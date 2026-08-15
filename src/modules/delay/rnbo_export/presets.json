@@ -1,0 +1,13 @@
+[
+  {
+    "name": "cotucatronics_delay",
+    "preset": {
+      "dly_mix": {
+        "value": 0
+      },
+      "dly_time": {
+        "value": 1
+      }
+    }
+  }
+]

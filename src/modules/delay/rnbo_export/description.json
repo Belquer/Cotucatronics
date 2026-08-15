@@ -1,0 +1,89 @@
+{
+  "parameters": [
+    {
+      "type": "ParameterTypeNumber",
+      "index": 0,
+      "name": "dly_time",
+      "paramId": "dly_time",
+      "minimum": 0,
+      "maximum": 1,
+      "exponent": 1,
+      "steps": 0,
+      "initialValue": 0.5,
+      "isEnum": false,
+      "enumValues": [],
+      "displayName": "",
+      "unit": "",
+      "order": 0,
+      "displayorder": "-",
+      "debug": false,
+      "visible": true,
+      "signalIndex": null,
+      "ioType": "IOTypeUndefined"
+    },
+    {
+      "type": "ParameterTypeNumber",
+      "index": 1,
+      "name": "dly_mix",
+      "paramId": "dly_mix",
+      "minimum": 0,
+      "maximum": 1,
+      "exponent": 1,
+      "steps": 0,
+      "initialValue": 0.5,
+      "isEnum": false,
+      "enumValues": [],
+      "displayName": "",
+      "unit": "",
+      "order": 0,
+      "displayorder": "-",
+      "debug": false,
+      "visible": true,
+      "signalIndex": null,
+      "ioType": "IOTypeUndefined"
+    }
+  ],
+  "numParameters": 2,
+  "numSignalInParameters": 0,
+  "numSignalOutParameters": 0,
+  "numInputChannels": 1,
+  "numOutputChannels": 2,
+  "numMidiInputPorts": 0,
+  "numMidiOutputPorts": 0,
+  "transportUsed": false,
+  "externalDataRefs": [],
+  "patcherSerial": 0,
+  "inports": [],
+  "outports": [],
+  "inlets": [
+    {
+      "type": "signal",
+      "index": 1,
+      "tag": "in1",
+      "meta": ""
+    }
+  ],
+  "outlets": [
+    {
+      "type": "signal",
+      "index": 1,
+      "tag": "out1",
+      "meta": ""
+    },
+    {
+      "type": "signal",
+      "index": 2,
+      "tag": "out2",
+      "meta": ""
+    }
+  ],
+  "presetid": "rnbo",
+  "meta": {
+    "architecture": "x64",
+    "filename": "rnbo_delay.maxpat",
+    "rnboobjname": "rnbomatic",
+    "maxversion": "9.1.4",
+    "rnboversion": "1.4.3",
+    "name": "cotucatronics_delay"
+  }
+}

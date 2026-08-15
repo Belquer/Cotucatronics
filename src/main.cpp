@@ -1,20 +1,36 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.3.0 (board-agnostic)
-// Este arquivo NÃO sabe qual placa é o cérebro.
+// Cotucatronics OS — esqueleto v0.4.0 (board-agnostic)
+// Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
+// DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.3.0"
+#define COTUCA_OS_VERSION "0.4.0"
 
 #include "hal.h"
 #include "params.h"
 #include "manifest.h"
+#include "module.h"
+#include "module_rnbo.h"
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
 
 static cotuca::ParamTable params;
 static cotuca::Manifest   manifest;
+
+// ---- módulo DSP ----
+static cotuca::Module* dsp = nullptr;
+
+// índice do parâmetro no módulo, resolvido por nome no boot.
+// -1 = nome não existe no export → não empurra nada.
+static int   mod_index[4];
+static float mod_last[4]; // só empurra o que mudou
+
+// Fonte que alimenta o módulo: crossfade das entradas + tom de teste.
+// Estático porque o callback de áudio não aloca. 64 > block_size (48).
+static constexpr size_t kMaxBlock = 64;
+static float            src_buf[kMaxBlock];
 
 // ---- oscilador de teste mínimo (sem DaisySP: portável) ----
 static float osc_phase = 0.f;
@@ -43,14 +59,37 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
     const bool has_in = cotuca::hal::Info().has_audio_in;
 
+    if(size > kMaxBlock)
+        size = kMaxBlock; // não estoura o scratch; nunca acontece com blk=48
+
+    // 1) FONTE — crossfade das duas entradas + tom de teste por cima.
+    //    O tom entra aqui, antes do módulo, pra poder ser a fonte do
+    //    eco no teste de bancada.
     for(size_t i = 0; i < size; i++)
     {
         const float dry  = has_in ? (in[0][i] * (1.f - src) + in[1][i] * src)
                                   : 0.f;
         const float tone = OscProcess();
-        const float sig  = (dry * (1.f - mix) + tone * mix) * level;
-        out[0][i] = sig;
-        out[1][i] = sig;
+        src_buf[i]       = dry * (1.f - mix) + tone * mix;
+    }
+
+    // 2) MÓDULO — escreve direto no out (1 entrada, 2 saídas).
+    if(dsp)
+    {
+        const float* ins[1] = {src_buf};
+        dsp->Process(ins, out, size);
+    }
+    else
+    {
+        for(size_t i = 0; i < size; i++)
+            out[0][i] = out[1][i] = src_buf[i]; // sem módulo: passa reto
+    }
+
+    // 3) LEVEL — por último, master de saída.
+    for(size_t i = 0; i < size; i++)
+    {
+        out[0][i] *= level;
+        out[1][i] *= level;
     }
 }
 
@@ -78,6 +117,24 @@ static void HandleLine(const char* line)
                  b.sample_rate, (int)b.block_size);
         return;
     }
+    if(strncmp(line, "mods", 4) == 0)
+    {
+        if(!dsp)
+        { hal::Log("nenhum modulo carregado"); return; }
+        hal::Log("modulo \"%s\": %d params", dsp->Name(), dsp->ParamCount());
+        for(int i = 0; i < dsp->ParamCount(); i++)
+            hal::Log("  [%d] %s", i, dsp->ParamName(i));
+        for(int b = 0; b < manifest.n_bind; b++)
+            hal::Log("  %-10s -> %s [%d]",
+                     params.Name(manifest.bind[b].param_id),
+                     manifest.bind[b].mod_name,
+                     mod_index[b]);
+        const auto& a = cotuca::RnboAllocStatsGet();
+        hal::Log("  ram: %u SRAM (de %u) + %u SDRAM, %d blocos, %d falhas",
+                 (unsigned)a.internal_bytes, (unsigned)a.internal_cap,
+                 (unsigned)a.big_bytes, a.blocks, a.failures);
+        return;
+    }
     if(strncmp(line, "list", 4) == 0)
     {
         for(int i = 0; i < params.Count(); i++)
@@ -85,7 +142,7 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k5 <0-1> | tone on/off | board | list");
+    hal::Log("? k1..k5 <0-1> | tone on/off | board | list | mods");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -119,6 +176,27 @@ int main(void)
         while(1) { hal::SetLed(led); led = !led; hal::DelayMs(100); }
     }
 
+    // ---- módulo DSP: carrega, inicializa, resolve params por nome ----
+    dsp = CreateModule();
+    if(dsp && !dsp->Init(hal::Info().sample_rate, hal::Info().block_size))
+    {
+        hal::Log("ERRO: modulo \"%s\" falhou no Init — seguindo sem DSP",
+                 dsp->Name());
+        dsp = nullptr; // passthrough em vez de áudio corrompido
+    }
+
+    for(int b = 0; b < manifest.n_bind; b++)
+    {
+        mod_index[b] = dsp ? dsp->FindParam(manifest.bind[b].mod_name) : -1;
+        mod_last[b]  = -1.f; // força o primeiro push
+        if(dsp && mod_index[b] < 0)
+            hal::Log("AVISO: param \"%s\" nao existe no modulo",
+                     manifest.bind[b].mod_name);
+    }
+    if(dsp)
+        hal::Log("modulo \"%s\": %d params, %d ligados",
+                 dsp->Name(), dsp->ParamCount(), manifest.n_bind);
+
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);
     hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION " [%s] — pronto.",
@@ -145,6 +223,20 @@ int main(void)
             if(v >= 0.f) manifest.knob[k].Apply(params, v);
         }
         hal::PollSerial();
+
+        // empurra pro módulo o que mudou. Fora do callback de áudio de
+        // propósito: setParameterValue enfileira evento no RNBO.
+        for(int b = 0; b < manifest.n_bind; b++)
+        {
+            if(mod_index[b] < 0)
+                continue;
+            const float v = params.Get(manifest.bind[b].param_id);
+            if(v != mod_last[b])
+            {
+                mod_last[b] = v;
+                dsp->SetParam(mod_index[b], v);
+            }
+        }
 
         if(++tick >= kLedToggleTicks)
         {

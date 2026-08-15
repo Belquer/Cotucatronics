@@ -18,9 +18,23 @@ LIBDAISY_DIR ?= $(HOME)/dev/libDaisy
 
 HAL_SRC = hal_$(BOARD).cpp
 
+# Motor de DSP. module_rnbo.cpp e o UNICO que ve headers do RNBO;
+# ele inclui o .cpp gerado como fonte, entao o export nao entra
+# aqui como unidade de compilacao separada.
+MODULE_SRC ?= module_rnbo.cpp
+RNBO_DIR   ?= modules/delay/rnbo_export
+
 CPP_SOURCES = \
 main.cpp \
+$(MODULE_SRC) \
 $(HAL_SRC)
+
+# Headers do RNBO. So o module_rnbo.cpp usa, mas o -I e global.
+C_INCLUDES += -I$(RNBO_DIR)/rnbo -I$(RNBO_DIR)/rnbo/common -I$(RNBO_DIR)
+
+# O RNBO usa <cmath>/<algorithm> com a STL; nada de excecoes nem RTTI,
+# que o Makefile da libDaisy ja desliga.
+CPPFLAGS += -Wno-unused-parameter -Wno-sign-compare
 
 $(info Cotucatronics Makefile v0.1.0 — BOARD=$(BOARD) LIBDAISY_DIR=$(LIBDAISY_DIR))
 
