@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.1.0**
+**Documento v0.2.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -11,7 +11,7 @@ valem em todas elas.
 
 | Board | `BOARD=` | Arquivo | Estado |
 |---|---|---|---|
-| Daisy Seed 2 (DFM) | `daisy_seed` | `hal_daisy_seed.cpp` v0.3.0 | ✅ validada em bancada |
+| Daisy Seed 2 (DFM) | `daisy_seed` | `hal_daisy_seed.cpp` v0.3.1 | ✅ validada em bancada |
 | Teensy 4.1 | `teensy41` | `hal_teensy41.cpp` | 🔜 planejada |
 
 ### Daisy Seed 2 — `BoardInfo`
@@ -28,6 +28,30 @@ valem em todas elas.
 A detecção de Seed 1.1 vs Seed 2 DFM é automática dentro do `hw.Init()` da
 libDaisy (`CheckBoardVersion()`), e o codec PCM3060 do Seed 2 é tratado lá
 dentro. **Nada disso vaza pro nosso código.**
+
+> ### Daisy: o app roda da QSPI de 8 MB, via bootloader
+>
+> Desde a v0.4.0 o firmware é compilado com **`APP_TYPE=BOOT_QSPI`**: o app vive
+> na **QSPI flash de 8 MB** e **os 128 KB de flash interna são do bootloader**
+> da Electrosmith. Nenhum byte do nosso código mora na flash interna — o mapa de
+> memória mostra `FLASH: 0 B`, e isso está certo.
+>
+> **Por quê:** o primeiro módulo RNBO sozinho levou o firmware a 94,14% dos
+> 128 KB internos. O segundo não caberia. Na QSPI o mesmo firmware ocupa 1,52%
+> de 7 936 KB.
+>
+> **O que isso custa:**
+> - o Cortex-M7 executa da QSPI mais devagar que da flash interna — mitigado
+>   pelo I-cache, mas é real, e vale medir se um módulo pesado começar a estourar
+>   o prazo do bloco de áudio;
+> - o boot ganha ~2 s de janela de graça do bootloader;
+> - gravar tem um passo a mais, **uma vez por placa** (`make program-boot`).
+>
+> **Não é regra do projeto, é configuração da Daisy.** Uma placa nova não herda
+> nada disso: o `APP_TYPE` é do `Makefile` e do ecossistema Electrosmith. O
+> Teensy 4.1 tem 8 MB de flash direto, sem bootloader intermediário.
+>
+> Fluxo de gravação completo em [TESTES.md](TESTES.md).
 
 ---
 
@@ -81,20 +105,26 @@ if(!buffer)
 Todo boot imprime quanto saiu pelo portão:
 
 ```
-SDRAM via AllocBig: 0 de 67108864 bytes
+SDRAM via AllocBig: 524296 de 67108864 bytes
 ```
 
 Se um módulo alocar por fora, **esse número não fecha** — é o detector de
 violação da regra.
 
-### Armadilha conhecida
+O módulo RNBO tem seu próprio extrato, mais detalhado, no comando `mods`: ele
+serve de um pool de 32 KB em SRAM primeiro e só cai pra `AllocBig()` no que não
+couber. Receita completa em [modules/README.md](modules/README.md).
+
+### Armadilha conhecida — agora ativa
 
 `sdram_pool` em `hal_daisy_seed.cpp` reserva a região SDRAM **inteira**
-(64 MB). Hoje o `--gc-sections` descarta o pool porque nada chama
-`AllocBig()` — por isso o mapa de memória mostra `SDRAM: 0 B`. **No primeiro
-instrumento que alocar, os 64 MB voltam de uma vez** e não sobra byte pra
-mais nada em `.sdram_bss`. Como toda alocação passa pelo portão, isso é
-seguro — mas só enquanto a regra for respeitada.
+(64 MB). Até a v0.3.0 o `--gc-sections` descartava o pool porque nada chamava
+`AllocBig()`, e o mapa mostrava `SDRAM: 0 B`. **A partir da v0.4.0 o módulo
+RNBO chama, e os 64 MB voltaram de uma vez:** o mapa mostra `SDRAM: 100%`.
+
+Isso é o pool, não o consumo — mas a consequência é real: **não sobra byte pra
+mais nada em `.sdram_bss`**. Toda alocação tem que passar pelo portão. Como
+passa, é seguro — mas só enquanto a regra for respeitada.
 
 ---
 
