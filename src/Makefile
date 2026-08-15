@@ -1,8 +1,9 @@
 # ============================================================
-# Cotucatronics OS — Makefile v0.1.0
+# Cotucatronics OS — Makefile v0.2.0
 #
 #   make BOARD=daisy_seed      compila
-#   make program-dfu           grava (Seed em modo bootloader)
+#   make program-boot          grava o bootloader (Seed em DFU da STM)
+#   make program-dfu           grava o app na QSPI (Seed no bootloader)
 #   make clean
 #
 # Trocar de placa = escrever hal_<board>.cpp e passar BOARD=<board>.
@@ -11,6 +12,20 @@
 
 TARGET ?= cotucatronics
 BOARD  ?= daisy_seed
+
+# ---- onde o app roda ----
+# BOOT_QSPI: o app vive nos 8 MB da QSPI e os 128 KB de flash interna
+# ficam pro bootloader da Electrosmith. Migramos porque o app já ocupava
+# 94% dos 128 KB internos com um único módulo RNBO — o segundo não
+# caberia. Na QSPI o teto some como problema.
+#
+# Custo: o M7 executa da QSPI mais devagar que da flash interna (mitigado
+# pelo I-cache) e gravar passa a ter dois passos, um deles único
+# (program-boot). Volte pra flash interna com:
+#     make APP_TYPE=BOOT_NONE
+# — mas aí é preciso regravar por DFU da STM (BOOT+RESET), porque o
+# bootloader some junto.
+APP_TYPE ?= BOOT_QSPI
 
 # Clone da libDaisy. Sobrescreva na linha de comando se estiver
 # em outro lugar:  make LIBDAISY_DIR=/caminho/pra/libDaisy
@@ -36,7 +51,7 @@ C_INCLUDES += -I$(RNBO_DIR)/rnbo -I$(RNBO_DIR)/rnbo/common -I$(RNBO_DIR)
 # que o Makefile da libDaisy ja desliga.
 CPPFLAGS += -Wno-unused-parameter -Wno-sign-compare
 
-$(info Cotucatronics Makefile v0.1.0 — BOARD=$(BOARD) LIBDAISY_DIR=$(LIBDAISY_DIR))
+$(info Cotucatronics Makefile v0.2.0 — BOARD=$(BOARD) APP_TYPE=$(APP_TYPE) LIBDAISY_DIR=$(LIBDAISY_DIR))
 
 # ---- checagens com mensagem legível, em vez de erro críptico ----
 ifeq ($(wildcard $(HAL_SRC)),)
