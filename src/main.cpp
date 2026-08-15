@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.6.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.6.2 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.6.1"
+#define COTUCA_OS_VERSION "0.6.2"
 
 #include "hal.h"
 #include "params.h"
@@ -36,6 +36,8 @@ static float            src_buf[kMaxBlock];
 // ---- cadeia de dinâmica do shell ----
 static cotuca::Gate     gate;
 static cotuca::Governor gov_l; // só no ramo OUT_L (exciter)
+static cotuca::Limiter  lim_l; // um por ramo: estados independentes
+static cotuca::Limiter  lim_r;
 
 // ---- oscilador de teste mínimo (sem DaisySP: portável) ----
 static float osc_phase = 0.f;
@@ -114,6 +116,29 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     gov_l.SetRelease(params.Real(manifest.p_gov_release));
     for(size_t i = 0; i < size; i++)
         out[0][i] = gov_l.Process(out[0][i]);
+
+    // 6) LIMITER — último bloco de processamento em CADA ramo.
+    //    Um limiter por ramo, não um compartilhado: um pico no
+    //    exciter não pode abaixar o jack de linha.
+    for(size_t i = 0; i < size; i++)
+    {
+        out[0][i] = lim_l.Process(out[0][i]);
+        out[1][i] = lim_r.Process(out[1][i]);
+    }
+
+    // 7) ROTEAMENTO — só liga/desliga o ramo. Depois do limiter
+    //    porque mutar só pode reduzir: nada aqui consegue burlar o
+    //    teto.
+    const float r_exc = params.Real(manifest.p_route_exciter) >= 0.5f ? 1.f : 0.f;
+    const float r_jck = params.Real(manifest.p_route_jack) >= 0.5f ? 1.f : 0.f;
+    if(r_exc < 0.5f || r_jck < 0.5f)
+    {
+        for(size_t i = 0; i < size; i++)
+        {
+            out[0][i] *= r_exc;
+            out[1][i] *= r_jck;
+        }
+    }
 }
 
 // ---- painel falso via serial ----
@@ -168,6 +193,23 @@ static void HandleLine(const char* line)
                  params.Curve(id));
         return;
     }
+    if(strncmp(line, "dyn", 3) == 0)
+    {
+        hal::Log("gate  thr=%.4f rel=%.0fms gain=%.2f env=%.4f",
+                 params.Real(manifest.p_gate_thresh),
+                 params.Real(manifest.p_gate_release),
+                 gate.Gain(), gate.Env());
+        hal::Log("gov   ceil=%.2f rel=%.0fms gain=%.2f env=%.3f",
+                 params.Real(manifest.p_gov_ceiling),
+                 params.Real(manifest.p_gov_release),
+                 gov_l.Gain(), gov_l.Env());
+        hal::Log("lim   ceil=%.2f gainL=%.2f gainR=%.2f",
+                 cotuca::Limiter::Ceiling(), lim_l.Gain(), lim_r.Gain());
+        hal::Log("route exciter=%d jack=%d",
+                 params.Real(manifest.p_route_exciter) >= 0.5f ? 1 : 0,
+                 params.Real(manifest.p_route_jack) >= 0.5f ? 1 : 0);
+        return;
+    }
     if(strncmp(line, "cpu", 3) == 0)
     {
         hal::Log("cpu: %.1f%% media, %.1f%% pico (bloco de %d @ %.0f Hz)",
@@ -200,7 +242,7 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <0-1> | tone on/off | board | list | mods | cpu");
+    hal::Log("? k1..k5 <0-1> | set <nome> <0-1> | tone on/off | board | list | mods | dyn | cpu");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -257,6 +299,8 @@ int main(void)
 
     gate.Init(hal::Info().sample_rate);
     gov_l.Init(hal::Info().sample_rate);
+    lim_l.Init(hal::Info().sample_rate);
+    lim_r.Init(hal::Info().sample_rate);
 
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);

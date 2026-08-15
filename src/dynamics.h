@@ -1,5 +1,5 @@
 #pragma once
-// dynamics.h v0.2.0
+// dynamics.h v0.3.0
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
@@ -22,7 +22,7 @@
 namespace cotuca
 {
 
-#define COTUCA_DYNAMICS_VERSION "0.2.0"
+#define COTUCA_DYNAMICS_VERSION "0.3.0"
 
 // ------------------------------------------------------------
 // EnvFollower — detector de envelope de um polo, com constantes
@@ -221,6 +221,68 @@ class Governor
     EnvFollower det_;
     float       sr_ = 48000.f, a_ = 0.f, r_ = 0.f;
     float       ceiling_ = 0.5f, gain_ = 1.f;
+};
+
+// ------------------------------------------------------------
+// Limiter — teto absoluto. O último bloco antes de cada saída.
+//
+// INEGOCIÁVEL e SEM PARÂMETRO EXPOSTO, de propósito. Gate e
+// governor são política musical e se ajustam; o limiter é a
+// última linha entre o firmware e um exciter queimado ou um
+// alto-falante estourado. Coisa que protege hardware não vira
+// knob — não existe cenário em que valha desligá-lo, e existir
+// um parâmetro só cria o cenário de desligá-lo por engano.
+//
+// Duas camadas:
+//   1. ganho suavizado (attack 1 ms) quando o envelope passa do
+//      teto — é o que faz a redução soar limpa em vez de áspera;
+//   2. clamp duro no fim, backstop absoluto. A camada 1 tem
+//      tempo de ataque, então um transiente rápido o bastante
+//      passa por ela; o clamp garante que nada saia acima do
+//      teto, nem por uma amostra.
+//
+// Sem lookahead: exigiria atrasar o sinal, e num instrumento
+// realimentado a latência é parte do laço acústico. Preferimos
+// 1 ms de rampa e o clamp de segurança a atraso no laço.
+// ------------------------------------------------------------
+class Limiter
+{
+  public:
+    void Init(float sample_rate)
+    {
+        sr_ = sample_rate > 0.f ? sample_rate : 48000.f;
+        det_.Init(sr_);
+        det_.SetTimes(0.05f, 30.f); // detector quase instantâneo
+        a_    = EnvFollower::Coef(1.f, sr_);
+        r_    = EnvFollower::Coef(100.f, sr_);
+        gain_ = 1.f;
+    }
+
+    float Process(float x)
+    {
+        const float env    = det_.Process(x);
+        const float target = (env > kCeiling) ? (kCeiling / env) : 1.f;
+        const float c      = (target < gain_) ? a_ : r_;
+        gain_              = target + (gain_ - target) * c;
+
+        float y = x * gain_;
+
+        // backstop: nada passa acima do teto, nem por uma amostra
+        if(y > kCeiling)
+            y = kCeiling;
+        else if(y < -kCeiling)
+            y = -kCeiling;
+        return y;
+    }
+
+    float Gain() const { return gain_; }
+    static constexpr float Ceiling() { return kCeiling; }
+
+  private:
+    static constexpr float kCeiling = 0.95f;
+
+    EnvFollower det_;
+    float       sr_ = 48000.f, a_ = 0.f, r_ = 0.f, gain_ = 1.f;
 };
 
 } // namespace cotuca

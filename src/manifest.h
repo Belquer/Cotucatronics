@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.6.0
+// manifest.h (instrumento "bancada") v0.7.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -45,6 +45,12 @@ struct Manifest
     int p_gate_release;
     int p_gov_ceiling;
     int p_gov_release;
+
+    // Roteamento de saída: 0/1. Serial-only por ora — o toggle
+    // físico de 3 posições assume depois, e vira o único lugar
+    // que escreve nestes dois.
+    int p_route_exciter; // OUT_L → amp TPA3116 → exciter
+    int p_route_jack;    // OUT_R → jack de linha
 
     // ---- ligação com o módulo DSP, POR NOME ----
     // O manifest não conhece índice de parâmetro do RNBO: reexportar
@@ -96,6 +102,11 @@ struct Manifest
         p_gov_ceiling  = t.Add("gov_ceiling",  0.5f,    0.f,  1.f);
         // release em ms: 100–3000, default 800
         p_gov_release  = t.Add("gov_release",  0.2414f, 100.f, 3000.f);
+
+        // ROTEAMENTO. Os dois ligados no boot: mudo por engano é pior
+        // que alto por engano — pra alto o limiter já tem resposta.
+        p_route_exciter = t.Add("route_exciter", 1.0f, 0.f, 1.f);
+        p_route_jack    = t.Add("route_jack",    1.0f, 0.f, 1.f);
 
         // knob físico → macro → parâmetro(s)
         knob[0].AddTarget(p_dly_time, 1.0f);
