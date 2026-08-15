@@ -3,14 +3,14 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.3.1
+// hal_daisy_seed v0.4.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.3.1"
+#define COTUCA_HAL_VERSION "0.4.0"
 
 using namespace daisy;
 
@@ -35,12 +35,19 @@ static size_t             sdram_used = 0;
 // ---- áudio: adapta o callback genérico ao formato da libDaisy ----
 static AudioCallback user_cb = nullptr;
 
+// Mede quanto do prazo do bloco o DSP consome. GetTick() é barato
+// (contador de ciclos), então instrumentar o callback não distorce
+// a medida de forma relevante.
+static CpuLoadMeter cpu_meter;
+
 static void DaisyAudioCb(AudioHandle::InputBuffer  in,
                          AudioHandle::OutputBuffer out,
                          size_t                    size)
 {
+    cpu_meter.OnBlockStart();
     if(user_cb)
         user_cb(in, out, size);
+    cpu_meter.OnBlockEnd();
 }
 
 // ---- serial ----
@@ -113,6 +120,7 @@ const BoardInfo& Info() { return info; }
 
 void StartAudio(AudioCallback cb)
 {
+    cpu_meter.Init(hw.AudioSampleRate(), hw.AudioBlockSize());
     user_cb = cb;
     hw.StartAudio(DaisyAudioCb);
 }
@@ -203,5 +211,8 @@ void* AllocBig(size_t bytes)
 }
 
 size_t AllocBigUsed() { return sdram_used; }
+
+float CpuLoadAvg() { return cpu_meter.GetAvgCpuLoad(); }
+float CpuLoadMax() { return cpu_meter.GetMaxCpuLoad(); }
 
 } // namespace cotuca::hal

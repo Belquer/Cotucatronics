@@ -1,8 +1,8 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.4.0** · última execução em placa: 2026-08-15 (T1–T3, firmware
-v0.3.0) · firmware atual **v0.4.0 / HAL v0.3.1**, compilado e **ainda não
-gravado** — T5 pendente.
+**Documento v0.5.0** · última execução em placa: 2026-08-15 · firmware
+**v0.4.1 / HAL v0.4.0** na QSPI. **T1, T2, T3 e T5 passaram**; T4 espera
+hardware.
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
 antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware;
@@ -19,14 +19,14 @@ T5 é o critério de aceite do primeiro módulo RNBO.
 | libDaisy | `~/dev/libDaisy` (`libdaisy.a`, 7.6 MB) |
 | dfu-util | 0.11 |
 | Bootloader | Electrosmith `dsy_bootloader_v6_4-intdfu-2000ms.bin` (vem com a libDaisy) |
-| Firmware | Cotucatronics OS v0.4.0 / `hal_daisy_seed v0.3.1` · `APP_TYPE=BOOT_QSPI` |
+| Firmware | Cotucatronics OS v0.4.1 / `hal_daisy_seed v0.4.0` · `APP_TYPE=BOOT_QSPI` |
 
-Ocupação do firmware v0.4.0 (primeiro com módulo RNBO embarcado):
+Ocupação do firmware v0.4.1 (com módulo RNBO e medidor de CPU):
 
 | Região | Usado | Total | % |
 |---|---|---|---|
 | FLASH (interna) | 0 B | 128 KB | 0,00% — é do bootloader agora |
-| QSPIFLASH | 123 240 B | 7 936 KB | **1,52%** |
+| QSPIFLASH | 123 784 B | 7 936 KB | **1,52%** |
 | SRAM | 71 100 B | 512 KB | 13,56% |
 | SDRAM | 64 MB | 64 MB | 100,00% (o `sdram_pool` inteiro — ver nota no fim) |
 
@@ -150,13 +150,15 @@ passada tinha soado como um bip curto; foi observação parcial, não defeito.
 
 Espera o buffer de alta impedância, o TPA3116 e o painel. Nada a rodar.
 
-## T5 — módulo RNBO "delay" · ⏳ PENDENTE DE GRAVAÇÃO
+## T5 — módulo RNBO "delay" · ✅ PASSOU
 
 **O critério de aceite do primeiro módulo.** Compilar não é evidência: o
-patcher pode estar montado e mudo. Só o ouvido fecha a conta.
+patcher pode estar montado e mudo. Aqui a conta foi fechada por medição, não
+só por ouvido — ver T5b.
 
 **Pré-requisito:** bootloader gravado (`make program-boot`, uma vez) e
-firmware v0.4.0 na QSPI (`make program-dfu`).
+firmware na QSPI (`make program-dfu`). Ambos feitos em 2026-08-15;
+executado com o firmware v0.4.1 / HAL v0.4.0.
 
 ### T5a — descoberta dos parâmetros (serial, sem áudio)
 
@@ -181,6 +183,24 @@ firmware v0.4.0 na QSPI (`make program-dfu`).
 `ERRO: modulo "delay" falhou no Init` (o firmware cai pra passthrough e o
 áudio sai seco, o que **não** é o teste passando).
 
+**Resultado — passou:**
+
+```
+> mods
+< modulo "delay": 2 params
+<   [0] dly_time
+<   [1] dly_mix
+<   dly_time   -> dly_time [0]
+<   dly_mix    -> dly_mix [1]
+<   ram: 2000 SRAM (de 32768) + 1048584 SDRAM, 15 blocos, 0 falhas
+> list
+<  5 dly_time   norm=0.50 real=0.50
+<  6 dly_mix    norm=0.50 real=0.50
+```
+
+7 parâmetros, ligações em `[0]` e `[1]`, nenhum `AVISO`, 15 blocos e
+**0 falhas**.
+
 ### T5b — confirmação sonora
 
 Cabo no **pino 18 (AUDIO OUT L)** e **pino 20 (AGND)**.
@@ -199,10 +219,38 @@ Cabo no **pino 18 (AUDIO OUT L)** e **pino 20 (AGND)**.
 volume), estalos a cada mudança de `k1` (interpolação do delay), ou `k2`
 sem efeito nenhum (parâmetro não ligado — volte pro T5a).
 
-> **A confirmação sonora ainda não foi feita.** O firmware v0.4.0 compilou
-> limpo e a migração QSPI está pronta, mas a placa segue com o v0.3.0 (sem
-> módulo) porque gravar exige o botão BOOT. Enquanto o T5 não rodar, o
-> módulo RNBO é **código que compila**, não módulo que funciona.
+**Resultado — passou, e medido em vez de só ouvido.**
+
+Eco não muda afinação, então FFT de frequência não prova delay. O que prova é
+a **cauda que sobra depois de cortar a fonte** — se o sinal persiste com a
+fonte muda, ele está saindo da linha de delay e de nenhum outro lugar:
+
+| Condição | Nível 1 s após `tone off` |
+|---|---|
+| `dly_mix = 0.0` | silêncio (−94 dBFS) |
+| `dly_mix = 1.0` | **848 Hz a −33,7 dBFS** |
+| `dly_time = 0.05` | cauda já extinta na janela de medição |
+| `dly_time = 0.9` | −27,2 dBFS |
+
+Com o tom ligado e 100% molhado: 848,23 Hz a −23,4 dBFS; logo após o corte,
+848,01 Hz a −33,8 dBFS (−10,4 dB de decaimento); 3 s depois, silêncio.
+
+O par `dly_mix = 0` → seco / `dly_mix = 1` → cauda é o controle que fecha a
+cadeia inteira: **ParamTable → ligação por nome → `setParameterValue` do
+RNBO → mudança audível**.
+
+### T5c — CPU
+
+```
+> cpu
+< cpu: 5.7% media, 9.9% pico (bloco de 48 @ 48000 Hz)
+```
+
+**Constante** em 5,7% / 9,9% com qualquer combinação de `dly_time` e
+`dly_mix`, e igual em repouso e com o tom passando. Era esperado: a linha de
+delay lê e escreve toda amostra independente do ajuste, então a carga não
+depende do parâmetro. Carga determinística é o que se quer no palco — mas
+significa que **o custo do módulo não cai quando ele está "desligado"**.
 
 ---
 
@@ -268,21 +316,33 @@ A consequência prática é a de sempre: **não sobra byte pra mais nada em
 `.sdram_bss`**. Todo acesso à SDRAM tem que passar pelo portão. Regra completa
 em [BOARDS.md](BOARDS.md).
 
-### Quanto o RNBO deve pedir (previsão, ainda não medida)
+### Quanto o RNBO pede — previsão vs. medido
 
-Calculado lendo o export, não medido em placa — o T5 é que confirma:
+A previsão errou por exatamente **2×**, e a causa é instrutiva:
 
 | Origem | Conta | Bytes |
 |---|---|---|
-| Linha de delay (`delaytilde_01_del`) | `evaluateSizeExpr` devolve **96 000** samples (2 s @ 48 kHz); o RNBO arredonda pra potência de dois → **131 072** samples × 4 B (`RNBO_USE_FLOAT32`) | 524 288 |
-| Header do nosso alocador | 8 B por bloco | 8 |
-| **Total esperado em `AllocBigUsed()`** | | **≈ 524 296** |
+| Previsto | 131 072 samples × **4 B**, supondo que `RNBO_USE_FLOAT32` valesse pra linha de delay | 524 296 |
+| **Medido** | 131 072 samples × **8 B** + 8 B de header | **1 048 584** |
 
-Os demais buffers do patcher são do tamanho do bloco (48 samples = 192 B cada) e
-**cabem no pool de 32 KB em SRAM** — não devem aparecer na conta da SDRAM.
+**Por que o dobro:** `RNBO_USE_FLOAT32` troca o `SampleValue` (os sinais do
+patcher) para `float`, mas a linha de delay é um `buffer~`, e o código gerado
+a instancia como **`Float64Buffer`** — 8 B por amostra, independente da macro:
 
-Se o número medido no boot destoar muito disso, alguma coisa está alocando por
-fora, e é exatamente pra isso que o extrato existe.
+```cpp
+this->delaytilde_01_del_buffer = new Float64Buffer(this->delaytilde_01_del_bufferobj);
+```
+
+131 072 × 8 = 1 048 576, mais 8 do nosso header = **1 048 584**, que é o número
+medido, ao byte. A macro não alcança o armazenamento de `buffer~`.
+
+**Consequência de planejamento:** todo `buffer~` de um patch custa 8 B por
+amostra, não 4. Um freeze de 10 s a 48 kHz pede ~4 MB, não 2. Com 64 MB de
+SDRAM ainda sobra muito, mas a conta pra dimensionar módulos é essa.
+
+Os demais buffers do patcher são do tamanho do bloco e **couberam no pool de
+32 KB em SRAM**, como previsto: 2 000 B em 15 blocos, 6% do pool. Só a linha de
+delay foi pra SDRAM.
 
 > **Nota sobre `RNBO_USE_FLOAT32`:** sem essa macro, `SampleValue` seria
 > `double` e a mesma linha de delay pediria **1 MB** em vez de 512 KB.

@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.2.0
+// hal.h v0.3.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -61,6 +61,11 @@ void             DelayMs(uint32_t ms);
 // Declarar DSY_SDRAM_BSS (ou equivalente) fora de hal_<board>.cpp
 // é proibido — ver BOARDS.md.
 void*            AllocBig(size_t bytes);
+
+// Carga do bloco de áudio, 0.0–1.0 (1.0 = estourou o prazo).
+// Média e pico desde o boot. Placa sem medidor devolve -1.
+float            CpuLoadAvg();
+float            CpuLoadMax();
 
 // Total já entregue por AllocBig(), em bytes. Serve de extrato:
 // o boot loga isto, e módulo que aloque por fora não aparece aqui.

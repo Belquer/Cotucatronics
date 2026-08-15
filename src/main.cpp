@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.4.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.4.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.4.0"
+#define COTUCA_OS_VERSION "0.4.1"
 
 #include "hal.h"
 #include "params.h"
@@ -117,6 +117,13 @@ static void HandleLine(const char* line)
                  b.sample_rate, (int)b.block_size);
         return;
     }
+    if(strncmp(line, "cpu", 3) == 0)
+    {
+        hal::Log("cpu: %.1f%% media, %.1f%% pico (bloco de %d @ %.0f Hz)",
+                 hal::CpuLoadAvg() * 100.f, hal::CpuLoadMax() * 100.f,
+                 (int)hal::Info().block_size, hal::Info().sample_rate);
+        return;
+    }
     if(strncmp(line, "mods", 4) == 0)
     {
         if(!dsp)
@@ -142,7 +149,7 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k5 <0-1> | tone on/off | board | list | mods");
+    hal::Log("? k1..k5 <0-1> | tone on/off | board | list | mods | cpu");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

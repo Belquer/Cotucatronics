@@ -5,10 +5,10 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.4.0** — primeiro módulo RNBO
-embarcado e app migrado pra QSPI. T1–T3 do [TESTES.md](src/TESTES.md) passaram
-em bancada na v0.3.0; **o T5 (aceite do módulo RNBO) ainda não rodou** — o
-firmware v0.4.0 compila limpo mas não foi gravado.
+Projeto colaborativo. Estado atual: **v0.4.1** — primeiro módulo RNBO
+embarcado, app rodando da QSPI. **T1, T2, T3 e T5 do [TESTES.md](src/TESTES.md)
+passaram em bancada**; T4 espera hardware. O delay do RNBO está tocando na
+placa, com 5,7% de CPU e 1 MB de linha de delay na SDRAM.
 
 ---
 
@@ -34,17 +34,17 @@ Cinco regras que não se negociam:
 
 | Arquivo | Versão | O que é |
 |---|---|---|
-| [src/hal.h](src/hal.h) | **v0.2.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.3.1** | Único arquivo que pode incluir `daisy_seed.h` |
+| [src/hal.h](src/hal.h) | **v0.3.0** | O contrato. A fronteira de independência de fornecedor |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.4.0** | Único arquivo que pode incluir `daisy_seed.h` |
 | [src/module.h](src/module.h) | **v0.1.0** | Interface de módulo DSP. Isola o motor (RNBO) |
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.1.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
 | [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.1.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
-| [src/main.cpp](src/main.cpp) | **v0.4.0** | Loop, callback de áudio, painel falso via serial |
+| [src/main.cpp](src/main.cpp) | **v0.4.1** | Loop, callback de áudio, painel falso via serial |
 | [src/params.h](src/params.h) | **v0.2.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
 | [src/manifest.h](src/manifest.h) | **v0.3.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.1.0** | **Manual de embarque de módulos RNBO — o template** |
-| [src/TESTES.md](src/TESTES.md) | **v0.4.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
+| [src/TESTES.md](src/TESTES.md) | **v0.5.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.2.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
@@ -117,8 +117,12 @@ cd src && ./cotuca_serial.py --send board list "k1 0.5" --gap 1.3
 
 Ou duplo-clique em `src/monitor.command`.
 
-Comandos do firmware: `board` · `list` · `mods` · `k1..k5 <0-1>` · `tone on` ·
-`tone off`
+Comandos do firmware: `board` · `list` · `mods` · `cpu` · `k1..k5 <0-1>` ·
+`tone on` · `tone off`
+
+`cpu` reporta a carga do bloco de áudio (média e pico). Com o delay RNBO
+carregado: **5,7% média, 9,9% pico** a 48 kHz / bloco 48 — constante, porque a
+linha de delay lê e escreve toda amostra independente do ajuste.
 
 `mods` mostra o módulo DSP carregado, os parâmetros que ele expôs (descobertos
 **por nome**, não por índice), as ligações do manifest e o extrato de memória do
