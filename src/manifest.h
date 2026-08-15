@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.5.0
+// manifest.h (instrumento "bancada") v0.6.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -43,6 +43,8 @@ struct Manifest
     // se gasta aqui.
     int p_gate_thresh;
     int p_gate_release;
+    int p_gov_ceiling;
+    int p_gov_release;
 
     // ---- ligação com o módulo DSP, POR NOME ----
     // O manifest não conhece índice de parâmetro do RNBO: reexportar
@@ -86,6 +88,14 @@ struct Manifest
         p_gate_thresh  = t.Add("gate_thresh",  0.1414f, 0.f,  1.f, 2.0f);
         // release em ms: 50–2000, default 300
         p_gate_release = t.Add("gate_release", 0.1282f, 50.f, 2000.f);
+
+        // GOVERNOR. gov_ceiling é o futuro destino do ENCODER físico:
+        // é a "borda de feedback", o ponto onde a escultura para de
+        // crescer. Linear de propósito — a borda é procurada pelo
+        // ouvido, e curva atrapalharia o gesto fino.
+        p_gov_ceiling  = t.Add("gov_ceiling",  0.5f,    0.f,  1.f);
+        // release em ms: 100–3000, default 800
+        p_gov_release  = t.Add("gov_release",  0.2414f, 100.f, 3000.f);
 
         // knob físico → macro → parâmetro(s)
         knob[0].AddTarget(p_dly_time, 1.0f);

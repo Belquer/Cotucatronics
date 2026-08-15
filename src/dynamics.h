@@ -1,5 +1,5 @@
 #pragma once
-// dynamics.h v0.1.0
+// dynamics.h v0.2.0
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
@@ -22,7 +22,7 @@
 namespace cotuca
 {
 
-#define COTUCA_DYNAMICS_VERSION "0.1.0"
+#define COTUCA_DYNAMICS_VERSION "0.2.0"
 
 // ------------------------------------------------------------
 // EnvFollower — detector de envelope de um polo, com constantes
@@ -126,6 +126,101 @@ class Gate
     EnvFollower det_;
     float       sr_ = 48000.f, a_ = 0.f, r_ = 0.f;
     float       thresh_ = 0.02f, gain_ = 0.f;
+};
+
+// ------------------------------------------------------------
+// Governor — segura o ganho quando o sinal passa do teto.
+//
+// Política INVERSA à do Gate: o gate age no que é pequeno demais,
+// o governor no que é grande demais. Mesmo detector, decisões
+// opostas — por isso os dois compartilham EnvFollower.
+//
+// Não é limiter. O limiter é absoluto e inegociável; o governor é
+// negociável e musical: soft-knee, joelho largo, release lento,
+// pra que a redução soe como o instrumento "cedendo" em vez de
+// bater numa parede.
+//
+// >>> ESTE BLOCO VAI GANHAR O ENCODER FÍSICO como controle da
+// >>> "borda de feedback": girar o encoder move gov_ceiling, ou
+// >>> seja move o ponto em que a escultura para de crescer.
+// >>> Tocar a realimentação piezo→exciter é achar essa borda e
+// >>> passear nela; o governor é o que torna isso seguro em vez
+// >>> de um grito. gov_release é a memória dessa borda — release
+// >>> longo segura o ganho baixo depois de um pico, evitando o
+// >>> bombeamento que faz o feedback voltar a subir.
+// ------------------------------------------------------------
+class Governor
+{
+  public:
+    void Init(float sample_rate)
+    {
+        sr_ = sample_rate > 0.f ? sample_rate : 48000.f;
+        det_.Init(sr_);
+        det_.SetTimes(1.f, 50.f);
+        SetTimes(5.f, 800.f);
+        ceiling_ = 0.5f;
+        gain_    = 1.f;
+    }
+
+    void SetTimes(float attack_ms, float release_ms)
+    {
+        a_ = EnvFollower::Coef(attack_ms, sr_);
+        r_ = EnvFollower::Coef(release_ms, sr_);
+    }
+
+    void SetRelease(float release_ms) { r_ = EnvFollower::Coef(release_ms, sr_); }
+
+    void SetCeiling(float c) { ceiling_ = c > 1e-4f ? c : 1e-4f; }
+
+    float Process(float x)
+    {
+        const float env    = det_.Process(x);
+        const float target = GainFor(env);
+        // reduzir ganho usa attack (rápido, protege); devolver ganho
+        // usa release (lento, não bombeia)
+        const float c = (target < gain_) ? a_ : r_;
+        gain_         = target + (gain_ - target) * c;
+        return x * gain_;
+    }
+
+    float Gain() const { return gain_; }
+    float Env() const { return det_.Value(); }
+
+  private:
+    // Soft-knee em domínio linear, sem powf: acima do teto só uma
+    // fração `kSlope` do excesso passa, e a transição entra por uma
+    // interpolação quadrática ao longo do joelho — sem degrau na
+    // derivada, que é o que se ouve como "click" de compressor.
+    float GainFor(float env) const
+    {
+        const float knee = ceiling_ * kKneeWidth;
+        const float lo   = ceiling_ - knee * 0.5f;
+        const float hi   = ceiling_ + knee * 0.5f;
+
+        if(env <= lo || env <= 1e-6f)
+            return 1.f;
+
+        float out;
+        if(env >= hi)
+        {
+            out = ceiling_ + (env - ceiling_) * kSlope;
+        }
+        else
+        {
+            // dentro do joelho: slope varia de 1.0 até kSlope
+            const float t     = (env - lo) / (knee > 1e-9f ? knee : 1e-9f);
+            const float slope = 1.f + (kSlope - 1.f) * t * t;
+            out               = lo + (env - lo) * slope;
+        }
+        return out / env;
+    }
+
+    static constexpr float kSlope     = 0.25f; // 1/4 do excesso passa
+    static constexpr float kKneeWidth = 0.5f;  // joelho = 50% do teto
+
+    EnvFollower det_;
+    float       sr_ = 48000.f, a_ = 0.f, r_ = 0.f;
+    float       ceiling_ = 0.5f, gain_ = 1.f;
 };
 
 } // namespace cotuca

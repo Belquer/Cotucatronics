@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.6.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.6.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.6.0"
+#define COTUCA_OS_VERSION "0.6.1"
 
 #include "hal.h"
 #include "params.h"
@@ -34,7 +34,8 @@ static constexpr size_t kMaxBlock = 64;
 static float            src_buf[kMaxBlock];
 
 // ---- cadeia de dinâmica do shell ----
-static cotuca::Gate gate;
+static cotuca::Gate     gate;
+static cotuca::Governor gov_l; // só no ramo OUT_L (exciter)
 
 // ---- oscilador de teste mínimo (sem DaisySP: portável) ----
 static float osc_phase = 0.f;
@@ -96,12 +97,23 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             out[0][i] = out[1][i] = src_buf[i]; // sem módulo: passa reto
     }
 
-    // 4) LEVEL — master de saída.
+    // 4) LEVEL — master de saída, ANTES da dinâmica de saída: é
+    //    justamente o level exagerado que o governor e o limiter
+    //    precisam segurar.
     for(size_t i = 0; i < size; i++)
     {
         out[0][i] *= level;
         out[1][i] *= level;
     }
+
+    // 5) SPLIT — os ramos deixam de ser iguais aqui.
+    //    OUT_L vai pro exciter no corpo da escultura e é o ramo que
+    //    realimenta o piezo: leva o governor. OUT_R é jack de linha,
+    //    não realimenta, e não leva.
+    gov_l.SetCeiling(params.Real(manifest.p_gov_ceiling));
+    gov_l.SetRelease(params.Real(manifest.p_gov_release));
+    for(size_t i = 0; i < size; i++)
+        out[0][i] = gov_l.Process(out[0][i]);
 }
 
 // ---- painel falso via serial ----
@@ -244,6 +256,7 @@ int main(void)
                  dsp->Name(), dsp->ParamCount(), manifest.n_bind);
 
     gate.Init(hal::Info().sample_rate);
+    gov_l.Init(hal::Info().sample_rate);
 
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);
