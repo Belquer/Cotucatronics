@@ -3,14 +3,14 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.2.1
+// hal_daisy_seed v0.3.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.2.1"
+#define COTUCA_HAL_VERSION "0.3.0"
 
 using namespace daisy;
 
@@ -21,7 +21,7 @@ static DaisySeed hw;
 
 static BoardInfo info = {
     .name         = "Daisy Seed",
-    .num_knobs    = 4,
+    .num_knobs    = 5, // 4 de caráter + SRC MIX
     .has_audio_in = true,
     .sample_rate  = 48000.f,
     .block_size   = 48, // ~1 ms
@@ -172,5 +172,7 @@ void* AllocBig(size_t bytes)
     sdram_used += bytes;
     return p;
 }
+
+size_t AllocBigUsed() { return sdram_used; }
 
 } // namespace cotuca::hal

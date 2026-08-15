@@ -1,8 +1,10 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.2 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.3.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
+
+#define COTUCA_OS_VERSION "0.3.0"
 
 #include "hal.h"
 #include "params.h"
@@ -32,6 +34,10 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 {
     const float level = params.Real(manifest.p_level);
     const float mix   = params.Real(manifest.p_tone_mix);
+    // SRC MIX: 0.0 = IN_L (piezo)  ·  1.0 = IN_R (jack de linha).
+    // Crossfade linear, aplicado ANTES de qualquer processamento — é a
+    // fonte do instrumento, não um efeito.
+    const float src = params.Real(manifest.p_src_mix);
     OscSetFreq(params.Real(manifest.p_tone_freq),
                cotuca::hal::Info().sample_rate);
 
@@ -39,7 +45,8 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
     for(size_t i = 0; i < size; i++)
     {
-        const float dry  = has_in ? in[0][i] : 0.f;
+        const float dry  = has_in ? (in[0][i] * (1.f - src) + in[1][i] * src)
+                                  : 0.f;
         const float tone = OscProcess();
         const float sig  = (dry * (1.f - mix) + tone * mix) * level;
         out[0][i] = sig;
@@ -51,7 +58,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 static void HandleLine(const char* line)
 {
     using namespace cotuca;
-    if(line[0] == 'k' && line[1] >= '1' && line[1] <= '4')
+    if(line[0] == 'k' && line[1] >= '1' && line[1] <= '5')
     {
         int   idx = line[1] - '1';
         float v   = strtof(line + 2, nullptr);
@@ -78,7 +85,7 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k4 <0-1> | tone on/off | board | list");
+    hal::Log("? k1..k5 <0-1> | tone on/off | board | list");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -114,9 +121,21 @@ int main(void)
 
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);
-    hal::Log("Cotucatronics OS v0.2 [%s] — pronto.", hal::Info().name);
+    hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION " [%s] — pronto.",
+             hal::Info().name);
+    // Toda a SDRAM do projeto passa por AllocBig(). Este log é o extrato:
+    // se um módulo alocar escondido, o número aqui não fecha.
+    hal::Log("SDRAM via AllocBig: %u de %u bytes",
+             (unsigned)hal::AllocBigUsed(),
+             (unsigned)hal::Info().big_ram_bytes);
 
-    bool led = false;
+    // Tick de ~1 ms. Nada de bloqueio longo aqui: o serial responde na
+    // hora e o LED vira heartbeat contado, não um sleep de meio segundo.
+    constexpr uint32_t kLedToggleTicks = 500; // 500 ms aceso / 500 apagado
+
+    bool     led  = false;
+    uint32_t tick = 0;
+
     while(1)
     {
         // knobs físicos, quando existirem, vencem o serial
@@ -126,8 +145,13 @@ int main(void)
             if(v >= 0.f) manifest.knob[k].Apply(params, v);
         }
         hal::PollSerial();
-        hal::SetLed(led);
-        led = !led;
-        hal::DelayMs(500);
+
+        if(++tick >= kLedToggleTicks)
+        {
+            tick = 0;
+            led  = !led;
+            hal::SetLed(led);
+        }
+        hal::DelayMs(1);
     }
 }

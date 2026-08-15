@@ -1,6 +1,6 @@
-# TESTES.md — Cotucatronics OS v0.2 · roteiro de bancada
+# TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.1.0** · última execução: 2026-08-15
+**Documento v0.2.0** · última execução: 2026-08-15 · firmware v0.3.0
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
 antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware.
@@ -15,7 +15,7 @@ antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware.
 | Toolchain | ARM GNU Toolchain 15.3.rel1 (`arm-none-eabi-gcc 15.3.1`) |
 | libDaisy | `~/dev/libDaisy` (`libdaisy.a`, 7.6 MB) |
 | dfu-util | 0.11 |
-| Firmware | `hal_daisy_seed v0.2.1`, FLASH 103732 B / 128 KB (79.14%) |
+| Firmware | Cotucatronics OS v0.3.0 / `hal_daisy_seed v0.3.0`, FLASH 103964 B / 128 KB (79.32%) |
 
 > O toolchain do Homebrew (`brew install arm-none-eabi-gcc`) **não serve**:
 > vem sem newlib, e a libDaisy morre em `stdint.h: No such file or directory`.
@@ -45,17 +45,21 @@ pula pro app e para de responder ao último `get_status`. Se apareceu
 **Resultado:** piscando devagar. Confirmado também pelo serial: o boot imprime
 `pronto.` em vez de entrar no laço de pisca rápido, ou seja a Seed 2 atende
 `needs_audio_in`, `min_knobs 4` e a RAM exigidos pelo manifest.
+Na v0.3.0 o LED virou heartbeat contado (toggle a cada 500 ticks de ~1 ms),
+e o ritmo de 1 Hz se manteve.
 
 ## T2 — painel falso via serial 115200 · ✅ PASSOU
 
 **Procedimento:** `board`, `list`, `k1 0.5`, `list`.
 
 ```
-> board      < Daisy Seed | knobs:4 | in:sim | 48000Hz/blk48
+> board      < Daisy Seed | knobs:5 | in:sim | 48000Hz/blk48
 > list       <  0 level      norm=0.70 real=0.70
              <  1 tone_freq  norm=0.40 real=848.00
              <  2 tone_mix   norm=0.00 real=0.00
              <  3 spare      norm=0.00 real=0.00
+             <  4 src_mix    norm=0.00 real=0.00
+> k5 0.5     < knob 5 -> 0.50   (src_mix 0.00 → 0.50)
 > k1 0.5     < knob 1 -> 0.50
 > list       <  0 level      norm=0.50 real=0.50
 ```
@@ -74,7 +78,6 @@ normalizado→real do manifest confere: `0.40` em `[80, 2000]` = 848 Hz.
 > tone on     < tone ON            (tone_mix 0.00 → 0.50)
 > k2 0.1875   < knob 2 -> 0.19     → tone_freq real = 440.00 Hz
 > k2 0.8      < knob 2 -> 0.80     → tone_freq real = 1616.00 Hz
-> k5 0.5      < ? k1..k4 <0-1> | tone on/off | board | list
 > tone off    < tone OFF
 ```
 
@@ -85,9 +88,9 @@ Conversão pra afinação alvo, com `tone_freq` em `[80, 2000]`:
 (848 → 440 → 1616 → 440 Hz), sem estalo, dropout ou distorção. A primeira
 passada tinha soado como um bip curto; foi observação parcial, não defeito.
 
-> **`k5` não existe neste firmware.** O parser do `main.cpp` cobre k1..k4 e o
-> manifest tem `kNumKnobs = 4`. O `k5` cai no help. O teste constata a ausência
-> do SRC MIX — não valida o roteamento dele.
+> **`k5` / SRC MIX passou a existir na v0.3.0.** `list` mostra `src_mix` no
+> índice 4 e `k5 0.5` move de 0.00 → 0.50. O crossfade `IN_L`↔`IN_R` está no
+> callback, mas só será audível com as duas entradas ligadas (T4).
 
 ## T4 — piezo / exciter / toggle de roteamento · ⏸️ BLOQUEADO
 
@@ -102,7 +105,7 @@ Espera o buffer de alta impedância, o TPA3116 e o painel. Nada a rodar.
 | 1 | `list` travava a placa (CDC calada até o reset) | ✅ corrigido no HAL v0.2.0 |
 | 2 | Todo `%f` saía vazio — `board` sem o `48000`, `list` com `norm= real=` | ✅ corrigido no Makefile |
 | 3 | Primeira linha de log sai picotada e grudada na resposta seguinte | ❌ **em aberto** |
-| 4 | Comando serial demora até 0,5 s pra responder | ⚠️ conhecido, fora do HAL |
+| 4 | Comando serial demorava até 0,5 s pra responder | ✅ corrigido no main.cpp v0.3.0 |
 
 **#1 — despacho serial rodava na ISR.** `SetReceiveCallback` dispara em contexto
 de interrupção, e `hal::Log()` transmite pelo mesmo USB: o segundo `Log`
@@ -123,9 +126,10 @@ presa e só é empurrada pela escrita seguinte, chegando truncada e grudada
 estar no buffer interno do Logger da libDaisy, não no código do projeto. O
 `TransmitSync()` (bloqueante) que resolveria é `protected`.
 
-**#4 — latência.** Com o despacho agora por polling, o `DelayMs(500)` do loop do
-`main.cpp` virou o teto de resposta. Conserto natural: loop a ~10 ms contando
-iterações pro LED. É `main.cpp`, fora da fronteira HAL — não alterado.
+**#4 — latência.** Com o despacho por polling, o `DelayMs(500)` do loop virava o
+teto de resposta a comando. O loop agora gira a ~1 ms e o LED virou heartbeat
+contado (toggle a cada 500 ticks), mantendo 1 Hz. Verificado com comandos a
+0,35 s de intervalo: resposta imediata.
 
 ---
 

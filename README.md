@@ -5,8 +5,8 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.2**, base funcional validada em bancada
-na Daisy Seed 2 (T1–T3 do [TESTES.md](src/TESTES.md) passando).
+Projeto colaborativo. Estado atual: **v0.3.0**, validado em bancada na
+Daisy Seed 2 (T1–T3 do [TESTES.md](src/TESTES.md) passando).
 
 ---
 
@@ -32,13 +32,15 @@ Cinco regras que não se negociam:
 
 | Arquivo | Versão | O que é |
 |---|---|---|
-| [src/hal.h](src/hal.h) | — | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.2.1** | Único arquivo que pode incluir `daisy_seed.h` |
-| [src/main.cpp](src/main.cpp) | — | Loop, callback de áudio, painel falso via serial |
-| [src/params.h](src/params.h) | **v0.1.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | — | Instrumento "bancada": passthrough + tom de teste |
+| [src/hal.h](src/hal.h) | **v0.2.0** | O contrato. A fronteira de independência de fornecedor |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.3.0** | Único arquivo que pode incluir `daisy_seed.h` |
+| [src/module.h](src/module.h) | **v0.1.0** | Interface de módulo DSP. Isola o motor (RNBO) |
+| [src/main.cpp](src/main.cpp) | **v0.3.0** | Loop, callback de áudio, painel falso via serial |
+| [src/params.h](src/params.h) | **v0.2.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
+| [src/manifest.h](src/manifest.h) | **v0.2.0** | Instrumento "bancada": passthrough + tom de teste |
 | [src/Makefile](src/Makefile) | **v0.1.0** | Build por placa. Sem DaisySP |
 | [src/TESTES.md](src/TESTES.md) | **v0.1.0** | Roteiro T1–T4 e defeitos conhecidos |
+| [src/BOARDS.md](src/BOARDS.md) | **v0.1.0** | Placas suportadas e a regra da SDRAM |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
 
@@ -87,7 +89,12 @@ cd src && ./cotuca_serial.py --send board list "k1 0.5" --gap 1.3
 
 Ou duplo-clique em `src/monitor.command`.
 
-Comandos do firmware: `board` · `list` · `k1..k4 <0-1>` · `tone on` · `tone off`
+Comandos do firmware: `board` · `list` · `k1..k5 <0-1>` · `tone on` · `tone off`
+
+`k5` é o **SRC MIX**: crossfade linear entre `IN_L` (piezo, `0.0`) e `IN_R`
+(jack de linha, `1.0`), aplicado antes de qualquer processamento. Enquanto o
+painel de 5 pots não existe, o `k4` também aponta pra ele — por isso
+`req.min_knobs` segue em 4: uma placa de 4 knobs ainda alcança o SRC MIX.
 
 Como os knobs físicos ainda não estão ligados, `ReadKnob()` devolve `-1` e o
 painel vive no serial. Conversão pra uma afinação alvo, com `tone_freq` em
@@ -105,14 +112,16 @@ painel vive no serial. Conversão pra uma afinação alvo, com `tone_freq` em
 - **`sdram_pool` pede a região SDRAM inteira.** Hoje o `--gc-sections` descarta
   tudo porque nada chama `AllocBig`. No primeiro instrumento que chamar, os
   64 MB voltam de uma vez e não sobra espaço pra mais nada em `.sdram_bss`.
+- **`AllocBig()` é o único acesso à SDRAM.** Declarar `DSY_SDRAM_BSS` fora de
+  `hal_daisy_seed.cpp` é proibido — regra completa em [BOARDS.md](src/BOARDS.md).
+  O boot imprime o extrato (`SDRAM via AllocBig: N de M bytes`); se um módulo
+  alocar por fora, o número não fecha.
 
 ## Defeitos em aberto
 
 | Sintoma | Onde |
 |---|---|
-| Comando serial demora até 0,5 s pra responder (`DelayMs(500)` no loop) | `main.cpp` |
-| Primeira linha de log sai picotada e grudada na resposta seguinte | buffer do Logger da libDaisy |
-| `k5` / SRC MIX não existe — parser é k1..k4, `kNumKnobs = 4` | `manifest.h` + `main.cpp` |
+| Linha de log sai picotada e grudada na seguinte; às vezes some | `tx_buff_[128]` estático e compartilhado do Logger da libDaisy |
 
 Diagnóstico completo de cada um no [TESTES.md](src/TESTES.md).
 
@@ -134,7 +143,8 @@ bloquear decisões de arquitetura:
 ## Próximos passos
 
 - Módulos DSP vindos de exports C++ do **RNBO**, encaixados onde hoje vive o
-  oscilador de teste.
+  oscilador de teste. A interface já existe ([module.h](src/module.h)); falta o
+  `module_rnbo.cpp`, que espera o export em `src/modules/<nome>/rnbo_export/`.
 - Stack anti-feedback: frequency shifter Hilbert, gain governor, notch bank
   adaptativo, limiter de segurança.
 - Segunda placa: **Teensy 4.1**, via um `hal_teensy41.cpp` novo — sem tocar em

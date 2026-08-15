@@ -1,4 +1,5 @@
 #pragma once
+// manifest.h (instrumento "bancada") v0.2.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura
@@ -32,6 +33,7 @@ struct Manifest
     int p_tone_freq;  // freq do oscilador de teste
     int p_tone_mix;   // mistura tom de teste vs entrada
     int p_spare;      // slot vazio de exemplo
+    int p_src_mix;    // SRC MIX: 0 = IN_L (piezo), 1 = IN_R (linha)
 
     Macro knob[kNumKnobs];
 
@@ -42,12 +44,17 @@ struct Manifest
         p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
         p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
         p_spare     = t.Add("spare",     0.0f, 0.f,    1.f);
+        p_src_mix   = t.Add("src_mix",   0.0f, 0.f,    1.f);
 
         // knob físico → macro → parâmetro(s)
         knob[0].AddTarget(p_level, 1.0f);
         knob[1].AddTarget(p_tone_freq, 1.0f);
         knob[2].AddTarget(p_tone_mix, 1.0f);
-        knob[3].AddTarget(p_spare, 1.0f);
+        // knob 4 aponta pro src_mix PROVISORIAMENTE, até o painel de 5
+        // pots existir. É por isso que req.min_knobs segue em 4: com 4
+        // knobs o SRC MIX continua alcançável, então a escultura roda.
+        knob[3].AddTarget(p_src_mix, 1.0f);
+        knob[4].AddTarget(p_src_mix, 1.0f); // SRC MIX definitivo
         // exemplo de macro composta (comentado):
         // knob[1].AddTarget(p_verb_size, 0.8f);
         // knob[1].AddTarget(p_verb_damp, -0.5f); // invertido

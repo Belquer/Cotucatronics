@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.1.0
+// Cotucatronics OS — params v0.2.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -13,10 +13,11 @@
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.1.0"
+#define COTUCA_PARAMS_VERSION "0.2.0"
 
-// knobs físicos do painel (manifest declara Macro knob[kNumKnobs])
-constexpr int kNumKnobs = 4;
+// knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
+// 4 de caráter + SRC MIX = 5.
+constexpr int kNumKnobs = 5;
 
 // tetos estáticos — estourar é erro de manifest, não de runtime
 constexpr int kMaxParams       = 32;

@@ -1,4 +1,5 @@
 #pragma once
+// hal.h v0.2.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -55,6 +56,14 @@ void             DelayMs(uint32_t ms);
 // Aloca da RAM "grande" (SDRAM na Daisy). Chame só no boot,
 // nunca no callback de áudio. Retorna nullptr se a placa não
 // tem essa capacidade ou se acabou — quem chama DEVE checar.
+//
+// Este é o ÚNICO portão de acesso à RAM grande no projeto.
+// Declarar DSY_SDRAM_BSS (ou equivalente) fora de hal_<board>.cpp
+// é proibido — ver BOARDS.md.
 void*            AllocBig(size_t bytes);
+
+// Total já entregue por AllocBig(), em bytes. Serve de extrato:
+// o boot loga isto, e módulo que aloque por fora não aparece aqui.
+size_t           AllocBigUsed();
 
 } // namespace cotuca::hal
