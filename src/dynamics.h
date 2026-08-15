@@ -1,5 +1,5 @@
 #pragma once
-// dynamics.h v0.3.0
+// dynamics.h v0.3.1
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
@@ -22,7 +22,7 @@
 namespace cotuca
 {
 
-#define COTUCA_DYNAMICS_VERSION "0.3.0"
+#define COTUCA_DYNAMICS_VERSION "0.3.1"
 
 // ------------------------------------------------------------
 // EnvFollower — detector de envelope de um polo, com constantes
@@ -187,10 +187,23 @@ class Governor
     float Env() const { return det_.Value(); }
 
   private:
-    // Soft-knee em domínio linear, sem powf: acima do teto só uma
-    // fração `kSlope` do excesso passa, e a transição entra por uma
-    // interpolação quadrática ao longo do joelho — sem degrau na
-    // derivada, que é o que se ouve como "click" de compressor.
+    // Soft-knee em domínio linear, sem powf.
+    //
+    // A curva é definida pelo SLOPE, que vai de 1.0 (transparente)
+    // até kSlope ao longo do joelho:
+    //
+    //     slope(t) = 1 + (kSlope - 1) · t²,  t = (env - lo)/knee
+    //
+    // e a saída é a INTEGRAL dele, não o produto. Essa distinção não
+    // é cosmética: multiplicar a excursão inteira pelo slope
+    // instantâneo faz as duas metades da curva não se encontrarem no
+    // topo do joelho — dá um degrau de ~0.09 na saída, que é
+    // audível como click. (Foi assim que saiu na primeira versão; o
+    // teste nativo pegou.)
+    //
+    //     out(t) = lo + knee · (t + (kSlope-1)·t³/3)
+    //
+    // Contínua em valor E em derivada nos dois limites do joelho.
     float GainFor(float env) const
     {
         const float knee = ceiling_ * kKneeWidth;
@@ -203,16 +216,22 @@ class Governor
         float out;
         if(env >= hi)
         {
-            out = ceiling_ + (env - ceiling_) * kSlope;
+            // continua da PONTA do joelho, com o slope final
+            out = KneeEnd(lo, knee) + (env - hi) * kSlope;
         }
         else
         {
-            // dentro do joelho: slope varia de 1.0 até kSlope
-            const float t     = (env - lo) / (knee > 1e-9f ? knee : 1e-9f);
-            const float slope = 1.f + (kSlope - 1.f) * t * t;
-            out               = lo + (env - lo) * slope;
+            const float t = (env - lo) / (knee > 1e-9f ? knee : 1e-9f);
+            out           = lo + knee * (t + (kSlope - 1.f) * t * t * t / 3.f);
         }
         return out / env;
+    }
+
+    // Saída no topo do joelho — o ponto onde os dois ramos se
+    // encontram. É a integral de slope(t) de 0 a 1.
+    static float KneeEnd(float lo, float knee)
+    {
+        return lo + knee * (1.f + (kSlope - 1.f) / 3.f);
     }
 
     static constexpr float kSlope     = 0.25f; // 1/4 do excesso passa
