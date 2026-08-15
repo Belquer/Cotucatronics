@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.4.0
+// manifest.h (instrumento "bancada") v0.5.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -37,6 +37,13 @@ struct Manifest
     int p_dly_time;   // → módulo RNBO "dly_time"
     int p_dly_mix;    // → módulo RNBO "dly_mix"
 
+    // ---- cadeia de dinâmica do shell (C++ puro, não RNBO) ----
+    // Todos serial-only: são política de segurança e comportamento,
+    // não gesto de performance. O painel tem 5 knobs e nenhum deles
+    // se gasta aqui.
+    int p_gate_thresh;
+    int p_gate_release;
+
     // ---- ligação com o módulo DSP, POR NOME ----
     // O manifest não conhece índice de parâmetro do RNBO: reexportar
     // o patch reordena tudo. Declara-se o nome, e o boot resolve o
@@ -70,6 +77,15 @@ struct Manifest
         // curvado e não sabe que houve curva.
         p_dly_time  = t.Add("dly_time",  0.5f, 0.f,    1.f,  2.5f);
         p_dly_mix   = t.Add("dly_mix",   0.5f, 0.f,    1.f);
+
+        // GATE. gate_thresh usa curve 2 porque threshold útil vive
+        // todo no fundo da faixa: linear, os primeiros 5% do curso
+        // seriam a única parte usável. O default REAL é 0.02
+        // (~-34 dBFS), e como Real() = pow(norm,2), o norm que
+        // produz 0.02 é sqrt(0.02) = 0.1414.
+        p_gate_thresh  = t.Add("gate_thresh",  0.1414f, 0.f,  1.f, 2.0f);
+        // release em ms: 50–2000, default 300
+        p_gate_release = t.Add("gate_release", 0.1282f, 50.f, 2000.f);
 
         // knob físico → macro → parâmetro(s)
         knob[0].AddTarget(p_dly_time, 1.0f);

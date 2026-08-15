@@ -1,17 +1,18 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.5.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.6.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.5.0"
+#define COTUCA_OS_VERSION "0.6.0"
 
 #include "hal.h"
 #include "params.h"
 #include "manifest.h"
 #include "module.h"
 #include "module_rnbo.h"
+#include "dynamics.h"
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
@@ -31,6 +32,9 @@ static float mod_last[4]; // só empurra o que mudou
 // Estático porque o callback de áudio não aloca. 64 > block_size (48).
 static constexpr size_t kMaxBlock = 64;
 static float            src_buf[kMaxBlock];
+
+// ---- cadeia de dinâmica do shell ----
+static cotuca::Gate gate;
 
 // ---- oscilador de teste mínimo (sem DaisySP: portável) ----
 static float osc_phase = 0.f;
@@ -73,7 +77,14 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         src_buf[i]       = dry * (1.f - mix) + tone * mix;
     }
 
-    // 2) MÓDULO — escreve direto no out (1 entrada, 2 saídas).
+    // 2) GATE — na entrada, pós-crossfade e pós-tom. Silencia o chão
+    //    de ruído do piezo antes que o módulo o transforme em cauda.
+    gate.SetThreshold(params.Real(manifest.p_gate_thresh));
+    gate.SetRelease(params.Real(manifest.p_gate_release));
+    for(size_t i = 0; i < size; i++)
+        src_buf[i] = gate.Process(src_buf[i]);
+
+    // 3) MÓDULO — escreve direto no out (1 entrada, 2 saídas).
     if(dsp)
     {
         const float* ins[1] = {src_buf};
@@ -85,7 +96,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             out[0][i] = out[1][i] = src_buf[i]; // sem módulo: passa reto
     }
 
-    // 3) LEVEL — por último, master de saída.
+    // 4) LEVEL — master de saída.
     for(size_t i = 0; i < size; i++)
     {
         out[0][i] *= level;
@@ -231,6 +242,8 @@ int main(void)
     if(dsp)
         hal::Log("modulo \"%s\": %d params, %d ligados",
                  dsp->Name(), dsp->ParamCount(), manifest.n_bind);
+
+    gate.Init(hal::Info().sample_rate);
 
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);
