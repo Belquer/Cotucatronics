@@ -39,11 +39,11 @@ Cinco regras que não se negociam:
 | [src/module.h](src/module.h) | **v0.1.0** | Interface de módulo DSP. Isola o motor (RNBO) |
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.1.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
 | [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.1.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
-| [src/main.cpp](src/main.cpp) | **v0.4.1** | Loop, callback de áudio, painel falso via serial |
-| [src/params.h](src/params.h) | **v0.2.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.3.0** | Instrumento "bancada": entrada + tom atravessando o delay |
+| [src/main.cpp](src/main.cpp) | **v0.5.0** | Loop, callback de áudio, painel falso via serial |
+| [src/params.h](src/params.h) | **v0.3.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
+| [src/manifest.h](src/manifest.h) | **v0.4.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
-| [src/modules/README.md](src/modules/README.md) | **v0.1.0** | **Manual de embarque de módulos RNBO — o template** |
+| [src/modules/README.md](src/modules/README.md) | **v0.2.0** | **Manual de embarque de módulos RNBO — o template** |
 | [src/TESTES.md](src/TESTES.md) | **v0.5.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.2.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
@@ -118,7 +118,31 @@ cd src && ./cotuca_serial.py --send board list "k1 0.5" --gap 1.3
 Ou duplo-clique em `src/monitor.command`.
 
 Comandos do firmware: `board` · `list` · `mods` · `cpu` · `k1..k5 <0-1>` ·
-`tone on` · `tone off`
+`set <nome> <0-1>` · `tone on` · `tone off`
+
+`set` alcança **qualquer** parâmetro pelo nome, inclusive os sem knob. Com os
+knobs 1–3 no delay e no level, `tone_freq` e `tone_mix` são **serial-only por
+design** — o tom de teste é bancada, não performance:
+
+```
+set tone_freq 0.1875     # 440 Hz de volta
+```
+
+### Curva de parâmetro
+
+`ParamTable::Add()` aceita um expoente opcional:
+
+```
+real = min + pow(norm, curve) * (max - min)
+```
+
+`curve = 1.0` é linear (default, com caminho rápido que pula o `pow`). O
+`dly_time` usa **2.5**: metade do curso do knob cobre os primeiros ~18% da
+faixa, que é onde moram os delays curtos.
+
+**Curva é decisão de manifest, não de módulo.** É ergonomia — como o knob se
+comporta na mão. O DSP recebe o valor já curvado e não sabe que houve curva; o
+mesmo export do RNBO serve a esculturas com curvas diferentes.
 
 `cpu` reporta a carga do bloco de áudio (média e pico). Com o delay RNBO
 carregado: **5,7% média, 9,9% pico** a 48 kHz / bloco 48 — constante, porque a

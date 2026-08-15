@@ -1,7 +1,7 @@
 # modules/ — manual de embarque de módulos RNBO
 
-**Documento v0.1.0** · receita validada com o módulo `delay`
-(RNBO 1.4.3 / Max 9.1.4, Daisy Seed 2, firmware v0.4.0)
+**Documento v0.2.0** · receita validada em placa com o módulo `delay`
+(RNBO 1.4.3 / Max 9.1.4, Daisy Seed 2, firmware v0.5.0)
 
 Este é o **template de toda escultura futura**. Quem for embarcar o segundo
 módulo não precisa redescobrir nada: seguindo os sete passos abaixo, o export
@@ -276,6 +276,62 @@ Os três `-I` são todos necessários: `rnbo/` tem `RNBO_Common.h`, `rnbo/common
 tem `RNBO_MinimalEngine.h` e os headers internos, e a raiz do export resolve os
 includes relativos do arquivo gerado. Os dois `-Wno-` calam warnings de código
 gerado — que não vamos corrigir, porque não editamos o export.
+
+---
+
+## Regra de orçamento de memória
+
+> ### Todo `buffer~` custa **8 bytes por amostra**, e `RNBO_USE_FLOAT32` não muda isso.
+
+A regra mais cara de descobrir tarde. Vale pra dimensionar qualquer módulo
+antes de exportar.
+
+`RNBO_USE_FLOAT32` faz o `SampleValue` — os **sinais** que trafegam entre os
+objetos do patcher — virar `float` de 4 B. Mas o **armazenamento de `buffer~`**
+é outra coisa: o código gerado o instancia explicitamente como `Float64Buffer`,
+independente da macro.
+
+```cpp
+// no .cpp gerado — repare no 64, e ele não responde a nenhuma macro nossa
+this->delaytilde_01_del_buffer = new Float64Buffer(this->delaytilde_01_del_bufferobj);
+```
+
+Isso alcança tudo que guarda áudio ao longo do tempo: `delay~`, `buffer~`,
+`record~`, linhas de freeze, tabelas de wavetable.
+
+### A conta
+
+```
+bytes = próxima_potência_de_dois(segundos × sample_rate) × 8
+```
+
+O RNBO **arredonda pra potência de dois**, o que sozinho já pode dobrar a
+conta. Somando os dois efeitos, o erro de uma estimativa ingênua chega a 4×.
+
+| Módulo | Ingênuo (s × 48k × 4) | Real | Fator |
+|---|---|---|---|
+| `delay` 2 s (medido) | 384 KB | **1 048 576 B** (131 072 × 8) | 2,7× |
+| freeze 10 s | 1,9 MB | **8 MB** (1 048 576 × 8) | 4,3× |
+| wavetable 1 s | 192 KB | **512 KB** (65 536 × 8) | 2,7× |
+
+> A previsão do delay no TESTES.md errou por exatamente 2× justamente por
+> supor 4 B/amostra. O medido — `1 048 584` — bate ao byte com
+> `131 072 × 8 + 8` de header do nosso alocador.
+
+### Como conferir sem adivinhar
+
+O comando `mods` dá o extrato real do alocador:
+
+```
+ram: 2000 SRAM (de 32768) + 1048584 SDRAM, 15 blocos, 0 falhas
+```
+
+**Compare com sua previsão antes de aceitar o módulo.** Divergência grande
+significa que ou a conta está errada, ou alguma coisa está alocando fora do
+portão — e o extrato existe exatamente pra apanhar os dois casos.
+
+Com 64 MB de SDRAM ainda cabe muita coisa, mas o teto é real: **oito** freezes
+de 10 s e acabou.
 
 ---
 

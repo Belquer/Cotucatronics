@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.4.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.5.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.4.1"
+#define COTUCA_OS_VERSION "0.5.0"
 
 #include "hal.h"
 #include "params.h"
@@ -117,6 +117,34 @@ static void HandleLine(const char* line)
                  b.sample_rate, (int)b.block_size);
         return;
     }
+    if(strncmp(line, "set ", 4) == 0)
+    {
+        // set <nome> <0-1> — alcança QUALQUER parâmetro pelo nome,
+        // inclusive os que não têm knob (tone_freq e tone_mix são
+        // serial-only por design: o tom é bancada, não performance).
+        const char* p = line + 4;
+        while(*p == ' ') p++;
+        const char* sp = strchr(p, ' ');
+        if(!sp || sp == p)
+        { hal::Log("uso: set <nome> <0-1>"); return; }
+
+        char         name[24];
+        const size_t n = (size_t)(sp - p) < sizeof(name) - 1
+                             ? (size_t)(sp - p)
+                             : sizeof(name) - 1;
+        memcpy(name, p, n);
+        name[n] = '\0';
+
+        const int id = params.Find(name);
+        if(id < 0)
+        { hal::Log("? param \"%s\" nao existe (use list)", name); return; }
+
+        params.Set(id, strtof(sp + 1, nullptr));
+        hal::Log("%s -> norm=%.3f real=%.3f (curve %.1f)",
+                 params.Name(id), params.Get(id), params.Real(id),
+                 params.Curve(id));
+        return;
+    }
     if(strncmp(line, "cpu", 3) == 0)
     {
         hal::Log("cpu: %.1f%% media, %.1f%% pico (bloco de %d @ %.0f Hz)",
@@ -149,7 +177,7 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k5 <0-1> | tone on/off | board | list | mods | cpu");
+    hal::Log("? k1..k5 <0-1> | set <nome> <0-1> | tone on/off | board | list | mods | cpu");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -237,7 +265,10 @@ int main(void)
         {
             if(mod_index[b] < 0)
                 continue;
-            const float v = params.Get(manifest.bind[b].param_id);
+            // Real(), não Get(): é aqui que a curva do manifest passa a
+            // valer. Os params do módulo são declarados 0–1, então Real()
+            // devolve o normalizado JÁ CURVADO, que é o que o DSP quer.
+            const float v = params.Real(manifest.bind[b].param_id);
             if(v != mod_last[b])
             {
                 mod_last[b] = v;

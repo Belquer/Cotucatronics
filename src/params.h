@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.2.0
+// Cotucatronics OS — params v0.3.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -9,11 +9,13 @@
 // ============================================================
 
 #include <cstddef>
+#include <cstring>
+#include <cmath>
 
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.2.0"
+#define COTUCA_PARAMS_VERSION "0.3.0"
 
 // knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
 // 4 de caráter + SRC MIX = 5.
@@ -33,9 +35,18 @@ inline float Clamp01(float v)
 // Guarda cada parâmetro em duas formas:
 //   - normalizado 0..1  → o que knob/serial/RNBO falam
 //   - real (min..max)   → o que o DSP consome
-// Conversão é linear. Se algum dia um parâmetro precisar de
-// curva (freq em oitavas, tempo em log), o lugar de mexer é
-// Real() — nada fora daqui olha a escala.
+// A conversão tem EXPOENTE por parâmetro (`curve`):
+//
+//     real = min + pow(norm, curve) * (max - min)
+//
+// curve = 1.0 → linear (default, e há um caminho rápido que
+// pula o pow). curve > 1 empurra a resolução pro começo do
+// curso: com 2.5, metade do knob cobre os primeiros 18% da
+// faixa. curve < 1 faz o contrário.
+//
+// A curva é ERGONOMIA, decisão de MANIFEST — é sobre como o
+// knob se comporta na mão. Não é decisão de módulo: o DSP
+// recebe o valor final e não sabe que curva existiu.
 // ------------------------------------------------------------
 class ParamTable
 {
@@ -43,7 +54,11 @@ class ParamTable
     void Init() { count_ = 0; }
 
     // Retorna o id do parâmetro (índice). -1 se a tabela encheu.
-    int Add(const char* name, float def_norm, float min_real, float max_real)
+    int Add(const char* name,
+            float       def_norm,
+            float       min_real,
+            float       max_real,
+            float       curve = 1.0f)
     {
         if(count_ >= kMaxParams)
             return -1;
@@ -51,8 +66,18 @@ class ParamTable
         name_[id]    = name;
         min_[id]     = min_real;
         max_[id]     = max_real;
+        curve_[id]   = curve > 0.f ? curve : 1.0f; // expoente <= 0 não faz sentido
         norm_[id]    = Clamp01(def_norm);
         return id;
+    }
+
+    // Procura por nome. -1 se não existe — quem chama DEVE checar.
+    int Find(const char* name) const
+    {
+        for(int i = 0; i < count_; i++)
+            if(strcmp(name_[i], name) == 0)
+                return i;
+        return -1;
     }
 
     void Set(int id, float norm)
@@ -68,8 +93,15 @@ class ParamTable
     {
         if(!Valid(id))
             return 0.f;
-        return min_[id] + norm_[id] * (max_[id] - min_[id]);
+        const float n = norm_[id];
+        const float c = curve_[id];
+        // caminho rápido: a esmagadora maioria é linear, e Real() é
+        // chamado a cada bloco de áudio.
+        const float shaped = (c == 1.0f) ? n : powf(n, c);
+        return min_[id] + shaped * (max_[id] - min_[id]);
     }
+
+    float Curve(int id) const { return Valid(id) ? curve_[id] : 1.0f; }
 
     const char* Name(int id) const { return Valid(id) ? name_[id] : "?"; }
 
@@ -79,8 +111,9 @@ class ParamTable
     bool Valid(int id) const { return id >= 0 && id < count_; }
 
     const char* name_[kMaxParams] = {};
-    float       min_[kMaxParams]  = {};
-    float       max_[kMaxParams]  = {};
+    float       min_[kMaxParams]   = {};
+    float       max_[kMaxParams]   = {};
+    float       curve_[kMaxParams] = {};
     // volatile: escrito pela ISR do serial, lido pelo callback de
     // áudio. float de 32 bits é atômico no M7, então não há rasgo —
     // volatile só impede o compilador de cachear o valor.

@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.3.0
+// manifest.h (instrumento "bancada") v0.4.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -62,7 +62,13 @@ struct Manifest
         p_src_mix   = t.Add("src_mix",   0.0f, 0.f,    1.f);
         // os params do módulo já são 0–1 no export, então min/max reais
         // coincidem com o normalizado e a conversão é identidade.
-        p_dly_time  = t.Add("dly_time",  0.5f, 0.f,    1.f);
+        // curve 2.5 no dly_time: ERGONOMIA, não DSP. O parâmetro do
+        // patch é linear em 0–1, e linear na mão significa que quase
+        // todo delay curto se amontoa no primeiro décimo do knob. Com
+        // 2.5, metade do curso cobre os primeiros ~18% da faixa, que é
+        // onde moram os slapbacks e os flams. O RNBO recebe o valor já
+        // curvado e não sabe que houve curva.
+        p_dly_time  = t.Add("dly_time",  0.5f, 0.f,    1.f,  2.5f);
         p_dly_mix   = t.Add("dly_mix",   0.5f, 0.f,    1.f);
 
         // knob físico → macro → parâmetro(s)
