@@ -1,0 +1,12 @@
+# artefatos de build do firmware
+build/
+*.o
+*.d
+*.elf
+*.bin
+*.hex
+*.map
+*.lst
+
+# macOS
+.DS_Store
