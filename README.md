@@ -33,7 +33,7 @@ Cinco regras que não se negociam:
 | Arquivo | Versão | O que é |
 |---|---|---|
 | [src/hal.h](src/hal.h) | **v0.2.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.3.0** | Único arquivo que pode incluir `daisy_seed.h` |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.3.1** | Único arquivo que pode incluir `daisy_seed.h` |
 | [src/module.h](src/module.h) | **v0.1.0** | Interface de módulo DSP. Isola o motor (RNBO) |
 | [src/main.cpp](src/main.cpp) | **v0.3.0** | Loop, callback de áudio, painel falso via serial |
 | [src/params.h](src/params.h) | **v0.2.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
@@ -109,6 +109,9 @@ painel vive no serial. Conversão pra uma afinação alvo, com `tone_freq` em
 - **O callback de RX do USB roda em ISR.** Nunca chame `Log()` dali — foi
   exatamente isso que travava a placa antes da v0.2.1. Enfileire e despache no
   `PollSerial()`.
+- **Não use o `Logger` da libDaisy.** O `tx_buff_[128]` dele é único e
+  compartilhado: duas linhas seguidas se sobrescrevem em pleno voo. O
+  `hal::Log` transmite por conta própria, com buffer duplo e retry.
 - **`sdram_pool` pede a região SDRAM inteira.** Hoje o `--gc-sections` descarta
   tudo porque nada chama `AllocBig`. No primeiro instrumento que chamar, os
   64 MB voltam de uma vez e não sobra espaço pra mais nada em `.sdram_bss`.
@@ -119,11 +122,8 @@ painel vive no serial. Conversão pra uma afinação alvo, com `tone_freq` em
 
 ## Defeitos em aberto
 
-| Sintoma | Onde |
-|---|---|
-| Linha de log sai picotada e grudada na seguinte; às vezes some | `tx_buff_[128]` estático e compartilhado do Logger da libDaisy |
-
-Diagnóstico completo de cada um no [TESTES.md](src/TESTES.md).
+Nenhum. Os quatro encontrados na bancada estão corrigidos — diagnóstico de cada
+um no [TESTES.md](src/TESTES.md).
 
 ## Signal path do sistema completo
 

@@ -3,14 +3,14 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.3.0
+// hal_daisy_seed v0.3.1
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.3.0"
+#define COTUCA_HAL_VERSION "0.3.1"
 
 using namespace daisy;
 
@@ -104,7 +104,7 @@ bool Init()
     hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
     info.sample_rate = hw.AudioSampleRate();
     hw.StartLog(false);
-    hw.PrintLine("hal_daisy_seed v" COTUCA_HAL_VERSION);
+    Log("hal_daisy_seed v" COTUCA_HAL_VERSION);
     hw.usb_handle.SetReceiveCallback(UsbRxCallback, UsbHandle::FS_INTERNAL);
     return true;
 }
@@ -128,24 +128,53 @@ bool ReadButton(int /*index*/) { return false; } // stub
 
 void SetLed(bool on) { hw.SetLed(on); }
 
+// ---- log: transmissão própria, sem o Logger da libDaisy ----
+//
+// O Logger da libDaisy formata tudo num `static char tx_buff_[128]`
+// ÚNICO e transmite sem esperar. A segunda linha sobrescreve o buffer
+// enquanto o USB ainda está lendo a primeira: sai picotada e grudada
+// ("SDRAM via AllocBig:$$ 0 level..."), às vezes some. Não é ritmo — é
+// o buffer ser um só, e por isso o Delay() que tentei antes não curou.
+// O TransmitSync() que resolveria é protected na libDaisy.
+//
+// Aqui: dois buffers alternados + retry até o CDC ACEITAR. Log só
+// retorna depois do aceite, então quando escrevemos em B o buffer A já
+// foi entregue ao hardware, e o transmit de B só é aceito quando A
+// terminou. Nenhum buffer é tocado enquanto o DMA o lê.
+constexpr size_t kLogMax = 160;
+
+static uint8_t log_buf[2][kLogMax];
+static int     log_slot = 0;
+
 // NUNCA chamar do callback de áudio: isto bloqueia por milissegundos.
 // Só do loop principal / boot.
 void Log(const char* fmt, ...)
 {
-    char    msg[128];
+    char    tmp[kLogMax];
     va_list args;
     va_start(args, fmt);
-    vsnprintf(msg, sizeof(msg), fmt, args);
+    int n = vsnprintf(tmp, kLogMax - 2, fmt, args);
     va_end(args);
-    hw.PrintLine("%s", msg);
+    if(n < 0)
+        return;
+    if(n > (int)kLogMax - 3) // vsnprintf devolve o que CABERIA
+        n = (int)kLogMax - 3;
 
-    // CDC_Transmit_FS devolve BUSY se o TX anterior ainda não drenou, e
-    // o Logger da libDaisy descarta em vez de esperar — duas linhas
-    // seguidas se atropelam e saem picotadas ("knobs:4 $$ 0 level...").
-    // O TransmitSync() que resolveria isso é protected, fora de alcance.
-    // Então seguramos: quadro USB FS = 1 ms, e msg[128] são 2 pacotes
-    // de 64 B, logo 2 ms cobrem a linha mais longa possível.
-    System::Delay(2);
+    uint8_t* out = log_buf[log_slot];
+    log_slot ^= 1;
+    memcpy(out, tmp, (size_t)n);
+    out[n++] = '\r';
+    out[n++] = '\n';
+
+    // Teto de ~50 ms: sem host lendo, desiste e devolve o controle em
+    // vez de travar a placa esperando alguém que não vai chegar.
+    for(int t = 0; t < 50; t++)
+    {
+        if(hw.usb_handle.TransmitInternal(out, (size_t)n)
+           == UsbHandle::Result::OK)
+            return;
+        System::Delay(1);
+    }
 }
 
 void SetSerialLineCallback(SerialLineCallback cb) { line_cb = cb; }

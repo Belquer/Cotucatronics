@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.2.0** · última execução: 2026-08-15 · firmware v0.3.0
+**Documento v0.3.0** · última execução: 2026-08-15 · firmware v0.3.0 / HAL v0.3.1
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
 antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware.
@@ -15,7 +15,7 @@ antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware.
 | Toolchain | ARM GNU Toolchain 15.3.rel1 (`arm-none-eabi-gcc 15.3.1`) |
 | libDaisy | `~/dev/libDaisy` (`libdaisy.a`, 7.6 MB) |
 | dfu-util | 0.11 |
-| Firmware | Cotucatronics OS v0.3.0 / `hal_daisy_seed v0.3.0`, FLASH 103964 B / 128 KB (79.32%) |
+| Firmware | Cotucatronics OS v0.3.0 / `hal_daisy_seed v0.3.1`, FLASH 104036 B / 128 KB (79.37%) |
 
 > O toolchain do Homebrew (`brew install arm-none-eabi-gcc`) **não serve**:
 > vem sem newlib, e a libDaisy morre em `stdint.h: No such file or directory`.
@@ -104,7 +104,7 @@ Espera o buffer de alta impedância, o TPA3116 e o painel. Nada a rodar.
 |---|---|---|
 | 1 | `list` travava a placa (CDC calada até o reset) | ✅ corrigido no HAL v0.2.0 |
 | 2 | Todo `%f` saía vazio — `board` sem o `48000`, `list` com `norm= real=` | ✅ corrigido no Makefile |
-| 3 | Primeira linha de log sai picotada e grudada na resposta seguinte | ❌ **em aberto** |
+| 3 | Linha de log saía picotada e grudada na seguinte | ✅ corrigido no HAL v0.3.1 |
 | 4 | Comando serial demorava até 0,5 s pra responder | ✅ corrigido no main.cpp v0.3.0 |
 
 **#1 — despacho serial rodava na ISR.** `SetReceiveCallback` dispara em contexto
@@ -119,12 +119,20 @@ newlib-nano vem sem suporte a `%f`: falha **calada**, sem warning. Como o
 manifest e o painel são todos float, metade da saída sumia. `LDFLAGS = -u
 _printf_float` no Makefile, custa ~4,6 KB.
 
-**#3 — buffer do Logger.** A resposta do primeiro comando não sai na hora: fica
-presa e só é empurrada pela escrita seguinte, chegando truncada e grudada
-(`Daisy Seed | knobs:4 $$ 0 level...`). Comando isolado sai íntegro. Um
-`System::Delay(2)` por linha no `hal::Log` **não resolveu** — a causa parece
-estar no buffer interno do Logger da libDaisy, não no código do projeto. O
-`TransmitSync()` (bloqueante) que resolveria é `protected`.
+**#3 — buffer único do Logger.** O `Logger` da libDaisy formata tudo num
+`static char tx_buff_[128]` **compartilhado** e transmite sem esperar: a segunda
+linha sobrescrevia o buffer enquanto o USB ainda lia a primeira, e a saída vinha
+truncada e grudada (`SDRAM via AllocBig:$$ 0 level...`), às vezes sumindo.
+
+Não era ritmo — por isso um `System::Delay(2)` por linha **não** curou. O
+`hal::Log` agora ignora o Logger e transmite direto por
+`hw.usb_handle.TransmitInternal()`, com **dois buffers alternados** e retry até
+o CDC aceitar. Como `Log` só retorna após o aceite, ao escrever em B o buffer A
+já foi entregue ao hardware, e o transmit de B só é aceito quando A terminou:
+nenhum buffer é tocado enquanto o DMA o lê. Retry tem teto de ~50 ms, pra placa
+sem host lendo não travar.
+
+**Verificado:** 21 linhas em rajada com 50 ms entre comandos, todas íntegras.
 
 **#4 — latência.** Com o despacho por polling, o `DelayMs(500)` do loop virava o
 teto de resposta a comando. O loop agora gira a ~1 ms e o LED virou heartbeat
