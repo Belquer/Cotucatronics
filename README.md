@@ -43,6 +43,8 @@ Cinco regras que não se negociam:
 | [src/BOARDS.md](src/BOARDS.md) | **v0.1.0** | Placas suportadas e a regra da SDRAM |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
+| [src/cotuca_measure.py](src/cotuca_measure.py) | **v0.1.0** | Mede a frequência de saída por FFT |
+| [src/measure.command](src/measure.command) | **v0.1.0** | Wrapper duplo-clicável do medidor |
 
 ## Ambiente que funciona
 
@@ -99,6 +101,23 @@ painel de 5 pots não existe, o `k4` também aponta pra ele — por isso
 Como os knobs físicos ainda não estão ligados, `ReadKnob()` devolve `-1` e o
 painel vive no serial. Conversão pra uma afinação alvo, com `tone_freq` em
 `[80, 2000]`: `norm = (Hz − 80) / 1920` — logo **440 Hz = `k2 0.1875`**.
+
+### Medir em vez de confiar no ouvido
+
+Com o `OUT_L` numa entrada de áudio do Mac (aqui: MiniFuse 4, canal 2):
+
+```bash
+cd src && ./cotuca_measure.py --scan --expect 440
+```
+
+Reporta a frequência dominante por FFT com interpolação parabólica, o nível em
+dBFS e o erro em cents. Ou duplo-clique em `src/measure.command`.
+
+Medido na faixa inteira (80 / 440 / 880 / 1760 / 2000 Hz): erro constante de
+**+0,4 a +0,5 cents**. Sendo constante em termos *relativos*, é diferença de
+clock — a taxa real do SAI da Daisy é ~0,026% acima dos 48000 Hz que o
+`AudioSampleRate()` reporta e que o oscilador usa como base. Não é erro de
+código, e é inaudível (1 cent é ~1/100 de semitom).
 
 ## Gotchas
 
