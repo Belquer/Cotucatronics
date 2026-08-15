@@ -1,7 +1,7 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.5.0** · última execução em placa: 2026-08-15 · firmware
-**v0.4.1 / HAL v0.4.0** na QSPI. **T1, T2, T3 e T5 passaram**; T4 espera
+**Documento v0.6.0** · última execução em placa: 2026-08-15 · firmware
+**v0.5.0 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5 e T6 passaram**; T4 espera
 hardware.
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
@@ -19,7 +19,7 @@ T5 é o critério de aceite do primeiro módulo RNBO.
 | libDaisy | `~/dev/libDaisy` (`libdaisy.a`, 7.6 MB) |
 | dfu-util | 0.11 |
 | Bootloader | Electrosmith `dsy_bootloader_v6_4-intdfu-2000ms.bin` (vem com a libDaisy) |
-| Firmware | Cotucatronics OS v0.4.1 / `hal_daisy_seed v0.4.0` · `APP_TYPE=BOOT_QSPI` |
+| Firmware | Cotucatronics OS v0.5.0 / `hal_daisy_seed v0.4.0` · `APP_TYPE=BOOT_QSPI` |
 
 Ocupação do firmware v0.4.1 (com módulo RNBO e medidor de CPU):
 
@@ -251,6 +251,61 @@ RNBO → mudança audível**.
 delay lê e escreve toda amostra independente do ajuste, então a carga não
 depende do parâmetro. Carga determinística é o que se quer no palco — mas
 significa que **o custo do módulo não cai quando ele está "desligado"**.
+
+## T6 — curva de parâmetro e `set` serial · ✅ PASSOU
+
+**Procedimento:** girar `k1` (→ `dly_time`, `curve 2.5`) por todo o curso e
+conferir o `real` no `list`; depois exercitar `set <nome> <valor>`.
+
+### T6a — a curva bate com a conta
+
+`real = pow(norm, 2.5)`, medido nos cinco pontos:
+
+| `k1` | Previsto | Medido |
+|---|---|---|
+| 0.00 | 0.000 | 0.00 |
+| 0.25 | 0.031 | 0.03 |
+| **0.50** | **0.177** | **0.18** |
+| 0.75 | 0.487 | 0.49 |
+| 1.00 | 1.000 | 1.00 |
+
+Metade do curso do knob cobre os primeiros ~18% da faixa — os delays curtos
+ganharam metade útil do percurso, que era o objetivo.
+
+### T6b — o valor CURVADO chega no DSP
+
+O teste que importa: não basta o `list` mostrar o número certo, o RNBO tem que
+receber esse número. Medindo a cauda 1 s após cortar a fonte (440 Hz,
+`dly_mix = 1.0`):
+
+| `k1` | `dly_time` real | Cauda |
+|---|---|---|
+| 0.5 | 0.177 (curto) | −28,7 dBFS |
+| 0.9 | 0.768 (longo) | **−7,2 dBFS** |
+
+21,5 dB de diferença: delay curto repete mais vezes por segundo e a energia
+decai mais rápido. Se o módulo estivesse recebendo o normalizado cru (0.5 e
+0.9), a separação seria bem menor.
+
+> **Armadilha que isso apanha.** O push pro módulo usava `params.Get()` — o
+> normalizado **cru**. Com a curva só dentro do `Real()`, ela ficaria presa do
+> nosso lado e nunca chegaria no RNBO: o sintoma seria "a curva não faz nada",
+> sem erro, sem log, sem pista. O push agora usa `Real()`. **Todo parâmetro
+> futuro herda isso:** o que chega no módulo é `Real()`, e é por ali que
+> qualquer transformação de manifest passa a valer.
+
+### T6c — `set <nome> <valor>`
+
+```
+> set tone_freq 0.1875   < tone_freq -> norm=0.188 real=440.000 (curve 1.0)
+> set dly_time 0.5       < dly_time -> norm=0.500 real=0.177 (curve 2.5)
+> set naoexiste 0.5      < ? param "naoexiste" nao existe (use list)
+```
+
+Alcança qualquer parâmetro pelo nome, mostra a curva aplicada e recusa nome
+inexistente. `tone_freq` e `tone_mix` são **serial-only por design** — os
+knobs 1–3 foram pro delay e pro level, e o tom de teste é bancada, não
+performance.
 
 ---
 

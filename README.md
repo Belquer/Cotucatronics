@@ -5,10 +5,11 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.4.1** — primeiro módulo RNBO
-embarcado, app rodando da QSPI. **T1, T2, T3 e T5 do [TESTES.md](src/TESTES.md)
-passaram em bancada**; T4 espera hardware. O delay do RNBO está tocando na
-placa, com 5,7% de CPU e 1 MB de linha de delay na SDRAM.
+Projeto colaborativo. Estado atual: **v0.5.0** — primeiro módulo RNBO
+embarcado, app rodando da QSPI. **T1, T2, T3, T5 e T6 do
+[TESTES.md](src/TESTES.md) passaram em bancada**; T4 espera hardware. O delay
+do RNBO está tocando na placa, com 5,7% de CPU e 1 MB de linha de delay na
+SDRAM.
 
 ---
 
@@ -44,7 +45,7 @@ Cinco regras que não se negociam:
 | [src/manifest.h](src/manifest.h) | **v0.4.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.2.0** | **Manual de embarque de módulos RNBO — o template** |
-| [src/TESTES.md](src/TESTES.md) | **v0.5.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
+| [src/TESTES.md](src/TESTES.md) | **v0.6.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.2.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
