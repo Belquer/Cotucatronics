@@ -1,23 +1,86 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.15.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.16.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.15.0"
+#define COTUCA_OS_VERSION "0.16.0"
 
 #include "hal.h"
 #include "params.h"
 #include "manifest.h"
 #include "module.h"
 #include "dynamics.h"
+#include "midi.h"
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
 
 static cotuca::ParamTable params;
 static cotuca::Manifest   manifest;
+
+// ============================================================
+// DECISÃO DE ARQUITETURA — PRIORIDADE ENTRE FONTES DE CONTROLE
+//
+// Três fontes escrevem nos mesmos parâmetros: o painel falso do
+// SERIAL, o MIDI, e o KNOB FÍSICO quando existir.
+//
+// >>> ÚLTIMA ESCRITA VENCE. Não há hierarquia. <<<
+//
+// As três são PARES. Nenhuma tem precedência sobre a outra, e nenhuma
+// "trava" ou "solta" as demais. Quem mexeu por último definiu o valor,
+// ponto — como acontece com duas mãos no mesmo knob.
+//
+// POR QUÊ, e por que isto não é preguiça:
+//
+// 1. Não existe fonte mais legítima. O serial é bancada, o MIDI vai
+//    ser o pedal e o controlador do palco, o knob é a mão na
+//    escultura. Eleger um vencedor fixo quebraria justamente o caso
+//    de uso do outro — knob-vence-sempre tornaria o pedal decorativo,
+//    MIDI-vence-sempre congelaria o painel no meio do show.
+//
+// 2. A alternativa séria seria "take-over": o knob físico só assume
+//    quando o valor dele CRUZA o valor atual, pra não haver salto.
+//    É o comportamento certo pra sintetizador com preset. Aqui não:
+//    a escultura não tem cena salva, e take-over custa um parâmetro
+//    que não obedece até você achar a posição — no palco isso é um
+//    knob quebrado. Salto é honesto, silêncio não.
+//
+// 3. Toda fonte escreve NORMALIZADO na ParamTable, no mesmo ponto.
+//    Não há caminho paralelo pra divergir: a curva do manifest, o
+//    Shaped() do módulo e o Real() do DSP acontecem depois, iguais
+//    pra qualquer origem. MIDI é um knob remoto.
+//
+// >>> CONDIÇÃO PRA ISSO SER VERDADE, e é uma armadilha real: <<<
+// Uma fonte que reescreve o parâmetro A CADA VOLTA DO LOOP não é par
+// de ninguém — ela vence sempre, porque a última escrita é sempre
+// dela. O laço de knobs abaixo roda a cada ~1 ms, então ele SÓ pode
+// aplicar quando o valor MUDOU. Sem essa guarda, ligar os pots
+// físicos mataria o MIDI e o serial em silêncio, e o sintoma seria
+// "o CC não faz nada" — um bug de arquitetura disfarçado de bug de
+// parser. Ver o laço em main().
+// ============================================================
+
+// ---- MIDI ----
+// A máquina de estados é board-agnostic (midi.h). O HAL entrega
+// bytes; o parser entende; o mapa do manifest decide o que move.
+static cotuca::MidiParser midi;
+
+// Chamado pelo parser quando um CC completo passou pelo filtro de
+// canal. Roda no LOOP PRINCIPAL, não em ISR — hal::PollMidi() é quem
+// despacha, exatamente como PollSerial() faz com as linhas.
+static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
+{
+    // O mapa é do manifest, e aplicá-lo também: ver Manifest::ApplyMidiCc.
+    // CC fora do mapa devolve -1 e é ignorado de propósito — mas o
+    // parser já o guardou no histórico. No dia da solda, ver um CC
+    // chegando e não fazer nada é informação MUITO diferente de não
+    // ver nada.
+    manifest.ApplyMidiCc(params, cc, value);
+}
+
+static void OnMidiByte(uint8_t b) { midi.Byte(b); }
 
 // ---- módulos DSP, por SLOT ----
 // Preenchidos do REGISTRO em module.h. O main não inclui header de
@@ -523,7 +586,98 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe");
+    // ---- MIDI ----
+    // ATENÇÃO à ordem: "miditest" e "midiloop" TÊM que ser testados
+    // antes de "midi", senão o strncmp de 4 letras engole os dois.
+    if(strncmp(line, "miditest ", 9) == 0 || strncmp(line, "midiloop ", 9) == 0)
+    {
+        // miditest <cc> <val> [canal 1-16]  — injeta na fila de RX
+        // midiloop <cc> <val> [canal 1-16]  — manda pelo fio (T10)
+        const bool  loop = line[4] == 'l';
+        const char* p    = line + 9;
+        char*       end  = nullptr;
+        const long  cc   = strtol(p, &end, 10);
+        const long  val  = strtol(end, &end, 10);
+        long        ch   = strtol(end, &end, 10);
+        if(ch < 1 || ch > 16)
+            ch = 1;
+        if(cc < 0 || cc > 127 || val < 0 || val > 127)
+        {
+            hal::Log("uso: %s <cc 0-127> <val 0-127> [canal 1-16]",
+                     loop ? "midiloop" : "miditest");
+            return;
+        }
+        const uint8_t msg[3] = {(uint8_t)(0xB0 | (uint8_t)(ch - 1)),
+                                (uint8_t)cc,
+                                (uint8_t)val};
+        if(loop)
+        {
+            // Sai pelo TX e só volta se houver jumper D13→D14. O
+            // parser vê os bytes pelo caminho REAL: UART, DMA, ISR,
+            // fila. É o único teste que prova baud rate e pino.
+            if(!hal::MidiRxActive())
+            { hal::Log("midiloop: UART MIDI nao esta em escuta"); return; }
+            hal::MidiSendBytes(msg, 3);
+            hal::Log("midiloop: TX B%d %02lX %02lX — precisa de jumper "
+                     "D13->D14 pra voltar",
+                     (int)(ch - 1), cc, val);
+        }
+        else
+        {
+            // NÃO prova a UART: entra depois do fio. Prova o parser,
+            // o mapa e a via de aplicação. Ver T10 no TESTES.md.
+            for(int i = 0; i < 3; i++)
+                hal::MidiInjectByte(msg[i]);
+            hal::Log("miditest: injetado CC %ld = %ld no canal %ld "
+                     "(NAO passa pela UART)", cc, val, ch);
+        }
+        return;
+    }
+    if(strncmp(line, "midi", 4) == 0)
+    {
+        // A primeira coisa a consultar no dia da solda. A pergunta que
+        // ele responde é em qual etapa o sinal parou: fio, parser,
+        // canal ou mapa.
+        hal::Log("midi: uart %s | perdidos %lu | canal %s",
+                 hal::MidiRxActive() ? "ESCUTANDO" : "PARADA",
+                 (unsigned long)hal::MidiDropped(),
+                 midi.Channel() == cotuca::kMidiOmni ? "omni" : "fixo");
+        if(midi.Channel() != cotuca::kMidiOmni)
+            hal::Log("      canal %d (1-16, como no controlador)",
+                     midi.Channel() + 1);
+        hal::Log("  bytes %lu | cc %lu | outras %lu | orfaos %lu | "
+                 "realtime %lu | canal alheio %lu",
+                 (unsigned long)midi.Bytes(), (unsigned long)midi.CcCount(),
+                 (unsigned long)midi.Other(), (unsigned long)midi.Orphan(),
+                 (unsigned long)midi.RealTime(),
+                 (unsigned long)midi.Filtered());
+        hal::Log("  parser: running status %02X | %d byte(s) pendente(s)%s",
+                 midi.RunningStatus(), midi.PendingData(),
+                 midi.InSysex() ? " | DENTRO DE SYSEX" : "");
+        for(int i = 0; i < manifest.n_midi; i++)
+            hal::Log("  cc %-3d -> %s",
+                     manifest.midi_map[i].cc,
+                     params.Name(manifest.midi_map[i].param_id));
+        const int n = midi.HistoryCount();
+        if(!n)
+        { hal::Log("  ultimos CCs: nenhum ainda"); return; }
+        hal::Log("  ultimos CCs (mais recente primeiro):");
+        for(int i = 0; i < n; i++)
+        {
+            const cotuca::MidiCcEvent& e = midi.History(i);
+            const int id = [&]() {
+                for(int k = 0; k < manifest.n_midi; k++)
+                    if(manifest.midi_map[k].cc == e.cc)
+                        return manifest.midi_map[k].param_id;
+                return -1;
+            }();
+            hal::Log("    cc %-3d val %-3d ch %-2d -> %s",
+                     e.cc, e.value, e.channel + 1,
+                     id >= 0 ? params.Name(id) : "(fora do mapa)");
+        }
+        return;
+    }
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | midi | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -651,6 +805,17 @@ int main(void)
     lim_r.Init(hal::Info().sample_rate);
     shift_l.Init(hal::Info().sample_rate);
 
+    // ---- MIDI ----
+    // Depois do manifest.Init(): o parser recebe o canal do manifest,
+    // e o mapa CC→param só existe depois dos Add(). Mesma regra de
+    // ordem de configuração que vale pros bind[].
+    midi.Init(manifest.midi_channel, OnMidiCc);
+    hal::SetMidiByteCallback(OnMidiByte); // é isto que liga a UART
+    hal::Log("MIDI: canal %s, %d CCs mapeados",
+             manifest.midi_channel == kMidiOmni ? "omni"
+                                                : "fixo (ver `midi`)",
+             manifest.n_midi);
+
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);
     hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION " [%s] — pronto.",
@@ -668,15 +833,40 @@ int main(void)
     bool     led  = false;
     uint32_t tick = 0;
 
+    // Último valor lido de cada knob físico. Ver a DECISÃO DE
+    // PRIORIDADE no topo: o knob só escreve quando MUDOU, senão ele
+    // reescreveria o parâmetro a cada ~1 ms e venceria MIDI e serial
+    // sempre — "última escrita vence" viraria "o knob vence", sem que
+    // ninguém tivesse decidido isso.
+    //
+    // -2 e um valor impossivel (ReadKnob devolve -1 ou 0..1), entao a
+    // primeira leitura real sempre conta como mudanca.
+    float knob_last[kNumKnobs];
+    for(int k = 0; k < kNumKnobs; k++)
+        knob_last[k] = -2.f;
+
     while(1)
     {
-        // knobs físicos, quando existirem, vencem o serial
-        for(int k = 0; k < hal::Info().num_knobs; k++)
+        // Knobs físicos. Pares do MIDI e do serial: quem mexeu por
+        // último vence. Hoje ReadKnob() devolve -1 (sem pot ligado) e
+        // este laço não faz nada — a guarda de mudança existe pro dia
+        // em que os pots chegarem, porque sem ela o MIDI para de
+        // funcionar em silêncio no mesmo dia.
+        for(int k = 0; k < hal::Info().num_knobs && k < kNumKnobs; k++)
         {
-            float v = hal::ReadKnob(k);
-            if(v >= 0.f) manifest.knob[k].Apply(params, v);
+            const float v = hal::ReadKnob(k);
+            if(v < 0.f)
+                continue; // sem hardware
+            if(v == knob_last[k])
+                continue; // não mexeu: não reescreve, não atropela
+            knob_last[k] = v;
+            manifest.knob[k].Apply(params, v);
         }
         hal::PollSerial();
+        // MIDI no mesmo lugar do serial, e pelo mesmo motivo: os bytes
+        // chegam por interrupção e são despachados aqui, em contexto
+        // normal, onde mexer em params e logar é seguro.
+        hal::PollMidi();
 
         // watchdog: o callback só trava a flag; o log é aqui, porque
         // hal::Log bloqueia por milissegundos e não pode rodar no

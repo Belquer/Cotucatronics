@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.6.0
+// hal.h v0.7.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -43,6 +43,17 @@ using AudioCallback = void (*)(const float* const* in,
 // ---- serial (painel falso / debug) ----
 using SerialLineCallback = void (*)(const char* line);
 
+// ---- MIDI ----
+// O HAL entrega BYTES CRUS, um a um. Não parseia: a máquina de
+// estados MIDI é board-agnostic e mora em midi.h, do lado do shell.
+// A placa só sabe puxar bytes de um fio a 31250 baud.
+//
+// Por que byte e não mensagem: parser no HAL significaria reescrever
+// o parser a cada placa nova, e é justamente o tipo de lógica que não
+// muda de hardware pra hardware. O que muda é COMO os bytes chegam —
+// DMA, interrupção, polling —, e isso sim é assunto da placa.
+using MidiByteCallback = void (*)(uint8_t byte);
+
 // ---- contrato que toda placa implementa ----
 bool             Init();                       // clocks, codec, power
 const BoardInfo& Info();
@@ -62,6 +73,39 @@ void             Log(const char* fmt, ...);    // printf via USB/serial
 void             SetSerialLineCallback(SerialLineCallback cb);
 void             PollSerial();                 // chamar no loop principal
 void             DelayMs(uint32_t ms);
+
+// ---- MIDI: liga a porta e registra quem recebe os bytes ----
+//
+// Chamar UMA VEZ, no boot, antes do StartAudio. É esta chamada que
+// liga a UART — placa que nunca a chama não paga periférico nenhum.
+// Placa sem UART: implementa vazio, e PollMidi() nunca entrega nada.
+void             SetMidiByteCallback(MidiByteCallback cb);
+
+// Despacha os bytes acumulados. CHAMAR DO LOOP PRINCIPAL, junto com
+// PollSerial() — e pelo mesmo motivo: o RX chega por interrupção, e
+// rodar o parser (que mexe em params e pode logar) dentro da ISR é a
+// receita do deadlock que matou o `list` na v0.2.0. A ISR só
+// enfileira; quem despacha é o loop.
+void             PollMidi();
+
+// Transmite bytes crus pela MESMA porta. Existe pro teste de
+// loopback (T10): com um jumper de TX pra RX, o firmware manda uma
+// mensagem MIDI e ela volta pelo caminho real — UART, DMA, ISR, fila,
+// parser. É a única validação que prova baud rate e pino.
+void             MidiSendBytes(const uint8_t* bytes, size_t n);
+
+// GANCHO DE BANCADA. Empurra um byte na fila de RX como se tivesse
+// vindo do fio. Prova o parser e o mapeamento sem hardware nenhum —
+// mas NÃO prova a UART, e por isso não substitui o loopback.
+//
+// CUIDADO: escreve no mesmo índice que a ISR do RX. Com MIDI ao vivo
+// entrando, as duas escritas correm. É gancho de bancada com a porta
+// silenciosa, não ferramenta de uso geral.
+void             MidiInjectByte(uint8_t b);
+
+// Diagnóstico da porta, pro comando serial `midi`.
+bool             MidiRxActive();    // a escuta chegou a começar?
+uint32_t         MidiDropped();     // bytes perdidos por fila cheia
 
 // Aloca da RAM "grande" (SDRAM na Daisy). Chame só no boot,
 // nunca no callback de áudio. Retorna nullptr se a placa não

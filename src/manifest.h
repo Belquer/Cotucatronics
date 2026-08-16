@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.16.0
+// manifest.h (instrumento "bancada") v0.17.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -11,6 +11,7 @@
 
 #include "params.h"
 #include "module.h"
+#include "midi.h"
 
 namespace cotuca
 {
@@ -156,6 +157,55 @@ struct Manifest
     ModBind bind[8];
     int     n_bind = 0;
 
+    // ============================================================
+    // ---- MIDI: CC → parâmetro ----
+    //
+    // MIDI É UM KNOB REMOTO, NÃO UM CAMINHO NOVO. O CC entrega um
+    // valor normalizado à ParamTable e para por aí — exatamente onde
+    // o knob físico para. Tudo que vem depois (curva do manifest,
+    // Shaped() pro módulo, Real() pro DSP) acontece igual, porque é
+    // a mesma via. Um `dly_time` movido por CC tem a mesma ergonomia
+    // curvada de quando é movido pelo knob 1.
+    //
+    // Isso não é coincidência de implementação: os knobs deste
+    // manifest são macros de UM alvo com peso 1.0, e `Macro::Apply`
+    // com um alvo de peso 1.0 é literalmente `t.Set(id, v)`. Não há
+    // divergência possível entre as duas vias enquanto for assim.
+    // Se algum knob virar macro composta e o mesmo gesto tiver que
+    // ser alcançável por MIDI, o certo é apontar o CC pra macro —
+    // não duplicar os alvos aqui.
+    //
+    // A tabela é CC → PARÂMETRO e não CC → knob de propósito: o
+    // painel tem 5 knobs e o instrumento tem 15 parâmetros. MIDI
+    // alcança os que não couberam no painel — gov_ceiling é o
+    // exemplo, e é o mais importante deles.
+    // ============================================================
+    int        midi_channel = kMidiOmni; // omni: aceita todos os canais
+    MidiCcBind midi_map[kMaxMidiMap];
+    int        n_midi = 0;
+
+    // Aplica um CC pela via do knob. Devolve o id do parâmetro movido,
+    // ou -1 se o CC não está no mapa.
+    //
+    // Mora aqui, e não no main.cpp, porque o mapa é do manifest —
+    // e porque assim o banco de teste nativo (test_midi.cpp) exercita
+    // ESTA função, não uma cópia dela. Lógica de mapeamento duplicada
+    // entre firmware e teste é teste que valida a si mesmo.
+    int ApplyMidiCc(ParamTable& t, uint8_t cc, uint8_t value) const
+    {
+        for(int i = 0; i < n_midi; i++)
+        {
+            if(midi_map[i].cc != cc)
+                continue;
+            // Set() fala NORMALIZADO — o mesmo ponto de entrada do
+            // knob físico. Curva, Shaped() e Real() vêm depois, iguais
+            // pra qualquer origem.
+            t.Set(midi_map[i].param_id, MidiNorm(value));
+            return midi_map[i].param_id; // primeiro vence; duplicata é erro
+        }
+        return -1;
+    }
+
     Macro knob[kNumKnobs];
 
     void Init(ParamTable& t)
@@ -252,6 +302,24 @@ struct Manifest
         // nomes conferidos contra o description.json do freeze
         bind[n_bind++] = {ModuleSlot::Fx2, p_voc_mix, "voc_mix"};
         bind[n_bind++] = {ModuleSlot::Fx2, p_voc_pitch, "voc_pitch"};
+
+        // ---- MAPA MIDI ----
+        // Aqui embaixo pelo MESMO motivo dos bind[]: um id lido antes
+        // do Add() correspondente vale 0, e 0 é o `level`. Um mapa
+        // montado cedo faria todos os CCs mexerem no volume.
+        //
+        // CCs 20–24: faixa "undefined" da spec MIDI, então não colide
+        // com nada padrão (1 é mod wheel, 7 é volume, 64 é sustain).
+        // Controlador genérico sai de fábrica sem usá-las.
+        midi_map[n_midi++] = {20, p_dly_time};
+        midi_map[n_midi++] = {21, p_dly_mix};
+        midi_map[n_midi++] = {22, p_level};
+        midi_map[n_midi++] = {23, p_src_mix};
+        // gov_ceiling é a "borda de feedback" e não tem knob — os cinco
+        // estão ocupados. Até o encoder físico existir, o CC 24 é o
+        // único jeito de procurar a borda sem largar a escultura pra
+        // digitar no serial. É o mapeamento que mais justifica o MIDI.
+        midi_map[n_midi++] = {24, p_gov_ceiling};
 
         // shift_hz NÃO tem ModBind: o shifter é bloco do shell, lido
         // direto do callback, como gate/governor/limiter. Slot Fx2

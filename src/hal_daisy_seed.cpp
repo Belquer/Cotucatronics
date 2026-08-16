@@ -3,14 +3,14 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.8.0
+// hal_daisy_seed v0.9.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.8.0"
+#define COTUCA_HAL_VERSION "0.9.0"
 
 using namespace daisy;
 
@@ -213,6 +213,149 @@ void PollSerial()
         q_tail = (q_tail + 1) % kQueueLines;
     }
 }
+
+// ============================================================
+// MIDI — USART1 a 31250 baud
+//
+// PINOS: TX = D13 (PB6, pino físico 14), RX = D14 (PB7, pino 15).
+// São os pinos que a própria libDaisy usa por default no
+// MidiUartTransport, então um cabo montado pra qualquer exemplo de
+// MIDI da Electrosmith serve aqui sem alteração.
+//
+// LEMBRE QUE É CRUZADO: o TX do módulo WIDI vai no RX da placa
+// (D14) e o RX do módulo no TX da placa (D13). Guia de solda em
+// BOARDS.md.
+//
+// MODO: DmaListenStart — DMA circular com interrupção de IDLE. É o
+// mesmo mecanismo do MidiUartTransport da libDaisy, e é o único
+// limpo pra MIDI: o fluxo é esporádico e em rajadas curtas, então
+// polling ou desperdiça o loop ou perde byte, e uma interrupção por
+// byte a 31250 baud é ruído de contexto à toa. Com DMA + IDLE a CPU
+// só é incomodada quando uma rajada termina.
+//
+// O buffer do DMA TEM que morar em seção acessível por DMA
+// (.sram1_bss, via DMA_BUFFER_MEM_SECTION). Num buffer comum o DMA
+// escreve na RAM e o núcleo lê o cache: os bytes chegam, e mesmo
+// assim o parser vê zeros.
+// ============================================================
+static UartHandler                midi_uart;
+static uint8_t DMA_BUFFER_MEM_SECTION midi_dma_buf[256];
+static bool                       midi_started = false;
+static MidiByteCallback           midi_cb      = nullptr;
+
+// Fila SPSC de bytes, mesmo padrão da fila de linhas do serial: a
+// ISR do DMA move a cabeça, o loop principal move a cauda.
+//
+// 128 bytes é folga larga — a mensagem MIDI mais longa que nos
+// interessa tem 3 bytes, e o loop principal gira a cada ~1 ms, que a
+// 31250 baud dá tempo pra ~3 bytes chegarem.
+constexpr size_t kMidiRing = 128;
+
+static uint8_t           midi_ring[kMidiRing];
+static volatile uint32_t m_head       = 0;
+static volatile uint32_t m_tail       = 0;
+static volatile uint32_t midi_dropped = 0;
+
+// Roda em ISR. Só enfileira — sem Log(), sem parser, sem params.
+static void MidiRxCallback(uint8_t*            data,
+                           size_t              size,
+                           void*               /*context*/,
+                           UartHandler::Result res)
+{
+    if(res != UartHandler::Result::OK)
+        return;
+    for(size_t i = 0; i < size; i++)
+    {
+        const uint32_t next = (m_head + 1) % kMidiRing;
+        if(next == m_tail)
+        {
+            // fila cheia: descarta e CONTA. Perder byte calado num
+            // protocolo com running status vira parâmetro errado sem
+            // explicação — o contador é o que separa "não chegou" de
+            // "chegou e eu deixei cair".
+            midi_dropped++;
+            return;
+        }
+        midi_ring[m_head] = data[i];
+        m_head            = next;
+    }
+}
+
+void SetMidiByteCallback(MidiByteCallback cb)
+{
+    midi_cb = cb;
+    if(midi_started)
+        return; // registrar de novo não reinicializa a porta
+
+    UartHandler::Config c;
+    c.periph          = UartHandler::Config::Peripheral::USART_1;
+    c.mode            = UartHandler::Config::Mode::TX_RX; // TX é pro loopback
+    c.baudrate        = 31250;                            // o baud do MIDI
+    c.stopbits        = UartHandler::Config::StopBits::BITS_1;
+    c.parity          = UartHandler::Config::Parity::NONE;
+    c.wordlength      = UartHandler::Config::WordLength::BITS_8;
+    c.pin_config.tx   = seed::D13; // PB6 — vai no RX do módulo
+    c.pin_config.rx   = seed::D14; // PB7 — recebe o TX do módulo
+
+    if(midi_uart.Init(c) != UartHandler::Result::OK)
+    {
+        Log("ERRO: UART MIDI nao inicializou (USART1 D13/D14)");
+        return;
+    }
+    memset(midi_dma_buf, 0, sizeof(midi_dma_buf));
+    if(midi_uart.DmaListenStart(
+           midi_dma_buf, sizeof(midi_dma_buf), MidiRxCallback, nullptr)
+       != UartHandler::Result::OK)
+    {
+        Log("ERRO: UART MIDI nao entrou em escuta DMA");
+        return;
+    }
+    midi_started = true;
+    Log("MIDI: USART1 31250 8N1 | TX=D13(pino14) RX=D14(pino15)");
+}
+
+void PollMidi()
+{
+    // Despacha em contexto normal, onde o parser pode mexer em params
+    // e o Log() pode transmitir. Mesmo contrato do PollSerial().
+    while(m_tail != m_head)
+    {
+        const uint8_t b = midi_ring[m_tail];
+        m_tail          = (m_tail + 1) % kMidiRing;
+        if(midi_cb)
+            midi_cb(b);
+    }
+}
+
+void MidiSendBytes(const uint8_t* bytes, size_t n)
+{
+    if(!midi_started || !bytes || n == 0)
+        return;
+    // BlockingTransmit quer ponteiro não-const; copia pra um buffer
+    // local em vez de fazer cast, que é mentira barata.
+    uint8_t tmp[16];
+    if(n > sizeof(tmp))
+        n = sizeof(tmp);
+    memcpy(tmp, bytes, n);
+    midi_uart.BlockingTransmit(tmp, n, 10);
+}
+
+void MidiInjectByte(uint8_t b)
+{
+    // Ver o aviso de corrida em hal.h: isto escreve no mesmo m_head
+    // que a ISR. Gancho de bancada, com a porta silenciosa.
+    const uint32_t next = (m_head + 1) % kMidiRing;
+    if(next == m_tail)
+    {
+        midi_dropped++;
+        return;
+    }
+    midi_ring[m_head] = b;
+    m_head            = next;
+}
+
+bool     MidiRxActive() { return midi_started && midi_uart.IsListening(); }
+uint32_t MidiDropped() { return midi_dropped; }
 
 void DelayMs(uint32_t ms) { System::Delay(ms); }
 

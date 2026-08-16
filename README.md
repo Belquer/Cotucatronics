@@ -5,11 +5,15 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.9.0** — módulo RNBO embarcado e
-**stack anti-feedback completo em software** — gate, governor, limiter e
-shifter SSB, os quatro em C++ do shell.
+Projeto colaborativo. Estado atual: **v0.16.0** — módulo RNBO embarcado,
+**stack anti-feedback completo em software** (gate, governor, limiter e
+shifter SSB, os quatro em C++ do shell) e **entrada MIDI** por CC.
 **T1, T2, T3, T5, T6, T7 e T8 do [TESTES.md](src/TESTES.md) passaram em bancada**;
 T4 espera hardware. Tudo rodando a **10,7% de CPU**.
+
+> **O MIDI ainda não foi validado em placa.** O parser e o mapa passam no
+> banco nativo (T10a, 16 verificações), mas a UART — baud rate, pino, DMA —
+> só o loopback com jumper prova. **T10b está pendente.**
 
 > ### Estado versionado — INSTRUMENTO
 >
@@ -44,21 +48,23 @@ Cinco regras que não se negociam:
 
 | Arquivo | Versão | O que é |
 |---|---|---|
-| [src/hal.h](src/hal.h) | **v0.3.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.4.0** | Único arquivo que pode incluir `daisy_seed.h` |
-| [src/module.h](src/module.h) | **v0.3.0** | Interface, **slots fixos** e registro de módulos |
+| [src/hal.h](src/hal.h) | **v0.7.0** | O contrato. A fronteira de independência de fornecedor |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.9.0** | Único arquivo que pode incluir `daisy_seed.h` |
+| [src/module.h](src/module.h) | **v0.4.0** | Interface, **slots fixos** e registro de módulos |
 | [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
+| [src/midi.h](src/midi.h) | **v0.1.0** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
-| [src/test.command](src/test.command) | **v0.1.0** | Wrapper duplo-clicável do banco de teste |
+| [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
+| [src/test.command](src/test.command) | **v0.2.0** | Wrapper duplo-clicável dos dois bancos de teste |
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.2.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
 | [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.2.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
-| [src/main.cpp](src/main.cpp) | **v0.9.0** | Loop, callback de áudio, painel falso via serial |
+| [src/main.cpp](src/main.cpp) | **v0.16.0** | Loop, callback de áudio, painel falso via serial |
 | [src/params.h](src/params.h) | **v0.5.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.10.0** | Instrumento "bancada": entrada + tom atravessando o delay |
+| [src/manifest.h](src/manifest.h) | **v0.17.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
-| [src/modules/README.md](src/modules/README.md) | **v0.3.0** | **Manual de embarque de módulos RNBO — o template** |
-| [src/TESTES.md](src/TESTES.md) | **v0.10.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
-| [src/BOARDS.md](src/BOARDS.md) | **v0.2.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
+| [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
+| [src/TESTES.md](src/TESTES.md) | **v0.11.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
+| [src/BOARDS.md](src/BOARDS.md) | **v0.5.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
 | [src/cotuca_measure.py](src/cotuca_measure.py) | **v0.1.0** | Mede a frequência de saída por FFT |
@@ -130,8 +136,9 @@ cd src && ./cotuca_serial.py --send board list "k1 0.5" --gap 1.3
 
 Ou duplo-clique em `src/monitor.command`.
 
-Comandos do firmware: `board` · `list` · `mods` · `cpu` · `k1..k5 <0-1>` ·
-`set <nome> <0-1>` · `tone on` · `tone off`
+Comandos do firmware: `board` · `list` · `mods` · `cpu` · `dyn` · `probe` ·
+`midi` · `miditest` · `midiloop` · `k1..k5 <0-1>` · `set <nome> <real>` ·
+`tone on` · `tone off`
 
 `set` alcança **qualquer** parâmetro pelo nome, **em unidade real** — Hz, ms, ×
 — e recusa valor fora da faixa citando os limites. Com os knobs 1–3 no delay e
@@ -170,6 +177,54 @@ linha de delay lê e escreve toda amostra independente do ajuste.
 `mods` mostra o módulo DSP carregado, os parâmetros que ele expôs (descobertos
 **por nome**, não por índice), as ligações do manifest e o extrato de memória do
 alocador do RNBO.
+
+### MIDI
+
+Porta MIDI na **USART1 a 31250 baud** — TX em `D13` (pino 14), RX em `D14`
+(pino 15). Guia de solda do WIDI, **com o aviso do cruzamento TX↔RX**, em
+[BOARDS.md](src/BOARDS.md).
+
+O mapa CC→parâmetro mora no manifest e começa assim:
+
+| CC | Parâmetro | Por quê |
+|---|---|---|
+| 20 | `dly_time` | também no knob 1 |
+| 21 | `dly_mix` | também no knob 2 |
+| 22 | `level` | também no knob 3 |
+| 23 | `src_mix` | também nos knobs 4/5 |
+| 24 | `gov_ceiling` | **sem knob** — a borda de feedback só é alcançável por MIDI ou serial |
+
+Canal configurável no manifest, **omni por default**. CCs 20–24 são a faixa
+"undefined" da spec, então não colidem com mod wheel, volume ou sustain.
+
+> **MIDI é um knob remoto, não um caminho novo.** O CC entrega um valor
+> normalizado à `ParamTable` e para aí — exatamente onde o knob físico para.
+> Curva do manifest, `Shaped()` e `Real()` acontecem depois, iguais pra
+> qualquer origem. O banco nativo verifica isso: o mesmo gesto por CC e por
+> knob dá bit a bit o mesmo valor.
+
+**Prioridade entre fontes: última escrita vence.** Serial, MIDI e o futuro knob
+físico são pares, sem hierarquia — o raciocínio inteiro está no topo do
+[main.cpp](src/main.cpp).
+
+`midi` mostra o estado da porta, os contadores do parser, o mapa e os últimos
+CCs recebidos. É a primeira coisa a consultar no dia da solda: ele diz **em qual
+etapa o sinal parou** — fio, parser, canal ou mapa.
+
+`miditest <cc> <val>` injeta bytes na fila de RX sem passar pela UART (prova o
+parser e o mapa); `midiloop <cc> <val>` manda pelo fio e precisa de um jumper
+`D13→D14` pra voltar — é o único que prova baud rate e pino. Roteiro em
+[T10](src/TESTES.md).
+
+### Bancos de teste nativos
+
+```bash
+cd src && ./test.command
+```
+
+`dynamics.h` e `midi.h` são C++ puro e board-agnostic, então a matemática dos
+blocos e a máquina de estados MIDI rodam no Mac — sem placa, sem flash. **Não
+substituem teste em placa**: nenhum deles toca hardware, e nenhum prova a UART.
 
 `k5` é o **SRC MIX**: crossfade linear entre `IN_L` (piezo, `0.0`) e `IN_R`
 (jack de linha, `1.0`), aplicado antes de qualquer processamento. Enquanto o

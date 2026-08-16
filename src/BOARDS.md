@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.4.0**
+**Documento v0.5.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -52,6 +52,79 @@ dentro. **Nada disso vaza pro nosso código.**
 > Teensy 4.1 tem 8 MB de flash direto, sem bootloader intermediário.
 >
 > Fluxo de gravação completo em [TESTES.md](TESTES.md).
+
+---
+
+## MIDI — guia de solda do WIDI
+
+**A porta MIDI da Daisy é a USART1 a 31250 baud, 8N1.** Ligada no boot
+por `hal::SetMidiByteCallback()`; placa que nunca chama não paga
+periférico nenhum.
+
+### Pinos
+
+| Sinal | libDaisy | STM32 | Pino físico | Vai em quê no módulo |
+|---|---|---|---|---|
+| **TX** (a placa fala) | `seed::D13` | `PB6` | **14** | **RX** do WIDI |
+| **RX** (a placa ouve) | `seed::D14` | `PB7` | **15** | **TX** do WIDI |
+| 3V3 | — | — | ver serigrafia | VCC do WIDI |
+| GND | — | — | qualquer DGND | GND do WIDI |
+
+> ### ⚠️ É CRUZADO. Este é o erro que custa uma tarde.
+>
+> **TX do módulo → RX da placa (D14).** **RX do módulo → TX da placa
+> (D13).** Ligar reto — TX no TX — não queima nada e não dá erro
+> nenhum: simplesmente não chega byte. O sintoma é `bytes 0` no
+> comando `midi`, idêntico ao de um módulo sem alimentação.
+>
+> **Se o `midi` mostrar `bytes 0`, desconfie do cruzamento antes de
+> qualquer outra coisa.**
+
+**Sobre os números de pino físico.** D13/D14 vêm direto do
+`daisy_seed.h` da libDaisy (`PORTB,6` e `PORTB,7`) — esses são certos.
+Os números 14 e 15 seguem da numeração do SOM, em que os pinos 1–15 são
+D0–D14 (é o que faz o pino 18 ser AUDIO OUT L e o 20 ser AGND, como o
+[TESTES.md](TESTES.md) já usava). **Confira contra o diagrama oficial
+da Electrosmith antes de encostar o ferro** — errar o pino de
+alimentação custa a placa, e D-número é a referência que não depende
+dessa contagem.
+
+Os pinos de **3V3 e GND não estão listados por número de propósito**:
+o SOM tem mais de um GND, e chutar o pino de alimentação é a única
+coisa aqui que estraga hardware. Localize na serigrafia.
+
+**São os pinos default do `MidiUartTransport` da libDaisy.** Um cabo
+montado pra qualquer exemplo de MIDI da Electrosmith serve aqui sem
+alteração — foi por isso que foram escolhidos, e não por preferência.
+
+### Por que DMA em modo listen, e não polling nem uma IRQ por byte
+
+O fluxo MIDI é esporádico e em rajadas curtas. Polling ou desperdiça o
+loop principal ou perde byte; uma interrupção por byte a 31250 baud é
+troca de contexto à toa. `DmaListenStart` — DMA circular com interrupção
+de IDLE — só incomoda a CPU quando uma rajada termina. É o mesmo
+mecanismo que a própria libDaisy usa no `MidiUartTransport`.
+
+> **O buffer do DMA tem que morar em seção acessível por DMA**
+> (`DMA_BUFFER_MEM_SECTION`, que é `.sram1_bss`). Num buffer comum o
+> DMA escreve na RAM e o núcleo lê o cache: os bytes chegam e o parser
+> vê zeros. No mapa de memória ele aparece em `RAM_D2_DMA` — 256 bytes.
+
+### O que é da placa e o que não é
+
+O HAL entrega **bytes crus**, um a um. Não parseia. A máquina de estados
+MIDI é board-agnostic e mora em [midi.h](midi.h), do lado do shell.
+
+Isso não é purismo: "como os bytes chegam" muda de placa pra placa
+(DMA, interrupção, polling), mas "o que eles significam" não muda nunca.
+Um parser dentro do HAL teria que ser reescrito no Teensy — e reescrito
+igual.
+
+**O RX chega por interrupção e é despachado no loop principal**, via
+`hal::PollMidi()`, exatamente como as linhas do serial. Mesma regra,
+mesmo motivo: rodar o parser na ISR significa mexer em `params` e
+possivelmente logar de dentro dela, que é o deadlock que matou o `list`
+na v0.2.0.
 
 ---
 

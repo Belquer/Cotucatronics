@@ -1,12 +1,19 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.10.0** · última execução em placa: 2026-08-15 · firmware
-**v0.9.0 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
-hardware, e o T7e (gate com piezo) espera junto.
+**Documento v0.11.0** · última execução em placa: 2026-08-15 · firmware
+**v0.16.0 / HAL v0.9.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
+hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
+T10b espera um jumper.**
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
 antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware;
-T5 é o critério de aceite do primeiro módulo RNBO.
+T5 é o critério de aceite do primeiro módulo RNBO; T10 é o do MIDI.
+
+> **Os bancos nativos rodam sem placa e sem flash:** `./test.command`
+> valida `dynamics.h` e `midi.h` no Mac em um segundo. Eles não
+> substituem teste em placa — nenhum deles toca hardware — mas evitam
+> gastar um ciclo de gravação pra descobrir erro de aritmética ou de
+> máquina de estados.
 
 ---
 
@@ -503,6 +510,128 @@ mutar um não toca no outro.
 > **Se tivesse gravado sem medir, o anti-feedback ficaria com metade da
 > supressão e ninguém descobriria até uma escultura apitar no palco.** É o
 > argumento mais forte que este projeto tem a favor de medir antes de gravar.
+
+---
+
+## T10 — MIDI: parser, mapa e loopback de UART · ⚙️ NATIVO PASSOU · ⏳ PLACA PENDENTE
+
+**A validação está partida em dois de propósito, porque as duas metades
+provam coisas diferentes e só uma delas roda sem hardware.**
+
+| | O que prova | O que **não** prova |
+|---|---|---|
+| **T10a** — banco nativo | parser, mapa do manifest, normalização, curva | nada da UART |
+| **T10b** — loopback com jumper | UART, baud rate, pino, DMA, fila, ISR | — |
+
+Um parser perfeito alimentado por uma UART configurada a 9600 baud não
+recebe byte nenhum, e o T10a passaria do mesmo jeito. Por isso o T10a
+**não** é o teste de aceite — é o que permite chegar na bancada com o
+parser já sabidamente correto.
+
+### T10a — banco nativo · ✅ PASSOU
+
+```bash
+cd src && ./test.command      # ou: clang++ -std=c++14 -O2 -I. test_midi.cpp -o /tmp/t && /tmp/t
+```
+
+`midi.h` e `manifest.h` são C++ puro e board-agnostic, então a máquina
+de estados **e a via completa CC→ParamTable** rodam no Mac.
+
+**Resultado: 16 verificações, 0 falhas.** As que importam:
+
+```
+OK   status omitido: 3 CCs de um B0 so                     n=3 ultimo val=127
+OK   clock entre os data bytes nao quebra o CC             n=1 val=64 realtime=1
+OK   nota/bend/pgm/pressure engolidos, CC seguinte intacto n=1 cc=21 val=32 outras=4
+OK   corpo de sysex nao vira CC, e o CC seguinte funciona  n=2 cc=22 val=99
+OK   dados sem status sao descartados e contados           n=1 orfaos=3 val=70
+OK   CC 20 val 64 -> dly_time norm 0.50                    norm=0.5039 real=0.1803 (curve 2.5)
+OK   CC 24 val 127 -> gov_ceiling em 1.00 (param sem knob) norm=1.0000
+OK   CC e knob no mesmo param dao o MESMO valor            midi=1.0000 knob=1.0000
+```
+
+A penúltima é a que fecha o critério de aceite do enunciado. A última é
+a que prova que **MIDI é um knob remoto e não um caminho novo**: o mesmo
+gesto pelas duas vias dá bit a bit o mesmo valor.
+
+> **`real=0.1803` não é erro.** `dly_time` tem curva 2.5, então
+> `real = 0.5039^2.5 = 0.18`. O `list` mostra as duas colunas; o
+> critério é o `norm`. A curva do manifest vale pro MIDI **exatamente
+> como vale pro knob** — é o ponto, não um efeito colateral.
+
+### T10b — loopback de UART · ⏳ PENDENTE
+
+**Precisa de um jumper entre o pino 14 (D13/TX) e o pino 15 (D14/RX).**
+Um fio, sem solda. É a única forma de provar baud rate e pino sem o
+WIDI em mãos.
+
+```bash
+cd src && ./cotuca_serial.py --send midi "midiloop 20 64" midi list --gap 1.5
+```
+
+**Esperado:**
+
+1. No **boot**: `MIDI: USART1 31250 8N1 | TX=D13(pino14) RX=D14(pino15)`
+   e `MIDI: canal omni, 5 CCs mapeados`.
+2. `midi` antes: `uart ESCUTANDO | perdidos 0`, `bytes 0`, `cc 0`.
+3. `midiloop 20 64` manda `B0 14 40` pelo TX.
+4. `midi` depois: **`bytes 3 | cc 1`**, e no histórico
+   `cc 20 val 64 ch 1 -> dly_time`.
+5. `list`: **`dly_time norm=0.50`**.
+
+**Falhou, e o que cada falha quer dizer:**
+
+| Sintoma | Onde está o problema |
+|---|---|
+| `uart PARADA` no boot | a UART nem inicializou — conflito de periférico |
+| `bytes 0` depois do `midiloop` | o jumper: fio solto, ou pino errado |
+| `bytes 3` mas `cc 0` | parser — mas o T10a já cobre isso, então desconfie do jumper primeiro |
+| `cc 1` mas `dly_time` parado | o mapa do manifest, ou id resolvido antes do `Add()` |
+| `perdidos > 0` | fila de 128 estourou — não deve acontecer com 3 bytes |
+
+### `miditest` — o atalho, e o que ele custa
+
+```
+miditest 20 64
+```
+
+Injeta os mesmos três bytes **na fila de RX**, sem passar pela UART.
+Serve pra separar "o fio não chegou" de "chegou e o firmware ignorou"
+sem desmontar nada.
+
+> **`miditest` NÃO substitui o `midiloop`.** Ele entra depois do fio:
+> um baud rate errado, um pino trocado ou um DMA mal configurado
+> passariam por ele sem reclamar. O próprio comando avisa isso na
+> resposta (`NAO passa pela UART`).
+>
+> E ele escreve no mesmo índice de fila que a ISR do RX. Com MIDI ao
+> vivo entrando, as duas escritas correm. **É gancho de bancada com a
+> porta silenciosa.**
+
+### No dia da solda do WIDI
+
+`midi` é a primeira coisa a consultar. Ele responde **em qual etapa o
+sinal parou**:
+
+```
+midi: uart ESCUTANDO | perdidos 0 | canal omni
+  bytes 42 | cc 3 | outras 12 | orfaos 0 | realtime 24 | canal alheio 0
+  parser: running status B0 | 0 byte(s) pendente(s)
+  cc 20  -> dly_time
+  ...
+  ultimos CCs (mais recente primeiro):
+    cc 20  val 64  ch 1  -> dly_time
+```
+
+- `bytes 0` → **cheque o cruzamento TX↔RX antes de qualquer coisa**
+  (ver [BOARDS.md](BOARDS.md)). Ligar reto não queima nada e não dá erro
+  nenhum: só não chega byte, igualzinho a módulo sem alimentação.
+- `bytes > 0` mas `cc 0` → está chegando lixo, ou só real-time. Se
+  `realtime` sobe e mais nada, o controlador manda clock e não CC.
+- `cc > 0` mas `(fora do mapa)` no histórico → o controlador manda CC,
+  só que outro número. Ajuste o `midi_map[]` no manifest.
+- `canal alheio > 0` → chegou no canal errado. O default é omni, então
+  isto só aparece se alguém fixou `midi_channel`.
 
 ---
 
