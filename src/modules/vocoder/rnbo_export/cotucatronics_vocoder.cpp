@@ -125,57 +125,58 @@ void process(
     SampleValue * out2 = (numOutputs >= 2 && outputs[1] ? outputs[1] : this->dummyBuffer);
     const SampleValue * in1 = (numInputs >= 1 && inputs[0] ? inputs[0] : this->zeroBuffer);
     const SampleValue * in2 = (numInputs >= 2 && inputs[1] ? inputs[1] : this->zeroBuffer);
-    this->signaladder_01_perform(in1, in1, this->signals[1], n);
-    this->dspexpr_09_perform(this->signals[1], this->dspexpr_09_in2, this->signals[0], n);
 
     this->fftstream_tilde_01_perform(
         in1,
         this->fftstream_tilde_01_imagIn,
+        this->signals[0],
+        this->signals[1],
         this->signals[2],
-        this->signals[3],
-        this->signals[4],
         n
     );
 
-    this->dspexpr_03_perform(this->signals[2], this->signals[2], this->signals[5], n);
-    this->dspexpr_04_perform(this->signals[3], this->signals[3], this->signals[2], n);
-    this->signaladder_02_perform(this->signals[2], this->signals[5], this->signals[5], n);
-    this->dspexpr_02_perform(this->signals[5], this->signals[3], n);
+    this->dspexpr_03_perform(this->signals[0], this->signals[0], this->signals[3], n);
+    this->dspexpr_04_perform(this->signals[1], this->signals[1], this->signals[0], n);
+    this->signaladder_01_perform(this->signals[0], this->signals[3], this->signals[3], n);
+    this->dspexpr_02_perform(this->signals[3], this->signals[1], n);
 
     this->poke_tilde_01_perform(
-        this->signals[4],
+        this->signals[2],
         this->poke_tilde_01_channel,
         this->poke_tilde_01_overdub,
-        this->signals[3],
+        this->signals[1],
         n
     );
+
+    this->signaladder_02_perform(in1, in1, this->signals[0], n);
+    this->dspexpr_09_perform(this->signals[0], this->dspexpr_09_in2, this->signals[1], n);
 
     this->fftstream_tilde_04_perform(
         in1,
         this->fftstream_tilde_04_imagIn,
-        this->signals[3],
-        this->signals[2],
+        this->signals[4],
+        this->signals[5],
         this->signals[6],
         n
     );
 
-    this->dspexpr_14_perform(this->signals[3], this->signals[3], this->signals[7], n);
-    this->dspexpr_15_perform(this->signals[2], this->signals[2], this->signals[3], n);
-    this->signaladder_03_perform(this->signals[7], this->signals[3], this->signals[3], n);
-    this->dspexpr_13_perform(this->signals[3], this->signals[2], n);
+    this->dspexpr_14_perform(this->signals[4], this->signals[4], this->signals[7], n);
+    this->dspexpr_15_perform(this->signals[5], this->signals[5], this->signals[4], n);
+    this->signaladder_03_perform(this->signals[7], this->signals[4], this->signals[4], n);
+    this->dspexpr_13_perform(this->signals[4], this->signals[5], n);
 
     this->poke_tilde_02_perform(
         this->signals[6],
         this->poke_tilde_02_channel,
         this->poke_tilde_02_overdub,
-        this->signals[2],
+        this->signals[5],
         n
     );
 
     this->fftstream_tilde_02_perform(
         in2,
         this->fftstream_tilde_02_imagIn,
-        this->signals[2],
+        this->signals[5],
         this->signals[7],
         this->dummyBuffer,
         n
@@ -213,7 +214,7 @@ void process(
         n
     );
 
-    this->dspexpr_08_perform(this->signals[4], this->signals[10], this->signals[11], n);
+    this->dspexpr_08_perform(this->signals[2], this->signals[10], this->signals[11], n);
 
     this->peek_tilde_01_perform(
         this->signals[11],
@@ -224,22 +225,22 @@ void process(
     );
 
     this->dspexpr_05_perform(this->signals[10], this->signals[7], this->signals[11], n);
-    this->dspexpr_01_perform(this->signals[10], this->signals[2], this->signals[7], n);
+    this->dspexpr_01_perform(this->signals[10], this->signals[5], this->signals[7], n);
 
     this->ifftstream_tilde_01_perform(
         this->signals[7],
         this->signals[11],
-        this->signals[2],
+        this->signals[5],
         this->dummyBuffer,
         this->dummyBuffer,
         n
     );
 
-    this->signaladder_04_perform(this->signals[8], this->signals[2], this->signals[2], n);
-    this->dspexpr_07_perform(this->signals[2], this->dspexpr_07_in2, this->signals[11], n);
-    this->dspexpr_06_perform(this->signals[11], this->signals[0], this->signals[8], n);
-    this->signalforwarder_01_perform(this->signals[8], out1, n);
-    this->signalforwarder_02_perform(this->signals[8], out2, n);
+    this->signaladder_04_perform(this->signals[5], this->signals[8], this->signals[8], n);
+    this->dspexpr_07_perform(this->signals[8], this->dspexpr_07_in2, this->signals[11], n);
+    this->dspexpr_06_perform(this->signals[11], this->signals[1], this->signals[5], n);
+    this->signalforwarder_01_perform(this->signals[5], out1, n);
+    this->signalforwarder_02_perform(this->signals[5], out2, n);
     this->stackprotect_perform(n);
     this->globaltransport_advance();
     this->advanceTime((ENGINE*)nullptr);
@@ -1087,11 +1088,11 @@ void zeroDataRef(DataRef& ref) {
 }
 
 void allocateDataRefs() {
-    this->data_02_buffer->requestSize(2048, 1);
+    this->data_02_buffer->requestSize(1024, 1);
     this->data_02_buffer->setSampleRate(this->sr);
-    this->data_01_buffer->requestSize(2048, 1);
+    this->data_01_buffer->requestSize(1024, 1);
     this->data_01_buffer->setSampleRate(this->sr);
-    this->data_03_buffer->requestSize(2048, 1);
+    this->data_03_buffer->requestSize(1024, 1);
     this->data_03_buffer->setSampleRate(this->sr);
     this->poke_tilde_01_buffer = this->poke_tilde_01_buffer->allocateIfNeeded();
     this->peek_tilde_01_buffer = this->peek_tilde_01_buffer->allocateIfNeeded();
@@ -1256,27 +1257,6 @@ template<typename LISTTYPE> void scale_01_input_set(const LISTTYPE& v) {
     this->scale_01_out_set(tmp);
 }
 
-void signaladder_01_perform(
-    const SampleValue * in1,
-    const SampleValue * in2,
-    SampleValue * out,
-    Index n
-) {
-    Index i;
-
-    for (i = 0; i < (Index)n; i++) {
-        out[(Index)i] = in1[(Index)i] + in2[(Index)i];
-    }
-}
-
-void dspexpr_09_perform(const Sample * in1, number in2, SampleValue * out1, Index n) {
-    Index i;
-
-    for (i = 0; i < (Index)n; i++) {
-        out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
-    }
-}
-
 void fftstream_tilde_01_perform(
     const Sample * realIn,
     number imagIn,
@@ -1288,7 +1268,7 @@ void fftstream_tilde_01_perform(
     RNBO_UNUSED(imagIn);
     auto __fftstream_tilde_01_win_buf = this->fftstream_tilde_01_win_buf;
     auto __fftstream_tilde_01_datapos = this->fftstream_tilde_01_datapos;
-    number invFftSize = (number)1 / (number)2048;
+    number invFftSize = (number)1 / (number)1024;
     Index i0;
 
     for (i0 = 0; i0 < (Index)n; i0++) {
@@ -1297,21 +1277,21 @@ void fftstream_tilde_01_perform(
         number windowFactor = 1;
         windowFactor = __fftstream_tilde_01_win_buf->getSample(0, i);
 
-        if (__fftstream_tilde_01_datapos < 2048) {
+        if (__fftstream_tilde_01_datapos < 1024) {
             this->fftstream_tilde_01_inWorkspace[(Index)(2 * i)] = windowFactor * realIn[(Index)i0];
             out[0] = this->fftstream_tilde_01_outWorkspace[(Index)(2 * i)];
             this->fftstream_tilde_01_inWorkspace[(Index)(2 * i + 1)] = windowFactor * 0;
             out[1] = this->fftstream_tilde_01_outWorkspace[(Index)(2 * i + 1)];
 
-            if (i == 2048 - 1) {
-                this->fftstream_tilde_01_fft_next(this->fftstream_tilde_01_inWorkspace, 2048);
+            if (i == 1024 - 1) {
+                this->fftstream_tilde_01_fft_next(this->fftstream_tilde_01_inWorkspace, 1024);
 
-                for (SampleIndex j = 0; j < 2048 * 2; j++) {
+                for (SampleIndex j = 0; j < 1024 * 2; j++) {
                     this->fftstream_tilde_01_outWorkspace[(Index)j] = this->fftstream_tilde_01_inWorkspace[(Index)j];
                 }
             }
 
-            __fftstream_tilde_01_datapos = (__fftstream_tilde_01_datapos + 1) % 2048;
+            __fftstream_tilde_01_datapos = (__fftstream_tilde_01_datapos + 1) % 1024;
         }
 
         out1[(Index)i0] = out[0];
@@ -1338,7 +1318,7 @@ void dspexpr_04_perform(const Sample * in1, const Sample * in2, SampleValue * ou
     }
 }
 
-void signaladder_02_perform(
+void signaladder_01_perform(
     const SampleValue * in1,
     const SampleValue * in2,
     SampleValue * out,
@@ -1375,6 +1355,27 @@ void poke_tilde_01_perform(
     }
 }
 
+void signaladder_02_perform(
+    const SampleValue * in1,
+    const SampleValue * in2,
+    SampleValue * out,
+    Index n
+) {
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out[(Index)i] = in1[(Index)i] + in2[(Index)i];
+    }
+}
+
+void dspexpr_09_perform(const Sample * in1, number in2, SampleValue * out1, Index n) {
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
+    }
+}
+
 void fftstream_tilde_04_perform(
     const Sample * realIn,
     number imagIn,
@@ -1386,7 +1387,7 @@ void fftstream_tilde_04_perform(
     RNBO_UNUSED(imagIn);
     auto __fftstream_tilde_04_win_buf = this->fftstream_tilde_04_win_buf;
     auto __fftstream_tilde_04_datapos = this->fftstream_tilde_04_datapos;
-    number invFftSize = (number)1 / (number)2048;
+    number invFftSize = (number)1 / (number)1024;
     Index i0;
 
     for (i0 = 0; i0 < (Index)n; i0++) {
@@ -1395,21 +1396,21 @@ void fftstream_tilde_04_perform(
         number windowFactor = 1;
         windowFactor = __fftstream_tilde_04_win_buf->getSample(0, i);
 
-        if (__fftstream_tilde_04_datapos < 2048) {
+        if (__fftstream_tilde_04_datapos < 1024) {
             this->fftstream_tilde_04_inWorkspace[(Index)(2 * i)] = windowFactor * realIn[(Index)i0];
             out[0] = this->fftstream_tilde_04_outWorkspace[(Index)(2 * i)];
             this->fftstream_tilde_04_inWorkspace[(Index)(2 * i + 1)] = windowFactor * 0;
             out[1] = this->fftstream_tilde_04_outWorkspace[(Index)(2 * i + 1)];
 
-            if (i == 2048 - 1) {
-                this->fftstream_tilde_04_fft_next(this->fftstream_tilde_04_inWorkspace, 2048);
+            if (i == 1024 - 1) {
+                this->fftstream_tilde_04_fft_next(this->fftstream_tilde_04_inWorkspace, 1024);
 
-                for (SampleIndex j = 0; j < 2048 * 2; j++) {
+                for (SampleIndex j = 0; j < 1024 * 2; j++) {
                     this->fftstream_tilde_04_outWorkspace[(Index)j] = this->fftstream_tilde_04_inWorkspace[(Index)j];
                 }
             }
 
-            __fftstream_tilde_04_datapos = (__fftstream_tilde_04_datapos + 1) % 2048;
+            __fftstream_tilde_04_datapos = (__fftstream_tilde_04_datapos + 1) % 1024;
         }
 
         out1[(Index)i0] = out[0];
@@ -1484,7 +1485,7 @@ void fftstream_tilde_02_perform(
     RNBO_UNUSED(imagIn);
     auto __fftstream_tilde_02_win_buf = this->fftstream_tilde_02_win_buf;
     auto __fftstream_tilde_02_datapos = this->fftstream_tilde_02_datapos;
-    number invFftSize = (number)1 / (number)2048;
+    number invFftSize = (number)1 / (number)1024;
     Index i0;
 
     for (i0 = 0; i0 < (Index)n; i0++) {
@@ -1493,21 +1494,21 @@ void fftstream_tilde_02_perform(
         number windowFactor = 1;
         windowFactor = __fftstream_tilde_02_win_buf->getSample(0, i);
 
-        if (__fftstream_tilde_02_datapos < 2048) {
+        if (__fftstream_tilde_02_datapos < 1024) {
             this->fftstream_tilde_02_inWorkspace[(Index)(2 * i)] = windowFactor * realIn[(Index)i0];
             out[0] = this->fftstream_tilde_02_outWorkspace[(Index)(2 * i)];
             this->fftstream_tilde_02_inWorkspace[(Index)(2 * i + 1)] = windowFactor * 0;
             out[1] = this->fftstream_tilde_02_outWorkspace[(Index)(2 * i + 1)];
 
-            if (i == 2048 - 1) {
-                this->fftstream_tilde_02_fft_next(this->fftstream_tilde_02_inWorkspace, 2048);
+            if (i == 1024 - 1) {
+                this->fftstream_tilde_02_fft_next(this->fftstream_tilde_02_inWorkspace, 1024);
 
-                for (SampleIndex j = 0; j < 2048 * 2; j++) {
+                for (SampleIndex j = 0; j < 1024 * 2; j++) {
                     this->fftstream_tilde_02_outWorkspace[(Index)j] = this->fftstream_tilde_02_inWorkspace[(Index)j];
                 }
             }
 
-            __fftstream_tilde_02_datapos = (__fftstream_tilde_02_datapos + 1) % 2048;
+            __fftstream_tilde_02_datapos = (__fftstream_tilde_02_datapos + 1) % 1024;
         }
 
         out1[(Index)i0] = out[0];
@@ -1529,7 +1530,7 @@ void fftstream_tilde_03_perform(
     RNBO_UNUSED(imagIn);
     auto __fftstream_tilde_03_win_buf = this->fftstream_tilde_03_win_buf;
     auto __fftstream_tilde_03_datapos = this->fftstream_tilde_03_datapos;
-    number invFftSize = (number)1 / (number)2048;
+    number invFftSize = (number)1 / (number)1024;
     Index i0;
 
     for (i0 = 0; i0 < (Index)n; i0++) {
@@ -1538,21 +1539,21 @@ void fftstream_tilde_03_perform(
         number windowFactor = 1;
         windowFactor = __fftstream_tilde_03_win_buf->getSample(0, i);
 
-        if (__fftstream_tilde_03_datapos < 2048) {
+        if (__fftstream_tilde_03_datapos < 1024) {
             this->fftstream_tilde_03_inWorkspace[(Index)(2 * i)] = windowFactor * realIn[(Index)i0];
             out[0] = this->fftstream_tilde_03_outWorkspace[(Index)(2 * i)];
             this->fftstream_tilde_03_inWorkspace[(Index)(2 * i + 1)] = windowFactor * 0;
             out[1] = this->fftstream_tilde_03_outWorkspace[(Index)(2 * i + 1)];
 
-            if (i == 2048 - 1) {
-                this->fftstream_tilde_03_fft_next(this->fftstream_tilde_03_inWorkspace, 2048);
+            if (i == 1024 - 1) {
+                this->fftstream_tilde_03_fft_next(this->fftstream_tilde_03_inWorkspace, 1024);
 
-                for (SampleIndex j = 0; j < 2048 * 2; j++) {
+                for (SampleIndex j = 0; j < 1024 * 2; j++) {
                     this->fftstream_tilde_03_outWorkspace[(Index)j] = this->fftstream_tilde_03_inWorkspace[(Index)j];
                 }
             }
 
-            __fftstream_tilde_03_datapos = (__fftstream_tilde_03_datapos + 1) % 2048;
+            __fftstream_tilde_03_datapos = (__fftstream_tilde_03_datapos + 1) % 1024;
         }
 
         out1[(Index)i0] = out[0];
@@ -1635,27 +1636,27 @@ void ifftstream_tilde_02_perform(
     Index i0;
 
     for (i0 = 0; i0 < (Index)n; i0++) {
-        number invFftSize = (number)1 / (number)2048;
+        number invFftSize = (number)1 / (number)1024;
         SampleIndex i = (SampleIndex)(__ifftstream_tilde_02_datapos);
         list out = list(0, 0, i);
         number windowFactor = 1;
         windowFactor = __ifftstream_tilde_02_win_buf->getSample(0, i);
 
-        if (__ifftstream_tilde_02_datapos < 2048) {
+        if (__ifftstream_tilde_02_datapos < 1024) {
             this->ifftstream_tilde_02_inWorkspace[(Index)(2 * i + 1)] = realIn[(Index)i0];
             out[0] = windowFactor * this->ifftstream_tilde_02_outWorkspace[(Index)(2 * i + 1)];
             this->ifftstream_tilde_02_inWorkspace[(Index)(2 * i)] = imagIn[(Index)i0];
             out[1] = windowFactor * this->ifftstream_tilde_02_outWorkspace[(Index)(2 * i)];
 
-            if (i == 2048 - 1) {
-                this->ifftstream_tilde_02_fft_next(this->ifftstream_tilde_02_inWorkspace, 2048);
+            if (i == 1024 - 1) {
+                this->ifftstream_tilde_02_fft_next(this->ifftstream_tilde_02_inWorkspace, 1024);
 
-                for (SampleIndex j = 0; j < 2048 * 2; j++) {
+                for (SampleIndex j = 0; j < 1024 * 2; j++) {
                     this->ifftstream_tilde_02_outWorkspace[(Index)j] = this->ifftstream_tilde_02_inWorkspace[(Index)j] * invFftSize;
                 }
             }
 
-            __ifftstream_tilde_02_datapos = (__ifftstream_tilde_02_datapos + 1) % 2048;
+            __ifftstream_tilde_02_datapos = (__ifftstream_tilde_02_datapos + 1) % 1024;
         }
 
         out1[(Index)i0] = out[0];
@@ -1726,27 +1727,27 @@ void ifftstream_tilde_01_perform(
     Index i0;
 
     for (i0 = 0; i0 < (Index)n; i0++) {
-        number invFftSize = (number)1 / (number)2048;
+        number invFftSize = (number)1 / (number)1024;
         SampleIndex i = (SampleIndex)(__ifftstream_tilde_01_datapos);
         list out = list(0, 0, i);
         number windowFactor = 1;
         windowFactor = __ifftstream_tilde_01_win_buf->getSample(0, i);
 
-        if (__ifftstream_tilde_01_datapos < 2048) {
+        if (__ifftstream_tilde_01_datapos < 1024) {
             this->ifftstream_tilde_01_inWorkspace[(Index)(2 * i + 1)] = realIn[(Index)i0];
             out[0] = windowFactor * this->ifftstream_tilde_01_outWorkspace[(Index)(2 * i + 1)];
             this->ifftstream_tilde_01_inWorkspace[(Index)(2 * i)] = imagIn[(Index)i0];
             out[1] = windowFactor * this->ifftstream_tilde_01_outWorkspace[(Index)(2 * i)];
 
-            if (i == 2048 - 1) {
-                this->ifftstream_tilde_01_fft_next(this->ifftstream_tilde_01_inWorkspace, 2048);
+            if (i == 1024 - 1) {
+                this->ifftstream_tilde_01_fft_next(this->ifftstream_tilde_01_inWorkspace, 1024);
 
-                for (SampleIndex j = 0; j < 2048 * 2; j++) {
+                for (SampleIndex j = 0; j < 1024 * 2; j++) {
                     this->ifftstream_tilde_01_outWorkspace[(Index)j] = this->ifftstream_tilde_01_inWorkspace[(Index)j] * invFftSize;
                 }
             }
 
-            __ifftstream_tilde_01_datapos = (__ifftstream_tilde_01_datapos + 1) % 2048;
+            __ifftstream_tilde_01_datapos = (__ifftstream_tilde_01_datapos + 1) % 1024;
         }
 
         out1[(Index)i0] = out[0];
@@ -1939,26 +1940,26 @@ void ifftstream_tilde_01_dspsetup(bool force) {
     if ((bool)(this->ifftstream_tilde_01_setupDone) && (bool)(!(bool)(force)))
         return;
 
-    for (Int i = 0; i < 2048 * 2; i++) {
+    for (Int i = 0; i < 1024 * 2; i++) {
         this->ifftstream_tilde_01_inWorkspace[(Index)i] = 0;
         this->ifftstream_tilde_01_outWorkspace[(Index)i] = 0;
     }
 
-    Int safeframesize = (Int)(2048);
+    Int safeframesize = (Int)(1024);
 
     {
-        safeframesize = nextpoweroftwo(2048);
+        safeframesize = nextpoweroftwo(1024);
     }
 
-    Int framepos = (Int)(0 % safeframesize);
+    Int framepos = (Int)(512 % safeframesize);
 
-    if (framepos < 2048) {
+    if (framepos < 1024) {
         this->ifftstream_tilde_01_datapos = framepos;
     } else {
         this->ifftstream_tilde_01_datapos = 0;
     }
 
-    this->ifftstream_tilde_01_datapos = (this->audioProcessSampleCount + this->ifftstream_tilde_01_datapos) % 2048;
+    this->ifftstream_tilde_01_datapos = (this->audioProcessSampleCount + this->ifftstream_tilde_01_datapos) % 1024;
     this->ifftstream_tilde_01_setupDone = true;
 }
 
@@ -2035,26 +2036,26 @@ void fftstream_tilde_01_dspsetup(bool force) {
     if ((bool)(this->fftstream_tilde_01_setupDone) && (bool)(!(bool)(force)))
         return;
 
-    for (Int i = 0; i < 2048 * 2; i++) {
+    for (Int i = 0; i < 1024 * 2; i++) {
         this->fftstream_tilde_01_inWorkspace[(Index)i] = 0;
         this->fftstream_tilde_01_outWorkspace[(Index)i] = 0;
     }
 
-    Int safeframesize = (Int)(2048);
+    Int safeframesize = (Int)(1024);
 
     {
-        safeframesize = nextpoweroftwo(2048);
+        safeframesize = nextpoweroftwo(1024);
     }
 
     Int framepos = (Int)(0 % safeframesize);
 
-    if (framepos < 2048) {
+    if (framepos < 1024) {
         this->fftstream_tilde_01_datapos = framepos;
     } else {
         this->fftstream_tilde_01_datapos = 0;
     }
 
-    this->fftstream_tilde_01_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_01_datapos) % 2048;
+    this->fftstream_tilde_01_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_01_datapos) % 1024;
     this->fftstream_tilde_01_setupDone = true;
 }
 
@@ -2131,26 +2132,26 @@ void fftstream_tilde_02_dspsetup(bool force) {
     if ((bool)(this->fftstream_tilde_02_setupDone) && (bool)(!(bool)(force)))
         return;
 
-    for (Int i = 0; i < 2048 * 2; i++) {
+    for (Int i = 0; i < 1024 * 2; i++) {
         this->fftstream_tilde_02_inWorkspace[(Index)i] = 0;
         this->fftstream_tilde_02_outWorkspace[(Index)i] = 0;
     }
 
-    Int safeframesize = (Int)(2048);
+    Int safeframesize = (Int)(1024);
 
     {
-        safeframesize = nextpoweroftwo(2048);
+        safeframesize = nextpoweroftwo(1024);
     }
 
     Int framepos = (Int)(0 % safeframesize);
 
-    if (framepos < 2048) {
+    if (framepos < 1024) {
         this->fftstream_tilde_02_datapos = framepos;
     } else {
         this->fftstream_tilde_02_datapos = 0;
     }
 
-    this->fftstream_tilde_02_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_02_datapos) % 2048;
+    this->fftstream_tilde_02_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_02_datapos) % 1024;
     this->fftstream_tilde_02_setupDone = true;
 }
 
@@ -2322,26 +2323,26 @@ void ifftstream_tilde_02_dspsetup(bool force) {
     if ((bool)(this->ifftstream_tilde_02_setupDone) && (bool)(!(bool)(force)))
         return;
 
-    for (Int i = 0; i < 2048 * 2; i++) {
+    for (Int i = 0; i < 1024 * 2; i++) {
         this->ifftstream_tilde_02_inWorkspace[(Index)i] = 0;
         this->ifftstream_tilde_02_outWorkspace[(Index)i] = 0;
     }
 
-    Int safeframesize = (Int)(2048);
+    Int safeframesize = (Int)(1024);
 
     {
-        safeframesize = nextpoweroftwo(2048);
+        safeframesize = nextpoweroftwo(1024);
     }
 
-    Int framepos = (Int)(1024 % safeframesize);
+    Int framepos = (Int)(512 % safeframesize);
 
-    if (framepos < 2048) {
+    if (framepos < 1024) {
         this->ifftstream_tilde_02_datapos = framepos;
     } else {
         this->ifftstream_tilde_02_datapos = 0;
     }
 
-    this->ifftstream_tilde_02_datapos = (this->audioProcessSampleCount + this->ifftstream_tilde_02_datapos) % 2048;
+    this->ifftstream_tilde_02_datapos = (this->audioProcessSampleCount + this->ifftstream_tilde_02_datapos) % 1024;
     this->ifftstream_tilde_02_setupDone = true;
 }
 
@@ -2459,26 +2460,26 @@ void fftstream_tilde_03_dspsetup(bool force) {
     if ((bool)(this->fftstream_tilde_03_setupDone) && (bool)(!(bool)(force)))
         return;
 
-    for (Int i = 0; i < 2048 * 2; i++) {
+    for (Int i = 0; i < 1024 * 2; i++) {
         this->fftstream_tilde_03_inWorkspace[(Index)i] = 0;
         this->fftstream_tilde_03_outWorkspace[(Index)i] = 0;
     }
 
-    Int safeframesize = (Int)(2048);
+    Int safeframesize = (Int)(1024);
 
     {
-        safeframesize = nextpoweroftwo(2048);
+        safeframesize = nextpoweroftwo(1024);
     }
 
-    Int framepos = (Int)(1024 % safeframesize);
+    Int framepos = (Int)(512 % safeframesize);
 
-    if (framepos < 2048) {
+    if (framepos < 1024) {
         this->fftstream_tilde_03_datapos = framepos;
     } else {
         this->fftstream_tilde_03_datapos = 0;
     }
 
-    this->fftstream_tilde_03_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_03_datapos) % 2048;
+    this->fftstream_tilde_03_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_03_datapos) % 1024;
     this->fftstream_tilde_03_setupDone = true;
 }
 
@@ -2555,26 +2556,26 @@ void fftstream_tilde_04_dspsetup(bool force) {
     if ((bool)(this->fftstream_tilde_04_setupDone) && (bool)(!(bool)(force)))
         return;
 
-    for (Int i = 0; i < 2048 * 2; i++) {
+    for (Int i = 0; i < 1024 * 2; i++) {
         this->fftstream_tilde_04_inWorkspace[(Index)i] = 0;
         this->fftstream_tilde_04_outWorkspace[(Index)i] = 0;
     }
 
-    Int safeframesize = (Int)(2048);
+    Int safeframesize = (Int)(1024);
 
     {
-        safeframesize = nextpoweroftwo(2048);
+        safeframesize = nextpoweroftwo(1024);
     }
 
-    Int framepos = (Int)(1024 % safeframesize);
+    Int framepos = (Int)(512 % safeframesize);
 
-    if (framepos < 2048) {
+    if (framepos < 1024) {
         this->fftstream_tilde_04_datapos = framepos;
     } else {
         this->fftstream_tilde_04_datapos = 0;
     }
 
-    this->fftstream_tilde_04_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_04_datapos) % 2048;
+    this->fftstream_tilde_04_datapos = (this->audioProcessSampleCount + this->fftstream_tilde_04_datapos) % 1024;
     this->fftstream_tilde_04_setupDone = true;
 }
 
@@ -2642,7 +2643,7 @@ void assign_defaults()
     poke_tilde_01_channel = 0;
     poke_tilde_01_overdub = 0;
     data_01_sizeout = 0;
-    data_01_size = 2048;
+    data_01_size = 1024;
     data_01_sizems = 0;
     data_01_normalize = 0.995;
     data_01_channels = 1;
@@ -2679,7 +2680,7 @@ void assign_defaults()
     dspexpr_09_in1 = 0;
     dspexpr_09_in2 = 0;
     data_02_sizeout = 0;
-    data_02_size = 2048;
+    data_02_size = 1024;
     data_02_sizems = 0;
     data_02_normalize = 0.995;
     data_02_channels = 1;
@@ -2697,7 +2698,7 @@ void assign_defaults()
     ifftstream_tilde_02_realIn = 0;
     ifftstream_tilde_02_imagIn = 0;
     data_03_sizeout = 0;
-    data_03_size = 2048;
+    data_03_size = 1024;
     data_03_sizems = 0;
     data_03_normalize = 0.995;
     data_03_channels = 1;
@@ -2901,8 +2902,8 @@ void assign_defaults()
     Float32BufferRef data_01_buffer;
     Int data_01_sizemode;
     bool data_01_setupDone;
-    SampleValue ifftstream_tilde_01_inWorkspace[4096] = { };
-    SampleValue ifftstream_tilde_01_outWorkspace[4096] = { };
+    SampleValue ifftstream_tilde_01_inWorkspace[2048] = { };
+    SampleValue ifftstream_tilde_01_outWorkspace[2048] = { };
     Float32BufferRef ifftstream_tilde_01_win_buf;
     SampleIndex ifftstream_tilde_01_datapos;
     Int ifftstream_tilde_01_fft_lastsize;
@@ -2910,8 +2911,8 @@ void assign_defaults()
     list ifftstream_tilde_01_fft_sintab;
     Int ifftstream_tilde_01_fft_levels;
     bool ifftstream_tilde_01_setupDone;
-    SampleValue fftstream_tilde_01_inWorkspace[4096] = { };
-    SampleValue fftstream_tilde_01_outWorkspace[4096] = { };
+    SampleValue fftstream_tilde_01_inWorkspace[2048] = { };
+    SampleValue fftstream_tilde_01_outWorkspace[2048] = { };
     Float32BufferRef fftstream_tilde_01_win_buf;
     SampleIndex fftstream_tilde_01_datapos;
     Int fftstream_tilde_01_fft_lastsize;
@@ -2919,8 +2920,8 @@ void assign_defaults()
     list fftstream_tilde_01_fft_sintab;
     Int fftstream_tilde_01_fft_levels;
     bool fftstream_tilde_01_setupDone;
-    SampleValue fftstream_tilde_02_inWorkspace[4096] = { };
-    SampleValue fftstream_tilde_02_outWorkspace[4096] = { };
+    SampleValue fftstream_tilde_02_inWorkspace[2048] = { };
+    SampleValue fftstream_tilde_02_outWorkspace[2048] = { };
     Float32BufferRef fftstream_tilde_02_win_buf;
     SampleIndex fftstream_tilde_02_datapos;
     Int fftstream_tilde_02_fft_lastsize;
@@ -2940,8 +2941,8 @@ void assign_defaults()
     signal ip_01_sigbuf;
     bool ip_01_setupDone;
     Float64BufferRef peek_tilde_02_buffer;
-    SampleValue ifftstream_tilde_02_inWorkspace[4096] = { };
-    SampleValue ifftstream_tilde_02_outWorkspace[4096] = { };
+    SampleValue ifftstream_tilde_02_inWorkspace[2048] = { };
+    SampleValue ifftstream_tilde_02_outWorkspace[2048] = { };
     Float32BufferRef ifftstream_tilde_02_win_buf;
     SampleIndex ifftstream_tilde_02_datapos;
     Int ifftstream_tilde_02_fft_lastsize;
@@ -2952,8 +2953,8 @@ void assign_defaults()
     Float64BufferRef data_03_buffer;
     Int data_03_sizemode;
     bool data_03_setupDone;
-    SampleValue fftstream_tilde_03_inWorkspace[4096] = { };
-    SampleValue fftstream_tilde_03_outWorkspace[4096] = { };
+    SampleValue fftstream_tilde_03_inWorkspace[2048] = { };
+    SampleValue fftstream_tilde_03_outWorkspace[2048] = { };
     Float32BufferRef fftstream_tilde_03_win_buf;
     SampleIndex fftstream_tilde_03_datapos;
     Int fftstream_tilde_03_fft_lastsize;
@@ -2962,8 +2963,8 @@ void assign_defaults()
     Int fftstream_tilde_03_fft_levels;
     bool fftstream_tilde_03_setupDone;
     Float64BufferRef poke_tilde_02_buffer;
-    SampleValue fftstream_tilde_04_inWorkspace[4096] = { };
-    SampleValue fftstream_tilde_04_outWorkspace[4096] = { };
+    SampleValue fftstream_tilde_04_inWorkspace[2048] = { };
+    SampleValue fftstream_tilde_04_outWorkspace[2048] = { };
     Float32BufferRef fftstream_tilde_04_win_buf;
     SampleIndex fftstream_tilde_04_datapos;
     Int fftstream_tilde_04_fft_lastsize;

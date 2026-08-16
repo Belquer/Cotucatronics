@@ -42,7 +42,7 @@ struct Requirements
     // regime — não coube nem no 256, por 5%. A variante FFT
     // 1024/hop 512 deve cair pra faixa de 2,5–2,8k us e caber no 256
     // com folga.
-    size_t block_size = 128;
+    size_t block_size = 256;
 };
 
 struct Manifest

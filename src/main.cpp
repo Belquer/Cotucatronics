@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.14.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.14.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.14.0"
+#define COTUCA_OS_VERSION "0.14.1"
 
 #include "hal.h"
 #include "params.h"
@@ -112,6 +112,11 @@ static bool              fx2_was_on   = false;
 // estreia roda com graca=0 — trava o watchdog antes da protecao
 // existir. Foi exatamente o que aconteceu na primeira tentativa.
 static volatile bool     fx2_prev_want = false;
+// Pico da ESTREIA, capturado no fim da graca ANTES do reset. Sem
+// isto o numero da estreia se perde justamente por causa da protecao
+// que existe pra separa-lo do regime — a instrumentacao apagava o
+// dado que ela mesma foi criada pra revelar.
+static volatile float    fx2_startup_peak = 0.f;
 static constexpr float   kOverrunTrip = 0.90f;
 static constexpr uint32_t kGraceBlocks = 24; // ~64 ms em bloco 128
 
@@ -219,6 +224,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             // existia justamente pra perdoar. Terceira vez nesta
             // funcao que contexto errado gera bug — armar protecao e
             // checar condicao TEM que ser o mesmo contexto.
+            fx2_startup_peak = cotuca::hal::CpuLoadMax(); // guarda antes
             cotuca::hal::CpuLoadReset();
             fx2_grace_done = true; // o loop so loga
         }
@@ -393,6 +399,12 @@ static void HandleLine(const char* line)
                  gov_l.Gain(), gov_l.Env());
         hal::Log("lim   ceil=%.2f gainL=%.2f gainR=%.2f",
                  cotuca::Limiter::Ceiling(), lim_l.Gain(), lim_r.Gain());
+        {
+            const float b = 1e6f * (float)hal::Info().block_size
+                            / hal::Info().sample_rate;
+            hal::Log("estreia %.0f us  (regime abaixo)",
+                     fx2_startup_peak * b);
+        }
         hal::Log("fx2   %s", fx2_overrun
                      ? "BYPASS FORCADO — estourou o prazo do bloco"
                      : (params.Real(manifest.p_fx2_on) >= 0.5f
@@ -600,8 +612,11 @@ int main(void)
         if(fx2_grace_done)
         {
             fx2_grace_done = false;
-            hal::Log("fx2: graca encerrada, medidor zerado — daqui pra "
-                     "frente e regime permanente");
+            const float budget_us = 1e6f * (float)hal::Info().block_size
+                                    / hal::Info().sample_rate;
+            hal::Log("fx2 ESTREIA: %.0f us de pico (%.0f%% do prazo)",
+                     fx2_startup_peak * budget_us, fx2_startup_peak * 100.f);
+            hal::Log("fx2: graca encerrada — daqui pra frente e regime");
         }
 
         // rearma quando o operador desliga explicitamente
