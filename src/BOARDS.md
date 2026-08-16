@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.5.0**
+**Documento v0.6.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -125,6 +125,66 @@ igual.
 mesmo motivo: rodar o parser na ISR significa mexer em `params` e
 possivelmente logar de dentro dela, que é o deadlock que matou o `list`
 na v0.2.0.
+
+---
+
+## Ruído: o USB do computador é a fonte dominante
+
+> **Alimentar a Daisy pelo USB do computador injeta ruído audível.**
+> Medido, não suposto. É característica de bancada, e é argumento
+> direto pra bateria interna no build.
+
+Protocolo: entrada em curto (`AUDIO_IN_L` → `AGND`, piezo fora), cadeia
+neutralizada (`dly_mix` 0, `tone_mix` 0, `shift_hz` 0, `bench_boost` 1×,
+`gate_thresh` **0** pra manter o gate aberto — com ele fechando, o piso
+fica mascarado e a medição não vale nada). Espectro por `cotuca_noise.py`.
+
+| | USB do computador | Powerbank | Δ |
+|---|---|---|---|
+| Pico | −44,1 dBFS | **−64,4** | **−20 dB** |
+| 16 002 Hz | −80,9 | some | — |
+| 7 998 Hz | −85,2 | some | — |
+| 3 000 Hz | −86,9 | −100,5 | −13,6 |
+| 1 998 Hz | −88,9 | −97,4 | −8,5 |
+| 1 002 Hz | −88,1 | −90,4 | −2,3 |
+
+**Os dois sintomas têm assinatura distinta e a mesma fonte:**
+
+- **Apito agudo** = o harmônico de **16 kHz** da série de 1 kHz. Some por
+  completo na bateria.
+- **Crackling** = energia **impulsiva**: fator de crista de 30 dB no USB
+  (pico 30 dB acima do RMS), contra 12 dB na bateria. Ruído contínuo tem
+  crista baixa; crista alta é evento isolado, que é o que se ouve como
+  estalo.
+
+### O residual de 1 kHz é NOSSO, e é a taxa de bloco
+
+Os 1 002 Hz sobrevivem na bateria quase no mesmo nível. **Sem host USB não
+existe frame** — então esse pico não pode ser USB. Bloco 48 a 48 kHz dá
+exatamente **1 000 blocos por segundo**.
+
+Fica registrado como **não resolvido e provavelmente inaudível**: −90 dBFS
+e sem os harmônicos altos, que eram o que o ouvido pegava. Se um dia
+incomodar, o teste que confirma é barato — **mudar o bloco move a
+frequência** (128 → 375 Hz). E as duas causas plausíveis movem junto, então
+o teste confirma a origem mas **não distingue**:
+
+1. **Software** — parâmetro lido uma vez por bloco e aplicado em degrau na
+   fronteira: zipper noise. Conserto: interpolar o ganho ao longo do bloco.
+2. **Hardware** — pico de consumo do callback acoplando na alimentação
+   analógica. Software não resolve.
+
+### Armadilha de interpretação registrada
+
+Na primeira leitura deste espectro a série de 1 kHz foi nomeada "frame
+USB" porque batia com um suspeito da lista. Estava certo por acaso: no
+teste 1 a placa **estava** no USB do computador. Quando o teste da bateria
+foi lido fora de ordem, a mesma série virou "taxa de bloco" e a conclusão
+inverteu.
+
+**Frequência coincidir com suspeito conhecido não é identificação.** Duas
+fontes diferentes aqui produzem exatamente 1 kHz, e só o teste que remove
+uma delas separa as duas.
 
 ---
 
