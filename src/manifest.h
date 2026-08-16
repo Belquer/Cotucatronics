@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.20.0
+// manifest.h (instrumento "bancada") v0.21.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -360,13 +360,24 @@ struct Manifest
         // pode passar de 40 dB. Curva 3 mantem o ajuste fino embaixo —
         // metade do curso ainda cobre 1x-32x.
         //
-        // Default 48x. E chute, e esta declarado como tal: o log dos
-        // primeiros blocos agora mede in/out e imprime o "falta Nx"
-        // real, e o proximo valor sai dessa medicao em vez de sair
-        // daqui. Com limiter e governor a jusante, exagerar comprime.
+        // Default 8x, PROVISORIO, e baixou de 48x de proposito.
         //
-        // norm = ((48-1)/255)^(1/3) = 0.573
-        p_fx2_gain  = t.Add("fx2_gain",  0.573f, 1.f, 256.f, 3.0f);
+        // Os 48x foram calibrados contra o pior caso possivel — tom
+        // senoidal puro contra portadora de tres parciais, em que os
+        // bins quase nunca coincidem e a saida beira zero. Calibrar
+        // ganho no caso mais esparso que existe garante estouro no
+        // caso real: com piezo (banda larga) as coincidencias sao
+        // muitas, a saida sobe, e 48x estoura no primeiro tap.
+        // Governor e limiter seguram, mas segurar nao e o mesmo que
+        // estar certo — o instrumento passaria a viver comprimido.
+        //
+        // A calibracao de verdade e com a caixa-preta no caso BANDA
+        // LARGA: voc_tone 0 (portadora de ruido) ou o piezo tocando.
+        // Ver T12 no TESTES.md. Ate la, 8x e um chute conservador —
+        // erra pra baixo, que e o lado seguro de errar.
+        //
+        // norm = ((8-1)/255)^(1/3) = 0.301
+        p_fx2_gain  = t.Add("fx2_gain",  0.301f, 1.f, 256.f, 3.0f);
 
         // ---- LIGACOES ----
         // TODAS depois de TODOS os Add(). Nao e estilo: um bind feito

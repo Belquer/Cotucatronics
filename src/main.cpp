@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.19.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.19.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.19.0"
+#define COTUCA_OS_VERSION "0.19.1"
 
 #include "hal.h"
 #include "params.h"
@@ -345,7 +345,14 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         src_buf[i] = gate.Process(src_buf[i]);
 
     // ch2 da convenção de 2 entradas: IN_R CRU, pré-crossfade e
-    // pré-gate. Ver o contrato em module.h — é a portadora externa.
+    // pré-gate. Ver o contrato em module.h.
+    //
+    // HOJE NINGUÉM USA. O vocoder v3 é 1-input e gera a própria
+    // portadora (senoides + ruído) por dentro; o freeze, que era o
+    // outro cliente, está fora do build. O canal continua montado
+    // porque o CONTRATO do slot é 2-in — módulo futuro que precise de
+    // referência externa acha ela pronta aqui. Fiação viva sem
+    // consumidor, não código morto.
     const float* carrier = has_in ? in[1] : zero_buf;
 
     // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
@@ -416,15 +423,20 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         fx2_overrun = true; // trava; quem loga é o loop principal
     if(fx2_want && !fx2_overrun)
     {
-        // DOIS canais de entrada. O freeze e 2-in/2-out, ao contrario
-        // do delay que e 1-in. Passar um array de 1 aqui faria o
-        // modulo ler in[1] fora dos limites — sem crash imediato, com
-        // lixo no audio. O slot generico entrega o par estereo.
-        // ch1 = sinal do ponto da cadeia; ch2 = portadora externa.
-        // ANTES daqui ia {out[0], out[1]} — o par estéreo — o que
-        // dava ao módulo o próprio sinal duas vezes em vez de uma
-        // referência externa. Cross-synthesis precisa de duas fontes
-        // DIFERENTES.
+        // O SLOT sempre entrega DOIS canais; quantos o módulo lê é
+        // decisão dele, declarada em InputCount() e respeitada no
+        // wrapper. Passar menos que dois aqui faria um módulo 2-in
+        // ler in[1] fora dos limites — sem crash, com lixo no áudio.
+        //
+        // ch1 = sinal do ponto da cadeia. ch2 = IN_R cru, HOJE SEM
+        // CLIENTE: o vocoder v3 é 1-input e tem portadora interna. O
+        // comentário anterior prometia cross-synthesis externa e ficou
+        // stale quando o dB reexportou o patch — a promessa sobreviveu
+        // ao recurso.
+        //
+        // ANTES daqui ia {out[0], out[1]}, o par estéreo, o que dava
+        // ao módulo o próprio sinal duas vezes. Isso era bug de
+        // verdade e continua consertado.
         const float* ins[2]  = {out[0], carrier};
         float*       outs[2] = {fx_buf[0], fx_buf[1]};
         // scratch limpo: export de 1 saída não escreve out[1], e sem

@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.11.0** · última execução em placa: 2026-08-15 · firmware
+**Documento v0.12.0** · última execução em placa: 2026-08-15 · firmware
 **v0.16.0 / HAL v0.9.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -684,9 +684,102 @@ GPIO, pull-up e debounce. `b1`/`b2` entram depois disso. Um botão que
 quica ou um pino trocado passa neste teste e falha no painel — a
 validação do hardware é bater no botão de verdade e ver o log.
 
+## T12 — vocoder: coincidência espectral · ⏳
+
+**O teste que impede um diagnóstico errado de virar bug report.**
+
+Em 2026-08-16 o vocoder pareceu quebrado: rodava, custava 61% do prazo
+do bloco, e não saía som. Não era defeito. **Molde espectralmente
+esparso (tom senoidal) × portadora esparsa (drone de 3 parciais) = os
+bins não coincidem, e a saída é ~zero por construção.**
+
+O comentário do `fx2_gain` no manifest já dizia isso — *"cross-synthesis
+só devolve energia onde as duas fontes coincidem"* — mas ninguém tinha
+transformado a frase num teste, então o silêncio continuou parecendo
+falha. É o que este T12 conserta.
+
+### T12a — a coincidência liga e desliga o som
+
+Com `voc_tone` no default (portadora tonal) e `voc_pitch` centrado:
+
+```bash
+./cotuca_serial.py --send "tone on" "set tone_freq 220" "set fx2_on 1" --gap 2.5
+```
+
+**Esperado:** saída FORTE. Depois, num voo novo, `tone_freq 300` deve
+**despencar** — 300 Hz não cai em cima das parciais do drone.
+
+A razão `pin/pout` da caixa-preta (`bb`) nos dois casos **documenta o
+fenômeno com número**. Sem isso a explicação continua sendo teoria.
+
+### T12b — portadora de ruído passa qualquer coisa
+
+```bash
+./cotuca_serial.py --send "set voc_tone 0" "tone on" "set tone_freq 300" "set fx2_on 1" --gap 2.5
+```
+
+`voc_tone 0` põe ruído na portadora — espectro cheio, coincidência
+garantida. **Qualquer `tone_freq` deve passar.** Se 300 Hz passar aqui e
+não passar no T12a, o fenômeno está provado e o vocoder está são.
+
+### T12c — critério de aceite REAL é o piezo
+
+Tom senoidal é o **pior caso possível**: energia numa raia só. A
+escultura pelo piezo é banda larga, as coincidências são muitas, e é
+esse o caso que decide se o módulo serve. **T12a e T12b são diagnóstico;
+T12c é aceite.** Espera o dB tocar.
+
+### Calibração do `fx2_gain` — no caso banda larga, nunca no senoidal
+
+> **Armadilha, e já caímos nela.** Calibrar ganho contra o tom senoidal
+> mede o caso de menor saída que existe. O valor que resulta (chegamos a
+> 48x) **estoura no primeiro tap** quando o piezo entra, porque aí a
+> saída é muito maior. Governor e limiter seguram — mas segurar não é o
+> mesmo que estar certo: o instrumento passaria a viver comprimido.
+>
+> Calibrar com `voc_tone 0` (ruído) ou com o piezo tocando, lendo
+> `pin/pout` do `bb`. O default caiu pra **8x** justamente por isso:
+> provisório, e errando pro lado seguro.
+
 ---
 
 ## Defeitos conhecidos
+
+### A serial morre quando o vocoder liga · ABERTO
+
+Com o Fx2 ativo, o USB CDC cai poucos blocos depois (`Device not
+configured`) e não volta até o RESET. **O áudio continua rodando o tempo
+todo** — a escultura toca normalmente, só não há mais como falar com ela.
+
+Não é inanição do loop principal, que foi a primeira teoria: a carga
+medida é de **61%**, e 61% não starva loop nenhum. A hipótese de pé é o
+callback segurando o processador em blocos de ~3,2 ms e atrasando o
+serviço da interrupção do USB o bastante pra quebrar o timing do CDC.
+**Não medido — é hipótese, não diagnóstico.**
+
+**Impacto prático, que é o que importa:** nenhum parâmetro pode ser
+ajustado com o vocoder ligado, então todo ajuste vira uma regravação.
+Foi a causa de quase toda a lentidão da sessão de 2026-08-16.
+
+Contornos que existem hoje: a **caixa-preta** (`bb`) grava durante o voo
+e é lida depois do reset; o **CC 25** ajusta o `fx2_gain` por MIDI, que
+é o único caminho de controle que sobrevive.
+
+### `r_window`: o "fallback" de tamanho é o único caminho · CORRIGIDO
+
+`r_window` é `buffer~` e o export **nunca** chama `requestSize()` nele,
+então `getSizeInBytes()` devolve 0 sempre e o código que "lê o tamanho do
+próprio dataref" nunca executou. O fallback estava em 2048 pra uma FFT de
+1024: o patch lia meia janela — uma rampa — e o overlap-add nunca somou
+plano. Corrigido em `module_rnbo_vocoder v0.3.0`.
+
+### Backup SRAM: destravar o domínio antes de qualquer acesso · CORRIGIDO
+
+Só ligar o clock não basta. No H7 o domínio de backup nasce com proteção
+de escrita, e acesso a `0x38800000` sem `HAL_PWR_EnableBkUpAccess()` dá
+**bus fault**, não escrita ignorada — a placa morre no primeiro `bb`,
+parecendo defeito de boot sem relação com o vocoder. Sequência completa
+em `hal_daisy_seed v0.10.1`.
 
 | # | Sintoma | Estado |
 |---|---|---|
