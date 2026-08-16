@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.3.0**
+**Documento v0.4.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -55,29 +55,59 @@ dentro. **Nada disso vaza pro nosso código.**
 
 ---
 
-## Estado gravado na placa hoje — MODO BANCADA
+## Estado versionado — INSTRUMENTO
 
-> Isto **não** é a configuração de palco. É o que está na Seed neste
-> momento, e daqui a semanas ninguém lembra de cabeça.
+> **Regra da casa: o repo versiona o INSTRUMENTO. Bancada é estado
+> transitório.** O que está no `main` é o que deve estar na placa pra
+> tocar; qualquer configuração de medição é receita documentada, não
+> commit.
 
 | | Valor | Onde muda |
 |---|---|---|
-| Clock | **480 MHz** (boost) | `hw.Init(true)` em `hal_daisy_seed.cpp` |
-| Bloco | **256** (5 333 µs, latência 5,3 ms) | `Requirements::block_size` no manifest |
-| Otimização | **`-O3`** | `OPT` no `Makefile` |
+| Clock | **480 MHz** | permanente, `hw.Init(true)` |
+| Bloco | **48** — 1 000 µs, latência 1 ms | `Requirements::block_size` |
+| Módulos | `delay` no slot instrument, **fx2 vazio** | `MODULE_SRC` no `Makefile` |
+| `dly_time` / `dly_mix` | 0,40 / 0,50 | manifest |
 | App | QSPI via bootloader | `APP_TYPE=BOOT_QSPI` |
-| Firmware | OS v0.15.0 / HAL v0.7.0 | |
+| CPU medida | **188 µs de 1 000 — 18,8%** | |
 
-**O bloco 256 é do instrumento de teste**, escolhido porque o vocoder
-precisa dele (3 520 µs de pico). Uma escultura sem módulo espectral roda
-em 48 e tem 1 ms de latência — o bloco é decisão de manifest justamente
-por isso.
+### Como remontar a bancada do vocoder
 
-**O `-O3` é candidato a reverter.** Medido contra `-O2`: média piorou de
-11,3% para 13,0%, pico praticamente igual. O app executa da QSPI, e o
+Duas mudanças, nesta ordem:
+
+```make
+# Makefile
+MODULE_SRC ?= module_rnbo_delay.cpp module_rnbo_vocoder.cpp
+```
+
+```cpp
+// manifest.h, em Requirements
+size_t block_size = 256;
+```
+
+O bloco 256 é **exigência do vocoder**, não preferência: ele pede 3 520 µs
+de pico e o prazo do bloco 48 é 1 000 µs. Custa 5,3 ms de latência, que
+num instrumento realimentado não é neutro.
+
+Depois: gravar, `set fx2_on 1`, e o watchdog cuida do resto. A janela de
+graça absorve a estreia; `probe` dá o perfil bloco a bloco; `cpu` dá o
+regime em µs contra o prazo.
+
+O **freeze** segue fora de qualquer regime: 7 349 µs de pico, não cabe
+em prazo nenhum que valha a latência. `module_rnbo_freeze.cpp` e o export
+em `modules/xxxfreeze/` continuam no repo pra quando o patch emagrecer.
+
+### Nota sobre `-O3`
+
+Fica até o orçamento apertar. Medido contra `-O2`: média **piorou** de
+11,3% para 13,0%, pico praticamente igual. O app executa da QSPI e o
 binário inflou 13% (260 → 295 KB) — mais código, mais falha de I-cache,
-e numa memória externa isso custa mais que o inlining rende. Só não
-reverti porque não era o gargalo.
+e em memória externa isso custa mais que o inlining rende.
+
+> **Ao reverter, REMEDIR TUDO.** Todos os números deste documento e dos
+> commits — 188 µs do instrumento, 3 520 do vocoder, 7 349 do freeze —
+> têm `-O3` como base. Comparar número novo com número velho depois de
+> trocar a otimização é comparar coisas diferentes.
 
 ---
 

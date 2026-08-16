@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.15.0
+// manifest.h (instrumento "bancada") v0.16.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -42,7 +42,10 @@ struct Requirements
     // regime — não coube nem no 256, por 5%. A variante FFT
     // 1024/hop 512 deve cair pra faixa de 2,5–2,8k us e caber no 256
     // com folga.
-    size_t block_size = 256;
+    // ESTADO INSTRUMENTO: 48, o regime nervoso — 1 ms de latencia.
+    // O 256 era do vocoder, que precisa de 5 333 us de prazo. Sem
+    // modulo espectral na cadeia, nao ha razao pra pagar latencia.
+    size_t block_size = 48;
 };
 
 struct Manifest
@@ -171,7 +174,9 @@ struct Manifest
         // 2.5, metade do curso cobre os primeiros ~18% da faixa, que é
         // onde moram os slapbacks e os flams. O RNBO recebe o valor já
         // curvado e não sabe que houve curva.
-        p_dly_time  = t.Add("dly_time",  0.5f, 0.f,    1.f,  2.5f);
+        // norm 0.69 com curve 2.5 da real ~0.40: eco audivel e
+        // claramente separado, nem slapback nem cauda longa.
+        p_dly_time  = t.Add("dly_time",  0.69f, 0.f,   1.f,  2.5f);
         p_dly_mix   = t.Add("dly_mix",   0.5f, 0.f,    1.f);
 
         // GATE. gate_thresh usa curve 2 porque threshold útil vive

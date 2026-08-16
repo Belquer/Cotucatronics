@@ -40,7 +40,12 @@ HAL_SRC = hal_$(BOARD).cpp
 # contra 2667 de orcamento) e ocupava 89% do pool de SRAM, que o
 # vocoder precisa. O arquivo continua no repo — module_rnbo_freeze.cpp
 # aponta pra modules/xxxfreeze/ — pra voltar quando o patch emagrecer.
-MODULE_SRC ?= module_rnbo_delay.cpp module_rnbo_vocoder.cpp
+# ESTADO INSTRUMENTO: so o delay. O vocoder sai do build — ele existe
+# e cabe (3 520 us em bloco 256), mas exige bloco 256 e 5,3 ms de
+# latencia, que nao e o regime de tocar. Volta adicionando
+# module_rnbo_vocoder.cpp aqui e pondo block_size 256 no manifest.
+# O freeze segue fora: nao cabe em prazo nenhum (7 349 us).
+MODULE_SRC ?= module_rnbo_delay.cpp
 
 # UM runtime pros dois patchers. Os exports vieram com versoes
 # diferentes (delay 1.4.3, freeze 1.4.5), mas elas diferem em 3

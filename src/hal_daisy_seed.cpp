@@ -3,14 +3,14 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.7.0
+// hal_daisy_seed v0.8.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.7.0"
+#define COTUCA_HAL_VERSION "0.8.0"
 
 using namespace daisy;
 
@@ -109,8 +109,10 @@ static void UsbRxCallback(uint8_t* buf, uint32_t* len)
 // ---- contrato ----
 bool Init()
 {
-    // >>> BENCH <<< boost de clock: 400 MHz -> 480 MHz (+20%).
-    // Reverter pra hw.Init() junto com o block_size.
+    // Boost de clock: 400 -> 480 MHz. PERMANENTE, nao e modo bancada.
+    // Folga de graca: +20% de trabalho por microssegundo, sem custo
+    // relevante pra este uso. Info().cpu_hz traz o valor real lido da
+    // placa, nao o nominal.
     hw.Init(true);
     info.cpu_hz = System::GetSysClkFreq();
     hw.SetAudioBlockSize(info.block_size);
