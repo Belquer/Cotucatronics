@@ -105,3 +105,15 @@ LDFLAGS = -u _printf_float
 
 SYSTEM_FILES_DIR = $(LIBDAISY_DIR)/core
 include $(SYSTEM_FILES_DIR)/Makefile
+
+# ---- checagem de repo ----
+# `make check` responde: um CLONE LIMPO compila? Existe porque
+# module_rnbo_alloc.h ficou meses fora do repo sem ninguem notar — o
+# build local funcionava porque o arquivo estava na arvore. Conferir
+# a arvore nao e conferir o repositorio.
+.PHONY: check print-cpp-sources
+check:
+	@./check_repo.sh
+
+print-cpp-sources:
+	@echo $(CPP_SOURCES)

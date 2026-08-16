@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.14.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.15.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.14.1"
+#define COTUCA_OS_VERSION "0.15.0"
 
 #include "hal.h"
 #include "params.h"
@@ -49,7 +49,27 @@ static float fx_buf[2][kMaxBlock];
 static float zero_buf[kMaxBlock] = {};
 
 // ============================================================
-// REGRA: QUEM ARMA E QUEM CHECA TÊM QUE SER O MESMO CONTEXTO.
+// REGRA: ORDEM IMPORTA — DUAS FAMÍLIAS.
+//
+// A) CORRIDA DE CONTEXTO: quem ARMA e quem CHECA têm que ser o
+//    mesmo contexto. Este projeto roda dois concorrentes — o
+//    callback de áudio (interrupção) e o loop principal — e toda
+//    vez que uma proteção foi armada num e a condição que ela
+//    protege aconteceu no outro, apareceu bug.
+//
+// B) ORDEM DE CONFIGURAÇÃO: quem CONFIGURA tem que vir antes de
+//    quem CONSOME. Não há concorrência aqui — é sequência dentro
+//    de uma função só, e por isso engana mais: o código lê certo
+//    de cima pra baixo e mesmo assim está errado, porque o
+//    consumidor leu um valor que ainda não tinha sido escrito.
+//
+// As duas dão o mesmo sintoma — comportamento errado sem erro,
+// sem log, sem crash — mas o conserto difere. Em (A) move-se o
+// armar pra junto do checar. Em (B) move-se o configurar pra
+// antes do consumir. Confundir as duas leva a "sincronizar" o
+// que só precisava ser reordenado.
+//
+// ---- casos (A), corrida de contexto ----
 //
 // Este projeto tem dois contextos que rodam concorrentes — o
 // callback de áudio (interrupção) e o loop principal. Toda vez
@@ -117,6 +137,17 @@ static volatile bool     fx2_prev_want = false;
 // que existe pra separa-lo do regime — a instrumentacao apagava o
 // dado que ela mesma foi criada pra revelar.
 static volatile float    fx2_startup_peak = 0.f;
+// Custo dos primeiros blocos, isolado um a um. Responde a pergunta
+// que decide o conserto da estreia: o custo esta CONCENTRADO no
+// primeiro Process (alocacao preguicosa de uma vez) ou ESPALHADO
+// pelos blocos iniciais (crescimento incremental)? Warm-up no Init
+// resolve o primeiro caso; so mexer no alocador resolve o segundo.
+static constexpr int  kProbeBlocks = 8;
+static volatile float fx2_probe[kProbeBlocks] = {};
+// So a PRIMEIRA ativacao apos o boot interessa: e nela que a
+// alocacao preguicosa acontece. Reativar depois mede so o regime e
+// apagaria o dado — foi o que aconteceu na primeira tentativa.
+static volatile bool  fx2_probe_done = false;
 static constexpr float   kOverrunTrip = 0.90f;
 static constexpr uint32_t kGraceBlocks = 24; // ~64 ms em bloco 128
 
@@ -215,6 +246,19 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
     if(fx2_want && fx2_grace > 0)
     {
+        // O medidor e zerado a cada bloco da graca, entao o que se le
+        // no inicio de um bloco e a carga do bloco ANTERIOR, isolada.
+        const uint32_t done = kGraceBlocks - fx2_grace;
+        const float    prev = cotuca::hal::CpuLoadMax();
+        if(done > 0)
+        {
+            if(prev > fx2_startup_peak)
+                fx2_startup_peak = prev;
+            if(!fx2_probe_done && done <= (uint32_t)kProbeBlocks)
+                fx2_probe[done - 1] = prev;
+        }
+        cotuca::hal::CpuLoadReset();
+
         if(--fx2_grace == 0)
         {
             // ZERA AQUI, no mesmo contexto de quem checa. Deixar o
@@ -224,8 +268,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             // existia justamente pra perdoar. Terceira vez nesta
             // funcao que contexto errado gera bug — armar protecao e
             // checar condicao TEM que ser o mesmo contexto.
-            fx2_startup_peak = cotuca::hal::CpuLoadMax(); // guarda antes
-            cotuca::hal::CpuLoadReset();
+            fx2_probe_done = true; // congela o perfil da estreia
             fx2_grace_done = true; // o loop so loga
         }
     }
@@ -417,6 +460,19 @@ static void HandleLine(const char* line)
                  params.Real(manifest.p_route_jack) >= 0.5f ? 1 : 0);
         return;
     }
+    if(strncmp(line, "probe", 5) == 0)
+    {
+        // Uma linha POR BLOCO, em resposta a comando. Quatro Logs em
+        // rajada a 67% de CPU perdiam as linhas do meio: o loop
+        // principal ganha pouco tempo e o retry de 50 ms do Log
+        // estoura. Sob comando o ritmo e do host.
+        const float b = 1e6f * (float)hal::Info().block_size
+                        / hal::Info().sample_rate;
+        hal::Log("estreia, bloco a bloco (prazo %.0f us):", b);
+        for(int i = 0; i < kProbeBlocks; i++)
+            hal::Log("  bloco %d: %.0f us", i + 1, fx2_probe[i] * b);
+        return;
+    }
     if(strncmp(line, "cpu", 3) == 0)
     {
         // O prazo do bloco em microssegundos. Reportar % sozinho
@@ -467,7 +523,7 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -501,6 +557,19 @@ int main(void)
         while(1) { hal::SetLed(led); led = !led; hal::DelayMs(100); }
     }
 
+    // Tamanho de bloco é decisão de INSTRUMENTO, não de placa: define
+    // a latência, e num instrumento realimentado a latência é parte do
+    // laço acústico.
+    //
+    // TEM QUE VIR ANTES DO Init DOS MÓDULOS. O Module::Init recebe
+    // hal::Info().block_size e o repassa ao prepareToProcess, que
+    // dimensiona os buffers internos por ele. Pedir o bloco DEPOIS
+    // deixava os módulos preparados pra 48 enquanto o callback
+    // entregava 256 — estouro de heap silencioso nos blocos vizinhos
+    // do alocador. Mesma familia dos outros bugs de ordem desta
+    // funcao: quem configura tem que vir antes de quem consome.
+    hal::RequestBlockSize(manifest.req.block_size);
+
     // ---- módulos: pega do REGISTRO, slot a slot ----
     // O main não conhece motor nenhum. Quem se registrou, apareceu.
     for(int s = 0; s < (int)ModuleSlot::kCount; s++)
@@ -521,6 +590,35 @@ int main(void)
                      m->Name(), SlotName(slot));
             continue;
         }
+        // ---- WARM-UP: política do slot, não remendo de módulo ----
+        //
+        // Módulo espectral aloca preguiçosamente no primeiro HOP, não
+        // no primeiro Process. Medido no vocoder (FFT 1024/hop 512,
+        // bloco 256): bloco 1 custou 932 us, bloco 2 custou 81 563,
+        // bloco 4 custou 42 512, e só no bloco 6 chegou aos 3 526 do
+        // regime. Uma chamada de silêncio não resolveria — o bloco 1
+        // é justamente o barato.
+        //
+        // Então rodamos silêncio até cobrir ~4096 amostras, que dá
+        // dois hops de 2048, quatro de 1024 ou oito de 512. O custo
+        // vai pro boot, onde ninguém ouve, e toda ativação posterior
+        // já nasce em regime.
+        //
+        // Genérico de propósito: vale pra qualquer módulo com estreia
+        // preguiçosa, não só pro fftstream~. E preserva o alocador
+        // bump simples — determinístico, sem fragmentação — que
+        // crescimento esperto começaria a erodir.
+        {
+            const size_t bs = hal::Info().block_size;
+            const int    n  = (int)((4096 + bs - 1) / bs);
+            const float* wi[2] = {zero_buf, zero_buf};
+            float*       wo[2] = {fx_buf[0], fx_buf[1]};
+            for(int k = 0; k < n; k++)
+                m->Process(wi, wo, bs);
+            hal::Log("slot %-10s warm-up: %d blocos de silencio",
+                     SlotName(slot), n);
+        }
+
         mod_slot[s] = m;
         hal::Log("slot %-10s \"%s\": %d params",
                  SlotName(slot), m->Name(), m->ParamCount());
@@ -552,13 +650,6 @@ int main(void)
     lim_l.Init(hal::Info().sample_rate);
     lim_r.Init(hal::Info().sample_rate);
     shift_l.Init(hal::Info().sample_rate);
-
-    // Tamanho de bloco é decisão de INSTRUMENTO, não de placa: ele
-    // define a latência, e num instrumento realimentado a latência é
-    // parte do laço acústico. Por isso vem do manifest. Tem que ser
-    // pedido ANTES do StartAudio — o medidor de CPU se calibra pelo
-    // valor efetivo.
-    hal::RequestBlockSize(manifest.req.block_size);
 
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);
@@ -616,6 +707,7 @@ int main(void)
                                     / hal::Info().sample_rate;
             hal::Log("fx2 ESTREIA: %.0f us de pico (%.0f%% do prazo)",
                      fx2_startup_peak * budget_us, fx2_startup_peak * 100.f);
+            hal::Log("  perfil bloco a bloco: comando `probe`");
             hal::Log("fx2: graca encerrada — daqui pra frente e regime");
         }
 
