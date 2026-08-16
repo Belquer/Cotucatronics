@@ -48,7 +48,7 @@ Cinco regras que não se negociam:
 | [src/manifest.h](src/manifest.h) | **v0.10.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.3.0** | **Manual de embarque de módulos RNBO — o template** |
-| [src/TESTES.md](src/TESTES.md) | **v0.9.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
+| [src/TESTES.md](src/TESTES.md) | **v0.10.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.2.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |

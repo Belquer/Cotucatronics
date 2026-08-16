@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.9.0** · última execução em placa: 2026-08-15 · firmware
+**Documento v0.10.0** · última execução em placa: 2026-08-15 · firmware
 **v0.9.0 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto.
 
@@ -449,10 +449,44 @@ qualquer `shift_hz` — o filtro roda sempre, como os outros blocos do stack.
 O barateamento vem do oscilador de quadratura em **forma acoplada** (4
 multiplicações por amostra) em vez de dois `sinf`/`cosf` por amostra.
 
-### T8d — jack sem shift · ⏸️ PENDENTE
+### T8d — jack sem shift · ✅ PASSOU
 
-`OUT_R` deve sair em 440 Hz intacto, por design. Não medido: o cabo está no
-pino 18 (`OUT_L`) e medir o outro ramo exige movê-lo pro pino 19.
+Cabo movido pro **pino 19** (`OUT_R`), mesmo tom 440 Hz e mesmo `shift_hz 5`:
+
+| Componente | Nível | vs. 440 |
+|---|---|---|
+| **440 Hz** (original) | −4,4 dBFS | — |
+| 445 Hz (banda superior) | −111,1 dBFS | **−106,7 dB** |
+| 435 Hz (banda inferior) | −108,7 dBFS | −104,3 dB |
+
+**106,7 dB de rejeição** — isso é o piso de ruído, não supressão parcial. O jack
+sai absolutamente limpo, sem traço do deslocamento. O split é real.
+
+### T8e — roteamento, dos dois lados
+
+Com o cabo no pino 19:
+
+| Roteamento | Medido em `OUT_R` |
+|---|---|
+| exciter=1, jack=1 | 440,12 Hz, −7,4 dBFS |
+| exciter=1, jack=0 | silêncio |
+| exciter=0, jack=1 | 440,12 Hz, −7,4 dBFS |
+
+Espelho exato do teste no pino 18: cada ramo responde só ao próprio `route`, e
+mutar um não toca no outro.
+
+> **Erro de bancada que quase virou conclusão errada.** A primeira rodada deste
+> teste usava `set -- $cfg` num loop de shell pra separar os pares. **zsh não faz
+> word-splitting** em expansão não-quotada, então `$1` virava `"1 1"` e `$2`
+> ficava vazio — o comando enviado era `set route_jack` sem valor, que o
+> `strtof` lê como **0**. O jack esteve mutado durante todo o teste.
+>
+> A conclusão anterior (que `route_exciter` controla o canal medido no pino 18)
+> continuava certa, mas **por acaso**. Refeito com argumentos explícitos.
+>
+> Vale a lição pro roteiro: teste que dá o resultado esperado merece a mesma
+> desconfiança que o que falha — aqui foi o silêncio *inesperado* no pino 19 que
+> expôs o bug, e ele estava lá desde a rodada anterior.
 
 > ### A armadilha que quase passou: `a` vs `a²`
 >
