@@ -1,5 +1,5 @@
 #pragma once
-// module_rnbo.h v0.1.0
+// module_rnbo.h v0.2.0
 // ============================================================
 // Declaração pública do módulo RNBO.
 //
@@ -15,23 +15,16 @@
 namespace cotuca
 {
 
-#define COTUCA_MODULE_RNBO_VERSION "0.1.0"
+#define COTUCA_MODULE_RNBO_VERSION "0.2.0"
 
-// Extrato do alocador do RNBO. O RNBO aloca no boot (sinais,
-// linha de delay); nós interceptamos com RNBO_USECUSTOMALLOCATOR
-// e servimos de um pool interno, caindo pra hal::AllocBig() —
-// isto é, SDRAM — quando não couber.
+// Este header existe só pra documentar que o módulo RNBO EXISTE.
+// Ele NÃO é incluído pelo main: o main pega o módulo pelo registro
+// de module.h e lê a memória por Module::Memory().
 //
-// Serve pra ver, no log de boot, o que foi parar em cada lugar.
-struct RnboAllocStats
-{
-    size_t internal_bytes; // servido do pool em SRAM
-    size_t big_bytes;      // servido pela SDRAM via AllocBig()
-    size_t internal_cap;   // tamanho do pool interno
-    int    blocks;         // quantas alocações
-    int    failures;       // quantas voltaram nullptr
-};
-
-const RnboAllocStats& RnboAllocStatsGet();
+// O extrato do alocador (pool em SRAM + queda pra hal::AllocBig)
+// era exposto aqui como RnboAllocStatsGet() e o main o chamava
+// direto — o que obrigava o main a incluir este header e furava a
+// fronteira pela porta dos fundos. Agora é Module::Memory(),
+// genérico, e nada concreto vaza.
 
 } // namespace cotuca

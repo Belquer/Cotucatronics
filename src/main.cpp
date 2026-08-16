@@ -1,17 +1,16 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.7.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.8.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.7.0"
+#define COTUCA_OS_VERSION "0.8.0"
 
 #include "hal.h"
 #include "params.h"
 #include "manifest.h"
 #include "module.h"
-#include "module_rnbo.h"
 #include "dynamics.h"
 #include <cstring>
 #include <cstdlib>
@@ -20,18 +19,25 @@
 static cotuca::ParamTable params;
 static cotuca::Manifest   manifest;
 
-// ---- módulo DSP ----
-static cotuca::Module* dsp = nullptr;
+// ---- módulos DSP, por SLOT ----
+// Preenchidos do REGISTRO em module.h. O main não inclui header de
+// motor nenhum: não sabe que existe RNBO. Slot vazio = passthrough.
+static cotuca::Module* mod_slot[static_cast<int>(cotuca::ModuleSlot::kCount)]
+    = {};
 
-// índice do parâmetro no módulo, resolvido por nome no boot.
-// -1 = nome não existe no export → não empurra nada.
-static int   mod_index[4];
-static float mod_last[4]; // só empurra o que mudou
+// índice do parâmetro dentro do módulo, resolvido por nome no boot.
+// -1 = nome não existe naquele slot → não empurra nada.
+static int   mod_index[8];
+static float mod_last[8]; // só empurra o que mudou
 
 // Fonte que alimenta o módulo: crossfade das entradas + tom de teste.
 // Estático porque o callback de áudio não aloca. 64 > block_size (48).
 static constexpr size_t kMaxBlock = 64;
 static float            src_buf[kMaxBlock];
+
+// Scratch do shifter. Module::Process não é seguro in-place — o motor
+// lê a entrada enquanto escreve a saída — então o ramo passa por aqui.
+static float shift_buf[2][kMaxBlock];
 
 // ---- cadeia de dinâmica do shell ----
 static cotuca::Gate     gate;
@@ -87,11 +93,12 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     for(size_t i = 0; i < size; i++)
         src_buf[i] = gate.Process(src_buf[i]);
 
-    // 3) MÓDULO — escreve direto no out (1 entrada, 2 saídas).
-    if(dsp)
+    // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (1 in, 2 out).
+    cotuca::Module* inst = mod_slot[(int)cotuca::ModuleSlot::Instrument];
+    if(inst)
     {
         const float* ins[1] = {src_buf};
-        dsp->Process(ins, out, size);
+        inst->Process(ins, out, size);
     }
     else
     {
@@ -108,7 +115,25 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         out[1][i] *= level;
     }
 
-    // 5) SPLIT — os ramos deixam de ser iguais aqui.
+    // 5) SHIFTER — SÓ no ramo do exciter, entre o split e o governor.
+    //    Anti-feedback: alguns Hz de deslocamento quebram a coerência
+    //    do laço piezo→corpo→piezo. Vem ANTES do governor de
+    //    propósito: o governor deve reagir ao sinal que de fato vai
+    //    pro exciter, já deslocado.
+    //
+    //    Slot vazio = passthrough silencioso. Um instrumento sem
+    //    shifter é um instrumento válido, não um erro.
+    cotuca::Module* shifter = mod_slot[(int)cotuca::ModuleSlot::Shifter];
+    if(shifter)
+    {
+        const float* ins[1]  = {out[0]};
+        float*       outs[2] = {shift_buf[0], shift_buf[1]};
+        shifter->Process(ins, outs, size);
+        for(size_t i = 0; i < size; i++)
+            out[0][i] = shift_buf[0][i];
+    }
+
+    // 6) SPLIT — os ramos deixam de ser iguais aqui.
     //    OUT_L vai pro exciter no corpo da escultura e é o ramo que
     //    realimenta o piezo: leva o governor. OUT_R é jack de linha,
     //    não realimenta, e não leva.
@@ -117,7 +142,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     for(size_t i = 0; i < size; i++)
         out[0][i] = gov_l.Process(out[0][i]);
 
-    // 5b) BENCH BOOST — FERRAMENTA DE BANCADA, só no ramo do exciter,
+    // 6b) BENCH BOOST — FERRAMENTA DE BANCADA, só no ramo do exciter,
     //     imediatamente antes do limiter. Ver o bloco de aviso em
     //     manifest.h: nunca vai a knob nem a cena, e nasce em 1.0.
     const float boost = params.Real(manifest.p_bench_boost);
@@ -125,7 +150,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         for(size_t i = 0; i < size; i++)
             out[0][i] *= boost;
 
-    // 6) LIMITER — último bloco de processamento em CADA ramo.
+    // 7) LIMITER — último bloco de processamento em CADA ramo.
     //    Um limiter por ramo, não um compartilhado: um pico no
     //    exciter não pode abaixar o jack de linha.
     for(size_t i = 0; i < size; i++)
@@ -134,7 +159,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         out[1][i] = lim_r.Process(out[1][i]);
     }
 
-    // 7) ROTEAMENTO — só liga/desliga o ramo. Depois do limiter
+    // 8) ROTEAMENTO — só liga/desliga o ramo. Depois do limiter
     //    porque mutar só pode reduzir: nada aqui consegue burlar o
     //    teto.
     const float r_exc = params.Real(manifest.p_route_exciter) >= 0.5f ? 1.f : 0.f;
@@ -243,20 +268,28 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "mods", 4) == 0)
     {
-        if(!dsp)
-        { hal::Log("nenhum modulo carregado"); return; }
-        hal::Log("modulo \"%s\": %d params", dsp->Name(), dsp->ParamCount());
-        for(int i = 0; i < dsp->ParamCount(); i++)
-            hal::Log("  [%d] %s", i, dsp->ParamName(i));
+        for(int s = 0; s < (int)ModuleSlot::kCount; s++)
+        {
+            const ModuleSlot slot = (ModuleSlot)s;
+            Module*          m    = mod_slot[s];
+            if(!m)
+            { hal::Log("slot %-10s vazio", SlotName(slot)); continue; }
+            hal::Log("slot %-10s \"%s\": %d params",
+                     SlotName(slot), m->Name(), m->ParamCount());
+            for(int i = 0; i < m->ParamCount(); i++)
+                hal::Log("    [%d] %s", i, m->ParamName(i));
+            const Module::MemReport mem = m->Memory();
+            if(mem.blocks)
+                hal::Log("    ram: %u SRAM (de %u) + %u SDRAM, %d bl, %d falhas",
+                         (unsigned)mem.internal_bytes, (unsigned)mem.internal_cap,
+                         (unsigned)mem.big_bytes, mem.blocks, mem.failures);
+        }
         for(int b = 0; b < manifest.n_bind; b++)
-            hal::Log("  %-10s -> %s [%d]",
+            hal::Log("  %-12s -> %s.%s [%d]",
                      params.Name(manifest.bind[b].param_id),
+                     SlotName(manifest.bind[b].slot),
                      manifest.bind[b].mod_name,
                      mod_index[b]);
-        const auto& a = cotuca::RnboAllocStatsGet();
-        hal::Log("  ram: %u SRAM (de %u) + %u SDRAM, %d blocos, %d falhas",
-                 (unsigned)a.internal_bytes, (unsigned)a.internal_cap,
-                 (unsigned)a.big_bytes, a.blocks, a.failures);
         return;
     }
     if(strncmp(line, "list", 4) == 0)
@@ -300,26 +333,40 @@ int main(void)
         while(1) { hal::SetLed(led); led = !led; hal::DelayMs(100); }
     }
 
-    // ---- módulo DSP: carrega, inicializa, resolve params por nome ----
-    dsp = CreateModule();
-    if(dsp && !dsp->Init(hal::Info().sample_rate, hal::Info().block_size))
+    // ---- módulos: pega do REGISTRO, slot a slot ----
+    // O main não conhece motor nenhum. Quem se registrou, apareceu.
+    for(int s = 0; s < (int)ModuleSlot::kCount; s++)
     {
-        hal::Log("ERRO: modulo \"%s\" falhou no Init — seguindo sem DSP",
-                 dsp->Name());
-        dsp = nullptr; // passthrough em vez de áudio corrompido
+        const ModuleSlot slot = (ModuleSlot)s;
+        Module*          m    = GetModule(slot);
+        if(!m)
+        {
+            hal::Log("slot %-10s vazio (passthrough)", SlotName(slot));
+            continue;
+        }
+        if(!m->Init(hal::Info().sample_rate, hal::Info().block_size))
+        {
+            // slot fica nullptr = passthrough. Áudio limpo com um
+            // módulo faltando é melhor que áudio corrompido com um
+            // módulo meio inicializado.
+            hal::Log("ERRO: \"%s\" no slot %s falhou no Init — slot vazio",
+                     m->Name(), SlotName(slot));
+            continue;
+        }
+        mod_slot[s] = m;
+        hal::Log("slot %-10s \"%s\": %d params",
+                 SlotName(slot), m->Name(), m->ParamCount());
     }
 
     for(int b = 0; b < manifest.n_bind; b++)
     {
-        mod_index[b] = dsp ? dsp->FindParam(manifest.bind[b].mod_name) : -1;
+        Module* m    = mod_slot[(int)manifest.bind[b].slot];
+        mod_index[b] = m ? m->FindParam(manifest.bind[b].mod_name) : -1;
         mod_last[b]  = -1.f; // força o primeiro push
-        if(dsp && mod_index[b] < 0)
-            hal::Log("AVISO: param \"%s\" nao existe no modulo",
-                     manifest.bind[b].mod_name);
+        if(m && mod_index[b] < 0)
+            hal::Log("AVISO: param \"%s\" nao existe no slot %s",
+                     manifest.bind[b].mod_name, SlotName(manifest.bind[b].slot));
     }
-    if(dsp)
-        hal::Log("modulo \"%s\": %d params, %d ligados",
-                 dsp->Name(), dsp->ParamCount(), manifest.n_bind);
 
     // Salvaguarda (c): bench_boost TEM que nascer em 1.0. Hoje não
     // existe persistência de cena, então isto nunca dispara — é
@@ -373,11 +420,14 @@ int main(void)
             // Real(), não Get(): é aqui que a curva do manifest passa a
             // valer. Os params do módulo são declarados 0–1, então Real()
             // devolve o normalizado JÁ CURVADO, que é o que o DSP quer.
-            const float v = params.Real(manifest.bind[b].param_id);
+            // Shaped(), não Real(): o módulo quer 0..1 com a curva do
+            // manifest já aplicada. Real() traz a unidade (Hz, ms),
+            // que é assunto nosso e não dele.
+            const float v = params.Shaped(manifest.bind[b].param_id);
             if(v != mod_last[b])
             {
                 mod_last[b] = v;
-                dsp->SetParam(mod_index[b], v);
+                mod_slot[(int)manifest.bind[b].slot]->SetParam(mod_index[b], v);
             }
         }
 

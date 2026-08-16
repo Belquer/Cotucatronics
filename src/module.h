@@ -1,5 +1,5 @@
 #pragma once
-// module.h v0.1.0
+// module.h v0.2.0
 // ============================================================
 // Cotucatronics OS — interface abstrata de módulo DSP
 //
@@ -11,7 +11,7 @@
 // código escrito à mão. Regra espelhada: nenhum header do RNBO
 // pode aparecer fora de module_rnbo.cpp.
 //
-// Board-agnostic: inclui só params.h, nunca hal_<board>.
+// Board-agnostic: inclui só <cstddef>, nunca hal_<board>.
 // ============================================================
 
 #include <cstddef>
@@ -19,7 +19,49 @@
 namespace cotuca
 {
 
-#define COTUCA_MODULE_VERSION "0.1.0"
+#define COTUCA_MODULE_VERSION "0.2.0"
+
+// ------------------------------------------------------------
+// SLOTS — posições FIXAS na cadeia do shell.
+//
+// O shell não carrega "uma lista de módulos": ele tem lugares
+// definidos, cada um com uma função no signal path. Isso é
+// deliberado. Uma cadeia livre de plugins pediria roteamento
+// dinâmico, ordem configurável e a pergunta "o que vem antes do
+// quê" aberta em runtime — e num instrumento realimentado a
+// ordem É a segurança. O shifter tem que vir antes do governor,
+// não depois; o limiter tem que ser último. Slot fixo torna
+// isso estrutural em vez de convenção.
+//
+//   fonte → GATE → [INSTRUMENT] → level → split
+//                                          ├ OUT_L: [SHIFTER] → GOVERNOR → LIMITER
+//                                          └ OUT_R:                        LIMITER
+// ------------------------------------------------------------
+enum class ModuleSlot
+{
+    // O módulo da escultura: delay, reverb, o que a peça for.
+    // Caminho principal, antes do split.
+    Instrument = 0,
+
+    // Frequency shifter, SÓ no ramo do exciter, entre o split e
+    // o governor. É anti-feedback: deslocar alguns Hz quebra a
+    // coerência do laço piezo→corpo→piezo antes que ele cresça.
+    // Vem ANTES do governor de propósito — o governor deve reagir
+    // ao sinal que de fato vai pro exciter, já deslocado.
+    Shifter = 1,
+
+    kCount
+};
+
+inline const char* SlotName(ModuleSlot s)
+{
+    switch(s)
+    {
+        case ModuleSlot::Instrument: return "instrument";
+        case ModuleSlot::Shifter: return "shifter";
+        default: return "?";
+    }
+}
 
 class Module
 {
@@ -34,7 +76,7 @@ class Module
     // O boot deve recusar e logar, não seguir com módulo meio vivo.
     virtual bool Init(float sample_rate, size_t block_size) = 0;
 
-    // Pro log de boot: "delay", "reverb"...
+    // Pro log de boot: "delay", "shifter"...
     virtual const char* Name() const = 0;
 
     // ---- parâmetros POR NOME ----
@@ -44,8 +86,8 @@ class Module
     // apodrece. Então o manifest pede "delay_time" e o módulo resolve.
     // FindParam devolve -1 se não existe — quem chama DEVE checar, é
     // assim que um patch trocado vira erro claro no boot.
-    virtual int         ParamCount() const               = 0;
-    virtual const char* ParamName(int index) const       = 0;
+    virtual int         ParamCount() const                = 0;
+    virtual const char* ParamName(int index) const        = 0;
     virtual int         FindParam(const char* name) const = 0;
 
     // valor normalizado 0..1, na mesma moeda da ParamTable.
@@ -58,15 +100,70 @@ class Module
     virtual void Process(const float* const* in,
                          float**             out,
                          size_t              size) = 0;
+
+    // Extrato de memória do módulo, pro `mods` e pro log de boot.
+    // Genérico de propósito: sem isto o main precisaria chamar uma
+    // função concreta do motor (era RnboAllocStatsGet()) e voltaria
+    // a incluir o header do RNBO — furando a fronteira pela porta
+    // dos fundos. Motor que não sabe se medir devolve zeros.
+    struct MemReport
+    {
+        size_t internal_bytes = 0; // servido de pool próprio (SRAM)
+        size_t internal_cap   = 0; // tamanho desse pool
+        size_t big_bytes      = 0; // servido por hal::AllocBig (SDRAM)
+        int    blocks         = 0;
+        int    failures       = 0;
+    };
+    virtual MemReport Memory() const { return MemReport{}; }
 };
 
-// Toda implementação expõe uma fábrica com esta cara. O main pega o
-// módulo sem saber de que motor ele saiu:
+// ------------------------------------------------------------
+// REGISTRO
 //
-//     cotuca::Module* m = cotuca::CreateModule();
+// Cada implementação se registra sozinha num slot, por objeto
+// estático. O main pergunta ao registro e NUNCA inclui header
+// concreto de motor — era essa a dívida: `#include
+// "module_rnbo.h"` no main.cpp. Com um módulo só dava pra viver
+// com ela; com dois, cada motor novo somaria um include e uma
+// chamada concreta, e a fronteira viraria decoração.
 //
-// Definida em module_<engine>.cpp e escolhida no Makefile, igual ao
-// hal_<board>.cpp. Devolve nullptr se o motor não estiver disponível.
-Module* CreateModule();
+// Os slots vivem em .bss (zerados antes do __libc_init_array),
+// então registrar de construtor estático é seguro: nenhum
+// registrador roda antes do array existir zerado.
+// ------------------------------------------------------------
+namespace detail
+{
+inline Module** RegistrySlots()
+{
+    static Module* slots[static_cast<int>(ModuleSlot::kCount)] = {};
+    return slots;
+}
+} // namespace detail
+
+inline void RegisterModule(ModuleSlot slot, Module* m)
+{
+    const int i = static_cast<int>(slot);
+    if(i >= 0 && i < static_cast<int>(ModuleSlot::kCount))
+        detail::RegistrySlots()[i] = m;
+}
+
+// nullptr = slot vazio. O shell trata como passthrough, não como
+// erro: um instrumento sem shifter é um instrumento válido.
+inline Module* GetModule(ModuleSlot slot)
+{
+    const int i = static_cast<int>(slot);
+    if(i < 0 || i >= static_cast<int>(ModuleSlot::kCount))
+        return nullptr;
+    return detail::RegistrySlots()[i];
+}
+
+// Auto-registro: basta declarar um destes ao lado da instância.
+//
+//     static RnboModule       g_delay;
+//     static ModuleRegistrar  g_reg(ModuleSlot::Instrument, &g_delay);
+struct ModuleRegistrar
+{
+    ModuleRegistrar(ModuleSlot slot, Module* m) { RegisterModule(slot, m); }
+};
 
 } // namespace cotuca

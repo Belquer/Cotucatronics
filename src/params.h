@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.4.0
+// Cotucatronics OS — params v0.5.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -15,7 +15,7 @@
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.4.0"
+#define COTUCA_PARAMS_VERSION "0.5.0"
 
 // knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
 // 4 de caráter + SRC MIX = 5.
@@ -133,6 +133,21 @@ class ParamTable
         // chamado a cada bloco de áudio.
         const float shaped = (c == 1.0f) ? n : powf(n, c);
         return min_[id] + shaped * (max_[id] - min_[id]);
+    }
+
+    // Normalizado DEPOIS da curva, sempre em 0..1. É o que um
+    // módulo DSP quer receber: a curva do manifest já aplicada, mas
+    // sem a unidade real (Hz, ms) que é assunto nosso, não dele.
+    //
+    // Equivale a (Real - min)/(max - min). Empurrar Real() direto só
+    // funcionava porque os params do delay são [0,1] por acaso — com
+    // shift_hz em [0,20] o módulo receberia 20 onde espera 1.
+    float Shaped(int id) const
+    {
+        if(!Valid(id))
+            return 0.f;
+        const float c = curve_[id];
+        return (c == 1.0f) ? norm_[id] : powf(norm_[id], c);
     }
 
     float Curve(int id) const { return Valid(id) ? curve_[id] : 1.0f; }

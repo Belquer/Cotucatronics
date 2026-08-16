@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.8.0
+// manifest.h (instrumento "bancada") v0.9.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -10,6 +10,7 @@
 // ============================================================
 
 #include "params.h"
+#include "module.h"
 
 namespace cotuca
 {
@@ -74,6 +75,20 @@ struct Manifest
     // ============================================================
     int p_bench_boost;
 
+    // SHIFTER — anti-feedback no ramo do exciter. Deslocar alguns Hz
+    // quebra a coerência do laço piezo→corpo→piezo antes que ele
+    // cresça: o sinal que volta não coincide mais em fase com o que
+    // saiu, e a realimentação não encontra uma frequência pra travar.
+    //
+    // >>> DESTINO DO ENCODER FÍSICO, junto com gov_ceiling. Os dois
+    // >>> formam o controle da "borda de feedback": gov_ceiling diz
+    // >>> ONDE parar de crescer, shift_hz diz O QUANTO desmanchar o
+    // >>> laço. Push do encoder alterna entre os dois.
+    //
+    // 0 Hz = desligado. Acima de ~10 Hz começa a soar como efeito
+    // (metálico, desafinado) em vez de proteção transparente.
+    int p_shift_hz;
+
     // ---- ligação com o módulo DSP, POR NOME ----
     // O manifest não conhece índice de parâmetro do RNBO: reexportar
     // o patch reordena tudo. Declara-se o nome, e o boot resolve o
@@ -81,10 +96,11 @@ struct Manifest
     // claro no log, não parâmetro fantasma mexendo em nada.
     struct ModBind
     {
+        ModuleSlot  slot;     // em qual slot da cadeia o módulo está
         int         param_id; // id na nossa ParamTable
-        const char* mod_name; // nome no export do RNBO
+        const char* mod_name; // nome do parâmetro dentro do módulo
     };
-    ModBind bind[4];
+    ModBind bind[8];
     int     n_bind = 0;
 
     Macro knob[kNumKnobs];
@@ -134,6 +150,10 @@ struct Manifest
         // faixa [1,8] e curve 1 dá real = 1.0 no boot, sempre.
         p_bench_boost   = t.Add("bench_boost",   0.0f, 1.f, 8.f);
 
+        // SHIFTER. Faixa 0–20 Hz, default 0 (desligado). Linear pelo
+        // mesmo motivo do gov_ceiling: a borda se procura de ouvido.
+        p_shift_hz      = t.Add("shift_hz",      0.0f, 0.f, 20.f);
+
         // knob físico → macro → parâmetro(s)
         knob[0].AddTarget(p_dly_time, 1.0f);
         knob[1].AddTarget(p_dly_mix, 1.0f);
@@ -150,8 +170,12 @@ struct Manifest
         // bancada, não performance.
 
         // nomes conferidos contra description.json do export
-        bind[n_bind++] = {p_dly_time, "dly_time"};
-        bind[n_bind++] = {p_dly_mix, "dly_mix"};
+        bind[n_bind++] = {ModuleSlot::Instrument, p_dly_time, "dly_time"};
+        bind[n_bind++] = {ModuleSlot::Instrument, p_dly_mix, "dly_mix"};
+        // Slot do shifter ainda vazio: a ligação já existe e resolve
+        // pra -1 em silêncio até um módulo se registrar ali. É o
+        // ponto: o shell fica pronto sem fingir que o módulo existe.
+        bind[n_bind++] = {ModuleSlot::Shifter, p_shift_hz, "shift_hz"};
         // exemplo de macro composta (comentado):
         // knob[1].AddTarget(p_verb_size, 0.8f);
         // knob[1].AddTarget(p_verb_damp, -0.5f); // invertido

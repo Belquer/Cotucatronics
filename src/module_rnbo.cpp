@@ -1,6 +1,6 @@
 // ============================================================
 // Cotucatronics OS — módulo DSP: export do RNBO
-// module_rnbo v0.1.0
+// module_rnbo v0.2.0
 //
 // ÚNICO arquivo do projeto que pode incluir headers do RNBO.
 // Regra espelhada da fronteira HAL: assim como só
@@ -59,7 +59,7 @@ constexpr size_t kHeader       = 8; // guarda o tamanho e mantém alinhamento 8
 alignas(8) uint8_t g_pool[kInternalPool];
 size_t             g_pool_used = 0;
 
-cotuca::RnboAllocStats g_stats = {0, 0, kInternalPool, 0, 0};
+cotuca::Module::MemReport g_stats = {0, kInternalPool, 0, 0, 0};
 
 inline size_t Align8(size_t n) { return (n + 7u) & ~size_t(7); }
 
@@ -139,8 +139,6 @@ void* realloc(void* ptr, size_t size)
 namespace cotuca
 {
 
-const RnboAllocStats& RnboAllocStatsGet() { return g_stats; }
-
 namespace
 {
 
@@ -196,6 +194,8 @@ class RnboModule final : public Module
                                    RNBO::TimeNow);
     }
 
+    MemReport Memory() const override { return g_stats; }
+
     void Process(const float* const* in, float** out, size_t size) override
     {
         // description.json: 1 entrada, 2 saídas.
@@ -213,8 +213,11 @@ class RnboModule final : public Module
 
 RnboModule g_module; // estático: sem heap, vida do programa inteiro
 
-} // namespace
+// Auto-registro no slot INSTRUMENT. É isto que tira o
+// `#include "module_rnbo.h"` do main.cpp: o main pergunta ao
+// registro por slot e nunca nomeia um motor concreto.
+ModuleRegistrar g_registrar(ModuleSlot::Instrument, &g_module);
 
-Module* CreateModule() { return &g_module; }
+} // namespace
 
 } // namespace cotuca

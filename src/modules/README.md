@@ -1,6 +1,6 @@
 # modules/ — manual de embarque de módulos RNBO
 
-**Documento v0.2.0** · receita validada em placa com o módulo `delay`
+**Documento v0.3.0** · receita validada em placa com o módulo `delay`
 (RNBO 1.4.3 / Max 9.1.4, Daisy Seed 2, firmware v0.5.0)
 
 Este é o **template de toda escultura futura**. Quem for embarcar o segundo
@@ -276,6 +276,65 @@ Os três `-I` são todos necessários: `rnbo/` tem `RNBO_Common.h`, `rnbo/common
 tem `RNBO_MinimalEngine.h` e os headers internos, e a raiz do export resolve os
 includes relativos do arquivo gerado. Os dois `-Wno-` calam warnings de código
 gerado — que não vamos corrigir, porque não editamos o export.
+
+---
+
+## Slots e registro
+
+O shell tem **posições fixas** na cadeia, não uma lista livre de plugins:
+
+```
+fonte → GATE → [INSTRUMENT] → level → split
+                                       ├ OUT_L: [SHIFTER] → GOVERNOR → LIMITER
+                                       └ OUT_R:                        LIMITER
+```
+
+| Slot | Onde | Pra quê |
+|---|---|---|
+| `Instrument` | caminho principal, antes do split | o DSP da escultura: delay, reverb, o que a peça for |
+| `Shifter` | ramo do exciter, entre split e governor | anti-feedback por deslocamento de frequência |
+
+**Por que fixo e não configurável.** Cadeia livre pediria ordem em runtime — e
+num instrumento realimentado **a ordem é a segurança**. O shifter tem que vir
+antes do governor (o governor precisa reagir ao sinal que de fato vai pro
+exciter, já deslocado); o limiter tem que ser o último. Slot fixo torna isso
+estrutural em vez de convenção que alguém pode furar sem perceber.
+
+**Slot vazio é passthrough**, não erro. Instrumento sem shifter é instrumento
+válido.
+
+### Como um módulo entra num slot
+
+Auto-registro por objeto estático, no fim do `module_<engine>.cpp`:
+
+```cpp
+RnboModule      g_module;
+ModuleRegistrar g_registrar(ModuleSlot::Instrument, &g_module);
+```
+
+O `main.cpp` **não inclui header de motor nenhum** — pergunta ao registro por
+slot. Era essa a dívida: com um módulo só dava pra viver com o
+`#include "module_rnbo.h"`; com dois, cada motor somaria um include e uma
+chamada concreta, e a fronteira viraria decoração.
+
+O extrato de memória segue o mesmo caminho: era `RnboAllocStatsGet()` chamado
+direto pelo main, o que furava a fronteira pela porta dos fundos mesmo sem
+include aparente. Virou `Module::Memory()`, genérico.
+
+### As três moedas de um parâmetro
+
+Erro fácil de cometer e difícil de ver. Um parâmetro tem **três** leituras, e
+cada consumidor quer uma:
+
+| Método | Devolve | Quem consome |
+|---|---|---|
+| `Get()` | normalizado cru, 0–1 | knob e macro (posição de curso) |
+| `Shaped()` | normalizado **com a curva aplicada**, 0–1 | **o módulo DSP** |
+| `Real()` | unidade real: Hz, ms, × | humano, `set`, `list`, log |
+
+Empurrar `Real()` pro módulo funcionava enquanto todos os params do módulo eram
+`[0,1]` — aí real e normalizado coincidem por acaso. Com `shift_hz` em
+`[0, 20] Hz` o módulo receberia **20 onde espera 1**. Use `Shaped()`.
 
 ---
 
