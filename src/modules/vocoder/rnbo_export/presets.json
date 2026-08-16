@@ -1,0 +1,10 @@
+[
+  {
+    "name": "vocoder",
+    "preset": {
+      "voc_pitch": {
+        "value": 0.5
+      }
+    }
+  }
+]

@@ -3,14 +3,14 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.4.0
+// hal_daisy_seed v0.7.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.4.0"
+#define COTUCA_HAL_VERSION "0.7.0"
 
 using namespace daisy;
 
@@ -24,8 +24,11 @@ static BoardInfo info = {
     .num_knobs    = 5, // 4 de caráter + SRC MIX
     .has_audio_in = true,
     .sample_rate  = 48000.f,
-    .block_size   = 48, // ~1 ms
+    // Valor de partida; o manifest pede o dele em RequestBlockSize()
+    // antes do StartAudio. Ver Requirements::block_size.
+    .block_size   = 48,
     .big_ram_bytes = 64u * 1024u * 1024u, // SDRAM
+    .cpu_hz        = 0, // preenchido no Init com o clock real
 };
 
 // ---- pool SDRAM: alocador bump, simples e determinístico ----
@@ -106,7 +109,10 @@ static void UsbRxCallback(uint8_t* buf, uint32_t* len)
 // ---- contrato ----
 bool Init()
 {
-    hw.Init();
+    // >>> BENCH <<< boost de clock: 400 MHz -> 480 MHz (+20%).
+    // Reverter pra hw.Init() junto com o block_size.
+    hw.Init(true);
+    info.cpu_hz = System::GetSysClkFreq();
     hw.SetAudioBlockSize(info.block_size);
     hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
     info.sample_rate = hw.AudioSampleRate();
@@ -117,6 +123,14 @@ bool Init()
 }
 
 const BoardInfo& Info() { return info; }
+
+void RequestBlockSize(size_t block_size)
+{
+    if(block_size == 0)
+        return;
+    hw.SetAudioBlockSize(block_size);
+    info.block_size = hw.AudioBlockSize(); // o efetivo, não o pedido
+}
 
 void StartAudio(AudioCallback cb)
 {
@@ -214,5 +228,6 @@ size_t AllocBigUsed() { return sdram_used; }
 
 float CpuLoadAvg() { return cpu_meter.GetAvgCpuLoad(); }
 float CpuLoadMax() { return cpu_meter.GetMaxCpuLoad(); }
+void  CpuLoadReset() { cpu_meter.Reset(); }
 
 } // namespace cotuca::hal

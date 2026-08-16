@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.10.0
+// manifest.h (instrumento "bancada") v0.15.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -23,6 +23,26 @@ struct Requirements
     size_t big_ram_bytes = 0;     // ex: 8MB p/ freeze longo
     bool   needs_audio_in = true; // esculturas com piezo: sim
     int    min_knobs      = 4;
+
+    // ---- TAMANHO DE BLOCO: decisão de INSTRUMENTO ----
+    //
+    // Define a latência, e num instrumento realimentado a latência é
+    // parte do laço acústico — mexer nela muda ONDE o feedback se
+    // estabelece. Por isso mora aqui e não no HAL.
+    //
+    // O prazo de cada bloco é block_size / sample_rate, e é ele que
+    // um módulo pesado precisa caber. Módulo espectral concentra o
+    // custo no bloco do hop: o que tem que caber é o PICO.
+    //
+    //    48  →  1000 us  — latência mínima, o normal do instrumento
+    //   128  →  2667 us  — 2,7x de orçamento, 2,7 ms de latência
+    //   256  →  5333 us  — 5,3x de orçamento, 5,3 ms de latência
+    //
+    // Medido com o vocoder (FFT 2048/hop 1024): pico de 5609 us em
+    // regime — não coube nem no 256, por 5%. A variante FFT
+    // 1024/hop 512 deve cair pra faixa de 2,5–2,8k us e caber no 256
+    // com folga.
+    size_t block_size = 128;
 };
 
 struct Manifest
@@ -89,6 +109,35 @@ struct Manifest
     // 0 Hz = desligado. Acima de ~10 Hz começa a soar como efeito
     // (metálico, desafinado) em vez de proteção transparente.
     int p_shift_hz;
+
+    // ---- FREEZE (slot Fx2) ----
+    // Serial-only: os cinco knobs estao todos ocupados. As faixas
+    // ESPELHAM as do export, porque o modulo recebe normalizado e o
+    // RNBO remapeia — declarar [-24,24] aqui faz `set frz_transp 12`
+    // significar 12 semitons de verdade.
+    // BYPASS do slot Fx2. NASCE DESLIGADO de proposito.
+    //
+    // Um modulo pesado que estoura o prazo do bloco de audio nao
+    // "soa mal": ele mata o loop principal por inanicao, e a placa
+    // fica surda no serial — sem log, sem cpu, sem jeito de
+    // diagnosticar a nao ser regravando. Ja aconteceu com o freeze.
+    //
+    // Com bypass, o boot sempre responde, e ligar o modulo vira um
+    // experimento reversivel em vez de uma aposta.
+    int p_fx2_on;
+
+    // Variante ENXUTA do patch: a cirurgia do dB fixou auto, fade e
+    // pitchjit internamente e removeu transp/panjit/ampjit. Restam
+    // dois params vivos. O export ainda EXPOE lowcut, highcut,
+    // direct, auto, autodel, fade e pitchjit — nao ligamos porque,
+    // segundo o autor, estao fixos por dentro; ligar daria a ilusao
+    // de controle sobre algo que nao responde.
+    // ---- VOCODER (slot Fx2) ----
+    // Cross-synthesis: ch1 = escultura (modulador), ch2 = jack de
+    // linha CRU (portadora). Serial-only — os cinco knobs estao
+    // ocupados.
+    int p_voc_mix;   // → "voc_mix"    0..1, seco/molhado
+    int p_voc_pitch; // → "voc_pitch"  0..1, centro 0.5 = sem deslocamento
 
     // ---- ligação com o módulo DSP, POR NOME ----
     // O manifest não conhece índice de parâmetro do RNBO: reexportar
@@ -173,9 +222,32 @@ struct Manifest
         // (`tone on`/`tone off`) e pelo default — o tom de teste é
         // bancada, não performance.
 
-        // nomes conferidos contra description.json do export
+        // Fx2 nasce em BYPASS — ver a nota no bloco de declaracao.
+        p_fx2_on     = t.Add("fx2_on",     0.0f, 0.f,   1.f);
+
+        // FREEZE. Defaults iguais aos do export, pra o boot nascer
+        // com o patch no estado que o autor definiu.
+        // Defaults iguais aos do export: mix 1 (molhado), pitch 0.5
+        // (centro, deslocamento zero).
+        p_voc_mix   = t.Add("voc_mix",   1.0f, 0.f, 1.f);
+        p_voc_pitch = t.Add("voc_pitch", 0.5f, 0.f, 1.f);
+
+        // ---- LIGACOES ----
+        // TODAS depois de TODOS os Add(). Nao e estilo: um bind feito
+        // antes do Add correspondente le o id AINDA ZERO, e id 0 e o
+        // `level` — foi exatamente o que aconteceu, e o knob de volume
+        // passou a dirigir os quatro parametros do freeze em silencio,
+        // porque -1 nao aparece e 0 e um id perfeitamente valido.
+        //
+        // O `mods` mostra o nome do parametro de origem justamente pra
+        // isso saltar aos olhos: quatro linhas dizendo "level ->" e o
+        // sintoma.
         bind[n_bind++] = {ModuleSlot::Instrument, p_dly_time, "dly_time"};
         bind[n_bind++] = {ModuleSlot::Instrument, p_dly_mix, "dly_mix"};
+        // nomes conferidos contra o description.json do freeze
+        bind[n_bind++] = {ModuleSlot::Fx2, p_voc_mix, "voc_mix"};
+        bind[n_bind++] = {ModuleSlot::Fx2, p_voc_pitch, "voc_pitch"};
+
         // shift_hz NÃO tem ModBind: o shifter é bloco do shell, lido
         // direto do callback, como gate/governor/limiter. Slot Fx2
         // segue vago até o freeze.

@@ -36,7 +36,11 @@ HAL_SRC = hal_$(BOARD).cpp
 # Motores de DSP. Cada module_rnbo_*.cpp inclui o .cpp gerado como
 # fonte, dentro de um namespace proprio — os exports nao entram aqui
 # como unidades de compilacao separadas.
-MODULE_SRC ?= module_rnbo_delay.cpp module_rnbo_freeze.cpp
+# O freeze saiu do build: nao cabe no prazo do bloco (7349 us medidos
+# contra 2667 de orcamento) e ocupava 89% do pool de SRAM, que o
+# vocoder precisa. O arquivo continua no repo — module_rnbo_freeze.cpp
+# aponta pra modules/xxxfreeze/ — pra voltar quando o patch emagrecer.
+MODULE_SRC ?= module_rnbo_delay.cpp module_rnbo_vocoder.cpp
 
 # UM runtime pros dois patchers. Os exports vieram com versoes
 # diferentes (delay 1.4.3, freeze 1.4.5), mas elas diferem em 3

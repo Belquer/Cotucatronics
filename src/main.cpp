@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.12.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.14.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.12.0"
+#define COTUCA_OS_VERSION "0.14.0"
 
 #include "hal.h"
 #include "params.h"
@@ -35,7 +35,8 @@ static float mod_last[8]; // só empurra o que mudou
 // TEM que ser >= ao block_size da placa. Com 64 e bloco 128, o clamp
 // abaixo processaria metade do bloco e deixaria a outra metade do
 // buffer de saida com lixo do bloco anterior — sem erro, com ruido.
-static constexpr size_t kMaxBlock = 128;
+// >= ao maior block_size que o manifest pode pedir (48/128/256).
+static constexpr size_t kMaxBlock = 256;
 static float            src_buf[kMaxBlock];
 
 // Scratch pro slot Fx2: Module::Process não é seguro in-place, o motor
@@ -46,6 +47,37 @@ static float fx_buf[2][kMaxBlock];
 // tem entrada de áudio: um módulo de 2 inputs continua rodando, só
 // que sem portadora.
 static float zero_buf[kMaxBlock] = {};
+
+// ============================================================
+// REGRA: QUEM ARMA E QUEM CHECA TÊM QUE SER O MESMO CONTEXTO.
+//
+// Este projeto tem dois contextos que rodam concorrentes — o
+// callback de áudio (interrupção) e o loop principal. Toda vez
+// que uma proteção foi ARMADA num e a condição que ela protege
+// aconteceu no outro, apareceu bug. Três vezes, todas com a
+// lógica correta e só a ordem errada:
+//
+//  1. DESPACHO SERIAL. O callback de RX do USB (ISR) chamava o
+//     painel falso direto, e hal::Log() transmite pelo mesmo
+//     USB: o segundo Log esperava um TX que só completa quando a
+//     ISR retorna. Deadlock — `list` matava a placa. Conserto: a
+//     ISR só enfileira, PollSerial() despacha do loop.
+//
+//  2. LIGAÇÃO DE PARÂMETRO. bind[] era montado ANTES dos Add()
+//     correspondentes no mesmo Init(). Os ids valiam 0, que é um
+//     id VÁLIDO — o do `level` —, então o knob de volume dirigia
+//     quatro parâmetros do freeze em silêncio. Conserto: todos
+//     os Add() antes de todos os bind[].
+//
+//  3. JANELA DE GRAÇA (abaixo). Duas vezes seguidas: primeiro a
+//     transição 0→1 era detectada no loop enquanto o bloco caro
+//     rodava no callback; depois o medidor era zerado no loop
+//     enquanto a checagem acontecia no callback. Nos dois casos
+//     a proteção existia e chegava tarde.
+//
+// O padrão é sempre o mesmo e o conserto também: mova o ARMAR
+// para junto do CHECAR, não o contrário.
+// ============================================================
 
 // ---- watchdog de módulo ----
 //
@@ -62,9 +94,26 @@ static float zero_buf[kMaxBlock] = {};
 // Trava, não histerese: um módulo que estourou uma vez vai estourar
 // de novo, e ficar oscilando entre ativo e bypass soaria pior que
 // ficar fora.
-static volatile bool fx2_overrun = false;
-static bool          fx2_reported = false;
-static constexpr float kOverrunTrip = 0.90f;
+// JANELA DE GRAÇA. Um módulo pode fazer trabalho de UMA VEZ no
+// primeiro Process — o RNBO aloca buffers de FFT preguiçosamente,
+// por exemplo. Condenar por isso confundiria custo de estreia com
+// custo de regime, que é justamente a pergunta que interessa.
+//
+// Durante a graça o watchdog não trava, e ao fim dela o medidor é
+// ZERADO: assim o pico reportado depois é só regime permanente.
+static volatile bool     fx2_overrun  = false;
+static bool              fx2_reported = false;
+static volatile uint32_t fx2_grace    = 0;
+static volatile bool     fx2_grace_done = false;
+static bool              fx2_was_on   = false;
+// A transicao 0->1 e detectada DENTRO do callback, nao no loop.
+// Detectar no loop cria corrida: o callback dispara entre o parametro
+// mudar e o loop chegar na linha que arma a graca, e o bloco caro da
+// estreia roda com graca=0 — trava o watchdog antes da protecao
+// existir. Foi exatamente o que aconteceu na primeira tentativa.
+static volatile bool     fx2_prev_want = false;
+static constexpr float   kOverrunTrip = 0.90f;
+static constexpr uint32_t kGraceBlocks = 24; // ~64 ms em bloco 128
 
 // ---- cadeia de dinâmica do shell ----
 static cotuca::Gate     gate;
@@ -151,8 +200,31 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //    e reversivel.
     cotuca::Module* fx2      = mod_slot[(int)cotuca::ModuleSlot::Fx2];
     const bool      fx2_want = fx2 && params.Real(manifest.p_fx2_on) >= 0.5f;
-    if(fx2_want && !fx2_overrun
-       && cotuca::hal::CpuLoadMax() > kOverrunTrip)
+    if(fx2_want && !fx2_prev_want)
+    {
+        // acabou de ligar: abre a graca AQUI, antes de qualquer bloco
+        fx2_grace   = kGraceBlocks;
+        fx2_overrun = false;
+    }
+    fx2_prev_want = fx2_want;
+
+    if(fx2_want && fx2_grace > 0)
+    {
+        if(--fx2_grace == 0)
+        {
+            // ZERA AQUI, no mesmo contexto de quem checa. Deixar o
+            // reset pro loop principal cria corrida: o medidor ainda
+            // carrega o pico da estreia quando o bloco seguinte faz a
+            // checagem, e o watchdog trava por um custo que a graca
+            // existia justamente pra perdoar. Terceira vez nesta
+            // funcao que contexto errado gera bug — armar protecao e
+            // checar condicao TEM que ser o mesmo contexto.
+            cotuca::hal::CpuLoadReset();
+            fx2_grace_done = true; // o loop so loga
+        }
+    }
+    else if(fx2_want && !fx2_overrun
+            && cotuca::hal::CpuLoadMax() > kOverrunTrip)
         fx2_overrun = true; // trava; quem loga é o loop principal
     if(fx2_want && !fx2_overrun)
     {
@@ -469,6 +541,13 @@ int main(void)
     lim_r.Init(hal::Info().sample_rate);
     shift_l.Init(hal::Info().sample_rate);
 
+    // Tamanho de bloco é decisão de INSTRUMENTO, não de placa: ele
+    // define a latência, e num instrumento realimentado a latência é
+    // parte do laço acústico. Por isso vem do manifest. Tem que ser
+    // pedido ANTES do StartAudio — o medidor de CPU se calibra pelo
+    // valor efetivo.
+    hal::RequestBlockSize(manifest.req.block_size);
+
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);
     hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION " [%s] — pronto.",
@@ -507,6 +586,24 @@ int main(void)
                      hal::CpuLoadMax() * 100.f);
             hal::Log("  para rearmar: set fx2_on 0, depois set fx2_on 1");
         }
+        // o callback e quem arma a graca; aqui so se avisa
+        {
+            const bool on = params.Real(manifest.p_fx2_on) >= 0.5f;
+            if(on && !fx2_was_on)
+            {
+                fx2_reported = false;
+                hal::Log("fx2: janela de graca de %lu blocos (custo de "
+                         "estreia nao conta)", (unsigned long)kGraceBlocks);
+            }
+            fx2_was_on = on;
+        }
+        if(fx2_grace_done)
+        {
+            fx2_grace_done = false;
+            hal::Log("fx2: graca encerrada, medidor zerado — daqui pra "
+                     "frente e regime permanente");
+        }
+
         // rearma quando o operador desliga explicitamente
         if(params.Real(manifest.p_fx2_on) < 0.5f && fx2_overrun)
         {
