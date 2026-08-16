@@ -11,6 +11,15 @@ shifter SSB, os quatro em C++ do shell.
 **T1, T2, T3, T5, T6, T7 e T8 do [TESTES.md](src/TESTES.md) passaram em bancada**;
 T4 espera hardware. Tudo rodando a **10,7% de CPU**.
 
+> ### O que está gravado na placa agora — MODO BANCADA
+>
+> **480 MHz · bloco 256 (5,3 ms de latência) · `-O3` · app na QSPI**
+> · firmware OS v0.15.0 / HAL v0.7.0
+>
+> Não é configuração de palco: o bloco 256 existe porque o vocoder
+> precisa dele. Escultura sem módulo espectral roda em 48, com 1 ms.
+> Detalhes e o que reverter em [BOARDS.md](src/BOARDS.md).
+
 ---
 
 ## Arquitetura

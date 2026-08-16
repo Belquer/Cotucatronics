@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.2.0**
+**Documento v0.3.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -52,6 +52,76 @@ dentro. **Nada disso vaza pro nosso código.**
 > Teensy 4.1 tem 8 MB de flash direto, sem bootloader intermediário.
 >
 > Fluxo de gravação completo em [TESTES.md](TESTES.md).
+
+---
+
+## Estado gravado na placa hoje — MODO BANCADA
+
+> Isto **não** é a configuração de palco. É o que está na Seed neste
+> momento, e daqui a semanas ninguém lembra de cabeça.
+
+| | Valor | Onde muda |
+|---|---|---|
+| Clock | **480 MHz** (boost) | `hw.Init(true)` em `hal_daisy_seed.cpp` |
+| Bloco | **256** (5 333 µs, latência 5,3 ms) | `Requirements::block_size` no manifest |
+| Otimização | **`-O3`** | `OPT` no `Makefile` |
+| App | QSPI via bootloader | `APP_TYPE=BOOT_QSPI` |
+| Firmware | OS v0.15.0 / HAL v0.7.0 | |
+
+**O bloco 256 é do instrumento de teste**, escolhido porque o vocoder
+precisa dele (3 520 µs de pico). Uma escultura sem módulo espectral roda
+em 48 e tem 1 ms de latência — o bloco é decisão de manifest justamente
+por isso.
+
+**O `-O3` é candidato a reverter.** Medido contra `-O2`: média piorou de
+11,3% para 13,0%, pico praticamente igual. O app executa da QSPI, e o
+binário inflou 13% (260 → 295 KB) — mais código, mais falha de I-cache,
+e numa memória externa isso custa mais que o inlining rende. Só não
+reverti porque não era o gargalo.
+
+---
+
+## Pool de SRAM dos módulos: 96,6% ocupado
+
+O alocador dos módulos RNBO (`module_rnbo_alloc.h`) serve de um pool
+estático de **48 KB** em SRAM e só cai pra `AllocBig()` (SDRAM) no que
+não couber. Estado com dois módulos:
+
+| Módulo | SRAM | Blocos |
+|---|---|---|
+| delay | 9 368 B | 12 |
+| vocoder | 38 128 B | 22 |
+| **total** | **47 496 B de 49 152** | **96,6%** |
+
+**Um terceiro módulo não cabe.** O número sempre foi esse; o warm-up no
+`Init` só o tornou visível, porque antes parte das alocações acontecia
+no primeiro `Process` e ficava fora da contabilidade.
+
+### O método, antes de crescer o pool ou migrar às cegas
+
+A decisão fica adiada até o módulo 3 existir, mas o **método** já está
+definido, e ele importa mais que a decisão:
+
+1. **Rotular as alocações por origem** no `MemReport`, separando
+   **quentes** (lidas amostra a amostra — sinais de bloco, linhas de
+   delay, buffers de FFT) de **mornas** (estado, filas de evento,
+   tabelas consultadas por bloco).
+2. **Quentes ficam na SRAM.** Migrá-las pra SDRAM custa latência de
+   acesso dentro do callback, que é exatamente onde não há folga.
+3. **Mornas migram barato.** Estado que se lê uma vez por bloco não
+   sente a diferença.
+4. Só então decidir: crescer o pool, migrar as mornas, ou as duas.
+
+Crescer o pool às cegas rouba SRAM de quem talvez precise mais; migrar
+às cegas pode empurrar um buffer quente pra SDRAM e criar um gargalo
+onde não havia. **Sem o mapa, as duas escolhas são apostas.**
+
+> Ressalva honesta sobre o rótulo: o alocador **não sabe** a semântica
+> de quem chama — o RNBO pede memória sem dizer pra quê. Rotular por
+> origem exige ou anotação manual por módulo, ou heurística por
+> tamanho e fase de alocação. A heurística é barata e imperfeita; a
+> anotação é exata e não escala pra patch que muda. Escolher entre as
+> duas é parte da tarefa, não detalhe dela.
 
 ---
 
