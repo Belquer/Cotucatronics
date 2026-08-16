@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.9.0
+// manifest.h (instrumento "bancada") v0.10.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -75,10 +75,11 @@ struct Manifest
     // ============================================================
     int p_bench_boost;
 
-    // SHIFTER — anti-feedback no ramo do exciter. Deslocar alguns Hz
-    // quebra a coerência do laço piezo→corpo→piezo antes que ele
-    // cresça: o sinal que volta não coincide mais em fase com o que
-    // saiu, e a realimentação não encontra uma frequência pra travar.
+    // SHIFTER — bloco PERMANENTE do shell (dynamics.h), não módulo.
+    // Anti-feedback: deslocar alguns Hz quebra a coerência do laço
+    // piezo→corpo→piezo antes que ele cresça — o sinal que volta não
+    // coincide mais em fase com o que saiu, e a realimentação não
+    // encontra frequência pra travar.
     //
     // >>> DESTINO DO ENCODER FÍSICO, junto com gov_ceiling. Os dois
     // >>> formam o controle da "borda de feedback": gov_ceiling diz
@@ -150,9 +151,12 @@ struct Manifest
         // faixa [1,8] e curve 1 dá real = 1.0 no boot, sempre.
         p_bench_boost   = t.Add("bench_boost",   0.0f, 1.f, 8.f);
 
-        // SHIFTER. Faixa 0–20 Hz, default 0 (desligado). Linear pelo
-        // mesmo motivo do gov_ceiling: a borda se procura de ouvido.
-        p_shift_hz      = t.Add("shift_hz",      0.0f, 0.f, 20.f);
+        // SHIFTER. Faixa 0–10 Hz, default 4 Hz (norm 0.4). Linear
+        // pelo mesmo motivo do gov_ceiling: a borda se procura de
+        // ouvido. Acima de ~10 Hz o deslocamento deixa de ser
+        // proteção transparente e vira efeito — as harmônicas param
+        // de ser múltiplas inteiras e o timbre metaliza.
+        p_shift_hz      = t.Add("shift_hz",      0.4f, 0.f, 10.f);
 
         // knob físico → macro → parâmetro(s)
         knob[0].AddTarget(p_dly_time, 1.0f);
@@ -172,10 +176,9 @@ struct Manifest
         // nomes conferidos contra description.json do export
         bind[n_bind++] = {ModuleSlot::Instrument, p_dly_time, "dly_time"};
         bind[n_bind++] = {ModuleSlot::Instrument, p_dly_mix, "dly_mix"};
-        // Slot do shifter ainda vazio: a ligação já existe e resolve
-        // pra -1 em silêncio até um módulo se registrar ali. É o
-        // ponto: o shell fica pronto sem fingir que o módulo existe.
-        bind[n_bind++] = {ModuleSlot::Shifter, p_shift_hz, "shift_hz"};
+        // shift_hz NÃO tem ModBind: o shifter é bloco do shell, lido
+        // direto do callback, como gate/governor/limiter. Slot Fx2
+        // segue vago até o freeze.
         // exemplo de macro composta (comentado):
         // knob[1].AddTarget(p_verb_size, 0.8f);
         // knob[1].AddTarget(p_verb_damp, -0.5f); // invertido

@@ -1,7 +1,7 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.8.0** · última execução em placa: 2026-08-15 · firmware
-**v0.7.0 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5, T6 e T7 passaram**; T4 espera
+**Documento v0.9.0** · última execução em placa: 2026-08-15 · firmware
+**v0.9.0 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto.
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
@@ -393,6 +393,82 @@ discutir quando o piezo chegar: com attack de 10 ms o gate **come parte do
 transiente**. Pra um tap seco em metal pode soar como perda de ataque. O
 conserto seria attack de ~1 ms, e o detector já está rápido o bastante (0,5 ms)
 pra sustentar isso sem falso disparo.
+
+## T8 — shifter SSB (anti-feedback) · ✅ PASSOU
+
+Quarto bloco permanente do stack, em C++ do shell. Ramo do exciter, entre o
+split e o governor. Firmware v0.9.0 / dynamics v0.4.0.
+
+**Este é o teste perfeito pro medidor por FFT**: o deslocamento é literalmente
+uma frequência, então o critério de aceite é diretamente mensurável em vez de
+inferido.
+
+### T8a — o deslocamento acontece, e é o valor pedido
+
+Tom 440 Hz, `set shift_hz 5`, medido no ramo do exciter:
+
+```
+ch2:  445.12 Hz   -7.4 dBFS   erro +0.12 Hz (+0.5 cents)
+```
+
+**445,12 Hz** = 440 + 5, com o mesmo desvio de clock de +0,12 Hz que aparece em
+toda medição desde o T3. Deslocamento linear em Hz, não intervalo.
+
+### T8b — banda lateral inferior suprimida
+
+FFT alvo em três frequências, 3 s de captura, janela de Hann:
+
+| Componente | Nível | vs. banda superior |
+|---|---|---|
+| **445 Hz** (banda superior) | −4,3 dBFS | — |
+| 440 Hz (portadora) | −101,0 dBFS | **−96,7 dB** |
+| 435 Hz (banda inferior) | −54,9 dBFS | **−50,5 dB** |
+
+**50,5 dB de supressão**, contra os 30 dB pedidos — e batendo *exatamente* com
+os 50,5 dB previstos nativamente a 440 Hz. A portadora original praticamente
+desapareceu (96,7 dB abaixo): o SSB está limpo.
+
+Perfil nativo em toda a banda:
+
+| Tom | Supressão |
+|---|---|
+| 100 Hz | 55,7 dB |
+| 440 Hz | 50,5 dB |
+| 5 kHz | 46,8 dB |
+
+### T8c — CPU
+
+| Configuração | Média | Pico |
+|---|---|---|
+| Sem shifter (v0.8.0) | 9,6% | 20,4% |
+| **Com shifter** | **10,7%** | **23,6%** |
+
+**~1 ponto de média**, abaixo do orçamento de 3–6% previsto. Constante para
+qualquer `shift_hz` — o filtro roda sempre, como os outros blocos do stack.
+
+O barateamento vem do oscilador de quadratura em **forma acoplada** (4
+multiplicações por amostra) em vez de dois `sinf`/`cosf` por amostra.
+
+### T8d — jack sem shift · ⏸️ PENDENTE
+
+`OUT_R` deve sair em 440 Hz intacto, por design. Não medido: o cabo está no
+pino 18 (`OUT_L`) e medir o outro ramo exige movê-lo pro pino 19.
+
+> ### A armadilha que quase passou: `a` vs `a²`
+>
+> A primeira versão do shifter dava **18,9 dB** de supressão, degradando em
+> direção ao meio da banda (60 dB a 100 Hz, 19 dB a 5 kHz). Testei as quatro
+> combinações de atraso e sinal — a melhor parava em 19 dB. Testei duas formas
+> de seção allpass — sem melhora.
+>
+> A causa: **os coeficientes clássicos publicados são `a`, e a seção usa `a²`.**
+> Elevar ao quadrado levou de 18,9 pra 46,8 dB a 5 kHz. Não era erro de
+> estrutura nem de sinal — era convenção não documentada no conjunto de
+> coeficientes.
+>
+> **Se tivesse gravado sem medir, o anti-feedback ficaria com metade da
+> supressão e ninguém descobriria até uma escultura apitar no palco.** É o
+> argumento mais forte que este projeto tem a favor de medir antes de gravar.
 
 ---
 

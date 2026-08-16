@@ -5,11 +5,11 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.8.0** — módulo RNBO embarcado e
-**cadeia de dinâmica do shell** (gate, governor, limiter) fechando a fase 1.
-**T1, T2, T3, T5, T6 e T7 do [TESTES.md](src/TESTES.md) passaram em bancada**;
-T4 espera hardware. Tudo rodando a **11% de CPU** com a cadeia inteira
-engajada.
+Projeto colaborativo. Estado atual: **v0.9.0** — módulo RNBO embarcado e
+**stack anti-feedback completo em software** — gate, governor, limiter e
+shifter SSB, os quatro em C++ do shell.
+**T1, T2, T3, T5, T6, T7 e T8 do [TESTES.md](src/TESTES.md) passaram em bancada**;
+T4 espera hardware. Tudo rodando a **10,7% de CPU**.
 
 ---
 
@@ -37,18 +37,18 @@ Cinco regras que não se negociam:
 |---|---|---|
 | [src/hal.h](src/hal.h) | **v0.3.0** | O contrato. A fronteira de independência de fornecedor |
 | [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.4.0** | Único arquivo que pode incluir `daisy_seed.h` |
-| [src/module.h](src/module.h) | **v0.2.0** | Interface, **slots fixos** e registro de módulos |
-| [src/dynamics.h](src/dynamics.h) | **v0.3.1** | Gate, governor, limiter. C++ puro, sem RNBO |
+| [src/module.h](src/module.h) | **v0.3.0** | Interface, **slots fixos** e registro de módulos |
+| [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test.command](src/test.command) | **v0.1.0** | Wrapper duplo-clicável do banco de teste |
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.2.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
 | [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.2.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
-| [src/main.cpp](src/main.cpp) | **v0.8.0** | Loop, callback de áudio, painel falso via serial |
+| [src/main.cpp](src/main.cpp) | **v0.9.0** | Loop, callback de áudio, painel falso via serial |
 | [src/params.h](src/params.h) | **v0.5.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.9.0** | Instrumento "bancada": entrada + tom atravessando o delay |
+| [src/manifest.h](src/manifest.h) | **v0.10.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.3.0** | **Manual de embarque de módulos RNBO — o template** |
-| [src/TESTES.md](src/TESTES.md) | **v0.8.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
+| [src/TESTES.md](src/TESTES.md) | **v0.9.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.2.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |

@@ -1,5 +1,5 @@
 #pragma once
-// module.h v0.2.0
+// module.h v0.3.0
 // ============================================================
 // Cotucatronics OS — interface abstrata de módulo DSP
 //
@@ -19,7 +19,7 @@
 namespace cotuca
 {
 
-#define COTUCA_MODULE_VERSION "0.2.0"
+#define COTUCA_MODULE_VERSION "0.3.0"
 
 // ------------------------------------------------------------
 // SLOTS — posições FIXAS na cadeia do shell.
@@ -33,9 +33,15 @@ namespace cotuca
 // não depois; o limiter tem que ser último. Slot fixo torna
 // isso estrutural em vez de convenção.
 //
-//   fonte → GATE → [INSTRUMENT] → level → split
-//                                          ├ OUT_L: [SHIFTER] → GOVERNOR → LIMITER
-//                                          └ OUT_R:                        LIMITER
+//   fonte → GATE → [INSTRUMENT] → [FX2] → level → split
+//                       ├ OUT_L: SHIFTER → GOVERNOR → LIMITER
+//                       └ OUT_R:                      LIMITER
+//
+// Repare que o ramo do exciter NÃO tem slot de módulo. É
+// deliberado: ali só mora política de segurança, toda em C++ do
+// shell (dynamics.h). Trocar a escultura não pode trocar o
+// anti-feedback — foi por isso que o shifter deixou de ser slot
+// e virou bloco permanente.
 // ------------------------------------------------------------
 enum class ModuleSlot
 {
@@ -43,12 +49,15 @@ enum class ModuleSlot
     // Caminho principal, antes do split.
     Instrument = 0,
 
-    // Frequency shifter, SÓ no ramo do exciter, entre o split e
-    // o governor. É anti-feedback: deslocar alguns Hz quebra a
-    // coerência do laço piezo→corpo→piezo antes que ele cresça.
-    // Vem ANTES do governor de propósito — o governor deve reagir
-    // ao sinal que de fato vai pro exciter, já deslocado.
-    Shifter = 1,
+    // Segundo efeito de instrumento, depois do Instrument e antes
+    // do level. Vago por ora — é o lugar previsto pro freeze.
+    //
+    // Este slot já foi "Shifter". O shifter virou bloco permanente
+    // do shell (dynamics.h) quando ficou decidido que anti-feedback
+    // é política de segurança e não DSP de instrumento: se morasse
+    // num slot, trocar o patch da escultura poderia levar a proteção
+    // junto. O slot ficou, genérico, pro que vier de verdade.
+    Fx2 = 1,
 
     kCount
 };
@@ -58,7 +67,7 @@ inline const char* SlotName(ModuleSlot s)
     switch(s)
     {
         case ModuleSlot::Instrument: return "instrument";
-        case ModuleSlot::Shifter: return "shifter";
+        case ModuleSlot::Fx2: return "fx2";
         default: return "?";
     }
 }

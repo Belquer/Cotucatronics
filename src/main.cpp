@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.8.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.9.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.8.0"
+#define COTUCA_OS_VERSION "0.9.0"
 
 #include "hal.h"
 #include "params.h"
@@ -35,15 +35,16 @@ static float mod_last[8]; // só empurra o que mudou
 static constexpr size_t kMaxBlock = 64;
 static float            src_buf[kMaxBlock];
 
-// Scratch do shifter. Module::Process não é seguro in-place — o motor
-// lê a entrada enquanto escreve a saída — então o ramo passa por aqui.
-static float shift_buf[2][kMaxBlock];
+// Scratch pro slot Fx2: Module::Process não é seguro in-place, o motor
+// lê a entrada enquanto escreve a saída.
+static float fx_buf[2][kMaxBlock];
 
 // ---- cadeia de dinâmica do shell ----
 static cotuca::Gate     gate;
 static cotuca::Governor gov_l; // só no ramo OUT_L (exciter)
 static cotuca::Limiter  lim_l; // um por ramo: estados independentes
 static cotuca::Limiter  lim_r;
+static cotuca::Shifter  shift_l; // anti-feedback, só no ramo do exciter
 
 // ---- oscilador de teste mínimo (sem DaisySP: portável) ----
 static float osc_phase = 0.f;
@@ -115,28 +116,36 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         out[1][i] *= level;
     }
 
-    // 5) SHIFTER — SÓ no ramo do exciter, entre o split e o governor.
-    //    Anti-feedback: alguns Hz de deslocamento quebram a coerência
-    //    do laço piezo→corpo→piezo. Vem ANTES do governor de
-    //    propósito: o governor deve reagir ao sinal que de fato vai
-    //    pro exciter, já deslocado.
-    //
-    //    Slot vazio = passthrough silencioso. Um instrumento sem
-    //    shifter é um instrumento válido, não um erro.
-    cotuca::Module* shifter = mod_slot[(int)cotuca::ModuleSlot::Shifter];
-    if(shifter)
+    // 3b) FX2 — segundo efeito de instrumento. Slot vago por ora.
+    //     Slot vazio = passthrough silencioso, não erro.
+    cotuca::Module* fx2 = mod_slot[(int)cotuca::ModuleSlot::Fx2];
+    if(fx2)
     {
         const float* ins[1]  = {out[0]};
-        float*       outs[2] = {shift_buf[0], shift_buf[1]};
-        shifter->Process(ins, outs, size);
+        float*       outs[2] = {fx_buf[0], fx_buf[1]};
+        fx2->Process(ins, outs, size);
         for(size_t i = 0; i < size; i++)
-            out[0][i] = shift_buf[0][i];
+        {
+            out[0][i] = fx_buf[0][i];
+            out[1][i] = fx_buf[1][i];
+        }
     }
 
     // 6) SPLIT — os ramos deixam de ser iguais aqui.
     //    OUT_L vai pro exciter no corpo da escultura e é o ramo que
     //    realimenta o piezo: leva o governor. OUT_R é jack de linha,
     //    não realimenta, e não leva.
+    // SHIFTER — anti-feedback, entre o split e o governor, SÓ no ramo
+    // do exciter. O jack de linha sai SEM shift por design: quem
+    // grava ou manda pra PA quer o sinal do instrumento, não o sinal
+    // protegido contra um laço acústico que não existe do lado de lá.
+    //
+    // Antes do governor de propósito: o governor deve reagir ao sinal
+    // que de fato vai pro exciter, já deslocado.
+    shift_l.SetShift(params.Real(manifest.p_shift_hz));
+    for(size_t i = 0; i < size; i++)
+        out[0][i] = shift_l.Process(out[0][i]);
+
     gov_l.SetCeiling(params.Real(manifest.p_gov_ceiling));
     gov_l.SetRelease(params.Real(manifest.p_gov_release));
     for(size_t i = 0; i < size; i++)
@@ -252,6 +261,7 @@ static void HandleLine(const char* line)
                  gov_l.Gain(), gov_l.Env());
         hal::Log("lim   ceil=%.2f gainL=%.2f gainR=%.2f",
                  cotuca::Limiter::Ceiling(), lim_l.Gain(), lim_r.Gain());
+        hal::Log("shift %.1f Hz (SSB, so no ramo exciter)", shift_l.Shift());
         hal::Log("boost %.2fx  (BANCADA — nasce sempre em 1.00)",
                  params.Real(manifest.p_bench_boost));
         hal::Log("route exciter=%d jack=%d",
@@ -383,6 +393,7 @@ int main(void)
     gov_l.Init(hal::Info().sample_rate);
     lim_l.Init(hal::Info().sample_rate);
     lim_r.Init(hal::Info().sample_rate);
+    shift_l.Init(hal::Info().sample_rate);
 
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);

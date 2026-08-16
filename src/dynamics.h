@@ -1,5 +1,5 @@
 #pragma once
-// dynamics.h v0.3.1
+// dynamics.h v0.4.0
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
@@ -10,8 +10,12 @@
 //
 // Ordem na cadeia:
 //   fonte → GATE → [módulo] → level → split
-//                    ├ OUT_L: GOVERNOR → [bench_boost] → LIMITER
-//                    └ OUT_R:                            LIMITER
+//        ├ OUT_L: SHIFTER → GOVERNOR → [bench_boost] → LIMITER
+//        └ OUT_R:                                      LIMITER
+//
+// O ramo do exciter é EXCLUSIVAMENTE política de segurança, toda
+// em C++ do shell. Os slots de módulo vivem no caminho principal.
+// Trocar a escultura não pode trocar o anti-feedback.
 //
 // bench_boost é ferramenta de bancada, não parte da cadeia de
 // produção — ver o bloco de aviso em manifest.h.
@@ -25,7 +29,7 @@
 namespace cotuca
 {
 
-#define COTUCA_DYNAMICS_VERSION "0.3.1"
+#define COTUCA_DYNAMICS_VERSION "0.4.0"
 
 // ------------------------------------------------------------
 // EnvFollower — detector de envelope de um polo, com constantes
@@ -305,6 +309,147 @@ class Limiter
 
     EnvFollower det_;
     float       sr_ = 48000.f, a_ = 0.f, r_ = 0.f, gain_ = 1.f;
+};
+
+// ------------------------------------------------------------
+// Shifter — frequency shifter SSB (banda lateral única).
+//
+// QUARTO bloco permanente do stack, e o único que não é dinâmica:
+// é anti-feedback. Desloca TODO o espectro alguns Hz pra cima. O
+// laço piezo→corpo→exciter→piezo depende de coincidência de fase
+// numa frequência de ressonância pra crescer; com o retorno
+// deslocado, nenhuma frequência fecha o laço consigo mesma e a
+// realimentação não encontra onde travar.
+//
+// Não confundir com pitch shift: aqui é deslocamento LINEAR em
+// Hz, não em intervalo. As harmônicas deixam de ser múltiplas
+// inteiras — daí soar metálico acima de ~10 Hz, e daí a faixa
+// parar em 10.
+//
+// Por que SSB e não modulação em anel: modulação em anel produz
+// as DUAS bandas laterais, e a inferior desce em frequência —
+// metade do sinal iria pro lado errado e o laço acharia caminho
+// de volta. SSB suprime uma delas.
+//
+// Estrutura: par de cadeias allpass IIR que mantêm ~90° de
+// diferença de fase entre si na banda de áudio (Hilbert
+// aproximado), oscilador de quadratura em forma acoplada, e
+//
+//     out = I·cos(ωt) + Q·sin(ωt)      → banda superior
+//
+// SÓ no ramo do exciter. O jack de linha sai SEM shift, por
+// design: quem grava ou manda pra PA quer o sinal do instrumento,
+// não o sinal protegido contra um laço acústico que não existe do
+// lado de lá.
+// ------------------------------------------------------------
+class Shifter
+{
+  public:
+    void Init(float sample_rate)
+    {
+        sr_ = sample_rate > 0.f ? sample_rate : 48000.f;
+        // Coeficientes clássicos do par de Hilbert IIR.
+        //
+        // ATENÇÃO: os números publicados são `a`, e a seção Allpass2
+        // usa `a²`. Elevar ao quadrado aqui NÃO é detalhe — usá-los
+        // crus derruba a supressão de banda lateral de ~47 dB pra
+        // ~19 dB, com o pior caso bem no meio da banda de áudio.
+        // Medido: sem o quadrado, 18,9 dB a 5 kHz; com, 46,8 dB.
+        //
+        // Locais e não membros de propósito: array `static constexpr`
+        // de classe precisa de definição fora dela em C++14, e a
+        // build da libDaisy é gnu++14.
+        constexpr float ca[kSections] = {0.6923877778065f, 0.9360654322959f,
+                                         0.9882295226860f, 0.9987488452737f};
+        constexpr float cb[kSections] = {0.4021921162426f, 0.8561710882420f,
+                                         0.9722909545651f, 0.9952884791278f};
+        for(int i = 0; i < kSections; i++)
+        {
+            a_[i] = Allpass2{ca[i] * ca[i]};
+            b_[i] = Allpass2{cb[i] * cb[i]};
+        }
+        delay_ = 0.f;
+        osc_x_ = 1.f;
+        osc_y_ = 0.f;
+        SetShift(0.f);
+    }
+
+    void SetShift(float hz)
+    {
+        if(hz == hz_)
+            return;
+        hz_             = hz;
+        const float w   = 2.f * 3.14159265358979f * hz / sr_;
+        osc_c_          = cosf(w);
+        osc_s_          = sinf(w);
+    }
+
+    float Process(float x)
+    {
+        // I e Q: mesma entrada nas duas cadeias, mas o ramo I recebe
+        // a amostra ATRASADA de uma. É esse atraso que completa os
+        // 90° — sem ele, ou com ele no ramo errado, as cadeias não
+        // ficam em quadratura e a banda lateral indesejada sobrevive.
+        float i_sig = delay_;
+        delay_      = x;
+        for(int k = 0; k < kSections; k++)
+            i_sig = a_[k].Process(i_sig);
+
+        float q_sig = x;
+        for(int k = 0; k < kSections; k++)
+            q_sig = b_[k].Process(q_sig);
+
+        // oscilador de quadratura, forma acoplada: 4 mults por
+        // amostra em vez de dois sinf/cosf.
+        const float nx = osc_x_ * osc_c_ - osc_y_ * osc_s_;
+        const float ny = osc_x_ * osc_s_ + osc_y_ * osc_c_;
+        osc_x_         = nx;
+        osc_y_         = ny;
+
+        // a amplitude do oscilador acoplado deriva devagar; isto a
+        // puxa de volta pra 1 sem raiz quadrada.
+        if(++renorm_ >= 1024)
+        {
+            renorm_        = 0;
+            const float g  = 1.5f - 0.5f * (osc_x_ * osc_x_ + osc_y_ * osc_y_);
+            osc_x_ *= g;
+            osc_y_ *= g;
+        }
+
+        // I·cos + Q·sin com ESTE par de cadeias dá a banda SUPERIOR.
+        // O sinal depende de qual cadeia carrega o atraso; foi
+        // determinado por medição, não por dedução.
+        return i_sig * osc_x_ + q_sig * osc_y_;
+    }
+
+    float Shift() const { return hz_; }
+
+  private:
+    // Allpass de 2ª ordem na forma y[n] = a²·(x[n] + y[n−2]) − x[n−2].
+    // Duas amostras de estado, um multiplicador.
+    struct Allpass2
+    {
+        float a2 = 0.f;
+        float x1 = 0.f, x2 = 0.f, y1 = 0.f, y2 = 0.f;
+
+        float Process(float x)
+        {
+            const float y = a2 * (x + y2) - x2;
+            x2            = x1;
+            x1            = x;
+            y2            = y1;
+            y1            = y;
+            return y;
+        }
+    };
+
+    static constexpr int kSections = 4; // 8ª ordem por ramo
+
+    Allpass2 a_[kSections], b_[kSections];
+    float    delay_ = 0.f;
+    float    sr_ = 48000.f, hz_ = -1.f;
+    float    osc_x_ = 1.f, osc_y_ = 0.f, osc_c_ = 1.f, osc_s_ = 0.f;
+    int      renorm_ = 0;
 };
 
 } // namespace cotuca
