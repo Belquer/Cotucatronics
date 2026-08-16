@@ -131,8 +131,15 @@ na v0.2.0.
 ## Ruído: o USB do computador é a fonte dominante
 
 > **Alimentar a Daisy pelo USB do computador injeta ruído audível.**
-> Medido, não suposto. É característica de bancada, e é argumento
-> direto pra bateria interna no build.
+> Medido, não suposto.
+>
+> **A bateria interna sempre esteve no projeto; o USB é só pra gravar
+> firmware.** Então isto não é requisito novo — é a medida do que a
+> configuração de bancada custa, e a confirmação de que o ruído
+> reportado NÃO acompanha o instrumento montado.
+>
+> Na bateria, o único ruído que sobra é o residual de 1 kHz abaixo —
+> nosso, a −90 dBFS. É o único que vai pro campo.
 
 Protocolo: entrada em curto (`AUDIO_IN_L` → `AGND`, piezo fora), cadeia
 neutralizada (`dly_mix` 0, `tone_mix` 0, `shift_hz` 0, `bench_boost` 1×,
