@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.6.3 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.7.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.6.3"
+#define COTUCA_OS_VERSION "0.7.0"
 
 #include "hal.h"
 #include "params.h"
@@ -175,14 +175,22 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "set ", 4) == 0)
     {
-        // set <nome> <0-1> — alcança QUALQUER parâmetro pelo nome,
-        // inclusive os que não têm knob (tone_freq e tone_mix são
+        // set <nome> <valor REAL> — alcança QUALQUER parâmetro pelo
+        // nome, inclusive os sem knob (tone_freq e tone_mix são
         // serial-only por design: o tom é bancada, não performance).
+        //
+        // O VALOR É REAL, na unidade do parâmetro: Hz, ms, ×.
+        // Antes era normalizado, e isso invertia a intuição em faixa
+        // que não começa em zero — `set bench_boost 1.0` parecia "sem
+        // boost" e entregava 8×, o máximo, num parâmetro que existe
+        // justamente pra sobrecarregar a saída do exciter.
+        // Knob e macro seguem normalizados: posição de curso é
+        // normalizada por natureza. Quem digita, digita em unidade.
         const char* p = line + 4;
         while(*p == ' ') p++;
         const char* sp = strchr(p, ' ');
         if(!sp || sp == p)
-        { hal::Log("uso: set <nome> <0-1>"); return; }
+        { hal::Log("uso: set <nome> <valor real> — veja list"); return; }
 
         char         name[24];
         const size_t n = (size_t)(sp - p) < sizeof(name) - 1
@@ -195,9 +203,15 @@ static void HandleLine(const char* line)
         if(id < 0)
         { hal::Log("? param \"%s\" nao existe (use list)", name); return; }
 
-        params.Set(id, strtof(sp + 1, nullptr));
-        hal::Log("%s -> norm=%.3f real=%.3f (curve %.1f)",
-                 params.Name(id), params.Get(id), params.Real(id),
+        const float v = strtof(sp + 1, nullptr);
+        if(!params.SetReal(id, v))
+        {
+            hal::Log("fora da faixa: %s aceita [%.3f .. %.3f]",
+                     params.Name(id), params.Min(id), params.Max(id));
+            return;
+        }
+        hal::Log("%s -> real=%.3f (norm=%.3f, curve %.1f)",
+                 params.Name(id), params.Real(id), params.Get(id),
                  params.Curve(id));
         return;
     }
@@ -252,7 +266,7 @@ static void HandleLine(const char* line)
                      i, params.Name(i), params.Get(i), params.Real(i));
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <0-1> | tone on/off | board | list | mods | dyn | cpu");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

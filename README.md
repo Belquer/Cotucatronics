@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.6.3** — módulo RNBO embarcado e
+Projeto colaborativo. Estado atual: **v0.7.0** — módulo RNBO embarcado e
 **cadeia de dinâmica do shell** (gate, governor, limiter) fechando a fase 1.
 **T1, T2, T3, T5, T6 e T7 do [TESTES.md](src/TESTES.md) passaram em bancada**;
 T4 espera hardware. Tudo rodando a **11% de CPU** com a cadeia inteira
@@ -43,12 +43,12 @@ Cinco regras que não se negociam:
 | [src/test.command](src/test.command) | **v0.1.0** | Wrapper duplo-clicável do banco de teste |
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.1.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
 | [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.1.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
-| [src/main.cpp](src/main.cpp) | **v0.6.3** | Loop, callback de áudio, painel falso via serial |
-| [src/params.h](src/params.h) | **v0.3.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
+| [src/main.cpp](src/main.cpp) | **v0.7.0** | Loop, callback de áudio, painel falso via serial |
+| [src/params.h](src/params.h) | **v0.4.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
 | [src/manifest.h](src/manifest.h) | **v0.8.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.2.0** | **Manual de embarque de módulos RNBO — o template** |
-| [src/TESTES.md](src/TESTES.md) | **v0.7.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
+| [src/TESTES.md](src/TESTES.md) | **v0.8.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.2.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
@@ -124,13 +124,19 @@ Ou duplo-clique em `src/monitor.command`.
 Comandos do firmware: `board` · `list` · `mods` · `cpu` · `k1..k5 <0-1>` ·
 `set <nome> <0-1>` · `tone on` · `tone off`
 
-`set` alcança **qualquer** parâmetro pelo nome, inclusive os sem knob. Com os
-knobs 1–3 no delay e no level, `tone_freq` e `tone_mix` são **serial-only por
-design** — o tom de teste é bancada, não performance:
+`set` alcança **qualquer** parâmetro pelo nome, **em unidade real** — Hz, ms, ×
+— e recusa valor fora da faixa citando os limites. Com os knobs 1–3 no delay e
+no level, `tone_freq` e `tone_mix` são **serial-only por design** — o tom de
+teste é bancada, não performance:
 
 ```
-set tone_freq 0.1875     # 440 Hz de volta
+set tone_freq 440        # Hz, direto
+set gate_release 500     # ms
+set bench_boost 2        # vezes
 ```
+
+Knob e macro seguem falando normalizado (posição de curso é normalizada por
+natureza); a unidade real é só na fronteira humana.
 
 ### Curva de parâmetro
 

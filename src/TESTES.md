@@ -1,7 +1,7 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.7.0** · última execução em placa: 2026-08-15 · firmware
-**v0.6.3 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5, T6 e T7 passaram**; T4 espera
+**Documento v0.8.0** · última execução em placa: 2026-08-15 · firmware
+**v0.7.0 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5, T6 e T7 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto.
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
@@ -297,13 +297,13 @@ decai mais rápido. Se o módulo estivesse recebendo o normalizado cru (0.5 e
 ### T6c — `set <nome> <valor>`
 
 ```
-> set tone_freq 0.1875   < tone_freq -> norm=0.188 real=440.000 (curve 1.0)
-> set dly_time 0.5       < dly_time -> norm=0.500 real=0.177 (curve 2.5)
+> set tone_freq 440      < tone_freq -> real=440.000 (norm=0.188, curve 1.0)
+> set dly_time 0.5       < dly_time -> real=0.500 (norm=0.758, curve 2.5)
 > set naoexiste 0.5      < ? param "naoexiste" nao existe (use list)
 ```
 
-Alcança qualquer parâmetro pelo nome, mostra a curva aplicada e recusa nome
-inexistente. `tone_freq` e `tone_mix` são **serial-only por design** — os
+Alcança qualquer parâmetro pelo nome **em unidade real**, mostra a curva
+aplicada e recusa nome inexistente ou valor fora da faixa. `tone_freq` e `tone_mix` são **serial-only por design** — os
 knobs 1–3 foram pro delay e pro level, e o tom de teste é bancada, não
 performance.
 
@@ -405,7 +405,7 @@ pra sustentar isso sem falso disparo.
 | 3 | Linha de log saía picotada e grudada na seguinte | ✅ corrigido no HAL v0.3.1 |
 | 4 | Comando serial demorava até 0,5 s pra responder | ✅ corrigido no main.cpp v0.3.0 |
 | 5 | Soft-knee do governor tinha degrau de 0,09 no topo do joelho | ✅ corrigido no dynamics v0.3.1 |
-| 6 | `set <param>` recebe NORMALIZADO, não real — `set bench_boost 1.0` dá **8×** | ⚠️ **em aberto** |
+| 6 | `set <param>` recebia NORMALIZADO, não real — `set bench_boost 1.0` dava **8×** | ✅ corrigido no main.cpp v0.7.0 |
 
 **#1 — despacho serial rodava na ISR.** `SetReceiveCallback` dispara em contexto
 de interrupção, e `hal::Log()` transmite pelo mesmo USB: o segundo `Log`
@@ -439,14 +439,42 @@ teto de resposta a comando. O loop agora gira a ~1 ms e o LED virou heartbeat
 contado (toggle a cada 500 ticks), mantendo 1 Hz. Verificado com comandos a
 0,35 s de intervalo: resposta imediata.
 
-**#6 — `set` recebe normalizado.** Coerente com o `ParamTable::Set()`, mas vira
-armadilha em parâmetro cuja faixa não é `[0,1]`: `set bench_boost 1.0` parece
-"sem boost" e entrega **8×**, o máximo. O eco do comando mostra
-`norm=1.000 real=8.000`, então dá pra perceber — mas num parâmetro que existe
-justamente pra sobrecarregar a saída, "parece seguro e é o máximo" é a inversão
-errada. Não corrigido ainda; a decisão é se `set` passa a aceitar valor real
-quando a faixa não é `[0,1]`, ou se ganha confirmação em parâmetro marcado como
-perigoso.
+**#6 — `set` recebia normalizado.** Era coerente com `ParamTable::Set()`, mas
+virava armadilha em parâmetro cuja faixa não é `[0,1]`: `set bench_boost 1.0`
+parecia "sem boost" e entregava **8×**, o máximo — num parâmetro que existe
+justamente pra sobrecarregar a saída do exciter. "Parece seguro e é o máximo" é
+a inversão errada pra ter num instrumento.
+
+`set` agora fala em **unidade real** — Hz, ms, ×. Converte pra normalizado
+invertendo a curva:
+
+```
+norm = pow((real - min) / (max - min), 1/curve)
+```
+
+e **recusa** fora da faixa em vez de saturar: quem digita 12 num parâmetro que
+vai até 8 errou, e saturar em 8 esconderia o erro.
+
+`Set()` normalizado continua existindo ao lado de `SetReal()`, e knob e macro
+seguem usando ele — posição de curso é normalizada por natureza. A mudança é só
+na fronteira humana.
+
+Efeito colateral bem-vindo: conserta o `dly_time` também. Com `curve 2.5`,
+`set dly_time 0.5` dava real `0.177`; agora dá `0.500`. Antes era preciso saber
+a curva de cabeça pra digitar o valor certo.
+
+**Validado em placa** (firmware v0.7.0):
+
+```
+> set tone_freq 440     < tone_freq -> real=440.000 (norm=0.188, curve 1.0)
+> set bench_boost 1     < bench_boost -> real=1.000 (norm=0.000, curve 1.0)
+> set bench_boost 12    < fora da faixa: bench_boost aceita [1.000 .. 8.000]
+> set dly_time 0.5      < dly_time -> real=0.500 (norm=0.758, curve 2.5)
+> set tone_freq 5000    < fora da faixa: tone_freq aceita [80.000 .. 2000.000]
+```
+
+`pow(0.5, 1/2.5) = 0.758` confere a inversão da curva, e a FFT confirma os
+440 Hz na saída (440,12 Hz medidos, +0,5 cents — o desvio de clock de sempre).
 
 ---
 

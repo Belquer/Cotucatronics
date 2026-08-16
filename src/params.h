@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.3.0
+// Cotucatronics OS — params v0.4.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -15,7 +15,7 @@
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.3.0"
+#define COTUCA_PARAMS_VERSION "0.4.0"
 
 // knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
 // 4 de caráter + SRC MIX = 5.
@@ -80,11 +80,45 @@ class ParamTable
         return -1;
     }
 
+    // Set() fala NORMALIZADO — é o que knob e macro produzem, e o
+    // knob é normalizado por natureza (posição de curso).
     void Set(int id, float norm)
     {
         if(!Valid(id))
             return;
         norm_[id] = Clamp01(norm);
+    }
+
+    // SetReal() fala na UNIDADE DO PARÂMETRO: Hz, ms, ×, 0–1.
+    // É o que um humano digita. Inverte a curva pra achar o
+    // normalizado equivalente:
+    //
+    //     real = min + pow(norm, curve) · (max - min)
+    //  ⇒  norm = pow((real - min)/(max - min), 1/curve)
+    //
+    // Devolve false se estiver fora da faixa — e RECUSA em vez de
+    // saturar calado: quem digita 12 num parâmetro que vai até 8
+    // errou, e saturar em 8 esconderia o erro.
+    bool SetReal(int id, float real)
+    {
+        if(!Valid(id))
+            return false;
+        const float lo = min_[id], hi = max_[id];
+        const float a = lo < hi ? lo : hi;
+        const float b = lo < hi ? hi : lo;
+        if(real < a || real > b)
+            return false;
+
+        const float span = hi - lo;
+        if(span == 0.f)
+        {
+            norm_[id] = 0.f;
+            return true;
+        }
+        const float t = Clamp01((real - lo) / span);
+        const float c = curve_[id];
+        norm_[id]     = (c == 1.0f) ? t : powf(t, 1.0f / c);
+        return true;
     }
 
     float Get(int id) const { return Valid(id) ? norm_[id] : 0.f; }
@@ -102,6 +136,8 @@ class ParamTable
     }
 
     float Curve(int id) const { return Valid(id) ? curve_[id] : 1.0f; }
+    float Min(int id) const { return Valid(id) ? min_[id] : 0.f; }
+    float Max(int id) const { return Valid(id) ? max_[id] : 0.f; }
 
     const char* Name(int id) const { return Valid(id) ? name_[id] : "?"; }
 
