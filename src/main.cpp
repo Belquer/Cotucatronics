@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.9.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.12.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.9.0"
+#define COTUCA_OS_VERSION "0.12.0"
 
 #include "hal.h"
 #include "params.h"
@@ -32,12 +32,39 @@ static float mod_last[8]; // só empurra o que mudou
 
 // Fonte que alimenta o módulo: crossfade das entradas + tom de teste.
 // Estático porque o callback de áudio não aloca. 64 > block_size (48).
-static constexpr size_t kMaxBlock = 64;
+// TEM que ser >= ao block_size da placa. Com 64 e bloco 128, o clamp
+// abaixo processaria metade do bloco e deixaria a outra metade do
+// buffer de saida com lixo do bloco anterior — sem erro, com ruido.
+static constexpr size_t kMaxBlock = 128;
 static float            src_buf[kMaxBlock];
 
 // Scratch pro slot Fx2: Module::Process não é seguro in-place, o motor
 // lê a entrada enquanto escreve a saída.
 static float fx_buf[2][kMaxBlock];
+
+// Portadora ausente = silêncio, não lixo. Usado quando a placa não
+// tem entrada de áudio: um módulo de 2 inputs continua rodando, só
+// que sem portadora.
+static float zero_buf[kMaxBlock] = {};
+
+// ---- watchdog de módulo ----
+//
+// Um módulo que estoura o prazo do bloco não soa mal: ele mata o
+// loop principal por inanição, e a placa fica surda no serial — sem
+// log, sem cpu, sem jeito de diagnosticar a não ser regravando às
+// cegas. Aconteceu com o freeze, cujo Process() não cabe em 1 ms.
+//
+// O watchdog lê a carga do bloco ANTERIOR de dentro do callback (o
+// único contexto que ainda roda quando o loop morreu), e trava o
+// Fx2 em bypass ao primeiro estouro. A CPU cai, o loop revive, e o
+// evento vira log em vez de placa muda.
+//
+// Trava, não histerese: um módulo que estourou uma vez vai estourar
+// de novo, e ficar oscilando entre ativo e bypass soaria pior que
+// ficar fora.
+static volatile bool fx2_overrun = false;
+static bool          fx2_reported = false;
+static constexpr float kOverrunTrip = 0.90f;
 
 // ---- cadeia de dinâmica do shell ----
 static cotuca::Gate     gate;
@@ -94,11 +121,15 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     for(size_t i = 0; i < size; i++)
         src_buf[i] = gate.Process(src_buf[i]);
 
-    // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (1 in, 2 out).
+    // ch2 da convenção de 2 entradas: IN_R CRU, pré-crossfade e
+    // pré-gate. Ver o contrato em module.h — é a portadora externa.
+    const float* carrier = has_in ? in[1] : zero_buf;
+
+    // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
     cotuca::Module* inst = mod_slot[(int)cotuca::ModuleSlot::Instrument];
     if(inst)
     {
-        const float* ins[1] = {src_buf};
+        const float* ins[2] = {src_buf, carrier};
         inst->Process(ins, out, size);
     }
     else
@@ -107,28 +138,54 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             out[0][i] = out[1][i] = src_buf[i]; // sem módulo: passa reto
     }
 
-    // 4) LEVEL — master de saída, ANTES da dinâmica de saída: é
-    //    justamente o level exagerado que o governor e o limiter
-    //    precisam segurar.
-    for(size_t i = 0; i < size; i++)
+    // 4) FX2 — segundo efeito de instrumento (freeze). ANTES do
+    //    level, como o contrato em module.h diz. A ordem importa:
+    //    depois do level, o freeze capturaria áudio com o volume já
+    //    aplicado, e mexer no level com o som congelado não mudaria
+    //    nada — o master deixaria de ser master.
+    //
+    //    Slot vazio = passthrough silencioso, não erro.
+    //    BYPASS: fx2_on nasce em 0. Modulo pesado que estoura o
+    //    prazo do bloco nao soa mal — mata o loop principal por
+    //    inanicao e a placa fica surda no serial. Com bypass, ligar
+    //    e reversivel.
+    cotuca::Module* fx2      = mod_slot[(int)cotuca::ModuleSlot::Fx2];
+    const bool      fx2_want = fx2 && params.Real(manifest.p_fx2_on) >= 0.5f;
+    if(fx2_want && !fx2_overrun
+       && cotuca::hal::CpuLoadMax() > kOverrunTrip)
+        fx2_overrun = true; // trava; quem loga é o loop principal
+    if(fx2_want && !fx2_overrun)
     {
-        out[0][i] *= level;
-        out[1][i] *= level;
-    }
-
-    // 3b) FX2 — segundo efeito de instrumento. Slot vago por ora.
-    //     Slot vazio = passthrough silencioso, não erro.
-    cotuca::Module* fx2 = mod_slot[(int)cotuca::ModuleSlot::Fx2];
-    if(fx2)
-    {
-        const float* ins[1]  = {out[0]};
+        // DOIS canais de entrada. O freeze e 2-in/2-out, ao contrario
+        // do delay que e 1-in. Passar um array de 1 aqui faria o
+        // modulo ler in[1] fora dos limites — sem crash imediato, com
+        // lixo no audio. O slot generico entrega o par estereo.
+        // ch1 = sinal do ponto da cadeia; ch2 = portadora externa.
+        // ANTES daqui ia {out[0], out[1]} — o par estéreo — o que
+        // dava ao módulo o próprio sinal duas vezes em vez de uma
+        // referência externa. Cross-synthesis precisa de duas fontes
+        // DIFERENTES.
+        const float* ins[2]  = {out[0], carrier};
         float*       outs[2] = {fx_buf[0], fx_buf[1]};
+        // scratch limpo: export de 1 saída não escreve out[1], e sem
+        // isto o canal direito ficaria com o bloco anterior.
+        for(size_t i = 0; i < size; i++)
+            fx_buf[0][i] = fx_buf[1][i] = 0.f;
         fx2->Process(ins, outs, size);
         for(size_t i = 0; i < size; i++)
         {
             out[0][i] = fx_buf[0][i];
             out[1][i] = fx_buf[1][i];
         }
+    }
+
+    // 5) LEVEL — master de saída, ANTES da dinâmica de saída: é
+    //    justamente o level exagerado que o governor e o limiter
+    //    precisam segurar.
+    for(size_t i = 0; i < size; i++)
+    {
+        out[0][i] *= level;
+        out[1][i] *= level;
     }
 
     // 6) SPLIT — os ramos deixam de ser iguais aqui.
@@ -205,6 +262,9 @@ static void HandleLine(const char* line)
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);
+        hal::Log("  cpu %lu MHz | prazo do bloco %.0f us",
+                 (unsigned long)(b.cpu_hz / 1000000u),
+                 1e6f * (float)b.block_size / b.sample_rate);
         return;
     }
     if(strncmp(line, "set ", 4) == 0)
@@ -261,6 +321,10 @@ static void HandleLine(const char* line)
                  gov_l.Gain(), gov_l.Env());
         hal::Log("lim   ceil=%.2f gainL=%.2f gainR=%.2f",
                  cotuca::Limiter::Ceiling(), lim_l.Gain(), lim_r.Gain());
+        hal::Log("fx2   %s", fx2_overrun
+                     ? "BYPASS FORCADO — estourou o prazo do bloco"
+                     : (params.Real(manifest.p_fx2_on) >= 0.5f
+                            ? "ATIVO" : "bypass (set fx2_on 1)"));
         hal::Log("shift %.1f Hz (SSB, so no ramo exciter)", shift_l.Shift());
         hal::Log("boost %.2fx  (BANCADA — nasce sempre em 1.00)",
                  params.Real(manifest.p_bench_boost));
@@ -271,8 +335,16 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "cpu", 3) == 0)
     {
-        hal::Log("cpu: %.1f%% media, %.1f%% pico (bloco de %d @ %.0f Hz)",
-                 hal::CpuLoadAvg() * 100.f, hal::CpuLoadMax() * 100.f,
+        // O prazo do bloco em microssegundos. Reportar % sozinho
+        // engana quando se compara tamanhos de bloco diferentes: 50%
+        // de 1 ms e 50% de 2,67 ms sao cargas MUITO diferentes em
+        // trabalho absoluto. O µs e invariante.
+        const float budget_us = 1e6f * (float)hal::Info().block_size
+                                / hal::Info().sample_rate;
+        hal::Log("cpu: %.1f%% media, %.1f%% pico",
+                 hal::CpuLoadAvg() * 100.f, hal::CpuLoadMax() * 100.f);
+        hal::Log("     %.0f us de pico em %.0f us de prazo (bloco %d @ %.0f Hz)",
+                 hal::CpuLoadMax() * budget_us, budget_us,
                  (int)hal::Info().block_size, hal::Info().sample_rate);
         return;
     }
@@ -284,8 +356,10 @@ static void HandleLine(const char* line)
             Module*          m    = mod_slot[s];
             if(!m)
             { hal::Log("slot %-10s vazio", SlotName(slot)); continue; }
-            hal::Log("slot %-10s \"%s\": %d params",
-                     SlotName(slot), m->Name(), m->ParamCount());
+            hal::Log("slot %-10s \"%s\": %d params, %d in%s",
+                     SlotName(slot), m->Name(), m->ParamCount(),
+                     m->InputCount(),
+                     m->InputCount() >= 2 ? " (ch2 = portadora IN_R)" : "");
             for(int i = 0; i < m->ParamCount(); i++)
                 hal::Log("    [%d] %s", i, m->ParamName(i));
             const Module::MemReport mem = m->Memory();
@@ -421,6 +495,25 @@ int main(void)
             if(v >= 0.f) manifest.knob[k].Apply(params, v);
         }
         hal::PollSerial();
+
+        // watchdog: o callback só trava a flag; o log é aqui, porque
+        // hal::Log bloqueia por milissegundos e não pode rodar no
+        // contexto de áudio.
+        if(fx2_overrun && !fx2_reported)
+        {
+            fx2_reported = true;
+            hal::Log("WATCHDOG: modulo do slot fx2 estourou o prazo do "
+                     "bloco (%.0f%% de pico). Forcado em bypass.",
+                     hal::CpuLoadMax() * 100.f);
+            hal::Log("  para rearmar: set fx2_on 0, depois set fx2_on 1");
+        }
+        // rearma quando o operador desliga explicitamente
+        if(params.Real(manifest.p_fx2_on) < 0.5f && fx2_overrun)
+        {
+            fx2_overrun  = false;
+            fx2_reported = false;
+            hal::CpuLoadReset(); // senao o pico antigo re-trava na hora
+        }
 
         // empurra pro módulo o que mudou. Fora do callback de áudio de
         // propósito: setParameterValue enfileira evento no RNBO.

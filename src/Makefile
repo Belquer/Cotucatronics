@@ -33,19 +33,30 @@ LIBDAISY_DIR ?= $(HOME)/dev/libDaisy
 
 HAL_SRC = hal_$(BOARD).cpp
 
-# Motor de DSP. module_rnbo.cpp e o UNICO que ve headers do RNBO;
-# ele inclui o .cpp gerado como fonte, entao o export nao entra
-# aqui como unidade de compilacao separada.
-MODULE_SRC ?= module_rnbo.cpp
-RNBO_DIR   ?= modules/delay/rnbo_export
+# Motores de DSP. Cada module_rnbo_*.cpp inclui o .cpp gerado como
+# fonte, dentro de um namespace proprio — os exports nao entram aqui
+# como unidades de compilacao separadas.
+MODULE_SRC ?= module_rnbo_delay.cpp module_rnbo_freeze.cpp
+
+# UM runtime pros dois patchers. Os exports vieram com versoes
+# diferentes (delay 1.4.3, freeze 1.4.5), mas elas diferem em 3
+# arquivos e a mudanca e ADITIVA (um metodo novo em RNBO_DataRef.h),
+# entao o 1.4.5 e superset. Usar dois -I e deixar a ordem decidir qual
+# cada modulo pega seria frágil e silencioso; melhor um so, explicito.
+# QUAL export fornece o runtime compartilhado. Nao importa de qual
+# ele vem — os exports trazem copias do mesmo runtime — mas importa
+# que o escolhido REALMENTE o tenha: um reexport pode vir so com o
+# .cpp gerado, sem a pasta rnbo/, e ai o build quebra em
+# "RNBO_Common.h: No such file". Ja aconteceu com o freeze.
+RNBO_DIR   ?= modules/vocoder/rnbo_export
 
 CPP_SOURCES = \
 main.cpp \
 $(MODULE_SRC) \
 $(HAL_SRC)
 
-# Headers do RNBO. So o module_rnbo.cpp usa, mas o -I e global.
-C_INCLUDES += -I$(RNBO_DIR)/rnbo -I$(RNBO_DIR)/rnbo/common -I$(RNBO_DIR)
+# So os modules_rnbo_*.cpp usam, mas o -I e global.
+C_INCLUDES += -I$(RNBO_DIR)/rnbo -I$(RNBO_DIR)/rnbo/common -I.
 
 # O RNBO usa <cmath>/<algorithm> com a STL; nada de excecoes nem RTTI,
 # que o Makefile da libDaisy ja desliga.
@@ -62,6 +73,10 @@ ifeq ($(wildcard $(LIBDAISY_DIR)/core/Makefile),)
 $(error libDaisy nao encontrada em $(LIBDAISY_DIR). Clone com: git clone --recurse-submodules https://github.com/electro-smith/libDaisy $(LIBDAISY_DIR))
 endif
 
+ifeq ($(wildcard $(RNBO_DIR)/rnbo/common/RNBO_Common.h),)
+$(error runtime do RNBO nao encontrado em $(RNBO_DIR)/rnbo/. Exports disponiveis com runtime: $(patsubst modules/%/rnbo_export/rnbo/common/RNBO_Common.h,%,$(wildcard modules/*/rnbo_export/rnbo/common/RNBO_Common.h)))
+endif
+
 ifeq ($(wildcard $(LIBDAISY_DIR)/build/libdaisy.a),)
 $(error libdaisy.a nao existe. Compile a lib antes: make -C $(LIBDAISY_DIR))
 endif
@@ -71,6 +86,16 @@ endif
 # O manifest e o painel serial são todos float, então sem isto o "list"
 # imprime "norm= real=". -u força a entrada da versão com float.
 # Custa ~7 KB de flash.
+# ============================================================
+# MODO BANCADA — alavanca 1 de 3
+# O core/Makefile da libDaisy usa "OPT ?= -O2", entao esta
+# atribuicao vence. -O3 vale pro projeto INTEIRO, nao so pros
+# modulos RNBO: separar por arquivo exigiria sobrepor a regra de
+# padrao do Makefile da libDaisy, que nao expoe gancho pra isso.
+# O delta medido no delay serve de calibracao do que -O3 rende.
+# ============================================================
+OPT = -O3
+
 # Definido ANTES do include porque o core/Makefile usa "LDFLAGS ?=".
 LDFLAGS = -u _printf_float
 

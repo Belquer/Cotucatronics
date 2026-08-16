@@ -1,6 +1,6 @@
 # modules/ — manual de embarque de módulos RNBO
 
-**Documento v0.3.0** · receita validada em placa com o módulo `delay`
+**Documento v0.4.0** · receita validada em placa com o módulo `delay`
 (RNBO 1.4.3 / Max 9.1.4, Daisy Seed 2, firmware v0.5.0)
 
 Este é o **template de toda escultura futura**. Quem for embarcar o segundo
@@ -335,6 +335,57 @@ cada consumidor quer uma:
 Empurrar `Real()` pro módulo funcionava enquanto todos os params do módulo eram
 `[0,1]` — aí real e normalizado coincidem por acaso. Com `shift_hz` em
 `[0, 20] Hz` o módulo receberia **20 onde espera 1**. Use `Shaped()`.
+
+---
+
+## Orçamento de CPU: o watchdog julga o PICO, não a média
+
+Regra que só aparece quando um módulo pesado entra, e que muda como se lê
+qualquer medição.
+
+O prazo de um bloco é fixo: `block_size / sample_rate`. Bloco 48 a 48 kHz são
+**1000 µs**; bloco 128, **2667 µs**. Estourar esse prazo **não soa mal** — mata
+o loop principal por inanição, e a placa fica surda no serial. Por isso o
+`fx2_on` nasce em bypass e existe o watchdog.
+
+E o watchdog reage ao **pico**, não à média. Isso é o que importa:
+
+### FFT embarcada: o custo mora num bloco a cada N
+
+Um módulo espectral (`fft~`/`ifft~`) não distribui trabalho por amostra. Ele
+acumula amostras até fechar uma janela e **faz tudo de uma vez**. Com FFT de
+2048 e hop de 1024, a análise dispara a cada 1024 amostras — com bloco 128,
+isso é **um bloco a cada oito** fazendo o trabalho pesado enquanto os outros
+sete quase não fazem nada.
+
+Consequência prática: **a média engana e o pico decide.** Um vocoder pode
+mostrar 15% de média e estourar o prazo, porque o bloco da roda faz oito vezes
+o trabalho dos outros. O módulo vive ou morre nesse bloco.
+
+| | Custo por amostra | Custo por bloco | Quem decide |
+|---|---|---|---|
+| Delay, filtros, dinâmica | constante | constante | média ≈ pico |
+| **FFT / espectral** | ~zero | **rajada a cada hop** | **só o pico** |
+
+Sempre leia o `cpu` pelo **segundo número** (µs de pico contra prazo), e não
+pela porcentagem média. E ao comparar regimes de bloco diferentes, use µs: 50%
+de 1000 µs e 50% de 2667 µs são cargas de trabalho muito diferentes.
+
+> **Bloco maior ajuda duplamente um módulo espectral**, e por isso vale tentar
+> antes de cortar patch: o prazo cresce proporcionalmente, e o custo do hop se
+> dilui em menos blocos. Para DSP de custo constante, bloco maior só ajuda com
+> o overhead por bloco.
+
+### Fixar parâmetro no Max NÃO remove o DSP
+
+Medido: a variante "enxuta" do freeze — com `transp`, `panjit` e `ampjit`
+removidos e `auto`, `fade`, `pitchjit` fixados — custou **7349 µs** contra
+**7331 µs** da versão cheia. Dezoito microssegundos **a mais**, dentro do ruído.
+O código encolheu 12%; a CPU, 0%.
+
+Um `pitchjit` travado em 25% continua sendo um oscilador rodando a cada
+amostra: o que mudou foi de onde vem o número que ele lê, não se ele roda. Pra
+cortar custo os objetos precisam **sair do patch**, apagados, não congelados.
 
 ---
 

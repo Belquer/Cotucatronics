@@ -1,5 +1,5 @@
 #pragma once
-// module.h v0.3.0
+// module.h v0.4.0
 // ============================================================
 // Cotucatronics OS — interface abstrata de módulo DSP
 //
@@ -19,7 +19,7 @@
 namespace cotuca
 {
 
-#define COTUCA_MODULE_VERSION "0.3.0"
+#define COTUCA_MODULE_VERSION "0.4.0"
 
 // ------------------------------------------------------------
 // SLOTS — posições FIXAS na cadeia do shell.
@@ -33,6 +33,8 @@ namespace cotuca
 // não depois; o limiter tem que ser último. Slot fixo torna
 // isso estrutural em vez de convenção.
 //
+//   IN_R cru ─────────────────────────┐ (ch2: portadora externa)
+//                                     ↓
 //   fonte → GATE → [INSTRUMENT] → [FX2] → level → split
 //                       ├ OUT_L: SHIFTER → GOVERNOR → LIMITER
 //                       └ OUT_R:                      LIMITER
@@ -103,9 +105,38 @@ class Module
     // A conversão pra unidade real é problema do módulo.
     virtual void SetParam(int index, float normalized) = 0;
 
+    // Quantos canais de entrada o módulo consome. Default 1.
+    //
+    // >>> ch2, QUANDO EXISTE, É A PORTADORA EXTERNA. <<<
+    //
+    // ch1 é sempre o sinal do ponto da cadeia onde o slot está —
+    // pós-crossfade de fontes e pós-gate, ou seja o instrumento.
+    //
+    // ch2 é IN_R CRU: direto do jack de linha, ANTES do crossfade e
+    // ANTES do gate. É deliberado que ele não passe por nenhum dos
+    // dois. O crossfade existe pra escolher UMA fonte entre piezo e
+    // jack; um módulo de duas entradas quer as duas ao mesmo tempo,
+    // então passar pelo crossfade seria pedir que ele escolhesse
+    // justamente o que ele não quer escolher. E o gate é política
+    // sobre o instrumento — silenciar o chão do piezo — que não tem
+    // por que se aplicar a uma fonte externa que o operador plugou
+    // de propósito.
+    //
+    // É isso que viabiliza cross-synthesis: a escultura modula, o
+    // jack porta. Vale pro vocoder e pra qualquer módulo futuro que
+    // precise de uma referência externa.
+    //
+    // Sem entrada de áudio na placa, ch2 é silêncio, não lixo.
+    virtual int InputCount() const { return 1; }
+
     // Mesma convenção do hal::AudioCallback: não-intercalado,
     // in/out[canal][amostra]. Tempo real: sem alocar, sem logar,
     // sem bloquear.
+    //
+    // `in` traz SEMPRE dois ponteiros válidos; módulo de 1 input
+    // simplesmente ignora in[1]. Passar sempre dois evita que um
+    // export de 2 canais leia fora dos limites — sem crash, com
+    // lixo no áudio, que é a pior classe de defeito.
     virtual void Process(const float* const* in,
                          float**             out,
                          size_t              size) = 0;
