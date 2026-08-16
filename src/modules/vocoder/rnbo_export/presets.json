@@ -2,8 +2,14 @@
   {
     "name": "vocoder",
     "preset": {
+      "voc_mix": {
+        "value": 1
+      },
       "voc_pitch": {
-        "value": 0.5
+        "value": 1
+      },
+      "voc_tone": {
+        "value": 0.16
       }
     }
   }

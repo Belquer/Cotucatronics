@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.7.0
+// hal.h v0.8.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -24,6 +24,7 @@ struct BoardInfo
 {
     const char* name;         // "Daisy Seed", "Teensy 4.1"...
     int         num_knobs;    // ADCs disponíveis no painel
+    int         num_buttons;  // botões momentâneos no painel
     bool        has_audio_in; // false = só síntese/playback
     float       sample_rate;
     size_t      block_size;
@@ -67,6 +68,12 @@ void             StartAudio(AudioCallback cb);
 // LATÊNCIA, e latência é característica do instrumento.
 void             RequestBlockSize(size_t block_size);
 float            ReadKnob(int index);          // 0.0–1.0 (stub até ter pots)
+// true = PRESSIONADO. Já com debounce; quem chama vê só transições
+// limpas. O contrato é NÍVEL, não evento: detectar borda é do shell,
+// que é onde se sabe o que uma borda significa.
+//
+// Chamar do loop principal, em qualquer ritmo — o debounce é por
+// tempo, não por contagem de chamadas.
 bool             ReadButton(int index);        // true = pressionado
 void             SetLed(bool on);
 void             Log(const char* fmt, ...);    // printf via USB/serial
@@ -125,6 +132,31 @@ float            CpuLoadMax();
 // CpuLoadMax() é monotônico, então sem reset um estouro passado
 // travaria o watchdog pra sempre.
 void             CpuLoadReset();
+
+// ---- CAIXA-PRETA: memória que sobrevive ao RESET ----
+//
+// Existe por um motivo específico e recorrente: MEDIR O QUE SÓ
+// ACONTECE DEPOIS QUE A SERIAL JÁ MORREU. Um módulo pesado derruba
+// o USB alguns blocos depois de subir, e a partir daí a placa não
+// tem mais como contar o que viu — todo instrumento que depende de
+// log vira inútil justamente no trecho que interessa.
+//
+// Com isto o firmware grava DURANTE o voo e a gente lê DEPOIS do
+// reset, quando o serial voltou a funcionar. É gravador de voo, não
+// armazenamento: sobrevive a RESET, NÃO sobrevive a queda de
+// energia, e não deve guardar nada que importe pro instrumento.
+//
+// Escrever é barato (uma store) e pode ser feito do callback de
+// áudio. Ler é do loop principal.
+//
+// Slot fora da faixa é ignorado na escrita e devolve 0 na leitura.
+// Depois de energizar do zero o conteúdo é lixo: Valid() diz se o
+// que está lá foi escrito por uma execução anterior ou não.
+void  BlackboxWrite(int slot, float value);
+float BlackboxRead(int slot);
+bool  BlackboxValid();   // false = ligou agora, não há voo anterior
+void  BlackboxArm();     // marca "há dados"; chamar antes de gravar
+int   BlackboxSlots();
 
 // Total já entregue por AllocBig(), em bytes. Serve de extrato:
 // o boot loga isto, e módulo que aloque por fora não aparece aqui.

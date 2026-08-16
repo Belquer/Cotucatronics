@@ -1,9 +1,18 @@
 // ============================================================
 // Cotucatronics OS — módulo DSP: vocoder (export do RNBO)
-// module_rnbo_vocoder v0.1.0
+// module_rnbo_vocoder v0.4.0
 //
-// Slot Fx2. Cross-synthesis espectral de duas entradas:
-//   ch1 = escultura (modulador)  ·  ch2 = jack de linha (portadora)
+// Slot Fx2. Cross-synthesis espectral de UMA entrada.
+//
+// PORTADORA INTERNA (export de 2026-08-16): o patch gera a própria
+// portadora — mistura de senoides e ruído, que é o que os três
+// `cycle~` novos e o RNBODefaultSinus de 16384 amostras fazem ali.
+// O description.json confirma: 1 entrada, 2 saídas. O export
+// ANTERIOR era 2/2 e esperava portadora externa no ch2.
+//
+// Consequência prática: o `carrier` que o shell manda (IN_R cru) é
+// ignorado. Não é bug — é fiação que deixou de ser necessária —,
+// mas declarar 2 entradas faria o `mods` mentir sobre o contrato.
 //
 // Um dos arquivos que podem incluir headers do RNBO. Ver
 // module_rnbo_delay.cpp pra explicação do renome de símbolos.
@@ -89,7 +98,34 @@ using Patcher = RNBO::rnbomatic_vocoder<>;
 // é específico deste patch. Nada vaza pra fronteira.
 // ------------------------------------------------------------
 constexpr const char* kWindowRef = "r_window";
-constexpr size_t      kWindowFallback = 2048; // só se o patch não pedir
+
+// ------------------------------------------------------------
+// O FALLBACK NÃO É FALLBACK: é o único caminho que roda.
+//
+// Descoberto em 2026-08-16. `r_window` é `buffer~`, e o export
+// NUNCA chama requestSize() nele — `allocateDataRefs()` pede
+// tamanho pros `data` internos e pro RNBODefaultSinus, e passa
+// direto pelo r_window, que só aparece num
+// `if(hasRequestedSize())` que nunca é verdadeiro.
+//
+// Logo `getSizeInBytes()` devolve 0 SEMPRE, e o codigo que "le o
+// tamanho do proprio dataref" nunca executou uma vez. O comentario
+// original temia que fixar 2048 fizesse firmware e patch
+// discordarem em silencio no dia em que a FFT mudasse. O medo
+// estava certo e o mecanismo de defesa nao funcionava.
+//
+// E a discordancia ESTAVA la: os dois exports do vocoder sao FFT
+// 1024, e a janela vinha com 2048. O patch lia so a primeira
+// metade do sqrt(hann) — uma rampa subindo — e o overlap-add
+// nunca somou plano. Passou despercebido porque o teste auditivo
+// do vocoder segue na fila congelada: o modulo nunca foi ouvido.
+//
+// 1024 e constante DESTE patch. Este arquivo ja e especifico deste
+// patch, entao a constante pertence aqui — mas se o dB reexportar
+// com outra FFT, ESTA LINHA MUDA JUNTO. Nao ha rede de seguranca
+// automatica; o `mods` loga o tamanho pra conferencia manual.
+// ------------------------------------------------------------
+constexpr size_t      kWindowFallback = 1024;
 
 class VocoderModule final : public Module
 {
@@ -107,6 +143,40 @@ class VocoderModule final : public Module
 
         patcher_.prepareToProcess(sample_rate, block_size, true);
 
+        // ------------------------------------------------------
+        // PREENCHE DE NOVO, DEPOIS. Não é redundância defensiva:
+        // prepareToProcess chama allocateDataRefs(), e lá dentro
+        // `data_01_buffer` — que é uma VIEW do r_window — chama
+        // requestSize(1024, 1).
+        //
+        // Isso dá ao r_window um tamanho pedido que ele NÃO tinha
+        // quando preenchemos. O allocateIfNeeded() seguinte pode
+        // então trocar o ponteiro por um buffer novo e ZERADO,
+        // jogando fora a janela recém-escrita. E o fillr_window()
+        // do próprio export não cobre o buraco: ele só roda se
+        // wantsFill() for verdadeiro, e setTouched(true) — que a
+        // gente chama pra avisar que os dados vieram de fora — é
+        // justamente o que faz wantsFill() virar falso.
+        //
+        // Resultado: janela toda zero, sete multiplicações por
+        // zero, VOCODER MUDO. Roda, custa CPU, não sai som, e não
+        // loga nada. Exatamente o modo de falha que o comentário
+        // de cima descreve — só que a causa não era ninguém
+        // esquecer de preencher, era o preenchimento ser
+        // descartado depois.
+        //
+        // A ordem certa é preencher NOS DOIS momentos: antes,
+        // porque processDataViewUpdate liga as views e
+        // prepareToProcess já as consulta; e depois, porque é só
+        // depois que o buffer definitivo existe.
+        // ------------------------------------------------------
+        const bool refill_ok = FillWindow();
+        window_ok_ = window_ok_ && refill_ok;
+
+        hal::Log("  vocoder: janela %u amostras, soma=%.1f%s",
+                 (unsigned)window_samples_, (double)window_sum_,
+                 window_sum_ > 0.f ? "" : "  <<< ZERADA: SAIRIA MUDO");
+
         n_params_ = static_cast<int>(patcher_.getNumParameters());
         mem_      = rnbo_alloc::Delta(before);
 
@@ -118,7 +188,8 @@ class VocoderModule final : public Module
     }
 
     const char* Name() const override { return "vocoder"; }
-    int         InputCount() const override { return 2; } // ch2 = portadora
+    // 1, não 2: o export novo tem portadora interna. Ver o cabeçalho.
+    int         InputCount() const override { return 1; }
     int         ParamCount() const override { return n_params_; }
 
     const char* ParamName(int i) const override
@@ -150,9 +221,13 @@ class VocoderModule final : public Module
     void Process(const float* const* in, float** out, size_t size) override
     {
         // description.json: 2 entradas, 2 saídas.
-        const RNBO::SampleValue* ins[2]  = {in[0], in[1]};
+        // numInputs = 1: o patch só tem in1. O `process` gerado
+        // protege com `numInputs >= 1 && inputs[0]`, então passar 2
+        // era inofensivo — mas passar o número certo é o que mantém
+        // o wrapper e o description.json contando a mesma história.
+        const RNBO::SampleValue* ins[1]  = {in[0]};
         RNBO::SampleValue*       outs[2] = {out[0], out[1]};
-        patcher_.process(ins, 2, outs, 2, static_cast<RNBO::Index>(size));
+        patcher_.process(ins, 1, outs, 2, static_cast<RNBO::Index>(size));
     }
 
     size_t WindowSamples() const { return window_samples_; }
@@ -182,7 +257,15 @@ class VocoderModule final : public Module
             if(count < 2)
                 return false;
 
-            float* w = static_cast<float*>(hal::AllocBig(bytes));
+            // REUSA o buffer entre as duas chamadas. AllocBig nunca
+            // devolve memória, então alocar de novo na segunda passada
+            // vazaria a primeira — pouco, mas sem motivo.
+            if(!window_buf_ || window_bytes_ != bytes)
+            {
+                window_buf_   = static_cast<float*>(hal::AllocBig(bytes));
+                window_bytes_ = bytes;
+            }
+            float* w = window_buf_;
             if(!w)
                 return false; // sem SDRAM: recusa, não roda mudo
 
@@ -190,11 +273,13 @@ class VocoderModule final : public Module
             // somarem plano no overlap-add (COLA). Hann puro nas duas
             // pontas somaria hann², que ondula.
             const float twopi = 6.283185307179586f;
+            window_sum_       = 0.f;
             for(size_t k = 0; k < count; k++)
             {
                 const float hann
                     = 0.5f * (1.f - cosf(twopi * (float)k / (float)(count - 1)));
                 w[k] = sqrtf(hann);
+                window_sum_ += w[k];
             }
 
             ref->setData(reinterpret_cast<char*>(w), bytes);
@@ -211,6 +296,12 @@ class VocoderModule final : public Module
     int                   n_params_       = 0;
     bool                  window_ok_      = false;
     size_t                window_samples_ = 0;
+    float*                window_buf_     = nullptr;
+    size_t                window_bytes_   = 0;
+    // Soma das amostras da janela. Serve de prova de vida: sqrt(hann)
+    // de 1024 pontos soma ~652. Zero significa janela vazia, e janela
+    // vazia significa vocoder mudo — que é o defeito que nao loga.
+    float                 window_sum_     = 0.f;
     MemReport             mem_;
 };
 

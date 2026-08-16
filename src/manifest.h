@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.17.0
+// manifest.h (instrumento "bancada") v0.20.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -43,10 +43,24 @@ struct Requirements
     // regime — não coube nem no 256, por 5%. A variante FFT
     // 1024/hop 512 deve cair pra faixa de 2,5–2,8k us e caber no 256
     // com folga.
-    // ESTADO INSTRUMENTO: 48, o regime nervoso — 1 ms de latencia.
-    // O 256 era do vocoder, que precisa de 5 333 us de prazo. Sem
-    // modulo espectral na cadeia, nao ha razao pra pagar latencia.
-    size_t block_size = 48;
+    // VOCODER LIGADO (2026-08-16): volta pra 256, porque é o único
+    // prazo em que módulo espectral cabe. O 128 foi MEDIDO em 112% —
+    // não é aperto, é estouro.
+    //
+    // O preço é honesto e não é pequeno: a latência sai de 1 ms pra
+    // 5,3 ms, e num instrumento realimentado isso desloca onde o
+    // feedback se estabelece. Tirar o vocoder do build e voltar pra 48
+    // é uma linha aqui e uma no Makefile.
+    size_t block_size = 256;
+};
+
+// Semântica do botão 2. Momentânea por ora; Toggle fica declarado
+// pra o dia em que existir, mas não implementado — declarar sem
+// implementar é melhor que improvisar depois sem lugar previsto.
+enum class ButtonMode
+{
+    Hold,   // param = 1 enquanto pressionado, volta ao anterior ao soltar
+    Toggle, // FUTURO: alterna a cada pressionada
 };
 
 struct Manifest
@@ -138,10 +152,72 @@ struct Manifest
     // de controle sobre algo que nao responde.
     // ---- VOCODER (slot Fx2) ----
     // Cross-synthesis: ch1 = escultura (modulador), ch2 = jack de
-    // linha CRU (portadora). Serial-only — os cinco knobs estao
-    // ocupados.
+    // linha CRU (portadora).
+    //
+    // `voc_tone` nasceu no export de 2026-08-16 e ficou com o k5, que
+    // estava livre desde o painel v2. mix e pitch seguem serial-only.
     int p_voc_mix;   // → "voc_mix"    0..1, seco/molhado
     int p_voc_pitch; // → "voc_pitch"  0..1, centro 0.5 = sem deslocamento
+    int p_voc_tone;  // → "voc_tone"   0..1, novo no export de 2026-08-16
+
+    // ---- GANHO DE COMPENSAÇÃO DO SLOT Fx2 ----
+    // O vocoder sai MUITO mais baixo que o delay. Não é defeito:
+    // cross-synthesis espectral só devolve energia onde as duas fontes
+    // coincidem, e coincidência é raríssima comparada com um delay, que
+    // devolve o sinal inteiro.
+    //
+    // POR QUE UM PARÂMETRO NOVO, e não subir `level` ou `bench_boost`:
+    //
+    //   level        é o master do palco, contrato [0,1]. Gastá-lo pra
+    //                compensar um módulo faria o knob de volume da
+    //                escultura significar coisas diferentes conforme o
+    //                Fx2 estivesse ligado ou não.
+    //   bench_boost  é ferramenta de bancada, proibida de sair da
+    //                bancada. Ver o bloco dela acima.
+    //
+    // Isto é CASAMENTO DE NÍVEL ENTRE MÓDULOS, que é problema próprio e
+    // merece nome próprio. Fica no slot, não no master: trocar o módulo
+    // do Fx2 troca o ganho junto, como tem que ser.
+    //
+    // Aplicado ANTES do level e da dinâmica, então governor e limiter
+    // continuam protegendo — é por isso que 8x é seguro de oferecer.
+    int p_fx2_gain;
+
+    // ============================================================
+    // PAINEL v2 — 5 pots + 2 botões momentâneos
+    //
+    //   k1 = level      k2 = src_mix      k3–k5 = macros de caráter
+    //   B1 = randomizador                 B2 = assinalável
+    // ============================================================
+
+    // ---- B1: RANDOMIZADOR, com whitelist EXPLÍCITA ----
+    //
+    // Só entra aqui parâmetro de CARÁTER do módulo — o que muda o som
+    // sem mudar o que o instrumento é. Ficam PROIBIDOS por design:
+    //
+    //   level          é o volume. Sortear volume no palco é o mesmo
+    //                  que dar um susto em quem está ouvindo.
+    //   src_mix        escolhe a FONTE. Sortear isso troca o
+    //                  instrumento, não o som dele.
+    //   gate_*         política sobre o chão de ruído do piezo.
+    //   gov_*, limiter proteção do exciter. Sortear proteção é
+    //                  sortear se o hardware sobrevive.
+    //   route_*        sortear roteamento pode emudecer a peça, ou
+    //                  mandar pro exciter o que devia ir pro jack.
+    //   shift_hz       anti-feedback. Mesmo argumento do governor.
+    //   bench_boost    ferramenta de bancada, nunca de performance.
+    //
+    // A regra por trás: o botão pode surpreender o TIMBRE, nunca a
+    // SEGURANÇA nem a IDENTIDADE do instrumento. Whitelist e não
+    // blacklist porque param novo nasce fora — esquecer de proibir é
+    // erro silencioso, esquecer de permitir só faz o botão ignorá-lo.
+    int randomizable[6];
+    int n_randomizable = 0;
+
+    // ---- B2: ASSINALÁVEL ----
+    // -1 = sem função. Momentâneo: segura, vale 1; solta, volta.
+    int        button2_target = -1;
+    ButtonMode button2_mode   = ButtonMode::Hold;
 
     // ---- ligação com o módulo DSP, POR NOME ----
     // O manifest não conhece índice de parâmetro do RNBO: reexportar
@@ -262,16 +338,6 @@ struct Manifest
         // de ser múltiplas inteiras e o timbre metaliza.
         p_shift_hz      = t.Add("shift_hz",      0.4f, 0.f, 10.f);
 
-        // knob físico → macro → parâmetro(s)
-        knob[0].AddTarget(p_dly_time, 1.0f);
-        knob[1].AddTarget(p_dly_mix, 1.0f);
-        knob[2].AddTarget(p_level, 1.0f);
-        // knob 4 aponta pro src_mix PROVISORIAMENTE, até o painel de 5
-        // pots existir. É por isso que req.min_knobs segue em 4: com 4
-        // knobs o SRC MIX continua alcançável, então a escultura roda.
-        knob[3].AddTarget(p_src_mix, 1.0f);
-        knob[4].AddTarget(p_src_mix, 1.0f); // SRC MIX definitivo
-
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
         // (`tone on`/`tone off`) e pelo default — o tom de teste é
@@ -283,9 +349,24 @@ struct Manifest
         // FREEZE. Defaults iguais aos do export, pra o boot nascer
         // com o patch no estado que o autor definiu.
         // Defaults iguais aos do export: mix 1 (molhado), pitch 0.5
-        // (centro, deslocamento zero).
+        // (centro, deslocamento zero), tone 0.7.
         p_voc_mix   = t.Add("voc_mix",   1.0f, 0.f, 1.f);
         p_voc_pitch = t.Add("voc_pitch", 0.5f, 0.f, 1.f);
+        p_voc_tone  = t.Add("voc_tone",  0.7f, 0.f, 1.f);
+
+        // Faixa [1,256], curva 3. O teto subiu de 16 porque 6x ficou
+        // "muuuuuito baixo" e 16 nao teria dado conta: cross-synthesis
+        // devolve energia so onde as duas fontes coincidem, e a queda
+        // pode passar de 40 dB. Curva 3 mantem o ajuste fino embaixo —
+        // metade do curso ainda cobre 1x-32x.
+        //
+        // Default 48x. E chute, e esta declarado como tal: o log dos
+        // primeiros blocos agora mede in/out e imprime o "falta Nx"
+        // real, e o proximo valor sai dessa medicao em vez de sair
+        // daqui. Com limiter e governor a jusante, exagerar comprime.
+        //
+        // norm = ((48-1)/255)^(1/3) = 0.573
+        p_fx2_gain  = t.Add("fx2_gain",  0.573f, 1.f, 256.f, 3.0f);
 
         // ---- LIGACOES ----
         // TODAS depois de TODOS os Add(). Nao e estilo: um bind feito
@@ -299,9 +380,55 @@ struct Manifest
         // sintoma.
         bind[n_bind++] = {ModuleSlot::Instrument, p_dly_time, "dly_time"};
         bind[n_bind++] = {ModuleSlot::Instrument, p_dly_mix, "dly_mix"};
-        // nomes conferidos contra o description.json do freeze
+
+        // ---- PAINEL v2: knob físico → macro → parâmetro(s) ----
+        // AQUI EMBAIXO, junto dos bind[], e pelo MESMO motivo: knob
+        // ligado antes do Add() correspondente lê id AINDA ZERO, e id 0
+        // é o `level`. Este bloco morava lá em cima e só não quebrava
+        // por acaso — k1–k4 apontam pra params declarados cedo. O k5
+        // apontando pro vocoder foi o primeiro a cruzar a linha.
+        //
+        // REGRA DO PROJETO, não sugestão: k1 e k2 são FIXOS em TODA
+        // escultura — k1 volume, k2 fonte. Só k3–k5 são livres, e é só
+        // neles que um manifest novo mexe.
+        //
+        // O motivo é a mão, não o código: painel com gramática constante
+        // se aprende uma vez e vale pra qualquer peça. Quem chega perto
+        // de uma escultura desconhecida já sabe onde abaixar o volume e
+        // onde trocar a fonte — sem manual, sem tentativa e erro em
+        // público. Mover k1/k2 num manifest quebra isso pra todas as
+        // outras esculturas, não só pra esta.
+        knob[0].AddTarget(p_level, 1.0f);    // k1 — volume master
+        knob[1].AddTarget(p_src_mix, 1.0f);  // k2 — SRC MIX piezo/linha
+        knob[2].AddTarget(p_dly_time, 1.0f); // k3 — macro do delay
+        knob[3].AddTarget(p_dly_mix, 1.0f);  // k4 — macro do delay
+        knob[4].AddTarget(p_voc_tone, 1.0f); // k5 — macro do vocoder
+
+        // ---- B1: o que o randomizador pode sortear ----
+        // Params de CARÁTER dos módulos, e só. Com o vocoder ligado
+        // entram os dois dele que mexem em timbre.
+        //
+        // `voc_mix` fica DE FORA: com o Fx2 no caminho, mix não é
+        // caráter — é quanto do módulo existe. Sortear isso é da mesma
+        // família de `src_mix`, que decide qual instrumento se está
+        // tocando, e não como ele soa.
+        randomizable[n_randomizable++] = p_dly_time;
+        randomizable[n_randomizable++] = p_dly_mix;
+        randomizable[n_randomizable++] = p_voc_pitch;
+        randomizable[n_randomizable++] = p_voc_tone;
+
+        // ---- B2: sem função neste instrumento ----
+        // Exemplo pra quando o freeze voltar ao slot Fx2:
+        //   button2_target = p_frz_on;
+        //   button2_mode   = ButtonMode::Hold;
+        // Aí segurar o botão congela e soltar libera — que é o gesto
+        // natural pra freeze, e o motivo de Hold ser o modo default.
+        button2_target = -1;
+
+        // nomes conferidos contra o description.json do vocoder
         bind[n_bind++] = {ModuleSlot::Fx2, p_voc_mix, "voc_mix"};
         bind[n_bind++] = {ModuleSlot::Fx2, p_voc_pitch, "voc_pitch"};
+        bind[n_bind++] = {ModuleSlot::Fx2, p_voc_tone, "voc_tone"};
 
         // ---- MAPA MIDI ----
         // Aqui embaixo pelo MESMO motivo dos bind[]: um id lido antes
@@ -320,6 +447,12 @@ struct Manifest
         // único jeito de procurar a borda sem largar a escultura pra
         // digitar no serial. É o mapeamento que mais justifica o MIDI.
         midi_map[n_midi++] = {24, p_gov_ceiling};
+        // CC 25: o ganho do Fx2. MIDI e nao serial de proposito — com o
+        // vocoder ligado a serial fica surda (defeito conhecido, ver
+        // TESTES.md), e o MIDI e o unico caminho de controle que
+        // sobrevive. "MIDI e um knob remoto" deixou de ser slogan e
+        // virou a unica mao no ganho.
+        midi_map[n_midi++] = {25, p_fx2_gain};
 
         // shift_hz NÃO tem ModBind: o shifter é bloco do shell, lido
         // direto do callback, como gate/governor/limiter. Slot Fx2

@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.16.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.19.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.16.0"
+#define COTUCA_OS_VERSION "0.19.0"
 
 #include "hal.h"
 #include "params.h"
@@ -211,8 +211,83 @@ static volatile float fx2_probe[kProbeBlocks] = {};
 // alocacao preguicosa acontece. Reativar depois mede so o regime e
 // apagaria o dado — foi o que aconteceu na primeira tentativa.
 static volatile bool  fx2_probe_done = false;
+
+// ---- BANCADA: cerco ao bloco que mata ----
+// Dois contadores em volta do Process. A diferenca entre eles e o
+// diagnostico inteiro:
+//
+//   in == out    → todo Process que comecou terminou. Se a placa
+//                  morreu assim, morreu FORA do modulo.
+//   in == out+1  → um Process entrou e nunca saiu. Trava ou fault
+//                  DENTRO do modulo, no bloco de numero `in`.
+//
+// O watchdog nao consegue ver essa diferenca porque ele so roda no
+// inicio do bloco SEGUINTE, que no caso de trava nunca existe.
+static volatile uint32_t fx2_in  = 0;
+static volatile uint32_t fx2_out = 0;
+// Picos medidos em volta do modulo: entrada (saida do delay) e saida
+// crua do vocoder, antes do ganho. A razao diz o ganho que falta.
+static volatile float    fx2_peak_in  = 0.f;
+static volatile float    fx2_peak_out = 0.f;
 static constexpr float   kOverrunTrip = 0.90f;
-static constexpr uint32_t kGraceBlocks = 24; // ~64 ms em bloco 128
+// BANCADA 2026-08-16 — era 24. Reduzido pra 2 pra descobrir se o
+// vocoder novo ESTOURA ou TRAVA, que sao doencas diferentes:
+//
+//   estoura → Process retorna tarde. O watchdog pega no bloco
+//             seguinte e loga "Forcado em bypass". Placa sobrevive.
+//   trava   → Process nao retorna (ou da fault). NAO EXISTE bloco
+//             seguinte, entao o watchdog nunca roda. Placa morre.
+//
+// Com 24 blocos os dois casos pareciam iguais: a placa morria antes
+// da protecao existir. Com 2, o watchdog tem chance quase imediata, e
+// o desfecho responde a pergunta.
+//
+// Encurtar e seguro porque o warm-up do Init ja paga a alocacao
+// preguicosa do RNBO — a graca longa era pra quando isso nao existia.
+static constexpr uint32_t kGraceBlocks = 2;
+
+// ============================================================
+// PAINEL v2 — 2 botões momentâneos
+//   B1 = randomizador   ·   B2 = assinalável (hold)
+//
+// O HAL entrega NÍVEL já com debounce; a detecção de BORDA é aqui,
+// porque é aqui que se sabe o que uma borda significa. B1 age na
+// subida (um gesto = um sorteio); B2 acompanha o nível (segura,
+// vale; solta, volta).
+// ============================================================
+static bool  btn_prev[2] = {false, false};
+static bool  b2_sim      = false; // simulação por serial
+static float b2_saved    = 0.f;
+static bool  b2_held     = false;
+
+// Rampa curta pro sorteio. Trocar parâmetro em degrau CLICA — é a
+// mesma descontinuidade que o soft-knee do governor teve que aprender
+// a evitar. 50 ms é curto o bastante pra parecer instantâneo ao gesto
+// e longo o bastante pra não estalar.
+//
+// O B2 NÃO rampa, de propósito: hold é chave, não varredura. Rampar
+// um freeze borraria justamente o instante que ele existe pra capturar.
+static constexpr uint16_t kRampTicks = 50; // loop gira a ~1 ms
+struct ParamRamp
+{
+    int      id;
+    float    from, to;
+    uint16_t step, steps;
+};
+static ParamRamp ramps[8];
+static int       n_ramps = 0;
+
+// xorshift32: barato, determinístico e suficiente pra sortear timbre.
+// A semente varia com o tick em que o primeiro sorteio acontece, então
+// não repete a mesma sequência a cada boot.
+static uint32_t rng_state = 0;
+static float    RandNorm()
+{
+    rng_state ^= rng_state << 13;
+    rng_state ^= rng_state >> 17;
+    rng_state ^= rng_state << 5;
+    return (float)(rng_state & 0xFFFFFF) / (float)0xFFFFFF;
+}
 
 // ---- cadeia de dinâmica do shell ----
 static cotuca::Gate     gate;
@@ -304,6 +379,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // acabou de ligar: abre a graca AQUI, antes de qualquer bloco
         fx2_grace   = kGraceBlocks;
         fx2_overrun = false;
+        cotuca::hal::BlackboxArm(); // so a partir daqui os slots valem
     }
     fx2_prev_want = fx2_want;
 
@@ -355,11 +431,47 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // isto o canal direito ficaria com o bloco anterior.
         for(size_t i = 0; i < size; i++)
             fx_buf[0][i] = fx_buf[1][i] = 0.f;
+        fx2_in++;
         fx2->Process(ins, outs, size);
+        fx2_out++;
+        // GANHO DE COMPENSACAO DO SLOT. O vocoder sai muito abaixo do
+        // delay porque cross-synthesis so devolve energia onde as duas
+        // fontes coincidem. Ver a nota no manifest pra por que isto nao
+        // e `level` nem `bench_boost`.
+        //
+        // Aqui e ANTES do level e da dinamica: o governor e o limiter
+        // continuam a jusante, entao exagerar comprime em vez de
+        // estourar.
+        const float g = params.Real(manifest.p_fx2_gain);
+        // MEDE OS DOIS LADOS. `pin` = o que entrou (saida do delay, que
+        // e o que o ouvido usa de referencia); `pout` = o que o vocoder
+        // devolveu, ANTES do ganho. A razao entre eles e exatamente o
+        // ganho de compensacao que falta — numero medido, nao chutado.
+        //
+        // Isto tem que sair no log dos primeiros blocos porque a serial
+        // morre logo depois que o vocoder sobe. Medir num lugar que so
+        // pode ser lido quando ja nao da pra ler nao mede nada.
+        float pin = 0.f, pout = 0.f;
         for(size_t i = 0; i < size; i++)
         {
-            out[0][i] = fx_buf[0][i];
-            out[1][i] = fx_buf[1][i];
+            const float a = out[0][i] < 0 ? -out[0][i] : out[0][i];
+            const float b = fx_buf[0][i] < 0 ? -fx_buf[0][i] : fx_buf[0][i];
+            if(a > pin) pin = a;
+            if(b > pout) pout = b;
+        }
+        if(pin > fx2_peak_in) fx2_peak_in = pin;
+        if(pout > fx2_peak_out) fx2_peak_out = pout;
+        // CAIXA-PRETA. Escrita a cada bloco, do callback, porque e aqui
+        // que o dado existe e daqui a poucos blocos nao havera mais
+        // serial pra contar. Custa tres stores.
+        cotuca::hal::BlackboxWrite(0, fx2_peak_in);
+        cotuca::hal::BlackboxWrite(1, fx2_peak_out);
+        cotuca::hal::BlackboxWrite(2, (float)fx2_in);
+        cotuca::hal::BlackboxWrite(3, cotuca::hal::CpuLoadMax());
+        for(size_t i = 0; i < size; i++)
+        {
+            out[0][i] = fx_buf[0][i] * g;
+            out[1][i] = fx_buf[1][i] * g;
         }
     }
 
@@ -424,6 +536,54 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     }
 }
 
+// B1: sorteia novos valores pros params da whitelist do manifest.
+// Só os de CARÁTER — nunca level, fonte, proteção ou roteamento. O
+// porquê de cada proibição está no manifest.h.
+static void TriggerRandomize()
+{
+    using namespace cotuca;
+    n_ramps = 0;
+    for(int i = 0; i < manifest.n_randomizable
+                   && n_ramps < (int)(sizeof(ramps) / sizeof(ramps[0]));
+        i++)
+    {
+        const int id = manifest.randomizable[i];
+        ramps[n_ramps].id    = id;
+        ramps[n_ramps].from  = params.Get(id);
+        ramps[n_ramps].to    = RandNorm();
+        ramps[n_ramps].step  = 0;
+        ramps[n_ramps].steps = kRampTicks;
+        n_ramps++;
+    }
+    if(n_ramps == 0)
+        hal::Log("B1: nada na whitelist deste manifest");
+    else
+        hal::Log("B1: sorteando %d param(s) em %d ms", n_ramps,
+                 (int)kRampTicks);
+}
+
+// B2: momentâneo. Guarda o valor, força 1, devolve ao soltar.
+static void SetButton2(bool pressed)
+{
+    using namespace cotuca;
+    const int t = manifest.button2_target;
+    if(t < 0)
+        return; // sem função neste instrumento
+    if(pressed && !b2_held)
+    {
+        b2_saved = params.Get(t);
+        params.Set(t, 1.f);
+        b2_held = true;
+        hal::Log("B2: %s = 1 (segurando)", params.Name(t));
+    }
+    else if(!pressed && b2_held)
+    {
+        params.Set(t, b2_saved);
+        b2_held = false;
+        hal::Log("B2: %s de volta a %.3f", params.Name(t), b2_saved);
+    }
+}
+
 // ---- painel falso via serial ----
 static void HandleLine(const char* line)
 {
@@ -434,6 +594,28 @@ static void HandleLine(const char* line)
         float v   = strtof(line + 2, nullptr);
         manifest.knob[idx].Apply(params, v);
         hal::Log("knob %d -> %.2f", idx + 1, v);
+        return;
+    }
+    // b1 — dispara o randomizador (gesto momentâneo, um sorteio)
+    if(strncmp(line, "b1", 2) == 0)
+    {
+        TriggerRandomize();
+        return;
+    }
+    // b2 [0|1] — simula segurar/soltar; sem argumento, alterna
+    if(strncmp(line, "b2", 2) == 0)
+    {
+        const char* a = line + 2;
+        while(*a == ' ') a++;
+        bool want = !b2_sim;
+        if(*a == '0') want = false;
+        else if(*a == '1') want = true;
+        b2_sim = want;
+        if(manifest.button2_target < 0)
+            hal::Log("B2 simulado: %s (mas button2_target = -1, sem efeito)",
+                     want ? "PRESSIONADO" : "solto");
+        else
+            hal::Log("B2 simulado: %s", want ? "PRESSIONADO" : "solto");
         return;
     }
     if(strncmp(line, "tone on", 7) == 0)
@@ -521,6 +703,30 @@ static void HandleLine(const char* line)
         hal::Log("route exciter=%d jack=%d",
                  params.Real(manifest.p_route_exciter) >= 0.5f ? 1 : 0,
                  params.Real(manifest.p_route_jack) >= 0.5f ? 1 : 0);
+        return;
+    }
+    // CAIXA-PRETA do voo anterior. E o unico jeito de saber o que o
+    // vocoder fez depois que a serial caiu: ele grava durante o voo,
+    // a gente le aqui, com o Fx2 desligado e o USB de novo vivo.
+    if(strncmp(line, "bb", 2) == 0 && (line[2] == 0 || line[2] == ' '))
+    {
+        if(!hal::BlackboxValid())
+        {
+            hal::Log("caixa-preta: vazia (ligou agora, sem voo anterior)");
+            return;
+        }
+        const float pi_ = hal::BlackboxRead(0);
+        const float po_ = hal::BlackboxRead(1);
+        hal::Log("caixa-preta do voo anterior:");
+        hal::Log("  blocos processados : %.0f", (double)hal::BlackboxRead(2));
+        hal::Log("  pico ENTRADA  do fx2: %.5f", (double)pi_);
+        hal::Log("  pico SAIDA    do fx2: %.5f  (antes do ganho)", (double)po_);
+        if(po_ > 1e-7f)
+            hal::Log("  => falta %.0fx de ganho pra casar com a entrada",
+                     (double)(pi_ / po_));
+        else if(pi_ > 1e-7f)
+            hal::Log("  => saida ZERO com entrada viva: modulo MUDO");
+        hal::Log("  pico de CPU: %.0f%%", (double)hal::BlackboxRead(3) * 100.0);
         return;
     }
     if(strncmp(line, "probe", 5) == 0)
@@ -677,7 +883,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | midi | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -863,6 +1069,31 @@ int main(void)
             manifest.knob[k].Apply(params, v);
         }
         hal::PollSerial();
+
+        // ---- PAINEL: botões (físico OU simulado por serial) ----
+        rng_state += 0x9E3779B9u; // gira sempre: a semente vira do tick
+        for(int b = 0; b < 2 && b < hal::Info().num_buttons; b++)
+        {
+            const bool now = hal::ReadButton(b) || (b == 1 && b2_sim);
+            if(now == btn_prev[b])
+                continue;
+            btn_prev[b] = now;
+            if(b == 0 && now)
+                TriggerRandomize(); // BORDA de subida
+            else if(b == 1)
+                SetButton2(now);    // NÍVEL
+        }
+
+        // avança as rampas do sorteio, um passo por tick
+        for(int i = 0; i < n_ramps; i++)
+        {
+            ParamRamp& r = ramps[i];
+            if(r.step >= r.steps)
+                continue;
+            r.step++;
+            const float t = (float)r.step / (float)r.steps;
+            params.Set(r.id, r.from + (r.to - r.from) * t);
+        }
         // MIDI no mesmo lugar do serial, e pelo mesmo motivo: os bytes
         // chegam por interrupção e são despachados aqui, em contexto
         // normal, onde mexer em params e logar é seguro.
@@ -889,6 +1120,35 @@ int main(void)
                          "estreia nao conta)", (unsigned long)kGraceBlocks);
             }
             fx2_was_on = on;
+        }
+        // BANCADA: cerco ao bloco que mata. Loga enquanto o fx2 estiver
+        // ligado e os contadores estiverem andando. A ULTIMA linha que
+        // sair pela serial antes do silencio diz o numero do bloco — e
+        // se `in` passou `out`, diz que ele nao voltou.
+        {
+            // A CADA 4 BLOCOS, nao a cada um. Uma linha de log a 115200
+            // custa ~3 ms e o bloco 256 dura 5,3 ms: logar todo bloco
+            // deixa o loop no limite, e um instrumento que compete com o
+            // que ele mede nao serve. De 4 em 4 sobra folga.
+            //
+            // CpuLoadMax e MONOTONICO desde o ultimo reset, entao a
+            // coluna `pico` so sobe. Se ela cruzar 90% antes do silencio,
+            // o modulo estourou e o watchdog perdeu a janela. Se ela
+            // ficar baixa ate o fim, a placa morreu por outra coisa que
+            // nao e custo de bloco.
+            static uint32_t last_logged = 0;
+            const uint32_t  in = fx2_in, out = fx2_out;
+            if(in >= last_logged + 4 && in <= 400)
+            {
+                last_logged = in;
+                const float pi_ = fx2_peak_in, po_ = fx2_peak_out;
+                hal::Log("fx2 bloco %lu/%lu cpu=%.0f%% in=%.4f out=%.4f "
+                         "falta %.0fx%s",
+                         (unsigned long)in, (unsigned long)out,
+                         hal::CpuLoadMax() * 100.f, (double)pi_, (double)po_,
+                         po_ > 1e-7f ? (double)(pi_ / po_) : 0.0,
+                         in == out ? "" : "  <<< NAO VOLTOU");
+            }
         }
         if(fx2_grace_done)
         {

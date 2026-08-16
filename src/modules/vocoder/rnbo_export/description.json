@@ -41,12 +41,33 @@
       "visible": true,
       "signalIndex": null,
       "ioType": "IOTypeUndefined"
+    },
+    {
+      "type": "ParameterTypeNumber",
+      "index": 2,
+      "name": "voc_tone",
+      "paramId": "voc_tone",
+      "minimum": 0,
+      "maximum": 1,
+      "exponent": 1,
+      "steps": 0,
+      "initialValue": 0.7,
+      "isEnum": false,
+      "enumValues": [],
+      "displayName": "",
+      "unit": "",
+      "order": 0,
+      "displayorder": "-",
+      "debug": false,
+      "visible": true,
+      "signalIndex": null,
+      "ioType": "IOTypeUndefined"
     }
   ],
-  "numParameters": 2,
+  "numParameters": 3,
   "numSignalInParameters": 0,
   "numSignalOutParameters": 0,
-  "numInputChannels": 2,
+  "numInputChannels": 1,
   "numOutputChannels": 2,
   "numMidiInputPorts": 0,
   "numMidiOutputPorts": 0,
@@ -66,12 +87,6 @@
       "type": "signal",
       "index": 1,
       "tag": "in1",
-      "meta": ""
-    },
-    {
-      "type": "signal",
-      "index": 2,
-      "tag": "in2",
       "meta": ""
     }
   ],

@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.6.0**
+**Documento v0.7.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -52,6 +52,80 @@ dentro. **Nada disso vaza pro nosso código.**
 > Teensy 4.1 tem 8 MB de flash direto, sem bootloader intermediário.
 >
 > Fluxo de gravação completo em [TESTES.md](TESTES.md).
+
+---
+
+## Painel v2 — guia de solda
+
+**5 pots + 2 botões momentâneos.** Hardware ainda não soldado; o
+firmware já está pronto e testável por serial (T11 no
+[TESTES.md](TESTES.md)).
+
+### Os 5 pots
+
+| Pot | Função | libDaisy | Pino físico |
+|---|---|---|---|
+| k1 | **level** (volume master) | `seed::A0` | **16** |
+| k2 | **src_mix** (piezo ↔ jack) | `seed::A1` | 17 |
+| k3 | macro de caráter | `seed::A2` | 18 |
+| k4 | macro de caráter | `seed::A3` | 19 |
+| k5 | macro de caráter | `seed::A4` | 20 |
+
+**10 kΩ lineares.** Ligação de cada um:
+
+```
+  3V3A  ──── terminal 1
+  wiper ──── ADC (A0–A4)  ──┬── 100 nF ── AGND
+  AGND  ──── terminal 3     └── (o capacitor vai JUNTO do wiper)
+```
+
+O **100 nF no wiper** não é opcional: sem ele o ADC lê o ruído que o
+pot capta como antena, e o parâmetro treme sozinho. Ponha perto do
+pino da placa, não perto do pot.
+
+**Use 3V3A e AGND, não 3V3D e DGND.** Os pots são referência analógica;
+alimentá-los pelo lado digital injeta o chaveamento direto no valor
+lido.
+
+> **k1 e k2 são FIXOS em todo instrumento** — volume e fonte. Só k3–k5
+> mudam de escultura pra escultura. Isso dá ao painel uma gramática
+> constante: a mão aprende uma vez e vale pra qualquer peça.
+
+### Os 2 botões
+
+| Botão | Função | libDaisy | Pino físico |
+|---|---|---|---|
+| B1 | randomizador | `seed::D26` | 33 |
+| B2 | assinalável (hold) | `seed::D27` | 34 |
+
+```
+  botão ── um terminal no pino (D26/D27)
+        └─ outro terminal em DGND
+```
+
+**Sem resistor externo.** O firmware liga o pull-up interno, então o
+botão só precisa fechar pra terra. Repouso lê alto, pressionado lê
+baixo. Debounce de 10 ms é feito em software, por tempo.
+
+> ### ⚠️ A0–A4 SÃO D15–D19. O mesmo pino físico.
+>
+> Na Daisy, `A0` é apenas outro nome pra `D15`, `A1` pra `D16`, e
+> assim por diante até `A4` = `D19`. **Não são pinos diferentes.**
+>
+> É por isso que os botões foram pra D26/D27: qualquer pino de D15 a
+> D19 colidiria com um pot, e D13/D14 já são a UART do MIDI. D26 e
+> D27 estão entre os poucos sem alias de ADC (A10=D25, A11=D28) e sem
+> função tomada.
+>
+> Se um dia mover um botão, **confira o alias antes de soldar** —
+> a colisão não dá erro de compilação nem de boot: dá pot que não lê
+> e botão que não responde, os dois em silêncio.
+
+**Sobre os números de pino físico:** seguem a mesma contagem do
+[TESTES.md](TESTES.md), em que o pino 18 é AUDIO OUT L e o 20 é AGND.
+**Confira contra o diagrama oficial da Electrosmith antes de encostar
+o ferro** — a referência que não depende dessa contagem é o nome
+`D`/`A`.
 
 ---
 

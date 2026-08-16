@@ -5,24 +5,33 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.16.0** — módulo RNBO embarcado,
+Projeto colaborativo. Estado atual: **v0.19.0** — módulo RNBO embarcado,
 **stack anti-feedback completo em software** (gate, governor, limiter e
-shifter SSB, os quatro em C++ do shell) e **entrada MIDI** por CC.
+shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
+**painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
+em BACKUP_SRAM.
 **T1, T2, T3, T5, T6, T7 e T8 do [TESTES.md](src/TESTES.md) passaram em bancada**;
-T4 espera hardware. Tudo rodando a **10,7% de CPU**.
+T4 espera hardware.
 
-> **O MIDI ainda não foi validado em placa.** O parser e o mapa passam no
-> banco nativo (T10a, 16 verificações), mas a UART — baud rate, pino, DMA —
-> só o loopback com jumper prova. **T10b está pendente.**
+> ### O que ainda NÃO foi validado em placa
+>
+> - **MIDI (T10b).** Parser e mapa passam no banco nativo — 16 verificações —
+>   mas a UART (baud rate, pino, DMA) só o loopback com jumper prova.
+> - **Painel v2 (T11).** Firmware pronto e simulável por serial (`b1`, `b2`);
+>   os pots e botões ainda não foram soldados.
+> - **Vocoder no build.** Ligado em 2026-08-16 com export novo; ainda não
+>   ouvido em placa nesta configuração.
 
-> ### Estado versionado — INSTRUMENTO
+> ### Estado versionado — VOCODER LIGADO
 >
-> **480 MHz · bloco 48 (1 ms de latência) · delay no caminho · fx2
-> vazio** · 18,8% de CPU · app na QSPI
+> **480 MHz · bloco 256 (5,3 ms de latência) · delay no slot Instrument ·
+> vocoder no Fx2** · app na QSPI
 >
-> **O repo versiona o instrumento; bancada é estado transitório.** A
-> receita pra remontar a bancada do vocoder (bloco 256 + módulo no
-> build) está em [BOARDS.md](src/BOARDS.md).
+> **O bloco 256 é exigência do vocoder, não preferência:** ele pede
+> ~3 520 µs de pico e o prazo do bloco 48 é 1 000 µs. `Makefile` e
+> `manifest.h` mudam **juntos** — módulo no build e `block_size` — e o
+> comentário está nos dois. Pra voltar ao estado instrumento (bloco 48,
+> só o delay), a receita está em [BOARDS.md](src/BOARDS.md).
 
 ---
 
@@ -48,23 +57,23 @@ Cinco regras que não se negociam:
 
 | Arquivo | Versão | O que é |
 |---|---|---|
-| [src/hal.h](src/hal.h) | **v0.7.0** | O contrato. A fronteira de independência de fornecedor |
+| [src/hal.h](src/hal.h) | **v0.8.0** | O contrato. A fronteira de independência de fornecedor |
 | [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.9.0** | Único arquivo que pode incluir `daisy_seed.h` |
 | [src/module.h](src/module.h) | **v0.4.0** | Interface, **slots fixos** e registro de módulos |
 | [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
 | [src/midi.h](src/midi.h) | **v0.1.0** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
-| [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
+| [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.1** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.2.0** | Wrapper duplo-clicável dos dois bancos de teste |
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.2.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
 | [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.2.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
-| [src/main.cpp](src/main.cpp) | **v0.16.0** | Loop, callback de áudio, painel falso via serial |
+| [src/main.cpp](src/main.cpp) | **v0.19.0** | Loop, callback de áudio, painel falso via serial |
 | [src/params.h](src/params.h) | **v0.5.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.17.0** | Instrumento "bancada": entrada + tom atravessando o delay |
+| [src/manifest.h](src/manifest.h) | **v0.20.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
 | [src/TESTES.md](src/TESTES.md) | **v0.11.0** | Roteiro T1–T5, fluxo de gravação e defeitos conhecidos |
-| [src/BOARDS.md](src/BOARDS.md) | **v0.5.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
+| [src/BOARDS.md](src/BOARDS.md) | **v0.7.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
 | [src/cotuca_measure.py](src/cotuca_measure.py) | **v0.1.0** | Mede a frequência de saída por FFT |
@@ -137,8 +146,14 @@ cd src && ./cotuca_serial.py --send board list "k1 0.5" --gap 1.3
 Ou duplo-clique em `src/monitor.command`.
 
 Comandos do firmware: `board` · `list` · `mods` · `cpu` · `dyn` · `probe` ·
-`midi` · `miditest` · `midiloop` · `k1..k5 <0-1>` · `set <nome> <real>` ·
-`tone on` · `tone off`
+`bb` · `midi` · `miditest` · `midiloop` · `b1` · `b2` · `k1..k5 <0-1>` ·
+`set <nome> <real>` · `tone on` · `tone off`
+
+`b1` e `b2` **simulam os botões do painel pelo serial**, então o painel v2 é
+testável antes de existir fisicamente: `b1` dispara o randomizador, `b2`
+segura o parâmetro assinalado. `bb` lê a **caixa-preta** — memória em
+BACKUP_SRAM que sobrevive ao RESET, pra medir o que só acontece depois que a
+serial já morreu.
 
 `set` alcança **qualquer** parâmetro pelo nome, **em unidade real** — Hz, ms, ×
 — e recusa valor fora da faixa citando os limites. Com os knobs 1–3 no delay e

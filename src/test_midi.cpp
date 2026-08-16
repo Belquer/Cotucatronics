@@ -1,4 +1,4 @@
-// test_midi v0.1.0 — validação nativa do parser MIDI e do mapa.
+// test_midi v0.1.1 — validação nativa do parser MIDI e do mapa.
 //
 // midi.h é C++ puro e board-agnostic, e manifest.h também (só inclui
 // params.h, module.h e midi.h). Então a máquina de estados E a via
@@ -234,15 +234,28 @@ int main()
         Check("CC 24 val 127 -> gov_ceiling em 1.00 (param sem knob)",
               fabsf(t.Get(id_gov) - 1.0f) < 0.001f, d);
 
-        // a curva do manifest tem que valer pro MIDI igual ao knob
+        // A INVARIANTE: MIDI e knob no mesmo parâmetro dão o mesmo
+        // valor. Testada contra uma Macro de um alvo com peso 1.0 —
+        // que é a forma de todo knob deste manifest — e NÃO contra um
+        // índice de knob específico.
+        //
+        // A primeira versão cravava knob[2] porque era ali que o
+        // `level` estava. O painel v2 remapeou (k1 virou level) e o
+        // teste passou a acusar falha num firmware correto: ele estava
+        // medindo o layout do painel, não a invariante. Layout é
+        // decisão de manifest e muda de escultura pra escultura; a
+        // invariante não muda nunca.
         const int id_lvl = t.Find("level");
         const uint8_t msg3[] = {0xB0, 22, 127};
         Feed(p, msg3, 3);
+
         cotuca::ParamTable t2;
         cotuca::Manifest   m2;
         t2.Init();
         m2.Init(t2);
-        m2.knob[2].Apply(t2, 1.0f); // knob 3 -> level, mesmo gesto
+        cotuca::Macro remoto;
+        remoto.AddTarget(t2.Find("level"), 1.0f);
+        remoto.Apply(t2, 1.0f); // o mesmo gesto, pela via do knob
         snprintf(d, sizeof(d), "midi=%.4f knob=%.4f",
                  t.Get(id_lvl), t2.Get(t2.Find("level")));
         Check("CC e knob no mesmo param dao o MESMO valor",

@@ -633,6 +633,57 @@ midi: uart ESCUTANDO | perdidos 0 | canal omni
 - `canal alheio > 0` → chegou no canal errado. O default é omni, então
   isto só aparece se alguém fixou `midi_channel`.
 
+## T11 — painel v2 por serial (botões antes da solda) · ⏳
+
+Mesma estratégia que validou os knobs antes dos pots existirem: os
+comandos `b1` e `b2` simulam os botões pelo caminho REAL — mesma
+detecção de borda, mesmo randomizador, mesmas rampas. O que fica de
+fora é só o GPIO e o debounce.
+
+### T11a — B1 randomizador
+
+```bash
+./cotuca_serial.py --send list b1 list --gap 1.5
+```
+
+**Esperado:** `B1: sorteando 2 param(s) em 50 ms`, e o `list` depois
+mostra `dly_time` e `dly_mix` com valores diferentes do anterior.
+
+**Whitelist:** só esses dois. Se `level`, `src_mix`, `gate_*`, `gov_*`,
+`route_*`, `shift_hz` ou `bench_boost` mudarem, **é defeito grave** —
+a whitelist existe pra que o botão surpreenda o timbre e nunca a
+segurança nem a identidade do instrumento.
+
+### T11b — a rampa não clica
+
+Com `tone on` soando, disparar `b1` repetidamente. O timbre deve
+mudar sem estalo. Rampa de 50 ms: curta pro gesto, longa pro alto-falante.
+
+### T11c — B2 hold
+
+Com `button2_target = -1` (instrumento atual), `b2 1` deve avisar que
+não há alvo. Quando o freeze voltar ao Fx2 e o alvo for `p_frz_on`:
+`b2 1` congela, `b2 0` libera, e o `list` mostra o valor anterior
+restaurado — não zerado.
+
+### T11d — knobs no desenho novo
+
+| | Antes | Painel v2 |
+|---|---|---|
+| k1 | dly_time | **level** |
+| k2 | dly_mix | **src_mix** |
+| k3 | level | dly_time |
+| k4 | src_mix | dly_mix |
+| k5 | src_mix | **livre** |
+
+`k5 0.5` não deve mexer em nada — o delay só tem dois params de caráter.
+
+### O que o serial NÃO prova
+
+GPIO, pull-up e debounce. `b1`/`b2` entram depois disso. Um botão que
+quica ou um pino trocado passa neste teste e falha no painel — a
+validação do hardware é bater no botão de verdade e ver o log.
+
 ---
 
 ## Defeitos conhecidos

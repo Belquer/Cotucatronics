@@ -21,7 +21,8 @@ static DaisySeed hw;
 
 static BoardInfo info = {
     .name         = "Daisy Seed",
-    .num_knobs    = 5, // 4 de caráter + SRC MIX
+    .num_knobs    = 5, // k1 level, k2 src_mix, k3-k5 macros
+    .num_buttons  = 2, // B1 randomizador, B2 assinalável
     .has_audio_in = true,
     .sample_rate  = 48000.f,
     // Valor de partida; o manifest pede o dele em RequestBlockSize()
@@ -30,6 +31,34 @@ static BoardInfo info = {
     .big_ram_bytes = 64u * 1024u * 1024u, // SDRAM
     .cpu_hz        = 0, // preenchido no Init com o clock real
 };
+
+// ---- botões do painel ----
+//
+// PINOS: D26 e D27. A escolha NÃO é arbitrária e a armadilha é real:
+// na Daisy, A0–A4 são ALIASES de D15–D19 — o mesmo pino físico. Os
+// cinco pots ocupam A0–A4, ou seja D15–D19, e D13/D14 são a UART do
+// MIDI. D26 e D27 são dos poucos que não têm alias de ADC (A10=D25,
+// A11=D28) nem função já tomada.
+//
+// Pull-up INTERNO: o botão fecha pra GND, então repouso lê alto e
+// pressionado lê baixo. Isso dispensa resistor externo no painel.
+//
+// Debounce por TEMPO, não por contagem de chamadas: o contrato do
+// hal.h diz que ReadButton pode ser chamado em qualquer ritmo, e
+// debounce contado quebraria em silêncio se o loop mudasse de
+// cadência — que é exatamente o tipo de acoplamento invisível que
+// esta base já pagou caro pra aprender a evitar.
+constexpr int      kNumButtons  = 2;
+constexpr uint32_t kDebounceMs  = 10;
+
+struct ButtonState
+{
+    GPIO     gpio;
+    bool     stable   = false; // já filtrado
+    bool     raw_last = false;
+    uint32_t changed_ms = 0;
+};
+static ButtonState buttons[kNumButtons];
 
 // ---- pool SDRAM: alocador bump, simples e determinístico ----
 static char DSY_SDRAM_BSS sdram_pool[64u * 1024u * 1024u];
@@ -114,6 +143,26 @@ bool Init()
     // relevante pra este uso. Info().cpu_hz traz o valor real lido da
     // placa, nao o nominal.
     hw.Init(true);
+
+    // ---- BACKUP SRAM: a sequencia INTEIRA, nesta ordem ----
+    // Custou uma placa muda: so o clock nao basta. No H7 o dominio de
+    // backup nasce com protecao de escrita, e QUALQUER acesso a
+    // 0x38800000 sem destravar da bus fault — nao "escrita ignorada",
+    // FAULT. A placa morre no primeiro `bb`, com o Fx2 desligado,
+    // parecendo defeito de boot.
+    //
+    //   1. EnableBkUpAccess  destrava o dominio (PWR_CR1_DBP)
+    //   2. BKPRAM_CLK_ENABLE liga o clock da memoria
+    //   3. EnableBkUpReg     mantem o conteudo — sem ele o dado
+    //                        atravessa reset mas nao standby
+    //
+    // Chamar aqui, no Init, ANTES de qualquer leitura: a caixa-preta e
+    // lida pelo comando serial, que roda muito depois, mas quem
+    // configura tem que vir antes de quem consome. Familia (B) da
+    // regra documentada no main.cpp — a mesma do RequestBlockSize.
+    HAL_PWR_EnableBkUpAccess();
+    __HAL_RCC_BKPRAM_CLK_ENABLE();
+    HAL_PWREx_EnableBkUpReg();
     info.cpu_hz = System::GetSysClkFreq();
     hw.SetAudioBlockSize(info.block_size);
     hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
@@ -121,6 +170,12 @@ bool Init()
     hw.StartLog(false);
     Log("hal_daisy_seed v" COTUCA_HAL_VERSION);
     hw.usb_handle.SetReceiveCallback(UsbRxCallback, UsbHandle::FS_INTERNAL);
+
+    // botões: entrada com pull-up interno, fecham pra GND
+    const Pin btn_pins[kNumButtons] = {seed::D26, seed::D27};
+    for(int i = 0; i < kNumButtons; i++)
+        buttons[i].gpio.Init(btn_pins[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+
     return true;
 }
 
@@ -148,7 +203,25 @@ float ReadKnob(int /*index*/)
     return -1.f; // -1 sinaliza "sem hardware, use serial"
 }
 
-bool ReadButton(int /*index*/) { return false; } // stub
+bool ReadButton(int index)
+{
+    if(index < 0 || index >= kNumButtons)
+        return false;
+    ButtonState&   b   = buttons[index];
+    const bool     raw = !b.gpio.Read(); // pull-up: baixo = pressionado
+    const uint32_t now = System::GetNow();
+
+    if(raw != b.raw_last)
+    {
+        b.raw_last   = raw;
+        b.changed_ms = now;      // começou a quicar, espera assentar
+    }
+    else if(now - b.changed_ms >= kDebounceMs)
+    {
+        b.stable = raw;          // estável há tempo suficiente
+    }
+    return b.stable;
+}
 
 void SetLed(bool on) { hw.SetLed(on); }
 
@@ -374,5 +447,51 @@ size_t AllocBigUsed() { return sdram_used; }
 float CpuLoadAvg() { return cpu_meter.GetAvgCpuLoad(); }
 float CpuLoadMax() { return cpu_meter.GetMaxCpuLoad(); }
 void  CpuLoadReset() { cpu_meter.Reset(); }
+
+// ---- CAIXA-PRETA ----
+// Mora na secao .backup_sram que o linker da libDaisy ja reserva
+// (STM32H750IB_flash.lds, 4 KB em 0x38800000). O que faz ela servir
+// nao e o endereco: e o NOLOAD. Secao NOLOAD nao e carregada nem
+// zerada pelo startup, entao o conteudo atravessa o reset.
+//
+// Poe-se um MAGICO junto pra distinguir "voo anterior" de "acabou de
+// energizar e isso e lixo". Sem ele, a primeira leitura depois de
+// plugar o cabo devolveria numeros aleatorios com cara de medicao —
+// pior que nao ter dado nenhum.
+namespace
+{
+constexpr uint32_t kBbMagic = 0xC0BEEF01u;
+constexpr int      kBbSlots = 8;
+struct Blackbox
+{
+    uint32_t magic;
+    float    slot[kBbSlots];
+};
+__attribute__((section(".backup_sram"))) Blackbox g_bb;
+} // namespace
+
+void BlackboxArm()
+{
+    if(g_bb.magic != kBbMagic)
+    {
+        g_bb.magic = kBbMagic;
+        for(int i = 0; i < kBbSlots; i++) g_bb.slot[i] = 0.f;
+    }
+}
+
+void BlackboxWrite(int slot, float value)
+{
+    if(slot < 0 || slot >= kBbSlots) return;
+    g_bb.slot[slot] = value;
+}
+
+float BlackboxRead(int slot)
+{
+    if(slot < 0 || slot >= kBbSlots) return 0.f;
+    return g_bb.slot[slot];
+}
+
+bool BlackboxValid() { return g_bb.magic == kBbMagic; }
+int  BlackboxSlots() { return kBbSlots; }
 
 } // namespace cotuca::hal

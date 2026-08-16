@@ -124,66 +124,105 @@ void process(
     SampleValue * out1 = (numOutputs >= 1 && outputs[0] ? outputs[0] : this->dummyBuffer);
     SampleValue * out2 = (numOutputs >= 2 && outputs[1] ? outputs[1] : this->dummyBuffer);
     const SampleValue * in1 = (numInputs >= 1 && inputs[0] ? inputs[0] : this->zeroBuffer);
-    const SampleValue * in2 = (numInputs >= 2 && inputs[1] ? inputs[1] : this->zeroBuffer);
+    this->dspexpr_08_perform(in1, this->dspexpr_08_in2, this->signals[0], n);
 
     this->fftstream_tilde_01_perform(
         in1,
         this->fftstream_tilde_01_imagIn,
-        this->signals[0],
         this->signals[1],
         this->signals[2],
+        this->signals[3],
         n
     );
 
-    this->dspexpr_03_perform(this->signals[0], this->signals[0], this->signals[3], n);
-    this->dspexpr_04_perform(this->signals[1], this->signals[1], this->signals[0], n);
-    this->signaladder_01_perform(this->signals[0], this->signals[3], this->signals[3], n);
-    this->dspexpr_02_perform(this->signals[3], this->signals[1], n);
+    this->dspexpr_03_perform(this->signals[1], this->signals[1], this->signals[4], n);
+    this->dspexpr_04_perform(this->signals[2], this->signals[2], this->signals[1], n);
+    this->signaladder_01_perform(this->signals[1], this->signals[4], this->signals[4], n);
+    this->dspexpr_02_perform(this->signals[4], this->signals[2], n);
 
     this->poke_tilde_01_perform(
-        this->signals[2],
+        this->signals[3],
         this->poke_tilde_01_channel,
         this->poke_tilde_01_overdub,
-        this->signals[1],
+        this->signals[2],
         n
     );
 
-    this->signaladder_02_perform(in1, in1, this->signals[0], n);
-    this->dspexpr_09_perform(this->signals[0], this->dspexpr_09_in2, this->signals[1], n);
+    this->peek_tilde_01_perform(
+        this->signals[3],
+        this->peek_tilde_01_offset,
+        this->signals[2],
+        this->dummyBuffer,
+        n
+    );
 
     this->fftstream_tilde_04_perform(
         in1,
         this->fftstream_tilde_04_imagIn,
-        this->signals[4],
+        this->signals[3],
+        this->signals[1],
         this->signals[5],
-        this->signals[6],
         n
     );
 
-    this->dspexpr_14_perform(this->signals[4], this->signals[4], this->signals[7], n);
-    this->dspexpr_15_perform(this->signals[5], this->signals[5], this->signals[4], n);
-    this->signaladder_03_perform(this->signals[7], this->signals[4], this->signals[4], n);
-    this->dspexpr_13_perform(this->signals[4], this->signals[5], n);
+    this->dspexpr_12_perform(this->signals[3], this->signals[3], this->signals[6], n);
+    this->dspexpr_13_perform(this->signals[1], this->signals[1], this->signals[3], n);
+    this->signaladder_02_perform(this->signals[6], this->signals[3], this->signals[3], n);
+    this->dspexpr_11_perform(this->signals[3], this->signals[1], n);
 
     this->poke_tilde_02_perform(
-        this->signals[6],
+        this->signals[5],
         this->poke_tilde_02_channel,
         this->poke_tilde_02_overdub,
-        this->signals[5],
+        this->signals[1],
         n
     );
 
-    this->fftstream_tilde_02_perform(
-        in2,
-        this->fftstream_tilde_02_imagIn,
+    this->peek_tilde_02_perform(
         this->signals[5],
+        this->peek_tilde_02_offset,
+        this->signals[1],
+        this->dummyBuffer,
+        n
+    );
+
+    this->cycle_tilde_01_perform(
+        this->cycle_tilde_01_frequency,
+        this->cycle_tilde_01_phase_offset,
+        this->signals[5],
+        this->dummyBuffer,
+        n
+    );
+
+    this->cycle_tilde_02_perform(
+        this->cycle_tilde_02_frequency,
+        this->cycle_tilde_02_phase_offset,
+        this->signals[6],
+        this->dummyBuffer,
+        n
+    );
+
+    this->cycle_tilde_03_perform(
+        this->cycle_tilde_03_frequency,
+        this->cycle_tilde_03_phase_offset,
         this->signals[7],
         this->dummyBuffer,
         n
     );
 
+    this->signaladder_03_perform(this->signals[6], this->signals[5], this->signals[5], n);
+    this->dspexpr_17_perform(this->signals[5], this->signals[7], this->signals[8], n);
+    this->dspexpr_16_perform(this->signals[8], this->dspexpr_16_in2, this->signals[7], n);
+    this->noise_tilde_01_perform(this->signals[8], n);
+    this->dspexpr_19_perform(this->signals[8], this->dspexpr_19_in2, this->signals[6], n);
+    this->ip_01_perform(this->signals[8], n);
+    this->dspexpr_15_perform(this->signals[7], this->signals[8], this->signals[9], n);
+    this->dspexpr_20_perform(this->signals[8], this->dspexpr_20_in2, this->signals[7], n);
+    this->dspexpr_18_perform(this->signals[6], this->signals[7], this->signals[8], n);
+    this->dspexpr_14_perform(this->signals[9], this->signals[8], this->signals[7], n);
+
     this->fftstream_tilde_03_perform(
-        in2,
+        this->signals[7],
         this->fftstream_tilde_03_imagIn,
         this->signals[8],
         this->signals[9],
@@ -191,56 +230,44 @@ void process(
         n
     );
 
-    this->ip_01_perform(this->signals[10], n);
-    this->dspexpr_10_perform(this->signals[6], this->signals[10], this->signals[11], n);
+    this->dspexpr_09_perform(this->signals[1], this->signals[8], this->signals[6], n);
+    this->dspexpr_10_perform(this->signals[1], this->signals[9], this->signals[8], n);
 
-    this->peek_tilde_02_perform(
-        this->signals[11],
-        this->peek_tilde_02_offset,
+    this->ifftstream_tilde_02_perform(
+        this->signals[6],
+        this->signals[8],
+        this->signals[9],
+        this->dummyBuffer,
+        this->dummyBuffer,
+        n
+    );
+
+    this->fftstream_tilde_02_perform(
+        this->signals[7],
+        this->fftstream_tilde_02_imagIn,
+        this->signals[8],
         this->signals[6],
         this->dummyBuffer,
         n
     );
 
-    this->dspexpr_12_perform(this->signals[6], this->signals[9], this->signals[11], n);
-    this->dspexpr_11_perform(this->signals[6], this->signals[8], this->signals[9], n);
-
-    this->ifftstream_tilde_02_perform(
-        this->signals[9],
-        this->signals[11],
-        this->signals[8],
-        this->dummyBuffer,
-        this->dummyBuffer,
-        n
-    );
-
-    this->dspexpr_08_perform(this->signals[2], this->signals[10], this->signals[11], n);
-
-    this->peek_tilde_01_perform(
-        this->signals[11],
-        this->peek_tilde_01_offset,
-        this->signals[10],
-        this->dummyBuffer,
-        n
-    );
-
-    this->dspexpr_05_perform(this->signals[10], this->signals[7], this->signals[11], n);
-    this->dspexpr_01_perform(this->signals[10], this->signals[5], this->signals[7], n);
+    this->dspexpr_01_perform(this->signals[2], this->signals[8], this->signals[7], n);
+    this->dspexpr_05_perform(this->signals[2], this->signals[6], this->signals[8], n);
 
     this->ifftstream_tilde_01_perform(
         this->signals[7],
-        this->signals[11],
-        this->signals[5],
+        this->signals[8],
+        this->signals[6],
         this->dummyBuffer,
         this->dummyBuffer,
         n
     );
 
-    this->signaladder_04_perform(this->signals[5], this->signals[8], this->signals[8], n);
-    this->dspexpr_07_perform(this->signals[8], this->dspexpr_07_in2, this->signals[11], n);
-    this->dspexpr_06_perform(this->signals[11], this->signals[1], this->signals[5], n);
-    this->signalforwarder_01_perform(this->signals[5], out1, n);
-    this->signalforwarder_02_perform(this->signals[5], out2, n);
+    this->signaladder_04_perform(this->signals[6], this->signals[9], this->signals[9], n);
+    this->dspexpr_07_perform(this->signals[9], this->dspexpr_07_in2, this->signals[8], n);
+    this->dspexpr_06_perform(this->signals[8], this->signals[0], this->signals[6], n);
+    this->signalforwarder_01_perform(this->signals[6], out1, n);
+    this->signalforwarder_02_perform(this->signals[6], out2, n);
     this->stackprotect_perform(n);
     this->globaltransport_advance();
     this->advanceTime((ENGINE*)nullptr);
@@ -253,7 +280,7 @@ void prepareToProcess(number sampleRate, Index maxBlockSize, bool force) {
     if (this->maxvs < maxBlockSize || !this->didAllocateSignals) {
         Index i;
 
-        for (i = 0; i < 12; i++) {
+        for (i = 0; i < 10; i++) {
             this->signals[i] = resizeSignal(this->signals[i], this->maxvs, maxBlockSize);
         }
 
@@ -279,13 +306,17 @@ void prepareToProcess(number sampleRate, Index maxBlockSize, bool force) {
     this->data_01_dspsetup(forceDSPSetup);
     this->fftstream_tilde_01_dspsetup(forceDSPSetup);
     this->fftstream_tilde_04_dspsetup(forceDSPSetup);
-    this->fftstream_tilde_02_dspsetup(forceDSPSetup);
-    this->fftstream_tilde_03_dspsetup(forceDSPSetup);
     this->data_02_dspsetup(forceDSPSetup);
-    this->ip_01_dspsetup(forceDSPSetup);
-    this->ifftstream_tilde_02_dspsetup(forceDSPSetup);
-    this->ifftstream_tilde_01_dspsetup(forceDSPSetup);
     this->data_03_dspsetup(forceDSPSetup);
+    this->cycle_tilde_01_dspsetup(forceDSPSetup);
+    this->cycle_tilde_02_dspsetup(forceDSPSetup);
+    this->cycle_tilde_03_dspsetup(forceDSPSetup);
+    this->noise_tilde_01_dspsetup(forceDSPSetup);
+    this->ip_01_dspsetup(forceDSPSetup);
+    this->fftstream_tilde_03_dspsetup(forceDSPSetup);
+    this->ifftstream_tilde_02_dspsetup(forceDSPSetup);
+    this->fftstream_tilde_02_dspsetup(forceDSPSetup);
+    this->ifftstream_tilde_01_dspsetup(forceDSPSetup);
     this->globaltransport_dspsetup(forceDSPSetup);
 
     if (sampleRateChanged)
@@ -301,7 +332,7 @@ MillisecondTime sampsToMs(SampleIndex samps) {
 }
 
 Index getNumInputChannels() const {
-    return 2;
+    return 1;
 }
 
 Index getNumOutputChannels() const {
@@ -325,6 +356,11 @@ DataRef* getDataRef(DataRefIndex index)  {
         return addressOf(this->frzmag2);
         break;
         }
+    case 3:
+        {
+        return addressOf(this->RNBODefaultSinus);
+        break;
+        }
     default:
         {
         return nullptr;
@@ -333,7 +369,7 @@ DataRef* getDataRef(DataRefIndex index)  {
 }
 
 DataRefIndex getNumDataRefs() const {
-    return 3;
+    return 4;
 }
 
 void processDataViewUpdate(DataRefIndex index, MillisecondTime time) {
@@ -362,6 +398,15 @@ void processDataViewUpdate(DataRefIndex index, MillisecondTime time) {
         this->data_03_buffer = reInitDataView(this->data_03_buffer, this->frzmag2);
         this->poke_tilde_02_buffer = reInitDataView(this->poke_tilde_02_buffer, this->frzmag2);
         this->data_03_afterBufferUpdate();
+    }
+
+    if (index == 3) {
+        this->cycle_tilde_01_buffer = reInitDataView(this->cycle_tilde_01_buffer, this->RNBODefaultSinus);
+        this->cycle_tilde_02_buffer = reInitDataView(this->cycle_tilde_02_buffer, this->RNBODefaultSinus);
+        this->cycle_tilde_03_buffer = reInitDataView(this->cycle_tilde_03_buffer, this->RNBODefaultSinus);
+        this->cycle_tilde_01_bufferUpdated();
+        this->cycle_tilde_02_bufferUpdated();
+        this->cycle_tilde_03_bufferUpdated();
     }
 }
 
@@ -392,6 +437,14 @@ void initialize() {
         this->dataRefStrings->tag2
     );
 
+    this->RNBODefaultSinus = initDataRef(
+        this->RNBODefaultSinus,
+        this->dataRefStrings->name3,
+        true,
+        this->dataRefStrings->file3,
+        this->dataRefStrings->tag3
+    );
+
     this->assign_defaults();
     this->applyState();
     this->frzmag1->setIndex(0);
@@ -410,6 +463,10 @@ void initialize() {
     this->peek_tilde_02_buffer = new Float64Buffer(this->frzmag2);
     this->data_03_buffer = new Float64Buffer(this->frzmag2);
     this->poke_tilde_02_buffer = new Float64Buffer(this->frzmag2);
+    this->RNBODefaultSinus->setIndex(3);
+    this->cycle_tilde_01_buffer = new SampleBuffer(this->RNBODefaultSinus);
+    this->cycle_tilde_02_buffer = new SampleBuffer(this->RNBODefaultSinus);
+    this->cycle_tilde_03_buffer = new SampleBuffer(this->RNBODefaultSinus);
     this->initializeObjects();
     this->allocateDataRefs();
     this->startup();
@@ -421,12 +478,14 @@ void getPreset(PatcherStateInterface& preset) {
     preset["__presetid"] = "rnbo";
     this->param_01_getPresetValue(getSubState(preset, "voc_mix"));
     this->param_02_getPresetValue(getSubState(preset, "voc_pitch"));
+    this->param_03_getPresetValue(getSubState(preset, "voc_tone"));
 }
 
 void setPreset(MillisecondTime time, PatcherStateInterface& preset) {
     this->updateTime(time, (ENGINE*)nullptr);
     this->param_01_setPresetValue(getSubState(preset, "voc_mix"));
     this->param_02_setPresetValue(getSubState(preset, "voc_pitch"));
+    this->param_03_setPresetValue(getSubState(preset, "voc_tone"));
 }
 
 void setParameterValue(ParameterIndex index, ParameterValue v, MillisecondTime time) {
@@ -441,6 +500,11 @@ void setParameterValue(ParameterIndex index, ParameterValue v, MillisecondTime t
     case 1:
         {
         this->param_02_value_set(v);
+        break;
+        }
+    case 2:
+        {
+        this->param_03_value_set(v);
         break;
         }
     }
@@ -468,6 +532,10 @@ ParameterValue getParameterValue(ParameterIndex index)  {
         {
         return this->param_02_value;
         }
+    case 2:
+        {
+        return this->param_03_value;
+        }
     default:
         {
         return 0;
@@ -484,7 +552,7 @@ ParameterIndex getNumSignalOutParameters() const {
 }
 
 ParameterIndex getNumParameters() const {
-    return 2;
+    return 3;
 }
 
 ConstCharPointer getParameterName(ParameterIndex index) const {
@@ -496,6 +564,10 @@ ConstCharPointer getParameterName(ParameterIndex index) const {
     case 1:
         {
         return "voc_pitch";
+        }
+    case 2:
+        {
+        return "voc_tone";
         }
     default:
         {
@@ -513,6 +585,10 @@ ConstCharPointer getParameterId(ParameterIndex index) const {
     case 1:
         {
         return "voc_pitch";
+        }
+    case 2:
+        {
+        return "voc_tone";
         }
     default:
         {
@@ -562,6 +638,25 @@ void getParameterInfo(ParameterIndex index, ParameterInfo * info) const {
             info->signalIndex = INVALID_INDEX;
             break;
             }
+        case 2:
+            {
+            info->type = ParameterTypeNumber;
+            info->initialValue = 0.7;
+            info->min = 0;
+            info->max = 1;
+            info->exponent = 1;
+            info->steps = 0;
+            info->debug = false;
+            info->saveable = true;
+            info->transmittable = true;
+            info->initialized = true;
+            info->visible = true;
+            info->displayName = "";
+            info->unit = "";
+            info->ioType = IOTypeUndefined;
+            info->signalIndex = INVALID_INDEX;
+            break;
+            }
         }
     }
 }
@@ -584,6 +679,7 @@ ParameterValue convertToNormalizedParameterValue(ParameterIndex index, Parameter
     switch (index) {
     case 0:
     case 1:
+    case 2:
         {
         {
             value = (value < 0 ? 0 : (value > 1 ? 1 : value));
@@ -604,6 +700,7 @@ ParameterValue convertFromNormalizedParameterValue(ParameterIndex index, Paramet
     switch (index) {
     case 0:
     case 1:
+    case 2:
         {
         {
             {
@@ -627,6 +724,10 @@ ParameterValue constrainParameterValue(ParameterIndex index, ParameterValue valu
     case 1:
         {
         return this->param_02_value_constrain(value);
+        }
+    case 2:
+        {
+        return this->param_03_value_constrain(value);
         }
     default:
         {
@@ -953,35 +1054,13 @@ template<typename BUFFERTYPE> array<SampleValue, 1 + 1> peek_boundmode_ignore_ch
     }
 }
 
-inline number safediv(number num, number denom) {
-    return (denom == 0.0 ? 0.0 : num / denom);
+Index voice() {
+    return this->_voiceIndex;
 }
 
-number safepow(number base, number exponent) {
-    return fixnan(rnbo_pow(base, exponent));
-}
-
-number scale(
-    number x,
-    number lowin,
-    number hiin,
-    number lowout,
-    number highout,
-    number pow
-) {
-    auto inscale = this->safediv(1., hiin - lowin);
-    number outdiff = highout - lowout;
-    number value = (x - lowin) * inscale;
-
-    if (pow != 1) {
-        if (value > 0)
-            value = this->safepow(value, pow);
-        else
-            value = -this->safepow(-value, pow);
-    }
-
-    value = value * outdiff + lowout;
-    return value;
+number random(number low, number high) {
+    number range = high - low;
+    return globalrandom() * range + low;
 }
 
 number maximum(number x, number y) {
@@ -1022,10 +1101,25 @@ void param_02_value_set(number v) {
         this->param_02_lastValue = this->param_02_value;
     }
 
-    {
-        listbase<number, 1> converted = {v};
-        this->scale_01_input_set(converted);
+    this->expr_04_in1_set(v);
+    this->expr_03_in1_set(v);
+    this->expr_02_in1_set(v);
+}
+
+void param_03_value_set(number v) {
+    v = this->param_03_value_constrain(v);
+    this->param_03_value = v;
+    this->sendParameter(2, false);
+
+    if (this->param_03_value != this->param_03_lastValue) {
+        {
+            this->getEngine()->presetTouched();
+        }
+
+        this->param_03_lastValue = this->param_03_value;
     }
+
+    this->ip_01_value_set(v);
 }
 
 MillisecondTime getPatcherTime() const {
@@ -1035,7 +1129,7 @@ MillisecondTime getPatcherTime() const {
 void deallocateSignals() {
     Index i;
 
-    for (i = 0; i < 12; i++) {
+    for (i = 0; i < 10; i++) {
         this->signals[i] = freeSignal(this->signals[i]);
     }
 
@@ -1073,11 +1167,25 @@ void fillr_window(DataRef& ref) {
     }
 }
 
+void fillRNBODefaultSinus(DataRef& ref) {
+    SampleBuffer buffer(ref);
+    number bufsize = buffer->getSize();
+
+    for (Index i = 0; i < bufsize; i++) {
+        buffer[i] = rnbo_cos(i * 3.14159265358979323846 * 2. / bufsize);
+    }
+}
+
 void fillDataRef(DataRefIndex index, DataRef& ref) {
     switch (index) {
     case 1:
         {
         this->fillr_window(ref);
+        break;
+        }
+    case 3:
+        {
+        this->fillRNBODefaultSinus(ref);
         break;
         }
     }
@@ -1094,6 +1202,12 @@ void allocateDataRefs() {
     this->data_01_buffer->setSampleRate(this->sr);
     this->data_03_buffer->requestSize(1024, 1);
     this->data_03_buffer->setSampleRate(this->sr);
+    this->cycle_tilde_01_buffer->requestSize(16384, 1);
+    this->cycle_tilde_01_buffer->setSampleRate(this->sr);
+    this->cycle_tilde_02_buffer->requestSize(16384, 1);
+    this->cycle_tilde_02_buffer->setSampleRate(this->sr);
+    this->cycle_tilde_03_buffer->requestSize(16384, 1);
+    this->cycle_tilde_03_buffer->setSampleRate(this->sr);
     this->poke_tilde_01_buffer = this->poke_tilde_01_buffer->allocateIfNeeded();
     this->peek_tilde_01_buffer = this->peek_tilde_01_buffer->allocateIfNeeded();
     this->data_02_buffer = this->data_02_buffer->allocateIfNeeded();
@@ -1130,13 +1244,25 @@ void allocateDataRefs() {
 
         this->getEngine()->sendDataRefUpdated(2);
     }
+
+    this->cycle_tilde_01_buffer = this->cycle_tilde_01_buffer->allocateIfNeeded();
+    this->cycle_tilde_02_buffer = this->cycle_tilde_02_buffer->allocateIfNeeded();
+    this->cycle_tilde_03_buffer = this->cycle_tilde_03_buffer->allocateIfNeeded();
+
+    if (this->RNBODefaultSinus->hasRequestedSize()) {
+        if (this->RNBODefaultSinus->wantsFill())
+            this->fillRNBODefaultSinus(this->RNBODefaultSinus);
+
+        this->getEngine()->sendDataRefUpdated(3);
+    }
 }
 
 void initializeObjects() {
     this->data_01_init();
     this->data_02_init();
-    this->ip_01_init();
     this->data_03_init();
+    this->noise_tilde_01_nz_init();
+    this->ip_01_init();
 }
 
 Index getIsMuted()  {
@@ -1182,6 +1308,10 @@ void startup() {
         this->scheduleParamInit(1, 0);
     }
 
+    {
+        this->scheduleParamInit(2, 0);
+    }
+
     this->processParamInitEvents();
 }
 
@@ -1190,13 +1320,13 @@ number param_01_value_constrain(number v) const {
     return v;
 }
 
-void dspexpr_09_in2_set(number v) {
-    this->dspexpr_09_in2 = v;
+void dspexpr_08_in2_set(number v) {
+    this->dspexpr_08_in2 = v;
 }
 
 void expr_01_out1_set(number v) {
     this->expr_01_out1 = v;
-    this->dspexpr_09_in2_set(this->expr_01_out1);
+    this->dspexpr_08_in2_set(this->expr_01_out1);
 }
 
 void expr_01_in1_set(number in1) {
@@ -1213,48 +1343,65 @@ number param_02_value_constrain(number v) const {
     return v;
 }
 
+void cycle_tilde_03_frequency_set(number v) {
+    this->cycle_tilde_03_frequency = v;
+}
+
+void expr_04_out1_set(number v) {
+    this->expr_04_out1 = v;
+    this->cycle_tilde_03_frequency_set(this->expr_04_out1);
+}
+
+void expr_04_in1_set(number in1) {
+    this->expr_04_in1 = in1;
+    this->expr_04_out1_set(fixnan(rnbo_pow(2, (this->expr_04_in1 * 48 - 24) / (number)12)) * 220);//#map:expr_obj-15:1
+}
+
+void cycle_tilde_02_frequency_set(number v) {
+    this->cycle_tilde_02_frequency = v;
+}
+
+void expr_03_out1_set(number v) {
+    this->expr_03_out1 = v;
+    this->cycle_tilde_02_frequency_set(this->expr_03_out1);
+}
+
+void expr_03_in1_set(number in1) {
+    this->expr_03_in1 = in1;
+    this->expr_03_out1_set(fixnan(rnbo_pow(2, (this->expr_03_in1 * 48 - 24) / (number)12)) * 165);//#map:expr_obj-13:1
+}
+
+void cycle_tilde_01_frequency_set(number v) {
+    this->cycle_tilde_01_frequency = v;
+}
+
+void expr_02_out1_set(number v) {
+    this->expr_02_out1 = v;
+    this->cycle_tilde_01_frequency_set(this->expr_02_out1);
+}
+
+void expr_02_in1_set(number in1) {
+    this->expr_02_in1 = in1;
+    this->expr_02_out1_set(fixnan(rnbo_pow(2, (this->expr_02_in1 * 48 - 24) / (number)12)) * 110);//#map:expr_obj-38:1
+}
+
+number param_03_value_constrain(number v) const {
+    v = (v > 1 ? 1 : (v < 0 ? 0 : v));
+    return v;
+}
+
 void ip_01_value_set(number v) {
     this->ip_01_value = v;
     this->ip_01_fillSigBuf();
     this->ip_01_lastValue = v;
 }
 
-void ip_01_impulse_set(number v) {
-    this->ip_01_impulse = v;
-    this->ip_01_fillSigBuf();
-    this->ip_01_lastValue = 0;
-    SampleIndex lengthInSamples = (SampleIndex)(this->maximum(1, this->msToSamps(v, this->sr)));
-    this->ip_01_resetCount = lengthInSamples;
-}
+void dspexpr_08_perform(const Sample * in1, number in2, SampleValue * out1, Index n) {
+    Index i;
 
-template<typename LISTTYPE> void scale_01_out_set(const LISTTYPE& v) {
-    this->scale_01_out = jsCreateListCopy(v);
-
-    {
-        if (v->length > 1)
-            this->ip_01_impulse_set(v[1]);
-
-        number converted = (v->length > 0 ? v[0] : 0);
-        this->ip_01_value_set(converted);
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
     }
-}
-
-template<typename LISTTYPE> void scale_01_input_set(const LISTTYPE& v) {
-    this->scale_01_input = jsCreateListCopy(v);
-    list tmp = {};
-
-    for (Index i = 0; i < v->length; i++) {
-        tmp->push(this->scale(
-            v[(Index)i],
-            this->scale_01_inlow,
-            this->scale_01_inhigh,
-            this->scale_01_outlow,
-            this->scale_01_outhigh,
-            this->scale_01_power
-        ));
-    }
-
-    this->scale_01_out_set(tmp);
 }
 
 void fftstream_tilde_01_perform(
@@ -1355,24 +1502,26 @@ void poke_tilde_01_perform(
     }
 }
 
-void signaladder_02_perform(
-    const SampleValue * in1,
-    const SampleValue * in2,
-    SampleValue * out,
+void peek_tilde_01_perform(
+    const Sample * index,
+    number offset,
+    SampleValue * out1,
+    SampleValue * outindex,
     Index n
 ) {
-    Index i;
+    RNBO_UNUSED(out1);
+    RNBO_UNUSED(offset);
+    auto __peek_tilde_01_buffer = this->peek_tilde_01_buffer;
+    SampleArray<1> out = {out1};
 
-    for (i = 0; i < (Index)n; i++) {
-        out[(Index)i] = in1[(Index)i] + in2[(Index)i];
-    }
-}
+    for (Index i = 0; i < n; i++) {
+        auto result = this->peek_boundmode_ignore_channelmode_ignore_indexmode_samples_interp_none(__peek_tilde_01_buffer, index[(Index)i], 0);
 
-void dspexpr_09_perform(const Sample * in1, number in2, SampleValue * out1, Index n) {
-    Index i;
+        for (Index j = 0; j < 1; j++) {
+            out[(Index)j][(Index)i] = result[(Index)j];
+        }
 
-    for (i = 0; i < (Index)n; i++) {
-        out1[(Index)i] = in1[(Index)i] * in2;//#map:_###_obj_###_:1
+        outindex[(Index)i] = result[1];
     }
 }
 
@@ -1421,7 +1570,7 @@ void fftstream_tilde_04_perform(
     this->fftstream_tilde_04_datapos = __fftstream_tilde_04_datapos;
 }
 
-void dspexpr_14_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+void dspexpr_12_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
@@ -1429,7 +1578,7 @@ void dspexpr_14_perform(const Sample * in1, const Sample * in2, SampleValue * ou
     }
 }
 
-void dspexpr_15_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+void dspexpr_13_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
@@ -1437,7 +1586,7 @@ void dspexpr_15_perform(const Sample * in1, const Sample * in2, SampleValue * ou
     }
 }
 
-void signaladder_03_perform(
+void signaladder_02_perform(
     const SampleValue * in1,
     const SampleValue * in2,
     SampleValue * out,
@@ -1450,7 +1599,7 @@ void signaladder_03_perform(
     }
 }
 
-void dspexpr_13_perform(const Sample * in1, SampleValue * out1, Index n) {
+void dspexpr_11_perform(const Sample * in1, SampleValue * out1, Index n) {
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
@@ -1474,49 +1623,246 @@ void poke_tilde_02_perform(
     }
 }
 
-void fftstream_tilde_02_perform(
-    const Sample * realIn,
-    number imagIn,
+void peek_tilde_02_perform(
+    const Sample * index,
+    number offset,
     SampleValue * out1,
-    SampleValue * out2,
-    SampleValue * out3,
+    SampleValue * outindex,
     Index n
 ) {
-    RNBO_UNUSED(imagIn);
-    auto __fftstream_tilde_02_win_buf = this->fftstream_tilde_02_win_buf;
-    auto __fftstream_tilde_02_datapos = this->fftstream_tilde_02_datapos;
-    number invFftSize = (number)1 / (number)1024;
-    Index i0;
+    RNBO_UNUSED(out1);
+    RNBO_UNUSED(offset);
+    auto __peek_tilde_02_buffer = this->peek_tilde_02_buffer;
+    SampleArray<1> out = {out1};
 
-    for (i0 = 0; i0 < (Index)n; i0++) {
-        SampleIndex i = (SampleIndex)(__fftstream_tilde_02_datapos);
-        array<number, 3> out = {0, 0, i};
-        number windowFactor = 1;
-        windowFactor = __fftstream_tilde_02_win_buf->getSample(0, i);
+    for (Index i = 0; i < n; i++) {
+        auto result = this->peek_boundmode_ignore_channelmode_ignore_indexmode_samples_interp_none(__peek_tilde_02_buffer, index[(Index)i], 0);
 
-        if (__fftstream_tilde_02_datapos < 1024) {
-            this->fftstream_tilde_02_inWorkspace[(Index)(2 * i)] = windowFactor * realIn[(Index)i0];
-            out[0] = this->fftstream_tilde_02_outWorkspace[(Index)(2 * i)];
-            this->fftstream_tilde_02_inWorkspace[(Index)(2 * i + 1)] = windowFactor * 0;
-            out[1] = this->fftstream_tilde_02_outWorkspace[(Index)(2 * i + 1)];
+        for (Index j = 0; j < 1; j++) {
+            out[(Index)j][(Index)i] = result[(Index)j];
+        }
 
-            if (i == 1024 - 1) {
-                this->fftstream_tilde_02_fft_next(this->fftstream_tilde_02_inWorkspace, 1024);
+        outindex[(Index)i] = result[1];
+    }
+}
 
-                for (SampleIndex j = 0; j < 1024 * 2; j++) {
-                    this->fftstream_tilde_02_outWorkspace[(Index)j] = this->fftstream_tilde_02_inWorkspace[(Index)j];
+void cycle_tilde_01_perform(
+    number frequency,
+    number phase_offset,
+    SampleValue * out1,
+    SampleValue * out2,
+    Index n
+) {
+    RNBO_UNUSED(phase_offset);
+    auto __cycle_tilde_01_f2i = this->cycle_tilde_01_f2i;
+    auto __cycle_tilde_01_buffer = this->cycle_tilde_01_buffer;
+    auto __cycle_tilde_01_phasei = this->cycle_tilde_01_phasei;
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        {
+            UInt32 uint_phase;
+
+            {
+                {
+                    uint_phase = __cycle_tilde_01_phasei;
                 }
             }
 
-            __fftstream_tilde_02_datapos = (__fftstream_tilde_02_datapos + 1) % 1024;
-        }
+            UInt32 idx = (UInt32)(uint32_rshift(uint_phase, 18));
+            number frac = ((BinOpInt)((BinOpInt)uint_phase & (BinOpInt)262143)) * 3.81471181759574e-6;
+            number y0 = __cycle_tilde_01_buffer[(Index)idx];
+            number y1 = __cycle_tilde_01_buffer[(Index)((BinOpInt)(idx + 1) & (BinOpInt)16383)];
+            number y = y0 + frac * (y1 - y0);
 
-        out1[(Index)i0] = out[0];
-        out2[(Index)i0] = out[1];
-        out3[(Index)i0] = out[2];
+            {
+                UInt32 pincr = (UInt32)(uint32_trunc(frequency * __cycle_tilde_01_f2i));
+                __cycle_tilde_01_phasei = uint32_add(__cycle_tilde_01_phasei, pincr);
+            }
+
+            out1[(Index)i] = y;
+            out2[(Index)i] = uint_phase * 0.232830643653869629e-9;
+            continue;
+        }
     }
 
-    this->fftstream_tilde_02_datapos = __fftstream_tilde_02_datapos;
+    this->cycle_tilde_01_phasei = __cycle_tilde_01_phasei;
+}
+
+void cycle_tilde_02_perform(
+    number frequency,
+    number phase_offset,
+    SampleValue * out1,
+    SampleValue * out2,
+    Index n
+) {
+    RNBO_UNUSED(phase_offset);
+    auto __cycle_tilde_02_f2i = this->cycle_tilde_02_f2i;
+    auto __cycle_tilde_02_buffer = this->cycle_tilde_02_buffer;
+    auto __cycle_tilde_02_phasei = this->cycle_tilde_02_phasei;
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        {
+            UInt32 uint_phase;
+
+            {
+                {
+                    uint_phase = __cycle_tilde_02_phasei;
+                }
+            }
+
+            UInt32 idx = (UInt32)(uint32_rshift(uint_phase, 18));
+            number frac = ((BinOpInt)((BinOpInt)uint_phase & (BinOpInt)262143)) * 3.81471181759574e-6;
+            number y0 = __cycle_tilde_02_buffer[(Index)idx];
+            number y1 = __cycle_tilde_02_buffer[(Index)((BinOpInt)(idx + 1) & (BinOpInt)16383)];
+            number y = y0 + frac * (y1 - y0);
+
+            {
+                UInt32 pincr = (UInt32)(uint32_trunc(frequency * __cycle_tilde_02_f2i));
+                __cycle_tilde_02_phasei = uint32_add(__cycle_tilde_02_phasei, pincr);
+            }
+
+            out1[(Index)i] = y;
+            out2[(Index)i] = uint_phase * 0.232830643653869629e-9;
+            continue;
+        }
+    }
+
+    this->cycle_tilde_02_phasei = __cycle_tilde_02_phasei;
+}
+
+void cycle_tilde_03_perform(
+    number frequency,
+    number phase_offset,
+    SampleValue * out1,
+    SampleValue * out2,
+    Index n
+) {
+    RNBO_UNUSED(phase_offset);
+    auto __cycle_tilde_03_f2i = this->cycle_tilde_03_f2i;
+    auto __cycle_tilde_03_buffer = this->cycle_tilde_03_buffer;
+    auto __cycle_tilde_03_phasei = this->cycle_tilde_03_phasei;
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        {
+            UInt32 uint_phase;
+
+            {
+                {
+                    uint_phase = __cycle_tilde_03_phasei;
+                }
+            }
+
+            UInt32 idx = (UInt32)(uint32_rshift(uint_phase, 18));
+            number frac = ((BinOpInt)((BinOpInt)uint_phase & (BinOpInt)262143)) * 3.81471181759574e-6;
+            number y0 = __cycle_tilde_03_buffer[(Index)idx];
+            number y1 = __cycle_tilde_03_buffer[(Index)((BinOpInt)(idx + 1) & (BinOpInt)16383)];
+            number y = y0 + frac * (y1 - y0);
+
+            {
+                UInt32 pincr = (UInt32)(uint32_trunc(frequency * __cycle_tilde_03_f2i));
+                __cycle_tilde_03_phasei = uint32_add(__cycle_tilde_03_phasei, pincr);
+            }
+
+            out1[(Index)i] = y;
+            out2[(Index)i] = uint_phase * 0.232830643653869629e-9;
+            continue;
+        }
+    }
+
+    this->cycle_tilde_03_phasei = __cycle_tilde_03_phasei;
+}
+
+void signaladder_03_perform(
+    const SampleValue * in1,
+    const SampleValue * in2,
+    SampleValue * out,
+    Index n
+) {
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out[(Index)i] = in1[(Index)i] + in2[(Index)i];
+    }
+}
+
+void dspexpr_17_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] + in2[(Index)i];//#map:_###_obj_###_:1
+    }
+}
+
+void dspexpr_16_perform(const Sample * in1, number in2, SampleValue * out1, Index n) {
+    RNBO_UNUSED(in2);
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] * 0.02;//#map:_###_obj_###_:1
+    }
+}
+
+void noise_tilde_01_perform(SampleValue * out, Index n) {
+    for (Index i = 0; i < n; i++) {
+        out[(Index)i] = this->noise_tilde_01_nz_next();
+    }
+}
+
+void dspexpr_19_perform(const Sample * in1, number in2, SampleValue * out1, Index n) {
+    RNBO_UNUSED(in2);
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] * 0.15;//#map:_###_obj_###_:1
+    }
+}
+
+void ip_01_perform(SampleValue * out, Index n) {
+    auto __ip_01_lastValue = this->ip_01_lastValue;
+    auto __ip_01_lastIndex = this->ip_01_lastIndex;
+
+    for (Index i = 0; i < n; i++) {
+        out[(Index)i] = ((SampleIndex)(i) >= __ip_01_lastIndex ? __ip_01_lastValue : this->ip_01_sigbuf[(Index)i]);
+    }
+
+    __ip_01_lastIndex = 0;
+    this->ip_01_lastIndex = __ip_01_lastIndex;
+}
+
+void dspexpr_15_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] * in2[(Index)i];//#map:_###_obj_###_:1
+    }
+}
+
+void dspexpr_20_perform(const Sample * in1, number in2, SampleValue * out1, Index n) {
+    RNBO_UNUSED(in2);
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = 1 - in1[(Index)i];//#map:_###_obj_###_:1
+    }
+}
+
+void dspexpr_18_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] * in2[(Index)i];//#map:_###_obj_###_:1
+    }
+}
+
+void dspexpr_14_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+    Index i;
+
+    for (i = 0; i < (Index)n; i++) {
+        out1[(Index)i] = in1[(Index)i] + in2[(Index)i];//#map:_###_obj_###_:1
+    }
 }
 
 void fftstream_tilde_03_perform(
@@ -1564,50 +1910,7 @@ void fftstream_tilde_03_perform(
     this->fftstream_tilde_03_datapos = __fftstream_tilde_03_datapos;
 }
 
-void ip_01_perform(SampleValue * out, Index n) {
-    auto __ip_01_lastValue = this->ip_01_lastValue;
-    auto __ip_01_lastIndex = this->ip_01_lastIndex;
-
-    for (Index i = 0; i < n; i++) {
-        out[(Index)i] = ((SampleIndex)(i) >= __ip_01_lastIndex ? __ip_01_lastValue : this->ip_01_sigbuf[(Index)i]);
-    }
-
-    __ip_01_lastIndex = 0;
-    this->ip_01_lastIndex = __ip_01_lastIndex;
-}
-
-void dspexpr_10_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
-    Index i;
-
-    for (i = 0; i < (Index)n; i++) {
-        out1[(Index)i] = in1[(Index)i] + in2[(Index)i];//#map:_###_obj_###_:1
-    }
-}
-
-void peek_tilde_02_perform(
-    const Sample * index,
-    number offset,
-    SampleValue * out1,
-    SampleValue * outindex,
-    Index n
-) {
-    RNBO_UNUSED(out1);
-    RNBO_UNUSED(offset);
-    auto __peek_tilde_02_buffer = this->peek_tilde_02_buffer;
-    SampleArray<1> out = {out1};
-
-    for (Index i = 0; i < n; i++) {
-        auto result = this->peek_boundmode_ignore_channelmode_ignore_indexmode_samples_interp_none(__peek_tilde_02_buffer, index[(Index)i], 0);
-
-        for (Index j = 0; j < 1; j++) {
-            out[(Index)j][(Index)i] = result[(Index)j];
-        }
-
-        outindex[(Index)i] = result[1];
-    }
-}
-
-void dspexpr_12_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+void dspexpr_09_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
@@ -1615,7 +1918,7 @@ void dspexpr_12_perform(const Sample * in1, const Sample * in2, SampleValue * ou
     }
 }
 
-void dspexpr_11_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+void dspexpr_10_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
@@ -1667,38 +1970,52 @@ void ifftstream_tilde_02_perform(
     this->ifftstream_tilde_02_datapos = __ifftstream_tilde_02_datapos;
 }
 
-void dspexpr_08_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
-    Index i;
-
-    for (i = 0; i < (Index)n; i++) {
-        out1[(Index)i] = in1[(Index)i] + in2[(Index)i];//#map:_###_obj_###_:1
-    }
-}
-
-void peek_tilde_01_perform(
-    const Sample * index,
-    number offset,
+void fftstream_tilde_02_perform(
+    const Sample * realIn,
+    number imagIn,
     SampleValue * out1,
-    SampleValue * outindex,
+    SampleValue * out2,
+    SampleValue * out3,
     Index n
 ) {
-    RNBO_UNUSED(out1);
-    RNBO_UNUSED(offset);
-    auto __peek_tilde_01_buffer = this->peek_tilde_01_buffer;
-    SampleArray<1> out = {out1};
+    RNBO_UNUSED(imagIn);
+    auto __fftstream_tilde_02_win_buf = this->fftstream_tilde_02_win_buf;
+    auto __fftstream_tilde_02_datapos = this->fftstream_tilde_02_datapos;
+    number invFftSize = (number)1 / (number)1024;
+    Index i0;
 
-    for (Index i = 0; i < n; i++) {
-        auto result = this->peek_boundmode_ignore_channelmode_ignore_indexmode_samples_interp_none(__peek_tilde_01_buffer, index[(Index)i], 0);
+    for (i0 = 0; i0 < (Index)n; i0++) {
+        SampleIndex i = (SampleIndex)(__fftstream_tilde_02_datapos);
+        array<number, 3> out = {0, 0, i};
+        number windowFactor = 1;
+        windowFactor = __fftstream_tilde_02_win_buf->getSample(0, i);
 
-        for (Index j = 0; j < 1; j++) {
-            out[(Index)j][(Index)i] = result[(Index)j];
+        if (__fftstream_tilde_02_datapos < 1024) {
+            this->fftstream_tilde_02_inWorkspace[(Index)(2 * i)] = windowFactor * realIn[(Index)i0];
+            out[0] = this->fftstream_tilde_02_outWorkspace[(Index)(2 * i)];
+            this->fftstream_tilde_02_inWorkspace[(Index)(2 * i + 1)] = windowFactor * 0;
+            out[1] = this->fftstream_tilde_02_outWorkspace[(Index)(2 * i + 1)];
+
+            if (i == 1024 - 1) {
+                this->fftstream_tilde_02_fft_next(this->fftstream_tilde_02_inWorkspace, 1024);
+
+                for (SampleIndex j = 0; j < 1024 * 2; j++) {
+                    this->fftstream_tilde_02_outWorkspace[(Index)j] = this->fftstream_tilde_02_inWorkspace[(Index)j];
+                }
+            }
+
+            __fftstream_tilde_02_datapos = (__fftstream_tilde_02_datapos + 1) % 1024;
         }
 
-        outindex[(Index)i] = result[1];
+        out1[(Index)i0] = out[0];
+        out2[(Index)i0] = out[1];
+        out3[(Index)i0] = out[2];
     }
+
+    this->fftstream_tilde_02_datapos = __fftstream_tilde_02_datapos;
 }
 
-void dspexpr_05_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+void dspexpr_01_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
@@ -1706,7 +2023,7 @@ void dspexpr_05_perform(const Sample * in1, const Sample * in2, SampleValue * ou
     }
 }
 
-void dspexpr_01_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
+void dspexpr_05_perform(const Sample * in1, const Sample * in2, SampleValue * out1, Index n) {
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
@@ -1951,7 +2268,7 @@ void ifftstream_tilde_01_dspsetup(bool force) {
         safeframesize = nextpoweroftwo(1024);
     }
 
-    Int framepos = (Int)(512 % safeframesize);
+    Int framepos = (Int)(0 % safeframesize);
 
     if (framepos < 1024) {
         this->ifftstream_tilde_01_datapos = framepos;
@@ -2166,17 +2483,6 @@ void param_01_setPresetValue(PatcherStateInterface& preset) {
     this->param_01_value_set(preset["value"]);
 }
 
-void param_02_getPresetValue(PatcherStateInterface& preset) {
-    preset["value"] = this->param_02_value;
-}
-
-void param_02_setPresetValue(PatcherStateInterface& preset) {
-    if ((bool)(stateIsEmpty(preset)))
-        return;
-
-    this->param_02_value_set(preset["value"]);
-}
-
 void data_02_init() {
     this->data_02_buffer->setWantsFill(true);
 }
@@ -2216,38 +2522,6 @@ void data_02_report() {
     }
 
     this->data_02_sizeout_set(this->data_02_buffer->getSize());
-}
-
-void ip_01_init() {
-    this->ip_01_lastValue = this->ip_01_value;
-}
-
-void ip_01_fillSigBuf() {
-    if ((bool)(this->ip_01_sigbuf)) {
-        SampleIndex k = (SampleIndex)(this->sampleOffsetIntoNextAudioBuffer);
-
-        if (k >= (SampleIndex)(this->vs))
-            k = (SampleIndex)(this->vs) - 1;
-
-        for (SampleIndex i = (SampleIndex)(this->ip_01_lastIndex); i < k; i++) {
-            if (this->ip_01_resetCount > 0) {
-                this->ip_01_sigbuf[(Index)i] = 1;
-                this->ip_01_resetCount--;
-            } else {
-                this->ip_01_sigbuf[(Index)i] = this->ip_01_lastValue;
-            }
-        }
-
-        this->ip_01_lastIndex = k;
-    }
-}
-
-void ip_01_dspsetup(bool force) {
-    if ((bool)(this->ip_01_setupDone) && (bool)(!(bool)(force)))
-        return;
-
-    this->ip_01_lastIndex = 0;
-    this->ip_01_setupDone = true;
 }
 
 template<typename BUFFERTYPE> void ifftstream_tilde_02_fft_next(BUFFERTYPE& buffer, Int fftsize) {
@@ -2579,6 +2853,218 @@ void fftstream_tilde_04_dspsetup(bool force) {
     this->fftstream_tilde_04_setupDone = true;
 }
 
+void param_02_getPresetValue(PatcherStateInterface& preset) {
+    preset["value"] = this->param_02_value;
+}
+
+void param_02_setPresetValue(PatcherStateInterface& preset) {
+    if ((bool)(stateIsEmpty(preset)))
+        return;
+
+    this->param_02_value_set(preset["value"]);
+}
+
+number cycle_tilde_01_ph_next(number freq, number reset) {
+    {
+        {
+            if (reset >= 0.)
+                this->cycle_tilde_01_ph_currentPhase = reset;
+        }
+    }
+
+    number pincr = freq * this->cycle_tilde_01_ph_conv;
+
+    if (this->cycle_tilde_01_ph_currentPhase < 0.)
+        this->cycle_tilde_01_ph_currentPhase = 1. + this->cycle_tilde_01_ph_currentPhase;
+
+    if (this->cycle_tilde_01_ph_currentPhase > 1.)
+        this->cycle_tilde_01_ph_currentPhase = this->cycle_tilde_01_ph_currentPhase - 1.;
+
+    number tmp = this->cycle_tilde_01_ph_currentPhase;
+    this->cycle_tilde_01_ph_currentPhase += pincr;
+    return tmp;
+}
+
+void cycle_tilde_01_ph_reset() {
+    this->cycle_tilde_01_ph_currentPhase = 0;
+}
+
+void cycle_tilde_01_ph_dspsetup() {
+    this->cycle_tilde_01_ph_conv = (number)1 / this->sr;
+}
+
+void cycle_tilde_01_dspsetup(bool force) {
+    if ((bool)(this->cycle_tilde_01_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->cycle_tilde_01_phasei = 0;
+    this->cycle_tilde_01_f2i = (number)4294967296 / this->sr;
+    this->cycle_tilde_01_wrap = (Int)(this->cycle_tilde_01_buffer->getSize()) - 1;
+    this->cycle_tilde_01_setupDone = true;
+    this->cycle_tilde_01_ph_dspsetup();
+}
+
+void cycle_tilde_01_bufferUpdated() {
+    this->cycle_tilde_01_wrap = (Int)(this->cycle_tilde_01_buffer->getSize()) - 1;
+}
+
+number cycle_tilde_02_ph_next(number freq, number reset) {
+    {
+        {
+            if (reset >= 0.)
+                this->cycle_tilde_02_ph_currentPhase = reset;
+        }
+    }
+
+    number pincr = freq * this->cycle_tilde_02_ph_conv;
+
+    if (this->cycle_tilde_02_ph_currentPhase < 0.)
+        this->cycle_tilde_02_ph_currentPhase = 1. + this->cycle_tilde_02_ph_currentPhase;
+
+    if (this->cycle_tilde_02_ph_currentPhase > 1.)
+        this->cycle_tilde_02_ph_currentPhase = this->cycle_tilde_02_ph_currentPhase - 1.;
+
+    number tmp = this->cycle_tilde_02_ph_currentPhase;
+    this->cycle_tilde_02_ph_currentPhase += pincr;
+    return tmp;
+}
+
+void cycle_tilde_02_ph_reset() {
+    this->cycle_tilde_02_ph_currentPhase = 0;
+}
+
+void cycle_tilde_02_ph_dspsetup() {
+    this->cycle_tilde_02_ph_conv = (number)1 / this->sr;
+}
+
+void cycle_tilde_02_dspsetup(bool force) {
+    if ((bool)(this->cycle_tilde_02_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->cycle_tilde_02_phasei = 0;
+    this->cycle_tilde_02_f2i = (number)4294967296 / this->sr;
+    this->cycle_tilde_02_wrap = (Int)(this->cycle_tilde_02_buffer->getSize()) - 1;
+    this->cycle_tilde_02_setupDone = true;
+    this->cycle_tilde_02_ph_dspsetup();
+}
+
+void cycle_tilde_02_bufferUpdated() {
+    this->cycle_tilde_02_wrap = (Int)(this->cycle_tilde_02_buffer->getSize()) - 1;
+}
+
+number cycle_tilde_03_ph_next(number freq, number reset) {
+    {
+        {
+            if (reset >= 0.)
+                this->cycle_tilde_03_ph_currentPhase = reset;
+        }
+    }
+
+    number pincr = freq * this->cycle_tilde_03_ph_conv;
+
+    if (this->cycle_tilde_03_ph_currentPhase < 0.)
+        this->cycle_tilde_03_ph_currentPhase = 1. + this->cycle_tilde_03_ph_currentPhase;
+
+    if (this->cycle_tilde_03_ph_currentPhase > 1.)
+        this->cycle_tilde_03_ph_currentPhase = this->cycle_tilde_03_ph_currentPhase - 1.;
+
+    number tmp = this->cycle_tilde_03_ph_currentPhase;
+    this->cycle_tilde_03_ph_currentPhase += pincr;
+    return tmp;
+}
+
+void cycle_tilde_03_ph_reset() {
+    this->cycle_tilde_03_ph_currentPhase = 0;
+}
+
+void cycle_tilde_03_ph_dspsetup() {
+    this->cycle_tilde_03_ph_conv = (number)1 / this->sr;
+}
+
+void cycle_tilde_03_dspsetup(bool force) {
+    if ((bool)(this->cycle_tilde_03_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->cycle_tilde_03_phasei = 0;
+    this->cycle_tilde_03_f2i = (number)4294967296 / this->sr;
+    this->cycle_tilde_03_wrap = (Int)(this->cycle_tilde_03_buffer->getSize()) - 1;
+    this->cycle_tilde_03_setupDone = true;
+    this->cycle_tilde_03_ph_dspsetup();
+}
+
+void cycle_tilde_03_bufferUpdated() {
+    this->cycle_tilde_03_wrap = (Int)(this->cycle_tilde_03_buffer->getSize()) - 1;
+}
+
+void noise_tilde_01_nz_reset() {
+    xoshiro_reset(
+        systemticks() + this->voice() + this->random(0, 10000),
+        this->noise_tilde_01_nz_state
+    );
+}
+
+void noise_tilde_01_nz_init() {
+    this->noise_tilde_01_nz_reset();
+}
+
+void noise_tilde_01_nz_seed(number v) {
+    xoshiro_reset(v, this->noise_tilde_01_nz_state);
+}
+
+number noise_tilde_01_nz_next() {
+    return xoshiro_next(this->noise_tilde_01_nz_state);
+}
+
+void noise_tilde_01_dspsetup(bool force) {
+    if ((bool)(this->noise_tilde_01_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->noise_tilde_01_setupDone = true;
+}
+
+void param_03_getPresetValue(PatcherStateInterface& preset) {
+    preset["value"] = this->param_03_value;
+}
+
+void param_03_setPresetValue(PatcherStateInterface& preset) {
+    if ((bool)(stateIsEmpty(preset)))
+        return;
+
+    this->param_03_value_set(preset["value"]);
+}
+
+void ip_01_init() {
+    this->ip_01_lastValue = this->ip_01_value;
+}
+
+void ip_01_fillSigBuf() {
+    if ((bool)(this->ip_01_sigbuf)) {
+        SampleIndex k = (SampleIndex)(this->sampleOffsetIntoNextAudioBuffer);
+
+        if (k >= (SampleIndex)(this->vs))
+            k = (SampleIndex)(this->vs) - 1;
+
+        for (SampleIndex i = (SampleIndex)(this->ip_01_lastIndex); i < k; i++) {
+            if (this->ip_01_resetCount > 0) {
+                this->ip_01_sigbuf[(Index)i] = 1;
+                this->ip_01_resetCount--;
+            } else {
+                this->ip_01_sigbuf[(Index)i] = this->ip_01_lastValue;
+            }
+        }
+
+        this->ip_01_lastIndex = k;
+    }
+}
+
+void ip_01_dspsetup(bool force) {
+    if ((bool)(this->ip_01_setupDone) && (bool)(!(bool)(force)))
+        return;
+
+    this->ip_01_lastIndex = 0;
+    this->ip_01_setupDone = true;
+}
+
 void globaltransport_advance() {}
 
 void globaltransport_dspsetup(bool ) {}
@@ -2660,25 +3146,17 @@ void assign_defaults()
     fftstream_tilde_02_imagIn = 0;
     dspexpr_04_in1 = 0;
     dspexpr_04_in2 = 0;
+    peek_tilde_01_index = 0;
+    peek_tilde_01_offset = 0;
     dspexpr_05_in1 = 0;
     dspexpr_05_in2 = 0;
+    param_01_value = 1;
     dspexpr_06_in1 = 0;
     dspexpr_06_in2 = 0;
     dspexpr_07_in1 = 0;
     dspexpr_07_in2 = 0;
-    param_01_value = 1;
-    peek_tilde_01_index = 0;
-    peek_tilde_01_offset = 0;
     dspexpr_08_in1 = 0;
-    dspexpr_08_in2 = 0;
-    scale_01_inlow = 0;
-    scale_01_inhigh = 1;
-    scale_01_outlow = -24;
-    scale_01_outhigh = 24;
-    scale_01_power = 1;
-    param_02_value = 0.5;
-    dspexpr_09_in1 = 0;
-    dspexpr_09_in2 = 0;
+    dspexpr_08_in2 = 0.5;
     data_02_sizeout = 0;
     data_02_size = 1024;
     data_02_sizems = 0;
@@ -2687,14 +3165,10 @@ void assign_defaults()
     expr_01_in1 = 0;
     expr_01_in2 = 1;
     expr_01_out1 = 0;
-    ip_01_value = 0;
-    ip_01_impulse = 0;
-    dspexpr_10_in1 = 0;
-    dspexpr_10_in2 = 0;
     peek_tilde_02_index = 0;
     peek_tilde_02_offset = 0;
-    dspexpr_11_in1 = 0;
-    dspexpr_11_in2 = 0;
+    dspexpr_09_in1 = 0;
+    dspexpr_09_in2 = 0;
     ifftstream_tilde_02_realIn = 0;
     ifftstream_tilde_02_imagIn = 0;
     data_03_sizeout = 0;
@@ -2702,21 +3176,52 @@ void assign_defaults()
     data_03_sizems = 0;
     data_03_normalize = 0.995;
     data_03_channels = 1;
-    dspexpr_12_in1 = 0;
-    dspexpr_12_in2 = 0;
+    dspexpr_10_in1 = 0;
+    dspexpr_10_in2 = 0;
     fftstream_tilde_03_realIn = 0;
     fftstream_tilde_03_imagIn = 0;
+    dspexpr_11_in1 = 0;
+    dspexpr_12_in1 = 0;
+    dspexpr_12_in2 = 0;
+    fftstream_tilde_04_realIn = 0;
+    fftstream_tilde_04_imagIn = 0;
+    dspexpr_13_in1 = 0;
+    dspexpr_13_in2 = 0;
     poke_tilde_02_value_number = 0;
     poke_tilde_02_index = 0;
     poke_tilde_02_channel = 0;
     poke_tilde_02_overdub = 0;
-    dspexpr_13_in1 = 0;
+    expr_02_in1 = 0;
+    expr_02_out1 = 0;
+    param_02_value = 0.5;
     dspexpr_14_in1 = 0;
     dspexpr_14_in2 = 0;
-    fftstream_tilde_04_realIn = 0;
-    fftstream_tilde_04_imagIn = 0;
     dspexpr_15_in1 = 0;
     dspexpr_15_in2 = 0;
+    dspexpr_16_in1 = 0;
+    dspexpr_16_in2 = 0.02;
+    cycle_tilde_01_frequency = 0;
+    cycle_tilde_01_phase_offset = 0;
+    dspexpr_17_in1 = 0;
+    dspexpr_17_in2 = 0;
+    expr_03_in1 = 0;
+    expr_03_out1 = 0;
+    cycle_tilde_02_frequency = 0;
+    cycle_tilde_02_phase_offset = 0;
+    expr_04_in1 = 0;
+    expr_04_out1 = 0;
+    cycle_tilde_03_frequency = 0;
+    cycle_tilde_03_phase_offset = 0;
+    dspexpr_18_in1 = 0;
+    dspexpr_18_in2 = 0;
+    dspexpr_19_in1 = 0;
+    dspexpr_19_in2 = 0.15;
+    noise_tilde_01_seed = 0;
+    dspexpr_20_in1 = 0;
+    dspexpr_20_in2 = 1;
+    param_03_value = 0.7;
+    ip_01_value = 0;
+    ip_01_impulse = 0;
     _currentTime = 0;
     audioProcessSampleCount = 0;
     sampleOffsetIntoNextAudioBuffer = 0;
@@ -2732,8 +3237,6 @@ void assign_defaults()
     signals[7] = nullptr;
     signals[8] = nullptr;
     signals[9] = nullptr;
-    signals[10] = nullptr;
-    signals[11] = nullptr;
     didAllocateSignals = 0;
     vs = 0;
     maxvs = 0;
@@ -2754,14 +3257,8 @@ void assign_defaults()
     fftstream_tilde_02_fft_levels = -1;
     fftstream_tilde_02_setupDone = false;
     param_01_lastValue = 0;
-    param_02_lastValue = 0;
     data_02_sizemode = 1;
     data_02_setupDone = false;
-    ip_01_lastIndex = 0;
-    ip_01_lastValue = 0;
-    ip_01_resetCount = 0;
-    ip_01_sigbuf = nullptr;
-    ip_01_setupDone = false;
     ifftstream_tilde_02_datapos = 0;
     ifftstream_tilde_02_fft_lastsize = 0;
     ifftstream_tilde_02_fft_levels = -1;
@@ -2776,6 +3273,26 @@ void assign_defaults()
     fftstream_tilde_04_fft_lastsize = 0;
     fftstream_tilde_04_fft_levels = -1;
     fftstream_tilde_04_setupDone = false;
+    param_02_lastValue = 0;
+    cycle_tilde_01_wrap = 0;
+    cycle_tilde_01_ph_currentPhase = 0;
+    cycle_tilde_01_ph_conv = 0;
+    cycle_tilde_01_setupDone = false;
+    cycle_tilde_02_wrap = 0;
+    cycle_tilde_02_ph_currentPhase = 0;
+    cycle_tilde_02_ph_conv = 0;
+    cycle_tilde_02_setupDone = false;
+    cycle_tilde_03_wrap = 0;
+    cycle_tilde_03_ph_currentPhase = 0;
+    cycle_tilde_03_ph_conv = 0;
+    cycle_tilde_03_setupDone = false;
+    noise_tilde_01_setupDone = false;
+    param_03_lastValue = 0;
+    ip_01_lastIndex = 0;
+    ip_01_lastValue = 0;
+    ip_01_resetCount = 0;
+    ip_01_sigbuf = nullptr;
+    ip_01_setupDone = false;
     globaltransport_tempo = nullptr;
     globaltransport_state = nullptr;
     stackprotect_count = 0;
@@ -2795,6 +3312,9 @@ void assign_defaults()
     	static constexpr auto& name2 = "frzmag2";
     	static constexpr auto& file2 = "";
     	static constexpr auto& tag2 = "data";
+    	static constexpr auto& name3 = "RNBODefaultSinus";
+    	static constexpr auto& file3 = "";
+    	static constexpr auto& tag3 = "buffer~";
     	DataRefStrings* operator->() { return this; }
     	const DataRefStrings* operator->() const { return this; }
     };
@@ -2826,27 +3346,17 @@ void assign_defaults()
     number fftstream_tilde_02_imagIn;
     number dspexpr_04_in1;
     number dspexpr_04_in2;
+    number peek_tilde_01_index;
+    number peek_tilde_01_offset;
     number dspexpr_05_in1;
     number dspexpr_05_in2;
+    number param_01_value;
     number dspexpr_06_in1;
     number dspexpr_06_in2;
     number dspexpr_07_in1;
     number dspexpr_07_in2;
-    number param_01_value;
-    number peek_tilde_01_index;
-    number peek_tilde_01_offset;
     number dspexpr_08_in1;
     number dspexpr_08_in2;
-    list scale_01_input;
-    number scale_01_inlow;
-    number scale_01_inhigh;
-    number scale_01_outlow;
-    number scale_01_outhigh;
-    number scale_01_power;
-    list scale_01_out;
-    number param_02_value;
-    number dspexpr_09_in1;
-    number dspexpr_09_in2;
     number data_02_sizeout;
     number data_02_size;
     number data_02_sizems;
@@ -2855,14 +3365,10 @@ void assign_defaults()
     number expr_01_in1;
     number expr_01_in2;
     number expr_01_out1;
-    number ip_01_value;
-    number ip_01_impulse;
-    number dspexpr_10_in1;
-    number dspexpr_10_in2;
     number peek_tilde_02_index;
     number peek_tilde_02_offset;
-    number dspexpr_11_in1;
-    number dspexpr_11_in2;
+    number dspexpr_09_in1;
+    number dspexpr_09_in2;
     number ifftstream_tilde_02_realIn;
     number ifftstream_tilde_02_imagIn;
     number data_03_sizeout;
@@ -2870,29 +3376,60 @@ void assign_defaults()
     number data_03_sizems;
     number data_03_normalize;
     number data_03_channels;
-    number dspexpr_12_in1;
-    number dspexpr_12_in2;
+    number dspexpr_10_in1;
+    number dspexpr_10_in2;
     number fftstream_tilde_03_realIn;
     number fftstream_tilde_03_imagIn;
+    number dspexpr_11_in1;
+    number dspexpr_12_in1;
+    number dspexpr_12_in2;
+    number fftstream_tilde_04_realIn;
+    number fftstream_tilde_04_imagIn;
+    number dspexpr_13_in1;
+    number dspexpr_13_in2;
     number poke_tilde_02_value_number;
     list poke_tilde_02_value_list;
     number poke_tilde_02_index;
     number poke_tilde_02_channel;
     number poke_tilde_02_overdub;
-    number dspexpr_13_in1;
+    number expr_02_in1;
+    number expr_02_out1;
+    number param_02_value;
     number dspexpr_14_in1;
     number dspexpr_14_in2;
-    number fftstream_tilde_04_realIn;
-    number fftstream_tilde_04_imagIn;
     number dspexpr_15_in1;
     number dspexpr_15_in2;
+    number dspexpr_16_in1;
+    number dspexpr_16_in2;
+    number cycle_tilde_01_frequency;
+    number cycle_tilde_01_phase_offset;
+    number dspexpr_17_in1;
+    number dspexpr_17_in2;
+    number expr_03_in1;
+    number expr_03_out1;
+    number cycle_tilde_02_frequency;
+    number cycle_tilde_02_phase_offset;
+    number expr_04_in1;
+    number expr_04_out1;
+    number cycle_tilde_03_frequency;
+    number cycle_tilde_03_phase_offset;
+    number dspexpr_18_in1;
+    number dspexpr_18_in2;
+    number dspexpr_19_in1;
+    number dspexpr_19_in2;
+    number noise_tilde_01_seed;
+    number dspexpr_20_in1;
+    number dspexpr_20_in2;
+    number param_03_value;
+    number ip_01_value;
+    number ip_01_impulse;
     MillisecondTime _currentTime;
     ENGINE _internalEngine;
     UInt64 audioProcessSampleCount;
     Index sampleOffsetIntoNextAudioBuffer;
     signal zeroBuffer;
     signal dummyBuffer;
-    SampleValue * signals[12];
+    SampleValue * signals[10];
     bool didAllocateSignals;
     Index vs;
     Index maxvs;
@@ -2929,17 +3466,11 @@ void assign_defaults()
     list fftstream_tilde_02_fft_sintab;
     Int fftstream_tilde_02_fft_levels;
     bool fftstream_tilde_02_setupDone;
-    number param_01_lastValue;
     Float64BufferRef peek_tilde_01_buffer;
-    number param_02_lastValue;
+    number param_01_lastValue;
     Float64BufferRef data_02_buffer;
     Int data_02_sizemode;
     bool data_02_setupDone;
-    SampleIndex ip_01_lastIndex;
-    number ip_01_lastValue;
-    SampleIndex ip_01_resetCount;
-    signal ip_01_sigbuf;
-    bool ip_01_setupDone;
     Float64BufferRef peek_tilde_02_buffer;
     SampleValue ifftstream_tilde_02_inWorkspace[2048] = { };
     SampleValue ifftstream_tilde_02_outWorkspace[2048] = { };
@@ -2962,7 +3493,6 @@ void assign_defaults()
     list fftstream_tilde_03_fft_sintab;
     Int fftstream_tilde_03_fft_levels;
     bool fftstream_tilde_03_setupDone;
-    Float64BufferRef poke_tilde_02_buffer;
     SampleValue fftstream_tilde_04_inWorkspace[2048] = { };
     SampleValue fftstream_tilde_04_outWorkspace[2048] = { };
     Float32BufferRef fftstream_tilde_04_win_buf;
@@ -2972,12 +3502,44 @@ void assign_defaults()
     list fftstream_tilde_04_fft_sintab;
     Int fftstream_tilde_04_fft_levels;
     bool fftstream_tilde_04_setupDone;
+    Float64BufferRef poke_tilde_02_buffer;
+    number param_02_lastValue;
+    SampleBufferRef cycle_tilde_01_buffer;
+    Int cycle_tilde_01_wrap;
+    UInt32 cycle_tilde_01_phasei;
+    SampleValue cycle_tilde_01_f2i;
+    number cycle_tilde_01_ph_currentPhase;
+    number cycle_tilde_01_ph_conv;
+    bool cycle_tilde_01_setupDone;
+    SampleBufferRef cycle_tilde_02_buffer;
+    Int cycle_tilde_02_wrap;
+    UInt32 cycle_tilde_02_phasei;
+    SampleValue cycle_tilde_02_f2i;
+    number cycle_tilde_02_ph_currentPhase;
+    number cycle_tilde_02_ph_conv;
+    bool cycle_tilde_02_setupDone;
+    SampleBufferRef cycle_tilde_03_buffer;
+    Int cycle_tilde_03_wrap;
+    UInt32 cycle_tilde_03_phasei;
+    SampleValue cycle_tilde_03_f2i;
+    number cycle_tilde_03_ph_currentPhase;
+    number cycle_tilde_03_ph_conv;
+    bool cycle_tilde_03_setupDone;
+    UInt noise_tilde_01_nz_state[4] = { };
+    bool noise_tilde_01_setupDone;
+    number param_03_lastValue;
+    SampleIndex ip_01_lastIndex;
+    number ip_01_lastValue;
+    SampleIndex ip_01_resetCount;
+    signal ip_01_sigbuf;
+    bool ip_01_setupDone;
     signal globaltransport_tempo;
     signal globaltransport_state;
     number stackprotect_count;
     DataRef frzmag1;
     DataRef r_window;
     DataRef frzmag2;
+    DataRef RNBODefaultSinus;
     Index _voiceIndex;
     Int _noteNumber;
     Index isMuted;
