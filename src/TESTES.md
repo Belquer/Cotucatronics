@@ -1,8 +1,8 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.6.0** · última execução em placa: 2026-08-15 · firmware
-**v0.5.0 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5 e T6 passaram**; T4 espera
-hardware.
+**Documento v0.7.0** · última execução em placa: 2026-08-15 · firmware
+**v0.6.3 / HAL v0.4.0** na QSPI. **T1, T2, T3, T5, T6 e T7 passaram**; T4 espera
+hardware, e o T7e (gate com piezo) espera junto.
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
 antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware;
@@ -307,6 +307,93 @@ inexistente. `tone_freq` e `tone_mix` são **serial-only por design** — os
 knobs 1–3 foram pro delay e pro level, e o tom de teste é bancada, não
 performance.
 
+## T7 — cadeia de dinâmica do shell · ✅ PASSOU (com ressalva no gate)
+
+Gate → [módulo] → level → split → `OUT_L`: governor → [bench_boost] → limiter ·
+`OUT_R`: limiter. Firmware v0.6.3 / dynamics v0.3.1.
+
+### T7a — governor comprime, e comprime o previsto
+
+Tom 440 Hz, `dly_mix 0`, nível fora da região de clipe do ADC:
+
+| `gov_ceiling` | ganho | saída medida | previsto |
+|---|---|---|---|
+| 1.0 | 1.00 | −9,0 dBFS | — |
+| 0.02 | 0.39 | −17,2 dBFS | **−8,2 dB** |
+
+Redução medida **8,2 dB**, batendo ao décimo com `20·log₁₀(0,39)`, repetível
+duas vezes.
+
+> **Armadilha de medição.** Numa primeira tentativa o medido (6,7 dB) não batia
+> com o previsto (11,1 dB). Não era o governor: `cotuca_measure.py` reporta
+> **RMS**, e pra senóide o pico fica 3 dB acima — a leitura de −1,1 dBFS RMS
+> significava pico em **+1,9 dBFS**, ou seja o ADC da interface estava clipando
+> e a leitura alta saía subestimada. Baixado o nível, os números fecharam.
+> Toda medida de nível aqui precisa de pico abaixo de 0 dBFS, não RMS.
+
+### T7b — limiter segura, e a conta fecha
+
+Com `bench_boost` (ferramenta de bancada) empurrando o sinal contra o teto:
+
+| `bench_boost` | interno | `gainL` medido | previsto `0,95/env` |
+|---|---|---|---|
+| 1× | 0,25 | 1.00 | 1.00 |
+| 2× | 0,50 | 1.00 | 1.00 |
+| 4× | 1,00 | **0.96** | 0,95 |
+| 8× | 2,00 | **0.48** | 0,475 |
+
+A saída trava de 4× em diante enquanto a entrada dobra.
+
+**Distorção — medida nativamente**, porque na placa o ADC clipa antes:
+
+| Sobrecarga | Pico de saída | THD |
+|---|---|---|
+| 1,1× | 0,95000 | 0,13% |
+| 2× | 0,95000 | 0,13% |
+| 4× | 0,95000 | 0,13% |
+| 8× | 0,95000 | **0,13%** |
+
+**A distorção não cresce com a sobrecarga.** Em regime permanente o clamp duro
+nunca atua: o ganho suavizado já trouxe o sinal abaixo do teto, e o que sai é
+senóide limpa apenas escalada. O clamp só pega o transiente inicial de ~1 ms,
+que é o papel de backstop dele.
+
+> **Ressalva:** isso é regime permanente. Material **percussivo** — que é
+> exatamente o piezo com taps — bate no clamp a cada ataque. Quando o piezo
+> chegar, medir de novo com transiente real, não com senóide.
+
+### T7c — roteamento
+
+`route_exciter=0` silencia o canal medido; `route_jack=0` não o afeta.
+Confirma que `OUT_L` é o ramo do exciter e que o mute entra depois do limiter.
+
+### T7d — CPU
+
+| Configuração | Média | Pico |
+|---|---|---|
+| Sem cadeia (v0.5.0, só delay RNBO) | 5,7% | 9,9% |
+| Repouso, cadeia carregada | 10,2% | 20,5% |
+| **Tudo engajado** (gate aberto + governor comprimindo + boost 8× + limiter atuando + delay) | **11,0%** | **20,5%** |
+
+A cadeia custou ~5 pontos de média. Note que engajar tudo custa quase nada a
+mais que o repouso: os três blocos rodam o detector e o ganho **sempre**, ativos
+ou não. Carga determinística — bom pro palco, mas o custo não desaparece quando
+o bloco está "desligado".
+
+### T7e — gate · ⏸️ PARCIAL
+
+Fecha corretamente com o chão em silêncio digital (`gain=0.00`, `env=0.0001`) e
+abre com sinal (`gain=1.00`, `env=0.47`). Mas os dois critérios que importam —
+*silenciar chão de ruído real* e *abrir no tap sem comer transiente* — precisam
+do piezo. Com a entrada desligada não há chão que gatear.
+
+O teste nativo cobre a lógica: fecha a −60 dBFS, abre em 10,1 ms, e deixa passar
+**9,5% do sinal no primeiro milissegundo**. Esse último número é o que vale
+discutir quando o piezo chegar: com attack de 10 ms o gate **come parte do
+transiente**. Pra um tap seco em metal pode soar como perda de ataque. O
+conserto seria attack de ~1 ms, e o detector já está rápido o bastante (0,5 ms)
+pra sustentar isso sem falso disparo.
+
 ---
 
 ## Defeitos conhecidos
@@ -317,6 +404,8 @@ performance.
 | 2 | Todo `%f` saía vazio — `board` sem o `48000`, `list` com `norm= real=` | ✅ corrigido no Makefile |
 | 3 | Linha de log saía picotada e grudada na seguinte | ✅ corrigido no HAL v0.3.1 |
 | 4 | Comando serial demorava até 0,5 s pra responder | ✅ corrigido no main.cpp v0.3.0 |
+| 5 | Soft-knee do governor tinha degrau de 0,09 no topo do joelho | ✅ corrigido no dynamics v0.3.1 |
+| 6 | `set <param>` recebe NORMALIZADO, não real — `set bench_boost 1.0` dá **8×** | ⚠️ **em aberto** |
 
 **#1 — despacho serial rodava na ISR.** `SetReceiveCallback` dispara em contexto
 de interrupção, e `hal::Log()` transmite pelo mesmo USB: o segundo `Log`
@@ -349,6 +438,15 @@ sem host lendo não travar.
 teto de resposta a comando. O loop agora gira a ~1 ms e o LED virou heartbeat
 contado (toggle a cada 500 ticks), mantendo 1 Hz. Verificado com comandos a
 0,35 s de intervalo: resposta imediata.
+
+**#6 — `set` recebe normalizado.** Coerente com o `ParamTable::Set()`, mas vira
+armadilha em parâmetro cuja faixa não é `[0,1]`: `set bench_boost 1.0` parece
+"sem boost" e entrega **8×**, o máximo. O eco do comando mostra
+`norm=1.000 real=8.000`, então dá pra perceber — mas num parâmetro que existe
+justamente pra sobrecarregar a saída, "parece seguro e é o máximo" é a inversão
+errada. Não corrigido ainda; a decisão é se `set` passa a aceitar valor real
+quando a faixa não é `[0,1]`, ou se ganha confirmação em parâmetro marcado como
+perigoso.
 
 ---
 

@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.6.2 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.6.3 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.6.2"
+#define COTUCA_OS_VERSION "0.6.3"
 
 #include "hal.h"
 #include "params.h"
@@ -117,6 +117,14 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     for(size_t i = 0; i < size; i++)
         out[0][i] = gov_l.Process(out[0][i]);
 
+    // 5b) BENCH BOOST — FERRAMENTA DE BANCADA, só no ramo do exciter,
+    //     imediatamente antes do limiter. Ver o bloco de aviso em
+    //     manifest.h: nunca vai a knob nem a cena, e nasce em 1.0.
+    const float boost = params.Real(manifest.p_bench_boost);
+    if(boost != 1.0f)
+        for(size_t i = 0; i < size; i++)
+            out[0][i] *= boost;
+
     // 6) LIMITER — último bloco de processamento em CADA ramo.
     //    Um limiter por ramo, não um compartilhado: um pico no
     //    exciter não pode abaixar o jack de linha.
@@ -205,6 +213,8 @@ static void HandleLine(const char* line)
                  gov_l.Gain(), gov_l.Env());
         hal::Log("lim   ceil=%.2f gainL=%.2f gainR=%.2f",
                  cotuca::Limiter::Ceiling(), lim_l.Gain(), lim_r.Gain());
+        hal::Log("boost %.2fx  (BANCADA — nasce sempre em 1.00)",
+                 params.Real(manifest.p_bench_boost));
         hal::Log("route exciter=%d jack=%d",
                  params.Real(manifest.p_route_exciter) >= 0.5f ? 1 : 0,
                  params.Real(manifest.p_route_jack) >= 0.5f ? 1 : 0);
@@ -296,6 +306,17 @@ int main(void)
     if(dsp)
         hal::Log("modulo \"%s\": %d params, %d ligados",
                  dsp->Name(), dsp->ParamCount(), manifest.n_bind);
+
+    // Salvaguarda (c): bench_boost TEM que nascer em 1.0. Hoje não
+    // existe persistência de cena, então isto nunca dispara — é
+    // tripwire pro dia em que existir. Um boost de 8x restaurado em
+    // silêncio seria a escultura gritando no palco sem explicação.
+    {
+        const float b = params.Real(manifest.p_bench_boost);
+        if(b != 1.0f)
+            hal::Log("AVISO: bench_boost nasceu em %.2f e nao 1.00 — "
+                     "ferramenta de bancada NAO deve persistir", b);
+    }
 
     gate.Init(hal::Info().sample_rate);
     gov_l.Init(hal::Info().sample_rate);

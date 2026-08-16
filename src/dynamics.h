@@ -10,8 +10,11 @@
 //
 // Ordem na cadeia:
 //   fonte → GATE → [módulo] → level → split
-//                                      ├ OUT_L: GOVERNOR → LIMITER
-//                                      └ OUT_R:            LIMITER
+//                    ├ OUT_L: GOVERNOR → [bench_boost] → LIMITER
+//                    └ OUT_R:                            LIMITER
+//
+// bench_boost é ferramenta de bancada, não parte da cadeia de
+// produção — ver o bloco de aviso em manifest.h.
 //
 // Os três blocos compartilham o MESMO EnvFollower — uma só
 // implementação de detector, três políticas diferentes em cima.

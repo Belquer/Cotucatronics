@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.7.0
+// manifest.h (instrumento "bancada") v0.8.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -51,6 +51,28 @@ struct Manifest
     // que escreve nestes dois.
     int p_route_exciter; // OUT_L → amp TPA3116 → exciter
     int p_route_jack;    // OUT_R → jack de linha
+
+    // ============================================================
+    // >>>>>>>>>>>>>  FERRAMENTA DE BANCADA  <<<<<<<<<<<<<
+    //
+    // NUNCA mapear bench_boost a knob, encoder, botão ou cena.
+    // Ele existe por um motivo só: dar headroom pra EXERCITAR o
+    // limiter em teste. O caminho de sinal normal não consegue
+    // passar de ~0,5 interno, e um limiter que nunca engata é um
+    // limiter não testado.
+    //
+    // Por que não subir o `level` em vez disso: level [0,1] é
+    // CONTRATO DE ERGONOMIA DO PALCO. O knob de volume da
+    // escultura não pode ter quatro quintos de curso perigoso.
+    //
+    // E o ganho de compensação do piezo, quando vier, NÃO mora
+    // aqui nem no level: mora pós-entrada / pré-gate, que é onde
+    // ele pertence — antes do gate poder decidir sobre o sinal já
+    // no nível certo.
+    //
+    // NÃO PERSISTE. Nasce sempre em 1.0. O boot tem tripwire.
+    // ============================================================
+    int p_bench_boost;
 
     // ---- ligação com o módulo DSP, POR NOME ----
     // O manifest não conhece índice de parâmetro do RNBO: reexportar
@@ -107,6 +129,10 @@ struct Manifest
         // que alto por engano — pra alto o limiter já tem resposta.
         p_route_exciter = t.Add("route_exciter", 1.0f, 0.f, 1.f);
         p_route_jack    = t.Add("route_jack",    1.0f, 0.f, 1.f);
+
+        // FERRAMENTA DE BANCADA — ver bloco acima. def_norm 0.0 com
+        // faixa [1,8] e curve 1 dá real = 1.0 no boot, sempre.
+        p_bench_boost   = t.Add("bench_boost",   0.0f, 1.f, 8.f);
 
         // knob físico → macro → parâmetro(s)
         knob[0].AddTarget(p_dly_time, 1.0f);
