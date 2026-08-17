@@ -614,12 +614,13 @@ void LogMute(bool on) { log_muted = on; }
 
 void BlackboxArm()
 {
-    bb_rec = true;
-    if(g_bb.magic != kBbMagic)
-    {
-        g_bb.magic = kBbMagic;
-        for(int i = 0; i < kBbSlots; i++) g_bb.slot[i] = 0.f;
-    }
+    // ZERA SEMPRE, nao so quando a magica e invalida. Antes, `disparos` e
+    // `consumidos` do voo ANTERIOR sobreviviam e apareciam misturados com
+    // os do voo novo — dado velho com cara de dado fresco, mesma familia
+    // das outras armadilhas deste instrumento.
+    bb_rec     = true;
+    g_bb.magic = kBbMagic;
+    for(int i = 0; i < kBbSlots; i++) g_bb.slot[i] = 0.f;
     BbFlush();
 }
 
