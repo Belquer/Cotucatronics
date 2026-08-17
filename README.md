@@ -73,6 +73,7 @@ Cinco regras que não se negociam:
 | [src/manifest.h](src/manifest.h) | **v0.28.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
+| [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |
 | [src/TESTES.md](src/TESTES.md) | **v0.16.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.7.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
