@@ -1,7 +1,7 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.12.0** · última execução em placa: 2026-08-15 · firmware
-**v0.16.0 / HAL v0.9.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
+**Documento v0.14.0** · última execução em placa: 2026-08-16 · firmware
+**v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
 
@@ -741,6 +741,47 @@ T12c é aceite.** Espera o dB tocar.
 > `pin/pout` do `bb`. O default caiu pra **8x** justamente por isso:
 > provisório, e errando pro lado seguro.
 
+### T12e — delay + vocoder JUNTOS, aprovados de ouvido · ✅ 2026-08-16
+
+"Tudo perfeito" — dB, com piezo, os dois módulos no caminho:
+`dly_mix 0.5 → voc_mix 0.5, voc_pitch 1.0 (base 440 Hz), voc_tone 0.7,
+ganho 1x, level 0.4`. CPU 64% do prazo de 5333 us. Este é o primeiro
+estado da cadeia inteira aprovado pelo autor do patch.
+
+**Atenção: é estado de BANCADA.** A dinâmica do shell está neutralizada
+(gate 0, shifter 0, governor fora) pro A/B com o Max. Quanto de proteção
+volta, e a que custo tímbrico, é decisão do dB — pendente. Até lá o
+manifest carrega os valores aprovados com as exceções comentadas.
+
+### T12d — VOCODER FUNCIONANDO em placa · ✅ 2026-08-16
+
+Confirmado de ouvido pelo dB com piezo, portadora tonal em `voc_pitch
+1.0`. A cadeia inteira que levou até aqui, porque nenhum passo sozinho
+resolvia:
+
+1. **Motor RNBO não era dirigido** (a causa raiz do mudo total). O
+   wrapper chamava `patcher_.process()` direto; o `MinimalEngine` exige
+   `processEventsUntil()` + `advanceTime()` por bloco. Sem isso o
+   relógio fica em zero e nenhum evento executa. Corrigido em
+   `module_rnbo_vocoder v0.5.0` — **vale pra todo módulo RNBO futuro.**
+2. **Ganho de compensação era fantasma.** A caixa-preta mediu: entrada
+   pico 0.215, saída crua do vocoder 2.359 — **11x mais quente**. Os
+   48–64x de "compensação" empurravam picos de ~151 contra um limiter
+   de 0.95 (~44 dB de esmagamento) — o vocoder soava "baixo" porque
+   estava sendo pisoteado. Ganho correto do host: **1x, unidade**.
+3. **A cadeia de dinâmica do shell mastigava o resto**: governor com
+   teto 0.5 contra picos de 2.36, shifter de 4 Hz sempre ligado, gate
+   cortando as caudas do piezo. Neutralizada pra A/B (bancada).
+4. **O "abafado" era a portadora tonal GRAVE**, não defeito: a base é
+   `2^((pitch*48-24)/12)*110` — pitch 0.5 = 110 Hz. Em pitch 1.0
+   (440 Hz) o vocoder soa como deve. A cadeia param→expr→cycle~ é
+   síncrona e responde ao vivo.
+
+**Pergunta que ficou aberta:** se o push de BOOT propaga até os
+cycle~ (os pushes por serial comprovadamente propagam). O "re-kick
+pós-warm-up" proposto pelo dB — reenviar todos os params ligados no fim
+do Init — é seguro barato contra essa classe inteira; decidir com ele.
+
 ---
 
 ## Defeitos conhecidos
@@ -764,6 +805,28 @@ Foi a causa de quase toda a lentidão da sessão de 2026-08-16.
 Contornos que existem hoje: a **caixa-preta** (`bb`) grava durante o voo
 e é lida depois do reset; o **CC 25** ajusta o `fx2_gain` por MIDI, que
 é o único caminho de controle que sobrevive.
+
+### Motor RNBO não dirigido: módulo roda mas eventos nunca executam · CORRIGIDO
+
+`MinimalEngine` exige que o HOST rode `processEventsUntil()` e
+`advanceTime()` a cada bloco. Chamar só `patcher_.process()` deixa
+`_currentTime` em zero pra sempre: sinal puro roda (FFT, delay), mas
+tudo que depende de evento — clock, rampa, captura — fica morto. No Max
+funciona porque o motor é do Max. Assinatura: **roda, custa CPU, não
+soa (ou soa errado), sem log**. Corrigido em `module_rnbo_vocoder
+v0.5.0`; o delay tem a mesma violação e funciona por ser só sinal —
+corrigir quando for mexido.
+
+### Caixa-preta: três armadilhas silenciosas até a primeira leitura · CORRIGIDO
+
+1. **Domínio de backup travado**: acesso sem `HAL_PWR_EnableBkUpAccess()`
+   é bus fault, não escrita ignorada.
+2. **D-cache**: escrita fica no cache e morre no reset — cada escrita
+   precisa de `SCB_CleanDCache_by_Addr`.
+3. **Bootloader**: o `BootInfo` DELE é linkado na BASE da backup SRAM
+   (binário separado!) e escrito a cada boot — em cima de qualquer coisa
+   que o linker do app puser ali. A caixa-preta mora em `0x38800F00`
+   (fim da região, ponteiro fixo), longe da briga.
 
 ### `r_window`: o "fallback" de tamanho é o único caminho · CORRIGIDO
 

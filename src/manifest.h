@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.21.0
+// manifest.h (instrumento "bancada") v0.24.3
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -287,7 +287,7 @@ struct Manifest
     void Init(ParamTable& t)
     {
         // nome, default (0-1), min real, max real
-        p_level     = t.Add("level",     0.7f, 0.f,    1.f);
+        p_level     = t.Add("level",     0.4f, 0.f,    1.f);
         p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
         p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
         p_spare     = t.Add("spare",     0.0f, 0.f,    1.f);
@@ -310,7 +310,7 @@ struct Manifest
         // seriam a única parte usável. O default REAL é 0.02
         // (~-34 dBFS), e como Real() = pow(norm,2), o norm que
         // produz 0.02 é sqrt(0.02) = 0.1414.
-        p_gate_thresh  = t.Add("gate_thresh",  0.1414f, 0.f,  1.f, 2.0f);
+        p_gate_thresh  = t.Add("gate_thresh",  0.0f, 0.f,  1.f, 2.0f);
         // release em ms: 50–2000, default 300
         p_gate_release = t.Add("gate_release", 0.1282f, 50.f, 2000.f);
 
@@ -318,7 +318,7 @@ struct Manifest
         // é a "borda de feedback", o ponto onde a escultura para de
         // crescer. Linear de propósito — a borda é procurada pelo
         // ouvido, e curva atrapalharia o gesto fino.
-        p_gov_ceiling  = t.Add("gov_ceiling",  0.5f,    0.f,  1.f);
+        p_gov_ceiling = t.Add("gov_ceiling", 1.0f,    0.f,  1.f);
         // release em ms: 100–3000, default 800
         p_gov_release  = t.Add("gov_release",  0.2414f, 100.f, 3000.f);
 
@@ -336,22 +336,45 @@ struct Manifest
         // ouvido. Acima de ~10 Hz o deslocamento deixa de ser
         // proteção transparente e vira efeito — as harmônicas param
         // de ser múltiplas inteiras e o timbre metaliza.
-        p_shift_hz      = t.Add("shift_hz",      0.4f, 0.f, 10.f);
+        p_shift_hz      = t.Add("shift_hz",      0.0f, 0.f, 10.f);
 
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
         // (`tone on`/`tone off`) e pelo default — o tom de teste é
         // bancada, não performance.
 
-        // Fx2 nasce em BYPASS — ver a nota no bloco de declaracao.
+        // >>> EXCECAO TEMPORARIA — BANCADA DE ESCUTA 2026-08-16 <<<
+        //
+        // O Fx2 nasce LIGADO aqui, contra a regra do bloco de
+        // declaracao. Nao e descuido: a serial esta caindo a cada 2-3
+        // comandos, entao configurar por serial deixou de ser viavel e
+        // o unico jeito de ouvir o vocoder e o boot ja subir no estado
+        // certo.
+        //
+        // A regra do bypass existe pra proteger de modulo que estoura o
+        // prazo e mata o loop. Esse risco esta MEDIDO e afastado: 63% de
+        // 5333 us, watchdog intacto, quatro voos sem overrun. Abrir
+        // excecao com a medicao na mao e diferente de abrir por
+        // conveniencia.
+        //
+        // REVERTIDO no mesmo dia. Subir ligado resolvia ouvir sem
+        // serial, mas criava um beco: com o Fx2 ativo desde o boot a
+        // serial morre em segundos, e a caixa-preta so pode ser LIDA
+        // com ele desligado. A ferramenta de medicao ficava inacessivel
+        // justamente pela mudanca feita pra poder medir.
+        //
+        // Os outros defaults de escuta FICAM (dly_mix 0, voc_tone 0,
+        // voc_mix 1, fx2_gain 16x), entao voar custa UM comando:
+        //   set fx2_on 1
+        // Um comando cabe no orcamento da serial; seis nao cabiam.
         p_fx2_on     = t.Add("fx2_on",     0.0f, 0.f,   1.f);
 
         // FREEZE. Defaults iguais aos do export, pra o boot nascer
         // com o patch no estado que o autor definiu.
         // Defaults iguais aos do export: mix 1 (molhado), pitch 0.5
         // (centro, deslocamento zero), tone 0.7.
-        p_voc_mix   = t.Add("voc_mix",   1.0f, 0.f, 1.f);
-        p_voc_pitch = t.Add("voc_pitch", 0.5f, 0.f, 1.f);
+        p_voc_mix   = t.Add("voc_mix",   0.5f, 0.f, 1.f);
+        p_voc_pitch = t.Add("voc_pitch", 1.0f, 0.f, 1.f);
         p_voc_tone  = t.Add("voc_tone",  0.7f, 0.f, 1.f);
 
         // Faixa [1,256], curva 3. O teto subiu de 16 porque 6x ficou
@@ -360,7 +383,37 @@ struct Manifest
         // pode passar de 40 dB. Curva 3 mantem o ajuste fino embaixo —
         // metade do curso ainda cobre 1x-32x.
         //
-        // Default 8x, PROVISORIO, e baixou de 48x de proposito.
+        // Default 1x — UNIDADE — e desta vez o numero e MEDIDO.
+        //
+        // A caixa-preta (voo de 16440 blocos, 2026-08-16): entrada
+        // pico 0.215, saida crua do vocoder pico 2.359. A saida e 11x
+        // MAIS QUENTE que a entrada. Com o ganho em 64x o pico virava
+        // ~151 em fundo de escala 1.0 e o limiter esmagava tudo com
+        // ~44 dB de reducao — o vocoder soava "baixo" porque estava
+        // sendo pisoteado, nao porque era fraco.
+        //
+        // A escalada 8->48->64 foi toda na direcao errada, calibrada
+        // por ouvido em cima de um sinal ja esmagado. Licao: o dB
+        // calibrou o patch NO MAX e la soa certo sem ganho externo —
+        // o trabalho do host e entregar UNIDADE e deixar o trim fino
+        // pro CC 25. Nao compensar fantasma.
+        //
+        // norm = ((1-1)/255)^(1/3) = 0.0
+        //
+        // (historico) Default 64x, e desta vez o numero tem conta atras dele.
+        //
+        // Em 16x o dB ouviu ~5% do nivel do delay. O dB entao subiu o
+        // ganho DENTRO do patch de 0.02 pra 0.1 — 5x — que e o lugar
+        // certo pra isso: ganho no host amplifica junto o piso de ruido
+        // do caminho, ganho no patch nao. Com 5x a mais, 16x passa a
+        // dar ~25%, e faltam 4x pra paridade. 16 x 4 = 64.
+        //
+        // A base ainda e uma estimativa AUDITIVA (os "5%"), e ouvido
+        // comprime. Serve pra chegar perto; quem fecha e a caixa-preta.
+        //
+        // norm = ((64-1)/255)^(1/3) = 0.616
+        //
+        // (historico) Default 8x, PROVISORIO, e baixou de 48x de proposito.
         //
         // Os 48x foram calibrados contra o pior caso possivel — tom
         // senoidal puro contra portadora de tres parciais, em que os
@@ -377,7 +430,7 @@ struct Manifest
         // erra pra baixo, que e o lado seguro de errar.
         //
         // norm = ((8-1)/255)^(1/3) = 0.301
-        p_fx2_gain  = t.Add("fx2_gain",  0.301f, 1.f, 256.f, 3.0f);
+        p_fx2_gain  = t.Add("fx2_gain",  0.0f, 1.f, 256.f, 3.0f);
 
         // ---- LIGACOES ----
         // TODAS depois de TODOS os Add(). Nao e estilo: um bind feito
