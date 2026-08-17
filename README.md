@@ -68,12 +68,12 @@ Cinco regras que não se negociam:
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.2.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
 | [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.2.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
 | [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.5.0** | Vocoder no Fx2. Janela 1024 do host; MOTOR DIRIGIDO por bloco |
-| [src/main.cpp](src/main.cpp) | **v0.19.1** | Loop, callback de áudio, painel falso via serial |
-| [src/params.h](src/params.h) | **v0.5.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.24.3** | Instrumento "bancada": entrada + tom atravessando o delay |
+| [src/main.cpp](src/main.cpp) | **v0.20.0** | Loop, callback de áudio, painel falso via serial |
+| [src/params.h](src/params.h) | **v0.6.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
+| [src/manifest.h](src/manifest.h) | **v0.25.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
-| [src/TESTES.md](src/TESTES.md) | **v0.14.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
+| [src/TESTES.md](src/TESTES.md) | **v0.15.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
 | [src/BOARDS.md](src/BOARDS.md) | **v0.7.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |

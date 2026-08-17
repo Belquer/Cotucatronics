@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.14.0** · última execução em placa: 2026-08-16 · firmware
+**Documento v0.15.0** · última execução em placa: 2026-08-16 · firmware
 **v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -781,6 +781,42 @@ resolvia:
 cycle~ (os pushes por serial comprovadamente propagam). O "re-kick
 pós-warm-up" proposto pelo dB — reenviar todos os params ligados no fim
 do Init — é seguro barato contra essa classe inteira; decidir com ele.
+
+## T13 — auto-rand por transiente, pitch preso em Lá menor · ⏳
+
+(Na spec do dB este teste veio como "T12"; virou T13 porque o T12 já
+era da coincidência espectral.)
+
+Cada batida no piezo sorteia:
+- **tempo de delay novo, uniforme entre 100 e 500 ms** (cerca em REAL,
+  porque a curva 2.5 do param entortaria um sorteio em norm);
+- **nota nova do vocoder em Lá menor natural** ({0,2,3,5,7,8,10} sobre
+  110 Hz — que JÁ é um Lá), repetição aceita: sorteio sem memória;
+- `dly_mix` [0.3–0.8] e `voc_tone` [0.4–1.0].
+
+```bash
+./cotuca_serial.py --send "set arand_on 1" "set fx2_on 1" --gap 2.5
+```
+
+**Esperado, de ouvido:**
+- cada batida move o eco (derrapagem de pitch na cauda do delay =
+  esperado e DESEJADO) e salta a nota do vocoder;
+- a nota **nunca soa "errada"** — sempre dentro de Lá menor;
+- duas batidas em < 100 ms = UM sorteio só (cooldown);
+- `set arand_on 0` congela tudo (exige serial viva; com o vocoder
+  ligado ela morre — RESET também congela, arand_on nasce em 0).
+
+**Registro:** enquanto a serial viver, cada sorteio loga
+`arand: dly_time=… voc_pitch=…`. Depois dela, os **últimos 4 sorteios**
+ficam na caixa-preta (slots 4–7: id na parte inteira, norm na fração)
+e saem no `bb` após o reset.
+
+**Custo:** o detector é um envelope + comparação por amostra. Esperado
+~zero; conferir no `cpu` que o pico não saiu da casa dos 63–64%.
+
+**Segurança inalterada:** level, src_mix, gate, governor, limiter,
+routing e shift seguem FORA de qualquer sorteio — a whitelist com
+cercas substitui a lista simples, não a política.
 
 ---
 

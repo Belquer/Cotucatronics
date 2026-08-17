@@ -106,6 +106,34 @@ static size_t rx_len = 0;
 // fila SPSC: a ISR move q_head, o loop principal move q_tail.
 // Cada índice tem um único escritor, então não precisa de lock.
 static char              queue[kQueueLines][kLineMax];
+// Marcadores da autopsia do loop. Nao sao volatile de proposito: sao
+// escritos e lidos so no loop principal — o unico contexto que os toca.
+static uint32_t          ser_m1 = 0, ser_m2 = 0, log_m3 = 0;
+// TRAVA DE GRAVACAO. Quinta vez nesta sessao que instrumentacao apaga o
+// proprio dado: a sessao que LE a caixa-preta tambem passa pelo
+// PollSerial e pelo Log, e sobrescrevia os marcadores antes de eu
+// olhar. So grava depois do BlackboxArm(), que so o voo chama.
+static bool              bb_rec = false;
+
+// ---- DEAD-MAN DO CDC: host morto vira ESTADO, nao excecao ----
+//
+// O host pode sumir sem avisar o device: ele reclama "Device not
+// configured" do lado dele, e o lado de ca nao recebe memo nenhum.
+// Enumeracao segue "configurada" pra sempre e a transmissao pendente
+// nunca completa — o endpoint IN espera um host que nao vai ler.
+//
+// Entao o detector tem que ser NOSSO: N falhas seguidas declaram o
+// CDC morto, e a partir dai o Log NAO CHAMA MAIS o transmit. Nao
+// adianta limitar a espera de uma chamada que pode nao voltar; o
+// unico conserto e nao fazer a chamada.
+//
+// REARME por RX: byte chegando pela serial e prova de host vivo —
+// e a unica prova confiavel, porque vem do outro lado.
+constexpr int            kCdcDeadAfter = 3;
+static bool              cdc_dead      = false;
+static bool              log_muted     = false;
+static int               cdc_fails     = 0;
+static uint32_t          log_dropped = 0;
 static volatile uint32_t q_head = 0;
 static volatile uint32_t q_tail = 0;
 
@@ -126,6 +154,9 @@ static void UsbRxCallback(uint8_t* buf, uint32_t* len)
                 {
                     memcpy(queue[q_head], rx_buf, rx_len + 1);
                     q_head = next;
+                    // REARME: chegou byte, o host esta vivo.
+                    cdc_dead  = false;
+                    cdc_fails = 0;
                 }
             }
             rx_len = 0;
@@ -263,14 +294,70 @@ void Log(const char* fmt, ...)
     out[n++] = '\r';
     out[n++] = '\n';
 
-    // Teto de ~50 ms: sem host lendo, desiste e devolve o controle em
-    // vez de travar a placa esperando alguém que não vai chegar.
-    for(int t = 0; t < 50; t++)
+    // DISJUNTOR. O teto de 50 ms por Log parecia generoso — e virou
+    // arma: com o host fora, um fluxo de logs continuos custa 50 ms
+    // CADA, e o loop principal vira zumbi gastando o dia inteiro em
+    // retry. Foi o mecanismo por tras de "a serial morre com o vocoder
+    // ligado": quem morria era o LOOP, afogado aqui dentro.
+    //
+    // Com o disjuntor: a primeira falha ARMA o mudo, e dai em diante
+    // cada Log tenta UMA vez, sem espera — custo ~zero. O primeiro
+    // envio que completar desarma. Log e diagnostico; diagnostico
+    // nunca pode custar o paciente.
+    // ORCAMENTO DURO. O disjuntor antigo mutava MENSAGENS; este muta
+    // ESPERAS, que e o que mata. Teto de 3 ms quando saudavel, uma
+    // tentativa quando mudo, e o que nao couber vira estatistica em vez
+    // de virar parada cardiaca do loop.
+    //
+    // Serial e conveniencia de bancada. O instrumento nao pode morrer
+    // por ela — com o vocoder a 65% do prazo, o USB e oficialmente
+    // hostil, e o canal de controle de voo passa a ser o MIDI.
+    // MIGALHA DE PAO: primeiro caractere do formato identifica QUEM
+    // chamou. No voo morto, o ultimo valor e o endereco da cela.
+    if(bb_rec) BlackboxWrite(31, (float)(unsigned char)fmt[0]);
+
+    // MUDO EM VOO: nem chega perto do USB. E o unico jeito de garantir
+    // que uma chamada que nao retorna nao possa acontecer.
+    if(log_muted)
     {
+        log_dropped++;
+        if(bb_rec) BlackboxWrite(25, (float)log_dropped);
+        return;
+    }
+
+    // GATE: com o CDC declarado morto, nem tenta. Descarta e conta.
+    if(cdc_dead)
+    {
+        log_dropped++;
+        if(bb_rec) BlackboxWrite(25, (float)log_dropped);
+        return;
+    }
+
+    static bool muted = false;
+    const int   tries = muted ? 1 : 3;
+    for(int t = 0; t < tries; t++)
+    {
+        // M3: marcador ANTES do TransmitInternal. Se o loop morrer com
+        // M3 na frente de M2, a prisao e aqui dentro — chamada que nao
+        // retorna, que nenhum orcamento consegue limitar.
+        if(bb_rec) BlackboxWrite(24, (float)++log_m3);
         if(hw.usb_handle.TransmitInternal(out, (size_t)n)
            == UsbHandle::Result::OK)
+        {
+            muted     = false;
+            cdc_fails = 0; // sucesso zera o dead-man
             return;
-        System::Delay(1);
+        }
+        if(!muted)
+            System::Delay(1);
+    }
+    muted = true;
+    log_dropped++;
+    if(bb_rec) BlackboxWrite(25, (float)log_dropped);
+    if(++cdc_fails >= kCdcDeadAfter)
+    {
+        cdc_dead = true;
+        if(bb_rec) BlackboxWrite(26, 1.f); // marca no registro de voo
     }
 }
 
@@ -281,8 +368,25 @@ void PollSerial()
     // drena a fila em contexto normal, onde Log() pode transmitir
     while(q_tail != q_head)
     {
+        // M1/M2 cercam o line_cb. M1 == M2 significa que todo comando
+        // que entrou tambem saiu: a prisao seria o proprio while da
+        // fila. M1 == M2+1 significa que um comando entrou e nao
+        // voltou — e ai o M3 diz se foi dentro do Log.
+        // TOKEN DE VOO, nao contador. Contadores pareados nao provam
+        // balanco quando o gravador liga ENTRE o par — foi o que
+        // aconteceu: o BlackboxArm roda no callback, na transicao do
+        // fx2, ou seja NO MEIO da linha `set fx2_on 1`. A primeira
+        // linha doou so o M2, a segunda so o M1, e o "M1==M2" foi
+        // acidente aritmetico com cara de alibi.
+        //
+        // Estado e imune a isso: se o voo morrer com o token em 1, uma
+        // linha entrou e nao saiu. Ponto final.
+        if(bb_rec) BlackboxWrite(30, 1.f);
+        if(bb_rec) BlackboxWrite(22, (float)++ser_m1);
         if(line_cb)
             line_cb(queue[q_tail]);
+        if(bb_rec) BlackboxWrite(23, (float)++ser_m2);
+        if(bb_rec) BlackboxWrite(30, 0.f);
         q_tail = (q_tail + 1) % kQueueLines;
     }
 }
@@ -430,6 +534,8 @@ void MidiInjectByte(uint8_t b)
 bool     MidiRxActive() { return midi_started && midi_uart.IsListening(); }
 uint32_t MidiDropped() { return midi_dropped; }
 
+uint32_t NowMs() { return System::GetNow(); }
+
 void DelayMs(uint32_t ms) { System::Delay(ms); }
 
 void* AllocBig(size_t bytes)
@@ -461,7 +567,7 @@ void  CpuLoadReset() { cpu_meter.Reset(); }
 namespace
 {
 constexpr uint32_t kBbMagic = 0xC0BEEF01u;
-constexpr int      kBbSlots = 8;
+constexpr int      kBbSlots = 32;
 struct Blackbox
 {
     uint32_t magic;
@@ -504,8 +610,11 @@ inline void BbFlush()
 }
 } // namespace
 
+void LogMute(bool on) { log_muted = on; }
+
 void BlackboxArm()
 {
+    bb_rec = true;
     if(g_bb.magic != kBbMagic)
     {
         g_bb.magic = kBbMagic;

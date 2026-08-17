@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.5.0
+// Cotucatronics OS — params v0.6.1
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -54,11 +54,16 @@ class ParamTable
     void Init() { count_ = 0; }
 
     // Retorna o id do parâmetro (índice). -1 se a tabela encheu.
+    // steps: quantização OPCIONAL do normalizado (0 = contínuo).
+    // steps=49 num param de ±24 semitons = grade cromática exata.
+    // Aplicada no Set(), que é o ponto ÚNICO de escrita — knob, serial
+    // e MIDI passam todos por lá, então nenhum caminho escapa da grade.
     int Add(const char* name,
             float       def_norm,
             float       min_real,
             float       max_real,
-            float       curve = 1.0f)
+            float       curve = 1.0f,
+            int         steps = 0)
     {
         if(count_ >= kMaxParams)
             return -1;
@@ -67,7 +72,8 @@ class ParamTable
         min_[id]     = min_real;
         max_[id]     = max_real;
         curve_[id]   = curve > 0.f ? curve : 1.0f; // expoente <= 0 não faz sentido
-        norm_[id]    = Clamp01(def_norm);
+        steps_[id]   = steps;
+        norm_[id]    = Quant(id, Clamp01(def_norm));
         return id;
     }
 
@@ -86,7 +92,7 @@ class ParamTable
     {
         if(!Valid(id))
             return;
-        norm_[id] = Clamp01(norm);
+        norm_[id] = Quant(id, Clamp01(norm));
     }
 
     // SetReal() fala na UNIDADE DO PARÂMETRO: Hz, ms, ×, 0–1.
@@ -156,12 +162,40 @@ class ParamTable
 
     const char* Name(int id) const { return Valid(id) ? name_[id] : "?"; }
 
+    // Grade do steps. Pública porque o sorteio do auto-rand também
+    // passa por Set() e herda a mesma quantização de graça.
+    // real → norm, invertendo a curva. É a MESMA conta do SetReal,
+    // exposta porque o sorteio do auto-rand precisa dela: cerca "100 a
+    // 500 ms" é uniforme na UNIDADE, e uniforme em norm com curva != 1
+    // entortaria a distribuição (concentraria nos tempos curtos).
+    float NormFromReal(int id, float real) const
+    {
+        if(!Valid(id))
+            return 0.f;
+        const float span = max_[id] - min_[id];
+        if(span == 0.f)
+            return 0.f;
+        float frac = (real - min_[id]) / span;
+        frac = Clamp01(frac);
+        return powf(frac, 1.f / curve_[id]);
+    }
+
+    float Quant(int id, float norm) const
+    {
+        const int st = steps_[id];
+        if(st < 2) return norm;
+        const float g = (float)(st - 1);
+        const float q = (float)(int)(norm * g + 0.5f) / g;
+        return q > 1.f ? 1.f : q;
+    }
+
     int Count() const { return count_; }
 
   private:
     bool Valid(int id) const { return id >= 0 && id < count_; }
 
     const char* name_[kMaxParams] = {};
+    int         steps_[kMaxParams] = {};
     float       min_[kMaxParams]   = {};
     float       max_[kMaxParams]   = {};
     float       curve_[kMaxParams] = {};

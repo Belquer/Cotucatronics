@@ -1,6 +1,6 @@
 // ============================================================
 // Cotucatronics OS — módulo DSP: vocoder (export do RNBO)
-// module_rnbo_vocoder v0.5.0
+// module_rnbo_vocoder v0.6.0
 //
 // Slot Fx2. Cross-synthesis espectral de UMA entrada.
 //
@@ -246,6 +246,19 @@ class VocoderModule final : public Module
         // começo do próximo — um bloco de latência, que é o preço
         // honesto de não fatiar o bloco por amostra.
         // ------------------------------------------------------
+        // CELULA 3: fila de eventos do RNBO. Evento pode reagendar
+        // evento (metro, delay de evento), e fila que cresce mais rapido
+        // do que drena e custo NAO-LIMITADO dentro do callback. Grava o
+        // maximo corrente: se subir monotonicamente, e bomba-relogio
+        // independente deste bug e precisa de teto por bloco.
+        {
+            const size_t qn = engine_.getQueueSize();
+            if((float)qn > q_max_)
+            {
+                q_max_ = (float)qn;
+                hal::BlackboxWrite(27, q_max_);
+            }
+        }
         engine_.processEventsUntil(engine_.getCurrentTime());
 
         const RNBO::SampleValue* ins[1]  = {in[0]};
@@ -322,6 +335,7 @@ class VocoderModule final : public Module
     bool                  window_ok_      = false;
     size_t                window_samples_ = 0;
     float                 sr_             = 48000.f;
+    float                 q_max_          = 0.f;
     float*                window_buf_     = nullptr;
     size_t                window_bytes_   = 0;
     // Soma das amostras da janela. Serve de prova de vida: sqrt(hann)

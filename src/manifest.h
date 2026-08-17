@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.24.3
+// manifest.h (instrumento "bancada") v0.27.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -52,6 +52,36 @@ struct Requirements
     // feedback se estabelece. Tirar o vocoder do build e voltar pra 48
     // é uma linha aqui e uma no Makefile.
     size_t block_size = 256;
+};
+
+// Grau permitido = semitom MOD 12 relativo ao centro da cerca. Lá
+// menor natural: a base da portadora é 110 Hz — um Lá — então a
+// máscara nasce afinada de graça, sem transposição nenhuma.
+// Outra escultura declara outra máscara; é DADO de manifest.
+static constexpr uint8_t kScaleAminor[] = {0, 2, 3, 5, 7, 8, 10};
+
+// Alvo de sorteio (B1 e auto-rand): cerca por parâmetro + máscara de
+// escala opcional. Cerca em NORMALIZADO, sorteio uniforme dentro dela.
+// Com máscara (n_scale > 0) o sorteio só pousa em semitons permitidos:
+// passo norm_per_semi a partir de center_norm.
+struct RandTarget
+{
+    int            id            = -1;
+    float          min_norm      = 0.f;   // cerca; ver real_fence
+    float          max_norm      = 1.f;
+    const uint8_t* scale         = nullptr;
+    int            n_scale       = 0;
+    float          center_norm   = 0.5f;
+    float          norm_per_semi = 0.f;
+    // true = a cerca está em REAL (unidade do param) e o sorteio é
+    // uniforme NELA. Necessário quando o param tem curva != 1: sorteio
+    // uniforme em norm entortaria a distribuição — "100 a 500 ms"
+    // viraria "quase sempre perto de 100".
+    bool           real_fence    = false;
+    // Passo do sorteio em REAL (0 = contínuo). Com real_fence, o
+    // sorteio pousa só em min + k*passo — degraus perceptíveis em vez
+    // de variação contínua que o ouvido lê como "quase igual".
+    float          real_step     = 0.f;
 };
 
 // Semântica do botão 2. Momentânea por ora; Toggle fica declarado
@@ -211,8 +241,17 @@ struct Manifest
     // SEGURANÇA nem a IDENTIDADE do instrumento. Whitelist e não
     // blacklist porque param novo nasce fora — esquecer de proibir é
     // erro silencioso, esquecer de permitir só faz o botão ignorá-lo.
-    int randomizable[6];
-    int n_randomizable = 0;
+    RandTarget randomizable[6];
+    int        n_randomizable = 0;
+
+    // ---- AUTO-RAND: sorteio disparado por transiente ----
+    // Detector no shell (main.cpp), pós-gate: batida acima do limiar
+    // dispara UM sorteio nas mesmas cercas do B1. arand_on nasce em 0
+    // — é gesto de performance, liga por serial/MIDI, e é candidato ao
+    // B2 como toggle quando Toggle existir.
+    int p_arand_on;
+    int p_arand_thresh;   // limiar do envelope pós-gate, 0..1
+    int p_arand_cooldown; // ms entre sorteios; 2 batidas rápidas = 1
 
     // ---- B2: ASSINALÁVEL ----
     // -1 = sem função. Momentâneo: segura, vale 1; solta, volta.
@@ -374,7 +413,10 @@ struct Manifest
         // Defaults iguais aos do export: mix 1 (molhado), pitch 0.5
         // (centro, deslocamento zero), tone 0.7.
         p_voc_mix   = t.Add("voc_mix",   0.5f, 0.f, 1.f);
-        p_voc_pitch = t.Add("voc_pitch", 1.0f, 0.f, 1.f);
+        // steps=49: o caminho MANUAL (serial/MIDI/knob) anda em grade
+        // cromática — 48 semitons + centro. A ESCALA vale só pro
+        // sorteio; a mão tem o cromático inteiro.
+        p_voc_pitch = t.Add("voc_pitch", 1.0f, 0.f, 1.f, 1.0f, 49);
         p_voc_tone  = t.Add("voc_tone",  0.7f, 0.f, 1.f);
 
         // Faixa [1,256], curva 3. O teto subiu de 16 porque 6x ficou
@@ -432,6 +474,12 @@ struct Manifest
         // norm = ((8-1)/255)^(1/3) = 0.301
         p_fx2_gain  = t.Add("fx2_gain",  0.0f, 1.f, 256.f, 3.0f);
 
+        // AUTO-RAND. thresh em norm==real (faixa 0..1). Cooldown em
+        // ms, default 100: norm = (100-10)/990 = 0.091.
+        p_arand_on       = t.Add("arand_on",       0.0f,   0.f,  1.f);
+        p_arand_thresh   = t.Add("arand_thresh",   0.15f,  0.f,  1.f);
+        p_arand_cooldown = t.Add("arand_cooldown", 0.091f, 10.f, 1000.f);
+
         // ---- LIGACOES ----
         // TODAS depois de TODOS os Add(). Nao e estilo: um bind feito
         // antes do Add correspondente le o id AINDA ZERO, e id 0 e o
@@ -476,10 +524,32 @@ struct Manifest
         // caráter — é quanto do módulo existe. Sortear isso é da mesma
         // família de `src_mix`, que decide qual instrumento se está
         // tocando, e não como ele soa.
-        randomizable[n_randomizable++] = p_dly_time;
-        randomizable[n_randomizable++] = p_dly_mix;
-        randomizable[n_randomizable++] = p_voc_pitch;
-        randomizable[n_randomizable++] = p_voc_tone;
+        // Cercas desta escultura.
+        //
+        // dly_time: 100 a 500 ms POR HIT, uniforme em MILISSEGUNDOS.
+        // O patch mapeia o param 0..1 linearmente em 10..1000 ms
+        // (`scale 0 1 10 1000` no gerado), então 100 ms = real 0.0909
+        // e 500 ms = real 0.4949. real_fence porque dly_time tem curva
+        // 2.5 — sorteio uniforme em norm concentraria nos tempos
+        // curtos e "100 a 500" viraria mentira estatística.
+        // Degraus de 50 ms: 100, 150, ..., 500 — nove valores. O
+        // contínuo sorteava vizinhos (ex.: 210 e 240 ms) que o ouvido
+        // lê como "o mesmo eco". 50 ms = 0.0505 na escala do patch.
+        randomizable[n_randomizable++] = {p_dly_time, 0.0909f, 0.4949f,
+                                          nullptr, 0, 0.5f, 0.f,
+                                          true, 0.0505f};
+        randomizable[n_randomizable++] = {p_dly_mix, 0.30f, 0.80f};
+        // voc_pitch: UMA NOTA NOVA POR HIT, repetição aceita (sorteio
+        // uniforme, sem memória). ±12 st ao redor do centro (110 Hz =
+        // Lá), quantizado em Lá menor — nunca cromático fora da
+        // escala. 1 st = 1/48 do curso (a faixa inteira é ±24 st).
+        // Centro em 220 Hz (norm 0.75 — também um Lá), cerca ±12 st =
+        // 110..440 Hz. O registro anterior (centro 110 Hz) sorteava
+        // certo mas soava tudo GRAVE e parecido — o registro aprovado
+        // de ouvido foi o de cima.
+        randomizable[n_randomizable++] = {p_voc_pitch, 0.50f, 1.00f,
+                                          kScaleAminor, 7, 0.75f, 1.f / 48.f};
+        randomizable[n_randomizable++] = {p_voc_tone, 0.40f, 1.00f};
 
         // ---- B2: sem função neste instrumento ----
         // Exemplo pra quando o freeze voltar ao slot Fx2:

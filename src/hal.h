@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.8.0
+// hal.h v0.10.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -81,6 +81,11 @@ void             SetSerialLineCallback(SerialLineCallback cb);
 void             PollSerial();                 // chamar no loop principal
 void             DelayMs(uint32_t ms);
 
+// Relogio monotonico em ms desde o boot. Existe pra INSTRUMENTACAO: um
+// contador de voltas sem carimbo de tempo diz que o loop parou, mas nao
+// QUANDO — e o quando e o que cruza com o evento que o matou.
+uint32_t         NowMs();
+
 // ---- MIDI: liga a porta e registra quem recebe os bytes ----
 //
 // Chamar UMA VEZ, no boot, antes do StartAudio. É esta chamada que
@@ -156,6 +161,11 @@ void  BlackboxWrite(int slot, float value);
 float BlackboxRead(int slot);
 bool  BlackboxValid();   // false = ligou agora, não há voo anterior
 void  BlackboxArm();     // marca "há dados"; chamar antes de gravar
+
+// SILENCIA o Log no caminho do USB: ele passa a gravar só na caixa-
+// preta. Existe porque em voo NINGUÉM lê a serial — ela morre — e as
+// confirmações de comando são luxo que está custando o instrumento.
+void  LogMute(bool on);
 int   BlackboxSlots();
 
 // Total já entregue por AllocBig(), em bytes. Serve de extrato:

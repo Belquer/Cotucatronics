@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.19.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.27.0-lean (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.19.1"
+#define COTUCA_OS_VERSION "0.27.0-lean"
 
 #include "hal.h"
 #include "params.h"
@@ -13,6 +13,7 @@
 #include "module.h"
 #include "dynamics.h"
 #include "midi.h"
+#include <cstdio>
 #include <cstring>
 #include <cstdlib>
 #include <cmath>
@@ -280,6 +281,23 @@ static int       n_ramps = 0;
 // xorshift32: barato, determinístico e suficiente pra sortear timbre.
 // A semente varia com o tick em que o primeiro sorteio acontece, então
 // não repete a mesma sequência a cada boot.
+// ---- AUTO-RAND: detector de transiente ----
+// O DETECTOR mora no callback (envelope, limiar, histerese, cooldown)
+// e o SORTEIO mora no loop principal — familia (A) da regra de ordem:
+// quem decide o disparo e quem conta o cooldown sao o MESMO contexto,
+// e o loop so consome uma flag pronta. Sorteio no callback seria
+// mexer em params e logar de dentro da interrupcao.
+static float             arand_env   = 0.f;
+static bool              arand_above = false;
+static volatile bool     arand_fire  = false;
+static volatile uint32_t arand_cd    = 0; // cooldown, em blocos
+// Diagnostico do detector, direto na caixa-preta: o pico que o
+// envelope ALCANCOU (slot 8) e quantas vezes disparou (slot 9).
+// Separa "limiar alto demais" de "disparou e nao soou" sem serial —
+// que e o estado normal com o vocoder ligado.
+static float             arand_env_peak = 0.f;
+static uint32_t          arand_fires    = 0;
+
 static uint32_t rng_state = 0;
 static float    RandNorm()
 {
@@ -343,6 +361,47 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     gate.SetRelease(params.Real(manifest.p_gate_release));
     for(size_t i = 0; i < size; i++)
         src_buf[i] = gate.Process(src_buf[i]);
+
+    // AUTO-RAND: detector de transiente, POS-GATE de proposito — o
+    // gate ja separou gesto de chao de ruido, entao o limiar aqui le
+    // batida, nao ambiente. Ataque instantaneo, queda ~40 ms,
+    // histerese em 60% do limiar, cooldown em blocos.
+    if(params.Real(manifest.p_arand_on) >= 0.5f)
+    {
+        const float thr = params.Real(manifest.p_arand_thresh);
+        for(size_t i = 0; i < size; i++)
+        {
+            const float a = src_buf[i] < 0.f ? -src_buf[i] : src_buf[i];
+            if(a > arand_env)
+                arand_env = a;
+            else
+                arand_env *= 0.9995f;
+            if(arand_env > arand_env_peak)
+            {
+                arand_env_peak = arand_env;
+                cotuca::hal::BlackboxWrite(8, arand_env_peak);
+            }
+            if(!arand_above && arand_env > thr)
+            {
+                arand_above = true;
+                if(arand_cd == 0)
+                {
+                    arand_fires++;
+                    cotuca::hal::BlackboxWrite(9, (float)arand_fires);
+                    arand_fire = true; // o loop sorteia
+                    const float ms = params.Real(manifest.p_arand_cooldown);
+                    arand_cd = 1
+                               + (uint32_t)(ms * 0.001f
+                                            * cotuca::hal::Info().sample_rate
+                                            / (float)size);
+                }
+            }
+            else if(arand_above && arand_env < thr * 0.6f)
+                arand_above = false;
+        }
+        if(arand_cd > 0)
+            arand_cd--;
+    }
 
     // ch2 da convenção de 2 entradas: IN_R CRU, pré-crossfade e
     // pré-gate. Ver o contrato em module.h.
@@ -478,8 +537,6 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // serial pra contar. Custa tres stores.
         cotuca::hal::BlackboxWrite(0, fx2_peak_in);
         cotuca::hal::BlackboxWrite(1, fx2_peak_out);
-        cotuca::hal::BlackboxWrite(2, (float)fx2_in);
-        cotuca::hal::BlackboxWrite(3, cotuca::hal::CpuLoadMax());
         for(size_t i = 0; i < size; i++)
         {
             out[0][i] = fx_buf[0][i] * g;
@@ -551,7 +608,56 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 // B1: sorteia novos valores pros params da whitelist do manifest.
 // Só os de CARÁTER — nunca level, fonte, proteção ou roteamento. O
 // porquê de cada proibição está no manifest.h.
-static void TriggerRandomize()
+// Sorteia UM valor dentro da cerca de um alvo; com máscara, pousa só
+// em graus da escala. O valor vai pela MESMA via dos knobs — Set() no
+// loop, Shaped() empurrado ao módulo com o motor vivo — via que o
+// nudge de voc_pitch já provou propagar ao vivo (T12d).
+static float DrawTarget(const cotuca::RandTarget& rt)
+{
+    if(rt.n_scale > 0 && rt.norm_per_semi > 0.f)
+    {
+        // semitons dentro da cerca E dentro da escala
+        int allowed[49];
+        int n = 0;
+        const int lo
+            = (int)ceilf((rt.min_norm - rt.center_norm) / rt.norm_per_semi);
+        const int hi
+            = (int)floorf((rt.max_norm - rt.center_norm) / rt.norm_per_semi);
+        for(int st = lo; st <= hi && n < 49; st++)
+        {
+            const int grau = ((st % 12) + 12) % 12;
+            for(int k = 0; k < rt.n_scale; k++)
+                if(rt.scale[k] == grau)
+                {
+                    allowed[n++] = st;
+                    break;
+                }
+        }
+        if(n == 0)
+            return rt.center_norm; // cerca sem grau nenhum: fica no tom
+        const int pick = (int)(RandNorm() * (float)n) % n;
+        return rt.center_norm + (float)allowed[pick] * rt.norm_per_semi;
+    }
+    if(rt.real_fence)
+    {
+        // uniforme na UNIDADE do param; a curva é invertida depois.
+        float real;
+        if(rt.real_step > 0.f)
+        {
+            // degraus: min + k*passo, k sorteado
+            const int n = 1 + (int)((rt.max_norm - rt.min_norm)
+                                    / rt.real_step + 0.001f);
+            const int k = (int)(RandNorm() * (float)n) % n;
+            real        = rt.min_norm + (float)k * rt.real_step;
+        }
+        else
+            real = rt.min_norm + RandNorm() * (rt.max_norm - rt.min_norm);
+        return params.NormFromReal(rt.id, real);
+    }
+    return rt.min_norm + RandNorm() * (rt.max_norm - rt.min_norm);
+}
+
+static void TriggerRandomize(bool autorand)
 {
     using namespace cotuca;
     n_ramps = 0;
@@ -559,19 +665,35 @@ static void TriggerRandomize()
                    && n_ramps < (int)(sizeof(ramps) / sizeof(ramps[0]));
         i++)
     {
-        const int id = manifest.randomizable[i];
-        ramps[n_ramps].id    = id;
-        ramps[n_ramps].from  = params.Get(id);
-        ramps[n_ramps].to    = RandNorm();
+        const RandTarget& rt = manifest.randomizable[i];
+        ramps[n_ramps].id    = rt.id;
+        ramps[n_ramps].from  = params.Get(rt.id);
+        ramps[n_ramps].to    = DrawTarget(rt);
         ramps[n_ramps].step  = 0;
         ramps[n_ramps].steps = kRampTicks;
+        // Caixa-preta, slots 4..7 rotativos: id na parte inteira, norm
+        // na fracao. E o unico registro que sobrevive quando a serial
+        // ja caiu — que e o estado normal com o vocoder ligado.
+        static int bb_rot = 0;
+        hal::BlackboxWrite(4 + bb_rot,
+                           (float)rt.id + ramps[n_ramps].to * 0.999f);
+        bb_rot = (bb_rot + 1) & 3;
         n_ramps++;
     }
     if(n_ramps == 0)
-        hal::Log("B1: nada na whitelist deste manifest");
-    else
-        hal::Log("B1: sorteando %d param(s) em %d ms", n_ramps,
-                 (int)kRampTicks);
+    {
+        hal::Log("%s: nada na whitelist deste manifest",
+                 autorand ? "arand" : "B1");
+        return;
+    }
+    // log dos valores sorteados — enquanto a serial viver, e o probe
+    // de bancada; depois dela, sobra a caixa-preta.
+    char linha[96];
+    int  off = 0;
+    for(int i = 0; i < n_ramps && off < (int)sizeof(linha) - 16; i++)
+        off += snprintf(linha + off, sizeof(linha) - off, " %s=%.2f",
+                        params.Name(ramps[i].id), (double)ramps[i].to);
+    hal::Log("%s:%s", autorand ? "arand" : "B1", linha);
 }
 
 // B2: momentâneo. Guarda o valor, força 1, devolve ao soltar.
@@ -611,7 +733,7 @@ static void HandleLine(const char* line)
     // b1 — dispara o randomizador (gesto momentâneo, um sorteio)
     if(strncmp(line, "b1", 2) == 0)
     {
-        TriggerRandomize();
+        TriggerRandomize(false);
         return;
     }
     // b2 [0|1] — simula segurar/soltar; sem argumento, alterna
@@ -720,6 +842,16 @@ static void HandleLine(const char* line)
     // CAIXA-PRETA do voo anterior. E o unico jeito de saber o que o
     // vocoder fez depois que a serial caiu: ele grava durante o voo,
     // a gente le aqui, com o Fx2 desligado e o USB de novo vivo.
+    // `bb arm` — arma o gravador e SILENCIA o log ANTES do voo, nunca
+    // no meio de uma linha. Conserta a raiz da assimetria que fez os
+    // contadores pareados mentirem.
+    if(strncmp(line, "bb arm", 6) == 0)
+    {
+        hal::BlackboxArm();
+        hal::LogMute(true);
+        hal::Log("caixa-preta armada; log mudo ate o proximo reset");
+        return;
+    }
     if(strncmp(line, "bb", 2) == 0 && (line[2] == 0 || line[2] == ' '))
     {
         if(!hal::BlackboxValid())
@@ -739,6 +871,47 @@ static void HandleLine(const char* line)
         else if(pi_ > 1e-7f)
             hal::Log("  => saida ZERO com entrada viva: modulo MUDO");
         hal::Log("  pico de CPU: %.0f%%", (double)hal::BlackboxRead(3) * 100.0);
+        // slots 4..7: ultimos sorteios do auto-rand/B1 — id na parte
+        // inteira, norm na fracao. Zero = slot nunca usado.
+        for(int sl = 4; sl < 8; sl++)
+        {
+            const float v = hal::BlackboxRead(sl);
+            if(v <= 0.f) continue;
+            const int   pid  = (int)v;
+            const float norm = v - (float)pid;
+            hal::Log("  sorteio[%d]: %s = %.2f", sl - 4,
+                     params.Name(pid), (double)norm);
+        }
+        hal::Log("  arand: env pico=%.4f, disparos=%.0f, consumidos=%.0f",
+                 (double)hal::BlackboxRead(8), (double)hal::BlackboxRead(9),
+                 (double)hal::BlackboxRead(11));
+        hal::Log("  loop: batimento=%.0f ticks, ultima fase=%.0f",
+                 (double)hal::BlackboxRead(10), (double)hal::BlackboxRead(12));
+        hal::Log("  fases: 1 knobs 2 serial 3 botoes 4 sorteio 5 rampas"
+                 " 6 midi 7 watchdog 8 push-modulo");
+        hal::Log("  TOKEN de linha no fim do voo=%.0f  (1 = PRESA)",
+                 (double)hal::BlackboxRead(30));
+        hal::Log("  ultimo Log chamado comecava com '%c'",
+                 (char)(int)hal::BlackboxRead(31));
+        hal::Log("  VOLTAS completas=%.0f, ultimo carimbo=%.0f ms",
+                 (double)hal::BlackboxRead(28), (double)hal::BlackboxRead(29));
+        hal::Log("  fila de eventos RNBO (max)=%.0f",
+                 (double)hal::BlackboxRead(27));
+        hal::Log("  cdc: declarado morto no voo? %s",
+                 hal::BlackboxRead(26) > 0.5f ? "SIM" : "nao");
+        hal::Log("  autopsia: M1=%.0f (entrou cmd) M2=%.0f (saiu cmd)"
+                 " M3=%.0f (entrou TX) | log descartados=%.0f",
+                 (double)hal::BlackboxRead(22), (double)hal::BlackboxRead(23),
+                 (double)hal::BlackboxRead(24), (double)hal::BlackboxRead(25));
+        hal::Log("  push-laco: iteracoes=%.0f | bind0 shaped=%.4f last=%.4f",
+                 (double)hal::BlackboxRead(19), (double)hal::BlackboxRead(20),
+                 (double)hal::BlackboxRead(21));
+        hal::Log("  rampa: passos=%.0f, escrito=%.4f, lido=%.4f",
+                 (double)hal::BlackboxRead(16), (double)hal::BlackboxRead(17),
+                 (double)hal::BlackboxRead(18));
+        hal::Log("  push: instrument=%.0f fx2=%.0f | ultimo voc_pitch=%.4f",
+                 (double)hal::BlackboxRead(13), (double)hal::BlackboxRead(14),
+                 (double)hal::BlackboxRead(15));
         return;
     }
     if(strncmp(line, "probe", 5) == 0)
@@ -1063,8 +1236,30 @@ int main(void)
     for(int k = 0; k < kNumKnobs; k++)
         knob_last[k] = -2.f;
 
+    // RASTREADOR DE FASE. O batimento provou que o loop MORRE (2816
+    // ticks contra 1,07 milhao de blocos de audio), mas nao onde. Cada
+    // etapa carimba o slot 12 ANTES de rodar; depois do reset, o
+    // numero que sobrou e a ultima etapa que ele entrou — e a proxima
+    // linha depois dela e a que trava. Uma store por etapa.
+    // VOO ENXUTO (bancada 2026-08-16). A instrumentacao cresceu ate
+    // ~20 escritas em backup SRAM por volta, cada uma com
+    // SCB_CleanDCache_by_Addr — e o padrao observado (degrada 8x, DEPOIS
+    // para) e compativel com o observador virando o assassino.
+    //
+    // kDiagFull=false deixa so DUAS escritas por volta: voltas e
+    // carimbo. E o DelayMs sai junto, porque o outro suspeito do mesmo
+    // tamanho e o relogio: DelayMs(1) que engole tick durante as
+    // rajadas de 3,4 ms do callback explicaria os ~8 ms/volta sem
+    // culpar o cache — e relogio quebra de vez, cache degrada linear.
+    static constexpr bool kDiagFull = false;
+    static constexpr bool kUseDelay = false;
+    #define FASE(n) do { if(kDiagFull) cotuca::hal::BlackboxWrite(12, (float)(n)); } while(0)
+
     while(1)
     {
+        // Declarado NO TOPO: quem configura vem antes de quem consome.
+        const bool voando = params.Real(manifest.p_arand_on) >= 0.5f;
+        FASE(1);
         // Knobs físicos. Pares do MIDI e do serial: quem mexeu por
         // último vence. Hoje ReadKnob() devolve -1 (sem pot ligado) e
         // este laço não faz nada — a guarda de mudança existe pro dia
@@ -1080,8 +1275,10 @@ int main(void)
             knob_last[k] = v;
             manifest.knob[k].Apply(params, v);
         }
+        FASE(2);
         hal::PollSerial();
 
+        FASE(3);
         // ---- PAINEL: botões (físico OU simulado por serial) ----
         rng_state += 0x9E3779B9u; // gira sempre: a semente vira do tick
         for(int b = 0; b < 2 && b < hal::Info().num_buttons; b++)
@@ -1091,11 +1288,39 @@ int main(void)
                 continue;
             btn_prev[b] = now;
             if(b == 0 && now)
-                TriggerRandomize(); // BORDA de subida
+                TriggerRandomize(false); // BORDA de subida
             else if(b == 1)
                 SetButton2(now);    // NÍVEL
         }
 
+        // BATIMENTO DO LOOP na caixa-preta (slot 10), a cada ~256
+        // ticks. E o registro que separa de vez "loop vivo" de "loop
+        // morto" num voo sem serial — a pergunta que custou o
+        // diagnostico inteiro do auto-rand. Slot 11: quantos sorteios
+        // o loop CONSUMIU (contra os disparos do slot 9).
+        {
+            static uint32_t hb = 0;
+            if(kDiagFull && ((++hb) & 0x0F) == 0)
+                hal::BlackboxWrite(10, (float)hb);
+        }
+
+        // AUTO-RAND: consome a flag armada pelo callback. A checagem
+        // de arand_on aqui é redundância barata — o detector já checa
+        // — mas cobre a janela em que o operador desliga entre o
+        // disparo e o consumo.
+        if(arand_fire)
+        {
+            arand_fire = false;
+            if(params.Real(manifest.p_arand_on) >= 0.5f)
+            {
+                FASE(4);
+                static uint32_t consumidos = 0;
+                hal::BlackboxWrite(11, (float)++consumidos);
+                TriggerRandomize(true);
+            }
+        }
+
+        FASE(5);
         // avança as rampas do sorteio, um passo por tick
         for(int i = 0; i < n_ramps; i++)
         {
@@ -1105,15 +1330,30 @@ int main(void)
             r.step++;
             const float t = (float)r.step / (float)r.steps;
             params.Set(r.id, r.from + (r.to - r.from) * t);
+            // Slot 16: quantos PASSOS de rampa realmente executaram.
+            // Slot 17: o valor que o ultimo passo escreveu, e slot 18 o
+            // que o params devolveu em seguida. Se 17 e 18 divergirem,
+            // o Set nao esta guardando o que recebeu.
+            static uint32_t passos = 0;
+            if(kDiagFull)
+            {
+                hal::BlackboxWrite(16, (float)++passos);
+                hal::BlackboxWrite(17, r.from + (r.to - r.from) * t);
+                hal::BlackboxWrite(18, params.Get(r.id));
+            }
+            else
+                hal::BlackboxWrite(16, (float)++passos);
         }
         // MIDI no mesmo lugar do serial, e pelo mesmo motivo: os bytes
         // chegam por interrupção e são despachados aqui, em contexto
         // normal, onde mexer em params e logar é seguro.
+        FASE(6);
         hal::PollMidi();
 
         // watchdog: o callback só trava a flag; o log é aqui, porque
         // hal::Log bloqueia por milissegundos e não pode rodar no
         // contexto de áudio.
+        FASE(7);
         if(fx2_overrun && !fx2_reported)
         {
             fx2_reported = true;
@@ -1133,35 +1373,12 @@ int main(void)
             }
             fx2_was_on = on;
         }
-        // BANCADA: cerco ao bloco que mata. Loga enquanto o fx2 estiver
-        // ligado e os contadores estiverem andando. A ULTIMA linha que
-        // sair pela serial antes do silencio diz o numero do bloco — e
-        // se `in` passou `out`, diz que ele nao voltou.
-        {
-            // A CADA 4 BLOCOS, nao a cada um. Uma linha de log a 115200
-            // custa ~3 ms e o bloco 256 dura 5,3 ms: logar todo bloco
-            // deixa o loop no limite, e um instrumento que compete com o
-            // que ele mede nao serve. De 4 em 4 sobra folga.
-            //
-            // CpuLoadMax e MONOTONICO desde o ultimo reset, entao a
-            // coluna `pico` so sobe. Se ela cruzar 90% antes do silencio,
-            // o modulo estourou e o watchdog perdeu a janela. Se ela
-            // ficar baixa ate o fim, a placa morreu por outra coisa que
-            // nao e custo de bloco.
-            static uint32_t last_logged = 0;
-            const uint32_t  in = fx2_in, out = fx2_out;
-            if(in >= last_logged + 4 && in <= 400)
-            {
-                last_logged = in;
-                const float pi_ = fx2_peak_in, po_ = fx2_peak_out;
-                hal::Log("fx2 bloco %lu/%lu cpu=%.0f%% in=%.4f out=%.4f "
-                         "falta %.0fx%s",
-                         (unsigned long)in, (unsigned long)out,
-                         hal::CpuLoadMax() * 100.f, (double)pi_, (double)po_,
-                         po_ > 1e-7f ? (double)(pi_ / po_) : 0.0,
-                         in == out ? "" : "  <<< NAO VOLTOU");
-            }
-        }
+        // (Aqui morava o log de bancada por-4-blocos do fx2. REMOVIDO:
+        // com o host desconectado, cada Log gastava o teto de 50 ms de
+        // retry e chegava um novo a cada 21 ms — o loop virava zumbi
+        // dentro do proprio instrumento de medicao, e foi ESSA a causa
+        // de "a serial morre com o vocoder ligado". O cerco ja tinha
+        // cumprido o papel; as medicoes vivem na caixa-preta.)
         if(fx2_grace_done)
         {
             fx2_grace_done = false;
@@ -1181,6 +1398,15 @@ int main(void)
             hal::CpuLoadReset(); // senao o pico antigo re-trava na hora
         }
 
+        // ARMADILHA DO PROPRIO INSTRUMENTO, custou tres voos:
+        // contadores `static` ZERAM no boot, e o boot empurra os binds.
+        // Entao a sessao que LE a caixa-preta reescrevia os slots antes
+        // de eu olhar, e o `bb` reportava sempre "5 pushes" — o numero
+        // da leitura, nao do voo. Diagnostico que se auto-apaga e pior
+        // que diagnostico ausente: parece dado.
+        //
+        // Conserto: so grava com o voo ATIVO. arand_on nasce em 0,
+        // entao a sessao de leitura nao toca em nada.
         // empurra pro módulo o que mudou. Fora do callback de áudio de
         // propósito: setParameterValue enfileira evento no RNBO.
         for(int b = 0; b < manifest.n_bind; b++)
@@ -1193,11 +1419,46 @@ int main(void)
             // Shaped(), não Real(): o módulo quer 0..1 com a curva do
             // manifest já aplicada. Real() traz a unidade (Hz, ms),
             // que é assunto nosso e não dele.
+            FASE(8);
+            // Slot 19: ITERACOES do laco (nao disparos). Se iteracoes
+            // >> pushes, o laco roda e a guarda `v != mod_last` e que
+            // nunca abre — o que significaria Shaped() parado enquanto
+            // Get() muda. Slot 20/21: o Shaped e o mod_last do bind 0,
+            // pra ver os dois lados da comparacao que decide tudo.
+            if(voando && kDiagFull)
+            {
+                static uint32_t iter = 0;
+                hal::BlackboxWrite(19, (float)++iter);
+            }
             const float v = params.Shaped(manifest.bind[b].param_id);
+            if(voando && kDiagFull && b == 0)
+            {
+                hal::BlackboxWrite(20, v);
+                hal::BlackboxWrite(21, mod_last[b]);
+            }
             if(v != mod_last[b])
             {
                 mod_last[b] = v;
                 mod_slot[(int)manifest.bind[b].slot]->SetParam(mod_index[b], v);
+                // Conta os pushes POR SLOT (13 = instrument, 14 = fx2) e
+                // guarda o ultimo valor empurrado pro fx2 (15). Se o
+                // delay randomiza e o vocoder nao, so ha dois desfechos:
+                // ou o push do fx2 nao acontece (13 sobe, 14 nao), ou
+                // acontece com valor certo e o patcher ignora (os dois
+                // sobem e o slot 15 varia). Cada um manda pra um lado
+                // completamente diferente.
+                static uint32_t push_i = 0, push_f = 0;
+                if(voando && kDiagFull)
+                {
+                    if(manifest.bind[b].slot == cotuca::ModuleSlot::Fx2)
+                    {
+                        hal::BlackboxWrite(14, (float)++push_f);
+                        if(manifest.bind[b].param_id == manifest.p_voc_pitch)
+                            hal::BlackboxWrite(15, v);
+                    }
+                    else
+                        hal::BlackboxWrite(13, (float)++push_i);
+                }
             }
         }
 
@@ -1207,6 +1468,20 @@ int main(void)
             led  = !led;
             hal::SetLed(led);
         }
-        hal::DelayMs(1);
+        // ---- CELULA 1: VOLTAS COMPLETAS + CARIMBO DE TEMPO ----
+        // FIM do while(1). O batimento (slot 10) diz que o loop CHEGOU
+        // ao meio; este diz que ele FECHOU a volta. A diferenca separa
+        // as duas explicacoes que o batimento sozinho confunde:
+        //   voltas paradas → PRISAO (nenhuma volta fecha)
+        //   voltas lentas  → STARVATION (dezenas em 30 s, nao zero)
+        // O carimbo diz QUANDO parou, cruzavel com o fx2_on.
+        if(voando)
+        {
+            static uint32_t voltas = 0;
+            hal::BlackboxWrite(28, (float)++voltas);
+            hal::BlackboxWrite(29, (float)hal::NowMs());
+        }
+        if(kUseDelay)
+            hal::DelayMs(1);
     }
 }
