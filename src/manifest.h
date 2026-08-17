@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.27.0
+// manifest.h (instrumento "bancada") v0.28.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -60,7 +60,7 @@ struct Requirements
 // Outra escultura declara outra máscara; é DADO de manifest.
 static constexpr uint8_t kScaleAminor[] = {0, 2, 3, 5, 7, 8, 10};
 
-// Alvo de sorteio (B1 e auto-rand): cerca por parâmetro + máscara de
+// Alvo de sorteio (B1 e búzios): cerca por parâmetro + máscara de
 // escala opcional. Cerca em NORMALIZADO, sorteio uniforme dentro dela.
 // Com máscara (n_scale > 0) o sorteio só pousa em semitons permitidos:
 // passo norm_per_semi a partir de center_norm.
@@ -244,14 +244,19 @@ struct Manifest
     RandTarget randomizable[6];
     int        n_randomizable = 0;
 
-    // ---- AUTO-RAND: sorteio disparado por transiente ----
+    // ---- BÚZIOS: o sorteio disparado por transiente ----
+    //
+    // Nome do dB, e ele descreve o gesto melhor que qualquer termo
+    // técnico: cada batida na escultura é uma jogada de búzios, e o
+    // que cai decide o timbre. A escala de Lá menor é o que faz a
+    // sorte cair sempre dentro do tom — surpresa sem nota errada.
     // Detector no shell (main.cpp), pós-gate: batida acima do limiar
-    // dispara UM sorteio nas mesmas cercas do B1. arand_on nasce em 0
+    // dispara UM sorteio nas mesmas cercas do B1. buzios_on nasce em 0
     // — é gesto de performance, liga por serial/MIDI, e é candidato ao
     // B2 como toggle quando Toggle existir.
-    int p_arand_on;
-    int p_arand_thresh;   // limiar do envelope pós-gate, 0..1
-    int p_arand_cooldown; // ms entre sorteios; 2 batidas rápidas = 1
+    int p_buzios_on;
+    int p_buzios_thresh;   // limiar do envelope pós-gate, 0..1
+    int p_buzios_cooldown; // ms entre sorteios; 2 batidas rápidas = 1
 
     // ---- B2: ASSINALÁVEL ----
     // -1 = sem função. Momentâneo: segura, vale 1; solta, volta.
@@ -474,11 +479,11 @@ struct Manifest
         // norm = ((8-1)/255)^(1/3) = 0.301
         p_fx2_gain  = t.Add("fx2_gain",  0.0f, 1.f, 256.f, 3.0f);
 
-        // AUTO-RAND. thresh em norm==real (faixa 0..1). Cooldown em
+        // BUZIOS. thresh em norm==real (faixa 0..1). Cooldown em
         // ms, default 100: norm = (100-10)/990 = 0.091.
-        p_arand_on       = t.Add("arand_on",       0.0f,   0.f,  1.f);
-        p_arand_thresh   = t.Add("arand_thresh",   0.15f,  0.f,  1.f);
-        p_arand_cooldown = t.Add("arand_cooldown", 0.091f, 10.f, 1000.f);
+        p_buzios_on       = t.Add("buzios_on",       0.0f,   0.f,  1.f);
+        p_buzios_thresh   = t.Add("buzios_thresh",   0.15f,  0.f,  1.f);
+        p_buzios_cooldown = t.Add("buzios_cooldown", 0.091f, 10.f, 1000.f);
 
         // ---- LIGACOES ----
         // TODAS depois de TODOS os Add(). Nao e estilo: um bind feito

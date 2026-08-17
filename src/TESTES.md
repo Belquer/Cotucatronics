@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.15.0** · última execução em placa: 2026-08-16 · firmware
+**Documento v0.16.0** · última execução em placa: 2026-08-16 · firmware
 **v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -782,7 +782,54 @@ cycle~ (os pushes por serial comprovadamente propagam). O "re-kick
 pós-warm-up" proposto pelo dB — reenviar todos os params ligados no fim
 do Init — é seguro barato contra essa classe inteira; decidir com ele.
 
-## T13 — auto-rand por transiente, pitch preso em Lá menor · ⏳
+## T13 — BÚZIOS: sorteio por transiente em Lá menor · ✅ PASSOU
+
+**Aprovado de ouvido pelo dB em 2026-08-16, um minuto contínuo de taps:
+74 transientes, 74 sorteios aplicados. Razão 1:1.**
+
+Nome do dB, e descreve o gesto melhor que qualquer termo técnico: cada
+batida na escultura é uma jogada de búzios, e o que cai decide o timbre.
+A escala de Lá menor faz a sorte cair sempre dentro do tom — surpresa
+sem nota errada.
+
+```bash
+./cotuca_serial.py --send "bb arm" "set buzios_on 1" "set fx2_on 1" --gap 3
+```
+
+| Alvo | Sorteio |
+|---|---|
+| `dly_time` | 100–500 ms em **degraus de 50 ms** (cerca em REAL) |
+| `voc_pitch` | nota nova em **Lá menor**, repetição aceita |
+| `dly_mix` / `voc_tone` | [0.3–0.8] / [0.4–1.0] |
+
+Proibidos por design: `level`, `src_mix`, gate, governor, limiter,
+roteamento, shift. **O búzio pode surpreender o TIMBRE, nunca a
+SEGURANÇA nem a IDENTIDADE do instrumento.**
+
+### A caçada que o T13 custou — o loop que morria
+
+O búzios "funcionava" 5 segundos e congelava. Foram nove voos de
+diagnóstico até o assassino ter nome, e o método que resolveu foi trocar
+teoria por medição a cada passo:
+
+| Voo | Variável | Voltas do loop | Morte |
+|---|---|---|---|
+| completo | tudo ligado | 1 505 | 12,6 s |
+| enxuto | sem `DelayMs`, instr. mínima | 8 748 683 | vivo aos 58,7 s |
+| discriminante | `DelayMs` religado | 1 516 | 12,7 s |
+| **conserto** | `DelayMs` fora | **9 711 576** | **vivo aos 62,9 s** |
+
+**`hal::DelayMs(1)` no fim do loop era o assassino.** Com o callback do
+vocoder segurando a CPU em rajadas de ~3,4 ms, a espera baseada em tick
+engole tick e em algum momento não termina. O carimbo de tempo é escrito
+imediatamente ANTES do delay: o loop chegou lá aos 12 674 ms e nunca
+mais voltou — entrou e não saiu.
+
+Tirar é seguro porque o delay era cortesia de CPU e o áudio roda por
+interrupção. A única coisa que dependia da cadência do loop era a rampa
+do sorteio — e ela virou função do relógio no patch anterior. **Tirar o
+metrônomo deixou de ter efeito colateral no exato commit em que o
+metrônomo deixou de existir.**
 
 (Na spec do dB este teste veio como "T12"; virou T13 porque o T12 já
 era da coincidência espectral.)
@@ -817,6 +864,44 @@ e saem no `bb` após o reset.
 **Segurança inalterada:** level, src_mix, gate, governor, limiter,
 routing e shift seguem FORA de qualquer sorteio — a whitelist com
 cercas substitui a lista simples, não a política.
+
+---
+
+## Catálogo forense — quando o instrumento destrói o próprio dado
+
+Sete casos numa sessão, e o padrão vale mais que qualquer um deles:
+**instrumentação é código de produção.** Quem mede tem que ser blindado
+como quem toca.
+
+1. **D-cache** — escrita na caixa-preta morria no cache e sumia no reset.
+2. **Bootloader** — o `BootInfo` dele mora na base da backup SRAM e é
+   escrito a cada boot, por cima da palavra mágica.
+3. **Domínio travado** — acesso sem `HAL_PWR_EnableBkUpAccess()` é bus
+   fault, não escrita ignorada.
+4. **A leitura apagando o voo** — contadores `static` zeram no boot, e a
+   sessão que LÊ reescrevia os slots antes de olhar. Reportava sempre
+   "5 pushes" (o número da leitura). Conserto: só grava com o voo ativo.
+5. **O mesmo, uma camada abaixo** — blindei os contadores do `main.cpp`
+   e esqueci os do HAL. Conserto: portão único no `BlackboxArm()`.
+6. **Contadores pareados que mentem** — `M1==M2` parecia álibi, mas o
+   gravador ARMAVA no meio de uma linha, então os contadores pareavam
+   eventos de linhas diferentes. Conserto: **token de estado**, não
+   contagem.
+7. **Dado velho com cara de fresco** — `BlackboxArm` só zerava quando a
+   mágica era inválida, então `disparos` do voo anterior apareciam
+   misturados. Conserto: zera sempre.
+
+E uma **terceira família** de bug de ordem, irmã da corrida-de-contexto e
+da ordem-de-configuração, mas no desenho experimental: **uma variável
+servindo a dois propósitos, e o teste mexendo nos dois de uma vez.** O
+`DelayMs` era relógio E metrônomo da rampa; removê-lo pra testar o
+relógio mudou a música junto, e invalidou a leitura auditiva do voo.
+
+### Ferramentas que a caçada deixou
+
+`bb arm` (arma antes do voo, nunca no meio) · `log_mute` (Log só grava na
+caixa-preta) · token de voo · marcadores de fase · carimbo de tempo ·
+contador de voltas completas.
 
 ---
 
