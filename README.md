@@ -60,6 +60,7 @@ Cinco regras que não se negociam:
 | [src/hal.h](src/hal.h) | **v0.10.0** | O contrato. A fronteira de independência de fornecedor |
 | [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.15.0** | Único arquivo que pode incluir `daisy_seed.h` |
 | [src/module.h](src/module.h) | **v0.4.0** | Interface, **slots fixos** e registro de módulos |
+| [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
 | [src/midi.h](src/midi.h) | **v0.1.0** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
@@ -73,6 +74,7 @@ Cinco regras que não se negociam:
 | [src/manifest.h](src/manifest.h) | **v0.28.0** | Instrumento "bancada": entrada + tom atravessando o delay |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
+| [docs/IFA10000.md](docs/IFA10000.md) | **vivo** | **Certificação de efeitos** — as 10 etapas que todo efeito passa |
 | [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |
 | [src/TESTES.md](src/TESTES.md) | **v0.16.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |

@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.16.0** · última execução em placa: 2026-08-16 · firmware
+**Documento v0.17.0** · última execução em placa: 2026-08-16 · firmware
 **v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -864,6 +864,64 @@ e saem no `bb` após o reset.
 **Segurança inalterada:** level, src_mix, gate, governor, limiter,
 routing e shift seguem FORA de qualquer sorteio — a whitelist com
 cercas substitui a lista simples, não a política.
+
+## T14 — REVERB + passa-alta do Fx2 · ✅ PASSOU
+
+Certificado pelo [IFÁ10000](../docs/IFA10000.md) em 2026-08-17.
+
+### T14a — reverb (Freeverb no shell)
+
+`rev_mix` 0.15 · `rev_size` 0.5 · `rev_damp` 0.5, todos serial/MIDI.
+**Material de prova: transiente + silêncio** — reverb em senoide contínua
+é quase inaudível, porque a cauda só aparece depois do ataque.
+
+**Custo, e a cicatriz que ele deixou:**
+
+| Buffers (108 KB) | Sem reverb | Com reverb | Custo |
+|---|---|---|---|
+| SDRAM (`AllocBig`) | 8,0% | 20,9% | **+12,9 pp** |
+| **SRAM** (`.bss`) | 7,9% | **13,5%** | **+5,6 pp** |
+
+**O padrão de acesso importa mais que o tamanho.** São 48 acessos por
+amostra espalhados em 24 linhas de atraso — 2,3 M/s, o pior caso possível
+pra cache. Os mesmos 108 KB na região certa custam menos da metade.
+
+Pico com vocoder: 71,3% (3800 µs de 5333), folga de 29%.
+
+**Fora dos búzios de propósito:** o reverb é MOLDURA, não caráter. Com
+tudo saltando a cada batida, a sala constante é o que faz as jogadas
+pertencerem ao mesmo lugar. *Se tudo salta, nada é surpresa.*
+
+### T14b — passa-alta do Fx2: a medição que impediu o conserto errado
+
+Sintoma: "um grave está estourando". O histograma de pico por nota
+(pré-level, pré-limiter) mostrou:
+
+| Portadora | Pico |
+|---|---|
+| ~110 Hz | 1,417 🔴 |
+| ~139 Hz | 1,478 🔴 |
+| ~175 Hz | 0,756 |
+| ~220 Hz | 0,704 |
+| ~277 Hz | 1,485 🔴 |
+| ~349 Hz | 0,549 |
+
+**Duas correções de leitura que valem mais que o número.** Primeira: os
+baldes cobriam 4 semitons cada, grosseiro demais — resolução dobrada
+depois. Segunda, e mais séria: o histograma agrupa por **pitch da
+portadora** e mede **pico total** — ele diz *quando* a saída picou, não
+*em que frequência está a energia*. Chamar aquilo de "ressonância" e
+receitar notch teria sido cirurgia baseada em suposição.
+
+O passa-alta virou então **hipótese e conserto ao mesmo tempo**: se
+achatasse o histograma, era energia grave; se não, o problema seria
+desequilíbrio de nível por nota e o filtro sairia.
+
+**Achatou.** `fx2_hp` = **120 Hz**, aprovado de ouvido ("não estoura
+mais"). Fica **no caminho do Fx2**, não no master — sem vocoder não
+estoura (medido), então filtrar o master castigaria o delay de graça. E
+120 Hz fica **abaixo** da região de 174–220 Hz que o histograma mostrou
+saudável: cortar mais alto levaria o corpo do som junto.
 
 ---
 

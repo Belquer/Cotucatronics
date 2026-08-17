@@ -1,17 +1,18 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.29.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.33.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.29.0"
+#define COTUCA_OS_VERSION "0.33.0"
 
 #include "hal.h"
 #include "params.h"
 #include "manifest.h"
 #include "module.h"
 #include "dynamics.h"
+#include "reverb.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -111,6 +112,33 @@ static float fx_buf[2][kMaxBlock];
 // tem entrada de áudio: um módulo de 2 inputs continua rodando, só
 // que sem portadora.
 static float zero_buf[kMaxBlock] = {};
+
+// REVERB — bloco permanente do shell, não módulo. Ver reverb.h pras
+// duas razões (pool de SRAM a 92,4% e a natureza fim-de-linha).
+// Pico de saida por balde de pitch (13 semitons da cerca dos buzios).
+static float note_peak[13] = {};
+
+static cotuca::HighPass fx2_hp_l, fx2_hp_r;
+static cotuca::Reverb reverb;
+static bool           reverb_ok = false;
+
+// BUFFERS DO REVERB EM SRAM, NAO SDRAM — e a diferenca foi medida.
+//
+// Com os buffers em SDRAM (via AllocBig) o reverb custou +12,9 pontos
+// de media: 8,0% -> 20,9% no bloco 256. A causa e o padrao de acesso:
+// 48 leituras/escritas por amostra espalhadas em 24 linhas de atraso,
+// 2,3 M de acessos por segundo — o padrao mais hostil a cache que
+// existe, e a SDRAM da Daisy e bem mais lenta que a SRAM interna.
+//
+// Por que cabe aqui e nao no pool dos modulos: sao regioes DIFERENTES.
+// O pool de modulos (49 KB) esta a 92,4% e nao aceitaria isto; a SRAM
+// principal tem 512 KB com ~300 KB livres. Alocacao estatica, sem
+// portao, sem fragmentacao.
+//
+// E por que isto NAO viola a regra do AllocBig: a regra existe pra que
+// ninguem toque na RAM GRANDE (SDRAM) sem passar pelo portao. Isto e
+// .bss comum — a mesma classe do src_buf e do fx_buf logo acima.
+alignas(32) static float reverb_mem[28160];
 
 // ============================================================
 // REGRA: ORDEM IMPORTA — DUAS FAMÍLIAS.
@@ -529,6 +557,17 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // Aqui e ANTES do level e da dinamica: o governor e o limiter
         // continuam a jusante, entao exagerar comprime em vez de
         // estourar.
+        // PASSA-ALTA do Fx2, antes do ganho e da medição de pico.
+        {
+            const float hz = params.Real(manifest.p_fx2_hp);
+            fx2_hp_l.SetCutoff(hz);
+            fx2_hp_r.SetCutoff(hz);
+            for(size_t i = 0; i < size; i++)
+            {
+                fx_buf[0][i] = fx2_hp_l.Process(fx_buf[0][i]);
+                fx_buf[1][i] = fx2_hp_r.Process(fx_buf[1][i]);
+            }
+        }
         const float g = params.Real(manifest.p_fx2_gain);
         // MEDE OS DOIS LADOS. `pin` = o que entrou (saida do delay, que
         // e o que o ouvido usa de referencia); `pout` = o que o vocoder
@@ -557,6 +596,62 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         {
             out[0][i] = fx_buf[0][i] * g;
             out[1][i] = fx_buf[1][i] * g;
+        }
+    }
+
+    // 4.5) REVERB — PÓS-FX2, PRÉ-LEVEL.
+    //
+    // Aqui molha OS DOIS RAMOS, que é o que se quer de uma sala: ela
+    // envolve o instrumento inteiro, não um canal dele. E vem antes do
+    // level porque o master tem que mandar no resultado final, cauda
+    // incluída — reverb depois do level faria o knob de volume mudar a
+    // proporção seco/molhado, que é comportamento de pedal quebrado.
+    //
+    // >>> PLANO B, se o laço acústico do exciter engordar: mover pra
+    // >>> molhar SÓ o OUT_R (jack de linha), deixando o exciter seco.
+    // >>> Cauda no exciter volta pelo piezo e realimenta o próprio
+    // >>> reverb — é o tipo de laço que cresce devagar e surpreende no
+    // >>> palco. O governor e o shifter seguram, mas segurar não é o
+    // >>> mesmo que estar certo. Se acontecer, o conserto é trocar as
+    // >>> duas linhas abaixo por uma que só passe out[1].
+    if(reverb_ok)
+    {
+        reverb.SetMix(params.Real(manifest.p_rev_mix));
+        reverb.SetSize(params.Real(manifest.p_rev_size));
+        reverb.SetDamp(params.Real(manifest.p_rev_damp));
+        for(size_t i = 0; i < size; i++)
+            reverb.Process(out[0][i], out[1][i]);
+    }
+
+    // ---- HISTOGRAMA DE PICO POR NOTA (bancada) ----
+    //
+    // "Um grave está estourando" precisa virar "QUAIS notas e QUANTO",
+    // senao o filtro e chute. O voc_pitch e quantizado em semitons e a
+    // cerca cobre 110–440 Hz, entao da pra medir NOTA A NOTA: cada
+    // bloco vai pro balde do pitch corrente, guardando o PICO ali.
+    //
+    // Mede a saida do reverb, ANTES do level e do limiter: e o sinal
+    // que o limiter vai ter que segurar. Medir depois dele mostraria
+    // 0.95 em tudo — o limiter escondendo justamente o que se procura.
+    {
+        // RESOLUCAO: 12 baldes cobrindo a CERCA dos buzios [0.5, 1.0],
+        // que sao 24 semitons — 2 semitons por balde, nao 4. A versao
+        // anterior dividia a faixa INTEIRA (0..1, 48 semitons) em 12, e
+        // cada rotulo cobria 4 semitons: grosseiro demais pra decidir
+        // entre notch e filtro.
+        const float pn = params.Get(manifest.p_voc_pitch);
+        int   b = (int)((pn - 0.5f) * 24.f + 0.5f);
+        if(b < 0) b = 0; else if(b > 12) b = 12;
+        float pk = 0.f;
+        for(size_t i = 0; i < size; i++)
+        {
+            const float a = out[0][i] < 0 ? -out[0][i] : out[0][i];
+            if(a > pk) pk = a;
+        }
+        if(pk > note_peak[b])
+        {
+            note_peak[b] = pk;
+            cotuca::hal::BlackboxWrite(32 + b, pk);
         }
     }
 
@@ -906,6 +1001,16 @@ static void HandleLine(const char* line)
                  (double)hal::BlackboxRead(10), (double)hal::BlackboxRead(12));
         hal::Log("  fases: 1 knobs 2 serial 3 botoes 4 sorteio 5 rampas"
                  " 6 midi 7 watchdog 8 push-modulo");
+        hal::Log("  --- PICO POR NOTA (pre-level/limiter) ---");
+        for(int b = 0; b <= 12; b++)
+        {
+            const float pk = hal::BlackboxRead(32 + b);
+            if(pk <= 0.f) continue;
+            const float pn = 0.5f + (float)b / 24.f;
+            const float hz = powf(2.f, (pn * 48.f - 24.f) / 12.f) * 110.f;
+            hal::Log("   %6.1f Hz : pico %.3f %s", (double)hz, (double)pk,
+                     pk > 0.95f ? "<<< ESTOURA" : (pk > 0.7f ? "<< quente" : ""));
+        }
         hal::Log("  TOKEN de linha no fim do voo=%.0f  (1 = PRESA)",
                  (double)hal::BlackboxRead(30));
         hal::Log("  ultimo Log chamado comecava com '%c'",
@@ -1223,6 +1328,31 @@ int main(void)
              manifest.midi_channel == kMidiOmni ? "omni"
                                                 : "fixo (ver `midi`)",
              manifest.n_midi);
+
+    // REVERB: aloca ANTES do StartAudio — familia (B) da regra de
+    // ordem, quem configura vem antes de quem consome. O callback
+    // rodando com reverb_ok false so passa direto; rodando com buffer
+    // meio-alocado leria memoria alheia.
+    //
+    // O `FloatsNeeded` e perguntado ao proprio reverb: este arquivo nao
+    // conhece as afinacoes do Freeverb, e o dia em que a taxa mudar o
+    // tamanho acompanha sozinho. Fixar um numero aqui seria a mesma
+    // armadilha do r_window com 2048 numa FFT de 1024.
+    {
+        const size_t need = cotuca::Reverb::FloatsNeeded(hal::Info().sample_rate);
+        const size_t have = sizeof(reverb_mem) / sizeof(reverb_mem[0]);
+        fx2_hp_l.Init(hal::Info().sample_rate);
+        fx2_hp_r.Init(hal::Info().sample_rate);
+        reverb_ok = reverb.Init(hal::Info().sample_rate, reverb_mem, have);
+        // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
+        // `have`, o reverb recusa (passthrough) e o log diz por que —
+        // em vez de rodar lendo memoria alheia, que e o que um
+        // buffer curto faria em silencio.
+        hal::Log("reverb: %s (%u de %u floats, %u KB em SRAM)",
+                 reverb_ok ? "pronto" : "BUFFER CURTO — passthrough",
+                 (unsigned)need, (unsigned)have,
+                 (unsigned)(sizeof(reverb_mem) / 1024));
+    }
 
     hal::SetSerialLineCallback(HandleLine);
     hal::StartAudio(AudioCb);

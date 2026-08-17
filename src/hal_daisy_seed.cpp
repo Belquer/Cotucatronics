@@ -567,7 +567,7 @@ void  CpuLoadReset() { cpu_meter.Reset(); }
 namespace
 {
 constexpr uint32_t kBbMagic = 0xC0BEEF01u;
-constexpr int      kBbSlots = 32;
+constexpr int      kBbSlots = 48;
 struct Blackbox
 {
     uint32_t magic;

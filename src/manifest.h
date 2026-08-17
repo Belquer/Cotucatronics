@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.28.0
+// manifest.h (instrumento "bancada") v0.32.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -158,6 +158,25 @@ struct Manifest
     // (metálico, desafinado) em vez de proteção transparente.
     int p_shift_hz;
 
+    // ---- REVERB — bloco PERMANENTE do shell (reverb.h) ----
+    // Freeverb clássico, pós-fx2 e pré-level: a sala envolve o
+    // instrumento inteiro, não um canal dele.
+    //
+    // Serial/MIDI por ora — os cinco knobs estão cheios. Escultura que
+    // quiser reverb na mão declara um macro aqui; é decisão de peça,
+    // não do shell.
+    //
+    // rev_mix nasce em 0.15: presença de sala sem virar efeito. Reverb
+    // é o ar em volta da escultura, e ar demais afoga o gesto do piezo.
+    // Passa-alta NO CAMINHO DO FX2, não no master. O estouro só
+    // acontece com o vocoder ligado (medido), então filtrar o master
+    // castigaria o delay de graça. 0 Hz = desligado.
+    int p_fx2_hp;
+
+    int p_rev_mix;
+    int p_rev_size;
+    int p_rev_damp;
+
     // ---- FREEZE (slot Fx2) ----
     // Serial-only: os cinco knobs estao todos ocupados. As faixas
     // ESPELHAM as do export, porque o modulo recebe normalizado e o
@@ -241,7 +260,7 @@ struct Manifest
     // SEGURANÇA nem a IDENTIDADE do instrumento. Whitelist e não
     // blacklist porque param novo nasce fora — esquecer de proibir é
     // erro silencioso, esquecer de permitir só faz o botão ignorá-lo.
-    RandTarget randomizable[6];
+    RandTarget randomizable[8];
     int        n_randomizable = 0;
 
     // ---- BÚZIOS: o sorteio disparado por transiente ----
@@ -381,6 +400,35 @@ struct Manifest
         // proteção transparente e vira efeito — as harmônicas param
         // de ser múltiplas inteiras e o timbre metaliza.
         p_shift_hz      = t.Add("shift_hz",      0.0f, 0.f, 10.f);
+
+        // REVERB. Os três 0..1: o reverb.h faz o mapeamento pras
+        // grandezas internas (size → realimentação [0.7, 0.98], damp →
+        // corte do passa-baixa da cauda).
+        // 120 Hz, APROVADO DE OUVIDO em 2026-08-17 ("não estoura mais").
+        //
+        // O caminho até este número, porque ele parece arbitrário e não
+        // é: o histograma de pico por nota mostrou a saída do Fx2
+        // picando 1,4–1,5 nas portadoras graves contra 0,55 nas agudas.
+        // Isso NÃO provava energia grave — o histograma agrupa por
+        // pitch da portadora, não por conteúdo espectral, e o excesso
+        // podia estar em qualquer lugar. O passa-alta foi ao mesmo
+        // tempo hipótese e conserto: se achatasse, era grave mesmo.
+        // Achatou.
+        //
+        // 120 Hz é escolha musical dentro do que a medição permitiu:
+        // corta o sub que a portadora empilha, e fica ABAIXO da região
+        // de 174–220 Hz que o histograma mostrou saudável (0,70–0,75).
+        // Cortar mais alto levaria junto o corpo do som.
+        //
+        // NO CAMINHO DO FX2, não no master: sem vocoder não estoura
+        // (medido), então filtrar o master castigaria o delay de graça.
+        // Faixa 0–400, curva 2 — resolução embaixo, que é onde se
+        // procura. 0 Hz desliga.
+        p_fx2_hp        = t.Add("fx2_hp",        0.5477f, 0.f, 400.f, 2.0f);
+
+        p_rev_mix       = t.Add("rev_mix",       0.15f, 0.f, 1.f);
+        p_rev_size      = t.Add("rev_size",      0.50f, 0.f, 1.f);
+        p_rev_damp      = t.Add("rev_damp",      0.50f, 0.f, 1.f);
 
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
@@ -555,6 +603,23 @@ struct Manifest
         randomizable[n_randomizable++] = {p_voc_pitch, 0.50f, 1.00f,
                                           kScaleAminor, 7, 0.75f, 1.f / 48.f};
         randomizable[n_randomizable++] = {p_voc_tone, 0.40f, 1.00f};
+        // >>> O REVERB FICA FORA DOS BÚZIOS. Decisão do dB, e é de
+        // >>> música, não de custo — chegou a ser sorteado e funcionava.
+        //
+        // O papel dele é UNIFORMIZAR: dar liga entre tanta variação.
+        // Com delay, pitch e timbre saltando a cada batida, a sala
+        // constante é o que faz as jogadas pertencerem ao MESMO LUGAR.
+        // Sortear a sala junto tiraria o único referencial fixo, e o
+        // resultado deixa de soar como um instrumento sendo tocado pra
+        // soar como uma sequência de instrumentos diferentes.
+        //
+        // Dito de outro jeito: se tudo salta, nada é surpresa. O
+        // contraste precisa de um fundo parado pra existir.
+        //
+        // Corolário de projeto, e vale pra próxima escultura: um bloco
+        // permanente que serve de MOLDURA não é candidato a sorteio,
+        // por mais tentador que seja. A whitelist dos búzios é pra
+        // caráter do módulo, e moldura não é caráter — é contexto.
 
         // ---- B2: sem função neste instrumento ----
         // Exemplo pra quando o freeze voltar ao slot Fx2:
