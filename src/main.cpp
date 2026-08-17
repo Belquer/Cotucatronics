@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.27.0-lean (board-agnostic)
+// Cotucatronics OS — esqueleto v0.29.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.27.0-lean"
+#define COTUCA_OS_VERSION "0.29.0"
 
 #include "hal.h"
 #include "params.h"
@@ -268,12 +268,28 @@ static bool  b2_held     = false;
 //
 // O B2 NÃO rampa, de propósito: hold é chave, não varredura. Rampar
 // um freeze borraria justamente o instante que ele existe pra capturar.
-static constexpr uint16_t kRampTicks = 50; // loop gira a ~1 ms
+static constexpr uint32_t kRampMs = 50; // duracao REAL da rampa
+// RAMPA POR TEMPO, nao por contagem de voltas.
+//
+// Antes: `step++` por volta, 50 voltas = 50 ms — verdade so enquanto o
+// loop girasse a 1 kHz. O DelayMs(1) era relogio E metronomo da rampa,
+// e tirar um tirava o outro: UMA VARIAVEL SERVINDO A DOIS PROPOSITOS,
+// terceira familia do catalogo — irma da corrida-de-contexto e da
+// ordem-de-configuracao, agora no desenho experimental.
+//
+// Agora e FUNCAO do relogio: t = (agora - inicio) / duracao.
+//   - dura 50 ms REAIS, gire o loop como girar;
+//   - loop degradado da avaliacoes esparsas, mas sempre no ponto certo
+//     da curva — nao ha passos pra perder, ha so o agora;
+//   - sem estado incremental corruptivel: qualquer volta reconstroi o
+//     valor do zero. Menos uma coisa que degrada quando o mundo degrada.
 struct ParamRamp
 {
     int      id;
     float    from, to;
-    uint16_t step, steps;
+    uint32_t start_ms;
+    uint32_t dur_ms;
+    bool     done;
 };
 static ParamRamp ramps[8];
 static int       n_ramps = 0;
@@ -281,22 +297,22 @@ static int       n_ramps = 0;
 // xorshift32: barato, determinístico e suficiente pra sortear timbre.
 // A semente varia com o tick em que o primeiro sorteio acontece, então
 // não repete a mesma sequência a cada boot.
-// ---- AUTO-RAND: detector de transiente ----
+// ---- BUZIOS: detector de transiente ----
 // O DETECTOR mora no callback (envelope, limiar, histerese, cooldown)
 // e o SORTEIO mora no loop principal — familia (A) da regra de ordem:
 // quem decide o disparo e quem conta o cooldown sao o MESMO contexto,
 // e o loop so consome uma flag pronta. Sorteio no callback seria
 // mexer em params e logar de dentro da interrupcao.
-static float             arand_env   = 0.f;
-static bool              arand_above = false;
-static volatile bool     arand_fire  = false;
-static volatile uint32_t arand_cd    = 0; // cooldown, em blocos
+static float             buzios_env   = 0.f;
+static bool              buzios_above = false;
+static volatile bool     buzios_fire  = false;
+static volatile uint32_t buzios_cd    = 0; // cooldown, em blocos
 // Diagnostico do detector, direto na caixa-preta: o pico que o
 // envelope ALCANCOU (slot 8) e quantas vezes disparou (slot 9).
 // Separa "limiar alto demais" de "disparou e nao soou" sem serial —
 // que e o estado normal com o vocoder ligado.
-static float             arand_env_peak = 0.f;
-static uint32_t          arand_fires    = 0;
+static float             buzios_env_peak = 0.f;
+static uint32_t          buzios_fires    = 0;
 
 static uint32_t rng_state = 0;
 static float    RandNorm()
@@ -362,45 +378,45 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     for(size_t i = 0; i < size; i++)
         src_buf[i] = gate.Process(src_buf[i]);
 
-    // AUTO-RAND: detector de transiente, POS-GATE de proposito — o
+    // BUZIOS: detector de transiente, POS-GATE de proposito — o
     // gate ja separou gesto de chao de ruido, entao o limiar aqui le
     // batida, nao ambiente. Ataque instantaneo, queda ~40 ms,
     // histerese em 60% do limiar, cooldown em blocos.
-    if(params.Real(manifest.p_arand_on) >= 0.5f)
+    if(params.Real(manifest.p_buzios_on) >= 0.5f)
     {
-        const float thr = params.Real(manifest.p_arand_thresh);
+        const float thr = params.Real(manifest.p_buzios_thresh);
         for(size_t i = 0; i < size; i++)
         {
             const float a = src_buf[i] < 0.f ? -src_buf[i] : src_buf[i];
-            if(a > arand_env)
-                arand_env = a;
+            if(a > buzios_env)
+                buzios_env = a;
             else
-                arand_env *= 0.9995f;
-            if(arand_env > arand_env_peak)
+                buzios_env *= 0.9995f;
+            if(buzios_env > buzios_env_peak)
             {
-                arand_env_peak = arand_env;
-                cotuca::hal::BlackboxWrite(8, arand_env_peak);
+                buzios_env_peak = buzios_env;
+                cotuca::hal::BlackboxWrite(8, buzios_env_peak);
             }
-            if(!arand_above && arand_env > thr)
+            if(!buzios_above && buzios_env > thr)
             {
-                arand_above = true;
-                if(arand_cd == 0)
+                buzios_above = true;
+                if(buzios_cd == 0)
                 {
-                    arand_fires++;
-                    cotuca::hal::BlackboxWrite(9, (float)arand_fires);
-                    arand_fire = true; // o loop sorteia
-                    const float ms = params.Real(manifest.p_arand_cooldown);
-                    arand_cd = 1
+                    buzios_fires++;
+                    cotuca::hal::BlackboxWrite(9, (float)buzios_fires);
+                    buzios_fire = true; // o loop sorteia
+                    const float ms = params.Real(manifest.p_buzios_cooldown);
+                    buzios_cd = 1
                                + (uint32_t)(ms * 0.001f
                                             * cotuca::hal::Info().sample_rate
                                             / (float)size);
                 }
             }
-            else if(arand_above && arand_env < thr * 0.6f)
-                arand_above = false;
+            else if(buzios_above && buzios_env < thr * 0.6f)
+                buzios_above = false;
         }
-        if(arand_cd > 0)
-            arand_cd--;
+        if(buzios_cd > 0)
+            buzios_cd--;
     }
 
     // ch2 da convenção de 2 entradas: IN_R CRU, pré-crossfade e
@@ -669,8 +685,9 @@ static void TriggerRandomize(bool autorand)
         ramps[n_ramps].id    = rt.id;
         ramps[n_ramps].from  = params.Get(rt.id);
         ramps[n_ramps].to    = DrawTarget(rt);
-        ramps[n_ramps].step  = 0;
-        ramps[n_ramps].steps = kRampTicks;
+        ramps[n_ramps].start_ms = hal::NowMs();
+        ramps[n_ramps].dur_ms   = kRampMs;
+        ramps[n_ramps].done     = false;
         // Caixa-preta, slots 4..7 rotativos: id na parte inteira, norm
         // na fracao. E o unico registro que sobrevive quando a serial
         // ja caiu — que e o estado normal com o vocoder ligado.
@@ -683,7 +700,7 @@ static void TriggerRandomize(bool autorand)
     if(n_ramps == 0)
     {
         hal::Log("%s: nada na whitelist deste manifest",
-                 autorand ? "arand" : "B1");
+                 autorand ? "buzios" : "B1");
         return;
     }
     // log dos valores sorteados — enquanto a serial viver, e o probe
@@ -693,7 +710,7 @@ static void TriggerRandomize(bool autorand)
     for(int i = 0; i < n_ramps && off < (int)sizeof(linha) - 16; i++)
         off += snprintf(linha + off, sizeof(linha) - off, " %s=%.2f",
                         params.Name(ramps[i].id), (double)ramps[i].to);
-    hal::Log("%s:%s", autorand ? "arand" : "B1", linha);
+    hal::Log("%s:%s", autorand ? "buzios" : "B1", linha);
 }
 
 // B2: momentâneo. Guarda o valor, força 1, devolve ao soltar.
@@ -871,7 +888,7 @@ static void HandleLine(const char* line)
         else if(pi_ > 1e-7f)
             hal::Log("  => saida ZERO com entrada viva: modulo MUDO");
         hal::Log("  pico de CPU: %.0f%%", (double)hal::BlackboxRead(3) * 100.0);
-        // slots 4..7: ultimos sorteios do auto-rand/B1 — id na parte
+        // slots 4..7: ultimos sorteios do búzios/B1 — id na parte
         // inteira, norm na fracao. Zero = slot nunca usado.
         for(int sl = 4; sl < 8; sl++)
         {
@@ -882,7 +899,7 @@ static void HandleLine(const char* line)
             hal::Log("  sorteio[%d]: %s = %.2f", sl - 4,
                      params.Name(pid), (double)norm);
         }
-        hal::Log("  arand: env pico=%.4f, disparos=%.0f, consumidos=%.0f",
+        hal::Log("  buzios: env pico=%.4f, disparos=%.0f, consumidos=%.0f",
                  (double)hal::BlackboxRead(8), (double)hal::BlackboxRead(9),
                  (double)hal::BlackboxRead(11));
         hal::Log("  loop: batimento=%.0f ticks, ultima fase=%.0f",
@@ -1252,13 +1269,33 @@ int main(void)
     // rajadas de 3,4 ms do callback explicaria os ~8 ms/volta sem
     // culpar o cache — e relogio quebra de vez, cache degrada linear.
     static constexpr bool kDiagFull = false;
+    // ============================================================
+    // DelayMs FORA DO LOOP — o assassino, nomeado por medicao.
+    //
+    // Dois voos, uma variavel trocada, instrumentacao identica:
+    //   sem DelayMs : 8 748 683 voltas, vivo aos 58,7 s
+    //   com DelayMs :        1 516 voltas, morto aos 12,7 s
+    //
+    // E o carimbo diz o mecanismo: ele e escrito IMEDIATAMENTE ANTES do
+    // delay. O loop chegou la aos 12 674 ms e nunca mais voltou — entrou
+    // e nao saiu. Com o callback do vocoder segurando a CPU em rajadas
+    // de ~3,4 ms, a espera baseada em tick engole tick e em algum
+    // momento nao termina.
+    //
+    // Por que simplesmente TIRAR e seguro, e nao remendo: o delay era
+    // cortesia de CPU, e o audio roda por INTERRUPCAO — o loop girando
+    // livre nao lhe rouba nada. A unica coisa que dependia da cadencia
+    // do loop era a rampa do sorteio, e ela agora e funcao do relogio,
+    // nao contagem de voltas. Tirar o metronomo deixou de ter efeito
+    // colateral no exato patch em que o metronomo deixou de existir.
+    // ============================================================
     static constexpr bool kUseDelay = false;
     #define FASE(n) do { if(kDiagFull) cotuca::hal::BlackboxWrite(12, (float)(n)); } while(0)
 
     while(1)
     {
         // Declarado NO TOPO: quem configura vem antes de quem consome.
-        const bool voando = params.Real(manifest.p_arand_on) >= 0.5f;
+        const bool voando = params.Real(manifest.p_buzios_on) >= 0.5f;
         FASE(1);
         // Knobs físicos. Pares do MIDI e do serial: quem mexeu por
         // último vence. Hoje ReadKnob() devolve -1 (sem pot ligado) e
@@ -1296,7 +1333,7 @@ int main(void)
         // BATIMENTO DO LOOP na caixa-preta (slot 10), a cada ~256
         // ticks. E o registro que separa de vez "loop vivo" de "loop
         // morto" num voo sem serial — a pergunta que custou o
-        // diagnostico inteiro do auto-rand. Slot 11: quantos sorteios
+        // diagnostico inteiro do búzios. Slot 11: quantos sorteios
         // o loop CONSUMIU (contra os disparos do slot 9).
         {
             static uint32_t hb = 0;
@@ -1304,14 +1341,14 @@ int main(void)
                 hal::BlackboxWrite(10, (float)hb);
         }
 
-        // AUTO-RAND: consome a flag armada pelo callback. A checagem
-        // de arand_on aqui é redundância barata — o detector já checa
+        // BUZIOS: consome a flag armada pelo callback. A checagem
+        // de buzios_on aqui é redundância barata — o detector já checa
         // — mas cobre a janela em que o operador desliga entre o
         // disparo e o consumo.
-        if(arand_fire)
+        if(buzios_fire)
         {
-            arand_fire = false;
-            if(params.Real(manifest.p_arand_on) >= 0.5f)
+            buzios_fire = false;
+            if(params.Real(manifest.p_buzios_on) >= 0.5f)
             {
                 FASE(4);
                 static uint32_t consumidos = 0;
@@ -1322,13 +1359,15 @@ int main(void)
 
         FASE(5);
         // avança as rampas do sorteio, um passo por tick
+        const uint32_t agora = hal::NowMs();
         for(int i = 0; i < n_ramps; i++)
         {
             ParamRamp& r = ramps[i];
-            if(r.step >= r.steps)
+            if(r.done)
                 continue;
-            r.step++;
-            const float t = (float)r.step / (float)r.steps;
+            const uint32_t dt = agora - r.start_ms;
+            float t = (r.dur_ms == 0) ? 1.f : (float)dt / (float)r.dur_ms;
+            if(t >= 1.f) { t = 1.f; r.done = true; } // pousa EXATO no `to`
             params.Set(r.id, r.from + (r.to - r.from) * t);
             // Slot 16: quantos PASSOS de rampa realmente executaram.
             // Slot 17: o valor que o ultimo passo escreveu, e slot 18 o
@@ -1405,7 +1444,7 @@ int main(void)
         // da leitura, nao do voo. Diagnostico que se auto-apaga e pior
         // que diagnostico ausente: parece dado.
         //
-        // Conserto: so grava com o voo ATIVO. arand_on nasce em 0,
+        // Conserto: so grava com o voo ATIVO. buzios_on nasce em 0,
         // entao a sessao de leitura nao toca em nada.
         // empurra pro módulo o que mudou. Fora do callback de áudio de
         // propósito: setParameterValue enfileira evento no RNBO.
