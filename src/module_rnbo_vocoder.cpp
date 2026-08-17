@@ -1,6 +1,6 @@
 // ============================================================
 // Cotucatronics OS — módulo DSP: vocoder (export do RNBO)
-// module_rnbo_vocoder v0.4.0
+// module_rnbo_vocoder v0.5.0
 //
 // Slot Fx2. Cross-synthesis espectral de UMA entrada.
 //
@@ -141,6 +141,7 @@ class VocoderModule final : public Module
         // consulta.
         window_ok_ = FillWindow();
 
+        sr_ = sample_rate > 0.f ? sample_rate : 48000.f;
         patcher_.prepareToProcess(sample_rate, block_size, true);
 
         // ------------------------------------------------------
@@ -221,13 +222,37 @@ class VocoderModule final : public Module
     void Process(const float* const* in, float** out, size_t size) override
     {
         // description.json: 2 entradas, 2 saídas.
-        // numInputs = 1: o patch só tem in1. O `process` gerado
-        // protege com `numInputs >= 1 && inputs[0]`, então passar 2
-        // era inofensivo — mas passar o número certo é o que mantém
-        // o wrapper e o description.json contando a mesma história.
+        // ------------------------------------------------------
+        // DIRIGIR O MOTOR, não só o patcher.
+        //
+        // MinimalEngine NÃO avança o tempo sozinho: quem chama tem
+        // que rodar processEventsUntil() e advanceTime() a cada
+        // bloco. Antes daqui o wrapper chamava patcher_.process()
+        // direto e pulava o motor — então `_currentTime` ficava em
+        // ZERO pra sempre e NENHUM evento agendado jamais executava.
+        //
+        // Isso não silencia o sinal puro: FFT, cycle~ e delay são
+        // domínio de sinal e rodam de qualquer jeito. Silencia o que
+        // depende de EVENTO — clock, metro, rampa de parâmetro,
+        // inicialização adiada. Num patch cuja portadora interna é
+        // montada por evento, o resultado é oscilador parado em 0 Hz
+        // e cross-synthesis contra DC: saída nula, sem erro nenhum.
+        //
+        // É a explicação de "roda perfeito no Max e mudo na placa":
+        // no Max o motor é do Max e sempre andou.
+        //
+        // Ordem: eventos vencidos primeiro, áudio depois, tempo por
+        // último. Evento agendado DURANTE este bloco dispara no
+        // começo do próximo — um bloco de latência, que é o preço
+        // honesto de não fatiar o bloco por amostra.
+        // ------------------------------------------------------
+        engine_.processEventsUntil(engine_.getCurrentTime());
+
         const RNBO::SampleValue* ins[1]  = {in[0]};
         RNBO::SampleValue*       outs[2] = {out[0], out[1]};
         patcher_.process(ins, 1, outs, 2, static_cast<RNBO::Index>(size));
+
+        engine_.advanceTime(1000.0 * (double)size / (double)sr_);
     }
 
     size_t WindowSamples() const { return window_samples_; }
@@ -296,6 +321,7 @@ class VocoderModule final : public Module
     int                   n_params_       = 0;
     bool                  window_ok_      = false;
     size_t                window_samples_ = 0;
+    float                 sr_             = 48000.f;
     float*                window_buf_     = nullptr;
     size_t                window_bytes_   = 0;
     // Soma das amostras da janela. Serve de prova de vida: sqrt(hann)
