@@ -8,6 +8,27 @@ aqui*. Leia os dois antes de tocar em código.
 
 ---
 
+## Rotina de operação: os dois destinos, sempre juntos
+
+**Toda nova versão de `STATUS.md` ou `battle_scars.md` vai para os DOIS
+destinos na mesma ação:**
+
+| Destino | Caminho | Forma |
+|---|---|---|
+| Repo | `docs/` | cru, sem frontmatter |
+| Vault | `~/Documents/Obsidian Vault/Cotucatronics/` | com frontmatter YAML + tags |
+
+Os dois servem leitores diferentes e nenhum substitui o outro. O **repo**
+é o que sobrevive ao clone limpo — documento citado que não existe no
+clone é a mesma classe do `module_rnbo_alloc.h` que faltou por semanas.
+O **vault** é onde se lê, linka e pensa entre sessões, com tags e
+backlinks que o Markdown cru não tem.
+
+Nunca deixar um destino pra depois: o par desalinha em silêncio, e o
+desalinho só aparece quando alguém precisa da versão certa.
+
+---
+
 ## Como retomar
 
 ```bash
