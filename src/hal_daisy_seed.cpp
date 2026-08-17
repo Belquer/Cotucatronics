@@ -467,7 +467,41 @@ struct Blackbox
     uint32_t magic;
     float    slot[kBbSlots];
 };
-__attribute__((section(".backup_sram"))) Blackbox g_bb;
+// ENDERECO FIXO, no FIM da regiao — e o motivo custou DOIS voos:
+//
+// A primeira versao usava __attribute__((section(".backup_sram"))),
+// e o linker colocou g_bb na BASE (0x38800000), empurrando o
+// daisy::boot_info pra +0x24. So que o BOOTLOADER e um binario
+// SEPARADO que linka o BootInfo DELE na base — e o escreve A CADA
+// BOOT, pra decidir se fica em DFU ou pula pro app. Cada reset
+// esmagava exatamente os bytes da nossa palavra magica. A caixa-
+// preta lia "vazia" depois de um voo inteiro gravado — nao porque
+// nao gravou, mas porque o bootloader passou por cima.
+//
+// (De quebra, o boot_info deslocado quebrava o ResetToBootloader()
+// da libDaisy: app e bootloader olhando enderecos diferentes.)
+//
+// A regiao tem 4 KB. O bootloader usa a base; nos usamos os
+// ultimos 256 bytes, por ponteiro fixo — sem linker no meio, sem
+// briga possivel. 0xF00 e multiplo de 32 (linha de cache).
+constexpr uintptr_t kBbAddr = 0x38800F00u;
+static Blackbox&    g_bb    = *reinterpret_cast<Blackbox*>(kBbAddr);
+
+// A ARMADILHA QUE APAGOU O PRIMEIRO VOO: o M7 tem D-cache, e a
+// libDaisy o liga. Escrever em g_bb escrevia NO CACHE — a SRAM
+// fisica nunca via o dado, e o reset (que apaga o cache) levava a
+// medicao junto. O `bb` respondia "vazia" depois de um voo inteiro
+// gravado. Nao ha erro, nao ha aviso: cache write-back fazendo o
+// trabalho dele.
+//
+// CleanDCache empurra as linhas sujas pra memoria fisica. Custa
+// dois flushes de linha (48 bytes) por bloco — barato o bastante
+// pro callback de audio.
+inline void BbFlush()
+{
+    SCB_CleanDCache_by_Addr(reinterpret_cast<uint32_t*>(&g_bb),
+                            (int32_t)sizeof(g_bb));
+}
 } // namespace
 
 void BlackboxArm()
@@ -477,12 +511,14 @@ void BlackboxArm()
         g_bb.magic = kBbMagic;
         for(int i = 0; i < kBbSlots; i++) g_bb.slot[i] = 0.f;
     }
+    BbFlush();
 }
 
 void BlackboxWrite(int slot, float value)
 {
     if(slot < 0 || slot >= kBbSlots) return;
     g_bb.slot[slot] = value;
+    BbFlush(); // sem isto a escrita morre no cache — ver nota acima
 }
 
 float BlackboxRead(int slot)
