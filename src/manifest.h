@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.32.0
+// manifest.h (instrumento "bancada") v0.38.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -103,6 +103,30 @@ struct Manifest
     int p_tone_mix;   // mistura tom de teste vs entrada
     int p_spare;      // slot vazio de exemplo
     int p_src_mix;    // SRC MIX: 0 = IN_L (piezo), 1 = IN_R (linha)
+
+    // ---- GANHO DE ENTRADA — pós-fonte, PRÉ-GATE ----
+    // O lugar que este manifest reservou pra ele desde o primeiro dia,
+    // no bloco do bench_boost: "o ganho de compensação do piezo NÃO
+    // mora no level: mora pós-entrada / pré-gate".
+    //
+    // POR QUE PRÉ-GATE, e não depois: o gate precisa decidir sobre o
+    // sinal JÁ no nível certo. Amplificar depois dele significaria
+    // amplificar junto o que ele deixou passar, e o limiar do gate
+    // passaria a significar coisas diferentes conforme o ganho.
+    //
+    // POR QUE NÃO É O MESMO QUE SUBIR O LEVEL: o level empurra a
+    // SAÍDA contra o governor e o limiter — mais volume ali é mais
+    // compressão, que é o artefato que se quer evitar. O ganho de
+    // entrada levanta o sinal ANTES da cadeia inteira, então delay,
+    // vocoder e reverb recebem material mais quente e a dinâmica
+    // continua trabalhando na mesma proporção.
+    //
+    // O QUE ELE NÃO RESOLVE, e é honesto dizer: ele levanta o CHÃO DE
+    // RUÍDO do piezo junto com o sinal. A relação sinal/ruído não
+    // melhora — o que melhora é o quanto da faixa útil se usa. Se o
+    // ruído começar a incomodar, o conserto é o buffer de alta
+    // impedância (receita no BOARDS.md), não mais ganho aqui.
+    int p_in_gain;
     int p_dly_time;   // → módulo RNBO "dly_time"
     int p_dly_mix;    // → módulo RNBO "dly_mix"
 
@@ -350,11 +374,52 @@ struct Manifest
     void Init(ParamTable& t)
     {
         // nome, default (0-1), min real, max real
-        p_level     = t.Add("level",     0.4f, 0.f,    1.f);
+        // ESTADO INSTRUMENTO restaurado 2026-08-17. Estava em 0.4 desde
+        // o A/B com o Max e ficou — o dB ouviu o instrumento real e
+        // disse "muuuuito baixo". Era resíduo de bancada versionado por
+        // descuido, exatamente o que a regra da casa proíbe.
+        //
+        // FUNDO DE ESCALA (1.0), por decisão do dB: "pode ir pra 1 se
+        // precisar diminuo na placa de som". Faz sentido pra ESTA
+        // escultura — a saída é jack de linha, e quem tem o atenuador
+        // na mão é quem mixa.
+        //
+        // >>> MAS ISSO NÃO É REGRA GERAL, e o dia em que o EXCITER
+        // >>> entrar no caminho a conta muda: lá o atenuador não existe,
+        // >>> o TPA3116 recebe o que a placa mandar, e level 1.0 com
+        // >>> governor em 0.85 deixa o limiter como única rede. Quando
+        // >>> a escultura tocar pelo exciter, revisar este número junto
+        // >>> com o gov_ceiling — os dois formam o par que decide onde
+        // >>> o laço para de crescer.
+        //
+        // O contrato [0,1] segue intacto: 1.0 é o topo do curso do knob,
+        // não uma exceção. Quem precisar de mais que isso está pedindo
+        // ganho de ENTRADA, que mora pós-entrada/pré-gate — nunca aqui.
+        p_level     = t.Add("level",     1.0f, 0.f,    1.f);
         p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
         p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
         p_spare     = t.Add("spare",     0.0f, 0.f,    1.f);
         p_src_mix   = t.Add("src_mix",   0.0f, 0.f,    1.f);
+
+        // Faixa [1, 8], curva 2 — resolução embaixo, onde o ajuste fino
+        // acontece. Em 8.0, o TOPO da faixa, por pedido do dB depois de
+        // 4x ter melhorado muito.
+        //
+        // ESTAR NO TETO É INFORMAÇÃO, não conforto: significa que o
+        // instrumento pede mais do que este ganho oferece, e a próxima
+        // pergunta deixa de ser "quanto" e passa a ser ONDE. Se 8x
+        // ainda ficar curto, subir o teto daqui é o caminho errado —
+        // o certo é o BUFFER DE ALTA IMPEDÂNCIA (receita no BOARDS.md),
+        // que levanta o sinal ANTES do ADC e melhora a relação
+        // sinal/ruído em vez de só multiplicar os dois.
+        //
+        // Lembrete do que este ganho não faz: ele levanta o chão de
+        // ruído do piezo junto. Em 8x o chão está 18 dB acima de onde
+        // estava em 1x. Se o ruído aparecer, é ele falando — não é
+        // defeito novo.
+        //
+        // norm para 8.0 = topo da faixa = 1.0
+        p_in_gain   = t.Add("in_gain",   1.0f, 1.f, 8.f, 2.0f);
         // os params do módulo já são 0–1 no export, então min/max reais
         // coincidem com o normalizado e a conversão é identidade.
         // curve 2.5 no dly_time: ERGONOMIA, não DSP. O parâmetro do
@@ -373,7 +438,9 @@ struct Manifest
         // seriam a única parte usável. O default REAL é 0.02
         // (~-34 dBFS), e como Real() = pow(norm,2), o norm que
         // produz 0.02 é sqrt(0.02) = 0.1414.
-        p_gate_thresh  = t.Add("gate_thresh",  0.0f, 0.f,  1.f, 2.0f);
+        // Gate de volta: o chão de ruído do piezo vira cauda no delay se
+        // ninguém o cortar. 0.02 é o valor que estava antes do A/B.
+        p_gate_thresh  = t.Add("gate_thresh",  0.02f, 0.f,  1.f, 2.0f);
         // release em ms: 50–2000, default 300
         p_gate_release = t.Add("gate_release", 0.1282f, 50.f, 2000.f);
 
@@ -381,7 +448,10 @@ struct Manifest
         // é a "borda de feedback", o ponto onde a escultura para de
         // crescer. Linear de propósito — a borda é procurada pelo
         // ouvido, e curva atrapalharia o gesto fino.
-        p_gov_ceiling = t.Add("gov_ceiling", 1.0f,    0.f,  1.f);
+        // Governor em 0.85, não nos 0.5 de antes: com o level em 0.85 um
+        // teto de 0.5 comprimiria o instrumento o tempo todo. Ele volta
+        // como PROTEÇÃO (segura o crescimento do laço), não como cor.
+        p_gov_ceiling = t.Add("gov_ceiling", 0.85f,    0.f,  1.f);
         // release em ms: 100–3000, default 800
         p_gov_release  = t.Add("gov_release",  0.2414f, 100.f, 3000.f);
 
@@ -426,7 +496,9 @@ struct Manifest
         // procura. 0 Hz desliga.
         p_fx2_hp        = t.Add("fx2_hp",        0.5477f, 0.f, 400.f, 2.0f);
 
-        p_rev_mix       = t.Add("rev_mix",       0.15f, 0.f, 1.f);
+        // 0.35 — o valor que o dB tocou e aprovou ("reverb está ótimo").
+        // 0.15 era o chute inicial e nunca foi ouvido.
+        p_rev_mix       = t.Add("rev_mix",       0.35f, 0.f, 1.f);
         p_rev_size      = t.Add("rev_size",      0.50f, 0.f, 1.f);
         p_rev_damp      = t.Add("rev_damp",      0.50f, 0.f, 1.f);
 
@@ -435,7 +507,7 @@ struct Manifest
         // (`tone on`/`tone off`) e pelo default — o tom de teste é
         // bancada, não performance.
 
-        // >>> EXCECAO TEMPORARIA — BANCADA DE ESCUTA 2026-08-16 <<<
+        // >>> HISTORICO (a excecao temporaria de 16/08 virou regra) <<<
         //
         // O Fx2 nasce LIGADO aqui, contra a regra do bloco de
         // declaracao. Nao e descuido: a serial esta caindo a cada 2-3
@@ -459,7 +531,28 @@ struct Manifest
         // voc_mix 1, fx2_gain 16x), entao voar custa UM comando:
         //   set fx2_on 1
         // Um comando cabe no orcamento da serial; seis nao cabiam.
-        p_fx2_on     = t.Add("fx2_on",     0.0f, 0.f,   1.f);
+        // >>> NASCE LIGADO a partir de 2026-08-17. <<<
+        //
+        // A regra do bypass existia porque modulo pesado que estoura o
+        // prazo mata o loop e a placa fica surda. Esse risco foi MEDIDO
+        // e afastado: vocoder em 37% do prazo, watchdog intacto, e a
+        // morte do loop que se culpava tinha outra causa (DelayMs, ver
+        // battle_scars cap. 7) — ja consertada.
+        //
+        // O que fica no lugar da regra e melhor que ela: o WATCHDOG,
+        // que forca bypass se o modulo estourar de verdade, e a janela
+        // de graca, que perdoa o custo de estreia. Protecao por
+        // medicao, nao por abstinencia.
+        //
+        // E o atrito era real: com fx2_on em 0, cada RESET devolvia a
+        // escultura ao delay seco, e o dB encontrou "so o delay" seis
+        // vezes num dia so. Instrumento que precisa de comando pra
+        // tocar nao esta pronto.
+        //
+        // >>> PRA VOLTAR AO BYPASS: 0.0f aqui. Se um modulo novo e nao
+        // >>> medido entrar no slot Fx2, VOLTE — a regra continua certa
+        // >>> pra quem ainda nao passou pelo IFA10000.
+        p_fx2_on     = t.Add("fx2_on",     1.0f, 0.f,   1.f);
 
         // FREEZE. Defaults iguais aos do export, pra o boot nascer
         // com o patch no estado que o autor definiu.
@@ -529,8 +622,24 @@ struct Manifest
 
         // BUZIOS. thresh em norm==real (faixa 0..1). Cooldown em
         // ms, default 100: norm = (100-10)/990 = 0.091.
-        p_buzios_on       = t.Add("buzios_on",       0.0f,   0.f,  1.f);
-        p_buzios_thresh   = t.Add("buzios_thresh",   0.15f,  0.f,  1.f);
+        // NASCE LIGADO. Búzios não podem travar nada: sorteiam dentro de
+        // cercas, pela mesma via dos knobs, e a rampa é função do
+        // relógio. O risco é zero e o atrito de não estar ligado é
+        // real — o dB encontrou "só o delay" seis vezes num dia.
+        p_buzios_on       = t.Add("buzios_on",       1.0f,   0.f,  1.f);
+        // 0.04, bem mais sensível que os 0.15 iniciais — pedido do dB
+        // depois de tocar o instrumento real.
+        //
+        // O PISO NÃO É ZERO, e é o gate que o define: o detector lê o
+        // sinal PÓS-GATE, e com `gate_thresh` em 0.02 tudo abaixo disso
+        // já foi silenciado. Um limiar em 0.02 dispararia no primeiro
+        // resíduo que o gate deixasse passar — búzios jogando sozinhos,
+        // sem ninguém bater. 0.04 dá o dobro do piso de margem.
+        //
+        // Se precisar de MAIS sensibilidade que isso, o caminho não é
+        // baixar mais este número: é baixar o `gate_thresh` junto, e aí
+        // a conversa passa a ser sobre o chão de ruído do piezo.
+        p_buzios_thresh   = t.Add("buzios_thresh",   0.04f,  0.f,  1.f);
         p_buzios_cooldown = t.Add("buzios_cooldown", 0.091f, 10.f, 1000.f);
 
         // ---- LIGACOES ----

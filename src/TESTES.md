@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.17.0** · última execução em placa: 2026-08-16 · firmware
+**Documento v0.18.0** · última execução em placa: 2026-08-16 · firmware
 **v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -922,6 +922,58 @@ mais"). Fica **no caminho do Fx2**, não no master — sem vocoder não
 estoura (medido), então filtrar o master castigaria o delay de graça. E
 120 Hz fica **abaixo** da região de 174–220 Hz que o histograma mostrou
 saudável: cortar mais alto levaria o corpo do som junto.
+
+## T15 — ESTADO INSTRUMENTO: a placa sobe tocando · ✅ 2026-08-17
+
+O instrumento real, aprovado de ouvido pelo dB. **Nenhum comando serial
+necessário** — RESET e toca.
+
+| Parâmetro | Valor | Como se chegou nele |
+|---|---|---|
+| `level` | **1.00** | fundo de escala; o atenuador está na placa de som |
+| `in_gain` | **8×** | topo da faixa, subiu 1→2→4→8 de ouvido |
+| `rev_mix` | **0.35** | valor tocado e aprovado (0.15 era chute não ouvido) |
+| `buzios_thresh` | **0.04** | 0.15 era duro demais pro gesto real |
+| `gate_thresh` | 0.02 | restaurado |
+| `gov_ceiling` | 0.85 | proteção, não cor |
+| `fx2_on` / `buzios_on` | **1 / 1** | nascem ligados |
+
+### `in_gain` — pós-fonte, PRÉ-GATE
+
+A promessa mais antiga deste manifest, cumprida no lugar que ela mesma
+reservou no primeiro dia: *"o ganho de compensação do piezo NÃO mora no
+level: mora pós-entrada / pré-gate"*.
+
+**Por que não é o mesmo que subir o `level`:** o level empurra a SAÍDA
+contra o governor e o limiter — mais volume ali é mais compressão, que é
+o artefato que se quer evitar. O ganho de entrada levanta o sinal antes
+da cadeia inteira, e a dinâmica segue trabalhando na mesma proporção.
+
+**Pré-gate** porque o gate precisa decidir sobre o sinal já no nível
+certo; depois dele, o limiar significaria coisas diferentes conforme o
+ganho.
+
+> ⚠️ **Está no TETO, e isso é informação.** Em 8× o chão de ruído do
+> piezo está 18 dB acima de onde estava. Se faltar mais, **subir o teto é
+> o caminho errado** — o certo é o buffer de alta impedância
+> ([BOARDS.md](BOARDS.md)), que levanta o sinal antes do ADC e melhora a
+> relação sinal/ruído em vez de multiplicar os dois. A conclusão de
+> 16/08 ("a Daisy dá conta do piezo") segue válida *para o nível em que
+> ele estava* — e esse nível mudou de significado.
+
+### A regra do bypass, revogada por medição
+
+`fx2_on` nascia em 0 porque módulo pesado que estoura o prazo mata o loop.
+O risco foi **medido e afastado**: vocoder em 37% do prazo, watchdog
+intacto, e a morte do loop que se culpava tinha outra causa (`DelayMs`,
+cap. 7 do battle scars) — já consertada.
+
+No lugar da regra fica algo melhor: **o watchdog**, que força bypass se o
+módulo estourar de verdade. *Proteção por medição, não por abstinência.*
+
+**Condição de retorno, escrita no manifest:** módulo novo e não medido no
+slot Fx2 → voltar ao bypass. A regra continua certa pra quem ainda não
+passou pelo [IFÁ10000](../docs/IFA10000.md).
 
 ---
 

@@ -67,27 +67,21 @@ piezo/linha → src_mix → gate → DELAY → VOCODER → fx2_gain → level
 
 ---
 
-## ⚠️ Estado do repo é BANCADA, não palco
+## ✅ Estado do repo é INSTRUMENTO
 
-A dinâmica está **neutralizada** — foi o A/B honesto com o Max, que não
-tem nada disso no caminho:
+Resolvido em 2026-08-17. A dinâmica voltou e a placa **sobe tocando**:
 
-| Parâmetro | Bancada | Instrumento (a decidir) |
-|---|---|---|
-| `gate_thresh` | 0 | ? |
-| `shift_hz` | 0 | 4 Hz? |
-| `gov_ceiling` | 1.0 (fora) | 0.5–0.8? |
-| `level` | 0.4 | 0.7? |
+| | |
+|---|---|
+| `level` 1.00 · `in_gain` **8×** | `gate_thresh` 0.02 · `gov_ceiling` 0.85 |
+| `rev_mix` 0.35 · `fx2_hp` 120 Hz | `fx2_on` 1 · `buzios_on` 1 · `buzios_thresh` 0.04 |
 
-**Decisão pendente do dB:** quanto de proteção volta, e a que custo
-tímbrico. Cada bloco tem preço conhecido — governor comprime o vocoder
-(que sai 11× mais quente que a entrada), shifter borra harmônicos, gate
-corta as caudas do piezo.
+`shift_hz` segue em 0: é anti-feedback do laço piezo→corpo→piezo, e liga
+quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 
-Isso **viola a regra da casa** ("repo versiona o instrumento; bancada é
-estado transitório") de propósito e temporariamente: duas sessões de
-diagnóstico moram neste estado, e versioná-lo custou menos que perdê-lo.
-Assim que a decisão vier, o default volta a ser o instrumento.
+> **Quando o exciter entrar, revisar `level` e `gov_ceiling` juntos.** Lá
+> não há atenuador: o TPA3116 recebe o que a placa mandar, e os dois
+> formam o par que decide onde o laço para de crescer.
 
 ---
 

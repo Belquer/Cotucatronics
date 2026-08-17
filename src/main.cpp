@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.33.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.34.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.33.0"
+#define COTUCA_OS_VERSION "0.34.0"
 
 #include "hal.h"
 #include "params.h"
@@ -397,6 +397,16 @@ static void AudioCb(const float* const* in, float** out, size_t size)
                                   : 0.f;
         const float tone = OscProcess();
         src_buf[i]       = dry * (1.f - mix) + tone * mix;
+    }
+
+    // 1.5) GANHO DE ENTRADA — pós-fonte, PRÉ-GATE. Ver a nota no
+    //      manifest: é aqui que o piezo ganha corpo sem empurrar a
+    //      saída contra o governor e o limiter.
+    {
+        const float ig = params.Real(manifest.p_in_gain);
+        if(ig != 1.f)
+            for(size_t i = 0; i < size; i++)
+                src_buf[i] *= ig;
     }
 
     // 2) GATE — na entrada, pós-crossfade e pós-tom. Silencia o chão
