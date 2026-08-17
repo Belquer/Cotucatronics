@@ -1801,7 +1801,7 @@ void dspexpr_16_perform(const Sample * in1, number in2, SampleValue * out1, Inde
     Index i;
 
     for (i = 0; i < (Index)n; i++) {
-        out1[(Index)i] = in1[(Index)i] * 0.02;//#map:_###_obj_###_:1
+        out1[(Index)i] = in1[(Index)i] * 0.1;//#map:_###_obj_###_:1
     }
 }
 
@@ -3199,7 +3199,7 @@ void assign_defaults()
     dspexpr_15_in1 = 0;
     dspexpr_15_in2 = 0;
     dspexpr_16_in1 = 0;
-    dspexpr_16_in2 = 0.02;
+    dspexpr_16_in2 = 0.1;
     cycle_tilde_01_frequency = 0;
     cycle_tilde_01_phase_offset = 0;
     dspexpr_17_in1 = 0;

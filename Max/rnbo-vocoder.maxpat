@@ -547,11 +547,11 @@
                                     "numinlets": 2,
                                     "numoutlets": 1,
                                     "outlettype": [ "signal" ],
-                                    "patching_rect": [ 1093.3333659172058, 345.33334362506866, 47.0, 23.0 ],
+                                    "patching_rect": [ 1093.3333659172058, 345.33334362506866, 40.0, 23.0 ],
                                     "rnbo_classname": "*~",
-                                    "rnbo_serial": 49,
+                                    "rnbo_serial": 52,
                                     "rnbo_uniqueid": "*~_obj-44",
-                                    "text": "*~ 0.02"
+                                    "text": "*~ 0.1"
                                 }
                             },
                             {
@@ -1506,11 +1506,12 @@
                             {
                                 "box": {
                                     "id": "obj-22",
+                                    "linecount": 3,
                                     "maxclass": "newobj",
                                     "numinlets": 2,
                                     "numoutlets": 2,
                                     "outlettype": [ "", "" ],
-                                    "patching_rect": [ 159.66667413711548, 570.6666836738586, 225.0, 23.0 ],
+                                    "patching_rect": [ 261.0, 553.0, 108.3333431482315, 52.0 ],
                                     "rnbo_classname": "param",
                                     "rnbo_extra_attributes": {
                                         "displayname": "",
@@ -4220,6 +4221,7 @@
                             {
                                 "patchline": {
                                     "destination": [ "obj-27", 0 ],
+                                    "midpoints": [ 35.0, 93.0, 12.0, 93.0, 12.0, 690.0, 338.8333431482315, 690.0 ],
                                     "order": 0,
                                     "source": [ "obj-10", 0 ]
                                 }
@@ -4394,6 +4396,7 @@
                             {
                                 "patchline": {
                                     "destination": [ "obj-28", 0 ],
+                                    "midpoints": [ 35.0, 650.15625, 260.1666741371155, 650.15625 ],
                                     "source": [ "obj-4", 0 ]
                                 }
                             },
@@ -4466,6 +4469,7 @@
                             {
                                 "patchline": {
                                     "destination": [ "obj-28", 0 ],
+                                    "midpoints": [ 516.5, 648.0, 260.1666741371155, 648.0 ],
                                     "source": [ "obj-56", 0 ]
                                 }
                             },
@@ -4479,6 +4483,7 @@
                             {
                                 "patchline": {
                                     "destination": [ "obj-18", 0 ],
+                                    "midpoints": [ 944.5, 315.0, 516.5, 315.0 ],
                                     "order": 1,
                                     "source": [ "obj-57", 2 ]
                                 }
@@ -4591,6 +4596,7 @@
                             {
                                 "patchline": {
                                     "destination": [ "obj-43", 0 ],
+                                    "midpoints": [ 1102.8333659172058, 528.0, 774.0, 528.0, 774.0, 390.0, 36.0, 390.0, 36.0, 345.0, 48.5, 345.0 ],
                                     "order": 1,
                                     "source": [ "obj-68", 0 ]
                                 }
@@ -4598,6 +4604,7 @@
                             {
                                 "patchline": {
                                     "destination": [ "obj-52", 0 ],
+                                    "midpoints": [ 1102.8333659172058, 577.3046875, 942.0, 577.3046875, 942.0, 342.0, 687.5, 342.0 ],
                                     "order": 0,
                                     "source": [ "obj-68", 0 ]
                                 }
