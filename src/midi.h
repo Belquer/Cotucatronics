@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.1.0
+// Cotucatronics OS — midi v0.2.1
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -19,7 +19,7 @@
 namespace cotuca
 {
 
-#define COTUCA_MIDI_VERSION "0.1.0"
+#define COTUCA_MIDI_VERSION "0.2.1"
 
 // canal 0–15 (o do fio) ou omni
 constexpr int kMidiOmni    = -1;
@@ -30,6 +30,32 @@ constexpr int kMidiHistory = 8;  // últimos CCs guardados pro `midi`
 // MIDI é 127, e dividir por 128 nunca alcançaria 1.0 — o knob remoto
 // não chegaria ao fim do curso.
 inline float MidiNorm(uint8_t v) { return (v > 127 ? 127 : v) * (1.f / 127.f); }
+
+// ---- SCOPE: o que o parser PENSOU de cada byte ----
+//
+// O objetivo nº1 do scope é ver o parser DESSINCRONIZAR, e pra isso
+// não basta mostrar o que chegou: tem que mostrar o que ele concluiu.
+// Byte igual pode significar coisas opostas conforme o estado — 0x45
+// é "data1 de um CC" ou "órfão" dependendo do que veio antes.
+enum class MidiVerdict : uint8_t
+{
+    RealTime,     // >= 0xF8, transparente, não toca no estado
+    StatusCanal,  // vira running status
+    StatusSystem, // system common: CANCELA o running status
+    SysexInicio,
+    SysexCorpo,   // engolido
+    SysexFim,
+    DadoOrfao,    // data sem status — fluxo pego no meio
+    DadoParcial,  // guardado, faltam mais
+    MsgCompleta,  // despachada
+    Truncada,     // status chegou com data pendente: RESSINCRONIZAÇÃO
+};
+
+// Chamado por Byte() pra CADA byte, se registrado. Roda no MESMO
+// contexto do PollMidi (loop principal), nunca na ISR — o parser é
+// alimentado pelo despacho, não pela interrupção.
+using MidiTraceFn = void (*)(uint8_t byte, MidiVerdict v, uint8_t status,
+                             int n_data);
 
 // Uma linha da tabela do manifest: "CC tal move o parâmetro tal".
 struct MidiCcBind
@@ -95,8 +121,15 @@ class MidiParser
         nd_     = 0;
         in_sysex_ = false;
         bytes_ = cc_ = other_ = orphan_ = realtime_ = filtered_ = 0;
+        resync_ = applied_ = 0;
         n_hist_ = hist_head_ = 0;
     }
+
+    void SetTrace(MidiTraceFn fn) { trace_ = fn; }
+
+    uint32_t Resync() const { return resync_; }
+    uint32_t Applied() const { return applied_; }
+    void     NoteApplied() { applied_++; }
 
     void Byte(uint8_t b)
     {
@@ -106,15 +139,29 @@ class MidiParser
         if(b >= 0xF8)
         {
             realtime_++;
+            Trace(b, MidiVerdict::RealTime);
             return;
         }
 
         // 2) STATUS BYTE
         if(b & 0x80)
         {
+            // RESSINCRONIZAÇÃO: status chegando com data pendente
+            // significa que a mensagem anterior foi CORTADA no meio —
+            // byte perdido no fio, fila estourada, ou fonte confusa.
+            // O parser se recupera sozinho (é pra isso que status
+            // reinicia nd_), mas o evento tem que ser CONTADO: é a
+            // assinatura de fluxo com buraco, e sem contador ele
+            // desaparece — o som fica errado e ninguém sabe por quê.
+            if(nd_ > 0)
+            {
+                resync_++;
+                Trace(b, MidiVerdict::Truncada);
+            }
             if(b == 0xF7) // fim de sysex
             {
                 in_sysex_ = false;
+                Trace(b, MidiVerdict::SysexFim);
                 return;
             }
             // Qualquer status não-real-time encerra um sysex em curso,
@@ -126,34 +173,56 @@ class MidiParser
             {
                 in_sysex_ = true;
                 status_   = 0; // sysex cancela running status
+                nd_       = 0;
+                Trace(b, MidiVerdict::SysexInicio);
                 return;
             }
             if(b >= 0xF1) // system common: também cancela
             {
                 status_ = 0;
+                nd_     = 0;
+                Trace(b, MidiVerdict::StatusSystem);
                 return;
             }
             // mensagem de canal: vira o running status
             status_ = b;
             nd_     = 0;
+            Trace(b, MidiVerdict::StatusCanal);
             return;
         }
 
         // 3) DATA BYTE
         if(in_sysex_)
+        {
+            Trace(b, MidiVerdict::SysexCorpo);
             return; // corpo de sysex: engole calado
+        }
         if(status_ == 0)
         {
             orphan_++; // dado sem status: fluxo pego no meio
+            Trace(b, MidiVerdict::DadoOrfao);
             return;
         }
 
         data_[nd_++] = b;
         if(nd_ < ExpectedData(status_))
+        {
+            Trace(b, MidiVerdict::DadoParcial);
             return;
+        }
 
         nd_ = 0; // running status FICA: a próxima mensagem pode omitir
         Dispatch();
+        // TRACE DEPOIS DO DISPATCH, e a ordem custou uma leitura errada
+        // no primeiro teste de campo: chamado antes, o handler lia
+        // History(0) e pegava a mensagem ANTERIOR — coluna hex mostrando
+        // o byte certo e a decodificacao mostrando a mensagem passada,
+        // defasadas em uma. O scope dizia "byte 00 -> val127".
+        //
+        // E a familia (B) do catalogo — quem CONFIGURA vem antes de quem
+        // CONSOME — aplicada a instrumentacao: o Dispatch e quem publica
+        // o evento, entao quem quer ler o evento vem depois dele.
+        Trace(b, MidiVerdict::MsgCompleta);
     }
 
     // ---- estado, pro comando `midi` ----
@@ -215,6 +284,14 @@ class MidiParser
     int        channel_ = kMidiOmni;
     CcCallback cb_      = nullptr;
 
+    void Trace(uint8_t b, MidiVerdict v)
+    {
+        if(trace_) trace_(b, v, status_, nd_);
+    }
+
+    MidiTraceFn trace_    = nullptr;
+    uint32_t    resync_   = 0;
+    uint32_t    applied_  = 0;
     uint8_t status_   = 0; // running status, 0 = nenhum
     uint8_t data_[2]  = {};
     int     nd_       = 0;

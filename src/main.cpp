@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.34.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.35.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.34.0"
+#define COTUCA_OS_VERSION "0.35.0"
 
 #include "hal.h"
 #include "params.h"
@@ -79,10 +79,73 @@ static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
     // parser já o guardou no histórico. No dia da solda, ver um CC
     // chegando e não fazer nada é informação MUITO diferente de não
     // ver nada.
-    manifest.ApplyMidiCc(params, cc, value);
+    if(manifest.ApplyMidiCc(params, cc, value) >= 0)
+        midi.NoteApplied(); // CC que achou dono; fora do mapa nao conta
 }
 
 static void OnMidiByte(uint8_t b) { midi.Byte(b); }
+
+// ============================================================
+// MIDI SCOPE — o analisador que a gente nao tem no bolso
+//
+// Duas colunas: hex CRU e o que o PARSER CONCLUIU. Byte igual
+// significa coisas opostas conforme o estado (0x45 e "data1 de um CC"
+// ou "orfao" dependendo do que veio antes), entao mostrar so o hex
+// seria mostrar metade.
+//
+// ORCAMENTO: escreve pelo hal::Log, que descarta em vez de esperar.
+// Em rajada o scope tem BURACOS, e isso e projeto, nao defeito —
+// ferramenta de diagnostico que segura o loop e o proximo DelayMs
+// (battle_scars cap. 7). Os CONTADORES nunca mentem; o stream sim.
+// ============================================================
+static int      mscope_mode = 0; // 0 = off, 1 = stream, 2 = stats
+static uint32_t msc_msgs = 0, msc_last_s = 0, msc_win_msgs = 0;
+
+static const char* VerdictoStr(cotuca::MidiVerdict v)
+{
+    using V = cotuca::MidiVerdict;
+    switch(v)
+    {
+        case V::RealTime:     return "realtime";
+        case V::StatusCanal:  return "status canal";
+        case V::StatusSystem: return "status system (cancela running)";
+        case V::SysexInicio:  return "sysex inicio";
+        case V::SysexCorpo:   return "sysex corpo";
+        case V::SysexFim:     return "sysex fim";
+        case V::DadoOrfao:    return "?? DADO SEM STATUS";
+        case V::DadoParcial:  return "data parcial";
+        case V::MsgCompleta:  return "MSG COMPLETA";
+        case V::Truncada:     return "!! TRUNCADA (ressync)";
+    }
+    return "?";
+}
+
+static void OnMidiTrace(uint8_t b, cotuca::MidiVerdict v, uint8_t status,
+                        int n_data)
+{
+    using namespace cotuca;
+    using V = cotuca::MidiVerdict;
+    if(v == V::MsgCompleta) { msc_msgs++; msc_win_msgs++; }
+    if(mscope_mode != 1)
+        return;
+    // Decodifica o que der: CC completo vira nome de param e valor real.
+    if(v == V::MsgCompleta && (status & 0xF0) == 0xB0)
+    {
+        const uint8_t cc  = midi.History(0).cc;
+        const uint8_t val = midi.History(0).value;
+        const int     pid = manifest.FindMidiParam(cc);
+        if(pid >= 0)
+            hal::Log("  %02X  CC ch%d cc%d val%d -> %s %.3f", b,
+                     (status & 0x0F) + 1, cc, val, params.Name(pid),
+                     (double)params.Real(pid));
+        else
+            hal::Log("  %02X  CC ch%d cc%d val%d -> (fora do mapa)", b,
+                     (status & 0x0F) + 1, cc, val);
+        return;
+    }
+    hal::Log("  %02X  %s%s", b, VerdictoStr(v),
+             (v == V::DadoParcial && n_data == 1) ? " (data1)" : "");
+}
 
 // ---- módulos DSP, por SLOT ----
 // Preenchidos do REGISTRO em module.h. O main não inclui header de
@@ -1021,6 +1084,12 @@ static void HandleLine(const char* line)
             hal::Log("   %6.1f Hz : pico %.3f %s", (double)hz, (double)pk,
                      pk > 0.95f ? "<<< ESTOURA" : (pk > 0.7f ? "<< quente" : ""));
         }
+        hal::Log("  --- MIDI no voo ---");
+        hal::Log("   bytes %.0f | msgs %.0f | aplicadas %.0f"
+                 " | ressync %.0f | fila perdeu %.0f",
+                 (double)hal::BlackboxRead(33), (double)hal::BlackboxRead(34),
+                 (double)hal::BlackboxRead(35), (double)hal::BlackboxRead(36),
+                 (double)hal::BlackboxRead(37));
         hal::Log("  TOKEN de linha no fim do voo=%.0f  (1 = PRESA)",
                  (double)hal::BlackboxRead(30));
         hal::Log("  ultimo Log chamado comecava com '%c'",
@@ -1156,6 +1225,21 @@ static void HandleLine(const char* line)
         }
         return;
     }
+    if(strncmp(line, "mscope", 6) == 0)
+    {
+        const char* a = line + 6;
+        while(*a == ' ') a++;
+        if(strncmp(a, "on", 2) == 0)       mscope_mode = 1;
+        else if(strncmp(a, "stats", 5) == 0) mscope_mode = 2;
+        else                                 mscope_mode = 0;
+        hal::Log("mscope: %s", mscope_mode == 1 ? "STREAM (hex + veredito)"
+                             : mscope_mode == 2 ? "STATS (1 linha/s)"
+                                                : "off");
+        if(mscope_mode == 1)
+            hal::Log("  em rajada o stream tem BURACOS de proposito;"
+                     " os contadores do `midi` nao mentem");
+        return;
+    }
     if(strncmp(line, "midi", 4) == 0)
     {
         // A primeira coisa a consultar no dia da solda. A pergunta que
@@ -1174,9 +1258,29 @@ static void HandleLine(const char* line)
                  (unsigned long)midi.Other(), (unsigned long)midi.Orphan(),
                  (unsigned long)midi.RealTime(),
                  (unsigned long)midi.Filtered());
-        hal::Log("  parser: running status %02X | %d byte(s) pendente(s)%s",
-                 midi.RunningStatus(), midi.PendingData(),
+        // ESTADO DA MAQUINA por extenso: "aguardando o que?" e a
+        // pergunta que o numero cru nao responde.
+        const int nd = midi.PendingData();
+        hal::Log("  parser: running status %02X | aguardando %s%s",
+                 midi.RunningStatus(),
+                 midi.RunningStatus() == 0 ? "STATUS"
+                 : nd == 0                 ? "data1"
+                                           : "data2",
                  midi.InSysex() ? " | DENTRO DE SYSEX" : "");
+        // Estes tres separam "chegou e nao virou mensagem" de "virou
+        // mensagem e nao virou som" — que sao consertos diferentes.
+        hal::Log("  msgs completas %lu | APLICADAS %lu | ressync %lu",
+                 (unsigned long)midi.CcCount() + midi.Other(),
+                 (unsigned long)midi.Applied(),
+                 (unsigned long)midi.Resync());
+        // Espelho na caixa-preta: com o vocoder ligado a serial morre,
+        // e estes numeros sao a unica autopsia possivel do MIDI sob
+        // carga. Slots 33-37.
+        hal::BlackboxWrite(33, (float)midi.Bytes());
+        hal::BlackboxWrite(34, (float)(midi.CcCount() + midi.Other()));
+        hal::BlackboxWrite(35, (float)midi.Applied());
+        hal::BlackboxWrite(36, (float)midi.Resync());
+        hal::BlackboxWrite(37, (float)hal::MidiDropped());
         for(int i = 0; i < manifest.n_midi; i++)
             hal::Log("  cc %-3d -> %s",
                      manifest.midi_map[i].cc,
@@ -1200,7 +1304,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -1333,6 +1437,7 @@ int main(void)
     // e o mapa CC→param só existe depois dos Add(). Mesma regra de
     // ordem de configuração que vale pros bind[].
     midi.Init(manifest.midi_channel, OnMidiCc);
+    midi.SetTrace(OnMidiTrace);
     hal::SetMidiByteCallback(OnMidiByte); // é isto que liga a UART
     hal::Log("MIDI: canal %s, %d CCs mapeados",
              manifest.midi_channel == kMidiOmni ? "omni"
@@ -1528,6 +1633,48 @@ int main(void)
         // normal, onde mexer em params e logar é seguro.
         FASE(6);
         hal::PollMidi();
+
+        // ESPELHO CONTINUO do MIDI na caixa-preta. Nao adianta so
+        // espelhar quando alguem digita `midi`: com o vocoder ligado a
+        // serial ja morreu e ninguem digita nada. Uma vez por segundo,
+        // custo desprezivel.
+        {
+            static uint32_t mid_s = 0;
+            const uint32_t  ag    = hal::NowMs() / 1000u;
+            if(ag != mid_s)
+            {
+                mid_s = ag;
+                hal::BlackboxWrite(33, (float)midi.Bytes());
+                hal::BlackboxWrite(34, (float)(midi.CcCount() + midi.Other()));
+                hal::BlackboxWrite(35, (float)midi.Applied());
+                hal::BlackboxWrite(36, (float)midi.Resync());
+                hal::BlackboxWrite(37, (float)hal::MidiDropped());
+            }
+        }
+
+        // MSCOPE STATS: uma linha por segundo. Existe pro caso
+        // fader-deslizando, em que o stream seria diluvio — e diluvio
+        // no Log e exatamente o que o orcamento duro joga fora, entao
+        // o stream mentiria por omissao justamente quando mais importa.
+        if(mscope_mode == 2)
+        {
+            const uint32_t agora_s = hal::NowMs() / 1000u;
+            if(agora_s != msc_last_s)
+            {
+                msc_last_s = agora_s;
+                hal::Log("mscope: %lu msg/s | total %lu | orfaos %lu"
+                         " ressync %lu | fila perdeu %lu",
+                         (unsigned long)msc_win_msgs,
+                         (unsigned long)msc_msgs,
+                         (unsigned long)midi.Orphan(),
+                         (unsigned long)midi.Resync(),
+                         (unsigned long)hal::MidiDropped());
+                for(int i = 0; i < 4 && i < midi.HistoryCount(); i++)
+                    hal::Log("   cc%d=%d", midi.History(i).cc,
+                             midi.History(i).value);
+                msc_win_msgs = 0;
+            }
+        }
 
         // watchdog: o callback só trava a flag; o log é aqui, porque
         // hal::Log bloqueia por milissegundos e não pode rodar no

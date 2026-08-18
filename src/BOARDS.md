@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.7.0**
+**Documento v0.9.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -170,6 +170,97 @@ coisa aqui que estraga hardware. Localize na serigrafia.
 **São os pinos default do `MidiUartTransport` da libDaisy.** Um cabo
 montado pra qualquer exemplo de MIDI da Electrosmith serve aqui sem
 alteração — foi por isso que foram escolhidos, e não por preferência.
+
+### ✅ CONFERIDO 2026-08-17, com o WIDI Core na mão
+
+Antes de encostar o ferro, o estado que importa:
+
+- **Pinos:** D13 (TX, PB6) e D14 (RX, PB7) — vêm direto do `daisy_seed.h`
+  da libDaisy, são os default do `MidiUartTransport`, e não colidem com
+  nada: os cinco pots ocupam A0–A4 (= D15–D19) e os botões D26/D27.
+- **Parser:** board-agnostic em `midi.h`, commitado em `b3d994c`. A ISR
+  só enfileira; quem despacha é `hal::PollMidi()` no loop principal —
+  mesma disciplina que o serial aprendeu na marra.
+- **Mapa de CC:** 13 entradas (limite 16). Ver a tabela abaixo.
+
+> **O MIDI deixou de ser conveniência e virou CONTROLE DE VOO.** A serial
+> USB morre segundos depois do vocoder subir (defeito conhecido, ver
+> [TESTES.md](TESTES.md)); o MIDI é imune — UART própria, DMA, nada a ver
+> com o CDC. Todo param que só a serial alcançava está no mapa agora.
+
+### Mapa de CC do instrumento atual
+
+| CC | Parâmetro | | CC | Parâmetro |
+|---|---|---|---|---|
+| 20 | `dly_time` | | 27 | `voc_tone` |
+| 21 | `dly_mix` | | 28 | `voc_mix` |
+| 22 | `level` | | 29 | `rev_mix` |
+| 23 | `src_mix` | | 30 | `in_gain` |
+| 24 | `gov_ceiling` | | 31 | `gate_thresh` |
+| 25 | `fx2_gain` | | 32 | `buzios_on` (0–63 off, 64–127 on) |
+| 26 | `voc_pitch` (grade cromática) | | | |
+
+CCs 20–31 são a faixa "undefined" da spec MIDI — não colidem com nada
+padrão (1 é mod wheel, 7 é volume, 64 é sustain), então controlador
+genérico sai de fábrica sem usá-las.
+
+**`voc_pitch` tem `steps=49`:** o `Set()` quantiza em semitons, e os 128
+passos do CC caem na grade cromática sozinhos. A quantização mora no
+ponto ÚNICO de escrita, então MIDI, serial e knob herdam a mesma grade —
+nada a tratar aqui.
+
+**`buzios_on` vira chave sem tratamento especial:** o param é [0,1], o
+`main` testa `>= 0.5`, e `MidiNorm(63)=0.496` cai abaixo enquanto
+`MidiNorm(64)=0.504` cai acima. O contrato já fazia isso funcionar.
+
+### 🔬 MIDI SCOPE — o analisador é nosso, e roda na própria placa
+
+Ferramenta **oficial e permanente**. Sem apps externos, sem hardware
+extra: um cabo USB e a serial.
+
+```
+mscope on      stream: hex cru + o que o parser CONCLUIU de cada byte
+mscope stats   uma linha por segundo (pro caso fader-deslizando)
+mscope off
+midi           contadores permanentes, sempre ativos
+```
+
+**Por que duas colunas.** O objetivo nº1 é ver o parser **dessincronizar**,
+e pra isso não basta mostrar o que chegou — tem que mostrar o que ele
+concluiu. O mesmo byte significa coisas opostas conforme o estado: `0x45`
+é *data1 de um CC* ou *órfão*, dependendo do que veio antes.
+
+```
+  B0  status canal
+  1D  data parcial (data1)
+  45  CC ch1 cc29 val69 -> rev_mix 0.543
+  45  ?? DADO SEM STATUS
+  B0  !! TRUNCADA (ressync)
+```
+
+**Contadores permanentes** (no `midi`, sempre ativos, espelhados na
+caixa-preta a cada segundo):
+
+| | |
+|---|---|
+| `bytes` | chegaram pela UART |
+| `msgs completas` | viraram mensagem |
+| **`APLICADAS`** | acharam dono no mapa |
+| `ressync` | status chegou com data pendente = mensagem cortada |
+| `órfãos` | data sem status = fluxo pego no meio |
+| `fila perdeu` | descarte na ISR |
+| estado | aguardando STATUS / data1 / data2 |
+
+> **`msgs completas` vs `APLICADAS` é a separação que importa:** "chegou e
+> não virou mensagem" e "virou mensagem e não virou som" são consertos
+> completamente diferentes. Um é fio/parser, o outro é mapa de CC.
+
+**O scope respeita o orçamento duro.** Ele escreve pelo `hal::Log`, que
+descarta em vez de esperar — em rajada o stream tem **buracos, e isso é
+projeto**. Ferramenta de diagnóstico que segura o loop é o próximo
+`DelayMs` (ver cap. 7 do [battle_scars](../docs/battle_scars.md)). **Os
+contadores nunca mentem; o stream sim** — e é por isso que existe o modo
+`stats`, em que o dilúvio vira uma linha por segundo.
 
 ### Por que DMA em modo listen, e não polling nem uma IRQ por byte
 

@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.38.0
+// manifest.h (instrumento "bancada") v0.40.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -354,6 +354,18 @@ struct Manifest
     // e porque assim o banco de teste nativo (test_midi.cpp) exercita
     // ESTA função, não uma cópia dela. Lógica de mapeamento duplicada
     // entre firmware e teste é teste que valida a si mesmo.
+    // Só CONSULTA o mapa, sem aplicar. O scope precisa disso pra
+    // decodificar o CC em nome de parâmetro sem provocar efeito
+    // colateral — instrumento de medição que altera o medido é a
+    // família inteira do catálogo forense.
+    int FindMidiParam(uint8_t cc) const
+    {
+        for(int i = 0; i < n_midi; i++)
+            if(midi_map[i].cc == cc)
+                return midi_map[i].param_id;
+        return -1;
+    }
+
     int ApplyMidiCc(ParamTable& t, uint8_t cc, uint8_t value) const
     {
         for(int i = 0; i < n_midi; i++)
@@ -766,6 +778,36 @@ struct Manifest
         // sobrevive. "MIDI e um knob remoto" deixou de ser slogan e
         // virou a unica mao no ganho.
         midi_map[n_midi++] = {25, p_fx2_gain};
+
+        // ---- WIDI CHEGOU (2026-08-17): o mapa vira CONTROLE DE VOO ----
+        //
+        // Estes sao exatamente os params que hoje so a serial alcanca —
+        // e a serial morre segundos depois do vocoder subir. O MIDI e
+        // imune a isso: UART propria, DMA, nada a ver com o CDC do USB.
+        // Deixou de ser conveniencia e virou o unico canal de ajuste ao
+        // vivo com o instrumento tocando.
+        //
+        // A sugestao do dB pedia CC 25 pro voc_pitch, mas 25 ja e do
+        // fx2_gain desde a sessao do vocoder — deslocado um pra frente.
+        // Duplicata nao daria erro: o ApplyMidiCc devolve o PRIMEIRO que
+        // casa, entao o segundo vira controle morto, em silencio.
+        midi_map[n_midi++] = {26, p_voc_pitch};
+        midi_map[n_midi++] = {27, p_voc_tone};
+        midi_map[n_midi++] = {28, p_voc_mix};
+        midi_map[n_midi++] = {29, p_rev_mix};
+        midi_map[n_midi++] = {30, p_in_gain};
+        midi_map[n_midi++] = {31, p_gate_thresh};
+        // buzios_on: faixa [0,1], entao o CC vira chave natural —
+        // 0..63 desliga, 64..127 liga, sem precisar de tratamento
+        // especial. MidiNorm(63)=0.496 arredonda pra baixo do 0.5 que
+        // o main testa; MidiNorm(64)=0.504 fica acima. O contrato de
+        // "ligado >= 0.5" ja fazia isso funcionar sem saber.
+        midi_map[n_midi++] = {32, p_buzios_on};
+
+        // >>> voc_pitch tem steps=49: o Set() quantiza em semitons, e o
+        // >>> CC de 128 passos cai na grade cromatica sozinho. Nada a
+        // >>> fazer aqui — a quantizacao mora no ponto UNICO de escrita,
+        // >>> entao MIDI, serial e knob herdam a mesma grade de graca.
 
         // shift_hz NÃO tem ModBind: o shifter é bloco do shell, lido
         // direto do callback, como gate/governor/limiter. Slot Fx2

@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.18.0** · última execução em placa: 2026-08-16 · firmware
+**Documento v0.19.0** · última execução em placa: 2026-08-16 · firmware
 **v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -974,6 +974,47 @@ módulo estourar de verdade. *Proteção por medição, não por abstinência.*
 **Condição de retorno, escrita no manifest:** módulo novo e não medido no
 slot Fx2 → voltar ao bypass. A regra continua certa pra quem ainda não
 passou pelo [IFÁ10000](../docs/IFA10000.md).
+
+## T16 — MIDI real com o WIDI, pelo scope · ⏳
+
+Reprodutível por qualquer um com um cabo USB. **Sessão fria primeiro** —
+`fx2_on 0` pra serial viver — depois com o vocoder, pela caixa-preta.
+
+### T16a — sessão fria, fader deslizando
+
+```bash
+./cotuca_serial.py --send "set fx2_on 0" "mscope on" --gap 2
+```
+
+O dB pareia o iPhone e desliza o fader do Loopy. O scope conta a história,
+e cada desfecho aponta pra um lugar diferente:
+
+| O que aparece | Onde está o problema |
+|---|---|
+| **nada** | BLE não pareou, ou UART/cruzamento (ver o guia de solda) |
+| bytes chegam, `msgs completas` não sobe | parser preso — ver `ressync` e `órfãos` |
+| msgs sobem, `APLICADAS` não | CC fora do mapa |
+| `fila perdeu` > 0 | rajada estourando a fila da ISR |
+| tudo sobe e o som não muda | o problema está depois do mapa |
+
+### T16b — rajada de 200 CCs
+
+Fader varrido rápido de ponta a ponta. Com `mscope stats`, uma linha por
+segundo: **msgs/s**, descartes, últimos 4 CCs. O stream teria buracos aqui
+de propósito — é o caso que o modo `stats` existe pra cobrir.
+
+**Passa se:** `ressync` fica em 0 e `fila perdeu` fica em 0.
+
+### T16c — com o vocoder ligado, pela caixa-preta
+
+A serial morre segundos depois do `fx2_on 1`. Os contadores continuam
+sendo espelhados na caixa-preta **a cada segundo** (slots 33–37), então:
+ligar tudo → deslizar o fader → RESET → `bb`.
+
+**É o MIDI provando por que existe:** se os CCs continuarem chegando e
+sendo aplicados com a serial morta, a hierarquia está confirmada na
+prática — caixa-preta é registro, serial é telemetria oportunista, **MIDI
+é controle**.
 
 ---
 
