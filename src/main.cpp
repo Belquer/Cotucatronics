@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.36.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.37.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.36.0"
+#define COTUCA_OS_VERSION "0.37.1"
 
 #include "hal.h"
 #include "params.h"
@@ -1090,6 +1090,31 @@ static void HandleLine(const char* line)
                  (double)hal::BlackboxRead(33), (double)hal::BlackboxRead(34),
                  (double)hal::BlackboxRead(35), (double)hal::BlackboxRead(36),
                  (double)hal::BlackboxRead(37));
+        hal::Log("   --- diario do link ---");
+        {
+            char l[110]; int off=0;
+            for(int m = 0; m < 12 && off < 90; m++)
+                off += snprintf(l+off, sizeof(l)-off, " %.0f",
+                                (double)hal::BlackboxRead(40+m));
+            hal::Log("   msgs por minuto:%s", l);
+        }
+        {
+            const int nt = (int)hal::BlackboxRead(84);
+            // "Nenhuma transicao" e AMBIGUO e a primeira versao mentia:
+            // silencio total e link estavel davam a MESMA resposta,
+            // porque o detector so registra MUDANCA e o estado inicial
+            // ja e "nao recebendo". O total de msgs desempata.
+            const float tot = hal::BlackboxRead(34);
+            if(nt == 0 && tot <= 0.f)
+                hal::Log("   transicoes: nenhuma, e ZERO MSGS — nada chegou"
+                         " no voo (ou a energia caiu e apagou o registro)");
+            else if(nt == 0)
+                hal::Log("   transicoes: nenhuma, com %.0f msgs —"
+                         " link CONSTANTE o voo todo", (double)tot);
+            for(int i = 0; i < nt && i < 16; i++)
+                hal::Log("   t=%.0fs  %s", (double)hal::BlackboxRead(52+i*2),
+                         hal::BlackboxRead(53+i*2) > 0.5f ? "VOLTOU" : "calou");
+        }
         hal::Log("   erros de uart %.0f | rearmes %.0f",
                  (double)hal::BlackboxRead(38), (double)hal::BlackboxRead(39));
         hal::Log("  TOKEN de linha no fim do voo=%.0f  (1 = PRESA)",
@@ -1650,6 +1675,49 @@ int main(void)
         // normal, onde mexer em params e logar é seguro.
         FASE(6);
         hal::PollMidi();
+
+        // ---- DIARIO DE BORDO DO LINK MIDI ----
+        //
+        // Duas escritas por segundo respondem a pergunta do voo de 10
+        // min: o link e ESTAVEL ou tem buracos? E se tem, QUANDO — pra
+        // cruzar com o que aconteceu no iPad.
+        //
+        //   slots 40-51  msgs por MINUTO (12 min de historico)
+        //   slots 52-83  transicoes: par (segundo, 1=voltou / 0=calou)
+        //   slot  84     quantas transicoes houve
+        //
+        // Transicao e o dado que importa: contagem por minuto diz QUANTO,
+        // mas so a transicao diz QUANDO comecou e quando acabou. Um
+        // buraco de 40 s no meio de um minuto cheio some na media.
+        {
+            static uint32_t ult_s = 0, ult_msgs = 0, base_min = 0;
+            static int      n_trans = 0;
+            static bool     recebendo = false;
+            const uint32_t  ag_s = hal::NowMs() / 1000u;
+            if(ag_s != ult_s)
+            {
+                ult_s = ag_s;
+                const uint32_t m  = msc_msgs;
+                const bool     rx = (m != ult_msgs);
+                ult_msgs = m;
+                if(rx != recebendo)
+                {
+                    recebendo = rx;
+                    if(n_trans < 16)
+                    {
+                        hal::BlackboxWrite(52 + n_trans * 2, (float)ag_s);
+                        hal::BlackboxWrite(53 + n_trans * 2, rx ? 1.f : 0.f);
+                        n_trans++;
+                        hal::BlackboxWrite(84, (float)n_trans);
+                    }
+                }
+                const uint32_t min = ag_s / 60u;
+                if(min < 12)
+                    hal::BlackboxWrite(40 + min, (float)(m - base_min));
+                if(ag_s % 60u == 59u)
+                    base_min = m;
+            }
+        }
 
         // ESPELHO CONTINUO do MIDI na caixa-preta. Nao adianta so
         // espelhar quando alguem digita `midi`: com o vocoder ligado a

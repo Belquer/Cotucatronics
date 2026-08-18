@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.9.0**
+**Documento v0.10.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -212,6 +212,30 @@ nada a tratar aqui.
 **`buzios_on` vira chave sem tratamento especial:** o param é [0,1], o
 `main` testa `>= 0.5`, e `MidiNorm(63)=0.496` cai abaixo enquanto
 `MidiNorm(64)=0.504` cai acima. O contrato já fazia isso funcionar.
+
+### ⚠️ PROCEDIMENTO OBRIGATÓRIO: reparear depois de todo RESET
+
+**O pareamento BLE não sobrevive ao reset da placa.** Descoberto pelo dB
+em 2026-08-17, depois de uma tarde inteira de diagnóstico errado.
+
+```
+1. gravar / resetar a placa
+2. no app: ESQUECER o dispositivo WIDI
+3. parear de novo
+4. só então testar
+```
+
+**Gravar e testar MIDI não cabem no mesmo ciclo.** O RESET necessário pra
+gravar invalida o pareamento, então a ordem é sempre
+*gravar → reparear → testar*, nunca gravar no meio de um teste.
+
+> **Por que isso enganou por tanto tempo:** o sintoma é `bytes 0` limpo —
+> UART reportando ESCUTANDO, zero erro, zero descarte. Idêntico a fio
+> cruzado errado, a módulo sem alimentação, a app sem autorização e a
+> central competindo. Todo zero de 2026-08-17 veio depois de um reset sem
+> reparear; todo sucesso veio depois de parear. **A regra de suspeita
+> passa a ser: `bytes 0` logo após gravar = pareamento, antes de qualquer
+> outra hipótese.**
 
 ### 🔬 MIDI SCOPE — o analisador é nosso, e roda na própria placa
 

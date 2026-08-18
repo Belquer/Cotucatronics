@@ -180,6 +180,20 @@ A regra: **quando o mesmo sintoma se repete pela terceira vez, pare de
 gerar hipóteses e procure o teste que corta o sistema ao meio.** Trocar de
 suspeito parece progresso e não é — é a mesma medição vestida de nova.
 
+**E a causa real, achada pelo dB depois de eu esgotar cinco hipóteses: o
+pareamento BLE não sobrevive ao reset da placa.** Todo `bytes 0` da tarde
+veio depois de um reset sem reparear; todo sucesso veio depois de parear.
+Não era link instável, nem 5V no pino de 3V3, nem brown-out do rail, nem
+central competindo — era procedimento de operação que ninguém tinha
+escrito. **Gravar e testar MIDI não cabem no mesmo ciclo.**
+
+O que me cegou: `bytes 0` é idêntico em todas as causas — fio cruzado,
+módulo sem alimentação, app sem autorização, central competindo, e
+pareamento velho. Eu tinha o sintoma certo e nenhuma forma de distinguir,
+e em vez de procurar o que distinguisse, **gerei explicações**. A pergunta
+que resolveria — *"o aparelho ainda está pareado?"* — é a mais básica do
+checklist e foi a única que eu não fiz.
+
 **Instrumento que só diz "não chegou" precisa de um par que diga "o que eu
 mandei, chegou".** O `mscope` mede o que entra, e por isso nunca podia
 distinguir "a fonte não mandou" de "mandou e se perdeu". O loopback é o

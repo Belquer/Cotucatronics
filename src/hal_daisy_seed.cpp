@@ -606,7 +606,7 @@ void  CpuLoadReset() { cpu_meter.Reset(); }
 namespace
 {
 constexpr uint32_t kBbMagic = 0xC0BEEF01u;
-constexpr int      kBbSlots = 48;
+constexpr int      kBbSlots = 128;
 struct Blackbox
 {
     uint32_t magic;
@@ -629,7 +629,13 @@ struct Blackbox
 // A regiao tem 4 KB. O bootloader usa a base; nos usamos os
 // ultimos 256 bytes, por ponteiro fixo — sem linker no meio, sem
 // briga possivel. 0xF00 e multiplo de 32 (linha de cache).
-constexpr uintptr_t kBbAddr = 0x38800F00u;
+// MOVIDA de 0x38800F00 pra 0x38800800 quando os slots foram a 128:
+// 128*4+4 = 516 bytes, e a partir de 0x38800F00 isso ESTOURARIA o fim da
+// regiao (0x38801000). Estouro de backup SRAM nao daria erro — escreveria
+// fora e o dado voltaria lixo, que e a mesma familia silenciosa das
+// outras armadilhas deste instrumento. Em 0x38800800 sobram 1,5 KB de
+// folga, e a base segue livre pro BootInfo do bootloader.
+constexpr uintptr_t kBbAddr = 0x38800800u;
 static Blackbox&    g_bb    = *reinterpret_cast<Blackbox*>(kBbAddr);
 
 // A ARMADILHA QUE APAGOU O PRIMEIRO VOO: o M7 tem D-cache, e a

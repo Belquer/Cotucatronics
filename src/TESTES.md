@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.20.0** · última execução em placa: 2026-08-16 · firmware
+**Documento v0.21.0** · última execução em placa: 2026-08-16 · firmware
 **v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -997,7 +997,11 @@ por isso nunca distingue "a fonte não mandou" de "mandou e se perdeu"; o
 loopback usa fonte conhecida no caminho real e dá resposta binária. Todo
 canal de entrada devia nascer com o seu par assim.
 
-## T16 — MIDI real com o WIDI, pelo scope · ⚠️ PARCIAL
+## T16 — MIDI real com o WIDI, pelo scope · ✅ a/b PASSARAM · c pendente
+
+> **PRÉ-REQUISITO, e ele explica todos os falsos negativos:** o pareamento
+> BLE **não sobrevive ao reset da placa**. Sempre *gravar → esquecer o
+> dispositivo → parear → testar*. Ver [BOARDS.md](BOARDS.md).
 
 Reprodutível por qualquer um com um cabo USB. **Sessão fria primeiro** —
 `fx2_on 0` pra serial viver — depois com o vocoder, pela caixa-preta.
@@ -1019,7 +1023,27 @@ e cada desfecho aponta pra um lugar diferente:
 | `fila perdeu` > 0 | rajada estourando a fila da ISR |
 | tudo sobe e o som não muda | o problema está depois do mapa |
 
-### T16b — rajada de 200 CCs
+### T16b — rajada · ✅ PASSOU com 914 mensagens
+
+Fonte determinística (MIDI Wrench, knobs 20–23 e botões 24–33):
+
+| CC | msgs | | CC | msgs |
+|---|---|---|---|---|
+| 20 `dly_time` | 62 | | 28 `voc_mix` | 42 |
+| 21 `dly_mix` | 49 | | 29 `rev_mix` | 58 |
+| **22 `level`** | **381** | | 30 `in_gain` | 27 |
+| 23 `src_mix` | 53 | | 31 `gate_thresh` | 25 |
+| 24 `gov_ceiling` | 43 | | 32 `buzios_on` | 19 |
+| 25 `fx2_gain` | 72 | | 26 `voc_pitch` | 57 |
+
+**914 mensagens · órfãos 0 · truncadas 0 · faixa 0–127 em todos.**
+
+O `cc 33` apareceu como "(fora do mapa)" neste voo e por isso foi mapeado
+pro `fx2_on` — **instrumentação que mostra o que NÃO está mapeado fez a
+lacuna aparecer sozinha.** Agora o vocoder liga por MIDI, e o instrumento
+não depende mais de serial nem de boot pra tocar.
+
+### T16b (histórico) — rajada de 200 CCs
 
 Fader varrido rápido de ponta a ponta. Com `mscope stats`, uma linha por
 segundo: **msgs/s**, descartes, últimos 4 CCs. O stream teria buracos aqui

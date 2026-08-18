@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.40.0
+// manifest.h (instrumento "bancada") v0.41.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -803,6 +803,16 @@ struct Manifest
         // o main testa; MidiNorm(64)=0.504 fica acima. O contrato de
         // "ligado >= 0.5" ja fazia isso funcionar sem saber.
         midi_map[n_midi++] = {32, p_buzios_on};
+        // CC 33 — fx2_on. A lacuna que ficou aberta quando o mapa foi
+        // expandido: sem ele, o vocoder so liga por SERIAL ou no boot, e
+        // no palco nao vai ter serial. Faixa [0,1], entao vira chave
+        // igual ao buzios_on (0-63 desliga, 64-127 liga) pelo mesmo
+        // contrato de ">= 0.5" que o main ja usa.
+        //
+        // Apareceu no scope como "(fora do mapa)" durante o T16b: o MIDI
+        // Wrench ja manda nele. Instrumentacao mostrando o que NAO esta
+        // mapeado e o que fez a lacuna aparecer sozinha.
+        midi_map[n_midi++] = {33, p_fx2_on};
 
         // >>> voc_pitch tem steps=49: o Set() quantiza em semitons, e o
         // >>> CC de 128 passos cai na grade cromatica sozinho. Nada a
