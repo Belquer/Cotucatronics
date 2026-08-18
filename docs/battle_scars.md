@@ -142,7 +142,25 @@ Cada transiente na escultura é uma jogada; o que cai decide o timbre. `dly_time
 
 ---
 
-## 10. Checklist de retomada a frio (colar no início de qualquer sessão futura)
+## 10. O dia 17/08 — quatro cicatrizes
+
+**Estado de diagnóstico que sobrevive ao diagnóstico.** O `level` ficou em 0.4 desde o A/B com o Max e virou default do repo por três commits, junto com gate e governor desligados. Pior que o descuido: eu **documentei a violação no STATUS como temporária** e segui em frente. Registro que se sabe errado e não conserta não é aviso — é permissão. O dB só descobriu indo tocar o instrumento real. É prima da instrumentação-que-apaga-o-dado, mas pior: aquela estraga a medição, esta estraga o instrumento, e some do radar justamente por estar anotada. **Estado de bancada tem prazo, e o prazo é a mesma sessão.**
+
+**Regra que sobrevive ao motivo.** O `fx2_on` nascia em bypass pra proteger de um risco que a medição já tinha eliminado — vocoder em 37% do prazo, watchdog funcionando, morte do loop com outra causa já consertada. A regra continuava cobrando preço (o dB encontrou "só o delay" seis vezes num dia) por um perigo que não existia mais. E o custo era invisível de um lado e óbvio do outro: **quem escreve a regra não é quem aperta o RESET.** Regra de segurança precisa de data de revisão, senão vira superstição.
+
+**`bytes 0` tem três causas, e a ordem de suspeita muda com o contexto.** No dia da solda é cruzamento TX/RX (o guia manda desconfiar dele primeiro, e está certo). Depois que o fio está provado, é quase sempre o **link BLE** — que cai sozinho, some depois de RESET, e é derrubado por outro central que se conecte ao mesmo periférico. No palco vai ser sempre essa. Receita: *esquecer o device → parear de novo → reiniciar o app que manda*. E **"conectado" num app prova que aquele aparelho tem o link, não que o CC sai de lá** — BLE MIDI costuma aceitar um central por vez, e um segundo app toma a conexão em silêncio.
+
+**Guardar um teste que passa é guardar um instrumento.** O que fechou o caso do MIDI foi um teste que já tinha passado: mesmo botão, mesmo CC, funcionara vinte minutos antes e parou sem ninguém tocar no firmware. Referência conhecida-boa vale mais que hipótese nova — se o que funcionava parou e o firmware não mudou, o firmware não é o suspeito.
+
+### O corolário que atravessa as quatro: replace que falha calado
+
+Duas destas cicatrizes quase não existiram — o script que as escrevia usou uma âncora errada, o `replace` não casou, **não deu erro**, e eu reportei como feito. O mesmo padrão já tinha comido uma célula de instrumentação inteira (o `VOLTAS=0, nan` que eu li como bug de escopo e era **código que nunca foi inserido**).
+
+**Edição programática sem verificação é a mesma família da instrumentação que apaga o dado**, aplicada ao próprio ato de documentar. Regra: `assert` na âncora antes de substituir, e `grep` depois pra confirmar que entrou. Ferramenta que falha calada mente com a mesma confiança com que acerta.
+
+---
+
+## 11. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.
 
