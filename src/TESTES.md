@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.19.0** · última execução em placa: 2026-08-16 · firmware
+**Documento v0.20.0** · última execução em placa: 2026-08-16 · firmware
 **v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -975,7 +975,29 @@ módulo estourar de verdade. *Proteção por medição, não por abstinência.*
 slot Fx2 → voltar ao bypass. A regra continua certa pra quem ainda não
 passou pelo [IFÁ10000](../docs/IFA10000.md).
 
-## T16 — MIDI real com o WIDI, pelo scope · ⏳
+## T10b — LOOPBACK MIDI · ✅ PASSOU (2026-08-17)
+
+Sai da fila congelada. Jumper **D13 → D14** e:
+
+```bash
+./cotuca_serial.py --send "mscope on" "midiloop 22 0" "midiloop 22 64" "midiloop 22 127" midi --gap 3
+```
+
+**Passou:** as três mensagens saíram pelo TX, voltaram pelo RX e
+percorreram o caminho real — UART → DMA → ISR → fila → parser → mapa →
+parâmetro. Hex batendo com a decodificação, `level` indo a 0.000 / 0.504 /
+1.000.
+
+| bytes | msgs | aplicadas | órfãos | ressync | perdidos | erros UART |
+|---|---|---|---|---|---|---|
+| 395 | 113 | 112 | 0 | 0 | 0 | 0 |
+
+**É o teste que corta o sistema ao meio.** O `mscope` mede o que entra e
+por isso nunca distingue "a fonte não mandou" de "mandou e se perdeu"; o
+loopback usa fonte conhecida no caminho real e dá resposta binária. Todo
+canal de entrada devia nascer com o seu par assim.
+
+## T16 — MIDI real com o WIDI, pelo scope · ⚠️ PARCIAL
 
 Reprodutível por qualquer um com um cabo USB. **Sessão fria primeiro** —
 `fx2_on 0` pra serial viver — depois com o vocoder, pela caixa-preta.
@@ -1005,7 +1027,12 @@ de propósito — é o caso que o modo `stats` existe pra cobrir.
 
 **Passa se:** `ressync` fica em 0 e `fila perdeu` fica em 0.
 
-### T16c — com o vocoder ligado, pela caixa-preta
+### T16c — com o vocoder ligado, pela caixa-preta · ⏳ NÃO EXECUTADO
+
+Nunca conseguimos manter o link BLE vivo até o vocoder subir. **A hipótese
+de que o MIDI é imune à carga segue sem prova** — e tem um furo conhecido:
+`hal::PollMidi()` roda no loop principal, então bytes chegam por DMA mas
+quem despacha é o loop. Se o loop engasgar, o canal cai junto.
 
 A serial morre segundos depois do `fx2_on 1`. Os contadores continuam
 sendo espelhados na caixa-preta **a cada segundo** (slots 33–37), então:

@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.35.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.36.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.35.0"
+#define COTUCA_OS_VERSION "0.36.0"
 
 #include "hal.h"
 #include "params.h"
@@ -1090,6 +1090,8 @@ static void HandleLine(const char* line)
                  (double)hal::BlackboxRead(33), (double)hal::BlackboxRead(34),
                  (double)hal::BlackboxRead(35), (double)hal::BlackboxRead(36),
                  (double)hal::BlackboxRead(37));
+        hal::Log("   erros de uart %.0f | rearmes %.0f",
+                 (double)hal::BlackboxRead(38), (double)hal::BlackboxRead(39));
         hal::Log("  TOKEN de linha no fim do voo=%.0f  (1 = PRESA)",
                  (double)hal::BlackboxRead(30));
         hal::Log("  ultimo Log chamado comecava com '%c'",
@@ -1225,6 +1227,18 @@ static void HandleLine(const char* line)
         }
         return;
     }
+    // `rearm` — forca o reinicio da escuta DMA do MIDI. Diagnostico E
+    // conserto: se o canal volta depois disto, a causa era o DMA
+    // abortado por erro de UART, e o vigia automatico do PollMidi
+    // resolve dai em diante.
+    if(strncmp(line, "rearm", 5) == 0)
+    {
+        const bool ok = hal::MidiRestart();
+        hal::Log("rearm: escuta DMA %s (rearmes totais: %lu)",
+                 ok ? "REINICIADA" : "FALHOU",
+                 (unsigned long)hal::MidiRestarts());
+        return;
+    }
     if(strncmp(line, "mscope", 6) == 0)
     {
         const char* a = line + 6;
@@ -1245,6 +1259,9 @@ static void HandleLine(const char* line)
         // A primeira coisa a consultar no dia da solda. A pergunta que
         // ele responde é em qual etapa o sinal parou: fio, parser,
         // canal ou mapa.
+        hal::Log("  uart: erros %lu | rearmes da escuta %lu",
+                 (unsigned long)hal::MidiErrors(),
+                 (unsigned long)hal::MidiRestarts());
         hal::Log("midi: uart %s | perdidos %lu | canal %s",
                  hal::MidiRxActive() ? "ESCUTANDO" : "PARADA",
                  (unsigned long)hal::MidiDropped(),
@@ -1304,7 +1321,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | rearm | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -1649,6 +1666,8 @@ int main(void)
                 hal::BlackboxWrite(35, (float)midi.Applied());
                 hal::BlackboxWrite(36, (float)midi.Resync());
                 hal::BlackboxWrite(37, (float)hal::MidiDropped());
+                hal::BlackboxWrite(38, (float)hal::MidiErrors());
+                hal::BlackboxWrite(39, (float)hal::MidiRestarts());
             }
         }
 

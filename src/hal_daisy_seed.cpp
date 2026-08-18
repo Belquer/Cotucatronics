@@ -432,6 +432,8 @@ static uint8_t           midi_ring[kMidiRing];
 static volatile uint32_t m_head       = 0;
 static volatile uint32_t m_tail       = 0;
 static volatile uint32_t midi_dropped = 0;
+static volatile uint32_t midi_err      = 0; // erros de UART na ISR
+static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
 
 // Roda em ISR. Só enfileira — sem Log(), sem parser, sem params.
 static void MidiRxCallback(uint8_t*            data,
@@ -439,8 +441,15 @@ static void MidiRxCallback(uint8_t*            data,
                            void*               /*context*/,
                            UartHandler::Result res)
 {
+    // ERRO DA UART: overrun, framing, ruido na linha. Antes isto
+    // retornava CALADO, e o silencio escondia a unica pista de um
+    // fluxo que para de chegar — "bytes 0" com a UART dizendo
+    // ESCUTANDO e indistinguivel de "ninguem esta mandando".
     if(res != UartHandler::Result::OK)
+    {
+        midi_err++;
         return;
+    }
     for(size_t i = 0; i < size; i++)
     {
         const uint32_t next = (m_head + 1) % kMidiRing;
@@ -491,8 +500,38 @@ void SetMidiByteCallback(MidiByteCallback cb)
     Log("MIDI: USART1 31250 8N1 | TX=D13(pino14) RX=D14(pino15)");
 }
 
+// Reinicia a escuta DMA. Existe porque erro de UART (overrun,
+// framing) pode ABORTAR a recepcao no stack da ST, e o listen nunca
+// volta sozinho: o sintoma e exatamente "funcionou e parou pra
+// sempre", com a porta reportando ESCUTANDO e zero byte chegando.
+//
+// Nao e remendo — e a contrapartida obrigatoria de um DMA circular
+// que pode ser derrubado por ruido de linha. Sem rearme, um unico
+// glitch no fio custa o canal ate o proximo reset.
+bool MidiRestart()
+{
+    if(!midi_started)
+        return false;
+    midi_uart.DmaListenStop();
+    memset(midi_dma_buf, 0, sizeof(midi_dma_buf));
+    const bool ok = midi_uart.DmaListenStart(midi_dma_buf,
+                                             sizeof(midi_dma_buf),
+                                             MidiRxCallback, nullptr)
+                    == UartHandler::Result::OK;
+    if(ok) midi_restarts++;
+    return ok;
+}
+
+uint32_t MidiErrors() { return midi_err; }
+uint32_t MidiRestarts() { return midi_restarts; }
+
 void PollMidi()
 {
+    // VIGIA DA ESCUTA. Se o DMA caiu, rearma sozinho. Roda no loop,
+    // custo de uma leitura de flag por volta.
+    if(midi_started && !midi_uart.IsListening())
+        MidiRestart();
+
     // Despacha em contexto normal, onde o parser pode mexer em params
     // e o Log() pode transmitir. Mesmo contrato do PollSerial().
     while(m_tail != m_head)

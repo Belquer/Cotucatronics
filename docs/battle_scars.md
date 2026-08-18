@@ -160,9 +160,58 @@ Duas destas cicatrizes quase não existiram — o script que as escrevia usou um
 
 ---
 
-## 11. Checklist de retomada a frio (colar no início de qualquer sessão futura)
+## 11. MIDI, BLE e a hora que eu gastei trocando de suspeito (17/08)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.
+**O teste que elimina variáveis vale mais que dez que trocam de suspeito.**
+Passei uma hora atrás de um MIDI que não chegava, e troquei de hipótese
+cinco vezes — link BLE caindo, fader desconfigurado, app sem autorização,
+DMA abortado, controlador mandando dump. **Nenhuma foi confirmada nem
+descartada com evidência.** O dado era sempre o mesmo (`bytes 0`) e a
+explicação era nova a cada rodada.
+
+O **loopback** (jumper D13→D14, comando `midiloop`) resolveu em dez
+segundos: mensagem sai pelo TX, volta pelo RX, percorre UART → DMA → ISR →
+fila → parser → mapa → parâmetro. Passou com 113 mensagens, zero órfãos,
+zero ressync, zero perdidos. **A placa inteira provada, e o problema
+isolado fora dela.**
+
+Ele estava disponível desde o começo, na fila congelada esperando um fio.
+A regra: **quando o mesmo sintoma se repete pela terceira vez, pare de
+gerar hipóteses e procure o teste que corta o sistema ao meio.** Trocar de
+suspeito parece progresso e não é — é a mesma medição vestida de nova.
+
+**Instrumento que só diz "não chegou" precisa de um par que diga "o que eu
+mandei, chegou".** O `mscope` mede o que entra, e por isso nunca podia
+distinguir "a fonte não mandou" de "mandou e se perdeu". O loopback é o
+par dele: fonte conhecida, caminho real, resposta binária. Todo canal de
+entrada devia nascer com o seu.
+
+**Erro de UART engolido em silêncio.** O callback do DMA fazia
+`if(res != OK) return;` sem contar nada — overrun, framing e ruído de
+linha ficavam invisíveis, e `bytes 0` com a porta reportando **ESCUTANDO**
+era indistinguível de "ninguém está mandando". Contador adicionado.
+
+**E a escuta DMA pode ser abortada sem voltar sozinha.** Erro de UART pode
+derrubar a recepção no stack da ST, e o `DmaListenStart` não se rearma: o
+sintoma seria exatamente "funcionou e parou pra sempre", com a porta
+dizendo que escuta. Agora há vigia no `PollMidi` que rearma, contador de
+rearmes, e o comando manual `rearm`. **Não é remendo — é a contrapartida
+obrigatória de um DMA circular que ruído de linha pode derrubar.**
+
+**Estado de teste anterior contamina o teste seguinte.** Os búzios ficaram
+ligados de uma rodada passada, com limiar 0.04, sorteando `dly_time`,
+`dly_mix`, `voc_pitch` e `voc_tone` **continuamente** durante os testes de
+MIDI — o instrumento se modificava sozinho enquanto eu media outra coisa.
+É a prima do `tone on` esquecido durante a medição do reverb. **Zerar o
+ambiente antes de medir é parte da medição.** (E de brinde: 0.04 dispara
+com o chão de ruído do piezo, sem ninguém tocar — dado que só apareceu por
+acidente.)
+
+---
+
+## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
+
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.
 
 ---
 

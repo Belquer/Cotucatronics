@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.10.0
+// hal.h v0.11.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -118,6 +118,14 @@ void             MidiInjectByte(uint8_t b);
 // Diagnóstico da porta, pro comando serial `midi`.
 bool             MidiRxActive();    // a escuta chegou a começar?
 uint32_t         MidiDropped();     // bytes perdidos por fila cheia
+uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
+uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
+
+// Reinicia a escuta DMA. Erro de UART pode abortar a recepcao no stack
+// da ST, e ela NAO volta sozinha — o sintoma e "funcionou e parou pra
+// sempre" com a porta reportando escuta ativa. O PollMidi ja rearma
+// automaticamente; isto existe pro comando manual de bancada.
+bool             MidiRestart();
 
 // Aloca da RAM "grande" (SDRAM na Daisy). Chame só no boot,
 // nunca no callback de áudio. Retorna nullptr se a placa não
