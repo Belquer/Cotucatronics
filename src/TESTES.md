@@ -997,7 +997,7 @@ por isso nunca distingue "a fonte não mandou" de "mandou e se perdeu"; o
 loopback usa fonte conhecida no caminho real e dá resposta binária. Todo
 canal de entrada devia nascer com o seu par assim.
 
-## T16 — MIDI real com o WIDI, pelo scope · ✅ a/b PASSARAM · c pendente
+## T16 — MIDI real com o WIDI, pelo scope · ✅ a/b/c PASSARAM
 
 > **PRÉ-REQUISITO, e ele explica todos os falsos negativos:** o pareamento
 > BLE **não sobrevive ao reset da placa**. Sempre *gravar → esquecer o
@@ -1051,21 +1051,59 @@ de propósito — é o caso que o modo `stats` existe pra cobrir.
 
 **Passa se:** `ressync` fica em 0 e `fila perdeu` fica em 0.
 
-### T16c — com o vocoder ligado, pela caixa-preta · ⏳ NÃO EXECUTADO
+### T16c — MIDI sob carga do vocoder · ✅ PASSOU (2026-08-18, v0.40.0)
 
-Nunca conseguimos manter o link BLE vivo até o vocoder subir. **A hipótese
-de que o MIDI é imune à carga segue sem prova** — e tem um furo conhecido:
-`hal::PollMidi()` roda no loop principal, então bytes chegam por DMA mas
-quem despacha é o loop. Se o loop engasgar, o canal cai junto.
+**A pergunta:** o MIDI sobrevive com o vocoder consumindo 65% do prazo do
+bloco? O furo conhecido era o `hal::PollMidi()`, que roda no loop
+principal — os bytes chegam por DMA (imune a carga), mas **quem despacha é
+o loop**. Se o loop engasga, o canal cai junto.
 
-A serial morre segundos depois do `fx2_on 1`. Os contadores continuam
-sendo espelhados na caixa-preta **a cada segundo** (slots 33–37), então:
-ligar tudo → deslizar o fader → RESET → `bb`.
+**Procedimento** (etapa 0 do IFÁ10000 primeiro, sempre):
 
-**É o MIDI provando por que existe:** se os CCs continuarem chegando e
-sendo aplicados com a serial morta, a hierarquia está confirmada na
-prática — caixa-preta é registro, serial é telemetria oportunista, **MIDI
-é controle**.
+```
+log on            → conferir eco. Sem eco, aborta.
+board             → confirma versão
+tone off ; set buzios_on 0     → zera o ambiente
+midi              → baseline da marca d'água
+set fx2_on 1      → sobe o vocoder (uma variável trocada)
+mscope stats      → janela de 90 s varrendo o CC 22 sem parar
+midi ; cpu        → veredito
+```
+
+**Resultado**
+
+| | sem carga | sob carga |
+|---|---|---|
+| CPU de pico | — | **65,1%** (3 470 de 5 333 µs) |
+| mensagens | 65 | **2 779 em 90 s** (~70/s sustentado) |
+| bytes | 220 | 8 362 |
+| órfãos / ressync / perdidos | 0 / 0 / 0 | **0 / 0 / 0** |
+| erros de UART / rearmes | 0 / 0 | **0 / 0** |
+| **pico da fila** | **32 de 128** | **32 de 128** |
+
+**Passa.** A marca d'água **não subiu um byte** com o vocoder ligado: o
+loop drena a fila na mesma velocidade a 65% de CPU que a vazio. O furo do
+`PollMidi` está fechado **com número**, não com suposição.
+
+**E o número explica a si mesmo.** Os 32 bytes não são atraso do loop — são
+o **tamanho da rajada da fonte**. O WIDI entrega em pacotes de ~10
+mensagens, e a fila reflete o BLE, não o despacho. Por isso o valor é
+idêntico nos dois regimes: se fosse latência de loop, teria subido junto
+com a carga.
+
+**Hierarquia confirmada na prática:** caixa-preta é registro, serial é
+telemetria oportunista, **MIDI é controle** — e o controle não vacilou sob
+carga.
+
+> **Pendência menor:** `msgs completas 2779 | APLICADAS 2778`. Falta
+> exatamente **uma**, igual à janela sem carga (65/64). Diferença **fixa**
+> de 1, não taxa de perda — quase certamente a mensagem em trânsito no
+> instante da leitura. Confirmar antes de chamar de cosmético.
+
+> **Nota histórica.** Este teste ficou "não executado" por um dia inteiro
+> porque quatro tentativas anteriores reportaram `0 CCs` — com o log mudo
+> por um `bb arm` meu. Elas não mediram o link: mediram o meu silêncio.
+> Ver caso 8 em [../docs/battle_scars.md](../docs/battle_scars.md).
 
 ---
 

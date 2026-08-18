@@ -89,13 +89,34 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 
 | Arquivo | Versão |
 |---|---|
-| `hal.h` / `hal_daisy_seed.cpp` | v0.10.0 / v0.15.0 |
-| `main.cpp` | v0.29.0 |
-| `manifest.h` | v0.28.0 |
+| `hal.h` / `hal_daisy_seed.cpp` | v0.12.0 / v0.10.0 |
+| `main.cpp` | **v0.40.0** |
+| `manifest.h` | v0.41.0 |
 | `params.h` | v0.6.1 |
 | `module_rnbo_vocoder.cpp` | v0.6.0 |
-| `module.h` / `dynamics.h` / `midi.h` | v0.4.0 / v0.4.0 / v0.1.0 |
-| `TESTES.md` / `BOARDS.md` | v0.16.0 / v0.7.0 |
+| `reverb.h` | v0.2.0 |
+| `module.h` / `dynamics.h` / `midi.h` | v0.4.0 / v0.4.0 / v0.2.1 |
+| `TESTES.md` / `BOARDS.md` | v0.21.0 / v0.10.0 |
+
+---
+
+## Fechado em 18/08 — MIDI certificado sob carga
+
+**T16c passou.** 2 779 CCs em 90 s com o vocoder a **65,1%** do prazo do
+bloco: zero órfão, zero ressync, zero perdido, zero erro de UART. A marca
+d'água da fila ficou em **32 de 128 bytes — idêntica com e sem carga**, o
+que fecha com número o furo do `PollMidi` (bytes entram por DMA, mas quem
+despacha é o loop). Os 32 bytes são o tamanho da rajada do BLE, não atraso
+do loop: se fosse latência, teria subido com a carga.
+
+**Regra revogada:** o pareamento BLE **sobrevive** ao reset. O
+`gravar → reparear → testar` era superstição nascida de um log que eu
+mesmo silenciei — caso 8 do battle_scars, com adendo no capítulo 11 e a
+seção do BOARDS.md marcada como REVOGADA.
+
+**Cicatrizes viraram skills.** `.claude/skills/`: `ifa10000`,
+`medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura`. O
+IFÁ10000 ganhou a **etapa 0 — MEDIÇÃO LIMPA**.
 
 ---
 
@@ -111,6 +132,11 @@ o loop nunca toca o USB e a drenagem acontece por ISR.
 realimentado desloca onde o feedback se estabelece. Preço aceito, não
 resolvido.
 
+**🟢 Off-by-one no contador de aplicadas.** `msgs completas N` vem sempre
+**exatamente 1** acima de `APLICADAS`, com e sem carga (65/64 e
+2779/2778). Diferença fixa, não taxa de perda — provavelmente a mensagem
+em trânsito no instante da leitura. Confirmar antes de chamar de cosmético.
+
 **🟡 Pool SRAM a 92,4%.** Terceiro módulo não entra sem mudar a
 estratégia de alocação (rotular alocações quente/fria antes de crescer).
 
@@ -119,8 +145,7 @@ estratégia de alocação (rotular alocações quente/fria antes de crescer).
 ## Fila congelada (espera hardware)
 
 T4 (buffer + piezo) · T7e (gate com transiente real) · teste percussivo do
-limiter · T10b (loopback MIDI, precisa de jumper D13→D14) · **solda do
-painel v2** (5 pots + 2 botões; B2 é candidato natural pro toggle dos
+limiter · **solda do painel v2** (5 pots + 2 botões; B2 é candidato natural pro toggle dos
 Búzios).
 
 ---

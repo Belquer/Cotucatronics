@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.37.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.40.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.37.1"
+#define COTUCA_OS_VERSION "0.40.0"
 
 #include "hal.h"
 #include "params.h"
@@ -904,6 +904,18 @@ static void SetButton2(bool pressed)
 }
 
 // ---- painel falso via serial ----
+// TODO COMANDO DE STATUS DENUNCIA OS MODOS QUE SILENCIAM.
+// Um rotulo que mente (cicatriz 7) e uma medicao que mede o proprio
+// silencio (cicatriz 8) tem o mesmo antidoto: o instrumento declara os
+// proprios modos, e a declaracao atravessa o modo que declara.
+static void declara_modos()
+{
+    using namespace cotuca;
+    if(hal::LogMuted())
+        hal::LogAlways("[LOG MUDO] o log esta silenciado — `log on` destrava."
+                       " O que voce nao esta vendo NAO e ausencia de dado.");
+}
+
 static void HandleLine(const char* line)
 {
     using namespace cotuca;
@@ -943,6 +955,7 @@ static void HandleLine(const char* line)
     { params.Set(manifest.p_tone_mix, 0.0f); hal::Log("tone OFF"); return; }
     if(strncmp(line, "board", 5) == 0)
     {
+        declara_modos();
         const auto& b = hal::Info();
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
@@ -1264,13 +1277,25 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRestarts());
         return;
     }
+    if(strncmp(line, "log ", 4) == 0)
+    {
+        const bool on = (strncmp(line + 4, "on", 2) == 0);
+        hal::LogMute(!on);
+        if(on) hal::Log("log: ligado");
+        return;
+    }
     if(strncmp(line, "mscope", 6) == 0)
     {
         const char* a = line + 6;
         while(*a == ' ') a++;
+        declara_modos();
         if(strncmp(a, "on", 2) == 0)       mscope_mode = 1;
         else if(strncmp(a, "stats", 5) == 0) mscope_mode = 2;
         else                                 mscope_mode = 0;
+        // Um scope que nao fala nao e scope. Se a caixa-preta calou o log,
+        // ligar o mscope destrava — senao a medicao morre muda e o zero
+        // na tela e o meu proprio silencio, nao o do MIDI.
+        if(mscope_mode != 0) hal::LogMute(false);
         hal::Log("mscope: %s", mscope_mode == 1 ? "STREAM (hex + veredito)"
                              : mscope_mode == 2 ? "STATS (1 linha/s)"
                                                 : "off");
@@ -1281,12 +1306,21 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "midi", 4) == 0)
     {
+        declara_modos();
         // A primeira coisa a consultar no dia da solda. A pergunta que
         // ele responde é em qual etapa o sinal parou: fio, parser,
         // canal ou mapa.
         hal::Log("  uart: erros %lu | rearmes da escuta %lu",
                  (unsigned long)hal::MidiErrors(),
                  (unsigned long)hal::MidiRestarts());
+        // FURO DO PollMidi, fechado com numero: os bytes entram por DMA
+        // (imune a carga), mas quem despacha e o loop. A marca d'agua diz
+        // quanta folga sobrou entre uma volta e outra.
+        hal::Log("  fila: pico %lu de %lu bytes (%.0f%% cheia no pior caso)",
+                 (unsigned long)hal::MidiHiWater(),
+                 (unsigned long)hal::MidiRingSize(),
+                 100.0f * (float)hal::MidiHiWater()
+                     / (float)hal::MidiRingSize());
         hal::Log("midi: uart %s | perdidos %lu | canal %s",
                  hal::MidiRxActive() ? "ESCUTANDO" : "PARADA",
                  (unsigned long)hal::MidiDropped(),
@@ -1323,6 +1357,7 @@ static void HandleLine(const char* line)
         hal::BlackboxWrite(35, (float)midi.Applied());
         hal::BlackboxWrite(36, (float)midi.Resync());
         hal::BlackboxWrite(37, (float)hal::MidiDropped());
+        hal::BlackboxWrite(41, (float)hal::MidiHiWater()); // 38 ja e MidiErrors
         for(int i = 0; i < manifest.n_midi; i++)
             hal::Log("  cc %-3d -> %s",
                      manifest.midi_map[i].cc,
@@ -1346,7 +1381,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | rearm | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | rearm | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -1734,6 +1769,7 @@ int main(void)
                 hal::BlackboxWrite(35, (float)midi.Applied());
                 hal::BlackboxWrite(36, (float)midi.Resync());
                 hal::BlackboxWrite(37, (float)hal::MidiDropped());
+                hal::BlackboxWrite(41, (float)hal::MidiHiWater()); // 38 ja e MidiErrors
                 hal::BlackboxWrite(38, (float)hal::MidiErrors());
                 hal::BlackboxWrite(39, (float)hal::MidiRestarts());
             }
@@ -1750,12 +1786,13 @@ int main(void)
             {
                 msc_last_s = agora_s;
                 hal::Log("mscope: %lu msg/s | total %lu | orfaos %lu"
-                         " ressync %lu | fila perdeu %lu",
+                         " ressync %lu | fila perdeu %lu | pico fila %lu",
                          (unsigned long)msc_win_msgs,
                          (unsigned long)msc_msgs,
                          (unsigned long)midi.Orphan(),
                          (unsigned long)midi.Resync(),
-                         (unsigned long)hal::MidiDropped());
+                         (unsigned long)hal::MidiDropped(),
+                         (unsigned long)hal::MidiHiWater());
                 for(int i = 0; i < 4 && i < midi.HistoryCount(); i++)
                     hal::Log("   cc%d=%d", midi.History(i).cc,
                              midi.History(i).value);

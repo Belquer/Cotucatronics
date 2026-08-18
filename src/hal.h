@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.11.0
+// hal.h v0.12.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -174,6 +174,10 @@ void  BlackboxArm();     // marca "há dados"; chamar antes de gravar
 // preta. Existe porque em voo NINGUÉM lê a serial — ela morre — e as
 // confirmações de comando são luxo que está custando o instrumento.
 void  LogMute(bool on);
+uint32_t MidiHiWater();   // pico de bytes na fila — o furo do PollMidi
+uint32_t MidiRingSize();  // capacidade, pra dar sentido ao pico
+bool  LogMuted();                     // o instrumento sabe que esta mudo
+void  LogAlways(const char* fmt, ...); // ...e consegue dizer isso
 int   BlackboxSlots();
 
 // Total já entregue por AllocBig(), em bytes. Serve de extrato:

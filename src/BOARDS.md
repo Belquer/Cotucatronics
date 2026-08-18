@@ -213,29 +213,30 @@ nada a tratar aqui.
 `main` testa `>= 0.5`, e `MidiNorm(63)=0.496` cai abaixo enquanto
 `MidiNorm(64)=0.504` cai acima. O contrato já fazia isso funcionar.
 
-### ⚠️ PROCEDIMENTO OBRIGATÓRIO: reparear depois de todo RESET
+### ✅ REVOGADO: o pareamento SOBREVIVE ao reset (medido em 2026-08-18)
 
-**O pareamento BLE não sobrevive ao reset da placa.** Descoberto pelo dB
-em 2026-08-17, depois de uma tarde inteira de diagnóstico errado.
+Esta seção mandava, até a v0.40.0, esquecer e reparear o WIDI depois de
+todo RESET. **A regra foi revogada por medição** — não existe procedimento
+especial. Grave, teste, siga.
 
-```
-1. gravar / resetar a placa
-2. no app: ESQUECER o dispositivo WIDI
-3. parear de novo
-4. só então testar
-```
+| Medido em 18/08, v0.40.0, sem reparear | |
+|---|---|
+| depois de DFU + gravação + reset | 65 CCs, 220 bytes |
+| órfãos / ressync / perdidos / erros | 0 / 0 / 0 / 0 |
 
-**Gravar e testar MIDI não cabem no mesmo ciclo.** O RESET necessário pra
-gravar invalida o pareamento, então a ordem é sempre
-*gravar → reparear → testar*, nunca gravar no meio de um teste.
+**De onde veio a regra falsa:** o comando `bb arm` silenciava o log e não
+tinha caminho de volta. Quatro janelas de teste mediram esse silêncio e
+foram lidas como "link morto"; o pareamento virou a explicação plausível
+que preencheu o buraco. História completa no caso 8 e no adendo do
+capítulo 11 de [../docs/battle_scars.md](../docs/battle_scars.md).
 
-> **Por que isso enganou por tanto tempo:** o sintoma é `bytes 0` limpo —
-> UART reportando ESCUTANDO, zero erro, zero descarte. Idêntico a fio
-> cruzado errado, a módulo sem alimentação, a app sem autorização e a
-> central competindo. Todo zero de 2026-08-17 veio depois de um reset sem
-> reparear; todo sucesso veio depois de parear. **A regra de suspeita
-> passa a ser: `bytes 0` logo após gravar = pareamento, antes de qualquer
-> outra hipótese.**
+**O que fica da seção antiga, e continua valendo:** `bytes 0` é um sintoma
+**cego** — idêntico em fio cruzado, módulo sem alimentação, app sem
+autorização, central competindo, e log mudo. Por isso a primeira pergunta
+diante de um zero nunca é *"qual a causa?"* e sim ***"este canal está
+provado?"*** — `log on`, conferir eco, e só então interpretar. Se um
+comando de status imprimir `[LOG MUDO]`, você está olhando pro seu próprio
+silêncio.
 
 ### 🔬 MIDI SCOPE — o analisador é nosso, e roda na própria placa
 

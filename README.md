@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.19.1** — delay + vocoder aprovados juntos em placa (2026-08-16), — módulo RNBO embarcado,
+Projeto colaborativo. Estado atual: **v0.40.0** — delay + reverb + vocoder + búzios aprovados em placa, MIDI certificado sob carga (T16c, 2026-08-18), módulo RNBO embarcado,
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -57,28 +57,31 @@ Cinco regras que não se negociam:
 
 | Arquivo | Versão | O que é |
 |---|---|---|
-| [src/hal.h](src/hal.h) | **v0.10.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.15.0** | Único arquivo que pode incluir `daisy_seed.h` |
+| [src/hal.h](src/hal.h) | **v0.12.0** | O contrato. A fronteira de independência de fornecedor |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.10.0** | Único arquivo que pode incluir `daisy_seed.h` |
 | [src/module.h](src/module.h) | **v0.4.0** | Interface, **slots fixos** e registro de módulos |
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
-| [src/midi.h](src/midi.h) | **v0.1.0** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
+| [src/midi.h](src/midi.h) | **v0.2.1** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.1** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.2.0** | Wrapper duplo-clicável dos dois bancos de teste |
 | [src/module_rnbo.h](src/module_rnbo.h) | **v0.2.0** | Declaração pública do módulo RNBO. Não inclui nada do RNBO |
-| [src/module_rnbo.cpp](src/module_rnbo.cpp) | **v0.2.0** | Único arquivo que pode incluir `RNBO.h`. Alocador híbrido |
-| [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.5.0** | Vocoder no Fx2. Janela 1024 do host; MOTOR DIRIGIDO por bloco |
-| [src/main.cpp](src/main.cpp) | **v0.29.0** | Loop, callback de áudio, painel falso via serial |
-| [src/params.h](src/params.h) | **v0.6.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.28.0** | Instrumento "bancada": entrada + tom atravessando o delay |
+| [src/module_rnbo_alloc.h](src/module_rnbo_alloc.h) | **v0.1.0** | Alocador híbrido dos módulos RNBO |
+| [src/module_rnbo_delay.cpp](src/module_rnbo_delay.cpp) | — | Delay no Fx1. Inclui `RNBO.h` |
+| [src/module_rnbo_freeze.cpp](src/module_rnbo_freeze.cpp) | — | Freeze. Reprovado na etapa 5 do IFÁ10000 (7 349 µs) |
+| [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.6.0** | Vocoder no Fx2. Janela 1024 do host; MOTOR DIRIGIDO por bloco |
+| [src/main.cpp](src/main.cpp) | **v0.40.0** | Loop, callback de áudio, painel falso via serial |
+| [src/params.h](src/params.h) | **v0.6.1** | `ParamTable` + `Macro`. Sem alocação dinâmica |
+| [src/manifest.h](src/manifest.h) | **v0.41.0** | Instrumento aprovado: delay + reverb, `level 1.0`, `in_gain 8x`, mapa de 14 CCs |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
+| [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura` |
 | [docs/IFA10000.md](docs/IFA10000.md) | **vivo** | **Certificação de efeitos** — as 10 etapas que todo efeito passa |
 | [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |
-| [src/TESTES.md](src/TESTES.md) | **v0.16.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
-| [src/BOARDS.md](src/BOARDS.md) | **v0.7.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
+| [src/TESTES.md](src/TESTES.md) | **v0.21.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
+| [src/BOARDS.md](src/BOARDS.md) | **v0.10.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
 | [src/cotuca_measure.py](src/cotuca_measure.py) | **v0.1.0** | Mede a frequência de saída por FFT |
@@ -112,6 +115,13 @@ make -C ~/dev/libDaisy
 ```bash
 cd src && make BOARD=daisy_seed
 ```
+
+> ⚠️ **A manobra de gravar o dia a dia é SÓ O RESET.** `BOOT + RESET` entra
+> no DFU da **ST**, que só enxerga a flash interna — e o app mora na QSPI.
+> O sintoma é `dfu-util: Last page at 0x9007760b is not writeable`
+> (`Error 64`). `BOOT + RESET` serve pro `make program-boot`, uma vez por
+> placa. Gravação bem-sucedida diz `File downloaded successfully` e termina
+> com `Error 74` no `leave request` — isso é normal.
 
 ### O app roda da QSPI, via bootloader
 

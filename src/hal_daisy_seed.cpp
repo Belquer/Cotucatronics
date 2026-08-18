@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.9.0
+// hal_daisy_seed v0.10.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -132,6 +132,11 @@ static bool              bb_rec = false;
 constexpr int            kCdcDeadAfter = 3;
 static bool              cdc_dead      = false;
 static bool              log_muted     = false;
+// UM CANAL QUE ATRAVESSA O MUDO. So o banner de status usa. Se o
+// instrumento nao consegue dizer "estou mudo", o mudo vira armadilha:
+// foi exatamente assim que quatro medicoes viraram zero e o zero virou
+// conclusao publicada (cicatriz 8).
+static bool              log_force     = false;
 static int               cdc_fails     = 0;
 static uint32_t          log_dropped = 0;
 static volatile uint32_t q_head = 0;
@@ -318,7 +323,7 @@ void Log(const char* fmt, ...)
 
     // MUDO EM VOO: nem chega perto do USB. E o unico jeito de garantir
     // que uma chamada que nao retorna nao possa acontecer.
-    if(log_muted)
+    if(log_muted && !log_force)
     {
         log_dropped++;
         if(bb_rec) BlackboxWrite(25, (float)log_dropped);
@@ -434,6 +439,13 @@ static volatile uint32_t m_tail       = 0;
 static volatile uint32_t midi_dropped = 0;
 static volatile uint32_t midi_err      = 0; // erros de UART na ISR
 static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
+// MARCA D'AGUA DA FILA. O furo conhecido do MIDI: os bytes chegam por
+// DMA (imune a carga) mas quem DESPACHA e o loop principal, que sob
+// vocoder gasta 65% do prazo. Se o loop atrasa, a fila enche. Este e o
+// numero que fecha esse furo — nao "caiu ou nao caiu", mas QUANTO de
+// folga sobrou. Max monotonico: grava o pico e trava, nunca atualiza
+// pra baixo (regra 1 da instrumentacao).
+static volatile uint32_t midi_hiwater = 0;
 
 // Roda em ISR. Só enfileira — sem Log(), sem parser, sem params.
 static void MidiRxCallback(uint8_t*            data,
@@ -465,6 +477,12 @@ static void MidiRxCallback(uint8_t*            data,
         midi_ring[m_head] = data[i];
         m_head            = next;
     }
+    // Amostra no fim do callback: dentro dele a fila so cresce, entao
+    // aqui esta o pico desta rajada. Uma leitura por callback, nao por
+    // byte — instrumentacao que custa caro vira o defeito que mede.
+    const uint32_t fill = (m_head + kMidiRing - m_tail) % kMidiRing;
+    if(fill > midi_hiwater)
+        midi_hiwater = fill;
 }
 
 void SetMidiByteCallback(MidiByteCallback cb)
@@ -572,6 +590,8 @@ void MidiInjectByte(uint8_t b)
 
 bool     MidiRxActive() { return midi_started && midi_uart.IsListening(); }
 uint32_t MidiDropped() { return midi_dropped; }
+uint32_t MidiHiWater() { return midi_hiwater; }
+uint32_t MidiRingSize() { return (uint32_t)kMidiRing; }
 
 uint32_t NowMs() { return System::GetNow(); }
 
@@ -656,6 +676,21 @@ inline void BbFlush()
 } // namespace
 
 void LogMute(bool on) { log_muted = on; }
+bool LogMuted() { return log_muted; }
+
+// Atravessa o mudo — e SO isso. Uma linha, em contexto de comando, onde
+// a serial ja provou que recebe. Nao serve pra diagnostico em voo.
+void LogAlways(const char* fmt, ...)
+{
+    char    tmp[kLogMax];
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(tmp, kLogMax - 2, fmt, args);
+    va_end(args);
+    log_force = true;
+    Log("%s", tmp);
+    log_force = false;
+}
 
 void BlackboxArm()
 {

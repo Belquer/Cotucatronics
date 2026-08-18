@@ -24,7 +24,7 @@ Todos os bugs graves de firmware desta fase tinham **lógica correta e ordem err
 
 ---
 
-## 2. A família da instrumentação que destrói o dado (7 casos)
+## 2. A família da instrumentação que destrói o dado (8 casos)
 
 A lição mais repetida do projeto, cometida inclusive **depois de nomeada**. Instrumentação é código de produção e falha como código de produção.
 
@@ -35,6 +35,15 @@ A lição mais repetida do projeto, cometida inclusive **depois de nomeada**. In
 5. Os marcadores do HAL gravavam **fora do portão** `bb_rec` — o comando `bb` da autópsia contaminava a cena do crime.
 6. O `BlackboxArm()` ligava **no meio do processamento de uma linha serial** — M1/M2 pareavam eventos de linhas diferentes e produziram um álibi falso (M1==M2 "provando" que nenhuma linha prendia).
 7. As ~20 escritas/volta com `SCB_CleanDCache` viraram **suspeitas de criar o defeito que mediam** (inocentadas depois, mas o voo enxuto precisou existir para isso).
+8. **O mudo sem porta de saída (18/08).** O comando `bb arm` chamava `LogMute(true)` e **não existia nenhum caminho de volta** — a flag só zerava no boot. Quatro janelas seguidas de teste de MIDI reportaram "0 CCs" e eu li como link morto. O log estava mudo **porque eu mesmo tinha armado a caixa-preta numa janela anterior**: cada medição seguinte mediu o meu próprio silêncio.
+
+**A escalada, nomeada: números → conclusões.** Os casos 1 a 7 estragaram *medições* — um pico perdido, um perfil sobrescrito, um contador zerado. O caso 8 estragou uma *conclusão*, e a conclusão foi **publicada**: com base nesses quatro zeros eu commitei neste documento uma causa errada para a falha de MIDI (ver o adendo no capítulo 11). Instrumentação quebrada não para na planilha — ela chega ao registro permanente, e de lá volta como premissa da sessão seguinte.
+
+**O agravante:** o próprio comando avisava — `"caixa-preta armada; log mudo ate o proximo reset"`. A mensagem saía **uma vez**, no armamento, e eu nunca a li porque vinha antes das linhas que eu estava esperando. **Aviso que aparece uma vez não é aviso; é sorte.**
+
+**O antídoto (v0.39.0): todo comando de status denuncia os modos que silenciam.** `board`, `midi` e `mscope` imprimem `[LOG MUDO]` no cabeçalho. E o ponto fino, que é a lição de desenho: **a declaração tem que ser imune ao modo que declara.** Um banner impresso pelo `Log()` normal morreria mudo junto com todo o resto — por isso existe `LogAlways()`, que atravessa o mudo, e só o banner o usa. Antídoto que pega a mesma doença não é antídoto.
+
+Esse antídoto é o **mesmo** da cicatriz 7 do capítulo 3 (o rótulo que mentia, "transições: NENHUMA" impresso com todos os contadores zerados): as duas falhas são o instrumento **não declarando o próprio estado**, e as duas se curam obrigando-o a declarar.
 
 **Regras destiladas:** dado de evento único grava uma vez e **trava** (não atualiza). Estado vence contagem (o token de voo `in_flight` é imune ao problema do armamento; contadores pareados não são). A caixa-preta arma **por comando explícito no início do voo**, nunca no meio de um fluxo. A sessão de leitura não escreve nada. Escritas em backup SRAM em **lote** (acumular em DTCM, um flush por volta ou por evento, struct `alignas(32)`).
 
@@ -187,6 +196,41 @@ Não era link instável, nem 5V no pino de 3V3, nem brown-out do rail, nem
 central competindo — era procedimento de operação que ninguém tinha
 escrito. **Gravar e testar MIDI não cabem no mesmo ciclo.**
 
+> **ADENDO DE 18/08 — esta conclusão foi publicada em cima de silêncio
+> auto-infligido.** Ela continua acima, sem corte, porque o registro do
+> que eu concluí importa tanto quanto a correção.
+>
+> As quatro janelas de "0 CCs" que sustentaram o *"não sobrevive ao
+> reset"* aconteceram **com o log mudo pelo meu próprio `bb arm`** (caso 8
+> do capítulo 2). Elas não mediram o link: mediram o meu silêncio. **O
+> pareamento pode ou não sobreviver ao reset — nós ainda não sabemos, e o
+> que estava escrito aqui como causa confirmada não estava confirmado.**
+>
+> O que permanece verdadeiro e independente do erro: o dB observou por
+> conta própria que reparear fazia funcionar, e o loopback (113 mensagens,
+> zero órfãos) prova o caminho **dentro** da placa. O que cai é a
+> atribuição de causa exclusiva.
+>
+> A revalidação está desenhada: gravar (o que já é um reset) → **não
+> reparear** → `log on` e conferir eco → só então `mscope stats`. Sem eco
+> confirmado, aborta e não interpreta. **Qualquer resultado é lucro:** ou
+> some uma burocracia inventada, ou o procedimento vira dado.
+>
+> **RESOLVIDO no mesmo dia, por medição: o pareamento SOBREVIVE ao reset.**
+> Firmware v0.40.0 gravado (DFU + gravação + reset, sem reparear nada),
+> canal provado por eco, fader movido: **65 CCs, 220 bytes, zero órfãos,
+> zero ressync, zero perdidos.** A causa que este capítulo publicou está
+> **refutada**, não apenas em dúvida. Não havia fenômeno de BLE nenhum —
+> havia um log que eu tinha mandado calar. **O procedimento
+> "gravar → reparear → testar" era superstição nascida do caso 8**, e o
+> BOARDS.md pode voltar a ser simples.
+>
+> A lição que sobra é sobre a forma do erro, não sobre BLE: **uma
+> explicação plausível preencheu o buraco que a medição quebrada abriu, e
+> depois se defendeu sozinha** — cada novo zero parecia confirmá-la, porque
+> cada novo zero vinha da mesma instrumentação quebrada. Hipótese que se
+> alimenta do próprio defeito não é hipótese; é eco.
+
 O que me cegou: `bytes 0` é idêntico em todas as causas — fio cruzado,
 módulo sem alimentação, app sem autorização, central competindo, e
 pareamento velho. Eu tinha o sintoma certo e nenhuma forma de distinguir,
@@ -225,7 +269,7 @@ acidente.)
 
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.
 
 ---
 
