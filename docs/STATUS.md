@@ -120,6 +120,23 @@ IFÁ10000 ganhou a **etapa 0 — MEDIÇÃO LIMPA**.
 
 ---
 
+## Ganho sonoro não planejado (18/08): o grave voltou
+
+Aceite do dB, sem eu ter mexido em nada de timbre: **"presença de grave que
+nunca teve antes, muito melhor sonoramente."**
+
+**Causa, verificada no código:** o passa-alta de 120 Hz mora dentro do bloco
+do Fx2. Vocoder fora ⇒ slot vazio ⇒ `fx2_want` falso ⇒ bloco pulado ⇒ **sem
+filtro**. Ele existia só pra conter o estouro de grave que o vocoder
+causava, e saiu junto com a causa porque foi instalado no escopo certo.
+
+**Contribuição secundária, não medida:** `block_size` de 256 → 48 derruba a
+latência de 5,3 ms pra 1 ms. Num instrumento realimentado isso desloca onde
+o laço acústico se estabelece e aperta o transiente. Plausível e não
+isolado — se quisermos o número, é um voo com uma variável.
+
+---
+
 ## Defeitos abertos
 
 **🔴 A serial morre com o vocoder ligado — prioridade 1.**

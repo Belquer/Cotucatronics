@@ -40,14 +40,20 @@ HAL_SRC = hal_$(BOARD).cpp
 # contra 2667 de orcamento) e ocupava 89% do pool de SRAM, que o
 # vocoder precisa. O arquivo continua no repo — module_rnbo_freeze.cpp
 # aponta pra modules/xxxfreeze/ — pra voltar quando o patch emagrecer.
-# VOCODER LIGADO (2026-08-16, export novo do dB). Os dois modulos no
-# build: delay no slot Instrument, vocoder no Fx2. Exige block_size 256
-# no manifest — os dois arquivos mudam JUNTOS, e e por isso que o
-# comentario esta nos dois.
+# VOCODER FORA (2026-08-18, decisao de ouvido do dB). Sobra o delay no
+# slot Instrument, e o slot Fx2 fica VAZIO — passthrough silencioso,
+# nao erro. O block_size voltou pra 48 no manifest na mesma leva: o 256
+# era exigencia da FFT do vocoder e saiu junto com ela. Os dois
+# arquivos mudam JUNTOS, e e por isso que a nota esta nos dois.
 #
-# Pra voltar ao estado instrumento: tira o vocoder daqui e poe 48 no
-# manifest. O freeze segue fora — nao cabe em prazo nenhum (7 349 us).
-MODULE_SRC ?= module_rnbo_delay.cpp module_rnbo_vocoder.cpp
+# Pra reviver: devolve module_rnbo_vocoder.cpp aqui e poe 256 la. O
+# export, o wrapper, os binds e a cerca de La menor dos buzios seguem
+# no repo, comentados e conferidos — a volta e de minutos.
+#
+# O FREEZE que entrou no lugar NAO e este module_rnbo_freeze.cpp: e o
+# freeze.h, granular em C++ no shell. O RNBO foi reprovado na etapa 5
+# do IFA10000 (7 349 us contra 2 667 de orcamento) e segue fora.
+MODULE_SRC ?= module_rnbo_delay.cpp
 
 # UM runtime pros dois patchers. Os exports vieram com versoes
 # diferentes (delay 1.4.3, freeze 1.4.5), mas elas diferem em 3

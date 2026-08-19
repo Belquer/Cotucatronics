@@ -267,6 +267,82 @@ acidente.)
 
 ---
 
+## 11b. O conserto que quase sobreviveu ao problema (18/08)
+
+Com o vocoder fora do build, o dB ouviu o instrumento e disse: **"o som está
+com uma presença de grave que nunca teve antes, muito melhor sonoramente."**
+
+A causa está em uma linha de escopo. O passa-alta de 120 Hz vive **dentro**
+do bloco do Fx2, e `fx2_want` exige um módulo no slot:
+
+```cpp
+const bool fx2_want = fx2 && params.Real(manifest.p_fx2_on) >= 0.5f;
+```
+
+Slot vazio ⇒ bloco pulado ⇒ **filtro não existe mais**. O grave do piezo
+passa inteiro.
+
+**Por que isso é um acerto e não sorte.** Aquele filtro nasceu pra tratar um
+defeito *do vocoder* — o estouro de grave que só acontecia com ele ligado. O
+estouro se **ouvia na saída**, então o lugar óbvio pra filtrar era o master.
+A decisão foi outra, e está escrita no manifest: *"NO CAMINHO DO FX2, não no
+master: sem vocoder não estoura."*
+
+Se tivesse ido pro master, ele teria sobrevivido à saída do vocoder e o
+instrumento ficaria fino **para sempre**, sem ninguém saber por quê — um
+filtro sem dono, tratando um problema que não existe mais.
+
+**A regra:** *um conserto pertence ao escopo do defeito, não ao lugar onde o
+sintoma aparece.* Filtro que existe por causa de um efeito mora no caminho
+daquele efeito. Quando o efeito sai, o conserto sai junto — de graça, sem
+ninguém precisar lembrar.
+
+O corolário incomoda mais: **todo conserto instalado fora do escopo do seu
+defeito vira dívida invisível.** Ele continua rodando depois que a razão
+morreu, e o custo aparece como "o instrumento sempre soou assim".
+
+---
+
+## 11c. O cabo (18/08) — cinco hipóteses, nenhuma certa
+
+A placa passou horas "morta": USB enumerava, DFU gravava, e o app não dava
+sinal — sem banner, sem resposta, sem som. **A causa era o cabo USB.** Com um
+cabo curto, tudo voltou ao normal. Quem achou foi o dB, trocando o cabo.
+
+**O que eu testei, e o veredito de cada uma:**
+
+| Hipótese minha | Como testei | Veredito |
+|---|---|---|
+| freeze quebrando o boot | build com o freeze fora | ❌ mesma falha |
+| alimentação / rail com o WIDI | só USB, WIDI fora | ❌ mesma falha |
+| cabo ou USB do host | DFU enumera e grava | ❌ *(conclusão errada)* |
+| QSPI corrompida | leitura de volta = ruído | ❌ era upload não suportado |
+| `cdc_dead` sem retentativa | conserto gravado | ❌ sintoma idêntico |
+
+**As bissecções foram bem feitas e a conclusão foi errada.** Cada teste
+isolou uma variável e deu resposta limpa; o problema é que a variável certa
+nunca entrou na lista como *suspeita ativa* — eu a marquei como **descartada**
+logo no começo, porque "o DFU enumera e grava, logo o cabo está bom".
+
+**O erro de raciocínio, que é o que vale guardar:** DFU e app usam o mesmo
+cabo mas **não o mesmo regime**. O bootloader faz transferências curtas, em
+rajada, sem áudio rodando; o app mantém CDC contínuo com o loop e o áudio
+disputando. **Um cabo marginal passa no primeiro e falha no segundo.** Provar
+que o cabo serve pro DFU não prova que ele serve pro app — e eu tratei como
+se provasse.
+
+**A regra:** *descartar um suspeito exige testá-lo no regime em que o defeito
+aparece.* Descarte feito em outro regime não é descarte, é mudança de
+assunto. E suspeito descartado cedo demais some da lista — não é reexaminado
+por mais bissecções que se faça depois, porque bissecção só divide o espaço
+que sobrou.
+
+> Custou horas de sessão, seis gravações, um conserto no alvo errado
+> (legítimo, mas não era a causa) e três afirmações minhas de "isso fecha o
+> diagnóstico" que não fechavam nada.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.

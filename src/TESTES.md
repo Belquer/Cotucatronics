@@ -1107,6 +1107,65 @@ carga.
 
 ---
 
+## T17 — QUARENTENA DE RECONEXÃO: o som não muda sem gesto · ⏳ NOVO
+
+**O caso de campo (2026-08-18).** Transições de link BLE fazem o iOS/Loopy
+reenviar a posição de todos os widgets de uma vez. O instrumento obedecia:
+**som silenciado na desconexão, e freeze com `frz_size` no teto na
+reconexão** — comandos que ninguém deu, aplicados como se fossem gesto.
+
+**A defesa** (main.cpp v0.44.0): todo CC que chega depois de silêncio
+> 5 s fica **seguro por até 100 ms sem ser aplicado**. Se dentro da janela
+aparecerem ≥ 4 CCs **distintos**, é dump: descarta tudo o que estava
+seguro e bloqueia por 500 ms. Senão, libera na ordem e a vida segue.
+
+> **Por que segurar antes de decidir.** O gatilho é o *quarto* CC
+> distinto. Bloquear a partir dali deixaria os **três primeiros**
+> entrarem — e com 14 CCs no mapa, três bastam pro estrago observado.
+
+### Fase 1 — capturar a rajada real (o dado que ainda não temos)
+
+```
+log on            → conferir eco
+mscope on
+```
+Conectar e desconectar o WIDI **com o scope ligado**. Registrar: **quais
+CCs, quais valores, e o timing**. A caixa-preta carimba (slots 87 e 89).
+
+**Critério:** ter em mãos o perfil da rajada — sem ele, o limiar de 4 CCs
+distintos é hipótese razoável, não número medido.
+
+### Fase 2 — o ciclo de 5
+
+Instrumento **tocando**, com o delay e o reverb no estado aprovado:
+
+```
+1. conectar    → o som mudou? 
+2. desconectar → o som mudou?
+   ... 5 vezes
+midi     → quantos CCs a quarentena recusou
+ble      → quantas (re)conexões foram detectadas
+```
+
+**Passa se: o som NÃO muda em nenhuma das 10 transições sem que alguém
+tenha encostado num controle.** Qualquer mudança audível sem gesto é
+reprovação, mesmo que os contadores digam que a quarentena atuou.
+
+**Falso positivo a vigiar:** um gesto humano legítimo barrado. O perfil é
+diferente — fader real é **um** CC repetido em rampa, dois dedos são
+**dois** CCs — mas o teste tem que confirmar que tocar normalmente depois
+de uma pausa continua funcionando. Custo declarado: o primeiro gesto
+depois de 5 s parado chega com até 100 ms de atraso, uma vez só.
+
+### Defesa em profundidade (fora da placa)
+
+Investigar no Loopy se existe *"send state on connect"* pra desligar na
+origem. **Não substitui a nossa** — um app de terceiro no caminho crítico
+é exatamente o que este projeto evita —, mas se existir, some a causa em
+vez de filtrar o sintoma.
+
+---
+
 ## Catálogo forense — quando o instrumento destrói o próprio dado
 
 Sete casos numa sessão, e o padrão vale mais que qualquer um deles:

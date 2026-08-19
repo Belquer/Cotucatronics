@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.40.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.47.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.40.0"
+#define COTUCA_OS_VERSION "0.47.0"
 
 #include "hal.h"
 #include "params.h"
@@ -13,6 +13,7 @@
 #include "module.h"
 #include "dynamics.h"
 #include "reverb.h"
+#include "freeze.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -72,7 +73,71 @@ static cotuca::MidiParser midi;
 // Chamado pelo parser quando um CC completo passou pelo filtro de
 // canal. Roda no LOOP PRINCIPAL, não em ISR — hal::PollMidi() é quem
 // despacha, exatamente como PollSerial() faz com as linhas.
-static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
+// ---- DIAGNOSTICO DE RADIO (camada 2 do sistema WIDI/BLE) ----
+//
+// E o mscope da camada de radio, e a filosofia e a mesma: a ferramenta e
+// NOSSA e nenhum app de terceiro entra no caminho critico. O mscope
+// responde "o que chegou"; isto responde "o link esta vivo, e se nao
+// esta, ha quanto tempo parou".
+//
+// A distincao que o comando existe pra fazer: `bytes 0` e IDENTICO em
+// "nunca conectou" e em "conectou e caiu", e os consertos sao
+// diferentes. Idade do ultimo byte separa os dois em uma linha.
+static uint32_t ble_last_rx_ms   = 0; // 0 = nunca recebeu nada
+static uint32_t ble_last_bytes   = 0;
+static uint32_t ble_session_base = 0; // CcCount no inicio da sessao
+static uint32_t ble_drops        = 0;
+static uint32_t ble_reconnects   = 0;
+static bool     ble_drop_flagged = false;
+
+// ============================================================
+// QUARENTENA DE RECONEXAO — o detector de dump virou DEFESA
+//
+// CASO DE CAMPO (18/08): transicoes de link BLE fazem o iOS/Loopy
+// reenviar a posicao de todos os widgets de uma vez. O instrumento
+// obedecia: som silenciado na desconexao, e freeze com frz_size no
+// TETO na reconexao. Comandos fantasma, que ninguem deu.
+//
+// O detector ja existia como SENSOR (>= 4 CCs distintos em < 100 ms
+// apos silencio > 5 s = provavel reconexao). Aqui ele vira portao.
+//
+// POR QUE SEGURAR ANTES DE DECIDIR, e nao bloquear depois de detectar:
+// o gatilho e o QUARTO CC distinto. Bloquear a partir dali deixaria os
+// TRES PRIMEIROS entrarem — e com 14 CCs no mapa, tres bastam pro
+// estrago observado (um deles ja seria o frz_size). Entao todo CC que
+// chega depois de silencio > 5 s fica SEGURO por ate 100 ms, sem ser
+// aplicado, ate a duvida se resolver:
+//
+//   confirmou dump  -> descarta tudo o que estava seguro + 500 ms de
+//                      quarentena. Nada fantasma encosta em parametro.
+//   nao confirmou   -> libera o segurado NA ORDEM, e a vida segue.
+//
+// O CUSTO, declarado: o primeiro gesto depois de 5 s parado chega com
+// ate 100 ms de atraso. Uma vez, e so depois de silencio. Um fader
+// varrido continua instantaneo, porque a partir do segundo CC a janela
+// ja se resolveu.
+//
+// POR QUE O FALSO POSITIVO E DESPREZIVEL: gesto humano nao tem esse
+// perfil. Um fader real e UM CC repetido em rampa; dois dedos sao dois
+// CCs. Quatro CCs DISTINTOS no mesmo centesimo de segundo nao e mao —
+// e maquina reenviando estado.
+static constexpr uint32_t kQuarWindowMs   = 100;  // janela de decisao
+static constexpr uint32_t kQuarBlockMs    = 500;  // bloqueio apos confirmar
+static constexpr uint32_t kQuarSilenceMs  = 5000; // silencio que abre suspeita
+static constexpr int      kQuarDistinct   = 4;    // CCs distintos = dump
+static constexpr int      kQuarHoldMax    = 16;
+
+struct HeldCc { uint8_t cc, value; };
+static HeldCc   quar_held[kQuarHoldMax];
+static int      quar_held_n   = 0;
+static uint8_t  quar_seen[kQuarHoldMax];
+static int      quar_seen_n   = 0;
+static uint32_t quar_win      = 0; // 0 = sem janela aberta
+static uint32_t quar_block_to = 0; // fim do bloqueio confirmado
+static uint32_t quar_last_ms  = 0;
+static uint32_t cc_quarentena = 0; // CCs recusados — visivel no `midi`
+
+static void ApplyCcNow(uint8_t cc, uint8_t value)
 {
     // O mapa é do manifest, e aplicá-lo também: ver Manifest::ApplyMidiCc.
     // CC fora do mapa devolve -1 e é ignorado de propósito — mas o
@@ -81,6 +146,91 @@ static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
     // ver nada.
     if(manifest.ApplyMidiCc(params, cc, value) >= 0)
         midi.NoteApplied(); // CC que achou dono; fora do mapa nao conta
+}
+
+static void QuarFlush()
+{
+    for(int i = 0; i < quar_held_n; i++)
+        ApplyCcNow(quar_held[i].cc, quar_held[i].value);
+    quar_held_n = 0;
+    quar_win    = 0;
+}
+
+// Chamado do loop principal. Existe porque a janela pode expirar SEM
+// que chegue outro CC — o humano que mexeu uma vez e parou. Sem este
+// tique o gesto dele ficaria seguro pra sempre.
+static void QuarTick()
+{
+    using namespace cotuca;
+    if(quar_win && (hal::NowMs() - quar_win) > kQuarWindowMs)
+        QuarFlush();
+}
+
+static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
+{
+    using namespace cotuca;
+    const uint32_t now = hal::NowMs();
+
+    // 1) Bloqueio confirmado: o CC e REGISTRADO pelo parser (ja
+    //    aconteceu antes daqui) mas nao encosta em parametro.
+    if(quar_block_to)
+    {
+        if(now < quar_block_to)
+        {
+            cc_quarentena++;
+            return;
+        }
+        quar_block_to = 0;
+    }
+
+    const uint32_t gap = quar_last_ms ? (now - quar_last_ms) : 0xFFFFFFFFu;
+    quar_last_ms       = now;
+
+    // 2) Primeiro CC depois de silencio longo: abre a duvida.
+    if(gap > kQuarSilenceMs)
+    {
+        quar_win    = now ? now : 1u;
+        quar_seen_n = 0;
+        quar_held_n = 0;
+    }
+
+    // 3) Dentro da janela: SEGURA, nao aplica.
+    if(quar_win && (now - quar_win) <= kQuarWindowMs)
+    {
+        bool ja = false;
+        for(int i = 0; i < quar_seen_n; i++)
+            if(quar_seen[i] == cc) ja = true;
+        if(!ja && quar_seen_n < kQuarHoldMax)
+            quar_seen[quar_seen_n++] = cc;
+        if(quar_held_n < kQuarHoldMax)
+            quar_held[quar_held_n++] = {cc, value};
+
+        if(quar_seen_n >= kQuarDistinct)
+        {
+            // CONFIRMADO. Descarta o que estava seguro — inclusive os
+            // tres primeiros, que e o ponto inteiro deste desenho.
+            cc_quarentena += (uint32_t)quar_held_n;
+            quar_held_n   = 0;
+            quar_win      = 0;
+            quar_block_to = now + kQuarBlockMs;
+            ble_reconnects++;
+            hal::BlackboxWrite(87, (float)ble_reconnects);
+            hal::BlackboxWrite(89, (float)cc_quarentena);
+            hal::Log("ble: DUMP DE RECONEXAO barrado — %d CCs distintos"
+                     " em <%lu ms apos silencio. %lu CCs recusados,"
+                     " %lu ms de quarentena.",
+                     quar_seen_n, (unsigned long)kQuarWindowMs,
+                     (unsigned long)cc_quarentena,
+                     (unsigned long)kQuarBlockMs);
+        }
+        return;
+    }
+
+    // 4) Janela expirou sem dump: libera o segurado, na ordem.
+    if(quar_win)
+        QuarFlush();
+
+    ApplyCcNow(cc, value);
 }
 
 static void OnMidiByte(uint8_t b) { midi.Byte(b); }
@@ -184,6 +334,37 @@ static float note_peak[13] = {};
 static cotuca::HighPass fx2_hp_l, fx2_hp_r;
 static cotuca::Reverb reverb;
 static bool           reverb_ok = false;
+
+// FREEZE — bloco permanente do shell, no lugar que era do vocoder na
+// cadeia. Ver freeze.h pro porquê de ser C++ e não módulo RNBO.
+//
+// O buffer vai pra SDRAM via AllocBig e ISSO ESTA CERTO, ao contrário
+// do reverb, que teve que sair de lá. A diferença é o PADRAO DE
+// ACESSO, que a etapa 4 do IFA10000 existe pra perguntar:
+//
+//   reverb : 48 leituras ESPALHADAS por amostra (8 combs + 4 allpass,
+//            estéreo) — cada uma num buffer diferente, cada uma um
+//            provável miss. SDRAM custou +12,9 pontos de CPU.
+//   freeze : 4 leituras SEQUENCIAIS por amostra (2 grãos x 2 canais),
+//            avançando uma posição por amostra. A linha de cache
+//            trazida serve as próximas 16 leituras.
+//
+// Mesma região, custo diferente, porque a pergunta certa nunca foi
+// "quantos bytes" e sim "de que jeito".
+static cotuca::Freeze freeze;
+static bool           freeze_ok = false;
+static float*         freeze_mem = nullptr;
+// 2 s estéreo a 48 kHz = 192 000 floats = 768 KB. Dois segundos porque
+// é o que sustenta uma batida inteira da escultura com cauda; abaixo
+// de ~1 s a varredura volta ao início rápido demais e o ouvido acha o
+// laço, que é exatamente o defeito que este bloco existe pra não ter.
+static constexpr float kFreezeSeconds = 2.0f;
+
+// BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
+// aloca, nao inicializa e nao entra no callback — se o som e a serial
+// voltarem, o culpado esta isolado; se nao voltarem, esta em outro
+// lugar e o freeze fica inocentado por medicao, nao por opiniao.
+#define COTUCA_FREEZE_ENABLED 1
 
 // BUFFERS DO REVERB EM SRAM, NAO SDRAM — e a diferenca foi medida.
 //
@@ -671,6 +852,32 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             out[1][i] = fx_buf[1][i] * g;
         }
     }
+
+    // 4.4) FREEZE — PÓS-DELAY, PRÉ-REVERB.
+    //
+    // A posição é a decisão musical inteira. Antes do reverb, o
+    // congelado ganha a sala JUNTO com o resto — pertence ao mesmo
+    // lugar que o instrumento vivo. Depois do reverb, ele viria seco
+    // por cima de uma sala que continua molhando o vivo, e soaria
+    // colado, não pertencente.
+    //
+    // Isto roda a cada bloco mesmo com `frz_on` em 0: enquanto não
+    // congela, o freeze é um gravador silencioso que não toca no
+    // áudio. Ele PRECISA gravar sempre — congelar só o que já passou
+    // é a única forma de o gesto pegar o som que acabou de acontecer.
+#if COTUCA_FREEZE_ENABLED
+    if(freeze_ok)
+    {
+        freeze.SetMix(params.Real(manifest.p_frz_mix));
+        freeze.SetSize(params.Real(manifest.p_frz_size));
+        // Borda decidida DENTRO do freeze (SetFrozen ignora repetição),
+        // então empurrar o estado a cada bloco é barato e não cria
+        // corrida: quem arma e quem consome são o mesmo contexto.
+        freeze.SetFrozen(params.Real(manifest.p_frz_on) >= 0.5f);
+        for(size_t i = 0; i < size; i++)
+            freeze.Process(out[0][i], out[1][i]);
+    }
+#endif
 
     // 4.5) REVERB — PÓS-FX2, PRÉ-LEVEL.
     //
@@ -1170,6 +1377,24 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "cpu", 3) == 0)
     {
+        // `cpu reset` ZERA O PICO. A etapa 5 do IFA10000 exige, com
+        // essas palavras, "pico, com o medidor zerado entre as
+        // leituras" — e ate a v0.42.0 a ferramenta pra fazer isso nao
+        // existia. O `strncmp(...,3)` casava com "cpu reset" e so
+        // imprimia: duas leituras seguidas devolviam o mesmo pico
+        // acumulado desde o boot, e a segunda parecia medicao sendo
+        // eco da primeira.
+        {
+            const char* a = line + 3;
+            while(*a == ' ') a++;
+            if(strncmp(a, "reset", 5) == 0 || strncmp(a, "zero", 4) == 0)
+            {
+                hal::CpuLoadReset();
+                hal::Log("cpu: pico zerado — a proxima leitura vale a"
+                         " partir de agora");
+                return;
+            }
+        }
         // O prazo do bloco em microssegundos. Reportar % sozinho
         // engana quando se compara tamanhos de bloco diferentes: 50%
         // de 1 ms e 50% de 2,67 ms sao cargas MUITO diferentes em
@@ -1277,6 +1502,40 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRestarts());
         return;
     }
+    if(strncmp(line, "ble", 3) == 0)
+    {
+        declara_modos();
+        const uint32_t now = hal::NowMs();
+        const uint32_t age = ble_last_rx_ms ? (now - ble_last_rx_ms) : 0u;
+        hal::Log("ble: ultimo byte ha %s%.1f s | msgs da sessao %lu",
+                 ble_last_rx_ms ? "" : "(nunca recebeu) ",
+                 (double)age / 1000.0,
+                 (unsigned long)(midi.CcCount() - ble_session_base));
+        hal::Log("  CCs recusados pela quarentena: %lu",
+                 (unsigned long)cc_quarentena);
+        hal::Log("  silencios >10 s: %lu | (re)conexoes detectadas %lu",
+                 (unsigned long)ble_drops, (unsigned long)ble_reconnects);
+        // O VEREDITO, que e o que se olha no palco. Silencio nao e
+        // diagnostico: silencio ANTES de qualquer trafego significa
+        // "nunca conectou"; DEPOIS de trafego significa "caiu". Sao
+        // consertos diferentes, e a serie de zeros e identica nos dois.
+        const bool keepalive = midi.RealTime() > 0;
+        const char* v;
+        if(!ble_last_rx_ms)   v = "NUNCA RECEBEU — parear / conferir fio";
+        else if(age > 2000u)
+            v = keepalive
+                    ? "SEM KEEPALIVE — o controlador mandava Active"
+                      " Sensing e parou: QUEDA provavel"
+                    : "SEM TRAFEGO — e so isso. Silencio NAO distingue"
+                      " 'ninguem mexeu' de 'link caiu': olhe o LED";
+        else                  v = "VIVO";
+        hal::Log("  veredito: %s", v);
+        if(!keepalive)
+            hal::Log("  (sem Active Sensing neste link — o contador"
+                     " acima conta SILENCIOS, nao quedas)");
+        hal::Log("  arvore de decisao completa: BOARDS.md, 'Bluetooth parou'");
+        return;
+    }
     if(strncmp(line, "log ", 4) == 0)
     {
         const bool on = (strncmp(line + 4, "on", 2) == 0);
@@ -1316,6 +1575,8 @@ static void HandleLine(const char* line)
         // FURO DO PollMidi, fechado com numero: os bytes entram por DMA
         // (imune a carga), mas quem despacha e o loop. A marca d'agua diz
         // quanta folga sobrou entre uma volta e outra.
+        hal::Log("  quarentena: %lu CCs recusados (dumps de reconexao)",
+                 (unsigned long)cc_quarentena);
         hal::Log("  fila: pico %lu de %lu bytes (%.0f%% cheia no pior caso)",
                  (unsigned long)hal::MidiHiWater(),
                  (unsigned long)hal::MidiRingSize(),
@@ -1357,7 +1618,7 @@ static void HandleLine(const char* line)
         hal::BlackboxWrite(35, (float)midi.Applied());
         hal::BlackboxWrite(36, (float)midi.Resync());
         hal::BlackboxWrite(37, (float)hal::MidiDropped());
-        hal::BlackboxWrite(41, (float)hal::MidiHiWater()); // 38 ja e MidiErrors
+        hal::BlackboxWrite(85, (float)hal::MidiHiWater()); // 41 e do diario (40+min)
         for(int i = 0; i < manifest.n_midi; i++)
             hal::Log("  cc %-3d -> %s",
                      manifest.midi_map[i].cc,
@@ -1546,7 +1807,27 @@ int main(void)
                  (unsigned)(sizeof(reverb_mem) / 1024));
     }
 
+    // FREEZE: mesma regra de ordem do reverb — alocar e inicializar
+    // ANTES do StartAudio. E o tamanho é PERGUNTADO ao freeze, nunca
+    // fixado aqui: se a taxa mudar, o pedido acompanha sozinho.
+    {
+#if COTUCA_FREEZE_ENABLED
+        const float  sr   = hal::Info().sample_rate;
+        const size_t need = cotuca::Freeze::FloatsNeeded(sr, kFreezeSeconds);
+        freeze_mem = (float*)hal::AllocBig(need * sizeof(float));
+        if(freeze_mem)
+            freeze_ok = freeze.Init(sr, freeze_mem, need, kFreezeSeconds);
+        hal::Log("freeze: %s (%.1f s, %u floats, %u KB em SDRAM)",
+                 freeze_ok ? "pronto" : "SEM BUFFER — passthrough",
+                 (double)kFreezeSeconds, (unsigned)need,
+                 (unsigned)(need * sizeof(float) / 1024));
+#else
+        hal::Log("freeze: DESLIGADO no build (bisseccao)");
+#endif
+    }
+
     hal::SetSerialLineCallback(HandleLine);
+
     hal::StartAudio(AudioCb);
     hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION " [%s] — pronto.",
              hal::Info().name);
@@ -1710,6 +1991,60 @@ int main(void)
         // normal, onde mexer em params e logar é seguro.
         FASE(6);
         hal::PollMidi();
+        // A janela de quarentena pode expirar sem que chegue outro
+        // CC — o humano que mexeu uma vez e parou. Sem este tique o
+        // gesto dele ficaria seguro pra sempre.
+        QuarTick();
+
+        // ---- SENSOR DE RADIO. Roda logo depois do despacho, porque e
+        // aqui que os contadores acabaram de ser atualizados.
+        {
+            const uint32_t now = hal::NowMs();
+            const uint32_t b   = midi.Bytes();
+            const uint32_t cc  = midi.CcCount();
+
+            // QUEDA: silencio > 10 s DEPOIS de ter havido trafego. A
+            // condicao "depois de trafego" e o que separa queda de
+            // "nunca conectou" — sem ela, uma placa que nunca pareou
+            // acumularia uma "queda" a cada 10 s.
+            // SILENCIO NAO E QUEDA — e so silencio.
+            //
+            // Este contador ja mentiu uma vez (18/08): disse "provavel
+            // QUEDA" quando o dB simplesmente parou de mexer no fader,
+            // com o link intacto. Cicatriz 7, o rotulo que mente, e
+            // escrita por mim horas depois de eu documentar a regra.
+            //
+            // MIDI so fala quando alguem toca. Sem keepalive chegando,
+            // "sem trafego" e IDENTICO em "ninguem encostou" e "o radio
+            // morreu", e nenhuma logica sobre o fluxo de RX separa os
+            // dois. Quem separa e o LED da camada 1 — e por isso que a
+            // camada 1 existe.
+            //
+            // A excecao mensuravel: se o controlador manda Active
+            // Sensing (realtime), ai sim existe batimento cardiaco, e a
+            // ausencia dele PASSA a significar queda. Enquanto
+            // RealTime() for 0, isto conta SILENCIOS, nao quedas.
+            if(ble_last_rx_ms && !ble_drop_flagged
+               && (now - ble_last_rx_ms) > 10000u)
+            {
+                ble_drop_flagged = true;
+                ble_drops++;
+                hal::BlackboxWrite(86, (float)ble_drops);
+                hal::BlackboxWrite(88, (float)((now - ble_last_rx_ms) / 1000u));
+            }
+
+            if(b != ble_last_bytes)
+            {
+                ble_last_bytes = b;
+                ble_last_rx_ms = now;
+                ble_drop_flagged = false; // voltou: rearma pra proxima
+            }
+
+            // O DETECTOR DE DUMP MUDOU DE LUGAR (18/08): virou o gate
+            // em OnMidiCc, porque sensor que avisa depois de o comando
+            // ja ter sido aplicado nao defende nada. Ver a QUARENTENA
+            // DE RECONEXAO no topo deste arquivo.
+        }
 
         // ---- DIARIO DE BORDO DO LINK MIDI ----
         //
@@ -1769,7 +2104,7 @@ int main(void)
                 hal::BlackboxWrite(35, (float)midi.Applied());
                 hal::BlackboxWrite(36, (float)midi.Resync());
                 hal::BlackboxWrite(37, (float)hal::MidiDropped());
-                hal::BlackboxWrite(41, (float)hal::MidiHiWater()); // 38 ja e MidiErrors
+                hal::BlackboxWrite(85, (float)hal::MidiHiWater()); // 41 e do diario (40+min)
                 hal::BlackboxWrite(38, (float)hal::MidiErrors());
                 hal::BlackboxWrite(39, (float)hal::MidiRestarts());
             }

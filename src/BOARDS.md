@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.10.0**
+**Documento v0.11.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -286,6 +286,117 @@ projeto**. Ferramenta de diagnóstico que segura o loop é o próximo
 `DelayMs` (ver cap. 7 do [battle_scars](../docs/battle_scars.md)). **Os
 contadores nunca mentem; o stream sim** — e é por isso que existe o modo
 `stats`, em que o dilúvio vira uma linha por segundo.
+
+### 📡 DIAGNÓSTICO WIDI/BLE — três camadas, nenhum app de terceiro
+
+O `mscope` responde *"o que chegou"*. Ele nunca soube responder *"o rádio
+está vivo?"* — e essa é a pergunta do palco. Este é o mscope da camada de
+rádio, mesma filosofia: **a ferramenta é nossa e nenhum app de terceiro
+entra no caminho crítico.**
+
+#### Camada 1 — o LED no pad LB
+
+LED + 470 Ω soldados no pad **LB** do WIDI Core, com **V3 como fonte**.
+
+Legenda oficial do módulo, conforme a **CME**:
+
+| LED | Significa |
+|---|---|
+| pisca lento | anunciando (advertising) — ninguém conectado |
+| fixo | conectado |
+
+> ⚠️ **Procedência:** esta legenda vem da documentação da CME, repassada
+> pelo dB — **não foi verificada por medição nossa**. A distinção importa
+> porque já inventei um LED que este módulo não tinha; o que está escrito
+> aqui é o que o fabricante diz, não o que a bancada provou. Se a bancada
+> discordar, quem manda é a bancada, e esta tabela muda.
+
+#### A matriz LED × mscope — seis quadrantes, um culpado cada
+
+O LED sozinho não basta, o `mscope` sozinho não basta. **Cruzados, cada
+combinação tem um culpado só** — que é exatamente o que faltava quando
+`bytes 0` era compatível com cinco causas ao mesmo tempo.
+
+| LED | tráfego no `mscope` | O que está acontecendo | Culpado / conserto |
+|---|---|---|---|
+| pisca lento | zero | anunciando, ninguém conectou | **a central**: parear; Forget Device se recusar |
+| pisca lento | chegando | contradição — não deveria existir | **a instrumentação**: LED mal soldado, ou pad errado. O rádio está bem |
+| fixo | zero | conectado, e mesmo assim nada chega | **o app**: não está mandando, CC fora do mapa, ou canal alheio |
+| fixo | chegando | ✅ tudo certo | — |
+| apagado | zero | módulo sem alimentação | **a energia**: rail de 5 V, fio, solda |
+| apagado | chegando | rádio funcionando, LED não | **o LED**, não o link. Ignore e siga tocando |
+
+A linha que mais paga o trabalho de soldar é a terceira: **fixo + zero**
+era, até aqui, indistinguível de tudo o mais. Ela separa "o rádio falhou"
+de "o rádio está ótimo e o problema é o que você configurou no iPad".
+
+#### Camada 2 — o comando `ble`
+
+```
+ble
+```
+
+Responde quatro coisas que o `midi` nunca soube:
+
+- **idade do último byte** — a medida que separa *"nunca conectou"* de
+  *"conectou e caiu"*. `bytes 0` é idêntico nos dois; idade não é.
+- **mensagens da sessão** — zeradas a cada (re)conexão detectada.
+- **quedas** — silêncio > 10 s **depois** de ter havido tráfego. A
+  condição *"depois de tráfego"* é o que impede uma placa que nunca
+  pareou de acumular uma queda a cada 10 s.
+- **(re)conexões detectadas** — ver abaixo.
+
+Tudo carimbado na caixa-preta (slots 86, 87, 88), então sobrevive ao
+RESET e pode ser lido depois de um voo em que a serial não existia.
+
+E o `ble` **denuncia `[LOG MUDO]`** como todos os outros comandos de
+status — etapa 0 embutida. Ferramenta de diagnóstico que pode mentir por
+silêncio já custou um dia inteiro (caso 8 do battle_scars).
+
+#### O detector de dump de sincronização
+
+**Um padrão de campo virou sensor.** Ao (re)conectar, o controlador
+despeja o estado de vários controles de uma vez — nós observamos isso
+acontecendo várias vezes antes de entender o que era. Agora a placa
+reconhece sozinha:
+
+> **≥ 4 CCs DISTINTOS em menos de 100 ms, logo após silêncio > 5 s**
+> ⇒ "provável (re)conexão", carimbado.
+
+**Distintos, e não quantidade** — e essa palavra é o detector inteiro.
+Varrer um fader sozinho manda dezenas de mensagens do *mesmo* CC em
+100 ms; pelo critério de quantidade, tocar seria indistinguível de
+reconectar.
+
+#### Camada 3 — árvore de decisão: "o Bluetooth parou"
+
+**1. O LED, antes de qualquer coisa.**
+Apagado → é energia, não rádio: rail de 5 V, fio, solda. Pisca lento →
+ninguém está conectado, vá pro passo 3. Fixo → o link existe; o problema
+está adiante, vá pro passo 2.
+
+**2. `ble` — o link está vivo ou parado?**
+Sem eco nenhum, confira `[LOG MUDO]` e mande `log on` primeiro: um zero
+num canal não provado não é dado. Com o log vivo: *NUNCA RECEBEU* → nunca
+pareou. *CALADO há mais de 10 s* → caiu, siga pro passo 3. *VIVO* → o
+rádio está bem e o problema é o mapa: confira CC e canal com `midi`.
+
+**3. Um central no universo.**
+Mais de um aparelho tentando falar com o mesmo WIDI é a causa mais
+comum e a mais invisível. Desligue o Bluetooth de tudo que não for o
+aparelho em uso — o iPhone esquecido no bolso conta.
+
+**4. Os consertos conhecidos, em ordem de custo.**
+*Forget Device* no aparelho e parear de novo → power-cycle do módulo →
+parear de novo. Se voltar, o `ble` carimba a (re)conexão sozinho e o
+número de quedas fica no registro.
+
+> **O que esta árvore substitui:** uma hora gasta trocando de suspeito
+> cinco vezes — link caindo, fader desconfigurado, app sem autorização,
+> DMA abortado, controlador mandando dump — sem confirmar nem descartar
+> nenhuma. O sintoma era sempre o mesmo `bytes 0`, e a explicação era nova
+> a cada rodada. Quatro passos com um culpado cada valem mais que cinco
+> hipóteses com nenhum.
 
 ### Por que DMA em modo listen, e não polling nem uma IRQ por byte
 

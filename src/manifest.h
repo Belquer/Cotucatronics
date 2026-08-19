@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.41.0
+// manifest.h (instrumento "bancada") v0.42.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -43,15 +43,20 @@ struct Requirements
     // regime — não coube nem no 256, por 5%. A variante FFT
     // 1024/hop 512 deve cair pra faixa de 2,5–2,8k us e caber no 256
     // com folga.
-    // VOCODER LIGADO (2026-08-16): volta pra 256, porque é o único
-    // prazo em que módulo espectral cabe. O 128 foi MEDIDO em 112% —
-    // não é aperto, é estouro.
+    // VOCODER FORA DO BUILD (2026-08-18, decisão de ouvido do dB):
+    // volta pra 48. O 256 nunca foi escolha — era exigência da FFT do
+    // vocoder, e saiu junto com ela.
     //
-    // O preço é honesto e não é pequeno: a latência sai de 1 ms pra
-    // 5,3 ms, e num instrumento realimentado isso desloca onde o
-    // feedback se estabelece. Tirar o vocoder do build e voltar pra 48
-    // é uma linha aqui e uma no Makefile.
-    size_t block_size = 256;
+    // O que se ganha de volta é o que o 256 custava: a latência cai de
+    // 5,3 ms pra 1 ms, e num instrumento realimentado isso REPÕE onde
+    // o feedback se estabelece. O freeze que entra no lugar é granular
+    // no domínio do tempo — não tem prazo mínimo de janela, roda em
+    // qualquer bloco.
+    //
+    // Pra reviver o vocoder: 256 aqui e o módulo de volta no Makefile.
+    // Os dois arquivos mudam JUNTOS — é por isso que a nota está nos
+    // dois.
+    size_t block_size = 48;
 };
 
 // Grau permitido = semitom MOD 12 relativo ao centro da cerca. Lá
@@ -200,6 +205,14 @@ struct Manifest
     int p_rev_mix;
     int p_rev_size;
     int p_rev_damp;
+
+    // FREEZE — bloco permanente do shell (freeze.h), no lugar do
+    // vocoder na cadeia: pós-delay, pré-reverb. O congelado ganha a
+    // sala junto, que é o que faz ele PERTENCER ao instrumento em vez
+    // de flutuar por cima.
+    int p_frz_on;   // 0/1 — gesto: CC, e B2 em Hold quando o painel vier
+    int p_frz_mix;  // 0..1 seco/congelado
+    int p_frz_size; // janela do grão, em ms
 
     // ---- FREEZE (slot Fx2) ----
     // Serial-only: os cinco knobs estao todos ocupados. As faixas
@@ -514,6 +527,24 @@ struct Manifest
         p_rev_size      = t.Add("rev_size",      0.50f, 0.f, 1.f);
         p_rev_damp      = t.Add("rev_damp",      0.50f, 0.f, 1.f);
 
+        // ---- FREEZE ----
+        // Nasce DESLIGADO. Congelar é gesto, e gesto não tem estado
+        // default ligado: a placa subindo já congelada seria a
+        // escultura tocando sozinha um som que ninguém pediu.
+        p_frz_on        = t.Add("frz_on",        0.0f, 0.f, 1.f);
+        // Mix em 1.0: congelou, é o congelado que se ouve. Meio a meio
+        // deixaria o seco competindo com a sustentação e o gesto
+        // perderia clareza — quem quiser camada abaixa no CC.
+        p_frz_mix       = t.Add("frz_mix",       1.0f, 0.f, 1.f);
+        // 100 ms de janela. Abaixo de ~40 ms o grão vira timbre
+        // próprio (soa granular, "chuvisco"); acima de ~250 ms os dois
+        // grãos leem quase o mesmo trecho e o batimento volta.
+        // CUIDADO: o primeiro argumento e NORMALIZADO, nao o valor
+        // real. Escrever 100.0f aqui satura em 1.0 e o grao nasce em
+        // 400 ms — exatamente o tamanho em que os dois graos leem quase
+        // o mesmo trecho e o batimento volta. 100 ms = (100-20)/380.
+        p_frz_size      = t.Add("frz_size",      0.2105f, 20.f, 400.f);
+
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
         // (`tone on`/`tone off`) e pelo default — o tom de teste é
@@ -721,9 +752,19 @@ struct Manifest
         // 110..440 Hz. O registro anterior (centro 110 Hz) sorteava
         // certo mas soava tudo GRAVE e parecido — o registro aprovado
         // de ouvido foi o de cima.
-        randomizable[n_randomizable++] = {p_voc_pitch, 0.50f, 1.00f,
-                                          kScaleAminor, 7, 0.75f, 1.f / 48.f};
-        randomizable[n_randomizable++] = {p_voc_tone, 0.40f, 1.00f};
+        // >>> voc_pitch e voc_tone SAIRAM da whitelist em 18/08 porque o
+        // >>> vocoder saiu do build. Nao e decisao de musica, e
+        // >>> aritmetica: param de modulo ausente nao tem o que
+        // >>> sortear. Voltam junto com o modulo, e a cerca de La menor
+        // >>> abaixo continua valendo pra quando isso acontecer:
+        //   {p_voc_pitch, 0.50f, 1.00f, kScaleAminor, 7, 0.75f, 1.f/48.f}
+        //   {p_voc_tone,  0.40f, 1.00f}
+        //
+        // CONSEQUENCIA A OLHO NU: sobram dly_time e dly_mix. Os buzios
+        // ficaram com DUAS cartas em vez de quatro, e o sorteio soa
+        // proporcionalmente mais pobre. Nao ha conserto silencioso pra
+        // isso — ou volta um modulo de carater, ou a decisao e aceitar
+        // o sorteio menor.
         // >>> O REVERB FICA FORA DOS BÚZIOS. Decisão do dB, e é de
         // >>> música, não de custo — chegou a ser sorteado e funcionava.
         //
@@ -742,18 +783,43 @@ struct Manifest
         // por mais tentador que seja. A whitelist dos búzios é pra
         // caráter do módulo, e moldura não é caráter — é contexto.
 
-        // ---- B2: sem função neste instrumento ----
-        // Exemplo pra quando o freeze voltar ao slot Fx2:
-        //   button2_target = p_frz_on;
-        //   button2_mode   = ButtonMode::Hold;
-        // Aí segurar o botão congela e soltar libera — que é o gesto
-        // natural pra freeze, e o motivo de Hold ser o modo default.
-        button2_target = -1;
+        // >>> O FREEZE TAMBÉM FICA FORA DOS BÚZIOS. Decisão do dB, e é
+        // >>> de música — reversível se ele mudar de ideia.
+        //
+        // A razão é outra que a do reverb, e vale distinguir: o reverb
+        // fica fora por ser MOLDURA. O freeze fica fora por ser GESTO.
+        // Congelar é uma decisão de execução, com hora certa — é o
+        // intérprete dizendo "este som, agora, para". Sorteado, deixa
+        // de ser decisão e vira acidente, e o que se perde é
+        // justamente o que faz o gesto significar alguma coisa.
+        //
+        // Terceira categoria de exclusão, então, e o manifest agora
+        // carrega as três: MOLDURA (reverb), SEGURANÇA (level,
+        // src_mix, gate, governor, limiter, shift) e GESTO (freeze).
+        // Búzios sorteiam CARÁTER — e só.
 
-        // nomes conferidos contra o description.json do vocoder
-        bind[n_bind++] = {ModuleSlot::Fx2, p_voc_mix, "voc_mix"};
-        bind[n_bind++] = {ModuleSlot::Fx2, p_voc_pitch, "voc_pitch"};
-        bind[n_bind++] = {ModuleSlot::Fx2, p_voc_tone, "voc_tone"};
+        // ---- B2: CONGELA ENQUANTO SEGURADO ----
+        // O exemplo virou o caso real. Segurar congela, soltar libera:
+        // é o gesto natural do freeze, e o motivo de Hold ser o modo
+        // default desde que o campo existe.
+        //
+        // O painel v2 ainda não está soldado — até lá o alvo vale pelo
+        // `b2` do painel falso via serial e pelo CC 26.
+        button2_target = p_frz_on;
+        button2_mode   = ButtonMode::Hold;
+
+        // ---- SLOT Fx2 VAZIO (2026-08-18) ----
+        // O vocoder saiu do build por decisão de ouvido do dB. Slot
+        // vazio é passthrough silencioso, não erro — e os binds abaixo
+        // ficam prontos pro dia da volta, conferidos contra o
+        // description.json do export de 16/08:
+        //   bind[n_bind++] = {ModuleSlot::Fx2, p_voc_mix,   "voc_mix"};
+        //   bind[n_bind++] = {ModuleSlot::Fx2, p_voc_pitch, "voc_pitch"};
+        //   bind[n_bind++] = {ModuleSlot::Fx2, p_voc_tone,  "voc_tone"};
+        //
+        // Os params p_voc_* CONTINUAM na tabela de propósito: mexer
+        // neles com o módulo fora não faz nada, e é exatamente esse
+        // silêncio inofensivo que mantém o caminho de volta barato.
 
         // ---- MAPA MIDI ----
         // Aqui embaixo pelo MESMO motivo dos bind[]: um id lido antes
@@ -791,9 +857,18 @@ struct Manifest
         // fx2_gain desde a sessao do vocoder — deslocado um pra frente.
         // Duplicata nao daria erro: o ApplyMidiCc devolve o PRIMEIRO que
         // casa, entao o segundo vira controle morto, em silencio.
-        midi_map[n_midi++] = {26, p_voc_pitch};
-        midi_map[n_midi++] = {27, p_voc_tone};
-        midi_map[n_midi++] = {28, p_voc_mix};
+        // 26–28 eram do vocoder e passam ao FREEZE (18/08). Reuso
+        // deliberado: o controlador do dB ja tem esses tres mapeados
+        // fisicamente, e mudar de numero obrigaria a reconfigurar o
+        // Loopy/MIDI Wrench por nada.
+        //
+        // CC 26 e o GESTO — o mesmo alvo do B2 quando o painel vier.
+        // Com `frz_on` sendo [0,1] e o main testando >= 0.5, um botao
+        // MIDI de 0/127 funciona sem tratamento especial: MidiNorm(63)
+        // = 0.496 cai abaixo, MidiNorm(64) = 0.504 cai acima.
+        midi_map[n_midi++] = {26, p_frz_on};
+        midi_map[n_midi++] = {27, p_frz_mix};
+        midi_map[n_midi++] = {28, p_frz_size};
         midi_map[n_midi++] = {29, p_rev_mix};
         midi_map[n_midi++] = {30, p_in_gain};
         midi_map[n_midi++] = {31, p_gate_thresh};

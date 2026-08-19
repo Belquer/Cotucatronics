@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.10.0
+// hal_daisy_seed v0.11.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -130,6 +130,11 @@ static bool              bb_rec = false;
 // REARME por RX: byte chegando pela serial e prova de host vivo —
 // e a unica prova confiavel, porque vem do outro lado.
 constexpr int            kCdcDeadAfter = 3;
+// Intervalo de ressurreicao do CDC. Meio segundo e imperceptivel pra
+// quem esta na bancada e barato pro loop: uma tentativa unica, sem
+// System::Delay, entao o custo e o de uma chamada que falha rapido.
+constexpr uint32_t       kCdcRetryMs   = 500;
+static uint32_t          cdc_retry_ms  = 0;
 static bool              cdc_dead      = false;
 static bool              log_muted     = false;
 // UM CANAL QUE ATRAVESSA O MUDO. So o banner de status usa. Se o
@@ -330,12 +335,35 @@ void Log(const char* fmt, ...)
         return;
     }
 
-    // GATE: com o CDC declarado morto, nem tenta. Descarta e conta.
+    // GATE COM RESSURREICAO. Antes isto era definitivo: tres falhas
+    // e a placa ficava MUDA PARA SEMPRE, sem retentar.
+    //
+    // O QUE ISSO CUSTOU (18/08, e travou a sessao inteira): no boot o
+    // app loga reverb, freeze, SDRAM e o banner ANTES de o host
+    // terminar de enumerar o USB. As tres primeiras falhas sao a
+    // CORRIDA NORMAL da enumeracao, nao um CDC doente — e matavam o
+    // log definitivamente. Depois disso a placa rodava perfeita e
+    // muda, e o sintoma (porta viva, zero resposta, nem banner) era
+    // indistinguivel de firmware travado.
+    //
+    // TERCEIRO modo silencioso sem porta de saida neste projeto,
+    // depois do `log_muted` e do `bb arm`. A licao que os tres
+    // ensinam junta: todo modo degradado precisa de caminho de volta
+    // AUTOMATICO — consertar um caso nao conserta a familia.
+    //
+    // Agora: quando morto, uma tentativa a cada kCdcRetryMs. Custo em
+    // regime ~zero (uma chamada por meio segundo, sem espera), e a
+    // primeira que passar ressuscita o canal.
     if(cdc_dead)
     {
-        log_dropped++;
-        if(bb_rec) BlackboxWrite(25, (float)log_dropped);
-        return;
+        const uint32_t agora = System::GetNow();
+        if(agora - cdc_retry_ms < kCdcRetryMs)
+        {
+            log_dropped++;
+            if(bb_rec) BlackboxWrite(25, (float)log_dropped);
+            return;
+        }
+        cdc_retry_ms = agora; // deixa passar UMA tentativa
     }
 
     static bool muted = false;
@@ -351,6 +379,7 @@ void Log(const char* fmt, ...)
         {
             muted     = false;
             cdc_fails = 0; // sucesso zera o dead-man
+            cdc_dead  = false; // ...e RESSUSCITA o canal
             return;
         }
         if(!muted)
