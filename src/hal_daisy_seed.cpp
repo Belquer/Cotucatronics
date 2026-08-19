@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.12.0
+// hal_daisy_seed v0.13.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -640,7 +640,20 @@ size_t AllocBigUsed() { return sdram_used; }
 
 float CpuLoadAvg() { return cpu_meter.GetAvgCpuLoad(); }
 float CpuLoadMax() { return cpu_meter.GetMaxCpuLoad(); }
-uint32_t NowUs() { return System::GetUs(); }
+uint32_t NowTicks() { return System::GetTick(); }
+uint32_t TicksPerUs()
+{
+    // Calculado uma vez: HAL_RCC_GetPCLK1Freq() nao e barato pra chamar
+    // de dentro do callback de audio a cada bloco.
+    static uint32_t t = 0;
+    if(t == 0)
+    {
+        const uint32_t hz = System::GetTickFreq();
+        t = hz / 1000000u;
+        if(t == 0) t = 1; // nunca dividir por zero no caminho de audio
+    }
+    return t;
+}
 void  CpuLoadReset() { cpu_meter.Reset(); }
 
 // ---- CAIXA-PRETA ----

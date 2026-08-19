@@ -54,6 +54,26 @@ gastava 35 µs de 500.
    defeito reprodutível em intermitente — e intermitente é o mais caro de
    todos.
 
+## Regra do filtro — "implausível" não se define por magnitude
+
+Se você filtrar outliers por tamanho, **descarta a catástrofe junto com o
+ruído**: um estouro real de 5 ms parece exatamente um erro de relógio.
+Ajustar o limiar só move a cegueira — do outro lado do corte há sempre uma
+catástrofe do mesmo tamanho.
+
+**Outlier reprodutível é bug achável.** Em 18/08 os outliers do relógio eram
+`System::GetUs()` dividindo antes da subtração: o valor devolvido só usa 1/200
+da faixa de 32 bits e dá a volta a cada ~21,5 s, então a subtração `uint32`
+não corrige. Conserto: medir em **ticks crus**, converter **depois** da
+subtração — e aí o filtro deixa de ser necessário.
+
+**Antes de filtrar, pergunte:** *por que este número existe?* Filtro é o que
+se faz quando a causa é desconhecida **e** o custo de investigar é alto; nos
+dois outros casos é um curativo que esconde.
+
+**Corolário para atuadores:** veto automático exige relógio **monotônico e
+confiável**. Sem isso, o caso 9 está armado para reincidir.
+
 ## Regra do observador — o diagnóstico não pode depender do paciente
 
 Serial, MIDI e caixa-preta passam todos pelo loop principal. Quando ele

@@ -424,6 +424,66 @@ impossível.
 
 ---
 
+## 11f. O filtro de sanidade que descartava a catástrofe (18/08)
+
+O caso 9 (watchdog que vetou um efeito saudável com base em 4 277 071 629 µs)
+foi consertado com um **filtro de plausibilidade**: amostra acima de 10× o
+orçamento é descartada e contada, nunca julgada. Isso impediu vetos falsos —
+e criou um defeito novo, apontado pelo dB:
+
+> **Um estouro catastrófico apareceria exatamente assim.**
+
+O filtro definia "implausível" por **magnitude**. Mas magnitude sozinha **não
+distingue outlier-por-erro de outlier-por-evento**. Um bloco que realmente
+levasse 5 ms — o pior caso que o veto existe pra pegar — seria descartado
+como ruído de relógio. O watchdog ficou cego justamente para aquilo que ele
+foi feito para ver.
+
+**E ajustar o limiar não conserta: só move a cegueira.** Qualquer corte por
+magnitude tem, do outro lado, uma catástrofe do mesmo tamanho.
+
+**É a família do dead-man cego pro host morto** (o disjuntor que declarava o
+CDC morto e nunca mais tentava) **e da janela de graça que apagava a estreia**
+(o filtro que existia pra perdoar o custo inicial e apagava a única medição
+dele). Nos três, um mecanismo de proteção destrói o dado que justifica sua
+existência.
+
+### A causa real, achada por leitura de fonte
+
+```cpp
+uint32_t GetTick() { return tim_hal_handle_.Instance->CNT; }
+uint32_t GetUs()   { return GetTick() / (GetFreq() / 1000000); }
+```
+
+`System::GetUs()` **divide antes de quem chama subtrair**. O `CNT` é um
+contador livre de 32 bits, mas o valor devolvido vive numa faixa muito menor
+— a 200 MHz, `2³²/200 ≈ 21 474 836 µs`, ou seja **dá a volta a cada ~21,5 s**.
+
+Subtração `uint32` só corrige a volta quando o valor ocupa a faixa **inteira**.
+Como não ocupa, uma volta no meio da medição produz `0 - 21 474 836` =
+**4 273 492 460** — que é o número observado, a menos de onde no ciclo a volta
+caiu.
+
+**A taxa confirma:** o bloco mede ~100 µs a cada 1 ms, então a volta cai
+dentro da janela em ~10% das vezes. Uma volta a cada 21,5 s em 2 h dá ~335
+voltas → ~33 medições corrompidas esperadas. Observadas: 21. Mesma ordem.
+
+**Conserto:** medir em **ticks crus** e converter **depois** da subtração. O
+`CNT` ocupa os 32 bits todos, então a volta se corrige sozinha. Com o relógio
+certo, o filtro por magnitude foi **removido** — número grande voltou a
+significar estouro de verdade, e volta a vetar.
+
+**A regra:** *filtro que define "implausível" por magnitude descarta a
+catástrofe junto com o ruído.* Se um outlier incomoda, ache **por que ele
+existe** — outlier reprodutível é bug achável, quase sempre de configuração
+ou de aritmética, não fenômeno.
+
+**Pré-requisito que isso estabelece:** um atuador automático exige um relógio
+**monotônico e confiável**. Sem isso, o caso 9 está armado para reincidir —
+não é questão de se, é de quando.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.

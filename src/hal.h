@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.13.0
+// hal.h v0.14.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -138,10 +138,22 @@ void*            AllocBig(size_t bytes);
 
 // Carga do bloco de áudio, 0.0–1.0 (1.0 = estourou o prazo).
 // Média e pico desde o boot. Placa sem medidor devolve -1.
-// Relogio de microssegundos. O CTOS mede o tempo do EFEITO por bloco,
-// e CpuLoadMeter mede o callback inteiro — nao serve pra dizer QUEM
-// gastou. Sem separar, o veto puniria o inocente.
-uint32_t         NowUs();
+// Relogio do CTOS. Mede o tempo do EFEITO por bloco — CpuLoadMeter
+// mede o callback inteiro e nao sabe dizer QUEM gastou; sem separar, o
+// veto puniria o inocente.
+//
+// EM TICKS, DE PROPOSITO, e isto e a correcao de um defeito real.
+// `System::GetUs()` faz `CNT / (freq/1e6)` — divide ANTES de quem chama
+// subtrair. O CNT e um contador livre de 32 bits, mas o valor devolvido
+// vive numa faixa muito menor: a 200 MHz, 2^32/200 = ~21,5 s. Subtracao
+// uint32 so corrige a volta quando o valor usa a faixa INTEIRA; como
+// nao usa, uma volta no meio da medicao produz ~4,27e9 em vez de ~100.
+//
+// Foi exatamente o numero que desligou o freeze num veto falso (caso 9
+// do battle_scars). Medir em TICKS e converter DEPOIS da subtracao faz
+// a volta se corrigir sozinha, porque o CNT ocupa os 32 bits todos.
+uint32_t         NowTicks();
+uint32_t         TicksPerUs();
 
 float            CpuLoadAvg();
 float            CpuLoadMax();

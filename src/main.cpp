@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.52.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.53.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.52.1"
+#define COTUCA_OS_VERSION "0.53.0"
 
 #include "hal.h"
 #include "params.h"
@@ -652,7 +652,6 @@ static volatile uint32_t ctos_bypass_ms    = 0;   // quando estourou
 static volatile uint32_t ctos_pico_us      = 0;   // pior caso visto
 static volatile uint32_t ctos_orcamento_us = 0;
 static volatile uint32_t ctos_ocorrencias  = 0;
-static volatile uint32_t ctos_descartes    = 0; // amostras implausiveis
 static volatile uint32_t loop_voltas       = 0;
 
 static void LedFaseTick(size_t block_size, float sample_rate)
@@ -928,7 +927,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // CTOS: o freeze e EFEITO, entao roda sob veto. Ver docs/CTOS.md.
     if(freeze_ok && !ctos_bypass_frz)
     {
-        const uint32_t t0 = cotuca::hal::NowUs();
+        const uint32_t t0 = cotuca::hal::NowTicks();
         freeze.SetMix(params.Real(manifest.p_frz_mix));
         freeze.SetSize(params.Real(manifest.p_frz_size));
         // Borda decidida DENTRO do freeze (SetFrozen ignora repetição),
@@ -938,27 +937,25 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         for(size_t i = 0; i < size; i++)
             freeze.Process(out[0][i], out[1][i]);
 
-        const uint32_t gasto = cotuca::hal::NowUs() - t0;
-        // SANIDADE ANTES DE JULGAR. Um watchdog nao pode agir sobre
-        // dado em que nao confia: em 18/08 este medidor devolveu
-        // 4 277 071 629 us (assinatura de subtracao estourada) e o veto
-        // desligou um efeito que gastava 35 us de 500. Juiz que aceita
-        // prova corrompida condena o inocente.
+        // SUBTRAI EM TICKS, converte DEPOIS. O contador ocupa os 32 bits
+        // inteiros, entao a volta se corrige sozinha na subtracao
+        // uint32 — que e exatamente o que `System::GetUs()` impedia ao
+        // dividir antes.
         //
-        // Amostra implausivel e DESCARTADA e CONTADA — nunca vetada. Se
-        // o contador subir, o problema e o relogio, e isso aparece no
-        // `ctos` em vez de virar bypass misterioso.
+        // O FILTRO DE SANIDADE POR MAGNITUDE FOI REMOVIDO, e de
+        // proposito. Ele descartava tudo acima de 10x o orcamento —
+        // que e EXATAMENTE como um estouro catastrofico apareceria.
+        // Ajustar o limiar so moveria a cegueira. Com o relogio certo,
+        // um numero grande e um estouro DE VERDADE e tem que vetar.
+        const uint32_t gasto
+            = (cotuca::hal::NowTicks() - t0) / cotuca::hal::TicksPerUs();
         const uint32_t prazo
             = (uint32_t)(1e6f * (float)size
                          / cotuca::hal::Info().sample_rate);
         ctos_orcamento_us = (uint32_t)(kEfeitoFracao * (float)prazo);
-        if(gasto <= prazo * 10u && gasto > ctos_pico_us)
+        if(gasto > ctos_pico_us)
             ctos_pico_us = gasto;
-        if(gasto > prazo * 10u)
-        {
-            ctos_descartes++;
-        }
-        else if(gasto > ctos_orcamento_us)
+        if(gasto > ctos_orcamento_us)
         {
             // VETO. Aqui mesmo, no contexto que mediu.
             ctos_ocorrencias++;
@@ -1607,7 +1604,6 @@ static void HandleLine(const char* line)
             ctos_bypass_frz  = false;
             ctos_pico_us     = 0;
             ctos_ocorrencias = 0;
-            ctos_descartes   = 0;
             hal::Log("ctos: efeitos rearmados — o veto volta a valer do zero");
             return;
         }
@@ -1631,10 +1627,9 @@ static void HandleLine(const char* line)
             hal::Log("  efeito \"freeze\": ativo | pico %lu us de %lu us",
                      (unsigned long)ctos_pico_us,
                      (unsigned long)ctos_orcamento_us);
-        if(ctos_descartes)
-            hal::Log("    %lu amostras DESCARTADAS por implausiveis"
-                     " (relogio, nao o efeito)",
-                     (unsigned long)ctos_descartes);
+        hal::Log("    relogio: ticks crus, %lu por us (a volta do"
+                 " contador se corrige na subtracao)",
+                 (unsigned long)hal::TicksPerUs());
         hal::Log("  o instrumento perde o efeito, nunca a base."
                  " Desenho em docs/CTOS.md");
         return;
