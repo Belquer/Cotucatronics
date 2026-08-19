@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.61.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.64.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.61.0"
+#define COTUCA_OS_VERSION "0.64.0"
 
 #include "hal.h"
 #include "params.h"
@@ -14,6 +14,7 @@
 #include "dynamics.h"
 #include "reverb.h"
 #include "freeze.h"
+#include "pitch.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -443,6 +444,40 @@ static float*         freeze_mem = nullptr;
 // laço, que é exatamente o defeito que este bloco existe pra não ter.
 static constexpr float kFreezeSeconds = 2.0f;
 
+// MOTOR DE PITCH COMPARTILHADO — um buffer, ate 4 vozes. Ver pitch.h e
+// docs/CTOS.md §5b. Shimmer, detune e warble consomem ESTE, em vez de
+// cada um alocar o seu: e onde o "compartilhado" vira economia real.
+//
+// 100 ms basta pra faixa util (0.5x a 2x): subindo uma oitava, a
+// leitura se aproxima da gravacao em um grao por grao, e a folga de
+// partida cobre isso com margem. 9600 floats = 38 KB.
+static cotuca::PitchEngine pitch;
+static bool                pitch_ok  = false;
+static float*              pitch_mem = nullptr;
+// 400 ms, nao 100. Os 100 ms cobriam o MINIMO pra leitura nao alcancar
+// a gravacao, e isso travava o grao em 25 ms (teto cap/4). Duas razoes
+// independentes pedem grao longo, e as duas apareceram no mesmo dia:
+//
+//   MEDIR: janela de 25 ms tem largura de banda de ~40 Hz e laterais a
+//   80 Hz — portadora e lateral quase encostadas. Encurtar o grao NAO
+//   ajuda: afasta as laterais e alarga a portadora na mesma proporcao.
+//   Com 100 ms, banda ~10 Hz e laterais a 20 Hz: portadora legivel.
+//
+//   SOAR: grao curto e granular audivel ("chuvisco"); o shimmer quer
+//   cauda lisa. O freeze ja tinha mostrado isso na etapa 9.
+//
+// Custo: 38 400 floats = 150 KB em SDRAM, acesso sequencial.
+static constexpr float     kPitchSeconds = 0.40f;
+
+// VALIDACAO ISOLADA (etapa 2 do IFA10000 pro motor): rota de teste que
+// substitui o sinal pela leitura deslocada, 100% molhado, pra medir a
+// frequencia de saida por FFT. Nao e caminho de producao — o shimmer
+// so entra depois que isto passar.
+static volatile bool  pitch_test  = false;
+static volatile float pitch_ratio = 2.0f;
+static volatile float pitch_pk_in  = 0.f;
+static volatile float pitch_pk_out = 0.f;
+
 // BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
 // aloca, nao inicializa e nao entra no callback — se o som e a serial
 // voltarem, o culpado esta isolado; se nao voltarem, esta em outro
@@ -792,6 +827,43 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         if(ig != 1.f)
             for(size_t i = 0; i < size; i++)
                 src_buf[i] *= ig;
+    }
+
+    // 1.6) ROTA DE TESTE DO MOTOR DE PITCH (validacao isolada).
+    //
+    // Substitui o sinal pela leitura deslocada, 100% molhado, pra que a
+    // frequencia de saida possa ser medida por FFT: seno de 848 Hz
+    // entra, 1696 Hz tem que sair com ratio 2.0.
+    //
+    // Fica AQUI, antes do gate e do modulo, porque validar o motor
+    // sozinho exige que nada mais esteja no caminho — medir com o
+    // delay ligado mediria os dois. Etapa 0 do IFA10000 aplicada ao
+    // proprio motor.
+    if(pitch_test && pitch_ok)
+    {
+        pitch.SetRatio(0, pitch_ratio);
+        if(!pitch.Active(0)) pitch.SetActive(0, true);
+        // MEDE OS DOIS LADOS. A teoria dizia que ratio 1.0 devolveria
+        // o sinal com ondulacao de +3 dB; a bancada mostrou -25 dB.
+        // Quando teoria e medicao discordam, quem mede esta certo — e
+        // o pico de ENTRADA vs SAIDA localiza onde some.
+        float pin = 0.f, pout = 0.f;
+        for(size_t i = 0; i < size; i++)
+        {
+            const float a = src_buf[i] < 0 ? -src_buf[i] : src_buf[i];
+            if(a > pin) pin = a;
+            // O motor e ESTEREO mas a fonte aqui e mono (src_buf):
+            // grava o mesmo nos dois lados e le o esquerdo.
+            pitch.Write(src_buf[i], src_buf[i]);
+            float pl, pr;
+            pitch.Read(0, pl, pr);
+            src_buf[i] = pl;
+            (void)pr;
+            const float b = pl < 0 ? -pl : pl;
+            if(b > pout) pout = b;
+        }
+        if(pin  > pitch_pk_in)  pitch_pk_in  = pin;
+        if(pout > pitch_pk_out) pitch_pk_out = pout;
     }
 
     // 2) GATE — na entrada, pós-crossfade e pós-tom. Silencia o chão
@@ -1750,6 +1822,58 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRestarts());
         return;
     }
+    if(strncmp(line, "pitch", 5) == 0)
+    {
+        const char* a = line + 5;
+        while(*a == ' ') a++;
+        if(*a == 0 || strncmp(a, "off", 3) == 0)
+        {
+            pitch_test = false;
+            if(pitch_ok) pitch.SetActive(0, false);
+            hal::Log("pitch: rota de teste DESLIGADA");
+            return;
+        }
+        if(strncmp(a, "grain", 5) == 0)
+        {
+            const float g = strtof(a + 5, nullptr);
+            if(pitch_ok) pitch.SetGrainMs(0, g);
+            hal::Log("pitch: grao = %.1f ms  (laterais em +-%.0f Hz)",
+                     (double)g, (double)(2000.f / (g > 0.f ? g : 1.f)));
+            return;
+        }
+        if(strncmp(a, "jitter", 6) == 0)
+        {
+            const float j = strtof(a + 6, nullptr);
+            if(pitch_ok) pitch.SetJitter(j);
+            hal::Log("pitch: jitter = %.3f  (0 = graos deterministicos,"
+                     " so pra MEDIR com seno)", (double)j);
+            return;
+        }
+        const float r = strtof(a, nullptr);
+        if(r <= 0.f)
+        {
+            hal::Log("uso: pitch <ratio>  (2=oitava acima, 1.498=quinta,"
+                     " 0.5=oitava abaixo) | pitch off");
+            return;
+        }
+        pitch_ratio = r;
+        pitch_test  = true;
+        hal::Log("pitch: rota de teste LIGADA, ratio %.4f"
+                 " (100%% molhado, so o motor no caminho)", (double)r);
+        hal::Log("  esperado: `tone on` a 848 Hz -> %.0f Hz na saida",
+                 (double)(848.f * r));
+        pitch_pk_in = pitch_pk_out = 0.f;
+        return;
+    }
+    if(strncmp(line, "pk", 2) == 0)
+    {
+        hal::Log("pitch: pico ENTRADA %.5f | SAIDA %.5f | razao %.3f",
+                 (double)pitch_pk_in, (double)pitch_pk_out,
+                 (double)(pitch_pk_in > 1e-9f
+                              ? pitch_pk_out / pitch_pk_in : 0.f));
+        pitch_pk_in = pitch_pk_out = 0.f;
+        return;
+    }
     if(strncmp(line, "sync", 4) == 0)
     {
         MidiPushEstado();
@@ -1970,7 +2094,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | ctos [rearm] | rearm | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | pitch <ratio> | ctos [rearm] | rearm | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -2133,6 +2257,20 @@ int main(void)
                  reverb_ok ? "pronto" : "BUFFER CURTO — passthrough",
                  (unsigned)need, (unsigned)have,
                  (unsigned)(sizeof(reverb_mem) / 1024));
+    }
+
+    // MOTOR DE PITCH: alocar e inicializar ANTES do StartAudio, mesma
+    // regra de ordem do reverb e do freeze.
+    {
+        const float  sr   = hal::Info().sample_rate;
+        const size_t need = cotuca::PitchEngine::FloatsNeeded(sr, kPitchSeconds);
+        pitch_mem = (float*)hal::AllocBig(need * sizeof(float));
+        if(pitch_mem)
+            pitch_ok = pitch.Init(sr, pitch_mem, need, kPitchSeconds);
+        hal::Log("pitch: %s (%.0f ms, %u floats, %u KB em SDRAM)",
+                 pitch_ok ? "pronto" : "SEM BUFFER — inativo",
+                 (double)(kPitchSeconds * 1000.f), (unsigned)need,
+                 (unsigned)(need * sizeof(float) / 1024));
     }
 
     // FREEZE: mesma regra de ordem do reverb — alocar e inicializar

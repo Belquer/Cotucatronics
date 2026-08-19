@@ -1,6 +1,6 @@
 # CTOS — Cotucatronics Operational System
 
-**Documento de desenho v0.1.0 · 2026-08-18 · design antes de código**
+**Documento de desenho v0.2.0 · 2026-08-18 · design antes de código**
 
 > **Status: PROPOSTA.** Nada aqui está implementado. O documento existe pra
 > ser discutido e aprovado antes de qualquer refactor — e pra que a discussão
@@ -256,6 +256,98 @@ Efeito.*
 botão e CC. A fronteira passa entre o gesto e o processamento, e é por isso
 que ela precisa estar desenhada antes: sem o mapa, "freeze" parece uma coisa
 só.
+
+---
+
+## 5b. Suíte de efeitos residentes v1 — desenho (PROPOSTA)
+
+Cinco efeitos em C++, todos **Efeito** pela régua do §5 (transformam amostra
+em amostra, trocáveis sem mudar a identidade da escultura). Calibrados pro
+material do dB — percussão, kalimba, monocórdio, molas — e pra estética
+Chase Bliss / dreamy.
+
+**Ordem fixa de pedaleira**, e ela é decisão musical, não de implementação:
+
+```
+drive → phaser → warble → detune → [delay] → shimmer → [reverb]
+```
+
+Drive antes de tudo porque cola e dá corpo ao que entra. Shimmer depois do
+delay e antes do reverb porque ele **é** um reverb com realimentação afinada:
+pô-lo antes do delay faria o delay repetir a cauda dele.
+
+### Motor de pitch compartilhado — a decisão de arquitetura
+
+Shimmer, detune e warble precisam de deslocamento de altura. **Um motor só,
+no CTOS, consumido pelos três** — em vez de cada efeito alocar o seu.
+
+**Por quê:** o pool é finito e a alocação é a única coisa que um efeito não
+pode pedir em voo (§2). Três buffers de pitch independentes seriam três vezes
+o mesmo custo pelo mesmo trabalho.
+
+> ⚠️ **CORREÇÃO DE PREMISSA: o freeze NÃO tem pitch-shifter.** Ele tem a
+> *maquinaria* granular — janela raiz-de-Hann, posições sorteadas, leitura
+> interpolada — mas lê a **taxa 1.0** (`pos_ += 1.f`). Altura é taxa ≠ 1.
+>
+> Então o motor compartilhado é uma **extensão** da estrutura do freeze, não
+> reuso de capacidade existente. O trabalho é pequeno porque a estrutura está
+> provada e certificada, mas não é zero — e planejar como se fosse zero é
+> como o `r_window` que ninguém conferiu.
+
+**O que o motor herda do freeze, e é o que o torna barato:** grãos com
+raiz-de-Hann somam potência constante para posições descorrelacionadas, e o
+sorteio de posição **mata o comb filtering** que um pitch-shifter de janela
+fixa produz. Os dois já foram medidos e aprovados de ouvido.
+
+### Custo — o que a aposta do dB encontra pela frente
+
+Aposta: **< 15% do bloco 48 com os cinco ligados.** Os números que já temos:
+
+| Peça | Medido |
+|---|---|
+| Freeverb (110 KB em SRAM) | **+5,6 pp** de CPU |
+| Freeze: 2 grãos, estéreo, interpolado | **98 µs** de 1000 (≈10%) |
+
+**A aposta é alcançável, mas depende de uma escolha de desenho do shimmer:**
+
+- **Shimmer com Freeverb próprio:** +110 KB de SRAM e +5,6 pp, mais o pitch
+  (~10%) ⇒ **~15% só ele**. A aposta não fecha.
+- **Shimmer realimentando pelo reverb EXISTENTE:** custo = só o pitch e a
+  soma ⇒ **~10%**, e zero memória nova. Mais fiel ao original de Eno/Lanois,
+  onde o shimmer *é* a sala realimentada.
+
+**Recomendação: o segundo.** E ele traz um risco declarado: o laço de
+realimentação passa a atravessar o reverb do instrumento, então `rev_mix` e
+`rev_size` afetam a cauda do shimmer. Isso é característica, não defeito —
+mas precisa estar no `frz`-style comentário e ser dito ao músico, porque um
+controle que mexe em dois lugares surpreende.
+
+Os outros três são baratos por construção: **drive** é função por amostra
+(zero memória), **phaser** é só estado de allpass (zero buffer), **warble** é
+um delay de ~20 ms (≈1 KB). Três dos cinco não pesam.
+
+### Cada efeito passa pelo IFÁ10000 completo
+
+O freeze é o gabarito — e o que ele custou vale como aviso: **três versões**
+até passar na etapa 9, e as três falhas foram de desenho, não de código
+(varredura linear virando laço; janela assumindo correlação depois de o
+sorteio tirá-la; mix como crossfade apagando o instrumento vivo).
+
+**Medir individual E com todos ligados**, no bloco 48. O watchdog por slot já
+cobre o estouro isolado; o que ele **não** cobre é a soma — cinco efeitos
+dentro do orçamento sozinhos podem estourar juntos, e nenhum seria vetado
+porque nenhum passou do próprio teto.
+
+> **Item de projeto que isso levanta:** o CTOS precisa de um **teto de soma**,
+> não só de tetos por efeito. Fica registrado aqui como pendência do §3.
+
+### Ordem de trabalho
+
+1. **Motor de pitch compartilhado** (extensão do freeze).
+2. **Shimmer** — primeiro efeito, valida o modelo inteiro: motor
+   compartilhado, slot, watchdog, IFÁ10000.
+3. Os outros quatro, na ordem de custo crescente: drive, phaser, warble,
+   detune.
 
 ---
 
