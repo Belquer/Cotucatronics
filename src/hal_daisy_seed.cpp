@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.11.0
+// hal_daisy_seed v0.12.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -640,6 +640,7 @@ size_t AllocBigUsed() { return sdram_used; }
 
 float CpuLoadAvg() { return cpu_meter.GetAvgCpuLoad(); }
 float CpuLoadMax() { return cpu_meter.GetMaxCpuLoad(); }
+uint32_t NowUs() { return System::GetUs(); }
 void  CpuLoadReset() { cpu_meter.Reset(); }
 
 // ---- CAIXA-PRETA ----

@@ -1,6 +1,13 @@
 #pragma once
 // ============================================================
 // Cotucatronics OS — freeze granular v0.2.0
+//
+// ⚠️  NAO VERIFICADO. O conserto abaixo e raciocinio, nao medicao. A
+//     v0.2.0 so deixa de ser hipotese quando PASSAR o teste especifico:
+//     congelar um transiente real e sustentar >= 10 s SEM PULSACAO
+//     AUDIVEL, com o aceite do dB. Ate la, nenhum documento deste repo
+//     pode chamar o laco-de-2s de resolvido — a v0.1.0 tambem parecia
+//     certa no papel, e o papel era este mesmo arquivo.
 // Captura contínua + sustentação por 2 grãos sorteados num núcleo.
 //
 // BLOCO PERMANENTE DO SHELL, não módulo RNBO — mesma família do

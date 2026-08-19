@@ -33,6 +33,43 @@ Instrumentação quebrada não para na planilha.
 6. **A medição não pode alterar o que mede.** Se puder, prove que não alterou
    (voo enxuto de controle) antes de confiar no número.
 
+## Regra do caso 9 — instrumentação que AGE
+
+A escalada da família, completa: **números → conclusões → ações.**
+Casos 1–7 corromperam *medições*. O caso 8 corrompeu uma *conclusão*, e ela
+foi publicada. O caso 9 **agiu**: um watchdog leu 4 277 071 629 µs (subtração
+estourada), tratou como estouro de prazo e **desligou um efeito saudável** que
+gastava 35 µs de 500.
+
+> **Um instrumento que só observa erra e alguém percebe. Um instrumento que
+> age erra e altera o sistema antes de alguém perceber.**
+
+**Se o mecanismo INTERVÉM (veto, bypass, mute, reset automático):**
+
+1. **Teste de plausibilidade antes do gatilho.** Amostra fora de faixa
+   física é **descartada e contada**, nunca julgada.
+2. **O contador de descartes aparece no status.** Senão o descarte vira outro
+   silêncio, e você troca um erro visível por um invisível.
+3. **A ação é permanente até rearme explícito.** Desfazer sozinho transforma
+   defeito reprodutível em intermitente — e intermitente é o mais caro de
+   todos.
+
+## Regra do observador — o diagnóstico não pode depender do paciente
+
+Serial, MIDI e caixa-preta passam todos pelo loop principal. Quando ele
+morreu, **os três calaram juntos** e nenhum pôde relatar. Uma hora de
+hipóteses sem observação por baixo, todas erradas.
+
+> **Um instrumento de diagnóstico não pode depender do que ele diagnostica.**
+
+**Ao criar qualquer canal de diagnóstico, declare de que contexto ele
+depende.** Se todos dependem do mesmo, você tem um ponto único de cegueira —
+e ele falha exatamente quando é mais necessário. O LED dirigido pelo callback
+de áudio existe por isso: o observador vive no contexto que sobrevive.
+
+**Sintoma diagnóstico de segunda ordem:** quando vários canais calam ao mesmo
+tempo, isso não é coincidência — é a assinatura **do que eles têm em comum**.
+
 ## Regra do caso 8 — modos que silenciam
 
 **Todo modo que silencia ou altera o instrumento tem que se declarar em todo

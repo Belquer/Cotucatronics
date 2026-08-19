@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.47.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.50.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.47.0"
+#define COTUCA_OS_VERSION "0.50.1"
 
 #include "hal.h"
 #include "params.h"
@@ -616,6 +616,65 @@ static float OscProcess()
 }
 
 // ---- callback de áudio genérico ----
+// ---- ONDE O LOOP PAROU, CONTADO PELO LED ----
+//
+// Um pisca de 1 Hz dirigido pelo proprio loop provou que ele trava, e
+// nao conseguiu dizer ONDE — porque quem piscava era o paciente. Um
+// instrumento que depende do paciente nao faz autopsia.
+//
+// Aqui quem pisca e o CALLBACK DE AUDIO, o unico contexto que continua
+// vivo (roda por interrupcao). Ele le a ultima FASE que o loop
+// completou e pisca esse numero, com pausa longa entre as rajadas:
+//
+//   1 pisco  = travou logo no inicio da volta
+//   5 piscos = chegou ate a FASE 5 e travou depois
+//
+// E o "ultima fase" da cacada do DelayMs, num canal que nao passa por
+// nada que morreu.
+static volatile uint8_t loop_fase = 0;
+
+// ---- CTOS: WATCHDOG COM VETO (ver docs/CTOS.md §3) ----
+//
+// O CTOS mede o tempo do EFEITO por bloco. Estouro => bypass no MESMO
+// contexto que detectou (familia A dos bugs de ordem: quem arma e quem
+// checa nao podem estar em contextos diferentes).
+//
+// BYPASS PERMANENTE ate `ctos rearm`, decisao do dB em 18/08. Religar
+// sozinho transformaria defeito reproduzivel em intermitente — e
+// intermitente foi o que custou a sessao inteira. O instrumento perde o
+// EFEITO, nunca a BASE.
+//
+// Orcamento: metade do prazo do bloco. Um efeito sozinho passando de
+// 50% nao deixa margem pra base + dinamica + reverb no mesmo bloco.
+static constexpr float kEfeitoFracao = 0.50f;
+static volatile bool     ctos_bypass_frz   = false;
+static volatile uint32_t ctos_bypass_ms    = 0;   // quando estourou
+static volatile uint32_t ctos_pico_us      = 0;   // pior caso visto
+static volatile uint32_t ctos_orcamento_us = 0;
+static volatile uint32_t ctos_ocorrencias  = 0;
+static volatile uint32_t ctos_descartes    = 0; // amostras implausiveis
+static volatile uint32_t loop_voltas       = 0;
+
+static void LedFaseTick(size_t block_size, float sample_rate)
+{
+    // Contado em amostras: o callback e o nosso relogio agora.
+    static uint32_t n = 0;
+    static bool     aceso = false;
+    n += (uint32_t)block_size;
+    const uint32_t por_ms = (uint32_t)(sample_rate / 1000.f);
+    const uint32_t ms     = n / (por_ms ? por_ms : 48u);
+
+    const uint8_t  alvo = loop_fase ? loop_fase : 1u;
+    const uint32_t dur  = (uint32_t)alvo * 300u + 1200u;
+    const uint32_t t    = ms % dur;
+    const bool quer = (t < (uint32_t)alvo * 300u) && ((t % 300u) < 150u);
+    if(quer != aceso)
+    {
+        aceso = quer;
+        cotuca::hal::SetLed(aceso);
+    }
+}
+
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
     const float level = params.Real(manifest.p_level);
@@ -866,8 +925,10 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // áudio. Ele PRECISA gravar sempre — congelar só o que já passou
     // é a única forma de o gesto pegar o som que acabou de acontecer.
 #if COTUCA_FREEZE_ENABLED
-    if(freeze_ok)
+    // CTOS: o freeze e EFEITO, entao roda sob veto. Ver docs/CTOS.md.
+    if(freeze_ok && !ctos_bypass_frz)
     {
+        const uint32_t t0 = cotuca::hal::NowUs();
         freeze.SetMix(params.Real(manifest.p_frz_mix));
         freeze.SetSize(params.Real(manifest.p_frz_size));
         // Borda decidida DENTRO do freeze (SetFrozen ignora repetição),
@@ -876,6 +937,37 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         freeze.SetFrozen(params.Real(manifest.p_frz_on) >= 0.5f);
         for(size_t i = 0; i < size; i++)
             freeze.Process(out[0][i], out[1][i]);
+
+        const uint32_t gasto = cotuca::hal::NowUs() - t0;
+        // SANIDADE ANTES DE JULGAR. Um watchdog nao pode agir sobre
+        // dado em que nao confia: em 18/08 este medidor devolveu
+        // 4 277 071 629 us (assinatura de subtracao estourada) e o veto
+        // desligou um efeito que gastava 35 us de 500. Juiz que aceita
+        // prova corrompida condena o inocente.
+        //
+        // Amostra implausivel e DESCARTADA e CONTADA — nunca vetada. Se
+        // o contador subir, o problema e o relogio, e isso aparece no
+        // `ctos` em vez de virar bypass misterioso.
+        const uint32_t prazo
+            = (uint32_t)(1e6f * (float)size
+                         / cotuca::hal::Info().sample_rate);
+        ctos_orcamento_us = (uint32_t)(kEfeitoFracao * (float)prazo);
+        if(gasto <= prazo * 10u && gasto > ctos_pico_us)
+            ctos_pico_us = gasto;
+        if(gasto > prazo * 10u)
+        {
+            ctos_descartes++;
+        }
+        else if(gasto > ctos_orcamento_us)
+        {
+            // VETO. Aqui mesmo, no contexto que mediu.
+            ctos_ocorrencias++;
+            if(!ctos_bypass_frz)
+            {
+                ctos_bypass_frz = true;
+                ctos_bypass_ms  = cotuca::hal::NowMs();
+            }
+        }
     }
 #endif
 
@@ -994,6 +1086,9 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             out[1][i] *= r_jck;
         }
     }
+    // Autopsia por LED: daqui, porque este contexto sobrevive ao loop.
+    LedFaseTick(size, cotuca::hal::Info().sample_rate);
+
 }
 
 // B1: sorteia novos valores pros params da whitelist do manifest.
@@ -1502,6 +1597,48 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRestarts());
         return;
     }
+    if(strncmp(line, "ctos", 4) == 0)
+    {
+        declara_modos();
+        const char* a = line + 4;
+        while(*a == ' ') a++;
+        if(strncmp(a, "rearm", 5) == 0)
+        {
+            ctos_bypass_frz  = false;
+            ctos_pico_us     = 0;
+            ctos_ocorrencias = 0;
+            ctos_descartes   = 0;
+            hal::Log("ctos: efeitos rearmados — o veto volta a valer do zero");
+            return;
+        }
+        hal::Log("CTOS | loop vivo | fase %u | %lu voltas | uptime %lu s",
+                 (unsigned)loop_fase, (unsigned long)loop_voltas,
+                 (unsigned long)(hal::NowMs() / 1000u));
+        if(ctos_bypass_frz)
+        {
+            hal::Log("  efeito \"freeze\": BYPASS por overrun");
+            hal::Log("    estourou em t=%.1f s | pico %lu us de %lu us"
+                     " | %lu ocorrencias",
+                     (double)ctos_bypass_ms / 1000.0,
+                     (unsigned long)ctos_pico_us,
+                     (unsigned long)ctos_orcamento_us,
+                     (unsigned long)ctos_ocorrencias);
+            hal::Log("    bypass e PERMANENTE ate `ctos rearm` — efeito que"
+                     " estourou uma vez estoura de novo, e religar sozinho"
+                     " esconderia o defeito");
+        }
+        else
+            hal::Log("  efeito \"freeze\": ativo | pico %lu us de %lu us",
+                     (unsigned long)ctos_pico_us,
+                     (unsigned long)ctos_orcamento_us);
+        if(ctos_descartes)
+            hal::Log("    %lu amostras DESCARTADAS por implausiveis"
+                     " (relogio, nao o efeito)",
+                     (unsigned long)ctos_descartes);
+        hal::Log("  o instrumento perde o efeito, nunca a base."
+                 " Desenho em docs/CTOS.md");
+        return;
+    }
     if(strncmp(line, "ble", 3) == 0)
     {
         declara_modos();
@@ -1642,7 +1779,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | rearm | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ctos [rearm] | rearm | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -1893,7 +2030,11 @@ int main(void)
     // colateral no exato patch em que o metronomo deixou de existir.
     // ============================================================
     static constexpr bool kUseDelay = false;
-    #define FASE(n) do { if(kDiagFull) cotuca::hal::BlackboxWrite(12, (float)(n)); } while(0)
+    // FASE publica em `loop_fase` ALEM da caixa-preta. A caixa-preta so
+    // se le pela serial, e a serial morre junto com o loop: o dado
+    // existia, o caminho ate ele e que estava morto.
+    #define FASE(n) do { loop_fase = (uint8_t)(n); \
+                        if(kDiagFull) cotuca::hal::BlackboxWrite(12, (float)(n)); } while(0)
 
     while(1)
     {
@@ -1991,6 +2132,7 @@ int main(void)
         // normal, onde mexer em params e logar é seguro.
         FASE(6);
         hal::PollMidi();
+        loop_voltas++;
         // A janela de quarentena pode expirar sem que chegue outro
         // CC — o humano que mexeu uma vez e parou. Sem este tique o
         // gesto dele ficaria seguro pra sempre.

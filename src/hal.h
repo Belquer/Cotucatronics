@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.12.0
+// hal.h v0.13.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -138,6 +138,11 @@ void*            AllocBig(size_t bytes);
 
 // Carga do bloco de áudio, 0.0–1.0 (1.0 = estourou o prazo).
 // Média e pico desde o boot. Placa sem medidor devolve -1.
+// Relogio de microssegundos. O CTOS mede o tempo do EFEITO por bloco,
+// e CpuLoadMeter mede o callback inteiro — nao serve pra dizer QUEM
+// gastou. Sem separar, o veto puniria o inocente.
+uint32_t         NowUs();
+
 float            CpuLoadAvg();
 float            CpuLoadMax();
 

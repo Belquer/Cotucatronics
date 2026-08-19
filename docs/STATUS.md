@@ -137,6 +137,54 @@ isolado — se quisermos o número, é um voo com uma variável.
 
 ---
 
+## ⚠️ Freeze v0.2.0 — NAO VERIFICADO
+
+O conserto do laço-de-2s (núcleo de ~500 ms com posição sorteada) está
+escrito, compilado e commitado — e **não foi ouvido**. A v0.1.0 também
+parecia correta no papel: o argumento que a defendia estava no cabeçalho do
+próprio arquivo, e era falso.
+
+**Só sai desta etiqueta quando passar o teste específico:** congelar um
+transiente real e sustentar **≥ 10 s sem pulsação audível**, com aceite do
+dB. Até lá, o laço-de-2s continua **aberto** em todo lugar — PAT incluído.
+
+---
+
+## Para amanhã — pedidos do dB (18/08, fim de sessão)
+
+O instrumento está **funcionando e aprovado** ("tudo ok! excelente"). Três
+ajustes do freeze, e os três têm raiz comum de desenho:
+
+**1. `frz_mix` é crossfade e deveria ser CAMADA.**
+```cpp
+l = l * (1.f - mix_) + wl * mix_;   // mix 1.0 APAGA o instrumento
+```
+Congelar deve **somar** uma camada sustentada, não substituir a fonte. É a
+causa de "quando o frz está rolando não escuto o instrumento direito" — não é
+efeito colateral, é o que a linha faz.
+
+**2. Ganho do freeze muito baixo.** Causa técnica: duas janelas Hann somam
+1.0 só para conteúdo **correlacionado**. Com as posições agora **sorteadas**,
+os grãos são descorrelacionados e somam em potência — ~0,7× da amplitude
+esperada. O conserto certo não é ganho de maquiagem: é **janela raiz-de-Hann**
+(`sqrt(hann)`), que dá potência constante justamente para grãos
+descorrelacionados.
+
+**3. Cauda no corte.** `frz_on` 1→0 corta seco; soa como tomada arrancada, não
+como gesto. Rampa de saída de ~300 ms, com os grãos rodando durante a descida.
+*Decisão pendente do dB:* tempo fixo ou parâmetro `frz_release`?
+
+### Também na fila, do mesmo desenho (CTOS protegendo a base)
+- **Tirar `src_mix`, `gate_thresh` e `gov_ceiling` do mapa MIDI.** São
+  roteamento e segurança — foram exatamente eles que emudeceram o instrumento
+  no despejo fantasma. *O que não está mapeado não pode ser derrubado.*
+- **Limite de taxa de mudança por parâmetro** vindo de MIDI: fader real anda
+  em rampa; salto de 0 a 127 num CC é assinatura de máquina.
+- **Relógio confiável pro watchdog:** `hal::NowUs()` devolve lixo
+  esporadicamente (3 amostras descartadas em 12 min). O veto repousa nele.
+
+---
+
 ## Defeitos abertos
 
 **🔴 A serial morre com o vocoder ligado — prioridade 1.**

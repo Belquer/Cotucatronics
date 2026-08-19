@@ -45,6 +45,27 @@ A lição mais repetida do projeto, cometida inclusive **depois de nomeada**. In
 
 Esse antídoto é o **mesmo** da cicatriz 7 do capítulo 3 (o rótulo que mentia, "transições: NENHUMA" impresso com todos os contadores zerados): as duas falhas são o instrumento **não declarando o próprio estado**, e as duas se curam obrigando-o a declarar.
 
+9. **O watchdog que condenou o inocente (18/08).** O CTOS ganhou veto
+   automático: efeito que estoura o prazo entra em bypass. Na primeira
+   execução ele mediu **4 277 071 629 µs** — lixo, assinatura de subtração
+   estourada — leu como estouro e **desligou o freeze**, que gastava 35 µs de
+   500. Os 15 s de "aceite do freeze" que rodaram em seguida foram, na
+   verdade, 15 s do instrumento **sem freeze**, e eu quase os apresentei como
+   resultado.
+
+**A escalada completa a família: números → conclusões → AÇÕES.** Os casos 1–7
+corromperam *medições*. O caso 8 corrompeu uma *conclusão*, e ela foi
+publicada. O caso 9 **agiu**: não relatou errado, ele *mudou o sistema* com
+base no erro.
+
+> **Um instrumento que só observa erra e alguém percebe. Um instrumento que
+> age erra e altera o sistema antes de alguém perceber.**
+
+**A regra:** todo mecanismo automático de veto exige **teste de
+plausibilidade antes do gatilho**. Amostra implausível é **descartada e
+contada**, nunca julgada — e o contador aparece no status, senão o descarte
+vira outro silêncio. Juiz que aceita prova corrompida condena o inocente.
+
 **Regras destiladas:** dado de evento único grava uma vez e **trava** (não atualiza). Estado vence contagem (o token de voo `in_flight` é imune ao problema do armamento; contadores pareados não são). A caixa-preta arma **por comando explícito no início do voo**, nunca no meio de um fluxo. A sessão de leitura não escreve nada. Escritas em backup SRAM em **lote** (acumular em DTCM, um flush por volta ou por evento, struct `alignas(32)`).
 
 ---
@@ -340,6 +361,66 @@ que sobrou.
 > Custou horas de sessão, seis gravações, um conserto no alvo errado
 > (legítimo, mas não era a causa) e três afirmações minhas de "isso fecha o
 > diagnóstico" que não fechavam nada.
+
+---
+
+## 11d. O instrumento que não pode depender do paciente (18/08)
+
+O loop principal morreu. Serial, MIDI e caixa-preta pararam juntos — e os
+**três** passam pelo loop. Nenhum conseguiu relatar a própria morte.
+
+Passei uma hora testando hipóteses (freeze, alimentação, QSPI, cabo, log)
+**sem nenhuma observação por baixo**. Todas erradas. O que destravou foi
+piscar o LED da placa direto do loop: em dois segundos ele disse mais que uma
+hora de sondas pela serial, porque não passava por nada que estava morto.
+
+**E a primeira versão do LED tinha o mesmo defeito.** Era o próprio loop que
+piscava, então ele só sabia dizer *"morreu"*, nunca *"onde"*. A segunda versão
+é dirigida pelo **callback de áudio** — o único contexto que sobrevive — e
+pisca N vezes com N igual à última fase que o loop completou.
+
+> **Um instrumento de diagnóstico não pode depender do que ele diagnostica.**
+> Se o observador e o paciente compartilham o destino, não há autópsia — só
+> silêncio.
+
+Corolário prático: **todo canal de diagnóstico precisa declarar de que
+contexto ele depende.** Serial depende do loop. MIDI depende do loop.
+Caixa-preta depende do loop pra ser lida. O LED dirigido pelo áudio depende
+só da interrupção. Quando os três primeiros calam ao mesmo tempo, isso não é
+coincidência — é a assinatura do que eles têm em comum.
+
+---
+
+## 11e. Comandos fantasma: a quarentena funcionou e não bastou (18/08)
+
+Transições de link BLE fazem o iOS reenviar o estado de todos os widgets. O
+instrumento obedecia. A quarentena de reconexão foi construída pra isso e
+**barrou 154 CCs em duas reconexões** — funcionou. E mesmo assim o resto do
+despejo passou e pôs **sete parâmetros no máximo**: `src_mix` em 1.0 (jack de
+linha, nada plugado) e `gate_thresh` em 1.0 (portão sempre fechado)
+emudeceram o instrumento.
+
+O gatilho da quarentena é *≥ 4 CCs distintos em < 100 ms após > 5 s de
+silêncio*. As duas brechas: despejo mais **espalhado** que 100 ms, ou **sem os
+5 s de silêncio** porque o músico estava tocando.
+
+**A defesa mais forte não é apertar o gatilho — é reduzir a superfície.**
+`src_mix`, `gate_thresh` e `gov_ceiling` são **roteamento e segurança**. A
+regra da whitelist dos búzios já dizia que esses jamais entram em sorteio; a
+mesma lógica vale pro MIDI, e ninguém tinha feito a ligação:
+
+> **O que não está mapeado não pode ser derrubado por fantasma.**
+
+Foram exatamente esses três que emudeceram o instrumento. Custa uma linha por
+CC tirá-los do mapa, e nenhuma quantidade de heurística de timing dá a mesma
+garantia.
+
+**Assimetria que o dado expõe:** o instrumento aceita "tudo no máximo" como se
+fosse música. Sete parâmetros no topo simultâneo não é gesto humano — é
+assinatura de máquina, detectável **por si só**, sem depender de timing. Daí a
+segunda defesa: **limite de taxa de mudança por parâmetro** vindo de MIDI. Um
+fader real anda em rampa; `src_mix` de 0 a 127 num único CC é fisicamente
+impossível.
 
 ---
 

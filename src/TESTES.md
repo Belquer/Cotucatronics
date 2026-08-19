@@ -1,7 +1,7 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.21.0** · última execução em placa: 2026-08-16 · firmware
-**v0.19.1 / HAL v0.10.3** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
+**Documento v0.23.0** · última execução em placa: 2026-08-18 · firmware
+**v0.47.0 / HAL v0.11.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
 
@@ -1104,6 +1104,40 @@ carga.
 > porque quatro tentativas anteriores reportaram `0 CCs` — com o log mudo
 > por um `bb arm` meu. Elas não mediram o link: mediram o meu silêncio.
 > Ver caso 8 em [../docs/battle_scars.md](../docs/battle_scars.md).
+
+---
+
+## T18 — PAT: Parameter Alignment Test · ⏳ 4 de 14
+
+Um parâmetro por vez, pedido **pelo nome** (não pelo número de CC). O dB mexe
+o controle, a placa registra qual CC chegou e em que param bateu, e o dB
+relata o que ouviu. Separa três coisas que "não funciona" mistura: **CC não
+chega**, **CC chega no param errado**, e **CC chega certo e não soa**.
+
+**Pré-requisito inegociável:** etapa 0 do IFÁ10000 **depois de cada RESET** —
+os búzios nascem ligados e sorteiam `dly_time` e `dly_mix`, então julgar
+esses dois com eles ativos é medir duas mãos no mesmo controle. Já aconteceu,
+e o dB percebeu antes de mim.
+
+| # | Parâmetro | CC | Alinhamento | Comportamento |
+|---|---|---|---|---|
+| 1 | `freeze on` | 26 ✅ | ok | ❌ laço ~2 s (v0.1.0). Conserto **NÃO VERIFICADO** |
+| 2 | `freeze mix` | **0** ❌ | widget no número errado — conserto é no app | bloqueado |
+| 3 | `delay time` | 20 ✅ | ok | ⚠️ re-testar (búzios ligados no julgamento) |
+| 4 | `delay mix` | 21 ✅ | ok | ✅ funciona |
+
+Faltam: `level`, `src mix`, `gov ceiling`, `reverb mix`, `in gain`,
+`gate thresh`, `buzios on`, `freeze size`, e os dois **esperados-mortos**
+`fx2 gain` (CC 25) e `fx2 on` (CC 33) — slot RNBO vazio, o esperado é o CC
+chegar e não fazer nada.
+
+**#1 e #2 ficam BLOQUEADOS** até o freeze v0.2.0 passar no teste de ouvido de
+10 s sem pulsação. Conserto não verificado não vira linha verde em lugar
+nenhum.
+
+**Achado que justifica o teste existir:** o widget de `freeze mix` mandava
+CC 0 (fora do mapa). O instrumento estava certo e o app no número errado —
+diagnóstico que nenhuma leitura de código encontraria.
 
 ---
 

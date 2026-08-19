@@ -42,6 +42,22 @@ Conferir no `list` se algum parâmetro está fora do default aprovado —
 varredura de CC deixa `fx2_gain` e `src_mix` bagunçados. Se estiver, **o
 RESET devolve o manifest aprovado** (e num teste de MIDI, exige reparear).
 
+## 2b. Conferir que ninguém mais está mexendo
+
+Estado de teste anterior não é a única contaminação. **Comandos fantasma
+existem:** transições de link BLE fazem o iOS reenviar o estado de todos os
+widgets, e o instrumento obedece. Já pôs sete parâmetros no máximo no meio de
+uma sessão — `src_mix` e `gate_thresh` no topo emudeceram tudo.
+
+```
+ble      → quantas (re)conexões e quantos CCs a quarentena recusou
+list     → algum param no extremo (0.00 ou 1.00) que você não pôs lá?
+```
+
+**Sete parâmetros no topo simultâneo não é gesto humano.** Se o `list` mostra
+extremos que você não colocou, a medição anterior está contaminada e o
+instrumento precisa voltar aos defaults antes de qualquer leitura.
+
 ## 3. Declarar o que está sendo medido
 
 Toda medição registra, por escrito, antes de rodar:
