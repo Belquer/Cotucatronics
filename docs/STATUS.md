@@ -137,16 +137,28 @@ isolado — se quisermos o número, é um voo com uma variável.
 
 ---
 
-## ⚠️ Freeze v0.2.0 — NAO VERIFICADO
+## ✅ Freeze granular — CERTIFICADO (2026-08-18)
 
-O conserto do laço-de-2s (núcleo de ~500 ms com posição sorteada) está
-escrito, compilado e commitado — e **não foi ouvido**. A v0.1.0 também
-parecia correta no papel: o argumento que a defendia estava no cabeçalho do
-próprio arquivo, e era falso.
+IFÁ10000 completo. **Etapa 9 passou:** *"ficou ótimo assim"* — sustentado de
+10 s sem pulsação, cauda de 2 s, instrumento vivo audível por baixo.
 
-**Só sai desta etiqueta quando passar o teste específico:** congelar um
-transiente real e sustentar **≥ 10 s sem pulsação audível**, com aceite do
-dB. Até lá, o laço-de-2s continua **aberto** em todo lugar — PAT incluído.
+| Etapa | Resultado |
+|---|---|
+| 4 MEMÓRIA | 768 KB SDRAM, 4 leituras **sequenciais**/amostra |
+| 5 CARGA | **98 µs** do efeito em 500 de orçamento; 370 de 1000 no sistema |
+| 6 MATERIAL | transiente real (tap na escultura) |
+| 8 SEGURANÇA | fora dos búzios — categoria **GESTO** |
+| 9 ACEITE | ✅ dB aprovou |
+
+**Três versões até chegar aqui, e cada uma consertou um erro de desenho meu:**
+- **v0.1.0** reprovou de ouvido: varredura linear = laço de 2 s. Eu tinha
+  escrito no cabeçalho que o jitter mataria a periodicidade. Não mata.
+- **v0.2.0** trocou varredura por **sorteio num núcleo de 500 ms** — matou a
+  gaiola e, no mesmo gesto, quebrou a premissa de correlação da janela,
+  criando o ganho baixo. *Janela e estratégia de posição são um par.*
+- **v0.3.0/0.3.1** fechou: **raiz-de-Hann** (potência constante para grãos
+  descorrelacionados), **mix como camada** e não crossfade (o crossfade
+  apagava o instrumento vivo), e **cauda de 2 s**.
 
 ---
 

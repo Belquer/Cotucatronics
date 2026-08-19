@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.50.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.52.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.50.1"
+#define COTUCA_OS_VERSION "0.52.1"
 
 #include "hal.h"
 #include "params.h"

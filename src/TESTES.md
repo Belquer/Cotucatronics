@@ -1,6 +1,6 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
-**Documento v0.23.0** · última execução em placa: 2026-08-18 · firmware
+**Documento v0.24.0** · última execução em placa: 2026-08-18 · firmware
 **v0.47.0 / HAL v0.11.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
@@ -1121,8 +1121,8 @@ e o dB percebeu antes de mim.
 
 | # | Parâmetro | CC | Alinhamento | Comportamento |
 |---|---|---|---|---|
-| 1 | `freeze on` | 26 ✅ | ok | ❌ laço ~2 s (v0.1.0). Conserto **NÃO VERIFICADO** |
-| 2 | `freeze mix` | **0** ❌ | widget no número errado — conserto é no app | bloqueado |
+| 1 | `freeze on` | 26 ✅ | ok | ✅ **certificado** (v0.3.1) |
+| 2 | `freeze mix` | 27 ✅ | corrigido no app (mandava CC 0) | ✅ funciona |
 | 3 | `delay time` | 20 ✅ | ok | ⚠️ re-testar (búzios ligados no julgamento) |
 | 4 | `delay mix` | 21 ✅ | ok | ✅ funciona |
 
@@ -1131,13 +1131,26 @@ Faltam: `level`, `src mix`, `gov ceiling`, `reverb mix`, `in gain`,
 `fx2 gain` (CC 25) e `fx2 on` (CC 33) — slot RNBO vazio, o esperado é o CC
 chegar e não fazer nada.
 
-**#1 e #2 ficam BLOQUEADOS** até o freeze v0.2.0 passar no teste de ouvido de
-10 s sem pulsação. Conserto não verificado não vira linha verde em lugar
-nenhum.
+**#1 e #2 DESBLOQUEADOS em 18/08:** o freeze v0.3.1 passou no aceite de 10 s
+(*"ficou ótimo assim"*) e o widget do `freeze mix` foi corrigido pro CC 27 no
+app. A regra que valeu até aqui continua valendo pro próximo: **conserto não
+verificado não vira linha verde em lugar nenhum.**
 
-**Achado que justifica o teste existir:** o widget de `freeze mix` mandava
-CC 0 (fora do mapa). O instrumento estava certo e o app no número errado —
-diagnóstico que nenhuma leitura de código encontraria.
+**Nota de método:** o `ctos` foi conferido DEPOIS do aceite pra provar que o
+freeze esteve ativo o teste inteiro. Sem isso o resultado não vale — o
+primeiro aceite foi anulado justamente por um veto falso do watchdog, e os
+15 s "de freeze" eram 15 s de silêncio.
+
+**Achado que justifica o teste existir, e que se confirmou:** o widget de
+`freeze mix` mandava **CC 0** (fora do mapa). O instrumento estava certo e o
+app no número errado — diagnóstico que nenhuma leitura de código
+encontraria, e que o dB corrigiu no app assim que o PAT apontou.
+
+**Mapa reduzido em 18/08:** `src_mix` (CC 23) e `gov_ceiling` (CC 24) saíram
+do mapa MIDI por segurança — ver T17. Os widgets deles no controlador seguem
+mandando e a placa ignora, o que aparece como `msgs completas` maior que
+`APLICADAS` (95 de 887 numa sessão). **Isso é a proteção funcionando, não
+perda.**
 
 ---
 

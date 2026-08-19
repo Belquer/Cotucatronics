@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.42.0
+// manifest.h (instrumento "bancada") v0.43.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -832,12 +832,38 @@ struct Manifest
         midi_map[n_midi++] = {20, p_dly_time};
         midi_map[n_midi++] = {21, p_dly_mix};
         midi_map[n_midi++] = {22, p_level};
-        midi_map[n_midi++] = {23, p_src_mix};
+        // ---- CC 23 (src_mix) e CC 24 (gov_ceiling) REMOVIDOS em 18/08 ----
+        //
+        // Decisao do dB depois de o instrumento emudecer TRES vezes na
+        // mesma sessao. Transicoes de link BLE fazem o iOS reenviar o
+        // estado de todos os widgets, e o `src_mix` saltava pra 1.0 —
+        // 100% jack de linha, com nada plugado. Silencio total, e com
+        // cara de "a placa morreu".
+        //
+        // A quarentena de reconexao pegou parte (154 e 14 CCs em dois
+        // eventos) e nao bastou: despejo espalhado, ou sem os 5 s de
+        // silencio porque o musico estava tocando, escapa.
+        //
+        //   O QUE NAO ESTA MAPEADO NAO PODE SER DERRUBADO POR FANTASMA.
+        //
+        // Nenhuma heuristica de timing da a mesma garantia que a
+        // ausencia. E os dois nao perdem nada de musica: `src_mix` e
+        // ROTEAMENTO (escolhe a fonte, nao toca), e `gov_ceiling` e
+        // SEGURANCA (a borda de feedback). E a mesma regra que ja
+        // proibia os dois na whitelist dos buzios — ninguem tinha feito
+        // a ligacao com o MIDI.
+        //
+        // gate_thresh (CC 31) FICA, por escolha do dB: e ajuste de
+        // execucao, muda com o material e com a sala, e precisa ser
+        // alcancavel sem largar a escultura.
+        //
+        // Os dois seguem alcancaveis pela serial: `set src_mix` e
+        // `set gov_ceiling`. Sai o acesso remoto, nao o controle.
         // gov_ceiling é a "borda de feedback" e não tem knob — os cinco
         // estão ocupados. Até o encoder físico existir, o CC 24 é o
         // único jeito de procurar a borda sem largar a escultura pra
         // digitar no serial. É o mapeamento que mais justifica o MIDI.
-        midi_map[n_midi++] = {24, p_gov_ceiling};
+
         // CC 25: o ganho do Fx2. MIDI e nao serial de proposito — com o
         // vocoder ligado a serial fica surda (defeito conhecido, ver
         // TESTES.md), e o MIDI e o unico caminho de controle que

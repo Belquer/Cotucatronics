@@ -227,12 +227,36 @@ int main()
         Check("CC 20 val 64 -> dly_time norm 0.50",
               fabsf(t.Get(id_time) - 0.5039f) < 0.002f, d);
 
-        // gov_ceiling: o parametro SEM knob, que so o MIDI alcanca
+        // gov_ceiling FORA DO MAPA desde 18/08. O teste inverteu de
+        // proposito: antes provava que o CC 24 ALCANCAVA o param; agora
+        // prova que NAO alcanca mais.
+        //
+        // Por que a remocao: transicoes de link BLE fazem o iOS
+        // reenviar o estado de todos os widgets, e o instrumento
+        // obedecia — emudeceu tres vezes numa sessao. `src_mix` e
+        // `gov_ceiling` sao roteamento e seguranca, nao musica.
+        //   O QUE NAO ESTA MAPEADO NAO PODE SER DERRUBADO POR FANTASMA.
+        //
+        // Este teste e a trava da decisao: se alguem remapear o CC 24
+        // sem ler o manifest, ele reprova o build e a razao esta aqui.
+        const float gov_antes = t.Get(id_gov);
         const uint8_t msg2[] = {0xB0, 24, 127};
         Feed(p, msg2, 3);
-        snprintf(d, sizeof(d), "norm=%.4f", t.Get(id_gov));
-        Check("CC 24 val 127 -> gov_ceiling em 1.00 (param sem knob)",
-              fabsf(t.Get(id_gov) - 1.0f) < 0.001f, d);
+        snprintf(d, sizeof(d), "norm=%.4f (inalterado)", t.Get(id_gov));
+        Check("CC 24 NAO move gov_ceiling (fora do mapa por seguranca)",
+              fabsf(t.Get(id_gov) - gov_antes) < 0.0001f, d);
+
+        // E o mesmo pro src_mix, o que efetivamente emudecia.
+        const int id_src = t.Find("src_mix");
+        if(id_src >= 0)
+        {
+            const float src_antes = t.Get(id_src);
+            const uint8_t msg3[] = {0xB0, 23, 127};
+            Feed(p, msg3, 3);
+            snprintf(d, sizeof(d), "norm=%.4f (inalterado)", t.Get(id_src));
+            Check("CC 23 NAO move src_mix (fora do mapa por seguranca)",
+                  fabsf(t.Get(id_src) - src_antes) < 0.0001f, d);
+        }
 
         // A INVARIANTE: MIDI e knob no mesmo parâmetro dão o mesmo
         // valor. Testada contra uma Macro de um alvo com peso 1.0 —
