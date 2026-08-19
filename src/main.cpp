@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.53.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.61.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.53.0"
+#define COTUCA_OS_VERSION "0.61.0"
 
 #include "hal.h"
 #include "params.h"
@@ -166,9 +166,59 @@ static void QuarTick()
         QuarFlush();
 }
 
+// CC RESERVADO COMO COMANDO, nao como parametro: pede a placa pra
+// EMPURRAR o estado dela pro controlador. Resolve na direcao certa um
+// problema que vinha sendo contornado na errada.
+//
+// O PROBLEMA: os defaults do manifest nao sobrevivem a conexao. Toda
+// gravacao restaura o aprovado, e o primeiro CC do Loopy sobrescreve
+// com onde os faders dele estao parados — entao o instrumento acorda
+// no estado do controlador, nao no seu proprio.
+//
+// Zerar os defaults seria contornar: faria o controlador SEMPRE vencer.
+// Isto inverte: a placa fala primeiro, e o controlador se alinha a ela.
+static constexpr uint8_t kCcSync = 34;
+
+static void MidiPushEstado()
+{
+    using namespace cotuca;
+    int n = 0;
+    for(int i = 0; i < manifest.n_midi; i++)
+    {
+        const int id = manifest.midi_map[i].param_id;
+        if(id < 0) continue;
+        const float norm = params.Get(id);
+        uint8_t v = (uint8_t)(norm * 127.f + 0.5f);
+        if(v > 127) v = 127;
+        const uint8_t msg[3] = {0xB0, manifest.midi_map[i].cc, v};
+        hal::MidiSendBytes(msg, 3);
+        // Respira entre mensagens: a 31250 baud tres bytes levam ~1 ms,
+        // e despejar 12 CCs de uma vez e exatamente o padrao que a
+        // quarentena do OUTRO lado (se houver) trataria como dump.
+        hal::DelayMs(3);
+        n++;
+    }
+    hal::Log("sync: %d CCs empurrados pro controlador — os faders do"
+             " Loopy devem pular pro estado da placa", n);
+}
+
 static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
 {
     using namespace cotuca;
+    // CC de COMANDO: nao e parametro, nao passa pela quarentena, nao
+    // entra no mapa. Borda de subida so.
+    if(cc == kCcSync)
+    {
+        static bool armado = true;
+        if(value >= 64)
+        {
+            if(armado) { armado = false; MidiPushEstado(); }
+        }
+        else
+            armado = true;
+        return;
+    }
+
     const uint32_t now = hal::NowMs();
 
     // 1) Bloqueio confirmado: o CC e REGISTRADO pelo parser (ja
@@ -206,6 +256,39 @@ static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
             quar_held[quar_held_n++] = {cc, value};
 
         if(quar_seen_n >= kQuarDistinct)
+        {
+            // ---- A DEFESA VIROU ESTORVO (18/08) ----
+            //
+            // A quarentena nasceu porque o despejo de reconexao punha
+            // `src_mix` e `gate_thresh` em valores perigosos e emudecia
+            // o instrumento. Duas decisoes do dB mataram essa premissa
+            // no mesmo dia:
+            //
+            //   1. os params de roteamento e seguranca SAIRAM do mapa —
+            //      o que nao esta mapeado nao pode ser derrubado;
+            //   2. os defaults do que o MIDI alcanca foram a ZERO, e o
+            //      Loopy (que so transmite) virou a fonte da verdade.
+            //
+            // Com isso o despejo deixou de ser ataque e virou a
+            // INICIALIZACAO desejada. A defesa passou a descartar
+            // exatamente o que o instrumento precisa: 5 mensagens
+            // chegaram no boot e ZERO foram aplicadas.
+            //
+            // Entao ela vira SENSOR: continua detectando e contando
+            // (diagnostico util — reconexao e evento que se quer ver),
+            // e para de descartar. Libera o que estava seguro.
+            QuarFlush();
+            ble_reconnects++;
+            hal::BlackboxWrite(87, (float)ble_reconnects);
+            hal::Log("ble: (re)conexao detectada — %d CCs distintos em"
+                     " <%lu ms. APLICADOS: com defaults em zero, o"
+                     " despejo do controlador E a inicializacao.",
+                     quar_seen_n, (unsigned long)kQuarWindowMs);
+            quar_win    = 0;
+            quar_seen_n = 0;
+            return;
+        }
+        if(false)
         {
             // CONFIRMADO. Descarta o que estava seguro — inclusive os
             // tres primeiros, que e o ponto inteiro deste desenho.
@@ -1207,6 +1290,79 @@ static void SetButton2(bool pressed)
 // Um rotulo que mente (cicatriz 7) e uma medicao que mede o proprio
 // silencio (cicatriz 8) tem o mesmo antidoto: o instrumento declara os
 // proprios modos, e a declaracao atravessa o modo que declara.
+// ---- CAMADA 1: OS TRES LEDS DO WIDI, MEDIDOS SEM SEREM NOMEADOS ----
+//
+// Ideia do dB: em vez de um LED pra humano olhar, os pads vao pra pinos
+// de entrada e o instrumento le o proprio estado de link.
+//
+// A PRIMEIRA VERSAO CLASSIFICAVA, E ESTAVA ERRADA. Eu escrevi
+// "fixo = conectado, piscando = anunciando" a partir da legenda da CME
+// — que estava marcada no codigo como NAO VERIFICADA — e o dB desmentiu
+// por medicao: desconectou o iPad e o LB continuou FIXO. Antes disso o
+// classificador ja trocava de estado 15 vezes em 90 s ENQUANTO o MIDI
+// fluia, o que nao e estado de link: e atividade.
+//
+// Entao aqui nao ha nome, so numero: transicoes e duty de CADA pad, por
+// janela de 2 s, correlacionados com trafego. A legenda sai da tabela
+// que o `ble raw` produzir — medir vem antes de nomear.
+static constexpr bool kLbAcesoEmBaixo = true; // confirmado: V3=3V3, LB=0V
+
+static volatile uint32_t lb_trans[3] = {0, 0, 0};
+static volatile uint8_t  lb_duty[3]  = {0, 0, 0};
+static bool              lb_cru      = false;
+static bool              lb_espelho  = false;
+
+static void LbTick()
+{
+    using namespace cotuca;
+    static uint32_t prox_ms = 0, jan0 = 0;
+    static bool     ant[3]  = {false, false, false};
+    static bool     primeira = true;
+    static uint32_t n_trans[3] = {0, 0, 0}, n_aceso[3] = {0, 0, 0};
+    static uint32_t n_amostras = 0;
+
+    const uint32_t ag = hal::NowMs();
+    if(ag < prox_ms)
+        return;
+    prox_ms = ag + 5u; // 200 Hz
+
+    bool aceso[3];
+    for(int i = 0; i < 3; i++)
+    {
+        const bool nivel = hal::ReadWidiLed(i);
+        aceso[i] = kLbAcesoEmBaixo ? !nivel : nivel;
+        if(primeira) ant[i] = aceso[i];
+        if(aceso[i] != ant[i]) { n_trans[i]++; ant[i] = aceso[i]; }
+        if(aceso[i]) n_aceso[i]++;
+    }
+    if(primeira) { jan0 = ag; primeira = false; }
+    n_amostras++;
+    if(lb_espelho)
+        hal::SetLed(aceso[0]);
+
+    if(ag - jan0 < 2000u)
+        return;
+
+    for(int i = 0; i < 3; i++)
+    {
+        lb_trans[i] = n_trans[i];
+        lb_duty[i]  = (uint8_t)(n_amostras ? (n_aceso[i] * 100u / n_amostras)
+                                           : 0u);
+    }
+    if(lb_cru)
+    {
+        const bool traf
+            = ble_last_rx_ms && (ag - ble_last_rx_ms) < 2000u;
+        hal::Log("lb: LB %lu/%u%%  LG %lu/%u%%  LR %lu/%u%%  | trafego %s",
+                 (unsigned long)lb_trans[0], (unsigned)lb_duty[0],
+                 (unsigned long)lb_trans[1], (unsigned)lb_duty[1],
+                 (unsigned long)lb_trans[2], (unsigned)lb_duty[2],
+                 traf ? "SIM" : "nao");
+    }
+    jan0 = ag; n_amostras = 0;
+    for(int i = 0; i < 3; i++) { n_trans[i] = 0; n_aceso[i] = 0; }
+}
+
 static void declara_modos()
 {
     using namespace cotuca;
@@ -1594,6 +1750,11 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRestarts());
         return;
     }
+    if(strncmp(line, "sync", 4) == 0)
+    {
+        MidiPushEstado();
+        return;
+    }
     if(strncmp(line, "ctos", 4) == 0)
     {
         declara_modos();
@@ -1637,12 +1798,47 @@ static void HandleLine(const char* line)
     if(strncmp(line, "ble", 3) == 0)
     {
         declara_modos();
+        {
+            const char* a = line + 3;
+            while(*a == ' ') a++;
+            if(strncmp(a, "raw", 3) == 0)
+            {
+                const char* b = a + 3;
+                while(*b == ' ') b++;
+                lb_cru = (strncmp(b, "off", 3) != 0);
+                hal::Log("ble raw: %s — publica transicoes/2s e %% aceso"
+                         " SEM classificar. Correlacione com o trafego"
+                         " antes de acreditar em qualquer legenda.",
+                         lb_cru ? "LIGADO" : "desligado");
+                return;
+            }
+            if(strncmp(a, "mirror", 6) == 0)
+            {
+                const char* b = a + 6;
+                while(*b == ' ') b++;
+                lb_espelho = (strncmp(b, "on", 2) == 0);
+                hal::Log("ble: espelho do LB no LED da placa %s%s",
+                         lb_espelho ? "LIGADO" : "desligado",
+                         lb_espelho ? " (o pulso de fase do CTOS para"
+                                      " enquanto durar)" : "");
+                return;
+            }
+        }
         const uint32_t now = hal::NowMs();
         const uint32_t age = ble_last_rx_ms ? (now - ble_last_rx_ms) : 0u;
         hal::Log("ble: ultimo byte ha %s%.1f s | msgs da sessao %lu",
                  ble_last_rx_ms ? "" : "(nunca recebeu) ",
                  (double)age / 1000.0,
                  (unsigned long)(midi.CcCount() - ble_session_base));
+        // ---- CAMADA 1: numero, nao nome ----
+        hal::Log("  WIDI LEDs (D28/29/30) — transicoes por 2 s / %% aceso:");
+        hal::Log("    LB %lu/%u%%   LG %lu/%u%%   LR %lu/%u%%",
+                 (unsigned long)lb_trans[0], (unsigned)lb_duty[0],
+                 (unsigned long)lb_trans[1], (unsigned)lb_duty[1],
+                 (unsigned long)lb_trans[2], (unsigned)lb_duty[2]);
+        hal::Log("    sem veredito: a legenda da CME foi DESMENTIDA em"
+                 " bancada (desconectou, LB ficou fixo). `ble raw`"
+                 " acompanha ao vivo — a tabela sai da medicao.");
         hal::Log("  CCs recusados pela quarentena: %lu",
                  (unsigned long)cc_quarentena);
         hal::Log("  silencios >10 s: %lu | (re)conexoes detectadas %lu",
@@ -1774,7 +1970,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ctos [rearm] | rearm | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | ctos [rearm] | rearm | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -2127,6 +2323,7 @@ int main(void)
         // normal, onde mexer em params e logar é seguro.
         FASE(6);
         hal::PollMidi();
+        LbTick();
         loop_voltas++;
         // A janela de quarentena pode expirar sem que chegue outro
         // CC — o humano que mexeu uma vez e parou. Sem este tique o

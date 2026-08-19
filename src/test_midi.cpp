@@ -220,12 +220,29 @@ int main()
         const int id_gov  = t.Find("gov_ceiling");
         Check("manifest expoe dly_time e gov_ceiling", id_time >= 0 && id_gov >= 0);
 
-        const uint8_t msg[] = {0xB0, 20, 64};
+        // MAPA v2 (18/08): renumerado contiguo de 20. `dly_time` saiu
+        // do CC 20 pro 22, porque o 20 virou o `level` — master no
+        // comeco da faixa. Este teste segue o mapa, e falhar aqui
+        // depois de um remapeamento e o comportamento CORRETO: ele
+        // avisa que o contrato mudou.
+        const uint8_t msg[] = {0xB0, 22, 64};
         Feed(p, msg, 3);
         snprintf(d, sizeof(d), "norm=%.4f real=%.4f (curve %.1f)",
                  t.Get(id_time), t.Real(id_time), t.Curve(id_time));
-        Check("CC 20 val 64 -> dly_time norm 0.50",
+        Check("CC 22 val 64 -> dly_time norm 0.50",
               fabsf(t.Get(id_time) - 0.5039f) < 0.002f, d);
+
+        // Params que so a serial alcancava e agora tem CC: rev_size
+        // (25), rev_damp (26) e buzios_thresh (32).
+        const int id_rs = t.Find("rev_size");
+        if(id_rs >= 0)
+        {
+            const uint8_t m4[] = {0xB0, 25, 127};
+            Feed(p, m4, 3);
+            snprintf(d, sizeof(d), "norm=%.4f", t.Get(id_rs));
+            Check("CC 25 -> rev_size (controle novo no mapa v2)",
+                  fabsf(t.Get(id_rs) - 1.0f) < 0.001f, d);
+        }
 
         // gov_ceiling FORA DO MAPA desde 18/08. O teste inverteu de
         // proposito: antes provava que o CC 24 ALCANCAVA o param; agora
@@ -240,6 +257,9 @@ int main()
         // Este teste e a trava da decisao: se alguem remapear o CC 24
         // sem ler o manifest, ele reprova o build e a razao esta aqui.
         const float gov_antes = t.Get(id_gov);
+        // NB: no mapa v2 o CC 24 e `rev_mix`. O que se prova aqui e que
+        // ele NAO alcanca `gov_ceiling` — a garantia e sobre o PARAM
+        // estar fora do mapa, nao sobre um numero especifico.
         const uint8_t msg2[] = {0xB0, 24, 127};
         Feed(p, msg2, 3);
         snprintf(d, sizeof(d), "norm=%.4f (inalterado)", t.Get(id_gov));
@@ -251,6 +271,8 @@ int main()
         if(id_src >= 0)
         {
             const float src_antes = t.Get(id_src);
+            // No mapa v2 o CC 23 e `dly_mix`. De novo: a garantia e
+            // que `src_mix` esta fora do mapa, seja qual for o numero.
             const uint8_t msg3[] = {0xB0, 23, 127};
             Feed(p, msg3, 3);
             snprintf(d, sizeof(d), "norm=%.4f (inalterado)", t.Get(id_src));
@@ -269,8 +291,12 @@ int main()
         // medindo o layout do painel, não a invariante. Layout é
         // decisão de manifest e muda de escultura pra escultura; a
         // invariante não muda nunca.
+        // No mapa v2 o `level` e o CC 20 (era 22). O teste segue o
+        // MAPA, nao um numero decorado — a invariante que ele prova e
+        // "MIDI e knob dao o mesmo valor", e ela nao depende de qual
+        // CC carrega o param.
         const int id_lvl = t.Find("level");
-        const uint8_t msg3[] = {0xB0, 22, 127};
+        const uint8_t msg3[] = {0xB0, 20, 127};
         Feed(p, msg3, 3);
 
         cotuca::ParamTable t2;

@@ -484,6 +484,78 @@ não é questão de se, é de quando.
 
 ---
 
+## 11g. A defesa que sobreviveu à ameaça (18/08)
+
+A quarentena de reconexão foi construída porque despejos de estado do iOS
+punham `src_mix` e `gate_thresh` em valores perigosos e **emudeceram o
+instrumento três vezes numa sessão**. Ela funcionava: barrou 154 e 14 CCs em
+dois eventos.
+
+Horas depois, duas decisões do dB — **cada uma correta isoladamente** —
+mataram a ameaça que a justificava:
+
+1. `src_mix` e `gov_ceiling` **saíram do mapa MIDI**. *O que não está mapeado
+   não pode ser derrubado.*
+2. Os defaults do que o MIDI alcança foram a **zero**, e o Loopy (que só
+   transmite) virou a fonte da verdade.
+
+Com isso o despejo deixou de ser ataque e virou a **inicialização desejada**.
+E a quarentena continuou rodando, agora descartando exatamente o que o
+instrumento precisava para acordar:
+
+```
+msgs completas 5 | APLICADAS 0
+quarentena: 5 CCs recusados
+```
+
+Cinco mensagens no boot, zero aplicadas, instrumento mudo. O sintoma era
+idêntico a "o MIDI não responde" — e a causa era uma defesa nossa fazendo
+exatamente o que fora mandada fazer.
+
+**Não é bug: é defesa órfã.** Nenhuma linha estava errada. O que mudou foi o
+mundo em volta dela, e ninguém revisou a defesa quando isso aconteceu.
+
+**É a família do passa-alta de 120 Hz** (cap. 11b) — conserto que existia por
+causa do vocoder. A diferença é instrutiva: **aquele saiu sozinho porque
+estava no escopo do defeito** (dentro do bloco do Fx2), e este não saiu porque
+estava no escopo do sistema inteiro.
+
+**A regra, mais dura que a do cap. 11b:**
+
+> **Toda defesa precisa declarar a ameaça que a justifica**, para que se possa
+> perguntar se a ameaça ainda existe.
+
+Sem isso, defesas acumulam e viram folclore: cada uma custando alguma coisa,
+nenhuma sendo revista, e a soma delas eventualmente impedindo o sistema de
+funcionar. O conserto aqui não foi remover — foi **rebaixar a defesa a
+sensor**: continua detectando e anunciando a reconexão (diagnóstico que se
+quer ter), e parou de descartar.
+
+**Corolário de processo:** quando uma decisão remove uma classe de ameaça,
+o passo seguinte é *listar o que existia por causa dela*. Nós tomamos as duas
+decisões e não fizemos essa pergunta.
+
+---
+
+## 11h. Proposta que o outro lado já executou (18/08)
+
+Propus um mapa de CCs renumerado, apresentei a tabela, pedi confirmação — e
+**não implementei**. O dB alinhou o Loopy pela tabela.
+
+O resultado foram várias rodadas caçando um `level` que "não respondia":
+o fader mandava CC 20 (o novo `level`) e a placa ainda tinha CC 20 =
+`dly_time`. Os dois lados estavam certos em relação a documentos diferentes.
+
+O diagnóstico só destravou quando o dB colou a tabela de volta e perguntou
+*"mas... e isso?"*.
+
+**A regra:** *proposta que o outro lado já executou deixa de ser proposta.*
+Uma tabela apresentada como decisão vira contrato no instante em que alguém
+age sobre ela — e o custo de implementar tarde é maior que o de implementar
+junto, porque no intervalo os dois lados divergem **em silêncio**.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.

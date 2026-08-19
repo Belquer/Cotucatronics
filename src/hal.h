@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.14.0
+// hal.h v0.16.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -75,6 +75,24 @@ float            ReadKnob(int index);          // 0.0–1.0 (stub até ter pots)
 // Chamar do loop principal, em qualquer ritmo — o debounce é por
 // tempo, não por contagem de chamadas.
 bool             ReadButton(int index);        // true = pressionado
+
+// Nivel CRU do pino ligado ao pad LB do WIDI (seed::D28), com pull-up
+// interno. Devolve o que o pino le, SEM interpretacao — quem classifica
+// "conectado" ou "anunciando" e o main, porque a polaridade e a legenda
+// sao do modulo, nao da placa.
+//
+// Pull-up interno significa que pino solto le ALTO. Entao "alto
+// constante" e ambiguo: pode ser LED apagado, ou fio nao ligado. O
+// comando `ble` diz isso em vez de fingir que sabe.
+// Le os TRES pads de LED do WIDI: LB (D28), LG (D29), LR (D30).
+// idx 0=LB 1=LG 2=LR. Nivel CRU, sem interpretacao.
+//
+// SAO TRES DE PROPOSITO. A legenda da CME ("pisca lento = anunciando,
+// fixo = conectado") foi assumida como sendo do LB e o dB DESMENTIU por
+// medicao: desconectou e o LB ficou fixo. Ou seja, o LB indica outra
+// coisa — e qual pad carrega o estado de conexao e pergunta EMPIRICA.
+// Ler os tres e mais barato que adivinhar de novo.
+bool             ReadWidiLed(int idx);
 void             SetLed(bool on);
 void             Log(const char* fmt, ...);    // printf via USB/serial
 void             SetSerialLineCallback(SerialLineCallback cb);

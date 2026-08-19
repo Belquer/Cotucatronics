@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.13.0
+// hal_daisy_seed v0.15.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -49,6 +49,7 @@ static BoardInfo info = {
 // cadência — que é exatamente o tipo de acoplamento invisível que
 // esta base já pagou caro pra aprender a evitar.
 constexpr int      kNumButtons  = 2;
+static GPIO        widi_led[3];  // LB=D28, LG=D29, LR=D30
 constexpr uint32_t kDebounceMs  = 10;
 
 struct ButtonState
@@ -213,6 +214,16 @@ bool Init()
     hw.usb_handle.SetReceiveCallback(UsbRxCallback, UsbHandle::FS_INTERNAL);
 
     // botões: entrada com pull-up interno, fecham pra GND
+    // WIDI LB: entrada com pull-up. D28 esta livre — D13/D14 sao a UART
+    // do MIDI, D15-D19 sao os pots (A0-A4 sao os MESMOS pinos), e
+    // D26/D27 sao os botoes.
+    {
+        const Pin led_pins[3] = {seed::D28, seed::D29, seed::D30};
+        for(int i = 0; i < 3; i++)
+            widi_led[i].Init(led_pins[i], GPIO::Mode::INPUT,
+                             GPIO::Pull::PULLUP);
+    }
+
     const Pin btn_pins[kNumButtons] = {seed::D26, seed::D27};
     for(int i = 0; i < kNumButtons; i++)
         buttons[i].gpio.Init(btn_pins[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
@@ -242,6 +253,12 @@ float ReadKnob(int /*index*/)
     // stub: pots físicos ainda não ligados.
     // Quando ligar: retornar hw.adc.GetFloat(index);
     return -1.f; // -1 sinaliza "sem hardware, use serial"
+}
+
+bool ReadWidiLed(int idx)
+{
+    if(idx < 0 || idx > 2) return true;
+    return widi_led[idx].Read();
 }
 
 bool ReadButton(int index)

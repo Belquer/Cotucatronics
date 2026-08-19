@@ -54,6 +54,30 @@ gastava 35 µs de 500.
    defeito reprodutível em intermitente — e intermitente é o mais caro de
    todos.
 
+## Regra da defesa órfã — declare a ameaça, ou ela vira folclore
+
+Toda proteção que você adiciona (quarentena, veto, filtro, bypass, janela de
+graça) **precisa declarar no código a ameaça que a justifica**. Não por
+documentação: porque sem isso ninguém consegue perguntar *"essa ameaça ainda
+existe?"*.
+
+Em 18/08 a quarentena de reconexão — que tinha barrado 154 CCs de despejos
+reais — passou a descartar a **inicialização legítima** do instrumento, porque
+duas decisões corretas removeram a ameaça e ninguém revisou a defesa. Cinco
+mensagens no boot, zero aplicadas, instrumento mudo, sintoma idêntico a
+"o MIDI não responde".
+
+**Nenhuma linha estava errada.** Mudou o mundo em volta.
+
+**Ao remover uma classe de ameaça, liste o que existia por causa dela.**
+Defesa que perdeu o inimigo raramente some sozinha — a menos que esteja no
+**escopo do defeito** (ver o passa-alta que saiu junto com o vocoder, cap.
+11b do battle_scars). Escopo largo = sobrevivência indevida.
+
+**Rebaixar costuma ser melhor que remover:** a quarentena virou sensor —
+continua detectando e anunciando, parou de descartar. Preserva o diagnóstico
+e devolve o controle.
+
 ## Regra do filtro — "implausível" não se define por magnitude
 
 Se você filtrar outliers por tamanho, **descarta a catástrofe junto com o

@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.43.0
+// manifest.h (instrumento "bancada") v0.46.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -398,6 +398,34 @@ struct Manifest
 
     void Init(ParamTable& t)
     {
+        // ============================================================
+        // DEFAULTS: ZERO PARA O QUE O MIDI ALCANCA (dB, 18/08)
+        //
+        // O Loopy so TRANSMITE — nao recebe sem MIDI learn, e o dB
+        // decidiu nao fazer isso por ora. Consequencia: o controlador e
+        // a fonte da verdade, e os faders dele estao onde estao.
+        //
+        // Se a placa acordasse nos valores "aprovados", eles durariam
+        // ate o primeiro CC e depois pulariam pro que o fader dissesse.
+        // Isso ja aconteceu hoje varias vezes e foi lido como defeito:
+        // `level` em 0.49 logo apos o boot, freeze ligado sozinho, o
+        // grave "sumindo". Nao era defeito — era o controlador fazendo
+        // o trabalho dele por cima do manifest.
+        //
+        // Entao o manifest para de disputar: params MAPEADOS nascem em
+        // ZERO, e o dB constroi o instrumento subindo os faders. Nada
+        // pula, porque nao ha divergencia pra corrigir.
+        //
+        // O QUE NAO E ZERADO, E POR QUE: params que o MIDI NAO alcanca.
+        // Zera-los nao alinha nada (o Loopy nunca os manda) e alguns
+        // quebram o instrumento — `gov_ceiling` em 0 faz o governor
+        // comprimir tudo contra o chao, que foi a causa medida do
+        // "sumiu o baixo" desta sessao. Roteamento em 0 e saida muda.
+        //
+        // A regra, entao: ZERA O QUE O CONTROLADOR ALCANCA, PRESERVA O
+        // QUE ELE NAO ALCANCA. E a mesma fronteira caráter/segurança
+        // que ja governa a whitelist dos buzios e o mapa MIDI.
+        // ============================================================
         // nome, default (0-1), min real, max real
         // ESTADO INSTRUMENTO restaurado 2026-08-17. Estava em 0.4 desde
         // o A/B com o Max e ficou — o dB ouviu o instrumento real e
@@ -420,7 +448,7 @@ struct Manifest
         // O contrato [0,1] segue intacto: 1.0 é o topo do curso do knob,
         // não uma exceção. Quem precisar de mais que isso está pedindo
         // ganho de ENTRADA, que mora pós-entrada/pré-gate — nunca aqui.
-        p_level     = t.Add("level",     1.0f, 0.f,    1.f);
+        p_level     = t.Add("level",     0.0f, 0.f,    1.f);   // MIDI: nasce 0
         p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
         p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
         p_spare     = t.Add("spare",     0.0f, 0.f,    1.f);
@@ -444,7 +472,7 @@ struct Manifest
         // defeito novo.
         //
         // norm para 8.0 = topo da faixa = 1.0
-        p_in_gain   = t.Add("in_gain",   1.0f, 1.f, 8.f, 2.0f);
+        p_in_gain   = t.Add("in_gain",   0.0f, 1.f, 8.f, 2.0f); // MIDI: nasce 0 (= 1x)
         // os params do módulo já são 0–1 no export, então min/max reais
         // coincidem com o normalizado e a conversão é identidade.
         // curve 2.5 no dly_time: ERGONOMIA, não DSP. O parâmetro do
@@ -455,8 +483,34 @@ struct Manifest
         // curvado e não sabe que houve curva.
         // norm 0.69 com curve 2.5 da real ~0.40: eco audivel e
         // claramente separado, nem slapback nem cauda longa.
-        p_dly_time  = t.Add("dly_time",  0.69f, 0.f,   1.f,  2.5f);
-        p_dly_mix   = t.Add("dly_mix",   0.5f, 0.f,    1.f);
+        // CURVA LINEAR (dB, 18/08). Era 2.5, que dava controle fino nos
+        // tempos CURTOS — util pra delay-como-timbre e pessimo pra
+        // delay-como-eco. O patch mapeia real 0..1 em 10..1000 ms
+        // linearmente, entao com curva 2.5 o fader em 30% dava 59 ms:
+        // abaixo de ~60 ms o ouvido nao separa em eco, vira
+        // espessamento. O primeiro TERCO do curso era inaudivel como
+        // delay, e foi exatamente o que o dB relatou.
+        //
+        // Linear: 10% = 109 ms, 25% = 258 ms, 50% = 505 ms, 100% = 1 s.
+        // Curso inteiro util, e o fader passa a ler em MILISSEGUNDOS —
+        // previsivel pra quem toca.
+        // FAIXA CORTADA POR BAIXO (dB, 18/08): o fader inteiro passa a
+        // viver na regiao PERCEPTIVEL. Antes ia de 10 ms a 1 s com
+        // curva 2.5, e o primeiro terco do curso ficava abaixo de
+        // ~60 ms — que o ouvido nao separa em eco, so espessa. Um
+        // terco de fader que nao faz nada audivel e um terco perdido.
+        //
+        // Agora min_real = 0.05, que o patch mapeia em ~59 ms (a borda
+        // da percepcao), e o topo segue em 1 s. Linear:
+        //   0% = 59 ms | 25% = 294 ms | 50% = 530 ms | 100% = 1000 ms
+        //
+        // O corte e no PARAMETRO, nao na curva, e a diferenca importa:
+        // curva redistribui o mesmo alcance e deixa o inutil no fim do
+        // curso; limite REMOVE o inutil do alcance. As cercas dos
+        // buzios (100-500 ms) continuam validas porque falam em real e
+        // cabem dentro da faixa nova.
+        p_dly_time  = t.Add("dly_time",  0.0f, 0.05f, 1.f, 1.0f); // MIDI: nasce 0
+        p_dly_mix   = t.Add("dly_mix",   0.0f, 0.f,    1.f);  // MIDI: nasce 0
 
         // GATE. gate_thresh usa curve 2 porque threshold útil vive
         // todo no fundo da faixa: linear, os primeiros 5% do curso
@@ -465,7 +519,7 @@ struct Manifest
         // produz 0.02 é sqrt(0.02) = 0.1414.
         // Gate de volta: o chão de ruído do piezo vira cauda no delay se
         // ninguém o cortar. 0.02 é o valor que estava antes do A/B.
-        p_gate_thresh  = t.Add("gate_thresh",  0.02f, 0.f,  1.f, 2.0f);
+        p_gate_thresh  = t.Add("gate_thresh",  0.0f, 0.f,  1.f, 2.0f); // MIDI: nasce 0 (portao aberto)
         // release em ms: 50–2000, default 300
         p_gate_release = t.Add("gate_release", 0.1282f, 50.f, 2000.f);
 
@@ -523,7 +577,7 @@ struct Manifest
 
         // 0.35 — o valor que o dB tocou e aprovou ("reverb está ótimo").
         // 0.15 era o chute inicial e nunca foi ouvido.
-        p_rev_mix       = t.Add("rev_mix",       0.35f, 0.f, 1.f);
+        p_rev_mix       = t.Add("rev_mix",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
         p_rev_size      = t.Add("rev_size",      0.50f, 0.f, 1.f);
         p_rev_damp      = t.Add("rev_damp",      0.50f, 0.f, 1.f);
 
@@ -535,7 +589,7 @@ struct Manifest
         // Mix em 1.0: congelou, é o congelado que se ouve. Meio a meio
         // deixaria o seco competindo com a sustentação e o gesto
         // perderia clareza — quem quiser camada abaixa no CC.
-        p_frz_mix       = t.Add("frz_mix",       1.0f, 0.f, 1.f);
+        p_frz_mix       = t.Add("frz_mix",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
         // 100 ms de janela. Abaixo de ~40 ms o grão vira timbre
         // próprio (soa granular, "chuvisco"); acima de ~250 ms os dois
         // grãos leem quase o mesmo trecho e o batimento volta.
@@ -543,7 +597,7 @@ struct Manifest
         // real. Escrever 100.0f aqui satura em 1.0 e o grao nasce em
         // 400 ms — exatamente o tamanho em que os dois graos leem quase
         // o mesmo trecho e o batimento volta. 100 ms = (100-20)/380.
-        p_frz_size      = t.Add("frz_size",      0.2105f, 20.f, 400.f);
+        p_frz_size      = t.Add("frz_size",      0.0f, 20.f, 400.f); // MIDI: nasce 0 (= 20 ms)
 
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
@@ -595,7 +649,7 @@ struct Manifest
         // >>> PRA VOLTAR AO BYPASS: 0.0f aqui. Se um modulo novo e nao
         // >>> medido entrar no slot Fx2, VOLTE — a regra continua certa
         // >>> pra quem ainda nao passou pelo IFA10000.
-        p_fx2_on     = t.Add("fx2_on",     1.0f, 0.f,   1.f);
+        p_fx2_on     = t.Add("fx2_on",     0.0f, 0.f,   1.f);  // MIDI: nasce 0
 
         // FREEZE. Defaults iguais aos do export, pra o boot nascer
         // com o patch no estado que o autor definiu.
@@ -669,7 +723,7 @@ struct Manifest
         // cercas, pela mesma via dos knobs, e a rampa é função do
         // relógio. O risco é zero e o atrito de não estar ligado é
         // real — o dB encontrou "só o delay" seis vezes num dia.
-        p_buzios_on       = t.Add("buzios_on",       1.0f,   0.f,  1.f);
+        p_buzios_on       = t.Add("buzios_on",       0.0f,   0.f,  1.f); // MIDI: nasce 0
         // 0.04, bem mais sensível que os 0.15 iniciais — pedido do dB
         // depois de tocar o instrumento real.
         //
@@ -829,91 +883,41 @@ struct Manifest
         // CCs 20–24: faixa "undefined" da spec MIDI, então não colide
         // com nada padrão (1 é mod wheel, 7 é volume, 64 é sustain).
         // Controlador genérico sai de fábrica sem usá-las.
-        midi_map[n_midi++] = {20, p_dly_time};
-        midi_map[n_midi++] = {21, p_dly_mix};
-        midi_map[n_midi++] = {22, p_level};
-        // ---- CC 23 (src_mix) e CC 24 (gov_ceiling) REMOVIDOS em 18/08 ----
+        // ============================================================
+        // MAPA v2 (dB, 18/08) — contiguo de 20, sem CCs mortos
         //
-        // Decisao do dB depois de o instrumento emudecer TRES vezes na
-        // mesma sessao. Transicoes de link BLE fazem o iOS reenviar o
-        // estado de todos os widgets, e o `src_mix` saltava pra 1.0 —
-        // 100% jack de linha, com nada plugado. Silencio total, e com
-        // cara de "a placa morreu".
+        // Renumerado porque o mapa antigo tinha buracos (23 e 24 sairam
+        // por seguranca) e dois CCs MORTOS apontando pro slot RNBO
+        // vazio: mexer neles nao fazia nada, em silencio. Tres params
+        // que so a serial alcancava ganharam controle.
         //
-        // A quarentena de reconexao pegou parte (154 e 14 CCs em dois
-        // eventos) e nao bastou: despejo espalhado, ou sem os 5 s de
-        // silencio porque o musico estava tocando, escapa.
+        // AGRUPADO POR FAMILIA, e isso e defesa, nao estetica: um
+        // widget mal configurado atinge o VIZINHO. Hoje um botao dos
+        // buzios mandava 31 junto com 32 e jogava o `gate_thresh` no
+        // topo — portao sempre fechado, instrumento mudo, sintoma
+        // identico ao do `src_mix`. Vizinhanca importa.
+        // ============================================================
+        midi_map[n_midi++] = {20, p_level};        // master
+        midi_map[n_midi++] = {21, p_in_gain};      // ganho de entrada
+        midi_map[n_midi++] = {22, p_dly_time};
+        midi_map[n_midi++] = {23, p_dly_mix};
+        midi_map[n_midi++] = {24, p_rev_mix};
+        midi_map[n_midi++] = {25, p_rev_size};     // novo
+        midi_map[n_midi++] = {26, p_rev_damp};     // novo
+        midi_map[n_midi++] = {27, p_frz_on};   // chave 0/127
+        midi_map[n_midi++] = {28, p_frz_mix};
+        midi_map[n_midi++] = {29, p_frz_size};
+        midi_map[n_midi++] = {30, p_gate_thresh};  // ajuste de execucao
+        midi_map[n_midi++] = {31, p_buzios_on}; // chave 0/127
+        midi_map[n_midi++] = {32, p_buzios_thresh};   // novo
+        // 33 RESERVADO pro vocoder quando voltar (voc_pitch).
+        // 34 e o comando `sync` — interceptado antes do mapa, ver
+        //    kCcSync no main.cpp. Nao e parametro e nao entra aqui.
         //
-        //   O QUE NAO ESTA MAPEADO NAO PODE SER DERRUBADO POR FANTASMA.
-        //
-        // Nenhuma heuristica de timing da a mesma garantia que a
-        // ausencia. E os dois nao perdem nada de musica: `src_mix` e
-        // ROTEAMENTO (escolhe a fonte, nao toca), e `gov_ceiling` e
-        // SEGURANCA (a borda de feedback). E a mesma regra que ja
-        // proibia os dois na whitelist dos buzios — ninguem tinha feito
-        // a ligacao com o MIDI.
-        //
-        // gate_thresh (CC 31) FICA, por escolha do dB: e ajuste de
-        // execucao, muda com o material e com a sala, e precisa ser
-        // alcancavel sem largar a escultura.
-        //
-        // Os dois seguem alcancaveis pela serial: `set src_mix` e
-        // `set gov_ceiling`. Sai o acesso remoto, nao o controle.
-        // gov_ceiling é a "borda de feedback" e não tem knob — os cinco
-        // estão ocupados. Até o encoder físico existir, o CC 24 é o
-        // único jeito de procurar a borda sem largar a escultura pra
-        // digitar no serial. É o mapeamento que mais justifica o MIDI.
-
-        // CC 25: o ganho do Fx2. MIDI e nao serial de proposito — com o
-        // vocoder ligado a serial fica surda (defeito conhecido, ver
-        // TESTES.md), e o MIDI e o unico caminho de controle que
-        // sobrevive. "MIDI e um knob remoto" deixou de ser slogan e
-        // virou a unica mao no ganho.
-        midi_map[n_midi++] = {25, p_fx2_gain};
-
-        // ---- WIDI CHEGOU (2026-08-17): o mapa vira CONTROLE DE VOO ----
-        //
-        // Estes sao exatamente os params que hoje so a serial alcanca —
-        // e a serial morre segundos depois do vocoder subir. O MIDI e
-        // imune a isso: UART propria, DMA, nada a ver com o CDC do USB.
-        // Deixou de ser conveniencia e virou o unico canal de ajuste ao
-        // vivo com o instrumento tocando.
-        //
-        // A sugestao do dB pedia CC 25 pro voc_pitch, mas 25 ja e do
-        // fx2_gain desde a sessao do vocoder — deslocado um pra frente.
-        // Duplicata nao daria erro: o ApplyMidiCc devolve o PRIMEIRO que
-        // casa, entao o segundo vira controle morto, em silencio.
-        // 26–28 eram do vocoder e passam ao FREEZE (18/08). Reuso
-        // deliberado: o controlador do dB ja tem esses tres mapeados
-        // fisicamente, e mudar de numero obrigaria a reconfigurar o
-        // Loopy/MIDI Wrench por nada.
-        //
-        // CC 26 e o GESTO — o mesmo alvo do B2 quando o painel vier.
-        // Com `frz_on` sendo [0,1] e o main testando >= 0.5, um botao
-        // MIDI de 0/127 funciona sem tratamento especial: MidiNorm(63)
-        // = 0.496 cai abaixo, MidiNorm(64) = 0.504 cai acima.
-        midi_map[n_midi++] = {26, p_frz_on};
-        midi_map[n_midi++] = {27, p_frz_mix};
-        midi_map[n_midi++] = {28, p_frz_size};
-        midi_map[n_midi++] = {29, p_rev_mix};
-        midi_map[n_midi++] = {30, p_in_gain};
-        midi_map[n_midi++] = {31, p_gate_thresh};
-        // buzios_on: faixa [0,1], entao o CC vira chave natural —
-        // 0..63 desliga, 64..127 liga, sem precisar de tratamento
-        // especial. MidiNorm(63)=0.496 arredonda pra baixo do 0.5 que
-        // o main testa; MidiNorm(64)=0.504 fica acima. O contrato de
-        // "ligado >= 0.5" ja fazia isso funcionar sem saber.
-        midi_map[n_midi++] = {32, p_buzios_on};
-        // CC 33 — fx2_on. A lacuna que ficou aberta quando o mapa foi
-        // expandido: sem ele, o vocoder so liga por SERIAL ou no boot, e
-        // no palco nao vai ter serial. Faixa [0,1], entao vira chave
-        // igual ao buzios_on (0-63 desliga, 64-127 liga) pelo mesmo
-        // contrato de ">= 0.5" que o main ja usa.
-        //
-        // Apareceu no scope como "(fora do mapa)" durante o T16b: o MIDI
-        // Wrench ja manda nele. Instrumentacao mostrando o que NAO esta
-        // mapeado e o que fez a lacuna aparecer sozinha.
-        midi_map[n_midi++] = {33, p_fx2_on};
+        // FORA DO MAPA POR SEGURANCA, e seguem no `set` da serial:
+        //   src_mix     roteamento — emudeceu o instrumento 3x hoje
+        //   gov_ceiling borda de feedback
+        // O QUE NAO ESTA MAPEADO NAO PODE SER DERRUBADO POR FANTASMA.
 
         // >>> voc_pitch tem steps=49: o Set() quantiza em semitons, e o
         // >>> CC de 128 passos cai na grade cromatica sozinho. Nada a
