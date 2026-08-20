@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.67.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.71.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.67.0"
+#define COTUCA_OS_VERSION "0.71.1"
 
 #include "hal.h"
 #include "params.h"
@@ -17,6 +17,7 @@
 #include "pitch.h"
 #include "effect_slot.h"
 #include "shimmer.h"
+#include "drive.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -502,6 +503,11 @@ static bool                pitch_tail_ok  = false;
 static float*              pitch_tail_mem = nullptr;
 static cotuca::Shimmer     shimmer;
 static cotuca::EffectSlot  shimmer_slot;
+
+// DRIVE — primeiro da cadeia, zero memoria. Fecha a classe "sem
+// historico" e valida o EffectSlot nela.
+static cotuca::Drive      drive;
+static cotuca::EffectSlot drive_slot;
 static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 
 // BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
@@ -997,6 +1003,37 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // referência externa acha ela pronta aqui. Fiação viva sem
     // consumidor, não código morto.
     const float* carrier = has_in ? in[1] : zero_buf;
+
+    // 2.5) DRIVE — PRIMEIRO EFEITO DA CADEIA.
+    //
+    // Depois do gate e antes de tudo o mais: sujeira antes de
+    // modulacao, tempo e espaco. Depois do gate de proposito — saturar
+    // o chao de ruido e depois tentar porta-lo seria empurrar contra a
+    // porta o que ela deveria segurar.
+    //
+    // SEM CRONOMETRO POR DENTRO. O shimmer mediu 209 us com dois
+    // NowTicks por amostra dentro da regiao medida, e boa parte era a
+    // propria instrumentacao. A medida limpa aqui e `cpu` ligado vs
+    // desligado — o medidor do callback nao tem custo por amostra.
+    drive_slot.SetOn(params.Real(manifest.p_drv_on) >= 0.5f);
+    if(drive_slot.Ativo())
+    {
+        drive.SetDrive(params.Real(manifest.p_drv_drive));
+        drive.SetTone(params.Real(manifest.p_drv_tone));
+        const float mx = params.Real(manifest.p_drv_mix);
+        for(size_t i = 0; i < size; i++)
+        {
+            float gs, gm;
+            drive_slot.Passo(gs, gm);
+            // O fade escala o MIX, nao o sinal: o seco passa inteiro o
+            // tempo todo, senao ligar o drive abriria um buraco no
+            // meio do instrumento.
+            drive.SetMix(mx * gm);
+            float l = src_buf[i], r = src_buf[i];
+            drive.Process(l, r);
+            src_buf[i] = l;
+        }
+    }
 
     // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
     cotuca::Module* inst = mod_slot[(int)cotuca::ModuleSlot::Instrument];
@@ -1651,6 +1688,12 @@ static void HandleLine(const char* line)
     {
         declara_modos();
         const auto& b = hal::Info();
+        // VERSAO PRIMEIRO. A rotina de conferir "o fonte e a placa
+        // batem?" so funciona se a placa disser a versao a qualquer
+        // momento — e nao apenas no banner de boot, que se perde pra
+        // quem conecta depois. Foi o primeiro buraco que a propria
+        // rotina encontrou, minutos depois de ser escrita.
+        hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION);
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);
@@ -2053,6 +2096,25 @@ static void HandleLine(const char* line)
         pitch_pk_in = pitch_pk_out = 0.f;
         return;
     }
+    if(strncmp(line, "dfu", 3) == 0)
+    {
+        // Exige confirmacao porque nao tem volta por software: uma vez
+        // em DFU, so gravar (ou RESET fisico) traz o app de volta.
+        const char* a = line + 3;
+        while(*a == ' ') a++;
+        if(strncmp(a, "go", 2) != 0)
+        {
+            hal::Log("dfu: reinicia a placa DIRETO no bootloader, com"
+                     " timeout INFINITO — ela espera ate ser gravada.");
+            hal::Log("     confirme com `dfu go`. Nao ha volta por"
+                     " software: so gravar ou RESET fisico.");
+            return;
+        }
+        hal::Log("dfu: indo pro bootloader. Ate ja.");
+        hal::DelayMs(50);   // deixa a linha sair antes de sumir o USB
+        hal::RebootToDfu();
+        return;
+    }
     if(strncmp(line, "sync", 4) == 0)
     {
         MidiPushEstado();
@@ -2284,7 +2346,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | pitch <ratio> | ctos [rearm] | rearm | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -2468,6 +2530,8 @@ int main(void)
             pitch_tail_ok = pitch_tail.Init(sr, pitch_tail_mem, need_t,
                                             kPitchSeconds);
         shimmer.Init(sr);
+        drive.Init(sr);
+        drive_slot.Init(sr, 8.f);
         shimmer_slot.Init(sr, 8.f);
         hal::Log("shimmer: %s (motor da cauda, %u KB em SDRAM)",
                  pitch_tail_ok ? "pronto" : "SEM BUFFER — inativo",
@@ -2496,6 +2560,22 @@ int main(void)
         hal::Log("freeze: DESLIGADO no build (bisseccao)");
 #endif
     }
+
+    // ---- CAPACIDADE DAS TABELAS: DENUNCIA NO BOOT ----
+    // Em 18/08 os dois tetos estouraram no mesmo dia, os dois EM
+    // SILENCIO: `kMaxParams` recusou tres params (os buzios inteiros
+    // sumiram) e `kMaxMidiMap` deixou a 17a entrada ser escrita FORA
+    // DO ARRAY (o `shm_shift` chegava e nao achava dono).
+    if(manifest.midi_overflow > 0)
+        hal::Log("ERRO: %d entradas do mapa MIDI RECUSADAS (kMaxMidiMap)."
+                 " Os ULTIMOS CCs declarados NAO respondem.",
+                 manifest.midi_overflow);
+    if(params.Overflow() > 0)
+        hal::Log("ERRO: %d parametros RECUSADOS (kMaxParams). Os ULTIMOS"
+                 " declarados NAO existem.", params.Overflow());
+    hal::Log("tabelas: %d params (teto %d) | %d CCs (teto %d)",
+             params.Count(), (int)cotuca::kMaxParams,
+             manifest.n_midi, (int)cotuca::kMaxMidiMap);
 
     hal::SetSerialLineCallback(HandleLine);
 

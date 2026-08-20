@@ -54,6 +54,30 @@ Todo arquivo tocado bumpa e **expõe a versão em runtime**:
 `main.cpp` carrega `COTUCA_OS_VERSION` **e** o comentário do cabeçalho —
 **os dois** precisam mudar juntos.
 
+### 4b. Conferir a VERSÃO — no arquivo e na placa
+
+**Rotina obrigatória**, e ela existe porque falhou três vezes seguidas no
+mesmo dia: eu anunciei consertos como gravados enquanto o `main.cpp` ficava
+travado numa versão antiga, porque as edições morriam em `assert` de âncora e
+eu só olhava o resultado da *gravação*.
+
+```bash
+head -3 main.cpp | grep esqueleto     # o que o fonte diz
+# e depois, na placa:  `board` imprime  Cotucatronics OS vX.Y.Z
+```
+
+**Os dois têm que bater.** Se o fonte não subiu de versão, a edição não
+entrou — por mais que a gravação tenha dito `GRAVOU`.
+
+> **Saída de ferramenta não é confirmação de intenção.** A laçada confirma que
+> gravou. O `assert` confirma que a âncora casou. O `grep` confirma que o texto
+> entrou. São três confirmações diferentes — não trate a primeira como se
+> cobrisse as três.
+
+**Corolário:** quanto melhor a proteção contra edição silenciosa, mais fácil é
+não perceber que ela agiu — o efeito de uma edição barrada é o arquivo
+continuar igual, e arquivo igual não faz barulho.
+
 ### 5. Relatar
 
 Dizer **quais arquivos mudaram e em que versão ficaram**. Sempre.

@@ -639,6 +639,80 @@ responde lendo o código, em segundos, antes de qualquer ajuste.
 
 ---
 
+## 11k. Reportar como feito o que o assert barrou (18/08)
+
+Três vezes seguidas eu anunciei um conserto como gravado, e o `main.cpp`
+tinha ficado em **v0.67.0** o tempo todo. As edições morriam num `assert` de
+âncora — comportamento **correto** da disciplina de edição segura, que
+protege o arquivo — e eu só conferia o resultado da **gravação**, nunca o do
+**script**.
+
+O `EXPIROU`/`GRAVOU` da laçada me dizia que o binário subiu. Não me dizia
+*qual* binário.
+
+**O que mascarou:** os consertos que importavam estavam em `params.h` e
+`midi.h`, e **esses** foram escritos. Os búzios voltaram, o `shm_shift`
+passou a responder — tudo funcionou. Só o log de capacidade no boot não
+existia, e era justamente a peça que provaria que o resto estava certo.
+
+> **Sempre conferir a versão do `main.cpp` — no arquivo E na placa — como
+> parte da rotina.** O boot já imprime `Cotucatronics OS vX.Y.Z`: comparar
+> com o fonte custa uma linha e fecha a diferença entre *"eu editei"* e *"a
+> placa tem"*.
+
+**A regra geral:** *saída de ferramenta não é confirmação de intenção.* A
+laçada confirma que gravou; o `assert` confirma que a âncora casou; o
+`grep` confirma que o texto entrou. **São três confirmações diferentes, e eu
+tratei a primeira como se cobrisse as três.**
+
+Corolário desagradável: quanto melhor a proteção contra edição silenciosa
+(o `assert`), mais fácil é *não perceber* que ela agiu — porque o efeito de
+uma edição barrada é o arquivo continuar igual, e arquivo igual não faz
+barulho.
+
+---
+
+## 11l. O RESET que não precisava existir (18/08)
+
+Esta sessão gastou perto de **vinte gravações** brigando com a janela de ~2 s
+do bootloader. Metade falhou porque eu pedia o RESET e **só depois** começava
+a escutar — a família de ordem, aplicada a duas pessoas em vez de a duas
+funções.
+
+A pergunta do dB — *"tem como eu colocar um jumper pra você fazer o rst por
+aí?"* — tinha uma resposta melhor que jumper: **`System::ResetToBootloader(
+DAISY_INFINITE_TIMEOUT)`**. A placa se reinicia direto no DFU e **espera pra
+sempre**. Comando `dfu go` pela serial, e a gravação acontece sem ninguém
+tocar em nada.
+
+**Resultado medido, na primeira gravação seguinte:**
+
+| | tentativas |
+|---|---|
+| últimas três com RESET físico | **119**, 66, 47 |
+| primeira com `dfu go` | **1** |
+
+**A lição não é sobre a API — é sobre quanto tempo se pode gastar contornando
+um atrito antes de perguntar se ele precisa existir.** O atrito era aceito
+como fato da bancada desde a primeira sessão, e todo o fluxo foi construído em
+volta dele: laçadas de retentativa, pedidos de "toca o RESET", coordenação de
+tempo entre duas pessoas. A solução estava no header da libDaisy o tempo todo.
+
+> **Atrito repetido vira paisagem.** Quando algo incomoda pela terceira vez,
+> pergunte se ele precisa existir — *antes* de automatizar o contorno.
+
+**E a regra irmã, que a rotina de versão encontrou em minutos:** o `board` não
+imprimia a versão fora do banner de boot, então a checagem que o dB acabara de
+pedir era **inexecutável** para quem conecta depois. Uma regra que não pode
+ser executada não é regra. Corrigido no mesmo ciclo.
+
+**Virou skill portátil** — `bancada-firmware`, sem nada de Cotucatronics
+nela: reset por software antes do botão, conferência de versão nos dois
+lados, e "saída de ferramenta não é confirmação de intenção". Vale para
+qualquer projeto embarcado futuro.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.

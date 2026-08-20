@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.16.0
+// hal.h v0.17.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -93,6 +93,19 @@ bool             ReadButton(int index);        // true = pressionado
 // coisa — e qual pad carrega o estado de conexao e pergunta EMPIRICA.
 // Ler os tres e mais barato que adivinhar de novo.
 bool             ReadWidiLed(int idx);
+
+// Reinicia a placa DIRETO no bootloader, com timeout INFINITO — ela
+// fica esperando a gravacao ate ser gravada.
+//
+// Isto elimina o maior atrito da bancada: a janela de ~2 s do
+// bootloader depois de um RESET fisico. Esta sessao gastou umas quinze
+// gravacoes tentando acertar esse tempo, e varias falharam porque o
+// comando saiu depois do toque. Agora a ORDEM some do problema: a
+// placa entra em DFU por comando e espera.
+//
+// NAO TEM VOLTA POR SOFTWARE. Uma vez em DFU, so gravar (ou um RESET
+// fisico) traz o app de volta — por isso o comando exige confirmacao.
+void             RebootToDfu();
 void             SetLed(bool on);
 void             Log(const char* fmt, ...);    // printf via USB/serial
 void             SetSerialLineCallback(SerialLineCallback cb);

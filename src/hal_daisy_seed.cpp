@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.15.0
+// hal_daisy_seed v0.16.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -657,6 +657,14 @@ size_t AllocBigUsed() { return sdram_used; }
 
 float CpuLoadAvg() { return cpu_meter.GetAvgCpuLoad(); }
 float CpuLoadMax() { return cpu_meter.GetMaxCpuLoad(); }
+void RebootToDfu()
+{
+    // DAISY_INFINITE_TIMEOUT: entra no bootloader da Electrosmith (que
+    // e quem enxerga a QSPI onde o app mora) e NAO desiste. Sem isso a
+    // janela seria de ~2 s e o problema de sincronia voltaria.
+    System::ResetToBootloader(System::BootloaderMode::DAISY_INFINITE_TIMEOUT);
+}
+
 uint32_t NowTicks() { return System::GetTick(); }
 uint32_t TicksPerUs()
 {

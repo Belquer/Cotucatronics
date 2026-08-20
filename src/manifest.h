@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.49.0
+// manifest.h (instrumento "bancada") v0.50.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -213,6 +213,13 @@ struct Manifest
     int p_frz_on;   // 0/1 — gesto: CC, e B2 em Hold quando o painel vier
     int p_frz_mix;  // 0..1 seco/congelado
     int p_frz_size; // janela do grão, em ms
+
+    // DRIVE — waveshaper tanh como COLA. Primeiro da cadeia: sujeira
+    // antes de modulacao, tempo e espaco (ordem de pedaleira).
+    int p_drv_on;     // 0/1 — chave
+    int p_drv_drive;  // vezes; a faixa COMECA na cola
+    int p_drv_tone;   // Hz do passa-baixa POS-saturacao
+    int p_drv_mix;    // 0..1 — CAMADA paralela
 
     // SHIMMER — reverb + pitch-up num laco de realimentacao. Nao tem
     // reverb proprio: realimenta o Freeverb da cadeia.
@@ -629,6 +636,18 @@ struct Manifest
         // o mesmo trecho e o batimento volta. 100 ms = (100-20)/380.
         p_frz_size      = t.Add("frz_size",      0.0f, 20.f, 400.f); // MIDI: nasce 0 (= 20 ms)
 
+        // ---- DRIVE ----
+        p_drv_on    = t.Add("drv_on",    0.0f, 0.f, 1.f);
+        // FAIXA CORTADA POR BAIXO, mesma regua do dly_time: 1.5x ja e
+        // cola audivel, e abaixo disso o waveshaper nao faz nada que o
+        // ouvido perceba. Curso inteiro util, agressivo so no fim.
+        //   0% = 1.5x | 25% = 4.1x | 50% = 6.8x | 100% = 12x
+        p_drv_drive = t.Add("drv_drive", 0.0f, 1.5f, 12.f);
+        // Passa-baixa pos-saturacao. No topo e transparente de
+        // proposito: "tone no maximo" tem que significar SEM filtro.
+        p_drv_tone  = t.Add("drv_tone",  0.0f, 800.f, 16000.f, 2.0f);
+        p_drv_mix   = t.Add("drv_mix",   0.0f, 0.f, 1.f);
+
         // ---- SHIMMER ----
         // Tudo em zero: o dB constroi subindo os faders (ver a nota dos
         // defaults no topo desta funcao).
@@ -952,6 +971,12 @@ struct Manifest
         AddMidi(30, p_gate_thresh);  // ajuste de execucao
         AddMidi(31, p_buzios_on); // chave 0/127
         AddMidi(32, p_buzios_thresh);   // novo
+        // Familia do DRIVE, contigua.
+        AddMidi(38, p_drv_on);    // chave 0/127
+        AddMidi(39, p_drv_drive);
+        AddMidi(40, p_drv_tone);
+        AddMidi(41, p_drv_mix);
+
         AddMidi(33, p_shm_on);   // chave 0/127
         AddMidi(37, p_shm_mix);
         AddMidi(35, p_shm_feedback);
