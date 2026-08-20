@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.82.2 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.84.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.82.2"
+#define COTUCA_OS_VERSION "0.84.0"
 
 #include "hal.h"
 #include "params.h"
@@ -538,6 +538,68 @@ static cotuca::Detune      detune;
 // pra nao produzirem um fade-in de estreia que ninguem pediu.
 static cotuca::Suave       suave_gl, suave_gr, suave_width;
 
+// ---- TETO DE SOMA DO CTOS ----
+//
+// IRMAO DO WATCHDOG, NAO SUBSTITUTO. O watchdog por-efeito pega o
+// efeito BUGADO — um que sozinho estoura seu orcamento tem defeito, e o
+// veto e justo porque ha culpado. Este pega N efeitos SAUDAVEIS que
+// juntos nao cabem no prazo. Nao ha culpado, e procurar um fabricaria
+// injustica: qualquer regra de "quem foi" acabaria punindo o inocente.
+//
+// A politica e PRIORIDADE DECLARADA no manifest, decidida a frio pelo
+// dB. O sistema no calor nao escolhe nada: le a ordem e obedece.
+//
+// MEDE O BLOCO INTEIRO, nao a soma de estimativas. Estimativa some
+// justamente no caso que importa (interacao, cache, estreia); o
+// cronometro do bloco e o unico numero que corresponde ao que de fato
+// acontece.
+static constexpr float    kTetoFrac      = 0.85f;  // do prazo do bloco
+static constexpr uint32_t kBlocosSeguidos = 4;     // ~4 ms antes de agir
+// CARENCIA DEPOIS DE CADA QUEDA. Zerar o param NAO faz o efeito parar de
+// custar: o EffectSlot desce por rampa e continua processando enquanto
+// desce. Sem esperar, o mecanismo mede de novo antes da propria acao
+// surtir efeito, ve o bloco ainda alto e derruba o proximo — MEDIDO: com
+// teto em 620 e bloco em 626, caiu o detune E o phaser, quando o detune
+// (-125 us) sozinho ja resolvia. Um efeito perdido a mais do que o
+// necessario e exatamente o que a politica de prioridade existe pra
+// evitar.
+//
+// 250 blocos ~ 250 ms: folgado pras rampas de 8 ms e curto o bastante
+// pra que um estouro real nao fique sustentado. A cauda de 2 s do freeze
+// nao cabe nesta janela, e nao deve caber: durante ela o custo ESTA la, e
+// uma segunda queda seria correta.
+static constexpr uint32_t kCarenciaBlocos = 250;
+static uint32_t soma_us        = 0;   // ultimo bloco medido
+static uint32_t soma_pico_us   = 0;
+static uint32_t soma_seguidos  = 0;
+static uint32_t soma_quedas    = 0;
+static uint32_t soma_carencia  = 0;   // blocos restantes de espera
+static uint32_t soma_teto_us   = 0;   // 0 = automatico (kTetoFrac do prazo)
+static uint32_t soma_teto_forc = 0;   // != 0 = teto artificial, so pra teste
+static bool     soma_caiu[cotuca::Manifest::kMaxSacrificaveis]   = {false};
+static uint32_t soma_caiu_ms[cotuca::Manifest::kMaxSacrificaveis] = {0};
+static uint32_t soma_caiu_us[cotuca::Manifest::kMaxSacrificaveis] = {0};
+// Estourou e nao sobrou nada pra derrubar: a base sozinha nao cabe.
+// Estado DIFERENTE de "tudo bem", e tem que se declarar — senao o
+// silencio do mecanismo seria lido como sucesso dele.
+static bool     soma_sem_saida = false;
+// CC de aviso na saida MIDI: valor = indice+1 do efeito derrubado.
+static constexpr uint8_t kCCAvisoTeto = 119;
+// AVISO PENDENTE — o callback MARCA, o loop FALA.
+//
+// A primeira versao chamava LogAlways() e MidiSendBytes() de dentro do
+// AudioCb. A serial morreu no primeiro teste: escrever no CDC de dentro
+// do callback starva a ISR do USB, que e o defeito de prioridade 1 deste
+// projeto, ja catalogado, e que eu cometi DEPOIS de ele estar escrito.
+//
+// Familia A dos bugs de ordem: quem arma e quem executa tem que estar no
+// mesmo contexto — e o contexto que pode falar com o mundo e o loop.
+// `volatile` porque cruza callback -> loop.
+static volatile int      aviso_teto_idx = -1;   // -1 = nada pendente
+static volatile uint32_t aviso_teto_us  = 0;
+static volatile uint32_t aviso_teto_prazo = 0;
+static volatile bool     aviso_sem_saida  = false;
+
 // ---- MEDIDOR DE ENTRADA, POR CANAL, CRU ----
 //
 // Nao existia, e a falta custou duas perguntas sem resposta: "chega
@@ -923,6 +985,16 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
     if(size > kMaxBlock)
         size = kMaxBlock; // não estoura o scratch; nunca acontece com blk=48
+
+    const uint32_t t_bloco0 = cotuca::hal::NowTicks();
+
+    // TETO DE SOMA: efeito derrubado fica derrubado ate `ctos rearm`.
+    // O latch e reaplicado TODO bloco, e nao so no instante da queda:
+    // sem isso um CC do Loopy religaria o efeito e o teto teria virado
+    // sugestao. Bypass permanente foi decisao do dB em 18/08 — religar
+    // sozinho fabrica intermitencia e esconde o defeito.
+    for(int k = 0; k < manifest.n_sacrif; k++)
+        if(soma_caiu[k]) params.Set(manifest.sacrif[k].param_on, 0.f);
 
     // 0) MEDIDOR DE ENTRADA — antes de tudo, inclusive do balanço.
     if(has_in)
@@ -1702,6 +1774,73 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // Autopsia por LED: daqui, porque este contexto sobrevive ao loop.
     LedFaseTick(size, cotuca::hal::Info().sample_rate);
 
+    // ---- TETO DE SOMA: mede o bloco inteiro e decide ----
+    {
+        const uint32_t tpu = cotuca::hal::TicksPerUs();
+        if(tpu)
+        {
+            // Subtrai em TICKS e converte depois: dividir antes faz a
+            // volta do contador deixar de se corrigir sozinha. Mesma
+            // armadilha que derrubou o watchdog em 4 277 071 629 us.
+            soma_us = (cotuca::hal::NowTicks() - t_bloco0) / tpu;
+            if(soma_us > soma_pico_us) soma_pico_us = soma_us;
+
+            const uint32_t prazo
+                = (uint32_t)(1e6f * (float)size
+                             / cotuca::hal::Info().sample_rate);
+            soma_teto_us = soma_teto_forc ? soma_teto_forc
+                                          : (uint32_t)(kTetoFrac * (float)prazo);
+
+            if(soma_carencia)
+            {
+                // Em carencia nao se mede pra decidir: a medicao ainda
+                // contem o efeito que esta descendo.
+                soma_carencia--;
+                soma_seguidos = 0;
+            }
+            else if(soma_us > soma_teto_us)
+            {
+                // BLOCOS SEGUIDOS, nao um. O primeiro bloco de qualquer
+                // efeito e caro (estreia), e derrubar por causa dele
+                // puniria o ato de LIGAR. So o regime conta.
+                if(++soma_seguidos >= kBlocosSeguidos)
+                {
+                    soma_seguidos = 0;
+                    // Procura o de MENOR prioridade que esteja ligado.
+                    int alvo = -1;
+                    for(int k = 0; k < manifest.n_sacrif; k++)
+                        if(!soma_caiu[k]
+                           && params.Real(manifest.sacrif[k].param_on) >= 0.5f)
+                        { alvo = k; break; }
+
+                    if(alvo >= 0)
+                    {
+                        soma_caiu[alvo]    = true;
+                        soma_caiu_ms[alvo] = cotuca::hal::NowMs();
+                        soma_caiu_us[alvo] = soma_us;
+                        params.Set(manifest.sacrif[alvo].param_on, 0.f);
+                        soma_quedas++;
+                        // AVISO OBRIGATORIO — mas MARCADO, nao falado.
+                        // Derrubar em silencio seria a familia "falha em
+                        // silencio"; falar daqui mata a serial.
+                        aviso_teto_idx   = alvo;
+                        aviso_teto_us    = soma_us;
+                        aviso_teto_prazo = prazo;
+                        // Espera a rampa descer antes de julgar de novo.
+                        soma_carencia    = kCarenciaBlocos;
+                    }
+                    else if(!soma_sem_saida)
+                    {
+                        soma_sem_saida  = true;
+                        aviso_sem_saida = true;
+                        aviso_teto_us   = soma_us;
+                    }
+                }
+            }
+            else if(soma_seguidos)
+                soma_seguidos--;   // volta devagar: nao zera num bloco bom
+        }
+    }
 }
 
 // B1: sorteia novos valores pros params da whitelist do manifest.
@@ -2525,7 +2664,42 @@ static void HandleLine(const char* line)
             pitch_slot.ZeraPico();
             shimmer_slot.ZeraPico();
             shimmer_pico = 0;
+            // TETO DE SOMA: solta os latches. NAO religa os efeitos —
+            // soltar o latch devolve o DIREITO de ligar; ligar continua
+            // sendo gesto do dB. Religar aqui decidiria por ele qual
+            // configuracao ele queria de volta.
+            for(int k = 0; k < manifest.n_sacrif; k++) soma_caiu[k] = false;
+            soma_sem_saida = false;
+            soma_seguidos  = 0;
+            soma_carencia  = 0;
+            soma_pico_us   = 0;
             hal::Log("ctos: efeitos rearmados — o veto volta a valer do zero");
+            hal::Log("  teto de soma: latches soltos. Os efeitos NAO"
+                     " religam sozinhos — ligue os que quiser de volta");
+            return;
+        }
+        if(strncmp(a, "teto", 4) == 0)
+        {
+            // TETO ARTIFICIAL — so pra TESTE. Baixar o teto simula
+            // "muitos efeitos" sem precisar carregar a CPU de verdade,
+            // que e a unica forma de exercitar o mecanismo antes de o
+            // instrumento chegar no limite em cena.
+            const char* v = a + 4;
+            while(*v == ' ') v++;
+            if(*v == 0)
+            {
+                hal::Log("ctos teto: %lu us %s (uso: `ctos teto <us>`,"
+                         " 0 = volta ao automatico)",
+                         (unsigned long)soma_teto_us,
+                         soma_teto_forc ? "FORCADO (teste)" : "automatico");
+                return;
+            }
+            soma_teto_forc = (uint32_t)atoi(v);
+            soma_seguidos  = 0;
+            hal::Log("ctos teto: %s",
+                     soma_teto_forc ? "FORCADO — isto e um teste, nao"
+                                      " esqueca de voltar com `ctos teto 0`"
+                                    : "de volta ao automatico");
             return;
         }
         hal::Log("CTOS | loop vivo | fase %u | %lu voltas | uptime %lu s",
@@ -2551,6 +2725,33 @@ static void HandleLine(const char* line)
         hal::Log("    relogio: ticks crus, %lu por us (a volta do"
                  " contador se corrige na subtracao)",
                  (unsigned long)hal::TicksPerUs());
+
+        // ---- TETO DE SOMA — mecanismo DIFERENTE do de cima ----
+        hal::Log("  TETO DE SOMA (bloco inteiro, nao soma de estimativas):");
+        hal::Log("    bloco %lu us | pico %lu us | teto %lu us%s | quedas %lu%s",
+                 (unsigned long)soma_us, (unsigned long)soma_pico_us,
+                 (unsigned long)soma_teto_us,
+                 soma_teto_forc ? " (FORCADO, teste)" : "",
+                 (unsigned long)soma_quedas,
+                 soma_carencia ? " | EM CARENCIA (rampa descendo)" : "");
+        hal::Log("    ordem de sacrificio (indice 0 cai primeiro):");
+        for(int k = 0; k < manifest.n_sacrif; k++)
+        {
+            const bool lig
+                = params.Real(manifest.sacrif[k].param_on) >= 0.5f;
+            if(soma_caiu[k])
+                hal::Log("      %d. %-8s CAIU pelo teto em t=%.1f s"
+                         " (bloco estava em %lu us)", k,
+                         manifest.sacrif[k].nome,
+                         (double)soma_caiu_ms[k] / 1000.0,
+                         (unsigned long)soma_caiu_us[k]);
+            else
+                hal::Log("      %d. %-8s %s", k, manifest.sacrif[k].nome,
+                         lig ? "ligado" : "desligado");
+        }
+        if(soma_sem_saida)
+            hal::Log("    *** estourou sem ter o que derrubar: a base"
+                     " sozinha nao cabe ***");
         hal::Log("  shimmer: %s | pico %lu us de %lu us",
                  shimmer_slot.Ativo() ? "ATIVO" : "desligado (custo zero)",
                  (unsigned long)shimmer_pico,
@@ -3200,6 +3401,42 @@ int main(void)
         // CC — o humano que mexeu uma vez e parou. Sem este tique o
         // gesto dele ficaria seguro pra sempre.
         QuarTick();
+
+        // ---- AVISO DO TETO DE SOMA — dito AQUI, no loop.
+        // O callback so marcou. Este e o contexto onde falar com o USB
+        // e com o fio MIDI e seguro; o callback nao e, e a serial morreu
+        // provando isso.
+        if(aviso_teto_idx >= 0)
+        {
+            const int      k     = aviso_teto_idx;
+            const uint32_t us    = aviso_teto_us;
+            const uint32_t prazo = aviso_teto_prazo;
+            aviso_teto_idx = -1;              // consome antes de falar
+            if(k < manifest.n_sacrif)
+            {
+                hal::LogAlways("CTOS TETO DE SOMA: \"%s\" em BYPASS —"
+                               " bloco %lu us de teto %lu (prazo %lu)",
+                               manifest.sacrif[k].nome, (unsigned long)us,
+                               (unsigned long)soma_teto_us,
+                               (unsigned long)prazo);
+                hal::LogAlways("  nao ha culpado: e a SOMA. A prioridade"
+                               " declarada no manifest escolheu."
+                               " `ctos rearm` devolve o direito de ligar.");
+                const uint8_t msg[3]
+                    = {0xB0, kCCAvisoTeto, (uint8_t)(k + 1)};
+                hal::MidiSendBytes(msg, 3);
+            }
+        }
+        if(aviso_sem_saida)
+        {
+            aviso_sem_saida = false;
+            hal::LogAlways("CTOS TETO DE SOMA: estourou (%lu us de %lu) e"
+                           " NAO HA o que derrubar.",
+                           (unsigned long)aviso_teto_us,
+                           (unsigned long)soma_teto_us);
+            hal::LogAlways("  a base sozinha nao cabe no prazo — isto nao"
+                           " se resolve por bypass.");
+        }
 
         // ---- SENSOR DE RADIO. Roda logo depois do despacho, porque e
         // aqui que os contadores acabaram de ser atualizados.

@@ -1,6 +1,6 @@
 # CTOS — Cotucatronics Operational System
 
-**Documento de desenho v0.3.0 · 2026-08-18 · design antes de código**
+**Documento de desenho v0.4.0 · 2026-08-20 · design antes de código**
 
 > **Status: PROPOSTA.** Nada aqui está implementado. O documento existe pra
 > ser discutido e aprovado antes de qualquer refactor — e pra que a discussão
@@ -186,6 +186,107 @@ sozinho transformaria um defeito reprodutível em intermitente — e
 intermitente foi o que custou esta sessão inteira. Um efeito que estourou uma
 vez estoura de novo; o valor do bypass está justamente em ele **não** se
 desfazer sem alguém olhar.
+
+---
+
+## 3b. Teto de soma — o irmão do watchdog, não o substituto
+
+O §3 protege contra **um efeito com defeito**. Não protege contra **N efeitos
+saudáveis que juntos não cabem**, e essa é uma situação de natureza diferente
+que exige um mecanismo diferente.
+
+### A distinção que decide tudo
+
+| | Watchdog por-efeito (§3) | Teto de soma (§3b) |
+|---|---|---|
+| **O que pega** | um efeito que sozinho estoura seu orçamento | N efeitos saudáveis cuja soma não cabe no prazo |
+| **Há culpado?** | **sim** — o efeito tem defeito individual | **não** — é excesso de ambição, ninguém está errado |
+| **Pergunta certa** | "quem estourou?" | "qual o instrumento perde com menos dano?" |
+| **Base da decisão** | medição do próprio efeito | **prioridade declarada a frio pelo dB** |
+| **Justiça** | o veto é justo porque há culpa | não existe noção de culpa aqui |
+
+**É aqui que o erro de punir o inocente nasceria.** Qualquer regra que tente
+achar "quem foi" quando não há quem, acaba inventando um culpado — e o
+inventado será algum efeito perfeitamente correto. A saída não é uma detecção
+melhor: é **abandonar a pergunta**. O teto de soma não procura culpa porque
+não há culpa a procurar.
+
+### Por que não LIFO
+
+Derrubar o último ligado é aproximação, e uma aproximação ruim: pune por
+**ordem de chegada**, que não tem relação nenhuma com valor musical. O último
+efeito ligado pode ser exatamente aquele que o dB estava procurando quando a
+soma estourou — o gesto mais recente é, se alguma coisa, o mais intencional.
+
+**Prioridade declarada é a versão correta.** A escolha é musical, e decisão
+musical se toma **a frio**, no manifest, fora do calor do overrun. O sistema,
+no instante da falha, não escolhe nada: lê a ordem e obedece.
+
+### A política
+
+1. **Ordem de sacrifício no manifest** (`Manifest::sacrif[]`). A ordem do
+   array **é** a prioridade — índice 0 cai primeiro. Não há número de
+   prioridade escondido em lugar nenhum; reordenar o array é a única forma de
+   mudar a política, e isso é deliberado: a política tem que ser legível de
+   uma olhada.
+
+2. **Mede o BLOCO INTEIRO**, não a soma de estimativas. Estimativa some
+   justamente no caso que importa — interação entre efeitos, cache, estreia. O
+   cronômetro do bloco é o único número que corresponde ao que de fato
+   acontece. Subtrai em **ticks** e converte depois: dividir antes faz a volta
+   do contador deixar de se corrigir sozinha (a armadilha que já derrubou o
+   watchdog em 4 277 071 629 µs).
+
+3. **Teto em 85% do prazo, e só depois de 4 blocos SEGUIDOS acima.** O
+   primeiro bloco de qualquer efeito é caro — é a estreia, e o projeto já tem
+   a distinção estreia/regime documentada. Derrubar por causa dela puniria o
+   ato de **ligar**. Só o regime conta. O contador volta devagar (decrementa,
+   não zera) para que uma alternância não mascare um estouro sustentado.
+
+4. **Cai o de menor prioridade que estiver LIGADO.** Bypass pelo mesmo
+   caminho que o dB usaria: o param de liga/desliga vai a zero. O latch é
+   reaplicado **todo bloco**, não só no instante da queda — sem isso um CC do
+   Loopy religaria o efeito e o teto teria virado sugestão.
+
+5. **O aviso é obrigatório.** Log alto + CC 119 na saída MIDI (valor =
+   índice+1 do efeito derrubado). Derrubar em silêncio seria a família "falha
+   em silêncio" de novo, e desta vez com o instrumento **mudando de som
+   sozinho** — o pior caso possível dessa família.
+
+   **O aviso sai do LOOP, nunca do callback.** A primeira versão logava de
+   dentro do `AudioCb` e matou a serial no primeiro teste: escrever no CDC de
+   dentro do callback starva a ISR do USB, que é o defeito de prioridade 1
+   deste projeto e estava catalogado antes de eu cometê-lo. O callback só
+   marca (`volatile`); o loop lê a marca e fala. Família A dos bugs de ordem:
+   quem arma e quem executa no mesmo contexto — e o contexto que pode falar
+   com o mundo é o loop.
+
+6. **Permanente até `ctos rearm` ou boot**, pela política já fechada no §3.
+   `ctos rearm` solta os latches mas **não religa os efeitos**: soltar o latch
+   devolve o *direito* de ligar; ligar continua sendo gesto do dB. Religar
+   automaticamente decidiria por ele qual configuração ele queria de volta.
+
+7. **Estourar sem ter o que derrubar é um estado próprio**, e se declara. Se
+   todos os sacrificáveis já caíram e a soma ainda não cabe, a base sozinha
+   não cabe — e isso não se resolve por bypass. O silêncio do mecanismo nesse
+   caso seria lido como sucesso dele.
+
+### Como testar sem esperar o limite chegar em cena
+
+```
+ctos teto <us>     # teto artificial, força o estouro sem carregar a CPU
+ctos teto 0        # volta ao automático
+ctos               # mostra bloco, pico, teto, quedas e a ordem inteira
+```
+
+Descobrir se o mecanismo funciona no instante em que o instrumento encontra o
+limite é descobrir tarde demais.
+
+### Custo
+
+O mecanismo custou **+14 µs** por bloco (dentro do ruído entre corridas; o
+pico não mudou). São duas leituras de tick e uma varredura de seis
+comparações. Já se cronometrava por efeito; somar é de graça.
 
 ---
 

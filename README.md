@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.82.2** — delay + reverb + freeze granular e a **suíte de cinco efeitos residentes** (drive, phaser, warble, detune, shimmer), bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
+Projeto colaborativo. Estado atual: **v0.84.0** — delay + reverb + freeze granular e a **suíte de cinco efeitos residentes** (drive, phaser, warble, detune, shimmer), bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -80,15 +80,15 @@ Cinco regras que não se negociam:
 | [src/module_rnbo_delay.cpp](src/module_rnbo_delay.cpp) | — | Delay no Fx1. Inclui `RNBO.h` |
 | [src/module_rnbo_freeze.cpp](src/module_rnbo_freeze.cpp) | — | Freeze. Reprovado na etapa 5 do IFÁ10000 (7 349 µs) |
 | [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.6.0** | Vocoder. **FORA do build desde 18/08** — decisão de ouvido do dB, revivível |
-| [src/main.cpp](src/main.cpp) | **v0.82.2** | Loop, callback de áudio, painel falso via serial. `board` declara as tabelas, `hist` dá o histograma de entrada por canal e dimensiona o atenuador |
+| [src/main.cpp](src/main.cpp) | **v0.84.0** | Loop, callback de áudio, painel falso via serial. `board` declara as tabelas, `hist` mede a entrada por canal, `ctos` reporta o teto de soma |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.8.0** | `ParamTable` + `Macro` (teto 64). Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.55.1** | Instrumento aprovado: delay + reverb + suíte de cinco efeitos + I/O, **56 params / 39 CCs** |
+| [src/manifest.h](src/manifest.h) | **v0.56.0** | Instrumento aprovado: delay + reverb + suíte + I/O + **ordem de sacrifício** do teto de soma, **56 params / 39 CCs** |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
 | [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura` |
 | [docs/FEATURES.md](docs/FEATURES.md) | **vivo** | **A CAIXA ÚNICA** — toda feature vigente, e as aposentadas no arquivo |
-| [docs/CTOS.md](docs/CTOS.md) | **v0.3.0** | A base à prova de falha, a fronteira CTOS/Efeito e a suíte de efeitos |
+| [docs/CTOS.md](docs/CTOS.md) | **v0.4.0** | A base à prova de falha, a fronteira CTOS/Efeito, a suíte, e o **teto de soma** (§3b) |
 | [docs/IFA10000.md](docs/IFA10000.md) | **vivo** | **Certificação de efeitos** — as 10 etapas que todo efeito passa |
 | [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |

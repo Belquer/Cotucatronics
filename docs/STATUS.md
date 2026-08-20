@@ -101,8 +101,8 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 | Arquivo | Versão |
 |---|---|
 | `hal.h` / `hal_daisy_seed.cpp` | v0.17.0 / v0.16.0 |
-| `main.cpp` | **v0.82.2** |
-| `manifest.h` | v0.55.1 |
+| `main.cpp` | **v0.84.0** |
+| `manifest.h` | v0.56.0 |
 | `params.h` / `midi.h` | v0.8.0 / v0.4.0 |
 | `pitch.h` / `shimmer.h` | **v0.5.0** / **v0.3.0** |
 | `suave.h` | **v0.1.0** (novo) |
@@ -238,6 +238,46 @@ a aspereza volta a cada boot.
 
 ---
 
+## Fechado em 20/08 — teto de soma do CTOS
+
+A última fronteira estrutural. O watchdog do §3 protegia contra **um efeito
+com defeito**; faltava a proteção contra **N efeitos saudáveis que juntos não
+cabem**. São situações de natureza diferente e exigem mecanismos diferentes —
+a distinção está inteira em [CTOS.md §3b](CTOS.md).
+
+**Não há culpado no teto de soma**, e é por isso que ele não procura um:
+qualquer regra que tente achar "quem foi" quando não há quem acaba inventando
+um culpado, e o inventado seria um efeito correto. A política é **prioridade
+declarada a frio** pelo dB em `Manifest::sacrif[]` — a ordem do array *é* a
+prioridade. LIFO foi descartado: pune por ordem de chegada, que não tem relação
+com valor musical.
+
+Três testes, todos passados na v0.84.0:
+
+| Teste | Esperado | Resultado |
+|---|---|---|
+| teto 620 µs (bloco 639) | cai **só** o detune | ✅ bloco 639 → 526 µs, os outros cinco tocando |
+| teto 200 µs | cascata na ordem + estado "sem saída" | ✅ detune→phaser→warble→drive→freeze→shimmer, depois *"a base sozinha não cabe"* |
+| `ctos rearm` | solta latches **sem** religar | ✅ |
+
+Com os seis efeitos ligados o bloco fica em **577–639 µs de pico ~700**, contra
+teto de 850 (85% de 1000). A suíte inteira ainda cabe com folga. Mecanismo
+custou **+14 µs**.
+
+**Duas correções que os testes forçaram:**
+
+1. **A serial morreu no primeiro teste** — eu chamava `LogAlways` e
+   `MidiSendBytes` de dentro do `AudioCb`, que é o defeito de prioridade 1
+   deste documento, catalogado antes de eu cometê-lo. Travou o instrumento
+   inteiro, não só o CDC. Consertado: o callback marca (`volatile`), o loop
+   fala.
+2. **Derrubava dois quando um bastava.** Zerar o param não faz o efeito parar
+   de custar — o `EffectSlot` desce por rampa e continua processando. O
+   mecanismo media de novo antes da própria ação surtir efeito. Consertado com
+   **carência de 250 ms** depois de cada queda.
+
+---
+
 ## Defeitos abertos
 
 **🔴 O p1 satura o conversor — e era isso o "p2 sem som".** Medido 20/08
@@ -271,11 +311,21 @@ grampo; o WM8731 não tem setter no libDaisy. O divisor físico é obrigatório.
 piezos em −6 batidos juntos dão 0 dBFS. A folga é o espaço da soma — já visível
 no histograma, que marcou 253 clips pós-ganho contra 252 no IN_R.
 
-**Plano do dB, 8 passos.** 1 Code: histograma ✅ · 2 dB: mede com atenuação
-provisória · 3 dB: divisor 10:1 em protoboard · 4 Code+dB: confirma −6 dBFS sem
-clip · 5 dB: solda definitivo, comutável 0/−6/−12 por piezo · 6 dB: recalibra
-`in_gain` · 7 Code: estica a faixa do `in_gain` se 8× virar teto · 8 dB:
-reconfirma os cinco efeitos (e o aceite do `piezo_mix`/`out_width` cai aqui).
+**Plano do dB, 8 passos — BLOQUEADO NO PASSO 2.**
+
+| # | Quem | O quê | Estado |
+|---|---|---|---|
+| 1 | Code | histograma de entrada (`hist`) | ✅ **feito** — v0.82.2, commit `8e06635` |
+| 2 | dB | medir o pico com atenuação provisória | 🔴 **bloqueado: faltam resistores de megaohm** (lab) |
+| 3 | dB | divisor 10:1 em protoboard (90k/10k = −20 dB) | ⏳ |
+| 4 | Code + dB | confirmar pico ~−6 dBFS sem clip | ⏳ |
+| 5 | dB | soldar definitivo, comutável 0/−6/−12 por piezo | ⏳ |
+| 6 | dB | recalibrar `in_gain` sobre sinal limpo | ⏳ |
+| 7 | Code | esticar a faixa do `in_gain` se 8× virar teto | ⏳ — decisão de desenho aberta: esticar a faixa muda o significado de todos os CCs já decorados |
+| 8 | dB | reconfirmar os cinco efeitos | ⏳ — o aceite do `piezo_mix`/`out_width` cai aqui |
+
+**Nada do passo 3 em diante avança sem o divisor.** O diagnóstico está
+completo e a ferramenta está commitada; o que falta é peça física.
 
 **CORRIGIDO 20/08:** o `in_gain` **não** nasce em 8,0. O default é **1,0×**
 (faixa 1–8×, curva quadrática), escrito na mesma linha do `Add()`. O 8,0 que

@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.55.1
+// manifest.h (instrumento "bancada") v0.56.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -291,6 +291,36 @@ struct Manifest
     int p_shm_shift;    // 0=+12  1=+7  2=ambos
     int p_shm_feedback; // 0..1 — quantas oitavas empilham
     int p_shm_tone;     // 0..1 — 0 = 6 kHz (quente) ... 1 = 18 kHz
+
+    // ------------------------------------------------------------
+    // ORDEM DE SACRIFICIO — a politica do TETO DE SOMA do CTOS.
+    //
+    // DUAS SITUACOES DIFERENTES, DOIS MECANISMOS. O watchdog por-efeito
+    // pega o efeito BUGADO: um efeito que sozinho estoura seu orcamento
+    // tem defeito individual, e o veto e justo porque ha culpado. O teto
+    // de soma pega outra coisa: N efeitos SAUDAVEIS que juntos nao cabem
+    // no prazo do bloco. Ali nao ha culpado — e excesso de ambicao, e
+    // procurar culpa fabricaria um.
+    //
+    // Entao nao se pergunta "quem estourou?" (ninguem), e sim "qual o
+    // instrumento perde com menos dano?". A resposta e PRIORIDADE
+    // DECLARADA: o dB decide A FRIO, aqui, fora do calor do overrun.
+    //
+    // POR QUE NAO LIFO. Derrubar o ultimo ligado e aproximacao: pune por
+    // ordem de chegada, que nao tem relacao com valor musical. O ultimo
+    // ligado pode ser exatamente o que se estava buscando.
+    //
+    // A ORDEM DO ARRAY E A PRIORIDADE. Indice 0 cai primeiro. Reordenar
+    // aqui e a unica forma de mudar a politica — nao ha numero de
+    // prioridade escondido em lugar nenhum.
+    struct Sacrificavel
+    {
+        int         param_on;
+        const char* nome;
+    };
+    static constexpr int kMaxSacrificaveis = 8;
+    Sacrificavel sacrif[kMaxSacrificaveis];
+    int          n_sacrif = 0;
 
     // ---- FREEZE (slot Fx2) ----
     // Serial-only: os cinco knobs estao todos ocupados. As faixas
@@ -1101,6 +1131,32 @@ struct Manifest
         // ---- I/O: familia contigua, os dois controles de ponta ----
         AddMidi(58, p_piezo_mix);  // 64 = centro (ambos cheios)
         AddMidi(59, p_out_width);  // 127 = largura nativa
+
+        // ---- ORDEM DE SACRIFICIO (indice 0 cai primeiro) ----
+        //
+        // Proposta inicial, do mais sacrificavel ao menos. E do dB
+        // mudar: a ordem e decisao musical, nao tecnica.
+        //
+        //   detune  +125 us — o MAIS caro da suite e o menos
+        //                     estrutural: engrossa, nao define.
+        //   phaser   +26 us — movimento, nao identidade.
+        //   warble   +14 us — idem, e o mais sutil dos tres.
+        //   drive    +21 us — cola; a falta se nota mais que a do phaser.
+        //   freeze     alto — GESTO: quando esta rolando, e intencional.
+        //                     Derrubar no meio interrompe uma decisao.
+        //   shimmer +250 us — CARATER. Caro, e o que mais define o som.
+        //                     Cai por ultimo apesar do preco.
+        auto S = [&](int id, const char* n) {
+            if(n_sacrif < kMaxSacrificaveis)
+            { sacrif[n_sacrif].param_on = id;
+              sacrif[n_sacrif].nome = n; n_sacrif++; }
+        };
+        S(p_det_on, "detune");
+        S(p_phs_on, "phaser");
+        S(p_wrb_on, "warble");
+        S(p_drv_on, "drive");
+        S(p_frz_on, "freeze");
+        S(p_shm_on, "shimmer");
         // 34 e o comando `sync` — fica no meio da familia do shimmer
         // por acidente historico, e nao vale remapear: mexer em numero
         // ja alinhado no Loopy custa mais que a assimetria incomoda.

@@ -35,6 +35,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Ganho de entrada** | `in_gain` | 21 | ativo · nasce em **1,0×**, faixa 1–8× com curva quadrática |
 | **Balanço dos piezos** (shell) — dois piezos em IN_L/IN_R, soma mono | `piezo_mix` | **58** | ⏳ **entregue 20/08, aceite pendente** · centro = ambos cheios · ~2 ganhos/amostra |
 | **Histograma de entrada** por canal | — | — | ✅ 20/08 · `hist` / `hist reset` · baldes de 6 dB pelo expoente do float, cru **e** pós-`in_gain`, clip com latch, e o dB que falta tirar pro atenuador · +27 µs |
+| **Teto de soma do CTOS** | ordem em `Manifest::sacrif[]` | aviso no **CC 119** | ✅ **20/08, três testes passados** · irmão do watchdog por-efeito: pega N efeitos saudáveis que juntos não cabem · prioridade declarada a frio, não LIFO · `ctos teto <us>` simula · +14 µs |
 | **Gate** | `gate_thresh`, `gate_release` | 30 | ativo |
 | **Delay** (RNBO, slot Instrument) | `dly_time`, `dly_mix` | 22, 23 | ✅ certificado T5 |
 | **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |

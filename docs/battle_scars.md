@@ -1099,9 +1099,74 @@ canais ainda são a mesma imagem.
 
 ---
 
+## 11x. Canal mudo prova que aquele canal está mudo (20/08)
+
+Implementando o **aviso obrigatório** do teto de soma — a parte do desenho que
+existia justamente para não repetir a família "falha em silêncio" — chamei
+`LogAlways()` e `MidiSendBytes()` de dentro do `AudioCb`.
+
+Escrever no CDC de dentro do callback starva a ISR do USB. **É o defeito de
+prioridade 1 do `STATUS.md`, escrito lá havia dias, e eu o cometi mesmo
+assim.** A implementação do aviso derrubou o instrumento.
+
+Família A dos bugs de ordem, na forma mais pura: quem arma e quem executa têm
+que estar no mesmo contexto, e o contexto que pode falar com o mundo é o loop.
+Conserto: o callback marca (`volatile int aviso_teto_idx`), o loop lê a marca,
+loga e manda o CC.
+
+**Mas a cicatriz não é essa. É o que eu disse depois.**
+
+Com a serial muda, afirmei ao dB: *"a placa continua tocando — só o canal de
+conversa caiu"*. Eu tinha medido **uma** coisa: que o CDC não respondia. Dali
+inferi o estado do áudio, que é outro subsistema, por nenhuma razão além de ser
+a hipótese confortável. O dB descobriu tocando: *"não há som"*. O travamento
+era geral.
+
+> **Canal mudo prova que aquele canal está mudo, e nada além disso.** A
+> ausência de resposta é a informação mais pobre que existe: ela não distingue
+> "o canal caiu" de "o sistema caiu". Antes de afirmar o que sobreviveu, medir
+> o que sobreviveu — ou dizer "não sei".
+
+Terceira aparição da mesma família num dia. A 11q foi sobre **afirmar estado
+velho**; a 11u sobre **destruir estado calado**; esta é sobre **afirmar estado
+que nunca foi medido**. As três têm a mesma raiz: tratar como sabido o que
+apenas era conveniente.
+
+---
+
+## 11y. Agir de novo antes de observar a própria ação (20/08)
+
+Teto de soma, teste 1: teto em 620 µs, bloco em 626. Derrubar o detune
+(−125 µs) resolvia com folga. **Caíram dois** — detune e phaser:
+
+```
+"detune" em BYPASS — bloco 626 us de teto 620
+"phaser" em BYPASS — bloco 633 us de teto 620      <- MAIOR que antes
+```
+
+Zerar o param **não faz o efeito parar de custar**: o `EffectSlot` desce por
+rampa e continua processando enquanto desce. O mecanismo mediu de novo antes
+que a própria ação surtisse efeito, viu o bloco ainda alto — mais alto, com o
+ruído — e derrubou o próximo da fila.
+
+O preço é exatamente o que a política de prioridade existia para evitar: um
+efeito perdido a mais do que o necessário. E o modo de falha é insidioso
+porque **cada queda individual parece justificada** pela medição do momento.
+
+> **Mecanismo corretivo automático precisa de carência entre agir e medir de
+> novo.** Sem ela ele reage à sua própria ação ainda em curso, e a correção
+> vira sobre-correção. A carência não é conservadorismo: é o tempo que a
+> realidade leva para refletir o que já foi feito.
+
+250 ms aqui — folgado para as rampas de 8 ms, curto para que um estouro real
+não fique sustentado. A cauda de 2 s do freeze não cabe nessa janela, e não
+deve caber: durante ela o custo **está** lá, e uma segunda queda seria correta.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.**
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.**
 
 ---
 
