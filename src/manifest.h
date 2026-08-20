@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.56.0
+// manifest.h (instrumento "bancada") v0.57.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -153,6 +153,7 @@ struct Manifest
     int p_in_gain;
     int p_dly_time;   // → módulo RNBO "dly_time"
     int p_dly_mix;    // → módulo RNBO "dly_mix"
+    int p_dly_on;     // 0/1 — chave própria (o mix deixa de ser a chave)
 
     // ---- cadeia de dinâmica do shell (C++ puro, não RNBO) ----
     // Todos serial-only: são política de segurança e comportamento,
@@ -221,6 +222,7 @@ struct Manifest
     // castigaria o delay de graça. 0 Hz = desligado.
     int p_fx2_hp;
 
+    int p_rev_on;     // 0/1 — chave. ATENÇÃO: emudece o shimmer junto
     int p_rev_mix;
     int p_rev_size;
     int p_rev_damp;
@@ -639,6 +641,11 @@ struct Manifest
         // cabem dentro da faixa nova.
         p_dly_time  = t.Add("dly_time",  0.0f, 0.05f, 1.f, 1.0f); // MIDI: nasce 0
         p_dly_mix   = t.Add("dly_mix",   0.0f, 0.f,    1.f);  // MIDI: nasce 0
+        // CHAVE PROPRIA. Delay e reverb ligavam pelo `mix` — sao
+        // anteriores a convencao de chave que o dB pediu pros efeitos
+        // da suite. Fundir chave e mix obriga a zerar o ajuste pra
+        // desligar, e o ajuste se perde.
+        p_dly_on    = t.Add("dly_on",    0.0f, 0.f,    1.f);
 
         // GATE. gate_thresh usa curve 2 porque threshold útil vive
         // todo no fundo da faixa: linear, os primeiros 5% do curso
@@ -706,6 +713,10 @@ struct Manifest
         // 0.35 — o valor que o dB tocou e aprovou ("reverb está ótimo").
         // 0.15 era o chute inicial e nunca foi ouvido.
         p_rev_mix       = t.Add("rev_mix",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
+        // DESLIGAR O REVERB EMUDECE O SHIMMER, que nao tem reverb
+        // proprio — ele realimenta ESTE. Dependencia real, declarada em
+        // vez de deixar o dB cacando um efeito que "parou de funcionar".
+        p_rev_on        = t.Add("rev_on",        0.0f, 0.f, 1.f);
         p_rev_size      = t.Add("rev_size",      0.50f, 0.f, 1.f);
         p_rev_damp      = t.Add("rev_damp",      0.50f, 0.f, 1.f);
 
@@ -1131,6 +1142,8 @@ struct Manifest
         // ---- I/O: familia contigua, os dois controles de ponta ----
         AddMidi(58, p_piezo_mix);  // 64 = centro (ambos cheios)
         AddMidi(59, p_out_width);  // 127 = largura nativa
+        AddMidi(60, p_dly_on);     // chave 0/127
+        AddMidi(61, p_rev_on);     // chave 0/127 — emudece o shimmer junto
 
         // ---- ORDEM DE SACRIFICIO (indice 0 cai primeiro) ----
         //

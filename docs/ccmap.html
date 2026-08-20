@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<title>Cotucatronics OS — Mapa de CC</title>
+<style>
+@page { size: A4; margin: 12mm 10mm; }
+* { box-sizing: border-box; }
+body { font: 10pt/1.35 -apple-system,"Helvetica Neue",Arial,sans-serif;
+       color:#111; margin:0; }
+h1 { font-size:17pt; margin:0 0 1mm; letter-spacing:-.3px; }
+.sub { font-size:8.5pt; color:#666; margin:0 0 4mm; }
+.cols { column-count:2; column-gap:7mm; }
+section { break-inside:avoid; margin:0 0 3.5mm; }
+h2 { font-size:10pt; margin:0 0 1mm; padding:1mm 2mm; background:#111;
+     color:#fff; border-radius:2px; letter-spacing:.3px; }
+table { width:100%; border-collapse:collapse; }
+td { padding:.9mm 2mm; vertical-align:top; border-bottom:.3pt solid #e6e6e6; }
+td.cc { width:9mm; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+td.nm { width:26mm; font-family:"SF Mono",Menlo,monospace; font-size:8.5pt; }
+td.ds { font-size:8.5pt; color:#333; }
+tr.on td { background:#fff6d8; }
+tr.on td.cc, tr.on td.nm { font-weight:700; }
+.warn { font-size:8pt; color:#8a1f11; padding:1mm 2mm; background:#fdecea;
+        border-left:2pt solid #c0392b; margin-top:1mm; }
+footer { display:block; break-inside:avoid; margin-top:2mm; padding-top:1.5mm;
+         border-top:.4pt solid #ccc; font-size:7.2pt; line-height:1.3;
+         color:#666; }
+footer b { color:#111; }
+.k { display:inline-block; background:#111; color:#fff; padding:0 1.2mm;
+     border-radius:2px; font-size:7pt; vertical-align:1px; }
+</style></head><body>
+<h1>Cotucatronics OS — Mapa de CC</h1>
+<p class="sub">Firmware v0.85.1 · manifest v0.57.0 · 41 CCs · canal MIDI 1 ·
+lido da placa em 20/08/2026 · <span class="k">destacado</span> = chave liga/desliga</p>
+<div class="cols">
+
+<section><h2>ENTRADA</h2><table>
+<tr class="on"><td class="cc">58</td><td class="nm">piezo_mix</td><td class="ds"><b>Balanço</b> dos dois piezos. <b>64 = centro, ambos cheios.</b> 0 = só p1 (IN_L) · 127 = só p2 (IN_R). Não tem posição muda</td></tr>
+<tr><td class="cc">21</td><td class="nm">in_gain</td><td class="ds">Ganho de entrada, 1× a 8×, curva quadrática</td></tr>
+<tr><td class="cc">30</td><td class="nm">gate_thresh</td><td class="ds">Limiar do gate</td></tr>
+</table></section>
+
+<section><h2>DRIVE</h2><table>
+<tr class="on"><td class="cc">38</td><td class="nm">drv_on</td><td class="ds">Liga / desliga</td></tr>
+<tr><td class="cc">39</td><td class="nm">drv_drive</td><td class="ds">Quanto satura</td></tr>
+<tr><td class="cc">40</td><td class="nm">drv_tone</td><td class="ds">Passa-baixa pós-saturação</td></tr>
+<tr><td class="cc">41</td><td class="nm">drv_mix</td><td class="ds">Quanto da camada entra</td></tr>
+</table></section>
+
+<section><h2>PHASER</h2><table>
+<tr class="on"><td class="cc">42</td><td class="nm">phs_on</td><td class="ds">Liga / desliga</td></tr>
+<tr><td class="cc">43</td><td class="nm">phs_rate</td><td class="ds">Velocidade do LFO</td></tr>
+<tr><td class="cc">44</td><td class="nm">phs_depth</td><td class="ds">Profundidade da varredura</td></tr>
+<tr><td class="cc">45</td><td class="nm">phs_feedback</td><td class="ds">Ressonância dos notches</td></tr>
+<tr><td class="cc">46</td><td class="nm">phs_stages</td><td class="ds">Número de allpass</td></tr>
+<tr><td class="cc">47</td><td class="nm">phs_mix</td><td class="ds"><b>MONTANHA:</b> pico em ~64. O topo <i>tira</i> o notch</td></tr>
+</table></section>
+
+<section><h2>WARBLE</h2><table>
+<tr class="on"><td class="cc">48</td><td class="nm">wrb_on</td><td class="ds">Liga / desliga</td></tr>
+<tr><td class="cc">49</td><td class="nm">wrb_rate</td><td class="ds">Velocidade da deriva</td></tr>
+<tr><td class="cc">50</td><td class="nm">wrb_depth</td><td class="ds">Quanto desafina (16 cents no máximo)</td></tr>
+<tr><td class="cc">51</td><td class="nm">wrb_irreg</td><td class="ds">Irregularidade da deriva</td></tr>
+</table></section>
+
+<section><h2>DELAY</h2><table>
+<tr class="on"><td class="cc">60</td><td class="nm">dly_on</td><td class="ds">Liga / desliga</td></tr>
+<tr><td class="cc">22</td><td class="nm">dly_time</td><td class="ds">Tempo</td></tr>
+<tr><td class="cc">23</td><td class="nm">dly_mix</td><td class="ds">Mistura</td></tr>
+</table></section>
+
+<footer>
+<b>Ordem da cadeia</b> &nbsp; piezos → balanço → in_gain → gate → drive → phaser → warble → delay → detune → freeze → [shimmer ↺ reverb] → level → largura → split (exciter | jack)<br>
+<b>CC 119 é de SAÍDA</b>, não de entrada: a placa manda quando o teto de soma do CTOS derruba um efeito. O valor é o índice do efeito na ordem de sacrifício (1 = detune, 2 = phaser, 3 = warble, 4 = drive, 5 = freeze, 6 = shimmer).<br>
+<b>Tudo nasce em zero</b> exceto <tt>out_width</tt> (127 = largura nativa) e <tt>piezo_mix</tt> (64 = centro): nesses dois o zero não é "desligado", é um estado ativo — colapso pra mono e um piezo mudo. <b>Toda gravação zera tudo de novo.</b><br>
+<b>CC 34 está vago</b> (era <tt>sync</tt>, comando e não param).
+</footer>
+
+<section><h2>DETUNE</h2><table>
+<tr class="on"><td class="cc">52</td><td class="nm">det_on</td><td class="ds">Liga / desliga</td></tr>
+<tr><td class="cc">53</td><td class="nm">det_cents</td><td class="ds">0 a 50 cents</td></tr>
+<tr><td class="cc">54</td><td class="nm">det_voices</td><td class="ds">1 ou 2 vozes</td></tr>
+<tr><td class="cc">55</td><td class="nm">det_spread</td><td class="ds"><b>A largura.</b> 0 junta no centro, 127 joga pras pontas — é o que separa desafinação de coro</td></tr>
+<tr><td class="cc">56</td><td class="nm">det_mix</td><td class="ds">Quanto da camada entra</td></tr>
+</table></section>
+
+<section><h2>FREEZE</h2><table>
+<tr class="on"><td class="cc">27</td><td class="nm">frz_on</td><td class="ds">Liga / desliga · cauda de 2 s ao sair</td></tr>
+<tr><td class="cc">28</td><td class="nm">frz_mix</td><td class="ds">Camada por cima do seco</td></tr>
+<tr><td class="cc">29</td><td class="nm">frz_size</td><td class="ds">Tamanho do núcleo</td></tr>
+</table></section>
+
+<section><h2>SHIMMER</h2><table>
+<tr class="on"><td class="cc">33</td><td class="nm">shm_on</td><td class="ds">Liga / desliga</td></tr>
+<tr><td class="cc">35</td><td class="nm">shm_feedback</td><td class="ds">Quantas oitavas empilham (teto 0,85)</td></tr>
+<tr><td class="cc">36</td><td class="nm">shm_shift</td><td class="ds">0 = +12 · 64 = +7 · 127 = ambos</td></tr>
+<tr><td class="cc">37</td><td class="nm">shm_mix</td><td class="ds">Camada direta</td></tr>
+<tr><td class="cc">57</td><td class="nm">shm_tone</td><td class="ds"><b>Sobe pra clarear.</b> 0 = sino −6 dB em 3 kHz + corte 6 kHz · 127 = aberto até 18 kHz</td></tr>
+</table>
+<div class="warn"><b>Precisa do reverb ligado (CC 61).</b> O shimmer não tem reverb próprio — ele realimenta o da cadeia. Com o reverb desligado ele fica mudo, e o <tt>board</tt> avisa.</div>
+</section>
+
+<section><h2>REVERB</h2><table>
+<tr class="on"><td class="cc">61</td><td class="nm">rev_on</td><td class="ds">Liga / desliga · <b>emudece o shimmer junto</b></td></tr>
+<tr><td class="cc">24</td><td class="nm">rev_mix</td><td class="ds">Mistura</td></tr>
+<tr><td class="cc">25</td><td class="nm">rev_size</td><td class="ds">Tamanho da sala</td></tr>
+<tr><td class="cc">26</td><td class="nm">rev_damp</td><td class="ds">Amortecimento do agudo</td></tr>
+</table></section>
+
+<section><h2>BÚZIOS</h2><table>
+<tr class="on"><td class="cc">31</td><td class="nm">buzios_on</td><td class="ds">Liga / desliga</td></tr>
+<tr><td class="cc">32</td><td class="nm">buzios_thresh</td><td class="ds">Limiar do transiente que dispara o sorteio</td></tr>
+</table></section>
+
+<section><h2>SAÍDA</h2><table>
+<tr class="on"><td class="cc">59</td><td class="nm">out_width</td><td class="ds">Largura mid/side. <b>127 = nativa</b> (nasce aqui) · 0 = mono puro</td></tr>
+<tr><td class="cc">20</td><td class="nm">level</td><td class="ds">Master</td></tr>
+</table></section>
+
+
+</div></body></html>

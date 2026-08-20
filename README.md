@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.84.0** — delay + reverb + freeze granular e a **suíte de cinco efeitos residentes** (drive, phaser, warble, detune, shimmer), bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
+Projeto colaborativo. Estado atual: **v0.85.1** — delay + reverb + freeze granular e a **suíte de cinco efeitos residentes** (drive, phaser, warble, detune, shimmer), bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -80,10 +80,11 @@ Cinco regras que não se negociam:
 | [src/module_rnbo_delay.cpp](src/module_rnbo_delay.cpp) | — | Delay no Fx1. Inclui `RNBO.h` |
 | [src/module_rnbo_freeze.cpp](src/module_rnbo_freeze.cpp) | — | Freeze. Reprovado na etapa 5 do IFÁ10000 (7 349 µs) |
 | [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.6.0** | Vocoder. **FORA do build desde 18/08** — decisão de ouvido do dB, revivível |
-| [src/main.cpp](src/main.cpp) | **v0.84.0** | Loop, callback de áudio, painel falso via serial. `board` declara as tabelas, `hist` mede a entrada por canal, `ctos` reporta o teto de soma |
+| [src/main.cpp](src/main.cpp) | **v0.85.1** | Loop, callback de áudio, painel falso via serial. `board` declara tabelas e dependências, `hist` mede a entrada, `ctos` reporta o teto de soma |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.8.0** | `ParamTable` + `Macro` (teto 64). Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.56.0** | Instrumento aprovado: delay + reverb + suíte + I/O + **ordem de sacrifício** do teto de soma, **56 params / 39 CCs** |
+| [src/manifest.h](src/manifest.h) | **v0.57.0** | Instrumento aprovado: delay + reverb + suíte + I/O + ordem de sacrifício, **58 params / 41 CCs** |
+| [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 41 CCs numa folha A4. Fonte em `ccmap.html`, gerador `ccmap-pdf.sh` / `.command` v0.1.0 |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
 | [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura` |

@@ -101,8 +101,8 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 | Arquivo | Versão |
 |---|---|
 | `hal.h` / `hal_daisy_seed.cpp` | v0.17.0 / v0.16.0 |
-| `main.cpp` | **v0.84.0** |
-| `manifest.h` | v0.56.0 |
+| `main.cpp` | **v0.85.1** |
+| `manifest.h` | v0.57.0 |
 | `params.h` / `midi.h` | v0.8.0 / v0.4.0 |
 | `pitch.h` / `shimmer.h` | **v0.5.0** / **v0.3.0** |
 | `suave.h` | **v0.1.0** (novo) |

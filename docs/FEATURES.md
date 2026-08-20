@@ -37,14 +37,14 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Histograma de entrada** por canal | — | — | ✅ 20/08 · `hist` / `hist reset` · baldes de 6 dB pelo expoente do float, cru **e** pós-`in_gain`, clip com latch, e o dB que falta tirar pro atenuador · +27 µs |
 | **Teto de soma do CTOS** | ordem em `Manifest::sacrif[]` | aviso no **CC 119** | ✅ **20/08, três testes passados** · irmão do watchdog por-efeito: pega N efeitos saudáveis que juntos não cabem · prioridade declarada a frio, não LIFO · `ctos teto <us>` simula · +14 µs |
 | **Gate** | `gate_thresh`, `gate_release` | 30 | ativo |
-| **Delay** (RNBO, slot Instrument) | `dly_time`, `dly_mix` | 22, 23 | ✅ certificado T5 |
+| **Delay** (RNBO, slot Instrument) | `dly_on`, `dly_time`, `dly_mix` | **60**, 22, 23 | ✅ certificado T5 · `dly_on` mistura pro seco e o módulo **segue rodando**: RNBO é opaco, e pular o `Process()` deixaria a linha rançosa |
 | **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |
 | **Drive** (shell) — waveshaper tanh como cola | `drv_on`, `drv_drive`, `drv_tone`, `drv_mix` | 38–41 | ✅ **aprovado** 18/08 · +21 µs |
 | **Phaser** (shell) — N allpass varridos por LFO | `phs_on`, `phs_rate`, `phs_depth`, `phs_feedback`, `phs_stages`, `phs_mix` | 42–47 | ✅ **aprovado** 18/08 · +26 µs · ⚠️ `phs_mix` é MONTANHA: pico em ~50%, topo tira o notch |
 | **Warble** (shell) — deriva de fita, delay curto modulado | `wrb_on`, `wrb_rate`, `wrb_depth`, `wrb_irreg` | 48–51 | ✅ **aprovado** 18/08 · +14 µs · 16 cents medidos |
 | **Detune** (shell) — 2 vozes micro-desafinadas + largura | `det_on`, `det_cents`, `det_voices`, `det_spread`, `det_mix` | 52–56 | ✅ **aprovado** 20/08 · +125 µs (o mais caro da suíte) |
 | **Shimmer** (shell) | `shm_on`, `shm_mix`, `shm_shift`, `shm_feedback`, `shm_tone` | 33, 37, 36, 35, **57** | ✅ **aprovado** 20/08 · cauda de 2 s · `shm_tone` **sobe pra clarear**: 0 = sino −6 dB em 3 kHz + corte 6 kHz, 1 = aberto até 18 kHz |
-| **Reverb** Freeverb (shell, moldura) | `rev_mix`, `rev_size`, `rev_damp` | 24, 25, 26 | ✅ certificado T14a |
+| **Reverb** Freeverb (shell, moldura) | `rev_on`, `rev_mix`, `rev_size`, `rev_damp` | **61**, 24, 25, 26 | ✅ certificado T14a · ⚠️ `rev_on` em 0 **emudece o shimmer junto** (ele realimenta este reverb) — o `board` declara |
 | **Passa-alta do Fx2** | `fx2_hp` | — | ⏸ inativo enquanto o slot Fx2 estiver vazio |
 | **Governor / limiter / gate de saída** | `gov_ceiling`, `gov_release` | — | ativo (fora do MIDI por segurança) |
 | **Shifter SSB** | `shift_hz` | — | ✅ certificado T8, desligado (espera o exciter) |

@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.84.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.85.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.84.0"
+#define COTUCA_OS_VERSION "0.85.1"
 
 #include "hal.h"
 #include "params.h"
@@ -537,6 +537,7 @@ static cotuca::Detune      detune;
 // I/O: balanco da entrada e largura da saida. Nascem no NEUTRO (1.0)
 // pra nao produzirem um fade-in de estreia que ninguem pediu.
 static cotuca::Suave       suave_gl, suave_gr, suave_width;
+static cotuca::Suave       suave_dly, suave_rev;
 
 // ---- TETO DE SOMA DO CTOS ----
 //
@@ -1288,6 +1289,22 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     {
         const float* ins[2] = {src_buf, carrier};
         inst->Process(ins, out, size);
+        // CHAVE DO DELAY — mistura pro seco, e o modulo SEGUE RODANDO.
+        //
+        // Pular o Process() zeraria o custo, mas o delay e um modulo
+        // RNBO de estado opaco: a linha ficaria rancosa e ao religar
+        // sairia um pedaco de audio velho. A regra da casa ("bypass
+        // pula o processamento, nunca a gravacao") nao se aplica a quem
+        // nao separa as duas coisas. Entre custo e ranco, escolhi
+        // custo — e o teto de soma agora cobre o risco de CPU.
+        const float alvo_d = params.Real(manifest.p_dly_on) >= 0.5f ? 1.f : 0.f;
+        if(alvo_d < 1.f || suave_dly.Valor() < 0.9999f)
+            for(size_t i = 0; i < size; i++)
+            {
+                const float g = suave_dly.Passo(alvo_d);
+                out[0][i] = out[0][i] * g + src_buf[i] * (1.f - g);
+                out[1][i] = out[1][i] * g + src_buf[i] * (1.f - g);
+            }
     }
     else
     {
@@ -1540,9 +1557,19 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // >>> palco. O governor e o shifter seguram, mas segurar não é o
     // >>> mesmo que estar certo. Se acontecer, o conserto é trocar as
     // >>> duas linhas abaixo por uma que só passe out[1].
-    if(reverb_ok)
+    // CHAVE DO REVERB. Desligado, o bloco INTEIRO e pulado — custo
+    // zero — e com ele vai o shimmer, que nao tem reverb proprio e
+    // realimenta este. Dependencia real; quem a declara e o loop, no
+    // `board`, pra ninguem cacar um shimmer que "parou de funcionar".
+    const float alvo_r = params.Real(manifest.p_rev_on) >= 0.5f ? 1.f : 0.f;
+    const bool  rev_vivo
+        = (alvo_r >= 0.5f) || suave_rev.Valor() > 0.0001f;
+    if(reverb_ok && rev_vivo)
     {
-        reverb.SetMix(params.Real(manifest.p_rev_mix));
+        // Rampa no MIX do proprio reverb: em g=0 ele e transparente, e
+        // so entao o bloco pode sumir sem clique.
+        const float gr = suave_rev.Passo(alvo_r);
+        reverb.SetMix(params.Real(manifest.p_rev_mix) * gr);
         reverb.SetSize(params.Real(manifest.p_rev_size));
         reverb.SetDamp(params.Real(manifest.p_rev_damp));
 
@@ -2100,6 +2127,15 @@ static void HandleLine(const char* line)
                  manifest.n_midi, (int)cotuca::kMaxMidiMap,
                  (params.Overflow() || manifest.midi_overflow)
                      ? "   *** ESTOUROU ***" : "");
+        // DEPENDENCIA DECLARADA. O shimmer nao tem reverb proprio; com
+        // `rev_on` em 0 ele emudece sem que nada pareca errado. Aviso
+        // que so aparece quando a combinacao acontece — defesa orfa
+        // nunca: declare a ameaca, ou ela vira folclore.
+        if(params.Real(manifest.p_shm_on) >= 0.5f
+           && params.Real(manifest.p_rev_on) < 0.5f)
+            hal::Log("*** shm_on ligado com rev_on DESLIGADO: o shimmer"
+                     " realimenta o reverb e esta MUDO. CC 61 para"
+                     " acordar os dois. ***");
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);
@@ -3128,6 +3164,10 @@ int main(void)
         suave_gl.Init(hal::Info().sample_rate, 20.f, 1.f);
         suave_gr.Init(hal::Info().sample_rate, 20.f, 1.f);
         suave_width.Init(hal::Info().sample_rate, 20.f, 1.f);
+        // Chaves nascem FECHADAS (0): default zero, como todo param
+        // alcancavel por MIDI.
+        suave_dly.Init(hal::Info().sample_rate, 20.f, 0.f);
+        suave_rev.Init(hal::Info().sample_rate, 20.f, 0.f);
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um
