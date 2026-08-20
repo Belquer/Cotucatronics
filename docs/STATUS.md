@@ -55,7 +55,15 @@ build desde 18/08 (decisão de ouvido, revivível). Bloco **48**.
 ```
 piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE
             → DELAY (Fx1) → DETUNE → FREEZE → [SHIMMER ↺ REVERB] → level
-            → governor → shifter SSB → limiter → OUT
+            → OUT_WIDTH (mid/side) → split → governor+SSB (exciter) | jack
+```
+
+`piezo_mix` é BALANÇO, não crossfade: no centro os dois piezos entram cheios.
+`out_width` fica entre o LEVEL e o split porque depois do split OUT_L e OUT_R
+deixam de ser uma imagem estéreo — são exciter e jack, com processamentos
+diferentes.
+
+```
 ```
 
 O shimmer não tem reverb próprio: ele realimenta o Freeverb que já está na
@@ -93,10 +101,11 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 | Arquivo | Versão |
 |---|---|
 | `hal.h` / `hal_daisy_seed.cpp` | v0.17.0 / v0.16.0 |
-| `main.cpp` | **v0.79.0** |
-| `manifest.h` | v0.54.0 |
+| `main.cpp` | **v0.81.0** |
+| `manifest.h` | v0.55.1 |
 | `params.h` / `midi.h` | v0.8.0 / v0.4.0 |
 | `pitch.h` / `shimmer.h` | **v0.5.0** / **v0.3.0** |
+| `suave.h` | **v0.1.0** (novo) |
 | `drive.h` / `phaser.h` / `warble.h` / `detune.h` | v0.2.0 / v0.3.0 / v0.1.0 / v0.1.0 |
 | `freeze.h` / `reverb.h` / `effect_slot.h` | v0.3.1 / v0.2.0 / v0.3.0 |
 | `module_rnbo_vocoder.cpp` | v0.6.0 (fora do build) |
@@ -231,9 +240,28 @@ a aspereza volta a cada boot.
 
 ## Defeitos abertos
 
-**🟡 Picos de entrada nunca lidos sob material real.** `in_gain` está em
-**8,0 — 18 dB**. Se a entrada satura, arde antes de qualquer efeito e nenhum
-EQ no shimmer conserta. Falta uma leitura de `pk` com o dB tocando.
+**🔴 O p1 satura o conversor — e era isso o "p2 sem som".** Medido 20/08
+com o dB tocando, entrada crua:
+
+```
+IN_L (p1): pico 1.00000 =  -0.0 dBFS |  42 365 amostras | clip 65
+IN_R (p2): pico 0.46398 =  -6.7 dBFS | 244 237 amostras | clip 0
+```
+
+O p2 **não está mudo**: entrega −6.7 dBFS e tem quase 6× mais amostras ativas
+que o p1. O p1 é que bate no teto do conversor (65 amostras em clip) ANTES de
+qualquer ganho de firmware, e ocupa todo o espaço. É literalmente "um encobre
+o outro" — o caso que o `piezo_mix` existe para resolver.
+
+Conserto de firmware é paliativo: baixar o `in_gain` e usar o balanço para
+abaixar o p1 em ~6,7 dB. **O conserto real é físico** — clipping no ADC não se
+desfaz a jusante. Reduzir a saída do p1 (piezo mais afastado, divisor
+resistivo, ou pré-amp com menos ganho) é o que devolve o headroom.
+
+**CORRIGIDO 20/08:** o `in_gain` **não** nasce em 8,0. O default é **1,0×**
+(faixa 1–8×, curva quadrática), escrito na mesma linha do `Add()`. O 8,0 que
+figurava aqui como defeito era **ajuste do dB**, lido de placa viva e tratado
+como default do projeto.
 
 **🔴 A serial morre com o vocoder ligado — prioridade 1.**
 As rajadas de ~3,4 ms do callback starvam a ISR do USB; o CDC do host

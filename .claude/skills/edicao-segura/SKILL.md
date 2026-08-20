@@ -82,6 +82,21 @@ continuar igual, e arquivo igual não faz barulho.
 
 Dizer **quais arquivos mudaram e em que versão ficaram**. Sempre.
 
+## Regra do primeiro caso de uma forma nova
+
+Padrão copiado carrega uma **pré-condição que ninguém escreveu**.
+
+Caso (20/08): `Add(nome, def_norm, min_real, max_real)` — o primeiro argumento
+é NORMALIZADO e está no nome. Todo param do projeto tinha `min_real = 0`, e com
+mínimo zero normalizado e real coincidem: a distinção nunca precisou existir.
+O primeiro param de faixa **simétrica** `[-1,+1]` nasceu na ponta em vez do
+centro, com um transdutor mudo e sem sintoma.
+
+> **Ao ser o primeiro caso de uma forma nova** — faixa negativa, unidade
+> diferente, sinal invertido, tipo novo — **reler a assinatura em vez de
+> imitar o vizinho.** Os vizinhos estavam certos por um motivo que pode não
+> valer para o caso novo.
+
 ## Regra de premissa
 
 Se a tarefa começa com uma premissa sobre o estado do sistema ("com a v0.39.0

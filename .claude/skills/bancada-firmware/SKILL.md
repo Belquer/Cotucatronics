@@ -82,6 +82,24 @@ ocorrência, porque só saía no banner: quem conecta a serial depois nunca a
 vê. Todo alarme de boot ganha uma via consultável a qualquer momento (aqui,
 `board` passou a imprimir `tabelas: N/teto params | N/teto CCs`).
 
+## 2c. GRAVAR DESTRÓI ESTADO — REPOR E DECLARAR FAZ PARTE DE GRAVAR
+
+A §2b cobre o erro de **relato** (afirmar estado que o flash apagou). Esta
+cobre o de **ação**, que é pior porque o outro lado não tem como saber que
+aconteceu.
+
+Caso (20/08): quatro gravações na mesma conversa, cada uma zerando `level`,
+nenhuma reposta nem anunciada. O dB re-dialava pelo Loopy sem saber por quê, e
+uma das perguntas dele ("sem som no p2") nasceu de um silêncio que era meu.
+
+> **Gravar não termina no `File downloaded successfully`.** Termina em repor o
+> estado de operação e **dizer qual estado foi reposto**.
+
+Mínimo a repor e declarar: `level`, `in_gain`, e as chaves do que estava
+tocando. Se a decisão for deixar zerado (teste seco, por exemplo), **dizer
+isso também** — silêncio deliberado e silêncio acidental são indistinguíveis
+do outro lado.
+
 ## 3. SAÍDA DE FERRAMENTA ≠ CONFIRMAÇÃO DE INTENÇÃO
 
 São confirmações **diferentes**, e cada uma cobre só o seu pedaço:

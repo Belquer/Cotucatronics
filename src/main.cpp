@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.79.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.81.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.79.0"
+#define COTUCA_OS_VERSION "0.81.0"
 
 #include "hal.h"
 #include "params.h"
@@ -21,6 +21,7 @@
 #include "phaser.h"
 #include "warble.h"
 #include "detune.h"
+#include "suave.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -533,6 +534,24 @@ static cotuca::PitchEngine pitch_det;
 static bool                pitch_det_ok  = false;
 static float*              pitch_det_mem = nullptr;
 static cotuca::Detune      detune;
+// I/O: balanco da entrada e largura da saida. Nascem no NEUTRO (1.0)
+// pra nao produzirem um fade-in de estreia que ninguem pediu.
+static cotuca::Suave       suave_gl, suave_gr, suave_width;
+
+// ---- MEDIDOR DE ENTRADA, POR CANAL, CRU ----
+//
+// Nao existia, e a falta custou duas perguntas sem resposta: "chega
+// sinal no segundo piezo?" e "o in_gain de 8.0 (18 dB) satura?". As
+// duas se respondem com o mesmo numero, e nenhuma se responde de
+// ouvido — piezo mudo e piezo baixo soam igual atras de um reverb.
+//
+// CRU DE PROPOSITO: antes do balanco, antes do in_gain, antes do gate.
+// Medir depois de qualquer ganho mistura "o que o transdutor entregou"
+// com "o que o firmware fez com isso", e e a primeira pergunta que
+// precisa de resposta limpa.
+static float    in_pk_l = 0.f, in_pk_r = 0.f;
+static uint32_t in_n_l  = 0,   in_n_r  = 0;   // amostras acima de -60 dBFS
+static uint32_t in_clip_l = 0, in_clip_r = 0; // amostras em |x| >= 0.99
 static cotuca::EffectSlot  detune_slot;
 static bool               warble_ok = false;
 alignas(32) static float  warble_mem[1924];
@@ -856,10 +875,15 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 {
     const float level = params.Real(manifest.p_level);
     const float mix   = params.Real(manifest.p_tone_mix);
-    // SRC MIX: 0.0 = IN_L (piezo)  ·  1.0 = IN_R (jack de linha).
-    // Crossfade linear, aplicado ANTES de qualquer processamento — é a
-    // fonte do instrumento, não um efeito.
-    const float src = params.Real(manifest.p_src_mix);
+    // BALANÇO dos dois piezos, aplicado ANTES de qualquer
+    // processamento — é a fonte do instrumento, não um efeito.
+    //   centro (0) = os dois cheios
+    //   +1 = só IN_R    -1 = só IN_L
+    // Um lado abaixa, o outro NÃO SOBE nem desce: é isso que separa
+    // balanço de crossfade, e é o que resolve "um encobre o outro".
+    const float bal      = params.Real(manifest.p_piezo_mix);
+    const float alvo_gl  = 1.f - (bal > 0.f ?  bal : 0.f);
+    const float alvo_gr  = 1.f - (bal < 0.f ? -bal : 0.f);
     OscSetFreq(params.Real(manifest.p_tone_freq),
                cotuca::hal::Info().sample_rate);
 
@@ -868,13 +892,30 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     if(size > kMaxBlock)
         size = kMaxBlock; // não estoura o scratch; nunca acontece com blk=48
 
-    // 1) FONTE — crossfade das duas entradas + tom de teste por cima.
+    // 0) MEDIDOR DE ENTRADA — antes de tudo, inclusive do balanço.
+    if(has_in)
+        for(size_t i = 0; i < size; i++)
+        {
+            const float al = in[0][i] < 0.f ? -in[0][i] : in[0][i];
+            const float ar = in[1][i] < 0.f ? -in[1][i] : in[1][i];
+            if(al > in_pk_l) in_pk_l = al;
+            if(ar > in_pk_r) in_pk_r = ar;
+            if(al > 0.001f)  in_n_l++;
+            if(ar > 0.001f)  in_n_r++;
+            if(al >= 0.99f)  in_clip_l++;
+            if(ar >= 0.99f)  in_clip_r++;
+        }
+
+    // 1) FONTE — BALANÇO das duas entradas + tom de teste por cima.
     //    O tom entra aqui, antes do módulo, pra poder ser a fonte do
     //    eco no teste de bancada.
     for(size_t i = 0; i < size; i++)
     {
-        const float dry  = has_in ? (in[0][i] * (1.f - src) + in[1][i] * src)
-                                  : 0.f;
+        // Ganhos suavizados por amostra: o CC tem 7 bits e o degrau
+        // de um passo é audível como clique num ganho de entrada.
+        const float gl   = suave_gl.Passo(alvo_gl);
+        const float gr   = suave_gr.Passo(alvo_gr);
+        const float dry  = has_in ? (in[0][i] * gl + in[1][i] * gr) : 0.f;
         const float tone = OscProcess();
         src_buf[i]       = dry * (1.f - mix) + tone * mix;
     }
@@ -1529,6 +1570,37 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     {
         out[0][i] *= level;
         out[1][i] *= level;
+    }
+
+    // 5b) LARGURA — mid/side, e tem que ser AQUI.
+    //
+    //   mid = (L+R)/2   side = (L-R)/2   L = mid+w*side   R = mid-w*side
+    //
+    // DEPOIS DO LEVEL E ANTES DO SPLIT, que é o ÚLTIMO ponto em que os
+    // dois canais ainda são a mesma imagem estéreo. Passado o split,
+    // OUT_L é o exciter (com governor e shifter SSB, porque realimenta
+    // o piezo) e OUT_R é o jack de linha limpo: são dois DESTINOS, não
+    // um par estéreo, e somar/subtrair os dois ali misturaria o ramo
+    // protegido com o desprotegido — desfazendo a proteção
+    // anti-feedback justamente no fio que fecha o laço acústico.
+    //
+    // A largura vem do reverb, do shimmer e do detune, que são os
+    // únicos que produzem estéreo nativo. Em 1.0 a conta é identidade,
+    // então o bloco inteiro é pulado: custo literalmente zero no
+    // neutro.
+    {
+        const float alvo_w = params.Real(manifest.p_out_width);
+        if(alvo_w < 0.9999f || suave_width.Valor() < 0.9999f)
+        {
+            for(size_t i = 0; i < size; i++)
+            {
+                const float w = suave_width.Passo(alvo_w);
+                const float m = (out[0][i] + out[1][i]) * 0.5f;
+                const float s = (out[0][i] - out[1][i]) * 0.5f * w;
+                out[0][i] = m + s;
+                out[1][i] = m - s;
+            }
+        }
     }
 
     // 6) SPLIT — os ramos deixam de ser iguais aqui.
@@ -2238,6 +2310,34 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "pk", 2) == 0)
     {
+        // ENTRADA CRUA POR CANAL, primeiro: e a pergunta mais barata
+        // de responder e a que mais vezes ficou sem resposta.
+        {
+            const float ig = params.Real(manifest.p_in_gain);
+            auto dbfs = [](float v) {
+                return v > 1e-7f ? 20.f * log10f(v) : -140.f;
+            };
+            hal::Log("ENTRADA CRUA (pre-balanco, pre-in_gain):");
+            hal::Log("  IN_L (p1): pico %.5f = %6.1f dBFS | %lu amostras | clip %lu",
+                     (double)in_pk_l, (double)dbfs(in_pk_l),
+                     (unsigned long)in_n_l, (unsigned long)in_clip_l);
+            hal::Log("  IN_R (p2): pico %.5f = %6.1f dBFS | %lu amostras | clip %lu",
+                     (double)in_pk_r, (double)dbfs(in_pk_r),
+                     (unsigned long)in_n_r, (unsigned long)in_clip_r);
+            hal::Log("  com in_gain %.2fx: L -> %.1f dBFS | R -> %.1f dBFS%s",
+                     (double)ig, (double)dbfs(in_pk_l * ig),
+                     (double)dbfs(in_pk_r * ig),
+                     (in_pk_l * ig >= 1.f || in_pk_r * ig >= 1.f)
+                         ? "   *** SATURA ***" : "");
+            if(in_n_l == 0 && in_n_r == 0)
+                hal::Log("  os DOIS mudos — ninguem tocou, ou a entrada nao chega");
+            else if(in_n_r == 0)
+                hal::Log("  IN_R MUDO com IN_L vivo: o problema e do p2 (cabo/pino/piezo)");
+            else if(in_n_l == 0)
+                hal::Log("  IN_L MUDO com IN_R vivo: o problema e do p1 (cabo/pino/piezo)");
+            in_pk_l = in_pk_r = 0.f;
+            in_n_l = in_n_r = 0; in_clip_l = in_clip_r = 0;
+        }
         hal::Log("pitch: pico ENTRADA %.5f | SAIDA %.5f | razao %.3f",
                  (double)pitch_pk_in, (double)pitch_pk_out,
                  (double)(pitch_pk_in > 1e-9f
@@ -2681,6 +2781,9 @@ int main(void)
         fx2_hp_l.Init(hal::Info().sample_rate);
         fx2_hp_r.Init(hal::Info().sample_rate);
         reverb_ok = reverb.Init(hal::Info().sample_rate, reverb_mem, have);
+        suave_gl.Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_gr.Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_width.Init(hal::Info().sample_rate, 20.f, 1.f);
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um

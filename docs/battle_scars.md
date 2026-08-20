@@ -1,6 +1,6 @@
 # Battle Scars — Cotucatronics
 ### O que o firmware nos ensinou enquanto a gente o ensinava a cantar
-*Registro de aprendizados — resultados e metodologia. Atualizado ao fim da caçada do shimmer ardido (suíte de cinco efeitos entregue).*
+*Registro de aprendizados — resultados e metodologia. Atualizado ao fim da caçada do shimmer ardido e dos dois controles de I/O.*
 
 ---
 
@@ -972,9 +972,136 @@ pesado onde precisava passar. Butterworth de 6ª ordem acertou as duas pontas.
 
 ---
 
+## 11t. A convenção que só funcionava porque todos os casos eram iguais (20/08)
+
+O `piezo_mix` nasceu grudado num piezo só — `real=-1.00`, o extremo
+esquerdo — e um dos dois transdutores teria ficado mudo sem sintoma.
+
+A assinatura sempre disse a verdade:
+
+```c
+int Add(const char* name, float def_norm, float min_real, float max_real, ...)
+                          ^^^^^^^^ NORMALIZADO, está no nome
+```
+
+**Todo parâmetro do projeto até aqui tinha `min_real = 0`.** Com mínimo zero,
+normalizado e real coincidem, e a distinção nunca precisou existir. Copiei o
+padrão de chamada de dezenas de vizinhos corretos sem verificar que a
+condição que os tornava corretos — mínimo zero — ainda valia. O `piezo_mix` é
+o primeiro de faixa **simétrica**, e nele `def_norm = 0` é a ponta, não o meio.
+
+> **Padrão copiado carrega uma pré-condição que ninguém escreveu.** Ao ser o
+> primeiro caso de uma forma nova (faixa negativa, unidade diferente, sinal
+> invertido), reler a assinatura em vez de imitar o vizinho — os vizinhos
+> estavam certos por um motivo que pode não valer para o caso novo.
+
+Pego pelo `list` antes do dB tocar, e só porque a leitura de estado depois de
+gravar já era rotina (11q). A cicatriz anterior pagou por esta.
+
+---
+
+## 11u. Não afirmei estado errado — destruí estado em silêncio (20/08)
+
+A 11q dizia: *estado afirmado antes de um flash não sobrevive ao flash*.
+Escrevi a regra, virou skill, e no mesmo dia o dB relatou "sem som no p2".
+
+O `level` estava em **0,00**. Eu havia gravado a placa **quatro vezes** na
+mesma conversa, cada gravação zerando o master, e **nunca reposto nem
+avisado**. Ele estava re-dialando pelo Loopy a cada rodada sem que eu
+soubesse, e uma das perguntas dele nasceu de um silêncio que era meu.
+
+A 11q cobria a metade errada do problema. Afirmar estado velho é um erro de
+**relato**; destruir estado sem avisar é um erro de **ação** — e este é pior,
+porque o outro lado não tem como saber que aconteceu.
+
+> **Toda gravação destrói estado. Repor o estado de operação e DECLARAR o
+> que foi reposto faz parte de gravar** — não é cortesia, é fechar a ação.
+> Mínimo: `level`, `in_gain` e as chaves do que estava tocando.
+
+---
+
+## 11v. A pergunta que o instrumento não sabe responder (20/08)
+
+*"Chega sinal no segundo piezo?"* — e não havia como saber. O firmware media
+CPU, MIDI, picos por nota, ganho do limiter, custo de cada efeito, e **não
+media a própria entrada, por canal**. Piezo mudo e piezo baixo soam
+exatamente igual atrás de um reverb.
+
+Medidor cru (pré-balanço, pré-`in_gain`, pré-gate) resolveu em cinco minutos
+e respondeu de imediato, antes mesmo de alguém tocar:
+
+```
+IN_L (p1): pico 0.00182 = -54.8 dBFS | 4783 amostras
+IN_R (p2): pico 0.00422 = -47.5 dBFS | 9515 amostras   ← chega ao conversor
+```
+
+Pino morto daria zero absoluto. O canal existe; a pergunta virou "o transdutor
+entrega?", que é outra pergunta e tem outro dono.
+
+**A mesma lacuna produziu um erro de fato que durou o dia inteiro.** Citei
+`in_gain = 8,0` como "18 dB de fábrica" em três respostas e o pus como defeito
+aberto no STATUS. O default é **1,0×** — está escrito no manifest, na mesma
+linha do `Add()`. O 8,0 era **ajuste do dB**, dialado pelo Loopy e persistido
+até a gravação seguinte.
+
+> **Valor lido de uma placa viva não tem procedência.** Antes de chamar um
+> número de "default do projeto", ler o default no fonte — a placa mostra o
+> que está lá, não quem o pôs.
+
+> **A pergunta que o instrumento não sabe responder é a que será respondida
+> com hipótese.** Quando um canal de sinal novo entra (entrada, saída, sensor),
+> o medidor dele entra junto — não depois do primeiro mistério.
+
+**O desfecho inverteu o diagnóstico.** Com o dB tocando:
+
+```
+IN_L (p1): pico 1.00000 =  -0.0 dBFS |  42 365 amostras | clip 65
+IN_R (p2): pico 0.46398 =  -6.7 dBFS | 244 237 amostras | clip 0
+```
+
+O p2 — o canal "sem som" — entrega −6,7 dBFS e tem **quase 6× mais amostras
+ativas** que o p1. Quem tem defeito é o **p1**, que bate no teto do conversor
+(65 amostras em clip) antes de qualquer ganho de firmware e ocupa todo o
+espaço. "Sem som no p2" era o p1 saturado encobrindo o vizinho — exatamente o
+caso que o `piezo_mix` foi construído para resolver, chegando pela porta de
+trás como se fosse um canal morto.
+
+> **O sintoma nomeia o canal onde a falta é OUVIDA, não o canal onde a causa
+> está.** Numa soma, o que some pode estar perfeito: quem o apaga é o outro
+> somando. Antes de investigar o lado silencioso, medir o lado alto.
+
+E o conserto de firmware aqui é paliativo declarado: baixar `in_gain` e abaixar
+o p1 pelo balanço recupera equilíbrio, mas **clipping no ADC não se desfaz a
+jusante**. O conserto real é físico.
+
+---
+
+## 11w. Dois canais de saída não são uma imagem estéreo (20/08)
+
+A especificação do `out_width` dizia "na saída final, após a espacialização
+estéreo". Aplicado ao pé da letra, teria desfeito o stack anti-feedback.
+
+`OUT_L` vai para o exciter **no corpo da escultura** e é o ramo que realimenta
+o piezo: leva governor e shifter SSB. `OUT_R` é jack de linha, não realimenta,
+e sai limpo **por desenho**. Depois do split eles não são L e R de uma imagem
+— são dois **destinos** com processamentos diferentes.
+
+`mid = (L+R)/2` e `side = (L-R)/2` ali dentro somariam o ramo protegido com o
+desprotegido, reinjetando sinal sem shift no fio que fecha o laço acústico. A
+proteção continuaria existindo no código e teria deixado de existir no ar.
+
+O lugar certo é **entre o LEVEL e o split** — o último ponto em que os dois
+canais ainda são a mesma imagem.
+
+> **Antes de qualquer operação que MISTURE canais (mid/side, soma mono,
+> correlação, pan), perguntar o que cada canal É naquele ponto.** "Estéreo" é
+> uma propriedade do trecho, não do cabo.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.**
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.**
 
 ---
 

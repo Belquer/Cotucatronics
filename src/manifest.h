@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.54.0
+// manifest.h (instrumento "bancada") v0.55.1
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -107,7 +107,26 @@ struct Manifest
     int p_tone_freq;  // freq do oscilador de teste
     int p_tone_mix;   // mistura tom de teste vs entrada
     int p_spare;      // slot vazio de exemplo
-    int p_src_mix;    // SRC MIX: 0 = IN_L (piezo), 1 = IN_R (linha)
+    // BALANCO dos dois piezos, nao crossfade. Centro = OS DOIS CHEIOS;
+    // girar abaixa o dominante sem cortar o outro. O crossfade que
+    // estava aqui (`src_mix`, aposentado 20/08) derrubava OS DOIS no
+    // meio — -6 dB cada no centro — e por isso nao resolvia "um
+    // encobre o outro".
+    //
+    // FAIXA SIMETRICA [-1,+1] com neutro em 0: e o que faz o default
+    // zero cair no centro sozinho, sem excecao a regra. CC 64 = centro.
+    //
+    // AGORA PODE IR PRO MIDI, e o `src_mix` nao podia. Aquele emudecia
+    // o instrumento nos extremos (3x num dia so); este, no extremo,
+    // perde UM piezo e mantem o outro. Nao existe posicao muda.
+    int p_piezo_mix;  // -1 = so IN_L ... 0 = ambos cheios ... +1 = so IN_R
+    // LARGURA da saida, mid/side. 1.0 = passa direto.
+    //
+    // NAO E EXCECAO A REGRA DO ZERO: o neutro deste controle e 1,
+    // porque 0 nao e "desligado", e um colapso ATIVO pra mono. Nascer
+    // em 0 colapsaria o instrumento a cada boot — o mesmo erro que o
+    // `shm_tone` evitou correndo a escala pra cima.
+    int p_out_width;  // 0 = mono puro ... 1 = largura nativa da cauda
 
     // ---- GANHO DE ENTRADA — pós-fonte, PRÉ-GATE ----
     // O lugar que este manifest reservou pra ele desde o primeiro dia,
@@ -331,7 +350,7 @@ struct Manifest
     // ============================================================
     // PAINEL v2 — 5 pots + 2 botões momentâneos
     //
-    //   k1 = level      k2 = src_mix      k3–k5 = macros de caráter
+    //   k1 = level      k2 = piezo_mix    k3–k5 = macros de caráter
     //   B1 = randomizador                 B2 = assinalável
     // ============================================================
 
@@ -524,7 +543,14 @@ struct Manifest
         p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
         p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
         p_spare     = t.Add("spare",     0.0f, 0.f,    1.f);
-        p_src_mix   = t.Add("src_mix",   0.0f, 0.f,    1.f);
+        // 0.5 NORMALIZADO = 0.0 real = centro. O primeiro argumento do
+        // Add() e `def_norm`, e todo param ate hoje tinha min = 0, o
+        // que fazia norm e real coincidirem — a distincao nunca doeu e
+        // por isso o habito passou batido. Este e o primeiro param de
+        // faixa SIMETRICA: aqui norm 0.0 e o extremo esquerdo, e
+        // nascia com um piezo mudo.
+        p_piezo_mix = t.Add("piezo_mix", 0.5f, -1.f,   1.f);
+        p_out_width = t.Add("out_width", 1.0f,  0.f,   1.f);
 
         // Faixa [1, 8], curva 2 — resolução embaixo, onde o ajuste fino
         // acontece. Em 8.0, o TOPO da faixa, por pedido do dB depois de
@@ -899,7 +925,7 @@ struct Manifest
         // público. Mover k1/k2 num manifest quebra isso pra todas as
         // outras esculturas, não só pra esta.
         knob[0].AddTarget(p_level, 1.0f);    // k1 — volume master
-        knob[1].AddTarget(p_src_mix, 1.0f);  // k2 — SRC MIX piezo/linha
+        knob[1].AddTarget(p_piezo_mix, 1.0f); // k2 — BALANCO dos piezos
         knob[2].AddTarget(p_dly_time, 1.0f); // k3 — macro do delay
         knob[3].AddTarget(p_dly_mix, 1.0f);  // k4 — macro do delay
         knob[4].AddTarget(p_voc_tone, 1.0f); // k5 — macro do vocoder
@@ -1071,6 +1097,10 @@ struct Manifest
         AddMidi(35, p_shm_feedback);
         AddMidi(36, p_shm_shift);   // chave 3 posicoes
         AddMidi(57, p_shm_tone);
+
+        // ---- I/O: familia contigua, os dois controles de ponta ----
+        AddMidi(58, p_piezo_mix);  // 64 = centro (ambos cheios)
+        AddMidi(59, p_out_width);  // 127 = largura nativa
         // 34 e o comando `sync` — fica no meio da familia do shimmer
         // por acidente historico, e nao vale remapear: mexer em numero
         // ja alinhado no Loopy custa mais que a assimetria incomoda.

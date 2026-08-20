@@ -189,6 +189,39 @@ mandei, chegou".** O `mscope` mede o que entra e nunca distingue "a fonte não
 mandou" de "mandou e se perdeu". O loopback é o par dele: fonte conhecida,
 caminho real, resposta binária. **Todo canal de entrada nasce com o seu.**
 
+## Regra do canal sem medidor — a pergunta que vira hipótese
+
+**Canal de sinal novo entra com o medidor dele junto.** Não depois do primeiro
+mistério.
+
+Caso (20/08): *"chega sinal no segundo piezo?"* O firmware media CPU, MIDI,
+picos por nota, ganho do limiter e custo por efeito — e não media a **própria
+entrada, por canal**. Piezo mudo e piezo baixo soam idênticos atrás de um
+reverb, então a pergunta só tinha resposta por hipótese.
+
+Um medidor cru (pré-ganho, pré-gate) respondeu antes de alguém tocar:
+
+```
+IN_L (p1): pico 0.00182 = -54.8 dBFS | 4783 amostras
+IN_R (p2): pico 0.00422 = -47.5 dBFS | 9515 amostras   ← chega ao conversor
+```
+
+Pino morto daria zero absoluto. A pergunta virou "o transdutor entrega?" — que
+tem outro dono.
+
+**Medir CRU.** Depois de qualquer ganho, a leitura mistura "o que o transdutor
+entregou" com "o que o firmware fez", e é a primeira pergunta que precisa de
+resposta limpa.
+
+## Regra da procedência — valor de placa viva não é default
+
+Citei `in_gain = 8,0` como "18 dB de fábrica" em três respostas e o registrei
+como defeito aberto. O default é **1,0×**, escrito na mesma linha do `Add()`.
+O 8,0 era ajuste do músico, persistido até a gravação seguinte.
+
+> **Antes de chamar um número de "default do projeto", ler o default no
+> fonte.** A placa mostra o que está lá, não quem o pôs.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

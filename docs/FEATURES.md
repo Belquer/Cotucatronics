@@ -32,7 +32,9 @@ e o custo de cada adição fica invisível até algo quebrar.
 | Feature | Params | CC | Estado |
 |---|---|---|---|
 | **Fonte** — crossfade piezo/jack + tom de teste | `src_mix`, `tone_freq`, `tone_mix` | — | ativo (`src_mix` fora do MIDI por segurança) |
-| **Ganho de entrada** | `in_gain` | 21 | ativo · ⚠️ **8,0 = 18 dB**, e picos de entrada nunca foram lidos sob material real |
+| **Ganho de entrada** | `in_gain` | 21 | ativo · nasce em **1,0×**, faixa 1–8× com curva quadrática |
+| **Balanço dos piezos** (shell) — dois piezos em IN_L/IN_R, soma mono | `piezo_mix` | **58** | ⏳ **entregue 20/08, aceite pendente** · centro = ambos cheios · ~2 ganhos/amostra |
+| **Medidor de entrada** por canal, cru | — | — | ✅ 20/08 · pré-balanço, pré-`in_gain`, pré-gate · sai no `pk` |
 | **Gate** | `gate_thresh`, `gate_release` | 30 | ativo |
 | **Delay** (RNBO, slot Instrument) | `dly_time`, `dly_mix` | 22, 23 | ✅ certificado T5 |
 | **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |
@@ -46,6 +48,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Governor / limiter / gate de saída** | `gov_ceiling`, `gov_release` | — | ativo (fora do MIDI por segurança) |
 | **Shifter SSB** | `shift_hz` | — | ✅ certificado T8, desligado (espera o exciter) |
 | **Level** master | `level` | 20 | ativo |
+| **Largura da saída** (shell) — mid/side | `out_width` | **59** | ⏳ **entregue 20/08, aceite pendente** · entre o LEVEL e o split · nasce em 1,0 (nativa) · +4 µs, zero no neutro |
 
 ### Gesto e automação
 | Feature | Params | CC | Estado |
@@ -78,7 +81,8 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Vocoder RNBO** | 18/08 | decisão de ouvido do dB | `MODULE_SRC` no Makefile + `block_size` 256 no manifest. Export, wrapper, binds e a cerca de Lá menor dos búzios seguem no repo, comentados |
 | **Freeze RNBO** | — | reprovado na etapa 5 do IFÁ10000: **7 349 µs** contra 2 667 de orçamento, e 89% do pool de SRAM | só se o patch emagrecer. Substituído pelo `freeze.h`, que faz o mesmo gesto por **98 µs** |
 | **`fx2_gain`, `fx2_on` no mapa MIDI** | 18/08 | apontavam pro slot RNBO vazio — mexer não fazia nada, em silêncio | voltam com o vocoder, no CC 33 reservado |
-| **`src_mix`, `gov_ceiling` no mapa MIDI** | 18/08 | roteamento e segurança; despejos do iOS os punham no extremo e emudeciam o instrumento **3× numa sessão** | não devem voltar. Seguem no `set` da serial |
+| **`src_mix`, `gov_ceiling` no mapa MIDI** | 18/08 | roteamento e segurança; despejos do iOS os punham no extremo e emudeciam o instrumento **3× numa sessão** | `gov_ceiling` não deve voltar. `src_mix` foi aposentado por inteiro (abaixo) |
+| **`src_mix`** (o param inteiro) | 20/08 | era **crossfade** das duas entradas: no centro derrubava as duas em −6 dB, e por isso não resolvia "um encobre o outro". Substituído pelo `piezo_mix`, que é **balanço**. Manter os dois seria dois controles disputando os mesmos ganhos — a família C do catálogo | `t.Add("src_mix", 0.f, 0.f, 1.f)` e o crossfade linear no passo 1 do `AudioCb`. O knob **k2** foi junto para o `piezo_mix` |
 | **Regra "reparear após todo RESET"** | 18/08 | **revogada por medição** — o pareamento sobrevive ao reset. Nasceu de um log que eu mesmo silenciei | — |
 | **Quarentena que DESCARTA** | 18/08 | as duas decisões acima mataram a ameaça; ela passou a descartar a inicialização legítima | rebaixada a sensor, não removida |
 | **Filtro de plausibilidade por magnitude** no watchdog | 18/08 | descartava a catástrofe junto com o ruído | removido; a causa (relógio) foi consertada |
