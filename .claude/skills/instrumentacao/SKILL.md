@@ -54,6 +54,34 @@ gastava 35 µs de 500.
    defeito reprodutível em intermitente — e intermitente é o mais caro de
    todos.
 
+## Regra da mensagem que afirma — cite o outro estado
+
+Antes de escrever qualquer frase de diagnóstico, pergunte:
+***"que outro estado produz exatamente esta evidência?"***
+
+Se houver um, **a frase tem que citá-lo**. Em 18/08 quatro instrumentos meus
+trataram ausência de dado como dado — "provável QUEDA" quando ninguém mexia,
+"degradação" no que era alguém tocando, "não voltou" com 21 CCs aplicados
+embaixo, e "sessão MIDI ausente" com o link perfeito.
+
+**O padrão não é esquecer a regra — é aplicá-la ao sistema e não a si mesmo.**
+Nas quatro vezes a ambiguidade era conhecida; nas quatro o código resolveu
+**escolhendo um lado**, porque escolher produz uma frase útil e admitir não
+produz.
+
+> **A correção nunca é o limiar. É parar de afirmar.**
+
+Instrumento que não distingue dois estados tem que dizer isso **e vir com o
+teste que distingue**:
+
+```
+>>> Se voce JA mexeu num controle, a sessao caiu: reconecte.
+>>> Se ainda nao mexeu, isto aqui nao diz nada: mexa e olhe de novo.
+```
+
+**Corolário:** instrumento novo não resolve a pergunta — ele **move a
+fronteira** do que ainda é ambíguo. Saiba onde a fronteira nova ficou.
+
 ## Regra da defesa órfã — declare a ameaça, ou ela vira folclore
 
 Toda proteção que você adiciona (quarentena, veto, filtro, bypass, janela de

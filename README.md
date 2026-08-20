@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.71.1** — delay + reverb + freeze granular, bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
+Projeto colaborativo. Estado atual: **v0.73.1** — delay + reverb + freeze granular, bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -63,9 +63,9 @@ Cinco regras que não se negociam:
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/freeze.h](src/freeze.h) | **v0.3.1** | Freeze granular: núcleo de 500 ms, 2 grãos sorteados, Hann. C++ puro |
 | [src/pitch.h](src/pitch.h) | **v0.2.0** | Motor de pitch compartilhado: 1 buffer, até 4 vozes. C++ puro |
-| [src/effect_slot.h](src/effect_slot.h) | **v0.1.0** | Moldura de todo efeito: fade igual-potência, custo-zero, cronometragem |
 | [src/shimmer.h](src/shimmer.h) | **v0.1.0** | Shimmer: reverb + pitch num laço. Realimenta o Freeverb existente |
-| [src/drive.h](src/drive.h) | **v0.1.0** | Drive: waveshaper tanh normalizado como cola. Zero memória |
+| [src/drive.h](src/drive.h) | **v0.2.0** | Drive: waveshaper tanh normalizado como cola. Zero memória |
+| [src/effect_slot.h](src/effect_slot.h) | **v0.3.0** | Moldura: fade assimétrico, custo-zero desligado, cronometragem |
 | [src/pitch_spectrum.py](src/pitch_spectrum.py) | **v0.1.0** | Os N maiores picos do espectro — pico dominante mente com laterais fortes |
 | [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
 | [src/midi.h](src/midi.h) | **v0.3.0** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
@@ -77,7 +77,7 @@ Cinco regras que não se negociam:
 | [src/module_rnbo_delay.cpp](src/module_rnbo_delay.cpp) | — | Delay no Fx1. Inclui `RNBO.h` |
 | [src/module_rnbo_freeze.cpp](src/module_rnbo_freeze.cpp) | — | Freeze. Reprovado na etapa 5 do IFÁ10000 (7 349 µs) |
 | [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.6.0** | Vocoder. **FORA do build desde 18/08** — decisão de ouvido do dB, revivível |
-| [src/main.cpp](src/main.cpp) | **v0.71.1** | Loop, callback de áudio, painel falso via serial |
+| [src/main.cpp](src/main.cpp) | **v0.73.1** | Loop, callback de áudio, painel falso via serial |
 | [src/params.h](src/params.h) | **v0.7.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
 | [src/manifest.h](src/manifest.h) | **v0.50.0** | Instrumento aprovado: delay + reverb, `level 1.0`, `in_gain 8x`, mapa de 14 CCs |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
@@ -89,7 +89,7 @@ Cinco regras que não se negociam:
 | [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |
 | [src/TESTES.md](src/TESTES.md) | **v0.24.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
-| [src/BOARDS.md](src/BOARDS.md) | **v0.11.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
+| [src/BOARDS.md](src/BOARDS.md) | **v0.12.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
 | [src/cotuca_measure.py](src/cotuca_measure.py) | **v0.1.0** | Mede a frequência de saída por FFT |

@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.11.0**
+**Documento v0.12.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -286,6 +286,34 @@ projeto**. Ferramenta de diagnóstico que segura o loop é o próximo
 `DelayMs` (ver cap. 7 do [battle_scars](../docs/battle_scars.md)). **Os
 contadores nunca mentem; o stream sim** — e é por isso que existe o modo
 `stats`, em que o dilúvio vira uma linha por segundo.
+
+### ⚡ DEPOIS DE GRAVAR: reconecte, NÃO esqueça
+
+**O link BLE sobrevive à gravação. A sessão CoreMIDI não.** São camadas
+diferentes, e confundi-las custava três passos onde bastam dois.
+
+| Camada | Depois de `dfu go` + gravar |
+|---|---|
+| **BLE** (o que o pino LB vê) | ✅ conectado — `LB 0/100%` |
+| **Sessão CoreMIDI** (o que o Loopy usa) | ❌ morre |
+
+**O ritual, medido em 18/08:**
+
+1. ~~Esquecer o Bluetooth no iPad~~ — **desnecessário**, o pareamento nunca
+   quebrou
+2. **Reconectar o WIDI** no painel de Bluetooth MIDI (dá pra fazer dentro do
+   próprio Loopy Pro)
+3. Voltar a tocar
+
+> **Isto refina a matriz de seis quadrantes abaixo:** `FIXO + zero tráfego`
+> **não distingue** *"o app parou de mandar"* de *"a sessão MIDI caiu com o
+> rádio intacto"*. Mesmo par de sintomas, causas diferentes — e a segunda é a
+> que acontece **toda vez** que se grava.
+>
+> O comando `ble` detecta esse caso específico (LB fixo + zero bytes desde o
+> boot) e imprime a instrução em vez do diagnóstico.
+
+---
 
 ### 📡 DIAGNÓSTICO WIDI/BLE — três camadas, nenhum app de terceiro
 

@@ -713,6 +713,74 @@ qualquer projeto embarcado futuro.
 
 ---
 
+## 11m. Escrevi a regra três vezes e violei quatro (18/08)
+
+**"Silêncio não distingue 'ninguém mexeu' de 'caiu'."** Está no `ble`, está no
+BOARDS.md, está no battle_scars. E eu construí **quatro** instrumentos que
+tratam ausência de dado como dado:
+
+1. O detector de queda BLE dizia **"provável QUEDA"** quando o dB só tinha
+   parado de mexer no fader. Corrigido — e o próprio conserto documentou a
+   regra.
+2. O monitor de tráfego me fez ler **"degradação do link"** num gráfico que
+   era o dB tocando normalmente: fluxo humano é naturalmente esburacado.
+3. O veredito do teste de fade imprimiu **"não voltou"** enquanto os
+   contadores embaixo mostravam 21 CCs aplicados.
+4. O aviso de sessão MIDI disparou **"SESSAO MIDI AUSENTE"** com o link
+   perfeito, porque "zero bytes desde o boot" também é verdade quando ninguém
+   encostou em nada ainda.
+
+**O padrão não é esquecer a regra — é aplicá-la ao sistema e não a mim.** Nas
+quatro vezes eu sabia que silêncio é ambíguo; nas quatro vezes escrevi código
+que resolvia a ambiguidade **escolhendo um lado**, porque escolher produz uma
+frase útil e admitir não produz.
+
+> **A correção nunca é o limiar. É parar de afirmar.**
+>
+> Instrumento que não consegue distinguir dois estados tem que **dizer isso**,
+> e vir com o teste que distingue:
+>
+> ```
+> >>> Se voce JA mexeu num controle, a sessao caiu: reconecte.
+> >>> Se ainda nao mexeu, isto aqui nao diz nada: mexa e olhe de novo.
+> ```
+
+**Sinal de alerta para escrever qualquer mensagem de diagnóstico:** se a
+frase afirma uma causa, pergunte *"que outro estado produz exatamente esta
+evidência?"* — e se houver um, a frase tem que citá-lo.
+
+---
+
+## 11n. Duas camadas com o mesmo sintoma (18/08)
+
+Depois de toda gravação o dB tinha de esquecer o Bluetooth, reparear o WIDI e
+voltar ao Loopy. Três passos, toda vez.
+
+Medido com o pino do LB:
+
+| Camada | Depois de gravar |
+|---|---|
+| **BLE** — o que o LB vê | ✅ conectado, `LB 0/100%` |
+| **Sessão CoreMIDI** — o que o Loopy usa | ❌ morre |
+
+**O pareamento nunca quebrou.** Esquecer o dispositivo era trabalho gasto num
+problema que não existia — a mesma forma da regra *"reparear após todo
+RESET"*, revogada por medição algumas horas antes, no mesmo dia.
+
+Ritual de três passos vira **dois**: reconectar no painel Bluetooth MIDI (dá
+pra fazer dentro do próprio Loopy) e voltar a tocar.
+
+**E isso expõe o limite da camada 1 que construímos hoje:** o LB responde
+*"o rádio está ligado?"*, **nunca** *"o MIDI está fluindo?"*. A matriz de seis
+quadrantes precisa da ressalva — `FIXO + zero tráfego` não distingue *"o app
+parou de mandar"* de *"a sessão MIDI caiu com o rádio intacto"*. Mesmo par de
+sintomas, causas diferentes, e a segunda acontece **toda vez** que se grava.
+
+> **Instrumento novo não resolve a pergunta — ele move a fronteira do que
+> ainda é ambíguo.** Vale saber onde a nova fronteira ficou.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.

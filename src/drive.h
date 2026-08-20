@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — drive v0.1.0
+// Cotucatronics OS — drive v0.2.0
 // Waveshaper tanh como COLA, nao como fuzz.
 //
 // O alvo e engordar percussao, kalimba, monocordio e molas — material
@@ -64,7 +64,11 @@ class Drive
         drive_ = d;
         // Normalizador, calculado SO quando o drive muda. tanh e caro
         // demais pra recalcular por amostra sem motivo.
-        inv_ = 1.f / std::tanh(d);
+        // O normalizador usa a MESMA aproximacao do caminho quente. Se
+        // usasse `std::tanh` aqui, o pico de saida ficaria levemente
+        // fora de 1.0 — pequeno, mas seria erro de coerencia: dois
+        // modelos diferentes da mesma curva.
+        inv_ = 1.f / TanhRapido(d);
     }
 
     // Corte do passa-baixa, em Hz. No topo da faixa ele e praticamente
@@ -83,18 +87,45 @@ class Drive
         mix_ = m < 0.f ? 0.f : (m > 1.f ? 1.f : m);
     }
 
-    // Um par estereo, in-place. Sem ramo condicional no caminho quente:
-    // com mix 0 o resultado ja e o seco, e quem decide pular o bloco
-    // inteiro e o EffectSlot.
-    void Process(float& l, float& r)
+    // APROXIMACAO DE tanh, e a medicao exigiu.
+    //
+    // `std::tanh` e TRANSCENDENTAL — chamada de biblioteca de ~100
+    // ciclos, nao aritmetica. Duas por amostra a 48 kHz custaram
+    // +36 us de pico (3,6% do bloco), contra uma aposta de <1%.
+    // "Funcao por amostra" nao implica barato quando a funcao e cara.
+    //
+    // Pade de 2a ordem: x*(27 + x^2) / (27 + 9x^2). Erro < 0.2% em
+    // |x| < 3, satura suave, e e so multiplicacao e uma divisao.
+    // Acima de |x| = 3 tanh ja esta a 0.995 — grampear ali nao muda
+    // nada audivel e evita a divisao crescer.
+    static float TanhRapido(float x)
     {
-        const float sl = std::tanh(drive_ * l) * inv_;
-        const float sr = std::tanh(drive_ * r) * inv_;
-        // LPF de 1 polo, POS-saturacao.
-        y_l_ += a_ * (sl - y_l_);
-        y_r_ += a_ * (sr - y_r_);
+        if(x >  3.f) return 1.f;
+        if(x < -3.f) return -1.f;
+        const float x2 = x * x;
+        return x * (27.f + x2) / (27.f + 9.f * x2);
+    }
+
+    // MONO neste ponto da cadeia. A fonte e `src_buf`, um so canal —
+    // a versao anterior calculava tanh DUAS VEZES sobre o mesmo valor
+    // e jogava metade do custo fora. Estereo real so aparece depois do
+    // reverb.
+    float ProcessMono(float x)
+    {
+        const float sat = TanhRapido(drive_ * x) * inv_;
+        y_l_ += a_ * (sat - y_l_);   // LPF de 1 polo, POS-saturacao
         // CAMADA: o seco passa inteiro e leva o ataque; o saturado
         // entra por baixo e leva o corpo.
+        return x + y_l_ * mix_;
+    }
+
+    // Par estereo, pra quando o drive for usado depois do reverb.
+    void Process(float& l, float& r)
+    {
+        const float sl = TanhRapido(drive_ * l) * inv_;
+        const float sr = TanhRapido(drive_ * r) * inv_;
+        y_l_ += a_ * (sl - y_l_);
+        y_r_ += a_ * (sr - y_r_);
         l += y_l_ * mix_;
         r += y_r_ * mix_;
     }

@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — EffectSlot v0.1.0
+// Cotucatronics OS — EffectSlot v0.3.0
 // A moldura que envolve TODO efeito da cadeia CTOS.
 //
 // Tres trabalhos, e os tres nasceram de cicatriz:
@@ -44,10 +44,22 @@ class EffectSlot
   public:
     // `fade_ms` e o tempo de cruzamento. 5-10 ms: longo o bastante pra
     // nao clicar, curto o bastante pra o gesto parecer imediato.
-    void Init(float sample_rate, float fade_ms = 8.f)
+    // FADE ASSIMETRICO. Entrar e sair sao gestos diferentes:
+    //
+    //   ENTRAR e decisao — quer resposta imediata (~8 ms, so o
+    //   suficiente pra nao clicar).
+    //   SAIR pode ser DECAIMENTO — um efeito com cauda que corta seco
+    //   soa como tomada arrancada. O freeze ensinou isso na etapa 9, e
+    //   o shimmer precisa de 2 s: ele E uma sala se empilhando, e sala
+    //   nao para de existir quando alguem solta o botao.
+    //
+    // `desce_ms = 0` usa o mesmo tempo da subida (simetrico).
+    void Init(float sample_rate, float sobe_ms = 8.f, float desce_ms = 0.f)
     {
         sr_   = sample_rate > 0.f ? sample_rate : 48000.f;
-        passo_ = 1.f / (0.001f * fade_ms * sr_);
+        if(desce_ms <= 0.f) desce_ms = sobe_ms;
+        passo_sobe_  = 1.f / (0.001f * sobe_ms  * sr_);
+        passo_desce_ = 1.f / (0.001f * desce_ms * sr_);
         alvo_ = 0.f;
         g_    = 0.f;
     }
@@ -69,18 +81,34 @@ class EffectSlot
     // de um lado e sqrt(g) do outro.
     void Passo(float& g_seco, float& g_molhado)
     {
-        if(g_ < alvo_)
+        if(g_ != alvo_)
         {
-            g_ += passo_;
-            if(g_ > alvo_) g_ = alvo_;
+            if(g_ < alvo_)
+            {
+                g_ += passo_sobe_;
+                if(g_ > alvo_) g_ = alvo_;
+            }
+            else
+            {
+                g_ -= passo_desce_;
+                if(g_ < alvo_) g_ = alvo_;
+            }
+            // So recalcula as raizes QUANDO A RAMPA ANDA.
+            //
+            // A versao anterior chamava sqrt duas vezes por amostra,
+            // sempre — e a rampa esta parada em 99,9% do tempo. Duas
+            // VSQRT sao ~28 ciclos; a 48 kHz isso e ~2,7 us por bloco
+            // POR EFEITO, pago pra recalcular o mesmo numero.
+            //
+            // Achado medindo o drive: +36 us caiu pra +24 com tanh
+            // rapido e caminho mono, e o que sobrou nao era o efeito —
+            // era esta moldura. Custo compartilhado conserta uma vez e
+            // paga nos cinco.
+            cache_molhado_ = std::sqrt(g_);
+            cache_seco_    = std::sqrt(1.f - g_);
         }
-        else if(g_ > alvo_)
-        {
-            g_ -= passo_;
-            if(g_ < alvo_) g_ = alvo_;
-        }
-        g_molhado = std::sqrt(g_);
-        g_seco    = std::sqrt(1.f - g_);
+        g_molhado = cache_molhado_;
+        g_seco    = cache_seco_;
     }
 
     // ---- CRONOMETRAGEM E VETO (docs/CTOS.md §3) ----
@@ -112,9 +140,12 @@ class EffectSlot
 
   private:
     float    sr_    = 48000.f;
-    float    passo_ = 1.f / 384.f;
+    float    passo_sobe_  = 1.f / 384.f;
+    float    passo_desce_ = 1.f / 384.f;
     float    alvo_  = 0.f;
     float    g_     = 0.f;
+    float    cache_molhado_ = 0.f;
+    float    cache_seco_    = 1.f;
     uint32_t t0_       = 0;
     uint32_t pico_us_  = 0;
 };

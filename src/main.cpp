@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.71.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.73.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.71.1"
+#define COTUCA_OS_VERSION "0.73.1"
 
 #include "hal.h"
 #include "params.h"
@@ -1021,17 +1021,17 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         drive.SetDrive(params.Real(manifest.p_drv_drive));
         drive.SetTone(params.Real(manifest.p_drv_tone));
         const float mx = params.Real(manifest.p_drv_mix);
+        float gs = 0.f, gm = 0.f;
         for(size_t i = 0; i < size; i++)
         {
-            float gs, gm;
             drive_slot.Passo(gs, gm);
             // O fade escala o MIX, nao o sinal: o seco passa inteiro o
             // tempo todo, senao ligar o drive abriria um buraco no
             // meio do instrumento.
             drive.SetMix(mx * gm);
-            float l = src_buf[i], r = src_buf[i];
-            drive.Process(l, r);
-            src_buf[i] = l;
+            // MONO: a fonte aqui e um canal so. Chamar o par estereo
+            // calcularia tanh duas vezes sobre o mesmo valor.
+            src_buf[i] = drive.ProcessMono(src_buf[i]);
         }
     }
 
@@ -2212,6 +2212,37 @@ static void HandleLine(const char* line)
                  (unsigned long)lb_trans[0], (unsigned)lb_duty[0],
                  (unsigned long)lb_trans[1], (unsigned)lb_duty[1],
                  (unsigned long)lb_trans[2], (unsigned)lb_duty[2]);
+        // ---- O CRUZAMENTO QUE IMPORTA NA PRATICA ----
+        //
+        // LB conectado + ZERO trafego desde o boot = a SESSAO CoreMIDI
+        // caiu com o radio intacto. Sao camadas diferentes: o BLE
+        // sobrevive a gravacao, a sessao MIDI nao.
+        //
+        // Medido em 18/08: depois de `dfu go` + gravar, o LB fica em
+        // 0/100% (conectado) e nao chega um byte. Reconectar no painel
+        // de Bluetooth MIDI resolve; ESQUECER o dispositivo e
+        // desnecessario — o pareamento nunca esteve quebrado.
+        // SILENCIO NAO DISTINGUE, E ESTE AVISO QUASE ESQUECEU DISSO.
+        //
+        // A primeira versao disparava com "LB conectado + zero bytes
+        // desde o boot" — que e verdade quando a sessao MIDI morreu E
+        // quando ninguem encostou em nada ainda. Disparou num caso
+        // saudavel na primeira vez que rodou.
+        //
+        // Terceira vez no mesmo dia que um instrumento meu trata
+        // ausencia de dado como dado. A correcao nao e o limiar: e
+        // parar de AFIRMAR. O aviso vira hipotese com o teste junto.
+        if(lb_duty[0] > 90 && lb_trans[0] == 0 && ble_last_rx_ms == 0
+           && hal::NowMs() > 20000u)
+        {
+            hal::Log("    >>> LB conectado e NENHUM byte desde o boot"
+                     " (ha %lu s).", (unsigned long)(hal::NowMs() / 1000u));
+            hal::Log("    >>> Se voce JA mexeu num controle, a sessao"
+                     " CoreMIDI caiu: reconecte o WIDI no painel"
+                     " Bluetooth MIDI. NAO precisa esquecer o aparelho.");
+            hal::Log("    >>> Se ainda nao mexeu, isto aqui nao diz nada:"
+                     " mexa e olhe de novo.");
+        }
         hal::Log("    sem veredito: a legenda da CME foi DESMENTIDA em"
                  " bancada (desconectou, LB ficou fixo). `ble raw`"
                  " acompanha ao vivo — a tabela sai da medicao.");
@@ -2532,7 +2563,10 @@ int main(void)
         shimmer.Init(sr);
         drive.Init(sr);
         drive_slot.Init(sr, 8.f);
-        shimmer_slot.Init(sr, 8.f);
+        // CAUDA DE 2 s NA SAIDA (pedido do dB). Entrar e imediato;
+        // sair e decaimento — o shimmer E a sala se empilhando, e sala
+        // nao para de existir quando alguem solta o botao.
+        shimmer_slot.Init(sr, 8.f, 2000.f);
         hal::Log("shimmer: %s (motor da cauda, %u KB em SDRAM)",
                  pitch_tail_ok ? "pronto" : "SEM BUFFER — inativo",
                  (unsigned)(need_t * sizeof(float) / 1024));

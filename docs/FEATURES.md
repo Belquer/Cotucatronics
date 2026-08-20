@@ -36,7 +36,8 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Gate** | `gate_thresh`, `gate_release` | 30 | ativo |
 | **Delay** (RNBO, slot Instrument) | `dly_time`, `dly_mix` | 22, 23 | ✅ certificado T5 |
 | **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |
-| **Shimmer** (shell) | `shm_on`, `shm_mix`, `shm_shift`, `shm_feedback` | 33, 37, 36, 35 | 🎵 aceite parcial — "o som está lindo" |
+| **Drive** (shell) — waveshaper tanh como cola | `drv_on`, `drv_drive`, `drv_tone`, `drv_mix` | 38–41 | ✅ **aprovado** 18/08 · +21 µs |
+| **Shimmer** (shell) | `shm_on`, `shm_mix`, `shm_shift`, `shm_feedback` | 33, 37, 36, 35 | 🎵 aprovado de ouvido · cauda de 2 s na saída |
 | **Reverb** Freeverb (shell, moldura) | `rev_mix`, `rev_size`, `rev_damp` | 24, 25, 26 | ✅ certificado T14a |
 | **Passa-alta do Fx2** | `fx2_hp` | — | ⏸ inativo enquanto o slot Fx2 estiver vazio |
 | **Governor / limiter / gate de saída** | `gov_ceiling`, `gov_release` | — | ativo (fora do MIDI por segurança) |
@@ -62,6 +63,8 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Diagnóstico BLE** — LEDs do WIDI em D28/29/30 | `ble raw` | ✅ legenda medida |
 | **Sync** — empurra estado pro controlador | `sync` / CC 34 | ⏸ pronto, inútil até o Loopy fazer MIDI learn |
 | **Denúncia de capacidade** das tabelas | boot | ✅ novo, 18/08 |
+| **`dfu go`** — reinicia no bootloader por software | `dfu go` | ✅ novo — trocou 119 tentativas por 1 |
+| **Aviso de sessão MIDI ausente** | `ble` | ✅ novo — LB fixo + zero bytes ⇒ "reconecte, não esqueça" |
 
 ---
 
