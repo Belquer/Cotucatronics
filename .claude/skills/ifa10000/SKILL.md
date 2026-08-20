@@ -12,6 +12,22 @@ Documento completo: `docs/IFA10000.md`. Histórias que compraram cada etapa:
 não passa não entra no build — fica no repo, documentado, com a etapa que
 reprovou.
 
+## ANTES DE TUDO: a caixa única
+
+**Ler `docs/FEATURES.md` inteiro antes de acrescentar qualquer coisa.** Toda
+feature vigente está lá com params, CCs e estado; as aposentadas estão no
+arquivo do mesmo documento, com *por que saiu* e *como reviver*.
+
+A pergunta que a caixa existe para forçar: ***o que já está aqui que eu
+deveria revisar antes de acrescentar mais?***
+
+Custou dois tetos estourados em silêncio no mesmo dia (`kMaxParams` e
+`kMaxMidiMap`) — os búzios sumiram do instrumento e ninguém soube até alguém
+olhar uma tabela de debug. E feature aposentada sem registro vira folclore:
+código que continua lá porque ninguém lembra por quê.
+
+**Aposentou algo? Vai pro arquivo no MESMO commit.**
+
 ## Como conduzir
 
 1. Abrir `docs/IFA10000.md` e copiar a **ficha de certificação** para o
@@ -36,6 +52,17 @@ reprovou.
 | 7 | FAIXA | existe tabela de onde satura, medida antes do limiter |
 | 8 | SEGURANÇA | decisão de cada param nos búzios escrita no manifest |
 | 9 | ACEITE | o dB ouviu ≥ 1 min tocando a escultura e aprovou |
+
+## Cada param novo precisa provar que MOVE algo
+
+Existir na tabela, receber CC e aparecer no `list` **não é o mesmo** que estar
+ligado ao som. Em 18/08 o `shm_mix` fazia as três coisas e não escalava nada —
+a função de mistura nunca era chamada. O efeito funcionava, soava bonito, e o
+controle girava solto.
+
+**Antes de fechar a etapa 2, para cada param novo:** mexer no extremo e provar
+que o som muda. Se não muda, o param está desconectado — e o sintoma que o
+músico vai relatar é *"está baixo"*, que manda procurar ganho em vez de fiação.
 | 10 | REGISTRO | quem clonar amanhã reproduz sem perguntar nada |
 
 ## Skills irmãs — o braço executável do protocolo

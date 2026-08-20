@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.46.0
+// manifest.h (instrumento "bancada") v0.49.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -214,6 +214,23 @@ struct Manifest
     int p_frz_mix;  // 0..1 seco/congelado
     int p_frz_size; // janela do grão, em ms
 
+    // SHIMMER — reverb + pitch-up num laco de realimentacao. Nao tem
+    // reverb proprio: realimenta o Freeverb da cadeia.
+    //
+    // NAO HA `shm_decay`, e e deliberado. A especificacao pedia o
+    // param E dizia "decay = tempo de cauda do proprio reverb" — o que
+    // faria dele um segundo dono de `rev_size`. Variavel com dois
+    // empregos e a terceira familia de bug de ordem deste projeto.
+    // `rev_size` (CC 25) E o decay, e a dependencia esta declarada.
+    // ON/OFF EXPLICITO, pedido do dB: todo efeito que entra na suite
+    // ganha o seu. Antes o shimmer ligava quando `mix > 0`, o que
+    // funde duas decisoes numa so — desligar obrigava a zerar o mix e
+    // perder o ajuste. Chave separada preserva a posicao do fader.
+    int p_shm_on;       // 0/1 — chave
+    int p_shm_mix;      // 0..1 — CAMADA por cima do seco
+    int p_shm_shift;    // 0=+12  1=+7  2=ambos
+    int p_shm_feedback; // 0..1 — quantas oitavas empilham
+
     // ---- FREEZE (slot Fx2) ----
     // Serial-only: os cinco knobs estao todos ocupados. As faixas
     // ESPELHAM as do export, porque o modulo recebe normalizado e o
@@ -358,6 +375,19 @@ struct Manifest
     // ============================================================
     int        midi_channel = kMidiOmni; // omni: aceita todos os canais
     MidiCcBind midi_map[kMaxMidiMap];
+    int        midi_overflow = 0; // entradas recusadas por falta de espaco
+
+    // TODA escrita no mapa passa por aqui. A versao anterior fazia
+    // `midi_map[n_midi++] = {...}` direto, SEM GUARDA — e a 17a entrada
+    // escreveu FORA DO ARRAY. Estouro de capacidade e defeito de
+    // PROJETO: quem adiciona o 33o CC precisa saber no boot.
+    void AddMidi(uint8_t cc, int param_id)
+    {
+        if(n_midi >= kMaxMidiMap) { midi_overflow++; return; }
+        midi_map[n_midi].cc       = cc;
+        midi_map[n_midi].param_id = param_id;
+        n_midi++;
+    }
     int        n_midi = 0;
 
     // Aplica um CC pela via do knob. Devolve o id do parâmetro movido,
@@ -598,6 +628,18 @@ struct Manifest
         // 400 ms — exatamente o tamanho em que os dois graos leem quase
         // o mesmo trecho e o batimento volta. 100 ms = (100-20)/380.
         p_frz_size      = t.Add("frz_size",      0.0f, 20.f, 400.f); // MIDI: nasce 0 (= 20 ms)
+
+        // ---- SHIMMER ----
+        // Tudo em zero: o dB constroi subindo os faders (ver a nota dos
+        // defaults no topo desta funcao).
+        p_shm_on       = t.Add("shm_on",       0.0f, 0.f, 1.f);
+        p_shm_mix      = t.Add("shm_mix",      0.0f, 0.f, 1.f);
+        // Chave de 3 posicoes. steps=3 faz o CC cair em terços limpos.
+        p_shm_shift    = t.Add("shm_shift",    0.0f, 0.f, 2.f, 1.0f, 3);
+        // O teto de 0.85 mora no shimmer.h, nao aqui: e limite de
+        // ESTABILIDADE do laco, nao preferencia musical. Param vai a
+        // 1.0 e o efeito escala pra dentro do seguro.
+        p_shm_feedback = t.Add("shm_feedback", 0.0f, 0.f, 1.f);
 
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
@@ -897,20 +939,26 @@ struct Manifest
         // topo — portao sempre fechado, instrumento mudo, sintoma
         // identico ao do `src_mix`. Vizinhanca importa.
         // ============================================================
-        midi_map[n_midi++] = {20, p_level};        // master
-        midi_map[n_midi++] = {21, p_in_gain};      // ganho de entrada
-        midi_map[n_midi++] = {22, p_dly_time};
-        midi_map[n_midi++] = {23, p_dly_mix};
-        midi_map[n_midi++] = {24, p_rev_mix};
-        midi_map[n_midi++] = {25, p_rev_size};     // novo
-        midi_map[n_midi++] = {26, p_rev_damp};     // novo
-        midi_map[n_midi++] = {27, p_frz_on};   // chave 0/127
-        midi_map[n_midi++] = {28, p_frz_mix};
-        midi_map[n_midi++] = {29, p_frz_size};
-        midi_map[n_midi++] = {30, p_gate_thresh};  // ajuste de execucao
-        midi_map[n_midi++] = {31, p_buzios_on}; // chave 0/127
-        midi_map[n_midi++] = {32, p_buzios_thresh};   // novo
-        // 33 RESERVADO pro vocoder quando voltar (voc_pitch).
+        AddMidi(20, p_level);        // master
+        AddMidi(21, p_in_gain);      // ganho de entrada
+        AddMidi(22, p_dly_time);
+        AddMidi(23, p_dly_mix);
+        AddMidi(24, p_rev_mix);
+        AddMidi(25, p_rev_size);     // novo
+        AddMidi(26, p_rev_damp);     // novo
+        AddMidi(27, p_frz_on);   // chave 0/127
+        AddMidi(28, p_frz_mix);
+        AddMidi(29, p_frz_size);
+        AddMidi(30, p_gate_thresh);  // ajuste de execucao
+        AddMidi(31, p_buzios_on); // chave 0/127
+        AddMidi(32, p_buzios_thresh);   // novo
+        AddMidi(33, p_shm_on);   // chave 0/127
+        AddMidi(37, p_shm_mix);
+        AddMidi(35, p_shm_feedback);
+        AddMidi(36, p_shm_shift);   // chave 3 posicoes
+        // 34 e o comando `sync` — fica no meio da familia do shimmer
+        // por acidente historico, e nao vale remapear: mexer em numero
+        // ja alinhado no Loopy custa mais que a assimetria incomoda.
         // 34 e o comando `sync` — interceptado antes do mapa, ver
         //    kCcSync no main.cpp. Nao e parametro e nao entra aqui.
         //

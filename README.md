@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.64.0** — delay + reverb + freeze granular, bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
+Projeto colaborativo. Estado atual: **v0.69.0** — delay + reverb + freeze granular, bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -63,9 +63,11 @@ Cinco regras que não se negociam:
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/freeze.h](src/freeze.h) | **v0.3.1** | Freeze granular: núcleo de 500 ms, 2 grãos sorteados, Hann. C++ puro |
 | [src/pitch.h](src/pitch.h) | **v0.2.0** | Motor de pitch compartilhado: 1 buffer, até 4 vozes. C++ puro |
+| [src/effect_slot.h](src/effect_slot.h) | **v0.1.0** | Moldura de todo efeito: fade igual-potência, custo-zero, cronometragem |
+| [src/shimmer.h](src/shimmer.h) | **v0.1.0** | Shimmer: reverb + pitch num laço. Realimenta o Freeverb existente |
 | [src/pitch_spectrum.py](src/pitch_spectrum.py) | **v0.1.0** | Os N maiores picos do espectro — pico dominante mente com laterais fortes |
 | [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
-| [src/midi.h](src/midi.h) | **v0.2.1** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
+| [src/midi.h](src/midi.h) | **v0.3.0** | Máquina de estados MIDI + mapa CC. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.1** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.2.0** | Wrapper duplo-clicável dos dois bancos de teste |
@@ -74,13 +76,14 @@ Cinco regras que não se negociam:
 | [src/module_rnbo_delay.cpp](src/module_rnbo_delay.cpp) | — | Delay no Fx1. Inclui `RNBO.h` |
 | [src/module_rnbo_freeze.cpp](src/module_rnbo_freeze.cpp) | — | Freeze. Reprovado na etapa 5 do IFÁ10000 (7 349 µs) |
 | [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.6.0** | Vocoder. **FORA do build desde 18/08** — decisão de ouvido do dB, revivível |
-| [src/main.cpp](src/main.cpp) | **v0.64.0** | Loop, callback de áudio, painel falso via serial |
-| [src/params.h](src/params.h) | **v0.6.1** | `ParamTable` + `Macro`. Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.46.0** | Instrumento aprovado: delay + reverb, `level 1.0`, `in_gain 8x`, mapa de 14 CCs |
+| [src/main.cpp](src/main.cpp) | **v0.69.0** | Loop, callback de áudio, painel falso via serial |
+| [src/params.h](src/params.h) | **v0.7.0** | `ParamTable` + `Macro`. Sem alocação dinâmica |
+| [src/manifest.h](src/manifest.h) | **v0.49.0** | Instrumento aprovado: delay + reverb, `level 1.0`, `in_gain 8x`, mapa de 14 CCs |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
 | [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura` |
-| [docs/CTOS.md](docs/CTOS.md) | **v0.1.0** | **PROPOSTA** — a base à prova de falha e a fronteira CTOS/Efeito |
+| [docs/FEATURES.md](docs/FEATURES.md) | **vivo** | **A CAIXA ÚNICA** — toda feature vigente, e as aposentadas no arquivo |
+| [docs/CTOS.md](docs/CTOS.md) | **v0.3.0** | A base à prova de falha, a fronteira CTOS/Efeito e a suíte de efeitos |
 | [docs/IFA10000.md](docs/IFA10000.md) | **vivo** | **Certificação de efeitos** — as 10 etapas que todo efeito passa |
 | [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |

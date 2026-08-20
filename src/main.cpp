@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.64.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.67.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.64.0"
+#define COTUCA_OS_VERSION "0.67.0"
 
 #include "hal.h"
 #include "params.h"
@@ -15,6 +15,8 @@
 #include "reverb.h"
 #include "freeze.h"
 #include "pitch.h"
+#include "effect_slot.h"
+#include "shimmer.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -478,6 +480,30 @@ static volatile float pitch_ratio = 2.0f;
 static volatile float pitch_pk_in  = 0.f;
 static volatile float pitch_pk_out = 0.f;
 
+// PECA 2 EM VALIDACAO: o motor de pitch e o primeiro efeito a rodar
+// dentro de um EffectSlot. Escolhido em vez do freeze porque o freeze
+// tem cauda de 2 s aprovada de ouvido, e o fade do slot e outra coisa
+// (bypass de 8 ms) — envolver o freeze agora poria duas rampas
+// disputando o mesmo gesto.
+//
+// O slot entrega tres coisas de uma vez: fade sem clique, custo ZERO
+// desligado, e a cronometragem por efeito que faltava (o `ctos` media
+// so o freeze).
+static cotuca::EffectSlot pitch_slot;
+
+// ---- SHIMMER: motor PROPRIO, no ponto de derivacao da cauda ----
+//
+// Motor separado do `pitch` porque "compartilhado" e afirmacao sobre a
+// FONTE, nao sobre o recurso (docs/CTOS.md §5b, correcao de 18/08). O
+// shimmer grava a SAIDA DO REVERB — e a cauda que sobe de oitava e
+// realimenta; detune e warble vao gravar o seco, noutro ponto.
+static cotuca::PitchEngine pitch_tail;
+static bool                pitch_tail_ok  = false;
+static float*              pitch_tail_mem = nullptr;
+static cotuca::Shimmer     shimmer;
+static cotuca::EffectSlot  shimmer_slot;
+static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
+
 // BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
 // aloca, nao inicializa e nao entra no callback — se o som e a serial
 // voltarem, o culpado esta isolado; se nao voltarem, esta em outro
@@ -839,8 +865,31 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // sozinho exige que nada mais esteja no caminho — medir com o
     // delay ligado mediria os dois. Etapa 0 do IFA10000 aplicada ao
     // proprio motor.
-    if(pitch_test && pitch_ok)
+    pitch_slot.SetOn(pitch_test);
+
+    // ---- GRAVAR SEMPRE, PROCESSAR SO QUANDO LIGADO ----
+    //
+    // A primeira versao pulava o bloco INTEIRO quando desligado — e
+    // isso incluia a gravacao. Ao ligar, o motor comecava a ler um
+    // buffer parado no ponto em que tinha sido interrompido, e a
+    // descontinuidade era um CLIQUE. O fade estava certo; ele cruzava
+    // pra um sinal que ja entrava quebrado.
+    //
+    // O freeze ja tinha escrito a regra no proprio comentario —
+    // "gravar SEMPRE e o que permite ao gesto pegar o som que acabou de
+    // acontecer" — e eu li como detalhe DELE em vez de como regra de
+    // EFEITO COM HISTORICO.
+    //
+    // Entao "custo zero desligado" vale pro PROCESSAMENTO, nao pra
+    // gravacao. Gravar sao dois stores por amostra; os graos, a
+    // interpolacao e as janelas sao o que custa 105 us.
+    if(pitch_ok && !pitch_slot.Ativo())
+        for(size_t i = 0; i < size; i++)
+            pitch.Write(src_buf[i], src_buf[i]);
+
+    if(pitch_ok && pitch_slot.Ativo())
     {
+        pitch_slot.Comeca(cotuca::hal::NowTicks());
         pitch.SetRatio(0, pitch_ratio);
         if(!pitch.Active(0)) pitch.SetActive(0, true);
         // MEDE OS DOIS LADOS. A teoria dizia que ratio 1.0 devolveria
@@ -857,14 +906,38 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             pitch.Write(src_buf[i], src_buf[i]);
             float pl, pr;
             pitch.Read(0, pl, pr);
-            src_buf[i] = pl;
             (void)pr;
+            // FADE DE IGUAL-POTENCIA: seco e molhado sao
+            // descorrelacionados durante o cruzamento, entao rampa
+            // linear abriria um buraco de -3 dB no meio. Raiz de cada
+            // lado soma POTENCIA e o nivel fica constante.
+            float gs, gm;
+            pitch_slot.Passo(gs, gm);
+            src_buf[i] = src_buf[i] * gs + pl * gm;
             const float b = pl < 0 ? -pl : pl;
             if(b > pout) pout = b;
         }
         if(pin  > pitch_pk_in)  pitch_pk_in  = pin;
         if(pout > pitch_pk_out) pitch_pk_out = pout;
+
+        const uint32_t prazo
+            = (uint32_t)(1e6f * (float)size
+                         / cotuca::hal::Info().sample_rate);
+        if(pitch_slot.Termina(cotuca::hal::NowTicks(),
+                              cotuca::hal::TicksPerUs(),
+                              (uint32_t)(0.5f * (float)prazo)))
+        {
+            // VETO: o instrumento perde o efeito, nunca a base.
+            pitch_test = false;
+            pitch_slot.SetOn(false);
+        }
+        // (a voz e solta FORA deste bloco — aqui dentro a condicao
+        //  nunca seria verdadeira, porque o bloco so roda com o slot
+        //  ativo. Bug de escopo da primeira versao.)
     }
+
+    if(pitch_ok && !pitch_slot.Ativo() && pitch.Active(0))
+        pitch.SetActive(0, false); // rampa terminou: libera a voz
 
     // 2) GATE — na entrada, pós-crossfade e pós-tom. Silencia o chão
     //    de ruído do piezo antes que o módulo o transforme em cauda.
@@ -1143,8 +1216,102 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         reverb.SetMix(params.Real(manifest.p_rev_mix));
         reverb.SetSize(params.Real(manifest.p_rev_size));
         reverb.SetDamp(params.Real(manifest.p_rev_damp));
+
+        // ---- SHIMMER: o laco fecha AQUI DENTRO ----
+        //
+        //   cauda -> pitch(+12/+7) -> passa-alta 200 Hz -> x feedback
+        //         -> injeta na ENTRADA do reverb -> cauda ...
+        //
+        // Grava-se SEMPRE (regra dos efeitos com historico: bypass
+        // pula o processamento, nunca a gravacao — foi o que causou o
+        // clique na Peca 2). O que o slot liga e desliga e o laco.
+        // A cronometragem cerca SO o shimmer. A primeira versao envolvia
+        // o `reverb.Process()` junto e media 299 us — atribuindo ao
+        // efeito o custo da BASE. E o mesmo erro que o `NowUs()` foi
+        // criado pra evitar: sem separar, o veto pune o inocente.
+        uint32_t shm_ticks = 0;
+        const bool shm = pitch_tail_ok && shimmer_slot.Ativo();
+        // CHAVE PROPRIA, nao "mix > 0". Fundir as duas decisoes obriga
+        // a zerar o mix pra desligar, e o ajuste se perde.
+        shimmer_slot.SetOn(params.Real(manifest.p_shm_on) >= 0.5f);
+        if(shm)
+        {
+            shimmer_slot.Comeca(cotuca::hal::NowTicks());
+            shimmer.SetMix(params.Real(manifest.p_shm_mix));
+            shimmer.SetFeedback(params.Real(manifest.p_shm_feedback));
+            const int   modo = (int)(params.Real(manifest.p_shm_shift) + 0.5f);
+            (void)modo;
+            // +12 = 2.0 ; +7 = 1.498 (quinta justa temperada)
+            pitch_tail.SetRatio(0, 2.0f);
+            pitch_tail.SetRatio(1, 1.498307f);
+            pitch_tail.SetActive(0, modo == 0 || modo == 2);
+            pitch_tail.SetActive(1, modo == 1 || modo == 2);
+        }
+
         for(size_t i = 0; i < size; i++)
+        {
+            float pl = 0.f, pr = 0.f, gm = 0.f;
+            if(shm)
+            {
+                const uint32_t t0 = cotuca::hal::NowTicks();
+                float al = 0.f, ar = 0.f, bl = 0.f, br = 0.f;
+                pitch_tail.Read(0, al, ar);
+                pitch_tail.Read(1, bl, br);
+                // No modo "ambos", meio ganho cada: duas vozes somadas
+                // a ganho cheio dobrariam a energia do laco e o teto de
+                // 0.85 deixaria de ser teto.
+                const float k = (pitch_tail.Active(0) && pitch_tail.Active(1))
+                                    ? 0.5f : 1.f;
+                pl = (al + bl) * k;
+                pr = (ar + br) * k;
+                float add_l, add_r;
+                shimmer.Realimenta(pl, pr, add_l, add_r);
+                float gs;
+                shimmer_slot.Passo(gs, gm);
+                out[0][i] += add_l * gm;   // injeta no reverb
+                out[1][i] += add_r * gm;
+                shm_ticks += cotuca::hal::NowTicks() - t0;
+            }
+
             reverb.Process(out[0][i], out[1][i]);
+
+            // GRAVA A CAUDA ANTES DA CAMADA DIRETA. Se a camada
+            // entrasse no buffer, ela realimentaria por fora do laco do
+            // reverb e o `feedback` deixaria de ser o unico dono do
+            // ganho de laco.
+            if(pitch_tail_ok) pitch_tail.Write(out[0][i], out[1][i]);
+
+            if(shm)
+            {
+                // CAMADA DIRETA — e o que da autoridade ao `shm_mix`.
+                // A versao anterior nunca somava nada por mix: ele so
+                // ligava o slot, e todo o nivel vinha do laco. Dai
+                // "mix no maximo e ganho baixo": o controle nao
+                // controlava.
+                const float m = shimmer.Mix() * gm;
+                out[0][i] += pl * m;
+                out[1][i] += pr * m;
+            }
+        }
+
+        if(shm)
+        {
+            const uint32_t prazo
+                = (uint32_t)(1e6f * (float)size
+                             / cotuca::hal::Info().sample_rate);
+            const uint32_t us = shm_ticks / cotuca::hal::TicksPerUs();
+            if(us > shimmer_pico) shimmer_pico = us;
+            if(us > (uint32_t)(0.5f * (float)prazo))
+            {
+                params.Set(manifest.p_shm_on, 0.f);
+                shimmer_slot.SetOn(false);
+            }
+        }
+        if(pitch_tail_ok && !shimmer_slot.Ativo())
+        {
+            pitch_tail.SetActive(0, false);
+            pitch_tail.SetActive(1, false);
+        }
     }
 
     // ---- HISTOGRAMA DE PICO POR NOTA (bancada) ----
@@ -1828,9 +1995,21 @@ static void HandleLine(const char* line)
         while(*a == ' ') a++;
         if(*a == 0 || strncmp(a, "off", 3) == 0)
         {
+            // NAO desativa a voz aqui. O comando so declara a
+            // INTENCAO; quem executa e o callback, quando a rampa
+            // chegar a zero.
+            //
+            // A versao anterior matava a voz na hora, e o molhado caia
+            // a zero num unico sample enquanto o slot ainda rampava —
+            // o fade cruzava pra silencio ja morto. Sintoma exato:
+            // entrando 0 cliques, saindo 100%. So o caminho de SAIDA
+            // tinha acao dura imediata, e era so nele que clicava.
+            //
+            // A regra: comando declara intencao, contexto de audio
+            // executa. Acao dura vinda de fora atravessa qualquer rampa.
             pitch_test = false;
-            if(pitch_ok) pitch.SetActive(0, false);
-            hal::Log("pitch: rota de teste DESLIGADA");
+            hal::Log("pitch: rota de teste DESLIGADA (a rampa de 8 ms"
+                     " termina no callback)");
             return;
         }
         if(strncmp(a, "grain", 5) == 0)
@@ -1889,6 +2068,9 @@ static void HandleLine(const char* line)
             ctos_bypass_frz  = false;
             ctos_pico_us     = 0;
             ctos_ocorrencias = 0;
+            pitch_slot.ZeraPico();
+            shimmer_slot.ZeraPico();
+            shimmer_pico = 0;
             hal::Log("ctos: efeitos rearmados — o veto volta a valer do zero");
             return;
         }
@@ -1915,6 +2097,14 @@ static void HandleLine(const char* line)
         hal::Log("    relogio: ticks crus, %lu por us (a volta do"
                  " contador se corrige na subtracao)",
                  (unsigned long)hal::TicksPerUs());
+        hal::Log("  shimmer: %s | pico %lu us de %lu us",
+                 shimmer_slot.Ativo() ? "ATIVO" : "desligado (custo zero)",
+                 (unsigned long)shimmer_pico,
+                 (unsigned long)ctos_orcamento_us);
+        hal::Log("  motor de pitch: %s | pico %lu us de %lu us",
+                 pitch_slot.Ativo() ? "ATIVO" : "desligado (custo zero)",
+                 (unsigned long)pitch_slot.PicoUs(),
+                 (unsigned long)ctos_orcamento_us);
         hal::Log("  o instrumento perde o efeito, nunca a base."
                  " Desenho em docs/CTOS.md");
         return;
@@ -2267,6 +2457,21 @@ int main(void)
         pitch_mem = (float*)hal::AllocBig(need * sizeof(float));
         if(pitch_mem)
             pitch_ok = pitch.Init(sr, pitch_mem, need, kPitchSeconds);
+        pitch_slot.Init(sr, 8.f);
+
+        // Motor da cauda + shimmer. Mesmo tamanho de buffer: a oitava
+        // acima exige a mesma folga de partida.
+        const size_t need_t
+            = cotuca::PitchEngine::FloatsNeeded(sr, kPitchSeconds);
+        pitch_tail_mem = (float*)hal::AllocBig(need_t * sizeof(float));
+        if(pitch_tail_mem)
+            pitch_tail_ok = pitch_tail.Init(sr, pitch_tail_mem, need_t,
+                                            kPitchSeconds);
+        shimmer.Init(sr);
+        shimmer_slot.Init(sr, 8.f);
+        hal::Log("shimmer: %s (motor da cauda, %u KB em SDRAM)",
+                 pitch_tail_ok ? "pronto" : "SEM BUFFER — inativo",
+                 (unsigned)(need_t * sizeof(float) / 1024));
         hal::Log("pitch: %s (%.0f ms, %u floats, %u KB em SDRAM)",
                  pitch_ok ? "pronto" : "SEM BUFFER — inativo",
                  (double)(kPitchSeconds * 1000.f), (unsigned)need,

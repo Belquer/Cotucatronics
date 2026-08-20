@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.6.1
+// Cotucatronics OS — params v0.7.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -22,7 +22,14 @@ namespace cotuca
 constexpr int kNumKnobs = 5;
 
 // tetos estáticos — estourar é erro de manifest, não de runtime
-constexpr int kMaxParams       = 32;
+// 48, nao 32. Em 18/08 a suite de efeitos levou o manifest a 35 params
+// e os TRES ultimos foram recusados EM SILENCIO — os buzios inteiros
+// sumiram do instrumento, e o unico sintoma foi um "?" no mapa MIDI.
+//
+// A folga e de proposito: a suite prevista (drive, phaser, warble,
+// detune) traz ~12 params a mais, e teto apertado transforma cada
+// efeito novo numa caca ao estouro.
+constexpr int kMaxParams       = 48;
 constexpr int kMaxMacroTargets = 4;
 
 inline float Clamp01(float v)
@@ -66,7 +73,18 @@ class ParamTable
             int         steps = 0)
     {
         if(count_ >= kMaxParams)
+        {
+            // FALHA RUIDOSA. A versao anterior devolvia -1 e seguia: o
+            // parametro simplesmente NAO EXISTIA, e quem o usasse
+            // escrevia no id -1 sem erro. Custou os buzios inteiros, e
+            // o unico sintoma foi um "?" numa tabela de debug.
+            //
+            // Estouro de capacidade e defeito de PROJETO, nao condicao
+            // de runtime: quem adiciona o 49o parametro precisa saber
+            // na hora, nao descobrir por uma feature que sumiu.
+            overflow_++;
             return -1;
+        }
         const int id = count_++;
         name_[id]    = name;
         min_[id]     = min_real;
@@ -194,6 +212,13 @@ class ParamTable
   private:
     bool Valid(int id) const { return id >= 0 && id < count_; }
 
+  public:
+    // Quantos Add() foram recusados por falta de espaco. O boot loga
+    // isto — silencio aqui ja apagou uma feature inteira.
+    int  Overflow() const { return overflow_; }
+
+  private:
+    int         overflow_ = 0;
     const char* name_[kMaxParams] = {};
     int         steps_[kMaxParams] = {};
     float       min_[kMaxParams]   = {};

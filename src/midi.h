@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.2.1
+// Cotucatronics OS — midi v0.3.0
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -23,7 +23,15 @@ namespace cotuca
 
 // canal 0–15 (o do fio) ou omni
 constexpr int kMidiOmni    = -1;
-constexpr int kMaxMidiMap  = 16; // entradas na tabela CC→param
+// 32, nao 16. Em 18/08 o mapa chegou a 17 entradas e a 17a foi
+// escrita FORA DO ARRAY — sem guarda, sem erro. O `midi` imprimia a
+// linha (le pelo mesmo indice estourado) e o `ApplyMidiCc` nao achava
+// o dono: duas leituras contraditorias da mesma tabela, que e a
+// assinatura de escrita fora dos limites.
+//
+// A suite de efeitos traz ~12 CCs a mais. Teto apertado transforma
+// cada efeito novo em corrupcao de memoria silenciosa.
+constexpr int kMaxMidiMap  = 32; // entradas na tabela CC→param
 constexpr int kMidiHistory = 8;  // últimos CCs guardados pro `midi`
 
 // 0–127 → 0.0–1.0. Divide por 127, não por 128: o valor máximo do

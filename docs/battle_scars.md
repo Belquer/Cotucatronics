@@ -556,6 +556,89 @@ junto, porque no intervalo os dois lados divergem **em silêncio**.
 
 ---
 
+## 11i. Os dois tetos que estouraram calados, e a caixa única (18/08)
+
+Quatro parâmetros novos do shimmer empurraram **três** para fora da tabela:
+`kMaxParams = 32`, o manifest declarava 35, e o `Add()` devolvia `-1` **sem
+dizer nada**. Os três últimos declarados eram os **búzios inteiros** — a
+feature sumiu do instrumento.
+
+No mesmo dia, o mapa MIDI chegou a **17** entradas com `kMaxMidiMap = 16` e
+**sem nenhuma guarda**: a 17ª foi escrita **fora do array**. O comando `midi`
+imprimia a linha (lê pelo mesmo índice estourado) e o `ApplyMidiCc` não achava
+o dono — **duas leituras contraditórias da mesma tabela**, que é a assinatura
+de escrita fora dos limites.
+
+**Sintomas:** uma feature ausente, e um `?` numa tabela de debug. Nenhum erro,
+nenhum log. Os dois só apareceram porque alguém olhou.
+
+**Quinta instância da mesma família no mesmo dia:** `log_muted` sem porta de
+saída, `cdc_dead` que nunca retentava, `replace` que não achava a âncora,
+`Add()` devolvendo −1, e o mapa MIDI sem guarda. **Mecanismo que falha em
+silêncio.**
+
+**Conserto em dois níveis, e o segundo é o que importa:** os tetos subiram
+(48 e 32, com folga proposital pros ~12 params dos quatro efeitos que faltam),
+e o estouro passou a **gritar no boot** com o número exato. Subir o teto
+resolve hoje; a falha ruidosa resolve todas as próximas.
+
+> **Estouro de capacidade é defeito de PROJETO, não condição de runtime.** Quem
+> adiciona o 49º parâmetro precisa saber na hora, não descobrir por uma feature
+> que sumiu.
+
+### A causa profunda, e a resposta do dB: a caixa única
+
+O teto era o sintoma. A causa é que **não havia lugar único onde a lista de
+features vive** — então ninguém revisa o que já existe antes de acrescentar, e
+o custo de cada adição fica invisível até algo quebrar.
+
+Daí [`docs/FEATURES.md`](FEATURES.md), decidido pelo dB em 18/08:
+
+- **Toda feature vigente numa caixa só**, com params, CCs e estado.
+- **Aposentadas vão pro arquivo**, no mesmo documento, com *por que saiu* e
+  *como reviver*.
+- **A caixa é o começo de toda sessão**, e tem checklist próprio: *o que já
+  está aqui que eu deveria revisar antes de acrescentar mais?*
+
+**Por que o arquivo importa tanto quanto a lista:** este projeto já tem
+**sete** features aposentadas, e cada uma deixou rastro — o vocoder deixou
+params vivos e CCs mortos, o freeze RNBO deixou um wrapper, a regra do
+pareamento deixou um procedimento que ninguém precisava seguir. **Aposentar
+sem registrar produz folclore**: coisas que continuam no código porque ninguém
+lembra por que estão lá.
+
+É a mesma raiz do cap. 11g (a defesa que sobreviveu à ameaça): sem declarar
+por que algo existe, não há como perguntar se ainda precisa existir.
+
+---
+
+## 11j. O controle que não controlava (18/08)
+
+O dB, sobre o shimmer recém-nascido: **"o som está lindo mas o ganho está
+baixo, mesmo com o mix no máximo."**
+
+A causa era literal: **eu nunca chamava `Mistura()`.** O `shm_mix` existia,
+era lido, escalava um campo interno — e nada no caminho de áudio consumia esse
+campo. Todo o nível audível vinha do laço de realimentação, então o controle
+girava sem estar ligado a coisa alguma.
+
+**O que torna esse defeito perigoso é que o efeito FUNCIONAVA.** Soava bonito,
+respondia ao feedback, ao shift, ao tamanho da sala. Um controle morto no meio
+de um efeito vivo não produz sintoma até alguém tentar usá-lo — e mesmo então
+o relato natural é *"está baixo"*, que manda procurar ganho, não fiação.
+
+**A regra:** *todo param novo precisa de um teste que prove que ele MOVE
+alguma coisa.* Não que exista, não que receba CC, não que apareça no `list` —
+que **mude o som**. O PAT (T18) faz isso pelo lado do MIDI; falta o
+equivalente do lado do DSP.
+
+**Sinal de alerta genérico:** quando um controle "não parece fazer efeito", a
+primeira hipótese não deve ser *"a faixa está errada"* ou *"o ganho é baixo"*.
+Deve ser ***"ele está ligado em alguma coisa?"*** — e essa pergunta se
+responde lendo o código, em segundos, antes de qualquer ajuste.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.

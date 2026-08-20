@@ -1,6 +1,6 @@
 # CTOS — Cotucatronics Operational System
 
-**Documento de desenho v0.2.0 · 2026-08-18 · design antes de código**
+**Documento de desenho v0.3.0 · 2026-08-18 · design antes de código**
 
 > **Status: PROPOSTA.** Nada aqui está implementado. O documento existe pra
 > ser discutido e aprovado antes de qualquer refactor — e pra que a discussão
@@ -276,14 +276,39 @@ Drive antes de tudo porque cola e dá corpo ao que entra. Shimmer depois do
 delay e antes do reverb porque ele **é** um reverb com realimentação afinada:
 pô-lo antes do delay faria o delay repetir a cauda dele.
 
-### Motor de pitch compartilhado — a decisão de arquitetura
+### Motor de pitch — UM POR PONTO DE DERIVAÇÃO
 
-Shimmer, detune e warble precisam de deslocamento de altura. **Um motor só,
-no CTOS, consumido pelos três** — em vez de cada efeito alocar o seu.
+> ⚠️ **CORREÇÃO (18/08):** a primeira versão deste documento dizia "um motor
+> só, consumido pelos três". **Está errado, e o erro só apareceu ao escrever
+> o laço do shimmer.**
 
-**Por quê:** o pool é finito e a alocação é a única coisa que um efeito não
-pode pedir em voo (§2). Três buffers de pitch independentes seriam três vezes
-o mesmo custo pelo mesmo trabalho.
+Um motor tem **um buffer com um ponto de escrita**. Ele só pode servir a
+consumidores que deslocam a **mesma fonte** — e os cinco efeitos não tapam no
+mesmo lugar:
+
+```
+seco → [detune, warble tapam AQUI] → drive/phaser → delay → reverb ⇄ [shimmer tapa AQUI]
+```
+
+O shimmer precisa gravar a **saída do reverb**, porque é a cauda que sobe de
+oitava e realimenta. Detune e warble precisam do **seco**, antes de tudo.
+
+**Decisão do dB: um motor por ponto de derivação.** A economia do
+compartilhamento continua real — apenas é **por ponto**, não global:
+
+| Motor | Tapa | Consumidores |
+|---|---|---|
+| `pitch_dry` | seco, pré-efeitos | detune (2 vozes), warble (1) |
+| `pitch_tail` | saída do reverb | shimmer (1 ou 2 vozes: +12 e +7) |
+
+Custo: 150 KB de SDRAM cada, acesso sequencial. Com 64 MB disponíveis, o
+gargalo nunca foi memória — era o pool de SRAM dos módulos RNBO, e nenhum
+destes usa aquele pool.
+
+**A lição do erro:** *"compartilhado" é uma afirmação sobre a FONTE, não sobre
+o recurso.* Dois efeitos só compartilham um motor de histórico se ouvirem o
+mesmo ponto da cadeia. Eu escrevi o desenho assumindo que sim, sem verificar
+de onde cada um puxa — e a verificação custava uma linha por efeito.
 
 > ⚠️ **CORREÇÃO DE PREMISSA: o freeze NÃO tem pitch-shifter.** Ele tem a
 > *maquinaria* granular — janela raiz-de-Hann, posições sorteadas, leitura
