@@ -101,7 +101,7 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 | Arquivo | Versão |
 |---|---|
 | `hal.h` / `hal_daisy_seed.cpp` | v0.17.0 / v0.16.0 |
-| `main.cpp` | **v0.81.0** |
+| `main.cpp` | **v0.82.2** |
 | `manifest.h` | v0.55.1 |
 | `params.h` / `midi.h` | v0.8.0 / v0.4.0 |
 | `pitch.h` / `shimmer.h` | **v0.5.0** / **v0.3.0** |
@@ -253,10 +253,29 @@ que o p1. O p1 é que bate no teto do conversor (65 amostras em clip) ANTES de
 qualquer ganho de firmware, e ocupa todo o espaço. É literalmente "um encobre
 o outro" — o caso que o `piezo_mix` existe para resolver.
 
-Conserto de firmware é paliativo: baixar o `in_gain` e usar o balanço para
-abaixar o p1 em ~6,7 dB. **O conserto real é físico** — clipping no ADC não se
-desfaz a jusante. Reduzir a saída do p1 (piezo mais afastado, divisor
-resistivo, ou pré-amp com menos ganho) é o que devolve o headroom.
+**Medido depois: OS DOIS grampeiam.** Batendo no p2 com `in_gain` em 1,0×,
+o p2 crava em 0 dBFS com 252–542 amostras em clip e o p1 cai para −55 dBFS.
+Batendo no p1, o inverso. Não é um transdutor desregulado — é o par.
+
+**Pico grampeado não dimensiona atenuador.** A medição satura em 0 dBFS e o
+pico real é "pelo menos isso". O `hist` passou a RECUSAR dar o número nesse
+estado (v0.82.2) e manda atenuar 20 dB provisório primeiro — a versão anterior
+imprimia "precisa tirar +6,0 dB", que é um piso com cara de resposta, e alguém
+soldaria o divisor errado por causa dela.
+
+**Não há caminho de software.** AK4556 não expõe controle de ganho; o PCM3060
+só tem atenuação **digital**, pós-conversão, que reduz o número sem desfazer o
+grampo; o WM8731 não tem setter no libDaisy. O divisor físico é obrigatório.
+
+**Alvo −6 dBFS por piezo, não −1:** no centro do balanço os dois somam, e dois
+piezos em −6 batidos juntos dão 0 dBFS. A folga é o espaço da soma — já visível
+no histograma, que marcou 253 clips pós-ganho contra 252 no IN_R.
+
+**Plano do dB, 8 passos.** 1 Code: histograma ✅ · 2 dB: mede com atenuação
+provisória · 3 dB: divisor 10:1 em protoboard · 4 Code+dB: confirma −6 dBFS sem
+clip · 5 dB: solda definitivo, comutável 0/−6/−12 por piezo · 6 dB: recalibra
+`in_gain` · 7 Code: estica a faixa do `in_gain` se 8× virar teto · 8 dB:
+reconfirma os cinco efeitos (e o aceite do `piezo_mix`/`out_width` cai aqui).
 
 **CORRIGIDO 20/08:** o `in_gain` **não** nasce em 8,0. O default é **1,0×**
 (faixa 1–8×, curva quadrática), escrito na mesma linha do `Add()`. O 8,0 que

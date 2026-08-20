@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.81.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.82.2 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.81.0"
+#define COTUCA_OS_VERSION "0.82.2"
 
 #include "hal.h"
 #include "params.h"
@@ -552,6 +552,38 @@ static cotuca::Suave       suave_gl, suave_gr, suave_width;
 static float    in_pk_l = 0.f, in_pk_r = 0.f;
 static uint32_t in_n_l  = 0,   in_n_r  = 0;   // amostras acima de -60 dBFS
 static uint32_t in_clip_l = 0, in_clip_r = 0; // amostras em |x| >= 0.99
+
+// ---- HISTOGRAMA DE ENTRADA ----
+//
+// O pico sozinho nao dimensiona um atenuador: um pico e UMA amostra, e
+// nao diz se o gesto inteiro mora perto do teto ou se foi um transiente
+// solitario. O histograma diz — e a diferenca decide se o divisor
+// precisa de 6 ou de 12 dB.
+//
+// BALDE PELO EXPOENTE DO FLOAT. `|x|` em [2^e, 2^(e+1)) e exatamente
+// uma faixa de 6.02 dB, e o expoente sai de um shift e uma mascara. Sem
+// log10f no caminho de audio — a versao obvia (um log por amostra por
+// canal) custaria mais que varios efeitos da suite somados.
+static constexpr int kNBaldes = 11;   // 0 = clip, 1..9 = -6k dB, 10 = fundo
+static uint32_t hist_l[kNBaldes] = {0};
+static uint32_t hist_r[kNBaldes] = {0};
+static uint32_t hist_o[kNBaldes] = {0};   // POS in_gain, ja somado em mono
+static float    out_pk_g   = 0.f;         // pico pos-ganho
+static uint32_t out_clip_g = 0;
+// LATCH: um clip de dez segundos atras ainda tem que aparecer. Contador
+// que zera sozinho esconde justamente o evento raro que se procura.
+static bool     clip_latch_l = false, clip_latch_r = false, clip_latch_o = false;
+
+static inline int Balde(float a)
+{
+    uint32_t u;
+    __builtin_memcpy(&u, &a, sizeof(u));
+    const int e = (int)((u >> 23) & 0xFFu) - 127;   // |a| em [2^e, 2^(e+1))
+    int b = -e;                                     // e=-1 -> 1 (-6..0 dBFS)
+    if(b < 0) b = 0;                                // >= 0 dBFS: clip
+    if(b >= kNBaldes) b = kNBaldes - 1;             // fundo
+    return b;
+}
 static cotuca::EffectSlot  detune_slot;
 static bool               warble_ok = false;
 alignas(32) static float  warble_mem[1924];
@@ -902,8 +934,10 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             if(ar > in_pk_r) in_pk_r = ar;
             if(al > 0.001f)  in_n_l++;
             if(ar > 0.001f)  in_n_r++;
-            if(al >= 0.99f)  in_clip_l++;
-            if(ar >= 0.99f)  in_clip_r++;
+            if(al >= 0.99f) { in_clip_l++; clip_latch_l = true; }
+            if(ar >= 0.99f) { in_clip_r++; clip_latch_r = true; }
+            hist_l[Balde(al)]++;
+            hist_r[Balde(ar)]++;
         }
 
     // 1) FONTE — BALANÇO das duas entradas + tom de teste por cima.
@@ -928,6 +962,18 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         if(ig != 1.f)
             for(size_t i = 0; i < size; i++)
                 src_buf[i] *= ig;
+
+        // POS-GANHO, e ja somado em mono: e o que a cadeia de efeitos
+        // realmente ve. Medir so a entrada crua responderia "o
+        // transdutor entrega?" e deixaria "o firmware estoura?" em
+        // aberto — sao as duas metades da mesma pergunta.
+        for(size_t i = 0; i < size; i++)
+        {
+            const float a = src_buf[i] < 0.f ? -src_buf[i] : src_buf[i];
+            if(a > out_pk_g) out_pk_g = a;
+            if(a >= 0.99f) { out_clip_g++; clip_latch_o = true; }
+            hist_o[Balde(a)]++;
+        }
     }
 
     // 1.6) ROTA DE TESTE DO MOTOR DE PITCH (validacao isolada).
@@ -2308,6 +2354,103 @@ static void HandleLine(const char* line)
         pitch_pk_in = pitch_pk_out = 0.f;
         return;
     }
+    if(strncmp(line, "hist", 4) == 0)
+    {
+        const char* a = line + 4;
+        while(*a == ' ') a++;
+        if(strncmp(a, "reset", 5) == 0)
+        {
+            for(int b = 0; b < kNBaldes; b++)
+                hist_l[b] = hist_r[b] = hist_o[b] = 0;
+            in_pk_l = in_pk_r = out_pk_g = 0.f;
+            in_n_l = in_n_r = 0;
+            in_clip_l = in_clip_r = out_clip_g = 0;
+            clip_latch_l = clip_latch_r = clip_latch_o = false;
+            hal::Log("hist: zerado — a proxima leitura vale a partir de agora");
+            return;
+        }
+        // FOTOGRAFIA ANTES DA CONTA. A primeira versao somava os
+        // totais numa passada e imprimia noutra, com o callback de
+        // audio incrementando os baldes no meio — e relatou 100.25%,
+        // um percentual que nunca existiu. Copiar tudo de uma vez nao
+        // torna a leitura atomica, mas garante que o que se imprime e
+        // o que se somou: os numeros passam a ser um instante
+        // possivel, ainda que ligeiramente velho.
+        uint32_t hl[kNBaldes], hr[kNBaldes], ho[kNBaldes];
+        for(int b = 0; b < kNBaldes; b++)
+        { hl[b] = hist_l[b]; hr[b] = hist_r[b]; ho[b] = hist_o[b]; }
+        const float pk_l = in_pk_l, pk_r = in_pk_r, pk_o = out_pk_g;
+        const uint32_t cl_l = in_clip_l, cl_r = in_clip_r;
+        uint32_t tl = 0, tr = 0, to = 0;
+        for(int b = 0; b < kNBaldes; b++)
+        { tl += hl[b]; tr += hr[b]; to += ho[b]; }
+        if(tl == 0)
+        {
+            hal::Log("hist: nada medido ainda (`hist reset` e toque)");
+            return;
+        }
+        const float ig = params.Real(manifest.p_in_gain);
+        hal::Log("HISTOGRAMA DE ENTRADA  (in_gain %.2fx)", (double)ig);
+        hal::Log("  faixa dBFS     IN_L(p1)    IN_R(p2)   POS-GANHO");
+        for(int b = 0; b < kNBaldes; b++)
+        {
+            if(hl[b] == 0 && hr[b] == 0 && ho[b] == 0) continue;
+            char faixa[16];
+            if(b == 0)                 snprintf(faixa, sizeof faixa, ">= 0 CLIP");
+            else if(b == kNBaldes - 1) snprintf(faixa, sizeof faixa, "<= -60");
+            else snprintf(faixa, sizeof faixa, "%4d..%-4d", -6 * b, -6 * (b - 1));
+            hal::Log("  %-12s %6.2f%%     %6.2f%%     %6.2f%%", faixa,
+                     (double)(100.f * (float)hl[b] / (float)tl),
+                     (double)(100.f * (float)hr[b] / (float)(tr ? tr : 1u)),
+                     (double)(100.f * (float)ho[b] / (float)(to ? to : 1u)));
+        }
+        auto dbfs = [](float v) { return v > 1e-7f ? 20.f * log10f(v) : -140.f; };
+        hal::Log("  pico: L %.1f dBFS | R %.1f dBFS | pos-ganho %.1f dBFS",
+                 (double)dbfs(pk_l), (double)dbfs(pk_r), (double)dbfs(pk_o));
+        hal::Log("  clip: L %lu%s | R %lu%s | pos-ganho %lu%s",
+                 (unsigned long)in_clip_l, clip_latch_l ? " *** " : "",
+                 (unsigned long)in_clip_r, clip_latch_r ? " *** " : "",
+                 (unsigned long)out_clip_g, clip_latch_o ? " *** " : "");
+
+        // O NUMERO QUE DIMENSIONA O DIVISOR. Alvo -6 dBFS de pico: deixa
+        // 6 dB de folga pro gesto que ainda nao aconteceu.
+        // DIMENSIONAMENTO DO ATENUADOR — e a recusa de dimensionar
+        // quando nao da.
+        //
+        // Pico GRAMPEADO nao dimensiona nada: a medicao satura em
+        // 0 dBFS e o pico real e "pelo menos isso", podendo estar 6 ou
+        // 25 dB acima. Imprimir "precisa tirar +6.0 dB" nesse estado e
+        // dar cara de resposta a um piso — e alguem solda o divisor
+        // errado por causa disso.
+        //
+        // Regra da casa: mensagem que afirma tem que citar o outro
+        // estado. Aqui o outro estado e "nao sei, e por isto".
+        for(int c = 0; c < 2; c++)
+        {
+            const float    pk = c ? pk_r : pk_l;
+            const uint32_t cl = c ? cl_r : cl_l;
+            const char*    nm = c ? "p2 (IN_R)" : "p1 (IN_L)";
+            if(pk < 1e-6f) continue;
+            if(cl > 0)
+            {
+                hal::Log("  %s: PICO GRAMPEADO (%lu amostras). Nao da pra"
+                         " dimensionar:", nm, (unsigned long)cl);
+                hal::Log("      o pico real e >= 0 dBFS, quanto acima e"
+                         " invisivel daqui.");
+                hal::Log("      atenue 20 dB PROVISORIO, meca de novo, e o"
+                         " numero passa a valer.");
+                continue;
+            }
+            const float precisa = dbfs(pk) + 6.f;   // quanto TIRAR
+            int degrau = 0;
+            if(precisa > 9.f)      degrau = 12;
+            else if(precisa > 3.f) degrau = 6;
+            hal::Log("  %s: pico limpo. Precisa tirar %+.1f dB -> degrau"
+                     " %d dB%s", nm, (double)precisa, degrau,
+                     degrau == 0 ? "  (ja cabe, nao mexer)" : "");
+        }
+        return;
+    }
     if(strncmp(line, "pk", 2) == 0)
     {
         // ENTRADA CRUA POR CANAL, primeiro: e a pergunta mais barata
@@ -2626,7 +2769,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
