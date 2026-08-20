@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.73.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.76.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.73.1"
+#define COTUCA_OS_VERSION "0.76.1"
 
 #include "hal.h"
 #include "params.h"
@@ -18,6 +18,9 @@
 #include "effect_slot.h"
 #include "shimmer.h"
 #include "drive.h"
+#include "phaser.h"
+#include "warble.h"
+#include "detune.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -508,6 +511,31 @@ static cotuca::EffectSlot  shimmer_slot;
 // historico" e valida o EffectSlot nela.
 static cotuca::Drive      drive;
 static cotuca::EffectSlot drive_slot;
+
+// PHASER — depois do drive, antes do delay. Zero buffer, mas N
+// multiplicacoes por amostra: a regua do drive vale, trabalho nao e
+// memoria. `bypass_style: cut` — sem cauda, corta seco (nao ha nada
+// decaindo pra deixar terminar).
+static cotuca::Phaser     phaser;
+static cotuca::EffectSlot phaser_slot;
+
+// WARBLE — deriva de fita. Buffer minusculo (40 ms mono = 7,5 KB), em
+// SRAM: acesso e uma leitura interpolada por amostra, perto da cabeca
+// de escrita, entao cabe na cache sem esforco.
+static cotuca::Warble     warble;
+static cotuca::EffectSlot warble_slot;
+
+// DETUNE — motor PROPRIO no ponto pos-modulo. Terceiro ponto de
+// derivacao (seco / cauda do reverb / pos-modulo), e o unico dos cinco
+// que consome DUAS vozes do mesmo buffer: o caso que o "compartilhado"
+// previa desde o desenho.
+static cotuca::PitchEngine pitch_det;
+static bool                pitch_det_ok  = false;
+static float*              pitch_det_mem = nullptr;
+static cotuca::Detune      detune;
+static cotuca::EffectSlot  detune_slot;
+static bool               warble_ok = false;
+alignas(32) static float  warble_mem[1924];
 static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 
 // BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
@@ -1035,6 +1063,66 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         }
     }
 
+    // 2.6) PHASER — depois do drive, antes do delay.
+    //
+    // Ordem de pedaleira: sujeira, depois MOVIMENTO, depois tempo e
+    // espaco. Phaser antes do delay faz o eco repetir o movimento;
+    // depois, o movimento passaria por cima dos ecos e borraria os dois.
+    phaser_slot.SetOn(params.Real(manifest.p_phs_on) >= 0.5f);
+    if(phaser_slot.Ativo())
+    {
+        phaser.SetRate(params.Real(manifest.p_phs_rate));
+        phaser.SetDepth(params.Real(manifest.p_phs_depth));
+        phaser.SetFeedback(params.Real(manifest.p_phs_feedback));
+        phaser.SetStages((int)(params.Real(manifest.p_phs_stages) + 0.5f));
+        // LFO E MAPEAMENTO DE FREQUENCIA: UMA VEZ POR BLOCO. As unicas
+        // transcendentais do efeito ficam aqui fora — foi o que fez o
+        // drive custar 36 us antes de aprender a licao.
+        phaser.AtualizaLfo(size);
+        const float mx = params.Real(manifest.p_phs_mix);
+        float gs = 0.f, gm = 0.f;
+        for(size_t i = 0; i < size; i++)
+        {
+            phaser_slot.Passo(gs, gm);
+            phaser.SetMix(mx * gm);
+            // MONO: a fonte aqui e um canal so.
+            src_buf[i] = phaser.ProcessMono(src_buf[i]);
+        }
+    }
+
+    // 2.7) WARBLE — depois do phaser, antes do delay.
+    //
+    // Sujeira, movimento de FASE, movimento de ALTURA, depois tempo e
+    // espaco. O warble antes do delay faz o eco repetir a deriva ja
+    // impressa; depois, ele derivaria os ecos junto e a fita soaria
+    // aplicada ao resultado em vez de a fonte.
+    //
+    // GRAVA SEMPRE (regra dos efeitos com historico). Aqui a regra
+    // morde de verdade: o buffer tem 40 ms, entao parar de gravar em
+    // bypass faria o efeito acordar lendo 40 ms de passado congelado.
+    warble_slot.SetOn(params.Real(manifest.p_wrb_on) >= 0.5f);
+    if(warble_ok && warble_slot.Ativo())
+    {
+        warble.SetRate(params.Real(manifest.p_wrb_rate));
+        warble.SetDepth(params.Real(manifest.p_wrb_depth));
+        warble.SetIrreg(params.Real(manifest.p_wrb_irreg));
+        warble.AtualizaLfo(size);
+        float gs = 0.f, gm = 0.f;
+        for(size_t i = 0; i < size; i++)
+        {
+            warble_slot.Passo(gs, gm);
+            const float w = warble.ProcessMono(src_buf[i]);
+            // O fade cruza entre seco e derivado. Nao ha `mix`: o
+            // cruzamento so existe pra ligar e desligar sem clique.
+            src_buf[i] = src_buf[i] * gs + w * gm;
+        }
+    }
+    else if(warble_ok)
+    {
+        // Bypass: grava, nao processa.
+        for(size_t i = 0; i < size; i++) warble.ProcessMono(src_buf[i]);
+    }
+
     // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
     cotuca::Module* inst = mod_slot[(int)cotuca::ModuleSlot::Instrument];
     if(inst)
@@ -1173,6 +1261,51 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         {
             out[0][i] = fx_buf[0][i] * g;
             out[1][i] = fx_buf[1][i] * g;
+        }
+    }
+
+    // 4.3) DETUNE — PÓS-MÓDULO, onde o estéreo existe.
+    //
+    // Antes disto a cadeia e um canal so, e sem estereo nao ha spread —
+    // detune mono soa como desafinacao, com largura soa como CORO.
+    //
+    // GRAVA SEMPRE (regra dos efeitos com historico): o buffer tem
+    // 400 ms, entao parar de gravar em bypass faria o efeito acordar
+    // lendo passado congelado — o clique que a Peca 2 ensinou.
+    detune_slot.SetOn(params.Real(manifest.p_det_on) >= 0.5f);
+    if(pitch_det_ok)
+    {
+        const bool det = detune_slot.Ativo();
+        if(det)
+        {
+            detune.SetCents(params.Real(manifest.p_det_cents));
+            detune.SetVoices((int)(params.Real(manifest.p_det_voices) + 0.5f));
+            detune.SetSpread(params.Real(manifest.p_det_spread));
+            pitch_det.SetRatio(0, detune.RatioA());
+            pitch_det.SetRatio(1, detune.RatioB());
+            pitch_det.SetActive(0, true);
+            pitch_det.SetActive(1, detune.Duas());
+        }
+        const float mx = params.Real(manifest.p_det_mix);
+        float gs = 0.f, gm = 0.f;
+        for(size_t i = 0; i < size; i++)
+        {
+            // Grava o canal esquerdo — a fonte pos-modulo e a mesma
+            // nos dois lados; a LARGURA nasce aqui, do pan, nao da
+            // fonte.
+            pitch_det.WriteMono(out[0][i]);
+            if(!det) continue;
+            detune_slot.Passo(gs, gm);
+            detune.SetMix(mx * gm);
+            // LEITURA MONO: metade do custo de duas leituras estereo.
+            const float a = pitch_det.ReadMono(0);
+            const float b = detune.Duas() ? pitch_det.ReadMono(1) : 0.f;
+            detune.Mistura(a, b, out[0][i], out[1][i]);
+        }
+        if(!det)
+        {
+            pitch_det.SetActive(0, false);
+            pitch_det.SetActive(1, false);
         }
     }
 
@@ -2563,6 +2696,25 @@ int main(void)
         shimmer.Init(sr);
         drive.Init(sr);
         drive_slot.Init(sr, 8.f);
+        phaser.Init(sr);
+        phaser_slot.Init(sr, 8.f);
+        warble_ok = warble.Init(sr, warble_mem,
+                                sizeof(warble_mem)/sizeof(warble_mem[0]), 40.f);
+        warble_slot.Init(sr, 8.f);
+        {
+            const size_t nd = cotuca::PitchEngine::FloatsNeeded(sr, kPitchSeconds);
+            pitch_det_mem = (float*)hal::AllocBig(nd * sizeof(float));
+            if(pitch_det_mem)
+                pitch_det_ok = pitch_det.Init(sr, pitch_det_mem, nd, kPitchSeconds);
+            detune.Init(sr);
+            detune_slot.Init(sr, 8.f);
+            hal::Log("detune: %s (%u KB em SDRAM)",
+                     pitch_det_ok ? "pronto" : "SEM BUFFER — inativo",
+                     (unsigned)(nd * sizeof(float) / 1024));
+        }
+        hal::Log("warble: %s (40 ms, %u KB em SRAM)",
+                 warble_ok ? "pronto" : "BUFFER CURTO — inativo",
+                 (unsigned)(sizeof(warble_mem)/1024));
         // CAUDA DE 2 s NA SAIDA (pedido do dB). Entrar e imediato;
         // sair e decaimento — o shimmer E a sala se empilhando, e sala
         // nao para de existir quando alguem solta o botao.

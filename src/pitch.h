@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — motor de pitch compartilhado v0.2.0
+// Cotucatronics OS — motor de pitch compartilhado v0.4.0
 //
 // UM BUFFER, VARIAS VOZES. E aqui que o "compartilhado" deixa de ser
 // palavra e vira economia: shimmer no modo "ambos" precisa de +12 E +7
@@ -74,6 +74,25 @@ class PitchEngine
         return true;
     }
 
+    // ESCRITA MONO — metade dos stores, e e o que os pontos mono
+    // precisam.
+    //
+    // Terceira vez que este projeto paga o dobro por tratar uma fonte
+    // mono como estereo: drive (tanh 2x), phaser (2N allpass), e agora
+    // a GRAVACAO do detune. Esta doeu mais que as outras porque a
+    // gravacao roda mesmo com o efeito EM BYPASS — eram 33 us pagos
+    // continuamente pra escrever o mesmo numero duas vezes.
+    //
+    // Quem le com ReadMono deve gravar com WriteMono. O par nao e
+    // opcional: gravar mono e ler estereo devolveria silencio no canal
+    // direito.
+    void WriteMono(float x)
+    {
+        if(cap_ == 0) return;
+        l_[write_] = x;
+        if(++write_ >= cap_) write_ = 0;
+    }
+
     // Escrita UNICA, feita pelo CTOS uma vez por amostra. As vozes so
     // leem — nenhuma escreve, entao nao ha ordem entre elas.
     void Write(float l, float r)
@@ -123,6 +142,35 @@ class PitchEngine
     bool Active(int v) const
     {
         return (v >= 0 && v < kMaxVoices) && voz_[v].ativa;
+    }
+
+    // LEITURA MONO — metade do custo, e e o que os pontos mono da
+    // cadeia precisam.
+    //
+    // O `Read` estereo faz duas interpolacoes e duas janelas por grao.
+    // Nos pontos onde a fonte e um canal so, a segunda e desperdicio —
+    // a mesma licao que o drive e o phaser pagaram duas vezes, agora
+    // aplicada a PECA COMPARTILHADA em vez de a cada efeito.
+    float ReadMono(int v)
+    {
+        if(cap_ == 0 || v < 0 || v >= kMaxVoices || !voz_[v].ativa)
+            return 0.f;
+        Voz& z = voz_[v];
+        float out = 0.f;
+        for(int g = 0; g < kGrains; g++)
+        {
+            out += Le(l_, z.pos[g]) * RaizHann(z.fase[g]);
+            z.pos[g] += z.ratio;
+            if(z.pos[g] >= (float)cap_) z.pos[g] -= (float)cap_;
+            if(z.pos[g] < 0.f)          z.pos[g] += (float)cap_;
+            z.fase[g] += 1.f / z.grain;
+            if(z.fase[g] >= 1.f)
+            {
+                z.fase[g] -= 1.f;
+                z.pos[g]   = Partida(v);
+            }
+        }
+        return out;
     }
 
     // Le UMA voz e avanca os graos dela. Chamada uma vez por amostra

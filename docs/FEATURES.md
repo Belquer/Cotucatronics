@@ -37,6 +37,9 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Delay** (RNBO, slot Instrument) | `dly_time`, `dly_mix` | 22, 23 | ✅ certificado T5 |
 | **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |
 | **Drive** (shell) — waveshaper tanh como cola | `drv_on`, `drv_drive`, `drv_tone`, `drv_mix` | 38–41 | ✅ **aprovado** 18/08 · +21 µs |
+| **Phaser** (shell) — N allpass varridos por LFO | `phs_on`, `phs_rate`, `phs_depth`, `phs_feedback`, `phs_stages`, `phs_mix` | 42–47 | ✅ **aprovado** 18/08 · +26 µs · ⚠️ `phs_mix` é MONTANHA: pico em ~50%, topo tira o notch |
+| **Warble** (shell) — deriva de fita, delay curto modulado | `wrb_on`, `wrb_rate`, `wrb_depth`, `wrb_irreg` | 48–51 | ✅ **aprovado** 18/08 · +14 µs · 16 cents medidos |
+| **Detune** (shell) — 2 vozes micro-desafinadas + largura | `det_on`, `det_cents`, `det_voices`, `det_spread`, `det_mix` | 52–56 | ⏳ aceite pendente · ~52 µs/voz |
 | **Shimmer** (shell) | `shm_on`, `shm_mix`, `shm_shift`, `shm_feedback` | 33, 37, 36, 35 | 🎵 aprovado de ouvido · cauda de 2 s na saída |
 | **Reverb** Freeverb (shell, moldura) | `rev_mix`, `rev_size`, `rev_damp` | 24, 25, 26 | ✅ certificado T14a |
 | **Passa-alta do Fx2** | `fx2_hp` | — | ⏸ inativo enquanto o slot Fx2 estiver vazio |
@@ -91,6 +94,10 @@ e o custo de cada adição fica invisível até algo quebrar.
 - [ ] Ela é **CTOS** ou **Efeito**? (mapa do `docs/CTOS.md` §5)
 - [ ] Se é Efeito: passa pelo **IFÁ10000** completo, etapa 0 inclusive
 - [ ] Ganha **on/off próprio**, separado do mix — decisão do dB, 18/08
+- [ ] **Nasce com o caminho MONO como padrão.** Antes do reverb a cadeia é um
+      canal só; `Process(l, r)` sobre fonte mono paga o dobro **sem sintoma
+      algum** — a saída fica certa e só o custo denuncia. Três efeitos
+      seguidos caíram nisso
 
 > **A pergunta que este documento existe para forçar:** *o que já está aqui
 > que eu deveria revisar antes de acrescentar mais?*

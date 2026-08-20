@@ -781,6 +781,78 @@ sintomas, causas diferentes, e a segunda acontece **toda vez** que se grava.
 
 ---
 
+## 11o. O desperdício que preserva a correção (18/08)
+
+Três efeitos seguidos pagaram o dobro pela mesma razão:
+
+| Efeito | O que duplicava |
+|---|---|
+| **drive** | `tanh` calculado 2× sobre o mesmo valor mono |
+| **phaser** | 2N allpass em vez de N |
+| **detune** | gravação escrevendo o mesmo número nos dois canais |
+
+**A causa não é "a cadeia é mono".** É que **a interface oferecia estéreo, o
+dado era mono, e nada tornava o descompasso visível.** Todo efeito expunha
+`Process(l, r)` como entrada natural; passar o mesmo valor duas vezes parecia
+inofensivo, e o tipo `float` não sabe se carrega um canal ou dois.
+
+### As três regras, da mais estreita à mais útil
+
+**1. Desperdício que preserva a correção não tem sintoma.** Os três produziam
+áudio **certo**. A única evidência era custo. Revisão não pega, teste não
+pega, ouvido não pega — **só medição pega, e só se alguém medir.**
+
+**2. Quando a forma da API não corresponde à forma do dado, o descompasso
+cobra em silêncio e repetidamente.** O conserto não é disciplina: eu falhei
+três vezes *sabendo* da regra. É fazer o caminho barato ser o **padrão** e o
+caro ter que ser pedido — `ProcessMono` devia ter nascido como `Process`, e o
+estéreo como `ProcessStereo`.
+
+**3. Conserto sem perguntar "onde mais esta forma aparece?" reincide.**
+Consertei no drive, repeti no phaser, repeti na gravação do detune. A pergunta
+custa trinta segundos e teria pego as três de uma vez.
+
+> **A terceira é a mais cara do projeto inteiro.** Ela também explica o
+> `log_muted` → `cdc_dead` → `Add()` → `AddMidi()`: quatro mecanismos que
+> falham em silêncio, consertados um a um, porque nenhum conserto perguntou
+> onde mais aquela forma existia.
+
+**O agravante da gravação do detune:** ela roda mesmo com o efeito **em
+bypass**. Eram 33 µs pagos **continuamente** para escrever o mesmo número duas
+vezes — custo que nem aparece quando o efeito está desligado, que é quando se
+espera custo zero.
+
+---
+
+## 11p. O sinal errado como régua, terceira aparição (18/08)
+
+O phaser soou "como um tremolo bem sutil". Medido: **excursão de nível de
+0,1 dB** com o notch varrendo — ou seja, não havia notch.
+
+A causa era um par de sinais trocados na equação de diferenças:
+
+```c
+y = a*x + x[n-1] - a*y[n-1]   →  H(z) = (a + z⁻¹)/(1 + a·z⁻¹)   polo em z = −a
+y = -a*x + x[n-1] + a*y[n-1]  →  H(z) = (z⁻¹ − a)/(1 − a·z⁻¹)   polo em z = +a
+```
+
+Polo em **−a** fica perto de **Nyquist**. Com `a ≈ 0,97` — calculado para
+200 Hz — toda a ação de fase acontecia perto de **24 kHz**, e os notches
+nasciam fora do espectro audível. **A conta do coeficiente estava certa; a
+equação é que não correspondia a ela.**
+
+Depois do conserto: **0,1 dB → 14,3 dB de excursão.**
+
+**O relato do dB foi o que tornou isso achável em minutos.** *"Parece um
+tremolo bem sutil"* descreve exatamente o resíduo de um notch fora de banda —
+sobra a ondulação de nível, some o caráter. *"Não funciona"* teria mandado
+procurar no LFO ou no mix.
+
+> **Sintoma descrito pelo caráter vale mais que sintoma descrito pela
+> ausência.** Vale pedir: *"com o que se parece?"*, não *"funcionou?"*.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.

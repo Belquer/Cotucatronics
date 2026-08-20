@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.50.0
+// manifest.h (instrumento "bancada") v0.53.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -220,6 +220,40 @@ struct Manifest
     int p_drv_drive;  // vezes; a faixa COMECA na cola
     int p_drv_tone;   // Hz do passa-baixa POS-saturacao
     int p_drv_mix;    // 0..1 — CAMADA paralela
+
+    // PHASER — N allpass varridos por LFO. Depois do drive, antes do
+    // delay: sujeira, depois movimento, depois tempo e espaco.
+    //
+    // ATENCAO ao `phs_mix`: e INVERTIDO em relacao aos outros efeitos.
+    // O notch nasce de CANCELAMENTO entre seco e desviado, e
+    // cancelamento maximo exige amplitudes iguais — entao ~0.5 e o
+    // "ligado" e 1.0 e quase inaudivel. Ver phaser.h.
+    int p_phs_on;
+    int p_phs_rate;      // Hz do LFO triangular
+    int p_phs_depth;     // quanto da faixa o LFO varre
+    int p_phs_feedback;  // o corpo: medio-alto = liquido/vocal
+    int p_phs_stages;    // 4 / 6 / 8 — pares, cada par e um notch
+    int p_phs_mix;       // MONTANHA, nao rampa: pico em ~0.5
+
+    // WARBLE — deriva de fita: delay curto modulado. Depois do phaser
+    // (sujeira, movimento de fase, movimento de altura), antes do
+    // delay.
+    //
+    // NAO tem `mix`: fita nao mistura com ela mesma. O sinal inteiro
+    // deriva, ou nao deriva — misturar com o seco daria flanger, que e
+    // outro efeito.
+    int p_wrb_on;
+    int p_wrb_rate;   // Hz — wow lento
+    int p_wrb_depth;  // ms de excursao do atraso
+    int p_wrb_irreg;  // 0 = periodico | 1 = passeio mecanico
+
+    // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
+    // onde o estereo existe: sem estereo nao ha spread.
+    int p_det_on;
+    int p_det_cents;   // 0..50 cents de desvio, simetrico
+    int p_det_voices;  // 1 ou 2
+    int p_det_spread;  // 0 = centro | 1 = pontas opostas
+    int p_det_mix;     // CAMADA por cima do seco
 
     // SHIMMER — reverb + pitch-up num laco de realimentacao. Nao tem
     // reverb proprio: realimenta o Freeverb da cadeia.
@@ -648,6 +682,35 @@ struct Manifest
         p_drv_tone  = t.Add("drv_tone",  0.0f, 800.f, 16000.f, 2.0f);
         p_drv_mix   = t.Add("drv_mix",   0.0f, 0.f, 1.f);
 
+        // ---- PHASER ----
+        p_phs_on       = t.Add("phs_on",       0.0f, 0.f, 1.f);
+        // 0.02 a 4 Hz. Abaixo de 0.02 o movimento some; acima de ~4 ja
+        // e vibrato de fase, nao phaser.
+        p_phs_rate     = t.Add("phs_rate",     0.0f, 0.02f, 4.f, 2.0f);
+        p_phs_depth    = t.Add("phs_depth",    0.0f, 0.f, 1.f);
+        p_phs_feedback = t.Add("phs_feedback", 0.0f, 0.f, 1.f);
+        // 3 posicoes: 4, 6 ou 8 estagios (2, 3 ou 4 notches).
+        p_phs_stages   = t.Add("phs_stages",   0.0f, 4.f, 8.f, 1.0f, 3);
+        p_phs_mix      = t.Add("phs_mix",      0.0f, 0.f, 1.f);
+
+        // ---- WARBLE ----
+        p_wrb_on    = t.Add("wrb_on",    0.0f, 0.f, 1.f);
+        p_wrb_rate  = t.Add("wrb_rate",  0.0f, 0.05f, 3.f, 2.0f);
+        // Ate 3 ms. O desvio de altura e ~2*pi*rate*depth: 1 ms a
+        // 0,6 Hz da ~4 cents (fita boa); 3 ms a 2 Hz da ~65 cents
+        // (fita estragada — as vezes e o que se quer).
+        p_wrb_depth = t.Add("wrb_depth", 0.0f, 0.f, 3.f);
+        p_wrb_irreg = t.Add("wrb_irreg", 0.0f, 0.f, 1.f);
+
+        // ---- DETUNE ----
+        p_det_on     = t.Add("det_on",     0.0f, 0.f, 1.f);
+        // Ate 50 cents. Abaixo de ~3 e batimento lento (mais textura
+        // que altura); acima de ~30 ja soa desafinado de proposito.
+        p_det_cents  = t.Add("det_cents",  0.0f, 0.f, 50.f);
+        p_det_voices = t.Add("det_voices", 0.0f, 1.f, 2.f, 1.0f, 2);
+        p_det_spread = t.Add("det_spread", 0.0f, 0.f, 1.f);
+        p_det_mix    = t.Add("det_mix",    0.0f, 0.f, 1.f);
+
         // ---- SHIMMER ----
         // Tudo em zero: o dB constroi subindo os faders (ver a nota dos
         // defaults no topo desta funcao).
@@ -971,6 +1034,27 @@ struct Manifest
         AddMidi(30, p_gate_thresh);  // ajuste de execucao
         AddMidi(31, p_buzios_on); // chave 0/127
         AddMidi(32, p_buzios_thresh);   // novo
+        // Familia do DETUNE, contigua.
+        AddMidi(52, p_det_on);     // chave 0/127
+        AddMidi(53, p_det_cents);
+        AddMidi(54, p_det_voices); // 2 posicoes
+        AddMidi(55, p_det_spread);
+        AddMidi(56, p_det_mix);
+
+        // Familia do WARBLE, contigua.
+        AddMidi(48, p_wrb_on);    // chave 0/127
+        AddMidi(49, p_wrb_rate);
+        AddMidi(50, p_wrb_depth);
+        AddMidi(51, p_wrb_irreg);
+
+        // Familia do PHASER, contigua.
+        AddMidi(42, p_phs_on);     // chave 0/127
+        AddMidi(43, p_phs_rate);
+        AddMidi(44, p_phs_depth);
+        AddMidi(45, p_phs_feedback);
+        AddMidi(46, p_phs_stages); // 3 posicoes
+        AddMidi(47, p_phs_mix);    // pico de notch em ~50%
+
         // Familia do DRIVE, contigua.
         AddMidi(38, p_drv_on);    // chave 0/127
         AddMidi(39, p_drv_drive);

@@ -54,6 +54,27 @@ gastava 35 µs de 500.
    defeito reprodutível em intermitente — e intermitente é o mais caro de
    todos.
 
+## Regra do desperdício sem sintoma
+
+**Desperdício que preserva a correção não tem sintoma.** Código que faz o
+trabalho duas vezes produz a saída **certa** — revisão não pega, teste não
+pega, ouvido não pega. Só medição pega, e só se alguém medir.
+
+Em 18/08 três efeitos seguidos pagaram o dobro pela mesma forma: a API
+oferecia estéreo, o dado era mono, e passar o mesmo valor duas vezes parecia
+inofensivo.
+
+**O conserto não é disciplina** — falhei três vezes *sabendo* da regra. É
+fazer **o caminho barato ser o padrão** e o caro ter que ser pedido.
+
+> **E a mais cara: conserto sem perguntar "onde mais esta forma aparece?"
+> reincide.** Trinta segundos de pergunta teriam pego as três de uma vez — e
+> explicam também os quatro mecanismos que falharam em silêncio neste projeto
+> (`log_muted`, `cdc_dead`, `Add()`, `AddMidi()`), consertados um a um.
+
+**Ao consertar qualquer coisa, antes de fechar:** procure a mesma forma no
+resto do código. `grep` pelo padrão, não pelo sintoma.
+
 ## Regra da mensagem que afirma — cite o outro estado
 
 Antes de escrever qualquer frase de diagnóstico, pergunte:
