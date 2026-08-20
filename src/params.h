@@ -29,7 +29,13 @@ constexpr int kNumKnobs = 5;
 // A folga e de proposito: a suite prevista (drive, phaser, warble,
 // detune) traz ~12 params a mais, e teto apertado transforma cada
 // efeito novo numa caca ao estouro.
-constexpr int kMaxParams       = 48;
+// 64. Estourou DE NOVO em 18/08 com a suite completa: 50 params
+// declarados contra teto de 48, e os buzios sumiram pela SEGUNDA vez.
+//
+// A denuncia no boot funcionou — e ninguem leu, porque a serial foi
+// conectada depois do banner. Por isso a versao e o estado das tabelas
+// tambem saem no `board`, que pode ser pedido a qualquer momento.
+constexpr int kMaxParams       = 64;
 constexpr int kMaxMacroTargets = 4;
 
 inline float Clamp01(float v)

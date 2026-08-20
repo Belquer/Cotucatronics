@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.76.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.79.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.76.1"
+#define COTUCA_OS_VERSION "0.79.0"
 
 #include "hal.h"
 #include "params.h"
@@ -1409,6 +1409,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             shimmer_slot.Comeca(cotuca::hal::NowTicks());
             shimmer.SetMix(params.Real(manifest.p_shm_mix));
             shimmer.SetFeedback(params.Real(manifest.p_shm_feedback));
+            shimmer.SetTone(params.Real(manifest.p_shm_tone));
             const int   modo = (int)(params.Real(manifest.p_shm_shift) + 0.5f);
             (void)modo;
             // +12 = 2.0 ; +7 = 1.498 (quinta justa temperada)
@@ -1434,6 +1435,11 @@ static void AudioCb(const float* const* in, float** out, size_t size)
                                     ? 0.5f : 1.f;
                 pl = (al + bl) * k;
                 pr = (ar + br) * k;
+                // TOM ANTES DOS DOIS USOS. O ouvido soma a realimentacao
+                // E a camada direta; filtrar so uma delas deixa metade da
+                // aspereza no ar. Filtrado aqui, `pl` ja segue tratado
+                // pros dois caminhos.
+                shimmer.Tom(pl, pr);
                 float add_l, add_r;
                 shimmer.Realimenta(pl, pr, add_l, add_r);
                 float gs;
@@ -1827,6 +1833,16 @@ static void HandleLine(const char* line)
         // quem conecta depois. Foi o primeiro buraco que a propria
         // rotina encontrou, minutos depois de ser escrita.
         hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION);
+        // ESTADO DAS TABELAS NO `board`, nao so no boot. A denuncia de
+        // estouro existia desde a v0.70 e nao evitou a segunda
+        // ocorrencia — porque so saia no banner, e quem conecta a
+        // serial depois nunca a ve. Aviso que exige estar presente na
+        // hora certa e aviso que se perde.
+        hal::Log("tabelas: %d/%d params | %d/%d CCs%s",
+                 params.Count(), (int)cotuca::kMaxParams,
+                 manifest.n_midi, (int)cotuca::kMaxMidiMap,
+                 (params.Overflow() || manifest.midi_overflow)
+                     ? "   *** ESTOUROU ***" : "");
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);

@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.53.0
+// manifest.h (instrumento "bancada") v0.54.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -271,6 +271,7 @@ struct Manifest
     int p_shm_mix;      // 0..1 — CAMADA por cima do seco
     int p_shm_shift;    // 0=+12  1=+7  2=ambos
     int p_shm_feedback; // 0..1 — quantas oitavas empilham
+    int p_shm_tone;     // 0..1 — 0 = 6 kHz (quente) ... 1 = 18 kHz
 
     // ---- FREEZE (slot Fx2) ----
     // Serial-only: os cinco knobs estao todos ocupados. As faixas
@@ -722,6 +723,10 @@ struct Manifest
         // ESTABILIDADE do laco, nao preferencia musical. Param vai a
         // 1.0 e o efeito escala pra dentro do seguro.
         p_shm_feedback = t.Add("shm_feedback", 0.0f, 0.f, 1.f);
+        // TOM: sobe pra clarear. 0 e o estado BOM, nao o mais brilhante
+        // — a regra do default zero desliga efeito, nao escolhe o pior
+        // timbre. Medido: 0 poe a cauda em centroide 3189 Hz, 1 em 5507.
+        p_shm_tone     = t.Add("shm_tone",     0.0f, 0.f, 1.f);
 
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
@@ -1065,6 +1070,7 @@ struct Manifest
         AddMidi(37, p_shm_mix);
         AddMidi(35, p_shm_feedback);
         AddMidi(36, p_shm_shift);   // chave 3 posicoes
+        AddMidi(57, p_shm_tone);
         // 34 e o comando `sync` — fica no meio da familia do shimmer
         // por acidente historico, e nao vale remapear: mexer em numero
         // ja alinhado no Loopy custa mais que a assimetria incomoda.

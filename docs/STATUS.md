@@ -4,7 +4,8 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-08-17 · último commit desta leva: `7ba5744`
+> Atualizado em 2026-08-20 · leva: suíte de cinco efeitos fechada, shimmer
+> suavizado por medição, tetos das tabelas corrigidos
 
 ---
 
@@ -48,22 +49,24 @@ scars — ele PIOROU; reverter exige remedir tudo).
 
 ## O que toca hoje
 
-**Delay + vocoder em série, com Búzios.** Aprovado de ouvido em
-2026-08-16: um minuto contínuo de taps, 74 transientes, 74 sorteios.
+**Pedaleira de cinco efeitos residentes, em ordem fixa.** Vocoder fora do
+build desde 18/08 (decisão de ouvido, revivível). Bloco **48**.
 
 ```
-piezo/linha → src_mix → gate → DELAY → VOCODER → fx2_gain → level
+piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE
+            → DELAY (Fx1) → DETUNE → FREEZE → [SHIMMER ↺ REVERB] → level
             → governor → shifter SSB → limiter → OUT
 ```
 
+O shimmer não tem reverb próprio: ele realimenta o Freeverb que já está na
+cadeia, e por isso aparece dentro do laço.
+
 | Recurso | Medido |
 |---|---|
-| CPU (delay + dinâmica + vocoder) | ~1650 µs de pico / 5333 (31%) |
-| Pool SRAM dos módulos | 45 432 / 49 152 B = **92,4%**, 0 falhas |
-| SDRAM do vocoder | 65 544 B (tabela de seno `RNBODefaultSinus`) |
-| QSPI | ~215 KB / 7 936 KB = 2,7% |
-| Bloco | **256** (5,3 ms de latência) — exigido pelo vocoder |
-| Loop principal | ~9,7 M de voltas em 63 s (sem `DelayMs`) |
+| CPU (suíte + shimmer + detune) | **59,5% média / 65,8% pico** do prazo de 1000 µs |
+| Tabelas | **55/64 params · 37/48 CCs** (o `board` declara) |
+| Bloco | **48** (1 ms de prazo) |
+| Custo por efeito | drive +21 µs · warble +14 · phaser +26 · detune **+125** |
 
 ---
 
@@ -89,14 +92,14 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 
 | Arquivo | Versão |
 |---|---|
-| `hal.h` / `hal_daisy_seed.cpp` | v0.12.0 / v0.10.0 |
-| `main.cpp` | **v0.40.0** |
-| `manifest.h` | v0.41.0 |
-| `params.h` | v0.6.1 |
-| `module_rnbo_vocoder.cpp` | v0.6.0 |
-| `reverb.h` | v0.2.0 |
-| `module.h` / `dynamics.h` / `midi.h` | v0.4.0 / v0.4.0 / v0.2.1 |
-| `TESTES.md` / `BOARDS.md` | v0.21.0 / v0.10.0 |
+| `hal.h` / `hal_daisy_seed.cpp` | v0.17.0 / v0.16.0 |
+| `main.cpp` | **v0.79.0** |
+| `manifest.h` | v0.54.0 |
+| `params.h` / `midi.h` | v0.8.0 / v0.4.0 |
+| `pitch.h` / `shimmer.h` | **v0.5.0** / **v0.3.0** |
+| `drive.h` / `phaser.h` / `warble.h` / `detune.h` | v0.2.0 / v0.3.0 / v0.1.0 / v0.1.0 |
+| `freeze.h` / `reverb.h` / `effect_slot.h` | v0.3.1 / v0.2.0 / v0.3.0 |
+| `module_rnbo_vocoder.cpp` | v0.6.0 (fora do build) |
 
 ---
 
@@ -197,7 +200,40 @@ como gesto. Rampa de saída de ~300 ms, com os grãos rodando durante a descida.
 
 ---
 
+## Fechado em 20/08 — o shimmer que ardia
+
+Duas causas distintas, medidas na bancada offline (os headers são C++ puro,
+então o host reproduz o laço exato):
+
+**1. Aliasing no motor de pitch.** Ler o buffer a `ratio 2.0` dobra a
+frequência; tudo acima de 12 kHz atravessa Nyquist e volta **inarmônico**. Com
+3500 Hz na entrada, o pico mais alto de toda a cauda era 19963 Hz. Anti-alias
+Butterworth de 6ª ordem **na escrita do motor** (não no shimmer — o defeito é
+de ler rápido, e quem lê rápido é o motor): dobra de −11,9 para **−64 dB**.
+
+**2. Conteúdo legítimo na faixa mais sensível do ouvido.** A planura espectral
+de 2–6 kHz é 0,009 — tonal, não ruído. O 1–3 kHz da escultura vai a 2–6 kHz
+pela oitava e o reverb sustenta lá. Conserto: **sino de −6 dB em 3 kHz**, com
+a profundidade escolhida contra a razão medida da cauda seca (0,28), não de
+ouvido.
+
+| | v0.1.0 | v0.3.0 |
+|---|---|---|
+| razão (2–6 k)/(300–2 k) | 1,01 | **0,19** |
+| centroide da cauda | 7134 Hz | **1907 Hz** |
+| 6–12 kHz | 28,2% | **4%** |
+
+`shm_tone` (**CC 57**) move as duas coisas e **sobe pra clarear**: 0 é o sino
+cheio com corte em 6 kHz, 1 abre até 18 kHz. Zero tem que ser o estado bom, ou
+a aspereza volta a cada boot.
+
+---
+
 ## Defeitos abertos
+
+**🟡 Picos de entrada nunca lidos sob material real.** `in_gain` está em
+**8,0 — 18 dB**. Se a entrada satura, arde antes de qualquer efeito e nenhum
+EQ no shimmer conserta. Falta uma leitura de `pk` com o dB tocando.
 
 **🔴 A serial morre com o vocoder ligado — prioridade 1.**
 As rajadas de ~3,4 ms do callback starvam a ISR do USB; o CDC do host

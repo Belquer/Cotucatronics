@@ -57,6 +57,31 @@ conferido.*
 **Se a placa não sabe dizer a própria versão fora do boot, conserte isso
 primeiro** — uma regra que não pode ser executada não é regra.
 
+## 2b. ESTADO DE PLACA NÃO SOBREVIVE AO FLASH
+
+Params, calibração, modo de log — tudo volátil morre na regravação. Neste
+projeto os params **nascem todos em zero por regra do dB**, então depois de
+gravar a placa está sempre no estado neutro, nunca no que estava configurado.
+
+Caso (20/08): configurei o detune, gravei para consertar outra coisa, e
+anunciei *"está ligado e pronto"* repetindo um estado anterior ao flash. O
+efeito estava com a chave em zero e nunca tocou.
+
+> **Ou se relê o estado depois de gravar, ou não se afirma nada sobre ele.**
+> A regravação é uma fronteira, e afirmação não a atravessa.
+
+Reler custa um comando:
+
+```
+list
+```
+
+**Corolário — alarme de boot precisa de gêmeo sob demanda.** A denúncia de
+estouro de tabela existia havia nove versões e não evitou a segunda
+ocorrência, porque só saía no banner: quem conecta a serial depois nunca a
+vê. Todo alarme de boot ganha uma via consultável a qualquer momento (aqui,
+`board` passou a imprimir `tabelas: N/teto params | N/teto CCs`).
+
 ## 3. SAÍDA DE FERRAMENTA ≠ CONFIRMAÇÃO DE INTENÇÃO
 
 São confirmações **diferentes**, e cada uma cobre só o seu pedaço:

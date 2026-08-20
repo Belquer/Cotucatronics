@@ -81,6 +81,46 @@ somados e não separa nenhum.
 - `bb arm` silencia o log até `log on` (ou reset). Está declarado no
   cabeçalho dos comandos de status a partir da v0.39.0.
 
+## 6. Antes de gastar código numa hipótese, a medição que a MATARIA
+
+Hipótese boa e endossada pelo próprio código ainda é hipótese. Antes de
+implementar, rodar o teste que a **derrubaria** se ela estivesse errada.
+
+Caso (20/08): a aspereza do shimmer parecia ruído de emenda de grão — o
+cabeçalho do `detune.h` até prescrevia "grão mais longo". A medição de
+**planura espectral** da faixa suspeita respondeu em trinta segundos:
+
+```
+cauda do shimmer 0,009   |   cauda seca de reverb 0,004   →  TONAL, não ruído
+```
+
+Grão mais longo teria custado memória e **piorado** a faixa. Hipótese morta
+antes de virar código.
+
+- **planura ≈ 1** → ruído (emendas, aliasing, granulação)
+- **planura ≈ 0** → tonal (som legítimo no lugar errado)
+
+Os dois pedem consertos opostos: filtro de ruído contra o primeiro, **EQ**
+contra o segundo.
+
+## 7. Régua medida, não ouvido, para escolher profundidade
+
+Quando o conserto é de grau (quanto cortar, quanto realimentar), a referência
+é uma **medição do sinal que já soa certo**, não uma escolha de gosto.
+
+Caso: para escolher a queda de presença do shimmer, a régua foi a razão
+(2–6 kHz)/(300–2000 Hz) da cauda **seca** — o timbre natural do instrumento
+na sala. Seco 0,28; shimmer sem sino 1,01; com −6 dB em 3 kHz, 0,19.
+
+## 8. A queixa tem tantas partes quantas o dB nomeou
+
+*"Agudas **e médio-agudas**"* são duas partes. Consertar uma, medir melhora e
+publicar vitória deixa a outra em pé — e às vezes **pior**: tirar energia de
+cima fez a faixa médio-aguda crescer de 26,4% para 35,7% como fatia do total.
+
+Antes de publicar, reler a própria medição perguntando **o que ela diz sobre
+a parte que eu não ataquei**.
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já

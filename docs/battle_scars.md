@@ -1,6 +1,6 @@
 # Battle Scars — Cotucatronics
 ### O que o firmware nos ensinou enquanto a gente o ensinava a cantar
-*Registro de aprendizados — resultados e metodologia. Atualizado ao fim da caçada do DelayMs (Búzios entregue).*
+*Registro de aprendizados — resultados e metodologia. Atualizado ao fim da caçada do shimmer ardido (suíte de cinco efeitos entregue).*
 
 ---
 
@@ -853,9 +853,128 @@ procurar no LFO ou no mix.
 
 ---
 
+## 11q. O estado que não sobrevive ao flash (20/08)
+
+Configurei o detune, gravei a placa para consertar os tetos das tabelas, e
+anunciei *"o detune está ligado e pronto"*. O dB foi tocar e não ouviu nada.
+
+Não era o efeito. Era o relato. A regravação zerou todos os params — que é
+**a regra que o próprio dB pediu** (tudo nasce em 0, ele sobe pelo Loopy). Eu
+repeti como presente um estado que era verdade antes do flash:
+
+```
+37 det_on     norm=0.00 real=0.00     ← desligado
+39 det_voices norm=0.00 real=1.00     ← uma voz
+40 det_spread norm=0.00 real=0.00     ← sem largura
+```
+
+O caminho do código estava certo, o `Mistura()` era chamado, o motor
+funcionava. Nada disso importava com a chave em zero.
+
+> **Estado de placa afirmado antes de um flash não sobrevive ao flash: ou se
+> relê depois, ou não se afirma.** Vale para qualquer estado volátil —
+> params, calibração, modo de log. A regravação é a fronteira, e afirmação
+> não a atravessa.
+
+**Corolário que virou código.** A denúncia de estouro de tabela existia desde
+a v0.70 e **não evitou a segunda ocorrência**, porque só saía no banner de
+boot — quem conecta a serial depois nunca a vê. Agora o estado das tabelas
+sai também no `board`, sob demanda:
+
+```
+tabelas: 55/64 params | 37/48 CCs
+```
+
+> **Aviso que exige estar presente na hora certa é aviso que se perde.** Todo
+> alarme de boot precisa de um gêmeo consultável a qualquer momento.
+
+---
+
+## 11r. Metade da queixa (20/08)
+
+O dB: *"tem frequências agudas, **médio-agudas** no shimmer que estão bem
+ardidas"*. Encontrei uma causa real e a consertei.
+
+**Aliasing.** Ler o buffer a `ratio 2.0` é compressão no tempo: tudo acima de
+12 kHz atravessa Nyquist e **dobra de volta inarmônico**. Medido no motor: um
+seno de 20 kHz reaparecia em **8 kHz a −11,9 dB**. E o laço fabricava isso
+sozinho — com 3500 Hz na entrada, o pico **mais alto de toda a cauda** era
+19963 Hz, que não é oitava de nada. Depois do anti-alias: **−64 dB**.
+
+Publiquei a vitória. O dB voltou: *"ainda ardido"*.
+
+A resposta estava na minha própria tabela, e eu a li como efeito colateral
+inofensivo:
+
+| | antes | depois |
+|---|---|---|
+| acima de 12 kHz | 19,2% | 1,2% |
+| **2–6 kHz** | **26,4%** | **35,7%** |
+
+A faixa médio-aguda **cresceu como fatia**. Eu tinha tirado energia de cima e
+deixado a metade médio-aguda intacta — proporcionalmente mais audível do que
+antes. O passa-baixa em 6 kHz que eu instalei **não toca em 2–6 kHz**: por
+construção, não podia consertar a metade que o dB nomeou primeiro.
+
+> **A queixa tem tantas partes quantas o dB nomeou.** Consertar uma parte e
+> medir melhora não é consertar a queixa. Antes de publicar, reler a própria
+> medição perguntando o que ela diz sobre a parte que eu *não* ataquei.
+
+---
+
+## 11s. A hipótese que a medição matou (20/08)
+
+Para a metade restante eu tinha uma hipótese boa, e o próprio código a
+endossava: o cabeçalho do `detune.h` já dizia que grãos descorrelacionados
+"somam em potência, nunca em fase" e que o caminho, se incomodasse, era
+**grão mais longo**. Emenda de fase espalha energia justo no médio-agudo.
+
+Medi antes de implementar. Seno puro de 1000 Hz, pitch ×2 — a saída ideal é
+um seno puro de 2000 Hz, e tudo fora do pico é sujeira fabricada pelo motor:
+
+| grão | sujeira |
+|---|---|
+| 50 ms | −15,8 dB |
+| 100 ms (o atual) | −25,5 dB |
+| 200 ms (buffer maior) | −36,2 dB |
+
+Dez decibéis disponíveis. Ia gastar memória para pegá-los. Antes, uma última
+medição: **planura espectral** da faixa 2–6 kHz na cauda real — próxima de 1
+é ruído, próxima de 0 é tonal.
+
+```
+cauda do shimmer:  0,009      cauda seca de reverb:  0,004
+```
+
+**Tonal.** A sujeira granular existe, mas não é o que arde — e grão de 200 ms
+até **piorou** a faixa (49,7% contra 35,7%). Hipótese morta antes de virar
+código, por uma medição de trinta segundos.
+
+O que arde é **som legítimo no lugar mais sensível do ouvido**: o 1–3 kHz da
+escultura levado a 2–6 kHz pela oitava e sustentado pelo reverb. Não é
+defeito de implementação — é o que um shimmer fiel faz.
+
+> **Contra som legítimo no lugar errado não se usa filtro de ruído: usa-se
+> EQ.** E a profundidade se escolhe contra uma **régua medida**, não de
+> ouvido: a razão (2–6 kHz)/(300–2000 Hz) da cauda *seca* é o timbre natural
+> do instrumento na sala. O shimmer dava 1,01 contra 0,28 do seco; o sino de
+> −6 dB em 3 kHz o pôs em 0,19.
+
+**Cicatriz menor, cara em tempo: cascata fraca não é filtro íngreme.** A
+primeira versão do anti-alias eram três passa-baixas de um polo. Medido:
+−25,6 dB, insuficiente. A conta explica — `y = (1−a)x + a·y` tem ganho
+`(1−a)/(1+a)` em Nyquist, que com corte em 10 kHz é apenas **−4,8 dB por
+polo**, e três já custavam −6,5 dB em 8 kHz. Fraco onde precisava cortar,
+pesado onde precisava passar. Butterworth de 6ª ordem acertou as duas pontas.
+
+> **Empilhar filtros baratos não substitui escolher a topologia certa.**
+> Medir a resposta do filtro, não presumir que a cascata soma o que se espera.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez.
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.**
 
 ---
 

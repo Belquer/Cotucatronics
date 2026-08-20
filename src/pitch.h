@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — motor de pitch compartilhado v0.4.0
+// Cotucatronics OS — motor de pitch compartilhado v0.5.0
 //
 // UM BUFFER, VARIAS VOZES. E aqui que o "compartilhado" deixa de ser
 // palavra e vira economia: shimmer no modo "ambos" precisa de +12 E +7
@@ -89,7 +89,7 @@ class PitchEngine
     void WriteMono(float x)
     {
         if(cap_ == 0) return;
-        l_[write_] = x;
+        l_[write_] = AA(x, aa_l_);
         if(++write_ >= cap_) write_ = 0;
     }
 
@@ -98,8 +98,8 @@ class PitchEngine
     void Write(float l, float r)
     {
         if(cap_ == 0) return;
-        l_[write_] = l;
-        r_[write_] = r;
+        l_[write_] = AA(l, aa_l_);
+        r_[write_] = AA(r, aa_r_);
         if(++write_ >= cap_) write_ = 0;
     }
 
@@ -111,6 +111,7 @@ class PitchEngine
         if(ratio < 0.25f) ratio = 0.25f;
         if(ratio > 4.0f)  ratio = 4.0f;
         voz_[v].ratio = ratio;
+        AtualizaAA();
     }
 
     void SetGrainMs(int v, float ms)
@@ -137,6 +138,7 @@ class PitchEngine
             }
         }
         voz_[v].ativa = on;
+        AtualizaAA();
     }
 
     bool Active(int v) const
@@ -256,6 +258,92 @@ class PitchEngine
     // Descendo (ratio<1) a leitura fica pra tras e o risco e o oposto:
     // dar a volta e encontrar material antigo demais. O buffer de 100 ms
     // cobre com folga na faixa util (0.5x a 2x).
+    // ------------------------------------------------------------
+    // ANTI-ALIAS: limite de banda NA ESCRITA, automatico.
+    //
+    // Ler o buffer a `ratio` e compressao no tempo: um parcial em f sai
+    // em ratio*f. Tudo acima de sr/(2*ratio) atravessa Nyquist e DOBRA
+    // de volta pra dentro da banda audivel — e volta INARMONICO, sem
+    // relacao com a nota tocada. Medido na bancada com ratio 2.0: um
+    // seno de 20 kHz reaparecia em 8 kHz a -11.9 dB, e no laco do
+    // shimmer um simples 3500 Hz fabricava um pico em 19963 Hz que era
+    // o MAIS ALTO de toda a cauda. Era isso o "ardido".
+    //
+    // POR QUE AQUI, E NAO NO SHIMMER: o defeito nao e do shimmer, e de
+    // ler rapido — e quem le rapido e o motor. Posto no consumidor,
+    // cada efeito futuro que puxe pitch pra cima teria que lembrar
+    // sozinho. Posto aqui, herdam calados. E a regra dos tres erros de
+    // mono/estereo: conserto sem perguntar "onde mais esta forma
+    // aparece?" reincide.
+    //
+    // CUSTO ZERO QUANDO NAO PRECISA: com todas as vozes em ratio <=
+    // 1.05 (detune, warble) o coeficiente e 0 e o filtro e um `return`.
+    // So quem sobe oitava paga.
+    // ------------------------------------------------------------
+    // POR QUE BUTTERWORTH, E NAO UM POLO EM CASCATA. A primeira versao
+    // usava tres passa-baixas de um polo. MEDIDO: derrubou a dobra de
+    // -11.9 para -25.6 dB — melhor, e insuficiente. A conta explica:
+    // `y = (1-a)x + a*y` tem ganho (1-a)/(1+a) em Nyquist, que com
+    // corte em 10 kHz e apenas -4.8 dB POR POLO. Tres davam 14 dB no
+    // agudo e ja custavam -6.5 dB em 8 kHz: fraco onde tinha que
+    // cortar, pesado onde tinha que deixar passar.
+    //
+    // Butterworth de 6a ordem (tres biquads) e plano ate ~8 kHz
+    // (-0.3 dB) e cai 36 dB/oitava depois. Mesma familia de custo, as
+    // duas pontas certas.
+    struct Biq
+    {
+        float b0 = 1.f, b1 = 0.f, b2 = 0.f, a1 = 0.f, a2 = 0.f;
+        float z1 = 0.f, z2 = 0.f;
+
+        float Process(float x)
+        {
+            const float y = b0 * x + z1;
+            z1 = b1 * x - a1 * y + z2;
+            z2 = b2 * x - a2 * y;
+            return y;
+        }
+        void Ajusta(float fc, float sr, float q)
+        {
+            const float w  = 6.283185307179586f * fc / sr;
+            const float cw = std::cos(w), sw = std::sin(w);
+            const float al = sw / (2.f * q);
+            const float a0 = 1.f + al;
+            b0 = (1.f - cw) * 0.5f / a0;
+            b1 = (1.f - cw) / a0;
+            b2 = b0;
+            a1 = (-2.f * cw) / a0;
+            a2 = (1.f - al) / a0;
+        }
+    };
+
+    void AtualizaAA()
+    {
+        float rmax = 1.f;
+        for(int v = 0; v < kMaxVoices; v++)
+            if(voz_[v].ativa && voz_[v].ratio > rmax) rmax = voz_[v].ratio;
+        if(rmax == aa_ratio_) return;   // so recalcula quando muda
+        aa_ratio_ = rmax;
+        aa_on_    = (rmax > 1.05f);
+        if(!aa_on_) return;
+        // 0.42 e nao 0.5: a margem paga a transicao do filtro.
+        const float fc = 0.42f * sr_ / rmax;
+        // Q das tres secoes de um Butterworth de ordem 6.
+        static const float kQ[3] = {0.5176f, 0.7071f, 1.9319f};
+        for(int k = 0; k < 3; k++)
+        {
+            aa_l_[k].Ajusta(fc, sr_, kQ[k]);
+            aa_r_[k].Ajusta(fc, sr_, kQ[k]);
+        }
+    }
+
+    float AA(float x, Biq* s)
+    {
+        if(!aa_on_) return x;
+        for(int k = 0; k < 3; k++) x = s[k].Process(x);
+        return x;
+    }
+
     float Partida(int v)
     {
         const Voz&  z    = voz_[v];
@@ -307,6 +395,10 @@ class PitchEngine
     float    sr_   = 48000.f;
     uint32_t rng_  = 0x9E3779B9u;
     float    jitter_ = kJitterFrac;
+    bool     aa_on_    = false;  // false = nenhuma voz sobe, filtro fora
+    float    aa_ratio_ = 1.f;
+    Biq      aa_l_[3];
+    Biq      aa_r_[3];
     Voz      voz_[kMaxVoices];
 };
 

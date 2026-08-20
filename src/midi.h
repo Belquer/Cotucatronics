@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.3.0
+// Cotucatronics OS — midi v0.4.0
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -31,7 +31,10 @@ constexpr int kMidiOmni    = -1;
 //
 // A suite de efeitos traz ~12 CCs a mais. Teto apertado transforma
 // cada efeito novo em corrupcao de memoria silenciosa.
-constexpr int kMaxMidiMap  = 32; // entradas na tabela CC→param
+// 48. Estourou DE NOVO: 36 entradas contra teto de 32, e os quatro CCs
+// do SHIMMER foram recusados em silencio — o efeito continuava tocando
+// e nenhum controle dele respondia.
+constexpr int kMaxMidiMap  = 48; // entradas na tabela CC→param
 constexpr int kMidiHistory = 8;  // últimos CCs guardados pro `midi`
 
 // 0–127 → 0.0–1.0. Divide por 127, não por 128: o valor máximo do

@@ -32,15 +32,15 @@ e o custo de cada adição fica invisível até algo quebrar.
 | Feature | Params | CC | Estado |
 |---|---|---|---|
 | **Fonte** — crossfade piezo/jack + tom de teste | `src_mix`, `tone_freq`, `tone_mix` | — | ativo (`src_mix` fora do MIDI por segurança) |
-| **Ganho de entrada** | `in_gain` | 21 | ativo |
+| **Ganho de entrada** | `in_gain` | 21 | ativo · ⚠️ **8,0 = 18 dB**, e picos de entrada nunca foram lidos sob material real |
 | **Gate** | `gate_thresh`, `gate_release` | 30 | ativo |
 | **Delay** (RNBO, slot Instrument) | `dly_time`, `dly_mix` | 22, 23 | ✅ certificado T5 |
 | **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |
 | **Drive** (shell) — waveshaper tanh como cola | `drv_on`, `drv_drive`, `drv_tone`, `drv_mix` | 38–41 | ✅ **aprovado** 18/08 · +21 µs |
 | **Phaser** (shell) — N allpass varridos por LFO | `phs_on`, `phs_rate`, `phs_depth`, `phs_feedback`, `phs_stages`, `phs_mix` | 42–47 | ✅ **aprovado** 18/08 · +26 µs · ⚠️ `phs_mix` é MONTANHA: pico em ~50%, topo tira o notch |
 | **Warble** (shell) — deriva de fita, delay curto modulado | `wrb_on`, `wrb_rate`, `wrb_depth`, `wrb_irreg` | 48–51 | ✅ **aprovado** 18/08 · +14 µs · 16 cents medidos |
-| **Detune** (shell) — 2 vozes micro-desafinadas + largura | `det_on`, `det_cents`, `det_voices`, `det_spread`, `det_mix` | 52–56 | ⏳ aceite pendente · ~52 µs/voz |
-| **Shimmer** (shell) | `shm_on`, `shm_mix`, `shm_shift`, `shm_feedback` | 33, 37, 36, 35 | 🎵 aprovado de ouvido · cauda de 2 s na saída |
+| **Detune** (shell) — 2 vozes micro-desafinadas + largura | `det_on`, `det_cents`, `det_voices`, `det_spread`, `det_mix` | 52–56 | ✅ **aprovado** 20/08 · +125 µs (o mais caro da suíte) |
+| **Shimmer** (shell) | `shm_on`, `shm_mix`, `shm_shift`, `shm_feedback`, `shm_tone` | 33, 37, 36, 35, **57** | ✅ **aprovado** 20/08 · cauda de 2 s · `shm_tone` **sobe pra clarear**: 0 = sino −6 dB em 3 kHz + corte 6 kHz, 1 = aberto até 18 kHz |
 | **Reverb** Freeverb (shell, moldura) | `rev_mix`, `rev_size`, `rev_damp` | 24, 25, 26 | ✅ certificado T14a |
 | **Passa-alta do Fx2** | `fx2_hp` | — | ⏸ inativo enquanto o slot Fx2 estiver vazio |
 | **Governor / limiter / gate de saída** | `gov_ceiling`, `gov_release` | — | ativo (fora do MIDI por segurança) |
@@ -88,7 +88,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 ## Checklist antes de acrescentar feature nova
 
 - [ ] **Li esta página inteira?** Alguma feature vigente já faz parte disto?
-- [ ] Quantos **params** e **CCs** ela adiciona? Cabem nos tetos? (o boot diz)
+- [ ] Quantos **params** e **CCs** ela adiciona? Cabem nos tetos? (o boot diz, e o `board` repete sob demanda — alarme só no banner se perde)
 - [ ] Ela **aposenta** alguma coisa? Se sim, a aposentada vai pro arquivo **no
       mesmo commit**
 - [ ] Ela é **CTOS** ou **Efeito**? (mapa do `docs/CTOS.md` §5)
