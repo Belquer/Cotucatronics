@@ -32,19 +32,45 @@ e o custo de cada adição fica invisível até algo quebrar.
 | Feature | Params | CC | Estado |
 |---|---|---|---|
 | **Fonte** — crossfade piezo/jack + tom de teste | `src_mix`, `tone_freq`, `tone_mix` | — | ativo (`src_mix` fora do MIDI por segurança) |
-| **Ganho de entrada** | `in_gain` | 21 | ativo · nasce em **1,0×**, faixa 1–8× com curva quadrática |
-| **Balanço dos piezos** (shell) — dois piezos em IN_L/IN_R, soma mono | `piezo_mix` | **58** | ⏳ **entregue 20/08, aceite pendente** · centro = ambos cheios · ~2 ganhos/amostra |
+| **Ganho de entrada** por cadeia | `in_gain_a`, `in_gain_b` | 21, **50** | ativo · nasce em **1,0×**, faixa 1–8× com curva quadrática |
+| **Mix entre as CADEIAS** (shell) | `piezo_mix` | **58** | ⏳ aceite pendente · **mudou de posição no pivô**: era balanço na entrada entre sinais crus, agora mistura as duas cadeias já processadas. Lei igual: centro = as duas cheias |
+| **Tom de teste: destino** | `tone_dest` | — | ✅ 20/08 · 0=A · 1=B · **2=AMBAS (default)** · injetado **depois do gate**, senão o gate corta o próprio tom e você mede o gate |
 | **Histograma de entrada** por canal | — | — | ✅ 20/08 · `hist` / `hist reset` · baldes de 6 dB pelo expoente do float, cru **e** pós-`in_gain`, clip com latch, e o dB que falta tirar pro atenuador · +27 µs |
 | **Teto de soma do CTOS** | ordem em `Manifest::sacrif[]` | aviso no **CC 119** | ✅ **20/08, três testes passados** · irmão do watchdog por-efeito: pega N efeitos saudáveis que juntos não cabem · prioridade declarada a frio, não LIFO · `ctos teto <us>` simula · +14 µs |
-| **Gate** | `gate_thresh`, `gate_release` | 30 | ativo |
+| **Gate** por cadeia | `gate_thresh_{a,b}`, `gate_release_{a,b}` | 30, **51** | ativo · duplicado por **material**, não por desequilíbrio: o piezo do tambor lê transiente curto, o da mola lê raspagem contínua |
 | **Delay** (RNBO, slot Instrument) | `dly_on`, `dly_time`, `dly_mix` | **60**, 22, 23 | ✅ certificado T5 · `dly_on` mistura pro seco e o módulo **segue rodando**: RNBO é opaco, e pular o `Process()` deixaria a linha rançosa |
 | **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |
-| **Drive** (shell) — waveshaper tanh como cola | `drv_on`, `drv_drive`, `drv_tone`, `drv_mix` | 38–41 | ✅ **aprovado** 18/08 · +21 µs |
-| **Phaser** (shell) — N allpass varridos por LFO | `phs_on`, `phs_rate`, `phs_depth`, `phs_feedback`, `phs_stages`, `phs_mix` | 42–47 | ✅ **aprovado** 18/08 · +26 µs · ⚠️ `phs_mix` é MONTANHA: pico em ~50%, topo tira o notch |
-| **Warble** (shell) — deriva de fita, delay curto modulado | `wrb_on`, `wrb_rate`, `wrb_depth`, `wrb_irreg` | 48–51 | ✅ **aprovado** 18/08 · +14 µs · 16 cents medidos |
-| **Detune** (shell) — 2 vozes micro-desafinadas + largura | `det_on`, `det_cents`, `det_voices`, `det_spread`, `det_mix` | 52–56 | ✅ **aprovado** 20/08 · +125 µs (o mais caro da suíte) |
+| **Drive** ×2 (uma por cadeia) | `drv_on_{a,b}`, `drv_drive_{a,b}` (primário), `drv_tone`, `drv_mix` | **38,39** / **44,45** · secundários por `set` | ⏳ **reaceite pendente na nova posição** (IFÁ10000 não se herda) · +21 µs cada |
+| **Phaser** ×2 | `phs_on_{a,b}`, `phs_rate_{a,b}` (primário), demais por `set` | **40,41** / **46,47** | ⏳ **reaceite pendente** · +26 µs cada · ⚠️ `phs_mix` é MONTANHA: pico em ~50% |
+| **Warble** ×2 | `wrb_on_{a,b}`, `wrb_depth_{a,b}` (primário), demais por `set` | **42,43** / **48,49** | ⏳ **reaceite pendente** · +14 µs cada · 16 cents medidos |
 | **Shimmer** (shell) | `shm_on`, `shm_mix`, `shm_shift`, `shm_feedback`, `shm_tone` | 33, 37, 36, 35, **57** | ✅ **aprovado** 20/08 · cauda de 2 s · `shm_tone` **sobe pra clarear**: 0 = sino −6 dB em 3 kHz + corte 6 kHz, 1 = aberto até 18 kHz |
 | **Reverb** Freeverb (shell, moldura) | `rev_on`, `rev_mix`, `rev_size`, `rev_damp` | **61**, 24, 25, 26 | ✅ certificado T14a · ⚠️ `rev_on` em 0 **emudece o shimmer junto** (ele realimenta este reverb) — o `board` declara |
+
+> ### 🔀 PIVÔ DE ARQUITETURA em curso (20/08) — duas cadeias de caráter
+>
+> Os instrumentos híbridos (tambor + corda + molas no mesmo corpo) pedem
+> tratamento diferente por material. Decisão do dB:
+>
+> ```
+> p1 → [DRIVE · PHASER · WARBLE] ┐
+>                                 ├→ MIX → [DELAY · FREEZE · SHIMMER↺REVERB]
+> p2 → [DRIVE · PHASER · WARBLE] ┘        → OUT_WIDTH → split
+>      caráter: DUPLICADO                  espaço: COMPARTILHADO
+> ```
+>
+> A cauda fica única de propósito: é o que faz tambor e corda soarem como
+> **o mesmo objeto**. Duplicar shimmer e reverb separaria o que
+> musicalmente deve unir — e são justamente os mais caros.
+>
+> **`piezo_mix` muda de posição:** sai da entrada e vira o balanço entre as
+> duas cadeias **já processadas**.
+>
+> Cada efeito duplicado passa pelo **IFÁ10000 na nova posição** — não herda
+> o aceite da cadeia antiga (regra herdada tem pré-condição, cicatriz 11z).
+>
+> Ordem: (a) detune fora ✅ · (b) infraestrutura das duas cadeias + mix,
+> medir CPU · (c) teto de CC **e de params** resolvido no desenho · (d)
+> aceite de ouvido no instrumento híbrido · (e) painel físico · (f) OLED.
 | **Passa-alta do Fx2** | `fx2_hp` | — | ⏸ inativo enquanto o slot Fx2 estiver vazio |
 | **Governor / limiter / gate de saída** | `gov_ceiling`, `gov_release` | — | ativo (fora do MIDI por segurança) |
 | **Shifter SSB** | `shift_hz` | — | ✅ certificado T8, desligado (espera o exciter) |
@@ -87,6 +113,8 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Regra "reparear após todo RESET"** | 18/08 | **revogada por medição** — o pareamento sobrevive ao reset. Nasceu de um log que eu mesmo silenciei | — |
 | **Quarentena que DESCARTA** | 18/08 | as duas decisões acima mataram a ameaça; ela passou a descartar a inicialização legítima | rebaixada a sensor, não removida |
 | **Filtro de plausibilidade por magnitude** no watchdog | 18/08 | descartava a catástrofe junto com o ruído | removido; a causa (relógio) foi consertada |
+| **Rota de teste isolada do motor de pitch** | 20/08 | custava uma **instância inteira do `PitchEngine` — 153,6 KB de SDRAM** — só para bancada. Com o detune fora do build, o único consumidor real virou o shimmer, que vive na cauda e tem instância própria. **Instrumentação é código de produção e paga custo de produção:** uma sonda que custa uma instância precisa justificar-se por uso corrente, não por conveniência histórica | reinstanciar `PitchEngine` + `EffectSlot` e o bloco 1.6 do `AudioCb` (marcado como vago no fonte) se/quando um segundo consumidor de pitch entrar numa cadeia. Os tunáveis `pitch grain` e `pitch jitter` **não** foram junto: seguem agindo na instância da cauda |
+| **Detune** (shell) — 2 vozes micro-desafinadas + largura | 20/08 | **decisão de ouvido do dB: _"o warble só já está bom"_.** O warble cobre o mesmo território — modulação de altura — e o detune custava **+125 µs, cinco vezes o phaser**, o efeito mais caro da suíte. Custo desproporcional ao que acrescentava sobre algo que já estava lá. Foi **aprovado de ouvido em 20/08 e aposentado no mesmo dia**, e isso é legítimo: aprovar responde *"isto funciona?"*, a arquitetura responde *"isto vale o lugar que ocupa?"* | `detune.h` v0.1.0 segue no repo, **intacto**. Reviver: (1) `#include "detune.h"` no `main.cpp` — o comentário que ficou no lugar do include explica; (2) declarar `Detune detune`, `EffectSlot detune_slot` e uma **terceira** instância de `PitchEngine`, 153,6 KB de SDRAM; (3) o bloco de processamento ia em **4.3, pós-módulo** — a posição está marcada como vaga no fonte e é obrigatória: antes dela a cadeia é mono, e sem estéreo não há `spread`; (4) manifest: 5 params + `AddMidi` em **52–56, que ficaram livres**; (5) recolocar no índice 0 da ordem de sacrifício |
 
 ---
 

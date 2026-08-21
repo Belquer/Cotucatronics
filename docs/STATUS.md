@@ -278,24 +278,59 @@ custou **+14 µs**.
 
 ---
 
+## Pivô de 20/08 — duas cadeias de caráter, medido
+
+```
+p1 → in_gain_A → gate_A → [DRIVE·PHASER·WARBLE] ┐
+                                                 ├→ MIX → [DELAY·FREEZE·SHIMMER↺REVERB]
+p2 → in_gain_B → gate_B → [DRIVE·PHASER·WARBLE] ┘   → level → OUT_WIDTH → split
+```
+
+Firmware **v0.91.0** · **71/96 params · 36/48 CCs** · SDRAM liberada: 153,6 KB.
+
+| | µs |
+|---|---|
+| tudo ligado | **620 média / 663 pico (66%)** |
+| base (nada ligado) | 160 |
+| os seis de caráter | ~130 (90 o primeiro a ligar, 38 o segundo — I-cache) |
+| cauda (reverb 99 + freeze 69 + shimmer 202) | 370 |
+
+**A assimetria entre cadeias era I-cache, não código.** Quem liga primeiro
+paga ~90, quem liga depois ~38, seja qual for a cadeia — três corridas
+concordantes com a ordem invertida. As duas cadeias são simétricas.
+
+**A base decomposta matou o caso de otimização:** dos 182 µs originais, o
+desperdício real eram os dois gates com o portão aberto. Módulo do delay (45),
+osso da dinâmica (94), medição (15) e escritas do warble (7) estão todos
+fazendo algo. Guarda `thresh > 0` implementado — **26–30 µs medidos A/B no
+mesmo binário**.
+
+**Aberto:** aceite de ouvido no instrumento híbrido, e IFÁ10000 dos seis
+efeitos nas novas posições (não herdam o aceite da cadeia antiga).
+
+---
+
 ## Defeitos abertos
 
-**🔴 O p1 satura o conversor — e era isso o "p2 sem som".** Medido 20/08
-com o dB tocando, entrada crua:
+**🟡 A entrada satura NO REGIME "DEDO NO DISCO SOLTO" — e só nele, até
+segunda ordem.** Medido 20/08, entrada crua:
 
 ```
 IN_L (p1): pico 1.00000 =  -0.0 dBFS |  42 365 amostras | clip 65
 IN_R (p2): pico 0.46398 =  -6.7 dBFS | 244 237 amostras | clip 0
 ```
 
-O p2 **não está mudo**: entrega −6.7 dBFS e tem quase 6× mais amostras ativas
-que o p1. O p1 é que bate no teto do conversor (65 amostras em clip) ANTES de
-qualquer ganho de firmware, e ocupa todo o espaço. É literalmente "um encobre
-o outro" — o caso que o `piezo_mix` existe para resolver.
+O p2 **não está mudo**: entrega sinal nos dois canais.
 
-**Medido depois: OS DOIS grampeiam.** Batendo no p2 com `in_gain` em 1,0×,
-o p2 crava em 0 dBFS com 252–542 amostras em clip e o p1 cai para −55 dBFS.
-Batendo no p1, o inverso. Não é um transdutor desregulado — é o par.
+> **CORRIGIDO 20/08 — a assimetria era DEFEITO FÍSICO de um piezo**, não do
+> circuito nem do canal. Trocados de lugar, p1 e p2 chegam exatamente iguais.
+> O que separou as hipóteses foi **permutar os transdutores**, não medir mais
+> fundo: nenhuma medição elétrica distingue "este canal atenua" de "este
+> transdutor entrega menos". Ver cicatriz 12b.
+
+**Medido depois: OS DOIS grampeiam** quando batidos direto — e isso vale, com
+a ressalva de regime abaixo. Batendo no p2, ele crava em 0 dBFS e o p1 cai para
+−55 dBFS; batendo no p1, o inverso.
 
 **Pico grampeado não dimensiona atenuador.** A medição satura em 0 dBFS e o
 pico real é "pelo menos isso". O `hist` passou a RECUSAR dar o número nesse
@@ -311,21 +346,46 @@ grampo; o WM8731 não tem setter no libDaisy. O divisor físico é obrigatório.
 piezos em −6 batidos juntos dão 0 dBFS. A folga é o espaço da soma — já visível
 no histograma, que marcou 253 clips pós-ganho contra 252 no IN_R.
 
+> ### ⚠️ VALIDADE DESTES NÚMEROS: o regime é parte do dado
+>
+> Tudo acima veio de **dedo direto no disco solto** — piezo desacoplado,
+> excitado por contato. **Não é o regime de uso.** A mesma pastilha colada
+> na escultura, excitada pela vibração dela, entrega outra coisa e
+> provavelmente muito menos: contato direto num disco livre é o caso mais
+> violento que um piezo encontra.
+>
+> Registrei "a entrada satura" sem qualificar o regime — que é afirmar,
+> sobre o instrumento montado, uma medição que nunca o tocou. **Nenhuma
+> decisão de hardware sai daqui.**
+>
+> O que estes números provam, e segue valendo: **o caminho de sinal
+> funciona nos dois canais** (o p2 nunca esteve mudo), e o `hist` mede o
+> que se pede dele.
+
 **Plano do dB, 8 passos — BLOQUEADO NO PASSO 2.**
 
 | # | Quem | O quê | Estado |
 |---|---|---|---|
 | 1 | Code | histograma de entrada (`hist`) | ✅ **feito** — v0.82.2, commit `8e06635` |
-| 2 | dB | medir o pico com atenuação provisória | 🔴 **bloqueado: faltam resistores de megaohm** (lab) |
-| 3 | dB | divisor 10:1 em protoboard (90k/10k = −20 dB) | ⏳ |
-| 4 | Code + dB | confirmar pico ~−6 dBFS sem clip | ⏳ |
-| 5 | dB | soldar definitivo, comutável 0/−6/−12 por piezo | ⏳ |
-| 6 | dB | recalibrar `in_gain` sobre sinal limpo | ⏳ |
+| 2 | dB | montar **só a proteção** — 1 kΩ em série + 2× 1N4148 em grampo. **Ganho intacto**: não é atenuador, é rede de segurança do ADC | ⏳ |
+| 3 | dB | instalar os piezos **na escultura** e tocar normal | ⏳ |
+| 4 | Code + dB | `hist reset` · tocar · `hist` — **medir no regime real** | ⏳ |
+| 5 | dB | **atenuador só se clipar tocando.** Se não clipar, os passos de divisor caem fora | ⏳ **condicional** |
+| 6 | dB | recalibrar `in_gain` sobre o sinal limpo | ⏳ |
 | 7 | Code | esticar a faixa do `in_gain` se 8× virar teto | ⏳ — decisão de desenho aberta: esticar a faixa muda o significado de todos os CCs já decorados |
 | 8 | dB | reconfirmar os cinco efeitos | ⏳ — o aceite do `piezo_mix`/`out_width` cai aqui |
 
-**Nada do passo 3 em diante avança sem o divisor.** O diagnóstico está
-completo e a ferramenta está commitada; o que falta é peça física.
+**O plano mudou de FORMA em 20/08, e a mudança é de método.** A versão
+anterior ia direto dimensionar um atenuador a partir de uma medição de dedo no
+disco solto. Agora: **proteção primeiro** — que não mexe no ganho e é barata —
+depois instrumento montado, depois medição no regime real. O atenuador entra
+**só se a medição de verdade pedir**.
+
+Dimensionar antes de medir no regime certo seria resolver um problema que
+talvez não exista, com um número que com certeza não valia. E o efeito
+colateral é bom: a proteção serve **de qualquer jeito**, clipando ou não —
+piezo entrega dezenas de volts num transiente forte, e o grampo protege o ADC
+independentemente da decisão de nível.
 
 **CORRIGIDO 20/08:** o `in_gain` **não** nasce em 8,0. O default é **1,0×**
 (faixa 1–8×, curva quadrática), escrito na mesma linha do `Add()`. O 8,0 que

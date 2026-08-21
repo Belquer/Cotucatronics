@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.7.0
+// Cotucatronics OS — params v0.9.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -35,7 +35,15 @@ constexpr int kNumKnobs = 5;
 // A denuncia no boot funcionou — e ninguem leu, porque a serial foi
 // conectada depois do banner. Por isso a versao e o estado das tabelas
 // tambem saem no `board`, que pode ser pedido a qualquer momento.
-constexpr int kMaxParams       = 64;
+// 96. Terceiro estouro previsto — e o primeiro RESOLVIDO NO DESENHO em
+// vez de no acidente. O pivo de 20/08 (duas cadeias de caracter) leva a
+// 71 params, e o painel fisico e os presets vem depois. Custo de subir:
+// 6 arrays x 32 entradas x 4 bytes = 768 bytes de SRAM.
+//
+// Estouro de capacidade e defeito de PROJETO. Duas vezes ele foi
+// descoberto por uma feature que sumiu calada; desta vez a conta foi
+// feita ANTES de escrever o manifest.
+constexpr int kMaxParams       = 96;
 constexpr int kMaxMacroTargets = 4;
 
 inline float Clamp01(float v)

@@ -63,7 +63,16 @@ instrumento precisa voltar aos defaults antes de qualquer leitura.
 Toda medição registra, por escrito, antes de rodar:
 
 - **unidade**: µs? % de que prazo? RMS, pico ou norm? real ou normalizado?
-- **regime**: estreia ou permanente?
+- **regime TEMPORAL**: estreia ou permanente?
+- **regime FÍSICO**: como o sinal está sendo produzido? Um transdutor solto,
+  batido por contato direto, é outro instrumento que o mesmo transdutor
+  montado e excitado por vibração. Medi a entrada com **dedo no disco solto**
+  e registrei "a entrada satura" — afirmação sobre o instrumento montado,
+  feita com uma medição que nunca o tocou (cicatriz 12a).
+
+> **O regime é parte do dado, não contexto do dado.** Um número sem regime
+> declarado não é medição incompleta: é medição cuja validade ninguém pode
+> julgar, inclusive quem a fez.
 - **contexto**: qual bloco (48/256), qual clock, `-O2` ou `-O3`?
 - **material**: qual sinal está entrando (ver etapa 6 do IFÁ10000)?
 
@@ -80,6 +89,17 @@ somados e não separa nenhum.
 - **A sessão de leitura não escreve nada.**
 - `bb arm` silencia o log até `log on` (ou reset). Está declarado no
   cabeçalho dos comandos de status a partir da v0.39.0.
+
+## 5b. Antes de dimensionar, confirmar que o problema existe no regime real
+
+Dimensionar cedo é resolver um problema que talvez não exista, com um número
+que com certeza não vale.
+
+Quando há medição pendente, a ordem certa é fazer primeiro **o que serve para
+os dois desfechos possíveis**. Caso (20/08): antes de dimensionar atenuador
+para uma saturação medida fora do regime de uso, entra a **proteção** — que não
+mexe no ganho, protege o ADC clipando ou não, e não depende do resultado da
+medição.
 
 ## 6. Antes de gastar código numa hipótese, a medição que a MATARIA
 

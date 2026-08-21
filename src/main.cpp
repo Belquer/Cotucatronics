@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.85.1 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.91.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.85.1"
+#define COTUCA_OS_VERSION "0.91.0"
 
 #include "hal.h"
 #include "params.h"
@@ -20,7 +20,10 @@
 #include "drive.h"
 #include "phaser.h"
 #include "warble.h"
-#include "detune.h"
+// detune.h NAO e incluido: o efeito saiu do build em 20/08 (decisao de
+// ouvido do dB — o warble ja cobre o territorio de modulacao de altura,
+// e o detune custava 125 us, cinco vezes o phaser). O arquivo segue no
+// repo, intacto e revivivel. Ver docs/FEATURES.md, secao Arquivo.
 #include "suave.h"
 #include "midi.h"
 #include <cstdio>
@@ -458,9 +461,6 @@ static constexpr float kFreezeSeconds = 2.0f;
 // 100 ms basta pra faixa util (0.5x a 2x): subindo uma oitava, a
 // leitura se aproxima da gravacao em um grao por grao, e a folga de
 // partida cobre isso com margem. 9600 floats = 38 KB.
-static cotuca::PitchEngine pitch;
-static bool                pitch_ok  = false;
-static float*              pitch_mem = nullptr;
 // 400 ms, nao 100. Os 100 ms cobriam o MINIMO pra leitura nao alcancar
 // a gravacao, e isso travava o grao em 25 ms (teto cap/4). Duas razoes
 // independentes pedem grao longo, e as duas apareceram no mesmo dia:
@@ -480,10 +480,6 @@ static constexpr float     kPitchSeconds = 0.40f;
 // substitui o sinal pela leitura deslocada, 100% molhado, pra medir a
 // frequencia de saida por FFT. Nao e caminho de producao — o shimmer
 // so entra depois que isto passar.
-static volatile bool  pitch_test  = false;
-static volatile float pitch_ratio = 2.0f;
-static volatile float pitch_pk_in  = 0.f;
-static volatile float pitch_pk_out = 0.f;
 
 // PECA 2 EM VALIDACAO: o motor de pitch e o primeiro efeito a rodar
 // dentro de um EffectSlot. Escolhido em vez do freeze porque o freeze
@@ -494,7 +490,6 @@ static volatile float pitch_pk_out = 0.f;
 // O slot entrega tres coisas de uma vez: fade sem clique, custo ZERO
 // desligado, e a cronometragem por efeito que faltava (o `ctos` media
 // so o freeze).
-static cotuca::EffectSlot pitch_slot;
 
 // ---- SHIMMER: motor PROPRIO, no ponto de derivacao da cauda ----
 //
@@ -510,30 +505,23 @@ static cotuca::EffectSlot  shimmer_slot;
 
 // DRIVE — primeiro da cadeia, zero memoria. Fecha a classe "sem
 // historico" e valida o EffectSlot nela.
-static cotuca::Drive      drive;
 static cotuca::EffectSlot drive_slot;
 
 // PHASER — depois do drive, antes do delay. Zero buffer, mas N
 // multiplicacoes por amostra: a regua do drive vale, trabalho nao e
 // memoria. `bypass_style: cut` — sem cauda, corta seco (nao ha nada
 // decaindo pra deixar terminar).
-static cotuca::Phaser     phaser;
 static cotuca::EffectSlot phaser_slot;
 
 // WARBLE — deriva de fita. Buffer minusculo (40 ms mono = 7,5 KB), em
 // SRAM: acesso e uma leitura interpolada por amostra, perto da cabeca
 // de escrita, entao cabe na cache sem esforco.
-static cotuca::Warble     warble;
 static cotuca::EffectSlot warble_slot;
 
 // DETUNE — motor PROPRIO no ponto pos-modulo. Terceiro ponto de
 // derivacao (seco / cauda do reverb / pos-modulo), e o unico dos cinco
 // que consome DUAS vozes do mesmo buffer: o caso que o "compartilhado"
 // previa desde o desenho.
-static cotuca::PitchEngine pitch_det;
-static bool                pitch_det_ok  = false;
-static float*              pitch_det_mem = nullptr;
-static cotuca::Detune      detune;
 // I/O: balanco da entrada e largura da saida. Nascem no NEUTRO (1.0)
 // pra nao produzirem um fade-in de estreia que ninguem pediu.
 static cotuca::Suave       suave_gl, suave_gr, suave_width;
@@ -647,9 +635,29 @@ static inline int Balde(float a)
     if(b >= kNBaldes) b = kNBaldes - 1;             // fundo
     return b;
 }
-static cotuca::EffectSlot  detune_slot;
-static bool               warble_ok = false;
-alignas(32) static float  warble_mem[1924];
+// ---- DUAS CADEIAS DE CARATER, UMA POR PIEZO ----
+//
+// Cada piezo capta um MATERIAL diferente do instrumento hibrido: o do
+// tambor le transientes curtos e fortes, o da mola/corda le raspagem
+// continua de baixo nivel. Diferenca de FONTE, nao de transdutor — vale
+// com dois piezos perfeitamente casados. Ver a nota longa no manifest.
+//
+// A CAUDA NAO DUPLICA (delay, freeze, shimmer, reverb): e ela que faz
+// tambor e corda soarem como o MESMO OBJETO. Duplicar separaria o que o
+// desenho existe pra unir — e sao justamente os mais caros.
+struct Cadeia
+{
+    cotuca::Gate       gate;
+    cotuca::Drive      drive;
+    cotuca::Phaser     phaser;
+    cotuca::Warble     warble;
+    cotuca::EffectSlot drive_slot, phaser_slot, warble_slot;
+    bool               warble_ok = false;
+    float              buf[kMaxBlock];
+};
+static Cadeia cad[cotuca::Manifest::kCadeias];
+alignas(32) static float warble_mem[cotuca::Manifest::kCadeias][1924];
+static float             tone_buf[kMaxBlock];
 static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 
 // BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
@@ -888,7 +896,6 @@ static float    RandNorm()
 }
 
 // ---- cadeia de dinâmica do shell ----
-static cotuca::Gate     gate;
 static cotuca::Governor gov_l; // só no ramo OUT_L (exciter)
 static cotuca::Limiter  lim_l; // um por ramo: estados independentes
 static cotuca::Limiter  lim_r;
@@ -970,15 +977,8 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 {
     const float level = params.Real(manifest.p_level);
     const float mix   = params.Real(manifest.p_tone_mix);
-    // BALANÇO dos dois piezos, aplicado ANTES de qualquer
-    // processamento — é a fonte do instrumento, não um efeito.
-    //   centro (0) = os dois cheios
-    //   +1 = só IN_R    -1 = só IN_L
-    // Um lado abaixa, o outro NÃO SOBE nem desce: é isso que separa
-    // balanço de crossfade, e é o que resolve "um encobre o outro".
-    const float bal      = params.Real(manifest.p_piezo_mix);
-    const float alvo_gl  = 1.f - (bal > 0.f ?  bal : 0.f);
-    const float alvo_gr  = 1.f - (bal < 0.f ? -bal : 0.f);
+    // O balanco dos piezos saiu daqui no pivo de 20/08: ele agora mistura
+    // as duas cadeias JA PROCESSADAS, no bloco 2.
     OscSetFreq(params.Real(manifest.p_tone_freq),
                cotuca::hal::Info().sample_rate);
 
@@ -1013,33 +1013,164 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             hist_r[Balde(ar)]++;
         }
 
-    // 1) FONTE — BALANÇO das duas entradas + tom de teste por cima.
-    //    O tom entra aqui, antes do módulo, pra poder ser a fonte do
-    //    eco no teste de bancada.
-    for(size_t i = 0; i < size; i++)
+    // 1) DUAS CADEIAS DE CARATER — uma por piezo, em paralelo.
+    //
+    //   p1 -> in_gain_A -> gate_A -> [DRIVE PHASER WARBLE] -\
+    //                                                        MIX -> cauda
+    //   p2 -> in_gain_B -> gate_B -> [DRIVE PHASER WARBLE] -/
+    //
+    // O gate e o ganho duplicam pelo mesmo motivo dos efeitos: um limiar
+    // que deixa a raspagem da mola passar abre demais pro tambor.
+
+    // TOM DE TESTE gerado UMA VEZ. Chamar OscProcess() por cadeia
+    // avancaria a fase duas vezes por amostra e dobraria a frequencia —
+    // o oscilador tem estado, e estado nao se consome em duplicata.
+    const int dest_tom = (int)(params.Real(manifest.p_tone_dest) + 0.5f);
+    if(mix > 0.f)
+        for(size_t i = 0; i < size; i++) tone_buf[i] = OscProcess();
+
+    for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
     {
-        // Ganhos suavizados por amostra: o CC tem 7 bits e o degrau
-        // de um passo é audível como clique num ganho de entrada.
-        const float gl   = suave_gl.Passo(alvo_gl);
-        const float gr   = suave_gr.Passo(alvo_gr);
-        const float dry  = has_in ? (in[0][i] * gl + in[1][i] * gr) : 0.f;
-        const float tone = OscProcess();
-        src_buf[i]       = dry * (1.f - mix) + tone * mix;
+        Cadeia&      k = cad[c];
+        float* const b = k.buf;
+
+        // 1.1) ENTRADA + GANHO
+        const float ig = params.Real(manifest.p_in_gain[c]);
+        for(size_t i = 0; i < size; i++)
+            b[i] = has_in ? in[c][i] * ig : 0.f;
+
+        // 1.2) GATE — por cadeia
+        // CUSTO ZERO COM O PORTAO ABERTO. `thresh` em 0 e o default e
+        // significa portao escancarado: o gate processa cada amostra
+        // pra devolve-la igual. MEDIDO: 15 us por bloco pros dois, sem
+        // efeito audivel nenhum. Duplicar a cadeia duplicou tambem esse
+        // desperdicio, e foi so ai que ele apareceu.
+        //
+        // O `gain` fica em 1.0 enquanto isso, entao religar o gate nao
+        // encontra estado velho — nao ha o problema de buffer rancoso
+        // que impede o mesmo truque no warble e no modulo.
+        const float thr = params.Real(manifest.p_gate_thresh[c]);
+        if(thr > 0.f)
+        {
+            k.gate.SetThreshold(thr);
+            k.gate.SetRelease(params.Real(manifest.p_gate_release[c]));
+            for(size_t i = 0; i < size; i++) b[i] = k.gate.Process(b[i]);
+        }
+
+        // 1.3) TOM DE TESTE — DEPOIS DO GATE, e o ponto e documentado.
+        //
+        // Antes do gate, o proprio gate cortaria o tom e a medicao
+        // estaria medindo o GATE em vez do alvo. Se algum teste futuro
+        // precisar excitar o gate, declara um SEGUNDO ponto de injecao
+        // explicitamente — medicao sem regime declarado nao vale.
+        if(mix > 0.f && (dest_tom == 2 || dest_tom == c))
+            for(size_t i = 0; i < size; i++)
+                b[i] = b[i] * (1.f - mix) + tone_buf[i] * mix;
+
+        // 1.4) DRIVE — sujeira antes de modulacao, tempo e espaco.
+        // Depois do gate de proposito: saturar o chao de ruido e depois
+        // tentar porta-lo seria empurrar contra a porta o que ela
+        // deveria segurar.
+        //
+        // SEM CRONOMETRO POR DENTRO. O shimmer mediu 209 us com dois
+        // NowTicks por amostra dentro da regiao medida, e boa parte era
+        // a propria instrumentacao. A medida limpa e `cpu` on/off.
+        k.drive_slot.SetOn(params.Real(manifest.p_drv_on[c]) >= 0.5f);
+        if(k.drive_slot.Ativo())
+        {
+            k.drive.SetDrive(params.Real(manifest.p_drv_drive[c]));
+            k.drive.SetTone(params.Real(manifest.p_drv_tone[c]));
+            const float mx = params.Real(manifest.p_drv_mix[c]);
+            float gs = 0.f, gm = 0.f;
+            for(size_t i = 0; i < size; i++)
+            {
+                k.drive_slot.Passo(gs, gm);
+                // O fade escala o MIX, nao o sinal: o seco passa inteiro
+                // o tempo todo, senao ligar abriria um buraco no meio.
+                k.drive.SetMix(mx * gm);
+                b[i] = k.drive.ProcessMono(b[i]);
+            }
+        }
+
+        // 1.5) PHASER — sujeira, depois MOVIMENTO, depois tempo/espaco.
+        k.phaser_slot.SetOn(params.Real(manifest.p_phs_on[c]) >= 0.5f);
+        if(k.phaser_slot.Ativo())
+        {
+            k.phaser.SetRate(params.Real(manifest.p_phs_rate[c]));
+            k.phaser.SetDepth(params.Real(manifest.p_phs_depth[c]));
+            k.phaser.SetFeedback(params.Real(manifest.p_phs_feedback[c]));
+            k.phaser.SetStages((int)(params.Real(manifest.p_phs_stages[c]) + 0.5f));
+            // LFO e mapeamento de frequencia UMA VEZ POR BLOCO: as unicas
+            // transcendentais ficam fora do laco de amostra.
+            k.phaser.AtualizaLfo(size);
+            const float mx = params.Real(manifest.p_phs_mix[c]);
+            float gs = 0.f, gm = 0.f;
+            for(size_t i = 0; i < size; i++)
+            {
+                k.phaser_slot.Passo(gs, gm);
+                k.phaser.SetMix(mx * gm);
+                b[i] = k.phaser.ProcessMono(b[i]);
+            }
+        }
+
+        // 1.6) WARBLE — movimento de ALTURA, ainda antes do delay.
+        //
+        // GRAVA SEMPRE (regra dos efeitos com historico). Aqui morde de
+        // verdade: o buffer tem 40 ms, entao parar de gravar em bypass
+        // faria o efeito acordar lendo 40 ms de passado congelado.
+        k.warble_slot.SetOn(params.Real(manifest.p_wrb_on[c]) >= 0.5f);
+        if(k.warble_ok && k.warble_slot.Ativo())
+        {
+            k.warble.SetRate(params.Real(manifest.p_wrb_rate[c]));
+            k.warble.SetDepth(params.Real(manifest.p_wrb_depth[c]));
+            k.warble.SetIrreg(params.Real(manifest.p_wrb_irreg[c]));
+            k.warble.AtualizaLfo(size);
+            float gs = 0.f, gm = 0.f;
+            for(size_t i = 0; i < size; i++)
+            {
+                k.warble_slot.Passo(gs, gm);
+                const float w = k.warble.ProcessMono(b[i]);
+                b[i] = b[i] * gs + w * gm;
+            }
+        }
+        else if(k.warble_ok)
+        {
+            for(size_t i = 0; i < size; i++) k.warble.ProcessMono(b[i]);
+        }
     }
 
-    // 1.5) GANHO DE ENTRADA — pós-fonte, PRÉ-GATE. Ver a nota no
-    //      manifest: é aqui que o piezo ganha corpo sem empurrar a
-    //      saída contra o governor e o limiter.
-    {
-        const float ig = params.Real(manifest.p_in_gain);
-        if(ig != 1.f)
-            for(size_t i = 0; i < size; i++)
-                src_buf[i] *= ig;
+    // PORTADORA do slot de instrumento (herdada do vocoder, hoje fora do
+    // build): era `in[1]` cru. Com duas cadeias, a segunda JA TRATADA e a
+    // escolha coerente — se o vocoder voltar, ele recebe a cadeia B com
+    // caracter, nao o piezo cru.
+    const float* carrier = cad[1].buf;
 
-        // POS-GANHO, e ja somado em mono: e o que a cadeia de efeitos
-        // realmente ve. Medir so a entrada crua responderia "o
-        // transdutor entrega?" e deixaria "o firmware estoura?" em
-        // aberto — sao as duas metades da mesma pergunta.
+    // 2) MIX ENTRE AS CADEIAS — o `piezo_mix` mudou de posicao.
+    //
+    // Ele era balanco na ENTRADA, entre dois sinais crus. Agora e entre
+    // duas cadeias JA PROCESSADAS, e a lei continua sendo balanco e nao
+    // crossfade: centro = as duas cheias, girar abaixa a dominante sem
+    // cortar a outra.
+    {
+        const float bal     = params.Real(manifest.p_piezo_mix);
+        const float alvo_ga = 1.f - (bal > 0.f ?  bal : 0.f);
+        const float alvo_gb = 1.f - (bal < 0.f ? -bal : 0.f);
+        for(size_t i = 0; i < size; i++)
+        {
+            const float ga = suave_gl.Passo(alvo_ga);
+            const float gb = suave_gr.Passo(alvo_gb);
+            src_buf[i] = cad[0].buf[i] * ga + cad[1].buf[i] * gb;
+        }
+
+        // POS-GANHO — o que a cauda de fato ve. A reestruturacao das
+        // duas cadeias apagou este trecho junto com o bloco antigo, e o
+        // `hist` continuou IMPRIMINDO a coluna que ninguem mais
+        // alimentava: teria reportado "pos-ganho 0" pra sempre, e zero
+        // num canal que ninguem escreve nao e ausencia de sinal, e
+        // ausencia de medicao. Instrumento que mente, pela enesima vez.
+        //
+        // O ponto mudou de significado com o pivo: era "depois do
+        // in_gain", agora e "depois dos DOIS ganhos e da mistura".
         for(size_t i = 0; i < size; i++)
         {
             const float a = src_buf[i] < 0.f ? -src_buf[i] : src_buf[i];
@@ -1047,240 +1178,6 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             if(a >= 0.99f) { out_clip_g++; clip_latch_o = true; }
             hist_o[Balde(a)]++;
         }
-    }
-
-    // 1.6) ROTA DE TESTE DO MOTOR DE PITCH (validacao isolada).
-    //
-    // Substitui o sinal pela leitura deslocada, 100% molhado, pra que a
-    // frequencia de saida possa ser medida por FFT: seno de 848 Hz
-    // entra, 1696 Hz tem que sair com ratio 2.0.
-    //
-    // Fica AQUI, antes do gate e do modulo, porque validar o motor
-    // sozinho exige que nada mais esteja no caminho — medir com o
-    // delay ligado mediria os dois. Etapa 0 do IFA10000 aplicada ao
-    // proprio motor.
-    pitch_slot.SetOn(pitch_test);
-
-    // ---- GRAVAR SEMPRE, PROCESSAR SO QUANDO LIGADO ----
-    //
-    // A primeira versao pulava o bloco INTEIRO quando desligado — e
-    // isso incluia a gravacao. Ao ligar, o motor comecava a ler um
-    // buffer parado no ponto em que tinha sido interrompido, e a
-    // descontinuidade era um CLIQUE. O fade estava certo; ele cruzava
-    // pra um sinal que ja entrava quebrado.
-    //
-    // O freeze ja tinha escrito a regra no proprio comentario —
-    // "gravar SEMPRE e o que permite ao gesto pegar o som que acabou de
-    // acontecer" — e eu li como detalhe DELE em vez de como regra de
-    // EFEITO COM HISTORICO.
-    //
-    // Entao "custo zero desligado" vale pro PROCESSAMENTO, nao pra
-    // gravacao. Gravar sao dois stores por amostra; os graos, a
-    // interpolacao e as janelas sao o que custa 105 us.
-    if(pitch_ok && !pitch_slot.Ativo())
-        for(size_t i = 0; i < size; i++)
-            pitch.Write(src_buf[i], src_buf[i]);
-
-    if(pitch_ok && pitch_slot.Ativo())
-    {
-        pitch_slot.Comeca(cotuca::hal::NowTicks());
-        pitch.SetRatio(0, pitch_ratio);
-        if(!pitch.Active(0)) pitch.SetActive(0, true);
-        // MEDE OS DOIS LADOS. A teoria dizia que ratio 1.0 devolveria
-        // o sinal com ondulacao de +3 dB; a bancada mostrou -25 dB.
-        // Quando teoria e medicao discordam, quem mede esta certo — e
-        // o pico de ENTRADA vs SAIDA localiza onde some.
-        float pin = 0.f, pout = 0.f;
-        for(size_t i = 0; i < size; i++)
-        {
-            const float a = src_buf[i] < 0 ? -src_buf[i] : src_buf[i];
-            if(a > pin) pin = a;
-            // O motor e ESTEREO mas a fonte aqui e mono (src_buf):
-            // grava o mesmo nos dois lados e le o esquerdo.
-            pitch.Write(src_buf[i], src_buf[i]);
-            float pl, pr;
-            pitch.Read(0, pl, pr);
-            (void)pr;
-            // FADE DE IGUAL-POTENCIA: seco e molhado sao
-            // descorrelacionados durante o cruzamento, entao rampa
-            // linear abriria um buraco de -3 dB no meio. Raiz de cada
-            // lado soma POTENCIA e o nivel fica constante.
-            float gs, gm;
-            pitch_slot.Passo(gs, gm);
-            src_buf[i] = src_buf[i] * gs + pl * gm;
-            const float b = pl < 0 ? -pl : pl;
-            if(b > pout) pout = b;
-        }
-        if(pin  > pitch_pk_in)  pitch_pk_in  = pin;
-        if(pout > pitch_pk_out) pitch_pk_out = pout;
-
-        const uint32_t prazo
-            = (uint32_t)(1e6f * (float)size
-                         / cotuca::hal::Info().sample_rate);
-        if(pitch_slot.Termina(cotuca::hal::NowTicks(),
-                              cotuca::hal::TicksPerUs(),
-                              (uint32_t)(0.5f * (float)prazo)))
-        {
-            // VETO: o instrumento perde o efeito, nunca a base.
-            pitch_test = false;
-            pitch_slot.SetOn(false);
-        }
-        // (a voz e solta FORA deste bloco — aqui dentro a condicao
-        //  nunca seria verdadeira, porque o bloco so roda com o slot
-        //  ativo. Bug de escopo da primeira versao.)
-    }
-
-    if(pitch_ok && !pitch_slot.Ativo() && pitch.Active(0))
-        pitch.SetActive(0, false); // rampa terminou: libera a voz
-
-    // 2) GATE — na entrada, pós-crossfade e pós-tom. Silencia o chão
-    //    de ruído do piezo antes que o módulo o transforme em cauda.
-    gate.SetThreshold(params.Real(manifest.p_gate_thresh));
-    gate.SetRelease(params.Real(manifest.p_gate_release));
-    for(size_t i = 0; i < size; i++)
-        src_buf[i] = gate.Process(src_buf[i]);
-
-    // BUZIOS: detector de transiente, POS-GATE de proposito — o
-    // gate ja separou gesto de chao de ruido, entao o limiar aqui le
-    // batida, nao ambiente. Ataque instantaneo, queda ~40 ms,
-    // histerese em 60% do limiar, cooldown em blocos.
-    if(params.Real(manifest.p_buzios_on) >= 0.5f)
-    {
-        const float thr = params.Real(manifest.p_buzios_thresh);
-        for(size_t i = 0; i < size; i++)
-        {
-            const float a = src_buf[i] < 0.f ? -src_buf[i] : src_buf[i];
-            if(a > buzios_env)
-                buzios_env = a;
-            else
-                buzios_env *= 0.9995f;
-            if(buzios_env > buzios_env_peak)
-            {
-                buzios_env_peak = buzios_env;
-                cotuca::hal::BlackboxWrite(8, buzios_env_peak);
-            }
-            if(!buzios_above && buzios_env > thr)
-            {
-                buzios_above = true;
-                if(buzios_cd == 0)
-                {
-                    buzios_fires++;
-                    cotuca::hal::BlackboxWrite(9, (float)buzios_fires);
-                    buzios_fire = true; // o loop sorteia
-                    const float ms = params.Real(manifest.p_buzios_cooldown);
-                    buzios_cd = 1
-                               + (uint32_t)(ms * 0.001f
-                                            * cotuca::hal::Info().sample_rate
-                                            / (float)size);
-                }
-            }
-            else if(buzios_above && buzios_env < thr * 0.6f)
-                buzios_above = false;
-        }
-        if(buzios_cd > 0)
-            buzios_cd--;
-    }
-
-    // ch2 da convenção de 2 entradas: IN_R CRU, pré-crossfade e
-    // pré-gate. Ver o contrato em module.h.
-    //
-    // HOJE NINGUÉM USA. O vocoder v3 é 1-input e gera a própria
-    // portadora (senoides + ruído) por dentro; o freeze, que era o
-    // outro cliente, está fora do build. O canal continua montado
-    // porque o CONTRATO do slot é 2-in — módulo futuro que precise de
-    // referência externa acha ela pronta aqui. Fiação viva sem
-    // consumidor, não código morto.
-    const float* carrier = has_in ? in[1] : zero_buf;
-
-    // 2.5) DRIVE — PRIMEIRO EFEITO DA CADEIA.
-    //
-    // Depois do gate e antes de tudo o mais: sujeira antes de
-    // modulacao, tempo e espaco. Depois do gate de proposito — saturar
-    // o chao de ruido e depois tentar porta-lo seria empurrar contra a
-    // porta o que ela deveria segurar.
-    //
-    // SEM CRONOMETRO POR DENTRO. O shimmer mediu 209 us com dois
-    // NowTicks por amostra dentro da regiao medida, e boa parte era a
-    // propria instrumentacao. A medida limpa aqui e `cpu` ligado vs
-    // desligado — o medidor do callback nao tem custo por amostra.
-    drive_slot.SetOn(params.Real(manifest.p_drv_on) >= 0.5f);
-    if(drive_slot.Ativo())
-    {
-        drive.SetDrive(params.Real(manifest.p_drv_drive));
-        drive.SetTone(params.Real(manifest.p_drv_tone));
-        const float mx = params.Real(manifest.p_drv_mix);
-        float gs = 0.f, gm = 0.f;
-        for(size_t i = 0; i < size; i++)
-        {
-            drive_slot.Passo(gs, gm);
-            // O fade escala o MIX, nao o sinal: o seco passa inteiro o
-            // tempo todo, senao ligar o drive abriria um buraco no
-            // meio do instrumento.
-            drive.SetMix(mx * gm);
-            // MONO: a fonte aqui e um canal so. Chamar o par estereo
-            // calcularia tanh duas vezes sobre o mesmo valor.
-            src_buf[i] = drive.ProcessMono(src_buf[i]);
-        }
-    }
-
-    // 2.6) PHASER — depois do drive, antes do delay.
-    //
-    // Ordem de pedaleira: sujeira, depois MOVIMENTO, depois tempo e
-    // espaco. Phaser antes do delay faz o eco repetir o movimento;
-    // depois, o movimento passaria por cima dos ecos e borraria os dois.
-    phaser_slot.SetOn(params.Real(manifest.p_phs_on) >= 0.5f);
-    if(phaser_slot.Ativo())
-    {
-        phaser.SetRate(params.Real(manifest.p_phs_rate));
-        phaser.SetDepth(params.Real(manifest.p_phs_depth));
-        phaser.SetFeedback(params.Real(manifest.p_phs_feedback));
-        phaser.SetStages((int)(params.Real(manifest.p_phs_stages) + 0.5f));
-        // LFO E MAPEAMENTO DE FREQUENCIA: UMA VEZ POR BLOCO. As unicas
-        // transcendentais do efeito ficam aqui fora — foi o que fez o
-        // drive custar 36 us antes de aprender a licao.
-        phaser.AtualizaLfo(size);
-        const float mx = params.Real(manifest.p_phs_mix);
-        float gs = 0.f, gm = 0.f;
-        for(size_t i = 0; i < size; i++)
-        {
-            phaser_slot.Passo(gs, gm);
-            phaser.SetMix(mx * gm);
-            // MONO: a fonte aqui e um canal so.
-            src_buf[i] = phaser.ProcessMono(src_buf[i]);
-        }
-    }
-
-    // 2.7) WARBLE — depois do phaser, antes do delay.
-    //
-    // Sujeira, movimento de FASE, movimento de ALTURA, depois tempo e
-    // espaco. O warble antes do delay faz o eco repetir a deriva ja
-    // impressa; depois, ele derivaria os ecos junto e a fita soaria
-    // aplicada ao resultado em vez de a fonte.
-    //
-    // GRAVA SEMPRE (regra dos efeitos com historico). Aqui a regra
-    // morde de verdade: o buffer tem 40 ms, entao parar de gravar em
-    // bypass faria o efeito acordar lendo 40 ms de passado congelado.
-    warble_slot.SetOn(params.Real(manifest.p_wrb_on) >= 0.5f);
-    if(warble_ok && warble_slot.Ativo())
-    {
-        warble.SetRate(params.Real(manifest.p_wrb_rate));
-        warble.SetDepth(params.Real(manifest.p_wrb_depth));
-        warble.SetIrreg(params.Real(manifest.p_wrb_irreg));
-        warble.AtualizaLfo(size);
-        float gs = 0.f, gm = 0.f;
-        for(size_t i = 0; i < size; i++)
-        {
-            warble_slot.Passo(gs, gm);
-            const float w = warble.ProcessMono(src_buf[i]);
-            // O fade cruza entre seco e derivado. Nao ha `mix`: o
-            // cruzamento so existe pra ligar e desligar sem clique.
-            src_buf[i] = src_buf[i] * gs + w * gm;
-        }
-    }
-    else if(warble_ok)
-    {
-        // Bypass: grava, nao processa.
-        for(size_t i = 0; i < size; i++) warble.ProcessMono(src_buf[i]);
     }
 
     // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
@@ -1440,50 +1337,11 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         }
     }
 
-    // 4.3) DETUNE — PÓS-MÓDULO, onde o estéreo existe.
+    // 4.3) [vago] — aqui morava o DETUNE, fora do build desde 20/08.
     //
-    // Antes disto a cadeia e um canal so, e sem estereo nao ha spread —
-    // detune mono soa como desafinacao, com largura soa como CORO.
-    //
-    // GRAVA SEMPRE (regra dos efeitos com historico): o buffer tem
-    // 400 ms, entao parar de gravar em bypass faria o efeito acordar
-    // lendo passado congelado — o clique que a Peca 2 ensinou.
-    detune_slot.SetOn(params.Real(manifest.p_det_on) >= 0.5f);
-    if(pitch_det_ok)
-    {
-        const bool det = detune_slot.Ativo();
-        if(det)
-        {
-            detune.SetCents(params.Real(manifest.p_det_cents));
-            detune.SetVoices((int)(params.Real(manifest.p_det_voices) + 0.5f));
-            detune.SetSpread(params.Real(manifest.p_det_spread));
-            pitch_det.SetRatio(0, detune.RatioA());
-            pitch_det.SetRatio(1, detune.RatioB());
-            pitch_det.SetActive(0, true);
-            pitch_det.SetActive(1, detune.Duas());
-        }
-        const float mx = params.Real(manifest.p_det_mix);
-        float gs = 0.f, gm = 0.f;
-        for(size_t i = 0; i < size; i++)
-        {
-            // Grava o canal esquerdo — a fonte pos-modulo e a mesma
-            // nos dois lados; a LARGURA nasce aqui, do pan, nao da
-            // fonte.
-            pitch_det.WriteMono(out[0][i]);
-            if(!det) continue;
-            detune_slot.Passo(gs, gm);
-            detune.SetMix(mx * gm);
-            // LEITURA MONO: metade do custo de duas leituras estereo.
-            const float a = pitch_det.ReadMono(0);
-            const float b = detune.Duas() ? pitch_det.ReadMono(1) : 0.f;
-            detune.Mistura(a, b, out[0][i], out[1][i]);
-        }
-        if(!det)
-        {
-            pitch_det.SetActive(0, false);
-            pitch_det.SetActive(1, false);
-        }
-    }
+    // O ponto e bom e fica reservado: e onde o estereo ja existe, e
+    // qualquer efeito que precise de LARGURA precisa estar depois do
+    // modulo. Ver docs/FEATURES.md para reviver.
 
     // 4.4) FREEZE — PÓS-DELAY, PRÉ-REVERB.
     //
@@ -1729,8 +1587,8 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // protegido com o desprotegido — desfazendo a proteção
     // anti-feedback justamente no fio que fecha o laço acústico.
     //
-    // A largura vem do reverb, do shimmer e do detune, que são os
-    // únicos que produzem estéreo nativo. Em 1.0 a conta é identidade,
+    // A largura vem do reverb e do shimmer, que são os únicos que
+    // produzem estéreo nativo (o detune era o terceiro, e saiu). Em 1.0 a conta é identidade,
     // então o bloco inteiro é pulado: custo literalmente zero no
     // neutro.
     {
@@ -2006,8 +1864,8 @@ static void SetButton2(bool pressed)
 // que o `ble raw` produzir — medir vem antes de nomear.
 static constexpr bool kLbAcesoEmBaixo = true; // confirmado: V3=3V3, LB=0V
 
-static volatile uint32_t lb_trans[3] = {0, 0, 0};
-static volatile uint8_t  lb_duty[3]  = {0, 0, 0};
+static volatile uint32_t lb_trans = 0;
+static volatile uint8_t  lb_duty  = 0;
 static bool              lb_cru      = false;
 static bool              lb_espelho  = false;
 
@@ -2015,9 +1873,9 @@ static void LbTick()
 {
     using namespace cotuca;
     static uint32_t prox_ms = 0, jan0 = 0;
-    static bool     ant[3]  = {false, false, false};
+    static bool     ant      = false;
     static bool     primeira = true;
-    static uint32_t n_trans[3] = {0, 0, 0}, n_aceso[3] = {0, 0, 0};
+    static uint32_t n_trans = 0, n_aceso = 0;
     static uint32_t n_amostras = 0;
 
     const uint32_t ag = hal::NowMs();
@@ -2025,41 +1883,32 @@ static void LbTick()
         return;
     prox_ms = ag + 5u; // 200 Hz
 
-    bool aceso[3];
-    for(int i = 0; i < 3; i++)
-    {
-        const bool nivel = hal::ReadWidiLed(i);
-        aceso[i] = kLbAcesoEmBaixo ? !nivel : nivel;
-        if(primeira) ant[i] = aceso[i];
-        if(aceso[i] != ant[i]) { n_trans[i]++; ant[i] = aceso[i]; }
-        if(aceso[i]) n_aceso[i]++;
-    }
+    // SO O LB. LG/LR saíram do hardware em 20/08 por nao marcarem nada.
+    const bool nivel = hal::ReadWidiLed();
+    const bool aceso = kLbAcesoEmBaixo ? !nivel : nivel;
+    if(primeira) ant = aceso;
+    if(aceso != ant) { n_trans++; ant = aceso; }
+    if(aceso) n_aceso++;
     if(primeira) { jan0 = ag; primeira = false; }
     n_amostras++;
     if(lb_espelho)
-        hal::SetLed(aceso[0]);
+        hal::SetLed(aceso);
 
     if(ag - jan0 < 2000u)
         return;
 
-    for(int i = 0; i < 3; i++)
-    {
-        lb_trans[i] = n_trans[i];
-        lb_duty[i]  = (uint8_t)(n_amostras ? (n_aceso[i] * 100u / n_amostras)
-                                           : 0u);
-    }
+    lb_trans = n_trans;
+    lb_duty  = (uint8_t)(n_amostras ? (n_aceso * 100u / n_amostras) : 0u);
     if(lb_cru)
     {
         const bool traf
             = ble_last_rx_ms && (ag - ble_last_rx_ms) < 2000u;
-        hal::Log("lb: LB %lu/%u%%  LG %lu/%u%%  LR %lu/%u%%  | trafego %s",
-                 (unsigned long)lb_trans[0], (unsigned)lb_duty[0],
-                 (unsigned long)lb_trans[1], (unsigned)lb_duty[1],
-                 (unsigned long)lb_trans[2], (unsigned)lb_duty[2],
+        hal::Log("lb: LB %lu/%u%%  | trafego %s",
+                 (unsigned long)lb_trans, (unsigned)lb_duty,
                  traf ? "SIM" : "nao");
     }
     jan0 = ag; n_amostras = 0;
-    for(int i = 0; i < 3; i++) { n_trans[i] = 0; n_aceso[i] = 0; }
+    n_trans = 0; n_aceso = 0;
 }
 
 static void declara_modos()
@@ -2188,10 +2037,12 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "dyn", 3) == 0)
     {
-        hal::Log("gate  thr=%.4f rel=%.0fms gain=%.2f env=%.4f",
-                 params.Real(manifest.p_gate_thresh),
-                 params.Real(manifest.p_gate_release),
-                 gate.Gain(), gate.Env());
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+            hal::Log("gate %c thr=%.4f rel=%.0fms gain=%.2f env=%.4f",
+                     'A' + c,
+                     params.Real(manifest.p_gate_thresh[c]),
+                     params.Real(manifest.p_gate_release[c]),
+                     cad[c].gate.Gain(), cad[c].gate.Env());
         hal::Log("gov   ceil=%.2f rel=%.0fms gain=%.2f env=%.3f",
                  params.Real(manifest.p_gov_ceiling),
                  params.Real(manifest.p_gov_release),
@@ -2478,55 +2329,34 @@ static void HandleLine(const char* line)
     {
         const char* a = line + 5;
         while(*a == ' ') a++;
-        if(*a == 0 || strncmp(a, "off", 3) == 0)
-        {
-            // NAO desativa a voz aqui. O comando so declara a
-            // INTENCAO; quem executa e o callback, quando a rampa
-            // chegar a zero.
-            //
-            // A versao anterior matava a voz na hora, e o molhado caia
-            // a zero num unico sample enquanto o slot ainda rampava —
-            // o fade cruzava pra silencio ja morto. Sintoma exato:
-            // entrando 0 cliques, saindo 100%. So o caminho de SAIDA
-            // tinha acao dura imediata, e era so nele que clicava.
-            //
-            // A regra: comando declara intencao, contexto de audio
-            // executa. Acao dura vinda de fora atravessa qualquer rampa.
-            pitch_test = false;
-            hal::Log("pitch: rota de teste DESLIGADA (a rampa de 8 ms"
-                     " termina no callback)");
-            return;
-        }
+        // OS TUNAVEIS DO MOTOR SEGUEM ALCANCAVEIS — na instancia que
+        // EXISTE, que e a da cauda (shimmer). A rota de teste isolada
+        // foi aposentada em 20/08 por custar uma instancia inteira so
+        // pra bancada; os ajustes nao foram junto.
         if(strncmp(a, "grain", 5) == 0)
         {
             const float g = strtof(a + 5, nullptr);
-            if(pitch_ok) pitch.SetGrainMs(0, g);
-            hal::Log("pitch: grao = %.1f ms  (laterais em +-%.0f Hz)",
+            if(pitch_tail_ok) pitch_tail.SetGrainMs(0, g);
+            hal::Log("pitch: grao = %.1f ms na cauda (laterais em +-%.0f Hz)",
                      (double)g, (double)(2000.f / (g > 0.f ? g : 1.f)));
             return;
         }
         if(strncmp(a, "jitter", 6) == 0)
         {
             const float j = strtof(a + 6, nullptr);
-            if(pitch_ok) pitch.SetJitter(j);
-            hal::Log("pitch: jitter = %.3f  (0 = graos deterministicos,"
-                     " so pra MEDIR com seno)", (double)j);
+            if(pitch_tail_ok) pitch_tail.SetJitter(j);
+            hal::Log("pitch: jitter = %.3f na cauda  (0 = graos"
+                     " deterministicos, so pra MEDIR com seno)", (double)j);
             return;
         }
-        const float r = strtof(a, nullptr);
-        if(r <= 0.f)
-        {
-            hal::Log("uso: pitch <ratio>  (2=oitava acima, 1.498=quinta,"
-                     " 0.5=oitava abaixo) | pitch off");
-            return;
-        }
-        pitch_ratio = r;
-        pitch_test  = true;
-        hal::Log("pitch: rota de teste LIGADA, ratio %.4f"
-                 " (100%% molhado, so o motor no caminho)", (double)r);
-        hal::Log("  esperado: `tone on` a 848 Hz -> %.0f Hz na saida",
-                 (double)(848.f * r));
-        pitch_pk_in = pitch_pk_out = 0.f;
+        hal::Log("pitch: a ROTA DE TESTE isolada foi aposentada em 20/08.");
+        hal::Log("  custava uma instancia inteira do motor (153,6 KB de"
+                 " SDRAM) so pra bancada, e");
+        hal::Log("  com o detune fora do build o unico consumidor real"
+                 " virou o shimmer, na cauda.");
+        hal::Log("  restam: `pitch grain <ms>` e `pitch jitter <0-1>`,"
+                 " que agem na instancia da cauda.");
+        hal::Log("  reviver: docs/FEATURES.md, secao Arquivo.");
         return;
     }
     if(strncmp(line, "hist", 4) == 0)
@@ -2564,8 +2394,23 @@ static void HandleLine(const char* line)
             hal::Log("hist: nada medido ainda (`hist reset` e toque)");
             return;
         }
-        const float ig = params.Real(manifest.p_in_gain);
+        const float ig = params.Real(manifest.p_in_gain[0]);
+        // O REGIME NAO ESTA NO ALCANCE DESTE COMANDO, E ELE DIZ ISSO.
+        //
+        // Em 20/08 a entrada foi medida com dedo direto no disco solto e
+        // o resultado virou "a entrada satura" no STATUS — afirmacao
+        // sobre o instrumento MONTADO feita com uma medicao que nunca o
+        // tocou. Nenhum numero estava errado; o alcance da conclusao e
+        // que estava.
+        //
+        // O firmware nao tem como saber se o piezo esta colado na
+        // escultura ou solto na bancada. O que ele pode fazer e nao
+        // deixar o leitor esquecer que essa pergunta existe.
         hal::Log("HISTOGRAMA DE ENTRADA  (in_gain %.2fx)", (double)ig);
+        hal::Log("  REGIME: nao sei qual e — declare voce. Piezo solto"
+                 " batido a dedo e piezo");
+        hal::Log("  montado excitado por vibracao sao instrumentos"
+                 " diferentes pra esta medicao.");
         hal::Log("  faixa dBFS     IN_L(p1)    IN_R(p2)   POS-GANHO");
         for(int b = 0; b < kNBaldes; b++)
         {
@@ -2631,7 +2476,7 @@ static void HandleLine(const char* line)
         // ENTRADA CRUA POR CANAL, primeiro: e a pergunta mais barata
         // de responder e a que mais vezes ficou sem resposta.
         {
-            const float ig = params.Real(manifest.p_in_gain);
+            const float ig = params.Real(manifest.p_in_gain[0]);
             auto dbfs = [](float v) {
                 return v > 1e-7f ? 20.f * log10f(v) : -140.f;
             };
@@ -2656,11 +2501,6 @@ static void HandleLine(const char* line)
             in_pk_l = in_pk_r = 0.f;
             in_n_l = in_n_r = 0; in_clip_l = in_clip_r = 0;
         }
-        hal::Log("pitch: pico ENTRADA %.5f | SAIDA %.5f | razao %.3f",
-                 (double)pitch_pk_in, (double)pitch_pk_out,
-                 (double)(pitch_pk_in > 1e-9f
-                              ? pitch_pk_out / pitch_pk_in : 0.f));
-        pitch_pk_in = pitch_pk_out = 0.f;
         return;
     }
     if(strncmp(line, "dfu", 3) == 0)
@@ -2697,7 +2537,6 @@ static void HandleLine(const char* line)
             ctos_bypass_frz  = false;
             ctos_pico_us     = 0;
             ctos_ocorrencias = 0;
-            pitch_slot.ZeraPico();
             shimmer_slot.ZeraPico();
             shimmer_pico = 0;
             // TETO DE SOMA: solta os latches. NAO religa os efeitos —
@@ -2792,10 +2631,6 @@ static void HandleLine(const char* line)
                  shimmer_slot.Ativo() ? "ATIVO" : "desligado (custo zero)",
                  (unsigned long)shimmer_pico,
                  (unsigned long)ctos_orcamento_us);
-        hal::Log("  motor de pitch: %s | pico %lu us de %lu us",
-                 pitch_slot.Ativo() ? "ATIVO" : "desligado (custo zero)",
-                 (unsigned long)pitch_slot.PicoUs(),
-                 (unsigned long)ctos_orcamento_us);
         hal::Log("  o instrumento perde o efeito, nunca a base."
                  " Desenho em docs/CTOS.md");
         return;
@@ -2836,11 +2671,9 @@ static void HandleLine(const char* line)
                  (double)age / 1000.0,
                  (unsigned long)(midi.CcCount() - ble_session_base));
         // ---- CAMADA 1: numero, nao nome ----
-        hal::Log("  WIDI LEDs (D28/29/30) — transicoes por 2 s / %% aceso:");
-        hal::Log("    LB %lu/%u%%   LG %lu/%u%%   LR %lu/%u%%",
-                 (unsigned long)lb_trans[0], (unsigned)lb_duty[0],
-                 (unsigned long)lb_trans[1], (unsigned)lb_duty[1],
-                 (unsigned long)lb_trans[2], (unsigned)lb_duty[2]);
+        hal::Log("  WIDI LED LB (D28) — transicoes por 2 s / %% aceso:");
+        hal::Log("    LB %lu/%u%%   (LG/LR removidos 20/08)",
+                 (unsigned long)lb_trans, (unsigned)lb_duty);
         // ---- O CRUZAMENTO QUE IMPORTA NA PRATICA ----
         //
         // LB conectado + ZERO trafego desde o boot = a SESSAO CoreMIDI
@@ -2861,7 +2694,7 @@ static void HandleLine(const char* line)
         // Terceira vez no mesmo dia que um instrumento meu trata
         // ausencia de dado como dado. A correcao nao e o limiar: e
         // parar de AFIRMAR. O aviso vira hipotese com o teste junto.
-        if(lb_duty[0] > 90 && lb_trans[0] == 0 && ble_last_rx_ms == 0
+        if(lb_duty > 90 && lb_trans == 0 && ble_last_rx_ms == 0
            && hal::NowMs() > 20000u)
         {
             hal::Log("    >>> LB conectado e NENHUM byte desde o boot"
@@ -3128,7 +2961,8 @@ int main(void)
                      "ferramenta de bancada NAO deve persistir", b);
     }
 
-    gate.Init(hal::Info().sample_rate);
+    for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+        cad[c].gate.Init(hal::Info().sample_rate);
     gov_l.Init(hal::Info().sample_rate);
     lim_l.Init(hal::Info().sample_rate);
     lim_r.Init(hal::Info().sample_rate);
@@ -3182,11 +3016,6 @@ int main(void)
     // regra de ordem do reverb e do freeze.
     {
         const float  sr   = hal::Info().sample_rate;
-        const size_t need = cotuca::PitchEngine::FloatsNeeded(sr, kPitchSeconds);
-        pitch_mem = (float*)hal::AllocBig(need * sizeof(float));
-        if(pitch_mem)
-            pitch_ok = pitch.Init(sr, pitch_mem, need, kPitchSeconds);
-        pitch_slot.Init(sr, 8.f);
 
         // Motor da cauda + shimmer. Mesmo tamanho de buffer: a oitava
         // acima exige a mesma folga de partida.
@@ -3197,26 +3026,19 @@ int main(void)
             pitch_tail_ok = pitch_tail.Init(sr, pitch_tail_mem, need_t,
                                             kPitchSeconds);
         shimmer.Init(sr);
-        drive.Init(sr);
-        drive_slot.Init(sr, 8.f);
-        phaser.Init(sr);
-        phaser_slot.Init(sr, 8.f);
-        warble_ok = warble.Init(sr, warble_mem,
-                                sizeof(warble_mem)/sizeof(warble_mem[0]), 40.f);
-        warble_slot.Init(sr, 8.f);
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
-            const size_t nd = cotuca::PitchEngine::FloatsNeeded(sr, kPitchSeconds);
-            pitch_det_mem = (float*)hal::AllocBig(nd * sizeof(float));
-            if(pitch_det_mem)
-                pitch_det_ok = pitch_det.Init(sr, pitch_det_mem, nd, kPitchSeconds);
-            detune.Init(sr);
-            detune_slot.Init(sr, 8.f);
-            hal::Log("detune: %s (%u KB em SDRAM)",
-                     pitch_det_ok ? "pronto" : "SEM BUFFER — inativo",
-                     (unsigned)(nd * sizeof(float) / 1024));
+            Cadeia& k = cad[c];
+            k.drive.Init(sr);   k.drive_slot.Init(sr, 8.f);
+            k.phaser.Init(sr);  k.phaser_slot.Init(sr, 8.f);
+            k.warble_ok = k.warble.Init(sr, warble_mem[c],
+                                        sizeof(warble_mem[c])
+                                            / sizeof(warble_mem[c][0]), 40.f);
+            k.warble_slot.Init(sr, 8.f);
         }
-        hal::Log("warble: %s (40 ms, %u KB em SRAM)",
-                 warble_ok ? "pronto" : "BUFFER CURTO — inativo",
+        hal::Log("warble: A %s | B %s (40 ms cada, %u KB em SRAM no total)",
+                 cad[0].warble_ok ? "pronto" : "BUFFER CURTO",
+                 cad[1].warble_ok ? "pronto" : "BUFFER CURTO",
                  (unsigned)(sizeof(warble_mem)/1024));
         // CAUDA DE 2 s NA SAIDA (pedido do dB). Entrar e imediato;
         // sair e decaimento — o shimmer E a sala se empilhando, e sala
@@ -3225,10 +3047,6 @@ int main(void)
         hal::Log("shimmer: %s (motor da cauda, %u KB em SDRAM)",
                  pitch_tail_ok ? "pronto" : "SEM BUFFER — inativo",
                  (unsigned)(need_t * sizeof(float) / 1024));
-        hal::Log("pitch: %s (%.0f ms, %u floats, %u KB em SDRAM)",
-                 pitch_ok ? "pronto" : "SEM BUFFER — inativo",
-                 (double)(kPitchSeconds * 1000.f), (unsigned)need,
-                 (unsigned)(need * sizeof(float) / 1024));
     }
 
     // FREEZE: mesma regra de ordem do reverb — alocar e inicializar

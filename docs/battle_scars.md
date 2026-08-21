@@ -1204,9 +1204,163 @@ teto de soma, fechado horas antes, é o que torna esse custo aceitável.
 
 ---
 
+## 12a. Validade de medição tem regime (20/08)
+
+Medi a entrada dos piezos com **dedo direto no disco solto** e registrei o
+resultado como *"a entrada satura"*. Escrevi isso no STATUS como defeito
+aberto, propus um plano de oito passos em cima disso, e cheguei a dar valores
+de divisor resistivo.
+
+O dB cortou: **esse regime não é o de uso.** Piezo desacoplado, excitado por
+contato direto, é o caso mais violento que a pastilha encontra na vida. A mesma
+pastilha colada na escultura e excitada pela vibração dela entrega outra coisa,
+e provavelmente muito menos.
+
+Nenhum número estava errado. **O que estava errado era o alcance da
+conclusão.** Eu media um regime e afirmava sobre outro.
+
+> **Toda medição vale para o regime em que foi feita, e o regime é parte do
+> dado — não contexto do dado.** Um número sem regime declarado não é uma
+> medição incompleta: é uma medição cuja validade ninguém pode julgar,
+> inclusive quem a fez.
+
+O projeto já tinha metade dessa regra, na forma *"estreia ou permanente?"* —
+regime **temporal**. Faltava a outra metade: regime **físico**, o de como o
+sinal está sendo produzido. Piezo solto e piezo montado são dois instrumentos
+diferentes para efeito de medição.
+
+**A correção mudou o plano de forma, não só de conteúdo.** A versão anterior ia
+dimensionar um atenuador a partir do número errado. A nova ordem é: montar só a
+**proteção** (1 kΩ + 2× 1N4148 — não mexe no ganho, protege o ADC de qualquer
+jeito), instalar na escultura, tocar, e **só então** medir. O atenuador virou
+condicional: entra se clipar tocando, e talvez não entre.
+
+> **Antes de dimensionar uma solução, verificar se o problema existe no regime
+> real.** Dimensionar cedo é resolver um problema que talvez não exista, com um
+> número que com certeza não vale.
+
+E há um bônus de método: a proteção é a peça **útil em qualquer desfecho**.
+Quando há uma medição pendente, a ordem certa é fazer primeiro o que serve
+para os dois resultados possíveis.
+
+---
+
+## 12b. Defeito físico num transdutor imita assimetria de circuito (20/08)
+
+O p2 chegava mais baixo que o p1. Medi, confirmei a diferença, e a diferença
+virou premissa: entrou no STATUS como característica do par de canais e quase
+virou a **justificativa** para duplicar gate e ganho por cadeia.
+
+Era **um piezo com defeito**. Trocados de canal, p1 e p2 chegam exatamente
+iguais.
+
+**O que separou as duas hipóteses não foi medir mais fundo — foi trocar os
+piezos de canal.** Nenhuma medição elétrica, por mais precisa, distingue "este
+canal atenua" de "este transdutor entrega menos": as duas produzem o mesmo
+número. O que distingue é **permutar o suspeito**, que é um experimento, não
+uma leitura.
+
+> **Quando um número descreve um par assimétrico, troque os elementos de lugar
+> antes de atribuir a assimetria ao sistema.** Uma medição mais precisa do
+> mesmo arranjo só confirma o número com mais casas decimais — e o número
+> nunca esteve em dúvida.
+
+Mesma família da medição do dedo-no-disco (12a): **o número estava certo; o
+que ele descrevia é que não era o que se supunha.** Ali era o regime; aqui é
+qual elemento do arranjo carrega a propriedade medida.
+
+**A decisão sobreviveu à justificativa, e isso importa registrar.** Gate e
+ganho duplicam mesmo — mas por **material**, não por desequilíbrio: o piezo do
+tambor lê transientes curtos e fortes, o da mola/corda lê raspagem contínua de
+baixo nível. Um limiar que deixa a raspagem passar abre demais para o tambor.
+A duplicação vale com dois piezos perfeitamente casados, e valeria se fossem
+idênticos de fábrica.
+
+> **Justificativa errada envelhece mal.** Se ficasse escrito "duplicamos
+> porque o p2 era mais baixo", alguém mede os canais iguais no futuro e conclui
+> que a duplicação é dispensável — desfazendo uma decisão certa por causa de um
+> motivo errado que ninguém revisou. A razão registrada tem que ser a razão que
+> se sustenta, não a que estava à mão quando se decidiu.
+
+---
+
+## 12c. Verificador que casa texto não distingue o dado da narração (20/08)
+
+Certifiquei a remoção dos LEDs LG/LR com um teste automático: rodar `ble` e
+procurar as letras `LG` ou `LR` na saída. Ele acusou **fantasmas**.
+
+A linha que ele encontrou era esta:
+
+```
+LB 0/100%   (LG/LR removidos 20/08)
+```
+
+O verificador achou exatamente **a frase que anuncia que eles foram
+removidos**. A certificação tinha passado; quem falhou foi o certificador — e
+eu publiquei "SIM — ERRADO" antes de olhar a saída com os próprios olhos.
+
+> **Verificador que casa padrão em texto precisa distinguir o DADO da NARRAÇÃO
+> sobre o dado.** Procurar um símbolo na saída inteira encontra também os
+> comentários, cabeçalhos e avisos que falam sobre ele — e quanto melhor a
+> mensagem explica o que mudou, mais provável que ela dispare o alarme.
+
+Casar na estrutura, não no texto livre: a linha de dado tem forma conhecida
+(`LB <n>/<n>%`), e é nela que se procura. Corolário desconfortável: **a
+mensagem bem escrita é a que mais engana o verificador ingênuo.**
+
+Mesmo dia, mesma família: quase publiquei uma decomposição de CPU em que dois
+controles marcavam **+0 µs** — porque a edição que os criava tinha falhado no
+`assert` e eu gravei o binário anterior. Um controle que não existe mede zero,
+e zero parece dado. **O tell foi o +0 exato em dois itens independentes**;
+número redondo demais é sintoma, não resultado.
+
+---
+
+## 12d. Delta entre builds não é atribuível (20/08)
+
+O guarda do gate (`if(thresh > 0)`, pular quando o portão está aberto) mediu
+**−58 µs** — comparando o total de v0.90.0 contra v0.91.0. Anunciei isso como o
+ganho do guarda.
+
+O dB desconfiou: o mesmo gate tinha medido **15 µs** por máscara. Quatro vezes
+de diferença no instrumento invalida tudo o que ele mediu.
+
+Medido de novo, **A/B no mesmo binário, na mesma janela** — com `thresh=0` o
+guarda pula, com `thresh` mínimo ele processa sem portar nada:
+
+| regime | gate pulado | gate rodando | custo |
+|---|---|---|---|
+| repouso | 159 µs | 185 µs | **+26** |
+| carga total | 618 µs | 648 µs | **+30** |
+
+**O gate custa 26–30 µs e não há super-linearidade.** A hipótese da I-cache
+(código menor é mais rápido nesta plataforma) era plausível e já catalogada —
+e não se aplica aqui.
+
+Os −58 vinham de comparar **dois builds diferentes**, e entre eles mudaram
+duas coisas: o guarda **e** a restauração do histograma pós-ganho, que
+*acrescenta* trabalho. O saldo não fecha por ~40 µs em nenhuma direção.
+
+> **Delta entre builds não é atribuível a nenhuma mudança específica.** Nesta
+> plataforma o layout do código move a I-cache, e recompilar já muda o número.
+> Custo só se atribui por **A/B no mesmo binário, na mesma janela** — de
+> preferência alternando por parâmetro, não por recompilação.
+
+A máscara, aliás, saiu absolvida: 16 contra 26 é ~1,6×, dentro do que variância
+de layout e de corrida explicam. **O instrumento defeituoso era a comparação,
+não a sonda** — e eu tinha acusado a sonda.
+
+**Consequência que fica em aberto:** a rejeição da janela morna do warble
+apoiava-se em 7 µs medidos por máscara. Corrigido pelo mesmo fator daria ~11 µs
+— ainda pouco, mas é **estimativa**, não medição. Um A/B honesto exigiria um
+param de toggle só para isso. Fica declarado como número fraco em vez de
+promovido a fato.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.**
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro.
 
 ---
 

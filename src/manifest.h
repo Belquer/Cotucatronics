@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.57.0
+// manifest.h (instrumento "bancada") v0.59.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -150,7 +150,26 @@ struct Manifest
     // melhora — o que melhora é o quanto da faixa útil se usa. Se o
     // ruído começar a incomodar, o conserto é o buffer de alta
     // impedância (receita no BOARDS.md), não mais ganho aqui.
-    int p_in_gain;
+    // ---- DUAS CADEIAS DE CARATER (pivo de 20/08) ----
+    //
+    // POR QUE DUPLICAR, e a razao NAO e desequilibrio entre transdutores.
+    //
+    // Cada piezo capta um MATERIAL diferente do instrumento hibrido: o do
+    // tambor le transientes curtos e fortes; o da mola/corda le raspagem
+    // continua de baixo nivel. E diferenca de FONTE, nao de transdutor.
+    // Um limiar de gate que deixa a raspagem passar abre demais pro
+    // tambor; um ganho que serve a corda satura no golpe.
+    //
+    // A duplicacao vale com dois piezos perfeitamente casados, e valeria
+    // se fossem identicos de fabrica. ISTO IMPORTA ESTAR ESCRITO: houve
+    // um momento em que o p2 chegava mais baixo e isso quase virou a
+    // justificativa — era DEFEITO FISICO de um piezo, nao propriedade do
+    // circuito, e com os dois em ordem os canais chegam iguais. Se
+    // ficasse registrado "duplicamos porque p2 era mais baixo", alguem
+    // mede os canais iguais no futuro e conclui que a duplicacao e
+    // dispensavel. Justificativa errada envelhece mal.
+    static constexpr int kCadeias = 2;
+    int p_in_gain[kCadeias];
     int p_dly_time;   // → módulo RNBO "dly_time"
     int p_dly_mix;    // → módulo RNBO "dly_mix"
     int p_dly_on;     // 0/1 — chave própria (o mix deixa de ser a chave)
@@ -159,8 +178,8 @@ struct Manifest
     // Todos serial-only: são política de segurança e comportamento,
     // não gesto de performance. O painel tem 5 knobs e nenhum deles
     // se gasta aqui.
-    int p_gate_thresh;
-    int p_gate_release;
+    int p_gate_thresh[kCadeias];
+    int p_gate_release[kCadeias];
     int p_gov_ceiling;
     int p_gov_release;
 
@@ -237,10 +256,10 @@ struct Manifest
 
     // DRIVE — waveshaper tanh como COLA. Primeiro da cadeia: sujeira
     // antes de modulacao, tempo e espaco (ordem de pedaleira).
-    int p_drv_on;     // 0/1 — chave
-    int p_drv_drive;  // vezes; a faixa COMECA na cola
-    int p_drv_tone;   // Hz do passa-baixa POS-saturacao
-    int p_drv_mix;    // 0..1 — CAMADA paralela
+    int p_drv_on[kCadeias];     // 0/1 — chave
+    int p_drv_drive[kCadeias];  // vezes; a faixa COMECA na cola · PRIMARIO
+    int p_drv_tone[kCadeias];   // Hz do passa-baixa POS-saturacao
+    int p_drv_mix[kCadeias];    // 0..1 — CAMADA paralela
 
     // PHASER — N allpass varridos por LFO. Depois do drive, antes do
     // delay: sujeira, depois movimento, depois tempo e espaco.
@@ -249,12 +268,12 @@ struct Manifest
     // O notch nasce de CANCELAMENTO entre seco e desviado, e
     // cancelamento maximo exige amplitudes iguais — entao ~0.5 e o
     // "ligado" e 1.0 e quase inaudivel. Ver phaser.h.
-    int p_phs_on;
-    int p_phs_rate;      // Hz do LFO triangular
-    int p_phs_depth;     // quanto da faixa o LFO varre
-    int p_phs_feedback;  // o corpo: medio-alto = liquido/vocal
-    int p_phs_stages;    // 4 / 6 / 8 — pares, cada par e um notch
-    int p_phs_mix;       // MONTANHA, nao rampa: pico em ~0.5
+    int p_phs_on[kCadeias];
+    int p_phs_rate[kCadeias];      // Hz do LFO triangular · PRIMARIO
+    int p_phs_depth[kCadeias];     // quanto da faixa o LFO varre
+    int p_phs_feedback[kCadeias];  // o corpo: medio-alto = liquido/vocal
+    int p_phs_stages[kCadeias];    // 4 / 6 / 8 — pares, cada par e um notch
+    int p_phs_mix[kCadeias];       // MONTANHA, nao rampa: pico em ~0.5
 
     // WARBLE — deriva de fita: delay curto modulado. Depois do phaser
     // (sujeira, movimento de fase, movimento de altura), antes do
@@ -263,18 +282,37 @@ struct Manifest
     // NAO tem `mix`: fita nao mistura com ela mesma. O sinal inteiro
     // deriva, ou nao deriva — misturar com o seco daria flanger, que e
     // outro efeito.
-    int p_wrb_on;
-    int p_wrb_rate;   // Hz — wow lento
-    int p_wrb_depth;  // ms de excursao do atraso
-    int p_wrb_irreg;  // 0 = periodico | 1 = passeio mecanico
+    int p_wrb_on[kCadeias];
+    int p_wrb_rate[kCadeias];   // Hz — wow lento
+    int p_wrb_depth[kCadeias];  // ms de excursao do atraso · PRIMARIO
+    int p_wrb_irreg[kCadeias];  // 0 = periodico | 1 = passeio mecanico
+
+    // ---- PARAM PRIMARIO POR EFEITO ----
+    //
+    // O que o pot de "parameter" do painel controla. E destilacao
+    // forcada: se nao da pra nomear o knob que mais importa, o efeito
+    // nao esta maduro. Tambem e o unico param, alem do on/off, que
+    // recebe CC — os secundarios seguem alcancaveis por `set`.
+    struct EfeitoCaracter
+    {
+        int         p_on;
+        int         p_primario;
+        const char* nome;
+        const char* nome_primario;
+    };
+    EfeitoCaracter caracter[kCadeias][3];
+
+    // TOM DE TESTE: pra qual cadeia. 0=A 1=B 2=AMBAS (default).
+    //
+    // Tom que entra so numa cadeia deixa a outra INVISIVEL ao teste, e
+    // canal mudo prova so que aquele canal esta mudo. Sem destino
+    // selecionavel, nenhum teste futuro distingue "B quebrada" de "B nao
+    // excitada". AMBAS valida simetria de uma vez; A ou B isolam quando
+    // o sintoma for assimetrico.
+    int p_tone_dest;
 
     // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
     // onde o estereo existe: sem estereo nao ha spread.
-    int p_det_on;
-    int p_det_cents;   // 0..50 cents de desvio, simetrico
-    int p_det_voices;  // 1 ou 2
-    int p_det_spread;  // 0 = centro | 1 = pontas opostas
-    int p_det_mix;     // CAMADA por cima do seco
 
     // SHIMMER — reverb + pitch-up num laco de realimentacao. Nao tem
     // reverb proprio: realimenta o Freeverb da cadeia.
@@ -320,7 +358,7 @@ struct Manifest
         int         param_on;
         const char* nome;
     };
-    static constexpr int kMaxSacrificaveis = 8;
+    static constexpr int kMaxSacrificaveis = 12;
     Sacrificavel sacrif[kMaxSacrificaveis];
     int          n_sacrif = 0;
 
@@ -602,7 +640,8 @@ struct Manifest
         // defeito novo.
         //
         // norm para 8.0 = topo da faixa = 1.0
-        p_in_gain   = t.Add("in_gain",   0.0f, 1.f, 8.f, 2.0f); // MIDI: nasce 0 (= 1x)
+        p_in_gain[0] = t.Add("in_gain_a", 0.0f, 1.f, 8.f, 2.0f); // nasce 1x
+        p_in_gain[1] = t.Add("in_gain_b", 0.0f, 1.f, 8.f, 2.0f);
         // os params do módulo já são 0–1 no export, então min/max reais
         // coincidem com o normalizado e a conversão é identidade.
         // curve 2.5 no dly_time: ERGONOMIA, não DSP. O parâmetro do
@@ -654,9 +693,11 @@ struct Manifest
         // produz 0.02 é sqrt(0.02) = 0.1414.
         // Gate de volta: o chão de ruído do piezo vira cauda no delay se
         // ninguém o cortar. 0.02 é o valor que estava antes do A/B.
-        p_gate_thresh  = t.Add("gate_thresh",  0.0f, 0.f,  1.f, 2.0f); // MIDI: nasce 0 (portao aberto)
+        p_gate_thresh[0]  = t.Add("gate_thresh_a",  0.0f, 0.f, 1.f, 2.0f);
+        p_gate_thresh[1]  = t.Add("gate_thresh_b",  0.0f, 0.f, 1.f, 2.0f);
         // release em ms: 50–2000, default 300
-        p_gate_release = t.Add("gate_release", 0.1282f, 50.f, 2000.f);
+        p_gate_release[0] = t.Add("gate_release_a", 0.1282f, 50.f, 2000.f);
+        p_gate_release[1] = t.Add("gate_release_b", 0.1282f, 50.f, 2000.f);
 
         // GOVERNOR. gov_ceiling é o futuro destino do ENCODER físico:
         // é a "borda de feedback", o ponto onde a escultura para de
@@ -739,45 +780,61 @@ struct Manifest
         p_frz_size      = t.Add("frz_size",      0.0f, 20.f, 400.f); // MIDI: nasce 0 (= 20 ms)
 
         // ---- DRIVE ----
-        p_drv_on    = t.Add("drv_on",    0.0f, 0.f, 1.f);
+        p_drv_on[0]    = t.Add("drv_on_a",    0.0f, 0.f, 1.f);
+        p_drv_on[1]    = t.Add("drv_on_b",    0.0f, 0.f, 1.f);
         // FAIXA CORTADA POR BAIXO, mesma regua do dly_time: 1.5x ja e
         // cola audivel, e abaixo disso o waveshaper nao faz nada que o
         // ouvido perceba. Curso inteiro util, agressivo so no fim.
         //   0% = 1.5x | 25% = 4.1x | 50% = 6.8x | 100% = 12x
-        p_drv_drive = t.Add("drv_drive", 0.0f, 1.5f, 12.f);
+        p_drv_drive[0] = t.Add("drv_drive_a", 0.0f, 1.5f, 12.f);
+        p_drv_drive[1] = t.Add("drv_drive_b", 0.0f, 1.5f, 12.f);
         // Passa-baixa pos-saturacao. No topo e transparente de
         // proposito: "tone no maximo" tem que significar SEM filtro.
-        p_drv_tone  = t.Add("drv_tone",  0.0f, 800.f, 16000.f, 2.0f);
-        p_drv_mix   = t.Add("drv_mix",   0.0f, 0.f, 1.f);
+        p_drv_tone[0]  = t.Add("drv_tone_a",  0.0f, 800.f, 16000.f, 2.0f);
+        p_drv_tone[1]  = t.Add("drv_tone_b",  0.0f, 800.f, 16000.f, 2.0f);
+        p_drv_mix[0]   = t.Add("drv_mix_a",   0.0f, 0.f, 1.f);
+        p_drv_mix[1]   = t.Add("drv_mix_b",   0.0f, 0.f, 1.f);
 
         // ---- PHASER ----
-        p_phs_on       = t.Add("phs_on",       0.0f, 0.f, 1.f);
+        p_phs_on[0]       = t.Add("phs_on_a",       0.0f, 0.f, 1.f);
+        p_phs_on[1]       = t.Add("phs_on_b",       0.0f, 0.f, 1.f);
         // 0.02 a 4 Hz. Abaixo de 0.02 o movimento some; acima de ~4 ja
         // e vibrato de fase, nao phaser.
-        p_phs_rate     = t.Add("phs_rate",     0.0f, 0.02f, 4.f, 2.0f);
-        p_phs_depth    = t.Add("phs_depth",    0.0f, 0.f, 1.f);
-        p_phs_feedback = t.Add("phs_feedback", 0.0f, 0.f, 1.f);
+        p_phs_rate[0]     = t.Add("phs_rate_a",     0.0f, 0.02f, 4.f, 2.0f);
+        p_phs_rate[1]     = t.Add("phs_rate_b",     0.0f, 0.02f, 4.f, 2.0f);
+        p_phs_depth[0]    = t.Add("phs_depth_a",    0.0f, 0.f, 1.f);
+        p_phs_depth[1]    = t.Add("phs_depth_b",    0.0f, 0.f, 1.f);
+        p_phs_feedback[0] = t.Add("phs_fb_a",       0.0f, 0.f, 1.f);
+        p_phs_feedback[1] = t.Add("phs_fb_b",       0.0f, 0.f, 1.f);
         // 3 posicoes: 4, 6 ou 8 estagios (2, 3 ou 4 notches).
-        p_phs_stages   = t.Add("phs_stages",   0.0f, 4.f, 8.f, 1.0f, 3);
-        p_phs_mix      = t.Add("phs_mix",      0.0f, 0.f, 1.f);
+        p_phs_stages[0]   = t.Add("phs_stages_a",   0.0f, 4.f, 8.f, 1.0f, 3);
+        p_phs_stages[1]   = t.Add("phs_stages_b",   0.0f, 4.f, 8.f, 1.0f, 3);
+        p_phs_mix[0]      = t.Add("phs_mix_a",      0.0f, 0.f, 1.f);
+        p_phs_mix[1]      = t.Add("phs_mix_b",      0.0f, 0.f, 1.f);
 
         // ---- WARBLE ----
-        p_wrb_on    = t.Add("wrb_on",    0.0f, 0.f, 1.f);
-        p_wrb_rate  = t.Add("wrb_rate",  0.0f, 0.05f, 3.f, 2.0f);
+        p_wrb_on[0]    = t.Add("wrb_on_a",    0.0f, 0.f, 1.f);
+        p_wrb_on[1]    = t.Add("wrb_on_b",    0.0f, 0.f, 1.f);
+        p_wrb_rate[0]  = t.Add("wrb_rate_a",  0.0f, 0.05f, 3.f, 2.0f);
+        p_wrb_rate[1]  = t.Add("wrb_rate_b",  0.0f, 0.05f, 3.f, 2.0f);
         // Ate 3 ms. O desvio de altura e ~2*pi*rate*depth: 1 ms a
         // 0,6 Hz da ~4 cents (fita boa); 3 ms a 2 Hz da ~65 cents
         // (fita estragada — as vezes e o que se quer).
-        p_wrb_depth = t.Add("wrb_depth", 0.0f, 0.f, 3.f);
-        p_wrb_irreg = t.Add("wrb_irreg", 0.0f, 0.f, 1.f);
+        p_wrb_depth[0] = t.Add("wrb_depth_a", 0.0f, 0.f, 3.f);
+        p_wrb_depth[1] = t.Add("wrb_depth_b", 0.0f, 0.f, 3.f);
+        p_wrb_irreg[0] = t.Add("wrb_irreg_a", 0.0f, 0.f, 1.f);
+        p_wrb_irreg[1] = t.Add("wrb_irreg_b", 0.0f, 0.f, 1.f);
 
-        // ---- DETUNE ----
-        p_det_on     = t.Add("det_on",     0.0f, 0.f, 1.f);
-        // Ate 50 cents. Abaixo de ~3 e batimento lento (mais textura
-        // que altura); acima de ~30 ja soa desafinado de proposito.
-        p_det_cents  = t.Add("det_cents",  0.0f, 0.f, 50.f);
-        p_det_voices = t.Add("det_voices", 0.0f, 1.f, 2.f, 1.0f, 2);
-        p_det_spread = t.Add("det_spread", 0.0f, 0.f, 1.f);
-        p_det_mix    = t.Add("det_mix",    0.0f, 0.f, 1.f);
+        // TOM DE TESTE: destino. 0=A 1=B 2=AMBAS (default).
+        p_tone_dest = t.Add("tone_dest", 1.0f, 0.f, 2.f, 1.0f, 3);
+
+        // ---- DESCRITOR POR EFEITO DE CARATER ----
+        for(int c = 0; c < kCadeias; c++)
+        {
+            caracter[c][0] = {p_drv_on[c], p_drv_drive[c], "drive", "drive"};
+            caracter[c][1] = {p_phs_on[c], p_phs_rate[c],  "phaser", "rate"};
+            caracter[c][2] = {p_wrb_on[c], p_wrb_depth[c], "warble", "depth"};
+        }
 
         // ---- SHIMMER ----
         // Tudo em zero: o dB constroi subindo os faders (ver a nota dos
@@ -1094,7 +1151,8 @@ struct Manifest
         // identico ao do `src_mix`. Vizinhanca importa.
         // ============================================================
         AddMidi(20, p_level);        // master
-        AddMidi(21, p_in_gain);      // ganho de entrada
+        AddMidi(21, p_in_gain[0]);   // ganho de entrada, cadeia A
+        AddMidi(50, p_in_gain[1]);   //                  cadeia B
         AddMidi(22, p_dly_time);
         AddMidi(23, p_dly_mix);
         AddMidi(24, p_rev_mix);
@@ -1103,35 +1161,36 @@ struct Manifest
         AddMidi(27, p_frz_on);   // chave 0/127
         AddMidi(28, p_frz_mix);
         AddMidi(29, p_frz_size);
-        AddMidi(30, p_gate_thresh);  // ajuste de execucao
+        AddMidi(30, p_gate_thresh[0]); // gate por cadeia: cada piezo le
+        AddMidi(51, p_gate_thresh[1]); // um material diferente
         AddMidi(31, p_buzios_on); // chave 0/127
         AddMidi(32, p_buzios_thresh);   // novo
         // Familia do DETUNE, contigua.
-        AddMidi(52, p_det_on);     // chave 0/127
-        AddMidi(53, p_det_cents);
-        AddMidi(54, p_det_voices); // 2 posicoes
-        AddMidi(55, p_det_spread);
-        AddMidi(56, p_det_mix);
+        // CC 52-56 LIVRES desde 20/08 (eram do detune, fora do build).
 
         // Familia do WARBLE, contigua.
-        AddMidi(48, p_wrb_on);    // chave 0/127
-        AddMidi(49, p_wrb_rate);
-        AddMidi(50, p_wrb_depth);
-        AddMidi(51, p_wrb_irreg);
+        // ---- CARATER: SO on/off + PRIMARIO, e a razao e teto ----
+        //
+        // Mapear os 14 params de caracter x 2 cadeias daria 28 CCs e
+        // estouraria os 48 (a conta foi feita ANTES de escrever isto).
+        // Os secundarios seguem alcancaveis por `set <nome> <real>`.
+        //
+        // Nao e so economia: o painel tem UM pot de parameter por
+        // cadeia, entao o primario e o que existe fisicamente. O resto
+        // e ajuste de bancada.
+        for(int c = 0; c < kCadeias; c++)
+        {
+            const uint8_t base = (uint8_t)(38 + 6 * c);  // A:38-43 B:44-49
+            for(int e = 0; e < 3; e++)
+            {
+                AddMidi((uint8_t)(base + 2 * e),     caracter[c][e].p_on);
+                AddMidi((uint8_t)(base + 2 * e + 1), caracter[c][e].p_primario);
+            }
+        }
 
         // Familia do PHASER, contigua.
-        AddMidi(42, p_phs_on);     // chave 0/127
-        AddMidi(43, p_phs_rate);
-        AddMidi(44, p_phs_depth);
-        AddMidi(45, p_phs_feedback);
-        AddMidi(46, p_phs_stages); // 3 posicoes
-        AddMidi(47, p_phs_mix);    // pico de notch em ~50%
 
         // Familia do DRIVE, contigua.
-        AddMidi(38, p_drv_on);    // chave 0/127
-        AddMidi(39, p_drv_drive);
-        AddMidi(40, p_drv_tone);
-        AddMidi(41, p_drv_mix);
 
         AddMidi(33, p_shm_on);   // chave 0/127
         AddMidi(37, p_shm_mix);
@@ -1150,8 +1209,7 @@ struct Manifest
         // Proposta inicial, do mais sacrificavel ao menos. E do dB
         // mudar: a ordem e decisao musical, nao tecnica.
         //
-        //   detune  +125 us — o MAIS caro da suite e o menos
-        //                     estrutural: engrossa, nao define.
+        //   (o detune era o indice 0 e saiu do build em 20/08)
         //   phaser   +26 us — movimento, nao identidade.
         //   warble   +14 us — idem, e o mais sutil dos tres.
         //   drive    +21 us — cola; a falta se nota mais que a do phaser.
@@ -1164,10 +1222,18 @@ struct Manifest
             { sacrif[n_sacrif].param_on = id;
               sacrif[n_sacrif].nome = n; n_sacrif++; }
         };
-        S(p_det_on, "detune");
-        S(p_phs_on, "phaser");
-        S(p_wrb_on, "warble");
-        S(p_drv_on, "drive");
+        // ORDEM REVISTA no pivo de 20/08: seis slots de caracter mais a
+        // cauda. Caracter cai antes da cauda porque a cauda e o que faz
+        // tambor e corda soarem como o MESMO OBJETO — perde-la separa o
+        // que o desenho existe pra unir.
+        //
+        // Dentro do caracter, B antes de A e escolha ARBITRARIA e o dB
+        // deve reordenar de ouvido. Fica declarado que e arbitraria:
+        // derrubar um efeito de UMA cadeia cria assimetria, e se isso
+        // incomodar mais que perder o efeito nas duas, a ordem muda.
+        for(int c = kCadeias - 1; c >= 0; c--) S(p_phs_on[c], "phaser");
+        for(int c = kCadeias - 1; c >= 0; c--) S(p_wrb_on[c], "warble");
+        for(int c = kCadeias - 1; c >= 0; c--) S(p_drv_on[c], "drive");
         S(p_frz_on, "freeze");
         S(p_shm_on, "shimmer");
         // 34 e o comando `sync` — fica no meio da familia do shimmer
