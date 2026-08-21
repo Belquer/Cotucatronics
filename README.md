@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.85.1** — delay + reverb + freeze granular e a **suíte de cinco efeitos residentes** (drive, phaser, warble, detune, shimmer), bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
+Projeto colaborativo. Estado atual: **v0.91.0** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, MIDI certificado sob carga (T16c, 2026-08-18); vocoder aposentado do build,
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -67,7 +67,7 @@ Cinco regras que não se negociam:
 | [src/drive.h](src/drive.h) | **v0.2.0** | Drive: waveshaper tanh normalizado como cola. Zero memória |
 | [src/phaser.h](src/phaser.h) | **v0.3.0** | Phaser: N allpass varridos por LFO triangular. Zero buffer |
 | [src/warble.h](src/warble.h) | **v0.1.0** | Warble: deriva de fita por delay curto modulado |
-| [src/detune.h](src/detune.h) | **v0.1.0** | Detune: 2 vozes micro-desafinadas + largura estéreo |
+| [src/detune.h](src/detune.h) | **v0.1.0** | Detune. **FORA do build desde 20/08** — revivível, ver `docs/FEATURES.md` |
 | [src/effect_slot.h](src/effect_slot.h) | **v0.3.0** | Moldura: fade assimétrico, custo-zero desligado, cronometragem |
 | [src/pitch_spectrum.py](src/pitch_spectrum.py) | **v0.1.0** | Os N maiores picos do espectro — pico dominante mente com laterais fortes |
 | [src/dynamics.h](src/dynamics.h) | **v0.4.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
@@ -80,10 +80,10 @@ Cinco regras que não se negociam:
 | [src/module_rnbo_delay.cpp](src/module_rnbo_delay.cpp) | — | Delay no Fx1. Inclui `RNBO.h` |
 | [src/module_rnbo_freeze.cpp](src/module_rnbo_freeze.cpp) | — | Freeze. Reprovado na etapa 5 do IFÁ10000 (7 349 µs) |
 | [src/module_rnbo_vocoder.cpp](src/module_rnbo_vocoder.cpp) | **v0.6.0** | Vocoder. **FORA do build desde 18/08** — decisão de ouvido do dB, revivível |
-| [src/main.cpp](src/main.cpp) | **v0.85.1** | Loop, callback de áudio, painel falso via serial. `board` declara tabelas e dependências, `hist` mede a entrada, `ctos` reporta o teto de soma |
+| [src/main.cpp](src/main.cpp) | **v0.91.0** | Loop, callback de áudio, painel falso via serial. **Duas cadeias de caráter + cauda compartilhada** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
-| [src/params.h](src/params.h) | **v0.8.0** | `ParamTable` + `Macro` (teto 64). Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.57.0** | Instrumento aprovado: delay + reverb + suíte + I/O + ordem de sacrifício, **58 params / 41 CCs** |
+| [src/params.h](src/params.h) | **v0.9.0** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
+| [src/manifest.h](src/manifest.h) | **v0.59.0** | Duas cadeias, cauda compartilhada, param primário por efeito, **71 params / 36 CCs** |
 | [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 41 CCs numa folha A4. Fonte em `ccmap.html`, gerador `ccmap-pdf.sh` / `.command` v0.1.0 |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [src/modules/README.md](src/modules/README.md) | **v0.4.0** | **Manual de embarque de módulos RNBO — o template** |
