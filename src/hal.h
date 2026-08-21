@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.17.0
+// hal.h v0.18.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -84,15 +84,20 @@ bool             ReadButton(int index);        // true = pressionado
 // Pull-up interno significa que pino solto le ALTO. Entao "alto
 // constante" e ambiguo: pode ser LED apagado, ou fio nao ligado. O
 // comando `ble` diz isso em vez de fingir que sabe.
-// Le os TRES pads de LED do WIDI: LB (D28), LG (D29), LR (D30).
-// idx 0=LB 1=LG 2=LR. Nivel CRU, sem interpretacao.
+// Le o pad LB (D28) do WIDI. Nivel CRU, sem interpretacao.
 //
-// SAO TRES DE PROPOSITO. A legenda da CME ("pisca lento = anunciando,
-// fixo = conectado") foi assumida como sendo do LB e o dB DESMENTIU por
-// medicao: desconectou e o LB ficou fixo. Ou seja, o LB indica outra
-// coisa — e qual pad carrega o estado de conexao e pergunta EMPIRICA.
-// Ler os tres e mais barato que adivinhar de novo.
-bool             ReadWidiLed(int idx);
+// ERAM TRES. LG (D29) e LR (D30) foram lidos por dois dias e NAO
+// MARCARAM NADA util — removidos do hardware em 20/08, com D29/D30 de
+// volta ao pool de pinos livres (ver BOARDS.md).
+//
+// O QUE O LB INDICA SEGUE PERGUNTA ABERTA. A legenda da CME ("pisca
+// lento = anunciando, fixo = conectado") foi assumida como sendo do LB
+// e o dB DESMENTIU por medicao: desconectou e o LB ficou FIXO. Entao o
+// LB nao e "conectado/desconectado" — e o que ele carrega ainda nao se
+// sabe. A hipotese "e um dos outros dois" morreu junto com eles: LG e
+// LR estao descartados como candidatos POR NAO MARCAREM, o que e
+// resultado, nao ausencia de resultado.
+bool             ReadWidiLed();
 
 // Reinicia a placa DIRETO no bootloader, com timeout INFINITO — ela
 // fica esperando a gravacao ate ser gravada.

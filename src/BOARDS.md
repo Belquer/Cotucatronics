@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.12.0**
+**Documento v0.13.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -143,6 +143,26 @@ periférico nenhum.
 | **RX** (a placa ouve) | `seed::D14` | `PB7` | **15** | **TX** do WIDI |
 | 3V3 | — | — | ver serigrafia | VCC do WIDI |
 | GND | — | — | qualquer DGND | GND do WIDI |
+| **LB** (estado do link) | `seed::D28` | — | — | pad **LB** do WIDI |
+
+> ### D29 e D30 ESTÃO LIVRES desde 20/08
+>
+> Eram **LG** (D29) e **LR** (D30), lidos junto com o LB para descobrir
+> qual pad carregava o estado de conexão. Foram medidos por dois dias e
+> **não marcaram nada útil** — removidos do hardware.
+>
+> **Isso é resultado, não desistência:** LG e LR estão descartados como
+> candidatos *por não marcarem*, o que fecha duas das três hipóteses. O
+> que o **LB** indica segue pergunta aberta — a legenda da CME foi
+> desmentida por medição (o dB desconectou e o LB ficou fixo), então o
+> LB **não** é conectado/desconectado.
+>
+> **D29 e D30 voltaram para o pool de pinos disponíveis.** São candidatos
+> naturais para o próximo subsistema que precisar de GPIO — mais botões,
+> um LED de status nosso, um encoder. **Confira o alias de ADC antes de
+> soldar** (a regra do quadro acima vale igual): a colisão não dá erro de
+> compilação nem de boot, dá pot que não lê e botão que não responde, os
+> dois em silêncio.
 
 > ### ⚠️ É CRUZADO. Este é o erro que custa uma tarde.
 >
@@ -325,6 +345,8 @@ entra no caminho crítico.**
 #### Camada 1 — o LED no pad LB
 
 LED + 470 Ω soldados no pad **LB** do WIDI Core, com **V3 como fonte**.
+**Só o LB** — LG e LR foram removidos em 20/08 (ver o quadro na seção de
+solda do WIDI).
 
 Legenda oficial do módulo, conforme a **CME**:
 
@@ -333,11 +355,19 @@ Legenda oficial do módulo, conforme a **CME**:
 | pisca lento | anunciando (advertising) — ninguém conectado |
 | fixo | conectado |
 
-> ⚠️ **Procedência:** esta legenda vem da documentação da CME, repassada
-> pelo dB — **não foi verificada por medição nossa**. A distinção importa
-> porque já inventei um LED que este módulo não tinha; o que está escrito
-> aqui é o que o fabricante diz, não o que a bancada provou. Se a bancada
-> discordar, quem manda é a bancada, e esta tabela muda.
+> ⚠️ **A BANCADA DISCORDOU, E QUEM MANDA É A BANCADA.** Esta tabela era
+> hipótese da CME, repassada pelo dB, e a medição a desmentiu: **o dB
+> desconectou e o LB ficou FIXO.** Logo o LB não é
+> conectado/desconectado — carrega outra coisa, e qual ainda não se sabe.
+>
+> A saída óbvia era "então é o LG ou o LR". Os dois foram lidos por dois
+> dias e **não marcaram nada**, e por isso saíram do hardware em 20/08.
+> Restou uma pergunta aberta com **dois candidatos a menos** — o que é
+> progresso, não o mesmo lugar de antes.
+>
+> Na prática o LB segue **útil como sinal cru**: `LB 0/100%` (fixo) vs
+> transições contando. O que não se pode é traduzi-lo para "conectado"
+> sem medir de novo.
 
 #### A matriz LED × mscope — seis quadrantes, um culpado cada
 
