@@ -337,6 +337,42 @@ do instrumento saiu do ar.
 > Gêmeo do "zero com cara de dado": **número bom com cara de vitória.** Toda
 > leitura de carga vem com o retrato do que estava no ar.
 
+## Código de diagnóstico tem as mesmas pré-condições do de produção
+
+Ele roda no mesmo hardware, na mesma ordem de inicialização, com os mesmos
+periféricos. *"É só um log"*, *"é só um recado"*, *"é só um script"* são as
+três frases que precedem as falhas mais caras deste projeto.
+
+Em 22/08, três vezes no mesmo dia o instrumento de medir virou a falha:
+
+- um parser de bancada devolvia `0` quando o regex não casava, e eu
+  registrei um defeito de firmware **inexistente** (12u);
+- o relatório de uma defesa mentia sobre o próprio critério, imprimindo
+  ">1000 us" enquanto contava contra 300 (12x);
+- o vigia do loop lia a SRAM de **backup** antes do `hal::Init()` — domínio
+  de energia não habilitado — e o resultado foi app rodando, LED batendo, e
+  **USB nunca subindo**. Placa viva e muda, recuperável só por BOOT+RST e
+  reinstalação do bootloader (12z).
+
+> **Antes de acrescentar qualquer sonda: em que ponto da inicialização ela
+> roda, e o que ela toca já está de pé nesse ponto?**
+
+## Retentativa automática precisa de teto E de contador
+
+Uma defesa que se auto-cura sem orçamento vira a doença. O rearme automático
+da escuta MIDI rearmava a cada volta do loop enquanto a escuta não se
+estabelecesse: **376.906 rearmes num voo**, ~3,7 s de loop gasto — que foi o
+travamento que o vigia detectou.
+
+> Toda retentativa automática precisa de **teto por unidade de tempo** e de
+> um **contador do que o teto barrou** — senão "está tentando o tempo todo"
+> é indistinguível de "nunca precisou tentar".
+
+**E varra os irmãos:** a regra do trabalho ilimitado já existia neste
+projeto, aplicada ao `Log()`, com comentário longo explicando por quê. Duas
+funções abaixo dela no mesmo arquivo não a seguiam. **Lição aplicada num
+lugar não é lição aplicada.**
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

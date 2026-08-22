@@ -2441,6 +2441,94 @@ estouros já grava.
 
 ---
 
+## 12y. Trabalho ilimitado em contexto compartilhado — a terceira e a quarta (22/08)
+
+O `Log()` já tinha aprendido isto e ganhado disjuntor: *trabalho ilimitado
+em contexto compartilhado é parada cardíaca esperando acontecer.* A lição
+estava escrita e **duas outras funções no mesmo arquivo não a tinham**.
+
+**PollMidi drenava sem teto:**
+
+```cpp
+while(m_tail != m_head) { ... midi_cb(b); }   // a ISR enche em paralelo
+```
+
+Produtor e consumidor no mesmo anel, consumidor sem orçamento. Se os bytes
+chegam tão rápido quanto são processados, `m_tail` nunca alcança `m_head` e
+a função **nunca retorna**. Nunca disparou na bancada — chegaram zero bytes
+no teste — mas é a mesma forma.
+
+**E o rearme da escuta rearmava a cada volta:**
+
+```cpp
+if(midi_started && !midi_uart.IsListening()) MidiRestart();
+```
+
+Uma defesa que se auto-cura, sem orçamento. Quando a escuta **não consegue
+se estabelecer** — WIDI desconectado, linha RX solta — isso vira
+moto-perpétuo: `DmaListenStop` + `memset` + `DmaListenStart`, milhares de
+vezes por segundo.
+
+**Medido pela caixa-preta: 376.906 rearmes num voo.** A ~10 µs cada, ~3,7 s
+de loop gasto rearmando — exatamente a janela que o vigia detectou.
+
+**Regra:** *uma defesa que se auto-cura sem orçamento vira a doença.* Toda
+retentativa automática precisa de teto por unidade de tempo E de um contador
+do que o teto barrou — senão "está tentando o tempo todo" é indistinguível
+de "nunca precisou tentar".
+
+**Meta-lição, e é a que dói:** a regra já existia neste arquivo, aplicada ao
+`Log()`, com comentário longo explicando por quê. Duas funções abaixo dela
+não a seguiam. **Lição aplicada num lugar não é lição aplicada** — quando
+uma regra nasce de um bug, vale varrer os irmãos do mesmo arquivo no mesmo
+dia.
+
+---
+
+## 12z. Investigação sem ponto de retorno declarado (22/08)
+
+Ao trocar para `BOOT_SRAM` apareceu um travamento reprodutível. Investiguei
+por seis gravações seguidas, cada uma com um conserto novo, **sem nunca
+fixar o bom conhecido**. Quando o app parou de enumerar o USB, não havia
+para onde voltar sem reconstruir — e a recuperação custou BOOT+RST,
+reinstalação do bootloader, e vários RESETs físicos do dB.
+
+O repositório tinha o chão o tempo todo: commit `163ee1d`, v0.123.2. Eu
+levei seis gravações para usá-lo.
+
+**Regra:** *antes da primeira gravação exploratória, declarar em voz alta
+qual é o bom conhecido e como se volta a ele.* Não é cerimônia: é a
+diferença entre "reverto num comando" e "reconstruo às cegas com a placa
+muda".
+
+**E o pior defeito do dia foi meu, no próprio instrumento de diagnóstico.**
+O vigia do loop deixa recado na SRAM de backup. Pus a leitura desse recado
+como **primeira linha do `main`, antes do `hal::Init()`** — e a SRAM de
+backup vive num domínio de energia que só é habilitado durante a
+inicialização do HAL, com a leitura ainda fazendo operação de cache.
+
+Resultado: a pior falha que este instrumento pode ter. **O app rodava — o
+LED batia — e o USB nunca subia.** Placa viva e muda, sem serial para dizer
+o que houve, recuperável só por BOOT+RST e reinstalação do bootloader.
+
+É a família "ordem de configuração", já catalogada aqui, reintroduzida no
+código que existe **para investigar falhas**. Terceira vez no mesmo dia que
+o instrumento de medir vira a falha: o parser que devolvia zero (12u), o
+relatório que mentia sobre o próprio critério (12x), e agora o vigia que
+derruba o USB.
+
+**Regra:** *código de diagnóstico roda no mesmo hardware que o código de
+produção e tem as mesmas pré-condições.* "É só um log", "é só um recado",
+"é só um script" são as três frases que precedem as falhas mais caras deste
+projeto.
+
+**Sub-lição sobre a janela de 2 s do bootloader:** gravar depois do RESET
+falha porque o comando leva mais tempo que a janela. O certo é **esperar o
+bootloader aparecer e gravar no instante em que surgir** — polling do
+`dfu-util -l`, gravação no primeiro acerto. Funcionou de primeira.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**

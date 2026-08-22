@@ -128,3 +128,42 @@ duas pessoas em vez de a duas funções.
 for i in $(seq 1 120); do <flash> && break; sleep 1; done &
 # só ENTÃO: "toca o RESET"
 ```
+
+## Antes da primeira gravação exploratória: declare o bom conhecido
+
+Em 22/08 uma troca de `APP_TYPE` produziu travamento reprodutível. Investiguei
+por **seis gravações seguidas**, cada uma com um conserto novo, sem nunca
+fixar o ponto de retorno. Quando o app parou de enumerar o USB, não havia
+para onde voltar sem reconstruir — e a recuperação custou BOOT+RST,
+reinstalação do bootloader e vários RESETs físicos do operador.
+
+O repositório tinha o chão o tempo todo. Levei seis gravações para usá-lo.
+
+> **Antes da primeira gravação exploratória, dizer em voz alta qual commit é
+> o bom conhecido e como se volta a ele.** Não é cerimônia: é a diferença
+> entre "reverto num comando" e "reconstruo às cegas com a placa muda".
+
+E um conserto por gravação, com a placa respondendo entre cada um. Empilhar
+consertos numa gravação só torna todo diagnóstico seguinte ambíguo.
+
+## A janela do bootloader não se pega por comando, se pega por espera
+
+Gravar **depois** de pedir o RESET falha: o comando leva mais tempo que a
+janela de 2 s. O certo é o inverso — **ficar esperando o bootloader aparecer
+e gravar no instante em que surgir**:
+
+```
+polling de `dfu-util -l` a cada 0,25 s; grava no primeiro acerto
+```
+
+Funcionou de primeira depois de duas tentativas perdidas pelo método antigo.
+
+## Recuperação quando o app não enumera nada
+
+Sintoma: sem porta serial, sem DFU, LED aceso. O app subiu e derrubou o USB.
+
+1. **BOOT+RST** entra no DFU da **ROM da ST** (`0483:df11`, mostra a flash
+   interna em `0x08000000`) — independente do app e do bootloader.
+2. `make program-boot` reinstala o bootloader da Daisy. O erro no
+   `leave request` no fim é normal: o dispositivo já saiu.
+3. RESET simples, e gravar o app pela espera descrita acima.
