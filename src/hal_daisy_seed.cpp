@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.17.0
+// hal_daisy_seed v0.18.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -22,7 +22,7 @@ static DaisySeed hw;
 static BoardInfo info = {
     .name         = "Daisy Seed",
     .num_knobs    = 5, // k1 level, k2 src_mix, k3-k5 macros
-    .num_buttons  = 2, // B1 randomizador, B2 assinalável
+    .num_buttons  = 3, // B1 randomizador, B2 assinalável, B3 rearme do CTOS
     .has_audio_in = true,
     .sample_rate  = 48000.f,
     // Valor de partida; o manifest pede o dele em RequestBlockSize()
@@ -48,7 +48,7 @@ static BoardInfo info = {
 // debounce contado quebraria em silêncio se o loop mudasse de
 // cadência — que é exatamente o tipo de acoplamento invisível que
 // esta base já pagou caro pra aprender a evitar.
-constexpr int      kNumButtons  = 2;
+constexpr int      kNumButtons  = 3;
 static GPIO        widi_led;     // LB=D28 (LG/LR removidos 20/08 — nao
                                  // marcavam nada, medido)
 constexpr uint32_t kDebounceMs  = 10;
@@ -218,10 +218,13 @@ bool Init()
     // WIDI LB: entrada com pull-up. D28 esta livre — D13/D14 sao a UART
     // do MIDI, D15-D19 sao os pots (A0-A4 sao os MESMOS pinos), e
     // D26/D27 sao os botoes.
-    // So o LB. D29/D30 LIVRES desde 20/08.
+    // So o LB. D29/D30 reservados pras chaves DPDT dos excitadores.
+    // D25 entrou em 22/08 como B3 = rearme do teto de soma: pull-up
+    // interno e ativo em BAIXO, entao com o painel ainda inexistente o
+    // pino flutuante le "solto" — botao que nao existe nao dispara.
     widi_led.Init(seed::D28, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
-    const Pin btn_pins[kNumButtons] = {seed::D26, seed::D27};
+    const Pin btn_pins[kNumButtons] = {seed::D26, seed::D27, seed::D25};
     for(int i = 0; i < kNumButtons; i++)
         buttons[i].gpio.Init(btn_pins[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 

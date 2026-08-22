@@ -1783,6 +1783,338 @@ importa era "compare, e saiba qual direção é defeito"**.
 
 ---
 
+## 12k. A trava muda: três efeitos "quebrados" que estavam intactos (22/08)
+
+**Sintoma.** "phaser, drive e shimmer não estão soando, warble, delay,
+rvb e frz estão." Fui procurar defeito nos três módulos.
+
+**O que os três tinham em comum não era um defeito — era uma trava.**
+O teto de soma do CTOS havia disparado 28 minutos antes, durante a
+varredura da auditoria de parâmetros (que liga os dez efeitos de uma vez
+e estourou os 850 µs), e derrubou, na ordem declarada: phaser A e B,
+drive A e B, freeze A e B, shimmer A e B. A queda é **travada** — de
+propósito, senão o mecanismo oscilaria. E a trava é reimposta **a cada
+bloco**:
+
+```cpp
+if(soma_caiu[k]) params.Set(manifest.sacrif[k].param_on, 0.f);
+```
+
+**A impressão digital estava à vista e eu não a li.** Tudo que o
+operador reportou mudo estava na lista de sacrifício. Tudo que soava —
+delay e reverb — **não está na lista**. O warble aparecia como
+"desligado", nunca caiu, e por isso ligava normal. A lista de sacrifício
+era a resposta inteira, disponível num `ctos` desde o primeiro minuto.
+
+**O que fez isso custar uma sessão: os três canais de leitura mentiam
+por omissão.**
+
+| canal | o que mostrava | o que era |
+|---|---|---|
+| `set drv_on_a 1` | `real=0.000` | recusado pela trava, sem dizer |
+| `set shm_on_a 1` | `real=1.000` | aceito e desfeito no bloco seguinte |
+| `list` | `norm=0.00 real=0.00` | idêntico a um efeito honestamente desligado |
+| `board` | silêncio | o aviso de shimmer-sem-sala lê `shm_on`, que a trava zerou |
+
+Esse último é o mais perverso: **a trava emudeceu a defesa que existia
+para esse caso.** O aviso "shm_on ligado com rev_on em 0" estava correto
+e nunca disparou, porque a condição que ele testa é justamente o valor
+que a trava esmaga. Defesa que lê estado pode ser calada por quem
+escreve esse estado — a ordem de leitura importa.
+
+**Prova de que não havia defeito:** `ctos rearm` e os três voltaram, com
+custo de CPU medido — drive +12 µs, phaser +24 µs, shimmer +296 µs.
+Zero linhas de correção em drive.h, phaser ou shimmer.h.
+
+**A lição não é "não trave".** A trava está certa. A lição é que **um
+mecanismo que desfaz o comando do operador tem obrigação de dizer que
+desfez** — no momento do comando, não num diagnóstico que só quem
+suspeita vai pedir. v0.110.0 faz a trava falar nos três canais: o `set`
+avisa que será desfeito, o `list` marca `*** TRAVADO PELO CTOS ***`, e o
+`board` grita antes de qualquer outro aviso (justamente porque os outros
+leem estado que ela falseia).
+
+**Regra:** *estado imposto por mecanismo é indistinguível de estado
+escolhido por gente, a menos que alguém escreva a diferença. Se o
+firmware sobrescreve uma intenção, ele deve isso ao operador em voz
+alta.*
+
+**Sub-lição, do teste do próprio conserto:** `ctos teto 300` não derrubou
+nada e eu quase li isso como "o conserto não funciona". Base 188 µs +
+phaser 24 µs = 212, abaixo de 300. **Um teto de teste tem que ficar
+abaixo da base**, ou o teste não testa nada. Foi o teste que falhou, não
+o código.
+
+**Sub-lição 2:** escrevi `SacrifTravado(i) ? "" : "TRAVADO"` numa função
+que devolve **−1 quando não está travado**. −1 é verdadeiro; a marca
+apareceria em todo param são e sumiria justamente no índice 0. Sentinela
+negativa exige `>= 0` explícito — nunca teste de verdade.
+
+---
+
+## 12l. Gravar apaga o instrumento, e ninguém é avisado (22/08)
+
+**Sintoma, dez minutos depois de 12k:** "e drv shm e rvb não estão
+soando". Fui procurar a trava do CTOS de novo. Não era.
+
+Era `level = 0.00`. Eu havia gravado duas vezes (v0.110.0 e v0.111.0)
+**enquanto o dB tocava**. Cada gravação reinicia a placa, todo parâmetro
+volta ao default, e `level` nasce em 0. Os ajustes de uma sessão inteira
+de Loopy evaporam — e o Loopy só remanda um CC quando aquele fader se
+mexe, então nada se restaura sozinho.
+
+**O que torna isso pior que o teto de soma:** a queda do teto ao menos
+*acontece* por um motivo audível e agora se anuncia (12k). A perda por
+gravação é **silenciosa dos dois lados**: a placa reinicia sem dizer, e o
+operador só descobre pela ausência de som — que ele naturalmente lê como
+defeito no efeito que estava usando. Duas vezes hoje eu mesmo caí nessa
+leitura.
+
+**A confusão foi minha e era evitável.** Eu estava rodando tetos
+artificiais e zerando `phs_on_a`/`drv_on_a` no fim de cada teste com o
+instrumento em uso. Todo relato de "não soa" que chegou nessa janela
+tinha uma causa minha antes de qualquer causa do firmware.
+
+**Regra 1:** *não se instrumenta o instrumento enquanto ele está sendo
+tocado. Se for inevitável, o primeiro suspeito de qualquer sintoma
+relatado nessa janela sou eu, não o código.*
+
+**Regra 2:** *estado que só existe em RAM morre a cada gravação. Num
+instrumento sem tela, isso é perda de trabalho invisível — e o sintoma
+dela imita defeito de efeito.* Aponta pra preset em flash: salvar e
+recarregar no boot. Aberto em 22/08.
+
+---
+
+## 12m. O botão que devolve, e o LED que avisa que ele existe (22/08)
+
+Resolvido 12k, ficou a pergunta prática: o dB toca **sem computador**. Se
+o teto derrubar no meio da performance, `ctos rearm` por serial não está
+ao alcance dele. Resposta dele: *"rearme e botão físico"*. B3 em D25.
+
+**Duas escolhas de desenho que não são óbvias.**
+
+**O botão é assimétrico em relação ao serial, de propósito.** `ctos
+rearm` solta a trava e **não religa** — decisão antiga e correta, com o
+argumento escrito em código: religar decidiria pelo operador qual
+configuração ele queria de volta. Para o botão esse argumento **não vale**,
+e é importante entender por quê: `soma_caiu[k]` só fica de pé para efeito
+que **estava ligado** quando o teto o derrubou. Não há ambiguidade
+nenhuma sobre o que devolver. Devolver não é escolher por ninguém — é
+desfazer o que o mecanismo fez. E um botão de rearme que rearma sem
+trazer som de volta está quebrado do ponto de vista de quem aperta.
+
+Se não couber de novo, cai de novo em menos de um segundo. Isso é
+informação honesta, não falha.
+
+**O alarme entrou na CADÊNCIA do LED, não no estado dele.** O LED já é o
+batimento que separa "loop vivo" de "loop morto" — a pergunta que custou
+o diagnóstico inteiro do búzios. Roubá-lo para sinalizar trava teria
+pago o alarme com a prova. Então: devagar = vivo e sem trava; **4× mais
+rápido = tem efeito travado**; congelado = loop morto, nos dois regimes.
+Um canal, dois fatos, nenhum perdido.
+
+**A dependência que ninguém declara:** *um controle de correção sem um
+indicador da condição que ele corrige é inútil — ninguém aperta um
+rearme sem saber que precisa rearmar.* O botão e o LED são uma feature
+só; entregar um sem o outro seria entregar nada.
+
+**Sub-lição de implementação:** o simulado `b3` setava o pulso e nada o
+baixava. O laço vê a borda, dispara, e `btn_prev` fica em alto **para
+sempre** — o botão funcionaria exatamente uma vez por boot. Pulso
+simulado tem que ser consumido por quem o lê.
+
+---
+
+## 12n. O efeito que funciona e mesmo assim não soa (22/08)
+
+**Relato:** "tudo funciona exceto o drive." O drive custava +12 µs
+medidos — rodava. E não se ouvia.
+
+**Duas hipóteses minhas, as duas refutadas por medição:**
+
+*Hipótese 1: o `drv_tone` nasce em 800 Hz (fundo da faixa) e o LPF fica
+DEPOIS do saturador, então mata os harmônicos que são o drive.* Plausível
+e errada. Replicando a matemática exata do módulo: a camada somada entra
+a **+2,4 dB** sobre o seco em tone 800, contra +3,6 dB em tone 16000 —
+1,2 dB de diferença. Mais escura, nunca inaudível.
+
+*Hipótese 2: o `gm` do EffectSlot não chega a 1, então o drive processa
+somando zero.* Também errada — e era o mesmo slot que o phaser usa, que
+funcionava. Ler o código teria bastado para descartar essa antes de
+suspeitar dela.
+
+**Medição na placa, com o `env` do governor como medidor de saída:** na
+configuração exata do relato (4×, mix 0.5, tone 800), o drive soma
+**+7,5 dB**. Não é inaudível. É alto.
+
+**A resposta não estava no drive. Estava no nível de quem toca.**
+
+    y = tanh(d·x) / tanh(d)
+
+A divisão é o que isola timbre de nível — a razão de ser do módulo,
+escrita no cabeçalho dele. Mas ela tem um corolário que ninguém tinha
+escrito: **abaixo do joelho, `tanh(d·x) ≈ d·x`, e o waveshaper normalizado
+vira ganho limpo.** O joelho fica em `x ≈ 1/d`.
+
+THD da saturação, por nível de entrada:
+
+| pico | 2× | 4× | 6× | 9× | 12× |
+|---|---|---|---|---|---|
+| −34 dBFS | 0,0 | 0,0 | 0,1 | 0,2 | 0,4 |
+| −20 dBFS | 0,3 | 1,1 | 2,5 | 5,2 | 8,4 |
+| −9 dBFS | 3,3 | 10,6 | 18,2 | 26,5 | 31,1 |
+
+Com `in_gain` em 1.0, o p1 monta a −9,2 dBFS e o p2 a **−19,5 dBFS**. O
+drive colore o instante do ataque do p1 e **desaparece no p2 até no
+pico**. O relato "não soa" estava descrevendo o instrumento com exatidão.
+
+**Conserto: `in_gain`, não drive.** Havia 9 e 19 dB de headroom medido e
+parado (bts 12a: zero clip com os piezos montados). 2,2× e 6,0×.
+
+**Regra:** *num waveshaper normalizado, o controle de drive não tem
+efeito absoluto — ele tem efeito RELATIVO ao nível que chega. "O efeito
+não soa" e "o sinal não alcança o joelho do efeito" são sintomas
+idênticos e conserto em lugares opostos.* Antes de mexer no efeito,
+medir onde o sinal está em relação à faixa útil dele.
+
+**Meta-regra, das duas hipóteses queimadas:** *hipótese sobre módulo com
+matemática fechada se testa replicando a matemática em dois minutos,
+não flasheando a placa.* As duas medições que decidiram tudo — a camada
+por tone e a THD por nível — rodaram no host, sem tocar no hardware.
+
+---
+
+## 12o. O teto era o defeito, e eu consertei a divisão (22/08)
+
+**Queixa:** "quando ligo o drive tenho mais ganho mas a distorção legal que
+tinha antes desapareceu."
+
+Ganho sem distorção é a assinatura exata de um waveshaper operando **abaixo
+do joelho**, onde `tanh(d·x) ≈ d·x` e a curva é reta. O joelho fica em
+`x ≈ 1/d`. Com o teto de `drv_drive` em 12×, ele caía em −19 dBFS — e o
+histograma do instrumento tocado põe **98% das amostras abaixo de −18 dBFS**,
+com o grosso entre −45 e −25.
+
+**O diagnóstico estava certo e o conserto foi no lugar errado.** Concluí que
+a normalização `tanh(d·x)/tanh(d)` era a culpada: ela divide pelo pico para
+entrada de fundo de escala, que o instrumento nunca alcança, então não
+normaliza nada e sobra ganho bruto de `d`. Troquei o denominador por `d`,
+que normaliza o ganho de pequeno sinal. Matematicamente correto.
+
+O dB reprovou em uma frase: *"o timbre da distorção está bom mas bem abaixo
+do som dry, phaser aparece muito mais."*
+
+**Eu tinha os dois números na tela quando escolhi errado:**
+
+| | ÷tanh(d) | ÷d |
+|---|---|---|
+| THD em 48×, nível real | 12,0% | 12,0% |
+| camada vs seco | **+30,4 dB** | **−3,2 dB** |
+
+As duas distorcem **igual**. A única diferença é o peso. Um efeito paralelo
+precisa PESAR — a camada de `÷d` fica limitada a `1/d`, que em 48× é
+−33 dBFS enquanto os picos do instrumento chegam a −9.
+
+**A raiz do erro foi de leitura, não de conta.** A queixa anterior era
+"mais ganho, sem distorção", e eu li o **ganho** como o defeito. O ganho
+estava certo; a distorção ausente é que era o problema. Consertei a
+reclamação que ele não fez.
+
+**Regra:** *quando duas grandezas mudam juntas numa queixa, a que o operador
+NOMEIA como boa não é a que ele quer que você conserte.* "Mais ganho MAS sem
+distorção" tem um "mas": o que vem depois é o pedido.
+
+**Sub-lição:** antes disso queimei duas hipóteses por medição — o `drv_tone`
+nascendo em 800 Hz (mede +2,4 dB de camada contra +3,6 em 16 kHz: mais
+escuro, nunca inaudível) e o `gm` do EffectSlot não chegando a 1 (mesmo slot
+do phaser, que funcionava — ler o código teria bastado). **Hipótese sobre
+módulo com matemática fechada se testa replicando a matemática em dois
+minutos, não flasheando a placa.** As duas medições que decidiram tudo
+rodaram no host.
+
+---
+
+## 12p. Defesa órfã: a separação de canal que existia só no cabeçalho (22/08)
+
+Implementei o espelho MIDI — a placa transmite seu estado de volta ao iPad
+— com duas defesas declaradas contra realimentação:
+
+1. canal separado (escuta em 1, fala em 2)
+2. tabela `eco_ult[cc]`, que impede reenviar valor repetido
+
+**A primeira nunca existiu.** Escrevi `kStatusEco = 0xB1` para transmitir e
+**não escrevi filtro nenhum na recepção**. O receptor está em omni — e omni
+inclui o canal em que a própria placa fala. O `midi` mostrou o crime:
+
+```
+cc 65  val 127 ch 1  -> frz_on_a      <- o Loopy respondendo
+cc 65  val 127 ch 2  -> frz_on_a      <- a MINHA mensagem, aceita
+```
+
+A placa estava obedecendo à própria voz. Metade de uma defesa é uma defesa
+órfã, e esta deixou o laço inteiro de pé enquanto o cabeçalho afirmava que
+ele estava fechado.
+
+**O que a fez visível foi um contador que não existia.** Não havia número
+para "mensagens minhas recusadas na entrada", então uma defesa que nunca
+trabalhou era indistinguível de uma que trabalhava em silêncio. Só apareceu
+quando o histórico de CCs foi lido à mão.
+
+**Regra:** *defesa sem contador é hipótese. Se o mecanismo não produz um
+número que sobe quando ele age, ninguém — inclusive quem o escreveu — pode
+distinguir "funcionou" de "nunca rodou".*
+
+**Sub-lição, do mesmo dia e do mesmo módulo:** `eco_proprio` conta mensagens
+que **voltaram**; eu o li como "quantas saíram" e relatei "a placa só mandou
+4 de 8". Os dois números só coincidem se o caminho de volta for perfeito —
+que era **exatamente a hipótese sob teste**. Medir o retorno e chamar de
+envio responde a pergunta errada com confiança. Contador de TX separado,
+posto depois: `eco: TX 8 | voltaram 4 | perdidas 4`.
+
+**E o número certo mudou a conclusão inteira:** com TX de verdade, o
+experimento virou CC65 = 6/8 contra CC68 = 8/8, o que isolou o widget do
+Loopy como causa e absolveu o firmware.
+
+---
+
+## 12q. A lacuna entre varreduras é onde o erro mora (22/08)
+
+O modo `learn` percorre os 76 CCs pulsando cada um para o dB armar os
+widgets do Loopy. Primeira versão: a placa pulsa, **eu** leio o histórico a
+cada 3 s de fora, detecto a resposta do widget e mando `learn next`.
+
+Funcionou por dois CCs. Depois o dB: *"todos estão ficando em cc 26."*
+
+**A causa é a lacuna, não a detecção.** Entre uma chamada minha e outra
+podem passar minutos, e o firmware continua pulsando o CC estacionado
+indefinidamente. Todo widget armado nesse intervalo aprende o mesmo CC.
+Quatro deles aprenderam o 26 porque foi o que ficou no fio durante uma
+pausa.
+
+**O sinal certo já existia e estava sendo desperdiçado.** Um CC que chega no
+canal de entrada com o número do alvo atual só pode vir de um widget que
+acabou de aprendê-lo — é prova de arme, no instante do arme. A placa via
+isso e apenas incrementava um contador.
+
+**Regra:** *quem decide o avanço tem que ser quem vê a confirmação.*
+Observador externo tem sempre uma lacuna entre o evento e a leitura, e num
+processo com humano no circuito essa lacuna não é latência — é a janela em
+que o estado errado é gravado. Detecção de fora só serve quando nada muda
+enquanto ninguém olha.
+
+**Sub-lição sobre modos:** a caminhada automática avança depois de 4 pulsos
+**tenha ou não alguém armado**. Com humano no circuito, o modo certo é o
+estacionado: repete indefinidamente e só sai quando a confirmação chega.
+Um modo que anda sozinho e um modo que espera não são configuração — são
+dois procedimentos diferentes, e escolher errado desalinha tudo em silêncio.
+
+**Sub-lição de implementação:** o `learn next` limpava `learn_fixo`, então o
+primeiro passo manual disparava a caminhada automática inteira. O comando
+que deveria dar UM passo dava todos.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**

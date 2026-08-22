@@ -222,6 +222,44 @@ O 8,0 era ajuste do músico, persistido até a gravação seguinte.
 > **Antes de chamar um número de "default do projeto", ler o default no
 > fonte.** A placa mostra o que está lá, não quem o pôs.
 
+## Defesa sem contador é hipótese
+
+Todo mecanismo que **recusa, descarta, trava ou sobrescreve** tem que
+produzir um número que sobe quando ele age. Sem isso, "funcionou" e "nunca
+rodou" são indistinguíveis — inclusive para quem o escreveu.
+
+Três casos, todos em 22/08 e todos no mesmo módulo:
+
+- **A separação de canal do espelho MIDI** foi declarada no cabeçalho e
+  nunca escrita no código: o receptor em omni aceitava o próprio canal de
+  transmissão de volta. Não havia contador de "mensagens minhas recusadas",
+  então a defesa ausente parecia uma defesa silenciosa. Só apareceu lendo o
+  histórico de CCs à mão.
+- **A trava do teto de soma** zerava os `_on` a cada bloco sem dizer nada. O
+  `set` do operador era desfeito 3000 vezes por segundo e o `list` mostrava
+  0, idêntico a um efeito desligado à mão. Custou uma sessão procurando
+  defeito em três módulos intactos.
+- **Descarte mudo** é a família proibida: a janela de autoria descarta CCs
+  dentro de 250 ms, e descartar sem contar teria trocado um laço visível por
+  um sumiço invisível.
+
+> **Se o firmware sobrescreve, recusa ou desfaz uma intenção do operador,
+> ele deve isso ao operador em voz alta** — no momento do comando, não num
+> diagnóstico que só quem já suspeita vai pedir.
+
+## O contador tem que medir o que o nome dele diz
+
+`eco_proprio` contava mensagens que **voltaram**. Li como "quantas saíram" e
+relatei "a placa só mandou 4 de 8". Os dois números só coincidem se o
+caminho de volta for perfeito — que era **exatamente a hipótese sob teste**.
+
+Medir o retorno e chamar de envio responde a pergunta errada com confiança.
+Com o contador de TX separado, o experimento virou 6/8 contra 8/8 e isolou a
+causa num outro sistema.
+
+> **Antes de ler um contador, dizer em voz alta o que ele incrementa.** Se a
+> frase não for idêntica à pergunta que se está fazendo, o número não serve.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

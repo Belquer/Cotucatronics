@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.109.0** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, **sem RNBO** (o delay virou C++ em 20/08 e levou o runtime inteiro junto),
+Projeto colaborativo. Estado atual: **v0.116.0** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, **sem RNBO** (o delay virou C++ em 20/08 e levou o runtime inteiro junto),
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -58,12 +58,12 @@ Cinco regras que não se negociam:
 | Arquivo | Versão | O que é |
 |---|---|---|
 | [src/hal.h](src/hal.h) | **v0.17.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.16.0** | Único arquivo que pode incluir `daisy_seed.h` |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.18.0** | Único arquivo que pode incluir `daisy_seed.h`. Três botões: D26 B1, D27 B2, **D25 B3 = rearme do CTOS** |
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/freeze.h](src/freeze.h) | **v0.3.1** | Freeze granular: núcleo de 500 ms, 2 grãos sorteados, Hann. C++ puro |
 | [src/pitch.h](src/pitch.h) | **v0.5.0** | Motor de pitch compartilhado: 1 buffer, até 4 vozes. **Anti-alias automático na escrita** (Butterworth 6ª ordem, custo zero se nenhuma voz sobe). C++ puro |
 | [src/shimmer.h](src/shimmer.h) | **v0.3.0** | Shimmer: reverb + pitch num laço. Realimenta o Freeverb existente. **Tom = corte + sino de presença em 3 kHz** |
-| [src/drive.h](src/drive.h) | **v0.2.0** | Drive: waveshaper tanh normalizado como cola. Zero memória |
+| [src/drive.h](src/drive.h) | **v0.4.0** | Drive: tanh normalizado, **1,5–48×** (o joelho tem que alcançar −30 dBFS), + `drv_sujeira`: morph pra wavefolder com anti-alias próprio |
 | [src/phaser.h](src/phaser.h) | **v0.3.0** | Phaser: N allpass varridos por LFO triangular. Zero buffer |
 | [src/warble.h](src/warble.h) | **v0.1.1** | Warble: deriva de fita por delay curto modulado. O dry/wet dele chama-se `wrb_mix` e **é nome, não param** |
 | [src/detune.h](src/detune.h) | **v0.1.0** | Detune. **FORA do build desde 20/08** — revivível, ver `docs/FEATURES.md` |
@@ -75,15 +75,16 @@ Cinco regras que não se negociam:
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.1** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.2.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.97.0** | Loop, callback de áudio, painel falso via serial. **Duas cadeias de caráter + cauda compartilhada** |
+| [src/main.cpp](src/main.cpp) | **v0.116.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI no canal 2**, janela de autoria, modo `learn` |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.9.0** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.64.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **61 params / 36 CCs** |
+| [src/manifest.h](src/manifest.h) | **v0.76.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **76 CCs mapeados** + CC 120 = sync |
 | [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 41 CCs numa folha A4. Fonte em `ccmap.html`, gerador `ccmap-pdf.sh` / `.command` v0.1.0 |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
 | [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura` |
 | [docs/FEATURES.md](docs/FEATURES.md) | **vivo** | **A CAIXA ÚNICA** — toda feature vigente, e as aposentadas no arquivo |
 | [docs/CTOS.md](docs/CTOS.md) | **v0.4.0** | A base à prova de falha, a fronteira CTOS/Efeito, a suíte, e o **teto de soma** (§3b) |
+| [docs/PROCEDIMENTO-MIDI-LEARN.md](docs/PROCEDIMENTO-MIDI-LEARN.md) | **novo** | Endereçar as páginas do Loopy pelo modo `learn`. Inclui os três "não faça" que custaram rodada |
 | [docs/IFA10000.md](docs/IFA10000.md) | **vivo** | **Certificação de efeitos** — as 10 etapas que todo efeito passa |
 | [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |

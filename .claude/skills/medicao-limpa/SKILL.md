@@ -141,6 +141,27 @@ cima fez a faixa médio-aguda crescer de 26,4% para 35,7% como fatia do total.
 Antes de publicar, reler a própria medição perguntando **o que ela diz sobre
 a parte que eu não ataquei**.
 
+## 9. Numa queixa com "mas", o pedido é o que vem depois
+
+*"Quando ligo o drive tenho mais ganho **mas** a distorção legal
+desapareceu."* Li o ganho como o defeito e reprojetei a normalização do
+módulo para eliminá-lo. O ganho estava certo. A distorção ausente era o
+pedido, e eu consertei a reclamação que ele não fez.
+
+Pior: **os dois números que decidiam estavam na minha tela quando escolhi.**
+As duas normalizações davam THD idêntico (12,0%); a diferença era o peso da
+camada, +30,4 dB contra −3,2 dB. Escolhi a que resolvia o ganho.
+
+> **Quando duas grandezas mudam juntas numa queixa, a que o operador NOMEIA
+> como boa não é a que ele quer consertada.** Antes de mexer, repetir a
+> queixa em voz alta e sublinhar o pedido.
+
+E o corolário da etapa 6: **hipótese sobre módulo com matemática fechada se
+testa replicando a matemática em dois minutos, não gravando a placa.** As
+duas medições que decidiram o caso do drive — camada por tone, THD por
+nível — rodaram no host, sem tocar no hardware, e mataram duas hipóteses
+minhas antes de virarem código.
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já

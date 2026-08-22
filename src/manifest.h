@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.73.0
+// manifest.h (instrumento "bancada") v0.76.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -292,6 +292,7 @@ struct Manifest
     int p_drv_mix[kCadeias];    // 0..1 — dry/wet, POR CANAL
     int p_drv_drive;            // COMPARTILHADO · PRIMARIO
     int p_drv_tone;             // COMPARTILHADO
+    int p_drv_sujeira;          // COMPARTILHADO — tanh -> wavefolder
 
     // PHASER — N allpass varridos por LFO. Depois do drive, antes do
     // delay: sujeira, depois movimento, depois tempo e espaco.
@@ -845,8 +846,11 @@ struct Manifest
         // proposito: "tone no maximo" tem que significar SEM filtro.
         p_drv_mix[0]   = t.Add("drv_mix_a",   0.0f, 0.f, 1.f);
         p_drv_mix[1]   = t.Add("drv_mix_b",   0.0f, 0.f, 1.f);
-        p_drv_drive = t.Add("drv_drive", 0.0f, 1.5f, 12.f);
+        p_drv_drive = t.Add("drv_drive", 0.0f, 1.5f, 48.f);
         p_drv_tone  = t.Add("drv_tone",  0.0f, 800.f, 16000.f, 2.0f);
+        // NASCE EM 0 = o tube aprovado de ouvido em 22/08. Subir
+        // daqui e ir pro dobrador, que e o "bem mais suja" pedido.
+        p_drv_sujeira = t.Add("drv_sujeira", 0.0f, 0.f, 1.f);
 
         // ---- PHASER ----
         p_phs_on[0]       = t.Add("phs_on_a",       0.0f, 0.f, 1.f);
@@ -1223,6 +1227,7 @@ struct Manifest
         AddMidi(33, p_drv_mix[1]);
         AddMidi(34, p_drv_drive);        // compartilhado
         AddMidi(35, p_drv_tone);         // compartilhado
+        AddMidi(36, p_drv_sujeira);      // compartilhado
 
         // ---- PHASER: 40-47 ----
         AddMidi(40, p_phs_on[0]);

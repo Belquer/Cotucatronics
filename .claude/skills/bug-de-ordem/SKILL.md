@@ -55,6 +55,33 @@ a placa inteira em dez segundos — esperava na fila desde o começo.
 
 Para canal de entrada, o teste que corta ao meio **é o loopback**.
 
+## Quarta família: a lacuna do observador externo
+
+Um processo com humano no circuito, observado de fora por varredura
+periódica, tem entre o evento e a leitura uma janela em que o estado errado
+é gravado. Isso **não é latência** — é corrupção.
+
+Caso (22/08): o modo `learn` pulsava um CC para o dB armar um widget no
+Loopy; um script lia o histórico a cada 3 s e mandava avançar. Entre uma
+chamada e outra passavam minutos, e o firmware seguia pulsando o mesmo CC.
+Todo widget armado nesse intervalo aprendeu o CC errado — quatro deles.
+
+O sinal certo já existia e estava sendo desperdiçado: um CC chegando com o
+número do alvo atual **só pode** vir de um widget que acabou de aprendê-lo.
+A placa via isso e apenas incrementava um contador.
+
+> **Quem decide o avanço tem que ser quem vê a confirmação.** Detecção de
+> fora só serve quando nada muda enquanto ninguém olha.
+
+**Sintoma que a denuncia:** "está tudo caindo no mesmo valor / no mesmo
+passo". Estado que deveria variar e não varia, num processo cujo relógio
+está fora do sistema observado.
+
+**Irmã da terceira família:** um modo que anda sozinho e um modo que espera
+confirmação não são configuração do mesmo procedimento — são dois
+procedimentos. Tratá-los como um parâmetro é dar dois empregos a uma
+variável, e escolher errado desalinha tudo em silêncio.
+
 ## Registro
 
 Hipótese nova: **registrar a aposta com percentual** antes de testar. Aposta

@@ -382,7 +382,22 @@ cadeia alimenta, `frz_hold` diz quando congelar.
 **Proteção anti-feedback duplicada** para o ramo B (bloqueante do hardware de
 dois exciters): governor e boost por ramo, `shift_hz` compartilhado — dois
 exciters no mesmo corpo com deslocamentos diferentes bateriam um contra o
-outro. `exc_on_a/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
+outro. **Painel — pinos (22/08).** D26 = B1 randomizador, D27 = B2 assinalável,
+**D25 = B3 rearme do CTOS** (novo em v0.111.0). D28 = LB do WIDI.
+D29/D30 reservados pras chaves DPDT dos excitadores. Os três botões usam
+pull-up interno e são ativos em baixo, então pino sem botão lê "solto".
+
+**O LED do Seed carrega dois fatos numa cadência só:** devagar = loop
+vivo e sem trava; **4× mais rápido = tem efeito derrubado pelo teto,
+aperte B3**; congelado = loop morto. O alarme entrou na cadência
+justamente pra não gastar o estado, que é a prova de aliveness.
+
+**Aberto, e é o mais caro agora: não há preset em flash.** Toda gravação
+zera todo parâmetro e `level` nasce em 0. A perda é silenciosa dos dois
+lados e o sintoma imita defeito de efeito — custou dois diagnósticos
+falsos em 22/08 (bts 12l).
+
+`exc_on_a/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
 substituem o param pelo estado real.
 
 **Simplificação depois (v0.106.0):** `esp_on/esp_mix` e o `rev_mix` antigo

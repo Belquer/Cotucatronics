@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.109.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.116.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.109.0"
+#define COTUCA_OS_VERSION "0.116.0"
 
 #include "hal.h"
 #include "params.h"
@@ -188,7 +188,207 @@ static void QuarTick()
 //
 // Zerar os defaults seria contornar: faria o controlador SEMPRE vencer.
 // Isto inverte: a placa fala primeiro, e o controlador se alinha a ela.
-static constexpr uint8_t kCcSync = 34;
+// 120, NAO 34. Em 22/08 o 34 foi dado ao `drv_drive` na reorganizacao
+// do mapa e ninguem cruzou as duas listas: o `OnMidiCc` intercepta o CC
+// de comando ANTES do mapa e retorna, entao `drv_drive` ficou surdo a
+// MIDI e cada gesto naquele fader disparava um push de estado inteiro.
+// Dois donos para um numero, e o intercept vence sempre — em silencio.
+// 120 fica fora de toda faixa de parametro, que e onde comando mora.
+static constexpr uint8_t kCcSync = 120;
+
+// ---- ESPELHO: a placa fala de volta, no CANAL 2 ----
+//
+// O LACO E O PROBLEMA CENTRAL, nao a transmissao. Se a placa manda CC
+// ao mudar um param e o Loopy responde mandando CC de volta, os dois se
+// empurram pra sempre. Duas defesas, e a segunda existe porque a
+// primeira pode falhar num caminho que eu nao previ:
+//
+//   1. CANAL SEPARADO — escuta em 1 (omni), fala em 2. Estrutural: uma
+//      mensagem que sai nunca se parece com uma que entra.
+//   2. VALOR REPETIDO NAO SE MANDA — `eco_ult[cc]` guarda o ultimo
+//      valor visto naquele CC, VENHA DE ONDE VIER. Um CC recebido
+//      atualiza essa tabela, entao o espelho nao o devolve. Se as duas
+//      pontas caissem no mesmo canal, o laco morreria na segunda volta
+//      em vez de girar pra sempre.
+// O CANAL DO ESPELHO MORA NUMA CONSTANTE SO. A versao anterior tinha
+// 0xB1 escrito a mao aqui e o filtro de recepcao em lugar nenhum — e a
+// separacao de canal, declarada como defesa estrutural, nunca existiu.
+// Base 0: indice 1 = canal 2 no mostrador.
+static constexpr uint8_t kCanalEco  = 1;
+static constexpr uint8_t kStatusEco = 0xB0 | kCanalEco;
+static uint8_t  eco_ult[128];                 // 0xFF = nunca visto
+static uint32_t eco_prox_ms = 0;
+static uint32_t eco_proprio = 0;   // mensagens minhas que VOLTARAM
+// CONTADOR DE TRANSMISSAO, e ele faltava. Em 22/08 eu li `eco_proprio`
+// como "quantas sairam" — ele conta quantas VOLTARAM. Os dois numeros
+// so coincidem se o caminho de volta for perfeito, que e exatamente a
+// hipotese sob teste. Medir o retorno e chamar de envio responde a
+// pergunta errada com confianca.
+static uint32_t eco_tx = 0;
+
+// ---- JANELA DE AUTORIA: depois de falar, a placa e dona do CC ----
+//
+// POR QUE CASAMENTO DE MENSAGEM NAO SERVE. O widget do Loopy e um
+// toggle COM ESTADO: recebe a mensagem do espelho, alterna, e devolve
+// o ESTADO DELE — nao a mensagem. Em fase devolve igual (eco
+// idempotente, inofensivo); FORA de fase devolve o valor OPOSTO, que
+// escreve no param e desfaz a mudanca autonoma. Um filtro por "isto e
+// igual ao que enviei" pegaria so o inofensivo e deixaria passar
+// justamente o que destroi.
+//
+// O criterio nao e "o que eu enviei": e "o ASSUNTO sobre o qual eu
+// acabei de falar". Transmitiu o CC n, ignora qualquer CC n que chegue
+// — qualquer valor, qualquer canal — por 250 ms.
+//
+// NAO TOCA EM GESTO HUMANO: a janela so abre quando o espelho
+// transmite, e o espelho so transmite mudanca AUTONOMA (`eco_ult` ja
+// impede que o que veio de MIDI volte). Gesto normal nunca encontra
+// janela aberta — ela so existe depois de boot-push, queda do teto,
+// buzios, ou serial.
+//
+// TRADE DECLARADO: gesto humano no mesmo CC dentro de 250 ms de uma
+// mudanca autonoma DAQUELE CC e descartado. Raro, e e a colisao que a
+// regra arbitra — a maquina acabou de falar, ela vence o instante.
+// Se 250 estiver errado, e numero, nao arquitetura.
+static constexpr uint32_t kJanelaMs = 250;
+static uint32_t quiet_until[128] = {0};
+static uint32_t cc_janela = 0;   // recusados pela janela
+static uint32_t cc_learn  = 0;   // recusados por estar em learn
+static bool     learn_ativo = false;
+
+// Subtracao ANTES da comparacao: uint32 de ms volta a zero em 49 dias
+// e `agora < limite` mentiria por 250 ms uma vez por volta. Esta base
+// ja perdeu um watchdog em 4 277 071 629 us por isso.
+static inline bool NaJanela(uint8_t cc, uint32_t agora)
+{
+    return (int32_t)(agora - quiet_until[cc]) < 0;
+}
+
+// Chamado do LOOP, nunca do callback. A regra ja custou uma placa
+// pendurada: MidiSendBytes de dentro do audio starva o ISR do USB.
+static void MidiEspelha()
+{
+    using namespace cotuca;
+    if(learn_ativo) return;   // no learn quem fala e a caminhada
+    const uint32_t ag = hal::NowMs();
+    if((int32_t)(ag - eco_prox_ms) < 0) return;
+    int n = 0;
+    for(int i = 0; i < manifest.n_midi && n < 2; i++)
+    {
+        const int id = manifest.midi_map[i].param_id;
+        if(id < 0) continue;
+        const uint8_t cc = manifest.midi_map[i].cc;
+        float norm = params.Get(id);
+        if(norm < 0.f) norm = 0.f;
+        if(norm > 1.f) norm = 1.f;
+        const uint8_t v = (uint8_t)(norm * 127.f + 0.5f);
+        if(eco_ult[cc] == v) continue;
+        eco_ult[cc] = v;
+        const uint8_t msg[3] = {kStatusEco, cc, v};
+        hal::MidiSendBytes(msg, 3);
+        quiet_until[cc] = ag + kJanelaMs;   // falei deste assunto
+        eco_tx++;
+        n++;
+    }
+    // A 31250 baud tres bytes levam ~1 ms. Duas por janela de 8 ms
+    // segura o pior caso (varredura de fader) bem abaixo do fio.
+    if(n) eco_prox_ms = ag + 8u;
+}
+
+// ---- MODO LEARN: a placa percorre o mapa pra o Loopy aprender ----
+//
+// Endereca as quatro paginas sem digitar CC a CC. Anda na ordem do
+// mapa, que e a ordem das familias — casa com as paginas.
+//
+// MAQUINA DE ESTADOS NO LOOP, SEM DelayMs. Um envio por volta quando o
+// timer vence. `DelayMs` numa caminhada de cinco minutos prenderia o
+// loop inteiro: sem serial, sem botao, sem CTOS. A familia ja cobrou
+// esse pedagio uma vez.
+//
+// TX-ONLY: os pulsos NAO escrevem nos params. E anuncio, nao `set` — o
+// estado da placa atravessa o learn intocado, e `list` antes e depois
+// tem que sair identico.
+static int      learn_slot    = 0;
+static int      learn_pulso   = 0;
+static uint32_t learn_prox_ms = 0;
+static bool     learn_fixo    = false;   // estacionado num CC so
+
+static void LearnFim(const char* motivo)
+{
+    using namespace cotuca;
+    if(!learn_ativo) return;
+    learn_ativo = false;
+    learn_fixo  = false;
+    // A TABELA TEM QUE ESQUECER A CAMINHADA. Os pulsos deixaram
+    // `eco_ult` com os 0 do learn; sem zerar, o espelho compararia o
+    // estado REAL contra o lixo do learn e engoliria as arestas em que
+    // os dois coincidem. 0xFF = nunca visto, que e o mesmo mecanismo
+    // do boot: o proximo passe re-empurra os %d CCs inteiros.
+    for(int i = 0; i < 128; i++) eco_ult[i] = 0xFF;
+    hal::Log("learn: %s — re-empurrando o estado real nos %d CCs."
+             " Os pulsos deixaram os widgets em estado arbitrario;"
+             " o re-push restaura a verdade da placa.",
+             motivo, manifest.n_midi);
+}
+
+// O WIDGET CONFIRMA, A PLACA ANDA. Sem isto o firmware fica pulsando o
+// CC estacionado indefinidamente entre uma varredura minha e outra —
+// minutos, as vezes — e TODO widget armado nesse intervalo aprende o
+// mesmo CC. Foi o que aconteceu em 22/08: quatro widgets aprenderam o
+// cc26 porque era o que estava no fio quando o dB os armou.
+//
+// O sinal ja existia e estava sendo desperdicado: um CC que chega no
+// canal de ENTRADA com o numero do alvo atual so pode vir de um widget
+// que acabou de aprende-lo. Prova de arme, no instante do arme.
+//
+// Quem decide o avanco tem que ser quem VE a confirmacao. Eu, de fora,
+// vejo com atraso de uma varredura — e o atraso e o defeito.
+static void LearnConfirma(uint8_t cc)
+{
+    using namespace cotuca;
+    hal::Log("learn: cc%d ARMADO (o widget respondeu) — avancando",
+             (int)cc);
+    learn_pulso   = 0;
+    learn_slot++;
+    learn_prox_ms = hal::NowMs() + 400u;   // respira antes do proximo
+    if(learn_slot >= manifest.n_midi) LearnFim("fim da lista");
+}
+
+static void LearnPasso()
+{
+    using namespace cotuca;
+    if(!learn_ativo) return;
+    const uint32_t ag = hal::NowMs();
+    if((int32_t)(ag - learn_prox_ms) < 0) return;
+    if(learn_slot >= manifest.n_midi) { LearnFim("fim da lista"); return; }
+
+    const int     id = manifest.midi_map[learn_slot].param_id;
+    const uint8_t cc = manifest.midi_map[learn_slot].cc;
+    if(learn_pulso == 0)
+        hal::Log("learn: %d/%d · cc%d · %s  <- arme o widget agora",
+                 learn_slot + 1, manifest.n_midi, (int)cc,
+                 id >= 0 ? params.Name(id) : "?");
+    // PULSO CURTO, NAO DEGRAU. A versao anterior mandava 127, esperava
+    // 1 s, mandava 0 — e o widget do Loopy lia o 127 sustentado como
+    // HOLD, alternando entre hold e CC normal a cada passo. O gesto que
+    // ele reconhece e apertar-e-soltar: 127 seguido de 0 em ~60 ms.
+    //
+    // Continua sem DelayMs: o par vira DOIS passos da maquina, com
+    // intervalos diferentes — 60 ms depois do alto, 940 ms depois do
+    // baixo. Quatro pulsos por CC, ~1 s entre eles, ~4 s por CC.
+    const bool    alto   = (learn_pulso % 2) == 0;
+    const uint8_t v      = alto ? 127 : 0;
+    const uint8_t msg[3] = {kStatusEco, cc, v};
+    hal::MidiSendBytes(msg, 3);
+    quiet_until[cc] = ag + kJanelaMs;
+    eco_tx++;
+    learn_prox_ms = ag + (alto ? 60u : 940u);
+    if(++learn_pulso >= 8)
+    {
+        learn_pulso = 0;
+        if(!learn_fixo) learn_slot++;
+    }
+}
 
 static void MidiPushEstado()
 {
@@ -201,7 +401,8 @@ static void MidiPushEstado()
         const float norm = params.Get(id);
         uint8_t v = (uint8_t)(norm * 127.f + 0.5f);
         if(v > 127) v = 127;
-        const uint8_t msg[3] = {0xB0, manifest.midi_map[i].cc, v};
+        const uint8_t msg[3] = {kStatusEco, manifest.midi_map[i].cc, v};
+        eco_ult[manifest.midi_map[i].cc] = v;  // nao reenviar depois
         hal::MidiSendBytes(msg, 3);
         // Respira entre mensagens: a 31250 baud tres bytes levam ~1 ms,
         // e despejar 12 CCs de uma vez e exatamente o padrao que a
@@ -213,9 +414,17 @@ static void MidiPushEstado()
              " Loopy devem pular pro estado da placa", n);
 }
 
-static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
+static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
 {
     using namespace cotuca;
+    // A PLACA NAO OBEDECE A PROPRIA VOZ.
+    //
+    // Medido em 22/08 com o `midi`: cada mensagem que saia no canal 2
+    // voltava pelo RX e era ACEITA, porque o receptor esta em omni —
+    // omni inclui o canal em que ela mesma fala. A separacao de canal
+    // estava declarada no cabecalho e nao existia no codigo: metade de
+    // uma defesa e uma defesa orfa, e esta deixou o laco de pe.
+    if(ch == kCanalEco) { eco_proprio++; return; }
     // CC de COMANDO: nao e parametro, nao passa pela quarentena, nao
     // entra no mapa. Borda de subida so.
     if(cc == kCcSync)
@@ -230,7 +439,29 @@ static void OnMidiCc(uint8_t /*ch*/, uint8_t cc, uint8_t value)
         return;
     }
 
+    // LEARN E ESTADO DE BANCADA: a placa fala, nao escuta. Os widgets
+    // ja aprendidos alternam e devolvem durante a caminhada inteira,
+    // muito alem do alcance dos 250 ms.
+    if(learn_ativo)
+    {
+        cc_learn++;
+        // So o alvo ATUAL confirma. Widget ja armado que ecoa por conta
+        // propria nao empurra a caminhada.
+        if(learn_slot < manifest.n_midi
+           && cc == manifest.midi_map[learn_slot].cc)
+            LearnConfirma(cc);
+        return;
+    }
+
     const uint32_t now = hal::NowMs();
+
+    // JANELA DE AUTORIA. Descarte CONTADO — descarte mudo e a familia
+    // proibida: defesa que trabalha calada e indistinguivel de defesa
+    // que nao existe, e foi assim que o laco do canal 2 passou.
+    if(NaJanela(cc, now)) { cc_janela++; return; }
+    // Passou a janela: o Loopy e o autor deste valor e ja o conhece,
+    // entao o espelho nao deve devolve-lo.
+    eco_ult[cc] = value;
 
     // 1) Bloqueio confirmado: o CC e REGISTRADO pelo parser (ja
     //    aconteceu antes daqui) mas nao encosta em parametro.
@@ -591,10 +822,68 @@ static uint32_t soma_teto_forc = 0;   // != 0 = teto artificial, so pra teste
 static bool     soma_caiu[cotuca::Manifest::kMaxSacrificaveis]   = {false};
 static uint32_t soma_caiu_ms[cotuca::Manifest::kMaxSacrificaveis] = {0};
 static uint32_t soma_caiu_us[cotuca::Manifest::kMaxSacrificaveis] = {0};
+static bool     soma_sem_saida = false;
+// A TRAVA TEM QUE FALAR. Enquanto `soma_caiu[k]` estiver de pe, o
+// callback zera aquele `_on` a cada bloco: o `set` do operador e
+// desfeito 3000 vezes por segundo, o `list` mostra 0, e esse 0 e
+// visualmente identico ao de um efeito honestamente desligado. A
+// diferenca entre "eu desliguei" e "o CTOS derrubou" morava numa
+// variavel que ninguem via — e custou uma sessao inteira procurando
+// defeito em drive, phaser e shimmer que estavam todos intactos.
+// Devolve o indice de sacrificio, ou -1 se o param nao esta travado.
+static int SacrifTravado(int param_id)
+{
+    for(int k = 0; k < manifest.n_sacrif; k++)
+        if(manifest.sacrif[k].param_on == param_id && soma_caiu[k])
+            return k;
+    return -1;
+}
+
+// REARME PELO BOTAO — E ASSIMETRICO EM RELACAO AO SERIAL, DE PROPOSITO.
+// `ctos rearm` solta a trava e NAO religa: e comando administrativo, a
+// frio, com o operador na frente de um terminal, e religar decidiria
+// por ele qual configuracao ele queria de volta.
+//
+// O botao e o oposto disso: e o dB no meio da performance, sem
+// computador. Se ele apertar e nada voltar a soar, o botao esta
+// quebrado do ponto de vista dele. E aqui NAO ha ambiguidade sobre o
+// que devolver — `soma_caiu[k]` so fica de pe pra efeito que ESTAVA
+// LIGADO quando o teto o derrubou. Devolver isso nao e escolher por
+// ninguem: e desfazer o que o mecanismo fez.
+//
+// Se nao couber de novo, cai de novo em menos de um segundo e o LED
+// volta a bater rapido. Isso e informacao honesta, nao falha.
+static int soma_rearmes_botao = 0;
+static int RearmaCtosDevolvendo()
+{
+    int n = 0;
+    for(int k = 0; k < manifest.n_sacrif; k++)
+        if(soma_caiu[k])
+        {
+            params.SetReal(manifest.sacrif[k].param_on, 1.f);
+            soma_caiu[k] = false;
+            n++;
+        }
+    soma_sem_saida = false;
+    soma_seguidos  = 0;
+    soma_carencia  = 0;
+    soma_pico_us   = 0;
+    if(n) soma_rearmes_botao++;
+    return n;
+}
+
+// Quantos efeitos estao travados agora. O LED do loop le isto.
+static int SomaTravados()
+{
+    int n = 0;
+    for(int k = 0; k < manifest.n_sacrif; k++)
+        if(soma_caiu[k]) n++;
+    return n;
+}
 // Estourou e nao sobrou nada pra derrubar: a base sozinha nao cabe.
 // Estado DIFERENTE de "tudo bem", e tem que se declarar — senao o
 // silencio do mecanismo seria lido como sucesso dele.
-static bool     soma_sem_saida = false;
+// (declarado acima, junto de soma_caiu — RearmaCtosDevolvendo usa)
 // ---- CC DE AVISO NA SAIDA MIDI ----
 //
 // A placa MANDA este CC quando decide sozinha derrubar um efeito. E o
@@ -808,16 +1097,21 @@ alignas(32) static float reverb_mem[cotuca::Manifest::kCadeias][28160];
 // ficar fora.
 
 // ============================================================
-// PAINEL v2 — 2 botões momentâneos
-//   B1 = randomizador   ·   B2 = assinalável (hold)
+// PAINEL v2 — 3 botões momentâneos
+//   B1 = randomizador · B2 = assinalável (hold) · B3 = rearme do CTOS
 //
 // O HAL entrega NÍVEL já com debounce; a detecção de BORDA é aqui,
 // porque é aqui que se sabe o que uma borda significa. B1 age na
 // subida (um gesto = um sorteio); B2 acompanha o nível (segura,
 // vale; solta, volta).
 // ============================================================
-static bool  btn_prev[2] = {false, false};
+// TRES, e o laco itera tres. Em 22/08 este array ficou em [2] enquanto
+// o laco passou a `b < 3` junto com o B3: `btn_prev[2] = now` escrevia
+// FORA, em cima de b2_sim/b3_sim. Array de painel e o laco que o
+// percorre sao uma coisa so — mudar um sem o outro e corrupcao muda.
+static bool  btn_prev[3] = {false, false, false};
 static bool  b2_sim      = false; // simulação por serial
+static bool  b3_sim      = false; // B3 (rearme) simulado por serial
 static float b2_saved    = 0.f;
 static bool  b2_held     = false;
 
@@ -1080,6 +1374,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         {
             k.drive.SetDrive(params.Real(manifest.p_drv_drive));
             k.drive.SetTone(params.Real(manifest.p_drv_tone));
+            k.drive.SetSujeira(params.Real(manifest.p_drv_sujeira));
             const float mx = params.Real(manifest.p_drv_mix[c]);
             float gs = 0.f, gm = 0.f;
             for(size_t i = 0; i < size; i++)
@@ -1786,6 +2081,77 @@ static void HandleLine(const char* line)
         TriggerRandomize(false);
         return;
     }
+    // learn [stop|next|<cc>|<nome>] — caminhada de endereçamento
+    if(strncmp(line, "learn", 5) == 0)
+    {
+        const char* a = line + 5;
+        while(*a == ' ') a++;
+        if(strncmp(a, "stop", 4) == 0)
+        {
+            if(!learn_ativo) { hal::Log("learn: nao estava rodando"); return; }
+            LearnFim("abortado");
+            return;
+        }
+        if(strncmp(a, "next", 4) == 0)
+        {
+            if(!learn_ativo) { hal::Log("learn: nao estava rodando"); return; }
+            // PRESERVA O ESTACIONAMENTO. A versao anterior zerava
+            // `learn_fixo` aqui, entao o primeiro `next` num learn
+            // manual disparava a caminhada automatica inteira — o
+            // comando que deveria dar UM passo dava todos.
+            learn_pulso = 0; learn_slot++;
+            learn_prox_ms = hal::NowMs();
+            hal::Log("learn: proximo (%s)",
+                     learn_fixo ? "estacionado, esperando `next`"
+                                : "caminhada automatica");
+            return;
+        }
+        int alvo = 0;
+        learn_fixo = false;
+        if(*a)
+        {
+            // <cc> numerico ou <nome> de parametro; nos dois casos
+            // procura o SLOT do mapa, que e onde a caminhada anda.
+            int achou = -1;
+            if(*a >= '0' && *a <= '9')
+            {
+                const long cc = strtol(a, nullptr, 10);
+                for(int i = 0; i < manifest.n_midi; i++)
+                    if(manifest.midi_map[i].cc == (uint8_t)cc) { achou = i; break; }
+                if(achou < 0)
+                { hal::Log("learn: cc %ld nao esta no mapa", cc); return; }
+            }
+            else
+            {
+                const int id = params.Find(a);
+                if(id < 0)
+                { hal::Log("learn: param \"%s\" nao existe", a); return; }
+                for(int i = 0; i < manifest.n_midi; i++)
+                    if(manifest.midi_map[i].param_id == id) { achou = i; break; }
+                if(achou < 0)
+                { hal::Log("learn: \"%s\" nao tem CC", a); return; }
+            }
+            alvo = achou;
+            learn_fixo = true;   // estaciona: repete ate `next` ou `stop`
+        }
+        learn_ativo   = true;
+        learn_slot    = alvo;
+        learn_pulso   = 0;
+        learn_prox_ms = hal::NowMs();
+        hal::Log("learn: ENTRANDO. A placa FALA e NAO ESCUTA — todo CC"
+                 " mapeado que chegar sera descartado e contado.");
+        hal::Log("  4 pulsos por CC, 1 s cada. %s",
+                 learn_fixo ? "estacionado: `learn next` avanca"
+                            : "~5 min pros 76. `learn stop` aborta.");
+        return;
+    }
+    // b3 — pulsa o botao de rearme (o painel ainda nao existe)
+    if(strncmp(line, "b3", 2) == 0)
+    {
+        b3_sim = true;
+        hal::Log("B3 simulado: pulso de rearme");
+        return;   // o laco do painel ve a borda e devolve; b3_sim cai la
+    }
     // b2 [0|1] — simula segurar/soltar; sem argumento, alterna
     if(strncmp(line, "b2", 2) == 0)
     {
@@ -1826,6 +2192,21 @@ static void HandleLine(const char* line)
                  manifest.n_midi, (int)cotuca::kMaxMidiMap,
                  (params.Overflow() || manifest.midi_overflow)
                      ? "   *** ESTOUROU ***" : "");
+        // A TRAVA DO CTOS VEM ANTES DE QUALQUER OUTRO AVISO: enquanto
+        // ela esta de pe, todo aviso que le um `_on` le o zero que ela
+        // impos, nao a intencao do operador — e cala por causa disso.
+        // Foi exatamente assim que o aviso do shimmer logo abaixo ficou
+        // mudo enquanto o shimmer estava derrubado.
+        {
+            int travados = 0;
+            for(int k = 0; k < manifest.n_sacrif; k++)
+                if(soma_caiu[k]) travados++;
+            if(travados)
+                hal::Log("*** CTOS: %d efeito(s) derrubado(s) pelo teto e"
+                         " TRAVADO(S). Ligar por CC ou por serial nao"
+                         " adianta ate `ctos rearm`. Veja `ctos`. ***",
+                         travados);
+        }
         // DEPENDENCIA DECLARADA. O shimmer nao tem reverb proprio; com
         // `rev_on` em 0 ele emudece sem que nada pareca errado. Aviso
         // que so aparece quando a combinacao acontece — defesa orfa
@@ -1885,6 +2266,14 @@ static void HandleLine(const char* line)
         hal::Log("%s -> real=%.3f (norm=%.3f, curve %.1f)",
                  params.Name(id), params.Real(id), params.Get(id),
                  params.Curve(id));
+        const int trv = SacrifTravado(id);
+        if(trv >= 0)
+            hal::Log("*** ...e o CTOS vai desfazer isso. \"%s\" caiu pelo"
+                     " teto em t=%.1f s e a trava esta de pe: o callback"
+                     " zera esse _on todo bloco. `ctos rearm` pra soltar."
+                     " ***",
+                     manifest.sacrif[trv].nome,
+                     (double)soma_caiu_ms[trv] / 1000.0);
         return;
     }
     if(strncmp(line, "dyn", 3) == 0)
@@ -2058,8 +2447,10 @@ static void HandleLine(const char* line)
     if(strncmp(line, "list", 4) == 0)
     {
         for(int i = 0; i < params.Count(); i++)
-            hal::Log("%2d %-10s norm=%.2f real=%.2f",
-                     i, params.Name(i), params.Get(i), params.Real(i));
+            hal::Log("%2d %-10s norm=%.2f real=%.2f%s",
+                     i, params.Name(i), params.Get(i), params.Real(i),
+                     SacrifTravado(i) >= 0 ? "   *** TRAVADO PELO CTOS ***"
+                                          : "");
         return;
     }
     // ---- MIDI ----
@@ -2094,6 +2485,11 @@ static void HandleLine(const char* line)
             if(!hal::MidiRxActive())
             { hal::Log("midiloop: UART MIDI nao esta em escuta"); return; }
             hal::MidiSendBytes(msg, 3);
+            // ALIMENTA A TABELA DE ECO, igual ao espelho. Sem isto o
+            // teste tem comportamento DIFERENTE da feature que ele
+            // deveria exercitar — e foi assim que um `midiloop` ficou
+            // batendo com o espelho durante a bancada de 22/08.
+            if((uint8_t)(ch - 1) == kCanalEco) eco_ult[cc] = (uint8_t)val;
             hal::Log("midiloop: TX B%d %02lX %02lX — precisa de jumper "
                      "D13->D14 pra voltar",
                      (int)(ch - 1), cc, val);
@@ -2588,6 +2984,23 @@ static void HandleLine(const char* line)
                  (unsigned long)midi.Other(), (unsigned long)midi.Orphan(),
                  (unsigned long)midi.RealTime(),
                  (unsigned long)midi.Filtered());
+        // A DEFESA TEM QUE APARECER NUM CONTADOR. Uma que trabalha em
+        // silencio e indistinguivel de uma que nao existe — foi
+        // exatamente por nao ter este numero que o laco do canal 2
+        // passou despercebido ate o `midi` mostrar as mensagens
+        // proprias voltando.
+        // OS DOIS JUNTOS, e a diferenca entre eles E o dado: TX conta o
+        // que a placa pos no fio, "voltaram" conta o que o caminho
+        // devolveu. TX > voltaram significa perda entre D13 e o iPad.
+        hal::Log("  eco: TX %lu no canal %d | voltaram %lu | perdidas %ld",
+                 (unsigned long)eco_tx, kCanalEco + 1,
+                 (unsigned long)eco_proprio,
+                 (long)eco_tx - (long)eco_proprio);
+        hal::Log("  autoria: %lu CCs recusados pela janela de %lu ms |"
+                 " %lu recusados em learn%s",
+                 (unsigned long)cc_janela, (unsigned long)kJanelaMs,
+                 (unsigned long)cc_learn,
+                 learn_ativo ? "  *** LEARN ATIVO: a placa nao escuta ***" : "");
         // ESTADO DA MAQUINA por extenso: "aguardando o que?" e a
         // pergunta que o numero cru nao responde.
         const int nd = midi.PendingData();
@@ -2635,7 +3048,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | learn [stop|next|<cc>] | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -2708,6 +3121,11 @@ int main(void)
     // Depois do manifest.Init(): o parser recebe o canal do manifest,
     // e o mapa CC→param só existe depois dos Add(). Mesma regra de
     // ordem de configuração que vale pros bind[].
+    // 0xFF = nunca visto, entao o primeiro passe do espelho empurra o
+    // estado INTEIRO pro Loopy. E a resposta na direcao certa pro
+    // problema que mordeu tres vezes hoje: gravar zera tudo e a tela do
+    // dB continuava mostrando o valor velho. Agora a placa fala primeiro.
+    for(int i = 0; i < 128; i++) eco_ult[i] = 0xFF;
     midi.Init(manifest.midi_channel, OnMidiCc);
     midi.SetTrace(OnMidiTrace);
     hal::SetMidiByteCallback(OnMidiByte); // é isto que liga a UART
@@ -2951,13 +3369,16 @@ int main(void)
         }
         FASE(2);
         hal::PollSerial();
+        MidiEspelha();   // LOOP, nunca callback — ver cabecalho
+        LearnPasso();    // idem: maquina de estados, sem DelayMs
 
         FASE(3);
         // ---- PAINEL: botões (físico OU simulado por serial) ----
         rng_state += 0x9E3779B9u; // gira sempre: a semente vira do tick
-        for(int b = 0; b < 2 && b < hal::Info().num_buttons; b++)
+        for(int b = 0; b < 3 && b < hal::Info().num_buttons; b++)
         {
-            const bool now = hal::ReadButton(b) || (b == 1 && b2_sim);
+            const bool now = hal::ReadButton(b) || (b == 1 && b2_sim)
+                             || (b == 2 && b3_sim);
             if(now == btn_prev[b])
                 continue;
             btn_prev[b] = now;
@@ -2965,6 +3386,18 @@ int main(void)
                 TriggerRandomize(false); // BORDA de subida
             else if(b == 1)
                 SetButton2(now);    // NÍVEL
+            else if(b == 2 && now)
+            {
+                // BORDA de subida. Segurar nao repete: o teto que
+                // derrubou uma vez derrubaria de novo, e um rearme
+                // repetido em rajada viraria oscilacao audivel.
+                const int n = RearmaCtosDevolvendo();
+                if(n) hal::Log("B3: %d efeito(s) devolvido(s) pelo botao", n);
+                else  hal::Log("B3: nada estava travado");
+                b3_sim = false;   // pulso consumido: sem isso o
+                                  // simulado ficaria preso em alto e
+                                  // nunca mais haveria outra borda
+            }
         }
 
         // BATIMENTO DO LOOP na caixa-preta (slot 10), a cada ~256
@@ -3245,7 +3678,14 @@ int main(void)
         // Conserto: so grava com o voo ATIVO. buzios_on nasce em 0,
         // entao a sessao de leitura nao toca em nada.
 
-        if(++tick >= kLedToggleTicks)
+        // O LED JA E O BATIMENTO — nao dava pra roubar sem perder a
+        // prova de "loop vivo", que custou o diagnostico inteiro do
+        // buzios. Entao o alarme entra na CADENCIA, nao no estado: com
+        // efeito travado ele bate 4x mais rapido. Loop morto continua
+        // congelando o LED nos dois regimes, que e o que importa
+        // preservar. Sem isso, o botao B3 seria inutil: ninguem aperta
+        // um rearme sem saber que precisa rearmar.
+        if(++tick >= (SomaTravados() ? kLedToggleTicks / 4 : kLedToggleTicks))
         {
             tick = 0;
             led  = !led;
