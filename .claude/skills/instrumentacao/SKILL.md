@@ -260,6 +260,34 @@ causa num outro sistema.
 > **Antes de ler um contador, dizer em voz alta o que ele incrementa.** Se a
 > frase não for idêntica à pergunta que se está fazendo, o número não serve.
 
+## Dimensionar: diga a unidade dos DOIS números
+
+O histórico de CCs guardava 8 mensagens e eu precisava inventariar 76
+widgets. Aumentei para 96 — *"96 > 76, folga de sobra"*. Cobriu **nove**.
+
+96 era de MENSAGENS, 76 de WIDGETS, e varrer um fader manda dezenas de
+mensagens. A desigualdade era verdadeira e não significava nada.
+
+> **Antes de escolher um tamanho, dizer em voz alta a unidade do número
+> escolhido E a unidade do requisito.** Se não forem a mesma, a folga é
+> imaginária.
+
+E a estrutura estava errada junto: **histórico responde "o que acabou de
+chegar"; inventário responde "o que já chegou alguma vez"**. A segunda não
+se resolve alargando a primeira — por maior que fique, continua sendo uma
+fila que expulsa o antigo. O conserto certo custou 128 bytes.
+
+## Todo instrumento tem ponto cego — declare o seu
+
+O inventário `vistos` só enxerga widget que **envia**. Um widget que só
+recebe é invisível para ele, por melhor que esteja endereçado. Quatro
+apareceram como "faltando" e um estava perfeito — o dB o viu piscando na
+tela enquanto meu relatório dizia que não existia.
+
+> **Ao entregar um instrumento, dizer o que ele NÃO consegue ver.** Sem
+> isso, o silêncio dele é lido como ausência do fenômeno, e não como
+> ausência de alcance. Ver também a regra do canal mudo.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

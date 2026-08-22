@@ -2115,6 +2115,81 @@ que deveria dar UM passo dava todos.
 
 ---
 
+## 12r. Unidade errada num dimensionamento (22/08)
+
+Precisava saber quais dos 76 widgets do Loopy já estavam endereçados. O
+histórico de CCs da placa guardava **8** mensagens — pouco. Aumentei para
+**96**, com este raciocínio: *96 > 76 widgets, cobre a varredura inteira com
+folga.*
+
+Cobriu nove.
+
+**A unidade estava errada.** 96 é de MENSAGENS; 76 é de WIDGETS. Varrer um
+fader de ponta a ponta manda dezenas de mensagens. Os 96 slots se encheram
+com os últimos nove controles tocados, e os primeiros da varredura caíram
+fora antes de eu ler.
+
+**E a estrutura estava errada junto com a unidade.** Histórico responde *"o
+que acabou de chegar"*; inventário responde *"o que já chegou alguma vez"*.
+São perguntas diferentes e a segunda não se resolve alargando a primeira —
+por maior que fique, ela continua sendo uma fila que expulsa o antigo. O
+conserto certo custou 128 bytes: um contador por número de CC, que não
+transborda por mais que se varra.
+
+**Regra:** *antes de dimensionar uma estrutura, dizer em voz alta a unidade
+do número que se está escolhendo E a unidade do requisito.* Se as duas não
+forem a mesma, a folga é imaginária. "96 > 76" é verdade e não significa
+nada quando um é mensagem e o outro é widget.
+
+**Sub-lição:** dobrei o tamanho, gravei, testei, falhou, e só então
+questionei a estrutura. A pergunta *"esta estrutura responde à minha
+pergunta?"* é mais barata que uma gravação e vem antes dela.
+
+---
+
+## 12s. Inverter a pergunta resolveu o que três horas de mecanismo não (22/08)
+
+O modo `learn` foi construído para endereçar os widgets do Loopy: a placa
+pulsa cada CC, o dB arma o widget, avança. Ganhou confirmação automática,
+distinção entre widget novo e já armado por tempo de resposta, pausa que não
+empurra, estacionamento que não avança sozinho. Cinco versões de firmware.
+
+Nunca fechou. Em cada passo havia uma janela onde o número errado podia ser
+gravado, e a cada janela fechada aparecia outra.
+
+**O dB inverteu a pergunta:** *"eu configurei todos para mandar no canal 1.
+Você fala com eles e vê se batem? Se não baterem, você ajusta do seu lado."*
+
+Em vez de fazer os widgets aprenderem os números da placa, **ler o que os
+widgets mandam e adaptar o firmware**. Duas varreduras e um comando novo
+(`vistos`, 128 bytes) fecharam 65 de 65, com quatro widgets flagrados
+carregando número de outro parâmetro — descobertos sozinhos, sem ninguém
+procurar.
+
+**Por que o learn era o caminho difícil:** ele exigia coreografia entre três
+coisas que não se enxergam — a placa pulsando, o operador achando o widget,
+e eu dirigindo **sem ver nada do lado dele**. Eu não tenho acesso ao Loopy:
+não vejo widget, nem nome, nem página. Isso deveria ter sido dito na
+primeira mensagem sobre o assunto, e só foi dito depois de o dB perguntar.
+
+**Regra:** *quando um mecanismo precisa de uma janela de sincronia a cada
+passo e você não enxerga uma das pontas, o mecanismo está errado, não mal
+ajustado.* Procurar a formulação em que os dois lados falam quando querem —
+e alguém apenas escuta e se adapta.
+
+**Sub-lição, e foi erro puro:** anunciei "CC 42" no chat depois de uma
+chamada que só LEU o estado — a placa continuou pulsando o 41. O widget
+aprendeu 41. **Nunca anunciar um estado que não se acabou de escrever.**
+Ler e afirmar são coisas diferentes.
+
+**Sub-lição 2 — o instrumento cego:** `vistos` só enxerga widget que ENVIA.
+Um widget que só recebe é invisível para ele, por melhor que esteja
+endereçado. Quatro apareceram como "faltando" e um deles estava perfeito —
+o dB viu piscando. Todo instrumento tem um ponto cego; declará-lo é parte de
+entregá-lo.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**

@@ -82,6 +82,32 @@ confirmação não são configuração do mesmo procedimento — são dois
 procedimentos. Tratá-los como um parâmetro é dar dois empregos a uma
 variável, e escolher errado desalinha tudo em silêncio.
 
+## Quando fechar janelas não acaba, inverta a pergunta
+
+Cinco versões de firmware num mecanismo de endereçamento por MIDI learn: a
+placa pulsava um CC, o operador armava o widget, ela avançava. Cada versão
+fechava uma janela onde o número errado podia ser gravado, e a cada janela
+fechada aparecia outra. Nunca fechou.
+
+O dB inverteu: *"configurei todos para mandar no canal 1 — fala com eles e
+vê se batem; se não baterem, ajusta do seu lado."* Duas varreduras e 128
+bytes de contador fecharam 65 de 65, e flagraram quatro widgets com número
+de outro parâmetro sem ninguém procurar.
+
+> **Um mecanismo que precisa de janela de sincronia a cada passo, com uma
+> das pontas fora da sua vista, está errado — não mal ajustado.** Procure a
+> formulação em que cada lado fala quando quer, e alguém apenas escuta e se
+> adapta.
+
+**Sinal de que você está no mecanismo errado:** consertos que geram
+consertos, todos na mesma família (timing, ordem, sincronia), sem que o
+problema original encolha.
+
+**E declare o que você não enxerga.** Eu dirigi três horas de coreografia
+sem ter acesso nenhum ao lado do operador — não via widget, nem nome, nem
+página. Isso muda qual mecanismo é viável e tinha de ser dito na primeira
+mensagem, não depois de ele perguntar.
+
 ## Registro
 
 Hipótese nova: **registrar a aposta com percentual** antes de testar. Aposta

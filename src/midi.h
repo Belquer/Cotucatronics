@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.4.0
+// Cotucatronics OS — midi v0.5.0
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -39,7 +39,12 @@ constexpr int kMidiOmni    = -1;
 // o mapa, pela terceira vez seguida: estouro de capacidade e defeito de
 // projeto, nao condicao de runtime.
 constexpr int kMaxMidiMap  = 80; // entradas na tabela CC→param
-constexpr int kMidiHistory = 8;  // últimos CCs guardados pro `midi`
+// 96, e o numero veio de um trabalho real. Com 8 o historico so
+// respondia "o que acabou de chegar"; para inventariar 76 widgets — o
+// dB varre a pagina inteira e eu leio o que chegou — 8 obriga a ir de
+// seis em seis e transforma uma passada em doze rodadas. 96 cobre a
+// varredura completa com folga. Custa 96*4 bytes.
+constexpr int kMidiHistory = 96; // últimos CCs guardados pro `midi`
 
 // 0–127 → 0.0–1.0. Divide por 127, não por 128: o valor máximo do
 // MIDI é 127, e dividir por 128 nunca alcançaria 1.0 — o knob remoto
