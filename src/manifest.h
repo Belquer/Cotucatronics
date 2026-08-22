@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.61.0
+// manifest.h (instrumento "bancada") v0.64.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -10,7 +10,6 @@
 // ============================================================
 
 #include "params.h"
-#include "module.h"
 #include "midi.h"
 
 namespace cotuca
@@ -106,7 +105,6 @@ struct Manifest
     int p_level;      // volume master
     int p_tone_freq;  // freq do oscilador de teste
     int p_tone_mix;   // mistura tom de teste vs entrada
-    int p_spare;      // slot vazio de exemplo
     // BALANCO dos dois piezos, nao crossfade. Centro = OS DOIS CHEIOS;
     // girar abaixa o dominante sem cortar o outro. O crossfade que
     // estava aqui (`src_mix`, aposentado 20/08) derrubava OS DOIS no
@@ -231,7 +229,6 @@ struct Manifest
     // Passa-alta NO CAMINHO DO FX2, não no master. O estouro só
     // acontece com o vocoder ligado (medido), então filtrar o master
     // castigaria o delay de graça. 0 Hz = desligado.
-    int p_fx2_hp;
 
     int p_rev_on;     // 0/1 — chave. ATENÇÃO: emudece o shimmer junto
     int p_rev_mix;
@@ -383,7 +380,6 @@ struct Manifest
     //
     // Com bypass, o boot sempre responde, e ligar o modulo vira um
     // experimento reversivel em vez de uma aposta.
-    int p_fx2_on;
 
     // Variante ENXUTA do patch: a cirurgia do dB fixou auto, fade e
     // pitchjit internamente e removeu transp/panjit/ampjit. Restam
@@ -397,9 +393,6 @@ struct Manifest
     //
     // `voc_tone` nasceu no export de 2026-08-16 e ficou com o k5, que
     // estava livre desde o painel v2. mix e pitch seguem serial-only.
-    int p_voc_mix;   // → "voc_mix"    0..1, seco/molhado
-    int p_voc_pitch; // → "voc_pitch"  0..1, centro 0.5 = sem deslocamento
-    int p_voc_tone;  // → "voc_tone"   0..1, novo no export de 2026-08-16
 
     // ---- GANHO DE COMPENSAÇÃO DO SLOT Fx2 ----
     // O vocoder sai MUITO mais baixo que o delay. Não é defeito:
@@ -422,7 +415,6 @@ struct Manifest
     //
     // Aplicado ANTES do level e da dinâmica, então governor e limiter
     // continuam protegendo — é por isso que 8x é seguro de oferecer.
-    int p_fx2_gain;
 
     // ============================================================
     // PAINEL v2 — 5 pots + 2 botões momentâneos
@@ -479,14 +471,10 @@ struct Manifest
     // o patch reordena tudo. Declara-se o nome, e o boot resolve o
     // índice via Module::FindParam(). Nome que não existe = erro
     // claro no log, não parâmetro fantasma mexendo em nada.
-    struct ModBind
-    {
-        ModuleSlot  slot;     // em qual slot da cadeia o módulo está
-        int         param_id; // id na nossa ParamTable
-        const char* mod_name; // nome do parâmetro dentro do módulo
-    };
-    ModBind bind[8];
-    int     n_bind = 0;
+    // O SISTEMA DE MODULOS SAIU EM 20/08 junto com o RNBO. O delay,
+    // ultimo modulo, virou C++ no shell (delay.h). Nao ha mais slot,
+    // bind, nem push por nome — todo efeito le os params direto, como
+    // sempre foi pros efeitos da casa.
 
     // ============================================================
     // ---- MIDI: CC → parâmetro ----
@@ -619,7 +607,6 @@ struct Manifest
         p_level     = t.Add("level",     0.0f, 0.f,    1.f);   // MIDI: nasce 0
         p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
         p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
-        p_spare     = t.Add("spare",     0.0f, 0.f,    1.f);
         // 0.5 NORMALIZADO = 0.0 real = centro. O primeiro argumento do
         // Add() e `def_norm`, e todo param ate hoje tinha min = 0, o
         // que fazia norm e real coincidirem — a distincao nunca doeu e
@@ -684,7 +671,10 @@ struct Manifest
         // curso; limite REMOVE o inutil do alcance. As cercas dos
         // buzios (100-500 ms) continuam validas porque falam em real e
         // cabem dentro da faixa nova.
-        p_dly_time  = t.Add("dly_time",  0.0f, 0.05f, 1.f, 1.0f); // MIDI: nasce 0
+        // CURSO INTEIRO desde 20/08: a cerca de 50 ms mudou-se pra
+        // dentro do `delay.h`, onde vale pra qualquer manifest que o
+        // use. Aqui o param volta a ser 0..1 de ponta a ponta.
+        p_dly_time  = t.Add("dly_time",  0.0f, 0.f, 1.f, 1.0f); // 50..1000 ms
         p_dly_mix   = t.Add("dly_mix",   0.0f, 0.f,    1.f);  // MIDI: nasce 0
         // CHAVE PROPRIA. Delay e reverb ligavam pelo `mix` — sao
         // anteriores a convencao de chave que o dB pediu pros efeitos
@@ -755,7 +745,6 @@ struct Manifest
         // (medido), então filtrar o master castigaria o delay de graça.
         // Faixa 0–400, curva 2 — resolução embaixo, que é onde se
         // procura. 0 Hz desliga.
-        p_fx2_hp        = t.Add("fx2_hp",        0.5477f, 0.f, 400.f, 2.0f);
 
         // 0.35 — o valor que o dB tocou e aprovou ("reverb está ótimo").
         // 0.15 era o chute inicial e nunca foi ouvido.
@@ -900,18 +889,14 @@ struct Manifest
         // >>> PRA VOLTAR AO BYPASS: 0.0f aqui. Se um modulo novo e nao
         // >>> medido entrar no slot Fx2, VOLTE — a regra continua certa
         // >>> pra quem ainda nao passou pelo IFA10000.
-        p_fx2_on     = t.Add("fx2_on",     0.0f, 0.f,   1.f);  // MIDI: nasce 0
 
         // FREEZE. Defaults iguais aos do export, pra o boot nascer
         // com o patch no estado que o autor definiu.
         // Defaults iguais aos do export: mix 1 (molhado), pitch 0.5
         // (centro, deslocamento zero), tone 0.7.
-        p_voc_mix   = t.Add("voc_mix",   0.5f, 0.f, 1.f);
         // steps=49: o caminho MANUAL (serial/MIDI/knob) anda em grade
         // cromática — 48 semitons + centro. A ESCALA vale só pro
         // sorteio; a mão tem o cromático inteiro.
-        p_voc_pitch = t.Add("voc_pitch", 1.0f, 0.f, 1.f, 1.0f, 49);
-        p_voc_tone  = t.Add("voc_tone",  0.7f, 0.f, 1.f);
 
         // Faixa [1,256], curva 3. O teto subiu de 16 porque 6x ficou
         // "muuuuuito baixo" e 16 nao teria dado conta: cross-synthesis
@@ -966,7 +951,6 @@ struct Manifest
         // erra pra baixo, que e o lado seguro de errar.
         //
         // norm = ((8-1)/255)^(1/3) = 0.301
-        p_fx2_gain  = t.Add("fx2_gain",  0.0f, 1.f, 256.f, 3.0f);
 
         // BUZIOS. thresh em norm==real (faixa 0..1). Cooldown em
         // ms, default 100: norm = (100-10)/990 = 0.091.
@@ -1000,8 +984,9 @@ struct Manifest
         // O `mods` mostra o nome do parametro de origem justamente pra
         // isso saltar aos olhos: quatro linhas dizendo "level ->" e o
         // sintoma.
-        bind[n_bind++] = {ModuleSlot::Instrument, p_dly_time, "dly_time"};
-        bind[n_bind++] = {ModuleSlot::Instrument, p_dly_mix, "dly_mix"};
+        // O DELAY DEIXOU DE SER MODULO em 20/08 — virou C++ no shell
+        // (delay.h). Nao ha mais bind: o callback le os params direto,
+        // como todos os outros efeitos da casa.
 
         // ---- PAINEL v2: knob físico → macro → parâmetro(s) ----
         // AQUI EMBAIXO, junto dos bind[], e pelo MESMO motivo: knob
@@ -1024,7 +1009,6 @@ struct Manifest
         knob[1].AddTarget(p_piezo_mix, 1.0f); // k2 — BALANCO dos piezos
         knob[2].AddTarget(p_dly_time, 1.0f); // k3 — macro do delay
         knob[3].AddTarget(p_dly_mix, 1.0f);  // k4 — macro do delay
-        knob[4].AddTarget(p_voc_tone, 1.0f); // k5 — macro do vocoder
 
         // ---- B1: o que o randomizador pode sortear ----
         // Params de CARÁTER dos módulos, e só. Com o vocoder ligado
@@ -1148,67 +1132,102 @@ struct Manifest
         // topo — portao sempre fechado, instrumento mudo, sintoma
         // identico ao do `src_mix`. Vizinhanca importa.
         // ============================================================
-        AddMidi(20, p_level);        // master
-        AddMidi(21, p_in_gain[0]);   // ganho de entrada, cadeia A
-        AddMidi(50, p_in_gain[1]);   //                  cadeia B
-        AddMidi(22, p_dly_time);
-        AddMidi(23, p_dly_mix);
-        AddMidi(24, p_rev_mix);
-        AddMidi(25, p_rev_size);     // novo
-        AddMidi(26, p_rev_damp);     // novo
-        AddMidi(27, p_frz_on);   // chave 0/127
-        AddMidi(28, p_frz_mix);
-        AddMidi(29, p_frz_size);
-        AddMidi(30, p_gate_thresh[0]); // gate por cadeia: cada piezo le
-        AddMidi(51, p_gate_thresh[1]); // um material diferente
-        AddMidi(31, p_buzios_on); // chave 0/127
-        AddMidi(32, p_buzios_thresh);   // novo
-        // Familia do DETUNE, contigua.
-        // CC 52-56 LIVRES desde 20/08 (eram do detune, fora do build).
+        // UMA DECADA POR EFEITO. Todo param recebe CC (decisao do dB,
+        // 20/08) — nada mais so-serial. O agrupamento por decada e
+        // memorizavel e, mais importante, e DEFESA: um widget mal
+        // configurado atinge o VIZINHO, e vizinho da mesma familia faz
+        // menos estrago que vizinho de outra. Ja aconteceu: um botao
+        // dos buzios mandava 31 junto com 32 e jogava o `gate_thresh`
+        // no topo — portao fechado, instrumento mudo.
 
-        // Familia do WARBLE, contigua.
-        // ---- CARATER: SO on/off + PRIMARIO, e a razao e teto ----
+        // ---- ENTRADA: 20-26 ----
+        AddMidi(20, p_piezo_mix);        // 64 = centro, as duas cadeias
+        AddMidi(21, p_in_gain[0]);
+        AddMidi(22, p_in_gain[1]);
+        AddMidi(23, p_gate_thresh[0]);   // em 0 o gate e PULADO
+        AddMidi(24, p_gate_thresh[1]);
+        AddMidi(25, p_gate_release[0]);
+        AddMidi(26, p_gate_release[1]);
+
+        // ---- DRIVE: 30-35 ----
+        AddMidi(30, p_drv_on[0]);
+        AddMidi(31, p_drv_mix[0]);
+        AddMidi(32, p_drv_on[1]);
+        AddMidi(33, p_drv_mix[1]);
+        AddMidi(34, p_drv_drive);        // compartilhado
+        AddMidi(35, p_drv_tone);         // compartilhado
+
+        // ---- PHASER: 40-47 ----
+        AddMidi(40, p_phs_on[0]);
+        AddMidi(41, p_phs_mix[0]);       // MONTANHA: pico em ~64
+        AddMidi(42, p_phs_on[1]);
+        AddMidi(43, p_phs_mix[1]);
+        AddMidi(44, p_phs_rate);         // compartilhado
+        AddMidi(45, p_phs_depth);        // compartilhado
+        AddMidi(46, p_phs_feedback);     // compartilhado
+        AddMidi(47, p_phs_stages);       // compartilhado, 3 posicoes
+
+        // ---- WARBLE: 50-54 ----
+        AddMidi(50, p_wrb_on[0]);
+        AddMidi(51, p_wrb_on[1]);
+        AddMidi(52, p_wrb_rate);         // compartilhado
+        AddMidi(53, p_wrb_depth);        // compartilhado
+        AddMidi(54, p_wrb_irreg);        // compartilhado
+
+        // ---- DELAY: 60-62 ----
+        AddMidi(60, p_dly_on);
+        AddMidi(61, p_dly_time);         // 50 ms .. 1 s
+        AddMidi(62, p_dly_mix);
+
+        // ---- FREEZE: 65-67 ----
+        AddMidi(65, p_frz_on);           // cauda de 2 s ao sair
+        AddMidi(66, p_frz_mix);
+        AddMidi(67, p_frz_size);
+
+        // ---- SHIMMER: 70-74 ----
+        AddMidi(70, p_shm_on);           // precisa do rev_on ligado
+        AddMidi(71, p_shm_mix);
+        AddMidi(72, p_shm_feedback);
+        AddMidi(73, p_shm_shift);        // 3 posicoes
+        AddMidi(74, p_shm_tone);         // SOBE pra clarear
+
+        // ---- REVERB: 80-83 ----
+        AddMidi(80, p_rev_on);           // emudece o shimmer junto
+        AddMidi(81, p_rev_mix);
+        AddMidi(82, p_rev_size);
+        AddMidi(83, p_rev_damp);
+
+        // ---- BUZIOS: 85-87 ----
+        AddMidi(85, p_buzios_on);
+        AddMidi(86, p_buzios_thresh);
+        AddMidi(87, p_buzios_cooldown);
+
+        // ---- TOM DE TESTE: 90-92 ----
+        AddMidi(90, p_tone_freq);
+        AddMidi(91, p_tone_mix);
+        AddMidi(92, p_tone_dest);        // 0=A 1=B 2=AMBAS
+
+        // ---- MASTER: 100 ----
+        AddMidi(100, p_level);
+
+        // ---- PROTECAO E ROTEAMENTO: 110-115 ----
         //
-        // Mapear os 14 params de caracter x 2 cadeias daria 28 CCs e
-        // estouraria os 48 (a conta foi feita ANTES de escrever isto).
-        // Os secundarios seguem alcancaveis por `set <nome> <real>`.
+        // LONGE DE PROPOSITO, e a distancia e a defesa. Estes seis
+        // saiam do MIDI em 18/08 porque despejos do iOS os punham no
+        // extremo e emudeciam o instrumento TRES VEZES numa sessao.
         //
-        // Nao e so economia: o painel tem UM pot de parameter por
-        // cadeia, entao o primario e o que existe fisicamente. O resto
-        // e ajuste de bancada.
-        // POR CANAL: chave e dry/wet — o que se opera ao vivo.
-        //   A: 38 39 40 41 42     B: 44 45 46 47 48
-        for(int c = 0; c < kCadeias; c++)
-        {
-            const uint8_t b = (uint8_t)(38 + 6 * c);
-            AddMidi((uint8_t)(b + 0), p_drv_on[c]);
-            AddMidi((uint8_t)(b + 1), p_drv_mix[c]);
-            AddMidi((uint8_t)(b + 2), p_phs_on[c]);
-            AddMidi((uint8_t)(b + 3), p_phs_mix[c]);
-            AddMidi((uint8_t)(b + 4), p_wrb_on[c]);
-            // b+5 (43 e 49) fica pros primarios COMPARTILHADOS abaixo.
-        }
-        // COMPARTILHADOS: um so pros dois canais. Mapear duas vezes o
-        // mesmo param gastaria CC pra dar dois nomes a mesma coisa.
-        AddMidi(43, p_drv_drive);
-        AddMidi(49, p_phs_rate);
-        AddMidi(52, p_wrb_depth);
-
-        // Familia do PHASER, contigua.
-
-        // Familia do DRIVE, contigua.
-
-        AddMidi(33, p_shm_on);   // chave 0/127
-        AddMidi(37, p_shm_mix);
-        AddMidi(35, p_shm_feedback);
-        AddMidi(36, p_shm_shift);   // chave 3 posicoes
-        AddMidi(57, p_shm_tone);
-
-        // ---- I/O: familia contigua, os dois controles de ponta ----
-        AddMidi(58, p_piezo_mix);  // 64 = centro (ambos cheios)
-        // CC 59 LIVRE: era o out_width, aposentado em 20/08.
-        AddMidi(60, p_dly_on);     // chave 0/127
-        AddMidi(61, p_rev_on);     // chave 0/127 — emudece o shimmer junto
+        // Voltam agora por decisao do dB (mapear tudo), e o que mudou
+        // desde entao: a QUARENTENA de reconexao existe e barra dumps.
+        // Mas o risco residual e real — um controlador mal mapeado que
+        // varra 110-115 desliga o roteamento e o instrumento emudece
+        // sem defeito nenhum. Por isso ficam a 10 CCs do vizinho mais
+        // proximo: varredura acidental nao chega ate aqui.
+        AddMidi(110, p_gov_ceiling);
+        AddMidi(111, p_gov_release);
+        AddMidi(112, p_shift_hz);
+        AddMidi(113, p_route_exciter);   // 0 = corta o ramo do exciter
+        AddMidi(114, p_route_jack);      // 0 = corta o ramo do jack
+        AddMidi(115, p_bench_boost);
 
         // ---- ORDEM DE SACRIFICIO (indice 0 cai primeiro) ----
         //

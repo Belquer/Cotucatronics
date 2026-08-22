@@ -1,5 +1,5 @@
 #!/bin/bash
-# check_repo v0.1.0 — o repo compila num CLONE LIMPO?
+# check_repo v0.2.0 — o repo compila num CLONE LIMPO?
 #
 # Existe por um defeito real: module_rnbo_alloc.h foi incluido pelos
 # tres modulos e NUNCA commitado. O build local sempre funcionou
@@ -14,7 +14,7 @@
 # Saida: 0 se tudo rastreado, 1 se falta algo.
 
 cd "$(dirname "$0")" || exit 2
-echo "check_repo v0.1.0"
+echo "check_repo v0.2.0"
 echo
 
 fail=0
@@ -60,28 +60,12 @@ else
     [ "$miss" = 0 ] && echo "   ok — todos rastreados" || fail=1
 fi
 
-# ---- 3. exports do RNBO que os modulos incluem por caminho ----
-echo
-echo "3. exports do RNBO incluidos por caminho"
-miss=0
-for f in module_rnbo_*.cpp; do
-    [ -f "$f" ] || continue
-    grep -ho '#include "modules/[^"]*"' "$f" 2>/dev/null \
-        | sed 's/#include "//; s/"//' | while read -r p; do
-            if [ ! -f "$p" ]; then
-                echo "   SUMIU  $p  (referenciado por $f)"
-                echo "x" >> /tmp/.cotuca_check_fail
-            elif ! tracked "$p"; then
-                echo "   FALTA  $p  (referenciado por $f)"
-                echo "x" >> /tmp/.cotuca_check_fail
-            fi
-        done
-done
-if [ -f /tmp/.cotuca_check_fail ]; then
-    fail=1; rm -f /tmp/.cotuca_check_fail
-else
-    echo "   ok"
-fi
+# ---- 3. o RNBO saiu: nada a checar ----
+# Havia aqui um bloco que conferia os exports do RNBO referenciados por
+# caminho pelos module_rnbo_*.cpp. Em 20/08 o delay virou C++ no shell
+# (delay.h) e o runtime inteiro saiu do projeto — os arquivos, os
+# includes e o sistema de slots. Verificacao sem objeto e ruido que o
+# proximo leitor vai tentar entender.
 
 echo
 if [ "$fail" = 0 ]; then

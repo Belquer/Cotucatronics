@@ -310,6 +310,40 @@ efeitos nas novas posições (não herdam o aceite da cadeia antiga).
 
 ---
 
+## Fechado em 20/08 — RNBO fora, inteiro
+
+O delay era o último consumidor do runtime. Reescrito em C++ (`delay.h`, grafo
+lido do export: feedback fixo **0,4**, crossfade, mono nos dois canais), o
+RNBO saiu por completo.
+
+| | antes | depois |
+|---|---|---|
+| tudo ligado | 678 µs | **545 µs / 656 pico** |
+| base (nada ligado) | 182 µs | **115 µs** |
+| o delay | 45 µs, **sempre** | +11 µs, só ligado |
+| binário | 212 424 B | 175 980 B |
+| params | 61 | **54** |
+| repo | — | **−8 MB** de export |
+
+**Os 67 µs da base são o dado que interessa:** um `Module::Process` roda ligado
+ou desligado, porque o módulo não sabe que está em bypass. Custo-zero-desligado,
+que todo efeito da casa segue, era **estruturalmente impossível** dentro do
+sistema de slots.
+
+Saíram junto: `MODULE_SRC`, `RNBO_DIR`, `module.h`, `mod_slot[]`, `ModBind` e o
+push-por-nome, seis arquivos, quatro exports, os seis params órfãos do vocoder,
+o watchdog do fx2 que julgava pelo CPU global (**achado 8**), o comando `probe`
+e o histograma nota-a-nota (**achado 7**).
+
+**Método na cicatriz 12f:** remover o símbolo-raiz e deixar o compilador
+enumerar os dependentes. Quatro erros na primeira passada, depois um, depois
+zero — sem faixa calculada e sem prosa perdida.
+
+**Mapa de CC refeito:** todo param recebe CC (54/64), uma década por efeito.
+Nada mais só-serial.
+
+---
+
 ## Defeitos abertos
 
 **🟡 A entrada satura NO REGIME "DEDO NO DISCO SOLTO" — e só nele, até

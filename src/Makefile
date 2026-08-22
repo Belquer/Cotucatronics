@@ -53,33 +53,21 @@ HAL_SRC = hal_$(BOARD).cpp
 # O FREEZE que entrou no lugar NAO e este module_rnbo_freeze.cpp: e o
 # freeze.h, granular em C++ no shell. O RNBO foi reprovado na etapa 5
 # do IFA10000 (7 349 us contra 2 667 de orcamento) e segue fora.
-MODULE_SRC ?= module_rnbo_delay.cpp
-
-# UM runtime pros dois patchers. Os exports vieram com versoes
-# diferentes (delay 1.4.3, freeze 1.4.5), mas elas diferem em 3
-# arquivos e a mudanca e ADITIVA (um metodo novo em RNBO_DataRef.h),
-# entao o 1.4.5 e superset. Usar dois -I e deixar a ordem decidir qual
-# cada modulo pega seria frágil e silencioso; melhor um so, explicito.
-# QUAL export fornece o runtime compartilhado. Nao importa de qual
-# ele vem — os exports trazem copias do mesmo runtime — mas importa
-# que o escolhido REALMENTE o tenha: um reexport pode vir so com o
-# .cpp gerado, sem a pasta rnbo/, e ai o build quebra em
-# "RNBO_Common.h: No such file". Ja aconteceu com o freeze.
-RNBO_DIR   ?= modules/vocoder/rnbo_export
 
 CPP_SOURCES = \
 main.cpp \
-$(MODULE_SRC) \
 $(HAL_SRC)
 
 # So os modules_rnbo_*.cpp usam, mas o -I e global.
-C_INCLUDES += -I$(RNBO_DIR)/rnbo -I$(RNBO_DIR)/rnbo/common -I.
+# Sem -I do RNBO: o runtime saiu inteiro em 20/08 quando o delay
+# virou C++ no shell. O instrumento nao depende mais de RNBO.
+C_INCLUDES += -I.
 
 # O RNBO usa <cmath>/<algorithm> com a STL; nada de excecoes nem RTTI,
 # que o Makefile da libDaisy ja desliga.
 CPPFLAGS += -Wno-unused-parameter -Wno-sign-compare
 
-$(info Cotucatronics Makefile v0.2.0 — BOARD=$(BOARD) APP_TYPE=$(APP_TYPE) LIBDAISY_DIR=$(LIBDAISY_DIR))
+$(info Cotucatronics Makefile v0.4.0 — BOARD=$(BOARD) APP_TYPE=$(APP_TYPE) LIBDAISY_DIR=$(LIBDAISY_DIR))
 
 # ---- checagens com mensagem legível, em vez de erro críptico ----
 ifeq ($(wildcard $(HAL_SRC)),)
@@ -90,9 +78,6 @@ ifeq ($(wildcard $(LIBDAISY_DIR)/core/Makefile),)
 $(error libDaisy nao encontrada em $(LIBDAISY_DIR). Clone com: git clone --recurse-submodules https://github.com/electro-smith/libDaisy $(LIBDAISY_DIR))
 endif
 
-ifeq ($(wildcard $(RNBO_DIR)/rnbo/common/RNBO_Common.h),)
-$(error runtime do RNBO nao encontrado em $(RNBO_DIR)/rnbo/. Exports disponiveis com runtime: $(patsubst modules/%/rnbo_export/rnbo/common/RNBO_Common.h,%,$(wildcard modules/*/rnbo_export/rnbo/common/RNBO_Common.h)))
-endif
 
 ifeq ($(wildcard $(LIBDAISY_DIR)/build/libdaisy.a),)
 $(error libdaisy.a nao existe. Compile a lib antes: make -C $(LIBDAISY_DIR))

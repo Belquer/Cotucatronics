@@ -34,7 +34,11 @@ constexpr int kMidiOmni    = -1;
 // 48. Estourou DE NOVO: 36 entradas contra teto de 32, e os quatro CCs
 // do SHIMMER foram recusados em silencio — o efeito continuava tocando
 // e nenhum controle dele respondia.
-constexpr int kMaxMidiMap  = 48; // entradas na tabela CC→param
+// 64. O dB mandou mapear TODO param em 20/08 — nada mais so-serial.
+// Sao 54 hoje, e o teto de 48 estourava. Conta feita ANTES de escrever
+// o mapa, pela terceira vez seguida: estouro de capacidade e defeito de
+// projeto, nao condicao de runtime.
+constexpr int kMaxMidiMap  = 64; // entradas na tabela CC→param
 constexpr int kMidiHistory = 8;  // últimos CCs guardados pro `midi`
 
 // 0–127 → 0.0–1.0. Divide por 127, não por 128: o valor máximo do

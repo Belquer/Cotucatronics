@@ -1,5 +1,5 @@
 #pragma once
-// dynamics.h v0.4.0
+// dynamics.h v0.5.0
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
@@ -128,6 +128,22 @@ class Gate
 
     float Gain() const { return gain_; }
     float Env() const { return det_.Value(); }
+
+    // RETOMADA ABERTA. O `main` pula o Process() inteiro quando o
+    // limiar esta em 0 (portao escancarado, custo zero) — e enquanto
+    // pula, `gain_` congela onde estava. Desde o boot isso e ZERO,
+    // porque e onde o Init o poe.
+    //
+    // Sem isto, subir o limiar com som tocando reabre o gate com ganho
+    // partindo de 0 e detector descarregado: ~46 ms de fade-in que o dB
+    // ouve como um duck ao HABILITAR a protecao. Quem liga um gate nao
+    // pede um mergulho.
+    //
+    // Abrir e o default seguro: se o sinal estiver mesmo abaixo do
+    // limiar, o release (300 ms) fecha suave logo em seguida. O erro na
+    // direcao contraria — comecar fechado — corta audio que devia
+    // passar, no instante exato em que alguem estava mexendo.
+    void Abre() { gain_ = 1.f; }
 
   private:
     EnvFollower det_;

@@ -1,16 +1,15 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.93.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.97.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.93.0"
+#define COTUCA_OS_VERSION "0.97.0"
 
 #include "hal.h"
 #include "params.h"
 #include "manifest.h"
-#include "module.h"
 #include "dynamics.h"
 #include "reverb.h"
 #include "freeze.h"
@@ -25,6 +24,7 @@
 // e o detune custava 125 us, cinco vezes o phaser). O arquivo segue no
 // repo, intacto e revivivel. Ver docs/FEATURES.md, secao Arquivo.
 #include "suave.h"
+#include "delay.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -391,16 +391,7 @@ static void OnMidiTrace(uint8_t b, cotuca::MidiVerdict v, uint8_t status,
              (v == V::DadoParcial && n_data == 1) ? " (data1)" : "");
 }
 
-// ---- módulos DSP, por SLOT ----
-// Preenchidos do REGISTRO em module.h. O main não inclui header de
-// motor nenhum: não sabe que existe RNBO. Slot vazio = passthrough.
-static cotuca::Module* mod_slot[static_cast<int>(cotuca::ModuleSlot::kCount)]
-    = {};
 
-// índice do parâmetro dentro do módulo, resolvido por nome no boot.
-// -1 = nome não existe naquele slot → não empurra nada.
-static int   mod_index[8];
-static float mod_last[8]; // só empurra o que mudou
 
 // Fonte que alimenta o módulo: crossfade das entradas + tom de teste.
 // Estático porque o callback de áudio não aloca. 64 > block_size (48).
@@ -411,9 +402,6 @@ static float mod_last[8]; // só empurra o que mudou
 static constexpr size_t kMaxBlock = 256;
 static float            src_buf[kMaxBlock];
 
-// Scratch pro slot Fx2: Module::Process não é seguro in-place, o motor
-// lê a entrada enquanto escreve a saída.
-static float fx_buf[2][kMaxBlock];
 
 // Portadora ausente = silêncio, não lixo. Usado quando a placa não
 // tem entrada de áudio: um módulo de 2 inputs continua rodando, só
@@ -423,9 +411,7 @@ static float zero_buf[kMaxBlock] = {};
 // REVERB — bloco permanente do shell, não módulo. Ver reverb.h pras
 // duas razões (pool de SRAM a 92,4% e a natureza fim-de-linha).
 // Pico de saida por balde de pitch (13 semitons da cerca dos buzios).
-static float note_peak[13] = {};
 
-static cotuca::HighPass fx2_hp_l, fx2_hp_r;
 static cotuca::Reverb reverb;
 static bool           reverb_ok = false;
 
@@ -525,6 +511,14 @@ static cotuca::EffectSlot warble_slot;
 // I/O: balanco da entrada e largura da saida. Nascem no NEUTRO (1.0)
 // pra nao produzirem um fade-in de estreia que ninguem pediu.
 static cotuca::Suave       suave_gl, suave_gr;
+
+// DELAY EM C++ — substitui o modulo RNBO em 20/08. Era o ultimo
+// consumidor do runtime RNBO no instrumento. Ver delay.h: o grafo do
+// patch foi lido do export e reproduzido, feedback 0.4 incluido.
+static cotuca::Delay       delay_fx;
+static bool                delay_ok  = false;
+static float*              delay_mem = nullptr;
+static constexpr float     kDelaySeg = 1.0f;   // teto do tempo
 static cotuca::Suave       suave_dly, suave_rev;
 
 // ---- TETO DE SOMA DO CTOS ----
@@ -574,6 +568,14 @@ static uint32_t soma_caiu_us[cotuca::Manifest::kMaxSacrificaveis] = {0};
 static bool     soma_sem_saida = false;
 // CC de aviso na saida MIDI: valor = indice+1 do efeito derrubado.
 static constexpr uint8_t kCCAvisoTeto = 119;
+// AVISO DO AUTO-VETO DO SHIMMER. O tripwire por-efeito derrubava o
+// shimmer e nao dizia nada: o dB veria o som sumir sem uma linha de
+// log. O teto de soma sempre teve aviso completo; este ficou de uma
+// era anterior, e e a mesma familia "falha em silencio" dentro do
+// proprio CTOS. Callback MARCA, loop FALA (regra da 11x).
+static volatile bool     aviso_shm_kill = false;
+static volatile uint32_t aviso_shm_us   = 0;
+static volatile uint32_t aviso_shm_prazo = 0;
 // AVISO PENDENTE — o callback MARCA, o loop FALA.
 //
 // A primeira versao chamava LogAlways() e MidiSendBytes() de dentro do
@@ -653,6 +655,7 @@ struct Cadeia
     cotuca::Warble     warble;
     cotuca::EffectSlot drive_slot, phaser_slot, warble_slot;
     bool               warble_ok = false;
+    bool               gate_ativo = false;  // pra detectar a borda pulado->ativo
     float              buf[kMaxBlock];
 };
 static Cadeia cad[cotuca::Manifest::kCadeias];
@@ -750,74 +753,6 @@ alignas(32) static float reverb_mem[28160];
 // Trava, não histerese: um módulo que estourou uma vez vai estourar
 // de novo, e ficar oscilando entre ativo e bypass soaria pior que
 // ficar fora.
-// JANELA DE GRAÇA. Um módulo pode fazer trabalho de UMA VEZ no
-// primeiro Process — o RNBO aloca buffers de FFT preguiçosamente,
-// por exemplo. Condenar por isso confundiria custo de estreia com
-// custo de regime, que é justamente a pergunta que interessa.
-//
-// Durante a graça o watchdog não trava, e ao fim dela o medidor é
-// ZERADO: assim o pico reportado depois é só regime permanente.
-static volatile bool     fx2_overrun  = false;
-static bool              fx2_reported = false;
-static volatile uint32_t fx2_grace    = 0;
-static volatile bool     fx2_grace_done = false;
-static bool              fx2_was_on   = false;
-// A transicao 0->1 e detectada DENTRO do callback, nao no loop.
-// Detectar no loop cria corrida: o callback dispara entre o parametro
-// mudar e o loop chegar na linha que arma a graca, e o bloco caro da
-// estreia roda com graca=0 — trava o watchdog antes da protecao
-// existir. Foi exatamente o que aconteceu na primeira tentativa.
-static volatile bool     fx2_prev_want = false;
-// Pico da ESTREIA, capturado no fim da graca ANTES do reset. Sem
-// isto o numero da estreia se perde justamente por causa da protecao
-// que existe pra separa-lo do regime — a instrumentacao apagava o
-// dado que ela mesma foi criada pra revelar.
-static volatile float    fx2_startup_peak = 0.f;
-// Custo dos primeiros blocos, isolado um a um. Responde a pergunta
-// que decide o conserto da estreia: o custo esta CONCENTRADO no
-// primeiro Process (alocacao preguicosa de uma vez) ou ESPALHADO
-// pelos blocos iniciais (crescimento incremental)? Warm-up no Init
-// resolve o primeiro caso; so mexer no alocador resolve o segundo.
-static constexpr int  kProbeBlocks = 8;
-static volatile float fx2_probe[kProbeBlocks] = {};
-// So a PRIMEIRA ativacao apos o boot interessa: e nela que a
-// alocacao preguicosa acontece. Reativar depois mede so o regime e
-// apagaria o dado — foi o que aconteceu na primeira tentativa.
-static volatile bool  fx2_probe_done = false;
-
-// ---- BANCADA: cerco ao bloco que mata ----
-// Dois contadores em volta do Process. A diferenca entre eles e o
-// diagnostico inteiro:
-//
-//   in == out    → todo Process que comecou terminou. Se a placa
-//                  morreu assim, morreu FORA do modulo.
-//   in == out+1  → um Process entrou e nunca saiu. Trava ou fault
-//                  DENTRO do modulo, no bloco de numero `in`.
-//
-// O watchdog nao consegue ver essa diferenca porque ele so roda no
-// inicio do bloco SEGUINTE, que no caso de trava nunca existe.
-static volatile uint32_t fx2_in  = 0;
-static volatile uint32_t fx2_out = 0;
-// Picos medidos em volta do modulo: entrada (saida do delay) e saida
-// crua do vocoder, antes do ganho. A razao diz o ganho que falta.
-static volatile float    fx2_peak_in  = 0.f;
-static volatile float    fx2_peak_out = 0.f;
-static constexpr float   kOverrunTrip = 0.90f;
-// BANCADA 2026-08-16 — era 24. Reduzido pra 2 pra descobrir se o
-// vocoder novo ESTOURA ou TRAVA, que sao doencas diferentes:
-//
-//   estoura → Process retorna tarde. O watchdog pega no bloco
-//             seguinte e loga "Forcado em bypass". Placa sobrevive.
-//   trava   → Process nao retorna (ou da fault). NAO EXISTE bloco
-//             seguinte, entao o watchdog nunca roda. Placa morre.
-//
-// Com 24 blocos os dois casos pareciam iguais: a placa morria antes
-// da protecao existir. Com 2, o watchdog tem chance quase imediata, e
-// o desfecho responde a pergunta.
-//
-// Encurtar e seguro porque o warm-up do Init ja paga a alocacao
-// preguicosa do RNBO — a graca longa era pra quando isso nao existia.
-static constexpr uint32_t kGraceBlocks = 2;
 
 // ============================================================
 // PAINEL v2 — 2 botões momentâneos
@@ -1046,16 +981,25 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // efeito audivel nenhum. Duplicar a cadeia duplicou tambem esse
         // desperdicio, e foi so ai que ele apareceu.
         //
-        // O `gain` fica em 1.0 enquanto isso, entao religar o gate nao
-        // encontra estado velho — nao ha o problema de buffer rancoso
-        // que impede o mesmo truque no warble e no modulo.
+        // CORRECAO 20/08: a versao anterior deste comentario afirmava
+        // que "o gain fica em 1.0 enquanto isso". E FALSO — `Gate::Init`
+        // poe `gain_` em ZERO, e pular o Process() CONGELA esse zero.
+        // Eu afirmei um estado que nao conferi, e a consequencia era
+        // audivel: subir o limiar com som tocando reabria o gate a
+        // partir de ganho 0, com ~46 ms de fade-in.
+        //
+        // Agora a transicao pulado->ativo forca retomada ABERTA. Se o
+        // sinal estiver mesmo abaixo do limiar, o release fecha suave.
         const float thr = params.Real(manifest.p_gate_thresh[c]);
         if(thr > 0.f)
         {
+            if(!k.gate_ativo) { k.gate.Abre(); k.gate_ativo = true; }
             k.gate.SetThreshold(thr);
             k.gate.SetRelease(params.Real(manifest.p_gate_release[c]));
             for(size_t i = 0; i < size; i++) b[i] = k.gate.Process(b[i]);
         }
+        else
+            k.gate_ativo = false;
 
         // 1.3) TOM DE TESTE — DEPOIS DO GATE, e o ponto e documentado.
         //
@@ -1139,12 +1083,6 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         }
     }
 
-    // PORTADORA do slot de instrumento (herdada do vocoder, hoje fora do
-    // build): era `in[1]` cru. Com duas cadeias, a segunda JA TRATADA e a
-    // escolha coerente — se o vocoder voltar, ele recebe a cadeia B com
-    // caracter, nao o piezo cru.
-    const float* carrier = cad[1].buf;
-
     // 2) MIX ENTRE AS CADEIAS — o `piezo_mix` mudou de posicao.
     //
     // Ele era balanco na ENTRADA, entre dois sinais crus. Agora e entre
@@ -1181,159 +1119,36 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     }
 
     // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
-    cotuca::Module* inst = mod_slot[(int)cotuca::ModuleSlot::Instrument];
-    if(inst)
+    // 3) DELAY — C++ puro desde 20/08, no lugar do modulo RNBO.
+    //
+    // Escreve nos DOIS canais o mesmo mono, como o patch fazia: a
+    // largura so nasce depois, no reverb e no shimmer.
     {
-        const float* ins[2] = {src_buf, carrier};
-        inst->Process(ins, out, size);
-        // CHAVE DO DELAY — mistura pro seco, e o modulo SEGUE RODANDO.
-        //
-        // Pular o Process() zeraria o custo, mas o delay e um modulo
-        // RNBO de estado opaco: a linha ficaria rancosa e ao religar
-        // sairia um pedaco de audio velho. A regra da casa ("bypass
-        // pula o processamento, nunca a gravacao") nao se aplica a quem
-        // nao separa as duas coisas. Entre custo e ranco, escolhi
-        // custo — e o teto de soma agora cobre o risco de CPU.
         const float alvo_d = params.Real(manifest.p_dly_on) >= 0.5f ? 1.f : 0.f;
-        if(alvo_d < 1.f || suave_dly.Valor() < 0.9999f)
+        const bool  vivo   = (alvo_d >= 0.5f) || suave_dly.Valor() > 0.0001f;
+        if(delay_ok && vivo)
+        {
+            delay_fx.SetTime(params.Real(manifest.p_dly_time));
+            delay_fx.SetMix(params.Real(manifest.p_dly_mix));
             for(size_t i = 0; i < size; i++)
             {
                 const float g = suave_dly.Passo(alvo_d);
-                out[0][i] = out[0][i] * g + src_buf[i] * (1.f - g);
-                out[1][i] = out[1][i] * g + src_buf[i] * (1.f - g);
+                const float w = delay_fx.ProcessMono(src_buf[i]);
+                // A chave cruza pro seco. O `mix` interno ja faz
+                // seco/molhado; esta rampa e so pra ligar e desligar
+                // sem clique, como nos outros efeitos.
+                out[0][i] = out[1][i] = src_buf[i] * (1.f - g) + w * g;
             }
-    }
-    else
-    {
-        for(size_t i = 0; i < size; i++)
-            out[0][i] = out[1][i] = src_buf[i]; // sem módulo: passa reto
-    }
-
-    // 4) FX2 — segundo efeito de instrumento (freeze). ANTES do
-    //    level, como o contrato em module.h diz. A ordem importa:
-    //    depois do level, o freeze capturaria áudio com o volume já
-    //    aplicado, e mexer no level com o som congelado não mudaria
-    //    nada — o master deixaria de ser master.
-    //
-    //    Slot vazio = passthrough silencioso, não erro.
-    //    BYPASS: fx2_on nasce em 0. Modulo pesado que estoura o
-    //    prazo do bloco nao soa mal — mata o loop principal por
-    //    inanicao e a placa fica surda no serial. Com bypass, ligar
-    //    e reversivel.
-    cotuca::Module* fx2      = mod_slot[(int)cotuca::ModuleSlot::Fx2];
-    const bool      fx2_want = fx2 && params.Real(manifest.p_fx2_on) >= 0.5f;
-    if(fx2_want && !fx2_prev_want)
-    {
-        // acabou de ligar: abre a graca AQUI, antes de qualquer bloco
-        fx2_grace   = kGraceBlocks;
-        fx2_overrun = false;
-        cotuca::hal::BlackboxArm(); // so a partir daqui os slots valem
-    }
-    fx2_prev_want = fx2_want;
-
-    if(fx2_want && fx2_grace > 0)
-    {
-        // O medidor e zerado a cada bloco da graca, entao o que se le
-        // no inicio de um bloco e a carga do bloco ANTERIOR, isolada.
-        const uint32_t done = kGraceBlocks - fx2_grace;
-        const float    prev = cotuca::hal::CpuLoadMax();
-        if(done > 0)
-        {
-            if(prev > fx2_startup_peak)
-                fx2_startup_peak = prev;
-            if(!fx2_probe_done && done <= (uint32_t)kProbeBlocks)
-                fx2_probe[done - 1] = prev;
         }
-        cotuca::hal::CpuLoadReset();
-
-        if(--fx2_grace == 0)
+        else
         {
-            // ZERA AQUI, no mesmo contexto de quem checa. Deixar o
-            // reset pro loop principal cria corrida: o medidor ainda
-            // carrega o pico da estreia quando o bloco seguinte faz a
-            // checagem, e o watchdog trava por um custo que a graca
-            // existia justamente pra perdoar. Terceira vez nesta
-            // funcao que contexto errado gera bug — armar protecao e
-            // checar condicao TEM que ser o mesmo contexto.
-            fx2_probe_done = true; // congela o perfil da estreia
-            fx2_grace_done = true; // o loop so loga
-        }
-    }
-    else if(fx2_want && !fx2_overrun
-            && cotuca::hal::CpuLoadMax() > kOverrunTrip)
-        fx2_overrun = true; // trava; quem loga é o loop principal
-    if(fx2_want && !fx2_overrun)
-    {
-        // O SLOT sempre entrega DOIS canais; quantos o módulo lê é
-        // decisão dele, declarada em InputCount() e respeitada no
-        // wrapper. Passar menos que dois aqui faria um módulo 2-in
-        // ler in[1] fora dos limites — sem crash, com lixo no áudio.
-        //
-        // ch1 = sinal do ponto da cadeia. ch2 = IN_R cru, HOJE SEM
-        // CLIENTE: o vocoder v3 é 1-input e tem portadora interna. O
-        // comentário anterior prometia cross-synthesis externa e ficou
-        // stale quando o dB reexportou o patch — a promessa sobreviveu
-        // ao recurso.
-        //
-        // ANTES daqui ia {out[0], out[1]}, o par estéreo, o que dava
-        // ao módulo o próprio sinal duas vezes. Isso era bug de
-        // verdade e continua consertado.
-        const float* ins[2]  = {out[0], carrier};
-        float*       outs[2] = {fx_buf[0], fx_buf[1]};
-        // scratch limpo: export de 1 saída não escreve out[1], e sem
-        // isto o canal direito ficaria com o bloco anterior.
-        for(size_t i = 0; i < size; i++)
-            fx_buf[0][i] = fx_buf[1][i] = 0.f;
-        fx2_in++;
-        fx2->Process(ins, outs, size);
-        fx2_out++;
-        // GANHO DE COMPENSACAO DO SLOT. O vocoder sai muito abaixo do
-        // delay porque cross-synthesis so devolve energia onde as duas
-        // fontes coincidem. Ver a nota no manifest pra por que isto nao
-        // e `level` nem `bench_boost`.
-        //
-        // Aqui e ANTES do level e da dinamica: o governor e o limiter
-        // continuam a jusante, entao exagerar comprime em vez de
-        // estourar.
-        // PASSA-ALTA do Fx2, antes do ganho e da medição de pico.
-        {
-            const float hz = params.Real(manifest.p_fx2_hp);
-            fx2_hp_l.SetCutoff(hz);
-            fx2_hp_r.SetCutoff(hz);
+            // BYPASS: alimenta a linha, nao processa a saida. Regra dos
+            // efeitos com historico — parar de gravar faria o delay
+            // acordar lendo ate 1 s de passado congelado.
+            if(delay_ok)
+                for(size_t i = 0; i < size; i++) delay_fx.ProcessMono(src_buf[i]);
             for(size_t i = 0; i < size; i++)
-            {
-                fx_buf[0][i] = fx2_hp_l.Process(fx_buf[0][i]);
-                fx_buf[1][i] = fx2_hp_r.Process(fx_buf[1][i]);
-            }
-        }
-        const float g = params.Real(manifest.p_fx2_gain);
-        // MEDE OS DOIS LADOS. `pin` = o que entrou (saida do delay, que
-        // e o que o ouvido usa de referencia); `pout` = o que o vocoder
-        // devolveu, ANTES do ganho. A razao entre eles e exatamente o
-        // ganho de compensacao que falta — numero medido, nao chutado.
-        //
-        // Isto tem que sair no log dos primeiros blocos porque a serial
-        // morre logo depois que o vocoder sobe. Medir num lugar que so
-        // pode ser lido quando ja nao da pra ler nao mede nada.
-        float pin = 0.f, pout = 0.f;
-        for(size_t i = 0; i < size; i++)
-        {
-            const float a = out[0][i] < 0 ? -out[0][i] : out[0][i];
-            const float b = fx_buf[0][i] < 0 ? -fx_buf[0][i] : fx_buf[0][i];
-            if(a > pin) pin = a;
-            if(b > pout) pout = b;
-        }
-        if(pin > fx2_peak_in) fx2_peak_in = pin;
-        if(pout > fx2_peak_out) fx2_peak_out = pout;
-        // CAIXA-PRETA. Escrita a cada bloco, do callback, porque e aqui
-        // que o dado existe e daqui a poucos blocos nao havera mais
-        // serial pra contar. Custa tres stores.
-        cotuca::hal::BlackboxWrite(0, fx2_peak_in);
-        cotuca::hal::BlackboxWrite(1, fx2_peak_out);
-        for(size_t i = 0; i < size; i++)
-        {
-            out[0][i] = fx_buf[0][i] * g;
-            out[1][i] = fx_buf[1][i] * g;
+                out[0][i] = out[1][i] = src_buf[i];
         }
     }
 
@@ -1525,44 +1340,15 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             {
                 params.Set(manifest.p_shm_on, 0.f);
                 shimmer_slot.SetOn(false);
+                aviso_shm_kill  = true;
+                aviso_shm_us    = us;
+                aviso_shm_prazo = prazo;
             }
         }
         if(pitch_tail_ok && !shimmer_slot.Ativo())
         {
             pitch_tail.SetActive(0, false);
             pitch_tail.SetActive(1, false);
-        }
-    }
-
-    // ---- HISTOGRAMA DE PICO POR NOTA (bancada) ----
-    //
-    // "Um grave está estourando" precisa virar "QUAIS notas e QUANTO",
-    // senao o filtro e chute. O voc_pitch e quantizado em semitons e a
-    // cerca cobre 110–440 Hz, entao da pra medir NOTA A NOTA: cada
-    // bloco vai pro balde do pitch corrente, guardando o PICO ali.
-    //
-    // Mede a saida do reverb, ANTES do level e do limiter: e o sinal
-    // que o limiter vai ter que segurar. Medir depois dele mostraria
-    // 0.95 em tudo — o limiter escondendo justamente o que se procura.
-    {
-        // RESOLUCAO: 12 baldes cobrindo a CERCA dos buzios [0.5, 1.0],
-        // que sao 24 semitons — 2 semitons por balde, nao 4. A versao
-        // anterior dividia a faixa INTEIRA (0..1, 48 semitons) em 12, e
-        // cada rotulo cobria 4 semitons: grosseiro demais pra decidir
-        // entre notch e filtro.
-        const float pn = params.Get(manifest.p_voc_pitch);
-        int   b = (int)((pn - 0.5f) * 24.f + 0.5f);
-        if(b < 0) b = 0; else if(b > 12) b = 12;
-        float pk = 0.f;
-        for(size_t i = 0; i < size; i++)
-        {
-            const float a = out[0][i] < 0 ? -out[0][i] : out[0][i];
-            if(a > pk) pk = a;
-        }
-        if(pk > note_peak[b])
-        {
-            note_peak[b] = pk;
-            cotuca::hal::BlackboxWrite(32 + b, pk);
         }
     }
 
@@ -2031,17 +1817,6 @@ static void HandleLine(const char* line)
                  gov_l.Gain(), gov_l.Env());
         hal::Log("lim   ceil=%.2f gainL=%.2f gainR=%.2f",
                  cotuca::Limiter::Ceiling(), lim_l.Gain(), lim_r.Gain());
-        {
-            const float b = 1e6f * (float)hal::Info().block_size
-                            / hal::Info().sample_rate;
-            hal::Log("estreia %.0f us  (regime abaixo)",
-                     fx2_startup_peak * b);
-        }
-        hal::Log("fx2   %s", fx2_overrun
-                     ? "BYPASS FORCADO — estourou o prazo do bloco"
-                     : (params.Real(manifest.p_fx2_on) >= 0.5f
-                            ? "ATIVO" : "bypass (set fx2_on 1)"));
-        hal::Log("shift %.1f Hz (SSB, so no ramo exciter)", shift_l.Shift());
         hal::Log("boost %.2fx  (BANCADA — nasce sempre em 1.00)",
                  params.Real(manifest.p_bench_boost));
         hal::Log("route exciter=%d jack=%d",
@@ -2069,17 +1844,8 @@ static void HandleLine(const char* line)
             hal::Log("caixa-preta: vazia (ligou agora, sem voo anterior)");
             return;
         }
-        const float pi_ = hal::BlackboxRead(0);
-        const float po_ = hal::BlackboxRead(1);
         hal::Log("caixa-preta do voo anterior:");
         hal::Log("  blocos processados : %.0f", (double)hal::BlackboxRead(2));
-        hal::Log("  pico ENTRADA  do fx2: %.5f", (double)pi_);
-        hal::Log("  pico SAIDA    do fx2: %.5f  (antes do ganho)", (double)po_);
-        if(po_ > 1e-7f)
-            hal::Log("  => falta %.0fx de ganho pra casar com a entrada",
-                     (double)(pi_ / po_));
-        else if(pi_ > 1e-7f)
-            hal::Log("  => saida ZERO com entrada viva: modulo MUDO");
         hal::Log("  pico de CPU: %.0f%%", (double)hal::BlackboxRead(3) * 100.0);
         // slots 4..7: ultimos sorteios do búzios/B1 — id na parte
         // inteira, norm na fracao. Zero = slot nunca usado.
@@ -2162,22 +1928,6 @@ static void HandleLine(const char* line)
         hal::Log("  rampa: passos=%.0f, escrito=%.4f, lido=%.4f",
                  (double)hal::BlackboxRead(16), (double)hal::BlackboxRead(17),
                  (double)hal::BlackboxRead(18));
-        hal::Log("  push: instrument=%.0f fx2=%.0f | ultimo voc_pitch=%.4f",
-                 (double)hal::BlackboxRead(13), (double)hal::BlackboxRead(14),
-                 (double)hal::BlackboxRead(15));
-        return;
-    }
-    if(strncmp(line, "probe", 5) == 0)
-    {
-        // Uma linha POR BLOCO, em resposta a comando. Quatro Logs em
-        // rajada a 67% de CPU perdiam as linhas do meio: o loop
-        // principal ganha pouco tempo e o retry de 50 ms do Log
-        // estoura. Sob comando o ritmo e do host.
-        const float b = 1e6f * (float)hal::Info().block_size
-                        / hal::Info().sample_rate;
-        hal::Log("estreia, bloco a bloco (prazo %.0f us):", b);
-        for(int i = 0; i < kProbeBlocks; i++)
-            hal::Log("  bloco %d: %.0f us", i + 1, fx2_probe[i] * b);
         return;
     }
     if(strncmp(line, "cpu", 3) == 0)
@@ -2211,34 +1961,6 @@ static void HandleLine(const char* line)
         hal::Log("     %.0f us de pico em %.0f us de prazo (bloco %d @ %.0f Hz)",
                  hal::CpuLoadMax() * budget_us, budget_us,
                  (int)hal::Info().block_size, hal::Info().sample_rate);
-        return;
-    }
-    if(strncmp(line, "mods", 4) == 0)
-    {
-        for(int s = 0; s < (int)ModuleSlot::kCount; s++)
-        {
-            const ModuleSlot slot = (ModuleSlot)s;
-            Module*          m    = mod_slot[s];
-            if(!m)
-            { hal::Log("slot %-10s vazio", SlotName(slot)); continue; }
-            hal::Log("slot %-10s \"%s\": %d params, %d in%s",
-                     SlotName(slot), m->Name(), m->ParamCount(),
-                     m->InputCount(),
-                     m->InputCount() >= 2 ? " (ch2 = portadora IN_R)" : "");
-            for(int i = 0; i < m->ParamCount(); i++)
-                hal::Log("    [%d] %s", i, m->ParamName(i));
-            const Module::MemReport mem = m->Memory();
-            if(mem.blocks)
-                hal::Log("    ram: %u SRAM (de %u) + %u SDRAM, %d bl, %d falhas",
-                         (unsigned)mem.internal_bytes, (unsigned)mem.internal_cap,
-                         (unsigned)mem.big_bytes, mem.blocks, mem.failures);
-        }
-        for(int b = 0; b < manifest.n_bind; b++)
-            hal::Log("  %-12s -> %s.%s [%d]",
-                     params.Name(manifest.bind[b].param_id),
-                     SlotName(manifest.bind[b].slot),
-                     manifest.bind[b].mod_name,
-                     mod_index[b]);
         return;
     }
     if(strncmp(line, "list", 4) == 0)
@@ -2868,69 +2590,6 @@ int main(void)
     // funcao: quem configura tem que vir antes de quem consome.
     hal::RequestBlockSize(manifest.req.block_size);
 
-    // ---- módulos: pega do REGISTRO, slot a slot ----
-    // O main não conhece motor nenhum. Quem se registrou, apareceu.
-    for(int s = 0; s < (int)ModuleSlot::kCount; s++)
-    {
-        const ModuleSlot slot = (ModuleSlot)s;
-        Module*          m    = GetModule(slot);
-        if(!m)
-        {
-            hal::Log("slot %-10s vazio (passthrough)", SlotName(slot));
-            continue;
-        }
-        if(!m->Init(hal::Info().sample_rate, hal::Info().block_size))
-        {
-            // slot fica nullptr = passthrough. Áudio limpo com um
-            // módulo faltando é melhor que áudio corrompido com um
-            // módulo meio inicializado.
-            hal::Log("ERRO: \"%s\" no slot %s falhou no Init — slot vazio",
-                     m->Name(), SlotName(slot));
-            continue;
-        }
-        // ---- WARM-UP: política do slot, não remendo de módulo ----
-        //
-        // Módulo espectral aloca preguiçosamente no primeiro HOP, não
-        // no primeiro Process. Medido no vocoder (FFT 1024/hop 512,
-        // bloco 256): bloco 1 custou 932 us, bloco 2 custou 81 563,
-        // bloco 4 custou 42 512, e só no bloco 6 chegou aos 3 526 do
-        // regime. Uma chamada de silêncio não resolveria — o bloco 1
-        // é justamente o barato.
-        //
-        // Então rodamos silêncio até cobrir ~4096 amostras, que dá
-        // dois hops de 2048, quatro de 1024 ou oito de 512. O custo
-        // vai pro boot, onde ninguém ouve, e toda ativação posterior
-        // já nasce em regime.
-        //
-        // Genérico de propósito: vale pra qualquer módulo com estreia
-        // preguiçosa, não só pro fftstream~. E preserva o alocador
-        // bump simples — determinístico, sem fragmentação — que
-        // crescimento esperto começaria a erodir.
-        {
-            const size_t bs = hal::Info().block_size;
-            const int    n  = (int)((4096 + bs - 1) / bs);
-            const float* wi[2] = {zero_buf, zero_buf};
-            float*       wo[2] = {fx_buf[0], fx_buf[1]};
-            for(int k = 0; k < n; k++)
-                m->Process(wi, wo, bs);
-            hal::Log("slot %-10s warm-up: %d blocos de silencio",
-                     SlotName(slot), n);
-        }
-
-        mod_slot[s] = m;
-        hal::Log("slot %-10s \"%s\": %d params",
-                 SlotName(slot), m->Name(), m->ParamCount());
-    }
-
-    for(int b = 0; b < manifest.n_bind; b++)
-    {
-        Module* m    = mod_slot[(int)manifest.bind[b].slot];
-        mod_index[b] = m ? m->FindParam(manifest.bind[b].mod_name) : -1;
-        mod_last[b]  = -1.f; // força o primeiro push
-        if(m && mod_index[b] < 0)
-            hal::Log("AVISO: param \"%s\" nao existe no slot %s",
-                     manifest.bind[b].mod_name, SlotName(manifest.bind[b].slot));
-    }
 
     // Salvaguarda (c): bench_boost TEM que nascer em 1.0. Hoje não
     // existe persistência de cena, então isto nunca dispara — é
@@ -2974,8 +2633,6 @@ int main(void)
     {
         const size_t need = cotuca::Reverb::FloatsNeeded(hal::Info().sample_rate);
         const size_t have = sizeof(reverb_mem) / sizeof(reverb_mem[0]);
-        fx2_hp_l.Init(hal::Info().sample_rate);
-        fx2_hp_r.Init(hal::Info().sample_rate);
         reverb_ok = reverb.Init(hal::Info().sample_rate, reverb_mem, have);
         suave_gl.Init(hal::Info().sample_rate, 20.f, 1.f);
         suave_gr.Init(hal::Info().sample_rate, 20.f, 1.f);
@@ -3006,6 +2663,20 @@ int main(void)
         if(pitch_tail_mem)
             pitch_tail_ok = pitch_tail.Init(sr, pitch_tail_mem, need_t,
                                             kPitchSeconds);
+        // DELAY: 1 s a 48 kHz = 192 KB. Vai pra SDRAM pelo portao
+        // unico (`AllocBig`), como os motores de pitch — nao cabe no
+        // pool de SRAM e nao deve competir com ele.
+        {
+            const size_t nd = cotuca::Delay::FloatsNeeded(sr, kDelaySeg);
+            delay_mem = (float*)hal::AllocBig(nd * sizeof(float));
+            if(delay_mem)
+                delay_ok = delay_fx.Init(sr, delay_mem, nd, kDelaySeg);
+            hal::Log("delay: %s (%.0f ms max, %u KB em SDRAM, feedback %.2f)",
+                     delay_ok ? "pronto" : "SEM BUFFER — passthrough",
+                     (double)(kDelaySeg * 1000.f),
+                     (unsigned)(nd * sizeof(float) / 1024),
+                     (double)cotuca::Delay::kFeedback);
+        }
         shimmer.Init(sr);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
@@ -3266,6 +2937,19 @@ int main(void)
                 hal::MidiSendBytes(msg, 3);
             }
         }
+        if(aviso_shm_kill)
+        {
+            aviso_shm_kill = false;
+            hal::LogAlways("CTOS: \"shimmer\" em BYPASS pelo watchdog"
+                           " POR-EFEITO — %lu us de teto %lu (metade do"
+                           " prazo de %lu).",
+                           (unsigned long)aviso_shm_us,
+                           (unsigned long)(aviso_shm_prazo / 2u),
+                           (unsigned long)aviso_shm_prazo);
+            hal::LogAlways("  isto NAO e o teto de soma: aqui HA culpado,"
+                           " o efeito estourou o orcamento dele sozinho."
+                           " `ctos rearm` devolve.");
+        }
         if(aviso_sem_saida)
         {
             aviso_sem_saida = false;
@@ -3420,49 +3104,13 @@ int main(void)
         // hal::Log bloqueia por milissegundos e não pode rodar no
         // contexto de áudio.
         FASE(7);
-        if(fx2_overrun && !fx2_reported)
-        {
-            fx2_reported = true;
-            hal::Log("WATCHDOG: modulo do slot fx2 estourou o prazo do "
-                     "bloco (%.0f%% de pico). Forcado em bypass.",
-                     hal::CpuLoadMax() * 100.f);
-            hal::Log("  para rearmar: set fx2_on 0, depois set fx2_on 1");
-        }
-        // o callback e quem arma a graca; aqui so se avisa
-        {
-            const bool on = params.Real(manifest.p_fx2_on) >= 0.5f;
-            if(on && !fx2_was_on)
-            {
-                fx2_reported = false;
-                hal::Log("fx2: janela de graca de %lu blocos (custo de "
-                         "estreia nao conta)", (unsigned long)kGraceBlocks);
-            }
-            fx2_was_on = on;
-        }
         // (Aqui morava o log de bancada por-4-blocos do fx2. REMOVIDO:
         // com o host desconectado, cada Log gastava o teto de 50 ms de
         // retry e chegava um novo a cada 21 ms — o loop virava zumbi
         // dentro do proprio instrumento de medicao, e foi ESSA a causa
         // de "a serial morre com o vocoder ligado". O cerco ja tinha
         // cumprido o papel; as medicoes vivem na caixa-preta.)
-        if(fx2_grace_done)
-        {
-            fx2_grace_done = false;
-            const float budget_us = 1e6f * (float)hal::Info().block_size
-                                    / hal::Info().sample_rate;
-            hal::Log("fx2 ESTREIA: %.0f us de pico (%.0f%% do prazo)",
-                     fx2_startup_peak * budget_us, fx2_startup_peak * 100.f);
-            hal::Log("  perfil bloco a bloco: comando `probe`");
-            hal::Log("fx2: graca encerrada — daqui pra frente e regime");
-        }
 
-        // rearma quando o operador desliga explicitamente
-        if(params.Real(manifest.p_fx2_on) < 0.5f && fx2_overrun)
-        {
-            fx2_overrun  = false;
-            fx2_reported = false;
-            hal::CpuLoadReset(); // senao o pico antigo re-trava na hora
-        }
 
         // ARMADILHA DO PROPRIO INSTRUMENTO, custou tres voos:
         // contadores `static` ZERAM no boot, e o boot empurra os binds.
@@ -3473,60 +3121,6 @@ int main(void)
         //
         // Conserto: so grava com o voo ATIVO. buzios_on nasce em 0,
         // entao a sessao de leitura nao toca em nada.
-        // empurra pro módulo o que mudou. Fora do callback de áudio de
-        // propósito: setParameterValue enfileira evento no RNBO.
-        for(int b = 0; b < manifest.n_bind; b++)
-        {
-            if(mod_index[b] < 0)
-                continue;
-            // Real(), não Get(): é aqui que a curva do manifest passa a
-            // valer. Os params do módulo são declarados 0–1, então Real()
-            // devolve o normalizado JÁ CURVADO, que é o que o DSP quer.
-            // Shaped(), não Real(): o módulo quer 0..1 com a curva do
-            // manifest já aplicada. Real() traz a unidade (Hz, ms),
-            // que é assunto nosso e não dele.
-            FASE(8);
-            // Slot 19: ITERACOES do laco (nao disparos). Se iteracoes
-            // >> pushes, o laco roda e a guarda `v != mod_last` e que
-            // nunca abre — o que significaria Shaped() parado enquanto
-            // Get() muda. Slot 20/21: o Shaped e o mod_last do bind 0,
-            // pra ver os dois lados da comparacao que decide tudo.
-            if(voando && kDiagFull)
-            {
-                static uint32_t iter = 0;
-                hal::BlackboxWrite(19, (float)++iter);
-            }
-            const float v = params.Shaped(manifest.bind[b].param_id);
-            if(voando && kDiagFull && b == 0)
-            {
-                hal::BlackboxWrite(20, v);
-                hal::BlackboxWrite(21, mod_last[b]);
-            }
-            if(v != mod_last[b])
-            {
-                mod_last[b] = v;
-                mod_slot[(int)manifest.bind[b].slot]->SetParam(mod_index[b], v);
-                // Conta os pushes POR SLOT (13 = instrument, 14 = fx2) e
-                // guarda o ultimo valor empurrado pro fx2 (15). Se o
-                // delay randomiza e o vocoder nao, so ha dois desfechos:
-                // ou o push do fx2 nao acontece (13 sobe, 14 nao), ou
-                // acontece com valor certo e o patcher ignora (os dois
-                // sobem e o slot 15 varia). Cada um manda pra um lado
-                // completamente diferente.
-                static uint32_t push_i = 0, push_f = 0;
-                if(voando && kDiagFull)
-                {
-                    if(manifest.bind[b].slot == cotuca::ModuleSlot::Fx2)
-                    {
-                        hal::BlackboxWrite(14, (float)++push_f);
-                        if(manifest.bind[b].param_id == manifest.p_voc_pitch)
-                            hal::BlackboxWrite(15, v);
-                    }
-                    else
-                        hal::BlackboxWrite(13, (float)++push_i);
-                }
-            }
-        }
 
         if(++tick >= kLedToggleTicks)
         {
