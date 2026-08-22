@@ -38,8 +38,26 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Histograma de entrada** por canal | — | — | ✅ 20/08 · `hist` / `hist reset` · baldes de 6 dB pelo expoente do float, cru **e** pós-`in_gain`, clip com latch, e o dB que falta tirar pro atenuador · +27 µs |
 | **Teto de soma do CTOS** | ordem em `Manifest::sacrif[]` | aviso no **CC 119** | ✅ **20/08, três testes passados** · irmão do watchdog por-efeito: pega N efeitos saudáveis que juntos não cabem · prioridade declarada a frio, não LIFO · `ctos teto <us>` simula · +14 µs |
 | **Gate** por cadeia | `gate_thresh_{a,b}`, `gate_release_{a,b}` | 30, **51** | ativo · duplicado por **material**, não por desequilíbrio: o piezo do tambor lê transiente curto, o da mola lê raspagem contínua |
-| **Delay** (shell, C++) | `dly_on`, `dly_time`, `dly_mix` | 60, 61, 62 | ⏳ **reaceite pendente** — reescrito em C++ 20/08, `delay.h` v0.1.0 · +11 µs (era 45, **sempre**) · piso 50 ms, curso inteiro · feedback fixo **0,4**, lido do patch |
-| **Freeze granular** (shell) | `frz_on`, `frz_mix`, `frz_size` | 27, 28, 29 | ✅ certificado 18/08 |
+| **Delay** (shell, C++) — envio por cadeia | `dly_on_{a,b}`, `dly_mix_{a,b}`, `dly_time` | 60–64 | ⏳ **reaceite pendente** · `delay.h` v0.1.0 · +11 µs (era 45, **sempre**) · piso 50 ms · feedback fixo **0,4**, lido do patch |
+
+> ### 🔀 CAUDA PARALELA e DOIS ESPAÇOS (20/08)
+>
+> A cauda deixou de ser fila e virou **destinos irmãos**, cada um com envio
+> por cadeia. E o **espaço duplicou**: cada cadeia tem sala e shimmer
+> próprios, porque shimmer não é um efeito ao lado do reverb — ele *é* o
+> reverb realimentado com pitch, e duas molhaduras exigem duas salas.
+>
+> Delay e freeze continuam sendo **um só**, com envio por cadeia: o gesto
+> pedido era sobre espaço, e duplicá-los custaria CPU sem entregar diferença.
+>
+> **Medido:** A com delay+shimmer e B com sala limpa = **490 µs / 530 pico
+> (53%)**. Pior caso, as duas com tudo = **598 / 639 (64%)** — 209 µs abaixo
+> da previsão, porque custo medido numa arquitetura não se transporta para
+> outra (cicatriz 12g).
+>
+> **Perdeu-se:** o delay não é mais reverberado. Os ecos saem secos e a sala
+> trabalha sobre a fonte.
+| **Freeze granular** (shell) — envio por cadeia | `frz_on_{a,b}`, `frz_mix_{a,b}`, **`frz_hold`** (o gesto), `frz_size` | 65–70 | ✅ certificado 18/08 · ⏳ reaceite na nova posição · **fonte e gesto separados**: `frz_on_a/b` dizem qual cadeia alimenta, `frz_hold` diz quando congelar |
 | **Drive** — chave e dry/wet por canal | `drv_on_{a,b}`, `drv_mix_{a,b}` · `drv_drive`, `drv_tone` compartilhados | 38,39 / 44,45 · primário **43** | ⏳ **reaceite pendente na nova posição** (IFÁ10000 não se herda) · +21 µs por canal |
 | **Phaser** — chave e dry/wet por canal | `phs_on_{a,b}`, `phs_mix_{a,b}` · `phs_rate`, `phs_depth`, `phs_fb`, `phs_stages` compartilhados | 40,41 / 46,47 · primário **49** | ⏳ **reaceite pendente** · +26 µs por canal · ⚠️ `phs_mix` é MONTANHA: pico em ~50% |
 | **Warble** — chave por canal, params compartilhados | `wrb_on_{a,b}` · `wrb_rate`, `wrb_depth`, `wrb_irreg` compartilhados | 42 / 48 · primário **52** | ⏳ **reaceite pendente** · +14 µs por canal · 16 cents medidos |

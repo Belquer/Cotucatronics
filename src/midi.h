@@ -38,7 +38,7 @@ constexpr int kMidiOmni    = -1;
 // Sao 54 hoje, e o teto de 48 estourava. Conta feita ANTES de escrever
 // o mapa, pela terceira vez seguida: estouro de capacidade e defeito de
 // projeto, nao condicao de runtime.
-constexpr int kMaxMidiMap  = 64; // entradas na tabela CC→param
+constexpr int kMaxMidiMap  = 80; // entradas na tabela CC→param
 constexpr int kMidiHistory = 8;  // últimos CCs guardados pro `midi`
 
 // 0–127 → 0.0–1.0. Divide por 127, não por 128: o valor máximo do

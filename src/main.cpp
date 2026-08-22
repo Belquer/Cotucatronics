@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.97.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.105.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.97.0"
+#define COTUCA_OS_VERSION "0.105.0"
 
 #include "hal.h"
 #include "params.h"
@@ -412,6 +412,29 @@ static float zero_buf[kMaxBlock] = {};
 // duas razões (pool de SRAM a 92,4% e a natureza fim-de-linha).
 // Pico de saida por balde de pitch (13 semitons da cerca dos buzios).
 
+// ---- ESPACO POR CADEIA ----
+//
+// DUAS SALAS DE VERDADE, e a razao e que shimmer NAO e um efeito ao
+// lado do reverb: ele E o reverb realimentado com pitch. Pra cadeia A
+// ter shimmer e a B ter sala limpa, cada uma precisa da propria — nao
+// ha como uma sala so ser molhada de dois jeitos ao mesmo tempo.
+//
+// Custo medido: +99 us a sala, +182 us o shimmer. Pior caso (as duas
+// com shimmer) da 807 us contra teto de 850 — cabe, e o teto de soma
+// existe exatamente pra esse limite.
+struct Espaco
+{
+    cotuca::Reverb      reverb;
+    bool                reverb_ok = false;
+    cotuca::Shimmer     shimmer;
+    cotuca::EffectSlot  shimmer_slot;
+    cotuca::PitchEngine pitch;      // motor proprio: o shimmer le a cauda
+    bool                pitch_ok  = false;
+    float*              pitch_mem = nullptr;
+    cotuca::Suave       suave;      // rampa da chave da sala
+    uint32_t            pico_us   = 0;
+};
+static Espaco esp[cotuca::Manifest::kCadeias];
 static cotuca::Reverb reverb;
 static bool           reverb_ok = false;
 
@@ -566,8 +589,29 @@ static uint32_t soma_caiu_us[cotuca::Manifest::kMaxSacrificaveis] = {0};
 // Estado DIFERENTE de "tudo bem", e tem que se declarar — senao o
 // silencio do mecanismo seria lido como sucesso dele.
 static bool     soma_sem_saida = false;
-// CC de aviso na saida MIDI: valor = indice+1 do efeito derrubado.
-static constexpr uint8_t kCCAvisoTeto = 119;
+// ---- CC DE AVISO NA SAIDA MIDI ----
+//
+// A placa MANDA este CC quando decide sozinha derrubar um efeito. E o
+// unico CC do instrumento que anda na direcao da saida: todos os outros
+// sao o dB falando com a placa; este e a placa falando com o dB.
+//
+// DOIS VALORES, NAO UM INDICE (decisao do dB, 20/08):
+//   127 = teto de SOMA — N efeitos saudaveis nao cabem juntos
+//    64 = watchdog POR-EFEITO — o shimmer sozinho estourou o orcamento
+//
+// A versao anterior mandava `indice+1` do efeito derrubado, o que
+// carregava mais informacao e servia pior: no palco o dB nao le um
+// numero, ve um indicador. Dois valores bem separados sao duas posicoes
+// distintas de lampada. QUAL efeito caiu segue no log, que e onde essa
+// pergunta se faz — depois, com tempo.
+//
+// E sao dois valores porque sao DUAS DOENCAS: no teto de soma nao ha
+// culpado (excesso de ambicao), no watchdog ha (o efeito estourou
+// sozinho). Um indicador so, com dois estados, cobre os dois sem
+// fundi-los.
+static constexpr uint8_t kCCAviso     = 119;
+static constexpr uint8_t kAvisoSoma   = 127;
+static constexpr uint8_t kAvisoEfeito = 64;
 // AVISO DO AUTO-VETO DO SHIMMER. O tripwire por-efeito derrubava o
 // shimmer e nao dizia nada: o dB veria o som sumir sem uma linha de
 // log. O teto de soma sempre teve aviso completo; este ficou de uma
@@ -661,6 +705,9 @@ struct Cadeia
 static Cadeia cad[cotuca::Manifest::kCadeias];
 alignas(32) static float warble_mem[cotuca::Manifest::kCadeias][1924];
 static float             tone_buf[kMaxBlock];
+// O que CONTORNA a cauda: a parte de cada cadeia que o `esp_mix`
+// deixou de fora. Somado de volta no fim, depois do reverb.
+static float             seco_buf[kMaxBlock];
 static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 
 // BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
@@ -685,7 +732,7 @@ static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 // E por que isto NAO viola a regra do AllocBig: a regra existe pra que
 // ninguem toque na RAM GRANDE (SDRAM) sem passar pelo portao. Isto e
 // .bss comum — a mesma classe do src_buf e do fx_buf logo acima.
-alignas(32) static float reverb_mem[28160];
+alignas(32) static float reverb_mem[cotuca::Manifest::kCadeias][28160];
 
 // ============================================================
 // REGRA: ORDEM IMPORTA — DUAS FAMÍLIAS.
@@ -831,10 +878,13 @@ static float    RandNorm()
 }
 
 // ---- cadeia de dinâmica do shell ----
-static cotuca::Governor gov_l; // só no ramo OUT_L (exciter)
+static cotuca::Governor gov_l, gov_r; // só no ramo OUT_L (exciter)
 static cotuca::Limiter  lim_l; // um por ramo: estados independentes
 static cotuca::Limiter  lim_r;
-static cotuca::Shifter  shift_l; // anti-feedback, só no ramo do exciter
+// ANTI-FEEDBACK POR RAMO. Ate 20/08 so o ramo L tinha: OUT_R era jack
+// de linha e nao realimentava. Com DOIS exciters os dois fecham laco, e
+// a protecao duplica junto com o hardware.
+static cotuca::Shifter  shift_l, shift_r;
 
 // ---- oscilador de teste mínimo (sem DaisySP: portável) ----
 static float osc_phase = 0.f;
@@ -1069,12 +1119,19 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             k.warble.SetDepth(params.Real(manifest.p_wrb_depth));
             k.warble.SetIrreg(params.Real(manifest.p_wrb_irreg));
             k.warble.AtualizaLfo(size);
+            // `mix` ESCALA O MOLHADO, e o fade do slot escala o mix —
+            // mesma forma do drive e do phaser. Ate 20/08 o warble
+            // cruzava direto pro derivado e ligar bastava pra ouvir;
+            // agora mix em 0 significa mudo, e isso e mudanca no efeito
+            // aprovado, feita a pedido do dB por consistencia.
+            const float mx = params.Real(manifest.p_wrb_mix[c]);
             float gs = 0.f, gm = 0.f;
             for(size_t i = 0; i < size; i++)
             {
                 k.warble_slot.Passo(gs, gm);
                 const float w = k.warble.ProcessMono(b[i]);
-                b[i] = b[i] * gs + w * gm;
+                const float m = mx * gm;
+                b[i] = b[i] * (1.f - m) + w * m;
             }
         }
         else if(k.warble_ok)
@@ -1093,11 +1150,24 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         const float bal     = params.Real(manifest.p_piezo_mix);
         const float alvo_ga = 1.f - (bal > 0.f ?  bal : 0.f);
         const float alvo_gb = 1.f - (bal < 0.f ? -bal : 0.f);
+        // CROSSFADE POR CADEIA entre "vai pro espaco" e "sai seco".
+        // O que nao entra na cauda contorna por `seco_buf` e volta no
+        // fim — senao baixar o mix emudeceria a cadeia, porque a cauda
+        // e o unico caminho pra saida.
+        // A CHAVE ZERA O MIX SEM APAGA-LO. Desligar tira a cadeia do
+        // espaco; o ajuste do mix segue guardado pra quando voltar.
+        const float ea = params.Real(manifest.p_esp_on[0]) >= 0.5f
+                             ? params.Real(manifest.p_esp_mix[0]) : 0.f;
+        const float eb = params.Real(manifest.p_esp_on[1]) >= 0.5f
+                             ? params.Real(manifest.p_esp_mix[1]) : 0.f;
         for(size_t i = 0; i < size; i++)
         {
             const float ga = suave_gl.Passo(alvo_ga);
             const float gb = suave_gr.Passo(alvo_gb);
-            src_buf[i] = cad[0].buf[i] * ga + cad[1].buf[i] * gb;
+            const float a  = cad[0].buf[i] * ga;
+            const float b  = cad[1].buf[i] * gb;
+            src_buf[i]  = a * ea + b * eb;
+            seco_buf[i] = a * (1.f - ea) + b * (1.f - eb);
         }
 
         // POS-GANHO — o que a cauda de fato ve. A reestruturacao das
@@ -1119,236 +1189,162 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     }
 
     // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
-    // 3) DELAY — C++ puro desde 20/08, no lugar do modulo RNBO.
+    // 3) CAUDA PARALELA — cada destino recebe SUA mistura das cadeias.
     //
-    // Escreve nos DOIS canais o mesmo mono, como o patch fazia: a
-    // largura so nasce depois, no reverb e no shimmer.
+    // Ate 20/08 a cauda era uma FILA: delay -> freeze -> [shimmer ↺
+    // reverb]. Toda cadeia atravessava tudo na mesma ordem, e por isso
+    // era impossivel dar delay a uma e sala a outra.
+    //
+    // Agora sao DESTINOS IRMAOS. Cada um tem envio por cadeia, e o seco
+    // passa inteiro por fora. Um efeito continua sendo UM — o custo nao
+    // duplicou — mas cada um recebe sua propria dose de A e de B.
+    //
+    // O QUE MUDOU NO SOM, e e real: o delay nao entra mais no reverb.
+    // Antes cada eco ganhava sala; agora os ecos saem secos e a sala
+    // trabalha sobre a fonte. Outra estetica, decidida pelo dB.
+    //
+    // O ESPACO DUPLICA DE VERDADE, e so ele. Shimmer nao e um efeito ao
+    // lado do reverb: ele E o reverb realimentado com pitch. Corda com
+    // shimmer e couro com sala limpa exige duas salas — nao ha como uma
+    // sala so ser molhada de dois jeitos ao mesmo tempo.
     {
-        const float alvo_d = params.Real(manifest.p_dly_on) >= 0.5f ? 1.f : 0.f;
-        const bool  vivo   = (alvo_d >= 0.5f) || suave_dly.Valor() > 0.0001f;
-        if(delay_ok && vivo)
-        {
-            delay_fx.SetTime(params.Real(manifest.p_dly_time));
-            delay_fx.SetMix(params.Real(manifest.p_dly_mix));
-            for(size_t i = 0; i < size; i++)
-            {
-                const float g = suave_dly.Passo(alvo_d);
-                const float w = delay_fx.ProcessMono(src_buf[i]);
-                // A chave cruza pro seco. O `mix` interno ja faz
-                // seco/molhado; esta rampa e so pra ligar e desligar
-                // sem clique, como nos outros efeitos.
-                out[0][i] = out[1][i] = src_buf[i] * (1.f - g) + w * g;
-            }
-        }
-        else
-        {
-            // BYPASS: alimenta a linha, nao processa a saida. Regra dos
-            // efeitos com historico — parar de gravar faria o delay
-            // acordar lendo ate 1 s de passado congelado.
-            if(delay_ok)
-                for(size_t i = 0; i < size; i++) delay_fx.ProcessMono(src_buf[i]);
-            for(size_t i = 0; i < size; i++)
-                out[0][i] = out[1][i] = src_buf[i];
-        }
-    }
-
-    // 4.3) [vago] — aqui morava o DETUNE, fora do build desde 20/08.
-    //
-    // O ponto e bom e fica reservado: e onde o estereo ja existe, e
-    // qualquer efeito que precise de LARGURA precisa estar depois do
-    // modulo. Ver docs/FEATURES.md para reviver.
-
-    // 4.4) FREEZE — PÓS-DELAY, PRÉ-REVERB.
-    //
-    // A posição é a decisão musical inteira. Antes do reverb, o
-    // congelado ganha a sala JUNTO com o resto — pertence ao mesmo
-    // lugar que o instrumento vivo. Depois do reverb, ele viria seco
-    // por cima de uma sala que continua molhando o vivo, e soaria
-    // colado, não pertencente.
-    //
-    // Isto roda a cada bloco mesmo com `frz_on` em 0: enquanto não
-    // congela, o freeze é um gravador silencioso que não toca no
-    // áudio. Ele PRECISA gravar sempre — congelar só o que já passou
-    // é a única forma de o gesto pegar o som que acabou de acontecer.
-#if COTUCA_FREEZE_ENABLED
-    // CTOS: o freeze e EFEITO, entao roda sob veto. Ver docs/CTOS.md.
-    if(freeze_ok && !ctos_bypass_frz)
-    {
-        const uint32_t t0 = cotuca::hal::NowTicks();
-        freeze.SetMix(params.Real(manifest.p_frz_mix));
-        freeze.SetSize(params.Real(manifest.p_frz_size));
-        // Borda decidida DENTRO do freeze (SetFrozen ignora repetição),
-        // então empurrar o estado a cada bloco é barato e não cria
-        // corrida: quem arma e quem consome são o mesmo contexto.
-        freeze.SetFrozen(params.Real(manifest.p_frz_on) >= 0.5f);
+        // SECO: passa inteiro, sempre. Envio e TAP, nao desvio — quem
+        // manda 127 pro delay nao some da saida direta.
         for(size_t i = 0; i < size; i++)
-            freeze.Process(out[0][i], out[1][i]);
+            out[0][i] = out[1][i] = cad[0].buf[i] + cad[1].buf[i];
 
-        // SUBTRAI EM TICKS, converte DEPOIS. O contador ocupa os 32 bits
-        // inteiros, entao a volta se corrige sozinha na subtracao
-        // uint32 — que e exatamente o que `System::GetUs()` impedia ao
-        // dividir antes.
-        //
-        // O FILTRO DE SANIDADE POR MAGNITUDE FOI REMOVIDO, e de
-        // proposito. Ele descartava tudo acima de 10x o orcamento —
-        // que e EXATAMENTE como um estouro catastrofico apareceria.
-        // Ajustar o limiar so moveria a cegueira. Com o relogio certo,
-        // um numero grande e um estouro DE VERDADE e tem que vetar.
-        const uint32_t gasto
-            = (cotuca::hal::NowTicks() - t0) / cotuca::hal::TicksPerUs();
-        const uint32_t prazo
-            = (uint32_t)(1e6f * (float)size
-                         / cotuca::hal::Info().sample_rate);
-        ctos_orcamento_us = (uint32_t)(kEfeitoFracao * (float)prazo);
-        if(gasto > ctos_pico_us)
-            ctos_pico_us = gasto;
-        if(gasto > ctos_orcamento_us)
+        // ---- DELAY (uma instancia, envio por cadeia) ----
         {
-            // VETO. Aqui mesmo, no contexto que mediu.
-            ctos_ocorrencias++;
-            if(!ctos_bypass_frz)
+            float ea = params.Real(manifest.p_dly_on[0]) >= 0.5f
+                           ? params.Real(manifest.p_dly_mix[0]) : 0.f;
+            float eb = params.Real(manifest.p_dly_on[1]) >= 0.5f
+                           ? params.Real(manifest.p_dly_mix[1]) : 0.f;
+            if(delay_ok)
             {
-                ctos_bypass_frz = true;
-                ctos_bypass_ms  = cotuca::hal::NowMs();
+                delay_fx.SetTime(params.Real(manifest.p_dly_time));
+                delay_fx.SetMix(1.f);   // retorno 100% molhado: quem dosa e o envio
+                for(size_t i = 0; i < size; i++)
+                {
+                    const float x = cad[0].buf[i] * ea + cad[1].buf[i] * eb;
+                    const float w = delay_fx.ProcessMono(x);
+                    out[0][i] += w;
+                    out[1][i] += w;
+                }
             }
         }
-    }
+
+        // ---- FREEZE (uma instancia, envio por cadeia) ----
+        //
+        // O GESTO e separado do ENVIO: `frz_on_a/b` dizem QUAL cadeia
+        // alimenta o freeze, `frz_hold` diz QUANDO congelar. Fundir os
+        // dois faria escolher a fonte e disparar o gesto no mesmo botao.
+#if COTUCA_FREEZE_ENABLED
+        if(freeze_ok && !ctos_bypass_frz)
+        {
+            const uint32_t t0 = cotuca::hal::NowTicks();
+            const float fa = params.Real(manifest.p_frz_on[0]) >= 0.5f
+                                 ? params.Real(manifest.p_frz_mix[0]) : 0.f;
+            const float fb = params.Real(manifest.p_frz_on[1]) >= 0.5f
+                                 ? params.Real(manifest.p_frz_mix[1]) : 0.f;
+            freeze.SetMix(1.f);         // retorno molhado; o envio dosa
+            freeze.SetSize(params.Real(manifest.p_frz_size));
+            freeze.SetFrozen(params.Real(manifest.p_frz_hold) >= 0.5f);
+            for(size_t i = 0; i < size; i++)
+            {
+                float l = cad[0].buf[i] * fa + cad[1].buf[i] * fb;
+                float r = l;
+                freeze.Process(l, r);
+                out[0][i] += l;
+                out[1][i] += r;
+            }
+            const uint32_t us = (cotuca::hal::NowTicks() - t0)
+                                / cotuca::hal::TicksPerUs();
+            if(us > ctos_pico_us) ctos_pico_us = us;
+        }
 #endif
 
-    // 4.5) REVERB — PÓS-FX2, PRÉ-LEVEL.
-    //
-    // Aqui molha OS DOIS RAMOS, que é o que se quer de uma sala: ela
-    // envolve o instrumento inteiro, não um canal dele. E vem antes do
-    // level porque o master tem que mandar no resultado final, cauda
-    // incluída — reverb depois do level faria o knob de volume mudar a
-    // proporção seco/molhado, que é comportamento de pedal quebrado.
-    //
-    // >>> PLANO B, se o laço acústico do exciter engordar: mover pra
-    // >>> molhar SÓ o OUT_R (jack de linha), deixando o exciter seco.
-    // >>> Cauda no exciter volta pelo piezo e realimenta o próprio
-    // >>> reverb — é o tipo de laço que cresce devagar e surpreende no
-    // >>> palco. O governor e o shifter seguram, mas segurar não é o
-    // >>> mesmo que estar certo. Se acontecer, o conserto é trocar as
-    // >>> duas linhas abaixo por uma que só passe out[1].
-    // CHAVE DO REVERB. Desligado, o bloco INTEIRO e pulado — custo
-    // zero — e com ele vai o shimmer, que nao tem reverb proprio e
-    // realimenta este. Dependencia real; quem a declara e o loop, no
-    // `board`, pra ninguem cacar um shimmer que "parou de funcionar".
-    const float alvo_r = params.Real(manifest.p_rev_on) >= 0.5f ? 1.f : 0.f;
-    const bool  rev_vivo
-        = (alvo_r >= 0.5f) || suave_rev.Valor() > 0.0001f;
-    if(reverb_ok && rev_vivo)
-    {
-        // Rampa no MIX do proprio reverb: em g=0 ele e transparente, e
-        // so entao o bloco pode sumir sem clique.
-        const float gr = suave_rev.Passo(alvo_r);
-        reverb.SetMix(params.Real(manifest.p_rev_mix) * gr);
-        reverb.SetSize(params.Real(manifest.p_rev_size));
-        reverb.SetDamp(params.Real(manifest.p_rev_damp));
-
-        // ---- SHIMMER: o laco fecha AQUI DENTRO ----
-        //
-        //   cauda -> pitch(+12/+7) -> passa-alta 200 Hz -> x feedback
-        //         -> injeta na ENTRADA do reverb -> cauda ...
-        //
-        // Grava-se SEMPRE (regra dos efeitos com historico: bypass
-        // pula o processamento, nunca a gravacao — foi o que causou o
-        // clique na Peca 2). O que o slot liga e desliga e o laco.
-        // A cronometragem cerca SO o shimmer. A primeira versao envolvia
-        // o `reverb.Process()` junto e media 299 us — atribuindo ao
-        // efeito o custo da BASE. E o mesmo erro que o `NowUs()` foi
-        // criado pra evitar: sem separar, o veto pune o inocente.
-        uint32_t shm_ticks = 0;
-        const bool shm = pitch_tail_ok && shimmer_slot.Ativo();
-        // CHAVE PROPRIA, nao "mix > 0". Fundir as duas decisoes obriga
-        // a zerar o mix pra desligar, e o ajuste se perde.
-        shimmer_slot.SetOn(params.Real(manifest.p_shm_on) >= 0.5f);
-        if(shm)
+        // ---- ESPACOS: um por cadeia, cada um com sala e shimmer ----
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
-            shimmer_slot.Comeca(cotuca::hal::NowTicks());
-            shimmer.SetMix(params.Real(manifest.p_shm_mix));
-            shimmer.SetFeedback(params.Real(manifest.p_shm_feedback));
-            shimmer.SetTone(params.Real(manifest.p_shm_tone));
-            const int   modo = (int)(params.Real(manifest.p_shm_shift) + 0.5f);
-            (void)modo;
-            // +12 = 2.0 ; +7 = 1.498 (quinta justa temperada)
-            pitch_tail.SetRatio(0, 2.0f);
-            pitch_tail.SetRatio(1, 1.498307f);
-            pitch_tail.SetActive(0, modo == 0 || modo == 2);
-            pitch_tail.SetActive(1, modo == 1 || modo == 2);
-        }
+            Espaco& e = esp[c];
+            if(!e.reverb_ok) continue;
+            const bool rev_quer = params.Real(manifest.p_rev_on[c]) >= 0.5f;
+            const bool shm_quer = params.Real(manifest.p_shm_on[c]) >= 0.5f;
+            const float alvo = (rev_quer || shm_quer) ? 1.f : 0.f;
+            if(alvo < 0.5f && e.suave.Valor() <= 0.0001f) continue;
 
-        for(size_t i = 0; i < size; i++)
-        {
-            float pl = 0.f, pr = 0.f, gm = 0.f;
+            const float env = params.Real(manifest.p_esp_on[c]) >= 0.5f
+                                  ? params.Real(manifest.p_esp_mix[c]) : 0.f;
+            e.reverb.SetSize(params.Real(manifest.p_rev_size[c]));
+            e.reverb.SetDamp(params.Real(manifest.p_rev_damp[c]));
+            // Com UMA sala por cadeia a molhadura ainda tem um valor so
+            // dentro dela: quem ligou define. Reverb tem precedencia; o
+            // shimmer usa a sala de passagem.
+            e.reverb.SetMix(1.f);
+
+            e.shimmer_slot.SetOn(shm_quer);
+            const bool shm = e.pitch_ok && e.shimmer_slot.Ativo();
             if(shm)
             {
-                const uint32_t t0 = cotuca::hal::NowTicks();
-                float al = 0.f, ar = 0.f, bl = 0.f, br = 0.f;
-                pitch_tail.Read(0, al, ar);
-                pitch_tail.Read(1, bl, br);
-                // No modo "ambos", meio ganho cada: duas vozes somadas
-                // a ganho cheio dobrariam a energia do laco e o teto de
-                // 0.85 deixaria de ser teto.
-                const float k = (pitch_tail.Active(0) && pitch_tail.Active(1))
-                                    ? 0.5f : 1.f;
-                pl = (al + bl) * k;
-                pr = (ar + br) * k;
-                // TOM ANTES DOS DOIS USOS. O ouvido soma a realimentacao
-                // E a camada direta; filtrar so uma delas deixa metade da
-                // aspereza no ar. Filtrado aqui, `pl` ja segue tratado
-                // pros dois caminhos.
-                shimmer.Tom(pl, pr);
-                float add_l, add_r;
-                shimmer.Realimenta(pl, pr, add_l, add_r);
-                float gs;
-                shimmer_slot.Passo(gs, gm);
-                out[0][i] += add_l * gm;   // injeta no reverb
-                out[1][i] += add_r * gm;
-                shm_ticks += cotuca::hal::NowTicks() - t0;
+                e.shimmer_slot.Comeca(cotuca::hal::NowTicks());
+                e.shimmer.SetMix(params.Real(manifest.p_shm_mix[c]));
+                e.shimmer.SetFeedback(params.Real(manifest.p_shm_feedback[c]));
+                e.shimmer.SetTone(params.Real(manifest.p_shm_tone[c]));
+                const int modo = (int)(params.Real(manifest.p_shm_shift[c]) + 0.5f);
+                e.pitch.SetRatio(0, 2.0f);
+                e.pitch.SetRatio(1, 1.498307f);
+                e.pitch.SetActive(0, modo == 0 || modo == 2);
+                e.pitch.SetActive(1, modo == 1 || modo == 2);
             }
 
-            reverb.Process(out[0][i], out[1][i]);
-
-            // GRAVA A CAUDA ANTES DA CAMADA DIRETA. Se a camada
-            // entrasse no buffer, ela realimentaria por fora do laco do
-            // reverb e o `feedback` deixaria de ser o unico dono do
-            // ganho de laco.
-            if(pitch_tail_ok) pitch_tail.Write(out[0][i], out[1][i]);
-
-            if(shm)
+            const uint32_t t0 = cotuca::hal::NowTicks();
+            const float    rm = rev_quer ? params.Real(manifest.p_rev_mix[c])
+                                         : params.Real(manifest.p_shm_mix[c]);
+            for(size_t i = 0; i < size; i++)
             {
-                // CAMADA DIRETA — e o que da autoridade ao `shm_mix`.
-                // A versao anterior nunca somava nada por mix: ele so
-                // ligava o slot, e todo o nivel vinha do laco. Dai
-                // "mix no maximo e ganho baixo": o controle nao
-                // controlava.
-                const float m = shimmer.Mix() * gm;
-                out[0][i] += pl * m;
-                out[1][i] += pr * m;
+                const float g = e.suave.Passo(alvo);
+                float l = cad[c].buf[i] * env;
+                float r = l;
+                float pl = 0.f, pr = 0.f, gm = 0.f;
+                if(shm)
+                {
+                    float al = 0.f, ar = 0.f, bl = 0.f, br = 0.f;
+                    e.pitch.Read(0, al, ar);
+                    e.pitch.Read(1, bl, br);
+                    // Duas vozes a ganho cheio dobrariam a energia do
+                    // laco e o teto de 0.85 deixaria de ser teto.
+                    const float k = (e.pitch.Active(0) && e.pitch.Active(1))
+                                        ? 0.5f : 1.f;
+                    pl = (al + bl) * k;
+                    pr = (ar + br) * k;
+                    // TOM ANTES DOS DOIS USOS: o ouvido soma a
+                    // realimentacao E a camada direta.
+                    e.shimmer.Tom(pl, pr);
+                    float add_l, add_r;
+                    e.shimmer.Realimenta(pl, pr, add_l, add_r);
+                    float gs;
+                    e.shimmer_slot.Passo(gs, gm);
+                    l += add_l * gm;
+                    r += add_r * gm;
+                }
+                e.reverb.Process(l, r);
+                // GRAVA A CAUDA ANTES DA CAMADA DIRETA: se ela entrasse
+                // no buffer, realimentaria por fora do laco e o
+                // `feedback` deixaria de ser o unico dono do ganho.
+                if(e.pitch_ok) e.pitch.Write(l, r);
+                if(shm)
+                {
+                    const float m = e.shimmer.Mix() * gm;
+                    l += pl * m;
+                    r += pr * m;
+                }
+                out[0][i] += l * rm * g;
+                out[1][i] += r * rm * g;
             }
-        }
-
-        if(shm)
-        {
-            const uint32_t prazo
-                = (uint32_t)(1e6f * (float)size
-                             / cotuca::hal::Info().sample_rate);
-            const uint32_t us = shm_ticks / cotuca::hal::TicksPerUs();
-            if(us > shimmer_pico) shimmer_pico = us;
-            if(us > (uint32_t)(0.5f * (float)prazo))
-            {
-                params.Set(manifest.p_shm_on, 0.f);
-                shimmer_slot.SetOn(false);
-                aviso_shm_kill  = true;
-                aviso_shm_us    = us;
-                aviso_shm_prazo = prazo;
-            }
-        }
-        if(pitch_tail_ok && !shimmer_slot.Ativo())
-        {
-            pitch_tail.SetActive(0, false);
-            pitch_tail.SetActive(1, false);
+            const uint32_t us = (cotuca::hal::NowTicks() - t0)
+                                / cotuca::hal::TicksPerUs();
+            e.pico_us = us;
+            if(c == 0 && us > shimmer_pico) shimmer_pico = us;
         }
     }
 
@@ -1374,33 +1370,59 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // docs/FEATURES.md para reviver, se um dia existir um modo em que a
     // saida seja um par estereo de verdade.
 
-    // 6) SPLIT — os ramos deixam de ser iguais aqui.
-    //    OUT_L vai pro exciter no corpo da escultura e é o ramo que
-    //    realimenta o piezo: leva o governor. OUT_R é jack de linha,
-    //    não realimenta, e não leva.
-    // SHIFTER — anti-feedback, entre o split e o governor, SÓ no ramo
-    // do exciter. O jack de linha sai SEM shift por design: quem
-    // grava ou manda pra PA quer o sinal do instrumento, não o sinal
-    // protegido contra um laço acústico que não existe do lado de lá.
+    // 6) SPLIT — cada ramo leva a SUA protecao.
     //
-    // Antes do governor de propósito: o governor deve reagir ao sinal
-    // que de fato vai pro exciter, já deslocado.
-    shift_l.SetShift(params.Real(manifest.p_shift_hz));
-    for(size_t i = 0; i < size; i++)
-        out[0][i] = shift_l.Process(out[0][i]);
+    // Ate 20/08 so o ramo L a tinha, e estava certo: OUT_R era jack de
+    // linha e nao realimentava. Com DOIS exciters no corpo da escultura
+    // os dois fecham laco acustico, e proteger so um deixaria o outro
+    // microfonando livre.
+    //
+    // O QUE SE PERDEU NA TROCA, e e real: nao existe mais uma tomada
+    // LIMPA. Cada saida alimenta amp E jack ao mesmo tempo, entao quem
+    // grava recebe o sinal ja deslocado e comprimido. O `exc_on` abaixo
+    // e o que devolve essa escolha.
+    //
+    // `shift_hz` E COMPARTILHADO pelos dois: dois exciters no MESMO
+    // corpo com deslocamentos diferentes bateriam um contra o outro.
+    // Mesmo shift desfaz o acordo de fase da microfonia sem batimento.
+    //
+    // Antes do governor de proposito: o governor deve reagir ao sinal
+    // que de fato vai pro exciter, ja deslocado.
+    {
+        const float hz = params.Real(manifest.p_shift_hz);
+        shift_l.SetShift(hz);
+        shift_r.SetShift(hz);
+        cotuca::Governor* gv[2] = {&gov_l, &gov_r};
+        cotuca::Shifter*  sh[2] = {&shift_l, &shift_r};
+        for(int b = 0; b < 2; b++)
+        {
+            // PORTAO POR RAMO. Com o exciter fora do circuito nao ha
+            // laco pra quebrar, e a protecao so custa timbre — o jack
+            // volta a receber o instrumento como ele e.
+            //
+            // Hoje e um param; quando os DPDT forem soldados, D29/D30
+            // leem o polo 2 e dizem o estado REAL. Ate la, quem declara
+            // e o dB, e errar pra ligado e o lado seguro: proteger sem
+            // precisar custa timbre, nao proteger quando precisa custa
+            // o instrumento.
+            if(params.Real(manifest.p_exc_on[b]) < 0.5f) continue;
+            gv[b]->SetCeiling(params.Real(manifest.p_gov_ceiling[b]));
+            gv[b]->SetRelease(params.Real(manifest.p_gov_release[b]));
+            float* o = out[b];
+            for(size_t i = 0; i < size; i++)
+                o[i] = gv[b]->Process(sh[b]->Process(o[i]));
+        }
+    }
 
-    gov_l.SetCeiling(params.Real(manifest.p_gov_ceiling));
-    gov_l.SetRelease(params.Real(manifest.p_gov_release));
-    for(size_t i = 0; i < size; i++)
-        out[0][i] = gov_l.Process(out[0][i]);
-
-    // 6b) BENCH BOOST — FERRAMENTA DE BANCADA, só no ramo do exciter,
-    //     imediatamente antes do limiter. Ver o bloco de aviso em
-    //     manifest.h: nunca vai a knob nem a cena, e nasce em 1.0.
-    const float boost = params.Real(manifest.p_bench_boost);
-    if(boost != 1.0f)
-        for(size_t i = 0; i < size; i++)
-            out[0][i] *= boost;
+    // 6b) BENCH BOOST — FERRAMENTA DE BANCADA, por ramo, imediatamente
+    //     antes do limiter. Ver o bloco de aviso em manifest.h: nunca
+    //     vai a knob nem a cena, e nasce em 1.0.
+    for(int b = 0; b < 2; b++)
+    {
+        const float boost = params.Real(manifest.p_bench_boost[b]);
+        if(boost != 1.0f)
+            for(size_t i = 0; i < size; i++) out[b][i] *= boost;
+    }
 
     // 7) LIMITER — último bloco de processamento em CADA ramo.
     //    Um limiter por ramo, não um compartilhado: um pico no
@@ -1748,11 +1770,11 @@ static void HandleLine(const char* line)
         // `rev_on` em 0 ele emudece sem que nada pareca errado. Aviso
         // que so aparece quando a combinacao acontece — defesa orfa
         // nunca: declare a ameaca, ou ela vira folclore.
-        if(params.Real(manifest.p_shm_on) >= 0.5f
-           && params.Real(manifest.p_rev_on) < 0.5f)
-            hal::Log("*** shm_on ligado com rev_on DESLIGADO: o shimmer"
-                     " realimenta o reverb e esta MUDO. CC 61 para"
-                     " acordar os dois. ***");
+        if(params.Real(manifest.p_shm_on[0]) >= 0.5f
+           && params.Real(manifest.p_rev_on[0]) < 0.5f)
+            hal::Log("nota: shimmer ligado com reverb desligado — a sala"
+                     " abre sozinha e quem define a molhadura e o"
+                     " `shm_mix`.");
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);
@@ -1811,14 +1833,22 @@ static void HandleLine(const char* line)
                      params.Real(manifest.p_gate_thresh[c]),
                      params.Real(manifest.p_gate_release[c]),
                      cad[c].gate.Gain(), cad[c].gate.Env());
-        hal::Log("gov   ceil=%.2f rel=%.0fms gain=%.2f env=%.3f",
-                 params.Real(manifest.p_gov_ceiling),
-                 params.Real(manifest.p_gov_release),
-                 gov_l.Gain(), gov_l.Env());
+        {
+            cotuca::Governor* gv[2] = {&gov_l, &gov_r};
+            for(int b = 0; b < 2; b++)
+                hal::Log("gov %c ceil=%.2f rel=%.0fms gain=%.2f env=%.3f %s",
+                         'A' + b,
+                         params.Real(manifest.p_gov_ceiling[b]),
+                         params.Real(manifest.p_gov_release[b]),
+                         gv[b]->Gain(), gv[b]->Env(),
+                         params.Real(manifest.p_exc_on[b]) >= 0.5f
+                             ? "" : "(exciter FORA: protecao pulada)");
+        }
         hal::Log("lim   ceil=%.2f gainL=%.2f gainR=%.2f",
                  cotuca::Limiter::Ceiling(), lim_l.Gain(), lim_r.Gain());
-        hal::Log("boost %.2fx  (BANCADA — nasce sempre em 1.00)",
-                 params.Real(manifest.p_bench_boost));
+        hal::Log("boost A %.2fx | B %.2fx  (BANCADA — nascem em 1.00)",
+                 params.Real(manifest.p_bench_boost[0]),
+                 params.Real(manifest.p_bench_boost[1]));
         hal::Log("route exciter=%d jack=%d",
                  params.Real(manifest.p_route_exciter) >= 0.5f ? 1 : 0,
                  params.Real(manifest.p_route_jack) >= 0.5f ? 1 : 0);
@@ -2596,7 +2626,8 @@ int main(void)
     // tripwire pro dia em que existir. Um boost de 8x restaurado em
     // silêncio seria a escultura gritando no palco sem explicação.
     {
-        const float b = params.Real(manifest.p_bench_boost);
+        const float b = params.Real(manifest.p_bench_boost[0])
+                        + params.Real(manifest.p_bench_boost[1]) - 1.f;
         if(b != 1.0f)
             hal::Log("AVISO: bench_boost nasceu em %.2f e nao 1.00 — "
                      "ferramenta de bancada NAO deve persistir", b);
@@ -2605,9 +2636,11 @@ int main(void)
     for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         cad[c].gate.Init(hal::Info().sample_rate);
     gov_l.Init(hal::Info().sample_rate);
+    gov_r.Init(hal::Info().sample_rate);
     lim_l.Init(hal::Info().sample_rate);
     lim_r.Init(hal::Info().sample_rate);
     shift_l.Init(hal::Info().sample_rate);
+    shift_r.Init(hal::Info().sample_rate);
 
     // ---- MIDI ----
     // Depois do manifest.Init(): o parser recebe o canal do manifest,
@@ -2631,9 +2664,17 @@ int main(void)
     // tamanho acompanha sozinho. Fixar um numero aqui seria a mesma
     // armadilha do r_window com 2048 numa FFT de 1024.
     {
-        const size_t need = cotuca::Reverb::FloatsNeeded(hal::Info().sample_rate);
-        const size_t have = sizeof(reverb_mem) / sizeof(reverb_mem[0]);
-        reverb_ok = reverb.Init(hal::Info().sample_rate, reverb_mem, have);
+        const float  sr   = hal::Info().sample_rate;
+        const size_t need = cotuca::Reverb::FloatsNeeded(sr);
+        const size_t have = sizeof(reverb_mem[0]) / sizeof(reverb_mem[0][0]);
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+        {
+            esp[c].reverb_ok = esp[c].reverb.Init(sr, reverb_mem[c], have);
+            esp[c].suave.Init(sr, 20.f, 0.f);
+            esp[c].shimmer.Init(sr);
+            esp[c].shimmer_slot.Init(sr, 8.f, 2000.f); // cauda de 2 s
+        }
+        reverb_ok = esp[0].reverb_ok;
         suave_gl.Init(hal::Info().sample_rate, 20.f, 1.f);
         suave_gr.Init(hal::Info().sample_rate, 20.f, 1.f);
         // Chaves nascem FECHADAS (0): default zero, como todo param
@@ -2644,8 +2685,10 @@ int main(void)
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um
         // buffer curto faria em silencio.
-        hal::Log("reverb: %s (%u de %u floats, %u KB em SRAM)",
-                 reverb_ok ? "pronto" : "BUFFER CURTO — passthrough",
+        hal::Log("espaco: sala A %s | sala B %s (%u de %u floats cada,"
+                 " %u KB em SRAM no total)",
+                 esp[0].reverb_ok ? "pronta" : "BUFFER CURTO",
+                 esp[1].reverb_ok ? "pronta" : "BUFFER CURTO",
                  (unsigned)need, (unsigned)have,
                  (unsigned)(sizeof(reverb_mem) / 1024));
     }
@@ -2657,12 +2700,22 @@ int main(void)
 
         // Motor da cauda + shimmer. Mesmo tamanho de buffer: a oitava
         // acima exige a mesma folga de partida.
+        // UM MOTOR DE PITCH POR ESPACO. Cada shimmer le a cauda da SUA
+        // sala; um motor compartilhado misturaria as duas e o shimmer
+        // de A ouviria o reverb de B.
         const size_t need_t
             = cotuca::PitchEngine::FloatsNeeded(sr, kPitchSeconds);
-        pitch_tail_mem = (float*)hal::AllocBig(need_t * sizeof(float));
-        if(pitch_tail_mem)
-            pitch_tail_ok = pitch_tail.Init(sr, pitch_tail_mem, need_t,
-                                            kPitchSeconds);
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+        {
+            esp[c].pitch_mem = (float*)hal::AllocBig(need_t * sizeof(float));
+            if(esp[c].pitch_mem)
+                esp[c].pitch_ok = esp[c].pitch.Init(sr, esp[c].pitch_mem,
+                                                    need_t, kPitchSeconds);
+        }
+        hal::Log("motores de pitch: A %s | B %s (%u KB cada em SDRAM)",
+                 esp[0].pitch_ok ? "pronto" : "SEM BUFFER",
+                 esp[1].pitch_ok ? "pronto" : "SEM BUFFER",
+                 (unsigned)(need_t * sizeof(float) / 1024));
         // DELAY: 1 s a 48 kHz = 192 KB. Vai pra SDRAM pelo portao
         // unico (`AllocBig`), como os motores de pitch — nao cabe no
         // pool de SRAM e nao deve competir com ele.
@@ -2677,7 +2730,6 @@ int main(void)
                      (unsigned)(nd * sizeof(float) / 1024),
                      (double)cotuca::Delay::kFeedback);
         }
-        shimmer.Init(sr);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
             Cadeia& k = cad[c];
@@ -2932,8 +2984,7 @@ int main(void)
                 hal::LogAlways("  nao ha culpado: e a SOMA. A prioridade"
                                " declarada no manifest escolheu."
                                " `ctos rearm` devolve o direito de ligar.");
-                const uint8_t msg[3]
-                    = {0xB0, kCCAvisoTeto, (uint8_t)(k + 1)};
+                const uint8_t msg[3] = {0xB0, kCCAviso, kAvisoSoma};
                 hal::MidiSendBytes(msg, 3);
             }
         }
@@ -2949,6 +3000,10 @@ int main(void)
             hal::LogAlways("  isto NAO e o teto de soma: aqui HA culpado,"
                            " o efeito estourou o orcamento dele sozinho."
                            " `ctos rearm` devolve.");
+            // MESMO CC, valor proprio: um indicador so cobre os dois
+            // casos, e o valor diz qual dos dois foi.
+            const uint8_t msg[3] = {0xB0, kCCAviso, kAvisoEfeito};
+            hal::MidiSendBytes(msg, 3);
         }
         if(aviso_sem_saida)
         {

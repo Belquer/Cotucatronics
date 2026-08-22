@@ -344,6 +344,51 @@ Nada mais só-serial.
 
 ---
 
+## Fechado em 20/08 — cauda PARALELA e dois espaços
+
+O dB pediu p1 com delay e p2 com reverb, e depois corda com shimmer e couro
+com sala limpa. A cauda serial não conseguia nenhum dos dois.
+
+```
+A ─┬→ ×dly_a ──┐
+B ─┼→ ×dly_b ──┴→ DELAY  (uma instância) ──┐
+   ├→ ×frz_a ──┐                           │
+   ├→ ×frz_b ──┴→ FREEZE (uma instância) ──┤→ soma → level → split
+   ├→ ×esp_a ───→ [SHIMMER_A ↺ SALA_A] ────┤
+   └→ ×esp_b ───→ [SHIMMER_B ↺ SALA_B] ────┤
+   └→ seco (as duas, inteiro) ─────────────┘
+```
+
+**Delay e freeze continuam sendo UM**, com envio por cadeia — o gesto pedido
+era sobre espaço, e duplicá-los custaria CPU sem entregar diferença. **O
+espaço duplica de verdade**, porque shimmer não é um efeito ao lado do reverb:
+ele *é* o reverb realimentado com pitch, e duas molhaduras exigem duas salas.
+
+| | previsto | medido |
+|---|---|---|
+| A: delay+shimmer · B: sala limpa | 625 µs | **490 / 530 pico — 53%** |
+| pior caso: as duas com shimmer e sala | 807 µs | **598 / 639 pico — 64%** |
+
+O pior caso ficou **209 µs abaixo** da previsão: somei custos medidos na cauda
+serial, onde cada efeito processava o sinal inteiro. Em paralelo cada um
+recebe só o seu envio — **duas salas custam menos que o dobro de uma**
+(cicatriz 12g).
+
+**Consequências declaradas:** o delay deixou de ser reverberado (os ecos saem
+secos, a sala trabalha sobre a fonte); os mixes internos viraram envios por
+cadeia; e o freeze separou **fonte** de **gesto** — `frz_on_a/b` dizem qual
+cadeia alimenta, `frz_hold` diz quando congelar.
+
+**Proteção anti-feedback duplicada** para o ramo B (bloqueante do hardware de
+dois exciters): governor e boost por ramo, `shift_hz` compartilhado — dois
+exciters no mesmo corpo com deslocamentos diferentes bateriam um contra o
+outro. `exc_on_a/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
+substituem o param pelo estado real.
+
+**Mapa de CC: 79 params, 79 CCs, nada só-serial.** Uma década por família.
+
+---
+
 ## Defeitos abertos
 
 **🟡 A entrada satura NO REGIME "DEDO NO DISCO SOLTO" — e só nele, até

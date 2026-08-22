@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.64.0
+// manifest.h (instrumento "bancada") v0.70.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -161,8 +161,8 @@ struct Manifest
     static constexpr int kCadeias = 2;
     int p_in_gain[kCadeias];
     int p_dly_time;   // → módulo RNBO "dly_time"
-    int p_dly_mix;    // → módulo RNBO "dly_mix"
-    int p_dly_on;     // 0/1 — chave própria (o mix deixa de ser a chave)
+    int p_dly_mix[kCadeias];    // → módulo RNBO "dly_mix"
+    int p_dly_on[kCadeias];     // 0/1 — chave própria (o mix deixa de ser a chave)
 
     // ---- cadeia de dinâmica do shell (C++ puro, não RNBO) ----
     // Todos serial-only: são política de segurança e comportamento,
@@ -170,12 +170,13 @@ struct Manifest
     // se gasta aqui.
     int p_gate_thresh[kCadeias];
     int p_gate_release[kCadeias];
-    int p_gov_ceiling;
-    int p_gov_release;
+    int p_gov_ceiling[2];
+    int p_gov_release[2];
 
     // Roteamento de saída: 0/1. Serial-only por ora — o toggle
     // físico de 3 posições assume depois, e vira o único lugar
     // que escreve nestes dois.
+    int p_exc_on[2];   // exciter no ar? gateia a protecao do ramo
     int p_route_exciter; // OUT_L → amp TPA3116 → exciter
     int p_route_jack;    // OUT_R → jack de linha
 
@@ -199,7 +200,7 @@ struct Manifest
     //
     // NÃO PERSISTE. Nasce sempre em 1.0. O boot tem tripwire.
     // ============================================================
-    int p_bench_boost;
+    int p_bench_boost[2];
 
     // SHIFTER — bloco PERMANENTE do shell (dynamics.h), não módulo.
     // Anti-feedback: deslocar alguns Hz quebra a coerência do laço
@@ -230,17 +231,18 @@ struct Manifest
     // acontece com o vocoder ligado (medido), então filtrar o master
     // castigaria o delay de graça. 0 Hz = desligado.
 
-    int p_rev_on;     // 0/1 — chave. ATENÇÃO: emudece o shimmer junto
-    int p_rev_mix;
-    int p_rev_size;
-    int p_rev_damp;
+    int p_rev_on[kCadeias];     // 0/1 — chave. ATENÇÃO: emudece o shimmer junto
+    int p_rev_mix[kCadeias];
+    int p_rev_size[kCadeias];
+    int p_rev_damp[kCadeias];
 
     // FREEZE — bloco permanente do shell (freeze.h), no lugar do
     // vocoder na cadeia: pós-delay, pré-reverb. O congelado ganha a
     // sala junto, que é o que faz ele PERTENCER ao instrumento em vez
     // de flutuar por cima.
-    int p_frz_on;   // 0/1 — gesto: CC, e B2 em Hold quando o painel vier
-    int p_frz_mix;  // 0..1 seco/congelado
+    int p_frz_on[kCadeias];   // envio por cadeia
+    int p_frz_hold;          // O GESTO: congela agora   // 0/1 — gesto: CC, e B2 em Hold quando o painel vier
+    int p_frz_mix[kCadeias];  // 0..1 seco/congelado
     int p_frz_size; // janela do grão, em ms
 
     // DRIVE — waveshaper tanh como COLA. Primeiro da cadeia: sujeira
@@ -282,11 +284,15 @@ struct Manifest
     // NAO tem `mix`: fita nao mistura com ela mesma. O sinal inteiro
     // deriva, ou nao deriva — misturar com o seco daria flanger, que e
     // outro efeito.
-    // WARBLE NAO TEM `mix` E NAO INVENTEI UM. O dry/wet dele e o
-    // crossfade do proprio EffectSlot — foi assim que passou no
-    // IFA10000. Criar um param novo mudaria um efeito aprovado, e isso
-    // e decisao do dB, nao consequencia de um refactor de tabela.
+    // WARBLE GANHOU `mix` EM 20/08, por decisao do dB (consistencia:
+    // todo efeito de caracter tem chave e dry/wet por canal).
+    //
+    // ISTO MUDA UM EFEITO APROVADO. Ate aqui o dry/wet do warble era o
+    // crossfade do EffectSlot, e ligar bastava pra ouvir. Agora, com
+    // mix em 0 — que e o default — ele fica MUDO ligado, igual a drive
+    // e phaser. Reaceite pelo IFA10000 esta pendente.
     int p_wrb_on[kCadeias];     // chave, POR CANAL
+    int p_wrb_mix[kCadeias];    // dry/wet, POR CANAL
     int p_wrb_rate;             // COMPARTILHADO
     int p_wrb_depth;            // COMPARTILHADO · PRIMARIO
     int p_wrb_irreg;            // COMPARTILHADO
@@ -313,6 +319,34 @@ struct Manifest
     // selecionavel, nenhum teste futuro distingue "B quebrada" de "B nao
     // excitada". AMBAS valida simetria de uma vez; A ou B isolam quando
     // o sintoma for assimetrico.
+    // MIX DA CADEIA PRO ESPACO — o "send" com o nome que o dB usa,
+    // porque e o que ele faz pra quem toca: quanto daquela cadeia vai
+    // banhar a cauda compartilhada.
+    //
+    // E CROSSFADE, NAO GANHO, e a distincao e o efeito inteiro: o que
+    // nao vai pro espaco sai SECO por fora da cauda. Se fosse ganho,
+    // baixar o mix de uma cadeia a emudeceria — a cauda e o unico
+    // caminho pra saida — em vez de seca-la. Com isto, tambor seco e
+    // corda molhada ao mesmo tempo, que era o gesto pedido.
+    //
+    // O QUE ELE NAO FAZ: delay curto pro tambor e longo pra corda. Isso
+    // exigiria DUPLICAR a cauda, e o pivo decidiu o contrario — e ela
+    // que faz os dois soarem como o mesmo objeto.
+    //
+    // NASCE EM 1 (tudo no espaco), nao em 0. Aqui 0 nao e "desligado",
+    // e uma decisao ativa de roteamento: seria o instrumento inteiro
+    // seco, com toda a cauda inaudivel e cada chave dela ligando nada.
+    // CHAVE E MIX, como todo efeito da casa. A chave existe pra que
+    // desligar nao custe o ajuste: fundir as duas obriga a zerar o mix
+    // pra tirar a cadeia do espaco, e o ajuste se perde.
+    //
+    // AS DUAS NASCEM "NO ESPACO" (on=1, mix=1), e nao em 0 como os
+    // efeitos. Aqui 0 nao e "desligado", e ROTEAMENTO: com as duas
+    // fora, a cauda inteira fica inaudivel e cada chave dela — dly_on,
+    // rev_on, shm_on, frz_on — passa a ligar nada. O caminho do espaco
+    // nasce aberto; o que nasce fechado sao os EFEITOS dentro dele.
+    int p_esp_on[kCadeias];
+    int p_esp_mix[kCadeias];
     int p_tone_dest;
 
     // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
@@ -330,11 +364,11 @@ struct Manifest
     // ganha o seu. Antes o shimmer ligava quando `mix > 0`, o que
     // funde duas decisoes numa so — desligar obrigava a zerar o mix e
     // perder o ajuste. Chave separada preserva a posicao do fader.
-    int p_shm_on;       // 0/1 — chave
-    int p_shm_mix;      // 0..1 — CAMADA por cima do seco
-    int p_shm_shift;    // 0=+12  1=+7  2=ambos
-    int p_shm_feedback; // 0..1 — quantas oitavas empilham
-    int p_shm_tone;     // 0..1 — 0 = 6 kHz (quente) ... 1 = 18 kHz
+    int p_shm_on[kCadeias];       // 0/1 — chave
+    int p_shm_mix[kCadeias];      // 0..1 — CAMADA por cima do seco
+    int p_shm_shift[kCadeias];    // 0=+12  1=+7  2=ambos
+    int p_shm_feedback[kCadeias]; // 0..1 — quantas oitavas empilham
+    int p_shm_tone[kCadeias];     // 0..1 — 0 = 6 kHz (quente) ... 1 = 18 kHz
 
     // ------------------------------------------------------------
     // ORDEM DE SACRIFICIO — a politica do TETO DE SOMA do CTOS.
@@ -675,12 +709,14 @@ struct Manifest
         // dentro do `delay.h`, onde vale pra qualquer manifest que o
         // use. Aqui o param volta a ser 0..1 de ponta a ponta.
         p_dly_time  = t.Add("dly_time",  0.0f, 0.f, 1.f, 1.0f); // 50..1000 ms
-        p_dly_mix   = t.Add("dly_mix",   0.0f, 0.f,    1.f);  // MIDI: nasce 0
+        p_dly_mix[0]   = t.Add("dly_mix_a",   0.0f, 0.f,    1.f);  // MIDI: nasce 0
+        p_dly_mix[1]   = t.Add("dly_mix_b",   0.0f, 0.f,    1.f);
         // CHAVE PROPRIA. Delay e reverb ligavam pelo `mix` — sao
         // anteriores a convencao de chave que o dB pediu pros efeitos
         // da suite. Fundir chave e mix obriga a zerar o ajuste pra
         // desligar, e o ajuste se perde.
-        p_dly_on    = t.Add("dly_on",    0.0f, 0.f,    1.f);
+        p_dly_on[0]    = t.Add("dly_on_a",    0.0f, 0.f,    1.f);
+        p_dly_on[1]    = t.Add("dly_on_b",    0.0f, 0.f,    1.f);
 
         // GATE. gate_thresh usa curve 2 porque threshold útil vive
         // todo no fundo da faixa: linear, os primeiros 5% do curso
@@ -702,18 +738,23 @@ struct Manifest
         // Governor em 0.85, não nos 0.5 de antes: com o level em 0.85 um
         // teto de 0.5 comprimiria o instrumento o tempo todo. Ele volta
         // como PROTEÇÃO (segura o crescimento do laço), não como cor.
-        p_gov_ceiling = t.Add("gov_ceiling", 0.85f,    0.f,  1.f);
+        p_gov_ceiling[0] = t.Add("gov_ceiling_a", 0.85f,    0.f,  1.f);
+        p_gov_ceiling[1] = t.Add("gov_ceiling_b", 0.85f,    0.f,  1.f);
         // release em ms: 100–3000, default 800
-        p_gov_release  = t.Add("gov_release",  0.2414f, 100.f, 3000.f);
+        p_gov_release[0]  = t.Add("gov_release_a",  0.2414f, 100.f, 3000.f);
+        p_gov_release[1]  = t.Add("gov_release_b",  0.2414f, 100.f, 3000.f);
 
         // ROTEAMENTO. Os dois ligados no boot: mudo por engano é pior
         // que alto por engano — pra alto o limiter já tem resposta.
+        p_exc_on[0]     = t.Add("exc_on_a",      1.0f, 0.f, 1.f);
+        p_exc_on[1]     = t.Add("exc_on_b",      1.0f, 0.f, 1.f);
         p_route_exciter = t.Add("route_exciter", 1.0f, 0.f, 1.f);
         p_route_jack    = t.Add("route_jack",    1.0f, 0.f, 1.f);
 
         // FERRAMENTA DE BANCADA — ver bloco acima. def_norm 0.0 com
         // faixa [1,8] e curve 1 dá real = 1.0 no boot, sempre.
-        p_bench_boost   = t.Add("bench_boost",   0.0f, 1.f, 8.f);
+        p_bench_boost[0]   = t.Add("bench_boost_a",   0.0f, 1.f, 8.f);
+        p_bench_boost[1]   = t.Add("bench_boost_b",   0.0f, 1.f, 8.f);
 
         // SHIFTER. Faixa 0–10 Hz, default 4 Hz (norm 0.4). Linear
         // pelo mesmo motivo do gov_ceiling: a borda se procura de
@@ -748,23 +789,32 @@ struct Manifest
 
         // 0.35 — o valor que o dB tocou e aprovou ("reverb está ótimo").
         // 0.15 era o chute inicial e nunca foi ouvido.
-        p_rev_mix       = t.Add("rev_mix",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
+        p_rev_mix[0]       = t.Add("rev_mix_a",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
+        p_rev_mix[1]       = t.Add("rev_mix_b",       0.0f, 0.f, 1.f);
         // DESLIGAR O REVERB EMUDECE O SHIMMER, que nao tem reverb
         // proprio — ele realimenta ESTE. Dependencia real, declarada em
         // vez de deixar o dB cacando um efeito que "parou de funcionar".
-        p_rev_on        = t.Add("rev_on",        0.0f, 0.f, 1.f);
-        p_rev_size      = t.Add("rev_size",      0.50f, 0.f, 1.f);
-        p_rev_damp      = t.Add("rev_damp",      0.50f, 0.f, 1.f);
+        p_rev_on[0]        = t.Add("rev_on_a",        0.0f, 0.f, 1.f);
+        p_rev_on[1]        = t.Add("rev_on_b",        0.0f, 0.f, 1.f);
+        p_rev_size[0]      = t.Add("rev_size_a",      0.50f, 0.f, 1.f);
+        p_rev_size[1]      = t.Add("rev_size_b",      0.50f, 0.f, 1.f);
+        p_rev_damp[0]      = t.Add("rev_damp_a",      0.50f, 0.f, 1.f);
+        p_rev_damp[1]      = t.Add("rev_damp_b",      0.50f, 0.f, 1.f);
 
         // ---- FREEZE ----
         // Nasce DESLIGADO. Congelar é gesto, e gesto não tem estado
         // default ligado: a placa subindo já congelada seria a
         // escultura tocando sozinha um som que ninguém pediu.
-        p_frz_on        = t.Add("frz_on",        0.0f, 0.f, 1.f);
+        p_frz_on[0]        = t.Add("frz_on_a",        0.0f, 0.f, 1.f);
+        p_frz_on[1]        = t.Add("frz_on_b",        0.0f, 0.f, 1.f);
+        // O GESTO, separado do envio: `frz_on_a/b` dizem QUAL cadeia
+        // alimenta o freeze; este diz QUANDO congelar.
+        p_frz_hold  = t.Add("frz_hold",  0.0f, 0.f, 1.f);
         // Mix em 1.0: congelou, é o congelado que se ouve. Meio a meio
         // deixaria o seco competindo com a sustentação e o gesto
         // perderia clareza — quem quiser camada abaixa no CC.
-        p_frz_mix       = t.Add("frz_mix",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
+        p_frz_mix[0]       = t.Add("frz_mix_a",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
+        p_frz_mix[1]       = t.Add("frz_mix_b",       0.0f, 0.f, 1.f);
         // 100 ms de janela. Abaixo de ~40 ms o grão vira timbre
         // próprio (soa granular, "chuvisco"); acima de ~250 ms os dois
         // grãos leem quase o mesmo trecho e o batimento volta.
@@ -804,6 +854,8 @@ struct Manifest
         // ---- WARBLE ----
         p_wrb_on[0]    = t.Add("wrb_on_a",    0.0f, 0.f, 1.f);
         p_wrb_on[1]    = t.Add("wrb_on_b",    0.0f, 0.f, 1.f);
+        p_wrb_mix[0]   = t.Add("wrb_mix_a",   0.0f, 0.f, 1.f);
+        p_wrb_mix[1]   = t.Add("wrb_mix_b",   0.0f, 0.f, 1.f);
         p_wrb_rate  = t.Add("wrb_rate",  0.0f, 0.05f, 3.f, 2.0f);
         p_wrb_depth = t.Add("wrb_depth", 0.0f, 0.f, 3.f);
         p_wrb_irreg = t.Add("wrb_irreg", 0.0f, 0.f, 1.f);
@@ -812,6 +864,10 @@ struct Manifest
         // (fita estragada — as vezes e o que se quer).
 
         // TOM DE TESTE: destino. 0=A 1=B 2=AMBAS (default).
+        p_esp_on[0]  = t.Add("esp_on_a",  1.0f, 0.f, 1.f);
+        p_esp_on[1]  = t.Add("esp_on_b",  1.0f, 0.f, 1.f);
+        p_esp_mix[0] = t.Add("esp_mix_a", 1.0f, 0.f, 1.f);
+        p_esp_mix[1] = t.Add("esp_mix_b", 1.0f, 0.f, 1.f);
         p_tone_dest = t.Add("tone_dest", 1.0f, 0.f, 2.f, 1.0f, 3);
 
         // ---- DESCRITOR POR EFEITO DE CARATER ----
@@ -826,18 +882,23 @@ struct Manifest
         // ---- SHIMMER ----
         // Tudo em zero: o dB constroi subindo os faders (ver a nota dos
         // defaults no topo desta funcao).
-        p_shm_on       = t.Add("shm_on",       0.0f, 0.f, 1.f);
-        p_shm_mix      = t.Add("shm_mix",      0.0f, 0.f, 1.f);
+        p_shm_on[0]       = t.Add("shm_on_a",       0.0f, 0.f, 1.f);
+        p_shm_on[1]       = t.Add("shm_on_b",       0.0f, 0.f, 1.f);
+        p_shm_mix[0]      = t.Add("shm_mix_a",      0.0f, 0.f, 1.f);
+        p_shm_mix[1]      = t.Add("shm_mix_b",      0.0f, 0.f, 1.f);
         // Chave de 3 posicoes. steps=3 faz o CC cair em terços limpos.
-        p_shm_shift    = t.Add("shm_shift",    0.0f, 0.f, 2.f, 1.0f, 3);
+        p_shm_shift[0]    = t.Add("shm_shift_a",    0.0f, 0.f, 2.f, 1.0f, 3);
+        p_shm_shift[1]    = t.Add("shm_shift_b",    0.0f, 0.f, 2.f, 1.0f, 3);
         // O teto de 0.85 mora no shimmer.h, nao aqui: e limite de
         // ESTABILIDADE do laco, nao preferencia musical. Param vai a
         // 1.0 e o efeito escala pra dentro do seguro.
-        p_shm_feedback = t.Add("shm_feedback", 0.0f, 0.f, 1.f);
+        p_shm_feedback[0] = t.Add("shm_feedback_a", 0.0f, 0.f, 1.f);
+        p_shm_feedback[1] = t.Add("shm_feedback_b", 0.0f, 0.f, 1.f);
         // TOM: sobe pra clarear. 0 e o estado BOM, nao o mais brilhante
         // — a regra do default zero desliga efeito, nao escolhe o pior
         // timbre. Medido: 0 poe a cauda em centroide 3189 Hz, 1 em 5507.
-        p_shm_tone     = t.Add("shm_tone",     0.0f, 0.f, 1.f);
+        p_shm_tone[0]     = t.Add("shm_tone_a",     0.0f, 0.f, 1.f);
+        p_shm_tone[1]     = t.Add("shm_tone_b",     0.0f, 0.f, 1.f);
 
         // tone_freq e tone_mix ficaram SEM knob: os três primeiros
         // foram pro delay e pro level. Seguem alcançáveis pelo serial
@@ -1008,7 +1069,7 @@ struct Manifest
         knob[0].AddTarget(p_level, 1.0f);    // k1 — volume master
         knob[1].AddTarget(p_piezo_mix, 1.0f); // k2 — BALANCO dos piezos
         knob[2].AddTarget(p_dly_time, 1.0f); // k3 — macro do delay
-        knob[3].AddTarget(p_dly_mix, 1.0f);  // k4 — macro do delay
+        knob[3].AddTarget(p_dly_mix[0], 1.0f); // k4 — envio da cadeia A
 
         // ---- B1: o que o randomizador pode sortear ----
         // Params de CARÁTER dos módulos, e só. Com o vocoder ligado
@@ -1032,7 +1093,7 @@ struct Manifest
         randomizable[n_randomizable++] = {p_dly_time, 0.0909f, 0.4949f,
                                           nullptr, 0, 0.5f, 0.f,
                                           true, 0.0505f};
-        randomizable[n_randomizable++] = {p_dly_mix, 0.30f, 0.80f};
+        randomizable[n_randomizable++] = {p_dly_mix[0], 0.30f, 0.80f};
         // voc_pitch: UMA NOTA NOVA POR HIT, repetição aceita (sorteio
         // uniforme, sem memória). ±12 st ao redor do centro (110 Hz =
         // Lá), quantizado em Lá menor — nunca cromático fora da
@@ -1094,7 +1155,7 @@ struct Manifest
         //
         // O painel v2 ainda não está soldado — até lá o alvo vale pelo
         // `b2` do painel falso via serial e pelo CC 26.
-        button2_target = p_frz_on;
+        button2_target = p_frz_hold;
         button2_mode   = ButtonMode::Hold;
 
         // ---- SLOT Fx2 VAZIO (2026-08-18) ----
@@ -1167,45 +1228,68 @@ struct Manifest
         AddMidi(46, p_phs_feedback);     // compartilhado
         AddMidi(47, p_phs_stages);       // compartilhado, 3 posicoes
 
-        // ---- WARBLE: 50-54 ----
+        // ---- WARBLE: 50-56 ----
         AddMidi(50, p_wrb_on[0]);
-        AddMidi(51, p_wrb_on[1]);
-        AddMidi(52, p_wrb_rate);         // compartilhado
-        AddMidi(53, p_wrb_depth);        // compartilhado
-        AddMidi(54, p_wrb_irreg);        // compartilhado
+        AddMidi(51, p_wrb_mix[0]);
+        AddMidi(52, p_wrb_on[1]);
+        AddMidi(53, p_wrb_mix[1]);
+        AddMidi(54, p_wrb_rate);         // compartilhado
+        AddMidi(55, p_wrb_depth);        // compartilhado
+        AddMidi(56, p_wrb_irreg);        // compartilhado
 
-        // ---- DELAY: 60-62 ----
-        AddMidi(60, p_dly_on);
-        AddMidi(61, p_dly_time);         // 50 ms .. 1 s
-        AddMidi(62, p_dly_mix);
+        // ---- DELAY: 60-64 — envio por cadeia, UMA instancia ----
+        AddMidi(60, p_dly_on[0]);
+        AddMidi(61, p_dly_mix[0]);
+        AddMidi(62, p_dly_on[1]);
+        AddMidi(63, p_dly_mix[1]);
+        AddMidi(64, p_dly_time);          // COMPARTILHADO, 50 ms .. 1 s
 
-        // ---- FREEZE: 65-67 ----
-        AddMidi(65, p_frz_on);           // cauda de 2 s ao sair
-        AddMidi(66, p_frz_mix);
-        AddMidi(67, p_frz_size);
+        // ---- FREEZE: 65-70 — envio por cadeia, UMA instancia ----
+        // `frz_on_a/b` dizem QUAL cadeia alimenta; `frz_hold` diz QUANDO
+        // congelar. Fundir os dois faria escolher a fonte e disparar o
+        // gesto no mesmo botao.
+        AddMidi(65, p_frz_on[0]);
+        AddMidi(66, p_frz_mix[0]);
+        AddMidi(67, p_frz_on[1]);
+        AddMidi(68, p_frz_mix[1]);
+        AddMidi(69, p_frz_hold);          // O GESTO
+        AddMidi(70, p_frz_size);          // COMPARTILHADO
 
-        // ---- SHIMMER: 70-74 ----
-        AddMidi(70, p_shm_on);           // precisa do rev_on ligado
-        AddMidi(71, p_shm_mix);
-        AddMidi(72, p_shm_feedback);
-        AddMidi(73, p_shm_shift);        // 3 posicoes
-        AddMidi(74, p_shm_tone);         // SOBE pra clarear
+        // ---- ESPACO A: 71-81 — sala e shimmer PROPRIOS da cadeia A ----
+        AddMidi(71, p_esp_on[0]);
+        AddMidi(72, p_esp_mix[0]);
+        AddMidi(73, p_rev_on[0]);
+        AddMidi(74, p_rev_mix[0]);
+        AddMidi(75, p_rev_size[0]);
+        AddMidi(76, p_rev_damp[0]);
+        AddMidi(77, p_shm_on[0]);
+        AddMidi(78, p_shm_mix[0]);
+        AddMidi(79, p_shm_feedback[0]);
+        AddMidi(80, p_shm_shift[0]);
+        AddMidi(81, p_shm_tone[0]);
 
-        // ---- REVERB: 80-83 ----
-        AddMidi(80, p_rev_on);           // emudece o shimmer junto
-        AddMidi(81, p_rev_mix);
-        AddMidi(82, p_rev_size);
-        AddMidi(83, p_rev_damp);
+        // ---- ESPACO B: 82-92 — mesma forma, sala independente ----
+        AddMidi(82, p_esp_on[1]);
+        AddMidi(83, p_esp_mix[1]);
+        AddMidi(84, p_rev_on[1]);
+        AddMidi(85, p_rev_mix[1]);
+        AddMidi(86, p_rev_size[1]);
+        AddMidi(87, p_rev_damp[1]);
+        AddMidi(88, p_shm_on[1]);
+        AddMidi(89, p_shm_mix[1]);
+        AddMidi(90, p_shm_feedback[1]);
+        AddMidi(91, p_shm_shift[1]);
+        AddMidi(92, p_shm_tone[1]);
 
-        // ---- BUZIOS: 85-87 ----
-        AddMidi(85, p_buzios_on);
-        AddMidi(86, p_buzios_thresh);
-        AddMidi(87, p_buzios_cooldown);
+        // ---- BUZIOS: 93-95 ----
+        AddMidi(93, p_buzios_on);
+        AddMidi(94, p_buzios_thresh);
+        AddMidi(95, p_buzios_cooldown);
 
-        // ---- TOM DE TESTE: 90-92 ----
-        AddMidi(90, p_tone_freq);
-        AddMidi(91, p_tone_mix);
-        AddMidi(92, p_tone_dest);        // 0=A 1=B 2=AMBAS
+        // ---- TOM DE TESTE: 96-98 ----
+        AddMidi(96, p_tone_freq);
+        AddMidi(97, p_tone_mix);
+        AddMidi(98, p_tone_dest);         // 0=A 1=B 2=AMBAS
 
         // ---- MASTER: 100 ----
         AddMidi(100, p_level);
@@ -1222,12 +1306,32 @@ struct Manifest
         // varra 110-115 desliga o roteamento e o instrumento emudece
         // sem defeito nenhum. Por isso ficam a 10 CCs do vizinho mais
         // proximo: varredura acidental nao chega ate aqui.
-        AddMidi(110, p_gov_ceiling);
-        AddMidi(111, p_gov_release);
-        AddMidi(112, p_shift_hz);
-        AddMidi(113, p_route_exciter);   // 0 = corta o ramo do exciter
-        AddMidi(114, p_route_jack);      // 0 = corta o ramo do jack
-        AddMidi(115, p_bench_boost);
+        // A PROTECAO DUPLICA porque o hardware duplicou: com DOIS
+        // exciters, o ramo B tambem fecha laco acustico. Ate 20/08
+        // OUT_R era jack de linha e saia limpo por desenho.
+        //
+        // `shift_hz` E COMPARTILHADO, e isso e decisao acustica, nao
+        // economia: dois exciters no MESMO CORPO com deslocamentos
+        // diferentes bateriam um contra o outro. Mesmo shift nos dois
+        // desfaz o acordo de fase da microfonia sem criar batimento.
+        //
+        // Governor e boost sao POR RAMO: cada amp e cada exciter tem
+        // ganho e acoplamento proprios, entao o teto util difere.
+        AddMidi(110, p_gov_ceiling[0]);
+        AddMidi(111, p_gov_release[0]);
+        AddMidi(112, p_shift_hz);         // COMPARTILHADO pelos dois ramos
+        AddMidi(113, p_route_exciter);    // 0 = corta o ramo A
+        AddMidi(114, p_route_jack);       // 0 = corta o ramo B
+        AddMidi(115, p_bench_boost[0]);
+        AddMidi(116, p_gov_ceiling[1]);
+        AddMidi(117, p_gov_release[1]);
+        AddMidi(118, p_bench_boost[1]);
+        // O PORTAO DA PROTECAO, um por ramo. Nasce LIGADO: proteger sem
+        // precisar custa timbre, nao proteger quando precisa custa o
+        // instrumento. Quando os DPDT forem soldados, D29/D30 dizem o
+        // estado REAL e estes params viram o espelho do que o polo 2 le.
+        AddMidi(105, p_exc_on[0]);
+        AddMidi(106, p_exc_on[1]);
 
         // ---- ORDEM DE SACRIFICIO (indice 0 cai primeiro) ----
         //
@@ -1259,8 +1363,8 @@ struct Manifest
         for(int c = kCadeias - 1; c >= 0; c--) S(p_phs_on[c], "phaser");
         for(int c = kCadeias - 1; c >= 0; c--) S(p_wrb_on[c], "warble");
         for(int c = kCadeias - 1; c >= 0; c--) S(p_drv_on[c], "drive");
-        S(p_frz_on, "freeze");
-        S(p_shm_on, "shimmer");
+        for(int c = kCadeias - 1; c >= 0; c--) S(p_frz_on[c], "freeze");
+        for(int c = kCadeias - 1; c >= 0; c--) S(p_shm_on[c], "shimmer");
         // 34 e o comando `sync` — fica no meio da familia do shimmer
         // por acidente historico, e nao vale remapear: mexer em numero
         // ja alinhado no Loopy custa mais que a assimetria incomoda.
