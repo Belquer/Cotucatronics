@@ -60,7 +60,23 @@ os ajustes não.
 
 ---
 
-# Registro: o modo `learn`, e por que não usá-lo
+# Registro: o modo `learn`, REMOVIDO em v0.121.0
+
+**Ele não existe mais no firmware.** Saiu inteiro — 136 linhas, ~10 KB de
+fonte, 83 referências. Está preservado no commit `514e09c`, de onde pode ser
+ressuscitado se algum dia fizer falta.
+
+**Por que não coexistia com o `vistos`:** em `learn` a placa fala e NÃO
+ESCUTA — todo CC que chega é descartado, por desenho. Mas o inventário lê
+exatamente o que chega. Ligar o learn cega o único instrumento capaz de
+provar que o learn funcionou. Não eram dois métodos: eram dois regimes
+incompatíveis (bts 12t).
+
+**Se precisar endereçar do zero num iPad novo**, o caminho é digitar os
+números direto nos widgets, pela lista de CCs do README e do `ccmap`. É uma
+passada só, determinística, e não depende de coreografia.
+
+O que segue é o registro do mecanismo removido.
 
 ## O que o mecanismo faz
 

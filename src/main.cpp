@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.120.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.121.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.120.0"
+#define COTUCA_OS_VERSION "0.121.0"
 
 #include "hal.h"
 #include "params.h"
@@ -253,7 +253,6 @@ static uint32_t eco_tx = 0;
 static constexpr uint32_t kJanelaMs = 250;
 static uint32_t quiet_until[128] = {0};
 static uint32_t cc_janela = 0;   // recusados pela janela
-static uint32_t cc_learn  = 0;   // recusados por estar em learn
 
 // INVENTARIO: QUAIS CCs JA CHEGARAM, um bit por numero.
 //
@@ -265,7 +264,6 @@ static uint32_t cc_learn  = 0;   // recusados por estar em learn
 // chegar"; inventario responde "o que ja chegou alguma vez". Duas
 // perguntas, duas estruturas.
 static uint8_t cc_visto[128] = {0};   // contagem, satura em 255
-static bool     learn_ativo = false;
 
 // Subtracao ANTES da comparacao: uint32 de ms volta a zero em 49 dias
 // e `agora < limite` mentiria por 250 ms uma vez por volta. Esta base
@@ -280,7 +278,6 @@ static inline bool NaJanela(uint8_t cc, uint32_t agora)
 static void MidiEspelha()
 {
     using namespace cotuca;
-    if(learn_ativo) return;   // no learn quem fala e a caminhada
     const uint32_t ag = hal::NowMs();
     if((int32_t)(ag - eco_prox_ms) < 0) return;
     int n = 0;
@@ -311,142 +308,6 @@ static void MidiEspelha()
 // Endereca as quatro paginas sem digitar CC a CC. Anda na ordem do
 // mapa, que e a ordem das familias — casa com as paginas.
 //
-// MAQUINA DE ESTADOS NO LOOP, SEM DelayMs. Um envio por volta quando o
-// timer vence. `DelayMs` numa caminhada de cinco minutos prenderia o
-// loop inteiro: sem serial, sem botao, sem CTOS. A familia ja cobrou
-// esse pedagio uma vez.
-//
-// TX-ONLY: os pulsos NAO escrevem nos params. E anuncio, nao `set` — o
-// estado da placa atravessa o learn intocado, e `list` antes e depois
-// tem que sair identico.
-static int      learn_slot    = 0;
-static int      learn_pulso   = 0;
-static uint32_t learn_prox_ms = 0;
-static bool     learn_fixo    = false;   // estacionado num CC so
-static uint32_t learn_chegou   = 0;      // quando entrei neste slot
-// QUEM JA SABIA RESPONDE NA HORA; QUEM ACABOU DE APRENDER, NAO.
-// Os dois ecos sao identicos — mesmo CC, mesmo canal, mesmo valor. O
-// que os separa e o TEMPO: um widget ja armado devolve no primeiro
-// pulso, em decimos de segundo; o humano leva segundos pra achar o
-// widget e apertar learn. Em 22/08 a caminhada correu de 20 a 25 em
-// segundos porque cinco widgets antigos confirmaram sozinhos, e o dB
-// ficou olhando pro widget errado.
-static constexpr uint32_t kJaSabiaMs = 2500;
-
-// `empurrar` SEPARA PAUSA DE CONCLUSAO, e a diferenca e a tela do dB.
-// O re-push despeja os 76 CCs de uma vez no Loopy — correto no FIM da
-// caminhada, quando os pulsos deixaram os widgets em estado arbitrario
-// e a verdade da placa tem que voltar. Mas em 22/08 eu chamei `learn
-// stop` meia duzia de vezes pra pausar, e cada pausa virou uma
-// enxurrada de 76 mensagens na tela dele — que ele leu como a placa
-// mandando CC errado. Pausar nao e terminar.
-static void LearnFim(const char* motivo, bool empurrar)
-{
-    using namespace cotuca;
-    if(!learn_ativo) return;
-    learn_ativo = false;
-    learn_fixo  = false;
-    learn_chegou = 0;
-    if(!empurrar)
-    {
-        // `eco_ult` fica como o learn o deixou, DE PROPOSITO: sem o
-        // 0xFF o espelho nao ve tudo como novo e nao dispara push.
-        // Os widgets podem estar mostrando valor de pulso em vez do
-        // estado real — e isso tem que ser dito, nao descoberto.
-        hal::Log("learn: %s. SEM re-push: os widgets podem estar"
-                 " mostrando valores dos pulsos, nao o estado da placa."
-                 " Rode `sync` quando quiser alinhar as paginas.", motivo);
-        return;
-    }
-    // A TABELA TEM QUE ESQUECER A CAMINHADA. Os pulsos deixaram
-    // `eco_ult` com os 0 do learn; sem zerar, o espelho compararia o
-    // estado REAL contra o lixo do learn e engoliria as arestas em que
-    // os dois coincidem. 0xFF = nunca visto, que e o mesmo mecanismo
-    // do boot: o proximo passe re-empurra os %d CCs inteiros.
-    for(int i = 0; i < 128; i++) eco_ult[i] = 0xFF;
-    hal::Log("learn: %s — re-empurrando o estado real nos %d CCs."
-             " Os pulsos deixaram os widgets em estado arbitrario;"
-             " o re-push restaura a verdade da placa.",
-             motivo, manifest.n_midi);
-}
-
-// O WIDGET CONFIRMA, A PLACA ANDA. Sem isto o firmware fica pulsando o
-// CC estacionado indefinidamente entre uma varredura minha e outra —
-// minutos, as vezes — e TODO widget armado nesse intervalo aprende o
-// mesmo CC. Foi o que aconteceu em 22/08: quatro widgets aprenderam o
-// cc26 porque era o que estava no fio quando o dB os armou.
-//
-// O sinal ja existia e estava sendo desperdicado: um CC que chega no
-// canal de ENTRADA com o numero do alvo atual so pode vir de um widget
-// que acabou de aprende-lo. Prova de arme, no instante do arme.
-//
-// Quem decide o avanco tem que ser quem VE a confirmacao. Eu, de fora,
-// vejo com atraso de uma varredura — e o atraso e o defeito.
-static void LearnConfirma(uint8_t cc)
-{
-    using namespace cotuca;
-    const uint32_t ag = hal::NowMs();
-    // Os dois casos AVANCAM — nao ha o que fazer num CC ja armado —
-    // mas o log tem que dizer QUAL foi, senao "pulou cinco" e "voce
-    // armou cinco" ficam indistinguiveis pra quem le.
-    if(ag - learn_chegou < kJaSabiaMs)
-        hal::Log("learn: cc%d ja estava armado (respondeu em %lu ms)"
-                 " — pulando", (int)cc,
-                 (unsigned long)(ag - learn_chegou));
-    else
-        hal::Log("learn: cc%d ARMADO AGORA (%lu ms) — avancando",
-                 (int)cc, (unsigned long)(ag - learn_chegou));
-    // ESTACIONADO SIGNIFICA FICA AQUI. Avancar sozinho a partir de um
-    // slot estacionado contradiz a palavra, e na pratica corria dois
-    // passos de uma vez: `learn next` avancava um e a confirmacao de um
-    // widget ja armado avancava outro, antes de o dB conseguir olhar.
-    // Em modo manual quem anda e quem comanda.
-    if(learn_fixo) return;
-    learn_pulso   = 0;
-    learn_slot++;
-    learn_prox_ms = ag + 400u;   // respira antes do proximo
-    learn_chegou  = ag + 400u;   // o relogio do slot novo comeca junto
-    if(learn_slot >= manifest.n_midi) LearnFim("fim da lista", true);
-}
-
-static void LearnPasso()
-{
-    using namespace cotuca;
-    if(!learn_ativo) return;
-    const uint32_t ag = hal::NowMs();
-    if((int32_t)(ag - learn_prox_ms) < 0) return;
-    if(learn_slot >= manifest.n_midi)
-    { LearnFim("fim da lista", true); return; }   // FIM: empurra
-
-    const int     id = manifest.midi_map[learn_slot].param_id;
-    const uint8_t cc = manifest.midi_map[learn_slot].cc;
-    if(learn_pulso == 0 && learn_chegou == 0) learn_chegou = ag;
-    if(learn_pulso == 0)
-        hal::Log("learn: %d/%d · cc%d · %s  <- arme o widget agora",
-                 learn_slot + 1, manifest.n_midi, (int)cc,
-                 id >= 0 ? params.Name(id) : "?");
-    // PULSO CURTO, NAO DEGRAU. A versao anterior mandava 127, esperava
-    // 1 s, mandava 0 — e o widget do Loopy lia o 127 sustentado como
-    // HOLD, alternando entre hold e CC normal a cada passo. O gesto que
-    // ele reconhece e apertar-e-soltar: 127 seguido de 0 em ~60 ms.
-    //
-    // Continua sem DelayMs: o par vira DOIS passos da maquina, com
-    // intervalos diferentes — 60 ms depois do alto, 940 ms depois do
-    // baixo. Quatro pulsos por CC, ~1 s entre eles, ~4 s por CC.
-    const bool    alto   = (learn_pulso % 2) == 0;
-    const uint8_t v      = alto ? 127 : 0;
-    const uint8_t msg[3] = {kStatusEco, cc, v};
-    hal::MidiSendBytes(msg, 3);
-    quiet_until[cc] = ag + kJanelaMs;
-    eco_tx++;
-    learn_prox_ms = ag + (alto ? 60u : 940u);
-    if(++learn_pulso >= 8)
-    {
-        learn_pulso = 0;
-        if(!learn_fixo) learn_slot++;
-    }
-}
-
 static void MidiPushEstado()
 {
     using namespace cotuca;
@@ -493,21 +354,6 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
         }
         else
             armado = true;
-        return;
-    }
-
-    // LEARN E ESTADO DE BANCADA: a placa fala, nao escuta. Os widgets
-    // ja aprendidos alternam e devolvem durante a caminhada inteira,
-    // muito alem do alcance dos 250 ms.
-    if(learn_ativo)
-    {
-        cc_learn++;
-        if(cc_visto[cc] < 255) cc_visto[cc]++;
-        // So o alvo ATUAL confirma. Widget ja armado que ecoa por conta
-        // propria nao empurra a caminhada.
-        if(learn_slot < manifest.n_midi
-           && cc == manifest.midi_map[learn_slot].cc)
-            LearnConfirma(cc);
         return;
     }
 
@@ -2175,71 +2021,6 @@ static void HandleLine(const char* line)
                          c, (int)cc_visto[c]);
         return;
     }
-    // learn [stop|next|<cc>|<nome>] — caminhada de endereçamento
-    if(strncmp(line, "learn", 5) == 0)
-    {
-        const char* a = line + 5;
-        while(*a == ' ') a++;
-        if(strncmp(a, "stop", 4) == 0)
-        {
-            if(!learn_ativo) { hal::Log("learn: nao estava rodando"); return; }
-            LearnFim("pausado", false);   // PAUSA: nao empurra
-            return;
-        }
-        if(strncmp(a, "next", 4) == 0)
-        {
-            if(!learn_ativo) { hal::Log("learn: nao estava rodando"); return; }
-            // PRESERVA O ESTACIONAMENTO. A versao anterior zerava
-            // `learn_fixo` aqui, entao o primeiro `next` num learn
-            // manual disparava a caminhada automatica inteira — o
-            // comando que deveria dar UM passo dava todos.
-            learn_pulso = 0; learn_slot++;
-            learn_prox_ms = hal::NowMs();
-            hal::Log("learn: proximo (%s)",
-                     learn_fixo ? "estacionado, esperando `next`"
-                                : "caminhada automatica");
-            return;
-        }
-        int alvo = 0;
-        learn_fixo = false;
-        if(*a)
-        {
-            // <cc> numerico ou <nome> de parametro; nos dois casos
-            // procura o SLOT do mapa, que e onde a caminhada anda.
-            int achou = -1;
-            if(*a >= '0' && *a <= '9')
-            {
-                const long cc = strtol(a, nullptr, 10);
-                for(int i = 0; i < manifest.n_midi; i++)
-                    if(manifest.midi_map[i].cc == (uint8_t)cc) { achou = i; break; }
-                if(achou < 0)
-                { hal::Log("learn: cc %ld nao esta no mapa", cc); return; }
-            }
-            else
-            {
-                const int id = params.Find(a);
-                if(id < 0)
-                { hal::Log("learn: param \"%s\" nao existe", a); return; }
-                for(int i = 0; i < manifest.n_midi; i++)
-                    if(manifest.midi_map[i].param_id == id) { achou = i; break; }
-                if(achou < 0)
-                { hal::Log("learn: \"%s\" nao tem CC", a); return; }
-            }
-            alvo = achou;
-            learn_fixo = true;   // estaciona: repete ate `next` ou `stop`
-        }
-        learn_ativo   = true;
-        learn_slot    = alvo;
-        learn_pulso   = 0;
-        learn_prox_ms = hal::NowMs();
-        learn_chegou  = hal::NowMs();
-        hal::Log("learn: ENTRANDO. A placa FALA e NAO ESCUTA — todo CC"
-                 " mapeado que chegar sera descartado e contado.");
-        hal::Log("  4 pulsos por CC, 1 s cada. %s",
-                 learn_fixo ? "estacionado: `learn next` avanca"
-                            : "~5 min pros 76. `learn stop` aborta.");
-        return;
-    }
     // b3 — pulsa o botao de rearme (o painel ainda nao existe)
     if(strncmp(line, "b3", 2) == 0)
     {
@@ -3091,11 +2872,8 @@ static void HandleLine(const char* line)
                  (unsigned long)eco_tx, kCanalEco + 1,
                  (unsigned long)eco_proprio,
                  (long)eco_tx - (long)eco_proprio);
-        hal::Log("  autoria: %lu CCs recusados pela janela de %lu ms |"
-                 " %lu recusados em learn%s",
-                 (unsigned long)cc_janela, (unsigned long)kJanelaMs,
-                 (unsigned long)cc_learn,
-                 learn_ativo ? "  *** LEARN ATIVO: a placa nao escuta ***" : "");
+        hal::Log("  autoria: %lu CCs recusados pela janela de %lu ms",
+                 (unsigned long)cc_janela, (unsigned long)kJanelaMs);
         // ESTADO DA MAQUINA por extenso: "aguardando o que?" e a
         // pergunta que o numero cru nao responde.
         const int nd = midi.PendingData();
@@ -3143,7 +2921,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | learn [stop|next|<cc>] | vistos [reset] | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | vistos [reset] | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -3465,7 +3243,6 @@ int main(void)
         FASE(2);
         hal::PollSerial();
         MidiEspelha();   // LOOP, nunca callback — ver cabecalho
-        LearnPasso();    // idem: maquina de estados, sem DelayMs
 
         FASE(3);
         // ---- PAINEL: botões (físico OU simulado por serial) ----

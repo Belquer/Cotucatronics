@@ -162,6 +162,34 @@ duas medições que decidiram o caso do drive — camada por tone, THD por
 nível — rodaram no host, sem tocar no hardware, e mataram duas hipóteses
 minhas antes de virarem código.
 
+## 10. Número dito de passagem é medição também
+
+Em 22/08 relatei "CPU 180 µs" numa frase lateral, ao lado de um 509 da mesma
+sessão. Parece otimização de 65%. Os dois eram **regimes diferentes**: 181 é
+o piso com todo efeito desligado (default pós-gravação), 526 é o mesmo
+perfil do 509. Nada tinha mudado.
+
+A regra já estava escrita nesta skill. Escapou porque a menção era *de
+passagem*, não uma medição formal — e é exatamente aí que ela escapa.
+
+> **Se um número aparece perto de outro da mesma grandeza, o leitor VAI
+> compará-los.** O regime tem que vir junto, ou a comparação vira uma
+> mentira que ninguém escreveu de propósito.
+
+## 11. Verificação que exige desligar o sensor é desenho invertido
+
+Dois mecanismos resolviam o mesmo problema e eram mutuamente exclusivos: um
+deles precisava que a placa **não escutasse** para funcionar — e escutar era
+a única forma de provar que ele tinha funcionado.
+
+> **Método que exige desligar o sensor que o verificaria está invertido. O
+> certo deixa o mundo agir e observa; o errado age e supõe.**
+
+Reconhecer cedo: se o mecanismo pede para suspender a entrada, silenciar um
+canal, ou "não escutar agora", perguntar **o que deixo de poder observar
+enquanto ele roda**. Se a resposta incluir a própria coisa que ele deveria
+produzir, parar ali — não são cinco versões de ajuste, é o mecanismo errado.
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já

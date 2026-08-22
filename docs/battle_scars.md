@@ -2190,6 +2190,77 @@ entregá-lo.
 
 ---
 
+## 12t. Verificação que exige desligar o sensor é desenho invertido (22/08)
+
+O modo `learn` e o inventário `vistos` resolviam o mesmo problema —
+endereçar os widgets do Loopy — e eram **mutuamente exclusivos**, o que
+demorei a enxergar porque parecia questão de preferência.
+
+**Em `learn` a placa fala e NÃO ESCUTA:** todo CC que chega é descartado,
+por desenho — os widgets já armados alternam e devolvem durante a caminhada
+inteira, e sem esse descarte a caminhada se atropela. Mas o inventário lê
+exatamente o que chega. Ligar o learn cega o único instrumento capaz de
+provar que o learn funcionou.
+
+Não eram dois métodos para o mesmo fim. Eram **dois regimes incompatíveis**,
+e um deles não podia coexistir com a verificação do próprio resultado.
+
+**Regra:** *método de verificação que exige desligar o sensor que o
+verificaria é desenho invertido. O método certo deixa o mundo agir e
+observa; o errado age e supõe.*
+
+O `learn` agia — pulsava, contava, avançava — e **supunha** que o widget
+tinha aprendido, porque não podia perguntar. O `vistos` não faz nada: espera
+o mundo se mover e relata. Fechou 65 de 65 em duas passadas o que cinco
+versões de mecanismo não fecharam.
+
+**Como reconhecer antes de gastar cinco versões:** se o mecanismo precisa
+suspender a entrada, silenciar um canal, ou "não escutar agora" para
+funcionar, perguntar imediatamente *o que eu deixo de poder observar
+enquanto ele roda* — e se a resposta incluir a própria coisa que ele
+deveria produzir, parar ali.
+
+**Aposentado pela forma da casa:** removido em v0.121.0, 136 linhas e ~10 KB
+de fonte. O caminho de volta está nomeado (commit 514e09c, onde ele está
+inteiro) e a alternativa manual documentada (lista de CCs no README e no
+ccmap). Remover sem nomear a volta seria apagar, não aposentar.
+
+---
+
+## 12u. Citei o piso ao lado de um número de carga (22/08)
+
+Relatei de passagem "CPU 180 µs" logo depois de remover o `learn`, ao lado
+de uma referência de 509 µs da mesma sessão. Parece otimização de 65%. Não é
+nada.
+
+**O 180 é o piso:** medido logo após gravar, quando todo parâmetro volta ao
+default e **todo efeito nasce desligado**. O 509 era carga: drive 48× nas
+duas cadeias, reverb A+B, shimmer A. Medindo os três com rótulo:
+
+| regime | µs |
+|---|---|
+| todo efeito desligado | 181 |
+| drive 48× A+B · reverb A+B · shimmer A | 526 |
+| + sujeira, shimmer B, delay, phaser, warble | 697 |
+
+O 526 bate com o 509 dentro do ruído. Nada mudou.
+
+Isto é a **12d outra vez**, e agora com agravante: a regra já estava escrita
+nesta base, na skill `medicao-limpa`, e mesmo assim o número saiu sem
+rótulo — porque era menção *de passagem*, não uma medição formal. É aí que a
+regra escapa.
+
+**Regra:** *número dito de passagem é medição também.* Se ele aparece perto
+de outro número da mesma grandeza, o leitor VAI compará-los, e o regime tem
+que vir junto ou a comparação é uma mentira que ninguém escreveu de
+propósito.
+
+**Achado de brinde, e é defeito:** nas três medições o `cpu` reportou
+**pico 0 µs**. Média válida, pico morto. Instrumento parcialmente quebrado
+que eu quase citaria como dado. Aberto.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**
