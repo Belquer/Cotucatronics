@@ -76,6 +76,21 @@ float            ReadKnob(int index);          // 0.0–1.0 (stub até ter pots)
 // tempo, não por contagem de chamadas.
 bool             ReadButton(int index);        // true = pressionado
 
+// Recado que sobrevive ao reset. Mora na SRAM de backup, com limpeza
+// de cache — sem ela o recado fica no cache e o reset o apaga.
+void             MarcaReset(uint32_t valor);
+uint32_t         LeMarcaReset();
+
+// Teto de bytes que o PollMidi drena por volta, e quantas vezes ele
+// mordeu. Sem teto, um produtor rapido prende o loop pra sempre.
+uint32_t         MidiPollCap();
+uint32_t         MidiPollEstouros();
+
+// Orcamento do rearme automatico da escuta MIDI. Sem ele, uma escuta
+// que nao se estabelece (WIDI desconectado) prende o loop rearmando.
+uint32_t         MidiRearmeBarrados();
+uint32_t         MidiRearmeMs();
+
 // Nivel CRU do pino ligado ao pad LB do WIDI (seed::D28), com pull-up
 // interno. Devolve o que o pino le, SEM interpretacao — quem classifica
 // "conectado" ou "anunciando" e o main, porque a polaridade e a legenda

@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.123.2 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.127.1 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.123.2"
+#define COTUCA_OS_VERSION "0.127.1"
 
 #include "hal.h"
 #include "params.h"
@@ -1041,7 +1041,92 @@ static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 // E por que isto NAO viola a regra do AllocBig: a regra existe pra que
 // ninguem toque na RAM GRANDE (SDRAM) sem passar pelo portao. Isto e
 // .bss comum — a mesma classe do src_buf e do fx_buf logo acima.
-alignas(32) static float reverb_mem[cotuca::Manifest::kCadeias][28160];
+// ---- ONDE CADA BUFFER GRANDE MORA, E POR QUE ----
+//
+// No BOOT_SRAM o `.bss` inteiro vai pra DTCMRAM (128 KB). Isso e BOM
+// pra dado quente — DTCM e a memoria mais rapida do chip pro M7, sem
+// espera. Mas nao cabe tudo, entao a alocacao virou decisao declarada:
+//
+//   reverb_mem  220 KB -> AXI  (`.axi_bss`)  POR TAMANHO. Sozinho ele
+//                               estoura os 128 KB da DTCM. E a AXI e
+//                               exatamente onde ele ja morava em
+//                               BOOT_QSPI: o voo continua com uma
+//                               variavel so.
+//   warble_mem   15 KB -> DTCM (default)     POR VELOCIDADE. Cabe, e
+//   audio rx/tx   8+8  -> DTCM (libDaisy)    deixar na memoria mais
+//   resto        ~25 KB-> DTCM               rapida e ganho, nao
+//                                            acidente.
+//
+// Se um dia a AXI apertar, a RAM_D2 (256 KB, hoje so o heap) e a
+// reserva: `.d2_bss` e o mesmo gesto que a `.axi_bss` no nosso linker.
+#ifdef COTUCA_TEM_AXI_BSS
+#define COTUCA_AXI_BSS __attribute__((section(".axi_bss")))
+#else
+#define COTUCA_AXI_BSS   // sem o nosso linker, cai na .bss padrao
+#endif
+
+// ---- AS PAREDES TEM QUE APARECER NO BOOT ----
+//
+// Restricao visivel envelhece como restricao; invisivel envelhece como
+// bug. Agora sao DUAS paredes de RAM (DTCM e AXI) alem da de CPU, e
+// ninguem deve descobrir nenhuma delas batendo nela.
+//
+// Os simbolos vem do LINKER, nao de sizeof: sizeof conta o que eu
+// lembrei de somar, o linker conta o que de fato foi posto la.
+extern "C" {
+extern char _sbss, _ebss;
+extern char _stext, _etext;
+#ifdef COTUCA_TEM_AXI_BSS
+extern char _saxi_bss, _eaxi_bss;
+#endif
+}
+// ---- A SECAO NOVA PRECISA SER ZERADA POR ALGUEM ----
+//
+// O `startup` da libDaisy zera o intervalo `_sbss.._ebss` — e a
+// `.axi_bss` NAO esta nesse intervalo, porque e uma secao propria do
+// nosso linker. C++ promete que um `static` nasce zerado; essa promessa
+// e cumprida pelo startup, e eu criei uma casa que o startup nao
+// visita. `reverb_mem` nasceria com lixo.
+//
+// Zerar aqui, no comeco do main, ANTES de qualquer Init que use o
+// buffer. E conta o lixo achado: sem esse numero, "consertei" e
+// indistinguivel de "nao era isso".
+static uint32_t axi_lixo = 0;
+static void ZeraAxiBss()
+{
+#ifdef COTUCA_TEM_AXI_BSS
+    uint32_t* p = (uint32_t*)&_saxi_bss;
+    uint32_t* e = (uint32_t*)&_eaxi_bss;
+    for(uint32_t* q = p; q < e; q++)
+        if(*q) axi_lixo++;
+    for(uint32_t* q = p; q < e; q++) *q = 0u;
+#endif
+}
+
+static void RelataParedes()
+{
+    const uint32_t dtcm = (uint32_t)(&_ebss - &_sbss);
+#ifdef COTUCA_TEM_AXI_BSS
+    const uint32_t axi  = (uint32_t)(&_eaxi_bss - &_saxi_bss);
+#else
+    const uint32_t axi  = 0;
+#endif
+    const uint32_t txt  = (uint32_t)(&_etext - &_stext);
+    cotuca::hal::Log("memoria: DTCM %lu KB de 128 | AXI %lu+%lu KB de 480"
+                     " (bss+text) | RAM_D2 0 de 256 (reserva)",
+                     (unsigned long)(dtcm / 1024),
+                     (unsigned long)(axi / 1024),
+                     (unsigned long)(txt / 1024));
+#ifdef COTUCA_TEM_AXI_BSS
+    cotuca::hal::Log("  .axi_bss no boot: %lu palavras nao-zero encontradas"
+                     " e limpas%s",
+                     (unsigned long)axi_lixo,
+                     axi_lixo ? "  *** o startup NAO zera esta secao ***"
+                              : "  (ja vinha limpa)");
+#endif
+}
+alignas(32) COTUCA_AXI_BSS static float
+    reverb_mem[cotuca::Manifest::kCadeias][28160];
 
 // ============================================================
 // REGRA: ORDEM IMPORTA — DUAS FAMÍLIAS.
@@ -1251,6 +1336,40 @@ static volatile uint32_t ctos_pico_us      = 0;   // pior caso visto
 static volatile uint32_t ctos_orcamento_us = 0;
 static volatile uint32_t ctos_ocorrencias  = 0;
 static volatile uint32_t loop_voltas       = 0;
+
+// ---- VIGIA DO LOOP: quem esta vivo vigia quem morreu ----
+//
+// POR QUE NAO O IWDG. O watchdog independente, uma vez ligado, so
+// desliga com reset de ALIMENTACAO — reset de sistema nao o para.
+// Entao `dfu go` reiniciaria no bootloader com ele correndo e ninguem
+// alimentando: o bootloader levaria reset a cada timeout e uma
+// transferencia de 185 KB nunca completaria. Trocaria "trava as vezes"
+// por "nao grava nunca".
+//
+// O QUE USAMOS. Quando o loop morreu em 22/08, o USB continuou
+// enumerado — as interrupcoes seguiam vivas. O callback de audio e o
+// contexto que continua rodando exatamente quando o loop para, entao
+// ele e o vigia natural. `loop_voltas` sobe milhoes de vezes por
+// minuto; se parar por 3 segundos, o loop morreu.
+//
+// 3000 blocos = ~3 s a 1 ms por bloco. A operacao mais longa que
+// prende o loop e o `sync` (76 CCs com DelayMs(3) = 228 ms), com uma
+// ordem de grandeza de folga.
+//
+// SO VIGIA, NAO CONSERTA: reset e o unico remedio honesto pra estado
+// que ninguem entende. E ele DEIXA RECADO — reset silencioso seria a
+// familia "falha em silencio", trocando placa muda por placa que
+// reinicia sem dizer por que.
+static constexpr uint32_t kVigiaBlocos = 3000;
+static constexpr uint32_t kVigiaMagia  = 0xC07CA1DAu;   // "cotuca vida"
+// O VEREDITO DO VIGIA SOBREVIVE AO BOOT, e nao so no log. Um recado
+// que existe apenas na linha impressa durante o boot e um recado que
+// se perde pra quem conectou depois — que e sempre o caso quando a
+// placa reinicia sozinha no meio de uma tocada.
+static bool     vigia_reiniciou = false;
+static uint8_t  vigia_fase      = 0;
+static uint32_t vigia_ult = 0;
+static uint32_t vigia_n   = 0;
 
 static void LedFaseTick(size_t block_size, float sample_rate)
 {
@@ -1835,6 +1954,23 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
             // ESTOURO DE PRAZO. So conta e carimba — nunca loga daqui:
             // a regra do callback que ja pendurou a placa uma vez.
+            // VIGIA DO LOOP. Roda no callback porque e ele que continua
+            // vivo quando o loop morre — foi o sintoma medido em 22/08.
+            if(loop_voltas != vigia_ult) { vigia_ult = loop_voltas; vigia_n = 0; }
+            else if(++vigia_n >= kVigiaBlocos)
+            {
+                // Deixa recado ANTES de reiniciar: reset silencioso
+                // trocaria placa muda por placa que reinicia sem dizer
+                // por que — mesma familia, sintoma novo.
+                // O RECADO CARREGA A FASE. "O loop morreu" e metade
+                // da informacao; "morreu na fase 4" e a outra metade,
+                // e ela ja existia num volatile que ninguem lia na
+                // hora certa. Byte baixo = fase.
+                cotuca::hal::MarcaReset((kVigiaMagia & 0xFFFFFF00u)
+                                        | (uint32_t)(loop_fase & 0xFFu));
+                NVIC_SystemReset();
+            }
+
             const uint32_t prazo_est = est_prazo_forc ? est_prazo_forc : prazo;
             if(soma_us > prazo_est)
             {
@@ -2106,6 +2242,19 @@ static void HandleLine(const char* line)
         TriggerRandomize(false);
         return;
     }
+    // `vigia teste` — TRAVA O LOOP DE PROPOSITO. Sem este gancho a
+    // unica forma de demonstrar o vigia seria esperar um bug real
+    // aparecer, e defesa que nunca se viu agir e hipotese. Espelha o
+    // `ctos prazo` e o `ctos teto`, que existem pelo mesmo motivo.
+    if(strncmp(line, "vigia teste", 11) == 0)
+    {
+        hal::Log("vigia: travando o loop DE PROPOSITO. O callback deve"
+                 " reiniciar a placa em ~%lu s e o proximo boot deve"
+                 " acusar. Se nada acontecer, o vigia nao funciona.",
+                 (unsigned long)(kVigiaBlocos / 1000));
+        hal::DelayMs(60);            // deixa a linha sair
+        for(;;) { __asm__ volatile("nop"); }
+    }
     // vistos [reset] — inventario de quais CCs ja chegaram
     if(strncmp(line, "vistos", 6) == 0)
     {
@@ -2214,6 +2363,18 @@ static void HandleLine(const char* line)
                          " entra no espaco %c, e o shimmer E a sala"
                          " realimentada. Ligue o envio. ***",
                          'a' + c, 'a' + c, 'A' + c);
+        RelataParedes();
+        hal::Log("vigia do loop: %s | %lu blocos (~%lu s) sem volta ="
+                 " reset automatico",
+                 vigia_reiniciou
+                     ? "*** ESTE BOOT VEIO DELE ***"
+                     : "armado, nada a relatar",
+                 (unsigned long)kVigiaBlocos,
+                 (unsigned long)(kVigiaBlocos / 1000));
+        if(vigia_reiniciou)
+            hal::Log("  o loop morreu na FASE %u — veja os FASE() em"
+                     " main.cpp pra saber o que roda ali",
+                     (unsigned)vigia_fase);
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);
@@ -3053,6 +3214,18 @@ static void HandleLine(const char* line)
         if(midi.Channel() != cotuca::kMidiOmni)
             hal::Log("      canal %d (1-16, como no controlador)",
                      midi.Channel() + 1);
+        hal::Log("  rearme da escuta: 1 a cada %lu ms | %lu barrados"
+                 " pelo orcamento%s",
+                 (unsigned long)hal::MidiRearmeMs(),
+                 (unsigned long)hal::MidiRearmeBarrados(),
+                 hal::MidiRearmeBarrados() > 1000
+                     ? "  *** a escuta NAO esta se estabelecendo ***" : "");
+        hal::Log("  poll: teto de %lu bytes por volta | %lu vezes que o"
+                 " teto mordeu%s",
+                 (unsigned long)hal::MidiPollCap(),
+                 (unsigned long)hal::MidiPollEstouros(),
+                 hal::MidiPollEstouros()
+                     ? "  (rajada — o resto esperou a proxima volta)" : "");
         hal::Log("  bytes %lu | cc %lu | outras %lu | orfaos %lu | "
                  "realtime %lu | canal alheio %lu",
                  (unsigned long)midi.Bytes(), (unsigned long)midi.CcCount(),
@@ -3142,8 +3315,30 @@ static bool CheckRequirements()
 
 int main(void)
 {
+    // PRIMEIRA COISA DO main, antes de qualquer Init: a secao que o
+    // startup nao visita precisa ser zerada por alguem.
+    ZeraAxiBss();
+
     using namespace cotuca;
     hal::Init();
+    // O RECADO DO VIGIA SO PODE SER LIDO DEPOIS DO hal::Init().
+    //
+    // Ele mora na SRAM de BACKUP e a leitura faz operacao de cache. O
+    // dominio de backup so e habilitado durante a inicializacao do HAL
+    // — ler antes e tocar periferico nao inicializado. Em 22/08 eu pus
+    // isto como PRIMEIRA linha do main e o resultado foi o pior tipo
+    // de falha: o app rodava (o LED batia) e o USB nunca subia. Placa
+    // "viva e muda", sem serial pra dizer o que houve, e recuperavel
+    // so por BOOT+RST e reinstalacao do bootloader.
+    //
+    // Lido cedo DENTRO do que e permitido, e limpo em seguida pra que
+    // o proximo boot nao herde a acusacao do anterior.
+    {
+        const uint32_t m = cotuca::hal::LeMarcaReset();
+        vigia_reiniciou  = (m & 0xFFFFFF00u) == (kVigiaMagia & 0xFFFFFF00u);
+        vigia_fase       = (uint8_t)(m & 0xFFu);
+        cotuca::hal::MarcaReset(0u);   // limpa DEPOIS de ler, e so aqui
+    }
     params.Init();
     manifest.Init(params);
 
@@ -3233,12 +3428,27 @@ int main(void)
         // alcancavel por MIDI.
         suave_dly.Init(hal::Info().sample_rate, 20.f, 0.f);
         suave_rev.Init(hal::Info().sample_rate, 20.f, 0.f);
+        RelataParedes();
+        // O RECADO DO VIGIA, dito alto no boot. Sem isto o reset
+        // automatico seria indistinguivel de "alguem apertou RESET" —
+        // e a informacao mais util (o loop morreu) se perderia.
+        if(vigia_reiniciou)
+            hal::Log("*** ESTE BOOT VEIO DO VIGIA: o loop parou por mais"
+                     " de %lu blocos (~%lu s) e o callback reiniciou a"
+                     " placa. Algo travou o loop principal. ***",
+                     (unsigned long)kVigiaBlocos,
+                     (unsigned long)(kVigiaBlocos / 1000));
+        else
+            hal::Log("vigia do loop: armado (%lu blocos ~ %lu s sem volta"
+                     " = reset automatico)",
+                     (unsigned long)kVigiaBlocos,
+                     (unsigned long)(kVigiaBlocos / 1000));
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um
         // buffer curto faria em silencio.
         hal::Log("espaco: sala A %s | sala B %s (%u de %u floats cada,"
-                 " %u KB em SRAM no total)",
+                 " %u KB na AXI no total)",
                  esp[0].reverb_ok ? "pronta" : "BUFFER CURTO",
                  esp[1].reverb_ok ? "pronta" : "BUFFER CURTO",
                  (unsigned)need, (unsigned)have,

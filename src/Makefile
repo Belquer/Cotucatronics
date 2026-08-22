@@ -27,6 +27,19 @@ BOARD  ?= daisy_seed
 # bootloader some junto.
 APP_TYPE ?= BOOT_QSPI
 
+# LINKER PROPRIO. O `?=` da libDaisy aceita sobrescrita, e tem que vir
+# ANTES do include — mesmo motivo do LDFLAGS abaixo.
+#
+# Existe porque no BOOT_SRAM o `.bss` vai pra DTCMRAM (128 KB) e o
+# `reverb_mem` sozinho tem 220 KB. A secao `.axi_bss` devolve dados
+# grandes pra SRAM, que e onde ja moravam em BOOT_QSPI. Certidao de
+# origem e o porque completo no topo do proprio .lds.
+#LDSCRIPT = $(shell pwd)/cotucatronics_sram.lds
+# O ATRIBUTO E O LINKER SAO UMA COISA SO. Quem usa `.axi_bss` precisa de
+# um linker que a defina; sem este par, o build do BOOT_QSPI quebra com
+# "undefined reference to _saxi_bss" — que foi como eu descobri.
+#C_DEFS += -DCOTUCA_TEM_AXI_BSS
+
 # Clone da libDaisy. Sobrescreva na linha de comando se estiver
 # em outro lugar:  make LIBDAISY_DIR=/caminho/pra/libDaisy
 LIBDAISY_DIR ?= $(HOME)/dev/libDaisy

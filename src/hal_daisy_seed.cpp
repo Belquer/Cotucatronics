@@ -588,22 +588,91 @@ bool MidiRestart()
 uint32_t MidiErrors() { return midi_err; }
 uint32_t MidiRestarts() { return midi_restarts; }
 
+static constexpr int      kMidiPollMax        = 64;
+static uint32_t           midi_estouro_poll   = 0;
+static constexpr uint32_t kMidiRearmeMs       = 100;
+static uint32_t           midi_rearme_ult     = 0;
+static uint32_t           midi_rearme_barrados = 0;
+
+// Teto do dreno por volta, e quantas vezes ele mordeu.
+uint32_t MidiPollCap()      { return kMidiPollMax; }
+uint32_t MidiPollEstouros() { return midi_estouro_poll; }
+// Quantos rearmes o orcamento BARROU. Sem este numero, "rearma direto"
+// e indistinguivel de "nunca precisou rearmar".
+uint32_t MidiRearmeBarrados() { return midi_rearme_barrados; }
+uint32_t MidiRearmeMs()       { return kMidiRearmeMs; }
+
 void PollMidi()
 {
-    // VIGIA DA ESCUTA. Se o DMA caiu, rearma sozinho. Roda no loop,
-    // custo de uma leitura de flag por volta.
+    // VIGIA DA ESCUTA, AGORA COM ORCAMENTO. Se o DMA caiu, rearma —
+    // mas NO MAXIMO uma vez a cada kMidiRearmeMs.
+    //
+    // A versao anterior rearmava a CADA VOLTA do loop enquanto
+    // `IsListening()` fosse falso. Quando a escuta nao consegue se
+    // estabelecer — por exemplo com o WIDI DESCONECTADO, a linha RX
+    // solta — isso vira moto-perpetuo: `DmaListenStop` + `memset` do
+    // buffer + `DmaListenStart`, milhares de vezes por segundo.
+    //
+    // Medido em 22/08 pela caixa-preta, depois do vigia acusar FASE 6:
+    // **376.906 rearmes** num voo. A ~10 us cada, sao ~3,7 s de loop
+    // gasto rearmando — exatamente a janela que o vigia detectou. O
+    // audio seguia rodando; quem morria era o loop.
+    //
+    // UMA DEFESA QUE SE AUTO-CURA SEM ORCAMENTO VIRA A DOENCA. Mesma
+    // familia do disjuntor do Log() e do teto do dreno logo abaixo:
+    // trabalho ilimitado em contexto compartilhado e parada cardiaca
+    // esperando acontecer.
+    //
+    // 100 ms: rapido o bastante pra um cabo reconectado voltar a
+    // funcionar sem gesto humano, lento o bastante pra o custo sumir
+    // (10 rearmes por segundo, ~0,1 ms).
     if(midi_started && !midi_uart.IsListening())
-        MidiRestart();
+    {
+        const uint32_t agora = System::GetNow();
+        if(agora - midi_rearme_ult >= kMidiRearmeMs)
+        {
+            midi_rearme_ult = agora;
+            MidiRestart();
+        }
+        else
+            midi_rearme_barrados++;
+    }
 
     // Despacha em contexto normal, onde o parser pode mexer em params
     // e o Log() pode transmitir. Mesmo contrato do PollSerial().
-    while(m_tail != m_head)
+    //
+    // ORCAMENTO DURO, e ele custou uma tarde pra aparecer. A versao
+    // anterior era `while(m_tail != m_head)` — drenar ATE ACABAR. Mas
+    // quem enche o anel e a ISR, em paralelo: se os bytes chegam tao
+    // rapido quanto sao processados, `m_tail` NUNCA alcanca `m_head` e
+    // a funcao nunca retorna. Produtor e consumidor no mesmo anel, com
+    // o consumidor sem teto.
+    //
+    // Em 22/08 isso matou o loop principal de verdade: o vigia acusou
+    // FASE 6, que e esta funcao. O audio seguia rodando — quem morre e
+    // o loop. E o produtor eramos NOS: o espelho MIDI transmite no
+    // canal 2, a mensagem volta pelo fio, e ligar/desligar um efeito
+    // alimenta o ciclo. O BOOT_SRAM nao criou o defeito; deixou o loop
+    // mais rapido, o espelho mandar mais, e a tempestade se sustentar.
+    //
+    // 64 bytes por volta: a 31250 baud chegam ~3 por ms, e o loop gira
+    // a ~1 kHz. O teto so morde numa rajada anormal — e o que sobra
+    // espera a proxima volta em vez de prender esta.
+    //
+    // MESMA FAMILIA DO DISJUNTOR DO Log(): trabalho ilimitado em
+    // contexto compartilhado e parada cardiaca esperando acontecer.
+    int orcamento = kMidiPollMax;
+    while(m_tail != m_head && orcamento-- > 0)
     {
         const uint8_t b = midi_ring[m_tail];
         m_tail          = (m_tail + 1) % kMidiRing;
         if(midi_cb)
             midi_cb(b);
     }
+    // DEFESA SEM CONTADOR E HIPOTESE. Se o teto morder, alguem tem que
+    // poder ver — senao "nunca aconteceu" e indistinguivel de "acontece
+    // toda volta e ninguem soube".
+    if(m_tail != m_head) midi_estouro_poll++;
 }
 
 void MidiSendBytes(const uint8_t* bytes, size_t n)
@@ -740,7 +809,25 @@ inline void BbFlush()
     SCB_CleanDCache_by_Addr(reinterpret_cast<uint32_t*>(&g_bb),
                             (int32_t)sizeof(g_bb));
 }
+// MARCA DE RESET, logo depois da caixa-preta. Mesma armadilha, mesmo
+// cuidado: a SRAM de backup e CACHEAVEL, e escrever sem limpar a linha
+// deixa o recado no cache — que o reset apaga. Foi assim que o primeiro
+// voo da caixa-preta se perdeu.
+constexpr uintptr_t kMarcaAddr = 0x38800A10u;
+static volatile uint32_t& g_marca
+    = *reinterpret_cast<volatile uint32_t*>(kMarcaAddr);
 } // namespace
+
+void MarcaReset(uint32_t valor)
+{
+    g_marca = valor;
+    SCB_CleanDCache_by_Addr((uint32_t*)kMarcaAddr, 4);
+}
+uint32_t LeMarcaReset()
+{
+    SCB_InvalidateDCache_by_Addr((uint32_t*)kMarcaAddr, 4);
+    return g_marca;
+}
 
 void LogMute(bool on) { log_muted = on; }
 bool LogMuted() { return log_muted; }
