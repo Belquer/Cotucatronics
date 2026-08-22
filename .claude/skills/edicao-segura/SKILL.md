@@ -82,6 +82,38 @@ continuar igual, e arquivo igual não faz barulho.
 
 Dizer **quais arquivos mudaram e em que versão ficaram**. Sempre.
 
+## Regra da deleção por faixa
+
+**Nunca apagar uma faixa cujos limites você calculou sem listar o que há
+dentro.** Duas vezes em 20/08 isso custou código e prosa (cicatriz 12e).
+
+O compilador testemunha **dependências de símbolo, e nada mais**. Então:
+
+> **O perigo de uma deleção por faixa é proporcional a quanto do conteúdo
+> apagado não é referenciado por nome em outro lugar.**
+
+As duas classes que somem em silêncio:
+- **código só-escrita** — instrumentação, contadores, log, efeito colateral.
+  Produz *zero com cara de dado*.
+- **prosa** — comentários que explicam um porquê. Some ainda mais calado,
+  porque ninguém nunca nota a falta de um parágrafo.
+
+**Antídoto, duas etapas:**
+
+```python
+m = re.search(padrao, s, re.S)
+print(repr(s[m.start():m.end()]))          # imprime o que casou
+print(s[m.start():m.end()].count("\n"))    # confere a contagem
+# só então apagar
+```
+
+`.*?` com `re.S` pode atravessar o arquivo inteiro dependendo do lookahead.
+**A falha é rodar operação destrutiva com matcher de extensão imprevisível** —
+não o casamento inesperado.
+
+**Recuperação:** `git show HEAD:arquivo` e recolagem cirúrgica.
+**Nunca `git checkout`** quando há trabalho não commitado no mesmo arquivo.
+
 ## Regra do primeiro caso de uma forma nova
 
 Padrão copiado carrega uma **pré-condição que ninguém escreveu**.

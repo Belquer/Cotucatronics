@@ -1358,9 +1358,121 @@ promovido a fato.
 
 ---
 
+## 12e. Deleção por faixa calculada, e a instrumentação órfã (20/08)
+
+Duas vezes na mesma sessão apaguei código que não pretendia apagar. As duas
+operações têm a mesma forma: **deletar uma faixa cujos limites eu calculei em
+vez de listar.** O que separa as duas é só o que as pegou.
+
+### Incidente A — silencioso, achado por acaso
+
+Substituir `s[i0:i1]` no `main.cpp`, com `i0` no `// 1) FONTE` e `i1` no
+`// 3) MÓDULO`, para trocar os blocos de fonte, gate e caráter pela versão de
+duas cadeias.
+
+Dentro dessa faixa também morava o bloco `1.5`, que continha o **escritor** do
+histograma pós-ganho (`out_pk_g`, `out_clip_g`, `hist_o[]`).
+
+**Compilou limpo.** As variáveis continuaram declaradas e o comando `hist`
+continuou **lendo** elas. O sintoma seria `hist` imprimindo *"pós-ganho 0"*
+para sempre — indistinguível de "não chega sinal depois do ganho". Achado por
+acaso, três turnos depois, procurando uma âncora para outra coisa. Nunca foi
+commitado, mas rodou em firmware gravado durante várias corridas de medição.
+
+### Incidente B — ruidoso, pego em dez segundos
+
+`re.search` com `.*?` e lookahead, `re.S`, para remover um comentário do
+`manifest.h`. Alvo: **7 linhas**. Apagou **50**. Colateral de 43: o bloco
+inteiro de documentação do `in_gain` (por que mora pré-gate, por que não é o
+mesmo que subir o `level`, o que ele **não** resolve) e a linha
+`static constexpr int kCadeias = 2;`.
+
+**Não reconstruí com confiança por que o padrão casou tão longe — e isso fica
+assim de propósito**, porque a regra que sai daí é melhor que qualquer
+explicação póstuma:
+
+> **A falha é rodar operação destrutiva com um matcher de extensão
+> imprevisível — não o casamento inesperado.** `.*?` com `re.S` pode
+> atravessar o arquivo inteiro dependendo do lookahead. A extensão precisa ser
+> **conhecida antes de deletar, não descoberta depois.**
+
+Antídoto de duas etapas: **casar → imprimir o que casou → conferir a contagem
+de linhas → só então apagar.**
+
+### A regra
+
+> **O perigo de uma deleção por faixa é proporcional a quanto do conteúdo
+> apagado não é referenciado por nome em outro lugar.**
+
+O compilador testemunha **dependências de símbolo, e nada mais.**
+
+**Só-escrita é a subclasse mais perigosa** — produz *zero com cara de dado*.
+Mas a mesma cegueira cobre as 43 linhas de prosa do `in_gain`: nenhum símbolo,
+nenhuma reclamação, e prosa some ainda mais silenciosamente, porque ninguém
+nunca vai notar a falta de um parágrafo que explicava um porquê.
+
+> **O que lê, o compilador cobra. O que escreve, não.**
+
+### A topologia explica os dois tempos
+
+Não foi sorte nem atenção: **B apagou algo com vinte referências, A apagou algo
+com zero.** O que tem muitos dependentes é quase impossível de perder em
+silêncio; o que não tem nenhum é quase impossível de notar. O incidente B fez
+barulho por sorte estrutural, não por mérito meu — se aquela regex tivesse
+comido só comentários e instrumentação, teria passado igual ao A.
+
+### Subtipo novo na família: INSTRUMENTAÇÃO ÓRFÃ
+
+Os oito casos anteriores são *instrumentação presente que corrompe o que
+mede*. Este é *instrumentação **ausente** que não avisa*. Sintoma oposto — lá
+número errado, aqui número que nunca chega — e a mesma raiz:
+
+> **A instrumentação não tem quem a defenda.** Ninguém depende dela, então nada
+> a protege: nem compilador, nem teste, nem uso.
+
+### Defesa acionável: dar testemunha à instrumentação
+
+Fazer com que algo dependa dela **por nome** — um `static_assert`, um contador
+que o `board` lê e cujo desaparecimento quebre o build, uma linha de teste que
+referencie o escritor. Dá ao compilador uma testemunha onde hoje não há
+nenhuma. É *hábito automatizado vence hábito lembrado* aplicado justamente à
+classe de código que este projeto mais perde.
+
+### Recuperação: recuperar um BLOCO não é restaurar um ARQUIVO
+
+`git checkout` é o reflexo e é o **errado** quando há trabalho não commitado no
+mesmo arquivo — no incidente B teria destruído a unificação de params. O que
+funcionou:
+
+```bash
+git show HEAD:src/manifest.h     # extrai o bloco
+# recola cirurgicamente, com âncora literal
+```
+
+### E uma correção do próprio relato
+
+Eu disse ao dB *"terceira vez nesta sessão que uma regex minha come mais do que
+devia"*. São **duas**, e uma nem era regex — era fatiamento por índice.
+
+> **Contar errado para o lado que se acusa mais não é humildade: é o mesmo
+> defeito com o sinal trocado. Em ambos os casos o número não veio de
+> contagem.**
+
+Vale sozinho porque a tentação de errar para o lado autocrítico é alta num
+documento de cicatrizes, e corrompe o registro tanto quanto o exagero na
+direção oposta.
+
+**E a defesa que eu já tinha cobria isto.** A skill `edicao-segura` manda
+âncora **literal e única**, conferida antes. Abandonei-a nas duas vezes, e nas
+duas pelo mesmo motivo: a operação parecia grande demais para âncoras
+individuais. É o raciocínio de quem pula o cinto na viagem curta — a regra
+descartada exatamente na hora em que valia mais.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro.
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**
 
 ---
 
