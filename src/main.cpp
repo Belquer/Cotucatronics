@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.91.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.93.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.91.0"
+#define COTUCA_OS_VERSION "0.93.0"
 
 #include "hal.h"
 #include "params.h"
@@ -524,7 +524,7 @@ static cotuca::EffectSlot warble_slot;
 // previa desde o desenho.
 // I/O: balanco da entrada e largura da saida. Nascem no NEUTRO (1.0)
 // pra nao produzirem um fade-in de estreia que ninguem pediu.
-static cotuca::Suave       suave_gl, suave_gr, suave_width;
+static cotuca::Suave       suave_gl, suave_gr;
 static cotuca::Suave       suave_dly, suave_rev;
 
 // ---- TETO DE SOMA DO CTOS ----
@@ -1078,8 +1078,8 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         k.drive_slot.SetOn(params.Real(manifest.p_drv_on[c]) >= 0.5f);
         if(k.drive_slot.Ativo())
         {
-            k.drive.SetDrive(params.Real(manifest.p_drv_drive[c]));
-            k.drive.SetTone(params.Real(manifest.p_drv_tone[c]));
+            k.drive.SetDrive(params.Real(manifest.p_drv_drive));
+            k.drive.SetTone(params.Real(manifest.p_drv_tone));
             const float mx = params.Real(manifest.p_drv_mix[c]);
             float gs = 0.f, gm = 0.f;
             for(size_t i = 0; i < size; i++)
@@ -1096,10 +1096,10 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         k.phaser_slot.SetOn(params.Real(manifest.p_phs_on[c]) >= 0.5f);
         if(k.phaser_slot.Ativo())
         {
-            k.phaser.SetRate(params.Real(manifest.p_phs_rate[c]));
-            k.phaser.SetDepth(params.Real(manifest.p_phs_depth[c]));
-            k.phaser.SetFeedback(params.Real(manifest.p_phs_feedback[c]));
-            k.phaser.SetStages((int)(params.Real(manifest.p_phs_stages[c]) + 0.5f));
+            k.phaser.SetRate(params.Real(manifest.p_phs_rate));
+            k.phaser.SetDepth(params.Real(manifest.p_phs_depth));
+            k.phaser.SetFeedback(params.Real(manifest.p_phs_feedback));
+            k.phaser.SetStages((int)(params.Real(manifest.p_phs_stages) + 0.5f));
             // LFO e mapeamento de frequencia UMA VEZ POR BLOCO: as unicas
             // transcendentais ficam fora do laco de amostra.
             k.phaser.AtualizaLfo(size);
@@ -1121,9 +1121,9 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         k.warble_slot.SetOn(params.Real(manifest.p_wrb_on[c]) >= 0.5f);
         if(k.warble_ok && k.warble_slot.Ativo())
         {
-            k.warble.SetRate(params.Real(manifest.p_wrb_rate[c]));
-            k.warble.SetDepth(params.Real(manifest.p_wrb_depth[c]));
-            k.warble.SetIrreg(params.Real(manifest.p_wrb_irreg[c]));
+            k.warble.SetRate(params.Real(manifest.p_wrb_rate));
+            k.warble.SetDepth(params.Real(manifest.p_wrb_depth));
+            k.warble.SetIrreg(params.Real(manifest.p_wrb_irreg));
             k.warble.AtualizaLfo(size);
             float gs = 0.f, gm = 0.f;
             for(size_t i = 0; i < size; i++)
@@ -1575,36 +1575,18 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         out[1][i] *= level;
     }
 
-    // 5b) LARGURA — mid/side, e tem que ser AQUI.
+    // 5b) [vago] — aqui morava o OUT_WIDTH (mid/side), aposentado em
+    // 20/08 quando a arquitetura de DOIS EXCITERS o esvaziou de sentido.
     //
-    //   mid = (L+R)/2   side = (L-R)/2   L = mid+w*side   R = mid-w*side
+    // M/S pressupoe que L e R sao um PAR ESTEREO. Com dois exciters no
+    // MESMO CORPO nao ha imagem estereo: a soma e ACUSTICA, no objeto,
+    // antes do ar. E em `stems` os dois canais sao FONTES INDEPENDENTES
+    // — aplicar M/S ali misturaria o piezo 1 dentro do piezo 2, que e
+    // contaminacao silenciosa.
     //
-    // DEPOIS DO LEVEL E ANTES DO SPLIT, que é o ÚLTIMO ponto em que os
-    // dois canais ainda são a mesma imagem estéreo. Passado o split,
-    // OUT_L é o exciter (com governor e shifter SSB, porque realimenta
-    // o piezo) e OUT_R é o jack de linha limpo: são dois DESTINOS, não
-    // um par estéreo, e somar/subtrair os dois ali misturaria o ramo
-    // protegido com o desprotegido — desfazendo a proteção
-    // anti-feedback justamente no fio que fecha o laço acústico.
-    //
-    // A largura vem do reverb e do shimmer, que são os únicos que
-    // produzem estéreo nativo (o detune era o terceiro, e saiu). Em 1.0 a conta é identidade,
-    // então o bloco inteiro é pulado: custo literalmente zero no
-    // neutro.
-    {
-        const float alvo_w = params.Real(manifest.p_out_width);
-        if(alvo_w < 0.9999f || suave_width.Valor() < 0.9999f)
-        {
-            for(size_t i = 0; i < size; i++)
-            {
-                const float w = suave_width.Passo(alvo_w);
-                const float m = (out[0][i] + out[1][i]) * 0.5f;
-                const float s = (out[0][i] - out[1][i]) * 0.5f * w;
-                out[0][i] = m + s;
-                out[1][i] = m - s;
-            }
-        }
-    }
+    // Nao sobrou modo em que o controle significasse algo. Ver
+    // docs/FEATURES.md para reviver, se um dia existir um modo em que a
+    // saida seja um par estereo de verdade.
 
     // 6) SPLIT — os ramos deixam de ser iguais aqui.
     //    OUT_L vai pro exciter no corpo da escultura e é o ramo que
@@ -2997,7 +2979,6 @@ int main(void)
         reverb_ok = reverb.Init(hal::Info().sample_rate, reverb_mem, have);
         suave_gl.Init(hal::Info().sample_rate, 20.f, 1.f);
         suave_gr.Init(hal::Info().sample_rate, 20.f, 1.f);
-        suave_width.Init(hal::Info().sample_rate, 20.f, 1.f);
         // Chaves nascem FECHADAS (0): default zero, como todo param
         // alcancavel por MIDI.
         suave_dly.Init(hal::Info().sample_rate, 20.f, 0.f);

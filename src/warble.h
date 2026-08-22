@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — warble v0.1.0
+// Cotucatronics OS — warble v0.1.1
 // Deriva de fita: delay curto modulado por LFO lento e irregular.
 //
 // NAO USA O MOTOR DE PITCH, e isso e correcao de premissa. O desenho
@@ -25,6 +25,19 @@
 // so; drive e phaser nasceram estereo e pagaram o dobro ate serem
 // corrigidos — a licao foi tratada como instancia duas vezes antes de
 // virar classe.
+//
+// ------------------------------------------------------------
+// O DRY/WET DO WARBLE CHAMA-SE `wrb_mix` — E SO O NOME.
+//
+// NAO EXISTE param `wrb_mix`, e nao e esquecimento: o dry/wet deste
+// efeito e o crossfade do proprio EffectSlot (`gs`/`gm` no callback),
+// e foi assim que ele passou no IFA10000. O nome existe pra alinhar o
+// vocabulario com os vizinhos — drive e phaser TEM `mix` ajustavel —
+// e pra que ninguem procure no `list` um estagio que nunca existiu.
+//
+// Se um dia virar param de verdade, e mudanca no efeito APROVADO e
+// passa por decisao do dB, nao por consistencia de tabela.
+// ------------------------------------------------------------
 //
 // C++ puro. Buffer vem de fora.
 // ============================================================

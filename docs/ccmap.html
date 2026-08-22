@@ -28,92 +28,82 @@ footer b { color:#111; }
      border-radius:2px; font-size:7pt; vertical-align:1px; }
 </style></head><body>
 <h1>Cotucatronics OS — Mapa de CC</h1>
-<p class="sub">Firmware v0.85.1 · manifest v0.57.0 · 41 CCs · canal MIDI 1 ·
+<p class="sub">Firmware v0.93.0 · manifest v0.61.0 · 36 CCs · canal MIDI 1 ·
 lido da placa em 20/08/2026 · <span class="k">destacado</span> = chave liga/desliga</p>
 <div class="cols">
 
 <section><h2>ENTRADA</h2><table>
-<tr class="on"><td class="cc">58</td><td class="nm">piezo_mix</td><td class="ds"><b>Balanço</b> dos dois piezos. <b>64 = centro, ambos cheios.</b> 0 = só p1 (IN_L) · 127 = só p2 (IN_R). Não tem posição muda</td></tr>
-<tr><td class="cc">21</td><td class="nm">in_gain</td><td class="ds">Ganho de entrada, 1× a 8×, curva quadrática</td></tr>
-<tr><td class="cc">30</td><td class="nm">gate_thresh</td><td class="ds">Limiar do gate</td></tr>
+<tr class="on"><td class="cc">58</td><td class="nm">piezo_mix</td><td class="ds"><b>Mix entre as duas CADEIAS</b>, já processadas. <b>64 = as duas cheias.</b> 0 = só a cadeia A · 127 = só a B</td></tr>
+<tr><td class="cc">21</td><td class="nm">in_gain_a</td><td class="ds">ganho de entrada, cadeia A (piezo 1)</td></tr>
+<tr><td class="cc">50</td><td class="nm">in_gain_b</td><td class="ds">cadeia B (piezo 2)</td></tr>
+<tr><td class="cc">30</td><td class="nm">gate_thresh_a</td><td class="ds">gate da cadeia A · <b>em 0 o gate é PULADO</b> (custo zero)</td></tr>
+<tr><td class="cc">51</td><td class="nm">gate_thresh_b</td><td class="ds">gate da cadeia B</td></tr>
+</table>
+<div class="warn"><b>Gate e ganho duplicam por MATERIAL, não por desequilíbrio.</b> O piezo do tambor lê transiente curto e forte; o da mola lê raspagem contínua de baixo nível. Vale com dois piezos perfeitamente casados.</div>
+</section>
+
+<section><h2>CARÁTER — CADEIA A (piezo 1)</h2><table>
+<tr class="on"><td class="cc">38</td><td class="nm">drv_on_a</td><td class="ds">drive liga/desliga</td></tr>
+<tr><td class="cc">39</td><td class="nm">drv_mix_a</td><td class="ds">dry/wet do drive</td></tr>
+<tr class="on"><td class="cc">40</td><td class="nm">phs_on_a</td><td class="ds">phaser liga/desliga</td></tr>
+<tr><td class="cc">41</td><td class="nm">phs_mix_a</td><td class="ds"><b>MONTANHA:</b> pico em ~64, o topo <i>tira</i> o notch</td></tr>
+<tr class="on"><td class="cc">42</td><td class="nm">wrb_on_a</td><td class="ds">warble liga/desliga — <b>não tem mix</b>, ver rodapé</td></tr>
 </table></section>
 
-<section><h2>DRIVE</h2><table>
-<tr class="on"><td class="cc">38</td><td class="nm">drv_on</td><td class="ds">Liga / desliga</td></tr>
-<tr><td class="cc">39</td><td class="nm">drv_drive</td><td class="ds">Quanto satura</td></tr>
-<tr><td class="cc">40</td><td class="nm">drv_tone</td><td class="ds">Passa-baixa pós-saturação</td></tr>
-<tr><td class="cc">41</td><td class="nm">drv_mix</td><td class="ds">Quanto da camada entra</td></tr>
+<section><h2>CARÁTER — CADEIA B (piezo 2)</h2><table>
+<tr class="on"><td class="cc">44</td><td class="nm">drv_on_b</td><td class="ds">drive</td></tr>
+<tr><td class="cc">45</td><td class="nm">drv_mix_b</td><td class="ds">dry/wet</td></tr>
+<tr class="on"><td class="cc">46</td><td class="nm">phs_on_b</td><td class="ds">phaser</td></tr>
+<tr><td class="cc">47</td><td class="nm">phs_mix_b</td><td class="ds">dry/wet · MONTANHA</td></tr>
+<tr class="on"><td class="cc">48</td><td class="nm">wrb_on_b</td><td class="ds">warble</td></tr>
 </table></section>
 
-<section><h2>PHASER</h2><table>
-<tr class="on"><td class="cc">42</td><td class="nm">phs_on</td><td class="ds">Liga / desliga</td></tr>
-<tr><td class="cc">43</td><td class="nm">phs_rate</td><td class="ds">Velocidade do LFO</td></tr>
-<tr><td class="cc">44</td><td class="nm">phs_depth</td><td class="ds">Profundidade da varredura</td></tr>
-<tr><td class="cc">45</td><td class="nm">phs_feedback</td><td class="ds">Ressonância dos notches</td></tr>
-<tr><td class="cc">46</td><td class="nm">phs_stages</td><td class="ds">Número de allpass</td></tr>
-<tr><td class="cc">47</td><td class="nm">phs_mix</td><td class="ds"><b>MONTANHA:</b> pico em ~64. O topo <i>tira</i> o notch</td></tr>
+<section><h2>CARÁTER — COMPARTILHADOS</h2><table>
+<tr><td class="cc">43</td><td class="nm">drv_drive</td><td class="ds">quanto satura — <b>as duas cadeias</b></td></tr>
+<tr><td class="cc">49</td><td class="nm">phs_rate</td><td class="ds">velocidade do LFO</td></tr>
+<tr><td class="cc">52</td><td class="nm">wrb_depth</td><td class="ds">quanto desafina (16 cents no máx.)</td></tr>
+</table>
+<div class="warn">Um drive, um phaser, um warble — <b>params compartilhados, chave e dry/wet por canal</b>. Os secundários (<tt>drv_tone</tt>, <tt>phs_depth</tt>, <tt>phs_fb</tt>, <tt>phs_stages</tt>, <tt>wrb_rate</tt>, <tt>wrb_irreg</tt>) vão por <tt>set &lt;nome&gt; &lt;valor&gt;</tt>.</div>
+</section>
+
+<section><h2>CAUDA — DELAY</h2><table>
+<tr class="on"><td class="cc">60</td><td class="nm">dly_on</td><td class="ds">liga/desliga</td></tr>
+<tr><td class="cc">22</td><td class="nm">dly_time</td><td class="ds">tempo</td></tr>
+<tr><td class="cc">23</td><td class="nm">dly_mix</td><td class="ds">mistura</td></tr>
 </table></section>
 
-<section><h2>WARBLE</h2><table>
-<tr class="on"><td class="cc">48</td><td class="nm">wrb_on</td><td class="ds">Liga / desliga</td></tr>
-<tr><td class="cc">49</td><td class="nm">wrb_rate</td><td class="ds">Velocidade da deriva</td></tr>
-<tr><td class="cc">50</td><td class="nm">wrb_depth</td><td class="ds">Quanto desafina (16 cents no máximo)</td></tr>
-<tr><td class="cc">51</td><td class="nm">wrb_irreg</td><td class="ds">Irregularidade da deriva</td></tr>
+<section><h2>CAUDA — FREEZE</h2><table>
+<tr class="on"><td class="cc">27</td><td class="nm">frz_on</td><td class="ds">liga/desliga · cauda de 2 s ao sair</td></tr>
+<tr><td class="cc">28</td><td class="nm">frz_mix</td><td class="ds">camada por cima do seco</td></tr>
+<tr><td class="cc">29</td><td class="nm">frz_size</td><td class="ds">tamanho do núcleo</td></tr>
 </table></section>
 
-<section><h2>DELAY</h2><table>
-<tr class="on"><td class="cc">60</td><td class="nm">dly_on</td><td class="ds">Liga / desliga</td></tr>
-<tr><td class="cc">22</td><td class="nm">dly_time</td><td class="ds">Tempo</td></tr>
-<tr><td class="cc">23</td><td class="nm">dly_mix</td><td class="ds">Mistura</td></tr>
+<section><h2>CAUDA — SHIMMER</h2><table>
+<tr class="on"><td class="cc">33</td><td class="nm">shm_on</td><td class="ds">liga/desliga</td></tr>
+<tr><td class="cc">35</td><td class="nm">shm_feedback</td><td class="ds">quantas oitavas empilham (teto 0,85)</td></tr>
+<tr><td class="cc">36</td><td class="nm">shm_shift</td><td class="ds">0 = +12 · 64 = +7 · 127 = ambos</td></tr>
+<tr><td class="cc">37</td><td class="nm">shm_mix</td><td class="ds">camada direta</td></tr>
+<tr><td class="cc">57</td><td class="nm">shm_tone</td><td class="ds"><b>sobe pra clarear.</b> 0 = sino −6 dB em 3 kHz + corte 6 kHz · 127 = aberto até 18 kHz</td></tr>
+</table>
+<div class="warn"><b>Precisa do reverb ligado (CC 61).</b> O shimmer não tem reverb próprio — realimenta o da cauda. Com o reverb desligado ele fica mudo, e o <tt>board</tt> avisa.</div>
+</section>
+
+<section><h2>CAUDA — REVERB</h2><table>
+<tr class="on"><td class="cc">61</td><td class="nm">rev_on</td><td class="ds">liga/desliga · <b>emudece o shimmer junto</b></td></tr>
+<tr><td class="cc">24</td><td class="nm">rev_mix</td><td class="ds">mistura</td></tr>
+<tr><td class="cc">25</td><td class="nm">rev_size</td><td class="ds">tamanho da sala</td></tr>
+<tr><td class="cc">26</td><td class="nm">rev_damp</td><td class="ds">amortecimento do agudo</td></tr>
+</table></section>
+
+<section><h2>BÚZIOS &amp; SAÍDA</h2><table>
+<tr class="on"><td class="cc">31</td><td class="nm">buzios_on</td><td class="ds">32 = <tt>buzios_thresh</tt>, limiar do transiente</td></tr>
+<tr><td class="cc">20</td><td class="nm">level</td><td class="ds">master</td></tr>
 </table></section>
 
 <footer>
-<b>Ordem da cadeia</b> &nbsp; piezos → balanço → in_gain → gate → drive → phaser → warble → delay → detune → freeze → [shimmer ↺ reverb] → level → largura → split (exciter | jack)<br>
-<b>CC 119 é de SAÍDA</b>, não de entrada: a placa manda quando o teto de soma do CTOS derruba um efeito. O valor é o índice do efeito na ordem de sacrifício (1 = detune, 2 = phaser, 3 = warble, 4 = drive, 5 = freeze, 6 = shimmer).<br>
-<b>Tudo nasce em zero</b> exceto <tt>out_width</tt> (127 = largura nativa) e <tt>piezo_mix</tt> (64 = centro): nesses dois o zero não é "desligado", é um estado ativo — colapso pra mono e um piezo mudo. <b>Toda gravação zera tudo de novo.</b><br>
-<b>CC 34 está vago</b> (era <tt>sync</tt>, comando e não param).
+<b>Cadeia</b> &nbsp; p1 → in_gain_A → gate_A → [drive · phaser · warble] ┐ &nbsp;&nbsp; p2 → in_gain_B → gate_B → [drive · phaser · warble] ┘ → <b>MIX</b> → delay → freeze → [shimmer ↺ reverb] → level → largura → split (exciter | jack). <b>O caráter duplica; a cauda é compartilhada</b> — é ela que faz tambor e corda soarem como o mesmo objeto.<br>
+<b><tt>wrb_mix</tt> é NOME, não param.</b> O dry/wet do warble é o crossfade do próprio <tt>EffectSlot</tt> — não aparece no <tt>list</tt>, não tem CC, não é ajustável. O nome existe só para alinhar o vocabulário com drive e phaser, que <i>têm</i> mix, e para ninguém procurar um estágio que nunca existiu.<br>
+<b>CC 119 é de SAÍDA</b>: a placa manda quando o teto de soma do CTOS derruba um efeito. Ordem de sacrifício: phaser B, phaser A, warble B, warble A, drive B, drive A, freeze, shimmer.<br>
+<b>Tudo nasce em zero</b> exceto <tt>out_width</tt> (127) e <tt>piezo_mix</tt> (64) — nesses dois o zero não é "desligado", é estado ativo. <b>Toda gravação zera tudo de novo.</b> CC 34, 53–56 e <b>59</b> vagos — o 59 era o <tt>out_width</tt>, aposentado: com dois exciters no mesmo corpo não há imagem estéreo, a soma é acústica no objeto.
 </footer>
-
-<section><h2>DETUNE</h2><table>
-<tr class="on"><td class="cc">52</td><td class="nm">det_on</td><td class="ds">Liga / desliga</td></tr>
-<tr><td class="cc">53</td><td class="nm">det_cents</td><td class="ds">0 a 50 cents</td></tr>
-<tr><td class="cc">54</td><td class="nm">det_voices</td><td class="ds">1 ou 2 vozes</td></tr>
-<tr><td class="cc">55</td><td class="nm">det_spread</td><td class="ds"><b>A largura.</b> 0 junta no centro, 127 joga pras pontas — é o que separa desafinação de coro</td></tr>
-<tr><td class="cc">56</td><td class="nm">det_mix</td><td class="ds">Quanto da camada entra</td></tr>
-</table></section>
-
-<section><h2>FREEZE</h2><table>
-<tr class="on"><td class="cc">27</td><td class="nm">frz_on</td><td class="ds">Liga / desliga · cauda de 2 s ao sair</td></tr>
-<tr><td class="cc">28</td><td class="nm">frz_mix</td><td class="ds">Camada por cima do seco</td></tr>
-<tr><td class="cc">29</td><td class="nm">frz_size</td><td class="ds">Tamanho do núcleo</td></tr>
-</table></section>
-
-<section><h2>SHIMMER</h2><table>
-<tr class="on"><td class="cc">33</td><td class="nm">shm_on</td><td class="ds">Liga / desliga</td></tr>
-<tr><td class="cc">35</td><td class="nm">shm_feedback</td><td class="ds">Quantas oitavas empilham (teto 0,85)</td></tr>
-<tr><td class="cc">36</td><td class="nm">shm_shift</td><td class="ds">0 = +12 · 64 = +7 · 127 = ambos</td></tr>
-<tr><td class="cc">37</td><td class="nm">shm_mix</td><td class="ds">Camada direta</td></tr>
-<tr><td class="cc">57</td><td class="nm">shm_tone</td><td class="ds"><b>Sobe pra clarear.</b> 0 = sino −6 dB em 3 kHz + corte 6 kHz · 127 = aberto até 18 kHz</td></tr>
-</table>
-<div class="warn"><b>Precisa do reverb ligado (CC 61).</b> O shimmer não tem reverb próprio — ele realimenta o da cadeia. Com o reverb desligado ele fica mudo, e o <tt>board</tt> avisa.</div>
-</section>
-
-<section><h2>REVERB</h2><table>
-<tr class="on"><td class="cc">61</td><td class="nm">rev_on</td><td class="ds">Liga / desliga · <b>emudece o shimmer junto</b></td></tr>
-<tr><td class="cc">24</td><td class="nm">rev_mix</td><td class="ds">Mistura</td></tr>
-<tr><td class="cc">25</td><td class="nm">rev_size</td><td class="ds">Tamanho da sala</td></tr>
-<tr><td class="cc">26</td><td class="nm">rev_damp</td><td class="ds">Amortecimento do agudo</td></tr>
-</table></section>
-
-<section><h2>BÚZIOS</h2><table>
-<tr class="on"><td class="cc">31</td><td class="nm">buzios_on</td><td class="ds">Liga / desliga</td></tr>
-<tr><td class="cc">32</td><td class="nm">buzios_thresh</td><td class="ds">Limiar do transiente que dispara o sorteio</td></tr>
-</table></section>
-
-<section><h2>SAÍDA</h2><table>
-<tr class="on"><td class="cc">59</td><td class="nm">out_width</td><td class="ds">Largura mid/side. <b>127 = nativa</b> (nasce aqui) · 0 = mono puro</td></tr>
-<tr><td class="cc">20</td><td class="nm">level</td><td class="ds">Master</td></tr>
-</table></section>
-
-
 </div></body></html>
