@@ -2255,9 +2255,189 @@ de outro número da mesma grandeza, o leitor VAI compará-los, e o regime tem
 que vir junto ou a comparação é uma mentira que ninguém escreveu de
 propósito.
 
-**Achado de brinde, e é defeito:** nas três medições o `cpu` reportou
-**pico 0 µs**. Média válida, pico morto. Instrumento parcialmente quebrado
-que eu quase citaria como dado. Aberto.
+**E o "achado de brinde" era falso — CORRIGIDO no mesmo dia.** Registrei
+que o `cpu` reportava **pico 0 µs** e que o instrumento estava quebrado.
+Chegou a virar o passo 0 do plano dos presets.
+
+O medidor da libDaisy está correto: `Reset()` põe `firstCycle_ = true` e o
+próximo `OnBlockEnd` faz `max_ = min_ = avg_ = load`, recuperando do NaN. A
+placa imprime `69.8% media, 82.9% pico`, como sempre imprimiu.
+
+**O defeito era o meu leitor.** A linha sai como `"...% media, ...% pico"` —
+o número vem ANTES da palavra — e eu procurei `pico ([\d.]+)%`. Não casou. E
+o meu código era:
+
+```python
+return float(m.group(1)) if m else 0      # <- o 0 e a mentira
+```
+
+**Um parser que não casa devolveu 0, e eu li 0 como medição.** Esta base já
+tem a regra escrita, do histograma: *zero num canal que ninguém escreve não
+é ausência de sinal, é ausência de medição.* Eu a violei no meu próprio
+script de bancada, e o resultado não foi só um número errado — foi um
+**defeito inventado no registro permanente** e priorizado como passo 0 de um
+plano.
+
+**Regra:** *leitor que não encontra o dado deve FALHAR, nunca devolver
+default.* `if else 0` num parser é a mesma família do canal mudo, e o
+instrumento que mente com mais eficácia é o que a gente escreve para medir
+os outros.
+
+**E o número escondido era o que mais importava.** Medindo os quatro
+regimes com o leitor consertado:
+
+| regime | média | pico |
+|---|---|---|
+| todo efeito desligado | 183 | 262 |
+| drive 48× A+B · reverb A+B · shimmer A | 536 | 687 |
+| + sujeira, shimmer B, delay, phaser, warble | 697 | 992 |
+| **tudo ligado** | **818** | **912 / 946 / 948** |
+
+A última linha é regime PERMANENTE, três janelas seguidas — não é estreia.
+**94% do prazo de bloco de 1000 µs**, sustentado. E há um pico de 1035 µs
+registrado no CTOS: acima do prazo, ou seja, uma falha de áudio real.
+
+A sessão inteira eu disse "509 µs, cabe", "697 µs, folga até 850" — **todas
+médias**, porque o leitor descartava os picos. A folga que eu vinha
+reportando não existia.
+
+**E isso expõe um limite do teto de soma que o desenho dele assumiu:** o
+teto exige blocos CONSECUTIVOS acima para derrubar efeito — histerese
+deliberada, para não oscilar. A suposição embutida era que picos fossem
+raros. Nesta configuração eles são a norma: o teto de 850 é ultrapassado em
+todo pico e `quedas` fica em 0. A proteção não está quebrada; ela está
+protegendo contra um fenômeno diferente do que está acontecendo.
+
+---
+
+## 12v. Pré-condição de API herdada, revogada sem aviso de compilação (22/08)
+
+Para os presets, a orientação que chegou foi: *"a libDaisy já resolveu isso
+— a classe de storage persistente escreve numa área reservada afastada do
+código."* Plausível, vinda de quem conhece a plataforma, e **errada em dois
+pontos** que só o código mostra.
+
+**Ponto 1 — ela não escolhe região nenhuma.**
+
+```cpp
+address_offset_ = address_offset & (uint32_t)(~0xff);   // alinha a 256 B
+...
+qspi_.Erase(address_offset_, address_offset_ + sizeof(s));
+```
+
+Alinha a **256 bytes**, não a setor. O `Erase` apaga o **setor de 4 KB**
+inteiro que contém o endereço. Quem escolhe onde é seguro é o chamador — e
+o `address_offset` tem **valor default 0**, que em `BOOT_QSPI` cai dentro
+dos 256 KB reservados ao bootloader.
+
+**Ponto 2, e este é o que mata:**
+
+```cpp
+QSPIHandle::Result QSPIHandle::Impl::EraseSector(...)
+    RETURN_IF_ERR(SetMode(Config::Mode::INDIRECT_POLLING));
+```
+
+Apagar exige tirar a QSPI do modo memory-mapped. E `qspi.cpp` **não tem
+atributo de seção nenhum** — esse código mora na QSPI junto com o resto do
+app. Em `APP_TYPE=BOOT_QSPI` o `.text` inteiro vai para `QSPIFLASH`. Chamar
+`Save()` é apagar o chão em que se pisa: a próxima busca de instrução vem da
+região que acabou de sair do ar. Se funciona, funciona por sorte de I-cache.
+
+**A pré-condição existe e não está escrita em lugar nenhum: `Save()` supõe
+que o app NÃO executa da QSPI.** Ela é verdadeira em `BOOT_NONE` (app na
+flash interna) e **revogada por `BOOT_QSPI`** — que é uma escolha de
+Makefile, feita meses antes, sem nenhum aviso de compilação, nenhum
+`static_assert`, nenhuma linha de documentação ligando as duas coisas.
+
+**Regra:** *toda API herdada carrega pré-condições que a descrição não
+menciona. Antes de construir em cima, ler a implementação procurando o que
+ela SUPÕE do ambiente — e conferir se alguma decisão de build já revogou
+isso.* Descrição diz o que a função faz; código diz o que ela exige.
+
+**Onde procurar primeiro:** operações que mudam o modo de um periférico do
+qual o código executa, que escrevem em memória de onde se busca instrução,
+ou que desabilitam interrupções por tempo indefinido. Essas três têm
+pré-condição de ambiente quase sempre.
+
+**Consequência:** o primeiro passo dos presets não é escrever preset nenhum
+— é trocar para `BOOT_SRAM` (`.text` vai para SRAM, 480 KB, binário de 180)
+e revalidar o que já funciona. A QSPI vira dado puro e a pré-condição passa
+a ser satisfeita de verdade, não por sorte.
+
+---
+
+## 12w. Teto é orçamento, prazo é parede — e a diferença salvou a defesa (22/08)
+
+O teto de soma derruba efeito quando N blocos **consecutivos** passam de
+850 µs. Histerese deliberada. Medindo com o leitor consertado (12u),
+apareceu uma lacuna: em carga alta o pico fica em ~975 µs, **o teto é
+ultrapassado em todo pico e `quedas` fica em zero**. A proteção não estava
+quebrada — estava mirando carga sustentada, e o fenômeno era pico.
+
+A proposta que chegou para fechar a lacuna: *"M picos acima do **teto** numa
+janela T"*. Escrita assim, ela herdaria o defeito da opção que já havíamos
+descartado (baixar o teto): **derrubaria efeito o tempo todo numa
+configuração que toca limpa.**
+
+**O erro só apareceu ao DIMENSIONAR.** No papel "picos acima do teto" soa
+razoável; com o número na mão — pico 975, teto 850, zero falhas — fica
+evidente que ultrapassar o teto é rotina benigna.
+
+    TETO  (850 µs) = ORÇAMENTO ADMINISTRATIVO. Onde o CTOS decide que a
+                     carga está alta demais para o conforto. ESCOLHIDO.
+    PRAZO (1000 µs) = PAREDE FÍSICA. Onde o bloco perde o deadline e o
+                     áudio falha de verdade. IMPOSTO pelo hardware.
+
+**Regra, e é vocabulário permanente do projeto:** *confundir orçamento com
+parede faz a proteção criar o defeito que deveria evitar.* Toda defesa
+precisa declarar em qual dos dois ela mira — e a resposta muda o critério,
+não só o número.
+
+O critério final mira o **prazo**: três estouros numa janela de 2 s. Mede
+zero em todo regime de bancada, o que é o comportamento certo de uma defesa:
+existir e ficar quieta até o fenômeno aparecer.
+
+**Onde o papel encontra o número:** opções discutidas em abstrato podem
+carregar a referência errada sem que ninguém note. O dimensionamento não é
+detalhe de implementação — é onde a opção é testada.
+
+---
+
+## 12x. O ganho de teste pegou o relatório mentindo, não só a defesa (22/08)
+
+O critério de estouro mede zero em regime real — então, sem ganho, seria
+indemonstrável. `ctos prazo <us>` força prazo artificial, espelhando o
+`ctos teto` que existe pelo mesmo motivo.
+
+Com `ctos prazo 300` a defesa agiu certo: cinco quedas na ordem declarada
+até sobrar o não-sacrificável. **E o relatório mentiu duas vezes:**
+
+| imprimia | era |
+|---|---|
+| `ESTOUROS DE PRAZO (>1000 us)` | contava contra os **300** artificiais |
+| `phaser CAIU pelo teto` | caiu pelo critério de **estouro** |
+
+O primeiro é rótulo com o número errado. O segundo é pior: **carga sustentada
+e picos estourando o prazo pedem consertos opostos**, e o relatório os
+apresentava como o mesmo evento. Quem lesse aquele log procuraria carga onde
+havia pico.
+
+**As duas só apareceram porque o ganho de teste existia** — e apareceram
+como efeito colateral de exercitar a *ação*. Se eu tivesse conferido só
+"caiu o que devia cair", ambas teriam sobrevivido.
+
+**Regra:** *ganho de teste que verifica só a AÇÃO e não a NARRAÇÃO deixa a
+metade mentirosa viva.* Ao exercitar uma defesa, ler o relatório dela com a
+mesma desconfiança com que se lê o comportamento — o relatório é a única
+coisa que vai existir quando o evento acontecer de verdade, sozinho, num
+palco.
+
+**Sub-lição, para o checklist de leitura:** com prazo artificial o `bloco`
+caiu de 453 para 246 µs — porque a defesa derrubou cinco efeitos. **Queda de
+CPU depois de proteção agindo é consequência, não melhora.** É o gêmeo do
+"zero com cara de dado": número bom com cara de vitória. Toda leitura de
+carga precisa vir com o retrato do que estava no ar — que o contador de
+estouros já grava.
 
 ---
 

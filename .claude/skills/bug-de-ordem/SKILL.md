@@ -108,6 +108,31 @@ sem ter acesso nenhum ao lado do operador — não via widget, nem nome, nem
 página. Isso muda qual mecanismo é viável e tinha de ser dito na primeira
 mensagem, não depois de ele perguntar.
 
+## Pré-condição de API herdada, revogada por decisão de build
+
+Uma decisão de Makefile tomada meses antes pode invalidar a pré-condição de
+uma biblioteca, **sem nenhum aviso de compilação**. É bug de ordem na escala
+do projeto, não da função.
+
+Caso (22/08): `PersistentStorage::Save()` da libDaisy tira a QSPI do modo
+memory-mapped para apagar. O código que faz isso mora na QSPI. A
+pré-condição — *"o app não executa da QSPI"* — é verdadeira em `BOOT_NONE` e
+**revogada por `APP_TYPE=BOOT_QSPI`**. Nada no build reclama; a chamada
+compila e a placa trava por sorte de cache.
+
+> **Descrição diz o que a função faz; código diz o que ela EXIGE.** Antes de
+> construir sobre API herdada, ler a implementação procurando o que ela supõe
+> do ambiente — e conferir se alguma decisão de build já revogou isso.
+
+**Onde a pré-condição escondida quase sempre mora:** operações que mudam o
+modo de um periférico do qual o código executa; que escrevem em memória de
+onde se busca instrução; que desabilitam interrupção por tempo indefinido.
+
+**E desconfie de "a biblioteca já resolveu isso"** — mesmo vindo de quem
+conhece a plataforma. Nesse caso a descrição dizia "escreve numa área
+reservada afastada do código"; o código alinhava a 256 bytes, tinha offset
+default ZERO dentro da região do bootloader, e apagava por setor de 4 KB.
+
 ## Registro
 
 Hipótese nova: **registrar a aposta com percentual** antes de testar. Aposta

@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.121.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.123.2 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.121.0"
+#define COTUCA_OS_VERSION "0.123.2"
 
 #include "hal.h"
 #include "params.h"
@@ -727,7 +727,31 @@ static uint32_t soma_teto_forc = 0;   // != 0 = teto artificial, so pra teste
 static bool     soma_caiu[cotuca::Manifest::kMaxSacrificaveis]   = {false};
 static uint32_t soma_caiu_ms[cotuca::Manifest::kMaxSacrificaveis] = {0};
 static uint32_t soma_caiu_us[cotuca::Manifest::kMaxSacrificaveis] = {0};
+// QUAL CRITERIO DERRUBOU. Com dois criterios agindo, "CAIU pelo teto"
+// para ambos e relatorio que perde a informacao mais util: carga
+// SUSTENTADA acima do orcamento e PICOS estourando o prazo pedem
+// consertos diferentes, e o registro nao pode confundi-los.
+static bool     soma_caiu_est[cotuca::Manifest::kMaxSacrificaveis] = {false};
 static bool     soma_sem_saida = false;
+
+// ---- ESTOUROS DE PRAZO: contagem, nao maximo ----
+//
+// O CTOS guardava o PICO e mais nada. Um pico de 1035 us num prazo de
+// 1000 pode ser evento unico (uma varredura de fader, o `sync`
+// empurrando 76 CCs) ou pode ser rotina — diagnosticos OPOSTOS com o
+// mesmo numero. Maximo sem denominador nao decide politica.
+//
+// POR REGIME, NAO GLOBAL: um contador que atravessa mudancas de
+// configuracao mistura o perfil leve com o pesado e volta a ser numero
+// sem denominador. Zera junto com o resto do CTOS, e cada estouro
+// carimba QUAIS efeitos estavam no ar — se eles coincidirem com
+// eventos discretos, o carimbo os entrega.
+static uint32_t est_n        = 0;   // quantos passaram do prazo
+static uint32_t est_ult_ms   = 0;   // carimbo do ultimo
+static uint32_t est_ult_us   = 0;   // quanto foi o ultimo
+static uint32_t est_pior_us  = 0;   // o pior desde o reset
+static uint16_t est_perfil   = 0;   // efeitos no ar no ultimo estouro
+static uint32_t est_prim_ms  = 0;   // carimbo do primeiro
 // A TRAVA TEM QUE FALAR. Enquanto `soma_caiu[k]` estiver de pe, o
 // callback zera aquele `_on` a cada bloco: o `set` do operador e
 // desfeito 3000 vezes por segundo, o `list` mostra 0, e esse 0 e
@@ -834,6 +858,91 @@ static volatile int      aviso_teto_idx = -1;   // -1 = nada pendente
 static volatile uint32_t aviso_teto_us  = 0;
 static volatile uint32_t aviso_teto_prazo = 0;
 static volatile bool     aviso_sem_saida  = false;
+
+// ---- SACRIFICIO, UM SO LUGAR ----
+// Dois criterios chamam isto: o de SEQUENCIA (blocos seguidos acima do
+// teto) e o de ESTOURO (blocos acima do PRAZO numa janela). Duplicar a
+// logica faria os dois divergirem no primeiro conserto — e a ordem de
+// prioridade e a coisa que menos pode ter duas versoes.
+static bool SacrificaUm(uint32_t us, uint32_t prazo, bool por_estouro)
+{
+    int alvo = -1;
+    for(int k = 0; k < manifest.n_sacrif; k++)
+        if(!soma_caiu[k]
+           && params.Real(manifest.sacrif[k].param_on) >= 0.5f)
+        { alvo = k; break; }
+    if(alvo < 0)
+    {
+        if(!soma_sem_saida)
+        {
+            soma_sem_saida  = true;
+            aviso_sem_saida = true;
+            aviso_teto_us   = us;
+        }
+        return false;
+    }
+    soma_caiu[alvo]    = true;
+    soma_caiu_ms[alvo] = cotuca::hal::NowMs();
+    soma_caiu_us[alvo]  = us;
+    soma_caiu_est[alvo] = por_estouro;
+    params.Set(manifest.sacrif[alvo].param_on, 0.f);
+    soma_quedas++;
+    // AVISO MARCADO, nao falado: falar do callback mata a serial.
+    aviso_teto_idx   = alvo;
+    aviso_teto_us    = us;
+    aviso_teto_prazo = prazo;
+    soma_carencia    = kCarenciaBlocos;
+    return true;
+}
+
+// ---- CRITERIO DE ESTOURO: mira o PRAZO, nao o teto ----
+//
+// TETO E PRAZO SAO COISAS DIFERENTES, e o vocabulario e permanente:
+//
+//   TETO  (850 us) = ORCAMENTO ADMINISTRATIVO. Onde o CTOS decide que
+//                    a carga esta alta demais pro conforto. Escolhido.
+//   PRAZO (1000 us) = PAREDE FISICA. Onde o bloco perde o deadline e
+//                    o audio falha de verdade. Imposto pelo hardware.
+//
+// Confundir os dois faz a protecao criar o defeito que deveria evitar.
+//
+// O teto (850) e orcamento administrativo; o prazo (1000) e a parede
+// fisica. Medido em 22/08: com tudo ligado o pico fica em ~975 us — o
+// teto e ultrapassado em TODO pico e nada falha. Um criterio de pico
+// que mirasse o teto derrubaria efeito o tempo todo numa configuracao
+// que toca limpa: seria a protecao criando o defeito que deveria
+// evitar, que e a razao pela qual baixar o teto foi descartado.
+//
+// Estouro de PRAZO e falha real, e mede ZERO nos dois regimes e sob
+// provocacao (`sync` de 76 CCs, varredura de fader, chaveamento do
+// wavefolder). Entao esta defesa nasce quieta — que e o certo: ela
+// existe e nao age ate o fenomeno aparecer.
+//
+// TRES numa janela de 2 s, nao um: um estouro isolado ja aconteceu uma
+// vez em toda a bancada e nao se reproduz. Punir o evento raro seria
+// punir o instrumento por um acidente.
+// ESCOLHIDOS, NAO MEDIDOS — e a etiqueta importa.
+//
+// 22/08: o contador de estouros mediu ZERO em todo regime de bancada
+// (uso desenhado, extremo com tudo ligado, e sob provocacao dirigida
+// ao `sync` de 76 CCs, varredura de fader e chaveamento do
+// wavefolder). Sem estouro observado, nao ha dado do qual derivar
+// estes numeros: eles vem de um CRITERIO declarado, nao de medicao.
+//
+// O criterio: nao punir o evento isolado. Houve um pico de 1035 us em
+// toda a bancada, uma vez, sem culpado nomeado e sem se reproduzir.
+// Derrubar efeito por causa dele seria punir o instrumento por um
+// acidente. Tres numa janela de 2 s exige um padrao, nao um acidente.
+//
+// REVISAR se o contador em uso real discordar. Constante escolhida e
+// constante medida sao coisas diferentes, e daqui a meses a pergunta
+// "por que 3?" tem que achar a resposta aqui em vez de virar
+// arqueologia.
+static constexpr uint32_t kEstJanelaMs = 2000;
+static constexpr uint32_t kEstLimite   = 3;
+static uint32_t est_rajada    = 0;
+static uint32_t est_rajada_ms = 0;
+static uint32_t est_prazo_forc = 0;   // != 0 = prazo artificial, so teste
 
 // ---- MEDIDOR DE ENTRADA, POR CANAL, CRU ----
 //
@@ -1723,6 +1832,45 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             const uint32_t prazo
                 = (uint32_t)(1e6f * (float)size
                              / cotuca::hal::Info().sample_rate);
+
+            // ESTOURO DE PRAZO. So conta e carimba — nunca loga daqui:
+            // a regra do callback que ja pendurou a placa uma vez.
+            const uint32_t prazo_est = est_prazo_forc ? est_prazo_forc : prazo;
+            if(soma_us > prazo_est)
+            {
+                const uint32_t ag = cotuca::hal::NowMs();
+                if(!est_n) est_prim_ms = ag;
+                est_n++;
+                est_ult_ms = ag;
+                est_ult_us = soma_us;
+                if(soma_us > est_pior_us) est_pior_us = soma_us;
+                // Retrato do que estava no ar. Um bit por familia por
+                // cadeia; sem isto o numero volta a nao ter denominador.
+                uint16_t m = 0;
+                for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+                {
+                    if(params.Real(manifest.p_drv_on[c]) >= 0.5f) m |= 1u << (c * 7 + 0);
+                    if(params.Real(manifest.p_phs_on[c]) >= 0.5f) m |= 1u << (c * 7 + 1);
+                    if(params.Real(manifest.p_wrb_on[c]) >= 0.5f) m |= 1u << (c * 7 + 2);
+                    if(params.Real(manifest.p_dly_on[c]) >= 0.5f) m |= 1u << (c * 7 + 3);
+                    if(params.Real(manifest.p_frz_on[c]) >= 0.5f) m |= 1u << (c * 7 + 4);
+                    if(params.Real(manifest.p_rev_on[c]) >= 0.5f) m |= 1u << (c * 7 + 5);
+                    if(params.Real(manifest.p_shm_on[c]) >= 0.5f) m |= 1u << (c * 7 + 6);
+                }
+                est_perfil = m;
+                // RAJADA: tres numa janela de 2 s derrubam um efeito.
+                // Fora da janela, a contagem recomeca — estouro
+                // esparso nao acumula ate virar queda.
+                const uint32_t ag2 = cotuca::hal::NowMs();
+                if(est_rajada && (ag2 - est_rajada_ms) > kEstJanelaMs)
+                    est_rajada = 0;
+                if(!est_rajada) est_rajada_ms = ag2;
+                if(++est_rajada >= kEstLimite && !soma_carencia)
+                {
+                    est_rajada = 0;
+                    SacrificaUm(soma_us, prazo_est, true);
+                }
+            }
             soma_teto_us = soma_teto_forc ? soma_teto_forc
                                           : (uint32_t)(kTetoFrac * (float)prazo);
 
@@ -1741,35 +1889,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
                 if(++soma_seguidos >= kBlocosSeguidos)
                 {
                     soma_seguidos = 0;
-                    // Procura o de MENOR prioridade que esteja ligado.
-                    int alvo = -1;
-                    for(int k = 0; k < manifest.n_sacrif; k++)
-                        if(!soma_caiu[k]
-                           && params.Real(manifest.sacrif[k].param_on) >= 0.5f)
-                        { alvo = k; break; }
-
-                    if(alvo >= 0)
-                    {
-                        soma_caiu[alvo]    = true;
-                        soma_caiu_ms[alvo] = cotuca::hal::NowMs();
-                        soma_caiu_us[alvo] = soma_us;
-                        params.Set(manifest.sacrif[alvo].param_on, 0.f);
-                        soma_quedas++;
-                        // AVISO OBRIGATORIO — mas MARCADO, nao falado.
-                        // Derrubar em silencio seria a familia "falha em
-                        // silencio"; falar daqui mata a serial.
-                        aviso_teto_idx   = alvo;
-                        aviso_teto_us    = soma_us;
-                        aviso_teto_prazo = prazo;
-                        // Espera a rampa descer antes de julgar de novo.
-                        soma_carencia    = kCarenciaBlocos;
-                    }
-                    else if(!soma_sem_saida)
-                    {
-                        soma_sem_saida  = true;
-                        aviso_sem_saida = true;
-                        aviso_teto_us   = soma_us;
-                    }
+                    SacrificaUm(soma_us, prazo, false);
                 }
             }
             else if(soma_seguidos)
@@ -2616,9 +2736,41 @@ static void HandleLine(const char* line)
             soma_seguidos  = 0;
             soma_carencia  = 0;
             soma_pico_us   = 0;
+            // O contador de estouros zera JUNTO: ele so significa
+            // alguma coisa com um regime declarado, e o rearm e o
+            // marco natural desse regime. Global, atravessando
+            // mudancas de configuracao, seria numero sem denominador.
+            est_n = est_ult_ms = est_ult_us = 0;
+            est_pior_us = est_prim_ms = 0;
+            est_perfil = 0;
+            est_rajada = 0;
+            for(int k = 0; k < manifest.n_sacrif; k++)
+                soma_caiu_est[k] = false;
             hal::Log("ctos: efeitos rearmados — o veto volta a valer do zero");
             hal::Log("  teto de soma: latches soltos. Os efeitos NAO"
                      " religam sozinhos — ligue os que quiser de volta");
+            return;
+        }
+        // `ctos prazo <us>` — prazo ARTIFICIAL, so pra teste. Sem
+        // isto o criterio de estouro seria indemonstravel: ele mede
+        // zero em todo regime real, e defesa que nunca se viu agir e
+        // hipotese. Espelha o `ctos teto`, que existe pelo mesmo motivo.
+        if(strncmp(a, "prazo", 5) == 0)
+        {
+            const char* v = a + 5;
+            while(*v == ' ') v++;
+            const long us = strtol(v, nullptr, 10);
+            est_prazo_forc = (us > 0) ? (uint32_t)us : 0;
+            est_rajada = 0;
+            if(est_prazo_forc)
+                hal::Log("ctos: prazo ARTIFICIAL em %lu us — %lu estouros"
+                         " em %lu ms derrubam um efeito. `ctos prazo 0`"
+                         " devolve o prazo real.",
+                         (unsigned long)est_prazo_forc,
+                         (unsigned long)kEstLimite,
+                         (unsigned long)kEstJanelaMs);
+            else
+                hal::Log("ctos: prazo de volta ao real");
             return;
         }
         if(strncmp(a, "teto", 4) == 0)
@@ -2683,9 +2835,10 @@ static void HandleLine(const char* line)
             const bool lig
                 = params.Real(manifest.sacrif[k].param_on) >= 0.5f;
             if(soma_caiu[k])
-                hal::Log("      %d. %-8s CAIU pelo teto em t=%.1f s"
+                hal::Log("      %d. %-8s CAIU por %-8s em t=%.1f s"
                          " (bloco estava em %lu us)", k,
                          manifest.sacrif[k].nome,
+                         soma_caiu_est[k] ? "ESTOURO" : "carga",
                          (double)soma_caiu_ms[k] / 1000.0,
                          (unsigned long)soma_caiu_us[k]);
             else
@@ -2699,6 +2852,52 @@ static void HandleLine(const char* line)
                  shimmer_slot.Ativo() ? "ATIVO" : "desligado (custo zero)",
                  (unsigned long)shimmer_pico,
                  (unsigned long)ctos_orcamento_us);
+        {
+            const uint32_t prazo_real
+                = (uint32_t)(1e6f * (float)hal::Info().block_size
+                             / hal::Info().sample_rate);
+            // O ROTULO USA O PRAZO EFETIVO. Em 22/08 ele imprimiu
+            // ">1000 us" enquanto contava contra os 300 artificiais do
+            // teste — instrumento que mente sobre o proprio criterio.
+            const uint32_t prazo = est_prazo_forc ? est_prazo_forc
+                                                  : prazo_real;
+            if(est_prazo_forc)
+                hal::Log("  *** PRAZO ARTIFICIAL em %lu us (real: %lu)"
+                         " — modo de teste ***",
+                         (unsigned long)est_prazo_forc,
+                         (unsigned long)prazo_real);
+            if(!est_n)
+                hal::Log("  ESTOUROS DE PRAZO (>%lu us): nenhum desde o"
+                         " rearm", (unsigned long)prazo);
+            else
+            {
+                const uint32_t janela = est_ult_ms > est_prim_ms
+                                            ? est_ult_ms - est_prim_ms : 0;
+                hal::Log("  ESTOUROS DE PRAZO (>%lu us): %lu em %.1f s"
+                         " — pior %lu us, ultimo %lu us em t=%.1f s",
+                         (unsigned long)prazo, (unsigned long)est_n,
+                         (double)janela / 1000.0,
+                         (unsigned long)est_pior_us,
+                         (unsigned long)est_ult_us,
+                         (double)est_ult_ms / 1000.0);
+                char perfil[80]; int w = 0;
+                static const char* fam[7]
+                    = {"drv","phs","wrb","dly","frz","rev","shm"};
+                for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+                    for(int i = 0; i < 7; i++)
+                        if(est_perfil & (1u << (c * 7 + i)))
+                            w += snprintf(perfil + w, sizeof(perfil) - w,
+                                          "%s%s%c", w ? " " : "",
+                                          fam[i], 'a' + c);
+                hal::Log("    no ar quando estourou: %s",
+                         w ? perfil : "nenhum efeito");
+                hal::Log("    criterio: %lu estouros em %lu ms derrubam"
+                         " um efeito (rajada atual %lu)",
+                         (unsigned long)kEstLimite,
+                         (unsigned long)kEstJanelaMs,
+                         (unsigned long)est_rajada);
+            }
+        }
         hal::Log("  o instrumento perde o efeito, nunca a base."
                  " Desenho em docs/CTOS.md");
         return;
@@ -2921,7 +3120,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm] | rearm | vistos [reset] | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

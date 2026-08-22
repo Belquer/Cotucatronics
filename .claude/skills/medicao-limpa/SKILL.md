@@ -190,6 +190,34 @@ canal, ou "não escutar agora", perguntar **o que deixo de poder observar
 enquanto ele roda**. Se a resposta incluir a própria coisa que ele deveria
 produzir, parar ali — não são cinco versões de ajuste, é o mecanismo errado.
 
+## 12. Orçamento e parede não são o mesmo limite
+
+    TETO  = orçamento administrativo. ESCOLHIDO. Onde se decide que a
+            carga está alta demais para o conforto.
+    PRAZO = parede física. IMPOSTO pelo hardware. Onde falha de verdade.
+
+Em 22/08 uma defesa foi proposta como "M picos acima do **teto** numa janela
+T". Com o número na mão — pico 975, teto 850, zero falhas — ficou evidente
+que ultrapassar o teto é rotina benigna nessa carga: o critério derrubaria
+efeito o tempo todo numa configuração que toca limpa.
+
+> **Confundir orçamento com parede faz a proteção criar o defeito que
+> deveria evitar.** Toda defesa declara em qual dos dois mira — e a resposta
+> muda o critério, não só o número.
+
+**E o erro só apareceu ao DIMENSIONAR.** No papel a formulação soava
+razoável. Dimensionamento não é detalhe de implementação: é onde a opção é
+testada contra a realidade.
+
+## 13. Constante escolhida ≠ constante medida — etiquete
+
+`kEstLimite = 3` / `kEstJanelaMs = 2000` vieram de um CRITÉRIO declarado
+("não punir o evento isolado"), não de medição — o fenômeno media zero. O
+comentário diz isso, e diz para revisar se o uso real discordar.
+
+> Daqui a meses, "por que 3?" tem que achar a resposta no código, em vez de
+> virar arqueologia.
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já

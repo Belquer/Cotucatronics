@@ -288,6 +288,55 @@ tela enquanto meu relatório dizia que não existia.
 > isso, o silêncio dele é lido como ausência do fenômeno, e não como
 > ausência de alcance. Ver também a regra do canal mudo.
 
+## Parser que não casa deve FALHAR, nunca devolver default
+
+```python
+return float(m.group(1)) if m else 0      # <- o 0 e a mentira
+```
+
+Em 22/08 esse padrão, num script meu de bancada, transformou "meu regex não
+casou" em "o pico é 0 µs". Resultado: registrei **um defeito de firmware que
+não existe**, priorizei como passo 0 de um plano, e escondi o número real —
+pico de 829 µs contra um teto de 850, a 21 µs de derrubar efeito.
+
+O medidor estava perfeito o tempo todo.
+
+> **A regra do canal mudo vale para o código que eu escrevo para medir.** O
+> instrumento que mente com mais eficácia é o de bancada, porque ninguém o
+> revisa: ele é "só um script".
+
+Num leitor de bancada: sem `else 0`, sem `or 0`, sem `get(k, 0)`. Se o dado
+não veio, dizer que não veio — e conferir a saída CRUA antes de confiar num
+extrator, especialmente quando o número parece redondo demais.
+
+## Ganho de teste verifica a AÇÃO e a NARRAÇÃO
+
+Uma defesa que mede zero em regime real é indemonstrável sem ganho de teste
+(`ctos teto <us>`, `ctos prazo <us>`). Mas exercitar a ação é metade.
+
+Em 22/08, `ctos prazo 300` provou que o critério derrubava os efeitos certos
+na ordem certa — e o relatório mentiu duas vezes no mesmo teste: imprimiu
+`>1000 us` enquanto contava contra 300, e rotulou como `CAIU pelo teto`
+quedas que vieram do critério de estouro. As duas só apareceram porque
+alguém leu o log em vez de conferir só o comportamento.
+
+> **O relatório é a única coisa que vai existir quando o evento acontecer de
+> verdade, sozinho, num palco.** Ao exercitar uma defesa, ler a narração
+> dela com a mesma desconfiança com que se lê o comportamento.
+
+Checklist ao exercitar defesa: o rótulo usa o valor EFETIVO (não o real,
+quando há modo de teste)? O modo de teste se declara? Se há mais de um
+critério, o registro diz QUAL agiu?
+
+## Queda de CPU depois de proteção agindo é consequência, não melhora
+
+Com prazo artificial o bloco caiu de 453 para 246 µs — porque a defesa tinha
+desligado cinco efeitos. Um leitor apressado vê "246 µs, ótimo" onde metade
+do instrumento saiu do ar.
+
+> Gêmeo do "zero com cara de dado": **número bom com cara de vitória.** Toda
+> leitura de carga vem com o retrato do que estava no ar.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria
