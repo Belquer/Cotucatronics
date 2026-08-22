@@ -32,7 +32,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 | Feature | Params | CC | Estado |
 |---|---|---|---|
 | **Fonte** — crossfade piezo/jack + tom de teste | `src_mix`, `tone_freq`, `tone_mix` | — | ativo (`src_mix` fora do MIDI por segurança) |
-| **Ganho de entrada** por cadeia | `in_gain_a`, `in_gain_b` | 21, **50** | ativo · nasce em **1,0×**, faixa 1–8× com curva quadrática |
+| **Ganho de entrada** por cadeia | `in_gain_a`, `in_gain_b` | 21, 22 | ativo · nasce em **1,0×**, faixa 1–8× · **medido 22/08 com os piezos montados: não satura** (p1 −9,2 dBFS, p2 −19,5, zero clip) |
 | **Mix entre as CADEIAS** (shell) | `piezo_mix` | **58** | ⏳ aceite pendente · **mudou de posição no pivô**: era balanço na entrada entre sinais crus, agora mistura as duas cadeias já processadas. Lei igual: centro = as duas cheias |
 | **Tom de teste: destino** | `tone_dest` | — | ✅ 20/08 · 0=A · 1=B · **2=AMBAS (default)** · injetado **depois do gate**, senão o gate corta o próprio tom e você mede o gate |
 | **Histograma de entrada** por canal | — | — | ✅ 20/08 · `hist` / `hist reset` · baldes de 6 dB pelo expoente do float, cru **e** pós-`in_gain`, clip com latch, e o dB que falta tirar pro atenuador · +27 µs |

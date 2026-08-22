@@ -429,85 +429,35 @@ que toque no callback.
 
 ## Defeitos abertos
 
-**🟡 A entrada satura NO REGIME "DEDO NO DISCO SOLTO" — e só nele, até
-segunda ordem.** Medido 20/08, entrada crua:
+**✅ FECHADO 22/08 — a entrada NÃO satura, e o divisor saiu da fila.**
+
+Medido com os piezos **montados na escultura**, que é o regime de uso:
 
 ```
-IN_L (p1): pico 1.00000 =  -0.0 dBFS |  42 365 amostras | clip 65
-IN_R (p2): pico 0.46398 =  -6.7 dBFS | 244 237 amostras | clip 0
+p1 (IN_L): pico  -9,2 dBFS | 18,0% das amostras ativas | clip 0
+p2 (IN_R): pico -19,5 dBFS |  1,3% das amostras ativas | clip 0
+pos-ganho (in_gain 2,8x):   -0,3 dBFS                  | clip 0
 ```
 
-O p2 **não está mudo**: entrega sinal nos dois canais.
+**Nenhum clip em lugar nenhum.** O plano de oito passos encolheu para dois: a
+proteção (1 kΩ + 2× 1N4148), que serve de qualquer jeito porque piezo entrega
+dezenas de volts num transiente forte, e recalibrar o `in_gain`.
 
-> **CORRIGIDO 20/08 — a assimetria era DEFEITO FÍSICO de um piezo**, não do
-> circuito nem do canal. Trocados de lugar, p1 e p2 chegam exatamente iguais.
-> O que separou as hipóteses foi **permutar os transdutores**, não medir mais
-> fundo: nenhuma medição elétrica distingue "este canal atenua" de "este
-> transdutor entrega menos". Ver cicatriz 12b.
+**A cicatriz 12a acertou o desfecho.** A medição de 20/08 que dizia "a entrada
+satura" foi feita com **dedo direto no disco solto** — o caso mais violento que
+a pastilha encontra. Montada e excitada por vibração, ela entrega vinte dB a
+menos. *"Dimensionar antes de medir no regime certo seria resolver um problema
+que talvez não exista"* — e não existia.
 
-**Medido depois: OS DOIS grampeiam** quando batidos direto — e isso vale, com
-a ressalva de regime abaixo. Batendo no p2, ele crava em 0 dBFS e o p1 cai para
-−55 dBFS; batendo no p1, o inverso.
+**Dois pontos de atenção que a medição deixou:**
 
-**Pico grampeado não dimensiona atenuador.** A medição satura em 0 dBFS e o
-pico real é "pelo menos isso". O `hist` passou a RECUSAR dar o número nesse
-estado (v0.82.2) e manda atenuar 20 dB provisório primeiro — a versão anterior
-imprimia "precisa tirar +6,0 dB", que é um piso com cara de resposta, e alguém
-soldaria o divisor errado por causa dela.
+**O pós-ganho está a três décimos do teto** (−0,3 dBFS com `in_gain` 2,8×). Uma
+batida mais forte clipa. Há folga na entrada, não na saída do ganho.
 
-**Não há caminho de software.** AK4556 não expõe controle de ganho; o PCM3060
-só tem atenuação **digital**, pós-conversão, que reduz o número sem desfazer o
-grampo; o WM8731 não tem setter no libDaisy. O divisor físico é obrigatório.
-
-**Alvo −6 dBFS por piezo, não −1:** no centro do balanço os dois somam, e dois
-piezos em −6 batidos juntos dão 0 dBFS. A folga é o espaço da soma — já visível
-no histograma, que marcou 253 clips pós-ganho contra 252 no IN_R.
-
-> ### ⚠️ VALIDADE DESTES NÚMEROS: o regime é parte do dado
->
-> Tudo acima veio de **dedo direto no disco solto** — piezo desacoplado,
-> excitado por contato. **Não é o regime de uso.** A mesma pastilha colada
-> na escultura, excitada pela vibração dela, entrega outra coisa e
-> provavelmente muito menos: contato direto num disco livre é o caso mais
-> violento que um piezo encontra.
->
-> Registrei "a entrada satura" sem qualificar o regime — que é afirmar,
-> sobre o instrumento montado, uma medição que nunca o tocou. **Nenhuma
-> decisão de hardware sai daqui.**
->
-> O que estes números provam, e segue valendo: **o caminho de sinal
-> funciona nos dois canais** (o p2 nunca esteve mudo), e o `hist` mede o
-> que se pede dele.
-
-**Plano do dB, 8 passos — BLOQUEADO NO PASSO 2.**
-
-| # | Quem | O quê | Estado |
-|---|---|---|---|
-| 1 | Code | histograma de entrada (`hist`) | ✅ **feito** — v0.82.2, commit `8e06635` |
-| 2 | dB | montar **só a proteção** — 1 kΩ em série + 2× 1N4148 em grampo. **Ganho intacto**: não é atenuador, é rede de segurança do ADC | ⏳ |
-| 3 | dB | instalar os piezos **na escultura** e tocar normal | ⏳ |
-| 4 | Code + dB | `hist reset` · tocar · `hist` — **medir no regime real** | ⏳ |
-| 5 | dB | **atenuador só se clipar tocando.** Se não clipar, os passos de divisor caem fora | ⏳ **condicional** |
-| 6 | dB | recalibrar `in_gain` sobre o sinal limpo | ⏳ |
-| 7 | Code | esticar a faixa do `in_gain` se 8× virar teto | ⏳ — decisão de desenho aberta: esticar a faixa muda o significado de todos os CCs já decorados |
-| 8 | dB | reconfirmar os cinco efeitos | ⏳ — o aceite do `piezo_mix`/`out_width` cai aqui |
-
-**O plano mudou de FORMA em 20/08, e a mudança é de método.** A versão
-anterior ia direto dimensionar um atenuador a partir de uma medição de dedo no
-disco solto. Agora: **proteção primeiro** — que não mexe no ganho e é barata —
-depois instrumento montado, depois medição no regime real. O atenuador entra
-**só se a medição de verdade pedir**.
-
-Dimensionar antes de medir no regime certo seria resolver um problema que
-talvez não exista, com um número que com certeza não valia. E o efeito
-colateral é bom: a proteção serve **de qualquer jeito**, clipando ou não —
-piezo entrega dezenas de volts num transiente forte, e o grampo protege o ADC
-independentemente da decisão de nível.
-
-**CORRIGIDO 20/08:** o `in_gain` **não** nasce em 8,0. O default é **1,0×**
-(faixa 1–8×, curva quadrática), escrito na mesma linha do `Add()`. O 8,0 que
-figurava aqui como defeito era **ajuste do dB**, lido de placa viva e tratado
-como default do projeto.
+**Dez dB entre os dois piezos, e p1 com 14× mais amostras ativas.** Pode ser
+execução ou acoplamento, e a medição não distingue — a separação é **trocar os
+piezos de canal** (cicatriz 12b). Enquanto não se faz, `in_gain_a/b` existem
+justamente para casar os dois.
 
 **🔴 A serial morre com o vocoder ligado — prioridade 1.**
 As rajadas de ~3,4 ms do callback starvam a ISR do USB; o CDC do host
