@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.106.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.109.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.106.0"
+#define COTUCA_OS_VERSION "0.109.0"
 
 #include "hal.h"
 #include "params.h"
@@ -454,6 +454,12 @@ static bool           reverb_ok = false;
 //
 // Mesma região, custo diferente, porque a pergunta certa nunca foi
 // "quantos bytes" e sim "de que jeito".
+// UM FREEZE POR CADEIA. Cada uma congela SEU material no SEU instante;
+// um freeze so, alimentado pela soma, congelaria os dois juntos — e o
+// gesto e justamente pegar um material enquanto o outro segue vivo.
+static cotuca::Freeze freeze_c[cotuca::Manifest::kCadeias];
+static bool           freeze_c_ok[cotuca::Manifest::kCadeias] = {};
+static float*         freeze_c_mem[cotuca::Manifest::kCadeias] = {};
 static cotuca::Freeze freeze;
 static bool           freeze_ok = false;
 static float*         freeze_mem = nullptr;
@@ -1163,6 +1169,60 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             src_buf[i] = cad[0].buf[i] + cad[1].buf[i];
         }
 
+    // BUZIOS — RESTAURADO EM 20/08.
+    //
+    // Ele foi APAGADO em 6a8175d, a reestruturacao em duas cadeias:
+    // vivia pos-gate, dentro da faixa que eu substitui de uma vez, e
+    // sumiu junto. Passou CINCO commits morto — sem erro de
+    // compilacao (as variaveis seguiram declaradas e lidas no loop) e
+    // com os dois CCs apontando pro nada.
+    //
+    // A posicao mudou de significado: era pos-gate de UM sinal, agora
+    // le a SOMA das duas cadeias ja processadas. Uma batida em
+    // qualquer piezo dispara um sorteio — que e o gesto, e nao seria
+    // se cada cadeia tivesse o seu.
+    // BUZIOS: detector de transiente, POS-GATE de proposito — o
+    // gate ja separou gesto de chao de ruido, entao o limiar aqui le
+    // batida, nao ambiente. Ataque instantaneo, queda ~40 ms,
+    // histerese em 60% do limiar, cooldown em blocos.
+    if(params.Real(manifest.p_buzios_on) >= 0.5f)
+    {
+        const float thr = params.Real(manifest.p_buzios_thresh);
+        for(size_t i = 0; i < size; i++)
+        {
+            const float a = src_buf[i] < 0.f ? -src_buf[i] : src_buf[i];
+            if(a > buzios_env)
+                buzios_env = a;
+            else
+                buzios_env *= 0.9995f;
+            if(buzios_env > buzios_env_peak)
+            {
+                buzios_env_peak = buzios_env;
+                cotuca::hal::BlackboxWrite(8, buzios_env_peak);
+            }
+            if(!buzios_above && buzios_env > thr)
+            {
+                buzios_above = true;
+                if(buzios_cd == 0)
+                {
+                    buzios_fires++;
+                    cotuca::hal::BlackboxWrite(9, (float)buzios_fires);
+                    buzios_fire = true; // o loop sorteia
+                    const float ms = params.Real(manifest.p_buzios_cooldown);
+                    buzios_cd = 1
+                               + (uint32_t)(ms * 0.001f
+                                            * cotuca::hal::Info().sample_rate
+                                            / (float)size);
+                }
+            }
+            else if(buzios_above && buzios_env < thr * 0.6f)
+                buzios_above = false;
+        }
+        if(buzios_cd > 0)
+            buzios_cd--;
+    }
+
+
         // POS-GANHO — o que a cauda de fato ve. A reestruturacao das
         // duas cadeias apagou este trecho junto com o bloco antigo, e o
         // `hist` continuou IMPRIMINDO a coluna que ninguem mais
@@ -1226,34 +1286,39 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             }
         }
 
-        // ---- FREEZE (uma instancia, envio por cadeia) ----
+        // ---- FREEZE: UM POR CADEIA ----
         //
-        // O GESTO e separado do ENVIO: `frz_on_a/b` dizem QUAL cadeia
-        // alimenta o freeze, `frz_hold` diz QUANDO congelar. Fundir os
-        // dois faria escolher a fonte e disparar o gesto no mesmo botao.
+        // NAO HA CHAVE SEPARADA: `frz_on` E o gesto de congelar. O
+        // param se chama `on` pra ler igual aos vizinhos, mas o que ele
+        // faz e segurar o que acabou de passar.
+        //
+        // SO O MOLHADO SAI DAQUI, e isto era um DEFEITO ate 20/08: o
+        // `Freeze::Process` e CAMADA — soma o congelado e deixa o sinal
+        // PASSAR. Na primeira versao paralela eu somava `l` inteiro na
+        // saida, entao o envio entrava de novo e a cadeia engrossava
+        // mesmo sem nada congelado. Subtrair a entrada isola o que o
+        // freeze de fato acrescentou.
 #if COTUCA_FREEZE_ENABLED
-        if(freeze_ok && !ctos_bypass_frz)
-        {
-            const uint32_t t0 = cotuca::hal::NowTicks();
-            const float fa = params.Real(manifest.p_frz_on[0]) >= 0.5f
-                                 ? params.Real(manifest.p_frz_mix[0]) : 0.f;
-            const float fb = params.Real(manifest.p_frz_on[1]) >= 0.5f
-                                 ? params.Real(manifest.p_frz_mix[1]) : 0.f;
-            freeze.SetMix(1.f);         // retorno molhado; o envio dosa
-            freeze.SetSize(params.Real(manifest.p_frz_size));
-            freeze.SetFrozen(params.Real(manifest.p_frz_hold) >= 0.5f);
-            for(size_t i = 0; i < size; i++)
+        if(!ctos_bypass_frz)
+            for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
             {
-                float l = cad[0].buf[i] * fa + cad[1].buf[i] * fb;
-                float r = l;
-                freeze.Process(l, r);
-                out[0][i] += l;
-                out[1][i] += r;
+                if(!freeze_c_ok[c]) continue;
+                const uint32_t t0 = cotuca::hal::NowTicks();
+                freeze_c[c].SetMix(params.Real(manifest.p_frz_vol[c]));
+                freeze_c[c].SetSize(params.Real(manifest.p_frz_size[c]));
+                freeze_c[c].SetFrozen(params.Real(manifest.p_frz_on[c]) >= 0.5f);
+                for(size_t i = 0; i < size; i++)
+                {
+                    const float x = cad[c].buf[i];
+                    float l = x, r = x;
+                    freeze_c[c].Process(l, r);
+                    out[0][i] += l - x;   // SO o congelado
+                    out[1][i] += r - x;
+                }
+                const uint32_t us = (cotuca::hal::NowTicks() - t0)
+                                    / cotuca::hal::TicksPerUs();
+                if(us > ctos_pico_us) ctos_pico_us = us;
             }
-            const uint32_t us = (cotuca::hal::NowTicks() - t0)
-                                / cotuca::hal::TicksPerUs();
-            if(us > ctos_pico_us) ctos_pico_us = us;
-        }
 #endif
 
         // ---- ESPACOS: um por cadeia, cada um com sala e shimmer ----
@@ -2757,12 +2822,18 @@ int main(void)
 #if COTUCA_FREEZE_ENABLED
         const float  sr   = hal::Info().sample_rate;
         const size_t need = cotuca::Freeze::FloatsNeeded(sr, kFreezeSeconds);
-        freeze_mem = (float*)hal::AllocBig(need * sizeof(float));
-        if(freeze_mem)
-            freeze_ok = freeze.Init(sr, freeze_mem, need, kFreezeSeconds);
-        hal::Log("freeze: %s (%.1f s, %u floats, %u KB em SDRAM)",
-                 freeze_ok ? "pronto" : "SEM BUFFER — passthrough",
-                 (double)kFreezeSeconds, (unsigned)need,
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+        {
+            freeze_c_mem[c] = (float*)hal::AllocBig(need * sizeof(float));
+            if(freeze_c_mem[c])
+                freeze_c_ok[c] = freeze_c[c].Init(sr, freeze_c_mem[c], need,
+                                                  kFreezeSeconds);
+        }
+        freeze_ok = freeze_c_ok[0];
+        hal::Log("freeze: A %s | B %s (%.1f s, %u KB cada em SDRAM)",
+                 freeze_c_ok[0] ? "pronto" : "SEM BUFFER",
+                 freeze_c_ok[1] ? "pronto" : "SEM BUFFER",
+                 (double)kFreezeSeconds,
                  (unsigned)(need * sizeof(float) / 1024));
 #else
         hal::Log("freeze: DESLIGADO no build (bisseccao)");

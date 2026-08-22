@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.71.0
+// manifest.h (instrumento "bancada") v0.73.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -255,10 +255,25 @@ struct Manifest
     // vocoder na cadeia: pós-delay, pré-reverb. O congelado ganha a
     // sala junto, que é o que faz ele PERTENCER ao instrumento em vez
     // de flutuar por cima.
-    int p_frz_on[kCadeias];   // envio por cadeia
-    int p_frz_hold;          // O GESTO: congela agora   // 0/1 — gesto: CC, e B2 em Hold quando o painel vier
-    int p_frz_mix[kCadeias];  // 0..1 seco/congelado
-    int p_frz_size; // janela do grão, em ms
+    // FREEZE: UM POR CADEIA, e SEM chave separada.
+    //
+    // NAO HA CHAVE SEPARADA porque congelar JA E o liga/desliga. Foi o
+    // dB que viu: "ele nao precisa de on/off ao contrario de todos os
+    // outros, o hold dele ja e on off".
+    //
+    // E o param se chama `frz_on` e nao `frz_hold` pra ler igual aos
+    // vizinhos na lista — o gesto e o mesmo, o nome e que acompanha a
+    // familia. Consistencia de vocabulario onde o comportamento ja e
+    // consistente.
+    //
+    // DOIS FREEZES DE VERDADE, nao um com envio: cada cadeia congela
+    // SEU material, no SEU instante. Um freeze so, alimentado pela
+    // soma, congelaria os dois juntos — e o gesto e justamente pegar
+    // um material enquanto o outro segue vivo.
+    int p_frz_on[kCadeias];     // A CHAVE, que aqui E o gesto de congelar
+    int p_frz_vol[kCadeias];    // nivel do congelado
+  // 0..1 seco/congelado
+    int p_frz_size[kCadeias];
 
     // DRIVE — waveshaper tanh como COLA. Primeiro da cadeia: sujeira
     // antes de modulacao, tempo e espaco (ordem de pedaleira).
@@ -792,16 +807,15 @@ struct Manifest
         // Nasce DESLIGADO. Congelar é gesto, e gesto não tem estado
         // default ligado: a placa subindo já congelada seria a
         // escultura tocando sozinha um som que ninguém pediu.
-        p_frz_on[0]        = t.Add("frz_on_a",        0.0f, 0.f, 1.f);
-        p_frz_on[1]        = t.Add("frz_on_b",        0.0f, 0.f, 1.f);
         // O GESTO, separado do envio: `frz_on_a/b` dizem QUAL cadeia
         // alimenta o freeze; este diz QUANDO congelar.
-        p_frz_hold  = t.Add("frz_hold",  0.0f, 0.f, 1.f);
+        p_frz_on[0]    = t.Add("frz_on_a",  0.0f, 0.f, 1.f);
+        p_frz_on[1]    = t.Add("frz_on_b",  0.0f, 0.f, 1.f);
+        p_frz_vol[0]   = t.Add("frz_vol_a", 0.0f, 0.f, 1.f);
+        p_frz_vol[1]   = t.Add("frz_vol_b", 0.0f, 0.f, 1.f);
         // Mix em 1.0: congelou, é o congelado que se ouve. Meio a meio
         // deixaria o seco competindo com a sustentação e o gesto
         // perderia clareza — quem quiser camada abaixa no CC.
-        p_frz_mix[0]       = t.Add("frz_mix_a",       0.0f, 0.f, 1.f);  // MIDI: nasce 0
-        p_frz_mix[1]       = t.Add("frz_mix_b",       0.0f, 0.f, 1.f);
         // 100 ms de janela. Abaixo de ~40 ms o grão vira timbre
         // próprio (soa granular, "chuvisco"); acima de ~250 ms os dois
         // grãos leem quase o mesmo trecho e o batimento volta.
@@ -809,7 +823,16 @@ struct Manifest
         // real. Escrever 100.0f aqui satura em 1.0 e o grao nasce em
         // 400 ms — exatamente o tamanho em que os dois graos leem quase
         // o mesmo trecho e o batimento volta. 100 ms = (100-20)/380.
-        p_frz_size      = t.Add("frz_size",      0.0f, 20.f, 400.f); // MIDI: nasce 0 (= 20 ms)
+        // FAIXA CORTADA EM 165 ms (20/08). Ia ate 400, e o `SetSize` limita o
+        // grao a um TERCO DO NUCLEO — que tem 500 ms, entao o teto real
+        // sempre foi ~167. Sessenta e um por cento do curso do fader nao
+        // fazia nada, e o dB percebeu tentando mexer no `frz_size_b`.
+        //
+        // Mesma licao do `dly_time` em 18/08: LIMITE remove o inutil do
+        // alcance, CURVA so o redistribui. E vale pros dois canais — o
+        // defeito nunca foi do B.
+        p_frz_size[0]      = t.Add("frz_size_a",      0.0f, 20.f, 165.f); // MIDI: nasce 0 (= 20 ms)
+        p_frz_size[1]      = t.Add("frz_size_b",      0.0f, 20.f, 165.f); // MIDI: nasce 0 (= 20 ms)
 
         // ---- DRIVE ----
         p_drv_on[0]    = t.Add("drv_on_a",    0.0f, 0.f, 1.f);
@@ -1138,7 +1161,7 @@ struct Manifest
         //
         // O painel v2 ainda não está soldado — até lá o alvo vale pelo
         // `b2` do painel falso via serial e pelo CC 26.
-        button2_target = p_frz_hold;
+        button2_target = p_frz_on[0];
         button2_mode   = ButtonMode::Hold;
 
         // ---- SLOT Fx2 VAZIO (2026-08-18) ----
@@ -1231,12 +1254,12 @@ struct Manifest
         // `frz_on_a/b` dizem QUAL cadeia alimenta; `frz_hold` diz QUANDO
         // congelar. Fundir os dois faria escolher a fonte e disparar o
         // gesto no mesmo botao.
-        AddMidi(65, p_frz_on[0]);
-        AddMidi(66, p_frz_mix[0]);
-        AddMidi(67, p_frz_on[1]);
-        AddMidi(68, p_frz_mix[1]);
-        AddMidi(69, p_frz_hold);          // O GESTO
-        AddMidi(70, p_frz_size);          // COMPARTILHADO
+        AddMidi(65, p_frz_on[0]);         // a chave E o gesto de congelar
+        AddMidi(66, p_frz_vol[0]);
+        AddMidi(67, p_frz_size[0]);
+        AddMidi(68, p_frz_on[1]);
+        AddMidi(69, p_frz_vol[1]);
+        AddMidi(70, p_frz_size[1]);
 
         // ---- ESPACO A: 71-79 · sala e shimmer PROPRIOS da cadeia A ----
         // `rev_on/rev_mix` sao o ENVIO, mesma forma do delay e do

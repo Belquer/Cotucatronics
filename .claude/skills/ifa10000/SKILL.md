@@ -12,6 +12,46 @@ Documento completo: `docs/IFA10000.md`. Histórias que compraram cada etapa:
 não passa não entra no build — fica no repo, documentado, com a etapa que
 reprovou.
 
+## Auditoria de params — três camadas, quinze minutos
+
+Roda inteira depois de qualquer refactor que toque no callback. Achou uma
+feature morta havia cinco commits (cicatriz 12j).
+
+**1. Quem lê cada param?** Compare a lista de `t.Add("nome"` no manifest com
+`params.Real(manifest.p_nome)` no `main.cpp`. Param sem leitor é **feature
+morta até prova em contrário** — e compila, fica na tabela, e mantém o CC
+apontando pro nada.
+
+**2. Faixa declarada × trava interna.** Ver a seção abaixo. Atenção à
+DIREÇÃO: faixa MAIOR que a trava é curso morto (defeito); faixa MENOR é
+escolha musical (não é).
+
+**3. Varredura viva.** Cada param no mínimo e no máximo, com leitura de volta
+da placa. Pega o que o texto não vê: curva errada, clamp no caminho, param
+que não chega.
+
+## Antes de tudo: a faixa do param bate com a trava do efeito?
+
+Pergunta de trinta segundos que já pegou um fader com **61% de curso morto**
+(cicatriz 12i).
+
+Todo efeito que trava um param internamente — `if(n > hi) n = hi` — cria um
+teto que o manifest não conhece. Os dois arquivos ficam corretos em isolamento
+e o defeito vive no espaço entre eles: o param guarda 400, o efeito usa 167,
+e mais da metade do fader não faz nada.
+
+```
+1. procure os clamps do efeito:  grep -n "if(n > \|if(ms > \|> teto" <efeito>.h
+2. calcule o teto REAL (pode depender de outro parametro: no freeze o teto
+   do grao e um terco do NUCLEO)
+3. compare com min/max do t.Add() no manifest
+4. faixa maior que a trava -> corte a FAIXA, nao ponha curva
+```
+
+**Limite REMOVE o inútil do alcance; curva só o redistribui.** A distinção é
+do `dly_time` em 18/08, e ela foi aplicada uma vez e não generalizada — por
+isso está aqui, como pergunta de rotina em vez de nota sobre um param.
+
 ## ANTES DE TUDO: a caixa única
 
 **Ler `docs/FEATURES.md` inteiro antes de acrescentar qualquer coisa.** Toda

@@ -397,6 +397,36 @@ compartilhados.
 
 ---
 
+## Auditoria de params (20/08) — uma feature estava morta
+
+O dB pediu auditoria de todos os params, um por um. Três camadas, quinze
+minutos:
+
+| camada | resultado |
+|---|---|
+| quem lê cada param | 🔴 **detector dos búzios apagado havia 5 commits** |
+| faixa × trava interna | 🟠 `frz_size` com 61% de curso morto (corrigido) |
+| varredura viva min/max | ✅ 75/75 atingem os extremos declarados |
+
+**Os búzios estavam mortos desde `6a8175d`** — o detector vivia pós-gate,
+dentro da faixa que substituí na reestruturação em duas cadeias. Nada
+denunciou: as variáveis seguiram declaradas e lidas no loop, os params na
+tabela, os CCs no mapa apontando pro nada, e o `board` reportando tudo certo.
+
+**Feature morta parece feature desligada** — e `buzios_on` nasce em 0, então o
+estado normal era o estado quebrado. Restaurado do `3303028` e testado: oito
+pulsos, oito sorteios. A posição mudou de significado — agora lê a soma das
+duas cadeias, e uma batida em qualquer piezo dispara.
+
+**Falso positivo registrado:** a camada 2 acusou `drv_drive`, `drv_tone` e
+`phs_rate` de alcance desperdiçado. São deliberados. A trava do efeito é rede
+de segurança, não alvo — só faixa MAIOR que a trava é defeito.
+
+A auditoria virou seção do IFÁ10000, para rodar depois de qualquer refactor
+que toque no callback.
+
+---
+
 ## Defeitos abertos
 
 **🟡 A entrada satura NO REGIME "DEDO NO DISCO SOLTO" — e só nele, até
