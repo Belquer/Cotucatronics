@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.105.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.106.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.105.0"
+#define COTUCA_OS_VERSION "0.106.0"
 
 #include "hal.h"
 #include "params.h"
@@ -1150,24 +1150,17 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         const float bal     = params.Real(manifest.p_piezo_mix);
         const float alvo_ga = 1.f - (bal > 0.f ?  bal : 0.f);
         const float alvo_gb = 1.f - (bal < 0.f ? -bal : 0.f);
-        // CROSSFADE POR CADEIA entre "vai pro espaco" e "sai seco".
-        // O que nao entra na cauda contorna por `seco_buf` e volta no
-        // fim — senao baixar o mix emudeceria a cadeia, porque a cauda
-        // e o unico caminho pra saida.
-        // A CHAVE ZERA O MIX SEM APAGA-LO. Desligar tira a cadeia do
-        // espaco; o ajuste do mix segue guardado pra quando voltar.
-        const float ea = params.Real(manifest.p_esp_on[0]) >= 0.5f
-                             ? params.Real(manifest.p_esp_mix[0]) : 0.f;
-        const float eb = params.Real(manifest.p_esp_on[1]) >= 0.5f
-                             ? params.Real(manifest.p_esp_mix[1]) : 0.f;
+        // O CROSSFADE SECO/ESPACO SAIU DAQUI em 20/08. Na cauda
+        // PARALELA o seco passa inteiro por fora e cada destino tem seu
+        // proprio envio — nao ha mais o que dividir aqui. Este bloco so
+        // aplica o balanco entre as cadeias.
         for(size_t i = 0; i < size; i++)
         {
             const float ga = suave_gl.Passo(alvo_ga);
             const float gb = suave_gr.Passo(alvo_gb);
-            const float a  = cad[0].buf[i] * ga;
-            const float b  = cad[1].buf[i] * gb;
-            src_buf[i]  = a * ea + b * eb;
-            seco_buf[i] = a * (1.f - ea) + b * (1.f - eb);
+            cad[0].buf[i] *= ga;
+            cad[1].buf[i] *= gb;
+            src_buf[i] = cad[0].buf[i] + cad[1].buf[i];
         }
 
         // POS-GANHO — o que a cauda de fato ve. A reestruturacao das
@@ -1268,13 +1261,15 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         {
             Espaco& e = esp[c];
             if(!e.reverb_ok) continue;
-            const bool rev_quer = params.Real(manifest.p_rev_on[c]) >= 0.5f;
-            const bool shm_quer = params.Real(manifest.p_shm_on[c]) >= 0.5f;
-            const float alvo = (rev_quer || shm_quer) ? 1.f : 0.f;
+            // O ENVIO E A CHAVE. `rev_on` diz se a cadeia entra no
+            // espaco; `rev_mix`, quanto. O shimmer nao tem envio proprio
+            // porque ele NAO tem sala propria: ele e esta sala
+            // realimentada com pitch, e entra pelo mesmo caminho.
+            const bool  rev_quer = params.Real(manifest.p_rev_on[c]) >= 0.5f;
+            const float alvo = rev_quer ? 1.f : 0.f;
             if(alvo < 0.5f && e.suave.Valor() <= 0.0001f) continue;
-
-            const float env = params.Real(manifest.p_esp_on[c]) >= 0.5f
-                                  ? params.Real(manifest.p_esp_mix[c]) : 0.f;
+            const float env = rev_quer ? params.Real(manifest.p_rev_mix[c]) : 0.f;
+            const bool  shm_quer = params.Real(manifest.p_shm_on[c]) >= 0.5f;
             e.reverb.SetSize(params.Real(manifest.p_rev_size[c]));
             e.reverb.SetDamp(params.Real(manifest.p_rev_damp[c]));
             // Com UMA sala por cadeia a molhadura ainda tem um valor so
@@ -1298,8 +1293,6 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             }
 
             const uint32_t t0 = cotuca::hal::NowTicks();
-            const float    rm = rev_quer ? params.Real(manifest.p_rev_mix[c])
-                                         : params.Real(manifest.p_shm_mix[c]);
             for(size_t i = 0; i < size; i++)
             {
                 const float g = e.suave.Passo(alvo);
@@ -1338,8 +1331,10 @@ static void AudioCb(const float* const* in, float** out, size_t size)
                     l += pl * m;
                     r += pr * m;
                 }
-                out[0][i] += l * rm * g;
-                out[1][i] += r * rm * g;
+                // RETORNO INTEIRO. Quem dosa e o envio; escalar aqui
+                // tambem seria o mesmo ganho duas vezes.
+                out[0][i] += l * g;
+                out[1][i] += r * g;
             }
             const uint32_t us = (cotuca::hal::NowTicks() - t0)
                                 / cotuca::hal::TicksPerUs();
@@ -1770,11 +1765,13 @@ static void HandleLine(const char* line)
         // `rev_on` em 0 ele emudece sem que nada pareca errado. Aviso
         // que so aparece quando a combinacao acontece — defesa orfa
         // nunca: declare a ameaca, ou ela vira folclore.
-        if(params.Real(manifest.p_shm_on[0]) >= 0.5f
-           && params.Real(manifest.p_rev_on[0]) < 0.5f)
-            hal::Log("nota: shimmer ligado com reverb desligado — a sala"
-                     " abre sozinha e quem define a molhadura e o"
-                     " `shm_mix`.");
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+            if(params.Real(manifest.p_shm_on[c]) >= 0.5f
+               && params.Real(manifest.p_rev_on[c]) < 0.5f)
+                hal::Log("*** shm_on_%c ligado com rev_on_%c em 0: nada"
+                         " entra no espaco %c, e o shimmer E a sala"
+                         " realimentada. Ligue o envio. ***",
+                         'a' + c, 'a' + c, 'A' + c);
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);

@@ -385,7 +385,15 @@ exciters no mesmo corpo com deslocamentos diferentes bateriam um contra o
 outro. `exc_on_a/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
 substituem o param pelo estado real.
 
-**Mapa de CC: 79 params, 79 CCs, nada só-serial.** Uma década por família.
+**Simplificação depois (v0.106.0):** `esp_on/esp_mix` e o `rev_mix` antigo
+eram **o mesmo controle duas vezes** — ganho na entrada e ganho na saída da
+mesma sala linear. O dB viu antes de mim. Ficou um envio só por destino
+(`rev_on`/`rev_mix`, mesma forma do delay e do freeze), retorno inteiro, e
+`shm_mix` de volta ao emprego único. Cicatriz 12h.
+
+**Mapa de CC: 75 params, 75 CCs, nada só-serial.** Uma faixa por família, e
+todo destino com a mesma forma: `on_a, mix_a, on_b, mix_b`, depois os
+compartilhados.
 
 ---
 

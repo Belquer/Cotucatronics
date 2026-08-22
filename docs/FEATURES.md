@@ -57,6 +57,12 @@ e o custo de cada adição fica invisível até algo quebrar.
 >
 > **Perdeu-se:** o delay não é mais reverberado. Os ecos saem secos e a sala
 > trabalha sobre a fonte.
+>
+> **Simplificado em seguida:** `esp_on/esp_mix` e o `rev_mix` antigo eram **o
+> mesmo controle duas vezes** — ganho na entrada e ganho na saída da mesma
+> sala linear. Ficou um envio só por destino: `rev_on`/`rev_mix` dizem quanto
+> da cadeia entra no espaço, o retorno volta inteiro, e `shm_mix` voltou ao
+> emprego único (só a camada direta). **75 params, 75 CCs.**
 | **Freeze granular** (shell) — envio por cadeia | `frz_on_{a,b}`, `frz_mix_{a,b}`, **`frz_hold`** (o gesto), `frz_size` | 65–70 | ✅ certificado 18/08 · ⏳ reaceite na nova posição · **fonte e gesto separados**: `frz_on_a/b` dizem qual cadeia alimenta, `frz_hold` diz quando congelar |
 | **Drive** — chave e dry/wet por canal | `drv_on_{a,b}`, `drv_mix_{a,b}` · `drv_drive`, `drv_tone` compartilhados | 38,39 / 44,45 · primário **43** | ⏳ **reaceite pendente na nova posição** (IFÁ10000 não se herda) · +21 µs por canal |
 | **Phaser** — chave e dry/wet por canal | `phs_on_{a,b}`, `phs_mix_{a,b}` · `phs_rate`, `phs_depth`, `phs_fb`, `phs_stages` compartilhados | 40,41 / 46,47 · primário **49** | ⏳ **reaceite pendente** · +26 µs por canal · ⚠️ `phs_mix` é MONTANHA: pico em ~50% |

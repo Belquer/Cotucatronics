@@ -28,105 +28,125 @@ footer b { color:#111; }
      border-radius:2px; font-size:7pt; vertical-align:1px; }
 </style></head><body>
 <h1>Cotucatronics OS — Mapa de CC</h1>
-<p class="sub">Firmware v0.97.0 · manifest v0.64.0 · <b>54 CCs, TODO param mapeado</b> · canal MIDI 1 · lido da placa em 20/08/2026 · <span class="k">destacado</span> = chave liga/desliga</p>
+<p class="sub">Firmware v0.106.0 · manifest v0.71.0 · <b>75 CCs, TODO param mapeado</b> · canal MIDI 1 · lido da placa · <span class="k">destacado</span> = chave liga/desliga</p>
 <div class="cols">
-<section><h2>ENTRADA</h2><table>
-<tr class="on"><td class="cc">20</td><td class="nm">piezo_mix</td><td class="ds"><b>Mix entre as duas CADEIAS.</b> 64 = as duas cheias · 0 = só A · 127 = só B</td></tr>
-<tr><td class="cc">21</td><td class="nm">in_gain_a</td><td class="ds">ganho, cadeia A (piezo 1) · 1…8×</td></tr>
-<tr><td class="cc">22</td><td class="nm">in_gain_b</td><td class="ds">cadeia B (piezo 2)</td></tr>
-<tr class="on"><td class="cc">23</td><td class="nm">gate_thresh_a</td><td class="ds"><b>em 0 o gate é PULADO</b> (custo zero)</td></tr>
-<tr class="on"><td class="cc">24</td><td class="nm">gate_thresh_b</td><td class="ds">idem, cadeia B</td></tr>
+<section><h2>ENTRADA — 20</h2><table>
+<tr class="on"><td class="cc">20</td><td class="nm">piezo_mix</td><td class="ds"><b>64 = as duas cadeias cheias</b> · 0 = só A · 127 = só B</td></tr>
+<tr><td class="cc">21</td><td class="nm">in_gain_a</td><td class="ds">1…8×</td></tr>
+<tr><td class="cc">22</td><td class="nm">in_gain_b</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">23</td><td class="nm">gate_thresh_a</td><td class="ds"><b>em 0 o gate é PULADO</b></td></tr>
+<tr class="on"><td class="cc">24</td><td class="nm">gate_thresh_b</td><td class="ds"></td></tr>
 <tr><td class="cc">25</td><td class="nm">gate_release_a</td><td class="ds">50…2000 ms</td></tr>
-<tr><td class="cc">26</td><td class="nm">gate_release_b</td><td class="ds">idem, cadeia B</td></tr>
+<tr><td class="cc">26</td><td class="nm">gate_release_b</td><td class="ds"></td></tr>
 </table>
-<div class="warn"><b>Gate e ganho duplicam por MATERIAL</b>, não por desequilíbrio: o piezo do tambor lê transiente curto e forte, o da mola lê raspagem contínua.</div>
 </section>
 <section><h2>DRIVE — 30</h2><table>
-<tr class="on"><td class="cc">30</td><td class="nm">drv_on_a</td><td class="ds">chave, cadeia A</td></tr>
-<tr><td class="cc">31</td><td class="nm">drv_mix_a</td><td class="ds">dry/wet, cadeia A</td></tr>
-<tr class="on"><td class="cc">32</td><td class="nm">drv_on_b</td><td class="ds">chave, cadeia B</td></tr>
-<tr><td class="cc">33</td><td class="nm">drv_mix_b</td><td class="ds">dry/wet, cadeia B</td></tr>
-<tr><td class="cc">34</td><td class="nm">drv_drive</td><td class="ds"><b>compartilhado</b> · 1,5…12×</td></tr>
-<tr><td class="cc">35</td><td class="nm">drv_tone</td><td class="ds"><b>compartilhado</b> · 800…16k Hz</td></tr>
+<tr class="on"><td class="cc">30</td><td class="nm">drv_on_a</td><td class="ds"></td></tr>
+<tr><td class="cc">31</td><td class="nm">drv_mix_a</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">32</td><td class="nm">drv_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">33</td><td class="nm">drv_mix_b</td><td class="ds"></td></tr>
+<tr><td class="cc">34</td><td class="nm">drv_drive</td><td class="ds"><b>compart.</b> 1,5…12×</td></tr>
+<tr><td class="cc">35</td><td class="nm">drv_tone</td><td class="ds"><b>compart.</b> 800…16k Hz</td></tr>
 </table>
 </section>
 <section><h2>PHASER — 40</h2><table>
-<tr class="on"><td class="cc">40</td><td class="nm">phs_on_a</td><td class="ds">chave A</td></tr>
+<tr class="on"><td class="cc">40</td><td class="nm">phs_on_a</td><td class="ds"></td></tr>
 <tr><td class="cc">41</td><td class="nm">phs_mix_a</td><td class="ds"><b>MONTANHA:</b> pico em ~64</td></tr>
-<tr class="on"><td class="cc">42</td><td class="nm">phs_on_b</td><td class="ds">chave B</td></tr>
-<tr><td class="cc">43</td><td class="nm">phs_mix_b</td><td class="ds">dry/wet B</td></tr>
-<tr><td class="cc">44</td><td class="nm">phs_rate</td><td class="ds"><b>compart.</b> 0,02…4 Hz</td></tr>
+<tr class="on"><td class="cc">42</td><td class="nm">phs_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">43</td><td class="nm">phs_mix_b</td><td class="ds"></td></tr>
+<tr><td class="cc">44</td><td class="nm">phs_rate</td><td class="ds"><b>compart.</b></td></tr>
 <tr><td class="cc">45</td><td class="nm">phs_depth</td><td class="ds"><b>compart.</b></td></tr>
 <tr><td class="cc">46</td><td class="nm">phs_fb</td><td class="ds"><b>compart.</b></td></tr>
 <tr><td class="cc">47</td><td class="nm">phs_stages</td><td class="ds"><b>compart.</b> 4/6/8</td></tr>
 </table>
 </section>
 <section><h2>WARBLE — 50</h2><table>
-<tr class="on"><td class="cc">50</td><td class="nm">wrb_on_a</td><td class="ds">chave A</td></tr>
-<tr class="on"><td class="cc">51</td><td class="nm">wrb_on_b</td><td class="ds">chave B</td></tr>
-<tr><td class="cc">52</td><td class="nm">wrb_rate</td><td class="ds"><b>compart.</b> 0,05…3 Hz</td></tr>
-<tr><td class="cc">53</td><td class="nm">wrb_depth</td><td class="ds"><b>compart.</b> 0…3 ms</td></tr>
-<tr><td class="cc">54</td><td class="nm">wrb_irreg</td><td class="ds"><b>compart.</b></td></tr>
+<tr class="on"><td class="cc">50</td><td class="nm">wrb_on_a</td><td class="ds"></td></tr>
+<tr><td class="cc">51</td><td class="nm">wrb_mix_a</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">52</td><td class="nm">wrb_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">53</td><td class="nm">wrb_mix_b</td><td class="ds"></td></tr>
+<tr><td class="cc">54</td><td class="nm">wrb_rate</td><td class="ds"><b>compart.</b></td></tr>
+<tr><td class="cc">55</td><td class="nm">wrb_depth</td><td class="ds"><b>compart.</b></td></tr>
+<tr><td class="cc">56</td><td class="nm">wrb_irreg</td><td class="ds"><b>compart.</b></td></tr>
 </table>
 </section>
-<section><h2>DELAY — 60</h2><table>
-<tr class="on"><td class="cc">60</td><td class="nm">dly_on</td><td class="ds">chave</td></tr>
-<tr><td class="cc">61</td><td class="nm">dly_time</td><td class="ds"><b>50 ms … 1 s</b>, curso inteiro</td></tr>
-<tr><td class="cc">62</td><td class="nm">dly_mix</td><td class="ds">crossfade · feedback fixo 0,4</td></tr>
+<section><h2>DELAY — 60 · uma instância</h2><table>
+<tr class="on"><td class="cc">60</td><td class="nm">dly_on_a</td><td class="ds">envio da cadeia A</td></tr>
+<tr><td class="cc">61</td><td class="nm">dly_mix_a</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">62</td><td class="nm">dly_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">63</td><td class="nm">dly_mix_b</td><td class="ds"></td></tr>
+<tr><td class="cc">64</td><td class="nm">dly_time</td><td class="ds"><b>compart.</b> 50 ms…1 s · feedback fixo 0,4</td></tr>
 </table>
 </section>
-<section><h2>FREEZE — 65</h2><table>
-<tr class="on"><td class="cc">65</td><td class="nm">frz_on</td><td class="ds">chave · cauda de 2 s ao sair</td></tr>
-<tr><td class="cc">66</td><td class="nm">frz_mix</td><td class="ds">camada por cima do seco</td></tr>
-<tr><td class="cc">67</td><td class="nm">frz_size</td><td class="ds">20…400 ms</td></tr>
+<section><h2>FREEZE — 65 · uma instância</h2><table>
+<tr class="on"><td class="cc">65</td><td class="nm">frz_on_a</td><td class="ds">qual cadeia alimenta</td></tr>
+<tr><td class="cc">66</td><td class="nm">frz_mix_a</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">67</td><td class="nm">frz_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">68</td><td class="nm">frz_mix_b</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">69</td><td class="nm">frz_hold</td><td class="ds"><b>O GESTO — congela agora</b></td></tr>
+<tr><td class="cc">70</td><td class="nm">frz_size</td><td class="ds"><b>compart.</b> 20…400 ms</td></tr>
 </table>
 </section>
-<section><h2>SHIMMER — 70</h2><table>
-<tr class="on"><td class="cc">70</td><td class="nm">shm_on</td><td class="ds">chave · <b>precisa do CC 80</b></td></tr>
-<tr><td class="cc">71</td><td class="nm">shm_mix</td><td class="ds">camada direta</td></tr>
-<tr><td class="cc">72</td><td class="nm">shm_feedback</td><td class="ds">oitavas empilhadas · teto 0,85</td></tr>
-<tr><td class="cc">73</td><td class="nm">shm_shift</td><td class="ds">0=+12 · 64=+7 · 127=ambos</td></tr>
-<tr><td class="cc">74</td><td class="nm">shm_tone</td><td class="ds"><b>sobe pra clarear</b> · 0 = sino −6 dB em 3 kHz</td></tr>
+<section><h2>ESPAÇO A — 71 · sala e shimmer próprios</h2><table>
+<tr class="on"><td class="cc">71</td><td class="nm">rev_on_a</td><td class="ds"><b>o envio</b> da cadeia A</td></tr>
+<tr><td class="cc">72</td><td class="nm">rev_mix_a</td><td class="ds">quanto entra no espaço</td></tr>
+<tr><td class="cc">73</td><td class="nm">rev_size_a</td><td class="ds"></td></tr>
+<tr><td class="cc">74</td><td class="nm">rev_damp_a</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">75</td><td class="nm">shm_on_a</td><td class="ds"></td></tr>
+<tr><td class="cc">76</td><td class="nm">shm_mix_a</td><td class="ds"><b>só a camada direta</b></td></tr>
+<tr><td class="cc">77</td><td class="nm">shm_feedback_a</td><td class="ds">teto 0,85</td></tr>
+<tr><td class="cc">78</td><td class="nm">shm_shift_a</td><td class="ds">0=+12 · 64=+7 · 127=ambos</td></tr>
+<tr><td class="cc">79</td><td class="nm">shm_tone_a</td><td class="ds"><b>sobe pra clarear</b></td></tr>
+</table>
+<div class="warn"><b>O shimmer não tem envio próprio</b> porque não tem sala própria: ele <i>é</i> esta sala realimentada com pitch, e entra pelo mesmo caminho. Com <tt>shm_on</tt> ligado e <tt>rev_on</tt> em 0, nada entra — e o <tt>board</tt> avisa.</div>
+</section>
+<section><h2>ESPAÇO B — 80 · sala independente</h2><table>
+<tr class="on"><td class="cc">80</td><td class="nm">rev_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">81</td><td class="nm">rev_mix_b</td><td class="ds"></td></tr>
+<tr><td class="cc">82</td><td class="nm">rev_size_b</td><td class="ds"></td></tr>
+<tr><td class="cc">83</td><td class="nm">rev_damp_b</td><td class="ds"></td></tr>
+<tr class="on"><td class="cc">84</td><td class="nm">shm_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">85</td><td class="nm">shm_mix_b</td><td class="ds"></td></tr>
+<tr><td class="cc">86</td><td class="nm">shm_feedback_b</td><td class="ds"></td></tr>
+<tr><td class="cc">87</td><td class="nm">shm_shift_b</td><td class="ds"></td></tr>
+<tr><td class="cc">88</td><td class="nm">shm_tone_b</td><td class="ds"></td></tr>
 </table>
 </section>
-<section><h2>REVERB — 80</h2><table>
-<tr class="on"><td class="cc">80</td><td class="nm">rev_on</td><td class="ds">chave · <b>emudece o shimmer junto</b></td></tr>
-<tr><td class="cc">81</td><td class="nm">rev_mix</td><td class="ds"></td></tr>
-<tr><td class="cc">82</td><td class="nm">rev_size</td><td class="ds"></td></tr>
-<tr><td class="cc">83</td><td class="nm">rev_damp</td><td class="ds"></td></tr>
+<section><h2>BÚZIOS — 90</h2><table>
+<tr class="on"><td class="cc">90</td><td class="nm">buzios_on</td><td class="ds"></td></tr>
+<tr><td class="cc">91</td><td class="nm">buzios_thresh</td><td class="ds"></td></tr>
+<tr><td class="cc">92</td><td class="nm">buzios_cooldown</td><td class="ds">10…1000 ms · 2 batidas rápidas = 1</td></tr>
 </table>
 </section>
-<section><h2>BÚZIOS — 85</h2><table>
-<tr class="on"><td class="cc">85</td><td class="nm">buzios_on</td><td class="ds">chave</td></tr>
-<tr><td class="cc">86</td><td class="nm">buzios_thresh</td><td class="ds">limiar do transiente</td></tr>
-<tr><td class="cc">87</td><td class="nm">buzios_cooldown</td><td class="ds">10…1000 ms</td></tr>
-</table>
-</section>
-<section><h2>TOM DE TESTE — 90</h2><table>
-<tr><td class="cc">90</td><td class="nm">tone_freq</td><td class="ds">80…2000 Hz</td></tr>
-<tr><td class="cc">91</td><td class="nm">tone_mix</td><td class="ds"></td></tr>
-<tr><td class="cc">92</td><td class="nm">tone_dest</td><td class="ds">0=A · 1=B · <b>2=AMBAS</b></td></tr>
+<section><h2>TOM DE TESTE — 93</h2><table>
+<tr><td class="cc">93</td><td class="nm">tone_freq</td><td class="ds">80…2000 Hz · nasce em 848</td></tr>
+<tr><td class="cc">94</td><td class="nm">tone_mix</td><td class="ds"></td></tr>
+<tr><td class="cc">95</td><td class="nm">tone_dest</td><td class="ds">0=A · 1=B · <b>2=AMBAS</b></td></tr>
 </table>
 </section>
 <section><h2>MASTER — 100</h2><table>
 <tr><td class="cc">100</td><td class="nm">level</td><td class="ds"></td></tr>
 </table>
 </section>
-<section><h2>PROTEÇÃO E ROTEAMENTO — 110</h2><table>
-<tr><td class="cc">110</td><td class="nm">gov_ceiling</td><td class="ds">governor, ramo do exciter</td></tr>
-<tr><td class="cc">111</td><td class="nm">gov_release</td><td class="ds"></td></tr>
-<tr><td class="cc">112</td><td class="nm">shift_hz</td><td class="ds">shifter SSB, anti-feedback</td></tr>
-<tr class="on"><td class="cc">113</td><td class="nm">route_exciter</td><td class="ds"><b>0 corta o ramo do exciter</b></td></tr>
-<tr class="on"><td class="cc">114</td><td class="nm">route_jack</td><td class="ds"><b>0 corta o ramo do jack</b></td></tr>
-<tr><td class="cc">115</td><td class="nm">bench_boost</td><td class="ds">bancada</td></tr>
+<section><h2>EXCITER E PROTEÇÃO — 105</h2><table>
+<tr class="on"><td class="cc">105</td><td class="nm">exc_on_a</td><td class="ds"><b>gateia a proteção do ramo</b></td></tr>
+<tr class="on"><td class="cc">106</td><td class="nm">exc_on_b</td><td class="ds"></td></tr>
+<tr><td class="cc">110</td><td class="nm">gov_ceiling_a</td><td class="ds"></td></tr>
+<tr><td class="cc">111</td><td class="nm">gov_release_a</td><td class="ds"></td></tr>
+<tr><td class="cc">112</td><td class="nm">shift_hz</td><td class="ds"><b>compartilhado</b> pelos dois ramos</td></tr>
+<tr class="on"><td class="cc">113</td><td class="nm">route_exciter</td><td class="ds"><b>0 corta o ramo</b></td></tr>
+<tr class="on"><td class="cc">114</td><td class="nm">route_jack</td><td class="ds"><b>0 corta o ramo</b></td></tr>
+<tr><td class="cc">115</td><td class="nm">bench_boost_a</td><td class="ds">bancada</td></tr>
+<tr><td class="cc">116</td><td class="nm">gov_ceiling_b</td><td class="ds"></td></tr>
+<tr><td class="cc">117</td><td class="nm">gov_release_b</td><td class="ds"></td></tr>
+<tr><td class="cc">118</td><td class="nm">bench_boost_b</td><td class="ds"></td></tr>
 </table>
-<div class="warn"><b>Longe de propósito.</b> Estes seis saíram do MIDI em 18/08 porque despejos do iOS os punham no extremo e emudeciam o instrumento <b>três vezes numa sessão</b>. Voltaram por decisão do dB, com a quarentena de reconexão como defesa — mas ficam a 10 CCs do vizinho mais próximo para que varredura acidental não chegue até aqui.</div>
+<div class="warn"><b>Longe de propósito.</b> Estes emudeceram o instrumento três vezes numa sessão quando estavam no MIDI. <tt>shift_hz</tt> é compartilhado por acústica: dois exciters no mesmo corpo com deslocamentos diferentes bateriam um contra o outro.</div>
 </section>
 <footer>
-<b>Cadeia</b> &nbsp; p1 → in_gain_A → gate_A → [drive · phaser · warble] ┐ &nbsp; p2 → in_gain_B → gate_B → [drive · phaser · warble] ┘ → <b>MIX</b> → delay → freeze → [shimmer ↺ reverb] → level → split (exciter | jack). <b>O caráter duplica; a cauda é compartilhada</b> — é ela que faz tambor e corda soarem como o mesmo objeto.<br>
-<b>Uma década por efeito, e isso é defesa.</b> Widget mal configurado atinge o vizinho, e vizinho da mesma família faz menos estrago. Já aconteceu: um botão dos búzios mandava 31 junto com 32 e jogava o gate no topo — instrumento mudo, sem defeito.<br>
-<b><tt>wrb_mix</tt> é NOME, não param.</b> O dry/wet do warble é o crossfade do <tt>EffectSlot</tt>: não aparece no <tt>list</tt>, não tem CC, não é ajustável.<br>
-<b>CC 119 é de SAÍDA</b>: a placa manda quando o teto de soma do CTOS derruba um efeito. Ordem: phaser B, phaser A, warble B, warble A, drive B, drive A, freeze, shimmer.<br>
-<b>Tudo nasce em zero</b> exceto <tt>piezo_mix</tt> (64 = centro) e <tt>tone_dest</tt> (2 = ambas). <b>Toda gravação zera tudo de novo.</b>
+<b>Cadeia</b> &nbsp; p1 → in_gain_a → gate_a → [drive·phaser·warble] ┐ &nbsp; p2 → idem ┘ → ×piezo_mix → <b>cauda PARALELA</b>: ×dly_a/b → DELAY · ×frz_a/b → FREEZE · ×rev_a → [SHM_A ↺ SALA_A] · ×rev_b → [SHM_B ↺ SALA_B] · + seco inteiro → level → split.<br>
+<b>Todo destino tem a mesma forma:</b> <tt>on_a, mix_a, on_b, mix_b</tt>, depois os compartilhados. Envio é <b>tap</b>, não desvio: mandar 127 pro delay não tira a cadeia da saída direta.<br>
+<b>Nascem fora de zero:</b> <tt>piezo_mix</tt> 64 · <tt>tone_dest</tt> 127 · <tt>exc_on_a/b</tt> ligados. <b>Toda gravação zera o resto.</b><br>
+<b>CC 119 é de SAÍDA:</b> 127 = teto de soma do CTOS · 64 = watchdog por-efeito. Duas doenças — numa não há culpado, na outra há.
 </footer>
 </div></body></html>

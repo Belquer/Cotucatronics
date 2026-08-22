@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.70.0
+// manifest.h (instrumento "bancada") v0.71.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -231,6 +231,21 @@ struct Manifest
     // acontece com o vocoder ligado (medido), então filtrar o master
     // castigaria o delay de graça. 0 Hz = desligado.
 
+    // ENVIO DA CADEIA PRO ESPACO — mesma forma do delay e do freeze.
+    //
+    // Ate 20/08 havia TRES controles pro mesmo caminho: `esp_mix` na
+    // entrada, `rev_mix` na saida, e duas chaves. Numa sala LINEAR
+    // ganho na entrada e ganho na saida sao o MESMO controle escrito
+    // duas vezes — o dB viu antes de mim.
+    //
+    // Ficou um so: `rev_on`/`rev_mix` dizem quanto da cadeia entra no
+    // espaco. O retorno volta inteiro, porque num send/return o retorno
+    // E o molhado — o seco ja passa por fora.
+    //
+    // `shm_mix` VOLTOU AO EMPREGO UNICO: so a camada pitcheada direta.
+    // Ele tambem escalava a saida da sala quando o reverb estava
+    // desligado, que e a familia C do catalogo (variavel com dois
+    // empregos) plantada por mim ontem.
     int p_rev_on[kCadeias];     // 0/1 — chave. ATENÇÃO: emudece o shimmer junto
     int p_rev_mix[kCadeias];
     int p_rev_size[kCadeias];
@@ -319,34 +334,6 @@ struct Manifest
     // selecionavel, nenhum teste futuro distingue "B quebrada" de "B nao
     // excitada". AMBAS valida simetria de uma vez; A ou B isolam quando
     // o sintoma for assimetrico.
-    // MIX DA CADEIA PRO ESPACO — o "send" com o nome que o dB usa,
-    // porque e o que ele faz pra quem toca: quanto daquela cadeia vai
-    // banhar a cauda compartilhada.
-    //
-    // E CROSSFADE, NAO GANHO, e a distincao e o efeito inteiro: o que
-    // nao vai pro espaco sai SECO por fora da cauda. Se fosse ganho,
-    // baixar o mix de uma cadeia a emudeceria — a cauda e o unico
-    // caminho pra saida — em vez de seca-la. Com isto, tambor seco e
-    // corda molhada ao mesmo tempo, que era o gesto pedido.
-    //
-    // O QUE ELE NAO FAZ: delay curto pro tambor e longo pra corda. Isso
-    // exigiria DUPLICAR a cauda, e o pivo decidiu o contrario — e ela
-    // que faz os dois soarem como o mesmo objeto.
-    //
-    // NASCE EM 1 (tudo no espaco), nao em 0. Aqui 0 nao e "desligado",
-    // e uma decisao ativa de roteamento: seria o instrumento inteiro
-    // seco, com toda a cauda inaudivel e cada chave dela ligando nada.
-    // CHAVE E MIX, como todo efeito da casa. A chave existe pra que
-    // desligar nao custe o ajuste: fundir as duas obriga a zerar o mix
-    // pra tirar a cadeia do espaco, e o ajuste se perde.
-    //
-    // AS DUAS NASCEM "NO ESPACO" (on=1, mix=1), e nao em 0 como os
-    // efeitos. Aqui 0 nao e "desligado", e ROTEAMENTO: com as duas
-    // fora, a cauda inteira fica inaudivel e cada chave dela — dly_on,
-    // rev_on, shm_on, frz_on — passa a ligar nada. O caminho do espaco
-    // nasce aberto; o que nasce fechado sao os EFEITOS dentro dele.
-    int p_esp_on[kCadeias];
-    int p_esp_mix[kCadeias];
     int p_tone_dest;
 
     // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
@@ -864,10 +851,6 @@ struct Manifest
         // (fita estragada — as vezes e o que se quer).
 
         // TOM DE TESTE: destino. 0=A 1=B 2=AMBAS (default).
-        p_esp_on[0]  = t.Add("esp_on_a",  1.0f, 0.f, 1.f);
-        p_esp_on[1]  = t.Add("esp_on_b",  1.0f, 0.f, 1.f);
-        p_esp_mix[0] = t.Add("esp_mix_a", 1.0f, 0.f, 1.f);
-        p_esp_mix[1] = t.Add("esp_mix_b", 1.0f, 0.f, 1.f);
         p_tone_dest = t.Add("tone_dest", 1.0f, 0.f, 2.f, 1.0f, 3);
 
         // ---- DESCRITOR POR EFEITO DE CARATER ----
@@ -1255,41 +1238,40 @@ struct Manifest
         AddMidi(69, p_frz_hold);          // O GESTO
         AddMidi(70, p_frz_size);          // COMPARTILHADO
 
-        // ---- ESPACO A: 71-81 — sala e shimmer PROPRIOS da cadeia A ----
-        AddMidi(71, p_esp_on[0]);
-        AddMidi(72, p_esp_mix[0]);
-        AddMidi(73, p_rev_on[0]);
-        AddMidi(74, p_rev_mix[0]);
-        AddMidi(75, p_rev_size[0]);
-        AddMidi(76, p_rev_damp[0]);
-        AddMidi(77, p_shm_on[0]);
-        AddMidi(78, p_shm_mix[0]);
-        AddMidi(79, p_shm_feedback[0]);
-        AddMidi(80, p_shm_shift[0]);
-        AddMidi(81, p_shm_tone[0]);
+        // ---- ESPACO A: 71-79 · sala e shimmer PROPRIOS da cadeia A ----
+        // `rev_on/rev_mix` sao o ENVIO, mesma forma do delay e do
+        // freeze. O shimmer nao tem envio proprio: ele E esta sala
+        // realimentada com pitch, e entra pelo mesmo caminho.
+        AddMidi(71, p_rev_on[0]);
+        AddMidi(72, p_rev_mix[0]);
+        AddMidi(73, p_rev_size[0]);
+        AddMidi(74, p_rev_damp[0]);
+        AddMidi(75, p_shm_on[0]);
+        AddMidi(76, p_shm_mix[0]);       // SO a camada direta
+        AddMidi(77, p_shm_feedback[0]);
+        AddMidi(78, p_shm_shift[0]);
+        AddMidi(79, p_shm_tone[0]);
 
-        // ---- ESPACO B: 82-92 — mesma forma, sala independente ----
-        AddMidi(82, p_esp_on[1]);
-        AddMidi(83, p_esp_mix[1]);
-        AddMidi(84, p_rev_on[1]);
-        AddMidi(85, p_rev_mix[1]);
-        AddMidi(86, p_rev_size[1]);
-        AddMidi(87, p_rev_damp[1]);
-        AddMidi(88, p_shm_on[1]);
-        AddMidi(89, p_shm_mix[1]);
-        AddMidi(90, p_shm_feedback[1]);
-        AddMidi(91, p_shm_shift[1]);
-        AddMidi(92, p_shm_tone[1]);
+        // ---- ESPACO B: 80-88 · sala independente ----
+        AddMidi(80, p_rev_on[1]);
+        AddMidi(81, p_rev_mix[1]);
+        AddMidi(82, p_rev_size[1]);
+        AddMidi(83, p_rev_damp[1]);
+        AddMidi(84, p_shm_on[1]);
+        AddMidi(85, p_shm_mix[1]);
+        AddMidi(86, p_shm_feedback[1]);
+        AddMidi(87, p_shm_shift[1]);
+        AddMidi(88, p_shm_tone[1]);
 
-        // ---- BUZIOS: 93-95 ----
-        AddMidi(93, p_buzios_on);
-        AddMidi(94, p_buzios_thresh);
-        AddMidi(95, p_buzios_cooldown);
+        // ---- BUZIOS: 90-92 ----
+        AddMidi(90, p_buzios_on);
+        AddMidi(91, p_buzios_thresh);
+        AddMidi(92, p_buzios_cooldown);
 
-        // ---- TOM DE TESTE: 96-98 ----
-        AddMidi(96, p_tone_freq);
-        AddMidi(97, p_tone_mix);
-        AddMidi(98, p_tone_dest);         // 0=A 1=B 2=AMBAS
+        // ---- TOM DE TESTE: 93-95 ----
+        AddMidi(93, p_tone_freq);
+        AddMidi(94, p_tone_mix);
+        AddMidi(95, p_tone_dest);         // 0=A 1=B 2=AMBAS
 
         // ---- MASTER: 100 ----
         AddMidi(100, p_level);
