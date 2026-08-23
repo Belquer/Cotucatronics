@@ -1,4 +1,4 @@
-// test_midi v0.3.0 — validação nativa do parser MIDI e do mapa.
+// test_midi v0.4.0 — validação nativa do parser MIDI e do mapa.
 //
 // midi.h é C++ puro e board-agnostic, e manifest.h também (só inclui
 // params.h, module.h e midi.h). Então a máquina de estados E a via
@@ -274,9 +274,10 @@ int main()
                      mesmo_cc, pares);
             Check("todo par _a/_b usa o MESMO numero de CC",
                   pares > 0 && mesmo_cc == pares, d);
-            snprintf(d, sizeof(d), "%d de %d com _a no ch1 e _b no ch2",
-                     ok, pares);
-            Check("todo par _a/_b: _a no ch1, _b no ch2",
+            snprintf(d, sizeof(d), "%d de %d com _a no ch%d e _b no ch%d",
+                     ok, pares, cotuca::kCanalEntradaA + 1,
+                     cotuca::kCanalEntradaB + 1);
+            Check("todo par _a/_b: _a no canal da A, _b no da B",
                   pares > 0 && ok == pares, d);
         }
 
@@ -306,12 +307,12 @@ int main()
         {
             int no_espelho = 0;
             for(int k = 0; k < m.n_midi; k++)
-                if(m.midi_map[k].canal == cotuca::kCanalEspelhoA
-                   || m.midi_map[k].canal == cotuca::kCanalEspelhoB)
+                if(cotuca::EhCanalEspelho(m.midi_map[k].canal))
                     no_espelho++;
             snprintf(d, sizeof(d), "%d vinculos nos canais de espelho"
-                     " (ch%d/ch%d)", no_espelho,
-                     cotuca::kCanalEspelhoA + 1, cotuca::kCanalEspelhoB + 1);
+                     " (ch%d-ch%d)", no_espelho,
+                     cotuca::kDeslocEspelho + 1,
+                     cotuca::kDeslocEspelho + cotuca::kNumCanaisEntrada);
             Check("nenhum vinculo de ENTRADA nos canais do espelho",
                   no_espelho == 0, d);
         }
@@ -321,12 +322,49 @@ int main()
         // duas vezes por volta com valores diferentes e o widget ficaria
         // com o ultimo — falha sem sintoma no log, so no iPad.
         {
-            snprintf(d, sizeof(d), "A->ch%d  B->ch%d",
+            snprintf(d, sizeof(d), "compart->ch%d  A->ch%d  B->ch%d",
+                     cotuca::CanalEspelhoDe(cotuca::kCanalCompart) + 1,
                      cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA) + 1,
                      cotuca::CanalEspelhoDe(cotuca::kCanalEntradaB) + 1);
-            Check("cada cadeia espelha num canal PROPRIO",
-                  cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA)
+            Check("os TRES canais de entrada espelham em canais distintos",
+                  cotuca::CanalEspelhoDe(cotuca::kCanalCompart)
+                      != cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA)
+                  && cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA)
                       != cotuca::CanalEspelhoDe(cotuca::kCanalEntradaB), d);
+
+            // A REGRA E ARITMETICA, e o teste cobra a aritmetica e nao
+            // tres constantes: escuta = manda + 3, para os tres.
+            Check("escuta = manda + 3, sem excecao",
+                  cotuca::CanalEspelhoDe(cotuca::kCanalCompart)
+                      == cotuca::kCanalCompart + 3
+                  && cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA)
+                      == cotuca::kCanalEntradaA + 3
+                  && cotuca::CanalEspelhoDe(cotuca::kCanalEntradaB)
+                      == cotuca::kCanalEntradaB + 3);
+
+            // E OS COMPARTILHADOS TEM CANAL PROPRIO — e a razao de ser
+            // desta versao: sem isso a pagina da cadeia A carrega
+            // `level` e `dly_time` junto, e a copia para a B tem que
+            // apaga-los a mao todas as vezes.
+            int compart_fora_do_canal = 0, compart = 0;
+            for(int k = 0; k < m.n_midi; k++)
+            {
+                const int id = m.midi_map[k].param_id;
+                if(id < 0) continue;
+                const char*  nm = t.Name(id);
+                const size_t L  = strlen(nm);
+                const bool pareado = L >= 3 && nm[L-2] == '_'
+                                     && (nm[L-1]=='a' || nm[L-1]=='b');
+                if(pareado) continue;
+                compart++;
+                if(m.midi_map[k].canal != cotuca::kCanalCompart)
+                    compart_fora_do_canal++;
+            }
+            snprintf(d, sizeof(d), "%d compartilhados, %d fora do ch%d",
+                     compart, compart_fora_do_canal,
+                     cotuca::kCanalCompart + 1);
+            Check("TODO compartilhado mora no canal proprio",
+                  compart > 0 && compart_fora_do_canal == 0, d);
         }
 
         // CANAL SEM VINCULO nao move nada — agora medido nos canais que
@@ -336,12 +374,14 @@ int main()
             if(ia >= 0)
             {
                 const float antes = t.Get(ia);
-                const uint8_t m3[] = {(uint8_t)(0xB0 | cotuca::kCanalEspelhoA),
-                                      (uint8_t)CcDe(ia), 7};
-                Feed(p, m3, 3);
-                const uint8_t m4[] = {(uint8_t)(0xB0 | cotuca::kCanalEspelhoB),
-                                      (uint8_t)CcDe(ia), 7};
-                Feed(p, m4, 3);
+                for(uint8_t k = 0; k < cotuca::kNumCanaisEntrada; k++)
+                {
+                    const uint8_t esp
+                        = (uint8_t)(cotuca::kDeslocEspelho + k);
+                    const uint8_t msg[] = {(uint8_t)(0xB0 | esp),
+                                           (uint8_t)CcDe(ia), 7};
+                    Feed(p, msg, 3);
+                }
                 snprintf(d, sizeof(d), "antes=%.4f depois=%.4f",
                          (double)antes, t.Get(ia));
                 Check("CC nos canais do ESPELHO nao movem parametro nenhum",
@@ -419,9 +459,14 @@ int main()
             const int cc_rs = CcDe(id_rs);
             if(cc_rs >= 0)
             {
-                const uint8_t m4[] = {0xB0, (uint8_t)cc_rs, 127};
-                Feed(p, m4, 3);
-                snprintf(d, sizeof(d), "cc=%d norm=%.4f", cc_rs, t.Get(id_rs));
+                // DERIVA O CANAL TAMBEM, nao so o numero. Este bloco
+                // cravava `0xB0` (canal 0) e passou a falhar quando o
+                // canal 0 virou o dos COMPARTILHADOS na v0.156.0 — o
+                // mesmo defeito do CC decorado, um eixo ao lado. O
+                // `Endereca` ja resolvia os dois e eu nao o usei aqui.
+                Endereca(id_rs, 127);
+                snprintf(d, sizeof(d), "ch%d cc%d norm=%.4f",
+                         CanalDe(id_rs) + 1, cc_rs, t.Get(id_rs));
                 Check("CC do rev_size, val 127 -> norm 1.00",
                       fabsf(t.Get(id_rs) - 1.0f) < 0.001f, d);
             }

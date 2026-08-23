@@ -1,33 +1,43 @@
-# Lista para refazer as páginas do Loopy
+# Lista de CCs para configurar o Loopy
 
-> **Gerada de `src/manifest.h` (v0.155.0).** Regerar antes de confiar se o
-> manifest mudar.
+> **Gerada de `src/manifest.h` — firmware v0.156.0.** Se o mapa mudar,
+> regerar antes de confiar.
 
-## As duas regras, e não há uma terceira
+## A regra: seis canais, e ESCUTA = MANDA + 3
 
-**1. MANDAR** — cadeia A e compartilhados no **ch1**, cadeia B no **ch2**.
+```
+MANDA    ch1  compartilhados
+         ch2  cadeia A
+         ch3  cadeia B
 
-**2. ESCUTAR** (widget que mostra estado: LED, posição de fader) —
-cadeia A e compartilhados no **ch3**, cadeia B no **ch4**.
+ESCUTA   ch4  compartilhados
+         ch5  cadeia A
+         ch6  cadeia B
+```
 
-**O número do CC é o mesmo nos quatro canais.** Só o canal diz de quem é
-e em que direção.
+**O número do CC é o mesmo nos seis canais.** Só o canal diz de quem é e
+em que direção.
 
-### O atalho que faz a cadeia B quase de graça
+**Cada página tem UM assunto**, e é isto que faz a duplicação funcionar:
+monte a página da cadeia A no ch2 e duplique trocando o canal para 3 — os
+37 saem numa operação, sem nenhum compartilhado junto para apagar.
 
-Monte a página da cadeia A no **ch1** e **duplique trocando o campo de
-canal para 2**. Os 37 pareados ficam prontos numa operação — é a mesma
-página, noutro canal.
+### Por que todos os widgets devem escutar
 
-### Widget que manda E mostra
+Não é conveniência. A placa muda params **sozinha** em três situações, e
+widget que não escuta passa a mentir:
 
-Um toggle que envia e reflete (o LED do freeze, por exemplo) manda no
-**ch1** e escuta no **ch3**, ao mesmo tempo. O eco dele não desfaz o
-próprio gesto: a placa mantém uma **janela de autoria de 250 ms** por
-parâmetro, e descarta o retorno dentro dela — contado em `midi`.
+- **búzios** sorteiam a cada batida;
+- o **CTOS** derruba efeitos quando o teto de soma estoura;
+- **`preset load`** troca 33 params de uma vez.
+
+O `sync` empurra o estado e **confere o retorno sozinho** — sai de `AVISO`
+para `OK` conforme os widgets voltam a escutar.
 
 
-## 12 COMPARTILHADOS — só ch1 (escuta ch3). **Não duplicar.**
+## COMPARTILHADOS — 12 · manda **ch1** · escuta **ch4**
+
+Existem uma vez só. **Não duplicar.**
 
 | CC | param |
 |---|---|
@@ -44,10 +54,10 @@ parâmetro, e descarta o retorno dentro dela — contado em `midi`.
 | 113 | `route_exciter` |
 | 114 | `route_jack` |
 
-## 37 PAREADOS — ch1 = cadeia A · ch2 = cadeia B
+## PAREADOS — 37 · manda **ch2**(A)/**ch3**(B) · escuta **ch5**/**ch6**
 
-O nome abaixo é a família: no firmware são `<nome>_a` e `<nome>_b`, e o
-canal é que os separa.
+O nome é a família: no firmware são `<nome>_a` e `<nome>_b`, e o canal os
+separa.
 
 
 ### CENTRAL
@@ -112,17 +122,12 @@ canal é que os separa.
 | 111 | `gov_release` |
 | 115 | `bench_boost` |
 
-## Números LIVRES, para o que vier
-
-Reservados dois para os presets (128 slots por cadeia, um CC cada):
+## Reservado, ainda não implementado
 
 ```
-  preset da cadeia A   ch1 cc101   valor 0..127 = slot
-  preset da cadeia B   ch2 cc101   valor 0..127 = slot
+preset da cadeia A   ch2 cc101   valor 0..127 = slot
+preset da cadeia B   ch3 cc101   valor 0..127 = slot
 ```
-
-Mesmo número, canal separando as cadeias — a mesma regra de tudo o mais.
-
 
 ## Ao terminar
 
@@ -133,6 +138,5 @@ vistos
 ```
 
 `FALTA` = não chegou · `ORFAO` = chegou fora do mapa → **conserto no
-firmware**. E `sync` confere o outro sentido, saindo de `AVISO` para `OK`
-conforme os widgets voltam a escutar.
+firmware**, não no widget.
 

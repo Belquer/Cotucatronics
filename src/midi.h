@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.7.0
+// Cotucatronics OS — midi v0.8.0
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -85,55 +85,61 @@ using MidiTraceFn = void (*)(uint8_t byte, MidiVerdict v, uint8_t status,
                              int n_data);
 
 // Uma linha da tabela do manifest: "CC tal move o parâmetro tal".
-// CANAIS DE ENTRADA. O canal deixou de ser decoração e virou parte do
-// endereço: com a multiplexação, o CC 30 no canal 1 e o CC 30 no canal 2
-// são parâmetros DIFERENTES.
-constexpr uint8_t kCanalEntradaA = 0;  // MIDI ch1 — cadeia A + compartilhados
-constexpr uint8_t kCanalEntradaB = 1;  // MIDI ch2 — cadeia B
-
-// CANAIS DE SAÍDA DO ESPELHO. Separados da entrada, e é isso que desfaz
-// a colisão do voo A: enquanto o espelho falava no ch2, a entrada da
-// cadeia B tinha que ficar recusada. Com canais próprios, a placa
-// espelha e recebe ao mesmo tempo, que é o estado final.
+// OS SEIS CANAIS, e a regra e uma so: ESCUTA = MANDA + 3.
 //
-// Um por cadeia, e não um só: o espelho carrega VALOR, e o valor da
-// cadeia A não serve para a B. Mandar os dois no mesmo canal faria o
-// mesmo número de CC chegar duas vezes por volta com valores
-// diferentes, e o widget ficaria com o último que chegasse.
-constexpr uint8_t kCanalEspelhoA = 2;  // MIDI ch3 — estado da cadeia A + compartilhados
-constexpr uint8_t kCanalEspelhoB = 3;  // MIDI ch4 — estado da cadeia B
+//   MANDA    ch1  compartilhados
+//            ch2  cadeia A
+//            ch3  cadeia B
+//   ESCUTA   ch4  compartilhados
+//            ch5  cadeia A
+//            ch6  cadeia B
+//
+// POR QUE OS COMPARTILHADOS TEM CANAL PROPRIO. Ate a v0.155.0 eles
+// viajavam junto com a cadeia A, e isso quebrava a unica coisa que a
+// multiplexacao existe para comprar: a pagina da cadeia B ser uma COPIA
+// da pagina da A. Com os compartilhados dentro da pagina da A, duplicar
+// trazia `level` e `dly_time` junto, e eles teriam de ser apagados da
+// copia a mao — todas as vezes.
+//
+// Separados, cada pagina tem UM assunto e a duplicacao fica limpa. O
+// custo sao dois canais de dezesseis.
+//
+// E o deslocamento fixo de 3 vale mais que tres constantes soltas: a
+// relacao entre falar e ouvir vira aritmetica, e nao uma tabela que
+// alguem tem que lembrar de manter alinhada.
+constexpr uint8_t kCanalCompart  = 0;  // MIDI ch1 — params compartilhados
+constexpr uint8_t kCanalEntradaA = 1;  // MIDI ch2 — cadeia A
+constexpr uint8_t kCanalEntradaB = 2;  // MIDI ch3 — cadeia B
+constexpr uint8_t kNumCanaisEntrada = 3;
 
-// O espelho de um vínculo é o canal de saída correspondente ao canal de
-// entrada dele. Uma função, para que o pareamento não seja redigitado em
-// cada lugar que precise dele.
-inline uint8_t CanalEspelhoDe(uint8_t canal_entrada)
+// O espelho de qualquer vinculo e o canal de entrada dele + 3.
+constexpr uint8_t kDeslocEspelho = 3;
+inline uint8_t    CanalEspelhoDe(uint8_t canal_entrada)
 {
-    return canal_entrada == kCanalEntradaB ? kCanalEspelhoB : kCanalEspelhoA;
+    return (uint8_t)(canal_entrada + kDeslocEspelho);
+}
+inline bool EhCanalEntrada(uint8_t c) { return c < kNumCanaisEntrada; }
+inline bool EhCanalEspelho(uint8_t c)
+{
+    return c >= kDeslocEspelho && c < kDeslocEspelho + kNumCanaisEntrada;
 }
 
 // A INVARIANTE QUE APOSENTOU UMA DEFESA DE TEMPO DE EXECUCAO.
 //
-// Enquanto o espelho falou num canal de ENTRADA (o ch2, no voo A), uma
-// mensagem dele ainda em voo chegava como escrita num param de verdade:
-// o espelho manda o CC 34 com o valor de `drv_drive_a`, e no ch2 o CC 34
-// e `drv_drive_b`. Nao era mensagem orfa — era MAL-ENDERECADA, que e a
-// classe nova que a multiplexacao criou e a que nao tem sintoma: a
-// cadeia B mudava sozinha, sem gesto humano para correlacionar.
+// Enquanto o espelho falou num canal de ENTRADA, uma mensagem dele ainda
+// em voo chegava como escrita num param de verdade — nao mensagem orfa,
+// mas MAL-ENDERECADA, que e a classe que nao tem sintoma: a cadeia irma
+// mudava sozinha, sem gesto humano para correlacionar (bts 13n).
 //
-// A defesa era uma carencia de drenagem de 300 ms. Ela some aqui, e nao
-// por confianca: some porque a SOBREPOSICAO que a tornava necessaria
-// ficou impossivel por construcao. Se alguem devolver o espelho para um
-// canal de entrada, o build quebra nesta linha e le o porque.
-//
-// Defesa que vira invariante de compilacao e melhor que defesa que roda:
-// custa zero e nao pode ser esquecida ligada nem esquecida desligada.
-static_assert(kCanalEspelhoA != kCanalEntradaA
-                  && kCanalEspelhoA != kCanalEntradaB
-                  && kCanalEspelhoB != kCanalEntradaA
-                  && kCanalEspelhoB != kCanalEntradaB,
-              "canal de espelho nao pode coincidir com canal de entrada: "
-              "mensagem do espelho em voo vira escrita mal-enderecada num "
-              "param real (ver battle_scars 13n)");
+// Com o deslocamento de 3 e tres canais de entrada, a sobreposicao fica
+// impossivel por construcao. Se alguem encolher o deslocamento ou
+// acrescentar um quarto canal de entrada sem mexer nele, o build quebra
+// AQUI, com a regra na mensagem.
+static_assert(kDeslocEspelho >= kNumCanaisEntrada,
+              "o deslocamento do espelho tem que ser >= o numero de canais "
+              "de entrada: senao um canal de espelho coincide com um de "
+              "entrada, e mensagem do espelho em voo vira escrita "
+              "mal-enderecada num param real (ver battle_scars 13n)");
 
 struct MidiCcBind
 {

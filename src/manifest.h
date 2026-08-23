@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.80.0
+// manifest.h (instrumento "bancada") v0.81.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -1310,8 +1310,16 @@ struct Manifest
         // ============================================================
         // MAPA MULTIPLEXADO POR CANAL (v0.79.0)
         //
-        //   ch1 (kCanalEntradaA) -> cadeia A + COMPARTILHADOS
-        //   ch2 (kCanalEntradaB) -> cadeia B
+        //   ch1 (kCanalCompart)  -> COMPARTILHADOS, e so eles
+        //   ch2 (kCanalEntradaA) -> cadeia A
+        //   ch3 (kCanalEntradaB) -> cadeia B
+        //
+        // OS COMPARTILHADOS GANHARAM CANAL PROPRIO em v0.156.0. Ate ali
+        // viajavam junto com a cadeia A, e isso quebrava a unica coisa
+        // que a multiplexacao compra: a pagina da B ser COPIA da pagina
+        // da A. Com `level` e `dly_time` dentro da pagina da A, duplicar
+        // os trazia junto e eles tinham de ser apagados da copia — todas
+        // as vezes. Separados, cada pagina tem UM assunto.
         //
         // O MESMO NUMERO DE CC nos dois canais. As paginas do Loopy
         // ficam identicas: copia a pagina da cadeia A, troca o campo de
@@ -1329,7 +1337,7 @@ struct Manifest
         // e um CC que chega num canal sem vinculo NAO move nada — que e
         // o que faz a recusa de 3 e 4 ser barata no voo B.
         // ============================================================
-        AddMidi(20, p_piezo_mix, kCanalEntradaA);        // 64 = centro, as duas cadeias   // COMPARTILHADO: so ch1
+        AddMidi(20, p_piezo_mix, kCanalCompart);        // 64 = centro, as duas cadeias   // COMPARTILHADO: so ch1
         AddMidi(21, p_in_gain[0], kCanalEntradaA);
         AddMidi(21, p_in_gain[1], kCanalEntradaB);
         AddMidi(23, p_gate_thresh[0], kCanalEntradaA);   // em 0 o gate e PULADO
@@ -1398,7 +1406,7 @@ struct Manifest
         AddMidi(61, p_dly_mix[0], kCanalEntradaA);
         AddMidi(60, p_dly_on[1], kCanalEntradaB);
         AddMidi(61, p_dly_mix[1], kCanalEntradaB);
-        AddMidi(64, p_dly_time, kCanalEntradaA);          // COMPARTILHADO, 50 ms .. 1 s
+        AddMidi(64, p_dly_time, kCanalCompart);          // COMPARTILHADO, 50 ms .. 1 s
 
         // ---- FREEZE: 65-70 — envio por cadeia, UMA instancia ----
         // `frz_on_a/b` dizem QUAL cadeia alimenta; `frz_hold` diz QUANDO
@@ -1437,17 +1445,17 @@ struct Manifest
         AddMidi(79, p_shm_tone[1], kCanalEntradaB);
 
         // ---- BUZIOS: 90-92 ----
-        AddMidi(90, p_buzios_on, kCanalEntradaA);   // COMPARTILHADO: so ch1
-        AddMidi(91, p_buzios_thresh, kCanalEntradaA);   // COMPARTILHADO: so ch1
-        AddMidi(92, p_buzios_cooldown, kCanalEntradaA);   // COMPARTILHADO: so ch1
+        AddMidi(90, p_buzios_on, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(91, p_buzios_thresh, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(92, p_buzios_cooldown, kCanalCompart);   // COMPARTILHADO: so ch1
 
         // ---- TOM DE TESTE: 93-95 ----
-        AddMidi(93, p_tone_freq, kCanalEntradaA);   // COMPARTILHADO: so ch1
-        AddMidi(94, p_tone_mix, kCanalEntradaA);   // COMPARTILHADO: so ch1
-        AddMidi(95, p_tone_dest, kCanalEntradaA);         // 0=A 1=B 2=AMBAS   // COMPARTILHADO: so ch1
+        AddMidi(93, p_tone_freq, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(94, p_tone_mix, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(95, p_tone_dest, kCanalCompart);         // 0=A 1=B 2=AMBAS   // COMPARTILHADO: so ch1
 
         // ---- MASTER: 100 ----
-        AddMidi(100, p_level, kCanalEntradaA);   // COMPARTILHADO: so ch1
+        AddMidi(100, p_level, kCanalCompart);   // COMPARTILHADO: so ch1
 
         // ---- PROTECAO E ROTEAMENTO: 110-115 ----
         //
@@ -1474,9 +1482,9 @@ struct Manifest
         // ganho e acoplamento proprios, entao o teto util difere.
         AddMidi(110, p_gov_ceiling[0], kCanalEntradaA);
         AddMidi(111, p_gov_release[0], kCanalEntradaA);
-        AddMidi(112, p_shift_hz, kCanalEntradaA);         // COMPARTILHADO pelos dois ramos
-        AddMidi(113, p_route_exciter, kCanalEntradaA);    // 0 = corta o ramo A   // COMPARTILHADO: so ch1
-        AddMidi(114, p_route_jack, kCanalEntradaA);       // 0 = corta o ramo B   // COMPARTILHADO: so ch1
+        AddMidi(112, p_shift_hz, kCanalCompart);         // COMPARTILHADO pelos dois ramos
+        AddMidi(113, p_route_exciter, kCanalCompart);    // 0 = corta o ramo A   // COMPARTILHADO: so ch1
+        AddMidi(114, p_route_jack, kCanalCompart);       // 0 = corta o ramo B   // COMPARTILHADO: so ch1
         AddMidi(115, p_bench_boost[0], kCanalEntradaA);
         AddMidi(110, p_gov_ceiling[1], kCanalEntradaB);
         AddMidi(111, p_gov_release[1], kCanalEntradaB);

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.155.0"
+#define COTUCA_OS_VERSION "0.156.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -435,7 +435,7 @@ static uint32_t cc_sem_dono = 0;      // (canal,cc) fora do mapa
 // inventario por CC diria "cc30 chegou" sem dizer QUAL drive chegou —
 // que e a pergunta toda. Quatro canais cobrem entrada (1,2) e o espelho
 // (3,4) do voo B, e custam 512 bytes contra os 128 de antes.
-static constexpr int kCanaisInv = 4;
+static constexpr int kCanaisInv = 8;
 static uint8_t cc_visto[kCanaisInv][128] = {{0}};   // contagem, satura em 255
 
 // Subtracao ANTES da comparacao: uint32 de ms volta a zero em 49 dias
@@ -593,7 +593,7 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
     // DE AUTORIA: o widget ouve o ch3, reage, e manda no ch1 — mesmo
     // canal de sempre. Nenhuma separacao de canal pega isso; so a janela
     // por param pega.
-    if(ch == kCanalEspelhoA || ch == kCanalEspelhoB) { eco_proprio++; return; }
+    if(cotuca::EhCanalEspelho(ch)) { eco_proprio++; return; }
     // O fio ainda carrega o que foi enderecado a versao anterior.
     if(boot_dreno_ate && (int32_t)(hal::NowMs() - boot_dreno_ate) < 0)
     { cc_dreno_boot++; return; }
@@ -604,7 +604,7 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
     // defesa que so nasce junto com a ameaca chega atrasada, e esta e
     // barata porque o canal virou parte do endereço: um CC que chega
     // num canal sem vinculo simplesmente nao acha dono.
-    if(ch != kCanalEntradaA && ch != kCanalEntradaB)
+    if(!cotuca::EhCanalEntrada(ch))
     {
         cc_canal_errado++;
         if(ch < kCanaisInv && cc_visto[ch][cc] < 255) cc_visto[ch][cc]++;
@@ -3442,12 +3442,17 @@ static void HandleLine(const char* line)
                 // ch3 espelha a A, ch4 espelha a B. Alimentar sempre a A
                 // faria o `midiloop` divergir da feature no exato ponto
                 // que ele existe para exercitar.
-                const uint8_t cin = ((uint8_t)(ch - 1) == kCanalEspelhoB)
-                                        ? kCanalEntradaB : kCanalEntradaA;
-                const int pid = manifest.FindMidiParam(cin, (uint8_t)cc);
-                if(((uint8_t)(ch - 1) == kCanalEspelhoA
-                    || (uint8_t)(ch - 1) == kCanalEspelhoB) && pid >= 0)
-                    eco_ult[pid] = (uint8_t)val;
+                // O canal do teste diz de QUAL entrada e o vinculo:
+                // espelho - deslocamento devolve o canal de origem.
+                const uint8_t cesp = (uint8_t)(ch - 1);
+                if(cotuca::EhCanalEspelho(cesp))
+                {
+                    const uint8_t cin
+                        = (uint8_t)(cesp - cotuca::kDeslocEspelho);
+                    const int pid
+                        = manifest.FindMidiParam(cin, (uint8_t)cc);
+                    if(pid >= 0) eco_ult[pid] = (uint8_t)val;
+                }
             }
             hal::Log("midiloop: TX B%d %02lX %02lX — precisa de jumper "
                      "D13->D14 pra voltar",
@@ -4042,10 +4047,12 @@ static void HandleLine(const char* line)
                  (unsigned long)injetados_local,
                  OuviDoFio() ? "   (o fio de volta FUNCIONA)"
                              : "   (o fio de volta NUNCA foi provado)");
-        hal::Log("  eco: TX %lu (ch%d cadeia A / ch%d cadeia B)"
+        hal::Log("  eco: TX %lu (ch%d compart / ch%d A / ch%d B)"
                  " | voltaram %lu | perdidas %ld",
                  (unsigned long)eco_tx,
-                 kCanalEspelhoA + 1, kCanalEspelhoB + 1,
+                 cotuca::CanalEspelhoDe(cotuca::kCanalCompart) + 1,
+                 cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA) + 1,
+                 cotuca::CanalEspelhoDe(cotuca::kCanalEntradaB) + 1,
                  (unsigned long)eco_proprio,
                  (long)eco_tx - (long)eco_proprio);
         hal::Log("  delay: %lu vezes que o clamp do ponteiro de leitura"
@@ -4485,17 +4492,19 @@ int main(void)
                     hal::LogAlways("      MAS o fio de volta JA FUNCIONOU neste"
                                    " voo (%lu CCs pelo FIO desde o boot). Entao"
                                    " nao e cabo nem pareamento: sao os widgets,"
-                                   " que nao estao ouvindo ch%d/ch%d.",
+                                   " que nao estao ouvindo ch%d-ch%d.",
                                    (unsigned long)OuviDoFio(),
-                                   cotuca::kCanalEspelhoA + 1,
-                                   cotuca::kCanalEspelhoB + 1);
+                                   cotuca::kDeslocEspelho + 1,
+                                   cotuca::kDeslocEspelho
+                                       + cotuca::kNumCanaisEntrada);
                 else
                     hal::LogAlways("      E a placa NUNCA ouviu o controlador"
                                    " neste voo. Restam duas: os widgets nao"
-                                   " escutam ch%d/ch%d, ou o fio de volta"
+                                   " escutam ch%d-ch%d, ou o fio de volta"
                                    " (WIDI OUT -> D14) nao fecha.",
-                                   cotuca::kCanalEspelhoA + 1,
-                                   cotuca::kCanalEspelhoB + 1);
+                                   cotuca::kDeslocEspelho + 1,
+                                   cotuca::kDeslocEspelho
+                                       + cotuca::kNumCanaisEntrada);
                 hal::LogAlways("      Nao confirmado quanto ao RETORNO. A"
                                " TRANSMISSAO a placa fez: conferir no MIDI"
                                " Wrench separa as duas coisas.");
