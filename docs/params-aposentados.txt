@@ -63,4 +63,7 @@ check_docs        # nome do proprio verificador, citado na 13m
 # linha aqui e uma divida — quando o desenho virar codigo, o simbolo passa
 # a ser achado no fonte e a linha TEM QUE SAIR. Isencao sem prazo vira
 # entulho, e entulho transforma verificador em carimbo (bts 13o).
-n_params          desenho  DESENHO-PRESETS-RAM.md §5 — sai quando PresetHeader existir
+#
+# (vazia em 23/08: o `n_params` saiu quando o PresetHeader passou a
+#  existir em presets.h — a divida foi cobrada pelo proprio mecanismo,
+#  que era o ponto de escrever o prazo.)

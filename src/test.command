@@ -1,10 +1,10 @@
 #!/bin/bash
-# test.command v0.2.0 — compila e roda os bancos de teste nativos
+# test.command v0.3.0 — compila e roda os bancos de teste nativos
 #
 # v0.2.0: junta o banco do midi.h ao do dynamics.h. Os dois rodam no
 # Mac porque os dois arquivos sao C++ puro e board-agnostic.
 cd "$(dirname "$0")"
-echo "test.command v0.2.0"
+echo "test.command v0.3.0"
 echo
 echo "dynamics.h e midi.h sao C++ puro e board-agnostic, entao a"
 echo "matematica dos blocos e a maquina de estados MIDI rodam no Mac —"
@@ -22,6 +22,12 @@ echo
 echo "================= midi ================="
 clang++ -std=c++14 -O2 -I. test_midi.cpp -o /tmp/cotuca_test_midi \
     && /tmp/cotuca_test_midi
+[ $? -ne 0 ] && STATUS=1
+
+echo
+echo "=============== presets ==============="
+clang++ -std=c++14 -O2 -I. test_presets.cpp -o /tmp/cotuca_test_presets \
+    && /tmp/cotuca_test_presets
 [ $? -ne 0 ] && STATUS=1
 
 echo

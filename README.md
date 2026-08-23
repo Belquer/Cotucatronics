@@ -74,13 +74,15 @@ Cinco regras que não se negociam:
 | [src/midi.h](src/midi.h) | **v0.5.0** | Máquina de estados MIDI + mapa CC (teto 48). C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.1** | Banco nativo do parser MIDI e da via CC→ParamTable |
-| [src/test.command](src/test.command) | **v0.2.0** | Wrapper duplo-clicável dos dois bancos de teste |
+| [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
 | [src/main.cpp](src/main.cpp) | **v0.130.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI no canal 2** com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`. **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.9.0** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
 | [src/midi.h](src/midi.h) | **v0.5.0** | Parser MIDI board-agnostic. Histórico de 96 mensagens |
 | [src/manifest.h](src/manifest.h) | **v0.77.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **76 CCs mapeados** + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
 | [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 41 CCs numa folha A4. Fonte em `ccmap.html`, gerador `ccmap-pdf.sh` / `.command` v0.1.0 |
+| [src/presets.h](src/presets.h) | **v0.1.0** | Estruturas de preset e a **versão do mapa derivada** (FNV-1a dos nomes). C++ puro — prova-se inteiro em banco nativo |
+| [src/test_presets.cpp](src/test_presets.cpp) | **v0.1.0** | Banco nativo dos presets: pertinência, hash (as duas metades) e cada veredito de recusa |
 | [src/qspi_raw.h](src/qspi_raw.h) | **v0.1.0** | Contrato do acesso cru à QUADSPI. **Fecho transitivo zero** — nada que ele chame pode morar na QSPI |
 | [src/qspi_raw.cpp](src/qspi_raw.cpp) | **v0.2.0** | Registradores da QUADSPI na mão, tudo marcado `COTUCA_ITCM`. **ABORT ao sair do memory-mapped** — ver `docs/DESENHO-ESCRITA-QSPI.md` |
 | [src/cotucatronics_qspi.lds](src/cotucatronics_qspi.lds) | **v0.1.0** | Linker script bifurcado da libDaisy (certidão de origem no topo). Acrescenta `.itcm_text` → ITCMRAM |
