@@ -399,7 +399,28 @@ struct Manifest
         int         param_on;
         const char* nome;
     };
+    // ESTE LIMITE E LIDO NO CALLBACK DE AUDIO, e por isso ele nao pode
+    // seguir a tabela de params.
+    //
+    // Uma varredura de 23/08 procurou "que custos escalam com uma tabela
+    // que cresceu?" e achou o `sync` gastando 258 ms onde foi dimensionado
+    // para 36 (bts 13p). O callback saiu limpo — o unico laco sobre tabela
+    // ali e o do `n_sacrif` — mas saiu limpo por SORTE DE DESENHO: nada
+    // dizia que ele nao podia escalar com params, e ninguem tinha
+    // verificado.
+    //
+    // O assert transforma a sorte em garantia. Se um dia alguem quiser
+    // sacrificar POR PARAM em vez de por efeito, o build reclama antes de
+    // o callback engordar — que e o unico lugar onde engordar custa
+    // amostra perdida, e nao apenas paciencia.
+    //
+    // Se este numero precisar passar de 16, a pergunta certa nao e "posso
+    // aumentar?" e sim "isto ainda e por EFEITO?".
     static constexpr int kMaxSacrificaveis = 12;
+    static_assert(kMaxSacrificaveis <= 16,
+                  "kMaxSacrificaveis e varrido no callback de audio: tem que "
+                  "ser constante pequena ligada a contagem de EFEITOS, nunca "
+                  "a de params, que cresce (ver battle_scars 13p)");
     Sacrificavel sacrif[kMaxSacrificaveis];
     int          n_sacrif = 0;
 

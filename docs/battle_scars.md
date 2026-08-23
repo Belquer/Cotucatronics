@@ -3331,6 +3331,46 @@ indistinguíveis.
 > saída, dois relatórios do mesmo mapa, dois ramos de amplificação. O irmão é
 > quase sempre visível do lugar onde se está.
 
+### A versão EXECUTÁVEL da pergunta, que é do dB
+
+*"Onde mais esta forma aparece?"* é busca por **semelhança**, e semelhança é
+subjetiva. *"Quem mais faz esta mesma coisa?"* é melhor porque é busca por
+**função**. Mas a versão que se executa é:
+
+> **Ao acrescentar um campo, uma defesa ou um relatório, faça `grep` pelos
+> DADOS que ele toca — não pela forma dele.**
+
+Nos três casos o irmão cai nesse grep:
+
+| defesa | dado tocado | o grep entrega |
+|---|---|---|
+| governor | ramo de saída | `OUT_L`, `OUT_R` |
+| janela de autoria | caminho do espelho | `eco_ult`, quem transmite |
+| canal no relatório | o `midi_map` | todo consumidor do mapa |
+
+**E o traço comum que explica por que o irmão escapa: nos três, ele foi criado
+em outro momento.** O governor L existia antes de R; o `MidiPushEstado` já
+estava lá quando o `MidiEspelha` ganhou a janela; o `midi` já imprimia quando
+o `vistos` ganhou canal. O irmão não está escondido — está **fora do campo de
+atenção**, e atenção é sempre local à edição. Grep de dado é o que o traz de
+volta ao campo.
+
+### Aplicada na hora, ela achou o que a previsão não tinha previsto
+
+Grep pelo dado *"recusar entrada por um tempo"* devolveu **três** mecanismos,
+não os dois esperados:
+
+| variável | escopo | gatilho |
+|---|---|---|
+| `quiet_until[param]` | por param | o espelho falou daquele assunto |
+| `quar_block_to` | global | despejo de reconexão detectado |
+| `boot_dreno_ate` | global | boot |
+
+Os três fazem *recusar CC até T, contando*. **Os dois globais são o mesmo
+mecanismo com razões diferentes** — um emprego, duas variáveis, que é a
+inversão da variável-com-dois-empregos e diverge no primeiro conserto. Fica
+registrado; unificar é trabalho de outro voo.
+
 ---
 
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
