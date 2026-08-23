@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.2.0
+// Cotucatronics OS — presets v0.3.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -127,6 +127,24 @@ struct PresetHeader
     uint8_t  checksum;     // cobre cabecalho E payload — ver abaixo
     uint8_t  _pad;
 };
+
+// A PROMESSA DO `kFormato` AMARRADA AO COMPILADOR.
+//
+// A convencao acima ("toda mudanca de layout incrementa kFormato") e
+// disciplina, e disciplina envelhece mal em comentario. Este assert a
+// transforma em contrato: quem mexer no layout bate na trava AQUI, com a
+// regra na mensagem, em vez de descobrir meses depois lendo um preset
+// deslocado e vendo "corrupcao".
+//
+// Ele nao verifica que o kFormato subiu — nao da pra verificar isso em
+// compilacao. Ele garante que ninguem mude o layout SEM PASSAR POR AQUI,
+// que e onde a regra esta escrita. Mesmo gesto do assert do n_sacrif:
+// transformar sorte em garantia, e limite em contrato.
+static_assert(sizeof(PresetHeader) == 8,
+              "o layout do PresetHeader mudou: incremente kFormato e ajuste "
+              "este numero. Preset gravado com o layout antigo sera lido com "
+              "deslocamento, e o veredito sairia 'corrupcao' para um caso de "
+              "migracao de formato (ver DESENHO-PRESETS-RAM.md §5)");
 
 static constexpr uint16_t kPresetMagic   = 0x4354u;  // 'CT'
 static constexpr uint8_t  kFormato       = 1;
