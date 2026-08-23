@@ -2628,6 +2628,68 @@ Foi isso que apontou o dedo para fora dela.
 
 ---
 
+## 13c. Prosa de status é medição também — as quatro do mesmo dia (22/08)
+
+Quatro vezes em 22/08 o instrumento de medir virou a falha. Só no fim ficou
+claro que as quatro têm a **mesma anatomia**.
+
+| onde | o que a linha dizia | o que era |
+|---|---|---|
+| parser de bancada | `pico 0 µs` | o regex não casou e o código fez `else 0` |
+| relatório da defesa | `ESTOUROS (>1000 us)` | contava contra os 300 artificiais |
+| anúncio no chat | "CC 42 no fio" | a chamada só LEU; a placa seguia no 41 |
+| script de bancada | `placa viva: sim` | **string fixa**, nenhuma verificação |
+
+Em todas, o relatório tem **duas camadas** — o dado e a **moldura** do dado —
+e a moldura foi escrita como decoração enquanto só o dado foi tratado como
+código. Rótulo, unidade, condição, afirmação de estado: nenhum deles foi
+verificado, porque nenhum deles *parecia* um número.
+
+**Regra:** *toda linha de relatório é uma afirmação verificável, ou é
+proibida.* `placa viva: sim` só pode existir como resultado de um ping com
+timeout. Se não houver o ping, a linha não existe — não vira "provavelmente",
+não vira texto otimista.
+
+É a 12u generalizada: de **número** dito de passagem para **frase** dita de
+passagem. Prosa de status é medição, e mente com a mesma eficácia — pior,
+com mais autoridade, porque ninguém revisa uma frase em português como
+revisa um número.
+
+**E "é só um script de bancada" já tem ficha:** é a frase que precede, agora
+com quatro ocorrências documentadas no mesmo dia. Junto com "é só um log" e
+"é só um recado" (12z), completa o trio.
+
+---
+
+## 13d. O tamanho da seção é a prova de que o atributo foi aplicado (22/08)
+
+A rotina de escrita na QSPI precisa executar da ITCM — é o mecanismo inteiro.
+Marquei `COTUCA_ITCM` nos dois ajudantes e **esqueci na função principal**.
+Ela rodava da QSPI e se matava na instrução seguinte a desligar o periférico:
+travamento total, dois RESETs físicos, uma reinstalação de bootloader.
+
+**E o número estava na tela antes de tudo isso:**
+
+    ITCMRAM:  68 B de 64 KB      <- pouco demais pro que eu tinha escrito
+    ITCMRAM: 212 B de 64 KB      <- depois do conserto, tres vezes maior
+
+O linker imprime isso **a cada compilação**, de graça. Eu li "a seção existe"
+e parei ali, quando o que importava era "a seção tem o tamanho certo".
+
+**Regra:** *quando o atributo de seção é o mecanismo, o tamanho da seção é a
+prova de que ele foi aplicado.* Seção do tamanho errado é atributo
+não-aplicado até prova em contrário — e a verificação é grátis, no output do
+build.
+
+Mesma família do `.map` que pegou o `.bss` indo parar na DTCM: **o linker
+fala; o custo é ler.** Nas duas vezes a informação estava impressa e eu segui
+adiante.
+
+Ficou escrito no cabeçalho do `qspi_raw.h` como parte do aceite, porque é lá
+que alguém vai acrescentar a próxima função e esquecer o atributo.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**

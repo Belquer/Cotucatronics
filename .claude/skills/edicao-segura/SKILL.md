@@ -159,3 +159,26 @@ float para inteiro com valor fora de faixa (ou NaN/Inf) é UB, não wrap.
 **E leia o contexto antes de tocar.** O segundo defeito só apareceu porque a
 linha foi lida inteira antes de ser trocada. Conserto parcial que parece
 completo é pior que nenhum: fecha o sintoma que denunciava o resto.
+
+## O tamanho da seção prova que o atributo foi aplicado
+
+Quando `__attribute__((section(...)))` **é o mecanismo** — código que precisa
+rodar de outra memória, dado que precisa morar noutra região — o tamanho da
+seção no output do build é a verificação, e ela é grátis.
+
+Em 22/08 marquei o atributo em dois ajudantes e esqueci na função principal.
+Ela rodou de onde não devia e travou a placa: dois RESETs físicos e uma
+reinstalação de bootloader. O número estava impresso antes de tudo isso:
+
+    ITCMRAM:  68 B    <- pouco demais pro que eu tinha escrito
+    ITCMRAM: 212 B    <- depois do conserto
+
+> **Seção do tamanho errado é atributo não-aplicado até prova em contrário.**
+> Ler "a seção existe" e parar ali é meio caminho; o que importa é "a seção
+> tem o tamanho certo".
+
+Mesma família do `.map` que pegou o `.bss` indo para a DTCM numa troca de
+`APP_TYPE`: **o linker fala; o custo é ler.**
+
+Escreva a expectativa no cabeçalho do arquivo, junto do `#define` do
+atributo — é lá que alguém vai acrescentar a próxima função e esquecer.

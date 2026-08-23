@@ -373,6 +373,29 @@ projeto, aplicada ao `Log()`, com comentário longo explicando por quê. Duas
 funções abaixo dela no mesmo arquivo não a seguiam. **Lição aplicada num
 lugar não é lição aplicada.**
 
+## Toda linha de relatório é afirmação verificável, ou é proibida
+
+Quatro vezes em 22/08 o instrumento mentiu, e as quatro têm a mesma
+anatomia: o relatório tem **duas camadas** — o dado e a **moldura** do dado —
+e a moldura foi escrita como decoração enquanto só o dado foi tratado como
+código.
+
+    pico 0 µs             <- o regex nao casou, e o codigo fez `else 0`
+    ESTOUROS (>1000 us)   <- contava contra os 300 artificiais
+    "CC 42 no fio"         <- a chamada so LEU; a placa seguia no 41
+    placa viva: sim       <- STRING FIXA, nenhuma verificacao
+
+> `placa viva: sim` só pode existir como resultado de um ping com timeout.
+> **Sem o ping, a linha não existe** — não vira "provavelmente", não vira
+> texto otimista.
+
+Rótulo, unidade, condição e afirmação de estado são medição igual ao número.
+Prosa de status mente com mais autoridade, porque ninguém revisa uma frase em
+português como revisa um número.
+
+**E "é só um script de bancada" tem ficha** — junto com "é só um log" e "é só
+um recado", completa o trio das frases que precedem as falhas mais caras.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

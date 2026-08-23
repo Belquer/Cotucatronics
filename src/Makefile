@@ -27,6 +27,20 @@ BOARD  ?= daisy_seed
 # bootloader some junto.
 APP_TYPE ?= BOOT_QSPI
 
+# LINKER PROPRIO. O `?=` da libDaisy aceita sobrescrita, e tem que vir
+# ANTES do include — mesmo motivo do LDFLAGS mais abaixo.
+#
+# Existe porque escrever na QSPI exige tira-la do modo memory-mapped, e
+# o app executa DE LA — inclusive a tabela de vetores e os 51 handlers.
+# A secao `.itcm_text` poe a rotina de escrita numa RAM que nao depende
+# da QSPI. Certidao de origem e o porque completo no topo do .lds.
+LDSCRIPT = $(shell pwd)/cotucatronics_qspi.lds
+
+# O ATRIBUTO E O LINKER SAO UMA COISA SO. Quem usa `.itcm_text` precisa
+# de um linker que a defina; separa-los quebra o build com "undefined
+# reference to _sitcm", que foi como eu descobri na rodada do .axi_bss.
+C_DEFS += -DCOTUCA_TEM_ITCM
+
 # Clone da libDaisy. Sobrescreva na linha de comando se estiver
 # em outro lugar:  make LIBDAISY_DIR=/caminho/pra/libDaisy
 LIBDAISY_DIR ?= $(HOME)/dev/libDaisy
@@ -55,6 +69,7 @@ HAL_SRC = hal_$(BOARD).cpp
 # do IFA10000 (7 349 us contra 2 667 de orcamento) e segue fora.
 
 CPP_SOURCES = \
+	qspi_raw.cpp \
 main.cpp \
 $(HAL_SRC)
 

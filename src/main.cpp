@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.124.0 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.125.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.124.0"
+#define COTUCA_OS_VERSION "0.125.1"
 
 #include "hal.h"
 #include "params.h"
@@ -25,6 +25,7 @@
 // repo, intacto e revivivel. Ver docs/FEATURES.md, secao Arquivo.
 #include "suave.h"
 #include "delay.h"
+#include "qspi_raw.h"
 #include "midi.h"
 #include <cstdio>
 #include <cstring>
@@ -2106,6 +2107,52 @@ static void HandleLine(const char* line)
         TriggerRandomize(false);
         return;
     }
+    // `qspi id` — le o JEDEC ID pela rotina ITCM.
+    //
+    // E O "OLA MUNDO" DA JANELA DE ESCRITA, por desenho: valida ITCM,
+    // mudanca de modo e retorno ao memory-mapped com o unico comando
+    // que nao pode estragar nada. Se ler tres bytes funciona, o mesmo
+    // mecanismo escreve — o que muda e a tabela de comandos.
+    // `qspi vida` — a rotina ITCM roda e volta? Sem tocar no chip.
+    if(strncmp(line, "qspi vida", 9) == 0)
+    {
+        const uint32_t r = cotuca::qspi::ProvaDeVida();
+        hal::Log("qspi: prova de vida da ITCM devolveu %lu (esperado 5050)"
+                 " — a rotina executa de la e retorna", (unsigned long)r);
+        return;
+    }
+    if(strncmp(line, "qspi id", 7) == 0)
+    {
+        // A JANELA. A tabela de vetores e os 51 handlers moram na
+        // QSPI; qualquer interrupcao aqui dentro busca o vetor da
+        // memoria que saiu do ar e e fatal ANTES de chegar ao handler.
+        // Nao ha lista de excecoes possivel — so mascarar tudo.
+        __disable_irq();
+        const uint32_t id = cotuca::qspi::LeJedecId();
+        __enable_irq();
+
+        if(!id)
+        {
+            hal::Log("qspi: o periferico NAO respondeu (id=0). A rotina"
+                     " voltou viva, entao a janela funciona — o que"
+                     " falhou foi o dialogo com o chip.");
+            return;
+        }
+        hal::Log("qspi: JEDEC ID = %02lX %02lX %02lX  (fabricante,"
+                 " tipo, densidade)",
+                 (unsigned long)((id >> 16) & 0xFF),
+                 (unsigned long)((id >> 8) & 0xFF),
+                 (unsigned long)(id & 0xFF));
+        // Densidade: o terceiro byte e log2 do tamanho em bytes nos
+        // JEDEC comuns. 0x17 = 8 MB. Declarado como INFERENCIA, nao
+        // como leitura — se o chip nao seguir a convencao, o numero
+        // mente e a etiqueta avisa.
+        const uint32_t d = id & 0xFF;
+        if(d >= 0x10 && d <= 0x20)
+            hal::Log("  densidade inferida: %lu MB (2^%lu bytes)",
+                     (unsigned long)(1ul << (d - 20)), (unsigned long)d);
+        return;
+    }
     // vistos [reset] — inventario de quais CCs ja chegaram
     if(strncmp(line, "vistos", 6) == 0)
     {
@@ -3124,7 +3171,7 @@ static void HandleLine(const char* line)
         }
         return;
     }
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | miditest | midiloop");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -3148,6 +3195,10 @@ int main(void)
 {
     using namespace cotuca;
     hal::Init();
+    // A `.itcm_text` mora gravada na QSPI e RODA na ITCM. Copiar aqui,
+    // antes de qualquer chamada pra la — e depois do hal::Init(),
+    // porque a copia usa cache e o cache e configurado la dentro.
+    cotuca::qspi::CopiaParaItcm();
     params.Init();
     manifest.Init(params);
 
