@@ -5,7 +5,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.127.1"
+#define COTUCA_OS_VERSION "0.128.1"
 
 #include "hal.h"
 #include "params.h"
@@ -427,6 +427,14 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
             // e para de descartar. Libera o que estava seguro.
             QuarFlush();
             ble_reconnects++;
+            // CARIMBA A BASE DA SESSAO. Ate 22/08 este contador era
+            // LIDO e nunca ESCRITO: o `ble` imprimia
+            // `CcCount() - ble_session_base` com a base congelada em
+            // zero, ou seja, o TOTAL rotulado como "msgs da sessao".
+            // Pior que zero-com-cara-de-dado — numero plausivel e
+            // errado, que ninguem tem como desconfiar. Uma reconexao
+            // e o inicio de sessao que o rotulo sempre prometeu.
+            ble_session_base = midi.CcCount();
             hal::BlackboxWrite(87, (float)ble_reconnects);
             hal::Log("ble: (re)conexao detectada — %d CCs distintos em"
                      " <%lu ms. APLICADOS: com defaults em zero, o"
@@ -540,11 +548,6 @@ static constexpr size_t kMaxBlock = 256;
 static float            src_buf[kMaxBlock];
 
 
-// Portadora ausente = silêncio, não lixo. Usado quando a placa não
-// tem entrada de áudio: um módulo de 2 inputs continua rodando, só
-// que sem portadora.
-static float zero_buf[kMaxBlock] = {};
-
 // REVERB — bloco permanente do shell, não módulo. Ver reverb.h pras
 // duas razões (pool de SRAM a 92,4% e a natureza fim-de-linha).
 // Pico de saida por balde de pitch (13 semitons da cerca dos buzios).
@@ -598,8 +601,6 @@ static cotuca::Freeze freeze_c[cotuca::Manifest::kCadeias];
 static bool           freeze_c_ok[cotuca::Manifest::kCadeias] = {};
 static float*         freeze_c_mem[cotuca::Manifest::kCadeias] = {};
 static cotuca::Freeze freeze;
-static bool           freeze_ok = false;
-static float*         freeze_mem = nullptr;
 // 2 s estéreo a 48 kHz = 192 000 floats = 768 KB. Dois segundos porque
 // é o que sustenta uma batida inteira da escultura com cauda; abaixo
 // de ~1 s a varredura volta ao início rápido demais e o ouvido acha o
@@ -651,7 +652,6 @@ static constexpr float     kPitchSeconds = 0.40f;
 // realimenta; detune e warble vao gravar o seco, noutro ponto.
 static cotuca::PitchEngine pitch_tail;
 static bool                pitch_tail_ok  = false;
-static float*              pitch_tail_mem = nullptr;
 static cotuca::Shimmer     shimmer;
 static cotuca::EffectSlot  shimmer_slot;
 
@@ -1015,9 +1015,6 @@ struct Cadeia
 static Cadeia cad[cotuca::Manifest::kCadeias];
 alignas(32) static float warble_mem[cotuca::Manifest::kCadeias][1924];
 static float             tone_buf[kMaxBlock];
-// O que CONTORNA a cauda: a parte de cada cadeia que o `esp_mix`
-// deixou de fora. Somado de volta no fim, depois do reverb.
-static float             seco_buf[kMaxBlock];
 static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 
 // BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
@@ -2999,6 +2996,9 @@ static void HandleLine(const char* line)
                          (unsigned long)est_rajada);
             }
         }
+        hal::Log("  rearmes pelo botao B3: %d  (o serial solta a trava"
+                 " sem religar; o botao DEVOLVE os efeitos)",
+                 soma_rearmes_botao);
         hal::Log("  o instrumento perde o efeito, nunca a base."
                  " Desenho em docs/CTOS.md");
         return;
@@ -3428,7 +3428,6 @@ int main(void)
                 freeze_c_ok[c] = freeze_c[c].Init(sr, freeze_c_mem[c], need,
                                                   kFreezeSeconds);
         }
-        freeze_ok = freeze_c_ok[0];
         hal::Log("freeze: A %s | B %s (%.1f s, %u KB cada em SDRAM)",
                  freeze_c_ok[0] ? "pronto" : "SEM BUFFER",
                  freeze_c_ok[1] ? "pronto" : "SEM BUFFER",
@@ -3728,7 +3727,6 @@ int main(void)
         {
             const uint32_t now = hal::NowMs();
             const uint32_t b   = midi.Bytes();
-            const uint32_t cc  = midi.CcCount();
 
             // QUEDA: silencio > 10 s DEPOIS de ter havido trafego. A
             // condicao "depois de trafego" e o que separa queda de

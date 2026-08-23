@@ -197,6 +197,10 @@ descorrelacionados.
 **3. Cauda no corte.** `frz_on` 1→0 corta seco; soa como tomada arrancada, não
 como gesto. Rampa de saída de ~300 ms, com os grãos rodando durante a descida.
 *Decisão pendente do dB:* tempo fixo ou parâmetro `frz_release`?
+<!-- doc-check: ignore frz_release (proposta nao implementada) -->
+> **Nota:** `frz_release` é **proposta**, não parâmetro. A marca acima o
+> declara ao verificador de deriva — fantasma declarado deixa de ser
+> fantasma; fantasma silencioso quebra o build.
 
 ### Também na fila, do mesmo desenho (CTOS protegendo a base)
 - **Tirar `src_mix`, `gate_thresh` e `gov_ceiling` do mapa MIDI.** São
@@ -376,8 +380,15 @@ recebe só o seu envio — **duas salas custam menos que o dobro de uma**
 
 **Consequências declaradas:** o delay deixou de ser reverberado (os ecos saem
 secos, a sala trabalha sobre a fonte); os mixes internos viraram envios por
-cadeia; e o freeze separou **fonte** de **gesto** — `frz_on_a/b` dizem qual
-cadeia alimenta, `frz_hold` diz quando congelar.
+cadeia; e o freeze virou **dois independentes**, um por cadeia, com buffer
+próprio: `frz_on_{a,b}` **são** o gesto de congelar, com `frz_vol` e
+`frz_size` por cadeia.
+
+> **Correção de deriva (22/08).** Este parágrafo descrevia por meses um
+> desenho de "fonte e gesto separados", com um `frz_hold` que **nunca
+> existiu como parâmetro** — o `manifest.h:264` já registrava a decisão
+> contrária e a doc ficou no modelo antigo. Achado pelo audit de deriva
+> doc↔código; ver bts 13h.
 
 **Proteção anti-feedback duplicada** para o ramo B (bloqueante do hardware de
 dois exciters): governor e boost por ramo, `shift_hz` compartilhado — dois

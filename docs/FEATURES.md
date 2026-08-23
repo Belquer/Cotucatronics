@@ -80,7 +80,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 > sala linear. Ficou um envio só por destino: `rev_on`/`rev_mix` dizem quanto
 > da cadeia entra no espaço, o retorno volta inteiro, e `shm_mix` voltou ao
 > emprego único (só a camada direta). **75 params, 75 CCs.**
-| **Freeze granular** (shell) — envio por cadeia | `frz_on_{a,b}`, `frz_mix_{a,b}`, **`frz_hold`** (o gesto), `frz_size` | 65–70 | ✅ certificado 18/08 · ⏳ reaceite na nova posição · **fonte e gesto separados**: `frz_on_a/b` dizem qual cadeia alimenta, `frz_hold` diz quando congelar |
+| **Freeze granular** (shell) — um por cadeia | `frz_on_{a,b}` (**o gesto**), `frz_vol_{a,b}`, `frz_size_{a,b}` | 65–70 | ✅ certificado 18/08 · ✅ **botão físico aprovado de ouvido 22/08** · **DUAS instâncias independentes**, com buffer próprio · o `_on` **é** o gesto de congelar, não chave de bypass — não existe `frz_hold` (bts 13h) |
 | **Drive** — chave e dry/wet por canal | `drv_on_{a,b}`, `drv_mix_{a,b}` · `drv_drive`, `drv_tone` compartilhados | 38,39 / 44,45 · primário **43** | ⏳ **reaceite pendente na nova posição** (IFÁ10000 não se herda) · +21 µs por canal |
 | **Phaser** — chave e dry/wet por canal | `phs_on_{a,b}`, `phs_mix_{a,b}` · `phs_rate`, `phs_depth`, `phs_fb`, `phs_stages` compartilhados | 40,41 / 46,47 · primário **49** | ⏳ **reaceite pendente** · +26 µs por canal · ⚠️ `phs_mix` é MONTANHA: pico em ~50% |
 | **Warble** — chave por canal, params compartilhados | `wrb_on_{a,b}` · `wrb_rate`, `wrb_depth`, `wrb_irreg` compartilhados | 42 / 48 · primário **52** | ⏳ **reaceite pendente** · +14 µs por canal · 16 cents medidos |
@@ -130,7 +130,11 @@ e o custo de cada adição fica invisível até algo quebrar.
 > (620 µs / 66%) · (c) tetos resolvidos no desenho ✅ (96 params / 48 CCs) ·
 > (d) caráter recolhido a params compartilhados ✅ · (e) `out_width`
 > aposentado ✅ · (f) **proteção anti-feedback do ramo B** ← próximo, e
-> bloqueante para o hardware · (g) segundo espaço + `rev_type` · (h) send
+> bloqueante para o hardware · (g) segundo espaço — **entregue de outra
+> forma**: em vez de um `rev_type` escolhendo o caráter, saíram **dois
+> espaços independentes** com params por cadeia (`rev_*_{a,b}`,
+> `shm_*_{a,b}`), que é o desenho que "corda com shimmer, couro com
+> reverb limpo" pedia · (h) send
 > por cadeia · (i) GPIOs dos DPDT · (j) IFÁ10000 e aceite de ouvido.
 >
 > ### 🔴 O ramo B não tem proteção anti-feedback
