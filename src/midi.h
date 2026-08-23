@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.5.0
+// Cotucatronics OS — midi v0.6.0
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -38,7 +38,14 @@ constexpr int kMidiOmni    = -1;
 // Sao 54 hoje, e o teto de 48 estourava. Conta feita ANTES de escrever
 // o mapa, pela terceira vez seguida: estouro de capacidade e defeito de
 // projeto, nao condicao de runtime.
-constexpr int kMaxMidiMap  = 80; // entradas na tabela CC→param
+// UNIDADE: VÍNCULOS `(cc,canal)→param`, NÃO números de CC. Os dois
+// deixaram de coincidir com a multiplexação — 49 números de CC produzem
+// 86 vínculos, porque os pareados aparecem nos dois canais.
+//
+// Confundir as duas unidades já custou uma rodada neste projeto (o
+// histórico de 96 MENSAGENS dimensionado contra 76 WIDGETS). Aqui a
+// conta é: 12 compartilhados (só ch1) + 37 pareados × 2 = 86.
+constexpr int kMaxMidiMap  = 128; // vínculos (cc,canal)→param
 // 96, e o numero veio de um trabalho real. Com 8 o historico so
 // respondia "o que acabou de chegar"; para inventariar 76 widgets — o
 // dB varre a pagina inteira e eu leio o que chegou — 8 obriga a ir de
@@ -78,9 +85,16 @@ using MidiTraceFn = void (*)(uint8_t byte, MidiVerdict v, uint8_t status,
                              int n_data);
 
 // Uma linha da tabela do manifest: "CC tal move o parâmetro tal".
+// CANAIS DE ENTRADA. O canal deixou de ser decoração e virou parte do
+// endereço: com a multiplexação, o CC 30 no canal 1 e o CC 30 no canal 2
+// são parâmetros DIFERENTES.
+constexpr uint8_t kCanalEntradaA = 0;  // MIDI ch1 — cadeia A + compartilhados
+constexpr uint8_t kCanalEntradaB = 1;  // MIDI ch2 — cadeia B
+
 struct MidiCcBind
 {
     uint8_t cc;       // número do controlador, 0–119
+    uint8_t canal;    // canal MIDI 0-based — PARTE DO ENDEREÇO, não filtro
     int     param_id; // id na ParamTable
 };
 

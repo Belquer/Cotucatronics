@@ -207,9 +207,9 @@ int main()
         static cotuca::ParamTable* pt = &t;
         struct Apply
         {
-            static void Cc(uint8_t, uint8_t cc, uint8_t val)
+            static void Cc(uint8_t ch, uint8_t cc, uint8_t val)
             {
-                pm->ApplyMidiCc(*pt, cc, val);
+                pm->ApplyMidiCc(*pt, ch, cc, val);
             }
         };
 
@@ -232,6 +232,90 @@ int main()
                 if(m.midi_map[k].param_id == param_id) return m.midi_map[k].cc;
             return -1;
         };
+        auto CanalDe = [&](int param_id) -> int {
+            for(int k = 0; k < m.n_midi; k++)
+                if(m.midi_map[k].param_id == param_id) return m.midi_map[k].canal;
+            return -1;
+        };
+        auto Endereca = [&](int param_id, uint8_t val) {
+            const int cc = CcDe(param_id), ca = CanalDe(param_id);
+            if(cc < 0 || ca < 0) return;
+            const uint8_t msg[] = {(uint8_t)(0xB0 | ca), (uint8_t)cc, val};
+            Feed(p, msg, 3);
+        };
+
+        // ---- MULTIPLEXACAO: o mesmo CC, canais diferentes, params
+        //      diferentes. E a invariante do voo A, e ela vale para
+        //      QUALQUER par _a/_b do mapa, nao para um exemplo escolhido:
+        //      um teste que so olha o drive nao percebe se o warble
+        //      ficou de fora do remapeamento.
+        {
+            int pares = 0, ok = 0, mesmo_cc = 0;
+            for(int i = 0; i < t.Count(); i++)
+            {
+                const char* nome = t.Name(i);
+                const size_t L = strlen(nome);
+                if(L < 3 || nome[L-2] != '_' || nome[L-1] != 'a') continue;
+                char nb[64];
+                snprintf(nb, sizeof(nb), "%s", nome);
+                nb[L-1] = 'b';
+                const int ib = t.Find(nb);
+                if(ib < 0) continue;
+                const int cca = CcDe(i), ccb = CcDe(ib);
+                if(cca < 0 || ccb < 0) continue;
+                pares++;
+                if(cca == ccb) mesmo_cc++;
+                if(CanalDe(i) == cotuca::kCanalEntradaA
+                   && CanalDe(ib) == cotuca::kCanalEntradaB) ok++;
+            }
+            snprintf(d, sizeof(d), "%d pares _a/_b mapeados", pares);
+            Check("existem pares _a/_b no mapa para testar", pares > 0, d);
+            snprintf(d, sizeof(d), "%d de %d com o MESMO numero de CC",
+                     mesmo_cc, pares);
+            Check("todo par _a/_b usa o MESMO numero de CC",
+                  pares > 0 && mesmo_cc == pares, d);
+            snprintf(d, sizeof(d), "%d de %d com _a no ch1 e _b no ch2",
+                     ok, pares);
+            Check("todo par _a/_b: _a no ch1, _b no ch2",
+                  pares > 0 && ok == pares, d);
+        }
+
+        // A PROVA DE FOGO: o mesmo numero de CC, dois canais, dois
+        // valores — e cada param fica com o SEU. Se o canal nao fizesse
+        // parte do endereço, o segundo sobrescreveria o primeiro.
+        {
+            const int ia = t.Find("drv_drive_a"), ib = t.Find("drv_drive_b");
+            Check("manifest expoe drv_drive_a e _b", ia >= 0 && ib >= 0);
+            if(ia >= 0 && ib >= 0)
+            {
+                Endereca(ia, 30);
+                Endereca(ib, 100);
+                snprintf(d, sizeof(d), "cc%d: ch1->%.4f ch2->%.4f",
+                         CcDe(ia), t.Get(ia), t.Get(ib));
+                Check("mesmo CC em ch1 e ch2 move params DIFERENTES",
+                      fabsf(t.Get(ia) - 30.f/127.f) < 0.002f
+                      && fabsf(t.Get(ib) - 100.f/127.f) < 0.002f, d);
+            }
+        }
+
+        // CANAL SEM VINCULO nao move nada. O ch3 e ch4 sao o espelho do
+        // voo B; hoje nao endereçam, e o teste trava isso ANTES de a
+        // saida existir — defesa testada antes da ameaca chegar.
+        {
+            const int ia = t.Find("drv_drive_a");
+            if(ia >= 0)
+            {
+                const float antes = t.Get(ia);
+                const uint8_t m3[] = {0xB2, (uint8_t)CcDe(ia), 7};
+                Feed(p, m3, 3);
+                const uint8_t m4[] = {0xB3, (uint8_t)CcDe(ia), 7};
+                Feed(p, m4, 3);
+                snprintf(d, sizeof(d), "antes=%.4f depois=%.4f",
+                         (double)antes, t.Get(ia));
+                Check("CC nos canais 3 e 4 NAO movem parametro nenhum",
+                      fabsf(t.Get(ia) - antes) < 1e-6f, d);
+            }
+        }
 
         const int id_time = t.Find("dly_time");
         Check("manifest expoe dly_time", id_time >= 0);

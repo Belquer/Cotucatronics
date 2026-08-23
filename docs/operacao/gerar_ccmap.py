@@ -61,18 +61,33 @@ def familia(n):
     return next((v for k, v in FAMILIAS if n.startswith(k)), '—')
 
 
+# O CANAL VIROU PARTE DO ENDERECO (v0.79.0 do manifest): o mesmo numero
+# de CC no ch1 e no ch2 sao params DIFERENTES. Uma tabela sem a coluna de
+# canal deixou de descrever o instrumento — descreve metade dele, e a
+# metade que falta e justamente a que o dB precisa copiar no Loopy.
+CANAIS = {'kCanalEntradaA': 1, 'kCanalEntradaB': 2}
+
 linhas, faltando = [], []
-for cc, expr in sorted(re.findall(r'AddMidi\(\s*(\d+)\s*,\s*([^)]+)\)', src),
-                       key=lambda x: int(x[0])):
+achados = re.findall(r'AddMidi\(\s*(\d+)\s*,\s*([^,)]+)\s*(?:,\s*(\w+)\s*)?\)',
+                     src)
+for cc, expr, canal in sorted(achados,
+                              key=lambda x: (int(x[0]), CANAIS.get(x[2], 1))):
     e = expr.strip()
     mm = re.match(r'(p_[a-z0-9_]+)(\[\d\])?$', e)
     nome = sym2name.get((mm.group(1), mm.group(2) or '')) if mm else None
     if not nome:
         faltando.append((cc, e))
         continue
+    # Canal desconhecido NAO vira 1 por conveniencia: um default aqui
+    # mentiria com a mesma eficacia do `else 0` que ja custou uma rodada
+    # neste projeto. Sem canal reconhecido, entra na lista de faltando.
+    if canal and canal not in CANAIS:
+        faltando.append((cc, f'{e} (canal desconhecido: {canal})'))
+        continue
+    ch = CANAIS.get(canal, 1)
     f = faixas.get(nome)
     fx = f'{f[0].rstrip(".")} – {f[1].rstrip(".")}' if f else '—'
-    linhas.append(f'| {cc} | `{nome}` | {familia(nome)} | {fx} |')
+    linhas.append(f'| {cc} | ch{ch} | `{nome}` | {familia(nome)} | {fx} |')
 
 if faltando:
     print(f'ERRO: {len(faltando)} CC(s) sem nome resolvido: {faltando}',
@@ -80,7 +95,8 @@ if faltando:
     sys.exit(1)
 
 print(f'<!-- gerado por gerar_ccmap.py de {MANIFEST.name} — nao editar a mao -->')
-print('| CC | param | família | faixa real |')
-print('|---|---|---|---|')
+print('| CC | canal | param | família | faixa real |')
+print('|---|---|---|---|---|')
 print('\n'.join(linhas))
-print(f'\n<!-- {len(linhas)} CCs -->')
+ncc = len({l.split('|')[1].strip() for l in linhas})
+print(f'\n<!-- {len(linhas)} vinculos em {ncc} numeros de CC -->')

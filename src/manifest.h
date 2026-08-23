@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.78.0
+// manifest.h (instrumento "bancada") v0.79.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -580,10 +580,11 @@ struct Manifest
     // `midi_map[n_midi++] = {...}` direto, SEM GUARDA — e a 17a entrada
     // escreveu FORA DO ARRAY. Estouro de capacidade e defeito de
     // PROJETO: quem adiciona o 33o CC precisa saber no boot.
-    void AddMidi(uint8_t cc, int param_id)
+    void AddMidi(uint8_t cc, int param_id, uint8_t canal = kCanalEntradaA)
     {
         if(n_midi >= kMaxMidiMap) { midi_overflow++; return; }
         midi_map[n_midi].cc       = cc;
+        midi_map[n_midi].canal    = canal;
         midi_map[n_midi].param_id = param_id;
         n_midi++;
     }
@@ -600,19 +601,24 @@ struct Manifest
     // decodificar o CC em nome de parâmetro sem provocar efeito
     // colateral — instrumento de medição que altera o medido é a
     // família inteira do catálogo forense.
-    int FindMidiParam(uint8_t cc) const
+    int FindMidiParam(uint8_t canal, uint8_t cc) const
     {
         for(int i = 0; i < n_midi; i++)
-            if(midi_map[i].cc == cc)
+            if(midi_map[i].cc == cc && midi_map[i].canal == canal)
                 return midi_map[i].param_id;
         return -1;
     }
 
-    int ApplyMidiCc(ParamTable& t, uint8_t cc, uint8_t value) const
+    // O CANAL E PARTE DO ENDERECO, e por isso e argumento e nao default:
+    // uma sobrecarga sem canal deixaria qualquer chamador antigo mirar
+    // silenciosamente na cadeia A. O compilador tem que cobrar os dois
+    // valores em cada chamada — o custo de errar aqui e o CC do bumbo
+    // mexendo no efeito da corda, que ninguem depura de ouvido.
+    int ApplyMidiCc(ParamTable& t, uint8_t canal, uint8_t cc, uint8_t value) const
     {
         for(int i = 0; i < n_midi; i++)
         {
-            if(midi_map[i].cc != cc)
+            if(midi_map[i].cc != cc || midi_map[i].canal != canal)
                 continue;
             // Set() fala NORMALIZADO — o mesmo ponto de entrada do
             // knob físico. Curva, Shaped() e Real() vêm depois, iguais
@@ -1280,13 +1286,35 @@ struct Manifest
         // no topo — portao fechado, instrumento mudo.
 
         // ---- ENTRADA: 20-26 ----
-        AddMidi(20, p_piezo_mix);        // 64 = centro, as duas cadeias
-        AddMidi(21, p_in_gain[0]);
-        AddMidi(22, p_in_gain[1]);
-        AddMidi(23, p_gate_thresh[0]);   // em 0 o gate e PULADO
-        AddMidi(24, p_gate_thresh[1]);
-        AddMidi(25, p_gate_release[0]);
-        AddMidi(26, p_gate_release[1]);
+        // ============================================================
+        // MAPA MULTIPLEXADO POR CANAL (v0.79.0)
+        //
+        //   ch1 (kCanalEntradaA) -> cadeia A + COMPARTILHADOS
+        //   ch2 (kCanalEntradaB) -> cadeia B
+        //
+        // O MESMO NUMERO DE CC nos dois canais. As paginas do Loopy
+        // ficam identicas: copia a pagina da cadeia A, troca o campo de
+        // canal, e a B esta endereçada. Foi por isso que os numeros da
+        // cadeia A ficaram TODOS onde estavam — a pagina que ja existe
+        // no iPad continua valendo sem retrabalho.
+        //
+        // Os numeros que a cadeia B ocupava (22, 24, 26, 32, 33, 42,
+        // 43, 52, 53, 62, 63, 68, 69, 70, 80-88, 106, 116, 117, 118)
+        // ficaram LIVRES. Nao reaproveitar sem pensar: eles ainda vivem
+        // em paginas do Loopy, e um numero reaproveitado cedo demais
+        // vira widget velho mexendo em param novo.
+        //
+        // O canal e ENDEREÇO, nao filtro: `ApplyMidiCc` casa cc E canal,
+        // e um CC que chega num canal sem vinculo NAO move nada — que e
+        // o que faz a recusa de 3 e 4 ser barata no voo B.
+        // ============================================================
+        AddMidi(20, p_piezo_mix, kCanalEntradaA);        // 64 = centro, as duas cadeias   // COMPARTILHADO: so ch1
+        AddMidi(21, p_in_gain[0], kCanalEntradaA);
+        AddMidi(21, p_in_gain[1], kCanalEntradaB);
+        AddMidi(23, p_gate_thresh[0], kCanalEntradaA);   // em 0 o gate e PULADO
+        AddMidi(23, p_gate_thresh[1], kCanalEntradaB);
+        AddMidi(25, p_gate_release[0], kCanalEntradaA);
+        AddMidi(25, p_gate_release[1], kCanalEntradaB);
 
         // ESTADO INTERINO DOS CCs DE CARATER — ler antes de estranhar.
         //
@@ -1307,88 +1335,98 @@ struct Manifest
         // morta parece feature desligada, e o default e zero.
         //
         // ---- DRIVE: 30-35 ----
-        AddMidi(30, p_drv_on[0]);
-        AddMidi(31, p_drv_mix[0]);
-        AddMidi(32, p_drv_on[1]);
-        AddMidi(33, p_drv_mix[1]);
-        AddMidi(34, p_drv_drive[0]);   // SO A CADEIA A ate a multiplexacao
-        AddMidi(35, p_drv_tone[0]);   // SO A CADEIA A ate a multiplexacao
-        AddMidi(36, p_drv_sujeira[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(30, p_drv_on[0], kCanalEntradaA);
+        AddMidi(31, p_drv_mix[0], kCanalEntradaA);
+        AddMidi(30, p_drv_on[1], kCanalEntradaB);
+        AddMidi(31, p_drv_mix[1], kCanalEntradaB);
+        AddMidi(34, p_drv_drive[0], kCanalEntradaA);
+        AddMidi(34, p_drv_drive[1], kCanalEntradaB);
+        AddMidi(35, p_drv_tone[0], kCanalEntradaA);
+        AddMidi(35, p_drv_tone[1], kCanalEntradaB);
+        AddMidi(36, p_drv_sujeira[0], kCanalEntradaA);
+        AddMidi(36, p_drv_sujeira[1], kCanalEntradaB);
 
         // ---- PHASER: 40-47 ----
-        AddMidi(40, p_phs_on[0]);
-        AddMidi(41, p_phs_mix[0]);       // MONTANHA: pico em ~64
-        AddMidi(42, p_phs_on[1]);
-        AddMidi(43, p_phs_mix[1]);
-        AddMidi(44, p_phs_rate[0]);   // SO A CADEIA A ate a multiplexacao
-        AddMidi(45, p_phs_depth[0]);   // SO A CADEIA A ate a multiplexacao
-        AddMidi(46, p_phs_feedback[0]);   // SO A CADEIA A ate a multiplexacao
-        AddMidi(47, p_phs_stages[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(40, p_phs_on[0], kCanalEntradaA);
+        AddMidi(41, p_phs_mix[0], kCanalEntradaA);       // MONTANHA: pico em ~64
+        AddMidi(40, p_phs_on[1], kCanalEntradaB);
+        AddMidi(41, p_phs_mix[1], kCanalEntradaB);
+        AddMidi(44, p_phs_rate[0], kCanalEntradaA);
+        AddMidi(44, p_phs_rate[1], kCanalEntradaB);
+        AddMidi(45, p_phs_depth[0], kCanalEntradaA);
+        AddMidi(45, p_phs_depth[1], kCanalEntradaB);
+        AddMidi(46, p_phs_feedback[0], kCanalEntradaA);
+        AddMidi(46, p_phs_feedback[1], kCanalEntradaB);
+        AddMidi(47, p_phs_stages[0], kCanalEntradaA);
+        AddMidi(47, p_phs_stages[1], kCanalEntradaB);
 
         // ---- WARBLE: 50-56 ----
-        AddMidi(50, p_wrb_on[0]);
-        AddMidi(51, p_wrb_mix[0]);
-        AddMidi(52, p_wrb_on[1]);
-        AddMidi(53, p_wrb_mix[1]);
-        AddMidi(54, p_wrb_rate[0]);   // SO A CADEIA A ate a multiplexacao
-        AddMidi(55, p_wrb_depth[0]);   // SO A CADEIA A ate a multiplexacao
-        AddMidi(56, p_wrb_irreg[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(50, p_wrb_on[0], kCanalEntradaA);
+        AddMidi(51, p_wrb_mix[0], kCanalEntradaA);
+        AddMidi(50, p_wrb_on[1], kCanalEntradaB);
+        AddMidi(51, p_wrb_mix[1], kCanalEntradaB);
+        AddMidi(54, p_wrb_rate[0], kCanalEntradaA);
+        AddMidi(54, p_wrb_rate[1], kCanalEntradaB);
+        AddMidi(55, p_wrb_depth[0], kCanalEntradaA);
+        AddMidi(55, p_wrb_depth[1], kCanalEntradaB);
+        AddMidi(56, p_wrb_irreg[0], kCanalEntradaA);
+        AddMidi(56, p_wrb_irreg[1], kCanalEntradaB);
 
         // ---- DELAY: 60-64 — envio por cadeia, UMA instancia ----
-        AddMidi(60, p_dly_on[0]);
-        AddMidi(61, p_dly_mix[0]);
-        AddMidi(62, p_dly_on[1]);
-        AddMidi(63, p_dly_mix[1]);
-        AddMidi(64, p_dly_time);          // COMPARTILHADO, 50 ms .. 1 s
+        AddMidi(60, p_dly_on[0], kCanalEntradaA);
+        AddMidi(61, p_dly_mix[0], kCanalEntradaA);
+        AddMidi(60, p_dly_on[1], kCanalEntradaB);
+        AddMidi(61, p_dly_mix[1], kCanalEntradaB);
+        AddMidi(64, p_dly_time, kCanalEntradaA);          // COMPARTILHADO, 50 ms .. 1 s
 
         // ---- FREEZE: 65-70 — envio por cadeia, UMA instancia ----
         // `frz_on_a/b` dizem QUAL cadeia alimenta; `frz_hold` diz QUANDO
         // congelar. Fundir os dois faria escolher a fonte e disparar o
         // gesto no mesmo botao.
-        AddMidi(65, p_frz_on[0]);         // a chave E o gesto de congelar
-        AddMidi(66, p_frz_vol[0]);
-        AddMidi(67, p_frz_size[0]);
-        AddMidi(68, p_frz_on[1]);
-        AddMidi(69, p_frz_vol[1]);
-        AddMidi(70, p_frz_size[1]);
+        AddMidi(65, p_frz_on[0], kCanalEntradaA);         // a chave E o gesto de congelar
+        AddMidi(66, p_frz_vol[0], kCanalEntradaA);
+        AddMidi(67, p_frz_size[0], kCanalEntradaA);
+        AddMidi(65, p_frz_on[1], kCanalEntradaB);
+        AddMidi(66, p_frz_vol[1], kCanalEntradaB);
+        AddMidi(67, p_frz_size[1], kCanalEntradaB);
 
         // ---- ESPACO A: 71-79 · sala e shimmer PROPRIOS da cadeia A ----
         // `rev_on/rev_mix` sao o ENVIO, mesma forma do delay e do
         // freeze. O shimmer nao tem envio proprio: ele E esta sala
         // realimentada com pitch, e entra pelo mesmo caminho.
-        AddMidi(71, p_rev_on[0]);
-        AddMidi(72, p_rev_mix[0]);
-        AddMidi(73, p_rev_size[0]);
-        AddMidi(74, p_rev_damp[0]);
-        AddMidi(75, p_shm_on[0]);
-        AddMidi(76, p_shm_mix[0]);       // SO a camada direta
-        AddMidi(77, p_shm_feedback[0]);
-        AddMidi(78, p_shm_shift[0]);
-        AddMidi(79, p_shm_tone[0]);
+        AddMidi(71, p_rev_on[0], kCanalEntradaA);
+        AddMidi(72, p_rev_mix[0], kCanalEntradaA);
+        AddMidi(73, p_rev_size[0], kCanalEntradaA);
+        AddMidi(74, p_rev_damp[0], kCanalEntradaA);
+        AddMidi(75, p_shm_on[0], kCanalEntradaA);
+        AddMidi(76, p_shm_mix[0], kCanalEntradaA);       // SO a camada direta
+        AddMidi(77, p_shm_feedback[0], kCanalEntradaA);
+        AddMidi(78, p_shm_shift[0], kCanalEntradaA);
+        AddMidi(79, p_shm_tone[0], kCanalEntradaA);
 
         // ---- ESPACO B: 80-88 · sala independente ----
-        AddMidi(80, p_rev_on[1]);
-        AddMidi(81, p_rev_mix[1]);
-        AddMidi(82, p_rev_size[1]);
-        AddMidi(83, p_rev_damp[1]);
-        AddMidi(84, p_shm_on[1]);
-        AddMidi(85, p_shm_mix[1]);
-        AddMidi(86, p_shm_feedback[1]);
-        AddMidi(87, p_shm_shift[1]);
-        AddMidi(88, p_shm_tone[1]);
+        AddMidi(71, p_rev_on[1], kCanalEntradaB);
+        AddMidi(72, p_rev_mix[1], kCanalEntradaB);
+        AddMidi(73, p_rev_size[1], kCanalEntradaB);
+        AddMidi(74, p_rev_damp[1], kCanalEntradaB);
+        AddMidi(75, p_shm_on[1], kCanalEntradaB);
+        AddMidi(76, p_shm_mix[1], kCanalEntradaB);
+        AddMidi(77, p_shm_feedback[1], kCanalEntradaB);
+        AddMidi(78, p_shm_shift[1], kCanalEntradaB);
+        AddMidi(79, p_shm_tone[1], kCanalEntradaB);
 
         // ---- BUZIOS: 90-92 ----
-        AddMidi(90, p_buzios_on);
-        AddMidi(91, p_buzios_thresh);
-        AddMidi(92, p_buzios_cooldown);
+        AddMidi(90, p_buzios_on, kCanalEntradaA);   // COMPARTILHADO: so ch1
+        AddMidi(91, p_buzios_thresh, kCanalEntradaA);   // COMPARTILHADO: so ch1
+        AddMidi(92, p_buzios_cooldown, kCanalEntradaA);   // COMPARTILHADO: so ch1
 
         // ---- TOM DE TESTE: 93-95 ----
-        AddMidi(93, p_tone_freq);
-        AddMidi(94, p_tone_mix);
-        AddMidi(95, p_tone_dest);         // 0=A 1=B 2=AMBAS
+        AddMidi(93, p_tone_freq, kCanalEntradaA);   // COMPARTILHADO: so ch1
+        AddMidi(94, p_tone_mix, kCanalEntradaA);   // COMPARTILHADO: so ch1
+        AddMidi(95, p_tone_dest, kCanalEntradaA);         // 0=A 1=B 2=AMBAS   // COMPARTILHADO: so ch1
 
         // ---- MASTER: 100 ----
-        AddMidi(100, p_level);
+        AddMidi(100, p_level, kCanalEntradaA);   // COMPARTILHADO: so ch1
 
         // ---- PROTECAO E ROTEAMENTO: 110-115 ----
         //
@@ -1413,21 +1451,21 @@ struct Manifest
         //
         // Governor e boost sao POR RAMO: cada amp e cada exciter tem
         // ganho e acoplamento proprios, entao o teto util difere.
-        AddMidi(110, p_gov_ceiling[0]);
-        AddMidi(111, p_gov_release[0]);
-        AddMidi(112, p_shift_hz);         // COMPARTILHADO pelos dois ramos
-        AddMidi(113, p_route_exciter);    // 0 = corta o ramo A
-        AddMidi(114, p_route_jack);       // 0 = corta o ramo B
-        AddMidi(115, p_bench_boost[0]);
-        AddMidi(116, p_gov_ceiling[1]);
-        AddMidi(117, p_gov_release[1]);
-        AddMidi(118, p_bench_boost[1]);
+        AddMidi(110, p_gov_ceiling[0], kCanalEntradaA);
+        AddMidi(111, p_gov_release[0], kCanalEntradaA);
+        AddMidi(112, p_shift_hz, kCanalEntradaA);         // COMPARTILHADO pelos dois ramos
+        AddMidi(113, p_route_exciter, kCanalEntradaA);    // 0 = corta o ramo A   // COMPARTILHADO: so ch1
+        AddMidi(114, p_route_jack, kCanalEntradaA);       // 0 = corta o ramo B   // COMPARTILHADO: so ch1
+        AddMidi(115, p_bench_boost[0], kCanalEntradaA);
+        AddMidi(110, p_gov_ceiling[1], kCanalEntradaB);
+        AddMidi(111, p_gov_release[1], kCanalEntradaB);
+        AddMidi(115, p_bench_boost[1], kCanalEntradaB);
         // O PORTAO DA PROTECAO, um por ramo. Nasce LIGADO: proteger sem
         // precisar custa timbre, nao proteger quando precisa custa o
         // instrumento. Quando os DPDT forem soldados, D29/D30 dizem o
         // estado REAL e estes params viram o espelho do que o polo 2 le.
-        AddMidi(105, p_exc_on[0]);
-        AddMidi(106, p_exc_on[1]);
+        AddMidi(105, p_exc_on[0], kCanalEntradaA);
+        AddMidi(105, p_exc_on[1], kCanalEntradaB);
 
         // ---- ORDEM DE SACRIFICIO (indice 0 cai primeiro) ----
         //
