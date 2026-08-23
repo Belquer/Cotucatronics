@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.7.0"
+VERSION = "0.7.1"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -161,9 +161,23 @@ def versao_derivada():
         if not d:
             continue
         # linha ADICIONADA que carrega um numero de versao
+        # RECONHECER A VERSAO EM QUALQUER LINGUAGEM DA CASA.
+        #
+        # A primeira versao exigia `//` ou a palavra "version" e nao
+        # reconhecia docstring de Python (`"""nome v0.2.0 ..."""`).
+        # Resultado: acusava dois arquivos CORRETOS de deriva — o
+        # verificador de ponto cego com ponto cego proprio, na mesma
+        # sessao em que a regra foi escrita.
+        #
+        # Agora casa em comentario de qualquer linguagem, docstring, ou
+        # linha que cite o nome do arquivo — que e como toda declaracao
+        # de versao deste projeto se parece.
+        stem = p.stem
         subiu = any(l.startswith("+") and not l.startswith("+++")
                     and re.search(r'v?\d+\.\d+\.\d+', l)
-                    and re.search(r'(?i)version|^\+//', l)
+                    and (re.search(r'(?i)version', l)
+                         or re.match(r'\+\s*(//|#|"""|\*)', l)
+                         or stem in l)
                     for l in d.splitlines())
         if not subiu:
             fora.append(p.name)

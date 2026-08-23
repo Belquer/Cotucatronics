@@ -3836,6 +3836,22 @@ dois minutos **porque as duas condições estavam satisfeitas ao mesmo tempo**:
 trabalho teria sumido.** A cicatriz não é "cuidado com o Python": é que
 **commitar cedo é o que transforma um destroço em inconveniente.**
 
+### E o verificador de ponto cego nasceu com ponto cego
+
+A regra de deriva exigia `//` ou a palavra `version` na linha adicionada — e
+os scripts Python da casa declaram a versão em **docstring**:
+
+    """nivel_tempo v0.2.0 — RMS em janelas de 50 ms."""
+
+Resultado: dois arquivos **corretos** ficaram acusados de deriva, na mesma
+sessão em que a regra foi escrita. **O verificador de ponto cego tinha ponto
+cego de linguagem.**
+
+> **Regra que reconhece um formato reconhece um dialeto, não um conceito.**
+> Ao escrever qualquer verificação por padrão de texto, listar as formas que o
+> próprio projeto usa — aqui eram três (`//`, `#`, docstring) e a primeira
+> versão cobria uma.
+
 ### E o instrumento que apanhou o erro não era o de destino
 
 O `check-docs` novo — escrito quinze minutos antes para vigiar deriva de
