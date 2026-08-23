@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.5.0"
+VERSION = "0.6.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -102,6 +102,34 @@ def aposentados():
         fora.add(linha.split()[0])
     return fora
 
+def comandos_sem_ajuda():
+    """Comando tratado que nao aparece na linha do `?`.
+
+    Comando que nao consta e comando que NAO EXISTE para quem esta na
+    bancada com a serial aberta — a descoberta e pela linha de ajuda, nao
+    pela leitura do fonte. Tres apareceram assim no mesmo dia (`dup`,
+    `espelho`, `dreno`), e o padrao e sempre o mesmo: escreve-se o
+    handler, testa-se chamando pelo nome, e a linha de ajuda fica.
+    """
+    src = (SRC / 'main.cpp').read_text(encoding='utf-8', errors='replace')
+    m = re.search(r'hal::Log\("\? ([^"]*)"\)', src)
+    if not m:
+        return None, []          # sem linha de ajuda: quem chama decide
+    ajuda = m.group(1)
+    tratados = set(re.findall(r'strncmp\(line,\s*"([a-z0-9]+)', src))
+    # `k1`..`k5` e `b2`/`b3` entram por outro caminho e ja estao na linha
+    # sob outra forma; o resto tem que constar literalmente.
+    # ISENCAO MINIMA, e ela ja esteve larga demais: `b2` e `b3` estavam
+    # aqui e sao comandos de verdade (pulso de freeze e de rearme). Uma
+    # isencao generosa transforma o verificador em carimbo. Ficam so os
+    # `k1..k5`, que a linha ja anuncia como faixa, e os dois `midi*`, que
+    # ela lista com o nome inteiro.
+    isento = {'k1', 'k2', 'k3', 'k4', 'k5', 'midiloop', 'miditest'}
+    faltam = sorted(c for c in tratados
+                    if c not in isento and c not in ajuda)
+    return ajuda, faltam
+
+
 def main():
     print(f"check_docs v{VERSION}")
     params, ccs = verdade()
@@ -129,6 +157,15 @@ def main():
             linha = texto[:mm.start()].count("\n") + 1
             erros.append((doc.name, linha, nome,
                           texto.split("\n")[linha-1].strip()[:70]))
+
+    ajuda, sem_ajuda = comandos_sem_ajuda()
+    if ajuda is None:
+        print("\nAVISO: nao achei a linha de ajuda `?` — checagem sem objeto,"
+              " que e pior que checagem ausente. Conferir o regex.")
+    else:
+        print(f"\nCOMANDOS SEM AJUDA: {len(sem_ajuda)}")
+        for c in sem_ajuda:
+            print(f"  `{c}` e tratado e nao aparece no `?`")
 
     print(f"\nFANTASMAS: {len(erros)}")
     for d, l, n, ctx in erros[:40]:
