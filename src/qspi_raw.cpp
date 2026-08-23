@@ -1,4 +1,4 @@
-// Cotucatronics OS — qspi_raw v0.1.0 — ver qspi_raw.h para o porquê.
+// Cotucatronics OS — qspi_raw v0.2.0 — ver qspi_raw.h para o porquê.
 #include "qspi_raw.h"
 #include "stm32h7xx.h"
 
@@ -123,10 +123,24 @@ COTUCA_ITCM uint32_t LeJedecId()
     const uint32_t ccr_antes = QUADSPI->CCR;
     const uint32_t cr_antes  = QUADSPI->CR;
 
-    // Sai do memory-mapped. Deste ponto ate a restauracao, NADA pode
-    // ser buscado da QSPI — por isso este arquivo inteiro esta na ITCM
-    // e o chamador mascara interrupcoes.
-    QUADSPI->CR &= ~QUADSPI_CR_EN;
+    // SAIR DO MEMORY-MAPPED EXIGE ABORT, nao so desligar o EN.
+    //
+    // O periferico guarda estado da configuracao mapeada — o contador
+    // de timeout, o TCEN, a transacao em curso. Desligar o EN e
+    // religar deixa esse estado de pe, e o resultado foi ler `00 00 00`
+    // ate no `0x06` (WREN), que NAO TEM fase de dado: a linha estava
+    // presa, nao o chip respondendo.
+    //
+    // A libDaisy faz isto por dentro do `SetMode`; a rotina propria
+    // tem que fazer explicito, que e o preco de nao herdar nada.
+    //
+    // Deste ponto ate a restauracao, NADA pode ser buscado da QSPI —
+    // por isso este arquivo inteiro esta na ITCM e o chamador mascara
+    // interrupcoes.
+    QUADSPI->CR |= QUADSPI_CR_ABORT;
+    EsperaFlag(0u, 1u);                       // um respiro
+    for(uint32_t i = 0; i < 100000u; i++)     // BUSY tem que cair
+        if(!(QUADSPI->SR & QUADSPI_SR_BUSY)) break;
     __DSB();
     LimpaFlags();
     QUADSPI->CR |= QUADSPI_CR_EN;

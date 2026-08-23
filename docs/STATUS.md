@@ -98,17 +98,16 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 
 ## Versões
 
-| Arquivo | Versão |
-|---|---|
-| `hal.h` / `hal_daisy_seed.cpp` | v0.17.0 / v0.16.0 |
-| `main.cpp` | **v0.85.1** |
-| `manifest.h` | v0.57.0 |
-| `params.h` / `midi.h` | v0.8.0 / v0.4.0 |
-| `pitch.h` / `shimmer.h` | **v0.5.0** / **v0.3.0** |
-| `suave.h` | **v0.1.0** (novo) |
-| `drive.h` / `phaser.h` / `warble.h` / `detune.h` | v0.2.0 / v0.3.0 / v0.1.0 / v0.1.0 |
-| `freeze.h` / `reverb.h` / `effect_slot.h` | v0.3.1 / v0.2.0 / v0.3.0 |
-| `module_rnbo_vocoder.cpp` | v0.6.0 (fora do build) |
+**Moram no mapa de arquivos do [README.md](../README.md), em um lugar só.**
+
+Esta seção já teve uma tabela própria. Ela chegou a `main.cpp v0.85.1`
+enquanto a placa rodava a v0.130.0 — **45 versões de deriva**, porque era uma
+segunda cópia que ninguém imprimia e ninguém lia. Mesma forma que o
+cabeçalho do `main.cpp` carregava (cicatriz 13k e a regra do checklist):
+*número que ninguém imprime não tem quem o corrija.*
+
+A versão que vale é a que a **placa diz no boot**, e o `flash.sh` a confere
+contra o binário depois de gravar.
 
 ---
 
@@ -450,6 +449,27 @@ de segurança, não alvo — só faixa MAIOR que a trava é defeito.
 
 A auditoria virou seção do IFÁ10000, para rodar depois de qualquer refactor
 que toque no callback.
+
+---
+
+## Rota dos presets (22/08) — o difícil resolvido, o tedioso identificado
+
+**A janela ITCM funciona.** A placa sai do memory-mapped executando de RAM
+independente, dialoga com o periférico, volta e sobrevive — seis gravações,
+`ITCMRAM: 212 B` provando que a seção foi aplicada. **Era o risco
+arquitetural da rota dos presets, e ele acabou.**
+
+**O que falta é protocolo**, que é trabalho de leitura: a sequência exata de
+leitura indireta do QUADSPI. Três hipóteses vivas e nomeadas, condição de
+retomada explícita — tudo em
+[DESENHO-ESCRITA-QSPI.md](DESENHO-ESCRITA-QSPI.md).
+
+> **Condição de retomada: RM0433, capítulo QUADSPI, leitura indireta.** Sem
+> ele a frente fica parada — por dimensionamento, não por desistência. Meia
+> hora com o manual vale mais que dez gravações adivinhando.
+
+O BOOT_SRAM segue estacionado no ramo `investigacao-boot-sram`, com a
+hipótese registrada para quem retomar.
 
 ---
 

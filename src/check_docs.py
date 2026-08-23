@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""check_docs v0.1.0 — dá testemunha à documentação.
+"""check_docs — dá testemunha à documentação (versão em VERSION).
 
 O compilador cobra os símbolos; nada cobrava a doc. Depois do audit de
 deriva de 22/08 (doze achados, ver bts 13h), isto passa a cobrar.
@@ -21,6 +21,11 @@ Imprime o que casou antes de falhar — senão vira o verificador que
 acusa a frase que documenta a remoção, que foi a 12c.
 """
 import re, sys, pathlib
+
+# A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
+# viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
+# corrigida — porque nunca aparecia em lugar nenhum.
+VERSION = "0.4.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -93,6 +98,7 @@ def aposentados():
     return fora
 
 def main():
+    print(f"check_docs v{VERSION}")
     params, ccs = verdade()
     simb = simbolos_do_fonte()
     apos = aposentados()

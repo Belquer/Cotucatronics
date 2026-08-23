@@ -421,6 +421,39 @@ crítico inteiro.
 **E paridade não substitui contagem:** cinco e sete batidas terminam no mesmo
 estado. O estado final era compatível com debounce bom E com debounce ruim.
 
+## A regra que fecha a família — ausência mora fora do domínio
+
+**Nenhum valor de dado pode significar "sem dado".** Ausência se representa
+**fora do domínio**: flag separada, sentinela impossível, ou par
+`(valor, validade)`. Nunca por um valor que o domínio consegue produzir.
+
+Cinco casos em 22/08, e é a mesma linha de raciocínio nas cinco:
+
+| onde | valor legítimo | lido como |
+|---|---|---|
+| parser de bancada | pico `0 µs` | "não casou" → defeito **inexistente** |
+| `voltaram 0` | zero retornos reais | "a placa não transmite" |
+| `eco_proprio` | retorno, não envio | "mandou 4 de 8" |
+| `mscope` sem sinal | canal calado | "a fonte não mandou" |
+| `RDSR = 0x00` | **chip ocioso** | "não respondeu" |
+
+O último é o mais claro: `if(!id)` tratava como ausência a resposta **mais
+normal que um chip pode dar**. Trocado por impressão do valor cru, o mesmo
+hardware distinguiu `00` (alguém puxa a linha) de `FF` (linha solta) — e essa
+distinção apontou a causa seguinte. **O diagnóstico só existiu porque o
+filtro saiu da frente.**
+
+Cinco num dia é **forma estrutural**, não descuido em série. A tentação é
+sempre a mesma: o valor "vazio" está ali, é conveniente, e `if(!x)` é mais
+curto que carregar a validade junto.
+
+**Ao escrever qualquer leitor, perguntar:** *este valor sentinela é
+produzível pelo dado real?* Se for, ele não pode ser o sentinela.
+
+**Corolário para relatórios: imprima o CRU, etiquete a interpretação ao
+lado.** Nunca só a interpretação. Na mesma linha, o leitor pode discordar da
+segunda sem perder a primeira.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

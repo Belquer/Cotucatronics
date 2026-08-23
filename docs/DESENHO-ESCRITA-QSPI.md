@@ -191,3 +191,78 @@ curta. Mas *rotina curta sobrevive* não escala para *apagamento de 4 KB
 sobrevive*: o erase é longo, o polling é laço, e laço longo é onde a I-cache
 eventualmente perde uma linha e busca na QSPI morta. **ITCM é a diferença
 entre funciona-por-sorte e funciona-por-construção.**
+
+---
+
+# Onde a frente parou (22/08) — e como retomar
+
+**Parada por dimensionamento, não por desistência.** O risco arquitetural
+acabou; o que resta é sequência de registrador, que é trabalho de leitura.
+
+## O que ficou PROVADO
+
+1. **A janela ITCM funciona.** A placa sai do memory-mapped executando de uma
+   RAM independente, dialoga com o periférico, volta e sobrevive. Reproduzido
+   em seis gravações. `ITCMRAM: 212 B` é a prova de que a seção foi aplicada.
+2. **O protocolo real está lido no fonte**, não suposto — ver a seção do
+   `Init` acima. A libDaisy **nunca** entra em quad.
+3. **A sonda varre sem gravar**: `qspi id [dummy] [modo] [opcode]`.
+4. **`00 00 00` distingue-se de `FF FF FF`** no relatório, com a
+   interpretação etiquetada ao lado. Informação de diagnóstico que não
+   existia antes — ver cicatriz 13k.
+
+## ACHADO DE PROTOCOLO: sair do memory-mapped exige ABORT
+
+Desligar o `QUADSPI_CR_EN` **não basta**. O periférico guarda estado da
+configuração mapeada — contador de timeout, `TCEN`, transação em curso — e
+com esse estado de pé a linha de dado fica presa. O sintoma foi ler
+`00 00 00` até no `0x06` (WREN), que **não tem fase de dado**.
+
+    QUADSPI->CR |= QUADSPI_CR_ABORT;
+    while(QUADSPI->SR & QUADSPI_SR_BUSY) { }   // com teto de voltas
+    __DSB();
+    LimpaFlags();
+    QUADSPI->CR |= QUADSPI_CR_EN;
+
+A libDaisy faz isto por dentro do `SetMode`. **Rotina própria não herda nada
+— tem que fazer explícito**, e este é o primeiro item dessa conta.
+
+*(Veio de um chute, e está registrado como achado assim mesmo. Ver 13l sobre
+por que um chute que acerta parcialmente é o mais perigoso.)*
+
+## AS TRÊS HIPÓTESES VIVAS — nomeadas, não testadas
+
+O gabarito é `QSPIHandle::Impl::GetStatusRegister()` em
+`libDaisy/src/per/qspi.cpp:1045`, que faz uma leitura indireta de 1 byte
+neste chip, com este periférico, e **funciona**. Ele difere da rotina própria
+em três pontos, e qualquer um deles explica o resultado atual:
+
+1. **Dois passos vs um.** O HAL chama `HAL_QSPI_Command` e **depois**
+   `HAL_QSPI_Receive`; a rotina própria configura `CCR` com `FMODE=01` numa
+   escrita só. A ordem de escrita do `CCR` pode ser o que dispara a leitura.
+2. **`NbData` / `DLR`.** O gabarito pede **1 byte** (`NbData = 1` → `DLR = 0`);
+   a sonda pede 3 (`DLR = 2`). Comprimento errado pode deixar a transação
+   pendurada.
+3. **Ordem de escrita do `CCR`** em relação a `DLR` e `AR`. No QUADSPI a
+   escrita do `CCR` é o gatilho quando não há endereço — se `DLR` for escrito
+   depois, chegou tarde.
+
+**Não são independentes o bastante para bissecção cega.** Testar uma custa
+uma gravação e, se falhar, não elimina as outras duas: sem o manual não se
+distingue "a hipótese está errada" de "a execução da hipótese está errada".
+
+## CONDIÇÃO DE RETOMADA
+
+> **RM0433 (STM32H7 reference manual), capítulo QUADSPI, seção de leitura
+> indireta.** Com ele aberto, a sequência é **leitura**, e as três hipóteses
+> viram uma resposta.
+
+**O critério, escrito para quem retomar não confundir pausa com abandono:**
+*meia hora com o manual vale mais que dez gravações adivinhando.* Sem o
+manual, a frente fica parada — e ficar parada aqui é a decisão certa, porque
+o difícil já está resolvido.
+
+## Depois que o ID ler
+
+A ordem não mudou: ID → recusa gritada de chip desconhecido → erase → program
+→ `save`/`load` sobrevivendo a desligar da tomada.

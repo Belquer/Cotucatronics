@@ -1,11 +1,17 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.125.0 (board-agnostic)
+// Cotucatronics OS — esqueleto board-agnostic.
+//
+// A VERSAO MORA SO EM `COTUCA_OS_VERSION`, logo abaixo, e em lugar
+// nenhum mais. Este cabecalho ja carregou um `v0.125.0` proprio que
+// ficou quatro versoes para tras sem ninguem notar — porque ele nunca
+// era impresso, e numero que ninguem le nao tem quem o corrija.
+// Segunda fonte de verdade e deriva com data marcada.
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.128.1"
+#define COTUCA_OS_VERSION "0.130.0"
 
 #include "hal.h"
 #include "params.h"
@@ -2174,7 +2180,24 @@ static void HandleLine(const char* line)
         hal::Log("qspi: SR=%08lX  esperas que estouraram=%lu",
                  (unsigned long)cotuca::qspi::UltimoSR(),
                  (unsigned long)cotuca::qspi::UltimasFalhas());
-        if(!id || id == 0xFFFFFFu)
+        // IMPRIME SEMPRE O VALOR CRU, e o motivo custou uma rodada:
+        // o filtro anterior tratava `id == 0` como "nao respondeu" — e
+        // 0x00 e EXATAMENTE o que um chip ocioso devolve ao RDSR
+        // (0x05). Resposta perfeita reportada como ausencia, que e a
+        // familia do `else 0` (bts 12u) na quinta aparicao do dia.
+        //
+        // Agora o cru vem sempre, e a INTERPRETACAO vem etiquetada:
+        //   FF FF FF  = linha em repouso, o chip nao dirigiu nada
+        //   00 00 00  = o chip dirigiu tudo baixo (RDSR ocioso = isto)
+        //   misto     = dado de verdade
+        hal::Log("qspi: cru = %02lX %02lX %02lX  (%s)",
+                 (unsigned long)((id >> 16) & 0xFF),
+                 (unsigned long)((id >> 8) & 0xFF),
+                 (unsigned long)(id & 0xFF),
+                 id == 0xFFFFFFu ? "linha em repouso — chip mudo"
+                 : id == 0u      ? "tudo baixo — o chip DIRIGIU"
+                                 : "dado misto");
+        if(id == 0xFFFFFFu)
         {
             hal::Log("qspi: o periferico NAO respondeu (id=0). A rotina"
                      " voltou viva, entao a janela funciona — o que"

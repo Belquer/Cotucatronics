@@ -2927,11 +2927,97 @@ exigida por eles.** Removi `zero_buf` e `seco_buf` no commit A; a cicatriz
 depois. O mecanismo se completou por pressão do próprio uso, que é o melhor
 sinal de que o desenho está certo.
 
+## 13k. Nenhum valor de dado pode significar "sem dado" (22/08)
+
+A sonda QSPI reportava, para quatro comandos diferentes:
+
+    0x05 RDSR  status   -> (nada)
+    0x9F RDID  jedec    -> 03 FF FF
+    0x35 RDCR  config   -> (nada)
+    0xAB RDP   wake     -> 03 FF FF
+
+O `(nada)` vinha daqui:
+
+    if(!id || id == 0xFFFFFFu) { /* "o periferico NAO respondeu" */ }
+
+**`0x00` é exatamente o que um chip ocioso devolve ao RDSR.** Status zero é
+"não ocupado, não armado para escrita" — a resposta mais normal que existe.
+O relatório estava chamando a resposta correta de ausência de resposta.
+
+Trocado por impressão do valor cru sempre, com a interpretação **etiquetada
+ao lado**, o mesmo hardware disse outra coisa:
+
+    0x05 RDSR  cru = 00 00 00  (tudo baixo — o chip DIRIGIU)
+    0x9F RDID  cru = 03 FF FF  (dado misto)
+    0x06 WREN  cru = 00 00 00  (tudo baixo — o chip DIRIGIU)
+
+E foi essa distinção — `00` significa *alguém puxou a linha para baixo*,
+`FF` significa *linha solta* — que apontou o ABORT ausente. **O diagnóstico
+seguinte só existiu porque o filtro saiu da frente.**
+
+### A quinta do dia, e por isso a família tem forma, não coincidência
+
+É literalmente o `else 0` da manhã (12u) com outra roupa:
+
+| onde | valor legítimo | lido como |
+|---|---|---|
+| parser de bancada | pico `0 µs` improvável | "não casou" → **defeito inexistente** |
+| `voltaram 0` | zero retornos reais | "a placa não transmite" |
+| `eco_proprio` | retorno, não envio | "mandou 4 de 8" |
+| `mscope` sem sinal | canal calado | "a fonte não mandou" |
+| `RDSR = 0x00` | **chip ocioso** | "não respondeu" |
+
+> **Nenhum valor do domínio pode significar "sem dado". Ausência se
+> representa FORA do domínio** — flag separada, sentinela impossível, ou par
+> `(valor, validade)`. Nunca por um valor que o domínio consegue produzir.
+
+Cinco casos num dia é a assinatura de uma **forma estrutural**, não de uma
+sequência de descuidos. E a forma é sempre a mesma tentação: o valor
+"vazio" está ali, é conveniente, e escrever `if(!x)` é mais curto do que
+carregar a validade junto.
+
+**Corolário para relatórios:** imprima o **cru** e etiquete a interpretação
+ao lado. Quando as duas ficam na mesma linha, o leitor pode discordar da
+segunda sem perder a primeira — que foi exatamente o que aconteceu aqui.
+
+## 13l. Parar no meio é a regra funcionando; parar depois é a cicatriz (22/08)
+
+Escrevi a 13j nesta mesma sessão. Ela diz: *o teste que decide é o que lê a
+fonte da configuração.* Depois disso **voltei a varrer duas vezes** — o
+ABORT e o formato de comando, uma gravação cada.
+
+O ABORT rendeu achado de protocolo de verdade (**sair do memory-mapped exige
+`QUADSPI_CR_ABORT`; desligar o `EN` não basta, e a libDaisy faz isso por
+dentro do `SetMode`**), o que torna o caso mais escorregadio, não menos: um
+chute que acerta parcialmente é o que financia o chute seguinte.
+
+Parei ao ver a terceira hipótese nascer. O argumento que decidiu não foi de
+método, foi de **aritmética de bissecção**:
+
+> Havia três hipóteses vivas — dois passos (`Command` + `Receive`), `NbData`
+> /`DLR`, e ordem de escrita do `CCR`. Testar uma custa uma gravação e, se
+> falhar, **não elimina as outras duas** — porque sem o manual não dá para
+> saber se falhou a hipótese ou a execução dela. É a pior forma de
+> bissecção: **a que não parte o espaço.**
+
+Com o RM0433 aberto, a sequência de leitura indireta é **leitura**, e as três
+hipóteses viram uma resposta.
+
+> **Antes de gastar um voo numa hipótese, perguntar: se ela falhar, o espaço
+> de busca diminui?** Se a resposta for não, o voo não é experimento — é
+> tentativa, e tentativa se paga com gravação.
+
+**E a diferença que importa entre parar e desistir:** a frente parou com o
+**difícil resolvido** (a janela ITCM funciona por construção) e o **tedioso
+identificado** (a sequência de registrador). A condição de retomada está
+escrita no `DESENHO-ESCRITA-QSPI.md`, com as três hipóteses nomeadas, para
+que ninguém recomece o espaço de busca.
+
 ---
 
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.** **Nenhum valor do domínio pode significar "sem dado": ausência se representa FORA do domínio** — flag, sentinela impossível ou par valor+validade; cinco casos num dia provam que a forma é estrutural. **Relatório imprime o CRU e etiqueta a interpretação ao lado.** **Antes de gastar um voo numa hipótese, perguntar se falhar diminui o espaço de busca** — se não diminui, não é experimento, é tentativa, e tentativa se paga com gravação. **Segunda fonte de verdade para a versão deriva com data marcada: número que ninguém imprime não tem quem o corrija.**
 
 ---
 
