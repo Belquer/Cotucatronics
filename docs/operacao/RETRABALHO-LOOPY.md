@@ -3,6 +3,52 @@
 > **Gerado de `src/manifest.h` em 23/08 (v0.153.0).** Se o manifest
 > mudar, este arquivo envelhece — regerar antes de confiar.
 
+## Antes da tabela: o MÉTODO, que não é digitar isto à mão
+
+**Esta tabela é REFERÊNCIA, não procedimento.** Ler 86 linhas e digitá-las no
+iPad é a alternativa manual — existe, e não é o caminho.
+
+O método é o de 22/08, e ele foi escolhido por uma razão que continua valendo:
+o modo `learn` foi **aposentado** porque exigia a placa **surda** (descartava
+todo CC que chegasse, por desenho) — e isso cegava o `vistos`, que é o único
+instrumento capaz de provar que o endereçamento funcionou.
+
+> *Método que exige desligar o sensor que o verificaria é desenho invertido:
+> o certo deixa o mundo agir e observa, o errado age e supõe.*
+
+### O procedimento
+
+**1. Arme o widget no Loopy** (MIDI learn dele) e peça ao Code:
+
+```
+midiloop <cc> 64 <canal>
+```
+
+Isso manda **aquele CC**, naquele canal, pelo fio real. A placa **continua
+escutando** — o disparo é dirigido e sob demanda, sem nenhum modo que a
+emudeça. É o que o `learn` tentava fazer e não podia.
+
+**2. No fim, verifique varrendo.** Mexa em todos os widgets e:
+
+```
+vistos
+```
+
+Ele reporta `N de 86 vínculos endereçados`, nomeia o que **falta** por
+(canal, CC) e denuncia **órfãos** — widget mandando num endereço que o
+firmware não conhece.
+
+**3. E o `sync` mede o progresso do outro lado:** empurra o estado e confere
+o retorno sozinho, saindo de `AVISO` para `OK` conforme os widgets voltam a
+escutar. O sub-ramo *"voltou menos da metade"* existe para o meio do caminho.
+
+**Atalho que corta o trabalho quase pela metade:** monte a página da cadeia A
+e **duplique-a trocando só o campo de canal**. Os números de CC são os mesmos
+nas duas — é literalmente a mesma página em outro canal.
+
+Ver `docs/PROCEDIMENTO-MIDI-LEARN.md` para o registro completo, incluindo por
+que o `learn` não existe mais.
+
 ## A regra, em uma linha
 
 **Cadeia A e compartilhados no canal 1. Cadeia B no canal 2.**
