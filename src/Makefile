@@ -130,3 +130,21 @@ check:
 
 print-cpp-sources:
 	@echo $(CPP_SOURCES)
+
+# ---- check-docs: da testemunha a documentacao ----
+#
+# O compilador cobra os simbolos; ate 22/08 nada cobrava a doc. O audit
+# de deriva achou DOZE casos — params fantasmas citados por meses,
+# contadores lidos-sem-escritor e escritos-sem-leitor, vestigios de uma
+# reestruturacao grande.
+#
+# A causa raiz vale a regra: TODA REESTRUTURACAO TEM TRES FRENTES —
+# codigo, documentacao e simbolos. O compilador cobra a primeira; nada
+# cobra as outras duas, entao o `make check-docs` cobra.
+#
+# Habito automatizado vence habito lembrado: a disciplina ja falhou
+# aqui, e a checagem manual recem-escrita nao teria pego o segundo caso.
+check-docs:
+	@python3 $(shell pwd)/check_docs.py
+
+.PHONY: check-docs

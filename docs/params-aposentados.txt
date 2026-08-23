@@ -1,0 +1,49 @@
+# Params que EXISTIRAM e sairam, ou que foram propostos e nunca nasceram.
+#
+# POR QUE ESTE ARQUIVO EXISTE. O `check_docs` reprova nome com cara de
+# param que nao existe em lugar nenhum. Mas a documentacao NARRA a
+# historia do instrumento, e narrar uma remocao exige citar o que foi
+# removido. Sem esta lista, toda cicatriz que conta um conserto viraria
+# fantasma — que e a 12c em forma de ferramenta: o verificador
+# acusando a frase que documenta o conserto.
+#
+# Formato:  nome    quando    o que houve
+#
+# Citar um destes na doc e LEGITIMO. Ressuscitar um deles como param
+# novo exige tira-lo daqui — senao o verificador para de vigia-lo.
+
+src_mix        20/08   crossfade das duas fontes; virou piezo_mix (BALANCO)
+voc_mix        20/08   saiu com o vocoder RNBO
+voc_tone       20/08   saiu com o vocoder RNBO
+fx2_on         18/08   slot RNBO Fx2; saiu do mapa MIDI, depois do codigo
+fx2_gain       18/08   idem
+fx2_hp         18/08   idem
+fx2_want       18/08   idem
+rev_mix        22/08   renomeado: o esp_mix virou rev_mix_{a,b} por cadeia
+esp_mix        22/08   virou rev_mix_{a,b}
+esp_on         22/08   virou rev_on_{a,b}
+frz_mix        22/08   virou frz_vol_{a,b}
+detune_on      20/08   detune saiu do build no pivo de duas cadeias
+detune_mix     20/08   idem
+detune_cents   20/08   idem
+
+# PROPOSTOS E NUNCA IMPLEMENTADOS — legitimos de citar como plano.
+frz_hold       nunca   desenho de "fonte e gesto separados", abandonado:
+#                      o frz_on E o gesto (manifest.h:264)
+frz_release    nunca   decisao pendente do dB, tempo fixo vs param
+rev_type       nunca   entregue de outra forma: dois espacos com params
+#                      por cadeia
+out_width      nunca   mid/side na saida; especificado, nao construido
+pitch_dry      nunca   nome de bloco no CTOS.md, nao param
+pitch_tail     nunca   idem
+get_status     nunca   nome generico de comando na prosa do README
+
+# NOMES EXTERNOS — nao sao nossos, e a doc os cita ao narrar o
+# diagnostico. libDaisy, HAL da ST, palavras da linguagem.
+log_mute       externo  o nosso e `log_muted`; a prosa usa a forma curta
+in_flight      externo  estado do CDC da libDaisy
+dev_state      externo  estado do dispositivo USB
+address_offset externo  parametro do PersistentStorage da libDaisy
+static_assert  externo  palavra da linguagem
+learn_fixo     externo  do modo `learn`, removido em v0.121.0 (bts 12t)
+frz_mix_b      externo  sufixo do frz_mix aposentado

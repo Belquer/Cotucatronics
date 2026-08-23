@@ -213,3 +213,26 @@ está amarrada pelo silício.
 
 > A diferença não aparece no esquema — aparece na tabela de funções
 > alternadas do chip. UART, SAI, ADC e QSPI não se remapeiam livremente.
+
+## Reestruturação tem três frentes; o compilador cobra uma
+
+Código, documentação e símbolos. O compilador cobra os símbolos que
+**quebram** — e cala sobre os que sobrevivem sem uso e sobre a doc que
+continua descrevendo o desenho morto.
+
+Em 22/08 um audit achou doze casos de deriva de uma única reestruturação:
+params fantasmas citados na doc por meses, contadores lidos-sem-escritor e
+escritos-sem-leitor, e três órfãos que o compilador já acusava em warning
+sem que ninguém lesse.
+
+> **Ao terminar uma reestruturação, varrer as três frentes.** E se a lição
+> se repetir, automatizar: `make check-docs` neste projeto verifica a doc
+> contra o manifest a cada build. Hábito automatizado vence hábito lembrado.
+
+**Ao escrever o verificador, a ordem é inegociável: limpar primeiro.** Contra
+base suja o primeiro build falha em massa e a tentação vira baixar a régua.
+
+**E cuidado com o verificador que acusa a frase que documenta o conserto** —
+casar padrão em texto pega a cicatriz que narra a remoção. Três regras
+resolveram: nome que existe no fonte é legítimo; família conta como nome;
+aposentados vão para uma lista declarada, que vira documentação útil por si.
