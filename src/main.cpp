@@ -11,7 +11,27 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.130.0"
+#define COTUCA_OS_VERSION "0.132.0"
+
+// A/B DA DUPLICACAO, NO MESMO BINARIO.
+//
+// Existe porque delta entre builds nao e atribuivel: medindo v0.130.0
+// contra v0.131.0 o pico CAIU 23 us, e "duplicar dez params economiza
+// 23 us" nao tem mecanismo nenhum. Layout de codigo, alinhamento e
+// inlining mudam entre binarios e engolem qualquer efeito desta escala.
+//
+// Com a chave, os dois bracos rodam no MESMO binario: `dup on` le
+// `p_x[c]` (uma entrada por cadeia), `dup off` le `p_x[0]` (as duas
+// cadeias na mesma entrada, que e o comportamento anterior a v0.131.0).
+//
+// O `? :` esta nos DOIS bracos, entao o custo dele cancela — a
+// diferenca medida e a diferenca de leitura, e mais nada. Roda uma vez
+// por bloco por efeito, nao por amostra.
+//
+// MODO QUE ALTERA O INSTRUMENTO: com `dup off` a cadeia B soa com os
+// valores da A. Por isso se declara em `board`, `list` e `cpu`.
+static bool g_dup_por_cadeia = true;
+static inline int CadeiaDoParam(int c) { return g_dup_por_cadeia ? c : 0; }
 
 #include "hal.h"
 #include "params.h"
@@ -1388,9 +1408,9 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         k.drive_slot.SetOn(params.Real(manifest.p_drv_on[c]) >= 0.5f);
         if(k.drive_slot.Ativo())
         {
-            k.drive.SetDrive(params.Real(manifest.p_drv_drive));
-            k.drive.SetTone(params.Real(manifest.p_drv_tone));
-            k.drive.SetSujeira(params.Real(manifest.p_drv_sujeira));
+            k.drive.SetDrive(params.Real(manifest.p_drv_drive[CadeiaDoParam(c)]));
+            k.drive.SetTone(params.Real(manifest.p_drv_tone[CadeiaDoParam(c)]));
+            k.drive.SetSujeira(params.Real(manifest.p_drv_sujeira[CadeiaDoParam(c)]));
             const float mx = params.Real(manifest.p_drv_mix[c]);
             float gs = 0.f, gm = 0.f;
             for(size_t i = 0; i < size; i++)
@@ -1407,10 +1427,10 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         k.phaser_slot.SetOn(params.Real(manifest.p_phs_on[c]) >= 0.5f);
         if(k.phaser_slot.Ativo())
         {
-            k.phaser.SetRate(params.Real(manifest.p_phs_rate));
-            k.phaser.SetDepth(params.Real(manifest.p_phs_depth));
-            k.phaser.SetFeedback(params.Real(manifest.p_phs_feedback));
-            k.phaser.SetStages((int)(params.Real(manifest.p_phs_stages) + 0.5f));
+            k.phaser.SetRate(params.Real(manifest.p_phs_rate[CadeiaDoParam(c)]));
+            k.phaser.SetDepth(params.Real(manifest.p_phs_depth[CadeiaDoParam(c)]));
+            k.phaser.SetFeedback(params.Real(manifest.p_phs_feedback[CadeiaDoParam(c)]));
+            k.phaser.SetStages((int)(params.Real(manifest.p_phs_stages[CadeiaDoParam(c)]) + 0.5f));
             // LFO e mapeamento de frequencia UMA VEZ POR BLOCO: as unicas
             // transcendentais ficam fora do laco de amostra.
             k.phaser.AtualizaLfo(size);
@@ -1432,9 +1452,9 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         k.warble_slot.SetOn(params.Real(manifest.p_wrb_on[c]) >= 0.5f);
         if(k.warble_ok && k.warble_slot.Ativo())
         {
-            k.warble.SetRate(params.Real(manifest.p_wrb_rate));
-            k.warble.SetDepth(params.Real(manifest.p_wrb_depth));
-            k.warble.SetIrreg(params.Real(manifest.p_wrb_irreg));
+            k.warble.SetRate(params.Real(manifest.p_wrb_rate[CadeiaDoParam(c)]));
+            k.warble.SetDepth(params.Real(manifest.p_wrb_depth[CadeiaDoParam(c)]));
+            k.warble.SetIrreg(params.Real(manifest.p_wrb_irreg[CadeiaDoParam(c)]));
             k.warble.AtualizaLfo(size);
             // `mix` ESCALA O MOLHADO, e o fade do slot escala o mix —
             // mesma forma do drive e do phaser. Ate 20/08 o warble
@@ -2115,6 +2135,13 @@ static void declara_modos()
     if(hal::LogMuted())
         hal::LogAlways("[LOG MUDO] o log esta silenciado — `log on` destrava."
                        " O que voce nao esta vendo NAO e ausencia de dado.");
+    // `dup off` faz a cadeia B soar com os valores da A: e modo que
+    // altera o instrumento, entao se declara junto com o log mudo. Sem
+    // isto, "a cadeia B nao responde ao set" tem duas explicacoes e o
+    // status nao distingue nenhuma.
+    if(!g_dup_por_cadeia)
+        hal::Log("[DUP OFF] os dez params de caracter estao COMPARTILHADOS"
+                 " — a cadeia B soa com os valores da A. `dup on` devolve.");
 }
 
 static void HandleLine(const char* line)
@@ -2281,6 +2308,17 @@ static void HandleLine(const char* line)
     { params.Set(manifest.p_tone_mix, 0.5f); hal::Log("tone ON"); return; }
     if(strncmp(line, "tone off", 8) == 0)
     { params.Set(manifest.p_tone_mix, 0.0f); hal::Log("tone OFF"); return; }
+    if(strncmp(line, "dup", 3) == 0)
+    {
+        const char* a = line + 3;
+        while(*a == ' ') a++;
+        if(*a) g_dup_por_cadeia = (strncmp(a, "on", 2) == 0);
+        hal::Log("dup: %s — os dez params de caracter leem %s",
+                 g_dup_por_cadeia ? "POR CADEIA" : "COMPARTILHADO",
+                 g_dup_por_cadeia ? "p_x[c] (uma entrada por cadeia)"
+                                  : "p_x[0] (cadeia B soa com valores da A)");
+        return;
+    }
     if(strncmp(line, "board", 5) == 0)
     {
         declara_modos();
@@ -2301,6 +2339,42 @@ static void HandleLine(const char* line)
                  manifest.n_midi, (int)cotuca::kMaxMidiMap,
                  (params.Overflow() || manifest.midi_overflow)
                      ? "   *** ESTOUROU ***" : "");
+        // PARAMS SEM CC — o ponto cego que a duplicacao criou.
+        //
+        // Param sem CC nao esta quebrado: continua alcancavel por `set`
+        // e continua sendo salvo. Mas param inalcancavel por MIDI, com
+        // default zero, e indistinguivel de param DESLIGADO para quem
+        // so tem o iPad na mao — e essa e a forma "feature morta parece
+        // feature desligada", que ja custou uma sessao neste projeto.
+        //
+        // A linha imprime o CRU (a contagem) e a etiqueta ao lado, e
+        // nomeia os primeiros para que a conta nao vire um numero sem
+        // assunto.
+        {
+            bool tem_cc[cotuca::kMaxParams] = {false};
+            for(int k = 0; k < manifest.n_midi; k++)
+            {
+                const int p = manifest.midi_map[k].param_id;
+                if(p >= 0 && p < params.Count()) tem_cc[p] = true;
+            }
+            int sem = 0;
+            char nomes[160]; nomes[0] = 0;
+            for(int p = 0; p < params.Count(); p++)
+            {
+                if(tem_cc[p]) continue;
+                sem++;
+                if(sem <= 6)
+                {
+                    strncat(nomes, sem > 1 ? " " : "",
+                            sizeof(nomes) - strlen(nomes) - 1);
+                    strncat(nomes, params.Name(p),
+                            sizeof(nomes) - strlen(nomes) - 1);
+                }
+            }
+            hal::Log("sem CC: %d de %d params — alcancaveis por `set`,"
+                     " invisiveis ao iPad", sem, params.Count());
+            if(sem) hal::Log("        %s%s", nomes, sem > 6 ? " ..." : "");
+        }
         // A TRAVA DO CTOS VEM ANTES DE QUALQUER OUTRO AVISO: enquanto
         // ela esta de pe, todo aviso que le um `_on` le o zero que ela
         // impos, nao a intencao do operador — e cala por causa disso.

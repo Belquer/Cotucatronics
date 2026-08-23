@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 720" font-family="'Courier New',monospace">
+  <style>
+    .bg    { fill:#f7f5f0; }
+    .card  { fill:#ffffff; stroke:#d8d3c8; stroke-width:1.5; }
+    .box   { fill:#faf8f3; stroke:#2a2a2a; stroke-width:2; }
+    .waud  { stroke:#1a5c8a; stroke-width:2.4; fill:none; }
+    .w5    { stroke:#d68910; stroke-width:2.2; fill:none; }
+    .wg    { stroke:#666; stroke-width:2.2; fill:none; }
+    .comp  { stroke:#2a2a2a; stroke-width:2; fill:none; }
+    .dash  { stroke:#b0a99a; stroke-width:1.6; fill:none; stroke-dasharray:6 5; }
+    .node  { fill:#2a2a2a; }
+    .title { font-size:24px; font-weight:bold; fill:#1a1a1a; }
+    .sub   { font-size:12px; fill:#7a7568; }
+    .h     { font-size:17px; font-weight:bold; fill:#1a1a1a; }
+    .lbl   { font-size:12px; fill:#2a2a2a; }
+    .lblb  { font-size:13px; font-weight:bold; fill:#1a1a1a; }
+    .val   { font-size:13px; font-weight:bold; fill:#b8541a; }
+    .pin   { font-size:12px; font-weight:bold; fill:#1a5c8a; }
+    .note  { font-size:11px; fill:#7a7568; }
+    .red   { font-size:11px; fill:#c0392b; font-weight:bold; }
+    .gray  { font-size:11px; fill:#b0a99a; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1000" height="720"/>
+
+  <text class="title" x="40" y="46">ENTRADA DO PIEZO — v2: só proteção</text>
+  <text class="sub" x="40" y="66">Ganho INTACTO. O atenuador fica de fora até o `hist` medir no regime real (piezo na escultura, tocando normal).</text>
+  <line x1="40" y1="80" x2="960" y2="80" stroke="#d8d3c8" stroke-width="1.5"/>
+
+  <!-- ============ CIRCUITO ============ -->
+  <rect class="card" x="40" y="100" width="920" height="330" rx="8"/>
+  <text class="h" x="60" y="128">CIRCUITO  (monte DOIS — um por piezo)</text>
+  <text class="note" x="60" y="147">3 componentes por canal. Os DOIS diodos apontam na mesma direção (cátodo pro lado mais positivo do seu par) — é o grampo clássico.</text>
+
+  <!-- PIEZO -->
+  <rect class="comp" x="70" y="215" width="44" height="62" rx="3"/>
+  <text class="lblb" x="70" y="207">PIEZO</text>
+  <text class="note" x="58" y="294">disco</text>
+  <circle class="node" cx="114" cy="232" r="3.5"/>
+  <text class="val" x="122" y="226">+</text>
+  <text class="note" x="122" y="199">centro (vermelho)</text>
+  <circle class="node" cx="114" cy="262" r="3.5"/>
+  <text class="val" x="122" y="277">−</text>
+  <text class="note" x="122" y="292">latão / malha (preto)</text>
+
+  <!-- (+) path -->
+  <line class="waud" x1="114" y1="232" x2="300" y2="232"/>
+  <rect class="comp" x="300" y="222" width="70" height="20"/>
+  <text class="val" x="303" y="215">1kΩ</text>
+  <text class="note" x="290" y="258">limita a corrente</text>
+  <text class="note" x="290" y="271">nos diodos</text>
+  <line class="waud" x1="370" y1="232" x2="640" y2="232"/>
+  <circle class="node" cx="470" cy="232" r="4"/>
+
+  <!-- D1 -> 3V3 -->
+  <line class="w5" x1="470" y1="232" x2="470" y2="200"/>
+  <path class="comp" d="M 458 200 L 482 200 L 470 181 Z"/>
+  <line class="comp" x1="458" y1="181" x2="482" y2="181"/>
+  <line class="w5" x1="470" y1="181" x2="470" y2="162"/>
+  <text class="pin" x="490" y="167">3V3</text>
+  <text class="val" x="490" y="186">D1 · 1N4148</text>
+  <text class="red" x="490" y="200">cátodo (faixa) → 3V3</text>
+
+  <!-- D2 -> GND -->
+  <line class="wg" x1="470" y1="232" x2="470" y2="290"/>
+  <path class="comp" d="M 458 309 L 482 309 L 470 290 Z"/>
+  <line class="comp" x1="458" y1="290" x2="482" y2="290"/>
+  <line class="wg" x1="470" y1="309" x2="470" y2="360"/>
+  <circle class="node" cx="470" cy="360" r="4"/>
+  <text class="val" x="490" y="326">D2 · 1N4148</text>
+  <text class="red" x="490" y="340">cátodo (faixa) → nó do sinal</text>
+
+  <!-- DAISY -->
+  <rect class="box" x="640" y="200" width="170" height="90" rx="4"/>
+  <text class="lblb" x="655" y="224">DAISY SEED 2</text>
+  <text class="pin" x="655" y="248">AUDIO IN L / R</text>
+  <text class="pin" x="655" y="276">GND</text>
+  <line class="wg" x1="640" y1="272" x2="610" y2="272"/>
+  <line class="wg" x1="610" y1="272" x2="610" y2="360"/>
+  <circle class="node" cx="610" cy="360" r="4"/>
+
+  <!-- trilho terra -->
+  <line class="wg" x1="114" y1="262" x2="114" y2="360"/>
+  <line class="wg" x1="114" y1="360" x2="620" y2="360"/>
+  <text class="lblb" x="130" y="380">TRILHO DE TERRA</text>
+  <text class="note" x="290" y="380">o (−) do piezo e o D2 chegam aqui. Nada de resistor no retorno.</text>
+
+  <!-- nota lateral -->
+  <text class="red" x="840" y="224">Fio BLINDADO</text>
+  <text class="note" x="840" y="240">centro = (+)</text>
+  <text class="note" x="840" y="254">malha = (−)</text>
+  <text class="note" x="840" y="276">Piezo A → IN_L</text>
+  <text class="note" x="840" y="290">Piezo B → IN_R</text>
+
+  <!-- ============ LISTA + POR QUE ============ -->
+  <rect class="card" x="40" y="450" width="445" height="240" rx="8"/>
+  <text class="h" x="60" y="478">LISTA — por piezo</text>
+  <text class="lbl" x="70" y="508">1 ×  resistor 1kΩ            (série)</text>
+  <text class="lbl" x="70" y="532">2 ×  diodo 1N4148            (grampo)</text>
+  <text class="lbl" x="70" y="556">1 ×  fio blindado curto      (centro/malha)</text>
+  <line x1="70" y1="576" x2="455" y2="576" stroke="#e0dbce"/>
+  <text class="note" x="70" y="598">Total: 3 componentes por canal, 6 no instrumento.</text>
+  <text class="note" x="70" y="616">Você já tem os diodos. Nada disso mexe no nível do sinal.</text>
+  <text class="red" x="70" y="648">O 1kΩ contra a impedância de entrada da Daisy</text>
+  <text class="red" x="70" y="664">custa fração de dB — desprezível, não é atenuação.</text>
+
+  <rect class="card" x="505" y="450" width="455" height="240" rx="8"/>
+  <text class="h" x="525" y="478">POR QUE O ATENUADOR SAIU (por ora)</text>
+  <text class="lbl" x="535" y="506">O clip medido em 20/08 veio de <tspan class="lblb">dedo direto no disco</tspan></text>
+  <text class="lbl" x="535" y="524">solto — regime que não é o de uso. Na escultura, o</text>
+  <text class="lbl" x="535" y="542">piezo lê flexão de placa: nível bem mais baixo.</text>
+  <text class="red" x="535" y="572">Validade de medição tem REGIME.</text>
+  <line x1="535" y1="586" x2="945" y2="586" stroke="#e0dbce"/>
+  <text class="lblb" x="535" y="610">Ordem certa:</text>
+  <text class="lbl" x="545" y="630">1. monta a proteção (ganho intacto)</text>
+  <text class="lbl" x="545" y="648">2. instala os piezos na escultura</text>
+  <text class="lbl" x="545" y="666">3. toca normal → `hist` remede</text>
+  <text class="red" x="545" y="684">4. atenuador SÓ se clipar tocando</text>
+</svg>

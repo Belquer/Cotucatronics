@@ -1,0 +1,350 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 2000" font-family="'Courier New',monospace">
+  <style>
+    .bg    { fill:#f7f5f0; }
+    .card  { fill:#ffffff; stroke:#d8d3c8; stroke-width:1.5; }
+    .box   { fill:#faf8f3; stroke:#2a2a2a; stroke-width:2; }
+    .wire  { stroke:#2a2a2a; stroke-width:2.2; fill:none; }
+    .w12   { stroke:#c0392b; stroke-width:2.6; fill:none; }
+    .w5    { stroke:#d68910; stroke-width:2.4; fill:none; }
+    .wg    { stroke:#666; stroke-width:2.2; fill:none; }
+    .waud  { stroke:#1a5c8a; stroke-width:2.2; fill:none; }
+    .comp  { stroke:#2a2a2a; stroke-width:2; fill:none; }
+    .node  { fill:#2a2a2a; }
+    .title { font-size:26px; font-weight:bold; fill:#1a1a1a; }
+    .sub   { font-size:12px; fill:#7a7568; }
+    .h     { font-size:18px; font-weight:bold; fill:#1a1a1a; }
+    .lbl   { font-size:12px; fill:#2a2a2a; }
+    .lblb  { font-size:13px; font-weight:bold; fill:#1a1a1a; }
+    .val   { font-size:12px; font-weight:bold; fill:#b8541a; }
+    .pin   { font-size:12px; font-weight:bold; fill:#1a5c8a; }
+    .note  { font-size:11px; fill:#7a7568; }
+    .red   { font-size:11px; fill:#c0392b; font-weight:bold; }
+    .gnd   { stroke:#666; stroke-width:2; fill:none; }
+    .tb    { font-size:12px; fill:#2a2a2a; }
+    .th    { font-size:12px; font-weight:bold; fill:#1a1a1a; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1000" height="2000"/>
+
+  <text class="title" x="40" y="48">COTUCATRONICS — Folha de montagem</text>
+  <text class="sub" x="40" y="68">Daisy Seed 2 · WIDI Core · TPA3110 · exciter Dayton 4Ω · painel   |   pinos verificados no fonte (hal_daisy_seed.cpp @ 3303028)</text>
+  <line x1="40" y1="82" x2="960" y2="82" stroke="#d8d3c8" stroke-width="1.5"/>
+
+  <!-- ================= CARD 1: ENERGIA ================= -->
+  <rect class="card" x="40" y="100" width="920" height="330" rx="8"/>
+  <text class="h" x="60" y="128">1 · DISTRIBUIÇÃO DE ENERGIA — entrada única</text>
+  <text class="note" x="60" y="147">Uma porta USB-C do powerbank (OUT1 ou OUT2, as de 45W). NUNCA duas portas: o powerbank renegocia tudo pra 5V/15W.</text>
+
+  <!-- powerbank -->
+  <rect class="box" x="60" y="175" width="105" height="60" rx="4"/>
+  <text class="lblb" x="72" y="200">INIU 45W</text>
+  <text class="note" x="72" y="216">10000mAh</text>
+  <text class="note" x="72" y="229">12V⎓3A</text>
+
+  <!-- cable -->
+  <line class="w12" x1="165" y1="205" x2="215" y2="205"/>
+  <text class="note" x="168" y="198">USB-C</text>
+
+  <!-- chassis connector -->
+  <rect class="box" x="215" y="175" width="100" height="60" rx="4"/>
+  <text class="lblb" x="224" y="198">CONECTOR</text>
+  <text class="note" x="224" y="213">Type-C fêmea</text>
+  <text class="note" x="224" y="226">chassi 3A</text>
+
+  <line class="w12" x1="315" y1="205" x2="365" y2="205"/>
+
+  <!-- PD trigger -->
+  <rect class="box" x="365" y="175" width="100" height="60" rx="4"/>
+  <text class="lblb" x="378" y="198">PD TRIG</text>
+  <text class="val" x="378" y="214">→ 12V</text>
+  <text class="red" x="374" y="228">confirmar 12V!</text>
+
+  <line class="w12" x1="465" y1="205" x2="510" y2="205"/>
+
+  <!-- switch -->
+  <circle class="node" cx="510" cy="205" r="3.5"/>
+  <line class="comp" x1="510" y1="205" x2="545" y2="188"/>
+  <circle class="node" cx="548" cy="205" r="3.5"/>
+  <text class="lblb" x="500" y="172">SWITCH</text>
+  <text class="red" x="480" y="248">no +V, nunca no GND</text>
+
+  <!-- 12V rail -->
+  <line class="w12" x1="548" y1="205" x2="700" y2="205"/>
+  <circle class="node" cx="640" cy="205" r="4"/>
+  <text class="val" x="600" y="196">RAIL 12V</text>
+
+  <!-- to amp (right) -->
+  <line class="w12" x1="700" y1="205" x2="760" y2="205"/>
+  <rect class="box" x="760" y="175" width="180" height="60" rx="4"/>
+  <text class="lblb" x="775" y="198">TPA3110 PBTL</text>
+  <text class="note" x="775" y="213">mono 30W → exciter</text>
+  <text class="note" x="775" y="227">Dayton 4Ω</text>
+
+  <!-- capacitor at amp -->
+  <line class="w12" x1="720" y1="205" x2="720" y2="255"/>
+  <line class="comp" x1="705" y1="255" x2="735" y2="255"/>
+  <line class="comp" x1="705" y1="263" x2="735" y2="263"/>
+  <line class="wg" x1="720" y1="263" x2="720" y2="290"/>
+  <line class="gnd" x1="704" y1="290" x2="736" y2="290"/>
+  <line class="gnd" x1="710" y1="296" x2="730" y2="296"/>
+  <line class="gnd" x1="716" y1="302" x2="724" y2="302"/>
+  <text class="val" x="745" y="262">2200µF / 25V</text>
+  <text class="note" x="745" y="277">+ 100nF cerâmico</text>
+  <text class="red" x="745" y="292">OBRIGATÓRIO, colado no amp</text>
+
+  <!-- to step-down (down) -->
+  <line class="w12" x1="640" y1="205" x2="640" y2="330"/>
+  <rect class="box" x="540" y="330" width="200" height="55" rx="4"/>
+  <text class="lblb" x="552" y="352">STEP-DOWN 12→5V</text>
+  <text class="note" x="552" y="368">10A (opera folgado a ~10%)</text>
+
+  <!-- 5V rail -->
+  <line class="w5" x1="540" y1="357" x2="380" y2="357"/>
+  <circle class="node" cx="440" cy="357" r="4"/>
+  <text class="val" x="400" y="348">RAIL 5V</text>
+  <line class="w5" x1="380" y1="357" x2="290" y2="357"/>
+  <text class="lbl" x="130" y="352">→ Daisy VIN</text>
+  <text class="lbl" x="130" y="372">→ WIDI VI (+jumper ON)</text>
+  <line class="w5" x1="290" y1="357" x2="270" y2="347"/>
+  <line class="w5" x1="290" y1="357" x2="270" y2="367"/>
+
+  <text class="red" x="60" y="415">GND: um rail único, contínuo, UM ponto de união. AGND+DGND da Daisy juntos no mesmo ponto. Zero loops.</text>
+
+  <!-- ================= CARD 2: PIEZOS ================= -->
+  <rect class="card" x="40" y="450" width="920" height="270" rx="8"/>
+  <text class="h" x="60" y="478">2 · ENTRADA DOS PIEZOS  (monte DOIS — um por canal)</text>
+  <text class="note" x="60" y="497">O (+) atravessa atenuador e proteção. O (−) vai DIRETO ao terra — é o retorno, nunca passa por resistor.</text>
+
+  <!-- PIEZO com terminais -->
+  <rect class="comp" x="62" y="545" width="42" height="60" rx="3"/>
+  <text class="lblb" x="62" y="538">PIEZO</text>
+  <text class="note" x="52" y="622">disco</text>
+  <!-- + terminal -->
+  <circle class="node" cx="104" cy="562" r="3.5"/>
+  <text class="val" x="110" y="556">+</text>
+  <text class="note" x="110" y="528">centro (vermelho)</text>
+  <!-- − terminal -->
+  <circle class="node" cx="104" cy="592" r="3.5"/>
+  <text class="val" x="110" y="606">−</text>
+  <text class="note" x="110" y="620">latão / malha (preto)</text>
+
+  <!-- (+) signal path -->
+  <line class="waud" x1="104" y1="562" x2="185" y2="562"/>
+  <rect class="comp" x="185" y="552" width="60" height="20"/>
+  <text class="val" x="186" y="546">R1 1MΩ</text>
+  <line class="waud" x1="245" y1="562" x2="350" y2="562"/>
+  <circle class="node" cx="290" cy="562" r="3.5"/>
+
+  <!-- R2 do nó ao terra -->
+  <line class="wg" x1="290" y1="562" x2="290" y2="618"/>
+  <rect class="comp" x="280" y="618" width="20" height="42"/>
+  <text class="val" x="312" y="634">R2 (no switch)</text>
+  <text class="note" x="312" y="650">1MΩ  = −6 dB</text>
+  <text class="note" x="312" y="664">330k = −12 dB</text>
+  
+  <line class="wg" x1="290" y1="660" x2="290" y2="690"/>
+  <circle class="node" cx="290" cy="690" r="3.5"/>
+
+  <!-- 1k proteção -->
+  <rect class="comp" x="350" y="552" width="60" height="20"/>
+  <text class="val" x="356" y="546">1kΩ</text>
+  <line class="waud" x1="410" y1="562" x2="565" y2="562"/>
+  <circle class="node" cx="480" cy="562" r="3.5"/>
+
+  <!-- D1 para 3V3 -->
+  <line class="w5" x1="480" y1="562" x2="480" y2="535"/>
+  <path class="comp" d="M 470 535 L 490 535 L 480 519 Z"/>
+  <line class="comp" x1="470" y1="519" x2="490" y2="519"/>
+  <line class="w5" x1="480" y1="519" x2="480" y2="507"/>
+  <text class="pin" x="495" y="512">3V3</text>
+  <text class="note" x="495" y="528">D1 · faixa p/ cima</text>
+
+  <!-- D2 para GND -->
+  <line class="wg" x1="480" y1="562" x2="480" y2="620"/>
+  <path class="comp" d="M 470 636 L 490 636 L 480 652 Z"/>
+  <line class="comp" x1="470" y1="636" x2="490" y2="636"/>
+  <line class="wg" x1="480" y1="652" x2="480" y2="690"/>
+  <circle class="node" cx="480" cy="690" r="3.5"/>
+  <text class="note" x="495" y="642">D2 · faixa p/ cima</text>
+
+  <!-- DAISY -->
+  <rect class="box" x="565" y="535" width="150" height="75" rx="4"/>
+  <text class="lblb" x="578" y="557">DAISY</text>
+  <text class="pin" x="578" y="577">AUDIO IN L / R</text>
+  <text class="pin" x="578" y="600">GND</text>
+  <line class="wg" x1="565" y1="596" x2="540" y2="596"/>
+  <line class="wg" x1="540" y1="596" x2="540" y2="690"/>
+  <circle class="node" cx="540" cy="690" r="3.5"/>
+
+  <!-- TRILHO DE TERRA -->
+  <line class="wg" x1="104" y1="592" x2="104" y2="690"/>
+  <line class="wg" x1="104" y1="690" x2="560" y2="690"/>
+  <text class="lblb" x="120" y="706">TRILHO DE TERRA  ← o (−) do piezo, o R2 e o D2 chegam todos aqui</text>
+
+  <!-- notas -->
+  <text class="red" x="740" y="546">Fio BLINDADO:</text>
+  <text class="note" x="740" y="562">centro = (+)</text>
+  <text class="note" x="740" y="576">malha = (−) no terra</text>
+  <text class="red" x="740" y="606">R2 final só depois</text>
+  <text class="note" x="740" y="622">do `hist` medir o pico</text>
+  <text class="note" x="740" y="636">real sem clip.</text>
+  <text class="note" x="740" y="650">Alvo: −6 dBFS/piezo</text>
+  <text class="note" x="740" y="664">(folga da soma).</text>
+  <text class="red" x="740" y="690">Piezo A → IN_L · B → IN_R</text>
+
+  <!-- ================= CARD 3: MAPA DE PINOS ================= -->
+  <rect class="card" x="40" y="740" width="920" height="420" rx="8"/>
+  <text class="h" x="60" y="768">3 · MAPA COMPLETO DE PINOS DA DAISY</text>
+
+  <line x1="60" y1="785" x2="940" y2="785" stroke="#d8d3c8"/>
+  <text class="th" x="70" y="805">PINO</text>
+  <text class="th" x="180" y="805">VAI PARA</text>
+  <text class="th" x="450" y="805">MODO / NOTA</text>
+  <line x1="60" y1="815" x2="940" y2="815" stroke="#d8d3c8"/>
+
+  <g class="tb">
+    <text class="pin" x="70" y="838">VIN</text>
+    <text x="180" y="838">rail 5V (do step-down)</text>
+    <text x="450" y="838">alimentação — 5V, não 3V3</text>
+
+    <text class="pin" x="70" y="861">GND</text>
+    <text x="180" y="861">rail de terra único</text>
+    <text x="450" y="861">AGND+DGND no mesmo ponto de união</text>
+
+    <text class="pin" x="70" y="884">AUDIO IN L</text>
+    <text x="180" y="884">piezo A (via atenuador+proteção)</text>
+    <text x="450" y="884">PIEZO_MIX balanceia A↔B no firmware</text>
+
+    <text class="pin" x="70" y="907">AUDIO IN R</text>
+    <text x="180" y="907">piezo B (via atenuador+proteção)</text>
+    <text x="450" y="907">idem</text>
+
+    <text class="pin" x="70" y="930">AUDIO OUT L</text>
+    <text x="180" y="930">entrada do TPA3110</text>
+    <text x="450" y="930">ramo do exciter (com anti-feedback)</text>
+
+    <text class="pin" x="70" y="953">AUDIO OUT R</text>
+    <text x="180" y="953">jack TRS</text>
+    <text x="450" y="953">ramo limpo (PA / gravação)</text>
+
+    <text class="pin" x="70" y="976">D13 (PB6)</text>
+    <text x="180" y="976">RX do WIDI</text>
+    <text x="450" y="976">TX — CRUZADO. Sync Loopy (futuro)</text>
+
+    <text class="pin" x="70" y="999">D14 (PB7)</text>
+    <text x="180" y="999">TX do WIDI</text>
+    <text x="450" y="999">RX — CRUZADO. ★ ESSENCIAL (recebe MIDI)</text>
+
+    <text class="pin" x="70" y="1022">D15–D19</text>
+    <text x="180" y="1022">wipers dos 5 pots</text>
+    <text x="450" y="1022">= A0–A4 (ADC) + 100nF de cada wiper p/ GND</text>
+
+    <text class="pin" x="70" y="1045">D26</text>
+    <text x="180" y="1045">botão 1 (búzios)</text>
+    <text x="450" y="1045">INPUT + PULLUP interno — outro lado no GND</text>
+
+    <text class="pin" x="70" y="1068">D27</text>
+    <text x="180" y="1068">botão 2 (assignável)</text>
+    <text x="450" y="1068">idem</text>
+
+    <text class="pin" x="70" y="1091">D28</text>
+    <text x="180" y="1091">LB do WIDI</text>
+    <text x="450" y="1091">INPUT + PULLUP — leitura de estado do link</text>
+
+    <text class="pin" x="70" y="1114">D29 / D30</text>
+    <text x="180" y="1114">— LIVRES —</text>
+    <text x="450" y="1114">LG/LR removidos 20/08 (não marcavam nada)</text>
+
+    <text class="pin" x="70" y="1137">3V3</text>
+    <text x="180" y="1137">pino 3 dos pots + cátodo D1</text>
+    <text x="450" y="1137">referência dos pots e do grampo</text>
+  </g>
+
+  <!-- ================= CARD 4: PAINEL + WIDI ================= -->
+  <rect class="card" x="40" y="1180" width="450" height="380" rx="8"/>
+  <text class="h" x="60" y="1208">4 · PAINEL (5 pots + 2 botões)</text>
+
+  <text class="lblb" x="60" y="1240">POT (×5) — 10kΩ LINEAR (B10K)</text>
+  <!-- pot drawing -->
+  <rect class="comp" x="70" y="1258" width="90" height="34" rx="3"/>
+  <text class="note" x="82" y="1280">10kΩ lin</text>
+  <line class="wg" x1="70" y1="1275" x2="45" y2="1275"/>
+  <text class="pin" x="170" y="1252">pino 1 → GND</text>
+  <line class="waud" x1="115" y1="1258" x2="115" y2="1230"/>
+  <text class="pin" x="170" y="1272">wiper (2) → D15..D19</text>
+  <line class="w5" x1="160" y1="1275" x2="185" y2="1275"/>
+  <text class="pin" x="170" y="1292">pino 3 → 3V3</text>
+  <text class="red" x="60" y="1318">+ 100nF de cada wiper p/ GND (anti-jitter)</text>
+  <text class="note" x="60" y="1336">Se ler invertido: troca pino 1 com pino 3.</text>
+  <text class="note" x="60" y="1354">LINEAR de propósito — a curva vive no firmware.</text>
+
+  <text class="lblb" x="60" y="1390">BOTÃO (×2) — 2 fios só</text>
+  <text class="lbl" x="70" y="1412">um lado → D26 (ou D27)</text>
+  <text class="lbl" x="70" y="1432">outro lado → GND</text>
+  <text class="note" x="70" y="1452">Pull-up é interno (firmware). Sem resistor externo.</text>
+
+  <text class="lblb" x="60" y="1490">SAÍDA</text>
+  <text class="lbl" x="70" y="1512">OUT_L → amp → exciter</text>
+  <text class="lbl" x="70" y="1532">OUT_R → jack TRS (PA/gravação)</text>
+
+  <rect class="card" x="510" y="1180" width="450" height="380" rx="8"/>
+  <text class="h" x="530" y="1208">5 · WIDI CORE — 6 fios</text>
+
+  <g class="tb">
+    <text class="pin" x="535" y="1245">VI</text>
+    <text x="600" y="1245">← rail 5V</text>
+    <text class="note" x="760" y="1245">5V, não 3V3</text>
+
+    <text class="pin" x="535" y="1275">ON</text>
+    <text x="600" y="1275">← jumper do VI</text>
+    <text class="red" x="760" y="1275">sem isso, dorme</text>
+
+    <text class="pin" x="535" y="1305">GND</text>
+    <text x="600" y="1305">← rail de terra</text>
+
+    <text class="pin" x="535" y="1335">RX</text>
+    <text x="600" y="1335">← D13 da Daisy</text>
+    <text class="note" x="760" y="1335">sync futura</text>
+
+    <text class="pin" x="535" y="1365">TX</text>
+    <text x="600" y="1365">→ D14 da Daisy</text>
+    <text class="red" x="760" y="1365">★ essencial</text>
+
+    <text class="pin" x="535" y="1395">LB</text>
+    <text x="600" y="1395">→ D28 da Daisy</text>
+    <text class="note" x="760" y="1395">status do link</text>
+
+    <text class="pin" x="535" y="1425">V3</text>
+    <text x="600" y="1425">(só medir)</text>
+    <text class="note" x="760" y="1425">≈3,3V = vivo</text>
+  </g>
+
+  <text class="red" x="530" y="1465">DADOS CRUZADOS: TX de um no RX do outro.</text>
+  <text class="note" x="530" y="1483">Ligar reto não queima — só dá silêncio, idêntico</text>
+  <text class="note" x="530" y="1499">a módulo desligado. Se `midi` der 0 bytes,</text>
+  <text class="note" x="530" y="1515">desconfia do cruzamento ANTES de tudo.</text>
+  <text class="note" x="530" y="1539">LG/LR não conectar (removidos do firmware).</text>
+
+  <!-- ================= CARD 6: CHECKLIST ================= -->
+  <rect class="card" x="40" y="1580" width="920" height="370" rx="8"/>
+  <text class="h" x="60" y="1608">6 · CHECKLIST ANTES DE ENERGIZAR</text>
+
+  <g class="tb">
+    <text x="70" y="1638">☐  <tspan class="lblb">Continuidade +V ↔ GND: NÃO pode bipar.</tspan>  Se bipar, tem curto — acha antes de ligar.</text>
+    <text x="70" y="1663">☐  <tspan class="lblb">Polaridade do capacitor 2200µF</tspan> — a tarja no corpo marca o NEGATIVO. Invertido, estoura.</text>
+    <text x="70" y="1688">☐  <tspan class="lblb">Polaridade dos diodos 1N4148</tspan> — faixa = cátodo. D1 com faixa p/ 3V3, D2 com faixa p/ o nó.</text>
+    <text x="70" y="1713">☐  <tspan class="lblb">PD trigger configurado em 12V</tspan> (alguns vêm 9V/20V de fábrica). Mede a saída ANTES de ligar no amp.</text>
+    <text x="70" y="1738">☐  <tspan class="lblb">Step-down ajustado/verificado em 5V</tspan> antes de encostar na Daisy. 12V na Daisy a mata.</text>
+    <text x="70" y="1763">☐  <tspan class="lblb">Switch no lado +V</tspan>, GND contínuo e sem loops (um rail, um ponto de união).</text>
+    <text x="70" y="1788">☐  <tspan class="lblb">Uma porta só do powerbank</tspan> — duas portas fazem ele renegociar tudo pra 5V/15W.</text>
+    <text x="70" y="1813">☐  <tspan class="lblb">V3 do WIDI ≈ 3,3V</tspan> depois de energizar = módulo vivo. Zero = volta pra alimentação/jumper ON.</text>
+    <text x="70" y="1838">☐  <tspan class="lblb">Atenuador provisório primeiro</tspan> — nunca solda o R2 final antes do `hist` dar o pico real sem clip.</text>
+    <text x="70" y="1863">☐  <tspan class="lblb">Exciter por último</tspan> — quando entrar, revisa `level` e `gov_ceiling` JUNTOS e liga o `shift_hz`.</text>
+  </g>
+
+  <line x1="60" y1="1885" x2="940" y2="1885" stroke="#d8d3c8"/>
+  <text class="red" x="70" y="1908">ORDEM DE MONTAGEM: energia (sem carga) → mede tensões → Daisy → WIDI → piezos → painel → amp/exciter.</text>
+  <text class="note" x="70" y="1928">Um subsistema por vez, medindo entre cada um. Tudo em protoboard antes de soldar o definitivo.</text>
+
+  <text class="note" x="60" y="1975">Cotucatronics OS · folha de montagem · pinos verificados no fonte, não de memória</text>
+</svg>

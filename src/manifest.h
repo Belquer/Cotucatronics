@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.77.0
+// manifest.h (instrumento "bancada") v0.78.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -290,9 +290,9 @@ struct Manifest
     // e a superficie de controle e a tabela — nao o trabalho.
     int p_drv_on[kCadeias];     // 0/1 — chave, POR CANAL
     int p_drv_mix[kCadeias];    // 0..1 — dry/wet, POR CANAL
-    int p_drv_drive;            // COMPARTILHADO · PRIMARIO
-    int p_drv_tone;             // COMPARTILHADO
-    int p_drv_sujeira;          // COMPARTILHADO — tanh -> wavefolder
+    int p_drv_drive[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+    int p_drv_tone[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+    int p_drv_sujeira[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
 
     // PHASER — N allpass varridos por LFO. Depois do drive, antes do
     // delay: sujeira, depois movimento, depois tempo e espaco.
@@ -303,10 +303,10 @@ struct Manifest
     // "ligado" e 1.0 e quase inaudivel. Ver phaser.h.
     int p_phs_on[kCadeias];        // chave, POR CANAL
     int p_phs_mix[kCadeias];       // dry/wet POR CANAL · MONTANHA: pico em ~0.5
-    int p_phs_rate;                // COMPARTILHADO · PRIMARIO
-    int p_phs_depth;               // COMPARTILHADO
-    int p_phs_feedback;            // COMPARTILHADO
-    int p_phs_stages;              // COMPARTILHADO
+    int p_phs_rate[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+    int p_phs_depth[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+    int p_phs_feedback[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+    int p_phs_stages[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
 
     // WARBLE — deriva de fita: delay curto modulado. Depois do phaser
     // (sujeira, movimento de fase, movimento de altura), antes do
@@ -324,9 +324,9 @@ struct Manifest
     // e phaser. Reaceite pelo IFA10000 esta pendente.
     int p_wrb_on[kCadeias];     // chave, POR CANAL
     int p_wrb_mix[kCadeias];    // dry/wet, POR CANAL
-    int p_wrb_rate;             // COMPARTILHADO
-    int p_wrb_depth;            // COMPARTILHADO · PRIMARIO
-    int p_wrb_irreg;            // COMPARTILHADO
+    int p_wrb_rate[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+    int p_wrb_depth[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+    int p_wrb_irreg[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
 
     // ---- PARAM PRIMARIO POR EFEITO ----
     //
@@ -900,11 +900,14 @@ struct Manifest
         // proposito: "tone no maximo" tem que significar SEM filtro.
         p_drv_mix[0]   = t.Add("drv_mix_a",   0.0f, 0.f, 1.f);
         p_drv_mix[1]   = t.Add("drv_mix_b",   0.0f, 0.f, 1.f);
-        p_drv_drive = t.Add("drv_drive", 0.0f, 1.5f, 48.f);
-        p_drv_tone  = t.Add("drv_tone",  0.0f, 800.f, 16000.f, 2.0f);
+        p_drv_drive[0] = t.Add("drv_drive_a", 0.0f, 1.5f, 48.f);
+        p_drv_drive[1] = t.Add("drv_drive_b", 0.0f, 1.5f, 48.f);
+        p_drv_tone[0] = t.Add("drv_tone_a", 0.0f, 800.f, 16000.f, 2.0f);
+        p_drv_tone[1] = t.Add("drv_tone_b", 0.0f, 800.f, 16000.f, 2.0f);
         // NASCE EM 0 = o tube aprovado de ouvido em 22/08. Subir
         // daqui e ir pro dobrador, que e o "bem mais suja" pedido.
-        p_drv_sujeira = t.Add("drv_sujeira", 0.0f, 0.f, 1.f);
+        p_drv_sujeira[0] = t.Add("drv_sujeira_a", 0.0f, 0.f, 1.f);
+        p_drv_sujeira[1] = t.Add("drv_sujeira_b", 0.0f, 0.f, 1.f);
 
         // ---- PHASER ----
         p_phs_on[0]       = t.Add("phs_on_a",       0.0f, 0.f, 1.f);
@@ -914,19 +917,26 @@ struct Manifest
         // 3 posicoes: 4, 6 ou 8 estagios (2, 3 ou 4 notches).
         p_phs_mix[0]      = t.Add("phs_mix_a",      0.0f, 0.f, 1.f);
         p_phs_mix[1]      = t.Add("phs_mix_b",      0.0f, 0.f, 1.f);
-        p_phs_rate     = t.Add("phs_rate",  0.0f, 0.02f, 4.f, 2.0f);
-        p_phs_depth    = t.Add("phs_depth", 0.0f, 0.f, 1.f);
-        p_phs_feedback = t.Add("phs_fb",    0.0f, 0.f, 1.f);
-        p_phs_stages   = t.Add("phs_stages",0.0f, 4.f, 8.f, 1.0f, 3);
+        p_phs_rate[0] = t.Add("phs_rate_a", 0.0f, 0.02f, 4.f, 2.0f);
+        p_phs_rate[1] = t.Add("phs_rate_b", 0.0f, 0.02f, 4.f, 2.0f);
+        p_phs_depth[0] = t.Add("phs_depth_a", 0.0f, 0.f, 1.f);
+        p_phs_depth[1] = t.Add("phs_depth_b", 0.0f, 0.f, 1.f);
+        p_phs_feedback[0] = t.Add("phs_fb_a", 0.0f, 0.f, 1.f);
+        p_phs_feedback[1] = t.Add("phs_fb_b", 0.0f, 0.f, 1.f);
+        p_phs_stages[0] = t.Add("phs_stages_a", 0.0f, 4.f, 8.f, 1.0f, 3);
+        p_phs_stages[1] = t.Add("phs_stages_b", 0.0f, 4.f, 8.f, 1.0f, 3);
 
         // ---- WARBLE ----
         p_wrb_on[0]    = t.Add("wrb_on_a",    0.0f, 0.f, 1.f);
         p_wrb_on[1]    = t.Add("wrb_on_b",    0.0f, 0.f, 1.f);
         p_wrb_mix[0]   = t.Add("wrb_mix_a",   0.0f, 0.f, 1.f);
         p_wrb_mix[1]   = t.Add("wrb_mix_b",   0.0f, 0.f, 1.f);
-        p_wrb_rate  = t.Add("wrb_rate",  0.0f, 0.05f, 3.f, 2.0f);
-        p_wrb_depth = t.Add("wrb_depth", 0.0f, 0.f, 3.f);
-        p_wrb_irreg = t.Add("wrb_irreg", 0.0f, 0.f, 1.f);
+        p_wrb_rate[0] = t.Add("wrb_rate_a", 0.0f, 0.05f, 3.f, 2.0f);
+        p_wrb_rate[1] = t.Add("wrb_rate_b", 0.0f, 0.05f, 3.f, 2.0f);
+        p_wrb_depth[0] = t.Add("wrb_depth_a", 0.0f, 0.f, 3.f);
+        p_wrb_depth[1] = t.Add("wrb_depth_b", 0.0f, 0.f, 3.f);
+        p_wrb_irreg[0] = t.Add("wrb_irreg_a", 0.0f, 0.f, 1.f);
+        p_wrb_irreg[1] = t.Add("wrb_irreg_b", 0.0f, 0.f, 1.f);
         // Ate 3 ms. O desvio de altura e ~2*pi*rate*depth: 1 ms a
         // 0,6 Hz da ~4 cents (fita boa); 3 ms a 2 Hz da ~65 cents
         // (fita estragada — as vezes e o que se quer).
@@ -938,9 +948,9 @@ struct Manifest
         for(int c = 0; c < kCadeias; c++)
         {
             // O PRIMARIO agora e COMPARTILHADO; so a chave e por canal.
-            caracter[c][0] = {p_drv_on[c], p_drv_drive, "drive", "drive"};
-            caracter[c][1] = {p_phs_on[c], p_phs_rate,  "phaser", "rate"};
-            caracter[c][2] = {p_wrb_on[c], p_wrb_depth, "warble", "depth"};
+            caracter[c][0] = {p_drv_on[c], p_drv_drive[c], "drive", "drive"};
+            caracter[c][1] = {p_phs_on[c], p_phs_rate[c],  "phaser", "rate"};
+            caracter[c][2] = {p_wrb_on[c], p_wrb_depth[c], "warble", "depth"};
         }
 
         // ---- SHIMMER ----
@@ -1278,33 +1288,51 @@ struct Manifest
         AddMidi(25, p_gate_release[0]);
         AddMidi(26, p_gate_release[1]);
 
+        // ESTADO INTERINO DOS CCs DE CARATER — ler antes de estranhar.
+        //
+        // Os dez params de caracter deixaram de ser compartilhados
+        // (v0.131.0). Ate a multiplexacao por canal entrar, cada um
+        // desses CCs enderecа SO A CADEIA A, e a copia da cadeia B fica
+        // alcancavel apenas por `set <nome>_b`.
+        //
+        // O QUE MUDA NO OUVIDO: antes, mexer no CC 34 movia o drive das
+        // DUAS cadeias, porque havia um valor so. Agora move so a A. Nao
+        // e defeito, e o preco da duplicacao — e some quando o canal
+        // MIDI passar a escolher a cadeia.
+        //
+        // Nao ha CC novo aqui de proposito: gastar dez numeros agora
+        // seria construir o que o passo seguinte apaga. O `board`
+        // reporta quantos params estao sem CC, para que "cadeia B
+        // inalcancavel" nao passe por "cadeia B desligada" — feature
+        // morta parece feature desligada, e o default e zero.
+        //
         // ---- DRIVE: 30-35 ----
         AddMidi(30, p_drv_on[0]);
         AddMidi(31, p_drv_mix[0]);
         AddMidi(32, p_drv_on[1]);
         AddMidi(33, p_drv_mix[1]);
-        AddMidi(34, p_drv_drive);        // compartilhado
-        AddMidi(35, p_drv_tone);         // compartilhado
-        AddMidi(36, p_drv_sujeira);      // compartilhado
+        AddMidi(34, p_drv_drive[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(35, p_drv_tone[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(36, p_drv_sujeira[0]);   // SO A CADEIA A ate a multiplexacao
 
         // ---- PHASER: 40-47 ----
         AddMidi(40, p_phs_on[0]);
         AddMidi(41, p_phs_mix[0]);       // MONTANHA: pico em ~64
         AddMidi(42, p_phs_on[1]);
         AddMidi(43, p_phs_mix[1]);
-        AddMidi(44, p_phs_rate);         // compartilhado
-        AddMidi(45, p_phs_depth);        // compartilhado
-        AddMidi(46, p_phs_feedback);     // compartilhado
-        AddMidi(47, p_phs_stages);       // compartilhado, 3 posicoes
+        AddMidi(44, p_phs_rate[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(45, p_phs_depth[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(46, p_phs_feedback[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(47, p_phs_stages[0]);   // SO A CADEIA A ate a multiplexacao
 
         // ---- WARBLE: 50-56 ----
         AddMidi(50, p_wrb_on[0]);
         AddMidi(51, p_wrb_mix[0]);
         AddMidi(52, p_wrb_on[1]);
         AddMidi(53, p_wrb_mix[1]);
-        AddMidi(54, p_wrb_rate);         // compartilhado
-        AddMidi(55, p_wrb_depth);        // compartilhado
-        AddMidi(56, p_wrb_irreg);        // compartilhado
+        AddMidi(54, p_wrb_rate[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(55, p_wrb_depth[0]);   // SO A CADEIA A ate a multiplexacao
+        AddMidi(56, p_wrb_irreg[0]);   // SO A CADEIA A ate a multiplexacao
 
         // ---- DELAY: 60-64 — envio por cadeia, UMA instancia ----
         AddMidi(60, p_dly_on[0]);

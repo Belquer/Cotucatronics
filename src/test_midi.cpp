@@ -1,4 +1,4 @@
-// test_midi v0.1.1 — validação nativa do parser MIDI e do mapa.
+// test_midi v0.2.0 — validação nativa do parser MIDI e do mapa.
 //
 // midi.h é C++ puro e board-agnostic, e manifest.h também (só inclui
 // params.h, module.h e midi.h). Então a máquina de estados E a via
@@ -216,107 +216,153 @@ int main()
         cotuca::MidiParser p;
         p.Init(m.midi_channel, Apply::Cc);
 
+        // ---- O CC VEM DO MAPA, NUNCA DECORADO ----
+        //
+        // Este bloco ja carregava o comentario certo ("o teste segue o
+        // MAPA, nao um numero decorado") e a linha seguinte cravava
+        // `{0xB0, 20, 127}`. A intencao estava escrita e a implementacao
+        // decorou — entao cada remapeamento reprovava um firmware
+        // correto, ate as falhas virarem paisagem.
+        //
+        // Com o CC derivado do manifest, remapear NAO quebra o teste. O
+        // que quebra o teste e o contrato mudar: param sumir, param
+        // entrar ou sair do mapa. Que e o que um banco deve vigiar.
+        auto CcDe = [&](int param_id) -> int {
+            for(int k = 0; k < m.n_midi; k++)
+                if(m.midi_map[k].param_id == param_id) return m.midi_map[k].cc;
+            return -1;
+        };
+
         const int id_time = t.Find("dly_time");
-        const int id_gov  = t.Find("gov_ceiling");
-        Check("manifest expoe dly_time e gov_ceiling", id_time >= 0 && id_gov >= 0);
+        Check("manifest expoe dly_time", id_time >= 0);
 
-        // MAPA v2 (18/08): renumerado contiguo de 20. `dly_time` saiu
-        // do CC 20 pro 22, porque o 20 virou o `level` — master no
-        // comeco da faixa. Este teste segue o mapa, e falhar aqui
-        // depois de um remapeamento e o comportamento CORRETO: ele
-        // avisa que o contrato mudou.
-        const uint8_t msg[] = {0xB0, 22, 64};
-        Feed(p, msg, 3);
-        snprintf(d, sizeof(d), "norm=%.4f real=%.4f (curve %.1f)",
-                 t.Get(id_time), t.Real(id_time), t.Curve(id_time));
-        Check("CC 22 val 64 -> dly_time norm 0.50",
-              fabsf(t.Get(id_time) - 0.5039f) < 0.002f, d);
+        // GOV_CEILING: A DECISAO MUDOU, E O TESTE MUDA COM ELA.
+        //
+        // Ate 18/08 `gov_ceiling` estava FORA do mapa de proposito:
+        // transicoes de link BLE faziam o iOS reenviar o estado de todos
+        // os widgets e o instrumento obedecia, emudecendo tres vezes numa
+        // sessao. Este teste era a trava dessa decisao.
+        //
+        // A decisao foi revista com o hardware: com dois exciters a
+        // protecao duplicou, virou `gov_ceiling_a/_b`, e a pagina de
+        // protecao entrou no mapa em 110/116 — a razao esta no manifest,
+        // ao lado do AddMidi.
+        //
+        // O QUE ISTO CUSTOU, e e o motivo de estar escrito aqui: quando a
+        // decisao mudou, este teste DEVERIA ter ficado vermelho e forcado
+        // a atualizacao do raciocinio. Ele ja estava vermelho — pelo nome
+        // antigo, que nao existia mais — e o sinal se perdeu no ruido de
+        // tres falhas cronicas. Falha cronica nao e divida: e um sensor
+        // desligado que ninguem lembra de ter desligado.
+        const int id_gov_a = t.Find("gov_ceiling_a");
+        const int id_gov_b = t.Find("gov_ceiling_b");
+        Check("manifest expoe gov_ceiling_a e _b (protecao POR RAMO)",
+              id_gov_a >= 0 && id_gov_b >= 0);
+        snprintf(d, sizeof(d), "cc_a=%d cc_b=%d", CcDe(id_gov_a), CcDe(id_gov_b));
+        Check("gov_ceiling_a/_b ESTAO no mapa (pagina de protecao)",
+              CcDe(id_gov_a) >= 0 && CcDe(id_gov_b) >= 0, d);
 
-        // Params que so a serial alcancava e agora tem CC: rev_size
-        // (25), rev_damp (26) e buzios_thresh (32).
-        const int id_rs = t.Find("rev_size");
+        // SRC_MIX: APOSENTADO em 20/08. O teste antigo vivia dentro de
+        // um `if(id_src >= 0)` e passou a NAO RODAR quando o param sumiu
+        // — sem uma linha de saida, sem uma falha, sem nada. Teste que
+        // some em silencio e pior que teste que falha: a suite fica
+        // menor e o relatorio continua dizendo "ok".
+        //
+        // Agora a ausencia e AFIRMADA. Se `src_mix` voltar, isto reprova
+        // e alguem le a razao pela qual ele saiu.
+        Check("src_mix continua aposentado (nao existe na tabela)",
+              t.Find("src_mix") < 0);
+
+        // ---- VIA COMPLETA, com o CC vindo do mapa ----
+        if(id_time >= 0)
+        {
+            const int cc_time = CcDe(id_time);
+            snprintf(d, sizeof(d), "dly_time esta no CC %d", cc_time);
+            Check("dly_time tem CC no mapa", cc_time >= 0, d);
+            if(cc_time >= 0)
+            {
+                const uint8_t msg[] = {0xB0, (uint8_t)cc_time, 64};
+                Feed(p, msg, 3);
+                snprintf(d, sizeof(d), "cc=%d norm=%.4f real=%.4f (curve %.1f)",
+                         cc_time, t.Get(id_time), t.Real(id_time),
+                         t.Curve(id_time));
+                Check("CC do dly_time, val 64 -> norm 0.50",
+                      fabsf(t.Get(id_time) - 0.5039f) < 0.002f, d);
+            }
+        }
+
+        // `rev_size_a`, nao `rev_size`: o reverb virou por cadeia e o
+        // nome ganhou sufixo. O teste antigo procurava o nome sem sufixo
+        // dentro de um `if(id_rs >= 0)` e PAROU DE RODAR nesse dia — sem
+        // falhar, sem imprimir, sem deixar rastro. Foi esta reescrita,
+        // ao trocar o guarda silencioso por afirmacao, que o descobriu.
+        const int id_rs = t.Find("rev_size_a");
+        Check("manifest expoe rev_size_a", id_rs >= 0);
         if(id_rs >= 0)
         {
-            const uint8_t m4[] = {0xB0, 25, 127};
-            Feed(p, m4, 3);
-            snprintf(d, sizeof(d), "norm=%.4f", t.Get(id_rs));
-            Check("CC 25 -> rev_size (controle novo no mapa v2)",
-                  fabsf(t.Get(id_rs) - 1.0f) < 0.001f, d);
+            const int cc_rs = CcDe(id_rs);
+            if(cc_rs >= 0)
+            {
+                const uint8_t m4[] = {0xB0, (uint8_t)cc_rs, 127};
+                Feed(p, m4, 3);
+                snprintf(d, sizeof(d), "cc=%d norm=%.4f", cc_rs, t.Get(id_rs));
+                Check("CC do rev_size, val 127 -> norm 1.00",
+                      fabsf(t.Get(id_rs) - 1.0f) < 0.001f, d);
+            }
         }
 
-        // gov_ceiling FORA DO MAPA desde 18/08. O teste inverteu de
-        // proposito: antes provava que o CC 24 ALCANCAVA o param; agora
-        // prova que NAO alcanca mais.
-        //
-        // Por que a remocao: transicoes de link BLE fazem o iOS
-        // reenviar o estado de todos os widgets, e o instrumento
-        // obedecia — emudeceu tres vezes numa sessao. `src_mix` e
-        // `gov_ceiling` sao roteamento e seguranca, nao musica.
-        //   O QUE NAO ESTA MAPEADO NAO PODE SER DERRUBADO POR FANTASMA.
-        //
-        // Este teste e a trava da decisao: se alguem remapear o CC 24
-        // sem ler o manifest, ele reprova o build e a razao esta aqui.
-        const float gov_antes = t.Get(id_gov);
-        // NB: no mapa v2 o CC 24 e `rev_mix`. O que se prova aqui e que
-        // ele NAO alcanca `gov_ceiling` — a garantia e sobre o PARAM
-        // estar fora do mapa, nao sobre um numero especifico.
-        const uint8_t msg2[] = {0xB0, 24, 127};
-        Feed(p, msg2, 3);
-        snprintf(d, sizeof(d), "norm=%.4f (inalterado)", t.Get(id_gov));
-        Check("CC 24 NAO move gov_ceiling (fora do mapa por seguranca)",
-              fabsf(t.Get(id_gov) - gov_antes) < 0.0001f, d);
-
-        // E o mesmo pro src_mix, o que efetivamente emudecia.
-        const int id_src = t.Find("src_mix");
-        if(id_src >= 0)
-        {
-            const float src_antes = t.Get(id_src);
-            // No mapa v2 o CC 23 e `dly_mix`. De novo: a garantia e
-            // que `src_mix` esta fora do mapa, seja qual for o numero.
-            const uint8_t msg3[] = {0xB0, 23, 127};
-            Feed(p, msg3, 3);
-            snprintf(d, sizeof(d), "norm=%.4f (inalterado)", t.Get(id_src));
-            Check("CC 23 NAO move src_mix (fora do mapa por seguranca)",
-                  fabsf(t.Get(id_src) - src_antes) < 0.0001f, d);
-        }
-
-        // A INVARIANTE: MIDI e knob no mesmo parâmetro dão o mesmo
-        // valor. Testada contra uma Macro de um alvo com peso 1.0 —
-        // que é a forma de todo knob deste manifest — e NÃO contra um
-        // índice de knob específico.
-        //
-        // A primeira versão cravava knob[2] porque era ali que o
-        // `level` estava. O painel v2 remapeou (k1 virou level) e o
-        // teste passou a acusar falha num firmware correto: ele estava
-        // medindo o layout do painel, não a invariante. Layout é
-        // decisão de manifest e muda de escultura pra escultura; a
-        // invariante não muda nunca.
-        // No mapa v2 o `level` e o CC 20 (era 22). O teste segue o
-        // MAPA, nao um numero decorado — a invariante que ele prova e
-        // "MIDI e knob dao o mesmo valor", e ela nao depende de qual
-        // CC carrega o param.
+        // A INVARIANTE: MIDI e knob no mesmo parametro dao o mesmo valor.
+        // Testada contra uma Macro de um alvo com peso 1.0 — que e a
+        // forma de todo knob deste manifest — e nao contra um indice de
+        // knob nem contra um numero de CC. A invariante nao depende de
+        // qual CC carrega o param, e agora o teste tambem nao.
         const int id_lvl = t.Find("level");
-        const uint8_t msg3[] = {0xB0, 20, 127};
-        Feed(p, msg3, 3);
+        Check("manifest expoe level", id_lvl >= 0);
+        if(id_lvl >= 0)
+        {
+            const int cc_lvl = CcDe(id_lvl);
+            Check("level tem CC no mapa", cc_lvl >= 0);
+            if(cc_lvl >= 0)
+            {
+                const uint8_t msg3[] = {0xB0, (uint8_t)cc_lvl, 127};
+                Feed(p, msg3, 3);
 
-        cotuca::ParamTable t2;
-        cotuca::Manifest   m2;
-        t2.Init();
-        m2.Init(t2);
-        cotuca::Macro remoto;
-        remoto.AddTarget(t2.Find("level"), 1.0f);
-        remoto.Apply(t2, 1.0f); // o mesmo gesto, pela via do knob
-        snprintf(d, sizeof(d), "midi=%.4f knob=%.4f",
-                 t.Get(id_lvl), t2.Get(t2.Find("level")));
-        Check("CC e knob no mesmo param dao o MESMO valor",
-              fabsf(t.Get(id_lvl) - t2.Get(t2.Find("level"))) < 1e-6f, d);
+                cotuca::ParamTable t2;
+                cotuca::Manifest   m2;
+                t2.Init();
+                m2.Init(t2);
+                cotuca::Macro remoto;
+                remoto.AddTarget(t2.Find("level"), 1.0f);
+                remoto.Apply(t2, 1.0f); // o mesmo gesto, pela via do knob
+                snprintf(d, sizeof(d), "cc=%d midi=%.4f knob=%.4f",
+                         cc_lvl, t.Get(id_lvl), t2.Get(t2.Find("level")));
+                Check("CC e knob no mesmo param dao o MESMO valor",
+                      fabsf(t.Get(id_lvl) - t2.Get(t2.Find("level"))) < 1e-6f, d);
+            }
+        }
 
-        // CC fora do mapa nao pode mexer em nada
-        const float before = t.Get(id_time);
-        const uint8_t msg4[] = {0xB0, 99, 0};
-        Feed(p, msg4, 3);
-        Check("CC fora do mapa nao move parametro nenhum",
-              t.Get(id_time) == before);
+        // CC FORA DO MAPA nao pode mexer em nada. O numero e escolhido
+        // por VARREDURA, nao decorado: um numero fixo vira "dentro do
+        // mapa" no dia em que alguem o usar, e o teste passa a provar o
+        // contrario do que diz.
+        int cc_livre = -1;
+        for(int cand = 0; cand < 128 && cc_livre < 0; cand++)
+        {
+            bool usado = false;
+            for(int k = 0; k < m.n_midi; k++)
+                if(m.midi_map[k].cc == cand) { usado = true; break; }
+            if(!usado) cc_livre = cand;
+        }
+        snprintf(d, sizeof(d), "cc livre encontrado: %d", cc_livre);
+        Check("existe ao menos um CC fora do mapa para testar", cc_livre >= 0, d);
+        if(cc_livre >= 0 && id_time >= 0)
+        {
+            const float before = t.Get(id_time);
+            const uint8_t msg4[] = {0xB0, (uint8_t)cc_livre, 0};
+            Feed(p, msg4, 3);
+            Check("CC fora do mapa nao move parametro nenhum",
+                  t.Get(id_time) == before);
+        }
     }
 
     printf("\n%s — %d falha(s)\n", fails ? "FALHOU" : "TUDO OK", fails);

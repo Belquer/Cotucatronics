@@ -25,11 +25,16 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.4.0"
+VERSION = "0.5.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
-DOCS = [RAIZ / "README.md"] + sorted((RAIZ / "docs").glob("*.md"))
+# rglob, NAO glob: `docs/operacao/` chegou com sete documentos e o glob
+# raso nao via nenhum. Pasta nova entra sem vigilancia por padrao, e o
+# verificador que nao alcanca um documento diz "ok" sobre ele — que e a
+# forma mais silenciosa desta familia (verificacao sem objeto PASSA, e
+# ninguem desconfia de um ok).
+DOCS = [RAIZ / "README.md"] + sorted((RAIZ / "docs").rglob("*.md"))
 
 def faixas():
     """min/max de cada param, pra conferir FAIXAS citadas na prosa.

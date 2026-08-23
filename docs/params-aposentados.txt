@@ -56,3 +56,4 @@ seco_buf       22/08   contorno da cauda; sem uso desde 3834cea (bts 13h)
 freeze_ok      22/08   vestigio do 3834cea, escrito e nunca lido
 freeze_mem     22/08   vestigio do 3834cea, declarado sem uso
 pitch_tail_mem 22/08   vestigio do 3834cea, declarado sem uso
+check_docs        # nome do proprio verificador, citado na 13m
