@@ -6,6 +6,7 @@
 // hal_daisy_seed v0.21.0
 #include "hal.h"
 #include "daisy_seed.h"
+#include "dev/oled_ssd130x.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -749,6 +750,58 @@ void MidiInjectByte(uint8_t b)
 
 bool     MidiRxActive() { return midi_started && midi_uart.IsListening(); }
 uint32_t SerialTruncadas() { return serial_truncadas; }
+
+// ---- OLED ----
+//
+// FIACAO SOLDADA (23/08) contra os defaults da libDaisy:
+//
+//   CLK  D8  = PORTG11   <- e o default, nao mexe
+//   DIN  D10 = PORTB5    <- e o default, nao mexe
+//   CS   D7  = PORTG10   <- e o default, nao mexe
+//   DC   D6  = PORTC12   <- default seria D9, SOBRESCRITO
+//   RST  D5  = PORTD2    <- default seria D30, SOBRESCRITO
+//
+// O RST fora do default e escolha boa: o D30 esta reservado para a
+// leitura dos DPDT do exciter, e usa-lo aqui criaria uma disputa que so
+// apareceria no dia da solda do painel.
+//
+// MISO NAO E ATRIBUIDO, e isso vem do proprio default da libDaisy:
+// `direction = TWO_LINES_TX_ONLY` com `miso = Pin(PORTX, 0)`, que e o
+// "nenhum pino" da casa. Nao se gasta pino, e a pergunta se respondeu
+// lendo o fonte em vez de escolhendo.
+static daisy::SSD130x4WireSpi128x64Driver oled;
+static bool oled_pronto = false;
+
+bool OledInit()
+{
+    if(oled_pronto) return true;
+    daisy::SSD130x4WireSpi128x64Driver::Config cfg;
+    // Defaults ja dao MODO 0 (polarity LOW + phase ONE_EDGE), que e o que
+    // o SSD1309 quer. Nao se toca no que ja esta certo.
+    cfg.transport_config.pin_config.dc    = seed::D6;
+    cfg.transport_config.pin_config.reset = seed::D5;
+    // PRESCALER ALTO NO PRIMEIRO VOO, de proposito: fio comprido e
+    // solda de bancada perdoam menos em MHz alto, e este teste nao tem
+    // requisito de taxa nenhum. Se acender, da para descer depois e
+    // medir onde para de acender — que e informacao, nao chute.
+    cfg.transport_config.spi_config.baud_prescaler
+        = SpiHandle::Config::BaudPrescaler::PS_64;
+    oled.Init(cfg);
+    // O `Init` da libDaisy e VOID. Nao ha status, entao nao ha status a
+    // reportar: o `true` daqui significa "configurei", e o chamador tem
+    // que dizer isso com essas palavras.
+    oled_pronto = true;
+    return true;
+}
+
+void OledPreenche(bool aceso)
+{
+    if(!oled_pronto) return;
+    oled.Fill(aceso);
+    oled.Update();   // BLOQUEANTE, e aceitavel: roda no loop, por comando
+}
+
+bool OledConfigurado() { return oled_pronto; }
 
 uint32_t MidiDropped() { return midi_dropped; }
 uint32_t MidiHiWater() { return midi_hiwater; }

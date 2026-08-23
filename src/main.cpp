@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.153.0"
+#define COTUCA_OS_VERSION "0.154.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2944,6 +2944,42 @@ static void HandleLine(const char* line)
                  " capturar <a|b|g> <nome>");
         return;
     }
+    // `oled [on|off]` — TESTE DE VIDA, nao driver de painel.
+    //
+    // Tela toda acesa prova que os cinco fios chegam. Apagar em seguida
+    // prova que nao e so o painel energizado — um SSD1309 sem CLK/DIN
+    // pode acender ruido no reset e parecer resposta.
+    //
+    // Init e Update rodam AQUI, no laco, por comando explicito. A escrita
+    // e bloqueante (~1 KB a PS_64) e isso e aceitavel num comando de
+    // bancada; no callback de audio nao seria, e por isso nao esta la.
+    if(strncmp(line, "oled", 4) == 0)
+    {
+        const char* a = line + 4;
+        while(*a == ' ') a++;
+        const bool primeira = !hal::OledConfigurado();
+        hal::OledInit();
+        if(primeira)
+        {
+            // O QUE A PLACA SABE E O QUE ELA NAO PODE SABER, separados.
+            // O `Init` da libDaisy e void: nao ha status. E o barramento
+            // e TX-only, entao o painel NUNCA responde — nao existe
+            // deteccao possivel aqui, hoje ou nunca.
+            hal::Log("oled: CONFIGURADO (nao detectado — o painel e escrita"
+                     " pura e nunca responde)");
+            hal::Log("      SPI1 modo 0, PS_64 | CLK D8 · DIN D10 · CS D7"
+                     " · DC D6 · RST D5 | MISO nao atribuido");
+        }
+        const bool aceso = (strncmp(a, "off", 3) != 0);
+        hal::OledPreenche(aceso);
+        hal::Log("oled: tela %s. %s", aceso ? "ACESA" : "apagada",
+                 aceso ? "Se acendeu inteira, os cinco fios chegam."
+                         " `oled off` apaga — e apagar prova que nao e"
+                         " so o painel energizado."
+                       : "Se apagou, o caminho responde nos dois sentidos"
+                         " do dado (aceso e apagado sao escritas diferentes).");
+        return;
+    }
     if(strncmp(line, "pino", 4) == 0)
     {
         // PRIMEIRO A TRAVA (sem relogio), depois a janela (com relogio).
@@ -3029,6 +3065,14 @@ static void HandleLine(const char* line)
         // ocorrencia — porque so saia no banner, e quem conecta a
         // serial depois nunca a ve. Aviso que exige estar presente na
         // hora certa e aviso que se perde.
+        // OLED: "configurado", jamais "presente". Ver o cabecalho do
+        // OledInit — nao ha caminho de leitura, entao afirmar presenca
+        // seria inventar.
+        hal::Log("oled: %s",
+                 hal::OledConfigurado()
+                     ? "configurado (D5 D6 D7 D8 D10) — presenca NAO e"
+                       " verificavel: o painel nunca responde"
+                     : "nao configurado ainda — `oled` inicializa e acende");
         if(hal::SerialTruncadas())
             hal::Log("serial: %lu linha(s) RECUSADA(S) por passar de %d chars"
                      " — comando pela metade nao e comando",
@@ -4065,7 +4109,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [on|off] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

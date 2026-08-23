@@ -168,6 +168,21 @@ uint32_t         MidiDropped();     // bytes perdidos por fila cheia
 // Linhas de comando RECUSADAS por passarem do tamanho maximo. Linha
 // truncada nao e comando: executar metade e pior que nao executar.
 uint32_t         SerialTruncadas();
+
+// ---- OLED (SSD1309 128x64, 4-wire SPI) ----
+//
+// TESTE DE VIDA, nao driver de painel. Prova que os cinco fios chegam e
+// para ai — sem fonte, sem layout, sem taxa de refresh.
+//
+// DECLARACAO QUE PRECEDE O USO: este display NAO E DETECTAVEL. O
+// barramento e TWO_LINES_TX_ONLY e o painel nunca responde, entao
+// nenhuma funcao aqui pode dizer "presente". `OledInit` devolve se a
+// CONFIGURACAO foi feita — o `Init` da libDaisy e `void` e nao tem o que
+// reportar. Chamar isso de deteccao seria a string fixa `placa viva: sim`
+// outra vez (bts, cap. instrumentacao).
+bool             OledInit();          // true = CONFIGURADO, nao detectado
+void             OledPreenche(bool aceso);   // tela toda acesa/apagada
+bool             OledConfigurado();
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
 

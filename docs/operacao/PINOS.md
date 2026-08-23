@@ -30,7 +30,7 @@ lendo estado real do hardware, não intenção de software).
 
 | bloco | pinos | nota |
 |---|---|---|
-| OLED SSD1309 SPI | 5 (SCK, MOSI, CS, DC, RES) | faixa D7–D10 + 2 GPIO — **confirmar o periférico SPI na libDaisy** |
+| OLED SSD1309 SPI | 5 | **SOLDADO 23/08** — ver a tabela abaixo. SPI1, modo 0, MISO não atribuído |
 | Encoder EC11 | 3 (A, B, push) | push = confirmar |
 | Pots de volume ×2 | 2 (ADC) | um por exciter |
 
@@ -58,3 +58,30 @@ novo.
 
 **O LED segue o PARAM, nunca o gesto.** Se o freeze mudar por CC, serial ou
 CTOS, o LED conta a verdade. Verificado por serial, sem tocar no botão.
+
+## OLED SSD1309 — soldado e ocupado (23/08, v0.154.0)
+
+| sinal | pino | porta | origem |
+|---|---|---|---|
+| CLK | **D8** | `PORTG11` | default da libDaisy |
+| DIN | **D10** | `PORTB5` | default da libDaisy |
+| CS | **D7** | `PORTG10` | default da libDaisy |
+| DC | **D6** | `PORTC12` | **sobrescrito** (default seria D9) |
+| RST | **D5** | `PORTD2` | **sobrescrito** (default seria D30) |
+
+**D5, D6, D7, D8 e D10 saíram do pool de livres.** O **D9** continua livre —
+é o que o default usaria para DC e a solda não usou.
+
+**O RST fora do default é escolha certa e vale registrar por quê:** o default
+é `PORTB15` = **D30**, e D29/D30 estão reservados para a leitura dos DPDT do
+exciter. Usar o default aqui criaria uma disputa que só apareceria no dia de
+soldar o painel.
+
+**MISO não é atribuído, e não custou decisão.** O default da libDaisy já é
+`direction = TWO_LINES_TX_ONLY` com `miso = Pin(PORTX, 0)` — o "nenhum pino"
+da casa. O display é escrita pura.
+
+> ⚠️ **Consequência que atravessa todo diagnóstico deste painel: ele NÃO É
+> DETECTÁVEL.** Não há caminho de leitura, então nenhum comando pode dizer
+> "OLED presente". O `board` diz **configurado**, e a diferença não é
+> preciosismo — é a mesma linha do `placa viva: sim` que já mentiu aqui.
