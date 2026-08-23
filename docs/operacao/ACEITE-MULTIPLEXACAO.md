@@ -1,7 +1,24 @@
 # Aceite de hardware — multiplexação por canal (voos A e B)
 
-> **Estado: pendente. É do dB — precisa do iPad, do WIDI e do MIDI Wrench.**
-> Firmware pronto e provado por banco nativo em **v0.137.0**.
+> **Estado (23/08, v0.153.0): o lado do FIRMWARE está VERDE.**
+> O que resta é remapear o Loopy — ver
+> [RETRABALHO-LOOPY.md](RETRABALHO-LOOPY.md).
+>
+> | via | prova |
+> |---|---|
+> | placa → iPad em **ch3** (cadeia A + compart.) | MIDI Wrench |
+> | placa → iPad em **ch4** (cadeia B) | MIDI Wrench |
+> | iPad → placa (fio de volta) | 93 CCs contados pela trava |
+> | endereçamento por canal, 37 pares | banco nativo |
+> | recusa de ch3/ch4 na entrada | varredura do mapa |
+>
+> **Os learns do Loopy foram apagados em 23/08**, então o remapeamento é
+> do zero e não uma migração de 37 widgets. O mapa inteiro está no
+> documento acima.
+>
+> ⚠️ **Se o Loopy não reagir mesmo com os learns refeitos, não é o WIDI:**
+> o Wrench provou a entrega. É a fonte MIDI dentro do Loopy, nas
+> preferências dele.
 
 ## Por que antes do passo 3
 
