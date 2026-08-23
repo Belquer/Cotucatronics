@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — qspi_raw v0.1.0
+// Cotucatronics OS — qspi_raw v0.2.0
 //
 // ACESSO DIRETO AO QUADSPI, PARA A JANELA DE ESCRITA.
 //

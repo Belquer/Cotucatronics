@@ -472,6 +472,18 @@ que toque no callback.
 constrói a biblioteca** — cada julgamento vira um preset em vez de uma
 anotação.
 
+**Duas frentes pequenas com argumento próprio, ambas de "dar testemunha ao
+que só a disciplina protege":**
+
+- **Tabela de pinos RESERVADOS em código**, com `static_assert` sobre os pinos
+  efetivamente configurados. Hoje `D29/D30` estão reservados aos DPDT do
+  exciter **só em documento — e o compilador não lê documento.** O default do
+  RST do OLED é justamente `D30`: se a solda tivesse seguido o default, a
+  colisão só apareceria no dia de montar o painel, com o fio na caixa, e nada
+  a teria pego antes.
+- **`defesas`**: inventário do que nunca foi exercitado (bts 13w), três
+  colunas — já agiu · tem gatilho · nenhum dos dois.
+
 **Na fila depois disso:** inventário do que nunca foi exercitado (bts 13w) ·
 unificar as duas recusas temporais globais · ponteiros de preset com
 pré-escuta · painel no OLED · QSPI (janela ITCM provada, falta a leitura

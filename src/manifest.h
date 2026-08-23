@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.79.0
+// manifest.h (instrumento "bancada") v0.80.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,

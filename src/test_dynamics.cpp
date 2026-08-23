@@ -1,3 +1,9 @@
+// test_dynamics v0.1.0 — banco nativo da matematica de blocos.
+//
+// A versao entrou em 23/08, quando o `make check-docs` passou a
+// cobrar o bump e revelou que este arquivo nunca teve uma. Regra da
+// casa e que todo arquivo carrega versao visivel — e o que faltava
+// nao era a regra, era a testemunha.
 // Banco de teste nativo pra dynamics.h — roda no Mac, sem placa.
 // dynamics.h é C++ puro e board-agnostic, então a matemática dos três
 // blocos pode ser verificada aqui antes de gastar um ciclo de flash.

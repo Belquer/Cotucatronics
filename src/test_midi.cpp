@@ -1,4 +1,4 @@
-// test_midi v0.2.0 — validação nativa do parser MIDI e do mapa.
+// test_midi v0.3.0 — validação nativa do parser MIDI e do mapa.
 //
 // midi.h é C++ puro e board-agnostic, e manifest.h também (só inclui
 // params.h, module.h e midi.h). Então a máquina de estados E a via

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""nivel_tempo v0.1.0 — RMS em janelas de 50 ms, pra ver o notch passar."""
+"""nivel_tempo v0.2.0 — RMS em janelas de 50 ms, pra ver o notch passar."""
 import sys, numpy as np, sounddevice as sd
 dev  = int(sys.argv[1]) if len(sys.argv) > 1 else 2
 secs = float(sys.argv[2]) if len(sys.argv) > 2 else 8.0

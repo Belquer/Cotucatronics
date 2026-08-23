@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.6.0"
+VERSION = "0.7.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -130,6 +130,46 @@ def comandos_sem_ajuda():
     return ajuda, faltam
 
 
+def versao_derivada():
+    """Arquivo tocado sem a versao dele mudar no mesmo commit.
+
+    A regra da casa e que toda alteracao sobe a versao. O que faltava era
+    a TESTEMUNHA: em 23/08 tres `sed` de bump nao casaram o padrao e
+    falharam em SILENCIO — o hal.h ficou em v0.18.0 enquanto tres funcoes
+    novas entravam. O script disse nada, e nada foi lido como sucesso.
+
+    O `check-docs` vigiava a doc contra o codigo e nao vigiava se o
+    NUMERO acompanhou o arquivo. Este e o buraco.
+
+    Criterio: no ULTIMO commit que tocou o arquivo, a linha de versao
+    mudou? Se nao, entra na lista. E AVISO e nao erro, porque existe
+    commit legitimo que nao muda comportamento — mas ele tem que ser
+    olhado, nao presumido.
+    """
+    import subprocess
+    fora = []
+    arquivos = sorted(SRC.glob("*.h")) + sorted(SRC.glob("*.cpp")) \
+             + sorted(SRC.glob("*.py"))
+    for p in arquivos:
+        rel = str(p.relative_to(RAIZ))
+        try:
+            d = subprocess.run(["git", "log", "-p", "-1", "--", rel],
+                               cwd=str(RAIZ), capture_output=True,
+                               text=True, timeout=20).stdout
+        except Exception:
+            continue
+        if not d:
+            continue
+        # linha ADICIONADA que carrega um numero de versao
+        subiu = any(l.startswith("+") and not l.startswith("+++")
+                    and re.search(r'v?\d+\.\d+\.\d+', l)
+                    and re.search(r'(?i)version|^\+//', l)
+                    for l in d.splitlines())
+        if not subiu:
+            fora.append(p.name)
+    return fora
+
+
 def main():
     print(f"check_docs v{VERSION}")
     params, ccs = verdade()
@@ -157,6 +197,11 @@ def main():
             linha = texto[:mm.start()].count("\n") + 1
             erros.append((doc.name, linha, nome,
                           texto.split("\n")[linha-1].strip()[:70]))
+
+    sem_bump = versao_derivada()
+    print(f"\nTOCADOS SEM SUBIR A VERSAO (aviso): {len(sem_bump)}")
+    for n in sem_bump:
+        print(f"  {n} — o ultimo commit que o tocou nao mexeu na versao")
 
     ajuda, sem_ajuda = comandos_sem_ajuda()
     if ajuda is None:

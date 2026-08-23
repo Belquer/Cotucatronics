@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pitch_spectrum v0.1.0 — os N maiores picos, nao so o dominante.
+"""pitch_spectrum v0.2.0 — os N maiores picos, nao so o dominante.
 
 O medidor de pico dominante mente quando o sinal tem bandas laterais
 fortes: um granular com ratio != 1 gera AM na taxa do grao, e a lateral
