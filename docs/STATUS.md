@@ -472,6 +472,46 @@ que toque no callback.
 constrói a biblioteca** — cada julgamento vira um preset em vez de uma
 anotação.
 
+## Frente na fila — ampliar os búzios (pedido do dB, 23/08, "mas não ainda")
+
+**Os búzios estão com DUAS cartas** — `dly_time` e `dly_mix_a`, num array que
+cabe 8. O manifest já registrava isso como empobrecimento conhecido, herdado
+da saída do vocoder do build:
+
+> *"Os búzios ficaram com DUAS cartas em vez de quatro, e o sorteio soa
+> proporcionalmente mais pobre. Não há conserto silencioso pra isso — ou volta
+> um módulo de caráter, ou a decisão é aceitar o sorteio menor."*
+
+**Há um terceiro caminho que aquele texto não previu:** a duplicação de
+caráter do passo 1 criou **dez params novos da categoria certa**. Não é
+"randomizar quase tudo" — é **preencher a categoria que já estava definida e
+estava vazia.**
+
+### Onde parar já está decidido, e as razões são de música
+
+| categoria | fora | por quê |
+|---|---|---|
+| **MOLDURA** | reverb | o fundo parado que faz o contraste existir — *se tudo salta, nada é surpresa* |
+| **GESTO** | freeze | decisão de execução com hora certa; sorteada vira acidente |
+| **SEGURANÇA** | level, gate, governor, limiter, shift | — |
+
+**Candidatos legítimos (20, contra os 2 de hoje):** `drv_drive`, `drv_tone`,
+`drv_sujeira`, `phs_rate`, `phs_depth`, `phs_fb`, `phs_stages`, `wrb_rate`,
+`wrb_depth`, `wrb_irreg` — nas duas cadeias.
+
+### O que o trabalho realmente é
+
+Subir o teto do array é trivial. **O trabalho é a FAIXA de sorteio de cada
+um**, e ela é de ouvido: sortear `drv_drive` no curso inteiro produz do limpo
+ao destruído a cada batida. O registro do `voc_pitch` mostra o padrão — faixa
+estreita, centro escolhido, e no caso dele até quantização em escala.
+
+E o aviso que o próprio manifest deixou: *"o registro anterior sorteava certo
+mas soava tudo grave e parecido — o registro aprovado de ouvido foi o de
+cima."* **Faixa de sorteio é decisão de música, e o aceite é do músico.**
+
+---
+
 **Duas frentes pequenas com argumento próprio, ambas de "dar testemunha ao
 que só a disciplina protege":**
 
