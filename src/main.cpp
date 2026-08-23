@@ -5,7 +5,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.125.1"
+#define COTUCA_OS_VERSION "0.125.6"
 
 #include "hal.h"
 #include "params.h"
@@ -2123,6 +2123,25 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "qspi id", 7) == 0)
     {
+        // `qspi id [n]` — n = ciclos dummy, pra varrer sem regravar.
+        {
+            const char* a = line + 7;
+            while(*a == ' ') a++;
+            // `qspi id [dummy] [modo] [opcode-hex]`
+            char* fim = nullptr;
+            if(*a >= '0' && *a <= '9')
+            {
+                cotuca::qspi::SetDummyQpi((uint32_t)strtol(a, &fim, 10));
+                while(fim && *fim == ' ') fim++;
+                if(fim && *fim >= '1' && *fim <= '4')
+                {
+                    cotuca::qspi::SetModo((uint32_t)strtol(fim, &fim, 10));
+                    while(fim && *fim == ' ') fim++;
+                    if(fim && *fim)
+                        cotuca::qspi::SetOpcode((uint32_t)strtol(fim, nullptr, 16));
+                }
+            }
+        }
         // A JANELA. A tabela de vetores e os 51 handlers moram na
         // QSPI; qualquer interrupcao aqui dentro busca o vetor da
         // memoria que saiu do ar e e fatal ANTES de chegar ao handler.
@@ -2131,7 +2150,10 @@ static void HandleLine(const char* line)
         const uint32_t id = cotuca::qspi::LeJedecId();
         __enable_irq();
 
-        if(!id)
+        hal::Log("qspi: SR=%08lX  esperas que estouraram=%lu",
+                 (unsigned long)cotuca::qspi::UltimoSR(),
+                 (unsigned long)cotuca::qspi::UltimasFalhas());
+        if(!id || id == 0xFFFFFFu)
         {
             hal::Log("qspi: o periferico NAO respondeu (id=0). A rotina"
                      " voltou viva, entao a janela funciona — o que"

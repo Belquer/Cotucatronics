@@ -67,5 +67,15 @@ COTUCA_ITCM uint32_t ProvaDeVida();
 
 COTUCA_ITCM uint32_t LeJedecId();
 
+// Estado da ultima transacao. "FF FF FF" nao distingue "o periferico
+// nao executou" de "executou e o chip nao respondeu" — o SR distingue.
+// Ciclos dummy do 0xAF em QPI. Argumento, nao constante: o numero
+// certo se acha varrendo, e varrer nao pode custar uma gravacao cada.
+void     SetDummyQpi(uint32_t n);
+void     SetOpcode(uint32_t op);   // 0x9F em SPI, 0xAF em QPI
+void     SetModo(uint32_t m);      // 1 = uma linha, 4 = quatro linhas
+uint32_t UltimoSR();
+uint32_t UltimasFalhas();
+
 } // namespace qspi
 } // namespace cotuca
