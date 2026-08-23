@@ -3892,6 +3892,35 @@ dispara aquele, verifica com `vistos` no fim.
 O mecanismo foi aposentado; **o método não**. Eu tratei os dois como a mesma
 coisa e reintroduzi trabalho manual em vez de procurar a peça que sobreviveu.
 
+### E eu repeti o erro uma camada abaixo, na propria correcao
+
+Corrigi o enquadramento e escrevi o procedimento novo assim: *"arma o widget
+no Loopy, e o Code dispara aquele CC"*. O dB perguntou o que significava
+"armar".
+
+**Significa preparar o MIDI learn — o mecanismo aposentado.** Eu tinha tirado
+a tabela do lugar de procedimento e mantido, dentro do procedimento corrigido,
+um passo do mecanismo que a decisão removera. **Corrigir a moldura e preservar
+a peça.**
+
+O procedimento em vigor não prepara nada no iPad:
+
+| aposentado (`learn`) | em vigor (`vistos`) |
+|---|---|
+| tu armas o widget | tu **varres** os widgets |
+| a placa dita o número | a placa **escuta** o que chega |
+| a placa fica **surda** | a placa nunca para de ouvir |
+| **o widget se adapta** | **o firmware se adapta** |
+
+> **Quem se adapta é o firmware, que é o lado que se edita.** Essa frase estava
+> escrita no procedimento desde 22/08, e eu passei duas rodadas propondo o
+> inverso.
+
+**A palavra denunciou o que a estrutura escondia.** "Armar" não tinha lugar no
+método novo, e foi por ela — não pela lógica — que o defeito apareceu. Vale
+como sinal: **vocabulário emprestado de um mecanismo aposentado é indício de
+que o mecanismo veio junto.**
+
 > **Ao retomar um problema que já foi resolvido, releia COMO foi resolvido
 > antes de propor caminho.** Uma decisão registrada tem duas partes — o que
 > foi removido e o que ficou no lugar — e lembrar só da primeira metade

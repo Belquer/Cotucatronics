@@ -16,38 +16,55 @@ instrumento capaz de provar que o endereçamento funcionou.
 > *Método que exige desligar o sensor que o verificaria é desenho invertido:
 > o certo deixa o mundo agir e observa, o errado age e supõe.*
 
-### O procedimento
+### O procedimento — e ele não pede que tu ensines número nenhum ao Loopy
 
-**1. Arme o widget no Loopy** (MIDI learn dele) e peça ao Code:
+A pergunta certa **não** é *"como faço os widgets aprenderem os meus
+números?"* — é ***"o que os widgets estão mandando, e bate com o meu mapa?"***.
+**Quem se adapta é o firmware**, que é o lado que se edita.
+
+```
+vistos reset     # zera o inventario
+                 # ... move TODOS os widgets, um por vez, sem pressa
+vistos           # o relatorio
+```
+
+- **`FALTA ch<n> cc<n> <param>`** — nunca chegou: sem endereço, ou com o
+  número de outro parâmetro
+- **`ORFAO ch<n> cc<n>`** — chegou e não está no mapa → **o conserto é no
+  firmware**, não no widget
+
+`vistos` conta CCs **distintos**: varre à vontade, repete, não transborda.
+
+**O `sync` mede o outro lado** e reporta sozinho, saindo de `AVISO` para `OK`
+conforme os widgets voltam a escutar.
+
+### O limite que a multiplexação criou
+
+O firmware adapta **o número do CC**. Não adapta **o canal**: cadeia A no ch1
+e cadeia B no ch2 é arquitetura, não convenção. Widget da cadeia B mandando
+no ch1 tem conserto do lado do iPad.
+
+### E se os widgets estiverem MUDOS
+
+O método pressupõe que o widget **envia** — e `vistos` só enxerga quem envia
+(é o ponto cego declarado dele). Com os learns apagados em 23/08, alguns
+podem ter ficado sem enviar nada.
+
+**A própria varredura responde:** dezenas de CCs chegando → o método vale e o
+trabalho é do firmware. Zero ou quase → há religação a fazer no iPad, e aí:
 
 ```
 midiloop <cc> 64 <canal>
 ```
 
-Isso manda **aquele CC**, naquele canal, pelo fio real. A placa **continua
-escutando** — o disparo é dirigido e sob demanda, sem nenhum modo que a
-emudeça. É o que o `learn` tentava fazer e não podia.
-
-**2. No fim, verifique varrendo.** Mexa em todos os widgets e:
-
-```
-vistos
-```
-
-Ele reporta `N de 86 vínculos endereçados`, nomeia o que **falta** por
-(canal, CC) e denuncia **órfãos** — widget mandando num endereço que o
-firmware não conhece.
-
-**3. E o `sync` mede o progresso do outro lado:** empurra o estado e confere
-o retorno sozinho, saindo de `AVISO` para `OK` conforme os widgets voltam a
-escutar. O sub-ramo *"voltou menos da metade"* existe para o meio do caminho.
+manda **aquele** CC pelo fio real, sob demanda, **com a placa nunca surda** —
+que é exatamente o que o `learn` não podia fazer, e por isso foi aposentado.
 
 **Atalho que corta o trabalho quase pela metade:** monte a página da cadeia A
-e **duplique-a trocando só o campo de canal**. Os números de CC são os mesmos
-nas duas — é literalmente a mesma página em outro canal.
+e **duplique trocando só o campo de canal**. Os números são os mesmos nas
+duas.
 
-Ver `docs/PROCEDIMENTO-MIDI-LEARN.md` para o registro completo, incluindo por
-que o `learn` não existe mais.
+Ver `docs/PROCEDIMENTO-MIDI-LEARN.md` para o registro completo.
 
 ## A regra, em uma linha
 
