@@ -382,6 +382,23 @@ int  PanelLedCount() { return kNumLeds; }
 // terminou. Nenhum buffer é tocado enquanto o DMA o lê.
 constexpr size_t kLogMax = 160;
 
+// A SIMETRIA VIRA CONTRATO, e nao fica em convencao.
+//
+// Uma linha que a placa consegue IMPRIMIR tem que ser uma linha que ela
+// consegue LER DE VOLTA. Sem isso o `preset dump` produz texto que a
+// propria placa recusa — que foi exatamente o que aconteceu em 23/08,
+// com o log em 160 e a entrada em 64: saiam 13 de 33 params, e a
+// colagem de volta recusava um por linha.
+//
+// Hoje os dois numeros sao iguais porque alguem os igualou. Amanha
+// alguem sobe um e nao o outro, e o defeito volta em silencio nos dois
+// sentidos. Este assert e a promessa amarrada — mesmo gesto do
+// `n_sacrif` e do `kFormato`.
+static_assert(kLineMax >= kLogMax,
+              "a linha de ENTRADA tem que caber o que a de SAIDA imprime: "
+              "senao o `preset dump` gera texto que a placa nao consegue "
+              "recarregar (ver battle_scars 13u)");
+
 static uint8_t log_buf[2][kLogMax];
 static int     log_slot = 0;
 
