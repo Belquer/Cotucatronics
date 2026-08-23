@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.137.0"
+#define COTUCA_OS_VERSION "0.138.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3498,8 +3498,18 @@ static void HandleLine(const char* line)
         hal::BlackboxWrite(36, (float)midi.Resync());
         hal::BlackboxWrite(37, (float)hal::MidiDropped());
         hal::BlackboxWrite(85, (float)hal::MidiHiWater()); // 41 e do diario (40+min)
+        // O CANAL ENTRA AQUI PELO MESMO MOTIVO QUE ENTROU NO `vistos`,
+        // e eu consertei um e nao o irmao: sem ele este relatorio
+        // imprime `cc 34 -> drv_drive_a` e `cc 34 -> drv_drive_b` em
+        // linhas indistinguiveis, e quem esta na bancada le duplicata
+        // onde ha dois enderecos.
+        //
+        // Defesa (ou correcao) aplicada num caminho e nao no outro e a
+        // familia mais antiga do catalogo — o ramo R sem governor, o
+        // `sync` sem janela de autoria, e agora este.
         for(int i = 0; i < manifest.n_midi; i++)
-            hal::Log("  cc %-3d -> %s",
+            hal::Log("  ch%d cc %-3d -> %s",
+                     manifest.midi_map[i].canal + 1,
                      manifest.midi_map[i].cc,
                      params.Name(manifest.midi_map[i].param_id));
         const int n = midi.HistoryCount();
