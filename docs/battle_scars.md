@@ -3184,6 +3184,32 @@ static_assert(kCanalEspelhoA != kCanalEntradaA && ... ,
               "canal de espelho nao pode coincidir com canal de entrada");
 ```
 
+### E a travessia, que o estado final esconde
+
+Ao aposentar a carência eu raciocinei sobre o **estado final** — ch3/ch4 sem
+vínculo, logo inofensivos — e esqueci a **migração**. Ao gravar, a placa
+reinicia; o WIDI e o iPad não. Mensagem de espelho da versão anterior, que
+falava no ch2, chega na versão nova pelo ch2 — que agora é entrada plena da
+cadeia B. O fantasma da mal-endereçada, na única janela em que ele ainda cabe.
+
+Foi o dB que apontou, e o argumento é geral:
+
+> **Provar que a configuração NOVA é segura não prova que a TRAVESSIA é.** As
+> duas pontas de uma migração podem ser sólidas e o caminho entre elas não —
+> porque durante a troca coexistem endereçamentos de duas versões, e o que
+> está no fio não sabe que a versão mudou.
+
+Daí a **drenagem de boot**: nos primeiros 300 ms, entrada recusada e contada.
+A regra que a sustenta depois de a migração terminar é mais larga que o caso:
+*no boot, tudo que está no fio foi endereçado a uma configuração que pode não
+ser esta.*
+
+**E ela nasceu indemonstrável**, o que quase a deixou como hipótese: 300 ms
+fecham antes de a serial USB enumerar, então ninguém a observa agindo, e
+"contador em 0" fica ambíguo entre *funcionou e nada chegou* e *nunca rodou*.
+O comando `dreno <ms>` rearma a janela e a torna observável — mesma família do
+`ctos prazo`. Exercitada: declara-se com contagem viva e expira.
+
 **Defesa que vira invariante de compilação é melhor que defesa que roda:**
 custa zero, não pode ser esquecida ligada nem esquecida desligada, e explica-se
 sozinha para quem a quebrar. E ela foi **exercitada antes de ser aceita** —

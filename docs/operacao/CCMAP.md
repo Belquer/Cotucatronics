@@ -59,6 +59,12 @@ de canal pega isso.
 multiplexação o CC deixou de identificar o assunto — a janela do drive da
 cadeia A silenciaria o da B. Descarte é **contado** (`cc_janela`, no `midi`).
 
+**Drenagem de boot: 300 ms.** Nos primeiros 300 ms a entrada é recusada e
+contada (`drenados no boot`, no `midi`). Existe porque o que está no fio ao
+ligar foi endereçado a uma configuração que pode não ser esta — durante uma
+migração de mapa, mensagem em voo da versão anterior vira escrita
+mal-endereçada. `dreno <ms>` rearma a janela para exercitar a defesa.
+
 **`espelho off`** cala a saída e **não** afeta a entrada. É ganho de teste: o
 único jeito de medir carga de MIDI sem a medição gerar tráfego.
 

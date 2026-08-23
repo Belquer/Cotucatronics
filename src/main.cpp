@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.135.0"
+#define COTUCA_OS_VERSION "0.136.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -319,6 +319,29 @@ static uint32_t cc_janela = 0;   // recusados pela janela
 // O que saiu junto com o interino foi o ACOPLAMENTO: a entrada nao
 // depende mais desta chave. Ela so cala a saida.
 static bool espelho_on = true;
+
+// DRENAGEM DE BOOT — a travessia, que e o caso que a drenagem do voo A
+// nao cobria e eu quase deixei passar.
+//
+// Raciocinei sobre o ESTADO FINAL (ch3/ch4 sem vinculo, logo inofensivos)
+// e esqueci a MIGRACAO. Ao gravar, a placa reinicia; o WIDI e o iPad
+// nao. Mensagens de espelho da versao ANTERIOR, que falava no ch2,
+// chegam na versao nova pelo ch2 — que agora e entrada plena da cadeia
+// B. CC 34 com o valor de `drv_drive_a` escrevendo `drv_drive_b`: o
+// fantasma da 13n, na unica janela em que ele ainda cabe.
+//
+// A regra geral, que e por que isto fica mesmo depois da migracao
+// terminar: NO BOOT, TUDO QUE ESTA NO FIO FOI ENDERECADO A UMA
+// CONFIGURACAO QUE PODE NAO SER ESTA. O mapa muda entre versoes, e uma
+// mensagem em voo nao sabe disso.
+//
+// 300 ms pelo mesmo dimensionamento do voo A (31250 baud, ~1 ms por
+// mensagem, rajadas de duas a cada 8 ms) — e aqui ha folga extra de
+// graca, porque ninguem move um fader de proposito nos primeiros 300 ms
+// de um boot. Se mover, o contador diz.
+static constexpr uint32_t kDrenoBootMs = 300;
+static uint32_t boot_dreno_ate = 0;
+static uint32_t cc_dreno_boot  = 0;
 static uint32_t cc_canal_errado = 0;  // canal sem vinculo nenhum
 static uint32_t cc_sem_dono = 0;      // (canal,cc) fora do mapa
 
@@ -440,6 +463,9 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
     // canal de sempre. Nenhuma separacao de canal pega isso; so a janela
     // por param pega.
     if(ch == kCanalEspelhoA || ch == kCanalEspelhoB) { eco_proprio++; return; }
+    // O fio ainda carrega o que foi enderecado a versao anterior.
+    if(boot_dreno_ate && (int32_t)(hal::NowMs() - boot_dreno_ate) < 0)
+    { cc_dreno_boot++; return; }
     // CANAL SEM VINCULO NENHUM: recusado e CONTADO.
     //
     // No voo A so 1 e 2 endereçam. 3 e 4 ainda nao existem como saida do
@@ -2248,6 +2274,11 @@ static void declara_modos()
     // para declarar. O que sobrou de modo declaravel e o espelho MUDO,
     // porque placa que nao espelha e indistinguivel de placa cujo fio
     // de saida caiu.
+    if(boot_dreno_ate && (int32_t)(hal::NowMs() - boot_dreno_ate) < 0)
+        hal::LogAlways("[DRENANDO O BOOT] a entrada esta recusada por mais"
+                       " ~%ld ms — o fio ainda pode carregar mensagem"
+                       " enderecada a versao anterior.",
+                       (long)(boot_dreno_ate - hal::NowMs()));
     if(!espelho_on)
         hal::Log("[ESPELHO MUDO] a placa nao esta transmitindo estado —"
                  " os widgets nao vao acompanhar. `espelho on` devolve.");
@@ -2426,6 +2457,25 @@ static void HandleLine(const char* line)
     { params.Set(manifest.p_tone_mix, 0.5f); hal::Log("tone ON"); return; }
     if(strncmp(line, "tone off", 8) == 0)
     { params.Set(manifest.p_tone_mix, 0.0f); hal::Log("tone OFF"); return; }
+    // GANHO DE TESTE DA DRENAGEM. Sem ele a defesa e indemonstravel: a
+    // janela de 300 ms fecha antes de a serial USB enumerar, entao
+    // ninguem consegue observa-la agindo, e "contador em 0" fica
+    // ambiguo entre "funcionou e nada chegou" e "nunca rodou".
+    //
+    // Mesma familia do `ctos prazo`: a defesa so vira demonstravel
+    // quando o parametro que a governa e alcancavel de fora.
+    if(strncmp(line, "dreno", 5) == 0)
+    {
+        const char* a = line + 5;
+        while(*a == ' ') a++;
+        const uint32_t ms = (uint32_t)atoi(a);
+        boot_dreno_ate = hal::NowMs() + (ms ? ms : kDrenoBootMs);
+        hal::Log("dreno: rearmado por %lu ms — a entrada esta RECUSADA e"
+                 " contada ate la (%lu drenados ate agora)",
+                 (unsigned long)(ms ? ms : kDrenoBootMs),
+                 (unsigned long)cc_dreno_boot);
+        return;
+    }
     if(strncmp(line, "espelho", 7) == 0)
     {
         const char* a = line + 7;
@@ -3420,8 +3470,10 @@ static void HandleLine(const char* line)
     // "o CC nao fez nada" teria duas causas indistinguiveis: canal sem
     // vinculo (widget na pagina errada) e endereço fora do mapa (widget
     // no numero errado). Sao consertos diferentes.
-    hal::Log("     canal sem vinculo: %lu | (canal,cc) fora do mapa: %lu",
-             (unsigned long)cc_canal_errado, (unsigned long)cc_sem_dono);
+    hal::Log("     canal sem vinculo: %lu | (canal,cc) fora do mapa: %lu"
+             " | drenados no boot: %lu",
+             (unsigned long)cc_canal_errado, (unsigned long)cc_sem_dono,
+             (unsigned long)cc_dreno_boot);
         // ESTADO DA MAQUINA por extenso: "aguardando o que?" e a
         // pergunta que o numero cru nao responde.
         const int nd = midi.PendingData();
@@ -3551,6 +3603,10 @@ int main(void)
     // problema que mordeu tres vezes hoje: gravar zera tudo e a tela do
     // dB continuava mostrando o valor velho. Agora a placa fala primeiro.
     for(int i = 0; i < cotuca::kMaxParams; i++) eco_ult[i] = 0xFF;
+    // Armado DEPOIS do hal::Init(), porque `NowMs()` antes dele nao tem
+    // base de tempo valida — a mesma pre-condicao que derrubou o vigia
+    // do loop em 22/08 (bts 12z).
+    boot_dreno_ate = hal::NowMs() + kDrenoBootMs;
     midi.Init(manifest.midi_channel, OnMidiCc);
     midi.SetTrace(OnMidiTrace);
     hal::SetMidiByteCallback(OnMidiByte); // é isto que liga a UART
