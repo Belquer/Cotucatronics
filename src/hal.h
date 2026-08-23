@@ -75,6 +75,11 @@ float            ReadKnob(int index);          // 0.0–1.0 (stub até ter pots)
 // Chamar do loop principal, em qualquer ritmo — o debounce é por
 // tempo, não por contagem de chamadas.
 bool             ReadButton(int index);        // true = pressionado
+// NIVEL CRU do pino: sem debounce, sem borda, sem estado. Existe para
+// responder "o botao fecha para GND?" sem passar por camada nenhuma que
+// possa mascarar a resposta — mesma razao de o `pk` medir a entrada de
+// audio antes de qualquer ganho. true = pino BAIXO (o que o botao faz).
+bool             ButtonNivelCru(int index);
 
 // Nivel CRU do pino ligado ao pad LB do WIDI (seed::D28), com pull-up
 // interno. Devolve o que o pino le, SEM interpretacao — quem classifica

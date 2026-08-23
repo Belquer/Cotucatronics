@@ -300,6 +300,12 @@ bool ReadWidiLed()
     return widi_led.Read();
 }
 
+bool ButtonNivelCru(int index)
+{
+    if(index < 0 || index >= kNumButtons) return false;
+    return !buttons[index].gpio.Read();   // true = BAIXO = fechado pra GND
+}
+
 bool ReadButton(int index)
 {
     if(index < 0 || index >= kNumButtons)

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.138.0"
+#define COTUCA_OS_VERSION "0.141.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1270,11 +1270,20 @@ alignas(32) static float reverb_mem[cotuca::Manifest::kCadeias][28160];
 // subida (um gesto = um sorteio); B2 acompanha o nível (segura,
 // vale; solta, volta).
 // ============================================================
-// TRES, e o laco itera tres. Em 22/08 este array ficou em [2] enquanto
-// o laco passou a `b < 3` junto com o B3: `btn_prev[2] = now` escrevia
-// FORA, em cima de b2_sim/b3_sim. Array de painel e o laco que o
-// percorre sao uma coisa so — mudar um sem o outro e corrupcao muda.
-static bool  btn_prev[3] = {false, false, false};
+// O ARRAY E DIMENSIONADO PELA MESMA CONSTANTE QUE LIMITA O LACO, e a
+// historia deste par explica por que:
+//
+// Em 22/08 o array ficou em [2] enquanto o laco passou a `b < 3`:
+// `btn_prev[2] = now` escrevia FORA, em cima de b2_sim/b3_sim.
+// Consertado alargando os dois a mao — e em 23/08 o par divergiu de
+// novo, no outro sentido: o array e o laco em 3, e o botao de indice 3
+// (freeze B, D22) NUNCA ERA LIDO. O nivel cru chegava, o contador ficava
+// em zero, e a suspeita caiu na solda do dB, que estava perfeita.
+//
+// Alargar a mao conserta o caso e preserva a forma. Agora o tamanho vem
+// de `kMaxBotoes` e o laco para em `num_buttons`, que sao as duas fontes
+// que ja existiam — nenhum numero digitado no meio.
+static bool  btn_prev[cotuca::Manifest::kMaxBotoes] = {false};
 static bool  b2_sim      = false; // simulação por serial
 static bool  b3_sim      = false; // B3 (rearme) simulado por serial
 
@@ -2172,6 +2181,21 @@ static void TriggerRandomize(bool autorand)
 // virar funcao unica.
 static uint32_t botao_batidas[cotuca::Manifest::kMaxBotoes] = {0};
 
+// TRAVA DE NIVEL CRU, e ela existe porque a janela de 400 ms do `pino`
+// repetia a cicatriz 13e: pedir "aperta agora" de dentro de uma medicao
+// cronometrada, quando a mensagem so chega depois de a janela abrir.
+//
+// A trava inverte: a placa acumula desde o boot e o operador aperta
+// quando quiser. `ja_baixo` responde "este pino ja fechou alguma vez?" —
+// que e A pergunta, e ela nao tem relogio dentro.
+//
+// Amostrado no LOOP e CRU: sem debounce, sem borda. Um contato de 2 ms
+// que o debounce descartaria aparece aqui, e essa diferenca e o proprio
+// diagnostico quando alguem suspeita de mau contato.
+static bool     cru_ja_baixo[8] = {false};
+static uint32_t cru_n_baixo[8]  = {0};
+static uint32_t cru_amostras    = 0;
+
 static void AlternaBotao(int idx)
 {
     using namespace cotuca;
@@ -2464,6 +2488,49 @@ static void HandleLine(const char* line)
     //
     // Mesma familia do `ctos prazo`: a defesa so vira demonstravel
     // quando o parametro que a governa e alcancavel de fora.
+    // `pino` — nivel CRU dos botoes, amostrado por um instante.
+    //
+    // Responde "o botao fecha para GND?" sem debounce, sem borda e sem
+    // contador no meio. Um contador em zero tem tres causas (aberto,
+    // terminal NC, pino morto) e nao distingue nenhuma; o nivel cru
+    // distingue as tres, e por isso ele existe.
+    if(strncmp(line, "pino", 4) == 0)
+    {
+        // PRIMEIRO A TRAVA (sem relogio), depois a janela (com relogio).
+        // A ordem importa: a trava responde sozinha na maioria dos casos,
+        // e quem le para de ler antes de precisar coordenar nada.
+        hal::Log("pino: desde o boot, %lu amostras no laco —"
+                 " CRU, sem debounce", (unsigned long)cru_amostras);
+        for(int i = 0; i < hal::Info().num_buttons && i < 8; i++)
+            hal::Log("  B%d  ja fechou pra GND: %-3s  (%lu amostras em baixo)",
+                     i + 1, cru_ja_baixo[i] ? "SIM" : "NAO",
+                     (unsigned long)cru_n_baixo[i]);
+        if(strstr(line, "reset"))
+        {
+            for(int i = 0; i < 8; i++) { cru_ja_baixo[i] = false; cru_n_baixo[i] = 0; }
+            cru_amostras = 0;
+            hal::Log("  trava zerada — aperte os botoes e rode `pino` de novo");
+            return;
+        }
+        int baixo[8] = {0};
+        const int n = hal::Info().num_buttons;
+        const int kAmostras = 400;
+        for(int a = 0; a < kAmostras; a++)
+        {
+            for(int i = 0; i < n && i < 8; i++)
+                if(hal::ButtonNivelCru(i)) baixo[i]++;
+            hal::DelayMs(1);
+        }
+        hal::Log("pino: %d amostras em ~%d ms, por botao —"
+                 " CRU, sem debounce", kAmostras, kAmostras);
+        for(int i = 0; i < n && i < 8; i++)
+            hal::Log("  B%d  baixo em %3d/%d amostras  (%s)",
+                     i + 1, baixo[i], kAmostras,
+                     baixo[i] == 0            ? "SEMPRE ALTO — aberto"
+                     : baixo[i] == kAmostras  ? "SEMPRE BAIXO — fechado o tempo todo"
+                                              : "ALTERNOU — o botao fecha e abre");
+        return;
+    }
     if(strncmp(line, "dreno", 5) == 0)
     {
         const char* a = line + 5;
@@ -3535,7 +3602,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -3867,37 +3934,63 @@ int main(void)
 
         FASE(3);
         // ---- PAINEL: botões (físico OU simulado por serial) ----
+        // Amostra CRUA dos botoes, toda volta do laco. Barato (uma
+        // leitura de GPIO por botao) e e o que alimenta a trava.
+        {
+            cru_amostras++;
+            for(int i = 0; i < hal::Info().num_buttons && i < 8; i++)
+                if(hal::ButtonNivelCru(i))
+                { cru_ja_baixo[i] = true; cru_n_baixo[i]++; }
+        }
         rng_state += 0x9E3779B9u; // gira sempre: a semente vira do tick
-        for(int b = 0; b < 3 && b < hal::Info().num_buttons; b++)
+        // DESPACHO POR SAIDA ANTECIPADA, e nao por cadeia `else if`.
+        //
+        // A cadeia anterior tinha um ramo MORTO e ninguem via: para
+        // b == 2, a condicao `b >= 1 && now` casava primeiro, entao o
+        // `else if(b == 2 && now)` do rearme NUNCA executava. O
+        // comentario de la afirmava que o B3 "cai no return do
+        // AlternaBotao e segue pro rearme logo abaixo" — mas `else if`
+        // nao funciona assim: o ramo tomado encerra a cadeia. O botao de
+        // rearme do CTOS nao rearmava nada desde que foi escrito.
+        //
+        // Com saida antecipada, cada botao tem UM bloco e o especifico
+        // vem antes do generico. Ramo morto por ordenacao deixa de ser
+        // possivel, porque nao ha ordenacao entre condicoes — ha
+        // sequencia de decisoes que terminam.
+        for(int b = 0;
+            b < hal::Info().num_buttons
+                && b < cotuca::Manifest::kMaxBotoes;
+            b++)
         {
             const bool now = hal::ReadButton(b) || (b == 1 && b2_sim)
                              || (b == 2 && b3_sim);
-            if(now == btn_prev[b])
-                continue;
+            if(now == btn_prev[b]) continue;
             btn_prev[b] = now;
-            if(b == 0 && now)
-                TriggerRandomize(false); // BORDA de subida
-            else if(b >= 1 && now)
+            if(!now) continue;          // so age ao PRESSIONAR
+
+            if(b == 0)
+            { TriggerRandomize(false); continue; }
+
+            if(b == 2)
             {
-                // BORDA de descida (pressed = subida do nivel logico,
-                // com pull-up ativo-baixo). Qualquer botao com alvo
-                // declarado alterna; o B3 nao tem alvo e cai no `return`
-                // do AlternaBotao, seguindo pro rearme logo abaixo.
-                AlternaBotao(b);
-                if(b == 1) b2_sim = false;   // pulso simulado consumido
-            }
-            else if(b == 2 && now)
-            {
-                // BORDA de subida. Segurar nao repete: o teto que
-                // derrubou uma vez derrubaria de novo, e um rearme
-                // repetido em rajada viraria oscilacao audivel.
+                // Segurar nao repete: o teto que derrubou uma vez
+                // derrubaria de novo, e rearme em rajada viraria
+                // oscilacao audivel.
                 const int n = RearmaCtosDevolvendo();
                 if(n) hal::Log("B3: %d efeito(s) devolvido(s) pelo botao", n);
                 else  hal::Log("B3: nada estava travado");
-                b3_sim = false;   // pulso consumido: sem isso o
-                                  // simulado ficaria preso em alto e
-                                  // nunca mais haveria outra borda
+                b3_sim = false;   // pulso consumido: sem isso o simulado
+                                  // ficaria preso em alto e nunca mais
+                                  // haveria outra borda
+                continue;
             }
+
+            // Qualquer outro botao com alvo declarado alterna. Botao sem
+            // alvo cai no `return` do AlternaBotao e nao faz nada, que e
+            // o comportamento certo — e agora e o UNICO caminho para
+            // "nao faz nada", em vez de um efeito colateral da ordem.
+            AlternaBotao(b);
+            if(b == 1) b2_sim = false;   // pulso simulado consumido
         }
 
         // LED DO FREEZE — SEGUE O PARAM, NUNCA O GESTO.
