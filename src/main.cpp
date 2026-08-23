@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.149.0"
+#define COTUCA_OS_VERSION "0.151.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -346,6 +346,28 @@ static void AbreJanelaEEspelha(int id)
     eco_ult[id]     = 0xFF;   // forca o espelho a reenviar este param
 }
 
+// ---- CONFERENCIA DO SYNC ----
+//
+// O `sync` deixou de ser "mandei" e passou a ser "chegou". A diferenca
+// importa porque a falha mais comum aqui e MUDA: o WIDI desligado, o
+// Loopy fora da tela, ou os widgets escutando o canal antigo — nos tres
+// a placa manda 86 CCs no vazio e, sem conferencia, diz "pronto".
+//
+// O INSTRUMENTO JA EXISTIA e e a propria defesa: se o Loopy recebe, os
+// widgets se movem e devolvem o estado deles pelo ch1/ch2. A janela de
+// autoria barra esse eco (e por isso que ela existe) — e o CONTA. Entao
+// o retorno do controlador e exatamente o que a janela registra.
+//
+// A conferencia e ASSINCRONA de proposito: bloquear aqui impediria o
+// `hal::PollMidi()` de rodar, e o eco que se quer medir chegaria numa
+// fila que ninguem esvazia. O laco confere quando o prazo vence e o
+// veredito sai sozinho — sem cronometro para o operador cumprir.
+static uint32_t sync_confere_ate = 0;
+static uint32_t sync_cc_antes    = 0;
+static uint32_t sync_jan_antes   = 0;
+static int      sync_mandados    = 0;
+static constexpr uint32_t kSyncEsperaMs = 1500;
+
 static bool espelho_on = true;
 
 // DRENAGEM DE BOOT — a travessia, que e o caso que a drenagem do voo A
@@ -454,6 +476,9 @@ static void MidiPushEstado()
                                 manifest.midi_map[i].cc, v};
         eco_ult[id] = v;  // nao reenviar depois
         hal::MidiSendBytes(msg, 3);
+        // (a janela por mensagem fica, mas NAO basta — ver o
+        //  re-carimbo depois do laco, que e o que realmente protege)
+        //
         // A JANELA DE AUTORIA ABRE AQUI TAMBEM, e faltava.
         //
         // `MidiEspelha` escrevia `quiet_until` a cada mensagem; esta
@@ -475,11 +500,44 @@ static void MidiPushEstado()
         hal::DelayMs(3);
         n++;
     }
+    // RE-CARIMBO DA JANELA, PARA TODOS, DEPOIS DO ULTIMO ENVIO.
+    //
+    // A janela por mensagem nao bastava e a conferencia mostrou: o
+    // despejo leva ~258 ms (86 x 3 ms) e a janela dura 250, entao a do
+    // PRIMEIRO param expira antes de o ULTIMO sair. Um controlador que
+    // responde em lote — recebe tudo, depois devolve tudo — chega com os
+    // primeiros ja desprotegidos.
+    //
+    // Medido com eco simulado: "0 barrados pela janela" com cinco ecos
+    // chegando. A defesa estava de pe e nao pegava nada.
+    //
+    // E o mesmo raciocinio que eu escrevi para o `load` e nao apliquei
+    // aqui — a janela conta do FIM do gesto, nao do meio dele, porque o
+    // gesto autonomo e o `sync` inteiro e nao cada mensagem. Irmao
+    // desprotegido de novo (bts 13q).
+    {
+        const uint32_t ag = hal::NowMs();
+        for(int i = 0; i < manifest.n_midi; i++)
+        {
+            const int id = manifest.midi_map[i].param_id;
+            if(id >= 0 && id < cotuca::kMaxParams)
+                quiet_until[id] = ag + kJanelaMs;
+        }
+    }
     hal::Log("sync: %d CCs empurrados pro controlador — os faders do"
              " Loopy devem pular pro estado da placa", n);
     hal::Log("     janela de autoria aberta para os %d params por %lu ms:"
              " o eco dos widgets nao desfaz o que acabou de sair",
              n, (unsigned long)kJanelaMs);
+    // Arma a conferencia. Os contadores sao lidos AGORA, depois do
+    // despejo, para que o que chegar dali em diante seja resposta a
+    // ELE — e nao trafego que ja estava no fio.
+    sync_mandados    = n;
+    sync_cc_antes    = midi.CcCount();
+    sync_jan_antes   = cc_janela;
+    sync_confere_ate = hal::NowMs() + kSyncEsperaMs;
+    hal::Log("     conferindo o retorno por %lu ms — o veredito sai sozinho,"
+             " nao precisa fazer nada", (unsigned long)kSyncEsperaMs);
 }
 
 static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
@@ -4305,6 +4363,46 @@ int main(void)
         FASE(2);
         hal::PollSerial();
         MidiEspelha();   // LOOP, nunca callback — ver cabecalho
+
+        // VEREDITO DO SYNC. Roda no laco porque so aqui o
+        // `hal::PollMidi()` ja teve chance de processar o que voltou.
+        if(sync_confere_ate
+           && (int32_t)(hal::NowMs() - sync_confere_ate) >= 0)
+        {
+            sync_confere_ate = 0;
+            const uint32_t voltaram = midi.CcCount() - sync_cc_antes;
+            const uint32_t barrados = cc_janela - sync_jan_antes;
+            if(!voltaram)
+            {
+                // O QUE A PLACA SABE E O QUE ELA NAO SABE, separados.
+                // Ela sabe que mandou e nao ouviu; nao sabe por que, e
+                // dizer "o Loopy nao esta conectado" seria escolher uma
+                // das tres causas para produzir uma frase util.
+                hal::LogAlways("sync: AVISO — mandei %d CCs e NADA voltou em"
+                               " %lu ms.", sync_mandados,
+                               (unsigned long)kSyncEsperaMs);
+                hal::LogAlways("      Tres causas dao este mesmo silencio:"
+                               " o WIDI nao esta ligado; o Loopy nao esta"
+                               " ativo; ou os widgets nao escutam ch%d/ch%d.",
+                               cotuca::kCanalEspelhoA + 1,
+                               cotuca::kCanalEspelhoB + 1);
+                hal::LogAlways("      A operacao NAO esta confirmada. O que a"
+                               " placa sabe: transmitiu. O que ela nao pode"
+                               " saber daqui: se alguem ouviu.");
+            }
+            else
+            {
+                hal::LogAlways("sync: OK — %d CCs enviados, %lu voltaram do"
+                               " controlador (%lu barrados pela janela,"
+                               " nenhum desfez nada).",
+                               sync_mandados, (unsigned long)voltaram,
+                               (unsigned long)barrados);
+                if(voltaram < (uint32_t)sync_mandados / 2)
+                    hal::LogAlways("      Voltou MENOS DA METADE: o link"
+                                   " responde, mas parte dos widgets pode"
+                                   " estar noutra pagina ou noutro canal.");
+            }
+        }
 
         FASE(3);
         // ---- PAINEL: botões (físico OU simulado por serial) ----
