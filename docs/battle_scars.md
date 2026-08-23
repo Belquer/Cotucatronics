@@ -3720,6 +3720,26 @@ janela continuaria não pegando nada, indefinidamente.
 > forma de descobrir que a coisa não chegava.** E vale para toda operação que
 > hoje termina dizendo apenas que executou.
 
+### E o exercício enganou o instrumento
+
+Ao exercitar o ramo *"o fio de volta já funcionou"*, usei `miditest` — que
+injeta na **mesma fila** do fio real. A placa contou a injeção como prova do
+fio e afirmou, com todas as letras, que o caminho de volta estava bom.
+
+> **Instrumento que o próprio exercício engana não é instrumento.** O gatilho
+> artificial tem que entrar por uma porta que o instrumento saiba distinguir —
+> senão exercitar a defesa é o mesmo que falsificar a medição dela.
+
+É a 13x vista do lado de quem mede: ali, "0 erros" onde se esperava vermelho
+significava que o exercício não rodou; aqui, o exercício rodou **e
+contaminou**. O conserto foi contar as injeções na origem (onde a origem é
+conhecida) e descontá-las do veredito, mostrando os dois números:
+
+    volta: 0 pelo FIO + 3 injetados por `miditest`   (o fio NUNCA foi provado)
+
+**Contar na origem e não no destino** é o ponto: lá embaixo o parser já não
+distingue, e nenhuma heurística recuperaria a diferença.
+
 ### Os dois ramos, exercitados
 
 Pela 13x — o gatilho também precisa ser exercitado:

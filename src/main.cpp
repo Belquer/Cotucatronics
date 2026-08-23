@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.151.0"
+#define COTUCA_OS_VERSION "0.153.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -368,6 +368,33 @@ static uint32_t sync_jan_antes   = 0;
 static int      sync_mandados    = 0;
 static constexpr uint32_t kSyncEsperaMs = 1500;
 
+// TRAVA DO CAMINHO DE VOLTA — "ja ouvi o controlador alguma vez?"
+//
+// O AVISO do `sync` listava tres causas para o mesmo silencio e nao
+// distinguia nenhuma. Mas a placa PODE distinguir uma delas: se algum CC
+// ja chegou por um canal de entrada desde o boot, o fio de volta
+// (WIDI OUT -> D14) esta bom, e o silencio de agora e dos WIDGETS.
+//
+// Mesma forma da trava do `pino`, que inocentou uma solda quando o
+// contador dizia zero: acumular desde o boot em vez de medir numa
+// janela. A pergunta "ja funcionou alguma vez?" nao tem relogio dentro.
+static uint32_t ouvi_controlador = 0;
+// E O DESCONTO DAS INJECOES, porque o `miditest` entra na MESMA fila do
+// fio real e o parser nao os distingue.
+//
+// Sem isto a trava mente com a maior autoridade possivel: eu exercitei
+// o ramo "ja funcionou" com uma injecao local e a placa afirmou que o
+// fio de volta estava bom. Instrumento que o proprio exercicio engana
+// nao e instrumento — e a 13x outra vez, agora do lado de quem mede.
+//
+// O relatorio mostra os DOIS numeros. O veredito usa so o real.
+static uint32_t injetados_local = 0;
+static inline uint32_t OuviDoFio()
+{
+    return ouvi_controlador > injetados_local
+               ? ouvi_controlador - injetados_local : 0;
+}
+
 static bool espelho_on = true;
 
 // DRENAGEM DE BOOT — a travessia, que e o caso que a drenagem do voo A
@@ -596,6 +623,11 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
             armado = true;
         return;
     }
+
+    // Registrado ANTES de qualquer recusa: a pergunta que esta trava
+    // responde e "o fio de volta funciona?", e ela nao depende de o
+    // firmware ter obedecido a mensagem.
+    ouvi_controlador++;
 
     const uint32_t now = hal::NowMs();
 
@@ -3369,6 +3401,10 @@ static void HandleLine(const char* line)
             // o mapa e a via de aplicação. Ver T10 no TESTES.md.
             for(int i = 0; i < 3; i++)
                 hal::MidiInjectByte(msg[i]);
+            // Conta a INJECAO para que a trava do fio de volta possa
+            // descontá-la. Aqui, e nao no OnMidiCc, porque e aqui que se
+            // sabe a origem — la embaixo o parser ja nao distingue.
+            injetados_local++;
             hal::Log("miditest: injetado CC %ld = %ld no canal %ld "
                      "(NAO passa pela UART)", cc, val, ch);
         }
@@ -3943,6 +3979,11 @@ static void HandleLine(const char* line)
         // OS DOIS JUNTOS, e a diferenca entre eles E o dado: TX conta o
         // que a placa pos no fio, "voltaram" conta o que o caminho
         // devolveu. TX > voltaram significa perda entre D13 e o iPad.
+        hal::Log("  volta: %lu pelo FIO + %lu injetados por `miditest`%s",
+                 (unsigned long)OuviDoFio(),
+                 (unsigned long)injetados_local,
+                 OuviDoFio() ? "   (o fio de volta FUNCIONA)"
+                             : "   (o fio de volta NUNCA foi provado)");
         hal::Log("  eco: TX %lu (ch%d cadeia A / ch%d cadeia B)"
                  " | voltaram %lu | perdidas %ld",
                  (unsigned long)eco_tx,
@@ -4381,14 +4422,25 @@ int main(void)
                 hal::LogAlways("sync: AVISO — mandei %d CCs e NADA voltou em"
                                " %lu ms.", sync_mandados,
                                (unsigned long)kSyncEsperaMs);
-                hal::LogAlways("      Tres causas dao este mesmo silencio:"
-                               " o WIDI nao esta ligado; o Loopy nao esta"
-                               " ativo; ou os widgets nao escutam ch%d/ch%d.",
-                               cotuca::kCanalEspelhoA + 1,
-                               cotuca::kCanalEspelhoB + 1);
-                hal::LogAlways("      A operacao NAO esta confirmada. O que a"
-                               " placa sabe: transmitiu. O que ela nao pode"
-                               " saber daqui: se alguem ouviu.");
+                // A TRAVA CORTA O ESPACO DE CAUSAS AO MEIO.
+                if(OuviDoFio())
+                    hal::LogAlways("      MAS o fio de volta JA FUNCIONOU neste"
+                                   " voo (%lu CCs pelo FIO desde o boot). Entao"
+                                   " nao e cabo nem pareamento: sao os widgets,"
+                                   " que nao estao ouvindo ch%d/ch%d.",
+                                   (unsigned long)OuviDoFio(),
+                                   cotuca::kCanalEspelhoA + 1,
+                                   cotuca::kCanalEspelhoB + 1);
+                else
+                    hal::LogAlways("      E a placa NUNCA ouviu o controlador"
+                                   " neste voo. Restam duas: os widgets nao"
+                                   " escutam ch%d/ch%d, ou o fio de volta"
+                                   " (WIDI OUT -> D14) nao fecha.",
+                                   cotuca::kCanalEspelhoA + 1,
+                                   cotuca::kCanalEspelhoB + 1);
+                hal::LogAlways("      Nao confirmado quanto ao RETORNO. A"
+                               " TRANSMISSAO a placa fez: conferir no MIDI"
+                               " Wrench separa as duas coisas.");
             }
             else
             {

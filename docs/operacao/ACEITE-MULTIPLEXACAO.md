@@ -37,7 +37,12 @@ no fio.
 
 Serial aberta (`./monitor.command`), e `log on` antes de tudo.
 
-**1. TX nos canais certos.** No MIDI Wrench, depois de um `sync`:
+**1. TX nos canais certos.** ✅ **FEITO 23/08** — o MIDI Wrench viu os três
+valores de `level` (CC 100 = 64, 127, 0) em **ch3**. O caminho
+`placa → WIDI → iPad` está provado ponta a ponta.
+
+*(procedimento original abaixo, para repetir quando necessário)*
+ No MIDI Wrench, depois de um `sync`:
 
 ```
 sync
@@ -91,6 +96,20 @@ teste que o Code rodou por serial; aqui ele roda pelo WIDI.
 32, 33, 42, 43, 52, 53, 62, 63, 68–70, 80–88, 106, 116–118. Enquanto houver
 widget velho apontando para eles, um número reaproveitado vira widget velho
 mexendo em param novo.
+
+**4b. O caminho de VOLTA, e ele é independente do de ida.**
+
+O `sync` agora confere sozinho e reporta. Se der `AVISO`, a linha seguinte
+diz o que a placa sabe:
+
+- *"o fio de volta JÁ FUNCIONOU neste voo (N CCs pelo FIO)"* → não é cabo nem
+  pareamento; são os widgets, que ainda não escutam ch3/ch4;
+- *"a placa NUNCA ouviu o controlador"* → restam duas: widgets no canal
+  errado, **ou** o fio `WIDI OUT → D14` não fecha.
+
+**O teste mais barato para separar as duas:** mexa em **qualquer fader** do
+Loopy e rode `midi`. A trava acumula desde o boot e não tem relógio — se
+`volta:` subir, o fio está bom e o resto é configuração.
 
 **5. Fechamento pelo inventário.**
 
