@@ -236,6 +236,42 @@ consertado.**
 de uso), com uma torção: aqui o regime mudou **por causa do nosso próprio
 conserto**, não por descuido de montagem.
 
+## 15. A hipótese plausível é a perigosa — leia a fonte da configuração
+
+Em 22/08 o JEDEC ID vinha `FF FF FF` e a explicação era boa: *a libDaisy põe
+o chip em QPI; chip em QPI ignora comando de 1 linha; a linha fica em
+pull-up; ler barramento em repouso dá `FF`.* Explicava o sintoma **byte a
+byte**.
+
+Estava errada. O código dizia:
+
+```cpp
+// we haven't added the ability to switch to quad mode. So they're
+// currently unused.
+QSPIHandle::Result EnterQuadMode() __attribute__((unused));
+```
+
+Seis gravações varrendo dummies e modos não responderam o que um `grep` no
+`Init` respondeu em um minuto.
+
+> **Quando o sintoma tem explicação plausível, a plausibilidade é o perigo.**
+> O teste que decide não é o que CONFIRMA a hipótese — é o que **lê a fonte
+> da configuração**.
+
+É o inverso da etapa 6 ("a medição que a mataria"): ali a hipótese era fraca e
+a medição a matou barato. Aqui era boa demais para ser questionada, e o que a
+derrubou foi **leitura, não medição**. Antes de varrer parâmetros de um
+periférico, ler quem o configurou.
+
+## 16. Item de backlog é afirmação sobre o código, e envelhece
+
+*"`frz_size`: 61% de curso morto, faixa 20–400"* — verificado no fonte: a
+faixa é 20–165 e o clamp é 166,7. Batem. Corrigido meses antes, e o item
+seguiu na fila, citado por mim em vários alinhamentos.
+
+> **Antes de citar uma pendência, verificá-la** — sobretudo as antigas, que
+> são as que mais provavelmente já foram consertadas por outro caminho.
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já

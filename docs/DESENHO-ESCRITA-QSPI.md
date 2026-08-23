@@ -90,6 +90,50 @@ save <n>                            // gesto de bancada, por serial
 função de biblioteca, nenhum `Log`, nenhuma variável em QSPI. É <100 ms, é
 bancada, e é surdo por construção.
 
+## O PROTOCOLO REAL — lido no `Init` da libDaisy, 22/08
+
+**Este é o resultado mais valioso da rodada, e é conhecimento, não código.**
+Está aqui porque a próxima tentativa pode travar a placa, e o achado tem que
+sobreviver à sessão.
+
+**A libDaisy NUNCA entra em quad:**
+
+```cpp
+// These functions are defined, but we haven't added the ability to
+// switch to quad mode. So they're currently unused.
+QSPIHandle::Result EnterQuadMode() __attribute__((unused));
+```
+
+O chip está em **SPI simples**. Isso **refuta** a hipótese que explicava o
+`FF FF FF` (chip em QPI ignorando comando de 1 linha) — hipótese plausível,
+que batia com o sintoma, e errada (bts 13j).
+
+**O formato da leitura memory-mapped, que é o que o chip entende hoje:**
+
+| campo | valor |
+|---|---|
+| `InstructionMode` | **1 LINHA** |
+| `Instruction` | `0xEB` — quad I/O fast read |
+| `AddressMode` | **4 linhas** |
+| `DataMode` | **4 linhas** |
+| `DummyCycles` | **6** |
+
+Não é SPI nem QPI: é **híbrido**. Só a instrução vai serial; endereço e dado
+vão em quatro linhas. Qualquer comando novo nasce sabendo disso.
+
+**O chip que a libDaisy supõe** aparece num comentário comentado ao lado dos
+dummies: `IS25LP080D_DUMMY_CYCLES_READ_QUAD` — um IS25LP da ISSI. **Suposição
+da biblioteca, não leitura** — daí o JEDEC ID continuar valendo.
+
+**E o `0x88` deixou de ser mistério:** são dois nibbles `1000` — uma linha
+alta e três baixas. É a assinatura de comando em quatro linhas chegando num
+chip que só escuta a IO0.
+
+**Próxima tentativa, com o protocolo conhecido em vez de suposto:** `0x9F`
+com instrução e dado em **1 linha**, **zero** dummy, e o **`SSHIFT` do `CR`
+conferido** — com prescaler alto, a amostragem de meia-fase é o que separa
+`03 07 0F 1F` de um ID legível. Uma variável.
+
 ## O chip nasce anônimo
 
 A primeira coisa que a rotina lê é o **JEDEC ID (0x9F)** — três bytes,

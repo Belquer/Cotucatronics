@@ -868,6 +868,24 @@ struct Manifest
         // Mesma licao do `dly_time` em 18/08: LIMITE remove o inutil do
         // alcance, CURVA so o redistribui. E vale pros dois canais — o
         // defeito nunca foi do B.
+        // O 165 NAO E ARBITRARIO E NAO PODE DESSINCRONIZAR EM SILENCIO.
+        //
+        // O `Freeze` grampeia o tamanho do grao em `NucleusLen()/3`, e
+        // `NucleusLen()` vale `kNucleusMs` (500 ms) convertido pra
+        // amostras. Logo o teto real e 500/3 = 166,7 ms, e declarar
+        // 165 poe a faixa inteira dentro do curso util com 1,7 ms de
+        // margem.
+        //
+        // Ate 20/08 a faixa era 20..400 ms contra o mesmo clamp: 61%
+        // do curso do fader nao fazia nada (bts 12i). Corrigido em
+        // d80e45d — e o item ficou meses na FILA descrevendo o estado
+        // pre-conserto, que e a deriva de 22/08 num lugar que o
+        // `check-docs` nao olha.
+        //
+        // SE `kNucleusMs` MUDAR, este numero muda junto: novo teto =
+        // kNucleusMs/3, menos uma margem. O literal esta aqui porque
+        // derivar exigiria o manifest incluir `freeze.h`, e essa
+        // dependencia custa mais que este comentario.
         p_frz_size[0]      = t.Add("frz_size_a",      0.0f, 20.f, 165.f); // MIDI: nasce 0 (= 20 ms)
         p_frz_size[1]      = t.Add("frz_size_b",      0.0f, 20.f, 165.f); // MIDI: nasce 0 (= 20 ms)
 

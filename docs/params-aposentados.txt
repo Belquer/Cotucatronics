@@ -47,3 +47,12 @@ address_offset externo  parametro do PersistentStorage da libDaisy
 static_assert  externo  palavra da linguagem
 learn_fixo     externo  do modo `learn`, removido em v0.121.0 (bts 12t)
 frz_mix_b      externo  sufixo do frz_mix aposentado
+
+# SIMBOLOS REMOVIDOS do fonte — a cicatriz que narra a remocao os cita,
+# e sem esta declaracao ela vira fantasma. Foi o proprio verificador
+# que exigiu esta secao, na primeira execucao depois do commit A.
+zero_buf       22/08   portadora ausente; sem uso desde o pivo (bts 13h)
+seco_buf       22/08   contorno da cauda; sem uso desde 3834cea (bts 13h)
+freeze_ok      22/08   vestigio do 3834cea, escrito e nunca lido
+freeze_mem     22/08   vestigio do 3834cea, declarado sem uso
+pitch_tail_mem 22/08   vestigio do 3834cea, declarado sem uso

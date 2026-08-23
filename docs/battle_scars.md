@@ -2840,6 +2840,81 @@ fantasma injetado → `make: *** [check-docs] Error 1`; removido → passa.
 
 ---
 
+## 13i. A fila também deriva, e ninguém a verifica (22/08)
+
+O backlog trazia: *"`frz_size`: 61% de curso morto, faixa 20–400, clamp 167,
+etiquetado antes do painel"*. Verificado no fonte de agora:
+
+    manifest    20 .. 165 ms
+    clamp real  NucleusLen()/3 = (500 ms x sr)/3 = 166,7 ms
+
+Batem. **O defeito foi corrigido em `d80e45d`** e o item ficou meses na fila
+descrevendo o estado pré-conserto — inclusive citado por mim, como pendência,
+em vários alinhamentos.
+
+É a deriva doc↔código do mesmo dia, **num lugar que o `check-docs` não
+olha**: a lista de pendências. O verificador confere nomes de param contra o
+manifest, mas o item citava **números** — faixa e clamp — e números em prosa
+são território de alto falso-positivo.
+
+**Regra:** *item de backlog é uma afirmação sobre o estado do código, e
+envelhece como qualquer outra.* Antes de citar uma pendência, verificá-la —
+sobretudo as antigas, que são as que mais provavelmente já foram consertadas
+por outro caminho.
+
+**Trabalho real que sobrou:** o `165.f` era literal e podia dessincronizar em
+silêncio se `kNucleusMs` mudasse. Ganhou comentário com a conta explícita.
+Derivar de verdade exigiria o manifest incluir `freeze.h`, e essa dependência
+custa mais que o comentário — **cirúrgico é o que muda menos**.
+
+---
+
+## 13j. A hipótese plausível é a perigosa (22/08)
+
+O JEDEC ID vinha `FF FF FF`. A explicação era boa: *a libDaisy põe o chip em
+QPI no `Init`; chip em QPI ignora comando em 1 linha; a linha fica em
+pull-up; ler barramento em repouso dá `FF`.* Ela **explicava o sintoma byte a
+byte**, e eu escrevi isso com essas palavras.
+
+Estava errada. Lendo o código que configura o chip:
+
+```cpp
+// These functions are defined, but we haven't added the ability to
+// switch to quad mode. So they're currently unused.
+QSPIHandle::Result EnterQuadMode() __attribute__((unused));
+```
+
+**A libDaisy nunca entra em quad.** O comentário diz isso com todas as
+letras, e o atributo confirma. O chip está em SPI simples.
+
+E o protocolo real, da configuração memory-mapped, é **híbrido** — nem SPI
+nem QPI:
+
+    InstructionMode = 1 LINHA        Instruction = 0xEB (quad I/O fast read)
+    AddressMode     = 4 LINHAS       DataMode    = 4 LINHAS
+    DummyCycles     = 6              chip suposto: IS25LP (num comentario)
+
+Isso também explica o `0x88` que a tentativa em quad devolveu: `0x88` são dois
+nibbles `1000` — uma linha alta e três baixas, a assinatura de **comando quad
+chegando num chip que só escuta a IO0**. Deixou de ser misterioso.
+
+**Regra:** *quando o sintoma tem explicação plausível, a plausibilidade é o
+perigo.* O teste que decide não é o que **confirma** a hipótese — é o que **lê
+a fonte da configuração**. Seis gravações varrendo dummies e modos não
+responderam o que um `grep` no `Init` respondeu em um minuto.
+
+É o inverso do "teste bom sobrevive a hipótese ruim" que este projeto já tem:
+aqui a hipótese era boa demais para ser questionada, e o que a derrubou foi
+**leitura, não medição**.
+
+**E a lista de aposentados não foi projetada para símbolos removidos — foi
+exigida por eles.** Removi `zero_buf` e `seco_buf` no commit A; a cicatriz
+13h narra a remoção; a narração virou fantasma no primeiro `make check-docs`
+depois. O mecanismo se completou por pressão do próprio uso, que é o melhor
+sinal de que o desenho está certo.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**
