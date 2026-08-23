@@ -1,11 +1,11 @@
 // ============================================================
-// Cotucatronics OS — esqueleto v0.123.2 (board-agnostic)
+// Cotucatronics OS — esqueleto v0.124.0 (board-agnostic)
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
 // DSP está rodando: fala com `Module`, não com o RNBO.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.123.2"
+#define COTUCA_OS_VERSION "0.124.0"
 
 #include "hal.h"
 #include "params.h"
@@ -3071,6 +3071,10 @@ static void HandleLine(const char* line)
                  (unsigned long)eco_tx, kCanalEco + 1,
                  (unsigned long)eco_proprio,
                  (long)eco_tx - (long)eco_proprio);
+        hal::Log("  delay: %lu vezes que o clamp do ponteiro de leitura"
+                 " mordeu%s", (unsigned long)delay_fx.Clamps(),
+                 delay_fx.Clamps()
+                     ? "  *** atraso_ saiu da faixa: NaN ou Inf ***" : "");
         hal::Log("  autoria: %lu CCs recusados pela janela de %lu ms",
                  (unsigned long)cc_janela, (unsigned long)kJanelaMs);
         // ESTADO DA MAQUINA por extenso: "aguardando o que?" e a

@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — delay v0.1.0
+// Cotucatronics OS — delay v0.2.0
 // Reescrita em C++ do patch RNBO `cotucatronics_delay`, que era o
 // ULTIMO consumidor do runtime RNBO no instrumento.
 //
@@ -49,6 +49,7 @@
 // C++ puro. Buffer vem de fora (1 s a 48 kHz = 192 KB, SDRAM).
 // ============================================================
 
+#include <cstdint>   // o contador do clamp
 #include <cstddef>
 #include <cmath>
 
@@ -114,7 +115,31 @@ class Delay
         atraso_ += (alvo_ - atraso_) * kSuave;
 
         float r = (float)write_ - atraso_;
-        while(r < 0.f) r += (float)cap_;
+        // UMA soma basta: `atraso_` e grampeado em [1, teto<=cap_] e
+        // `write_ < cap_`, entao r vive em (-cap_, cap_).
+        if(r < 0.f) r += (float)cap_;
+
+        // CLAMP DURO, e ele fecha DUAS falhas que o `while` antigo
+        // deixava abertas. `while(r < 0.f) r += cap_` era refem do
+        // valor de `atraso_`:
+        //
+        //   atraso_ = +Inf  ->  r = -Inf  ->  -Inf + cap_ = -Inf
+        //                       o laco NUNCA TERMINA. Loop morto, e o
+        //                       audio segue rodando: placa "viva e
+        //                       muda", que e o sintoma mais caro deste
+        //                       instrumento.
+        //   atraso_ = NaN   ->  `NaN < 0` e falso, sai na hora, e
+        //                       `(size_t)NaN` e INDEFINIDO — indexa
+        //                       fora do buffer em silencio.
+        //
+        // A forma NEGADA pega NaN de graca: qualquer comparacao com
+        // NaN e falsa, entao a negacao e verdadeira e o clamp morde.
+        // `r >= 0 && r < cap_` escrito direto deixaria o NaN passar.
+        if(!(r >= 0.f && r < (float)cap_))
+        {
+            r = 0.f;
+            if(clamps_ < 0xFFFFFFFFu) clamps_++;
+        }
         const size_t i0 = (size_t)r;
         const size_t i1 = (i0 + 1u >= cap_) ? 0u : i0 + 1u;
         const float  f  = r - (float)i0;
@@ -126,7 +151,13 @@ class Delay
         return atrasado * mix_ + x * (1.f - mix_);
     }
 
+    // DEFESA SEM CONTADOR E HIPOTESE. Se o clamp morder, alguem tem
+    // que poder ver — senao "nunca aconteceu" e indistinguivel de
+    // "acontece toda amostra e ninguem soube".
+    uint32_t Clamps() const { return clamps_; }
+
   private:
+    uint32_t clamps_ = 0;
     static constexpr float kSuave = 0.001f;   // ~20 ms a 48 kHz
 
     float* buf_    = nullptr;

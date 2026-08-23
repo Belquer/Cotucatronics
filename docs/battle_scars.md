@@ -2529,6 +2529,105 @@ bootloader aparecer e gravar no instante em que surgir** — polling do
 
 ---
 
+## 13a. Guarda de faixa em float se escreve pela NEGAÇÃO (22/08)
+
+`delay.h:117` tinha `while(r < 0.f) r += (float)cap_;` — normalizar um
+ponteiro de leitura circular. Fui consertar **um** defeito e encontrei
+**dois** dormindo na mesma linha, e o segundo era o pior.
+
+    atraso_ = +Inf  ->  r = -Inf  ->  -Inf + cap_ = -Inf
+                        o laco NUNCA TERMINA. Loop morto, audio seguindo:
+                        "placa viva e muda", o sintoma mais caro daqui.
+
+    atraso_ = NaN   ->  `NaN < 0` e FALSO, sai na hora, e `(size_t)NaN`
+                        e INDEFINIDO — indexa fora do buffer em silencio.
+
+O laço eterno era o que eu tinha visto. O índice fora do buffer estava
+invisível e é o mais grave — corrupção silenciosa contra travamento
+barulhento.
+
+**O conserto tem uma forma, e a forma é o ensinamento:**
+
+```cpp
+if(!(r >= 0.f && r < (float)cap_)) r = 0.f;   // pega NaN de graca
+```
+
+**NaN falha TODA comparação.** Então:
+
+| forma | com NaN | resultado |
+|---|---|---|
+| `if(r >= 0 && r < cap)` — direta | falso | **NaN passa como se estivesse dentro** |
+| `if(!(r >= 0 && r < cap))` — negada | verdadeiro | o clamp morde |
+
+A assimetria da IEEE 754 vira ferramenta: perguntar *"está dentro?"* deixa o
+NaN escapar; perguntar *"não está comprovadamente dentro?"* o pega de graça,
+sem `isnan()`, sem custo.
+
+**Regra, para a P7 do audit:** *toda guarda de faixa em float que protege um
+índice se escreve pela negação.* Qualquer `if(x >= lo && x < hi)` guardando
+acesso derivado de float é candidato a ter a forma invertida — e o projeto
+acabou de pagar para saber por quê.
+
+**Sub-lição do método:** o segundo defeito só apareceu porque li o contexto
+antes de tocar. Se eu tivesse ido direto trocar o `while` por um `if`,
+teria consertado o travamento e deixado a corrupção silenciosa em pé — o
+conserto parcial que parece completo é pior que nenhum, porque fecha o
+sintoma que denunciava o resto.
+
+**Aceite, e ele tambem tem forma:** varredura ponta a ponta (50 ms a 1 s,
+tom nas duas cadeias) com o contador em **ZERO**. Defesa de proteção se
+aceita provando que **não morde o legítimo**; que ela morde quando deve se
+prova por gancho de teste, como o `ctos prazo` fez.
+
+---
+
+## 13b. Três causas empilhadas, e cada uma escondia a seguinte (22/08)
+
+Amplificador novo na bancada — TPA3110 alimentado por boost, exciter de 4 Ω.
+Sintoma inicial: som muito baixo. Levou uma tarde, e a lição não é elétrica,
+é de método.
+
+**Causa 1 — chave de potência no caminho do sinal.** A saída da Daisy passava
+por uma chave de três posições marcada para 12 V. Contatos feitos para
+potência são de prata ou estanho e criam película de óxido; tensão e corrente
+altas **furam** essa película, e é assim que a chave funciona na aplicação
+para que foi feita. Áudio de linha — ~1 V, microampères — não fura nada. **A
+chave fechava mecanicamente e continuava aberta para o sinal.** Chama-se
+comutação em circuito seco, e o sintoma foi exato: entrada flutuando, muito
+ruído branco, seno ausente.
+
+**Causa 2, que só apareceu depois de consertar a 1.** Com o sinal barrado, o
+amplificador ficava em vazio — e por isso a fonte "segurava" 13 V firmes sob
+o que parecia carga. Assim que o sinal passou, o boost caiu para 6 V. A
+medição que descartava a fonte estava certa e era **inútil**, porque o regime
+que ela mediu não era o de uso (12a outra vez, agora em elétrica).
+
+**O capacitor foi útil por NÃO resolver.** 2200 µF / 35 V nos terminais do
+amplificador não mudou nada — e isso é dado: capacitor empresta energia para
+**picos**; se a tensão continua caindo, o que falta é corrente **média**, e
+nenhum capacitor fabrica potência. O teste discrimina sozinho.
+
+**Causa 3 — o boost.** Fonte de 12 V direta resolveu. Uma conversão a menos,
+e potência que se entrega em vez de potência de catálogo.
+
+**Regra de hardware, e vale para o painel inteiro:** *sinal de áudio não
+passa por contato mecânico em lugar nenhum deste instrumento.* Chave governa
+**GPIO**; o firmware corta o ramo. `route_exciter` e `route_jack` existem
+para isso, e as DPDT planejadas em D29/D30 seguem o mesmo desenho.
+
+**Regra de método:** *causa consertada muda o regime e pode revelar a
+próxima.* Uma medição feita antes do conserto pode ter medido um sistema que
+não existe mais — e "já descartei a fonte" era verdade sobre o sistema
+quebrado, não sobre o consertado. **Ao consertar, refazer as medições que o
+conserto tornou obsoletas.**
+
+**E o firmware ficou inocentado por telemetria, não por fé:** oito leituras
+seguidas do `env` do governor deram 0.142 a 0.143, variação de 0,001, com
+`gain` em 1.00. Enquanto o operador ouvia pulso, a placa entregava uma reta.
+Foi isso que apontou o dedo para fora dela.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**

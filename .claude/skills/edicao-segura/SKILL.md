@@ -134,3 +134,28 @@ centro, com um transdutor mudo e sem sintoma.
 Se a tarefa começa com uma premissa sobre o estado do sistema ("com a v0.39.0
 gravada..."), **verificar a premissa antes de agir sobre ela**. Uma sessão
 inteira já foi planejada em cima de um firmware que não estava na placa.
+
+## Guarda de faixa em float se escreve pela NEGAÇÃO
+
+**NaN falha toda comparação.** Isso torna a forma direta insegura:
+
+```cpp
+if(r >= 0.f && r < (float)cap_)  { usa(r); }        // NaN PASSA como "fora"
+if(!(r >= 0.f && r < (float)cap_)) { r = 0.f; }     // NaN cai na rede
+```
+
+Em 22/08, `delay.h:117` tinha `while(r < 0.f) r += cap_;` e escondia **dois**
+defeitos: com `atraso_` em +Inf o laço nunca terminava; com NaN ele saía na
+hora e `(size_t)NaN` — comportamento **indefinido** — indexava fora do
+buffer em silêncio. O segundo era o pior e estava invisível.
+
+> **Toda guarda de faixa em float que protege um índice se escreve pela
+> negação.** Qualquer `if(x >= lo && x < hi)` guardando acesso derivado de
+> float é candidato a ter a forma invertida.
+
+Quando for auditar, o padrão a procurar é: **float → índice**. Conversão de
+float para inteiro com valor fora de faixa (ou NaN/Inf) é UB, não wrap.
+
+**E leia o contexto antes de tocar.** O segundo defeito só apareceu porque a
+linha foi lida inteira antes de ser trocada. Conserto parcial que parece
+completo é pior que nenhum: fecha o sintoma que denunciava o resto.

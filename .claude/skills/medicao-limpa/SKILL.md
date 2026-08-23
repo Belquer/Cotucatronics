@@ -218,6 +218,24 @@ comentário diz isso, e diz para revisar se o uso real discordar.
 > Daqui a meses, "por que 3?" tem que achar a resposta no código, em vez de
 > virar arqueologia.
 
+## 14. Conserto muda o regime — refaça o que ele tornou obsoleto
+
+Em 22/08, uma chave de potência barrava o sinal de áudio antes do
+amplificador. Com o sinal barrado o amplificador ficava em vazio, e a fonte
+media **13 V firmes sob carga** — medição correta, e que descartava a fonte.
+
+Consertada a chave, o sinal passou, a carga apareceu, e a fonte caiu para
+6 V. **A medição anterior era verdade sobre o sistema quebrado, não sobre o
+consertado.**
+
+> **Ao consertar uma causa, listar quais medições aquele conserto tornou
+> obsoletas — e refazê-las.** "Já descartei X" tem validade limitada ao
+> regime em que X foi descartado.
+
+É a mesma família da cicatriz 12a (medir o instrumento num regime que não é o
+de uso), com uma torção: aqui o regime mudou **por causa do nosso próprio
+conserto**, não por descuido de montagem.
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já
