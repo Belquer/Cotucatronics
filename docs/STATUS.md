@@ -452,6 +452,33 @@ que toque no callback.
 
 ---
 
+## Onde estamos (23/08, v0.155.0)
+
+**A cadeia inteira do controlador está provada, e o painel acendeu.**
+
+| frente | estado |
+|---|---|
+| params de caráter por cadeia | ✅ custo indistinguível, medido com A/B no mesmo binário |
+| endereçamento por canal (ch1/ch2) | ✅ 37 pares, banco nativo |
+| espelho em ch3/ch4 | ✅ MIDI Wrench viu os dois |
+| fio de volta (iPad → placa) | ✅ 93 CCs contados |
+| presets em RAM | ✅ ciclo `capturar → dump → reset → colar → load` |
+| botão de freeze B (D22/D23) | ✅ 4 batidas para 4 apertos |
+| rearme do CTOS pelo B3 | ✅ ressuscitado — tinha ramo inalcançável |
+| OLED SSD1309 | ✅ acende e escreve. **Configurado, nunca "presente"** |
+
+**O que falta é humano:** remapear o Loopy (mapa inteiro em
+[RETRABALHO-LOOPY.md](operacao/RETRABALHO-LOOPY.md)) e a **escuta que
+constrói a biblioteca** — cada julgamento vira um preset em vez de uma
+anotação.
+
+**Na fila depois disso:** inventário do que nunca foi exercitado (bts 13w) ·
+unificar as duas recusas temporais globais · ponteiros de preset com
+pré-escuta · painel no OLED · QSPI (janela ITCM provada, falta a leitura
+indireta — não gastar gravação sem o RM0433).
+
+---
+
 ## Rota dos presets (22/08) — o difícil resolvido, o tedioso identificado
 
 **A janela ITCM funciona.** A placa sai do memory-mapped executando de RAM

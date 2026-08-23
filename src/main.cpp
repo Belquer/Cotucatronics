@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.154.0"
+#define COTUCA_OS_VERSION "0.155.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2970,14 +2970,28 @@ static void HandleLine(const char* line)
             hal::Log("      SPI1 modo 0, PS_64 | CLK D8 · DIN D10 · CS D7"
                      " · DC D6 · RST D5 | MISO nao atribuido");
         }
-        const bool aceso = (strncmp(a, "off", 3) != 0);
-        hal::OledPreenche(aceso);
-        hal::Log("oled: tela %s. %s", aceso ? "ACESA" : "apagada",
-                 aceso ? "Se acendeu inteira, os cinco fios chegam."
-                         " `oled off` apaga — e apagar prova que nao e"
-                         " so o painel energizado."
-                       : "Se apagou, o caminho responde nos dois sentidos"
-                         " do dado (aceso e apagado sao escritas diferentes).");
+        if(strncmp(a, "off", 3) == 0)
+        {
+            hal::OledPreenche(false);
+            hal::Log("oled: apagada — e apagar prova que nao e so o painel"
+                     " energizado (aceso e apagado sao escritas diferentes)");
+            return;
+        }
+        if(strncmp(a, "texto", 5) == 0)
+        {
+            const char* t = a + 5;
+            while(*t == ' ') t++;
+            hal::OledTexto(*t ? t : "COTUCATRONICS", "v" COTUCA_OS_VERSION);
+            hal::Log("oled: texto escrito. ISTO PROVA MAIS QUE O FILL —"
+                     " tela cheia so mostra que o painel liga; texto prova"
+                     " enderecamento de pixel e que o DC separa comando de"
+                     " dado. Painel com DC trocado acende inteiro e nao"
+                     " escreve nada legivel.");
+            return;
+        }
+        hal::OledPreenche(true);
+        hal::Log("oled: tela ACESA. Se acendeu inteira, os cinco fios chegam."
+                 " `oled texto` escreve · `oled off` apaga.");
         return;
     }
     if(strncmp(line, "pino", 4) == 0)
@@ -4109,7 +4123,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [on|off] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

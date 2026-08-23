@@ -3,10 +3,12 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.21.0
+// hal_daisy_seed v0.24.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
+#include "hid/disp/oled_display.h"
+#include "util/oled_fonts.h"
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -769,22 +771,25 @@ uint32_t SerialTruncadas() { return serial_truncadas; }
 // `direction = TWO_LINES_TX_ONLY` com `miso = Pin(PORTX, 0)`, que e o
 // "nenhum pino" da casa. Nao se gasta pino, e a pergunta se respondeu
 // lendo o fonte em vez de escolhendo.
-static daisy::SSD130x4WireSpi128x64Driver oled;
+// O INVOLUCRO, nao o driver cru: `OledDisplay` traz `SetCursor` e
+// `WriteString`, e o driver sozinho so tem `DrawPixel`. Escrever texto a
+// mao a partir do FontDef seria reimplementar o que ja existe testado.
+static daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver> oled;
 static bool oled_pronto = false;
 
 bool OledInit()
 {
     if(oled_pronto) return true;
-    daisy::SSD130x4WireSpi128x64Driver::Config cfg;
+    daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver>::Config cfg;
     // Defaults ja dao MODO 0 (polarity LOW + phase ONE_EDGE), que e o que
     // o SSD1309 quer. Nao se toca no que ja esta certo.
-    cfg.transport_config.pin_config.dc    = seed::D6;
-    cfg.transport_config.pin_config.reset = seed::D5;
+    cfg.driver_config.transport_config.pin_config.dc    = seed::D6;
+    cfg.driver_config.transport_config.pin_config.reset = seed::D5;
     // PRESCALER ALTO NO PRIMEIRO VOO, de proposito: fio comprido e
     // solda de bancada perdoam menos em MHz alto, e este teste nao tem
     // requisito de taxa nenhum. Se acender, da para descer depois e
     // medir onde para de acender — que e informacao, nao chute.
-    cfg.transport_config.spi_config.baud_prescaler
+    cfg.driver_config.transport_config.spi_config.baud_prescaler
         = SpiHandle::Config::BaudPrescaler::PS_64;
     oled.Init(cfg);
     // O `Init` da libDaisy e VOID. Nao ha status, entao nao ha status a
@@ -799,6 +804,38 @@ void OledPreenche(bool aceso)
     if(!oled_pronto) return;
     oled.Fill(aceso);
     oled.Update();   // BLOQUEANTE, e aceitavel: roda no loop, por comando
+}
+
+// TEXTO — e ele prova mais que o `Fill`.
+//
+// Tela toda acesa prova que os fios chegam e que o painel liga. TEXTO
+// prova ENDERECAMENTO DE PIXEL: que CLK e DIN carregam dado coerente,
+// na ordem certa, e que o DC separa comando de dado. Um painel com DC
+// trocado acende inteiro e nao escreve nada legivel.
+void OledTexto(const char* l1, const char* l2)
+{
+    if(!oled_pronto) return;
+    oled.Fill(false);
+    if(l1 && *l1)
+    {
+        // Centraliza pela largura da fonte, sem numero magico: 7 px por
+        // caractere e o que o Font_7x10 declara, e a conta se refaz
+        // sozinha se a fonte mudar.
+        int   n = 0; while(l1[n]) n++;
+        const int larg = n * 7;
+        const int x    = larg < 128 ? (128 - larg) / 2 : 0;
+        oled.SetCursor((uint16_t)x, 18);
+        oled.WriteString(l1, Font_7x10, true);
+    }
+    if(l2 && *l2)
+    {
+        int   n = 0; while(l2[n]) n++;
+        const int larg = n * 6;
+        const int x    = larg < 128 ? (128 - larg) / 2 : 0;
+        oled.SetCursor((uint16_t)x, 38);
+        oled.WriteString(l2, Font_6x8, true);
+    }
+    oled.Update();
 }
 
 bool OledConfigurado() { return oled_pronto; }

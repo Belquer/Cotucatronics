@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.18.0
+// hal.h v0.22.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -182,6 +182,7 @@ uint32_t         SerialTruncadas();
 // outra vez (bts, cap. instrumentacao).
 bool             OledInit();          // true = CONFIGURADO, nao detectado
 void             OledPreenche(bool aceso);   // tela toda acesa/apagada
+void             OledTexto(const char* l1, const char* l2);
 bool             OledConfigurado();
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
