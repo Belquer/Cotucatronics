@@ -165,6 +165,9 @@ void             MidiInjectByte(uint8_t b);
 // Diagnóstico da porta, pro comando serial `midi`.
 bool             MidiRxActive();    // a escuta chegou a começar?
 uint32_t         MidiDropped();     // bytes perdidos por fila cheia
+// Linhas de comando RECUSADAS por passarem do tamanho maximo. Linha
+// truncada nao e comando: executar metade e pior que nao executar.
+uint32_t         SerialTruncadas();
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
 

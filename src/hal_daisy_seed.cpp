@@ -119,7 +119,11 @@ static void DaisyAudioCb(AudioHandle::InputBuffer  in,
 // no contrato do hal.h.
 static SerialLineCallback line_cb = nullptr;
 
-constexpr size_t kLineMax    = 64;
+// 160, e o numero tem razao: e o mesmo teto do `hal::Log`. Uma linha
+// que a placa consegue IMPRIMIR tem que ser uma linha que ela consegue
+// LER de volta — senao o `preset dump` produz texto que ela mesma
+// recusa, que foi exatamente o que aconteceu em 23/08 com 64.
+constexpr size_t kLineMax    = 160;
 constexpr size_t kQueueLines = 8;
 
 // montagem da linha corrente: só a ISR encosta
@@ -167,6 +171,8 @@ static bool              log_muted     = false;
 static bool              log_force     = false;
 static int               cdc_fails     = 0;
 static uint32_t          log_dropped = 0;
+static bool              rx_over     = false;   // linha corrente estourou
+static uint32_t          serial_truncadas = 0;  // linhas recusadas por tamanho
 static volatile uint32_t q_head = 0;
 static volatile uint32_t q_tail = 0;
 
@@ -177,6 +183,24 @@ static void UsbRxCallback(uint8_t* buf, uint32_t* len)
         char c = static_cast<char>(buf[i]);
         if(c == '\n' || c == '\r')
         {
+            // LINHA TRUNCADA NAO E COMANDO — e recusada inteira.
+            //
+            // A versao anterior descartava os caracteres excedentes em
+            // silencio e DESPACHAVA o pedaco. Um `set drv_drive_a 12`
+            // cortado vira `set drv_drive_a 1`, que e um comando valido
+            // e obedece calado: o operador pede uma coisa e a placa faz
+            // outra, sem nada no log.
+            //
+            // Executar meio comando e pior que nao executar nenhum. O
+            // contador aparece no `board`, para que "meu comando nao fez
+            // nada" nao seja indistinguivel de "digitei errado".
+            if(rx_over)
+            {
+                serial_truncadas++;
+                rx_len  = 0;
+                rx_over = false;
+                continue;
+            }
             if(rx_len > 0)
             {
                 rx_buf[rx_len]      = '\0';
@@ -192,10 +216,13 @@ static void UsbRxCallback(uint8_t* buf, uint32_t* len)
                     cdc_fails = 0;
                 }
             }
-            rx_len = 0;
+            rx_len  = 0;
+            rx_over = false;
         }
         else if(rx_len < kLineMax - 1)
             rx_buf[rx_len++] = c;
+        else
+            rx_over = true;   // estourou: a linha inteira sera RECUSADA
     }
 }
 
@@ -369,8 +396,20 @@ void Log(const char* fmt, ...)
     va_end(args);
     if(n < 0)
         return;
+    // TRUNCAGEM SE ANUNCIA. O `vsnprintf` devolve o que CABERIA, entao
+    // aqui se sabe que cortou — e cortar em silencio e a familia
+    // proibida: em 23/08 o `preset dump` emitia 13 de 33 params e
+    // parecia completo, porque nada na linha dizia que ela tinha fim
+    // artificial.
+    //
+    // As tres reticencias custam tres caracteres do proprio conteudo, e
+    // e o preco certo: perder mais tres letras de uma linha ja perdida
+    // vale saber que ela foi perdida.
     if(n > (int)kLogMax - 3) // vsnprintf devolve o que CABERIA
+    {
         n = (int)kLogMax - 3;
+        if(n >= 3) { tmp[n - 3] = '.'; tmp[n - 2] = '.'; tmp[n - 1] = '.'; }
+    }
 
     uint8_t* out = log_buf[log_slot];
     log_slot ^= 1;
@@ -692,6 +731,8 @@ void MidiInjectByte(uint8_t b)
 }
 
 bool     MidiRxActive() { return midi_started && midi_uart.IsListening(); }
+uint32_t SerialTruncadas() { return serial_truncadas; }
+
 uint32_t MidiDropped() { return midi_dropped; }
 uint32_t MidiHiWater() { return midi_hiwater; }
 uint32_t MidiRingSize() { return (uint32_t)kMidiRing; }

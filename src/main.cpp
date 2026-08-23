@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.141.0"
+#define COTUCA_OS_VERSION "0.148.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -36,6 +36,7 @@ static inline int CadeiaDoParam(int c) { return g_dup_por_cadeia ? c : 0; }
 #include "hal.h"
 #include "params.h"
 #include "manifest.h"
+#include "presets.h"
 #include "dynamics.h"
 #include "reverb.h"
 #include "freeze.h"
@@ -318,6 +319,33 @@ static uint32_t cc_janela = 0;   // recusados pela janela
 //
 // O que saiu junto com o interino foi o ACOPLAMENTO: a entrada nao
 // depende mais desta chave. Ela so cala a saida.
+// ---- BIBLIOTECA DE PRESETS (em RAM) ----
+//
+// Mora em `.bss`, que neste APP_TYPE cai na SRAM/AXI — escolha
+// EXPLICITA e nao omissao: a biblioteca e memoria FRIA (lida no `load`,
+// escrita no `capturar`, nunca tocada no callback), e a DTCM, que esta
+// vazia, e a unica RAM que ainda pode salvar um caminho quente. Gastar
+// a rapida com dado frio seria desperdicar a que nao da pra recuperar.
+static cotuca::PresetMapa  pmapa;
+static cotuca::Biblioteca  biblio;
+static uint16_t            mapa_hash = 0;
+
+// Marca sujo para o espelho escoar. O `load` NAO usa a rota do `sync`:
+// 3 ms por mensagem x 86 sao 258 ms de laco bloqueado, e o espelho
+// normal escoa duas a cada 8 ms sem parar nada.
+static void AbreJanelaEEspelha(int id)
+{
+    using namespace cotuca;
+    if(id < 0 || id >= cotuca::kMaxParams) return;
+    // A JANELA ABRE AGORA, PARA TODOS, e nao a medida que o espelho
+    // manda. O gesto autonomo e o `load`, nao cada mensagem: se a janela
+    // abrisse so na saida, o widget que ecoasse no milissegundo 5 —
+    // antes de a mensagem dele sair — seria obedecido, e o preset seria
+    // desfeito pela metade.
+    quiet_until[id] = hal::NowMs() + kJanelaMs;
+    eco_ult[id]     = 0xFF;   // forca o espelho a reenviar este param
+}
+
 static bool espelho_on = true;
 
 // DRENAGEM DE BOOT — a travessia, que e o caso que a drenagem do voo A
@@ -426,14 +454,32 @@ static void MidiPushEstado()
                                 manifest.midi_map[i].cc, v};
         eco_ult[id] = v;  // nao reenviar depois
         hal::MidiSendBytes(msg, 3);
-        // Respira entre mensagens: a 31250 baud tres bytes levam ~1 ms,
-        // e despejar 12 CCs de uma vez e exatamente o padrao que a
-        // quarentena do OUTRO lado (se houver) trataria como dump.
+        // A JANELA DE AUTORIA ABRE AQUI TAMBEM, e faltava.
+        //
+        // `MidiEspelha` escrevia `quiet_until` a cada mensagem; esta
+        // funcao mandava e nao escrevia nenhuma. Defesa aplicada num
+        // caminho e nao no irmao (bts 13q) — e o irmao aqui e a OUTRA
+        // rota de saida, que e a mais barulhenta das duas.
+        //
+        // A consequencia era concreta: widget de toggle devolve o
+        // ESTADO DELE, que e o motivo de a janela existir. Depois de um
+        // `sync`, a placa obedecia o eco de tudo que acabara de mandar.
+        quiet_until[id] = hal::NowMs() + kJanelaMs;
+        // Respira entre mensagens: a 31250 baud tres bytes levam ~1 ms.
+        //
+        // O COMENTARIO DIZIA "12 CCs" e foi escrito quando o mapa tinha
+        // 12. Sao 86 hoje, e 3 ms cada dao 258 ms de laco bloqueado —
+        // regressao por CRESCIMENTO, nao por edicao (bts 13p). Fica
+        // registrado aqui; o `load` NAO usa esta rota justamente por
+        // isso, e escoa pelo espelho normal.
         hal::DelayMs(3);
         n++;
     }
     hal::Log("sync: %d CCs empurrados pro controlador — os faders do"
              " Loopy devem pular pro estado da placa", n);
+    hal::Log("     janela de autoria aberta para os %d params por %lu ms:"
+             " o eco dos widgets nao desfaz o que acabou de sair",
+             n, (unsigned long)kJanelaMs);
 }
 
 static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
@@ -2494,6 +2540,320 @@ static void HandleLine(const char* line)
     // contador no meio. Um contador em zero tem tres causas (aberto,
     // terminal NC, pino morto) e nao distingue nenhuma; o nivel cru
     // distingue as tres, e por isso ele existe.
+    // ---- PRESETS ----
+    //
+    // INGESTAO POR COLAGEM: uma linha de `dump` e um COMANDO VALIDO.
+    //
+    // Sem isto o `dump` seria so de saida e a biblioteca morreria no
+    // desligamento sem volta — dump que ninguem consegue recarregar nao
+    // e persistencia, e um relatorio.
+    //
+    // O formato ja e por NOME e as linhas de mesmo nome se juntam,
+    // entao colar o arquivo inteiro no terminal reconstroi a
+    // biblioteca. Linha `#` e comentario e some sem reclamar.
+    if(line[0] == '#') return;
+    if(strncmp(line, "cadeia ", 7) == 0 || strncmp(line, "global ", 7) == 0)
+    {
+        const bool eh_global = (line[0] == 'g');
+        const char* a = line + 7;
+        while(*a == ' ') a++;
+        char nome[cotuca::kNomeMax] = {0};
+        int  k = 0;
+        while(*a && *a != ' ' && k < cotuca::kNomeMax - 1) nome[k++] = *a++;
+        nome[k] = 0;
+        if(!k) { hal::Log("preset: linha sem nome"); return; }
+
+        // Acha ou cria. Linhas de mesmo nome ACUMULAM no mesmo preset —
+        // e por isso que o dump pode quebrar em quantas linhas quiser.
+        int idx;
+        if(eh_global)
+        {
+            idx = biblio.AchaGlobal(nome);
+            if(idx < 0)
+            {
+                idx = biblio.VagaGlobal();
+                if(idx < 0) { hal::Log("preset: biblioteca global cheia"); return; }
+                cotuca::Biblioteca::PoeNome(biblio.global[idx].nome, nome);
+                biblio.global[idx].usado = true;
+                biblio.global[idx].n = (uint8_t)pmapa.n_global;
+            }
+        }
+        else
+        {
+            idx = biblio.AchaCadeia(nome);
+            if(idx < 0)
+            {
+                idx = biblio.VagaCadeia();
+                if(idx < 0) { hal::Log("preset: biblioteca de cadeia cheia"); return; }
+                cotuca::Biblioteca::PoeNome(biblio.cadeia[idx].nome, nome);
+                biblio.cadeia[idx].usado = true;
+                biblio.cadeia[idx].n = (uint8_t)pmapa.n_cadeia;
+            }
+        }
+
+        int aceitos = 0, recusados = 0;
+        char ruins[90]; ruins[0] = 0;
+        while(*a)
+        {
+            while(*a == ' ') a++;
+            if(!*a) break;
+            char pn[40]; int p = 0;
+            while(*a && *a != '=' && *a != ' ' && p < 38) pn[p++] = *a++;
+            pn[p] = 0;
+            if(*a != '=')
+            {
+                if(p) recusados++;
+                continue;
+            }
+            a++;
+            int v = 0; bool tem = false;
+            while(*a >= '0' && *a <= '9') { v = v * 10 + (*a++ - '0'); tem = true; }
+            if(!tem || v > 127)
+            {
+                recusados++;
+                if(strlen(ruins) < 70)
+                { strncat(ruins, " ", 2); strncat(ruins, pn, 30); }
+                continue;
+            }
+            // CASA PELO NOME, contra a lista DERIVADA. Nome que nao
+            // existe no mapa e RECUSADO E NOMEADO — aceitar em silencio
+            // seria carregar um preset pela metade e chamar de sucesso.
+            int achou = -1;
+            for(int j = 0; j < (eh_global ? pmapa.n_global : pmapa.n_cadeia); j++)
+            {
+                const char* nm = params.Name(eh_global ? pmapa.global[j]
+                                                       : pmapa.cadeia[0][j]);
+                if(eh_global) { if(!strcmp(nm, pn)) { achou = j; break; } }
+                else
+                {
+                    const size_t L = strlen(nm);
+                    if(L >= 2 && !strncmp(nm, pn, L - 2) && strlen(pn) == L - 2)
+                    { achou = j; break; }
+                }
+            }
+            if(achou < 0)
+            {
+                recusados++;
+                if(strlen(ruins) < 70)
+                { strncat(ruins, " ", 2); strncat(ruins, pn, 30); }
+                continue;
+            }
+            if(eh_global) biblio.global[idx].val[achou] = (uint8_t)v;
+            else          biblio.cadeia[idx].val[achou] = (uint8_t)v;
+            aceitos++;
+        }
+        hal::Log("preset \"%s\": +%d params%s%s", nome, aceitos,
+                 recusados ? "  RECUSADOS:" : "",
+                 recusados ? ruins : "");
+        return;
+    }
+    if(strncmp(line, "capturar", 8) == 0)
+    {
+        const char* a = line + 8;
+        while(*a == ' ') a++;
+        // ALVO EXPLICITO. `capturar a`, `capturar b` ou `capturar g`.
+        // Sem default: capturar na cadeia errada e silencioso e so
+        // aparece quando alguem carrega o preset e o som e outro.
+        char alvo = *a; if(alvo) a++;
+        while(*a == ' ') a++;
+        if(alvo != 'a' && alvo != 'b' && alvo != 'g')
+        {
+            hal::Log("uso: capturar <a|b|g> <nome> — o alvo e obrigatorio,"
+                     " capturar na cadeia errada nao tem sintoma");
+            return;
+        }
+        if(!*a) { hal::Log("capturar: falta o nome"); return; }
+        if(alvo == 'g')
+        {
+            int i = biblio.AchaGlobal(a);
+            if(i < 0) i = biblio.VagaGlobal();
+            if(i < 0) { hal::Log("capturar: biblioteca global cheia (%d)",
+                                 (int)cotuca::kMaxPresetsGlobal); return; }
+            cotuca::PresetGlobal& p = biblio.global[i];
+            cotuca::Biblioteca::PoeNome(p.nome, a);
+            p.n = (uint8_t)pmapa.n_global;
+            for(int k = 0; k < pmapa.n_global; k++)
+                p.val[k] = (uint8_t)(params.Get(pmapa.global[k]) * 127.f + 0.5f);
+            p.usado = true;
+            hal::Log("capturar: global \"%s\" no slot %d (%d params, em RAM)",
+                     p.nome, i, (int)p.n);
+            return;
+        }
+        const int c = (alvo == 'a') ? 0 : 1;
+        int i = biblio.AchaCadeia(a);
+        if(i < 0) i = biblio.VagaCadeia();
+        if(i < 0) { hal::Log("capturar: biblioteca de cadeia cheia (%d)",
+                             (int)cotuca::kMaxPresetsCadeia); return; }
+        cotuca::PresetCadeia& p = biblio.cadeia[i];
+        cotuca::Biblioteca::PoeNome(p.nome, a);
+        p.n = (uint8_t)pmapa.n_cadeia;
+        for(int k = 0; k < pmapa.n_cadeia; k++)
+            p.val[k] = (uint8_t)(params.Get(pmapa.cadeia[c][k]) * 127.f + 0.5f);
+        p.usado = true;
+        biblio.ponteiro[c] = i;
+        hal::Log("capturar: \"%s\" no slot %d, da cadeia %c (%d params, em RAM)",
+                 p.nome, i, alvo == 'a' ? 'A' : 'B', (int)p.n);
+        hal::Log("        RAM: desliga da tomada e some. `preset dump` guarda"
+                 " no computador enquanto a flash nao destrava.");
+        // A CAPTURA E COM PERDA, E ISSO SE DIZ NA HORA DA CAPTURA.
+        //
+        // O preset guarda 7 bits (0..127), a mesma resolucao do MIDI —
+        // decisao do desenho, e o que mantem o `dump` legivel e
+        // editavel a mao. Mas o `set` aceita float, entao um valor
+        // ajustado de ouvido pode voltar levemente diferente: 24,00
+        // capturado volta 23,83.
+        //
+        // Dito AQUI e nao no `load` porque e aqui que a perda acontece,
+        // e porque descobrir isso depois — comparando um som lembrado
+        // com um som carregado — e a forma mais cara possivel de
+        // aprender que a operacao nao era exata.
+        hal::Log("        quantizado em 7 bits (0..127, igual ao MIDI):"
+                 " ajuste de `set` mais fino que 1/127 nao sobrevive.");
+        return;
+    }
+    if(strncmp(line, "preset", 6) == 0)
+    {
+        const char* a = line + 6;
+        while(*a == ' ') a++;
+
+        if(strncmp(a, "list", 4) == 0)
+        {
+            hal::Log("BIBLIOTECA (RAM) — mapa 0x%04X | %d params por cadeia,"
+                     " %d no global",
+                     (unsigned)mapa_hash, pmapa.n_cadeia, pmapa.n_global);
+            int n = 0;
+            for(int i = 0; i < cotuca::kMaxPresetsCadeia; i++)
+                if(biblio.cadeia[i].usado)
+                {
+                    hal::Log("  cadeia %2d  %-16s %d params%s%s", i,
+                             biblio.cadeia[i].nome, (int)biblio.cadeia[i].n,
+                             biblio.ponteiro[0] == i ? "   <- A" : "",
+                             biblio.ponteiro[1] == i ? "   <- B" : "");
+                    n++;
+                }
+            for(int i = 0; i < cotuca::kMaxPresetsGlobal; i++)
+                if(biblio.global[i].usado)
+                {
+                    hal::Log("  global %2d  %-16s %d params%s", i,
+                             biblio.global[i].nome, (int)biblio.global[i].n,
+                             biblio.ponteiro_global == i ? "   <- G" : "");
+                    n++;
+                }
+            if(!n) hal::Log("  (vazia — `capturar a <nome>` cria o primeiro)");
+            return;
+        }
+
+        if(strncmp(a, "dump", 4) == 0)
+        {
+            // TEXTO LEGIVEL E POR NOME, nunca posicional. Um formato
+            // posicional seria mais curto e transformaria qualquer
+            // reordenacao do manifest em corrupcao SILENCIOSA — o mesmo
+            // defeito do cabecalho, movido para dentro da linha.
+            // LINHAS CURTAS, NOME REPETIDO, E O LEITOR JUNTA.
+            //
+            // A primeira versao punha os 33 params numa linha so e o
+            // `hal::Log` cortava em 160 chars: saiam 13 de 33, e a linha
+            // parecia completa. Alargar o buffer seria consertar o caso
+            // e preservar a forma — o proximo param a mais quebraria de
+            // novo, em silencio.
+            //
+            // Com o nome repetido a cada linha, o formato deixa de
+            // depender de comprimento nenhum: quem le junta as linhas de
+            // mesmo nome. E de quebra fica mais facil de editar a mao,
+            // que e o ponto todo do dump ser texto.
+            hal::Log("# cotucatronics presets — mapa 0x%04X", (unsigned)mapa_hash);
+            hal::Log("# linhas com o MESMO nome se juntam — nao ha limite"
+                     " de params por preset");
+            hal::Log("# reordenar = mover bloco · deletar = apagar linhas ·"
+                     " versionar = git");
+            for(int i = 0; i < cotuca::kMaxPresetsCadeia; i++)
+            {
+                const cotuca::PresetCadeia& p = biblio.cadeia[i];
+                if(!p.usado) continue;
+                char linha[120];
+                int  o = 0, nesta = 0;
+                for(int k = 0; k < p.n && k < pmapa.n_cadeia; k++)
+                {
+                    if(nesta == 0)
+                        o = snprintf(linha, sizeof(linha), "cadeia %s", p.nome);
+                    const char* nm = params.Name(pmapa.cadeia[0][k]);
+                    char base[32]; int b = 0;
+                    for(; nm[b] && b < 30; b++) base[b] = nm[b];
+                    base[b] = 0;
+                    if(b >= 2 && base[b-2] == '_') base[b-2] = 0;  // tira o _a
+                    o += snprintf(linha + o, sizeof(linha) - o, " %s=%d",
+                                  base, (int)p.val[k]);
+                    nesta++;
+                    if(nesta == 5) { hal::Log("%s", linha); nesta = 0; }
+                }
+                if(nesta) hal::Log("%s", linha);
+            }
+            for(int i = 0; i < cotuca::kMaxPresetsGlobal; i++)
+            {
+                const cotuca::PresetGlobal& p = biblio.global[i];
+                if(!p.usado) continue;
+                char linha[120];
+                int  o = 0, nesta = 0;
+                for(int k = 0; k < p.n && k < pmapa.n_global; k++)
+                {
+                    if(nesta == 0)
+                        o = snprintf(linha, sizeof(linha), "global %s", p.nome);
+                    o += snprintf(linha + o, sizeof(linha) - o, " %s=%d",
+                                  params.Name(pmapa.global[k]), (int)p.val[k]);
+                    nesta++;
+                    if(nesta == 5) { hal::Log("%s", linha); nesta = 0; }
+                }
+                if(nesta) hal::Log("%s", linha);
+            }
+            hal::Log("# fim");
+            return;
+        }
+
+        if(strncmp(a, "load", 4) == 0)
+        {
+            const char* b = a + 4;
+            while(*b == ' ') b++;
+            char alvo = *b; if(alvo) b++;
+            while(*b == ' ') b++;
+            if((alvo != 'a' && alvo != 'b' && alvo != 'g') || !*b)
+            { hal::Log("uso: preset load <a|b|g> <nome>"); return; }
+
+            if(alvo == 'g')
+            {
+                const int i = biblio.AchaGlobal(b);
+                if(i < 0) { hal::Log("preset load: nao achei global \"%s\"", b); return; }
+                const cotuca::PresetGlobal& p = biblio.global[i];
+                for(int k = 0; k < p.n && k < pmapa.n_global; k++)
+                {
+                    params.Set(pmapa.global[k], (float)p.val[k] / 127.f);
+                    AbreJanelaEEspelha(pmapa.global[k]);
+                }
+                biblio.ponteiro_global = i;
+                hal::Log("preset load: global \"%s\" — %d params, janela de"
+                         " autoria aberta, espelho escoa sozinho",
+                         p.nome, (int)p.n);
+                return;
+            }
+            const int c = (alvo == 'a') ? 0 : 1;
+            const int i = biblio.AchaCadeia(b);
+            if(i < 0) { hal::Log("preset load: nao achei \"%s\"", b); return; }
+            const cotuca::PresetCadeia& p = biblio.cadeia[i];
+            for(int k = 0; k < p.n && k < pmapa.n_cadeia; k++)
+            {
+                params.Set(pmapa.cadeia[c][k], (float)p.val[k] / 127.f);
+                AbreJanelaEEspelha(pmapa.cadeia[c][k]);
+            }
+            biblio.ponteiro[c] = i;
+            hal::Log("preset load: \"%s\" na cadeia %c — %d params, janela"
+                     " aberta, espelho escoa sozinho",
+                     p.nome, alvo == 'a' ? 'A' : 'B', (int)p.n);
+            return;
+        }
+
+        hal::Log("preset: list | dump | load <a|b|g> <nome>   ·"
+                 " capturar <a|b|g> <nome>");
+        return;
+    }
     if(strncmp(line, "pino", 4) == 0)
     {
         // PRIMEIRO A TRAVA (sem relogio), depois a janela (com relogio).
@@ -2579,6 +2939,10 @@ static void HandleLine(const char* line)
         // ocorrencia — porque so saia no banner, e quem conecta a
         // serial depois nunca a ve. Aviso que exige estar presente na
         // hora certa e aviso que se perde.
+        if(hal::SerialTruncadas())
+            hal::Log("serial: %lu linha(s) RECUSADA(S) por passar de %d chars"
+                     " — comando pela metade nao e comando",
+                     (unsigned long)hal::SerialTruncadas(), 160);
         hal::Log("tabelas: %d/%d params | %d/%d CCs%s",
                  params.Count(), (int)cotuca::kMaxParams,
                  manifest.n_midi, (int)cotuca::kMaxMidiMap,
@@ -3602,7 +3966,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -3688,6 +4052,16 @@ int main(void)
     // base de tempo valida — a mesma pre-condicao que derrubou o vigia
     // do loop em 22/08 (bts 12z).
     boot_dreno_ate = hal::NowMs() + kDrenoBootMs;
+    // O MAPA DE PRESET E O HASH SE CONSTROEM DEPOIS DO manifest.Init(),
+    // porque os dois LEEM a tabela ja povoada. Ler antes daria um mapa
+    // vazio e um hash de nada — e o hash de nada bate com o hash de
+    // nada, entao todo preset passaria na conferencia (P2 do audit:
+    // quem configura vem antes de quem consome).
+    pmapa.Construir(params);
+    mapa_hash = cotuca::MapaHash(params);
+    hal::Log("presets: mapa 0x%04X | %d por cadeia + %d global%s",
+             (unsigned)mapa_hash, pmapa.n_cadeia, pmapa.n_global,
+             pmapa.estourou ? "   *** ESTOUROU o teto por preset ***" : "");
     midi.Init(manifest.midi_channel, OnMidiCc);
     midi.SetTrace(OnMidiTrace);
     hal::SetMidiByteCallback(OnMidiByte); // é isto que liga a UART

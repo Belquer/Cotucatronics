@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.3.0
+// Cotucatronics OS — presets v0.4.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -234,5 +234,131 @@ inline const char* Porque(PresetVeredito v)
     }
     return "?";
 }
+
+// ------------------------------------------------------------------
+// O MAPA ORDENADO — o que da sentido aos bytes
+//
+// O preset guarda uma sequencia de bytes; sem uma ordem ESTAVEL e
+// DERIVADA, o byte 7 nao significa nada. A ordem e a da propria
+// ParamTable, filtrada — nunca uma lista digitada, pela mesma razao de
+// `EhDeCadeia` ser derivado: duas listas divergem no primeiro param novo
+// e divergem em silencio.
+//
+// O `MapaHash` cobre exatamente essa dependencia: se a ordem da tabela
+// mudar, o hash muda e o preset velho e recusado antes de escrever nos
+// params errados.
+struct PresetMapa
+{
+    int  cadeia[2][kMaxPresetVals];   // ids na ordem, por cadeia
+    int  n_cadeia = 0;                // igual nas duas, por construcao
+    int  global[kMaxPresetVals];
+    int  n_global = 0;
+    bool estourou = false;            // mais params do que cabe
+
+    void Construir(const ParamTable& t)
+    {
+        n_cadeia = n_global = 0;
+        estourou = false;
+        for(int i = 0; i < t.Count(); i++)
+        {
+            const char*  nome = t.Name(i);
+            if(!nome) continue;
+            const size_t L = strlen(nome);
+            if(EhDeCadeia(nome))
+            {
+                // So a cadeia A avanca o indice; a B casa pelo nome
+                // irmao. Assim as duas listas ficam ALINHADAS por
+                // construcao — o byte k e o mesmo param nas duas — em
+                // vez de por coincidencia de ordem.
+                if(nome[L - 1] != 'a') continue;
+                if(n_cadeia >= kMaxPresetVals) { estourou = true; continue; }
+                char irmao[32];
+                if(L >= sizeof(irmao)) { estourou = true; continue; }
+                memcpy(irmao, nome, L + 1);
+                irmao[L - 1] = 'b';
+                const int ib = t.Find(irmao);
+                if(ib < 0) { estourou = true; continue; }
+                cadeia[0][n_cadeia] = i;
+                cadeia[1][n_cadeia] = ib;
+                n_cadeia++;
+            }
+            else if(EhGlobal(nome))
+            {
+                if(n_global >= kMaxPresetVals) { estourou = true; continue; }
+                global[n_global++] = i;
+            }
+        }
+    }
+};
+
+// ------------------------------------------------------------------
+// A BIBLIOTECA
+//
+// UMA biblioteca, DOIS ponteiros. Nao sao duas listas: se fossem,
+// "corda" existiria duas vezes e as copias divergiriam no primeiro
+// ajuste. Carrega-se "corda" no A e "tambor" no B; se um dia houver
+// duas cordas, carrega-se "corda" nos dois.
+static constexpr int kMaxPresetsCadeia = 16;
+static constexpr int kMaxPresetsGlobal = 8;
+static constexpr int kNomeMax          = 16;
+
+struct PresetCadeia
+{
+    char    nome[kNomeMax] = {0};
+    uint8_t val[kMaxPresetVals] = {0};
+    uint8_t n = 0;
+    bool    usado = false;
+};
+
+struct PresetGlobal
+{
+    char    nome[kNomeMax] = {0};
+    uint8_t val[kMaxPresetVals] = {0};
+    uint8_t n = 0;
+    bool    usado = false;
+};
+
+struct Biblioteca
+{
+    PresetCadeia cadeia[kMaxPresetsCadeia];
+    PresetGlobal global[kMaxPresetsGlobal];
+    int          ponteiro[2] = {-1, -1};   // -1 = nenhum carregado
+    int          ponteiro_global = -1;
+
+    // Nome copiado com truncamento EXPLICITO e terminador garantido.
+    // `strncpy` sem o terminador a mao ja produziu nome sem fim neste
+    // tipo de estrutura em projetos demais para eu repetir.
+    static void PoeNome(char* dst, const char* src)
+    {
+        int k = 0;
+        for(; src && src[k] && k < kNomeMax - 1; k++) dst[k] = src[k];
+        dst[k] = 0;
+    }
+
+    int VagaCadeia() const
+    {
+        for(int i = 0; i < kMaxPresetsCadeia; i++)
+            if(!cadeia[i].usado) return i;
+        return -1;
+    }
+    int VagaGlobal() const
+    {
+        for(int i = 0; i < kMaxPresetsGlobal; i++)
+            if(!global[i].usado) return i;
+        return -1;
+    }
+    int AchaCadeia(const char* nome) const
+    {
+        for(int i = 0; i < kMaxPresetsCadeia; i++)
+            if(cadeia[i].usado && !strcmp(cadeia[i].nome, nome)) return i;
+        return -1;
+    }
+    int AchaGlobal(const char* nome) const
+    {
+        for(int i = 0; i < kMaxPresetsGlobal; i++)
+            if(global[i].usado && !strcmp(global[i].nome, nome)) return i;
+        return -1;
+    }
+};
 
 } // namespace cotuca

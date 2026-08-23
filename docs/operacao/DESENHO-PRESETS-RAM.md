@@ -1,6 +1,8 @@
 # Desenho — biblioteca de presets em RAM
 
-> **Estado: desenho, não implementado.** Escrito enquanto o aceite de hardware
+> **Estado: passos 1–3 IMPLEMENTADOS e provados na placa (23/08, v0.148.0);
+> passos 4–5 pendentes.** O ciclo `capturar → dump → reset → colar → load`
+> fecha com 33 params e zero recusas. Escrito enquanto o aceite de hardware
 > corre, de propósito: é trabalho de cabeça, não toca o firmware e não captura
 > estado nenhum, então não corre o risco de congelar um endereçamento
 > não-validado. Ver `ACEITE-MULTIPLEXACAO.md`.
@@ -243,6 +245,8 @@ Reordenar = mover linha · renomear = editar texto · deletar = apagar linha ·
 Mesma filosofia do manifest: *identidade do instrumento é dado, não código.*
 
 ## 7. Ordem de implementação, e o que cada passo pode provar sozinho
+
+**FEITO (v0.148.0):** 1, 2 e 3. **Falta:** ponteiros com pré-escuta (4) e OLED (5).
 
 1. **Estruturas + hash do mapa.** Prova: o hash muda ao renomear um param, e
    não muda ao mexer numa faixa. Banco nativo, sem placa.
