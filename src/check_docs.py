@@ -26,6 +26,25 @@ RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
 DOCS = [RAIZ / "README.md"] + sorted((RAIZ / "docs").glob("*.md"))
 
+def faixas():
+    """min/max de cada param, pra conferir FAIXAS citadas na prosa.
+
+    A LACUNA QUE O AUDIT DE 22/08 DEIXOU ABERTA. O item de backlog do
+    `frz_size` dizia "faixa 20-400" quando o manifest declarava 20-165 —
+    e o nome estava certo, entao o verificador de fantasmas passou por
+    ele. Nome confere; NUMERO nao conferia.
+
+    Confere so quando param e faixa aparecem na MESMA linha: prosa esta
+    cheia de numeros, e conferir todos seria falso-positivo garantido.
+    """
+    m = (SRC / "manifest.h").read_text(errors="replace")
+    out = {}
+    for nome, mi, ma in re.findall(
+            r't\.Add\("([a-z_0-9]+)",\s*[-\d.f]+,\s*([-\d.]+)f?,\s*([-\d.]+)f?',
+            m):
+        out[nome] = (float(mi), float(ma))
+    return out
+
 def verdade():
     m = (SRC / "manifest.h").read_text(errors="replace")
     params = set(re.findall(r't\.Add\("([a-z_0-9]+)"', m))
@@ -113,6 +132,47 @@ def main():
             n = len(re.findall(r'\b' + re.escape(nome) + r'\b', t))
             if n <= 2:
                 avisos.append((f.name, nome, n))
+    # ---- FAIXAS: nome certo, numero errado ----
+    #
+    # A LACUNA QUE O AUDIT DE 22/08 DEIXOU: o item do `frz_size` dizia
+    # "faixa 20-400" com o manifest em 20-165. O NOME estava certo, entao
+    # o verificador de fantasmas passou por ele.
+    #
+    # SO ONDE A DOC DECLARA A FAIXA COM A PALAVRA. Duas tentativas mais
+    # amplas foram descartadas por falso-positivo: casar qualquer par de
+    # numeros na linha acusou o `drv_sujeira` pelo "1,5-48x" do
+    # `drv_drive`, e o `dly_time` por "60-64", que e faixa de CC. Os
+    # numeros da doc sao majoritariamente CC e versao — conferir todos
+    # seria acusar o inocente, e verificador que acusa inocente perde a
+    # autoridade que o torna util (12c).
+    fx = faixas()
+    ruins = []
+    padrao = re.compile(
+        r'faixa\s+(\d+(?:[.,]\d+)?)\s*[-\u2013a]+\s*(\d+(?:[.,]\d+)?)',
+        re.I)
+    for doc in DOCS:
+        if not doc.exists(): continue
+        for ln, linha in enumerate(doc.read_text(errors="replace").split("\n"), 1):
+            if "doc-check: ignore" in linha: continue
+            mm = padrao.search(linha)
+            if not mm: continue
+            citados = {x for x in re.findall(r'`([a-z][a-z0-9_]+)`', linha)
+                       if x in fx or (x + "_a") in fx}
+            if len(citados) != 1: continue
+            nome = citados.pop()
+            base = nome if nome in fx else nome + "_a"
+            mi, ma = fx[base]
+            a = float(mm.group(1).replace(",", "."))
+            b = float(mm.group(2).replace(",", "."))
+            if (a, b) != (mi, ma):
+                ruins.append((doc.name, ln, nome, a, b, mi, ma,
+                              linha.strip()[:66]))
+    print(f"\nFAIXAS DECLARADAS QUE NAO BATEM: {len(ruins)}")
+    for d, l, n, a, b, mi, ma, ctx in ruins[:12]:
+        print(f"  {d}:{l}  `{n}` diz {a:g}-{b:g}, manifest diz {mi:g}-{ma:g}")
+        print(f"      | {ctx}")
+    erros += [(d, l, n, ctx) for d, l, n, _, _, _, _, ctx in ruins]
+
     print(f"\nORFAOS (aviso, exige julgamento): {len(avisos)}")
     for f, n, c in avisos[:20]:
         print(f"  {f}: {n} ({c} ocorrencias)")

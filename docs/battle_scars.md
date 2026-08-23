@@ -2842,8 +2842,7 @@ fantasma injetado → `make: *** [check-docs] Error 1`; removido → passa.
 
 ## 13i. A fila também deriva, e ninguém a verifica (22/08)
 
-O backlog trazia: *"`frz_size`: 61% de curso morto, faixa 20–400, clamp 167,
-etiquetado antes do painel"*. Verificado no fonte de agora:
+O backlog trazia: *"`frz_size`: 61% de curso morto, faixa 20–400, clamp 167, etiquetado antes do painel"*. <!-- doc-check: ignore frz_size (cicatriz cita a faixa PRE-conserto) --> Verificado no fonte de agora:
 
     manifest    20 .. 165 ms
     clamp real  NucleusLen()/3 = (500 ms x sr)/3 = 166,7 ms
@@ -2852,8 +2851,23 @@ Batem. **O defeito foi corrigido em `d80e45d`** e o item ficou meses na fila
 descrevendo o estado pré-conserto — inclusive citado por mim, como pendência,
 em vários alinhamentos.
 
-É a deriva doc↔código do mesmo dia, **num lugar que o `check-docs` não
-olha**: a lista de pendências. O verificador confere nomes de param contra o
+**E o agravante, que é o pior da história:** o item não estava só
+desatualizado — ele **atravessou vários alinhamentos sendo recitado**, por
+mim inclusive, cada vez ganhando um pouco mais de autoridade por repetição.
+A fila não é só um lugar onde a deriva se esconde: é um lugar onde ela **se
+reforça**, porque cada repetição parece confirmação.
+
+É a deriva doc↔código do mesmo dia, num lugar que o `check-docs` vigiava **pela
+metade**: ele confere NOMES contra o manifest e `frz_size` é nome válido — o
+que estava errado eram os NÚMEROS.
+
+**Fechado no mesmo dia:** o verificador ganhou checagem de **faixa declarada**
+— onde a doc escreve "faixa X–Y" ao lado de um param, os números são
+conferidos contra o `t.Add()`. Duas versões mais amplas foram descartadas por
+falso-positivo: casar qualquer par de números acusou o `drv_sujeira` pelo
+"1,5–48×" do `drv_drive`, e o `dly_time` por "60–64", que é faixa de **CC**.
+Os números da doc são majoritariamente CC e versão — **verificador que acusa
+inocente perde a autoridade que o torna útil**. O verificador confere nomes de param contra o
 manifest, mas o item citava **números** — faixa e clamp — e números em prosa
 são território de alto falso-positivo.
 
