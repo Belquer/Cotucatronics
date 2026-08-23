@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.134.0"
+#define COTUCA_OS_VERSION "0.135.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -244,8 +244,18 @@ static constexpr uint8_t kCcSync = 120;
 // 0xB1 escrito a mao aqui e o filtro de recepcao em lugar nenhum — e a
 // separacao de canal, declarada como defesa estrutural, nunca existiu.
 // Base 0: indice 1 = canal 2 no mostrador.
-static constexpr uint8_t kCanalEco  = 1;
-static constexpr uint8_t kStatusEco = 0xB0 | kCanalEco;
+// O ESPELHO SAIU DO CH2 (v0.135.0). Falava no canal que virou a entrada
+// da cadeia B, e a colisao obrigava a recusar aquela entrada. Agora ele
+// tem canais proprios — ch3 para a cadeia A + compartilhados, ch4 para a
+// cadeia B — e a placa espelha e recebe ao mesmo tempo.
+//
+// O status de saida se deriva do canal do VINCULO, nunca de uma
+// constante solta: dois canais e uma constante e o convite para um deles
+// ficar para tras no proximo remapeamento.
+static inline uint8_t StatusEspelho(uint8_t canal_vinculo)
+{
+    return (uint8_t)(0xB0 | cotuca::CanalEspelhoDe(canal_vinculo));
+}
 // POR PARAM, pelo mesmo motivo do `quiet_until`: o CC deixou de
 // identificar o assunto. Aqui o efeito de errar seria mais silencioso —
 // o espelho acharia que ja mandou o valor da cadeia B porque a A tinha
@@ -297,41 +307,18 @@ static constexpr uint32_t kJanelaMs = 250;
 // sempre quis dizer com "o assunto sobre o qual eu acabei de falar".
 static uint32_t quiet_until[cotuca::kMaxParams] = {0};
 static uint32_t cc_janela = 0;   // recusados pela janela
-// CHAVE DO ESPELHO — e ela existe por uma colisao do voo A.
+// CHAVE DO ESPELHO. Nasceu no voo A para desfazer uma colisao de canal
+// que nao existe mais — e a colisao morreu, mas a chave FICA, por outra
+// razao, declarada aqui para que ninguem a leia como vestigio:
 //
-// O espelho fala no ch2, e o ch2 acabou de virar a ENTRADA da cadeia B.
-// A recusa "nao obedeco a minha propria voz" era incondicional no ch2,
-// entao a cadeia B nasceria inalcancavel e o aceite do voo A nao teria
-// como rodar.
+// silenciar o espelho e o unico jeito de medir carga de MIDI sem a
+// propria medicao gerar trafego, e de isolar "o widget nao recebe" de
+// "o widget recebe e ignora". E ganho de teste, da mesma familia do
+// `ctos prazo` e do `dup on|off`.
 //
-// A correcao nao e afrouxar a recusa: e amarra-la a premissa que a
-// justifica. A defesa existe porque a placa FALA naquele canal — se ela
-// nao esta falando, nao ha voz propria para recusar. Defesa orfa e a
-// que continua de pe depois que a ameaca some.
-//
-// No voo B o espelho vai para 3/4 e a colisao desaparece: da para
-// espelhar e receber ao mesmo tempo, que e o estado final desejado.
+// O que saiu junto com o interino foi o ACOPLAMENTO: a entrada nao
+// depende mais desta chave. Ela so cala a saida.
 static bool espelho_on = true;
-// CARENCIA DE DRENAGEM, e ela veio de uma medicao, nao de teoria.
-//
-// Ao virar `espelho off` na bancada, o contador novo acusou 4 CCs
-// chegando "fora do mapa" logo depois. Eram mensagens DO PROPRIO
-// espelho, ainda em voo no fio quando a chave virou: as
-// COMPARTILHADAS nao tem vinculo no ch2 e cairam como sem dono — mas
-// as PAREADAS teriam achado dono. O espelho manda o CC 34 com o valor
-// de `drv_drive_a`, e no ch2 o CC 34 e `drv_drive_b`: a placa
-// escreveria o valor da cadeia A dentro da B, sozinha.
-//
-// Desligar um transmissor nao esvazia o fio. A 31250 baud uma
-// mensagem leva ~1 ms e o espelho manda em rajadas de duas a cada
-// 8 ms; 300 ms cobrem a fila com folga larga, e o custo de errar para
-// mais e so demorar a aceitar a cadeia B.
-//
-// Mesma familia da regra de carencia do rearme: mecanismo que age
-// precisa de intervalo entre agir e voltar a confiar no que mede.
-static constexpr uint32_t kDrenoMs = 300;
-static uint32_t espelho_dreno_ate = 0;
-static uint32_t cc_dreno = 0;   // recusados enquanto o fio esvazia
 static uint32_t cc_canal_errado = 0;  // canal sem vinculo nenhum
 static uint32_t cc_sem_dono = 0;      // (canal,cc) fora do mapa
 
@@ -373,14 +360,10 @@ static void MidiEspelha()
     {
         const int id = manifest.midi_map[i].param_id;
         if(id < 0) continue;
-        // INTERINO DO VOO A: o espelho so reflete os vinculos do ch1
-        // (compartilhados + cadeia A). Sem este filtro ele mandaria o
-        // MESMO numero de CC duas vezes por volta, com o valor da A e o
-        // da B, e os dois se sobrescreveriam no widget.
-        //
-        // Some no voo B, quando o espelho ganhar dois canais proprios
-        // (3 e 4) e cada cadeia falar no seu.
-        if(manifest.midi_map[i].canal != kCanalEntradaA) continue;
+        // SEM FILTRO: cada vinculo fala no canal de espelho da SUA
+        // cadeia. O filtro do voo A existia porque havia um canal so —
+        // era a compressao de dois estados num, e o preco era a cadeia B
+        // invisivel ao iPad.
         const uint8_t cc = manifest.midi_map[i].cc;
         float norm = params.Get(id);
         if(norm < 0.f) norm = 0.f;
@@ -388,7 +371,8 @@ static void MidiEspelha()
         const uint8_t v = (uint8_t)(norm * 127.f + 0.5f);
         if(eco_ult[id] == v) continue;
         eco_ult[id] = v;
-        const uint8_t msg[3] = {kStatusEco, cc, v};
+        const uint8_t msg[3]
+            = {StatusEspelho(manifest.midi_map[i].canal), cc, v};
         hal::MidiSendBytes(msg, 3);
         quiet_until[id] = ag + kJanelaMs;   // falei deste assunto
         eco_tx++;
@@ -415,7 +399,8 @@ static void MidiPushEstado()
         const float norm = params.Get(id);
         uint8_t v = (uint8_t)(norm * 127.f + 0.5f);
         if(v > 127) v = 127;
-        const uint8_t msg[3] = {kStatusEco, manifest.midi_map[i].cc, v};
+        const uint8_t msg[3] = {StatusEspelho(manifest.midi_map[i].canal),
+                                manifest.midi_map[i].cc, v};
         eco_ult[id] = v;  // nao reenviar depois
         hal::MidiSendBytes(msg, 3);
         // Respira entre mensagens: a 31250 baud tres bytes levam ~1 ms,
@@ -438,12 +423,23 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
     // omni inclui o canal em que ela mesma fala. A separacao de canal
     // estava declarada no cabecalho e nao existia no codigo: metade de
     // uma defesa e uma defesa orfa, e esta deixou o laco de pe.
-    if(espelho_on && ch == kCanalEco) { eco_proprio++; return; }
-    // O fio ainda esvazia: o que chega no canal do espelho neste
-    // intervalo e voz propria atrasada, nao gesto do operador.
-    if(ch == kCanalEco && espelho_dreno_ate
-       && (int32_t)(hal::NowMs() - espelho_dreno_ate) < 0)
-    { cc_dreno++; return; }
+    // A RECUSA CONDICIONAL DO CH2 SAIU JUNTO COM A AMEACA (v0.135.0).
+    //
+    // Ela existia porque o espelho falava no ch2 e a placa obedeceria a
+    // propria voz. Com o espelho no ch3/ch4 o ch2 e SO entrada, e manter
+    // a recusa deixaria a cadeia B pela metade — defesa orfa e a que
+    // sobrevive ao inimigo.
+    //
+    // A voz propria continua barrada, e por um caminho mais simples: os
+    // canais 3 e 4 NAO TEM VINCULO NENHUM no mapa, entao caem na recusa
+    // por canal logo abaixo, contados. Endereco que nao existe nao
+    // precisa de defesa dedicada.
+    //
+    // E o que protege contra o laco de verdade nao e canal, e a JANELA
+    // DE AUTORIA: o widget ouve o ch3, reage, e manda no ch1 — mesmo
+    // canal de sempre. Nenhuma separacao de canal pega isso; so a janela
+    // por param pega.
+    if(ch == kCanalEspelhoA || ch == kCanalEspelhoB) { eco_proprio++; return; }
     // CANAL SEM VINCULO NENHUM: recusado e CONTADO.
     //
     // No voo A so 1 e 2 endereçam. 3 e 4 ainda nao existem como saida do
@@ -2247,14 +2243,14 @@ static void declara_modos()
     if(!g_dup_por_cadeia)
         hal::Log("[DUP OFF] os dez params de caracter estao COMPARTILHADOS"
                  " — a cadeia B soa com os valores da A. `dup on` devolve.");
-    // INTERINO DO VOO A, e ele TEM que aparecer em todo status: com o
-    // espelho ligado a cadeia B nao recebe MIDI, e o sintoma disso e
-    // exatamente igual ao de "o widget da cadeia B nao esta mandando".
-    // Sem esta linha, a proxima bancada gasta meia hora no lugar errado.
-    if(espelho_on)
-        hal::Log("[ESPELHO NO CH2] a entrada da cadeia B esta RECUSADA"
-                 " enquanto o espelho falar no ch2 — `espelho off` libera."
-                 " Some no voo B, quando o espelho for pro ch3/ch4.");
+    // O aviso do interino do voo A saiu junto com o interino: o espelho
+    // nao ocupa mais canal de entrada, entao nao ha entrada recusada
+    // para declarar. O que sobrou de modo declaravel e o espelho MUDO,
+    // porque placa que nao espelha e indistinguivel de placa cujo fio
+    // de saida caiu.
+    if(!espelho_on)
+        hal::Log("[ESPELHO MUDO] a placa nao esta transmitindo estado —"
+                 " os widgets nao vao acompanhar. `espelho on` devolve.");
 }
 
 static void HandleLine(const char* line)
@@ -2434,20 +2430,10 @@ static void HandleLine(const char* line)
     {
         const char* a = line + 7;
         while(*a == ' ') a++;
-        if(*a)
-        {
-            const bool novo = (strncmp(a, "on", 2) == 0);
-            if(espelho_on && !novo)
-                espelho_dreno_ate = hal::NowMs() + kDrenoMs;
-            espelho_on = novo;
-        }
-        const bool drenando = espelho_dreno_ate
-            && (int32_t)(hal::NowMs() - espelho_dreno_ate) < 0;
-        hal::Log("espelho: %s — entrada da cadeia B (ch2) %s",
-                 espelho_on ? "LIGADO no ch2" : "desligado",
-                 espelho_on ? "RECUSADA (a placa fala nesse canal)"
-                 : drenando ? "recusada por mais ~300 ms (fio esvaziando)"
-                            : "ACEITA");
+        if(*a) espelho_on = (strncmp(a, "on", 2) == 0);
+        hal::Log("espelho: %s — a entrada (ch1/ch2) nao depende disto",
+                 espelho_on ? "LIGADO (ch3 cadeia A, ch4 cadeia B)"
+                            : "MUDO");
         return;
     }
     if(strncmp(line, "dup", 3) == 0)
@@ -2823,9 +2809,15 @@ static void HandleLine(const char* line)
             // deveria exercitar — e foi assim que um `midiloop` ficou
             // batendo com o espelho durante a bancada de 22/08.
             {
-                const int pid = manifest.FindMidiParam(kCanalEntradaA,
-                                                       (uint8_t)cc);
-                if((uint8_t)(ch - 1) == kCanalEco && pid >= 0)
+                // O canal do teste decide de QUAL cadeia e o vinculo:
+                // ch3 espelha a A, ch4 espelha a B. Alimentar sempre a A
+                // faria o `midiloop` divergir da feature no exato ponto
+                // que ele existe para exercitar.
+                const uint8_t cin = ((uint8_t)(ch - 1) == kCanalEspelhoB)
+                                        ? kCanalEntradaB : kCanalEntradaA;
+                const int pid = manifest.FindMidiParam(cin, (uint8_t)cc);
+                if(((uint8_t)(ch - 1) == kCanalEspelhoA
+                    || (uint8_t)(ch - 1) == kCanalEspelhoB) && pid >= 0)
                     eco_ult[pid] = (uint8_t)val;
             }
             hal::Log("midiloop: TX B%d %02lX %02lX — precisa de jumper "
@@ -3412,8 +3404,10 @@ static void HandleLine(const char* line)
         // OS DOIS JUNTOS, e a diferenca entre eles E o dado: TX conta o
         // que a placa pos no fio, "voltaram" conta o que o caminho
         // devolveu. TX > voltaram significa perda entre D13 e o iPad.
-        hal::Log("  eco: TX %lu no canal %d | voltaram %lu | perdidas %ld",
-                 (unsigned long)eco_tx, kCanalEco + 1,
+        hal::Log("  eco: TX %lu (ch%d cadeia A / ch%d cadeia B)"
+                 " | voltaram %lu | perdidas %ld",
+                 (unsigned long)eco_tx,
+                 kCanalEspelhoA + 1, kCanalEspelhoB + 1,
                  (unsigned long)eco_proprio,
                  (long)eco_tx - (long)eco_proprio);
         hal::Log("  delay: %lu vezes que o clamp do ponteiro de leitura"
@@ -3426,10 +3420,8 @@ static void HandleLine(const char* line)
     // "o CC nao fez nada" teria duas causas indistinguiveis: canal sem
     // vinculo (widget na pagina errada) e endereço fora do mapa (widget
     // no numero errado). Sao consertos diferentes.
-    hal::Log("     canal sem vinculo: %lu | (canal,cc) fora do mapa: %lu"
-             " | drenagem do espelho: %lu",
-             (unsigned long)cc_canal_errado, (unsigned long)cc_sem_dono,
-             (unsigned long)cc_dreno);
+    hal::Log("     canal sem vinculo: %lu | (canal,cc) fora do mapa: %lu",
+             (unsigned long)cc_canal_errado, (unsigned long)cc_sem_dono);
         // ESTADO DA MAQUINA por extenso: "aguardando o que?" e a
         // pergunta que o numero cru nao responde.
         const int nd = midi.PendingData();

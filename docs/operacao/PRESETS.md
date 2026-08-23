@@ -1,7 +1,12 @@
 # PRESETS — desenho aprovado
 
-> **Estado: passo 1 IMPLEMENTADO E MEDIDO (23/08, v0.132.0); passos 2–6
+> **Estado: passos 1 e 2 IMPLEMENTADOS (23/08, v0.135.0); passos 3–6
 > desenhados.** Aprovado pelo dB em 22/08.
+>
+> O passo 2 saiu em **dois voos separados**: A, o endereçamento de
+> entrada por canal; B, o espelho para ch3/ch4. Separados porque falham
+> de jeitos diferentes e o `vistos` — o instrumento do aceite — estava
+> no meio da mudança que o afeta.
 > A escrita em flash está bloqueada (ver `DESENHO-ESCRITA-QSPI.md`); o
 > desenho abaixo **não depende dela** para começar.
 
@@ -68,6 +73,20 @@ idênticas — copiar a página e trocar um campo. Total de números de CC cai d
 
 ⚠️ O espelho **sai do canal 2** (que passa a ser entrada da cadeia B) e vai
 para 3/4. A defesa de recusar a própria voz se mantém, só muda de número.
+
+**Estado: FEITO (v0.135.0).** O que a implementação acrescentou ao desenho:
+
+- a **chave `espelho on|off`** teve que nascer no voo A, não no B: sem ela a
+  recusa incondicional do ch2 tornava a cadeia B inalcançável e o aceite do
+  voo A não tinha como rodar. Ficou depois como ganho de teste, desacoplada
+  da entrada;
+- **`espelho off` não abre a entrada na hora** enquanto os canais se
+  sobrepõem — desligar um transmissor não esvazia o fio, e mensagem do
+  espelho em voo vira escrita **mal-endereçada** na cadeia irmã. No voo B a
+  sobreposição virou impossível por construção (`static_assert`);
+- os **números liberados pela cadeia B** (22, 24, 26, 32, 33, 42, 43, 52, 53,
+  62, 63, 68–70, 80–88, 106, 116–118) seguem com widgets antigos apontando
+  para eles. O `vistos` os nomeia como `ORFAO ch1 ccNN`.
 
 **Consequências de implementação:**
 - A **janela de autoria passa a ser indexada por PARÂMETRO, não por CC** — com

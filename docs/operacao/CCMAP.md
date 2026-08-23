@@ -32,27 +32,35 @@ apontam para eles e **agora não fazem nada**. O `vistos` os nomeia como
 `ORFAO ch1 ccNN`. Não reaproveitar esses números antes de refazer as páginas:
 número reaproveitado cedo vira widget velho mexendo em param novo.
 
-## O espelho (canal 2 — interino do voo A)
+## O espelho (canais 3 e 4)
 
-A placa **transmite** seu estado no canal 2 e **recusa** na entrada tudo que
-chega no canal 2 — senão obedeceria a própria voz. No Loopy, o widget envia
-no canal 1 e escuta no canal 2.
+    ESPELHO   ch3 <- estado da cadeia A + COMPARTILHADOS
+              ch4 <- estado da cadeia B
 
-⚠️ **Colisão declarada, e ela some no voo B:** o ch2 agora é *também* a
-entrada da cadeia B. Enquanto o espelho falar nele, a entrada da cadeia B
-fica **recusada** — `espelho off` libera, e o `board` diz isso em toda
-consulta. Ao desligar, a entrada só abre **300 ms depois**, porque desligar
-um transmissor não esvazia o fio: mensagens ainda em voo chegariam como
-escrita na cadeia B (o espelho manda o CC 34 com o valor da A, e no ch2 o
-CC 34 é a B). No voo B o espelho vai para ch3/ch4 e dá para espelhar e
-receber ao mesmo tempo.
+**Um canal por cadeia, e não um só:** o espelho carrega VALOR, e o valor da
+cadeia A não serve para a B. No mesmo canal, o mesmo número de CC chegaria
+duas vezes por volta com valores diferentes e o widget ficaria com o último —
+falha que não aparece em log nenhum, só no iPad.
+
+No Loopy, o widget da cadeia A **envia no ch1 e escuta no ch3**; o da cadeia B
+**envia no ch2 e escuta no ch4**.
+
+**A entrada não depende do espelho.** Os canais 3 e 4 não têm vínculo nenhum
+no mapa, então o que chega neles não move nada e é contado — endereço que não
+existe não precisa de defesa dedicada. Um `static_assert` garante que canal de
+espelho nunca coincida com canal de entrada; se alguém tentar, o build quebra
+e explica por quê.
+
+**O que protege contra laço não é o canal, é a janela de autoria.** O widget
+ouve o ch3, reage, e manda no ch1 — o mesmo canal de sempre. Nenhuma separação
+de canal pega isso.
 
 **Janela de autoria: 250 ms, indexada por PARÂMETRO.** Era por CC, e com a
 multiplexação o CC deixou de identificar o assunto — a janela do drive da
-cadeia A silenciaria o da B. Depois de o espelho transmitir um param, a
-entrada ignora aquele param por 250 ms. Isso existe porque widget de toggle devolve o
-*estado dele*, não a mensagem — e fora de fase devolve o valor oposto,
-desfazendo a mudança. Descarte é **contado** (`cc_janela` no `midi`).
+cadeia A silenciaria o da B. Descarte é **contado** (`cc_janela`, no `midi`).
+
+**`espelho off`** cala a saída e **não** afeta a entrada. É ganho de teste: o
+único jeito de medir carga de MIDI sem a medição gerar tráfego.
 
 ## Tabela
 

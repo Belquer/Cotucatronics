@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.6.0
+// Cotucatronics OS — midi v0.7.0
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -90,6 +90,50 @@ using MidiTraceFn = void (*)(uint8_t byte, MidiVerdict v, uint8_t status,
 // são parâmetros DIFERENTES.
 constexpr uint8_t kCanalEntradaA = 0;  // MIDI ch1 — cadeia A + compartilhados
 constexpr uint8_t kCanalEntradaB = 1;  // MIDI ch2 — cadeia B
+
+// CANAIS DE SAÍDA DO ESPELHO. Separados da entrada, e é isso que desfaz
+// a colisão do voo A: enquanto o espelho falava no ch2, a entrada da
+// cadeia B tinha que ficar recusada. Com canais próprios, a placa
+// espelha e recebe ao mesmo tempo, que é o estado final.
+//
+// Um por cadeia, e não um só: o espelho carrega VALOR, e o valor da
+// cadeia A não serve para a B. Mandar os dois no mesmo canal faria o
+// mesmo número de CC chegar duas vezes por volta com valores
+// diferentes, e o widget ficaria com o último que chegasse.
+constexpr uint8_t kCanalEspelhoA = 2;  // MIDI ch3 — estado da cadeia A + compartilhados
+constexpr uint8_t kCanalEspelhoB = 3;  // MIDI ch4 — estado da cadeia B
+
+// O espelho de um vínculo é o canal de saída correspondente ao canal de
+// entrada dele. Uma função, para que o pareamento não seja redigitado em
+// cada lugar que precise dele.
+inline uint8_t CanalEspelhoDe(uint8_t canal_entrada)
+{
+    return canal_entrada == kCanalEntradaB ? kCanalEspelhoB : kCanalEspelhoA;
+}
+
+// A INVARIANTE QUE APOSENTOU UMA DEFESA DE TEMPO DE EXECUCAO.
+//
+// Enquanto o espelho falou num canal de ENTRADA (o ch2, no voo A), uma
+// mensagem dele ainda em voo chegava como escrita num param de verdade:
+// o espelho manda o CC 34 com o valor de `drv_drive_a`, e no ch2 o CC 34
+// e `drv_drive_b`. Nao era mensagem orfa — era MAL-ENDERECADA, que e a
+// classe nova que a multiplexacao criou e a que nao tem sintoma: a
+// cadeia B mudava sozinha, sem gesto humano para correlacionar.
+//
+// A defesa era uma carencia de drenagem de 300 ms. Ela some aqui, e nao
+// por confianca: some porque a SOBREPOSICAO que a tornava necessaria
+// ficou impossivel por construcao. Se alguem devolver o espelho para um
+// canal de entrada, o build quebra nesta linha e le o porque.
+//
+// Defesa que vira invariante de compilacao e melhor que defesa que roda:
+// custa zero e nao pode ser esquecida ligada nem esquecida desligada.
+static_assert(kCanalEspelhoA != kCanalEntradaA
+                  && kCanalEspelhoA != kCanalEntradaB
+                  && kCanalEspelhoB != kCanalEntradaA
+                  && kCanalEspelhoB != kCanalEntradaB,
+              "canal de espelho nao pode coincidir com canal de entrada: "
+              "mensagem do espelho em voo vira escrita mal-enderecada num "
+              "param real (ver battle_scars 13n)");
 
 struct MidiCcBind
 {

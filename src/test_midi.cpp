@@ -298,21 +298,53 @@ int main()
             }
         }
 
-        // CANAL SEM VINCULO nao move nada. O ch3 e ch4 sao o espelho do
-        // voo B; hoje nao endereçam, e o teste trava isso ANTES de a
-        // saida existir — defesa testada antes da ameaca chegar.
+        // OS CANAIS DE ESPELHO NAO ENDERECAM NADA NA ENTRADA, e este
+        // teste e o que substitui a recusa condicional que o voo A
+        // precisou: em vez de barrar um canal em tempo de execucao,
+        // prova-se que nenhum vinculo mora la. Endereço que nao existe
+        // nao precisa de defesa dedicada.
+        {
+            int no_espelho = 0;
+            for(int k = 0; k < m.n_midi; k++)
+                if(m.midi_map[k].canal == cotuca::kCanalEspelhoA
+                   || m.midi_map[k].canal == cotuca::kCanalEspelhoB)
+                    no_espelho++;
+            snprintf(d, sizeof(d), "%d vinculos nos canais de espelho"
+                     " (ch%d/ch%d)", no_espelho,
+                     cotuca::kCanalEspelhoA + 1, cotuca::kCanalEspelhoB + 1);
+            Check("nenhum vinculo de ENTRADA nos canais do espelho",
+                  no_espelho == 0, d);
+        }
+
+        // E O PAREAMENTO DA SAIDA: cada cadeia espelha no SEU canal. Se
+        // as duas fossem para o mesmo, o mesmo numero de CC chegaria
+        // duas vezes por volta com valores diferentes e o widget ficaria
+        // com o ultimo — falha sem sintoma no log, so no iPad.
+        {
+            snprintf(d, sizeof(d), "A->ch%d  B->ch%d",
+                     cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA) + 1,
+                     cotuca::CanalEspelhoDe(cotuca::kCanalEntradaB) + 1);
+            Check("cada cadeia espelha num canal PROPRIO",
+                  cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA)
+                      != cotuca::CanalEspelhoDe(cotuca::kCanalEntradaB), d);
+        }
+
+        // CANAL SEM VINCULO nao move nada — agora medido nos canais que
+        // o espelho de fato ocupa, e nao em dois numeros escolhidos.
         {
             const int ia = t.Find("drv_drive_a");
             if(ia >= 0)
             {
                 const float antes = t.Get(ia);
-                const uint8_t m3[] = {0xB2, (uint8_t)CcDe(ia), 7};
+                const uint8_t m3[] = {(uint8_t)(0xB0 | cotuca::kCanalEspelhoA),
+                                      (uint8_t)CcDe(ia), 7};
                 Feed(p, m3, 3);
-                const uint8_t m4[] = {0xB3, (uint8_t)CcDe(ia), 7};
+                const uint8_t m4[] = {(uint8_t)(0xB0 | cotuca::kCanalEspelhoB),
+                                      (uint8_t)CcDe(ia), 7};
                 Feed(p, m4, 3);
                 snprintf(d, sizeof(d), "antes=%.4f depois=%.4f",
                          (double)antes, t.Get(ia));
-                Check("CC nos canais 3 e 4 NAO movem parametro nenhum",
+                Check("CC nos canais do ESPELHO nao movem parametro nenhum",
                       fabsf(t.Get(ia) - antes) < 1e-6f, d);
             }
         }
