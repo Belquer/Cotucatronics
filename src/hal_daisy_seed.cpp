@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.18.0
+// hal_daisy_seed v0.21.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include <cstdarg>
@@ -22,7 +22,7 @@ static DaisySeed hw;
 static BoardInfo info = {
     .name         = "Daisy Seed",
     .num_knobs    = 5, // k1 level, k2 src_mix, k3-k5 macros
-    .num_buttons  = 3, // B1 randomizador, B2 assinalável, B3 rearme do CTOS
+    .num_buttons  = 4, // B1 rnd · B2 freeze A · B3 rearme CTOS · B4 freeze B
     .has_audio_in = true,
     .sample_rate  = 48000.f,
     // Valor de partida; o manifest pede o dele em RequestBlockSize()
@@ -48,10 +48,31 @@ static BoardInfo info = {
 // debounce contado quebraria em silêncio se o loop mudasse de
 // cadência — que é exatamente o tipo de acoplamento invisível que
 // esta base já pagou caro pra aprender a evitar.
-constexpr int      kNumButtons  = 3;
+constexpr int      kNumButtons  = 4;   // B1 rnd, B2 frzA, B3 rearme, B4 frzB
+// LED DO FREEZE — D24, saida. Confirmado livre no fonte antes de
+// reservar: D24 nao aparece em lugar nenhum, e os potenciometros nem
+// estao implementados (ReadKnob e stub), entao nao ha conflito de ADC.
+// Pino se confirma no codigo, nao na memoria.
+// LEDS DE PAINEL, por INDICE — o manifest declara qual botao acende
+// qual, e nao conhece pino. A fronteira board-agnostic e o motivo
+// desta base existir: quem troca de placa troca este arquivo e mais
+// nada.
+constexpr int      kNumLeds = 2;   // 0 = freeze A (D27), 1 = freeze B (D23)
+static GPIO        leds[kNumLeds];
 static GPIO        widi_led;     // LB=D28 (LG/LR removidos 20/08 — nao
                                  // marcavam nada, medido)
-constexpr uint32_t kDebounceMs  = 10;
+// 30 ms, MEDIDO — nao escolhido.
+//
+// Eram 10 ms, e com o botao de arcade EG Starts cinco batidas viraram
+// SEIS alternancias: o microswitch quica mais que 10 ms, sobretudo na
+// soltura. 30 ms fica bem acima do quique tipico e continua
+// imperceptivel como gesto — nenhum humano bate duas vezes em 30 ms.
+//
+// Se um dia um botao diferente exigir outro numero, o instrumento pra
+// medir ja existe: o contador de batidas no `board`, contra a
+// contagem do operador. Paridade nao serve — 5 e 7 batidas dao o
+// mesmo estado final.
+constexpr uint32_t kDebounceMs  = 30;
 
 struct ButtonState
 {
@@ -217,14 +238,33 @@ bool Init()
     // botões: entrada com pull-up interno, fecham pra GND
     // WIDI LB: entrada com pull-up. D28 esta livre — D13/D14 sao a UART
     // do MIDI, D15-D19 sao os pots (A0-A4 sao os MESMOS pinos), e
-    // D26/D27 sao os botoes.
+    // D26 e D24 sao botoes; D27 virou SAIDA pro LED do freeze.
     // So o LB. D29/D30 reservados pras chaves DPDT dos excitadores.
     // D25 entrou em 22/08 como B3 = rearme do teto de soma: pull-up
     // interno e ativo em BAIXO, entao com o painel ainda inexistente o
     // pino flutuante le "solto" — botao que nao existe nao dispara.
     widi_led.Init(seed::D28, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
-    const Pin btn_pins[kNumButtons] = {seed::D26, seed::D27, seed::D25};
+    // LEDs de painel. Saida, sem pull — os LEDs tem resistor proprio
+    // de 5 V acionados com 3,3 V. Brilho JULGADO SUFICIENTE de olho em
+    // 22/08, entao o plano B (transistor chaveando o trilho de 5 V,
+    // base/gate via 1k) fica arquivado sem custo.
+    //
+    // O LED do freeze A ficou no D27 e o switch no D24 porque a fiacao
+    // ja estava feita assim: trocar dois numeros no fonte custa uma
+    // gravacao, refazer solda custa tempo e risco de contato ruim.
+    const Pin led_pins[kNumLeds] = {seed::D27, seed::D23};
+    for(int i = 0; i < kNumLeds; i++)
+    {
+        leds[i].Init(led_pins[i], GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+        leds[i].Write(false);
+    }
+
+    // B1 randomizador, B2 FREEZE, B3 rearme do CTOS.
+    // B2 mudou de D27 pra D24 junto com o LED — ver acima.
+    // B1 randomizador · B2 freeze A · B3 rearme do CTOS · B4 freeze B
+    const Pin btn_pins[kNumButtons]
+        = {seed::D26, seed::D24, seed::D25, seed::D22};
     for(int i = 0; i < kNumButtons; i++)
         buttons[i].gpio.Init(btn_pins[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
@@ -281,6 +321,18 @@ bool ReadButton(int index)
 }
 
 void SetLed(bool on) { hw.SetLed(on); }
+
+// LED do freeze. SEGUE O PARAMETRO, nunca o gesto — quem chama tem que
+// passar o estado real de `frz_on`, nao "acabei de apertar". Se o
+// freeze mudar por CC, serial, preset ou queda do CTOS, o LED conta a
+// verdade. Mesma regra do espelho: indicador reporta estado, nao
+// intencao.
+void SetPanelLed(int idx, bool on)
+{
+    if(idx < 0 || idx >= kNumLeds) return;
+    leds[idx].Write(on);
+}
+int  PanelLedCount() { return kNumLeds; }
 
 // ---- log: transmissão própria, sem o Logger da libDaisy ----
 //

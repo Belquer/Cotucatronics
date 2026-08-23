@@ -5,7 +5,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.125.6"
+#define COTUCA_OS_VERSION "0.127.1"
 
 #include "hal.h"
 #include "params.h"
@@ -1127,8 +1127,6 @@ alignas(32) static float reverb_mem[cotuca::Manifest::kCadeias][28160];
 static bool  btn_prev[3] = {false, false, false};
 static bool  b2_sim      = false; // simulação por serial
 static bool  b3_sim      = false; // B3 (rearme) simulado por serial
-static float b2_saved    = 0.f;
-static bool  b2_held     = false;
 
 // Rampa curta pro sorteio. Trocar parâmetro em degrau CLICA — é a
 // mesma descontinuidade que o soft-knee do governor teve que aprender
@@ -1992,25 +1990,51 @@ static void TriggerRandomize(bool autorand)
 }
 
 // B2: momentâneo. Guarda o valor, força 1, devolve ao soltar.
-static void SetButton2(bool pressed)
+// B2 = BOTAO DE FREEZE FISICO (D27), e agora ALTERNA em vez de segurar.
+//
+// Era momentaneo: apertar forcava 1, soltar devolvia o valor guardado.
+// Virou toggle por pedido do dB — bateu congela, bateu solta. Com botao
+// de arcade a alternancia e o gesto certo: segurar um arcade durante
+// uma cauda de freeze e desconfortavel, e o `frz_on` deste instrumento
+// JA E o gesto de congelar, nao uma chave de bypass.
+//
+// O TOGGLE MORA NO PARAM, que e a fonte da verdade. O botao so escreve
+// ali; espelho, janela de autoria, LED e CTOS leem de la. Nenhuma rota
+// nova — e por isso a mudanca cabe em poucas linhas.
+//
+// ORIGEM LOCAL, e isso importa pro espelho: como a mudanca nao veio de
+// MIDI, `eco_ult` nao a conhece e o espelho vai transmitir o `frz_on`
+// novo pro Loopy sozinho — abrindo a janela de 250 ms naquele CC, que
+// e o que impede o widget de devolver e desfazer. Caminho existente,
+// verificado, nao reimplementado.
+// CONTADOR DE BATIDAS, e ele existe por um motivo de metodo: contar
+// alternancias por LOG exige que o operador bata dentro de uma janela
+// que so aparece na tela DEPOIS de a janela comecar — o operador nao
+// tem como saber quando. Contador nao tem esse problema: bate quando
+// quiser, le quando quiser.
+//
+// E a paridade sozinha nao prova debounce: 5 e 7 batidas dao o mesmo
+// estado final. O contador distingue.
+// UM SO LUGAR PRA TODOS OS BOTOES COM ALVO. Era `AlternaFreeze` com
+// um alvo unico; o segundo botao fisico obrigaria a repetir o gesto
+// inteiro, e repetir gesto e como as duas versoes comecam a divergir
+// no primeiro conserto — a mesma razao que fez o sacrificio do CTOS
+// virar funcao unica.
+static uint32_t botao_batidas[cotuca::Manifest::kMaxBotoes] = {0};
+
+static void AlternaBotao(int idx)
 {
     using namespace cotuca;
-    const int t = manifest.button2_target;
-    if(t < 0)
-        return; // sem função neste instrumento
-    if(pressed && !b2_held)
-    {
-        b2_saved = params.Get(t);
-        params.Set(t, 1.f);
-        b2_held = true;
-        hal::Log("B2: %s = 1 (segurando)", params.Name(t));
-    }
-    else if(!pressed && b2_held)
-    {
-        params.Set(t, b2_saved);
-        b2_held = false;
-        hal::Log("B2: %s de volta a %.3f", params.Name(t), b2_saved);
-    }
+    if(idx < 0 || idx >= Manifest::kMaxBotoes) return;
+    const Manifest::BotaoAlvo& b = manifest.botao[idx];
+    if(b.param < 0) return;   // botao sem alvo declarado
+    const bool ligado = params.Real(b.param) >= 0.5f;
+    params.Set(b.param, ligado ? 0.f : 1.f);
+    botao_batidas[idx]++;
+    hal::Log("B%d (%s): %s -> %s (botao fisico, batida %lu)",
+             idx + 1, b.nome ? b.nome : "?", params.Name(b.param),
+             ligado ? "SOLTA" : "CONGELA",
+             (unsigned long)botao_batidas[idx]);
 }
 
 // ---- painel falso via serial ----
@@ -2217,20 +2241,20 @@ static void HandleLine(const char* line)
         hal::Log("B3 simulado: pulso de rearme");
         return;   // o laco do painel ve a borda e devolve; b3_sim cai la
     }
-    // b2 [0|1] — simula segurar/soltar; sem argumento, alterna
+    // b2 — PULSA o botao de freeze, como o `b3` pulsa o rearme.
+    //
+    // Era `b2 [0|1]` (segurar/soltar) e virou pulso junto com o botao:
+    // simular "segurar" um botao que agora ALTERNA nao significa nada.
+    // Gancho que nao acompanha a mudanca do que ele simula vira
+    // instrumento que mente sobre o instrumento.
     if(strncmp(line, "b2", 2) == 0)
     {
-        const char* a = line + 2;
-        while(*a == ' ') a++;
-        bool want = !b2_sim;
-        if(*a == '0') want = false;
-        else if(*a == '1') want = true;
-        b2_sim = want;
-        if(manifest.button2_target < 0)
-            hal::Log("B2 simulado: %s (mas button2_target = -1, sem efeito)",
-                     want ? "PRESSIONADO" : "solto");
+        b2_sim = true;   // o laco consome a borda e baixa
+        if(manifest.botao[1].param < 0)
+            hal::Log("B2: pulso (mas o botao 2 nao tem alvo, sem efeito)");
         else
-            hal::Log("B2 simulado: %s", want ? "PRESSIONADO" : "solto");
+            hal::Log("B2: pulso — alterna %s",
+                     params.Name(manifest.botao[1].param));
         return;
     }
     if(strncmp(line, "tone on", 7) == 0)
@@ -2283,6 +2307,14 @@ static void HandleLine(const char* line)
                          " entra no espaco %c, e o shimmer E a sala"
                          " realimentada. Ligue o envio. ***",
                          'a' + c, 'a' + c, 'A' + c);
+        for(int k = 0; k < manifest.n_botoes; k++)
+        {
+            const cotuca::Manifest::BotaoAlvo& b = manifest.botao[k];
+            if(b.param < 0) continue;
+            hal::Log("B%d (%s): alterna %s | LED %d | %lu batidas",
+                     k + 1, b.nome ? b.nome : "?", params.Name(b.param),
+                     b.led_hw, (unsigned long)botao_batidas[k]);
+        }
         hal::Log("%s | knobs:%d | in:%s | %.0fHz/blk%d",
                  b.name, b.num_knobs, b.has_audio_in ? "sim" : "nao",
                  b.sample_rate, (int)b.block_size);
@@ -3532,8 +3564,15 @@ int main(void)
             btn_prev[b] = now;
             if(b == 0 && now)
                 TriggerRandomize(false); // BORDA de subida
-            else if(b == 1)
-                SetButton2(now);    // NÍVEL
+            else if(b >= 1 && now)
+            {
+                // BORDA de descida (pressed = subida do nivel logico,
+                // com pull-up ativo-baixo). Qualquer botao com alvo
+                // declarado alterna; o B3 nao tem alvo e cai no `return`
+                // do AlternaBotao, seguindo pro rearme logo abaixo.
+                AlternaBotao(b);
+                if(b == 1) b2_sim = false;   // pulso simulado consumido
+            }
             else if(b == 2 && now)
             {
                 // BORDA de subida. Segurar nao repete: o teto que
@@ -3545,6 +3584,25 @@ int main(void)
                 b3_sim = false;   // pulso consumido: sem isso o
                                   // simulado ficaria preso em alto e
                                   // nunca mais haveria outra borda
+            }
+        }
+
+        // LED DO FREEZE — SEGUE O PARAM, NUNCA O GESTO.
+        //
+        // Atualizado aqui e nao dentro do AlternaFreeze de proposito: se
+        // o freeze mudar por CC, serial, preset ou queda do CTOS, o LED
+        // acompanha do mesmo jeito. Indicador que segue o gesto mentiria
+        // em todos esses casos — e "mentir so as vezes" e o pior modo de
+        // um indicador, porque ensina a confiar nele.
+        {
+            static bool led_ant[cotuca::Manifest::kMaxBotoes] = {false};
+            for(int k = 0; k < manifest.n_botoes; k++)
+            {
+                const cotuca::Manifest::BotaoAlvo& b = manifest.botao[k];
+                if(b.param < 0 || b.led_hw < 0) continue;
+                const bool quer = params.Real(b.param) >= 0.5f;
+                if(quer != led_ant[k])
+                { led_ant[k] = quer; hal::SetPanelLed(b.led_hw, quer); }
             }
         }
 

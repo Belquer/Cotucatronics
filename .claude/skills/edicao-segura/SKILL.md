@@ -182,3 +182,34 @@ Mesma família do `.map` que pegou o `.bss` indo para a DTCM numa troca de
 
 Escreva a expectativa no cabeçalho do arquivo, junto do `#define` do
 atributo — é lá que alguém vai acrescentar a próxima função e esquecer.
+
+## Sentinela negativa exige init explícito E teste explícito
+
+`-1` como "nenhum" convive no mesmo tipo com `0`, que significa "o primeiro".
+As duas metades falham em silêncio, por motivos opostos:
+
+```cpp
+BotaoAlvo t[N] = {};        // zero-init: param = 0, e ZERO E INDICE VALIDO
+if(SacrifTravado(i)) ...    // -1 e VERDADEIRO; 0 (indice valido) e falso
+```
+
+Em 22/08 as duas apareceram no mesmo dia, no mesmo projeto. Na primeira, a
+marca de "travado" aparecia em todos os efeitos sãos e sumia no índice 0. Na
+segunda, o botão randomizador passou a apontar para o `level` e para o LED do
+freeze.
+
+> **`= {}` não respeita a sentinela; `if(x)` não a testa.** Inicializador no
+> próprio `struct` (`int param = -1;`) e comparação explícita (`>= 0`).
+
+## GPIO se remapeia no fonte; periférico, não
+
+Antes de propor "troco no firmware em vez de refazer a solda", perguntar se o
+pino é GPIO puro ou está amarrado a periférico.
+
+Em 22/08 o LED e o switch do freeze vieram invertidos e custaram dois números
+no fonte — GPIO não tem preferência de pino. Minutos depois, o MIDI de volta
+exigiu fio novo: `D13`/`D14` são `PB6`/`PB7`, as pernas da USART1, e a função
+está amarrada pelo silício.
+
+> A diferença não aparece no esquema — aparece na tabela de funções
+> alternadas do chip. UART, SAI, ADC e QSPI não se remapeiam livremente.

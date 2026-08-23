@@ -112,6 +112,12 @@ bool             ReadWidiLed();
 // fisico) traz o app de volta — por isso o comando exige confirmacao.
 void             RebootToDfu();
 void             SetLed(bool on);
+
+// LEDs de painel, por INDICE — quem chama nao conhece pino. Cada um
+// SEGUE O PARAMETRO que o manifest lhe atribuiu, nunca o gesto:
+// indicador reporta estado real, nao intencao.
+void             SetPanelLed(int idx, bool on);
+int              PanelLedCount();
 void             Log(const char* fmt, ...);    // printf via USB/serial
 void             SetSerialLineCallback(SerialLineCallback cb);
 void             PollSerial();                 // chamar no loop principal

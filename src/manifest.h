@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.76.0
+// manifest.h (instrumento "bancada") v0.77.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -500,7 +500,43 @@ struct Manifest
 
     // ---- B2: ASSINALÁVEL ----
     // -1 = sem função. Momentâneo: segura, vale 1; solta, volta.
-    int        button2_target = -1;
+    // ---- BOTOES COM ALVO, generalizado ----
+    //
+    // Era `button2_target`, um alvo unico, e o segundo botao fisico
+    // (freeze B) obrigaria a repetir o gesto inteiro — que e quando as
+    // duas versoes comecam a divergir no primeiro conserto. Agora e
+    // tabela: cada botao declara o param que alterna e o pino do LED
+    // que espelha esse param.
+    //
+    // `led_hw` e o INDICE do LED no HAL, nao o pino: o manifest nao
+    // conhece pino, e a fronteira board-agnostic e o motivo de esta
+    // base existir. -1 = sem LED.
+    // SENTINELA NEGATIVA NAO SOBREVIVE A ZERO-INIT, e este projeto ja
+    // pagou por isso hoje (o `SacrifTravado` devolvendo -1 testado como
+    // booleano). `BotaoAlvo x[] = {}` poe param=0 e led_hw=0 — e ZERO E
+    // INDICE VALIDO de parametro e de LED. Sem os inicializadores
+    // abaixo, o botao randomizador alternaria o `level` e acenderia o
+    // LED do freeze A.
+    //
+    // O relatorio do `board` pegou isso na primeira leitura: "B1 (?):
+    // alterna level | LED 0". Instrumento que declara o proprio estado
+    // paga o custo dele na primeira execucao.
+    struct BotaoAlvo
+    {
+        int         param  = -1;   // o que alterna na borda, -1 = nenhum
+        int         led_hw = -1;   // indice do LED que espelha, -1 = nenhum
+        const char* nome   = nullptr;
+    };
+    static constexpr int kMaxBotoes = 6;
+    BotaoAlvo  botao[kMaxBotoes] = {};
+    int        n_botoes = 0;
+
+    void AddBotao(int idx, int param, int led_hw, const char* nome)
+    {
+        if(idx < 0 || idx >= kMaxBotoes) return;
+        botao[idx] = {param, led_hw, nome};
+        if(idx + 1 > n_botoes) n_botoes = idx + 1;
+    }
     ButtonMode button2_mode   = ButtonMode::Hold;
 
     // ---- ligação com o módulo DSP, POR NOME ----
@@ -1165,7 +1201,11 @@ struct Manifest
         //
         // O painel v2 ainda não está soldado — até lá o alvo vale pelo
         // `b2` do painel falso via serial e pelo CC 26.
-        button2_target = p_frz_on[0];
+        // B2 = freeze A (switch D24, LED D27) — indices no HAL.
+        // B3 = rearme do CTOS, sem alvo de param (age no CTOS direto).
+        // B4 = freeze B (switch D22, LED D23).
+        AddBotao(1, p_frz_on[0], 0, "freeze A");
+        AddBotao(3, p_frz_on[1], 1, "freeze B");
         button2_mode   = ButtonMode::Hold;
 
         // ---- SLOT Fx2 VAZIO (2026-08-18) ----

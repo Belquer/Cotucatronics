@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.123.2** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, **sem RNBO** (o delay virou C++ em 20/08 e levou o runtime inteiro junto),
+Projeto colaborativo. Estado atual: **v0.127.1** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, **sem RNBO** (o delay virou C++ em 20/08 e levou o runtime inteiro junto),
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -75,7 +75,7 @@ Cinco regras que não se negociam:
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.1.1** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.2.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.123.2** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI no canal 2**, janela de autoria, modo `learn` |
+| [src/main.cpp](src/main.cpp) | **v0.127.1** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI no canal 2**, janela de autoria, modo `learn` |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.9.0** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
 | [src/midi.h](src/midi.h) | **v0.5.0** | Parser MIDI board-agnostic. Histórico de 96 mensagens |
@@ -353,6 +353,12 @@ bloquear decisões de arquitetura:
 - **Entradas.** `IN_L` = piezo via buffer de alta impedância (circuito externo);
   `IN_R` = jack TS/TRS de linha. **Pot 5 (SRC MIX)** faz crossfade entre os dois.
 - **Saídas.** `OUT_L` → amp TPA3116 → exciter no corpo da escultura;
+- **Painel (22/08).** `D24` switch do freeze A · `D27` LED do freeze A ·
+  `D22`/`D23` freeze B (firmware pronto, fiação pendente) · `D25` B3 rearme
+  do CTOS · `D26` B1 randomizador · `D28` LB do WIDI · `D29`/`D30`
+  reservados pras DPDT dos excitadores · `D13`/`D14` UART do MIDI
+  (**amarrados ao periférico**: USART1 em PB6/PB7, não se remapeiam) ·
+  `D15`–`D19` pots (A0–A4) · livres: `D0`–`D12`, `D20`, `D21`.
   `OUT_R` → jack out. O roteamento (exciter / jack / ambos) é firmware, por
   toggle de 3 posições.
 - **Jacks switched (NC)** servem de sensor de inserção via GPIO — não roteiam

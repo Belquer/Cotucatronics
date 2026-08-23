@@ -2690,6 +2690,97 @@ que alguém vai acrescentar a próxima função e esquecer o atributo.
 
 ---
 
+## 13e. O operador não consegue agir dentro de uma janela que só aparece depois dela começar (22/08)
+
+Precisava contar quantas alternâncias cinco batidas no arcade produziam. Fiz
+o óbvio: abri uma janela de 20 s, imprimi *">>> BATA 5 VEZES AGORA <<<"* e
+contei pelo log.
+
+Resultado: **zero**. E não porque o botão falhou — porque a mensagem só
+aparece na tela **depois** que a chamada começa, e a chamada é a janela. O dB
+leu o pedido quando os 20 s já tinham passado.
+
+Isso aconteceu **repetidamente** ao longo do dia: no teste do MIDI de volta,
+na varredura de frequência, no aceite do espelho, e aqui. Toda vez que
+escrevi "faça X agora" dentro de uma chamada de ferramenta, o "agora" era um
+instante que o operador nunca viu.
+
+**Regra:** *nunca peça uma ação humana de dentro de uma janela cronometrada.*
+As duas formas que funcionam:
+
+1. **Anunciar, encerrar o turno, medir no turno seguinte** — o operador age
+   quando quiser e a leitura não depende de timing.
+2. **Contador em vez de janela** — o instrumento acumula, e a leitura
+   acontece quando alguém pedir. Foi o que resolveu: `freeze fisico: N
+   batidas desde o boot`, legível a qualquer momento.
+
+A segunda é melhor quando o fenômeno se repete, porque tira a coordenação do
+caminho crítico inteiro. **Coordenação por cronômetro entre dois agentes que
+não compartilham relógio é a forma mais cara de medir qualquer coisa.**
+
+**E a paridade não substitui o contador:** cinco e sete batidas terminam no
+mesmo estado. `frz_on_a = 1.00` era compatível com debounce bom E com
+debounce ruim — só a contagem distingue.
+
+---
+
+## 13f. Sentinela negativa não sobrevive a zero-init — a segunda no mesmo dia (22/08)
+
+Generalizei o botão assinalável para uma tabela: cada botão declara o
+parâmetro que alterna e o LED que o espelha, com `-1` significando "sem
+alvo".
+
+```cpp
+BotaoAlvo botao[kMaxBotoes] = {};   // zero-init: param = 0, led_hw = 0
+```
+
+**Zero é índice válido.** O botão randomizador e o de rearme, que não deviam
+ter alvo nenhum, passaram a apontar para o parâmetro 0 (`level`) e para o
+LED 0 (o do freeze A). Apertar o randomizador alternaria o volume geral.
+
+O conserto é inicializador explícito no `struct` — `int param = -1;`.
+
+**Segunda vez hoje.** A primeira foi `SacrifTravado()` devolvendo `-1` para
+"não travado" e sendo testada como booleano, onde `-1` é verdadeiro e `0`
+(um índice válido) é falso. Mesma raiz: **um valor que significa "nenhum"
+convive no mesmo tipo com valores que significam "o primeiro".**
+
+**Regra:** *sentinela negativa exige inicialização explícita E teste
+explícito.* `= {}` não a respeita, e `if(x)` não a testa. As duas metades
+falham em silêncio e por motivos opostos.
+
+**O que pegou:** o relatório do `board`, na primeira leitura — `B1 (?):
+alterna level | LED 0`. Instrumento que declara o próprio estado cobra o
+preço dele imediatamente, e este cobrou antes de o defeito chegar ao painel.
+
+---
+
+## 13g. GPIO troca no fonte; UART, não (22/08)
+
+O LED do freeze foi soldado no D27 e o switch no D24 — invertidos em relação
+ao que o firmware esperava. Custou dois números no fonte e uma gravação:
+**GPIO não tem preferência de pino**, e refazer solda custa tempo e risco de
+contato ruim.
+
+Minutos depois, o MIDI de volta não chegava ao iPad e a resposta foi outra:
+`D13` e `D14` são `PB6` e `PB7`, as pernas da **USART1**. A função está
+amarrada ao pino pelo silício — não existe "transmita pelo D14", porque o
+D14 *é* a entrada do periférico.
+
+**Regra:** *antes de propor troca no firmware em vez de refiação, perguntar
+se o pino é livre ou amarrado a periférico.* GPIO puro se remapeia; UART,
+SAI, ADC e QSPI não. A diferença não aparece no esquema — aparece na tabela
+de funções alternadas do chip.
+
+**E eu li um contador errado no meio disso.** `voltaram 0` foi tratado como
+prova de que a placa não transmitia — mas esse contador mede o que **retorna**
+pelo fio, o que depende de o iPad ecoar. Zero ali era esperado, não sintoma.
+O `midiloop` com o MIDI Wrench aberto resolveu em trinta segundos o que a
+inferência errada tinha desviado por meia hora: **as mensagens chegavam**, e
+o problema era o widget não escutar o canal 2.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.**

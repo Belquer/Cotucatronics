@@ -396,6 +396,31 @@ português como revisa um número.
 **E "é só um script de bancada" tem ficha** — junto com "é só um log" e "é só
 um recado", completa o trio das frases que precedem as falhas mais caras.
 
+## Nunca peça ação humana de dentro de uma janela cronometrada
+
+A mensagem "faça X agora" só aparece na tela **depois** que a chamada começa
+— e a chamada É a janela. O operador lê o pedido quando o tempo já passou.
+
+Em 22/08 isso aconteceu quatro vezes: teste do MIDI de volta, varredura de
+frequência, aceite do espelho, e a contagem de batidas no botão. Nas quatro,
+o resultado foi zero e o instrumento parecia quebrado.
+
+As duas formas que funcionam:
+
+1. **Anunciar, encerrar o turno, medir no turno seguinte.** O operador age
+   quando quiser; a leitura não depende de relógio.
+2. **Contador em vez de janela.** O instrumento acumula e alguém lê quando
+   pedir — `N batidas desde o boot`, legível a qualquer momento.
+
+A segunda é melhor quando o fenômeno se repete: tira a coordenação do caminho
+crítico inteiro.
+
+> **Coordenação por cronômetro entre dois agentes que não compartilham
+> relógio é a forma mais cara de medir qualquer coisa.**
+
+**E paridade não substitui contagem:** cinco e sete batidas terminam no mesmo
+estado. O estado final era compatível com debounce bom E com debounce ruim.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria
