@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.1.0
+// Cotucatronics OS — presets v0.2.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -106,46 +106,99 @@ inline uint16_t MapaHash(const ParamTable& t)
 // `n_params` e redundante com o hash de proposito: um hash que nao bate
 // NAO DIZ O QUE MUDOU, e a contagem diz de que lado procurar. Custa um
 // byte e transforma "recusado" em "recusado, e olhe por aqui".
+//
+// `formato` cobre a TRAVESSIA numa dimensao que os outros campos nao
+// alcancam: "o cabecalho ganhou um campo entre a gravacao e a leitura".
+// Um preset gravado com o layout v1 e lido por um firmware v2 seria
+// interpretado com DESLOCAMENTO — passaria no magic e provavelmente
+// falharia no checksum, reportando CORRUPCAO para um caso de migracao
+// de formato. Diagnostico errado manda o operador cacar a coisa errada.
+//
+// CONVENCAO, e ela vive aqui ao lado do campo porque em outro lugar
+// ninguem lembraria: TODA mudanca no layout do PresetHeader ou na
+// ordem/largura do payload incrementa `kFormato`. Nao e a versao do
+// MAPA (essa e derivada, e outra coisa); e a versao do RECIPIENTE.
 struct PresetHeader
 {
-    uint16_t magic;        // kMagic
-    uint16_t versao_mapa;  // MapaHash() de quando foi capturado
+    uint16_t magic;        // kPresetMagic
+    uint8_t  formato;      // kFormato — versao do RECIPIENTE, nao do mapa
     uint8_t  n_params;     // contagem gravada
-    uint8_t  checksum;     // soma dos bytes de dado, 8 bits
+    uint16_t versao_mapa;  // MapaHash() de quando foi capturado
+    uint8_t  checksum;     // cobre cabecalho E payload — ver abaixo
+    uint8_t  _pad;
 };
 
 static constexpr uint16_t kPresetMagic   = 0x4354u;  // 'CT'
+static constexpr uint8_t  kFormato       = 1;
 static constexpr int      kMaxPresetVals = 40;       // teto por preset
 
-inline uint8_t Checksum(const uint8_t* v, int n)
+// O CHECKSUM COBRE O CABECALHO, nao so o payload.
+//
+// Hash do mapa corrompido e tao perigoso quanto payload corrompido — na
+// verdade e pior, porque um bit trocado ali produz "gravado sob outro
+// mapa", que e uma frase PLAUSIVEL. O operador vai procurar um
+// remapeamento que nunca houve.
+//
+// O proprio campo `checksum` fica de fora da conta, obviamente, e o
+// `_pad` tambem: byte de alinhamento nao tem valor definido e entraria
+// como ruido.
+inline uint8_t Checksum(const PresetHeader& h, const uint8_t* v, int n)
 {
     uint32_t s = 0;
+    s += (uint32_t)(h.magic & 0xFFu) + (uint32_t)(h.magic >> 8);
+    s += h.formato;
+    s += h.n_params;
+    s += (uint32_t)(h.versao_mapa & 0xFFu) + (uint32_t)(h.versao_mapa >> 8);
     for(int i = 0; i < n; i++) s += v[i];
     return (uint8_t)(s & 0xFFu);
 }
 
 // Por que a recusa e um ENUM e nao um bool: o dB precisa saber POR QUE
 // foi recusado para saber o que fazer. Magic errado = arquivo trocado;
-// mapa diferente = remapeamento; checksum = corrupcao. Tres consertos
-// diferentes, e um bool os confundiria — a mesma licao do "CAIU pelo
-// teto" contra "CAIU por ESTOURO".
+// formato = migracao de recipiente; mapa diferente = remapeamento;
+// checksum = corrupcao. Consertos diferentes, e um bool os confundiria —
+// a mesma licao do "CAIU pelo teto" contra "CAIU por ESTOURO".
 enum class PresetVeredito : uint8_t
 {
     Ok = 0,
     MagicErrado,
+    FormatoDiferente,
+    TamanhoImpossivel,
+    ChecksumErrado,
     MapaDiferente,
     ContagemDiferente,
-    ChecksumErrado,
 };
 
+// A ORDEM DAS CONFERENCIAS DECIDE O DIAGNOSTICO, e ela nao e indiferente.
+//
+// A versao anterior conferia o hash do mapa ANTES do checksum. Como o
+// checksum cobre o cabecalho, um bit trocado no campo do hash seria
+// reportado como "gravado sob outro mapa" — diagnostico errado com
+// aparencia de diagnostico certo.
+//
+// A regra geral: NAO SE CONFIA EM NENHUM CAMPO ANTES DE O CHECKSUM
+// PASSAR. So o magic, o formato e a coerencia de tamanho vem antes, e os
+// tres pelo mesmo motivo: sao pre-condicoes para a conta do checksum
+// existir (sem tamanho coerente nao ha o que somar).
+//
+//   1. magic      -> arquivo trocado        (mais barato e mais especifico)
+//   2. formato    -> migracao de recipiente (o layout mudou sob os pes)
+//   3. tamanho    -> incoerente             (nao da pra somar)
+//   4. checksum   -> corrupcao              (antes de confiar em campo algum)
+//   5. mapa       -> remapeamento           (agora o campo e confiavel)
+//   6. contagem   -> de que lado procurar
 inline PresetVeredito Conferir(const PresetHeader& h, const uint8_t* vals,
-                               uint16_t mapa_atual, int n_esperado)
+                               int n_disponivel, uint16_t mapa_atual,
+                               int n_esperado)
 {
-    if(h.magic != kPresetMagic)             return PresetVeredito::MagicErrado;
-    if(h.versao_mapa != mapa_atual)         return PresetVeredito::MapaDiferente;
-    if((int)h.n_params != n_esperado)       return PresetVeredito::ContagemDiferente;
-    if(h.checksum != Checksum(vals, h.n_params))
+    if(h.magic != kPresetMagic)   return PresetVeredito::MagicErrado;
+    if(h.formato != kFormato)     return PresetVeredito::FormatoDiferente;
+    if((int)h.n_params > n_disponivel || (int)h.n_params > kMaxPresetVals)
+        return PresetVeredito::TamanhoImpossivel;
+    if(h.checksum != Checksum(h, vals, h.n_params))
         return PresetVeredito::ChecksumErrado;
+    if(h.versao_mapa != mapa_atual)   return PresetVeredito::MapaDiferente;
+    if((int)h.n_params != n_esperado) return PresetVeredito::ContagemDiferente;
     return PresetVeredito::Ok;
 }
 
@@ -155,9 +208,11 @@ inline const char* Porque(PresetVeredito v)
     {
         case PresetVeredito::Ok:                return "ok";
         case PresetVeredito::MagicErrado:       return "nao e um preset";
+        case PresetVeredito::FormatoDiferente:  return "gravado com outro formato de cabecalho";
+        case PresetVeredito::TamanhoImpossivel: return "cabecalho incoerente: contagem fora do possivel";
+        case PresetVeredito::ChecksumErrado:    return "dado corrompido";
         case PresetVeredito::MapaDiferente:     return "gravado sob outro mapa de params";
         case PresetVeredito::ContagemDiferente: return "numero de params diferente";
-        case PresetVeredito::ChecksumErrado:    return "dado corrompido";
     }
     return "?";
 }

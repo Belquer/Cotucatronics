@@ -1,4 +1,4 @@
-// test_presets v0.1.0 — validação nativa das estruturas de preset.
+// test_presets v0.2.0 — validação nativa das estruturas de preset.
 //
 // Roda no Mac, sem placa: `presets.h` é C++ puro e a pergunta que ele
 // responde — "este preset foi gravado sob este mapa?" — não depende de
@@ -150,38 +150,85 @@ int main()
         uint8_t vals[3] = {10, 20, 30};
         cotuca::PresetHeader h;
         h.magic       = cotuca::kPresetMagic;
-        h.versao_mapa = base;
+        h.formato     = cotuca::kFormato;
         h.n_params    = 3;
-        h.checksum    = cotuca::Checksum(vals, 3);
+        h.versao_mapa = base;
+        h._pad        = 0;
+        h.checksum    = cotuca::Checksum(h, vals, 3);
 
         Check("cabecalho bom passa",
-              cotuca::Conferir(h, vals, base, 3) == cotuca::PresetVeredito::Ok);
+              cotuca::Conferir(h, vals, 3, base, 3) == cotuca::PresetVeredito::Ok);
 
         cotuca::PresetHeader x = h; x.magic = 0;
         Check("magic errado -> MagicErrado",
-              cotuca::Conferir(x, vals, base, 3)
+              cotuca::Conferir(x, vals, 3, base, 3)
                   == cotuca::PresetVeredito::MagicErrado);
 
-        x = h; x.versao_mapa = (uint16_t)(base + 1);
-        Check("mapa diferente -> MapaDiferente",
-              cotuca::Conferir(x, vals, base, 3)
-                  == cotuca::PresetVeredito::MapaDiferente);
+        x = h; x.formato = (uint8_t)(cotuca::kFormato + 1);
+        Check("formato diferente -> FormatoDiferente (nao 'corrupcao')",
+              cotuca::Conferir(x, vals, 3, base, 3)
+                  == cotuca::PresetVeredito::FormatoDiferente);
 
-        x = h; x.n_params = 4;
-        Check("contagem diferente -> ContagemDiferente",
-              cotuca::Conferir(x, vals, base, 3)
-                  == cotuca::PresetVeredito::ContagemDiferente);
+        x = h; x.n_params = 99;
+        Check("contagem alem do buffer -> TamanhoImpossivel (nao le memoria)",
+              cotuca::Conferir(x, vals, 3, base, 3)
+                  == cotuca::PresetVeredito::TamanhoImpossivel);
 
-        uint8_t maus[3] = {10, 20, 31};   // um bit trocado
         Check("dado corrompido -> ChecksumErrado",
-              cotuca::Conferir(h, maus, base, 3)
+              cotuca::Conferir(h, (const uint8_t[]){10, 20, 31}, 3, base, 3)
                   == cotuca::PresetVeredito::ChecksumErrado);
 
-        // O veredito tem que ter TEXTO, senao o dB le um numero. Foi a
-        // licao do "CAIU pelo teto" contra "CAIU por ESTOURO".
-        Check("todo veredito tem frase legivel",
-              strcmp(cotuca::Porque(cotuca::PresetVeredito::MapaDiferente), "?") != 0
-              && strcmp(cotuca::Porque(cotuca::PresetVeredito::ChecksumErrado), "?") != 0);
+        // O TESTE QUE A ORDEM EXISTE PARA PASSAR.
+        //
+        // Um bit trocado NO CAMPO DO HASH tem que ler como CORRUPCAO, e
+        // nao como "gravado sob outro mapa". A versao anterior conferia o
+        // mapa antes do checksum e reportava remapeamento — diagnostico
+        // errado com aparencia de certo, que manda o operador cacar um
+        // remapeamento que nunca houve.
+        x = h; x.versao_mapa ^= 0x0040u;   // um bit, sem recalcular o checksum
+        {
+            const cotuca::PresetVeredito v = cotuca::Conferir(x, vals, 3, base, 3);
+            snprintf(d, sizeof(d), "veredito = \"%s\"", cotuca::Porque(v));
+            Check("bit trocado NO CAMPO DO HASH le como corrupcao, nao remapeamento",
+                  v == cotuca::PresetVeredito::ChecksumErrado, d);
+        }
+
+        // E o gemeo: um remapeamento DE VERDADE (cabecalho integro, hash
+        // legitimamente outro) tem que continuar lendo como remapeamento.
+        // Sem este par, a ordem nova poderia estar mascarando tudo como
+        // corrupcao e o teste acima passaria igual.
+        x = h; x.versao_mapa = (uint16_t)(base + 1);
+        x.checksum = cotuca::Checksum(x, vals, 3);   // integro, so outro mapa
+        {
+            const cotuca::PresetVeredito v = cotuca::Conferir(x, vals, 3, base, 3);
+            snprintf(d, sizeof(d), "veredito = \"%s\"", cotuca::Porque(v));
+            Check("remapeamento REAL (cabecalho integro) le como remapeamento",
+                  v == cotuca::PresetVeredito::MapaDiferente, d);
+        }
+
+        x = h; x.n_params = 2; x.checksum = cotuca::Checksum(x, vals, 2);
+        Check("contagem diferente e integra -> ContagemDiferente",
+              cotuca::Conferir(x, vals, 3, base, 3)
+                  == cotuca::PresetVeredito::ContagemDiferente);
+
+        // Cada veredito com frase propria — e TODAS diferentes, senao dois
+        // consertos diferentes leem igual na tela.
+        const cotuca::PresetVeredito todos[] = {
+            cotuca::PresetVeredito::MagicErrado,
+            cotuca::PresetVeredito::FormatoDiferente,
+            cotuca::PresetVeredito::TamanhoImpossivel,
+            cotuca::PresetVeredito::ChecksumErrado,
+            cotuca::PresetVeredito::MapaDiferente,
+            cotuca::PresetVeredito::ContagemDiferente};
+        int iguais = 0;
+        for(size_t a = 0; a < sizeof(todos)/sizeof(todos[0]); a++)
+        {
+            if(!strcmp(cotuca::Porque(todos[a]), "?")) iguais++;
+            for(size_t b = a + 1; b < sizeof(todos)/sizeof(todos[0]); b++)
+                if(!strcmp(cotuca::Porque(todos[a]), cotuca::Porque(todos[b])))
+                    iguais++;
+        }
+        Check("os seis vereditos tem frases distintas e nao-vazias", iguais == 0);
     }
 
     printf("\n%s — %d falha(s)\n", fails ? "FALHOU" : "TUDO OK", fails);

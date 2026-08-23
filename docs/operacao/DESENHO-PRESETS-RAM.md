@@ -148,11 +148,48 @@ atraso de semanas** — e pior, porque não há sequer um fio para suspeitar.
 struct PresetHeader
 {
     uint16_t magic;        // 'CT'
+    uint8_t  formato;      // versao do RECIPIENTE (não do mapa)
+    uint8_t  n_params;     // contagem, redundante de propósito
     uint16_t versao_mapa;  // HASH dos nomes, ver abaixo
-    uint8_t  n_params;     // contagem, redundante de proposito
-    uint8_t  checksum;     // soma dos bytes
+    uint8_t  checksum;     // cobre CABEÇALHO E payload
+    uint8_t  _pad;
 };
 ```
+
+### O `formato` é a travessia noutra dimensão
+
+Os vereditos cobrem arquivo trocado, remapeamento e corrupção. **Nenhum
+cobria "o cabeçalho ganhou um campo entre a gravação e a leitura."** Um preset
+gravado com o layout v1 e lido por um firmware v2 é interpretado com
+**deslocamento**: passa no magic, falha no checksum, e reporta *corrupção*
+para um caso de migração de formato — mandando caçar a coisa errada.
+
+**Convenção, e ela vive ao lado do campo porque em outro lugar ninguém
+lembraria:** toda mudança no layout do `PresetHeader`, ou na ordem/largura do
+payload, incrementa `kFormato`.
+
+### A ORDEM das conferências decide o diagnóstico
+
+O checksum cobre o **cabeçalho**, e tem que cobrir — um bit trocado no campo
+do hash produz *"gravado sob outro mapa"*, que é uma frase **plausível**, e o
+operador vai procurar um remapeamento que nunca houve.
+
+Daí a regra: **não se confia em nenhum campo antes de o checksum passar.**
+
+    1. magic     -> arquivo trocado         (mais barato e mais específico)
+    2. formato   -> migração de recipiente  (o layout mudou sob os pés)
+    3. tamanho   -> incoerente              (sem isto não há o que somar)
+    4. checksum  -> corrupção               (antes de confiar em campo algum)
+    5. mapa      -> remapeamento            (agora o campo é confiável)
+    6. contagem  -> de que lado procurar
+
+Os três primeiros vêm antes do checksum pelo mesmo motivo: são
+**pré-condições para a conta existir**.
+
+O banco prova o **par**, não só a metade: campo do hash corrompido lê como
+corrupção, **e** um remapeamento real com cabeçalho íntegro continua lendo
+como remapeamento. Sem o gêmeo, a ordem nova poderia mascarar tudo como
+corrupção e o primeiro teste passaria igual.
 
 ### A versão do mapa é DERIVADA, não incrementada
 
