@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.37.0
+// hal_daisy_seed v0.38.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -902,19 +902,6 @@ bool EncoderPushBorda(int i)
 // `WriteString`, e o driver sozinho so tem `DrawPixel`. Escrever texto a
 // mao a partir do FontDef seria reimplementar o que ja existe testado.
 static daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver> oled;
-// O MESMO PAINEL EM I2C — porque o modulo tem os DOIS e a selecao mora
-// na traseira dele, nao no firmware.
-//
-// Defaults da libDaisy ja apontam para os pinos certos: SCL = PORTB8 =
-// D11 e SDA = PORTB9 = D12, que sao justamente os que ficaram livres
-// para o I2C_1. Endereco 0x3C (alguns modulos usam 0x3D).
-//
-// Os dois objetos coexistem e um flag decide qual fala. Custa RAM de
-// buffer duplicado e evita uma gravacao por tentativa — que e o preco
-// que a bancada de hoje ja pagou vezes demais.
-static daisy::OledDisplay<daisy::SSD130xI2c128x64Driver> oled_i2c;
-static bool    oled_usa_i2c = false;
-static uint8_t oled_addr    = 0x3C;
 // CONTADORES DO PROPRIO DESENHO. Faltavam, e a falta custou uma rodada
 // inteira de hipoteses: sem eles, "o bloco nao executou" e "executou e
 // pintou preto" leem exatamente igual — uma tela apagada.
@@ -941,31 +928,9 @@ bool OledVelocidade(int ps)
 }
 int OledVelocidadeAtual() { return oled_ps; }
 
-bool OledModoI2c(bool usa, int addr)
-{
-    oled_usa_i2c = usa;
-    if(addr == 0x3C || addr == 0x3D) oled_addr = (uint8_t)addr;
-    oled_pronto  = false;   // forca reinicializar no transporte novo
-    return true;
-}
-bool OledEhI2c()   { return oled_usa_i2c; }
-int  OledEndereco() { return oled_addr; }
-
 bool OledInit()
 {
     if(oled_pronto) return true;
-    if(oled_usa_i2c)
-    {
-        daisy::OledDisplay<daisy::SSD130xI2c128x64Driver>::Config ci;
-        ci.driver_config.transport_config.i2c_address = oled_addr;
-        // 400 kHz e nao 1 MHz: jumper solto perdoa menos, e este voo nao
-        // tem requisito de taxa. Mesma razao do PS_64 no SPI.
-        ci.driver_config.transport_config.i2c_config.speed
-            = I2CHandle::Config::Speed::I2C_400KHZ;
-        oled_i2c.Init(ci);
-        oled_pronto = true;
-        return true;
-    }
     daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver>::Config cfg;
     // Defaults ja dao MODO 0 (polarity LOW + phase ONE_EDGE), que e o que
     // o SSD1309 quer. Nao se toca no que ja esta certo.
@@ -1015,8 +980,8 @@ bool OledInit()
 void OledPreenche(bool aceso)
 {
     if(!oled_pronto) return;
-    if(oled_usa_i2c) { oled_i2c.Fill(aceso); oled_i2c.Update(); }
-    else             { oled.Fill(aceso);     oled.Update(); }
+    oled.Fill(aceso);
+    oled.Update();   // BLOQUEANTE, e aceitavel: roda no loop, por comando
     oled_updates++;
 }
 
@@ -1029,7 +994,7 @@ void OledPreenche(bool aceso)
 void OledTexto(const char* l1, const char* l2)
 {
     if(!oled_pronto) return;
-    if(oled_usa_i2c) oled_i2c.Fill(false); else oled.Fill(false);
+    oled.Fill(false);
     if(l1 && *l1)
     {
         // Centraliza pela largura da fonte, sem numero magico: 7 px por
@@ -1038,12 +1003,8 @@ void OledTexto(const char* l1, const char* l2)
         int   n = 0; while(l1[n]) n++;
         const int larg = n * 7;
         const int x    = larg < 128 ? (128 - larg) / 2 : 0;
-        if(oled_usa_i2c)
-        { oled_i2c.SetCursor((uint16_t)x, 18);
-          oled_i2c.WriteString(l1, Font_7x10, true); }
-        else
-        { oled.SetCursor((uint16_t)x, 18);
-          oled.WriteString(l1, Font_7x10, true); }
+        oled.SetCursor((uint16_t)x, 18);
+        oled.WriteString(l1, Font_7x10, true);
         oled_chars += (uint32_t)n;
     }
     if(l2 && *l2)
@@ -1051,12 +1012,8 @@ void OledTexto(const char* l1, const char* l2)
         int   n = 0; while(l2[n]) n++;
         const int larg = n * 6;
         const int x    = larg < 128 ? (128 - larg) / 2 : 0;
-        if(oled_usa_i2c)
-        { oled_i2c.SetCursor((uint16_t)x, 38);
-          oled_i2c.WriteString(l2, Font_6x8, true); }
-        else
-        { oled.SetCursor((uint16_t)x, 38);
-          oled.WriteString(l2, Font_6x8, true); }
+        oled.SetCursor((uint16_t)x, 38);
+        oled.WriteString(l2, Font_6x8, true);
     }
     oled.Update();
 }
@@ -1069,20 +1026,16 @@ void OledTexto(const char* l1, const char* l2)
 void OledLinhas(const char* l1, const char* l2, const char* l3)
 {
     if(!oled_pronto) return;
-    if(oled_usa_i2c) oled_i2c.Fill(false); else oled.Fill(false);
+    oled.Fill(false);
     const char* v[3] = {l1, l2, l3};
     for(int i = 0; i < 3; i++)
     {
         if(!v[i] || !*v[i]) continue;
-        if(oled_usa_i2c)
-        { oled_i2c.SetCursor(0, (uint16_t)(6 + i * 20));
-          oled_i2c.WriteString(v[i], Font_6x8, true); }
-        else
-        { oled.SetCursor(0, (uint16_t)(6 + i * 20));
-          oled.WriteString(v[i], Font_6x8, true); }
+        oled.SetCursor(0, (uint16_t)(6 + i * 20));
+        oled.WriteString(v[i], Font_6x8, true);
         for(const char* q = v[i]; *q; q++) oled_chars++;
     }
-    if(oled_usa_i2c) oled_i2c.Update(); else oled.Update();
+    oled.Update();
     oled_updates++;
 }
 
