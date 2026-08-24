@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.168.0"
+#define COTUCA_OS_VERSION "0.169.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -4530,6 +4530,25 @@ int main(void)
     hal::Log("presets: mapa 0x%04X | %d por cadeia + %d global%s",
              (unsigned)mapa_hash, pmapa.n_cadeia, pmapa.n_global,
              pmapa.estourou ? "   *** ESTOUROU o teto por preset ***" : "");
+    // ENCODERS INICIALIZAM NO BOOT, e nao no primeiro `enc`.
+    //
+    // Ate a v0.169.0 o `EncoderInit` so era chamado pelo comando de
+    // diagnostico, e o `EncoderPoll` do laco retornava cedo enquanto
+    // isso. Consequencia: girar antes de digitar `enc` nao contava nada
+    // — e o sintoma era desconcertante, porque o `encpino` (que tem
+    // GPIOs proprios) mostrava as fases COMUTANDO enquanto o contador
+    // ficava em zero.
+    //
+    // Isso me custou uma rodada de diagnostico de HARDWARE: cheguei a
+    // mandar o dB conferir o comum do encoder no multimetro, e o comum
+    // estava certo. Instrumento nao inicializado le zero, e zero pareceu
+    // dado — a familia de sempre, agora no codigo que eu mesma escrevi
+    // para caca-la.
+    //
+    // E o defeito estava ANOTADO ha horas, com estas palavras: "os
+    // encoders nao funcionam ate alguem digitar `enc`, o que e
+    // inaceitavel quando o painel for tocar". Deixei para depois.
+    hal::EncoderInit();
     midi.Init(manifest.midi_channel, OnMidiCc);
     midi.SetTrace(OnMidiTrace);
     hal::SetMidiByteCallback(OnMidiByte); // é isto que liga a UART

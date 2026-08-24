@@ -472,6 +472,48 @@ que toque no callback.
 constrói a biblioteca** — cada julgamento vira um preset em vez de uma
 anotação.
 
+## Painel físico (23/08) — encoders vivos, OLED morto
+
+**Os três encoders EC11 funcionam**, com o mapa conferido por medição:
+
+| encoder | fase A | fase B | push |
+|---|---|---|---|
+| cadeia A | D0 | D1 | D2 |
+| cadeia B | D3 | D4 | D9 |
+| global | **D18** | **D19** | **D17** |
+
+**Um pulso por detente, medido** — dez cliques deram dez. A divisão fica em 1.
+
+**O OLED não sobreviveu.** GND e 3V3 estavam invertidos na placa de
+distribuição, e o módulo recebeu polaridade reversa. Sete causas foram
+eliminadas por prova — firmware (o binário que funcionou também dá preto),
+alimentação, encoders, fio rompido, ponte, velocidade e ordem de energização —
+e tudo que divide a mesma placa de alimentação funciona.
+
+**Ao trocar o painel, o teste é de um minuto:** `oled` acende tudo,
+`oled texto ola` prova endereçamento de pixel e o DC.
+
+### Sondas que ficaram, e servem a cada solda nova
+
+| comando | o que responde |
+|---|---|
+| `varre [reset]` | **quais dos 15 pinos livres têm algo que se move** — não supõe mapa |
+| `encpino [reset]` | nível cru dos nove pinos, trava nas duas direções |
+| `fio <pino> <0\|1>` | segura um pino do OLED para medir no conector |
+| `fio curto` | ponte entre os cinco, teste diferencial |
+| `oledvel <n>` | prescaler do SPI em tempo de execução |
+
+Todas acumulam desde o reset — **nenhuma abre janela cronometrada.**
+
+### Revisão de pinos entra na rotina de fechamento
+
+`make check-docs` confere `PINOS.md` contra os `seed::Dnn` do fonte, em três
+colunas: **no código e fora do doc · no doc e não usado · RESERVADO usado.**
+Pedido do dB, e a razão é dele: *a placa está entupida e os pontos de solda
+espremidos — conferir de cabeça falha exatamente quando errar custa mais.*
+
+---
+
 ## Frente na fila — ampliar os búzios (pedido do dB, 23/08, "mas não ainda")
 
 **Os búzios estão com DUAS cartas** — `dly_time` e `dly_mix_a`, num array que
