@@ -65,7 +65,16 @@ def familia(n):
 # de CC no ch1 e no ch2 sao params DIFERENTES. Uma tabela sem a coluna de
 # canal deixou de descrever o instrumento — descreve metade dele, e a
 # metade que falta e justamente a que o dB precisa copiar no Loopy.
-CANAIS = {'kCanalEntradaA': 1, 'kCanalEntradaB': 2}
+# Os SEIS canais (v0.156.0). Escuta = manda + 3, entao o gerador so
+# precisa dos tres de entrada — a coluna de escuta se deduz.
+#
+# ESTE DICIONARIO JA FICOU VELHO UMA VEZ: foi escrito para dois canais e
+# a mudanca para tres o deixou com `kCanalCompart` desconhecido. O
+# gerador FALHOU ALTO em vez de emitir tabela torta, que era o desenho —
+# mas o episodio mostra que gerador tambem tem premissa, e premissa
+# tambem envelhece. A diferenca e que a dele grita.
+CANAIS = {'kCanalCompart': 1, 'kCanalEntradaA': 2, 'kCanalEntradaB': 3}
+DESLOC_ESCUTA = 3
 
 linhas, faltando = [], []
 achados = re.findall(r'AddMidi\(\s*(\d+)\s*,\s*([^,)]+)\s*(?:,\s*(\w+)\s*)?\)',
@@ -87,7 +96,8 @@ for cc, expr, canal in sorted(achados,
     ch = CANAIS.get(canal, 1)
     f = faixas.get(nome)
     fx = f'{f[0].rstrip(".")} – {f[1].rstrip(".")}' if f else '—'
-    linhas.append(f'| {cc} | ch{ch} | `{nome}` | {familia(nome)} | {fx} |')
+    linhas.append(f'| {cc} | ch{ch} | ch{ch + DESLOC_ESCUTA} |'
+                  f' `{nome}` | {familia(nome)} | {fx} |')
 
 if faltando:
     print(f'ERRO: {len(faltando)} CC(s) sem nome resolvido: {faltando}',
@@ -95,8 +105,8 @@ if faltando:
     sys.exit(1)
 
 print(f'<!-- gerado por gerar_ccmap.py de {MANIFEST.name} — nao editar a mao -->')
-print('| CC | canal | param | família | faixa real |')
-print('|---|---|---|---|---|')
+print('| CC | manda | escuta | param | família | faixa real |')
+print('|---|---|---|---|---|---|')
 print('\n'.join(linhas))
 ncc = len({l.split('|')[1].strip() for l in linhas})
 print(f'\n<!-- {len(linhas)} vinculos em {ncc} numeros de CC -->')

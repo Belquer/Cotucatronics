@@ -4,7 +4,8 @@
 > desenhados.** Aprovado pelo dB em 22/08.
 >
 > O passo 2 saiu em **dois voos separados**: A, o endereçamento de
-> entrada por canal; B, o espelho para ch3/ch4. Separados porque falham
+> entrada por canal; B, o espelho para canais próprios (que na época
+> foram ch3/ch4 e viraram ch4–ch6 na simetria de seis). Separados porque falham
 > de jeitos diferentes e o `vistos` — o instrumento do aceite — estava
 > no meio da mudança que o afeta.
 > A escrita em flash está bloqueada (ver `DESENHO-ESCRITA-QSPI.md`); o
@@ -60,19 +61,23 @@ com memória e CPU reais). Registrado como pergunta separada.
 ## Multiplexação por canal MIDI
 
 ```
-ENTRADA   ch1 → cadeia A + compartilhados
-          ch2 → cadeia B
-ESPELHO   ch3 → estado da cadeia A + compartilhados
-          ch4 → estado da cadeia B
-RECUSA    ch3 e ch4 na entrada (a placa nunca obedece a própria voz)
+ENTRADA   ch1 → compartilhados
+          ch2 → cadeia A
+          ch3 → cadeia B
+ESPELHO   ch4 → compartilhados
+          ch5 → cadeia A
+          ch6 → cadeia B
+RECUSA    ch4–ch6 na entrada (a placa nunca obedece a própria voz)
+
+REGRA: escuta = manda + 3. O número do CC é o mesmo nos seis.
 ```
 
 **Os mesmos números de CC nos dois canais.** As páginas do Loopy ficam
 idênticas — copiar a página e trocar um campo. Total de números de CC cai de
 76 para ~45, **mesmo duplicando os params**.
 
-⚠️ O espelho **sai do canal 2** (que passa a ser entrada da cadeia B) e vai
-para 3/4. A defesa de recusar a própria voz se mantém, só muda de número.
+⚠️ *(histórico)* O espelho saiu do canal 2 (que passa a ser entrada da cadeia B) e vai
+para ch4–ch6. A defesa de recusar a própria voz se mantém, só muda de número.
 
 **Estado: FEITO (v0.135.0).** O que a implementação acrescentou ao desenho:
 
@@ -163,7 +168,7 @@ A complexidade existe, mas só quem constrói a encontra.
 
 1. **Duplicar os params de caráter** (antes da biblioteca, senão ela nasce sem
    poder expressar drive diferente entre corda e tambor)
-2. **Multiplexação por canal** + espelho para 3/4
+2. **Multiplexação por canal** + espelho para ch4–ch6
 3. **Sistema de presets em RAM** com `dump`/`load`
 4. **SESSÃO DE ESCUTA = sessão de construção da biblioteca** — o julgamento
    das ~20 versões *vira* a biblioteca, em vez de ser pré-requisito burocrático

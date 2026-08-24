@@ -1,16 +1,17 @@
 # Aceite de hardware — multiplexação por canal (voos A e B)
 
-> **Estado (23/08, v0.153.0): o lado do FIRMWARE está VERDE.**
+> **Estado (23/08, v0.171.0): o lado do FIRMWARE está VERDE.**
 > O que resta é remapear o Loopy — ver
 > [RETRABALHO-LOOPY.md](RETRABALHO-LOOPY.md).
 >
 > | via | prova |
 > |---|---|
-> | placa → iPad em **ch3** (cadeia A + compart.) | MIDI Wrench |
-> | placa → iPad em **ch4** (cadeia B) | MIDI Wrench |
+> | placa → iPad em **ch4** (compartilhados) | *(a confirmar)* |
+> | placa → iPad em **ch5** (cadeia A) | MIDI Wrench |
+> | placa → iPad em **ch6** (cadeia B) | MIDI Wrench |
 > | iPad → placa (fio de volta) | 93 CCs contados pela trava |
 > | endereçamento por canal, 37 pares | banco nativo |
-> | recusa de ch3/ch4 na entrada | varredura do mapa |
+> | recusa de ch4–ch6 na entrada | varredura do mapa |
 >
 > **Os learns do Loopy foram apagados em 23/08**, então o remapeamento é
 > do zero e não uma migração de 37 widgets. O mapa inteiro está no
@@ -26,7 +27,7 @@
 defeito.** Capturar sobre um endereçamento não-validado congela o erro *dentro
 da biblioteca* — e aí ele deixa de estar num lugar e passa a estar em todos os
 presets. Se um widget da cadeia B ainda mandar no ch1, ou se o espelho não
-chegar em ch3/ch4, o preset "corda-shimmer" nasce com valores que vieram do
+chegar em ch4–ch6, o preset "corda-shimmer" nasce com valores que vieram do
 lugar errado.
 
 E o retrabalho do Loopy bloqueia o passo 3.5 (a escuta que constrói a
@@ -43,19 +44,31 @@ humanas em vez de intercalá-las.
 | nenhum vínculo de entrada nos canais do espelho | varredura do mapa | `test_midi` |
 | cada cadeia espelha num canal próprio | `CanalEspelhoDe` | `test_midi` |
 | espelho nunca coincide com entrada | **`static_assert`**, exercitado | `midi.h` |
-| a placa transmite em ch3 e ch4 | contador `eco: TX` | `midi` |
+| a placa transmite em ch5 e ch4 | contador `eco: TX` | `midi` |
 
 **O que NÃO está provado e só a bancada prova:** que o TX *chega* no iPad nos
 canais certos, e que a entrada funciona **pelo caminho real do WIDI** — não
 apenas pela tabela. `voltaram 0` hoje é honesto: o caminho de volta não está
 no fio.
 
+## O esquema em vigor — SEIS canais
+
+    MANDA    ch1 compartilhados · ch2 cadeia A · ch3 cadeia B
+    ESCUTA   ch4 compartilhados · ch5 cadeia A · ch6 cadeia B
+
+**Escuta = manda + 3**, mesmo número de CC nos seis.
+
+> Este documento descreveu o esquema de QUATRO canais até 23/08 — e o
+> roteiro mandava conferir `ch3`/`ch4` quando a placa já falava
+> `ch4`/`ch5`/`ch6`. **Documento errado não fica parado: manda alguém ao
+> lugar errado com o multímetro na mão** (bts 14h).
+
 ## Roteiro
 
 Serial aberta (`./monitor.command`), e `log on` antes de tudo.
 
 **1. TX nos canais certos.** ✅ **FEITO 23/08** — o MIDI Wrench viu os três
-valores de `level` (CC 100 = 64, 127, 0) em **ch3**. O caminho
+valores de `level` (CC 100 = 64, 127, 0) em **ch5**. O caminho
 `placa → WIDI → iPad` está provado ponta a ponta.
 
 *(procedimento original abaixo, para repetir quando necessário)*
@@ -65,14 +78,15 @@ valores de `level` (CC 100 = 64, 127, 0) em **ch3**. O caminho
 sync
 ```
 
-Esperado: rajada em **ch3** (cadeia A + compartilhados) e em **ch4** (cadeia B).
+Esperado: rajada em **ch4** (compartilhados), **ch5** (cadeia A) e
+**ch6** (cadeia B).
 Confirmar no `midi` que o TX subiu:
 
 ```
 midi
 ```
 
-**2. Injeção nos canais do espelho.** Mandar um CC qualquer pelo ch3 e pelo
+**2. Injeção nos canais do espelho.** Mandar um CC qualquer pelo ch5 e pelo
 ch4 e confirmar que foi **descartado e contado**, não obedecido:
 
 ```
@@ -104,7 +118,7 @@ teste que o Code rodou por serial; aqui ele roda pelo WIDI.
 **4. Retrabalho do Loopy.**
 
 - widgets da cadeia B passam a **enviar no ch2** (eram ch1, em outros números);
-- widgets de escuta migram de ch2 para **ch3** (cadeia A) e **ch4** (cadeia B);
+- widgets de escuta migram de ch2 para **ch5** (cadeia A) e **ch4** (cadeia B);
 - os órfãos `cc24`, `cc26`, `cc33` são reendereçados — são
   `gate_thresh_b`, `gate_release_b` e `drv_mix_b`, que trocaram de número
   para o do par e mudaram de canal.
@@ -120,7 +134,7 @@ O `sync` agora confere sozinho e reporta. Se der `AVISO`, a linha seguinte
 diz o que a placa sabe:
 
 - *"o fio de volta JÁ FUNCIONOU neste voo (N CCs pelo FIO)"* → não é cabo nem
-  pareamento; são os widgets, que ainda não escutam ch3/ch4;
+  pareamento; são os widgets, que ainda não escutam ch4–ch6;
 - *"a placa NUNCA ouviu o controlador"* → restam duas: widgets no canal
   errado, **ou** o fio `WIDI OUT → D14` não fecha.
 

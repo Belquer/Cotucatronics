@@ -460,7 +460,7 @@ que toque no callback.
 |---|---|
 | params de caráter por cadeia | ✅ custo indistinguível, medido com A/B no mesmo binário |
 | endereçamento por canal (ch1/ch2) | ✅ 37 pares, banco nativo |
-| espelho em ch3/ch4 | ✅ MIDI Wrench viu os dois |
+| espelho em ch4/ch5/ch6 | ✅ Wrench viu ch5; ch4 e ch6 a confirmar |
 | fio de volta (iPad → placa) | ✅ 93 CCs contados |
 | presets em RAM | ✅ ciclo `capturar → dump → reset → colar → load` |
 | botão de freeze B (D22/D23) | ✅ 4 batidas para 4 apertos |

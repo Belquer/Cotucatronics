@@ -4126,7 +4126,22 @@ Wrench, e a placa fala `ch4`/`ch5`/`ch6`. **Documento errado nao fica parado —
 ele manda alguem ao lugar errado com o multimetro na mao.**
 
 > **Para cada mudanca estrutural, separe os documentos que a descrevem em
-> GERADOS e ESCRITOS. Os escritos sao a lista de trabalho.** Os gerados nao
+> GERADOS e ESCRITOS. Os escritos sao a lista de trabalho.**
+
+### E o gerador tambem tem premissa — a diferenca e que a dele grita
+
+Ao regerar o `CCMAP.md` o gerador **falhou**: a tabela de canais dele dizia
+`{kCanalEntradaA: 1, kCanalEntradaB: 2}`, escrita para DOIS canais, e a
+mudanca para tres a deixou com `kCanalCompart` desconhecido.
+
+**Ele nao emitiu tabela torta — abortou nomeando os doze CCs que nao
+resolveu.** Era o desenho: *"sai com codigo 1 se algum CC nao resolver, em vez
+de emitir tabela incompleta: tabela gerada com buraco e pior que tabela
+ausente."*
+
+> **Gerador nao dispensa manutencao — dispensa DISCIPLINA.** A premissa dele
+> envelhece igual, mas ele grita em vez de mentir, e gritar e o que transforma
+> manutencao em tarefa em vez de armadilha. Os gerados nao
 > precisam de disciplina; os escritos so tem disciplina.
 
 E o corolario que vale mais que a regra: **o que se pode gerar, gere.** O
