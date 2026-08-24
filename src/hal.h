@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.22.0
+// hal.h v0.25.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -169,6 +169,29 @@ uint32_t         MidiDropped();     // bytes perdidos por fila cheia
 // truncada nao e comando: executar metade e pior que nao executar.
 uint32_t         SerialTruncadas();
 
+// ---- ENCODERS EC11 (tres: cadeia A, cadeia B, global) ----
+//
+// ESTADO INDEPENDENTE POR ENCODER, e isso e requisito e nao detalhe:
+// qualquer variavel compartilhada entre eles faz giro simultaneo se
+// contaminar, e o sintoma seria "as vezes o global pula" — intermitente,
+// que e o mais caro de todos.
+//
+// O `Incremento` e CRU: -1, 0 ou +1 do ultimo poll, sem divisao por
+// detente e sem aceleracao. A divisao se MEDE (alguns EC11 dao dois ou
+// quatro pulsos por clique) e a aceleracao e decisao de interface —
+// as duas moram na camada de cima, nao aqui.
+//
+// LIMITE CONHECIDO: o `Debounce` da libDaisy amostra a 1 kHz e decodifica
+// por padrao de quadratura. Transicao mais curta que 1 ms se perde. Por
+// isso quem chama ACUMULA e CONTA, para que a perda apareca como numero
+// em vez de sumir.
+static constexpr int kNumEncoders = 3;
+bool             EncoderInit();
+void             EncoderPoll();            // no LOOP, nunca no callback
+int              EncoderIncremento(int idx);  // -1 / 0 / +1, CRU
+bool             EncoderPushNivel(int idx);   // com debounce
+bool             EncoderPushBorda(int idx);   // borda de apertar
+
 // ---- OLED (SSD1309 128x64, 4-wire SPI) ----
 //
 // TESTE DE VIDA, nao driver de painel. Prova que os cinco fios chegam e
@@ -183,7 +206,14 @@ uint32_t         SerialTruncadas();
 bool             OledInit();          // true = CONFIGURADO, nao detectado
 void             OledPreenche(bool aceso);   // tela toda acesa/apagada
 void             OledTexto(const char* l1, const char* l2);
+// Tres linhas pequenas — o formato de instrumento, nao de titulo.
+void             OledLinhas(const char* l1, const char* l2, const char* l3);
 bool             OledConfigurado();
+// Quantos `Update` foram ao painel e quantos caracteres foram escritos.
+// Sem estes dois, tela preta tem duas causas indistinguiveis: o desenho
+// nao rodou, ou rodou e nao pintou.
+uint32_t         OledUpdates();
+uint32_t         OledChars();
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
 

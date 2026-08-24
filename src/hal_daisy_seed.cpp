@@ -3,10 +3,11 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.24.0
+// hal_daisy_seed v0.27.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
+#include "hid/encoder.h"
 #include "hid/disp/oled_display.h"
 #include "util/oled_fonts.h"
 #include <cstdarg>
@@ -753,6 +754,56 @@ void MidiInjectByte(uint8_t b)
 bool     MidiRxActive() { return midi_started && midi_uart.IsListening(); }
 uint32_t SerialTruncadas() { return serial_truncadas; }
 
+// ---- ENCODERS ----
+//
+// PINOS, e o criterio da escolha esta escrito porque ele vai ser
+// questionado quando o proximo periferico chegar:
+//
+//   enc A (cadeia A)   D0  D1   push D2
+//   enc B (cadeia B)   D3  D4   push D9
+//   enc G (global)     D20 D21  push D19
+//
+// Os DIGITAIS PUROS sao o recurso escasso — D0..D4, D9, D11, D12 e so.
+// Gastei seis neles e tres no bloco ADC, e escolhi o TOPO do bloco
+// (D19/D20/D21) para deixar A0..A3 contiguos: quatro pots num chicote so
+// e o tipo de folga que se agradece depois.
+//
+// D11/D12 FICAM LIVRES DE PROPOSITO: sao o I2C_1 (PB8/PB9), que o INA226
+// vai querer. Conferido no fonte da libDaisy — o codec usa I2C_2, em
+// pinos nao expostos, entao o I2C_1 esta inteiro.
+//
+// E NAO HA DEFAULT PARA COLIDIR: `Encoder::Init(a, b, click)` exige os
+// tres pinos. O risco que o OLED teve — RST default em D30, justo um
+// reservado — nao existe nesta classe.
+static daisy::Encoder enc[kNumEncoders];
+static bool           enc_pronto = false;
+
+bool EncoderInit()
+{
+    if(enc_pronto) return true;
+    //                     fase A       fase B       push
+    enc[0].Init(seed::D0,  seed::D1,  seed::D2);
+    enc[1].Init(seed::D3,  seed::D4,  seed::D9);
+    enc[2].Init(seed::D20, seed::D21, seed::D19);
+    enc_pronto = true;
+    return true;
+}
+
+void EncoderPoll()
+{
+    if(!enc_pronto) return;
+    // O proprio Debounce se limita a 1 kHz por dentro, entao chamar a
+    // cada volta do laco e correto e nao desperdica.
+    for(int i = 0; i < kNumEncoders; i++) enc[i].Debounce();
+}
+
+int  EncoderIncremento(int i)
+{ return (enc_pronto && i >= 0 && i < kNumEncoders) ? enc[i].Increment() : 0; }
+bool EncoderPushNivel(int i)
+{ return enc_pronto && i >= 0 && i < kNumEncoders && enc[i].Pressed(); }
+bool EncoderPushBorda(int i)
+{ return enc_pronto && i >= 0 && i < kNumEncoders && enc[i].RisingEdge(); }
+
 // ---- OLED ----
 //
 // FIACAO SOLDADA (23/08) contra os defaults da libDaisy:
@@ -775,6 +826,11 @@ uint32_t SerialTruncadas() { return serial_truncadas; }
 // `WriteString`, e o driver sozinho so tem `DrawPixel`. Escrever texto a
 // mao a partir do FontDef seria reimplementar o que ja existe testado.
 static daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver> oled;
+// CONTADORES DO PROPRIO DESENHO. Faltavam, e a falta custou uma rodada
+// inteira de hipoteses: sem eles, "o bloco nao executou" e "executou e
+// pintou preto" leem exatamente igual — uma tela apagada.
+static uint32_t oled_updates = 0;
+static uint32_t oled_chars   = 0;
 static bool oled_pronto = false;
 
 bool OledInit()
@@ -804,6 +860,7 @@ void OledPreenche(bool aceso)
     if(!oled_pronto) return;
     oled.Fill(aceso);
     oled.Update();   // BLOQUEANTE, e aceitavel: roda no loop, por comando
+    oled_updates++;
 }
 
 // TEXTO — e ele prova mais que o `Fill`.
@@ -826,6 +883,7 @@ void OledTexto(const char* l1, const char* l2)
         const int x    = larg < 128 ? (128 - larg) / 2 : 0;
         oled.SetCursor((uint16_t)x, 18);
         oled.WriteString(l1, Font_7x10, true);
+        oled_chars += (uint32_t)n;
     }
     if(l2 && *l2)
     {
@@ -837,6 +895,30 @@ void OledTexto(const char* l1, const char* l2)
     }
     oled.Update();
 }
+
+// TRES LINHAS, fonte pequena, alinhadas a esquerda.
+//
+// Formato de INSTRUMENTO e nao de titulo: nada de centralizar, porque
+// numero que muda de largura ficaria dancando na tela e o olho perde a
+// referencia. Coluna fixa le-se de relance.
+void OledLinhas(const char* l1, const char* l2, const char* l3)
+{
+    if(!oled_pronto) return;
+    oled.Fill(false);
+    const char* v[3] = {l1, l2, l3};
+    for(int i = 0; i < 3; i++)
+    {
+        if(!v[i] || !*v[i]) continue;
+        oled.SetCursor(0, (uint16_t)(6 + i * 20));
+        oled.WriteString(v[i], Font_6x8, true);
+        for(const char* q = v[i]; *q; q++) oled_chars++;
+    }
+    oled.Update();
+    oled_updates++;
+}
+
+uint32_t OledUpdates() { return oled_updates; }
+uint32_t OledChars()   { return oled_chars; }
 
 bool OledConfigurado() { return oled_pronto; }
 

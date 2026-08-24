@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.156.0"
+#define COTUCA_OS_VERSION "0.159.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -393,6 +393,74 @@ static inline uint32_t OuviDoFio()
 {
     return ouvi_controlador > injetados_local
                ? ouvi_controlador - injetados_local : 0;
+}
+
+// ---- ENCODERS: acumulacao, aceleracao e o instrumento ----
+//
+// TRES ESTADOS COMPLETAMENTE SEPARADOS. Nenhum campo compartilhado entre
+// encoders — giro simultaneo contaminado daria sintoma intermitente, que
+// e o mais caro de diagnosticar.
+//
+// O `passos_crus` conta o que a libDaisy entregou, SEM divisao por
+// detente. A divisao se mede girando dez cliques e conferindo dez — nao
+// se le no datasheet, porque EC11 varia entre lotes.
+struct EstadoEnc
+{
+    int32_t  crus       = 0;   // incrementos brutos acumulados
+    int32_t  passos     = 0;   // depois da divisao por detente
+    int32_t  acelerados = 0;   // depois da aceleracao por tempo
+    int      resto      = 0;   // sobra da divisao, para nao perder passo
+    int      ultimo_dir = 0;   // -1, 0, +1
+    uint32_t ultimo_ms  = 0;   // para a aceleracao POR TEMPO
+    uint32_t pushes     = 0;   // CONTAGEM, nao paridade (bts 13e)
+    bool     push_agora = false;
+    uint32_t rapidos    = 0;   // passos que a aceleracao multiplicou
+};
+static EstadoEnc enc_st[cotuca::hal::kNumEncoders];
+
+// DIVISAO POR DETENTE — nasce em 1 e se ajusta DEPOIS DE MEDIR.
+//
+// Alguns EC11 dao dois ou quatro pulsos por clique. Cravar 4 "porque
+// costuma ser" produziria um instrumento que mente por suposicao logo no
+// voo que existe para medir. Comeca em 1, o `enc` mostra o cru, e o
+// numero certo entra quando o dB girar dez e contar.
+static int enc_por_detente = 1;
+
+// ESPELHO DO ENCODER NA TELA — o mesmo instrumento, outra superficie.
+//
+// Nao e navegacao (isso e o passo 4): e o `enc` desenhado, para que a
+// medicao dos dez detentes se faca olhando o knob e nao a serial.
+//
+// SO REDESENHA QUANDO O TEXTO MUDA, e com teto de taxa. A escrita e
+// BLOQUEANTE (~1 KB por Update a PS_64) — redesenhar a cada volta do
+// laco poria milissegundos de bloqueio no caminho do MIDI e do serial
+// sem nenhum ganho, porque a tela nao muda mais rapido que o olho le.
+static bool     enc_na_tela   = true;
+static uint32_t enc_tela_prox = 0;
+static char     enc_tela_ant[3][24] = {{0},{0},{0}};
+
+// ACELERACAO POR TEMPO ENTRE PASSOS, nao por contagem bruta.
+//
+// Por contagem, um giro lento e longo acelera igual a um rapido e curto —
+// e o gesto do operador e o oposto: rapido quer percorrer, lento quer
+// precisar. O tempo entre passos captura a INTENCAO; a contagem captura
+// so a distancia.
+static constexpr uint32_t kEncRapidoMs = 40;   // abaixo disto, e varredura
+static constexpr uint32_t kEncTurboMs  = 15;   // muito rapido
+static constexpr int      kEncMultRap  = 4;
+static constexpr int      kEncMultTurbo = 10;
+
+// Aceleracao aplicada NO PASSO, com o intervalo desde o passo anterior.
+static void AplicaAcel(EstadoEnc& st, int dir)
+{
+    using namespace cotuca;
+    const uint32_t ag = hal::NowMs();
+    const uint32_t dt = st.ultimo_ms ? (ag - st.ultimo_ms) : 0xFFFFFFFFu;
+    st.ultimo_ms = ag;
+    int mult = 1;
+    if(dt <= kEncTurboMs)       { mult = kEncMultTurbo; st.rapidos++; }
+    else if(dt <= kEncRapidoMs) { mult = kEncMultRap;   st.rapidos++; }
+    st.acelerados += dir * mult;
 }
 
 static bool espelho_on = true;
@@ -2994,6 +3062,84 @@ static void HandleLine(const char* line)
                  " `oled texto` escreve · `oled off` apaga.");
         return;
     }
+    // `enc [reset]` — o teste E o instrumento de diagnostico depois.
+    //
+    // Reporta o CRU e a interpretacao ao lado, que e a regra da casa:
+    // "crus" e o que a libDaisy entregou, "passos" e depois da divisao
+    // por detente, "acel" e depois da aceleracao. Ver os tres juntos e o
+    // que permite dizer se um numero errado veio do hardware, da divisao
+    // ou da aceleracao — com um numero so, as tres causas leem igual.
+    if(strncmp(line, "enc", 3) == 0)
+    {
+        const char* a = line + 3;
+        while(*a == ' ') a++;
+        hal::EncoderInit();
+        // A tela liga junto: o instrumento serve para olhar o knob, nao
+        // a serial. `enc tela off` cala se atrapalhar.
+        hal::OledInit();
+        if(strncmp(a, "tela", 4) == 0)
+        {
+            const char* v = a + 4;
+            while(*v == ' ') v++;
+            if(*v) enc_na_tela = (strncmp(v, "on", 2) == 0);
+            enc_tela_ant[0][0] = 0;   // forca redesenho
+            if(!enc_na_tela) hal::OledPreenche(false);
+            hal::Log("enc: espelho na tela %s",
+                     enc_na_tela ? "LIGADO" : "desligado");
+            return;
+        }
+        if(strncmp(a, "reset", 5) == 0)
+        {
+            for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
+                enc_st[e] = EstadoEnc{};
+            enc_tela_ant[0][0] = 0;   // forca redesenho
+            hal::Log("enc: zerado. Gire e olhe a TELA — o contador acumula,"
+                     " nao ha janela nem pressa.");
+            return;
+        }
+        if(strncmp(a, "detente", 7) == 0)
+        {
+            const char* v = a + 7;
+            while(*v == ' ') v++;
+            const int n = atoi(v);
+            if(n >= 1 && n <= 8)
+            {
+                enc_por_detente = n;
+                for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
+                { enc_st[e].passos = 0; enc_st[e].resto = 0;
+                  enc_st[e].acelerados = 0; }
+                hal::Log("enc: %d pulso(s) por detente. Passos zerados —"
+                         " gire dez e confira dez.", n);
+            }
+            else
+                hal::Log("enc detente <1..8>  (agora: %d)", enc_por_detente);
+            return;
+        }
+        static const char* kNome[] = {"cadeia A", "cadeia B", "global"};
+        hal::Log("ENCODERS — %d pulso(s) por detente"
+                 " (`enc detente <n>` ajusta, `enc reset` zera)",
+                 enc_por_detente);
+        for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
+        {
+            const EstadoEnc& st = enc_st[e];
+            hal::Log("  %-9s crus %+ld | passos %+ld | acel %+ld |"
+                     " ult %s | push %lu%s",
+                     kNome[e], (long)st.crus, (long)st.passos,
+                     (long)st.acelerados,
+                     st.ultimo_dir > 0 ? "CW " : st.ultimo_dir < 0 ? "CCW" : "-  ",
+                     (unsigned long)st.pushes,
+                     st.push_agora ? "  [APERTADO AGORA]" : "");
+        }
+        hal::Log("  (crus = o que a libDaisy entregou · passos = depois da"
+                 " divisao · acel = depois da aceleracao por tempo)");
+        hal::Log("  tela: %s | %lu updates ao painel | %lu chars escritos",
+                 hal::OledConfigurado() ? (enc_na_tela ? "espelho LIGADO"
+                                                       : "espelho desligado")
+                                        : "OLED NAO CONFIGURADO",
+                 (unsigned long)hal::OledUpdates(),
+                 (unsigned long)hal::OledChars());
+        return;
+    }
     if(strncmp(line, "pino", 4) == 0)
     {
         // PRIMEIRO A TRAVA (sem relogio), depois a janela (com relogio).
@@ -4130,7 +4276,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | enc [reset|detente <n>|tela on/off] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -4468,6 +4614,55 @@ int main(void)
         }
         FASE(2);
         hal::PollSerial();
+        // ---- ENCODERS, no laco ----
+        hal::EncoderPoll();
+        for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
+        {
+            EstadoEnc& st = enc_st[e];
+            const int  inc = hal::EncoderIncremento(e);
+            if(inc)
+            {
+                st.crus += inc;
+                st.ultimo_dir = inc;
+                // Divisao com RESTO guardado: sem ele, dividir por 4
+                // perderia ate tres pulsos a cada troca de sentido, e a
+                // perda apareceria como "o encoder as vezes nao anda".
+                st.resto += inc;
+                while(st.resto >= enc_por_detente)
+                { st.resto -= enc_por_detente; st.passos += 1; AplicaAcel(st, +1); }
+                while(st.resto <= -enc_por_detente)
+                { st.resto += enc_por_detente; st.passos -= 1; AplicaAcel(st, -1); }
+            }
+            if(hal::EncoderPushBorda(e)) st.pushes++;
+            st.push_agora = hal::EncoderPushNivel(e);
+        }
+
+        // ---- ENCODER NA TELA ----
+        if(enc_na_tela && hal::OledConfigurado()
+           && (int32_t)(hal::NowMs() - enc_tela_prox) >= 0)
+        {
+            char l[3][24];
+            static const char* kIni[] = {"A", "B", "G"};
+            bool mudou = false;
+            for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
+            {
+                const EstadoEnc& st = enc_st[e];
+                snprintf(l[e], sizeof(l[e]), "%s c%+ld p%+ld #%lu%s",
+                         kIni[e], (long)st.crus, (long)st.passos,
+                         (unsigned long)st.pushes, st.push_agora ? " *" : "");
+                if(strcmp(l[e], enc_tela_ant[e]) != 0)
+                { mudou = true; snprintf(enc_tela_ant[e],
+                                         sizeof(enc_tela_ant[e]), "%s", l[e]); }
+            }
+            if(mudou)
+            {
+                hal::OledLinhas(l[0], l[1], l[2]);
+                // 60 ms entre desenhos: mais rapido que isso o olho nao
+                // acompanha, e cada Update bloqueia o laco.
+                enc_tela_prox = hal::NowMs() + 60u;
+            }
+        }
+
         MidiEspelha();   // LOOP, nunca callback — ver cabecalho
 
         // VEREDITO DO SYNC. Roda no laco porque so aqui o
