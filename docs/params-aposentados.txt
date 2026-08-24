@@ -67,3 +67,4 @@ check_docs        # nome do proprio verificador, citado na 13m
 # (vazia em 23/08: o `n_params` saiu quando o PresetHeader passou a
 #  existir em presets.h — a divida foi cobrada pelo proprio mecanismo,
 #  que era o ponto de escrever o prazo.)
+midi_dup          desenho  AUDIT-23-08 achado 2 — sai quando o detector existir
