@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.27.0
+// hal.h v0.28.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -236,6 +236,10 @@ bool             OledSondaPino(const char* nome, bool alto);
 // descricao. A placa faz sozinha o que o multimetro faria em dez
 // medicoes — e sem depender de um multimetro que ja mentiu hoje.
 int              OledCacaPonte(char* achados, int cap);
+// Prescaler do SPI do painel, ajustavel sem gravar. Fio comprido perdoa
+// menos em MHz alto — e isso se MEDE varrendo, nao se supoe.
+bool             OledVelocidade(int ps);   // 2,4,8,16,32,64,128,256
+int              OledVelocidadeAtual();
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
 

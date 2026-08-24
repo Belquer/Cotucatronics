@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.30.0
+// hal_daisy_seed v0.31.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -831,7 +831,26 @@ static daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver> oled;
 // pintou preto" leem exatamente igual — uma tela apagada.
 static uint32_t oled_updates = 0;
 static uint32_t oled_chars   = 0;
+// VELOCIDADE AJUSTAVEL EM TEMPO DE EXECUCAO — ganho de teste, nao
+// configuracao. Cravar um prescaler custaria uma gravacao por tentativa;
+// assim a varredura inteira cabe numa. Mesma familia do `ctos prazo` e
+// do `dup on|off`.
+static int oled_ps = 64;
 static bool oled_pronto = false;
+
+// Reinicializa DE VERDADE quando o prescaler muda: o `if(oled_pronto)`
+// existia para nao repetir o Init, e com velocidade ajustavel ele viraria
+// exatamente o defeito que faz um ajuste "nao pegar" em silencio.
+bool OledVelocidade(int ps)
+{
+    if(ps != 2 && ps != 4 && ps != 8 && ps != 16 && ps != 32
+       && ps != 64 && ps != 128 && ps != 256)
+        return false;
+    oled_ps     = ps;
+    oled_pronto = false;   // forca o Init a refazer o SPI
+    return true;
+}
+int OledVelocidadeAtual() { return oled_ps; }
 
 bool OledInit()
 {
@@ -845,8 +864,21 @@ bool OledInit()
     // solda de bancada perdoam menos em MHz alto, e este teste nao tem
     // requisito de taxa nenhum. Se acender, da para descer depois e
     // medir onde para de acender — que e informacao, nao chute.
-    cfg.driver_config.transport_config.spi_config.baud_prescaler
-        = SpiHandle::Config::BaudPrescaler::PS_64;
+    using BP = SpiHandle::Config::BaudPrescaler;
+    BP ps = BP::PS_64;
+    switch(oled_ps)
+    {
+        case 2:   ps = BP::PS_2;   break;
+        case 4:   ps = BP::PS_4;   break;
+        case 8:   ps = BP::PS_8;   break;
+        case 16:  ps = BP::PS_16;  break;
+        case 32:  ps = BP::PS_32;  break;
+        case 64:  ps = BP::PS_64;  break;
+        case 128: ps = BP::PS_128; break;
+        case 256: ps = BP::PS_256; break;
+        default:  ps = BP::PS_64;  break;
+    }
+    cfg.driver_config.transport_config.spi_config.baud_prescaler = ps;
     oled.Init(cfg);
     // O `Init` da libDaisy e VOID. Nao ha status, entao nao ha status a
     // reportar: o `true` daqui significa "configurei", e o chamador tem
