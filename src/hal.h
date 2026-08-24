@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.31.0
+// hal.h v0.32.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -263,6 +263,11 @@ int              OledCacaPonte(char* achados, int cap);
 // Prescaler do SPI do painel, ajustavel sem gravar. Fio comprido perdoa
 // menos em MHz alto — e isso se MEDE varrendo, nao se supoe.
 bool             OledVelocidade(int ps);   // 2,4,8,16,32,64,128,256
+// O modulo tem SPI e I2C, e a selecao mora na TRASEIRA DELE. O firmware
+// so precisa saber qual falar. I2C usa D11 (SCL) e D12 (SDA).
+bool             OledModoI2c(bool usa, int addr);
+bool             OledEhI2c();
+int              OledEndereco();
 int              OledVelocidadeAtual();
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.169.0"
+#define COTUCA_OS_VERSION "0.170.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3033,6 +3033,30 @@ static void HandleLine(const char* line)
     // mesma armadilha para `miditest`/`midiloop` contra `midi`.
     //
     // Licao escrita a dois comandos de distancia e licao nao aplicada.
+    // ATENCAO A ORDEM: antes do `oled` (bts 14c).
+    if(strncmp(line, "oledi2c", 7) == 0)
+    {
+        const char* a = line + 7;
+        while(*a == ' ') a++;
+        const int addr = (*a) ? (int)strtol(a, nullptr, 0) : 0x3C;
+        hal::OledModoI2c(true, addr);
+        hal::OledInit();
+        hal::OledPreenche(true);
+        hal::Log("oled: modo I2C, endereco 0x%02X, SCL=D11 SDA=D12,"
+                 " 400 kHz. Tela ACESA.", hal::OledEndereco());
+        hal::Log("  se nao acender, tenta `oledi2c 0x3D` — modulo com o"
+                 " outro endereco e a causa mais comum.");
+        return;
+    }
+    if(strncmp(line, "oledspi", 7) == 0)
+    {
+        hal::OledModoI2c(false, 0);
+        hal::OledInit();
+        hal::OledPreenche(true);
+        hal::Log("oled: modo SPI, CLK=D8 DIN=D10 CS=D7 DC=D6 RST=D5."
+                 " Tela ACESA.");
+        return;
+    }
     if(strncmp(line, "oledvel", 7) == 0)
     {
         const char* a = line + 7;
@@ -4434,7 +4458,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset] | encpino [reset] | enc [reset|detente <n>|tela on/off] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset] | encpino [reset] | enc [reset|detente <n>|tela on/off] | fio <pino> <0|1> | fio curto | oledvel <n> | oledi2c [addr] | oledspi | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
