@@ -85,3 +85,48 @@ da casa. O display é escrita pura.
 > DETECTÁVEL.** Não há caminho de leitura, então nenhum comando pode dizer
 > "OLED presente". O `board` diz **configurado**, e a diferença não é
 > preciosismo — é a mesma linha do `placa viva: sim` que já mentiu aqui.
+
+## MAPA CONFERIDO POR MÁQUINA
+
+<!-- pinos: inicio -->
+| pino | dono |
+|---|---|
+| D0 | encoder A fase A |
+| D1 | encoder A fase B |
+| D2 | encoder A push |
+| D3 | encoder B fase A |
+| D4 | encoder B fase B |
+| D5 | OLED RST |
+| D6 | OLED DC |
+| D7 | OLED CS |
+| D8 | OLED CLK |
+| D9 | encoder B push |
+| D10 | OLED DIN |
+| D13 | MIDI TX |
+| D14 | MIDI RX |
+| D17 | encoder G push |
+| D18 | encoder G fase A |
+| D19 | encoder G fase B |
+| D22 | botão B4 freeze B |
+| D23 | LED freeze B |
+| D24 | botão B2 freeze A |
+| D25 | botão B3 rearme CTOS |
+| D26 | botão B1 randomize |
+| D27 | LED freeze A |
+| D28 | WIDI LED |
+| D29 | RESERVADO — DPDT exciter |
+| D30 | RESERVADO — DPDT exciter |
+<!-- pinos: fim -->
+
+**Livres:** D11, D12 (I2C_1 para o INA226), D15, D16, D20, D21.
+
+> **Esta tabela é conferida pelo `make check-docs`** contra os
+> `seed::Dnn` do `hal_daisy_seed.cpp`. Pino reclamado no código e ausente
+> daqui, ou daqui e não usado lá, vira acusação.
+>
+> A rotina existe porque **a placa está entupida e os pontos de solda
+> espremidos**: conferir de cabeça é o que falha exatamente quando o
+> custo de errar é maior. E porque um mapa suposto já custou horas — o
+> encoder global estava em D17/D18/D19 e o firmware media D20/D21,
+> então todo instrumento apontava para o lugar errado e nenhum podia
+> dizer isso.

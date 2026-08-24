@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.33.0
+// hal_daisy_seed v0.36.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -761,7 +761,20 @@ uint32_t SerialTruncadas() { return serial_truncadas; }
 //
 //   enc A (cadeia A)   D0  D1   push D2
 //   enc B (cadeia B)   D3  D4   push D9
-//   enc G (global)     D20 D21  push D19
+//   enc G (global)     D18 D19  push D17
+//
+// O GLOBAL MUDOU DE PINO em 23/08, e a razao vale registrar: a solda
+// foi para D17/D18/D19 e o firmware supunha D20/D21/D19. O sintoma era
+// desconcertante — girar movia o pino do "push" (D19, que na verdade e
+// uma FASE) e as duas "fases" nunca comutavam, porque nao havia nada
+// ligado nelas.
+//
+// Perdi rodadas diagnosticando fiacao com base num mapa suposto. A
+// medicao so podia confirmar ou negar o que eu ja imaginava: nenhum
+// instrumento apontado para D20/D21 diria "o fio esta no D18".
+//
+// Dai o `varre`, que le TODOS os livres: supor o mapa e depois medir
+// contra a suposicao so encontra o que ja se esperava.
 //
 // Os DIGITAIS PUROS sao o recurso escasso — D0..D4, D9, D11, D12 e so.
 // Gastei seis neles e tres no bloco ADC, e escolhi o TOPO do bloco
@@ -784,7 +797,7 @@ bool EncoderInit()
     //                     fase A       fase B       push
     enc[0].Init(seed::D0,  seed::D1,  seed::D2);
     enc[1].Init(seed::D3,  seed::D4,  seed::D9);
-    enc[2].Init(seed::D20, seed::D21, seed::D19);
+    enc[2].Init(seed::D18, seed::D19, seed::D17);
     enc_pronto = true;
     return true;
 }
@@ -795,7 +808,7 @@ bool EncoderInit()
 static const daisy::Pin kEncPin[kNumEncoders][3] = {
     {seed::D0,  seed::D1,  seed::D2},
     {seed::D3,  seed::D4,  seed::D9},
-    {seed::D20, seed::D21, seed::D19},
+    {seed::D18, seed::D19, seed::D17},
 };
 
 bool EncoderNivelCru(int idx, int qual)
@@ -822,6 +835,33 @@ uint16_t EncoderNiveisCrus()
     for(int e = 0; e < kNumEncoders; e++)
         for(int q = 0; q < 3; q++)
             if(!g[e][q].Read()) m |= (uint16_t)(1u << (e * 3 + q));
+    return m;
+}
+
+// Todos os pinos que NAO estao ocupados por periferico. Inclui os nove
+// dos encoders — se o fio estiver noutro lugar, e aqui que aparece.
+static const int kLivres[] = {0,1,2,3,4,9,11,12,15,16,17,18,19,20,21};
+static const daisy::Pin kLivresPin[] = {
+    seed::D0, seed::D1, seed::D2, seed::D3, seed::D4, seed::D9,
+    seed::D11, seed::D12, seed::D15, seed::D16, seed::D17,
+    seed::D18, seed::D19, seed::D20, seed::D21};
+static constexpr int kNumLivres = (int)(sizeof(kLivres)/sizeof(kLivres[0]));
+
+int PinosVarridos(const int** lista) { *lista = kLivres; return kNumLivres; }
+
+uint32_t VarreLivres()
+{
+    static daisy::GPIO g[kNumLivres];
+    static bool feito = false;
+    if(!feito)
+    {
+        for(int i = 0; i < kNumLivres; i++)
+            g[i].Init(kLivresPin[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+        feito = true;
+    }
+    uint32_t m = 0;
+    for(int i = 0; i < kNumLivres; i++)
+        if(!g[i].Read()) m |= (1u << i);
     return m;
 }
 
@@ -896,6 +936,20 @@ bool OledInit()
     // o SSD1309 quer. Nao se toca no que ja esta certo.
     cfg.driver_config.transport_config.pin_config.dc    = seed::D6;
     cfg.driver_config.transport_config.pin_config.reset = seed::D5;
+    // OS TRES DO SPI SAO OS DEFAULTS, E MESMO ASSIM SE DECLARAM AQUI.
+    //
+    // Nao muda comportamento nenhum — muda quem SABE. Enquanto vinham do
+    // default da libDaisy, tres pinos estavam ocupados sem que o nosso
+    // fonte dissesse: quem atribuisse D7 a outra coisa nao encontraria
+    // conflito em lugar nenhum, e a colisao so apareceria na bancada.
+    //
+    // E o `make check-docs` os acusou por isso — "no PINOS.md e nao
+    // aparece no fonte". Ocupacao que vive so no default de uma
+    // biblioteca e o gemeo da reserva que vive so em documento (o D30):
+    // nos dois casos o compilador nao sabe, e o custo aparece na solda.
+    cfg.driver_config.transport_config.spi_config.pin_config.sclk = seed::D8;
+    cfg.driver_config.transport_config.spi_config.pin_config.mosi = seed::D10;
+    cfg.driver_config.transport_config.spi_config.pin_config.nss  = seed::D7;
     // PRESCALER ALTO NO PRIMEIRO VOO, de proposito: fio comprido e
     // solda de bancada perdoam menos em MHz alto, e este teste nao tem
     // requisito de taxa nenhum. Se acender, da para descer depois e

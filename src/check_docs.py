@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.7.1"
+VERSION = "0.8.1"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -184,6 +184,56 @@ def versao_derivada():
     return fora
 
 
+def pinos():
+    """Confere o mapa de pinos DECLARADO contra os `seed::Dnn` do fonte.
+
+    Existe porque a placa esta entupida e os pontos de solda espremidos:
+    conferir de cabeca e o que falha exatamente quando errar custa mais.
+
+    E porque um mapa SUPOSTO ja custou horas — o encoder global estava em
+    D17/D18/D19 e o firmware media D20/D21. Todos os instrumentos
+    apontavam para o lugar errado, e nenhum podia dizer isso: supor o
+    mapa e depois medir contra a suposicao so encontra o que ja se
+    esperava.
+    """
+    doc = (RAIZ / "docs/operacao/PINOS.md")
+    if not doc.exists():
+        return None, None, None
+    t = doc.read_text(encoding="utf-8", errors="replace")
+    m = re.search(r'<!-- pinos: inicio -->(.*?)<!-- pinos: fim -->', t, re.S)
+    if not m:
+        return None, None, None
+    declarado = {}
+    for ln in m.group(1).splitlines():
+        mm = re.match(r'\|\s*D(\d+)\s*\|\s*([^|]+?)\s*\|', ln)
+        if mm:
+            declarado[int(mm.group(1))] = mm.group(2)
+
+    src = (SRC / "hal_daisy_seed.cpp").read_text(encoding="utf-8",
+                                                 errors="replace")
+    # As tabelas de SONDA apontam de proposito para pinos ja reclamados;
+    # nao sao donos. Sem esta isencao todo pino instrumentado viraria
+    # conflito, e o verificador so gritaria.
+    # Recorta os BLOCOS inteiros das tabelas de sonda, nao so a primeira
+    # linha delas: `kLivresPin` e `kEncPin` sao inicializadores de varias
+    # linhas, e filtrar por linha deixava passar as continuacoes — foi o
+    # que acusou seis pinos livres como se fossem donos.
+    limpo = src
+    for nome in ("kLivresPin", "kEncPin", "kPino"):
+        limpo = re.sub(nome + r'\s*\[[^\]]*\][^=]*=\s*\{.*?\};',
+                       '', limpo, flags=re.S)
+    limpo = re.sub(r'strcmp\(nome[^\n]*\n', '', limpo)
+    usados = set(int(mm.group(1))
+                 for mm in re.finditer(r'seed::D(\d+)', limpo))
+
+    reservados = {d for d, n in declarado.items() if "RESERVADO" in n}
+    no_codigo_sem_doc = sorted(usados - set(declarado))
+    no_doc_sem_codigo = sorted(d for d in declarado
+                               if d not in usados and d not in reservados)
+    reservado_usado   = sorted(reservados & usados)
+    return no_codigo_sem_doc, no_doc_sem_codigo, reservado_usado
+
+
 def main():
     print(f"check_docs v{VERSION}")
     params, ccs = verdade()
@@ -211,6 +261,17 @@ def main():
             linha = texto[:mm.start()].count("\n") + 1
             erros.append((doc.name, linha, nome,
                           texto.split("\n")[linha-1].strip()[:70]))
+
+    a, b, c = pinos()
+    if a is None:
+        print("\nPINOS: sem tabela declarada em PINOS.md — checagem sem"
+              " objeto, que e pior que checagem ausente.")
+    else:
+        print(f"\nPINOS: {len(a)} no codigo e fora do doc |"
+              f" {len(b)} no doc e nao usados | {len(c)} RESERVADOS usados")
+        for d in a: print(f"  D{d} reclamado no fonte e AUSENTE do PINOS.md")
+        for d in b: print(f"  D{d} no PINOS.md e nao aparece no fonte")
+        for d in c: print(f"  *** D{d} e RESERVADO e esta sendo usado ***")
 
     sem_bump = versao_derivada()
     print(f"\nTOCADOS SEM SUBIR A VERSAO (aviso): {len(sem_bump)}")

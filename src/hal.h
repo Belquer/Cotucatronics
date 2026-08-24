@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.30.0
+// hal.h v0.31.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -206,6 +206,15 @@ bool             EncoderNivelCru(int idx, int qual);
 // Existe para a trava: leitura estatica nao distingue "fase morta" de
 // "fase em repouso neste detente" — so a MUDANCA distingue.
 uint16_t         EncoderNiveisCrus();
+
+// VARREDURA: le TODOS os pinos livres da Daisy, nao so os nove que eu
+// supus. Existe porque supor o mapa e depois medir contra a suposicao
+// so encontra o que ja se esperava — se o fio esta noutro pino, nenhum
+// instrumento apontado para os nove diria isso.
+//
+// `mascara` recebe um bit por pino da lista `PinosVarridos()`.
+int              PinosVarridos(const int** lista);
+uint32_t         VarreLivres();
 
 // ---- OLED (SSD1309 128x64, 4-wire SPI) ----
 //
