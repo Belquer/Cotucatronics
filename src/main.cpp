@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.159.0"
+#define COTUCA_OS_VERSION "0.162.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3140,6 +3140,48 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::OledChars());
         return;
     }
+    // `fio <rst|dc|cs|clk|din> <0|1>` — segura o pino e para.
+    if(strncmp(line, "fio curto", 9) == 0)
+    {
+        char achados[160] = {0};
+        const int n = hal::OledCacaPonte(achados, (int)sizeof(achados));
+        if(!n)
+            hal::Log("fio curto: nenhuma ponte entre os cinco pinos."
+                     " Os dez pares conferidos, todos limpos.");
+        else
+            hal::Log("fio curto: %d PONTE(S):%s", n, achados);
+        hal::Log("  (teste DIFERENCIAL: ponte e o pino que ACOMPANHA o"
+                 " dirigido — alto com alto E baixo com baixo. Pino preso"
+                 " por pull-up do painel fica alto nas duas e nao acusa.)");
+        hal::Log("  o SPI foi desfeito — rode `oled` para reinicializar.");
+        return;
+    }
+    if(strncmp(line, "fio", 3) == 0)
+    {
+        const char* a = line + 3;
+        while(*a == ' ') a++;
+        char nome[8] = {0};
+        int  k = 0;
+        while(*a && *a != ' ' && k < 7) nome[k++] = *a++;
+        while(*a == ' ') a++;
+        const bool alto = (*a == '1');
+        if(!*nome || (*a != '0' && *a != '1'))
+        {
+            hal::Log("uso: fio <rst|dc|cs|clk|din> <0|1>");
+            hal::Log("  segura o pino no nivel e PARA. Mede no conector do"
+                     " painel: 0 = ~0 V, 1 = ~3,3 V.");
+            hal::Log("  se o nivel nao chegar la, o defeito esta entre a"
+                     " Daisy e o painel — pino, solda, fio ou conector.");
+            return;
+        }
+        if(!hal::OledSondaPino(nome, alto))
+        { hal::Log("fio: nome invalido (rst|dc|cs|clk|din)"); return; }
+        hal::Log("fio %s = %s  (~%s V no conector do painel). Fica assim.",
+                 nome, alto ? "ALTO" : "baixo", alto ? "3,3" : "0");
+        hal::Log("  o SPI foi desconfigurado por isto — rode `oled` depois"
+                 " para reinicializar o painel.");
+        return;
+    }
     if(strncmp(line, "pino", 4) == 0)
     {
         // PRIMEIRO A TRAVA (sem relogio), depois a janela (com relogio).
@@ -4276,7 +4318,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | enc [reset|detente <n>|tela on/off] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | enc [reset|detente <n>|tela on/off] | fio <pino> <0|1> | fio curto | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

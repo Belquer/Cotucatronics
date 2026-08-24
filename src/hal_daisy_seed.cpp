@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.27.0
+// hal_daisy_seed v0.30.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -919,6 +919,90 @@ void OledLinhas(const char* l1, const char* l2, const char* l3)
 
 uint32_t OledUpdates() { return oled_updates; }
 uint32_t OledChars()   { return oled_chars; }
+
+// SONDA DE FIO — o gemeo, na direcao da SAIDA, do `pino` que inocentou
+// a solda do freeze B.
+//
+// La o problema era "o botao fecha?" e a resposta veio de ler o nivel
+// CRU antes de qualquer camada. Aqui o problema e "o sinal CHEGA?", e a
+// resposta e a placa SEGURAR um nivel enquanto alguem mede no outro
+// extremo. Continuidade com multimetro testa o fio; isto testa o
+// caminho — pino, solda, fio e conector.
+bool OledSondaPino(const char* nome, bool alto)
+{
+    static daisy::GPIO sonda;
+    daisy::Pin p;
+    if(!strcmp(nome, "rst"))      p = seed::D5;
+    else if(!strcmp(nome, "dc"))  p = seed::D6;
+    else if(!strcmp(nome, "cs"))  p = seed::D7;
+    else if(!strcmp(nome, "clk")) p = seed::D8;
+    else if(!strcmp(nome, "din")) p = seed::D10;
+    else return false;
+    sonda.Init(p, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+    sonda.Write(alto);
+    // O painel deixa de estar inicializado: quem reconfigura um pino do
+    // SPI como GPIO quebra o barramento, e afirmar o contrario seria
+    // exatamente a string fixa que ja mentiu aqui hoje.
+    oled_pronto = false;
+    return true;
+}
+
+int OledCacaPonte(char* achados, int cap)
+{
+    static const char* kNome[5] = {"rst", "dc", "cs", "clk", "din"};
+    const daisy::Pin   kPino[5] = {seed::D5, seed::D6, seed::D7,
+                                   seed::D8, seed::D10};
+    daisy::GPIO g[5];
+    int n = 0;
+    if(cap > 0) achados[0] = 0;
+
+    // TESTE DIFERENCIAL, e a primeira versao estava errada.
+    //
+    // Ela dirigia um pino ALTO e acusava ponte em quem lesse alto. Deu
+    // 20 de 20 — todos os pares — que e "numero redondo demais em itens
+    // independentes", o sintoma que a casa ja catalogou.
+    //
+    // A causa: o modulo OLED tem PULL-UP nas entradas dele, e ele vence
+    // o pull-down interno do MCU. Todo pino le alto sempre, e o teste
+    // media os pull-ups do painel em vez de pontes.
+    //
+    // Ponte de verdade e o pino que ACOMPANHA o dirigido: alto quando
+    // ele esta alto E baixo quando ele esta baixo. Um pino preso por
+    // pull-up externo fica alto nas duas leituras e nao acusa nada —
+    // que e o comportamento correto.
+    //
+    // E o gemeo importa: sem a segunda leitura, "acompanha" e
+    // indistinguivel de "esta sempre alto".
+    for(int dono = 0; dono < 5; dono++)
+    {
+        for(int i = 0; i < 5; i++)
+            if(i == dono) g[i].Init(kPino[i], GPIO::Mode::OUTPUT,
+                                    GPIO::Pull::NOPULL);
+            else          g[i].Init(kPino[i], GPIO::Mode::INPUT,
+                                    GPIO::Pull::NOPULL);
+        bool com_alto[5], com_baixo[5];
+        g[dono].Write(true);  System::Delay(3);
+        for(int i = 0; i < 5; i++) com_alto[i] = g[i].Read();
+        g[dono].Write(false); System::Delay(3);
+        for(int i = 0; i < 5; i++) com_baixo[i] = g[i].Read();
+
+        for(int i = 0; i < 5; i++)
+        {
+            if(i == dono) continue;
+            // ACOMPANHOU: alto com alto e baixo com baixo.
+            if(!(com_alto[i] && !com_baixo[i])) continue;
+            n++;
+            const int usado = (int)strlen(achados);
+            if(cap - usado > 24)
+                snprintf(achados + usado, (size_t)(cap - usado),
+                         " %s=%s", kNome[dono], kNome[i]);
+        }
+    }
+    for(int i = 0; i < 5; i++)
+        g[i].Init(kPino[i], GPIO::Mode::INPUT, GPIO::Pull::NOPULL);
+    oled_pronto = false;
+    return n;
+}
 
 bool OledConfigurado() { return oled_pronto; }
 

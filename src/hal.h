@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.25.0
+// hal.h v0.27.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -214,6 +214,28 @@ bool             OledConfigurado();
 // nao rodou, ou rodou e nao pintou.
 uint32_t         OledUpdates();
 uint32_t         OledChars();
+
+// SONDA DE FIO: segura um dos cinco pinos do OLED num nivel fixo, para
+// medir NO CONECTOR DO PAINEL com multimetro. Testa o percurso inteiro —
+// pino, solda, fio, conector — e nao so a continuidade de um fio solto.
+//
+// Sem janela e sem pressa: o nivel FICA ate a proxima chamada.
+//
+// ATENCAO: CLK, DIN e CS pertencem ao periferico SPI. Usar a sonda neles
+// os reconfigura como GPIO e o SPI para de funcionar ate um `oled` novo
+// reinicializar tudo. O comando avisa.
+bool             OledSondaPino(const char* nome, bool alto);
+
+// CACA-PONTE: dirige cada pino do OLED e le os outros quatro.
+//
+// O teste de continuidade ponto-a-ponto NAO cobre isto: `D6 -> DC` passa
+// mesmo que D6 esteja tambem em curto com D7, e dois sinais do SPI
+// unidos quebram tudo sem romper nada.
+//
+// Devolve quantos pares suspeitos achou e preenche `achados` com a
+// descricao. A placa faz sozinha o que o multimetro faria em dez
+// medicoes — e sem depender de um multimetro que ja mentiu hoje.
+int              OledCacaPonte(char* achados, int cap);
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
 
