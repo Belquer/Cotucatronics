@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.28.0
+// hal.h v0.30.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -191,6 +191,21 @@ void             EncoderPoll();            // no LOOP, nunca no callback
 int              EncoderIncremento(int idx);  // -1 / 0 / +1, CRU
 bool             EncoderPushNivel(int idx);   // com debounce
 bool             EncoderPushBorda(int idx);   // borda de apertar
+
+// NIVEL CRU dos nove pinos dos encoders, antes de qualquer decodificacao.
+//
+// O `Increment` da libDaisy so devolve algo quando a QUADRATURA casa: se
+// uma fase estiver solta, ele fica em zero para sempre e nao distingue
+// "encoder parado" de "fase morta". Isto le o pino direto.
+//
+// Mesma forma do `pino` que inocentou a solda do freeze B: acumular
+// desde o boot, sem janela, e deixar o operador girar quando quiser.
+// `idx` 0..2 = encoder, `qual` 0=fase A, 1=fase B, 2=push.
+bool             EncoderNivelCru(int idx, int qual);
+// Amostra os NOVE pinos de uma vez, um bit por pino (1 = BAIXO).
+// Existe para a trava: leitura estatica nao distingue "fase morta" de
+// "fase em repouso neste detente" — so a MUDANCA distingue.
+uint16_t         EncoderNiveisCrus();
 
 // ---- OLED (SSD1309 128x64, 4-wire SPI) ----
 //

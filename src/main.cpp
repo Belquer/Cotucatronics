@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.163.1"
+#define COTUCA_OS_VERSION "0.165.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -425,6 +425,18 @@ static EstadoEnc enc_st[cotuca::hal::kNumEncoders];
 // voo que existe para medir. Comeca em 1, o `enc` mostra o cru, e o
 // numero certo entra quando o dB girar dez e contar.
 static int enc_por_detente = 1;
+
+// TRAVA DE NIVEL CRU DOS ENCODERS — nas DUAS direcoes.
+//
+// Leitura estatica nao decide: uma fase pode legitimamente estar baixa
+// no detente atual. O que distingue fase MORTA de fase EM REPOUSO e a
+// MUDANCA — e por isso a trava guarda os dois lados.
+//
+// Pino que so aparece de um jeito desde o reset nunca comutou, e ai o
+// `Increment` da libDaisy fica em zero para sempre sem dizer por que:
+// ele exige a quadratura casar, e uma fase presa nunca casa.
+static uint16_t enc_ja_alto  = 0;
+static uint16_t enc_ja_baixo = 0;
 
 // ESPELHO DO ENCODER NA TELA — o mesmo instrumento, outra superficie.
 //
@@ -3094,6 +3106,47 @@ static void HandleLine(const char* line)
     // por detente, "acel" e depois da aceleracao. Ver os tres juntos e o
     // que permite dizer se um numero errado veio do hardware, da divisao
     // ou da aceleracao — com um numero so, as tres causas leem igual.
+    // ATENCAO A ORDEM: `encpino` antes de `enc` — bts 14c, o prefixo de
+    // tres letras engoliria este comando exatamente como o `oled` engoliu
+    // o `oledvel`.
+    if(strncmp(line, "encpino", 7) == 0)
+    {
+        static const char* kN[] = {"cadeia A", "cadeia B", "global  "};
+        static const char* kQ[] = {"faseA", "faseB", "push "};
+        static const char* kP[3][3] = {{"D0","D1","D2"},
+                                       {"D3","D4","D9"},
+                                       {"D20","D21","D19"}};
+        const char* a = line + 7;
+        while(*a == ' ') a++;
+        if(strncmp(a, "reset", 5) == 0)
+        {
+            enc_ja_alto = enc_ja_baixo = 0;
+            hal::Log("encpino: trava zerada. Gire e aperte os tres, no teu"
+                     " ritmo, e rode `encpino` — sem janela e sem pressa.");
+            return;
+        }
+        hal::Log("PINOS DOS ENCODERS — trava desde o reset, nas duas"
+                 " direcoes. Pino que so aparece de UM jeito nunca comutou.");
+        for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
+        {
+            char l[80]; int o = 0;
+            o += snprintf(l + o, sizeof(l) - o, "  %s ", kN[e]);
+            for(int q = 0; q < 3; q++)
+            {
+                const uint16_t bit = (uint16_t)(1u << (e * 3 + q));
+                const bool  vb = (enc_ja_baixo & bit) != 0;
+                const bool  va = (enc_ja_alto  & bit) != 0;
+                o += snprintf(l + o, sizeof(l) - o, " %s(%s)=%s", kQ[q],
+                              kP[e][q],
+                              (vb && va) ? "COMUTA"
+                              : vb       ? "so BAIXO"
+                              : va       ? "so alto"
+                                         : "sem leitura");
+            }
+            hal::Log("%s", l);
+        }
+        return;
+    }
     if(strncmp(line, "enc", 3) == 0)
     {
         const char* a = line + 3;
@@ -4343,7 +4396,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | enc [reset|detente <n>|tela on/off] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | encpino [reset] | enc [reset|detente <n>|tela on/off] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -4682,6 +4735,11 @@ int main(void)
         FASE(2);
         hal::PollSerial();
         // ---- ENCODERS, no laco ----
+        {
+            const uint16_t m = hal::EncoderNiveisCrus();
+            enc_ja_baixo |= m;
+            enc_ja_alto  |= (uint16_t)(~m & 0x1FFu);
+        }
         hal::EncoderPoll();
         for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
         {

@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.31.0
+// hal_daisy_seed v0.33.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -787,6 +787,42 @@ bool EncoderInit()
     enc[2].Init(seed::D20, seed::D21, seed::D19);
     enc_pronto = true;
     return true;
+}
+
+// Os mesmos pinos do EncoderInit, numa tabela para a sonda poder le-los
+// sem passar pela classe. UMA fonte: se o Init mudar e isto nao, o
+// proximo diagnostico mede o pino errado e culpa a solda certa.
+static const daisy::Pin kEncPin[kNumEncoders][3] = {
+    {seed::D0,  seed::D1,  seed::D2},
+    {seed::D3,  seed::D4,  seed::D9},
+    {seed::D20, seed::D21, seed::D19},
+};
+
+bool EncoderNivelCru(int idx, int qual)
+{
+    if(idx < 0 || idx >= kNumEncoders || qual < 0 || qual > 2) return false;
+    static daisy::GPIO g;
+    g.Init(kEncPin[idx][qual], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    return !g.Read();   // true = BAIXO = fechado pra GND
+}
+
+uint16_t EncoderNiveisCrus()
+{
+    static daisy::GPIO g[kNumEncoders][3];
+    static bool        feito = false;
+    if(!feito)
+    {
+        for(int e = 0; e < kNumEncoders; e++)
+            for(int q = 0; q < 3; q++)
+                g[e][q].Init(kEncPin[e][q], GPIO::Mode::INPUT,
+                             GPIO::Pull::PULLUP);
+        feito = true;
+    }
+    uint16_t m = 0;
+    for(int e = 0; e < kNumEncoders; e++)
+        for(int q = 0; q < 3; q++)
+            if(!g[e][q].Read()) m |= (uint16_t)(1u << (e * 3 + q));
+    return m;
 }
 
 void EncoderPoll()
