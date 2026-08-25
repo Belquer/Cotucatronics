@@ -4152,9 +4152,231 @@ para sempre.
 
 ---
 
+## 14i. Cinco padroes de mensagem, todos dentro do conjunto errado (24/08)
+
+O Loopy Pro nao aprendia o `cc21`. Testei cinco formas de disparo:
+
+| disparo | veredito do Loopy |
+|---|---|
+| 30/110 alternados a 500, 1000, 1500 ms | `double tap` nas tres |
+| rampa densa `0→127→0` a 60 ms | `hold` |
+| rampa esparsa, 5 valores a 250 ms | `hold` |
+| so 127 a cada 1 s | alterna `cc` e `hold` |
+| so o miolo 34–100, sem tocar nos extremos | `double tap` |
+
+Cinco resultados diferentes, **e todos gestos de botao**. Eu estava a escolher
+QUAL botao, nao a sair do conjunto dos botoes. Cada falha parecia informacao
+nova — era a mesma informacao com outra roupa.
+
+O que quebrou o ciclo foi o dB olhar a UI: **o `cc20` era um dial e o `cc21`
+um slider.** Mesmo protocolo, mesma placa, mesmo canal, widgets diferentes —
+e a mensagem tinha sido identica nos dois. Nenhuma variavel da mensagem podia
+explicar uma assimetria que a mensagem nao tinha.
+
+> **Quando N tentativas falham de formas DIFERENTES mas todas do mesmo tipo, o
+> tipo e a resposta.** A variedade dos vereditos disfarcou o invariante: eu li
+> "double tap, hold, double tap" como tres pistas e era uma so, repetida.
+> Antes da tentativa N+1, escrever o que TODAS as falhas tiveram em comum — e
+> se o comum nao estiver no espaco que se esta a varrer, parar de varrer.
+
+Ja tinha nomeado este erro uma hora antes, na mesma sessao, sobre o
+espacamento (14k). Nomear a familia nao imuniza contra ela com outra variavel.
+
+---
+
+## 14j. O limiar era zero, e eu deduzi-o em 64 (24/08)
+
+Todo o raciocinio sobre "o que o Loopy ve" assentava numa suposicao minha: que
+valor de CC acima de 64 e ON e abaixo e OFF, como um botao com meio curso.
+Nunca a escrevi como suposicao — usei-a como facto para explicar tres falhas.
+
+A documentacao, quando o dB a colou, dizia outra coisa:
+
+> "For CC messages, ON is a value **greater than 0** and OFF is a value of 0."
+
+Com o limiar certo, as cinco falhas explicam-se ao milimetro. E a pior delas
+inverte de sentido: mandar **so o miolo** foi a tentativa mais cuidadosa e a
+mais destrutiva, porque evitar o zero significa **nunca produzir um OFF**, e
+uma corrente so de ONs a 120 ms e a definicao literal de double tap. Eu tinha
+desenhado esse disparo exatamente para fugir da ambiguidade dos extremos.
+
+> **Constante de protocolo se le, nao se deduz do comportamento.** Eu tinha
+> cinco medicoes e um numero inventado; as medicoes eram boas e a leitura
+> delas era ficcao. E o numero deduzido nao aparece como suspeito porque
+> EXPLICA os dados — encaixa-se em tudo, so que ao contrario.
+
+---
+
+## 14k. Tres medidas na mesma variavel sem mover o fenomeno (24/08)
+
+O dB pediu espacamento de 500 ms, depois 1000, depois 1500, depois 2000 —
+cada um porque o anterior "ainda deu double tap". Quatro pedidos, uma variavel,
+zero movimento no resultado.
+
+> **Quando tres medidas mexem numa variavel e o fenomeno nao se move, a
+> variavel esta errada** — e o instinto de continuar a subir o numero e o que
+> segura a investigacao no lugar. A escalada parece progresso porque cada
+> passo e uma acao; mas uma serie que nao muda o resultado nao e uma serie de
+> experimentos, e uma medicao repetida quatro vezes.
+
+O sinal barato: **antes do quarto valor da mesma variavel, escrever o que o
+terceiro descartou.** Se a resposta for "nada", trocar de variavel.
+
+---
+
+## 14l. A sonda que nunca podia ouvir, e o `ok` que ela devolvia (24/08)
+
+Para saber se um widget mandava MIDI de volta, liguei `log on` e li a serial
+durante 20 s enquanto o dB mexia no controlo. Zero bytes. Conclui que o widget
+nao mandava.
+
+Fiz o controlo de presenca — mexer no widget que SABIAMOS que mandava. Zero
+bytes tambem. **O `log on` nao imprime MIDI de entrada.** A sonda nunca teve
+como ouvir nada; eu estava a ler silencio num canal onde a presenca era
+impossivel, e a chamar-lhe ausencia.
+
+O instrumento valido estava a dois comandos de distancia e ja tinha sido usado
+nesta mesma sessao: o `vistos`, que e estado da placa e nao fluxo de log.
+
+> Isto e a `13x` — *"ausencia so e evidencia quando a presenca era possivel"* —
+> a acontecer pela quarta vez em dois dias, agora com a agravante de eu ter
+> construido a sonda no proprio dia. **Sonda nova nasce sem procedencia: o
+> primeiro uso de qualquer sonda e o controlo de presenca, nao a medicao.**
+> Custou-me um minuto fazer o controlo depois; teria custado o mesmo antes, e
+> a conclusao errada nao teria existido.
+
+---
+
+## 14m. O artefacto exportado era a fonte que faltava (24/08)
+
+O trabalho a frente era configurar 85 bindings a mao no iPad — um dia inteiro,
+por gesto, sem verificacao possivel. A saida nao foi acelerar o gesto: foi
+**parar de gestionar**.
+
+O manual mencionava, de passagem, que perfis de controlo **exportam**. Custou
+dois bindings feitos a mao e uma exportacao para descobrir que:
+
+- o perfil e um **bundle de plists XML**, um ficheiro por dispositivo;
+- o gatilho e hex: `b<canal-1><cc>[<valor>]`, sem valor = continuo;
+- o projeto e um **zip com um SQLite**, e os widgets sao JSON com `title`;
+- `Scene` = pagina, com um array ORDENADO de widgets.
+
+Um dia de configuracao virou `gerar_perfil_loopy.py`, que le os CCs do
+`manifest.h` e emite os 86 bindings ja endereçados.
+
+> **Antes de aceitar trabalho manual repetitivo, procurar o formato de
+> intercambio.** Toda aplicacao que deixa exportar tem um formato, e formato e
+> superficie programavel. A pergunta nao e "como faco isto mais depressa" — e
+> **"onde e que isto vive quando nao esta na tela"**.
+
+E o corolario do projeto aplicou-se inteiro: o que se pode gerar, gere. O mapa
+de CCs saiu da lista de disciplina do dB para sempre — muda o `manifest.h`,
+reexporta o projeto, regera o perfil.
+
+---
+
+## 14n. Validar o gerador contra verdade conhecida ANTES de emitir (24/08)
+
+O gerador tinha de adivinhar como um binding aponta para o seu widget. A forma
+era `LPSliderWidget:1:2` — tipo, pagina, indice — e o indice **nao** e a posicao
+na tela nem a ordem da nossa lista: e a posicao no array `widgets` da `Scene`,
+contada por tipo.
+
+Eu podia ter emitido 85 bindings e mandado o dB testar no iPad. Em vez disso,
+o perfil exportado trazia **dois bindings feitos a mao** — `b417` e `b314` — e
+esses eram verdade conhecida. O gerador tinha de os reproduzir ao caracter
+antes de eu confiar nos outros 84.
+
+Reproduziu. `b417 → LPSliderWidget:1:2` e `b314 → LPSliderWidget:1:6`, exatos.
+
+> **Todo gerador de formato desconhecido tem que reproduzir uma amostra
+> conhecida antes de emitir o resto.** Sem isso, 85 bindings plausiveis sao
+> indistinguiveis de 85 bindings errados, e a deteccao passa para o ouvido do
+> musico, dias depois, um por um. Duas amostras custaram dois gestos e
+> compraram confianca em oitenta e quatro.
+
+A confirmacao cruzada foi de graca por cima: os unicos dois bindings no
+ficheiro eram exatamente os dois que a placa reportara como VOLTOU no teste
+de bancada, e o `cc21`, que reportara nada, nao existia no XML. **Duas
+medicoes independentes — uma pela placa, outra pelo XML — a dizerem o mesmo.**
+
+---
+
+## 14o. Endereco posicional desendereça em silencio (24/08)
+
+O `Subject` de um binding e posicional. O dB corrigiu o layout — moveu o
+`Dly Time` para a pagina CENTRAL — e regerei o perfil. A conferencia contra os
+dois bindings conhecidos deu **DIVERGE**:
+
+```
+b417  gerado=LPSliderWidget:1:3   antes era :1:2
+b314  gerado=LPSliderWidget:1:7   antes era :1:6
+```
+
+Nao era defeito do gerador: **acrescentar um slider empurrou todos os
+seguintes uma posicao**, e os dois bindings que o dB fizera a mao passaram a
+apontar para os widgets errados. Sem erro, sem aviso, sem sintoma ate alguem
+mexer no controlo e ouvir outra coisa.
+
+> **Endereco por posicao transforma edicao de layout em reendereçamento
+> silencioso.** E a familia da mensagem mal-endereçada (`13*`): ela obedece, e
+> por isso nao ha nada para correlacionar. A defesa e nao ter enderecos
+> posicionais escritos a mao — regerar o conjunto TODO depois de qualquer
+> mexida no layout, para que a posicao nunca seja informacao que so existe
+> numa configuracao antiga.
+
+O aviso ficou no cabecalho do gerador, que e onde alguem o le antes de mexer.
+
+---
+
+## 14p. O verificador contava zero CCs e assinava "ok" (24/08)
+
+Na revisao de fecho, o `check_docs` imprimiu:
+
+```
+manifest: 86 params (49 familias), 0 CCs
+...
+ok — nenhum fantasma
+```
+
+**Zero CCs** — e o meu gerador acabara de extrair 86 `AddMidi` do mesmo
+ficheiro. O regex era:
+
+```python
+r'AddMidi\((\d+),\s*([A-Za-z_0-9\[\]]+)\)'
+```
+
+Dois argumentos e parentese a fechar. O `AddMidi` passou a receber **tres**
+quando a multiplexacao por canal entrou — e desde essa sessao o verificador
+conta zero e diz `ok`. Quantas sessoes, nao sei dizer: nao ha registo, porque
+o numero nunca chamou a atencao.
+
+Duplo defeito, e o segundo pior: `ccs[int(num)] = alvo`, indexado so pelo
+numero do CC. Com seis canais, o mesmo numero vive em tres — **mesmo com o
+regex certo, dois tercos seriam apagados em silencio.** A estrutura envelheceu
+junto com o padrao, e nenhum dos dois foi reexaminado quando o canal entrou no
+endereco.
+
+Consertei os dois e pus a defesa que faltava: **se `AddMidi` nao casar nenhuma
+vez, aborta com codigo 2 em vez de imprimir zero.** Exercitada com uma forma de
+quatro argumentos — zero casamentos, aborta.
+
+> Isto e a `13n` — *"quando o canal vira parte do endereco, toda estrutura
+> indexada por CC tem que ser reexaminada, e o compilador nao cobra nenhuma"* —
+> com o corpo de um verificador em vez de firmware. **O regex tambem nao cobra.
+> E pior: ele responde.** Uma estrutura que envelhece cala-se; um verificador
+> que envelhece devolve um numero e um `ok`.
+>
+> **Todo contador de um verificador precisa de um piso: zero onde se esperava
+> populacao aborta, nao informa.** Um `ok` ao lado de um zero e a assinatura
+> desta familia, e e legivel a olho nu na primeira linha do relatorio — se
+> alguem a estiver a ler em vez de a saltar para os avisos.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.** **Documento gerado acompanha a mudança; escrito à mão, não — separe os dois e trate os escritos como lista de trabalho.** **E o que se pode gerar, gere: cada doc que vira gerador sai da lista de disciplina para sempre.** **TESTE O HARDWARE PRIMEIRO, DE TODAS AS MANEIRAS POSSÍVEIS: torça, puxe, aperte cada conector e veja se algo muda** — contato intermitente é invisível a teste estático por definição. **Intermitência correlacionada com manuseio É o diagnóstico, não o que atrapalha o diagnóstico.** **Toda sonda ganha uma dimensão de movimento: medir enquanto se mexe no chicote, não com tudo parado.** **Tensão presente não é tensão correta: meça com o SINAL, ponta preta num terra do lado de quem alimenta.** **Defeito conhecido e adiado vira a explicação errada do próximo sintoma, e o custo recai sobre quem está com o multímetro na mão.** **Divergência entre dois instrumentos que medem por caminhos diferentes é informação, não ruído a reconciliar.** **O instrumento herda o ponto cego da hipótese que o gerou: supor o mapa e medir contra a suposição só acha o que já se esperava** — alargue o escopo em vez de refinar a mira. **Ocupação que vive só no default de uma biblioteca é irmã da reserva que vive só em documento: declare no fonte, mesmo quando for o default.** **Revisão de pinos contra o esperado entra em toda rotina de fechamento.** **Despacho por prefixo exige ordem: comando novo que começa com o nome de um existente tem que vir ANTES dele** — e o sintoma é o pior tipo, porque o comando responde com mensagem plausível executando outra coisa. **Ao retomar problema já resolvido, releia COMO foi resolvido: decisão registrada tem duas metades — o que saiu e o que ficou no lugar — e lembrar só da primeira reintroduz o que ela evitava.** **Mecanismo aposentado não aposenta o método: procure a peça que sobreviveu.** **Nunca ler e escrever o mesmo arquivo na mesma expressão: `open(f,'w')` trunca antes de o `read()` interno rodar.** **Commitar cedo é o que transforma um destroço em inconveniente.** **Antes de escolher uma configuração, leia o default na fonte: a decisão pode não existir.** **Ao provar um caminho, escolha o teste que falha diferente para cada defeito possível.** **Periférico sem caminho de leitura não é detectável — diga CONFIGURADO, nunca PRESENTE, mesmo com ele funcionando na frente.** **Janela de silêncio conta do FIM do gesto, não do meio: um despejo mais longo que a janela deixa os primeiros desprotegidos.** **Transformar "mandei" em "chegou" é a única forma de descobrir que a coisa não chegava** — toda operação que termina dizendo só que executou é candidata. **Ausência só é evidência quando a presença era possível: antes de concluir do silêncio, prove que havia caminho para o som.** **O gatilho artificial também precisa ser exercitado — "0 erros" onde se esperava vermelho é sinal de exercício que não aconteceu, não de trava errada.** **Antes de concluir do silêncio de uma sonda, prove que ela cobre o caso** — ponto cego não é ausência do fenômeno. **Defesa que nunca agiu e não tem gatilho artificial é hipótese com nome de proteção: faça o inventário do que nunca foi exercitado.** **Linha truncada não é comando: recuse inteira e conte** — meio comando é válido e obedece calado. **Truncagem se anuncia nas duas pontas do canal.** **O formato não pode ter limite que o conteúdo alcance** — alargar o buffer conserta o caso e preserva a forma. **Instrumentar um ramo de três e ler o silêncio como resposta é a armadilha da própria família.** **Operação com perda se declara onde a perda acontece.** **Antes de suspeitar do trabalho de alguém, meça antes da primeira camada** — contador em zero não distingue "não fechou" de "ninguém leu". **Cadeia `else if` esconde ramo morto por ordenação: use saída antecipada, específico antes do genérico.** **Não gravar enquanto uma observação humana está em voo** — a resposta chega depois e responde outra pergunta. **Par array+laço: derive os dois das fontes que já existem; alargar à mão conserta o caso e preserva a forma.** **Todo teste de rejeição precisa do gêmeo que confirma a aceitação** — provar que o portão fecha não prova que ele abre, e o mecanismo largo demais passa em todos os testes de rejeição. **Ao conferir formato binário: primeiro o que torna a conta possível, depois a conta, só então o que a conta protege** — ler campo antes do checksum é consumir antes de configurar (P2), e a coerência de tamanho é segurança de memória, não só diagnóstico. **Para provar que o binário gravado tem a fonte atual, leia NA PLACA um número que só a fonte nova produz** — timestamp, `.map` e toolchain são testemunho do próprio acusado. **Trava que só diz "não" ensina a contornar; trava que diz o que REEXAMINAR ensina a decidir.** **Custo proporcional a uma tabela que cresce regride por CRESCIMENTO, não por edição — e nenhuma ferramenta do projeto vigia isso:** pergunte no audit que custos foram dimensionados quando a tabela era pequena. **Ao proteger ou consertar um caminho, procurar o IRMÃO** — duas rotas de saída, dois relatórios da mesma tabela, dois ramos: o irmão é quase sempre visível de onde se está. **Comando que não consta na ajuda não existe para quem está na bancada** — e a isenção do verificador, escrita larga, transforma-o em carimbo. **Provar que a configuração nova é segura não prova que a TRAVESSIA é: pergunte o que já está em trânsito quando você troca** — e trânsito inclui fio, flash e a cabeça de quem opera. **Pôr uma dimensão nova no endereço converte mensagem órfã em MAL-ENDEREÇADA, e esta não tem gesto humano para correlacionar** — pergunte se acha o dono CERTO, não se acha dono. **Defesa que vira invariante de compilação vence defesa que roda — e ainda assim tem que ser exercitada uma vez.** **Instrumentação nova encontra o que não era o alvo dela: instrumente cedo.** **Desligar um emissor não drena o meio: todo desligamento de transmissor pede carência de drenagem, dimensionada pelo tempo de voo.** **Quando o canal vira parte do endereço, toda estrutura indexada por CC tem que ser reexaminada** — janela, inventário, último-valor e fila de quarentena, e o compilador não cobra nenhuma delas. **Nesta placa o delta entre builds pode ser 25% sem mudar o trabalho** (o código roda da QSPI, logo layout de instrução é variável de primeira ordem): número de CPU sem A/B no mesmo binário é ruído com aparência de resultado, e ganho de teste que permite o A/B fica no firmware. **N falhas crônicas escondem a falha N+1** — suíte vermelha por paisagem é sensor desligado. **Teste dentro de `if(existe)` some em silêncio quando o nome muda: afirme a existência.** **Teste que cita um CC decorado mede o mapa, não a invariante — derive o número da fonte.** **Pasta nova entra sem vigilância por padrão: confira se o verificador alcança.** **Nenhum valor do domínio pode significar "sem dado": ausência se representa FORA do domínio** — flag, sentinela impossível ou par valor+validade; cinco casos num dia provam que a forma é estrutural. **Relatório imprime o CRU e etiqueta a interpretação ao lado.** **Antes de gastar um voo numa hipótese, perguntar se falhar diminui o espaço de busca** — se não diminui, não é experimento, é tentativa, e tentativa se paga com gravação. **Segunda fonte de verdade para a versão deriva com data marcada: número que ninguém imprime não tem quem o corrija.**
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.** **Documento gerado acompanha a mudança; escrito à mão, não — separe os dois e trate os escritos como lista de trabalho.** **E o que se pode gerar, gere: cada doc que vira gerador sai da lista de disciplina para sempre.** **TESTE O HARDWARE PRIMEIRO, DE TODAS AS MANEIRAS POSSÍVEIS: torça, puxe, aperte cada conector e veja se algo muda** — contato intermitente é invisível a teste estático por definição. **Intermitência correlacionada com manuseio É o diagnóstico, não o que atrapalha o diagnóstico.** **Toda sonda ganha uma dimensão de movimento: medir enquanto se mexe no chicote, não com tudo parado.** **Tensão presente não é tensão correta: meça com o SINAL, ponta preta num terra do lado de quem alimenta.** **Defeito conhecido e adiado vira a explicação errada do próximo sintoma, e o custo recai sobre quem está com o multímetro na mão.** **Divergência entre dois instrumentos que medem por caminhos diferentes é informação, não ruído a reconciliar.** **O instrumento herda o ponto cego da hipótese que o gerou: supor o mapa e medir contra a suposição só acha o que já se esperava** — alargue o escopo em vez de refinar a mira. **Ocupação que vive só no default de uma biblioteca é irmã da reserva que vive só em documento: declare no fonte, mesmo quando for o default.** **Revisão de pinos contra o esperado entra em toda rotina de fechamento.** **Despacho por prefixo exige ordem: comando novo que começa com o nome de um existente tem que vir ANTES dele** — e o sintoma é o pior tipo, porque o comando responde com mensagem plausível executando outra coisa. **Ao retomar problema já resolvido, releia COMO foi resolvido: decisão registrada tem duas metades — o que saiu e o que ficou no lugar — e lembrar só da primeira reintroduz o que ela evitava.** **Mecanismo aposentado não aposenta o método: procure a peça que sobreviveu.** **Nunca ler e escrever o mesmo arquivo na mesma expressão: `open(f,'w')` trunca antes de o `read()` interno rodar.** **Commitar cedo é o que transforma um destroço em inconveniente.** **Antes de escolher uma configuração, leia o default na fonte: a decisão pode não existir.** **Ao provar um caminho, escolha o teste que falha diferente para cada defeito possível.** **Periférico sem caminho de leitura não é detectável — diga CONFIGURADO, nunca PRESENTE, mesmo com ele funcionando na frente.** **Janela de silêncio conta do FIM do gesto, não do meio: um despejo mais longo que a janela deixa os primeiros desprotegidos.** **Transformar "mandei" em "chegou" é a única forma de descobrir que a coisa não chegava** — toda operação que termina dizendo só que executou é candidata. **Ausência só é evidência quando a presença era possível: antes de concluir do silêncio, prove que havia caminho para o som.** **O gatilho artificial também precisa ser exercitado — "0 erros" onde se esperava vermelho é sinal de exercício que não aconteceu, não de trava errada.** **Antes de concluir do silêncio de uma sonda, prove que ela cobre o caso** — ponto cego não é ausência do fenômeno. **Defesa que nunca agiu e não tem gatilho artificial é hipótese com nome de proteção: faça o inventário do que nunca foi exercitado.** **Linha truncada não é comando: recuse inteira e conte** — meio comando é válido e obedece calado. **Truncagem se anuncia nas duas pontas do canal.** **O formato não pode ter limite que o conteúdo alcance** — alargar o buffer conserta o caso e preserva a forma. **Instrumentar um ramo de três e ler o silêncio como resposta é a armadilha da própria família.** **Operação com perda se declara onde a perda acontece.** **Antes de suspeitar do trabalho de alguém, meça antes da primeira camada** — contador em zero não distingue "não fechou" de "ninguém leu". **Cadeia `else if` esconde ramo morto por ordenação: use saída antecipada, específico antes do genérico.** **Não gravar enquanto uma observação humana está em voo** — a resposta chega depois e responde outra pergunta. **Par array+laço: derive os dois das fontes que já existem; alargar à mão conserta o caso e preserva a forma.** **Todo teste de rejeição precisa do gêmeo que confirma a aceitação** — provar que o portão fecha não prova que ele abre, e o mecanismo largo demais passa em todos os testes de rejeição. **Ao conferir formato binário: primeiro o que torna a conta possível, depois a conta, só então o que a conta protege** — ler campo antes do checksum é consumir antes de configurar (P2), e a coerência de tamanho é segurança de memória, não só diagnóstico. **Para provar que o binário gravado tem a fonte atual, leia NA PLACA um número que só a fonte nova produz** — timestamp, `.map` e toolchain são testemunho do próprio acusado. **Trava que só diz "não" ensina a contornar; trava que diz o que REEXAMINAR ensina a decidir.** **Custo proporcional a uma tabela que cresce regride por CRESCIMENTO, não por edição — e nenhuma ferramenta do projeto vigia isso:** pergunte no audit que custos foram dimensionados quando a tabela era pequena. **Ao proteger ou consertar um caminho, procurar o IRMÃO** — duas rotas de saída, dois relatórios da mesma tabela, dois ramos: o irmão é quase sempre visível de onde se está. **Comando que não consta na ajuda não existe para quem está na bancada** — e a isenção do verificador, escrita larga, transforma-o em carimbo. **Provar que a configuração nova é segura não prova que a TRAVESSIA é: pergunte o que já está em trânsito quando você troca** — e trânsito inclui fio, flash e a cabeça de quem opera. **Pôr uma dimensão nova no endereço converte mensagem órfã em MAL-ENDEREÇADA, e esta não tem gesto humano para correlacionar** — pergunte se acha o dono CERTO, não se acha dono. **Defesa que vira invariante de compilação vence defesa que roda — e ainda assim tem que ser exercitada uma vez.** **Instrumentação nova encontra o que não era o alvo dela: instrumente cedo.** **Desligar um emissor não drena o meio: todo desligamento de transmissor pede carência de drenagem, dimensionada pelo tempo de voo.** **Quando o canal vira parte do endereço, toda estrutura indexada por CC tem que ser reexaminada** — janela, inventário, último-valor e fila de quarentena, e o compilador não cobra nenhuma delas. **Nesta placa o delta entre builds pode ser 25% sem mudar o trabalho** (o código roda da QSPI, logo layout de instrução é variável de primeira ordem): número de CPU sem A/B no mesmo binário é ruído com aparência de resultado, e ganho de teste que permite o A/B fica no firmware. **N falhas crônicas escondem a falha N+1** — suíte vermelha por paisagem é sensor desligado. **Teste dentro de `if(existe)` some em silêncio quando o nome muda: afirme a existência.** **Teste que cita um CC decorado mede o mapa, não a invariante — derive o número da fonte.** **Pasta nova entra sem vigilância por padrão: confira se o verificador alcança.** **Nenhum valor do domínio pode significar "sem dado": ausência se representa FORA do domínio** — flag, sentinela impossível ou par valor+validade; cinco casos num dia provam que a forma é estrutural. **Relatório imprime o CRU e etiqueta a interpretação ao lado.** **Antes de gastar um voo numa hipótese, perguntar se falhar diminui o espaço de busca** — se não diminui, não é experimento, é tentativa, e tentativa se paga com gravação. **Segunda fonte de verdade para a versão deriva com data marcada: número que ninguém imprime não tem quem o corrija.** **Quando N tentativas falham de formas diferentes mas todas do MESMO TIPO, o tipo e a resposta — escreva o que todas as falhas tiveram em comum antes da tentativa N+1.** **Constante de protocolo se le na fonte, nao se deduz do comportamento: numero deduzido nao parece suspeito porque EXPLICA os dados.** **Antes do quarto valor da mesma variavel, escreva o que o terceiro descartou — se for nada, troque de variavel.** **Sonda nova nasce sem procedencia: o primeiro uso de qualquer sonda e o controlo de presenca, nunca a medicao.** **Antes de aceitar trabalho manual repetitivo, procure o formato de intercambio — a pergunta e onde isto vive quando nao esta na tela.** **Todo gerador de formato desconhecido reproduz uma amostra conhecida antes de emitir o resto.** **Endereco por posicao transforma edicao de layout em reenderecamento silencioso: regere o conjunto todo, ou nao use posicao.** **Todo contador de verificador precisa de piso: zero onde se esperava populacao ABORTA, nao informa — `ok` ao lado de um zero e a assinatura da familia.**
 
 ---
 

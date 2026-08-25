@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.8.0
+// Cotucatronics OS — midi v0.8.1
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -19,7 +19,7 @@
 namespace cotuca
 {
 
-#define COTUCA_MIDI_VERSION "0.2.1"
+#define COTUCA_MIDI_VERSION "0.8.1"
 
 // canal 0–15 (o do fio) ou omni
 constexpr int kMidiOmni    = -1;

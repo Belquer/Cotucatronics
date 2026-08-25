@@ -5,7 +5,7 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.127.1** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, **sem RNBO** (o delay virou C++ em 20/08 e levou o runtime inteiro junto),
+Projeto colaborativo. Estado atual: **v0.172.0** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, **sem RNBO** (o delay virou C++ em 20/08 e levou o runtime inteiro junto),
 **stack anti-feedback completo em software** (gate, governor, limiter e
 shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
 **painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
@@ -57,8 +57,8 @@ Cinco regras que não se negociam:
 
 | Arquivo | Versão | O que é |
 |---|---|---|
-| [src/hal.h](src/hal.h) | **v0.22.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.24.0** | Único arquivo que pode incluir `daisy_seed.h`. **4 botões** (D26, D24, D25 rearme CTOS, D22 freeze B) e **2 LEDs de painel** (D27, D23). Debounce de 30 ms, medido |
+| [src/hal.h](src/hal.h) | **v0.33.0** | O contrato. A fronteira de independência de fornecedor |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.38.1** | Único arquivo que pode incluir `daisy_seed.h`. **4 botões** (D26, D24, D25 rearme CTOS, D22 freeze B) e **2 LEDs de painel** (D27, D23). Debounce de 30 ms, medido |
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/freeze.h](src/freeze.h) | **v0.3.1** | Freeze granular: núcleo de 500 ms, 2 grãos sorteados, Hann. C++ puro |
 | [src/pitch.h](src/pitch.h) | **v0.5.0** | Motor de pitch compartilhado: 1 buffer, até 4 vozes. **Anti-alias automático na escrita** (Butterworth 6ª ordem, custo zero se nenhuma voz sobe). C++ puro |
@@ -70,25 +70,27 @@ Cinco regras que não se negociam:
 | [src/delay.h](src/delay.h) | **v0.2.0** | Delay em C++: linha de 1 s, feedback fixo 0,4, piso 50 ms. **Clamp da leitura contra NaN/Inf, com contador `clamps_`** |
 | [src/effect_slot.h](src/effect_slot.h) | **v0.3.0** | Moldura: fade assimétrico, custo-zero desligado, cronometragem |
 | [src/pitch_spectrum.py](src/pitch_spectrum.py) | **v0.1.0** | Os N maiores picos do espectro — pico dominante mente com laterais fortes |
-| [src/dynamics.h](src/dynamics.h) | **v0.5.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
-| [src/midi.h](src/midi.h) | **v0.7.0** | Máquina de estados MIDI + mapa CC (teto 48). C++ puro, board-agnostic |
+| [src/dynamics.h](src/dynamics.h) | **v0.5.1** | Gate, governor, limiter e **shifter SSB**. C++ puro |
+| [src/midi.h](src/midi.h) | **v0.8.1** | Máquina de estados MIDI + **os seis canais** e a invariante `escuta = manda + 3`, travada em `static_assert`. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
-| [src/test_midi.cpp](src/test_midi.cpp) | **v0.2.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
+| [src/test_midi.cpp](src/test_midi.cpp) | **v0.4.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.155.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI no canal 2** com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`. **A versão mora só em `COTUCA_OS_VERSION`** |
+| [src/main.cpp](src/main.cpp) | **v0.172.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`. **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
-| [src/params.h](src/params.h) | **v0.9.0** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
-| [src/midi.h](src/midi.h) | **v0.5.0** | Parser MIDI board-agnostic. Histórico de 96 mensagens |
-| [src/manifest.h](src/manifest.h) | **v0.79.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **76 CCs mapeados** + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
+| [src/params.h](src/params.h) | **v0.9.1** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
+| [src/manifest.h](src/manifest.h) | **v0.81.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **86 vínculos em 49 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
 | [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 41 CCs numa folha A4. Fonte em `ccmap.html`, gerador `ccmap-pdf.sh` / `.command` v0.1.0 |
 | [docs/operacao/RETRABALHO-LOOPY.md](docs/operacao/RETRABALHO-LOOPY.md) | **gerado** | O mapa inteiro para remapear o Loopy: 86 vínculos em 49 CCs, por página |
+| [docs/operacao/gerar_perfil_loopy.py](docs/operacao/gerar_perfil_loopy.py) | **v0.1.0** | Lê o projeto exportado do Loopy (`.lpproj`, zip com SQLite) e **emite os 86 bindings** já endereçados, com os CCs vindos do `manifest.h`. ⚠️ O endereço é posicional — regerar depois de mexer no layout |
+| [docs/operacao/CCS-POR-PAGINA.md](docs/operacao/CCS-POR-PAGINA.md) | **gerado** | Os CCs na ordem das páginas do Loopy: central / mod a / mod b / time a / time b / random / tech |
+| [docs/operacao/BINDINGS-A-MAO.md](docs/operacao/BINDINGS-A-MAO.md) | **gerado** | Plano B: folha de entrada manual em Control Settings, com CC e canal por linha |
 | [docs/operacao/ACEITE-MULTIPLEXACAO.md](docs/operacao/ACEITE-MULTIPLEXACAO.md) | **vivo** | Roteiro do aceite de MIDI — o lado do firmware está verde |
 | [src/presets.h](src/presets.h) | **v0.4.0** | Estruturas de preset e a **versão do mapa derivada** (FNV-1a dos nomes). C++ puro — prova-se inteiro em banco nativo |
 | [src/test_presets.cpp](src/test_presets.cpp) | **v0.2.0** | Banco nativo dos presets: pertinência, hash (as duas metades) e cada veredito de recusa |
-| [src/qspi_raw.h](src/qspi_raw.h) | **v0.1.0** | Contrato do acesso cru à QUADSPI. **Fecho transitivo zero** — nada que ele chame pode morar na QSPI |
+| [src/qspi_raw.h](src/qspi_raw.h) | **v0.2.0** | Contrato do acesso cru à QUADSPI. **Fecho transitivo zero** — nada que ele chame pode morar na QSPI |
 | [src/qspi_raw.cpp](src/qspi_raw.cpp) | **v0.2.0** | Registradores da QUADSPI na mão, tudo marcado `COTUCA_ITCM`. **ABORT ao sair do memory-mapped** — ver `docs/DESENHO-ESCRITA-QSPI.md` |
 | [src/cotucatronics_qspi.lds](src/cotucatronics_qspi.lds) | **v0.1.0** | Linker script bifurcado da libDaisy (certidão de origem no topo). Acrescenta `.itcm_text` → ITCMRAM |
-| [src/check_docs.py](src/check_docs.py) | **v0.4.0** | `make check-docs`: dá testemunha à doc contra o manifest. **Imprime a própria versão na primeira linha** |
+| [src/check_docs.py](src/check_docs.py) | **v0.9.0** | `make check-docs`: dá testemunha à doc contra o manifest: fantasmas, comandos sem ajuda, mapa de pinos, faixas, e **duas versões no mesmo arquivo que discordam**. Aborta se `AddMidi` não casar nenhuma vez. **Imprime a própria versão na primeira linha** |
 | [docs/params-aposentados.txt](docs/params-aposentados.txt) | **vivo** | Params aposentados, símbolos removidos e nomes externos — o que o verificador tem licença para não achar |
 | [docs/DESENHO-ESCRITA-QSPI.md](docs/DESENHO-ESCRITA-QSPI.md) | **vivo** | A rota dos presets: janela ITCM (**provada**), protocolo real lido do fonte, e **onde a frente parou com a condição de retomada** |
 | [docs/PAUTA-ESCUTA.md](docs/PAUTA-ESCUTA.md) | **vivo** | O que ouvir, na ordem — ~20 versões sem veredito de ouvido |

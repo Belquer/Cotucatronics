@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.171.0"
+#define COTUCA_OS_VERSION "0.172.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3378,6 +3378,15 @@ static void HandleLine(const char* line)
         // quem conecta depois. Foi o primeiro buraco que a propria
         // rotina encontrou, minutos depois de ser escrita.
         hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION);
+        // VERSAO DE MODULO NO `board`. As quatro macros existiam desde
+        // sempre e NINGUEM as imprimia: em 24/08 a conferencia achou o
+        // `hal` a anunciar-se 0.9.0 estando em 0.38.0, e o `midi` 0.2.1
+        // estando em 0.8.0 — atraso de dezenas de revisoes, invisivel.
+        // Numero que ninguem imprime nao tem quem o corrija; a partir
+        // daqui eles saem aqui e o desvio aparece na primeira leitura.
+        hal::Log("modulos: hal %s · midi %s · params %s · dynamics %s",
+                 COTUCA_HAL_VERSION, COTUCA_MIDI_VERSION,
+                 COTUCA_PARAMS_VERSION, COTUCA_DYNAMICS_VERSION);
         // ESTADO DAS TABELAS NO `board`, nao so no boot. A denuncia de
         // estouro existia desde a v0.70 e nao evitou a segunda
         // ocorrencia — porque so saia no banner, e quem conecta a

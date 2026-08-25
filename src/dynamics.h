@@ -1,5 +1,5 @@
 #pragma once
-// dynamics.h v0.5.0
+// dynamics.h v0.5.1
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
@@ -29,7 +29,7 @@
 namespace cotuca
 {
 
-#define COTUCA_DYNAMICS_VERSION "0.4.0"
+#define COTUCA_DYNAMICS_VERSION "0.5.1"
 
 // ------------------------------------------------------------
 // EnvFollower — detector de envelope de um polo, com constantes

@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.9.0
+// Cotucatronics OS — params v0.9.1
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -15,7 +15,7 @@
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.5.0"
+#define COTUCA_PARAMS_VERSION "0.9.1"
 
 // knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
 // 4 de caráter + SRC MIX = 5.

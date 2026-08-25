@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.8.1"
+VERSION = "0.9.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -58,10 +58,47 @@ def faixas():
 def verdade():
     m = (SRC / "manifest.h").read_text(errors="replace")
     params = set(re.findall(r't\.Add\("([a-z_0-9]+)"', m))
+    # AddMidi(cc, param, canal) — o canal entrou em v0.8.2 (24/08). Ate ai o
+    # regex exigia DOIS argumentos e fechava parentese: com tres, deixou de
+    # casar e o contador passou a dizer "0 CCs" ao lado de um "ok".
+    # A chave e o PAR (cc, canal), nao o numero: com seis canais o mesmo CC
+    # aparece em tres, e indexar so pelo numero apagaria dois tercos calado.
     ccs = {}
-    for num, alvo in re.findall(r'AddMidi\((\d+),\s*([A-Za-z_0-9\[\]]+)\)', m):
-        ccs[int(num)] = alvo
+    for num, alvo, canal in re.findall(
+            r'AddMidi\(\s*(\d+)\s*,\s*([A-Za-z_0-9\[\]]+)\s*'
+            r'(?:,\s*([A-Za-z_0-9]+)\s*)?\)', m):
+        ccs[(int(num), canal or 'kCanalCompart')] = alvo
+    if not ccs:
+        print("check_docs: AddMidi nao casou NENHUMA vez — o regex envelheceu.")
+        raise SystemExit(2)
     return params, ccs
+
+
+def versoes_divergentes():
+    """Cabecalho `// nome vX.Y.Z` contra `#define COTUCA_*_VERSION "X.Y.Z"`.
+
+    NASCEU DE UM CASO REAL (24/08): quatro ficheiros carregavam DUAS versoes
+    que tinham divergido — `hal_daisy_seed` dizia 0.9.0 na macro estando em
+    0.38.0 no cabecalho, `midi` dizia 0.2.1 estando em 0.8.0. As macros nunca
+    eram impressas em lado nenhum, logo nada as corrigia: a placa anunciava
+    uma versao dezenas de revisoes atrasada e ninguem podia notar.
+
+    O cabecalho e o que o humano edita; a macro e o que a placa diz. Quando
+    discordam, a rotina de "o fonte e a placa batem?" mede o ficheiro errado.
+    """
+    fora = []
+    for f in sorted(SRC.glob("*.h")) + sorted(SRC.glob("*.cpp")):
+        txt = f.read_text(errors="replace")
+        cab = re.search(r'^//[^\n]*?\bv(\d+\.\d+\.\d+)', txt, re.M)
+        mac = re.search(r'#define\s+COTUCA_[A-Z_]*VERSION\s+"(\d+\.\d+\.\d+)"', txt)
+        if not cab or not mac:
+            continue
+        # main.cpp declara no proprio cabecalho que a versao mora SO na macro
+        if "A VERSAO MORA SO EM" in txt:
+            continue
+        if cab.group(1) != mac.group(1):
+            fora.append((f.name, cab.group(1), mac.group(1)))
+    return fora
 
 def isentos(texto):
     """nomes declarados como proposta/removido, na linha ou na anterior"""
@@ -286,6 +323,11 @@ def main():
         print(f"\nCOMANDOS SEM AJUDA: {len(sem_ajuda)}")
         for c in sem_ajuda:
             print(f"  `{c}` e tratado e nao aparece no `?`")
+
+    div = versoes_divergentes()
+    print(f"\nDUAS VERSOES NO MESMO ARQUIVO QUE DISCORDAM: {len(div)}")
+    for nome, cab, mac in div:
+        print(f"  {nome}: cabecalho {cab} · macro {mac}")
 
     print(f"\nFANTASMAS: {len(erros)}")
     for d, l, n, ctx in erros[:40]:
