@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.1.0 — escreve o .lpcontrolprofile a partir do projeto.
+"""gerar_perfil_loopy v0.2.0 — escreve o .lpcontrolprofile a partir do projeto.
 
     gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
 
@@ -94,6 +94,8 @@ def main():
     proj = json.loads(next(b for i,(t,b) in obj.items() if t=='Project'))
     ccs  = ccs_do_manifest(raiz)
 
+    # o perfil que vive DENTRO do .lpproj usa id; o exportado sozinho, posicao
+    dentro_do_projeto = os.environ.get('PERFIL_NO_PROJETO') == '1'
     binds, casados, orfaos = [], [], []
     for n, s in enumerate(proj['scenes']):
         d = json.loads(obj[s['_value']][1])
@@ -125,11 +127,19 @@ def main():
             manda, escuta = CANAL[lado if lado in CANAL else 'compart']
             cc = ccs[par]
             trig = f"b{escuta-1:x}{cc:02x}"
+            # IDENTIDADE PERSISTENTE, nao posicao. Descoberto em 24/08 ao
+            # abrir o perfil de DENTRO do projeto: os bindings feitos a mao
+            # apontavam para "#1522", que e o `id` do widget no SQLite. O
+            # `LPSliderWidget:1:6` que aparece no perfil exportado sozinho e
+            # uma CONVERSAO — fora do projeto o id nao significa nada.
+            # Dentro do projeto o id e estavel: reordenar a pagina nao mexe
+            # nele, e foi reordenar que desenderecou dois bindings ontem.
+            alvo = f"#{wid}" if dentro_do_projeto else f"LP{t}:{n}:{k}"
             binds.append({'Actions':[{'Identifier':'Trigger Widget',
                           'Parameters':{'Widget Action':'Value'},
-                          'Subject': f"LP{t}:{n}:{k}", 'Timing':'Sequential'}],
+                          'Subject': alvo, 'Timing':'Sequential'}],
                           'Trigger': trig})
-            casados.append((d['title'], f"LP{t}:{n}:{k}", tit, par, cc, escuta, trig))
+            casados.append((d['title'], alvo, tit, par, cc, escuta, trig))
 
     print(f"   casados: {len(casados)}   órfãos: {len(orfaos)}\n")
     if orfaos:

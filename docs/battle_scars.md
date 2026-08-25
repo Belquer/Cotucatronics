@@ -4325,7 +4325,31 @@ mexer no controlo e ouvir outra coisa.
 > mexida no layout, para que a posicao nunca seja informacao que so existe
 > numa configuracao antiga.
 
-O aviso ficou no cabecalho do gerador, que e onde alguem o le antes de mexer.
+O aviso ficou no cabecalho do gerador — e horas depois **deixou de ser
+necessario**, o que e a segunda metade desta cicatriz.
+
+**EMENDA, no mesmo dia.** Ao abrir o perfil de DENTRO do `.lpproj`, os
+bindings feitos a mao apontavam para `#1522` — o `id` do widget no SQLite,
+nao uma posicao. O `LPSliderWidget:1:6` que eu tinha decodificado e tomado
+por lei e uma **CONVERSAO**: o Loopy troca id por posicao quando exporta o
+perfil sozinho, porque fora do projeto o id nao significa nada.
+
+Ou seja: **eu decodifiquei o formato de exportacao e chamei-lhe o formato.**
+A forma fragil era a unica que eu tinha visto, e vi-a porque olhei para o
+artefacto exportado em vez do artefacto interno. O gerador passou a v0.2.0 a
+emitir `#<id>` para dentro do projeto, e a fragilidade posicional deixou de
+existir nesse caminho.
+
+> **O formato de intercambio nao e o formato interno** — e uma projecao, e
+> projecoes perdem informacao (aqui, a identidade). Ao decodificar por
+> engenharia inversa, perguntar SEMPRE se o artefacto que se tem em maos e o
+> que a aplicacao guarda ou o que ela exporta. As duas respostas coexistem, e
+> a exportada e quase sempre a mais pobre.
+
+E o que salvou: a mesma disciplina da `14n`. Os dois bindings feitos a mao
+eram verdade conhecida nas DUAS formas — `LPSliderWidget:1:2` no perfil
+exportado e `#1525` dentro do projeto — e o gerador teve de reproduzir cada
+uma no seu contexto. Foi a segunda reproducao que revelou que havia duas.
 
 ---
 
