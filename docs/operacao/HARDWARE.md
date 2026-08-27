@@ -153,8 +153,10 @@ KiCad → JLCPCB, SMD. Bloco de energia com esquemático **verificado pino a
 pino** (netlist conferida contra a conectividade pretendida, automaticamente).
 
 Peças críticas com número LCSC verificado: **CH224K** `C970725` (PD sink),
-**TPA3116D2DADR** `C50144` (amp), **INA226AIDGSR** `C49851` (medição de
-corrente).
+**TPA3116D2DADR** `C50144` (amp). O medidor de corrente é o **INA219**, a
+mesma peça da bancada — LCSC ⚠️ **por verificar**, ao contrário dos outros
+dois. O INA226 saiu do desenho em 25/08: bancada e produção passam a ser a
+mesma peça, e número medido numa peça não se transporta para outra.
 
 ⚠️ **Conector de 2 fios NÃO serve para a entrada** — PD negocia pelos pinos
 CC1/CC2. Pigtail sem CC deixa o chip surdo e o powerbank nunca sai dos 5V:

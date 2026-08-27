@@ -7,7 +7,7 @@
 |---|---|---|---|---|---|
 | PD sink | **CH224K** (WCH) | **C970725** | ESSOP-10 | ~5–6k | Rset **24 kΩ** no CFG1 = 12V. VDD máx 3,6V — alimentar pelo esquema de referência WCH (resistor série), NUNCA direto do VBUS. LED no PG = "12V confirmado" |
 | Amp ×2 | **TPA3116D2DADR** (TI) | **C50144** | HTSSOP-32 (PowerPAD) | em estoque | PBTL mono; 12V/4Ω ≈ 15–18W por canal. Pad térmico → vias de térmica no layout |
-| Medidor | **INA226AIDGSR** (TI) | **C49851** | VSSOP-10 | ~26–51k | ±0,02%, I2C, alerta. Kelvin no shunt |
+| Medidor | **INA219** (TI) | ⚠️ **LCSC a verificar** | SOT-23-8 ou SOIC-8 | — | I2C, bus 0–26 V, VCC 3–5 V. Kelvin no shunt. **Mesma peça da bancada** — ver GEAR-AUDIT |
 
 ## Commodity — valores definidos, número final na hora do pedido
 (quase tudo é JLC *basic part* = sem taxa de setup; conferir a flag no pedido)

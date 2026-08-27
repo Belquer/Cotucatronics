@@ -118,7 +118,7 @@ da casa. O display é escrita pura.
 | D30 | RESERVADO — DPDT exciter |
 <!-- pinos: fim -->
 
-**Livres:** D11, D12 (I2C_1 para o INA226), D15, D16, D20, D21.
+**Livres:** D11, D12 (I2C_1 para o INA219), D15, D16, D20, D21.
 
 > **Esta tabela é conferida pelo `make check-docs`** contra os
 > `seed::Dnn` do `hal_daisy_seed.cpp`. Pino reclamado no código e ausente

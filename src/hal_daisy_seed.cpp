@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.38.1
+// hal_daisy_seed v0.38.2
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.38.1"
+#define COTUCA_HAL_VERSION "0.38.2"
 
 using namespace daisy;
 
@@ -781,7 +781,7 @@ uint32_t SerialTruncadas() { return serial_truncadas; }
 // (D19/D20/D21) para deixar A0..A3 contiguos: quatro pots num chicote so
 // e o tipo de folga que se agradece depois.
 //
-// D11/D12 FICAM LIVRES DE PROPOSITO: sao o I2C_1 (PB8/PB9), que o INA226
+// D11/D12 FICAM LIVRES DE PROPOSITO: sao o I2C_1 (PB8/PB9), que o INA219
 // vai querer. Conferido no fonte da libDaisy — o codec usa I2C_2, em
 // pinos nao expostos, entao o I2C_1 esta inteiro.
 //

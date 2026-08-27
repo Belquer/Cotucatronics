@@ -19,11 +19,10 @@ conecta por headers: a placa não amarra o desenho da caixa.
 
 ### 1 · Energia
 ```
-USB-C (painel) → [CH224K: PD sink, pede 12V] → fusível PTC → switch (+V)
-   → RAIL 12V ─┬→ shunt 10 mΩ + INA226 (I2C) → bifurcação
-               ├→ AMP A (bulk 2200µF/25V + 100nF colados)
-               ├→ AMP B (idem)
-               └→ buck 12→5V (≥2A) → RAIL 5V → Daisy VIN + WIDI VI + OLED
+USB-C (painel) → [CH224K: PD sink, pede 15V] → fusível PTC → switch (+V)
+   → RAIL 15V ─┬→ shunt 10 mΩ + INA219 (I2C) ─┬→ AMP A (bulk 2200µF/35V + 100nF)
+               │                              └→ AMP B (idem)
+               └→ buck 15→5V (≥2A) → RAIL 5V → Daisy VIN + BLE + OLED
 ```
 - **CH224K** substitui o módulo PD trigger: SOP, ~US$0,30, config fixa em 12V.
   Fallback declarado: fonte sem PD 12V → 5V no rail → lógica viva (buck em
@@ -31,8 +30,12 @@ USB-C (painel) → [CH224K: PD sink, pede 12V] → fusível PTC → switch (+V)
   do CH224K denuncia "estou em 12V" — falha em silêncio, não.
 - **Buck 12→5V**: IC SMD classe 2–3A (candidatos no catálogo JLC na hora do
   esquemático: TPS54331 / MP2315 / TPS562201). Lógica consome <1A; folga 3×.
-- **INA226 + shunt 10 mΩ 2512** no positivo, ANTES da bifurcação (mede tudo que
-  sai do powerbank). Kelvin no shunt. I2C com pull-ups na placa.
+- **INA219 + shunt 10 mΩ 2512** no positivo, **no ramo dos AMPS, DEPOIS da
+  bifurcação** — a lógica puxa <1 A e é constante, e no total só diluiria a
+  resolução. Kelvin no shunt. I2C com pull-ups na placa.
+  Na carrier board não há módulo: o shunt escolhe-se. 10 mΩ com ~4 A dá 40 mV,
+  que cabe no PGA ÷1 do INA219 — LSB de 10 µV = **1 mA de resolução**.
+  ⚠️ VCC do INA219 é 3–5 V: alimenta do rail de 5 V, NUNCA do de 15 V.
 - Bulk por amp: eletrolítico radial low-ESR THT (montagem mista JLC) **ou** 2×
   1000µF polímero SMD por amp — decidir por custo no BOM.
 
