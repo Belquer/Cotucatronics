@@ -88,9 +88,31 @@ não conduz nível de linha.
 
 **Exciter é surdo em grave: 100 Hz serve pra medir, não pra ouvir.**
 
+**A CORRENTE DO EXCITER NÃO SE MEDE COM SHUNT.** Pelo mesmo motivo que o
+switch não pode morar depois do amp: em PBTL a saída é ponte comutada a
+centenas de kHz, **não há DC para medir e os dois terminais são quentes** —
+um INA ali não tem modo comum válido nem sinal que faça sentido. Para o
+exciter: microfone, ou pinça de corrente AC.
+
+Quem responde "quanto o amp está a puxar" é a medição **na entrada dele**,
+no ramo dos amps depois da bifurcação — ver o painel 5 dos esquemáticos. E
+ela responde a pergunta ELÉCTRICA: corrente é bom detector de anomalia e mau
+juiz de qualidade. Um exciter mal acoplado à escultura pode puxar o dobro e
+soar menos. Para *"está melhor?"* o instrumento é o ouvido.
+
 ---
 
 ## 4 · WIDI CORE — BLE MIDI, 6 fios
+
+> ⚠️ **SUBSTITUIÇÃO DECIDIDA, AINDA NÃO EXECUTADA.** O WIDI sai a favor de um
+> ESP32-C3 (US$ 45 → US$ 4, numa peça replicada em série na ordem de
+> centenas) — decisão e preço em [GEAR-AUDIT.md](GEAR-AUDIT.md), voo em
+> [VOO-ESP32-PONTE.md](VOO-ESP32-PONTE.md). **Sem plano B: o aceite é
+> portão**, e o que ele trava é a encomenda.
+>
+> Esta secção fica porque descreve o que está **na bancada hoje**. Sai
+> inteira quando o portão passar — e nunca sai do `battle_scars.md`, onde o
+> cruzamento TX/RX continua vivo, porque se aplica igual ao substituto.
 
 | WIDI | Daisy | nota |
 |---|---|---|

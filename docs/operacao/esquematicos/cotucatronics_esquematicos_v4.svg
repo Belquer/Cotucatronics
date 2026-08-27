@@ -1,0 +1,376 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 2440" font-family="'Courier New',monospace">
+  <style>
+    .bg    { fill:#f7f5f0; }
+    .card  { fill:#ffffff; stroke:#d8d3c8; stroke-width:1.5; }
+    .box   { fill:#faf8f3; stroke:#2a2a2a; stroke-width:2; }
+    .waud  { stroke:#1a5c8a; stroke-width:2.4; fill:none; }
+    .w12   { stroke:#c0392b; stroke-width:2.6; fill:none; }
+    .w5    { stroke:#d68910; stroke-width:2.2; fill:none; }
+    .wg    { stroke:#666; stroke-width:2.2; fill:none; }
+    .wd    { stroke:#2a2a2a; stroke-width:2.2; fill:none; }
+    .comp  { stroke:#2a2a2a; stroke-width:2; fill:none; }
+    .node  { fill:#2a2a2a; }
+    .title { font-size:25px; font-weight:bold; fill:#1a1a1a; }
+    .sub   { font-size:12px; fill:#7a7568; }
+    .h     { font-size:17px; font-weight:bold; fill:#1a1a1a; }
+    .lbl   { font-size:12px; fill:#2a2a2a; }
+    .lblb  { font-size:13px; font-weight:bold; fill:#1a1a1a; }
+    .val   { font-size:12px; font-weight:bold; fill:#b8541a; }
+    .pin   { font-size:12px; font-weight:bold; fill:#1a5c8a; }
+    .note  { font-size:11px; fill:#7a7568; }
+    .red   { font-size:11px; fill:#c0392b; font-weight:bold; }
+  </style>
+
+  <rect class="bg" x="0" y="0" width="1000" height="2440"/>
+
+  <text class="title" x="40" y="46">COTUCATRONICS — Esquemáticos v4</text>
+  <text class="sub" x="40" y="66">Duas cadeias · sem atenuador · OLED SSD1309 · INA219 no ramo dos amps   |   firmware v0.172.0 · 86 vínculos em 49 CCs · 86 params</text>
+  <line x1="40" y1="80" x2="960" y2="80" stroke="#d8d3c8" stroke-width="1.5"/>
+
+  <!-- ============ 1 · PIEZO ============ -->
+  <rect class="card" x="40" y="100" width="920" height="310" rx="8"/>
+  <text class="h" x="60" y="128">1 · PIEZO → DAISY   (monte DOIS: A → AUDIO IN L · B → AUDIO IN R)</text>
+  <text class="note" x="60" y="147">Só proteção. SEM atenuador — o clip medido veio de dedo no disco solto, regime que não é o de uso. Remedir tocando na escultura.</text>
+
+  <!-- piezo -->
+  <rect class="comp" x="70" y="205" width="42" height="58" rx="3"/>
+  <text class="lblb" x="70" y="198">PIEZO</text>
+  <circle class="node" cx="112" cy="220" r="3.5"/>
+  <text class="val" x="120" y="215">+</text>
+  <text class="note" x="132" y="215">centro (vermelho)</text>
+  <circle class="node" cx="112" cy="250" r="3.5"/>
+  <text class="val" x="120" y="264">−</text>
+  <text class="note" x="132" y="264">latão / malha (preto)</text>
+
+  <!-- 1k -->
+  <line class="waud" x1="112" y1="220" x2="290" y2="220"/>
+  <rect class="comp" x="290" y="210" width="62" height="20"/>
+  <text class="val" x="294" y="204">1kΩ</text>
+  <line class="waud" x1="352" y1="220" x2="600" y2="220"/>
+  <circle class="node" cx="450" cy="220" r="4"/>
+
+  <!-- D1 -->
+  <line class="w5" x1="450" y1="220" x2="450" y2="190"/>
+  <path class="comp" d="M 438 190 L 462 190 L 450 172 Z"/>
+  <line class="comp" x1="438" y1="172" x2="462" y2="172"/>
+  <line class="w5" x1="450" y1="172" x2="450" y2="158"/>
+  <text class="pin" x="470" y="163">3V3</text>
+  <text class="val" x="470" y="181">D1 · 1N4148</text>
+  <text class="red" x="470" y="195">cátodo → 3V3</text>
+
+  <!-- D2 -->
+  <line class="wg" x1="450" y1="220" x2="450" y2="272"/>
+  <path class="comp" d="M 438 291 L 462 291 L 450 272 Z"/>
+  <line class="comp" x1="438" y1="272" x2="462" y2="272"/>
+  <line class="wg" x1="450" y1="291" x2="450" y2="330"/>
+  <circle class="node" cx="450" cy="330" r="4"/>
+  <text class="val" x="470" y="292">D2 · 1N4148</text>
+  <text class="red" x="470" y="306">cátodo → nó do sinal</text>
+
+  <!-- daisy -->
+  <rect class="box" x="600" y="192" width="165" height="82" rx="4"/>
+  <text class="lblb" x="614" y="214">DAISY</text>
+  <text class="pin" x="614" y="236">AUDIO IN L / R</text>
+  <text class="pin" x="614" y="262">GND</text>
+  <line class="wg" x1="600" y1="258" x2="575" y2="258"/>
+  <line class="wg" x1="575" y1="258" x2="575" y2="330"/>
+  <circle class="node" cx="575" cy="330" r="4"/>
+
+  <!-- trilho terra -->
+  <line class="wg" x1="112" y1="250" x2="112" y2="330"/>
+  <line class="wg" x1="112" y1="330" x2="585" y2="330"/>
+  <text class="lblb" x="130" y="350">TRILHO DE TERRA</text>
+  <text class="note" x="300" y="350">o (−) do piezo e o D2 chegam aqui. Nada de resistor no retorno.</text>
+
+  <text class="red" x="795" y="212">Fio BLINDADO</text>
+  <text class="note" x="795" y="228">centro = (+)</text>
+  <text class="note" x="795" y="242">malha = (−)</text>
+  <text class="red" x="795" y="268">A → IN_L → cadeia A</text>
+  <text class="red" x="795" y="284">B → IN_R → cadeia B</text>
+  <text class="note" x="795" y="308">gate e in_gain são</text>
+  <text class="note" x="795" y="322">próprios de cada canal</text>
+
+  <text class="note" x="60" y="382">Cada canal tem in_gain e gate PRÓPRIOS — não por desequilíbrio elétrico (A e B chegam iguais), mas porque captam MATERIAIS diferentes:</text>
+  <text class="note" x="60" y="398">tambor dá transiente curto e forte, mola dá raspagem contínua de baixo nível. Nenhum limiar único serve aos dois.</text>
+
+  <!-- ============ 2 · WIDI ============ -->
+  <rect class="card" x="40" y="430" width="920" height="330" rx="8"/>
+  <text class="h" x="60" y="458">2 · DAISY ↔ WIDI CORE 1.3   (BLE MIDI — 6 fios)</text>
+  <text class="note" x="60" y="477">Dados CRUZADOS. LG/LR removidos 20/08 (não marcavam nada) → D29 e D30 LIVRES. Níveis lógicos OK sem conversor.</text>
+
+  <rect class="comp" x="110" y="505" width="215" height="230" rx="6"/>
+  <text class="lblb" x="160" y="530">DAISY SEED 2</text>
+  <line x1="110" y1="540" x2="325" y2="540" stroke="#d8d3c8"/>
+  <text class="pin" x="255" y="573">VIN</text>
+  <circle class="node" cx="325" cy="568" r="3.5"/>
+  <text class="pin" x="255" y="608">GND</text>
+  <circle class="node" cx="325" cy="603" r="3.5"/>
+  <text class="pin" x="205" y="643">D13 (PB6,TX)</text>
+  <circle class="node" cx="325" cy="638" r="3.5"/>
+  <text class="pin" x="205" y="678">D14 (PB7,RX)</text>
+  <circle class="node" cx="325" cy="673" r="3.5"/>
+  <text class="pin" x="243" y="713">D28</text>
+  <circle class="node" cx="325" cy="708" r="3.5"/>
+  <text class="note" x="122" y="728">USART1 · 31250 8N1 · DMA</text>
+
+  <rect class="comp" x="675" y="505" width="215" height="230" rx="6"/>
+  <text class="lblb" x="720" y="530">WIDI CORE 1.3</text>
+  <line x1="675" y1="540" x2="890" y2="540" stroke="#d8d3c8"/>
+  <circle class="node" cx="675" cy="568" r="3.5"/>
+  <text class="pin" x="695" y="573">VI</text>
+  <circle class="node" cx="675" cy="598" r="3.5"/>
+  <text class="pin" x="695" y="603">ON</text>
+  <circle class="node" cx="675" cy="638" r="3.5"/>
+  <text class="pin" x="695" y="643">GND</text>
+  <circle class="node" cx="675" cy="673" r="3.5"/>
+  <text class="pin" x="695" y="678">RX</text>
+  <circle class="node" cx="675" cy="708" r="3.5"/>
+  <text class="pin" x="695" y="713">TX</text>
+  <circle class="node" cx="675" cy="738" r="3.5"/>
+  <text class="pin" x="695" y="743">LB</text>
+  <text class="note" x="800" y="743">V3 ≈ 3,3V = vivo</text>
+
+  <path class="w5" d="M 325 568 L 675 568"/>
+  <text class="val" x="470" y="561">+5V</text>
+  <path class="w5" d="M 675 568 L 655 568 L 655 598 L 675 598"/>
+  <text class="red" x="560" y="590">jumper VI→ON</text>
+
+  <path class="wg" d="M 325 603 L 420 603 L 420 638 L 675 638"/>
+  <text class="note" x="470" y="628">GND comum</text>
+
+  <path class="wd" d="M 325 638 L 400 638 L 400 673 L 675 673"/>
+  <text class="lbl" x="440" y="666">D13 TX → RX do WIDI</text>
+
+  <path class="wd" d="M 325 673 L 380 673 L 380 708 L 675 708"/>
+  <text class="lblb" x="410" y="701">D14 RX ← TX do WIDI  ★</text>
+
+  <path class="wd" d="M 325 708 L 360 708 L 360 738 L 675 738"/>
+  <text class="lbl" x="390" y="731">D28 ← LB (status)</text>
+
+  <text class="red" x="110" y="753">★ essencial (recebe MIDI). Se `midi` der 0 bytes, desconfia do cruzamento ANTES de tudo.</text>
+
+  <!-- ============ 3 · SAÍDAS ============ -->
+  <rect class="card" x="40" y="780" width="920" height="370" rx="8"/>
+  <text class="h" x="60" y="808">3 · DAISY → SAÍDAS   (exciter + jack)</text>
+  <text class="note" x="60" y="827">O áudio vai SEMPRE aos dois destinos; quem decide o que soa é o firmware, lendo o switch de rota. Cada ramo tem seu processamento.</text>
+
+  <rect class="comp" x="70" y="865" width="180" height="165" rx="6"/>
+  <text class="lblb" x="95" y="890">DAISY SEED 2</text>
+  <line x1="70" y1="900" x2="250" y2="900" stroke="#d8d3c8"/>
+  <text class="pin" x="86" y="930">AUDIO OUT L</text>
+  <circle class="node" cx="250" cy="925" r="3.5"/>
+  <text class="pin" x="86" y="980">AUDIO OUT R</text>
+  <circle class="node" cx="250" cy="975" r="3.5"/>
+  <text class="pin" x="86" y="1022">GPIO / ADC</text>
+  <circle class="node" cx="250" cy="1017" r="3.5"/>
+
+  <!-- OUT L -> amp -> exciter -->
+  <line class="waud" x1="250" y1="925" x2="430" y2="925"/>
+  <text class="note" x="285" y="917">ramo do exciter</text>
+  <rect class="box" x="430" y="895" width="175" height="62" rx="4"/>
+  <text class="lblb" x="444" y="917">TPA3116 PBTL</text>
+  <text class="note" x="444" y="934">mono · 8–26V</text>
+  <text class="note" x="444" y="948">entrada de linha</text>
+  <line class="waud" x1="605" y1="925" x2="672" y2="925"/>
+  <circle class="comp" cx="700" cy="925" r="27"/>
+  <text class="lblb" x="742" y="918">EXCITER</text>
+  <text class="note" x="742" y="933">Dayton 4Ω 40W</text>
+  <text class="note" x="742" y="947">chão, face interna</text>
+
+  <!-- 12V entra pelo topo do amp -->
+  <line class="w12" x1="517" y1="862" x2="517" y2="895"/>
+  <text class="val" x="530" y="858">15V (do PD sink)</text>
+
+  <!-- capacitor pendurado sob o amp -->
+  <line class="w12" x1="470" y1="957" x2="470" y2="988"/>
+  <line class="comp" x1="452" y1="988" x2="488" y2="988"/>
+  <line class="comp" x1="452" y1="996" x2="488" y2="996"/>
+  <line class="wg" x1="470" y1="996" x2="470" y2="1022"/>
+  <line class="wg" x1="454" y1="1022" x2="486" y2="1022"/>
+  <line class="wg" x1="460" y1="1028" x2="480" y2="1028"/>
+  <text class="val" x="500" y="992">2200µF / 35V  +  100nF</text>
+  <text class="red" x="500" y="1008">colado nos pinos do amp</text>
+
+  <!-- OUT R -> jack -->
+  <line class="waud" x1="250" y1="975" x2="340" y2="975"/>
+  <line class="waud" x1="340" y1="975" x2="340" y2="1078"/>
+  <line class="waud" x1="340" y1="1078" x2="400" y2="1078"/>
+  <text class="note" x="258" y="967">ramo limpo</text>
+  <rect class="box" x="400" y="1053" width="150" height="50" rx="4"/>
+  <text class="lblb" x="414" y="1075">JACK TS</text>
+  <text class="note" x="414" y="1091">PA / gravação</text>
+
+  <!-- switch de rota -->
+  <line class="wd" x1="250" y1="1017" x2="290" y2="1017"/>
+  <circle class="node" cx="290" cy="1017" r="3.5"/>
+  <line class="comp" x1="290" y1="1017" x2="318" y2="1004"/>
+  <circle class="node" cx="322" cy="1002" r="3"/>
+  <circle class="node" cx="322" cy="1017" r="3"/>
+  <circle class="node" cx="322" cy="1032" r="3"/>
+  <text class="lblb" x="120" y="1064">SWITCH DE ROTA (3 pos)</text>
+  <text class="note" x="120" y="1080">interno / TRS / ambos</text>
+  <text class="note" x="120" y="1096">1 pino de ADC (divisor) ou 2 digitais</text>
+
+  <text class="red" x="600" y="1053">O switch também escolhe o perfil de proteção:</text>
+  <text class="note" x="600" y="1070">exciter no circuito = anti-feedback ligado</text>
+  <text class="note" x="600" y="1086">(shift_hz, governor) · só jack = caminho limpo</text>
+
+  <text class="note" x="70" y="1132">GND do amp no mesmo rail da Daisy. Um rail, um ponto de união, zero loops.</text>
+
+  <!-- ============ 4 · OLED ============ -->
+  <rect class="card" x="40" y="1170" width="920" height="390" rx="8"/>
+  <text class="h" x="60" y="1198">4 · OLED — Waveshare 2.42" SSD1309, 128×64, SPI 4 fios</text>
+  <text class="note" x="60" y="1217">Driver já existe na libDaisy (SSD130x, SPI 4 fios). Vem em SPI por padrão. Tradutor de tensão embarcado: aceita 3,3V.</text>
+
+  <rect class="comp" x="110" y="1250" width="200" height="230" rx="6"/>
+  <text class="lblb" x="145" y="1275">DAISY SEED 2</text>
+  <line x1="110" y1="1285" x2="310" y2="1285" stroke="#d8d3c8"/>
+  <text class="pin" x="128" y="1313">3V3</text>
+  <circle class="node" cx="310" cy="1308" r="3.5"/>
+  <text class="pin" x="128" y="1343">GND</text>
+  <circle class="node" cx="310" cy="1338" r="3.5"/>
+  <text class="pin" x="128" y="1373">SPI SCK</text>
+  <circle class="node" cx="310" cy="1368" r="3.5"/>
+  <text class="pin" x="128" y="1403">SPI MOSI</text>
+  <circle class="node" cx="310" cy="1398" r="3.5"/>
+  <text class="pin" x="128" y="1433">CS (NSS/GPIO)</text>
+  <circle class="node" cx="310" cy="1428" r="3.5"/>
+  <text class="pin" x="128" y="1463">GPIO ×2</text>
+  <circle class="node" cx="310" cy="1458" r="3.5"/>
+
+  <rect class="comp" x="620" y="1250" width="200" height="230" rx="6"/>
+  <text class="lblb" x="640" y="1275">OLED 2.42" (7 pinos)</text>
+  <line x1="620" y1="1285" x2="820" y2="1285" stroke="#d8d3c8"/>
+  <circle class="node" cx="620" cy="1308" r="3.5"/>
+  <text class="pin" x="640" y="1313">VCC</text>
+  <circle class="node" cx="620" cy="1338" r="3.5"/>
+  <text class="pin" x="640" y="1343">GND</text>
+  <circle class="node" cx="620" cy="1368" r="3.5"/>
+  <text class="pin" x="640" y="1373">SCL / SCK</text>
+  <circle class="node" cx="620" cy="1398" r="3.5"/>
+  <text class="pin" x="640" y="1403">SDA / MOSI</text>
+  <circle class="node" cx="620" cy="1428" r="3.5"/>
+  <text class="pin" x="640" y="1433">CS</text>
+  <circle class="node" cx="620" cy="1458" r="3.5"/>
+  <text class="pin" x="640" y="1463">DC · RES</text>
+
+  <line class="w5" x1="310" y1="1308" x2="620" y2="1308"/>
+  <line class="wg" x1="310" y1="1338" x2="620" y2="1338"/>
+  <line class="wd" x1="310" y1="1368" x2="620" y2="1368"/>
+  <line class="wd" x1="310" y1="1398" x2="620" y2="1398"/>
+  <line class="wd" x1="310" y1="1428" x2="620" y2="1428"/>
+  <line class="wd" x1="310" y1="1458" x2="620" y2="1458"/>
+
+  <text class="red" x="850" y="1313">3,3V</text>
+  <text class="note" x="850" y="1373">clock</text>
+  <text class="note" x="850" y="1403">dados</text>
+  <text class="note" x="850" y="1433">chip select</text>
+  <text class="note" x="850" y="1463">cmd + reset</text>
+
+  <text class="red" x="120" y="1508">Os D-números exatos do periférico SPI: CONFIRMAR na libDaisy antes de soldar (fonte, não memória).</text>
+  <text class="note" x="120" y="1526">Não colide com os ocupados: D13/D14 (UART) · D15–D19 (pots) · D26/D27 (botões) · D28 (LB). D29/D30 livres.</text>
+  <text class="note" x="120" y="1544">Recorte do painel: área visível 55,01 × 27,49mm · módulo 61,50 × 39,50mm · conector MX1.25 de 7 pinos.</text>
+
+
+  <!-- ============ 5 · ENERGIA ============ -->
+  <rect class="card" x="40" y="1580" width="920" height="450" rx="8"/>
+  <text class="h" x="60" y="1608">5 · ENERGIA — do powerbank ao rail, e onde entra a medição de corrente</text>
+  <text class="note" x="60" y="1627">O INA fica no ramo dos AMPS, depois da bifurcação: a lógica puxa &lt;1 A e é constante, e no total só diluiria a resolução.</text>
+
+  <!-- ramo da logica: NAO medido -->
+  <line class="w12" x1="470" y1="1745" x2="470" y2="1666"/>
+  <line class="w12" x1="470" y1="1666" x2="520" y2="1666"/>
+  <rect class="box" x="520" y="1645" width="196" height="42" rx="4"/>
+  <text class="lblb" x="530" y="1663">BUCK 15→5 V (≥2 A)</text>
+  <text class="note" x="530" y="1679">lógica &lt;1 A · folga 2×</text>
+  <line class="w5" x1="716" y1="1666" x2="752" y2="1666"/>
+  <text class="val" x="758" y="1663">RAIL 5 V</text>
+  <text class="note" x="758" y="1679">Daisy · WIDI · OLED</text>
+
+  <!-- trilho -->
+  <rect class="box" x="70" y="1722" width="84" height="46" rx="4"/>
+  <text class="lblb" x="80" y="1744">USB-C</text>
+  <text class="note" x="80" y="1760">painel</text>
+  <line class="w12" x1="154" y1="1745" x2="184" y2="1745"/>
+
+  <rect class="box" x="184" y="1716" width="100" height="58" rx="4"/>
+  <text class="lblb" x="193" y="1738">CH224K</text>
+  <text class="note" x="193" y="1754">PD sink</text>
+  <text class="val" x="247" y="1754">15 V</text>
+  <line class="w12" x1="284" y1="1745" x2="314" y2="1745"/>
+
+  <rect class="comp" x="314" y="1732" width="42" height="26" rx="3"/>
+  <text class="lbl" x="321" y="1750">PTC</text>
+  <line class="w12" x1="356" y1="1745" x2="386" y2="1745"/>
+
+  <circle class="node" cx="390" cy="1745" r="3.5"/>
+  <line class="comp" x1="390" y1="1745" x2="414" y2="1731"/>
+  <circle class="node" cx="418" cy="1745" r="3.5"/>
+  <text class="lbl" x="380" y="1784">SWITCH</text>
+  <text class="note" x="374" y="1798">só no (+)</text>
+  <line class="w12" x1="418" y1="1745" x2="520" y2="1745"/>
+  <circle class="node" cx="470" cy="1745" r="4.5"/>
+  <text class="note" x="440" y="1714">bifurcação</text>
+
+  <!-- INA219 EM SERIE no ramo dos amps -->
+  <rect class="box" x="520" y="1718" width="170" height="54" rx="4"/>
+  <text class="lblb" x="532" y="1739">INA219</text>
+  <text class="note" x="532" y="1755">shunt 0,1 Ω na placa</text>
+  <text class="pin" x="524" y="1712">VIN+</text>
+  <text class="pin" x="654" y="1712">VIN−</text>
+  <line class="w12" x1="690" y1="1745" x2="740" y2="1745"/>
+
+  <circle class="node" cx="740" cy="1745" r="4.5"/>
+  <line class="w12" x1="740" y1="1733" x2="740" y2="1793"/>
+  <line class="w12" x1="740" y1="1733" x2="772" y2="1733"/>
+  <rect class="box" x="772" y="1712" width="158" height="42" rx="4"/>
+  <text class="lblb" x="782" y="1730">AMP A · TPA3116</text>
+  <text class="note" x="782" y="1746">2200µF/35V + 100nF</text>
+  <line class="w12" x1="740" y1="1793" x2="772" y2="1793"/>
+  <rect class="box" x="772" y="1772" width="158" height="42" rx="4"/>
+  <text class="lblb" x="782" y="1790">AMP B · TPA3116</text>
+  <text class="note" x="782" y="1806">idem</text>
+
+  <!-- I2C ate a Daisy -->
+  <line class="wd" x1="560" y1="1772" x2="560" y2="1888"/>
+  <line class="wd" x1="560" y1="1888" x2="248" y2="1888"/>
+  <line class="wd" x1="600" y1="1772" x2="600" y2="1908"/>
+  <line class="wd" x1="600" y1="1908" x2="248" y2="1908"/>
+  <line class="w5" x1="644" y1="1772" x2="644" y2="1928"/>
+  <line class="w5" x1="644" y1="1928" x2="248" y2="1928"/>
+
+  <rect class="box" x="70" y="1858" width="178" height="88" rx="4"/>
+  <text class="lblb" x="82" y="1880">DAISY SEED 2</text>
+  <text class="pin" x="82" y="1900">D11 · SDA</text>
+  <text class="pin" x="82" y="1918">D12 · SCL</text>
+  <text class="pin" x="82" y="1938">3V3 → VCC</text>
+  <text class="note" x="664" y="1864">0x40 · PGA ÷8</text>
+  <text class="note" x="664" y="1880">±3,2 A</text>
+  <text class="note" x="664" y="1896">bus 0–26 V</text>
+
+  <text class="red" x="60" y="1972">VCC do INA219 é 3–5 V: alimenta do 3V3. Só VIN+/VIN− veem o rail, e o limite deles é 26 V.</text>
+  <text class="red" x="60" y="1992">Em série no POSITIVO. No retorno, o shunt entra no terra partilhado com o sinal e quebra o terra em estrela.</text>
+  <text class="note" x="60" y="2014">0,1 Ω a 3 A: cai 0,3 V e dissipa 0,9 W. Se o pico medido passar disso, trocar por 10 mΩ e recalibrar.</text>
+
+  <!-- ============ NOTAS ============ -->
+  <rect class="card" x="40" y="2030" width="920" height="350" rx="8"/>
+  <text class="h" x="60" y="2058">NOTAS — o que mudou desde a v3</text>
+
+  <text class="lblb" x="70" y="2092">ATENUADOR: fora do plano (por ora)</text>
+  <text class="lbl" x="80" y="2112">O clip medido veio de dedo direto no disco solto — regime que não é o de uso. Na escultura o piezo lê flexão de</text>
+  <text class="lbl" x="80" y="2130">placa, nível bem mais baixo. Monta só a proteção, toca normal, `hist` remede. Atenuador só se clipar tocando.</text>
+
+  <text class="lblb" x="70" y="2162">LG/LR: removidos (medido, 20/08)</text>
+  <text class="lbl" x="80" y="2182">Não marcavam estado útil. Só o LB (D28) permanece. D29 e D30 voltaram ao pool de pinos livres.</text>
+
+  <text class="lblb" x="70" y="2214">DUAS CADEIAS: in_gain e gate por canal</text>
+  <text class="lbl" x="80" y="2234">Justificativa é MATERIAL, não desequilíbrio — A e B chegam iguais (o p2 baixo era defeito físico do piezo, trocar</text>
+  <text class="lbl" x="80" y="2252">os piezos de canal provou). Tambor e mola pedem limiares diferentes mesmo com transdutores idênticos.</text>
+
+  <text class="lblb" x="70" y="2284">ENERGIA: rail passou a 15 V, e ganhou painel próprio (5)</text>
+  <text class="lbl" x="80" y="2304">O 12 V é SEMPRE opcional no PD; o 15 V é obrigatório em fontes de 27 W ou mais. Por isso o rail é 15 V.</text>
+  <text class="lbl" x="80" y="2322">Medição de corrente: INA219 em série no ramo dos AMPS, depois da bifurcação — a lógica não entra na conta.</text>
+  <text class="red" x="80" y="2346">Capacitor 2200µF/35V colado no amp é obrigatório. UMA porta só do powerbank — duas fazem renegociar pra 5V/15W e o 15 V some.</text>
+
+  <text class="note" x="60" y="2412">Cotucatronics OS · esquemáticos v4 · pinos conferidos por `make check-docs` (0 divergências) · amp: TPA3116 do BOM, HARDWARE.md ainda diz 3110</text>
+</svg>

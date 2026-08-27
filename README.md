@@ -81,6 +81,8 @@ Cinco regras que não se negociam:
 | [src/manifest.h](src/manifest.h) | **v0.81.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **86 vínculos em 49 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
 | [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 41 CCs numa folha A4. Fonte em `ccmap.html`, gerador `ccmap-pdf.sh` / `.command` v0.1.0 |
 | [docs/operacao/RETRABALHO-LOOPY.md](docs/operacao/RETRABALHO-LOOPY.md) | **gerado** | O mapa inteiro para remapear o Loopy: 86 vínculos em 49 CCs, por página |
+| [docs/operacao/GEAR-AUDIT.md](docs/operacao/GEAR-AUDIT.md) | **v0.1.0** | A decisão de trocar o WIDI Core por um ESP32-C3: US$ 45 → US$ 4 numa peça replicada em série. **Sem plano B — o aceite é portão**, e o que ele trava é a encomenda |
+| [docs/operacao/VOO-ESP32-PONTE.md](docs/operacao/VOO-ESP32-PONTE.md) | **v0.1.0** | O voo da ponte BLE↔UART. **O firmware da Daisy não muda uma linha** — o `sync` automático é o voo 2. Traz as três verificações feitas antes de escrever |
 | [docs/operacao/gerar_perfil_loopy.py](docs/operacao/gerar_perfil_loopy.py) | **v0.1.0** | Lê o projeto exportado do Loopy (`.lpproj`, zip com SQLite) e **emite os 86 bindings** já endereçados, com os CCs vindos do `manifest.h`. ⚠️ O endereço é posicional — regerar depois de mexer no layout |
 | [docs/operacao/CCS-POR-PAGINA.md](docs/operacao/CCS-POR-PAGINA.md) | **gerado** | Os CCs na ordem das páginas do Loopy: central / mod a / mod b / time a / time b / random / tech |
 | [docs/operacao/BINDINGS-A-MAO.md](docs/operacao/BINDINGS-A-MAO.md) | **gerado** | Plano B: folha de entrada manual em Control Settings, com CC e canal por linha |
