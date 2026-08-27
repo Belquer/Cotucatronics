@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.172.0"
+#define COTUCA_OS_VERSION "0.172.1"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3385,7 +3385,7 @@ static void HandleLine(const char* line)
         // Numero que ninguem imprime nao tem quem o corrija; a partir
         // daqui eles saem aqui e o desvio aparece na primeira leitura.
         hal::Log("modulos: hal %s · midi %s · params %s · dynamics %s",
-                 COTUCA_HAL_VERSION, COTUCA_MIDI_VERSION,
+                 hal::VersaoImpl(), COTUCA_MIDI_VERSION,
                  COTUCA_PARAMS_VERSION, COTUCA_DYNAMICS_VERSION);
         // ESTADO DAS TABELAS NO `board`, nao so no boot. A denuncia de
         // estouro existia desde a v0.70 e nao evitou a segunda

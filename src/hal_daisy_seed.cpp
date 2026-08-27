@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.38.2
+// hal_daisy_seed v0.39.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.38.2"
+#define COTUCA_HAL_VERSION "0.39.0"
 
 using namespace daisy;
 
@@ -1157,6 +1157,8 @@ void RebootToDfu()
     // janela seria de ~2 s e o problema de sincronia voltaria.
     System::ResetToBootloader(System::BootloaderMode::DAISY_INFINITE_TIMEOUT);
 }
+const char* VersaoImpl() { return COTUCA_HAL_VERSION; }
+
 
 uint32_t NowTicks() { return System::GetTick(); }
 uint32_t TicksPerUs()

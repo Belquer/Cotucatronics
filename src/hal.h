@@ -116,6 +116,19 @@ bool             ReadWidiLed();
 // NAO TEM VOLTA POR SOFTWARE. Uma vez em DFU, so gravar (ou um RESET
 // fisico) traz o app de volta — por isso o comando exige confirmacao.
 void             RebootToDfu();
+
+// VERSAO DA IMPLEMENTACAO DO HAL, perguntada ao backend.
+//
+// NASCEU DE UM BUILD QUEBRADO (25/08). O `board` passou a imprimir as
+// versoes de modulo, e para o hal eu usei `COTUCA_HAL_VERSION` direto no
+// main.cpp — macro que vive no hal_daisy_seed.cpp e portanto nao existe
+// ali. Compilou zero vezes e mesmo assim foi commitado: o check_docs e os
+// bancos nativos nao constroem o main.cpp para a placa.
+//
+// Mover a macro para ca teria resolvido o build e estragado o contrato:
+// a versao da IMPLEMENTACAO nao e propriedade da interface. O contrato
+// diz "cada backend sabe dizer a sua"; quem responde e quem implementa.
+const char*      VersaoImpl();
 void             SetLed(bool on);
 
 // LEDs de painel, por INDICE — quem chama nao conhece pino. Cada um
