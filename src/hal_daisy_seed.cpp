@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.39.0
+// hal_daisy_seed v0.40.1
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.39.0"
+#define COTUCA_HAL_VERSION "0.40.1"
 
 using namespace daisy;
 
@@ -166,6 +166,25 @@ constexpr int            kCdcDeadAfter = 3;
 // System::Delay, entao o custo e o de uma chamada que falha rapido.
 constexpr uint32_t       kCdcRetryMs   = 500;
 static uint32_t          cdc_retry_ms  = 0;
+// MUDO DO LOG, EM ESCOPO DE FICHEIRO — e a correcao de 27/08.
+//
+// Era um `static bool` DENTRO do Log, e por isso a ISR de recepcao nao
+// lhe chegava. O rearme por byte recebido limpava o `cdc_dead` e o
+// `cdc_fails` e deixava este armado: o canal voltava a "vivo" e continuava
+// com UMA tentativa por chamada, sem espera entre elas. Uma tentativa
+// isolada raramente calha com o endpoint livre, entao o log ficava morto
+// para sempre com cara de ressuscitado.
+//
+// Irmao desprotegido (bts 13q) em forma de sinalizador: dois estados
+// descrevem a mesma coisa, o rearme tocava num e nao no outro. O sintoma
+// e o pior possivel — placa viva, arranque completo, e ZERO bytes: em
+// 27/08 isso passou por firmware travado durante uma noite inteira, e
+// custou uma placa que se suspeitou morta sem estar.
+static bool              log_mudo      = false;
+// Teto da carencia de enumeracao. 3 s cobre com folga o tempo de o host
+// enumerar um CDC; a saida antecipada faz com que quase nunca se pague.
+constexpr uint32_t       kBootMinMs    = 3000;  // sempre esperado
+constexpr uint32_t       kBootGraceMs  = 2000;  // e ate mais isto, se preciso
 static bool              cdc_dead      = false;
 static bool              log_muted     = false;
 // UM CANAL QUE ATRAVESSA O MUDO. So o banner de status usa. Se o
@@ -216,8 +235,13 @@ static void UsbRxCallback(uint8_t* buf, uint32_t* len)
                     memcpy(queue[q_head], rx_buf, rx_len + 1);
                     q_head = next;
                     // REARME: chegou byte, o host esta vivo.
+                    //
+                    // OS TRES, e nao dois. O `log_mudo` faltava aqui e era
+                    // justamente o que mantinha o canal em uma-tentativa-
+                    // sem-espera depois de "ressuscitar".
                     cdc_dead  = false;
                     cdc_fails = 0;
+                    log_mudo  = false;
                 }
             }
             rx_len  = 0;
@@ -263,6 +287,39 @@ bool Init()
     hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
     info.sample_rate = hw.AudioSampleRate();
     hw.StartLog(false);
+
+    // ---- CARENCIA DE ENUMERACAO, LIMITADA E COM SAIDA ANTECIPADA ----
+    //
+    // `StartLog(false)` nao espera pelo host — e todo o arranque deste
+    // firmware saia antes de a enumeracao terminar, para um CDC que
+    // ninguem tinha aberto. Isso nunca doeu enquanto o loop chegava ao
+    // shell: dali em diante havia como perguntar. Numa placa onde o
+    // arranque MORRE, ou onde o canal nao ressuscita, a unica testemunha
+    // morre junto — e o sintoma (porta viva, zero bytes, nem banner) e
+    // INDISTINGUIVEL de firmware travado. Foi assim que uma noite inteira
+    // se gastou a caçar um travamento que nao existia.
+    //
+    // Nao e um `Delay` cego: tenta transmitir ate conseguir, e SAI no
+    // primeiro sucesso. Com host ligado custa milissegundos; sem host,
+    // custa o teto e segue. O instrumento nao pode cobrar o paciente.
+    {
+        // MINIMO INCONDICIONAL PRIMEIRO. A versao anterior desta carencia
+        // saia no primeiro envio bem-sucedido — e isso acontece ANTES de o
+        // host terminar de configurar a interface: medido em 27/08, o ping
+        // saia (2 bytes no fio) e tudo o que vinha a seguir morria. Sair
+        // cedo demais e nao esperar sao a mesma coisa.
+        System::Delay(kBootMinMs);
+        const char*    ping = "\r\n";
+        const uint32_t t0   = System::GetNow();
+        while(System::GetNow() - t0 < kBootGraceMs)
+        {
+            if(hw.usb_handle.TransmitInternal((uint8_t*)ping, 2)
+               == UsbHandle::Result::OK)
+                break;
+            System::Delay(10);
+        }
+    }
+
     Log("hal_daisy_seed v" COTUCA_HAL_VERSION);
     hw.usb_handle.SetReceiveCallback(UsbRxCallback, UsbHandle::FS_INTERNAL);
 
@@ -500,8 +557,7 @@ void Log(const char* fmt, ...)
         cdc_retry_ms = agora; // deixa passar UMA tentativa
     }
 
-    static bool muted = false;
-    const int   tries = muted ? 1 : 3;
+    const int   tries = log_mudo ? 1 : 3;
     for(int t = 0; t < tries; t++)
     {
         // M3: marcador ANTES do TransmitInternal. Se o loop morrer com
@@ -511,15 +567,15 @@ void Log(const char* fmt, ...)
         if(hw.usb_handle.TransmitInternal(out, (size_t)n)
            == UsbHandle::Result::OK)
         {
-            muted     = false;
+            log_mudo  = false;
             cdc_fails = 0; // sucesso zera o dead-man
             cdc_dead  = false; // ...e RESSUSCITA o canal
             return;
         }
-        if(!muted)
+        if(!log_mudo)
             System::Delay(1);
     }
-    muted = true;
+    log_mudo = true;
     log_dropped++;
     if(bb_rec) BlackboxWrite(25, (float)log_dropped);
     if(++cdc_fails >= kCdcDeadAfter)
