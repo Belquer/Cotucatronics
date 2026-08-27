@@ -13,3 +13,4 @@ build/
 
 # nunca versionar os zips de entrega
 *.zip
+__pycache__/
