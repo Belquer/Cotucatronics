@@ -1,5 +1,5 @@
 // ============================================================================
-// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v0.1.0
+// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v0.4.0
 // ESP32-C3 SuperMini · substitui o WIDI Core 1.3
 //
 // O QUE ESTA PLACA E: um fio com rádio. Nada mais.
@@ -37,7 +37,7 @@
 #include <hardware/BLEMIDI_ESP32_NimBLE.h>
 #include <MIDI.h>
 
-#define PONTE_VERSAO "0.1.0"
+#define PONTE_VERSAO "0.4.0"
 
 // ---- pinos -----------------------------------------------------------------
 // A GPIO Matrix do C3 poe a UART em quase qualquer pino — o oposto da Daisy.
@@ -67,6 +67,19 @@ static const uint32_t BAUD = 31250;
 static const size_t TX_BUFFER = 1024;
 
 // O macro cria o transporte como BLE<Nome>: aqui, BLERADIO.
+//
+// O NOME LONGO CABE, E FOI MEDIDO. A conta do pacote primario de anuncio
+// diz que nao caberia:
+//   31 bytes - 3 (flags) - 18 (UUID do servico MIDI, 128 bit) = 10,
+//   ou seja 2 de cabecalho + 8 caracteres, e "Cotucatronics" tem 13.
+// A conta esta certa e o modelo estava incompleto: o nome vai na RESPOSTA
+// AO SCAN, que e um segundo pacote de 31 bytes, e o iOS faz varredura
+// ativa. Em 25/08 encurtei para "Cotuca" com base so na conta — e o dB ja
+// tinha visto "Cotucatronics" aparecer no Loopy. Revertido.
+//
+// A licao e a da casa: nao agir sobre o modelo quando a medicao esta a
+// caminho. E o nome importa alem da estetica — o perfil de controlo do
+// Loopy fica preso a identidade do dispositivo.
 BLEMIDI_CREATE_INSTANCE("Cotucatronics", RADIO)
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, SER)
 
@@ -77,6 +90,12 @@ static uint32_t          ultima_queda_ms = 0;        // 0 = nunca caiu
 static uint32_t          msgs_ble_para_ser = 0;
 static uint32_t          msgs_ser_para_ble = 0;
 static uint32_t          saturacoes     = 0;         // TX sem espaco: CONTA, nao cala
+// BYTES CRUS, ANTES DO PARSER. Distingue "nao chegou nada" de "chegou lixo":
+// fio errado da zero; baud errado ou inversao da bytes que o parser MIDI
+// descarta em silencio. Sem este contador os dois casos sao o mesmo numero.
+static uint32_t          bytes_crus     = 0;
+static uint8_t           ultimos[16];
+static uint8_t           n_ultimos      = 0;
 
 // ---- estado do pino, num sitio so ------------------------------------------
 // Aberto-dreno por construcao: conduzir baixo, ou SOLTAR. Nunca conduzir alto
@@ -149,7 +168,7 @@ void setup()
                   PONTE_VERSAO, (unsigned long)BAUD);
     Serial.printf("  TX=GPIO%d -> D14 · RX=GPIO%d <- D13 · STATUS=GPIO%d -> D28\n",
                   PINO_TX, PINO_RX, PINO_STATUS);
-    Serial.println("  `board` para o estado.");
+    Serial.println("  `board` para o estado · `teste` dispara um CC pelo radio (bancada).");
 }
 
 // ---- LED: a cadencia e nossa, e mora SO deste lado -------------------------
@@ -198,8 +217,80 @@ static void Shell()
                               (unsigned long)msgs_ser_para_ble,
                               (unsigned long)saturacoes);
             }
+            else if(n && strncmp(buf, "cru", 3) == 0)
+            {
+                Serial.printf("cru: %lu bytes vistos na Serial1 · %d na fila agora\n",
+                              (unsigned long)bytes_crus, Serial1.available());
+                Serial.printf("     se for 0 o fio D13->GPIO%d nao entrega;\n", PINO_RX);
+                Serial.printf("     se for >0 e ser->BLE for 0, chega LIXO"
+                              " (baud, inversao, ou massa).\n");
+            }
+            else if(n && strncmp(buf, "pino", 4) == 0)
+            {
+                // FERRAMENTA DE FIO: conduz um GPIO para se poder conferir do
+                // outro lado. Cada fio testa-se sozinho, em vez de se adivinhar
+                // qual dos tres esta errado.
+                int g = -1, v = -1;
+                sscanf(buf + 4, "%d %d", &g, &v);
+                if(g >= 0 && (v == 0 || v == 1))
+                {
+                    pinMode(g, OUTPUT); digitalWrite(g, v ? HIGH : LOW);
+                    Serial.printf("pino: GPIO%d -> %s\n", g, v ? "ALTO" : "BAIXO");
+                }
+                else if(g >= 0 && v == 2)
+                {
+                    pinMode(g, INPUT);
+                    Serial.printf("pino: GPIO%d -> SOLTO (alta impedancia)\n", g);
+                }
+                else Serial.println("uso: pino <gpio> <0|1|2>   (2 = solta)");
+            }
+            else if(n && strncmp(buf, "pisca", 5) == 0)
+            {
+                // Pulsa um GPIO 20x a 4 Hz. Do outro lado, o `ble` da Daisy
+                // conta transicoes: se contar ~20, o fio entrega.
+                int g = PINO_STATUS;
+                sscanf(buf + 5, "%d", &g);
+                Serial.printf("pisca: GPIO%d, 20 pulsos a 4 Hz — le `ble` na Daisy\n", g);
+                pinMode(g, OUTPUT);
+                for(int i = 0; i < 20; i++)
+                { digitalWrite(g, LOW); delay(125); digitalWrite(g, HIGH); delay(125); }
+                AplicaStatus(conectado);
+                Serial.println("pisca: fim");
+            }
+            else if(n && strncmp(buf, "serteste", 8) == 0)
+            {
+                // O IRMAO DO `teste`, e faltava. O `teste` prova o caminho
+                // para o RADIO; este prova o caminho para o FIO. Sem os dois,
+                // "a Daisy nao ouviu" nao distingue fio partido de ponte muda.
+                int cc = 20, val = 100, ch = 1, rep = 10;
+                sscanf(buf + 8, "%d %d %d %d", &cc, &val, &ch, &rep);
+                for(int i = 0; i < rep; i++)
+                {
+                    SER.sendControlChange((uint8_t)cc, (uint8_t)val, (uint8_t)ch);
+                    delay(30);
+                }
+                Serial.printf("serteste: %dx cc%d val%d ch%d -> Serial1 (GPIO%d)\n",
+                              rep, cc, val, ch, PINO_TX);
+            }
+            else if(n && strncmp(buf, "teste", 5) == 0)
+            {
+                // BANCADA APENAS, E A TENSAO FICA DITA: isto poe a ponte a
+                // EMITIR, que e o que o desenho proibe em operacao. Tres
+                // coisas o tornam aceitavel, e nenhuma delas e conveniencia:
+                //   1. so existe atras do console USB, que ninguem tem em palco;
+                //   2. e disparado por uma pessoa, nunca por logica interna;
+                //   3. paga um teste que o portao precisa — SEPARAR O RADIO DO
+                //      FIO. Sem ele, "o widget nao mexeu" nao distingue radio
+                //      mudo de fio trocado, e o portao reprovaria a coisa certa
+                //      pelo motivo errado.
+                // Nao ha mapa aqui: os numeros vem do comando, nao de tabela.
+                int cc = 20, val = 100, ch = 1;
+                sscanf(buf + 5, "%d %d %d", &cc, &val, &ch);
+                RADIO.sendControlChange((uint8_t)cc, (uint8_t)val, (uint8_t)ch);
+                Serial.printf("teste: cc%d val%d ch%d -> BLE\n", cc, val, ch);
+            }
             else if(n)
-                Serial.println("comandos: board");
+                Serial.println("comandos: board · cru · pino <g> <0|1|2> · pisca [g] · teste [..] · serteste [..]");
             n = 0;
         }
         else if(n < (int)sizeof(buf) - 1)
@@ -207,8 +298,19 @@ static void Shell()
     }
 }
 
+static void EspiaCru()
+{
+    // Le do driver e devolve? Nao da. Entao contamos o que o driver DIZ ter,
+    // sem consumir — available() nao remove nada da fila.
+    static int ant = 0;
+    const int ag = Serial1.available();
+    if(ag > ant) bytes_crus += (uint32_t)(ag - ant);
+    ant = ag;
+}
+
 void loop()
 {
+    EspiaCru();
     RADIO.read();
     SER.read();
     PiscaLed();
