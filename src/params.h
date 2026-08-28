@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.9.1
+// Cotucatronics OS — params v0.10.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -15,7 +15,7 @@
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.9.1"
+#define COTUCA_PARAMS_VERSION "0.10.0"
 
 // knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
 // 4 de caráter + SRC MIX = 5.
@@ -43,7 +43,15 @@ constexpr int kNumKnobs = 5;
 // Estouro de capacidade e defeito de PROJETO. Duas vezes ele foi
 // descoberto por uma feature que sumiu calada; desta vez a conta foi
 // feita ANTES de escrever o manifest.
-constexpr int kMaxParams       = 96;
+// 128 desde 28/08. A conta acima continua valida e o custo foi o
+// previsto — 6 arrays x 32 entradas x 4 bytes, ~768 bytes de SRAM, com a
+// placa em 55,6% de 512 KB. Subiu-se com 91/96 ocupados, ou seja com
+// folga de CINCO, e nao com o estouro na mao: o painel fisico e a
+// navegacao do OLED ainda nao pediram params nenhuns, e vao pedir.
+//
+// Estouro de capacidade e defeito de PROJETO, e a terceira vez que se
+// resolve no desenho em vez de no acidente.
+constexpr int kMaxParams       = 128;
 constexpr int kMaxMacroTargets = 4;
 
 inline float Clamp01(float v)

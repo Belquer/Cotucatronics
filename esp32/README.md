@@ -1,6 +1,6 @@
 # esp32/ — a ponte BLE MIDI
 
-> **`ponte` v0.1.0** · ESP32-C3 SuperMini · substitui o WIDI Core 1.3.
+> **`ponte` v0.5.0** · ESP32-C3 SuperMini · substitui o WIDI Core 1.3.
 > A decisão está em [GEAR-AUDIT.md](../docs/operacao/GEAR-AUDIT.md) e o voo em
 > [VOO-ESP32-PONTE.md](../docs/operacao/VOO-ESP32-PONTE.md).
 
@@ -85,6 +85,25 @@ ponte v0.1.0 · BAUD 31250 · sem link
 pergunta que se faz numa galeria é *"está a cair agora?"*, e contagem sem o
 quando não é dado. De brinde, separa montagem de operação sem ninguém marcar
 nada: na montagem as quedas são densas e depois cessam.
+
+**E sobrevivem ao corte de energia, desde a v0.5.0.** Viviam só em RAM, e isso
+tornava-as inúteis para a pergunta que importa numa galeria — *"caiu de
+madrugada?"*. Um piscar de energia, que é **uma das causas de queda**, zerava
+a testemunha da queda.
+
+```
+quedas: 0 · nenhuma desde o boot        <- esta sessão: "está a cair AGORA?"
+desde sempre: 0 quedas em 4 arranques   <- NVS: "caiu enquanto eu não estava?"
+```
+
+`arranques` separa as duas leituras: vida alta **com** arranques altos é
+energia instável, não rádio instável. `zera` apaga a memória de vida.
+
+⚠️ **Não se escreve a cada queda**, por duas razões independentes: a NVS tem
+endurance finita e a peça fica meses ligada; e o callback de desconexão corre
+no contexto do stack BLE, onde escrever flash é trabalho longo no sítio
+errado. A queda **marca**, e o laço escreve — no máximo a cada 10 s. O `board`
+mostra `(por gravar)` enquanto há coisa pendente.
 
 **`TX sem espaço` conta e não cala.** O BLE entrega mais depressa do que 31250
 baud escoa, logo o gargalo é o buffer e não o rádio — e a maior rajada do

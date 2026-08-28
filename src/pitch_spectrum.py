@@ -21,6 +21,6 @@ mx = X.max()
 idx = [i for i in range(2, len(X)-2)
        if X[i] > X[i-1] and X[i] > X[i+1] and X[i] > mx*10**(-50/20)]
 idx.sort(key=lambda i: -X[i])
-print(f"pitch_spectrum v0.1.0 — {secs:.0f} s, bin {sr/len(x):.2f} Hz")
+print(f"pitch_spectrum v0.2.0 — {secs:.0f} s, bin {sr/len(x):.2f} Hz")
 for i in idx[:6]:
     print(f"  {f[i]:9.2f} Hz   {20*np.log10(X[i]/mx):6.1f} dB rel")

@@ -144,21 +144,44 @@ preset nenhum, saiu de graça — foi a última janela.
 
 ### Defeitos abertos que esta sessão deixou
 
-- 🔴 **`ccmap.html` / `ccmap.pdf` têm 27 CCs que já não existem.** A folha é
-  anterior ao esquema de seis canais. Marcada com faixa vermelha; regerar ou
-  aposentar é decisão do dB.
+- ✅ **`ccmap.html` / `ccmap.pdf` — RESOLVIDO, e virou GERADO.** O
+  `gerar_ccmap.py` v0.3.0 escreve os **dois** destinos (`CCMAP.md` e o cartão
+  A4) a partir do `manifest.h`. As notas humanas vivem numa tabela `NOTAS` — a
+  única parte escrita à mão — e o gerador **denuncia nota órfã** (param que já
+  não existe) e **nota que mente sobre topologia** (diz "compart." num param
+  pareado). Achou **dez notas erradas** à primeira passagem, incluindo o
+  `frz_size` a dizer 20–400 ms com o manifest em 20–165 (o caso que gerou a
+  regra das faixas) e o `tone_dest` com a semântica invertida. O par colapsa
+  numa linha (`in_gain_a/b`), e por isso volta a caber em **uma folha**.
 - ✅ **`OUT_L` — RESOLVIDO em 28/08.** Era fiação, e a placa foi inocentada
   por testemunha interna antes de se mexer num fio: com o tom em `dest 1` o
   `gov A` sobe a 0,285 enquanto o `gov B` fica em 0,001, e invertem-se com
   `dest 2` — sinal nos dois ramos, simétrico, dentro do firmware.
-- 🟠 **O contador de quedas da ponte vive em RAM** e some no power-cycle —
-  apaga-se no evento que mais interessa registar. Há onde o pôr: BACKUP_SRAM
-  (12 B usados de 4 KB) e NVS.
+- ✅ **Contador de quedas da ponte — RESOLVIDO.** `ponte` v0.5.0 guarda em
+  NVS, com **duas contas**: `quedas` desta sessão responde *"está a cair
+  agora?"*; `desde sempre` + `arranques` responde *"caiu enquanto eu não
+  estava?"*, e a segunda distingue energia instável de rádio instável.
+  Escrita diferida (máx. 1×/10 s, fora do callback do BLE, porque a NVS tem
+  endurance finita e a peça fica meses ligada). Persistência **provada**: o
+  contador de arranques foi 2 → 3 → 4 através de resets.
 - 🟡 **Os 20 minutos do link BLE continuam sem dado.** Repetir com o iPad
   acordado e o Loopy em primeiro plano, que é o confundidor por separar.
-- 🟡 **Folga de params: 91/96.** Restam cinco.
-- ⚪ **`check_docs` só vigia versões em `.h`/`.cpp`.** O `nivel_tempo.py` dizia
-  v0.2.0 no cabeçalho e imprimia v0.1.0, e passou.
+- ✅ **Tectos subidos, com folga na mão e não com o estouro.** `kMaxParams`
+  96 → **128** e `kMaxPresetVals` 40 → **56** — este era o mais apertado
+  (33/40), porque um param de cadeia novo gasta um slot aqui e **dois** na
+  tabela de params. Custo medido: **+1504 bytes**, SRAM 55,59 % → 56,00 %. E o
+  alarme de estouro de preset ganhou **gémeo consultável** no `board`: só
+  saía no boot, e quem liga a serial depois nunca o via.
+- ✅ **Ponto cego do `varre` — RESOLVIDO.** `varre tudo` lê os **31** pinos,
+  com o preço declarado: mata o OLED e o MIDI, porque são os mesmos pinos.
+  `reboot` desfaz — comando novo, porque modalidade que só sai com o dedo de
+  alguém não serve a uma escultura numa galeria.
+- ✅ **`check_docs` v0.12.0 vigia `.py`.** A regra antiga cruzava cabeçalho
+  com `#define`, e um script não tem `#define`. A nova recolhe **toda** a
+  auto-identificação — docstring, constante `VERSAO`, e o que ele **imprime**
+  — e exige que concordem. A que mais importa é a terceira: é a única que o
+  operador vê. Achou um segundo caso na primeira execução (`pitch_spectrum.py`
+  dizia 0.2.0 e imprimia 0.1.0).
 
 ---
 
@@ -178,11 +201,15 @@ Ferramenta de bancada que ficou, e que provou os cinco fios um a um:
 | `fio curto` | caça-ponte nos dez pares |
 | `fio <rst\|dc\|cs\|clk\|din> <0\|1>` | segura o pino para medir **no conector do painel** |
 | `varre` / `varre reset` | lê os **15 pinos livres** de uma vez, sem opinião |
+| `varre tudo` | lê os **31** — mata OLED e MIDI até um `reboot` |
+| `reboot` | reinicia o app por software; o estado volta aos defaults |
 | `encpino` / `encpino reset` | trava por pino dos encoders, nas duas direcções |
 | `enc inverte <a\|b\|g>` | inverte o sentido **em execução**, sem gravar |
 
-⚠️ **O `varre` lê 15 dos 31 pinos.** Ficam de fora `D5`–`D8`, `D10` (OLED),
-`D13`/`D14` (MIDI) e `D22`–`D30`. Fio que vá parar a um desses não aparece.
+⚠️ **O `varre` normal lê 15 dos 31 pinos** — ficam de fora `D5`–`D8`, `D10`
+(OLED), `D13`/`D14` (MIDI) e `D22`–`D30`. Isso é correcto para o uso comum:
+sonda que dirige um pino de periférico parte o periférico. Mas criava um modo
+de falha inteiro que nenhum instrumento nosso via, e **`varre tudo` abre-o**.
 
 **Encoder G: fases trocadas no `kEncPin`** (`D19` fase A · `D18` fase B ·
 `D17` push), porque montado o CW contava para trás. A troca mora no mapa de

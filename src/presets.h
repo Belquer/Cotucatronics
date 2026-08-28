@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.5.0
+// Cotucatronics OS — presets v0.6.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -161,7 +161,13 @@ static_assert(sizeof(PresetHeader) == 8,
 
 static constexpr uint16_t kPresetMagic   = 0x4354u;  // 'CT'
 static constexpr uint8_t  kFormato       = 1;
-static constexpr int      kMaxPresetVals = 40;       // teto por preset
+// 56 desde 28/08. Era 40 com 33 params de cadeia ja ocupados — folga de
+// SETE, e um param de cadeia novo consome UM slot aqui e DOIS na tabela
+// de params, entao este tecto e o que aperta primeiro por feature.
+//
+// Custo: 24 presets (16 de cadeia + 8 globais) x 16 bytes a mais, mais
+// tres arrays de indice — menos de 800 bytes de SRAM.
+static constexpr int      kMaxPresetVals = 56;       // teto por preset
 
 // O CHECKSUM COBRE O CABECALHO, nao so o payload.
 //

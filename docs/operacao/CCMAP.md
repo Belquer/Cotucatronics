@@ -49,7 +49,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 
 ## Tabela
 
-<!-- gerado por gerar_ccmap v0.2.0 de manifest.h — nao editar a mao -->
+<!-- gerado por gerar_ccmap v0.3.0 de manifest.h — nao editar a mao -->
 | CC | manda | escuta | param | família | faixa real |
 |---|---|---|---|---|---|
 | 20 | ch1 | ch4 | `piezo_mix` | mistura | -1 – 1 |

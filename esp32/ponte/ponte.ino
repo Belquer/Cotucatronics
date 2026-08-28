@@ -36,8 +36,9 @@
 #include <BLEMIDI_Transport.h>
 #include <hardware/BLEMIDI_ESP32_NimBLE.h>
 #include <MIDI.h>
+#include <Preferences.h>
 
-#define PONTE_VERSAO "0.4.0"
+#define PONTE_VERSAO "0.5.0"
 
 // ---- pinos -----------------------------------------------------------------
 // A GPIO Matrix do C3 poe a UART em quase qualquer pino — o oposto da Daisy.
@@ -87,6 +88,39 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, SER)
 static volatile bool     conectado      = false;
 static uint32_t          quedas         = 0;         // desconexoes desde o boot
 static uint32_t          ultima_queda_ms = 0;        // 0 = nunca caiu
+
+// ---- O QUE SOBREVIVE AO CORTE DE ENERGIA -----------------------------------
+//
+// O contador de quedas vivia so em RAM, e isso tornava-o inutil para a
+// pergunta que se faz numa galeria: "caiu de madrugada?". Um piscar de
+// energia — que e UMA DAS CAUSAS DE QUEDA — zerava a testemunha da queda.
+// Instrumento cuja memoria e apagada pelo evento que ele mede so serve
+// enquanto ninguem precisa dele.
+//
+// DUAS CONTAS, e sao perguntas diferentes:
+//   `quedas`      nesta sessao  -> "esta a cair AGORA?"
+//   `quedas_vida` desde sempre  -> "caiu enquanto eu nao estava?"
+// `arranques` separa as duas: vida alta com arranques altos e energia
+// instavel, nao radio instavel.
+static Preferences       nvs;
+static uint32_t          quedas_vida    = 0;
+static uint32_t          arranques      = 0;
+static volatile bool     nvs_sujo       = false;
+static uint32_t          nvs_ultimo_ms  = 0;
+
+// NAO SE ESCREVE A CADA QUEDA, por duas razoes independentes:
+//   1. NVS tem endurance finita, e uma peca de galeria fica meses ligada.
+//   2. O callback de desconexao corre no contexto do stack BLE; escrever
+//      flash de la e trabalho longo no sitio errado.
+// Entao a queda so MARCA, e o laco escreve — no maximo a cada 10 s.
+static const uint32_t    NVS_MIN_MS     = 10000;
+
+static void NvsGrava()
+{
+    nvs.putUInt("vida", quedas_vida);
+    nvs_sujo      = false;
+    nvs_ultimo_ms = millis();
+}
 static uint32_t          msgs_ble_para_ser = 0;
 static uint32_t          msgs_ser_para_ble = 0;
 static uint32_t          saturacoes     = 0;         // TX sem espaco: CONTA, nao cala
@@ -161,14 +195,27 @@ void setup()
         conectado = false;
         AplicaStatus(false);
         quedas++;
+        quedas_vida++;
+        nvs_sujo = true;              // o LACO escreve; aqui e contexto do BLE
         ultima_queda_ms = millis();   // RECENCIA: contagem sem o quando nao e dado
     });
 
+    // NVS ANTES DE QUALQUER COISA QUE POSSA CAIR: se um link caisse antes
+    // disto, a queda seria contada contra um `quedas_vida` ainda em zero e
+    // perdia-se. Configurar antes de consumir, a familia B do audit.
+    nvs.begin("ponte", false);
+    quedas_vida = nvs.getUInt("vida", 0);
+    arranques   = nvs.getUInt("boots", 0) + 1;
+    nvs.putUInt("boots", arranques);
+    nvs_ultimo_ms = millis();
+
     Serial.printf("ponte v%s — BLE MIDI <-> UART %lu 8N1\n",
                   PONTE_VERSAO, (unsigned long)BAUD);
+    Serial.printf("  memoria: %lu quedas desde sempre, em %lu arranques\n",
+                  (unsigned long)quedas_vida, (unsigned long)arranques);
     Serial.printf("  TX=GPIO%d -> D14 · RX=GPIO%d <- D13 · STATUS=GPIO%d -> D28\n",
                   PINO_TX, PINO_RX, PINO_STATUS);
-    Serial.println("  `board` para o estado · `teste` dispara um CC pelo radio (bancada).");
+    Serial.println("  `board` estado · `zera` apaga a memoria de quedas · `teste` dispara um CC.");
 }
 
 // ---- LED: a cadencia e nossa, e mora SO deste lado -------------------------
@@ -212,10 +259,26 @@ static void Shell()
                 else
                     Serial.printf("  quedas: %lu · nenhuma desde o boot\n",
                                   (unsigned long)quedas);
+                Serial.printf("  desde sempre: %lu quedas em %lu arranques%s\n",
+                              (unsigned long)quedas_vida,
+                              (unsigned long)arranques,
+                              nvs_sujo ? "  (por gravar)" : "");
                 Serial.printf("  msgs: BLE->ser %lu · ser->BLE %lu · TX sem espaco %lu\n",
                               (unsigned long)msgs_ble_para_ser,
                               (unsigned long)msgs_ser_para_ble,
                               (unsigned long)saturacoes);
+            }
+            else if(n && strncmp(buf, "zera", 4) == 0)
+            {
+                quedas = quedas_vida = 0;
+                arranques = 1;
+                ultima_queda_ms = 0;
+                nvs.putUInt("vida", 0);
+                nvs.putUInt("boots", 1);
+                nvs_sujo = false;
+                nvs_ultimo_ms = millis();
+                Serial.println("zera: contadores de vida apagados da NVS."
+                               " A sessao tambem foi a zero.");
             }
             else if(n && strncmp(buf, "cru", 3) == 0)
             {
@@ -315,4 +378,9 @@ void loop()
     SER.read();
     PiscaLed();
     Shell();
+    // ESCRITA DIFERIDA. A queda so marcou; e aqui que a flash e tocada, e
+    // no maximo a cada 10 s. Isto tambem escoa naturalmente para o momento
+    // certo: depois de uma queda nao ha trafego BLE a atrasar.
+    if(nvs_sujo && (uint32_t)(millis() - nvs_ultimo_ms) >= NVS_MIN_MS)
+        NvsGrava();
 }

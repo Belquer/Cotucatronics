@@ -232,6 +232,17 @@ uint16_t         EncoderNiveisCrus();
 // `mascara` recebe um bit por pino da lista `PinosVarridos()`.
 int              PinosVarridos(const int** lista);
 uint32_t         VarreLivres();
+// VARREDURA DOS 31 PINOS — abre o ponto cego do `VarreLivres`, que so ve
+// os 15 sem dono. PRECO DECLARADO: reconfigura tudo como entrada, logo
+// MATA o OLED e o MIDI ate um reboot. Sonda que custa periferico so se
+// liga por pedido explicito, e diz o que custou.
+// REINICIO POR SOFTWARE. Existe porque o `varre tudo` so se desfaz com
+// um reboot, e uma modalidade que exige o dedo de alguem para sair nao
+// serve a uma bancada remota — nem a uma escultura numa galeria.
+void             Reiniciar();
+int              PinosTodos(const int** lista);
+uint32_t         VarreTudo();
+bool             VarreTudoAtivo();
 
 // ---- OLED (SSD1309 128x64, 4-wire SPI) ----
 //

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.182.0"
+#define COTUCA_OS_VERSION "0.185.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -450,6 +450,7 @@ static uint32_t var_ja_baixo = 0;
 // BLOQUEANTE (~1 KB por Update a PS_64) — redesenhar a cada volta do
 // laco poria milissegundos de bloqueio no caminho do MIDI e do serial
 // sem nenhum ganho, porque a tela nao muda mais rapido que o olho le.
+static uint32_t var_tudo_alto = 0, var_tudo_baixo = 0;
 static bool     enc_na_tela   = true;
 // SENTIDO POR ENCODER, +1 ou -1. Existe porque o sentido de um encoder
 // depende de COMO ELE FOI SOLDADO, e isso nao se descobre lendo codigo:
@@ -3259,17 +3260,36 @@ static void HandleLine(const char* line)
         if(strncmp(a, "reset", 5) == 0)
         {
             var_ja_alto = var_ja_baixo = 0;
+            var_tudo_alto = var_tudo_baixo = 0;
             hal::Log("varre: zerado. Mexa em tudo e rode `varre`.");
             return;
         }
-        const int* lst; const int n = hal::PinosVarridos(&lst);
-        hal::Log("VARREDURA DOS PINOS LIVRES — os que COMUTAM tem algo"
-                 " ligado que se move:");
+        // `varre tudo` — abre o ponto cego dos 15 pinos.
+        if(strncmp(a, "tudo", 4) == 0)
+        {
+            var_tudo_alto = var_tudo_baixo = 0;
+            hal::VarreTudo();          // liga e configura os 31
+            hal::Log("varre tudo: os 31 pinos como ENTRADA. O OLED e o MIDI"
+                     " PARARAM — sao os mesmos pinos, nao ha como nao"
+                     " matar.");
+            hal::Log("  so um REBOOT os devolve. Mexa em tudo e rode"
+                     " `varre` para ler.");
+            return;
+        }
+        const bool tudo = hal::VarreTudoAtivo();
+        const int* lst; int n;
+        if(tudo) n = hal::PinosTodos(&lst);
+        else     n = hal::PinosVarridos(&lst);
+        const uint32_t jb = tudo ? var_tudo_baixo : var_ja_baixo;
+        const uint32_t ja = tudo ? var_tudo_alto  : var_ja_alto;
+        hal::Log("VARREDURA DOS %d PINOS %s — os que COMUTAM tem algo"
+                 " ligado que se move:", n,
+                 tudo ? "(TODOS — OLED e MIDI parados)" : "LIVRES");
         char l[160]; int o = 0; int achou = 0;
         for(int i = 0; i < n; i++)
         {
             const uint32_t bit = 1u << i;
-            if(!((var_ja_baixo & bit) && (var_ja_alto & bit))) continue;
+            if(!((jb & bit) && (ja & bit))) continue;
             achou++;
             o += snprintf(l + o, sizeof(l) - o, " D%d", lst[i]);
             if(o > 120) break;
@@ -3279,7 +3299,7 @@ static void HandleLine(const char* line)
         for(int i = 0; i < n; i++)
         {
             const uint32_t bit = 1u << i;
-            if((var_ja_baixo & bit) && (var_ja_alto & bit)) continue;
+            if((jb & bit) && (ja & bit)) continue;
             o += snprintf(l + o, sizeof(l) - o, " D%d", lst[i]);
             if(o > 120) break;
         }
@@ -3575,6 +3595,15 @@ static void HandleLine(const char* line)
                  manifest.n_midi, (int)cotuca::kMaxMidiMap,
                  (params.Overflow() || manifest.midi_overflow)
                      ? "   *** ESTOUROU ***" : "");
+        // O GEMEO CONSULTAVEL do alarme de preset. A conta so saia no
+        // boot, e quem liga a serial depois nunca a via — a mesma regra
+        // que ja obrigou o `tabelas:` a existir aqui. Estouro do mapa de
+        // preset trunca a captura EM SILENCIO: o preset guarda menos
+        // params do que devia e carrega-se sem se queixar.
+        hal::Log("presets: mapa 0x%04X | %d/%d por cadeia + %d/%d global%s",
+                 (unsigned)mapa_hash, pmapa.n_cadeia, (int)cotuca::kMaxPresetVals,
+                 pmapa.n_global, (int)cotuca::kMaxPresetVals,
+                 pmapa.estourou ? "   *** ESTOUROU o teto por preset ***" : "");
         // PARAMS SEM CC — o ponto cego que a duplicacao criou.
         //
         // Param sem CC nao esta quebrado: continua alcancavel por `set`
@@ -4152,6 +4181,19 @@ static void HandleLine(const char* line)
         }
         return;
     }
+    // ATENCAO A ORDEM: `reboot` antes de qualquer comando que comece por
+    // `re`. Nenhum existe hoje, e o comentario fica para quando existir —
+    // o despacho e por prefixo, e ja engoliu um comando nesta base.
+    if(strncmp(line, "reboot", 6) == 0)
+    {
+        hal::Log("reboot: reiniciando o app. TODO O ESTADO SE PERDE — os"
+                 " params voltam aos defaults do manifest, como num flash.");
+        hal::Log("  (e o unico jeito de sair do `varre tudo`, que devolve"
+                 " o OLED e o MIDI.)");
+        hal::DelayMs(80);   // deixa as duas linhas sairem antes do reset
+        hal::Reiniciar();
+        return;
+    }
     if(strncmp(line, "dfu", 3) == 0)
     {
         // Exige confirmacao porque nao tem volta por software: uma vez
@@ -4619,7 +4661,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset] | encpino [reset] | enc [reset|detente <n>|tela on/off] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -4995,6 +5037,14 @@ int main(void)
             enc_ja_baixo |= m;
             enc_ja_alto  |= (uint16_t)(~m & 0x1FFu);
             const int* dummy; const int nl = hal::PinosVarridos(&dummy);
+            if(hal::VarreTudoAtivo())
+            {
+                const uint32_t w = hal::VarreTudo();
+                const int* d2; const int nt = hal::PinosTodos(&d2);
+                var_tudo_baixo |= w;
+                var_tudo_alto  |= (~w) & ((nt >= 32) ? 0xFFFFFFFFu
+                                                     : ((1u << nt) - 1u));
+            }
             const uint32_t v = hal::VarreLivres();
             var_ja_baixo |= v;
             var_ja_alto  |= (~v) & ((nl >= 32) ? 0xFFFFFFFFu

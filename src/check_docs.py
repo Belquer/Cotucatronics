@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.10.0"
+VERSION = "0.12.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -98,6 +98,41 @@ def versoes_divergentes():
             continue
         if cab.group(1) != mac.group(1):
             fora.append((f.name, cab.group(1), mac.group(1)))
+
+    # ---- PYTHON: a mesma familia, sem macro para cruzar ----
+    #
+    # CASO REAL (28/08): `nivel_tempo.py` dizia v0.2.0 no docstring e
+    # IMPRIMIA v0.1.0. A regra acima nao o via — ela cruza cabecalho com
+    # `#define`, e um script nao tem `#define`. Foi apanhado por acaso,
+    # ao ler a saida durante outra medicao.
+    #
+    # Aqui a forma e outra: em vez de cruzar DUAS fontes conhecidas,
+    # recolhe-se TODA a auto-identificacao do ficheiro e exige-se que
+    # concordem. As tres formas que este repo usa:
+    #   1. primeira linha do docstring   """nome vX.Y.Z — ..."""
+    #   2. VERSAO / VERSION = "X.Y.Z"
+    #   3. o que o script IMPRIME        print("nome vX.Y.Z ...")
+    #
+    # A (3) e a que mais importa: e a unica que o operador ve. Numero que
+    # ninguem imprime nao tem quem o corrija — e numero que se imprime
+    # errado mente com autoridade.
+    for f in sorted(SRC.glob("*.py")):
+        txt = f.read_text(errors="replace")
+        achados = {}
+        doc = re.match(r'\s*(?:#![^\n]*\n)?\s*"""([^\n]*)', txt)
+        if doc:
+            m = re.search(r'\bv(\d+\.\d+\.\d+)', doc.group(1))
+            if m: achados.setdefault(m.group(1), []).append("docstring")
+        for m in re.finditer(r'^(?:VERSAO|VERSION)\s*=\s*"(\d+\.\d+\.\d+)"',
+                             txt, re.M):
+            achados.setdefault(m.group(1), []).append("constante")
+        for m in re.finditer(r'print\s*\(\s*f?"[^"]*?\bv(\d+\.\d+\.\d+)', txt):
+            achados.setdefault(m.group(1), []).append("print")
+        if len(achados) > 1:
+            ordenado = sorted(achados.items())
+            fora.append((f.name,
+                         "%s (%s)" % (ordenado[0][0], "/".join(ordenado[0][1])),
+                         "%s (%s)" % (ordenado[1][0], "/".join(ordenado[1][1]))))
     return fora
 
 def isentos(texto):
@@ -275,7 +310,12 @@ def pinos():
     # PAPEL, e refactor muda papel.** Ao promover uma estrutura a fonte
     # unica, procure quem a estava a ignorar de proposito.
     limpo = src
-    for nome in ("kLivresPin", "kPino"):
+    # `kTodosPin` entra aqui e o `kEncPin` saiu, no mesmo dia — e a
+    # distincao e exactamente a licao: o criterio nao e "e uma tabela de
+    # pinos", e QUEM MANDA. O `kEncPin` virou a fonte que o `EncoderInit`
+    # le; o `kTodosPin` lista os 31 para uma sonda de diagnostico e nao
+    # reclama nada, incluindo os RESERVADOS D29/D30.
+    for nome in ("kLivresPin", "kTodosPin", "kPino"):
         limpo = re.sub(nome + r'\s*\[[^\]]*\][^=]*=\s*\{.*?\};',
                        '', limpo, flags=re.S)
     limpo = re.sub(r'strcmp\(nome[^\n]*\n', '', limpo)
@@ -346,7 +386,7 @@ def main():
     div = versoes_divergentes()
     print(f"\nDUAS VERSOES NO MESMO ARQUIVO QUE DISCORDAM: {len(div)}")
     for nome, cab, mac in div:
-        print(f"  {nome}: cabecalho {cab} · macro {mac}")
+        print(f"  {nome}: {cab} · {mac}")
 
     print(f"\nFANTASMAS: {len(erros)}")
     for d, l, n, ctx in erros[:40]:

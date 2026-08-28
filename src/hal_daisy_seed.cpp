@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.42.0
+// hal_daisy_seed v0.44.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.42.0"
+#define COTUCA_HAL_VERSION "0.44.0"
 
 using namespace daisy;
 
@@ -938,6 +938,61 @@ uint16_t EncoderNiveisCrus()
 // Todos os pinos que NAO estao ocupados por periferico. Inclui os nove
 // dos encoders — se o fio estiver noutro lugar, e aqui que aparece.
 static const int kLivres[] = {0,1,2,3,4,9,11,12,15,16,17,18,19,20,21};
+
+// ---- O PONTO CEGO DO `varre`, e como se abre ----
+//
+// A lista acima cobre 15 dos 31 pinos. Ficam de fora os que TEM DONO:
+// D5-D8 e D10 (OLED), D13/D14 (a UART do MIDI) e D22-D30 (botoes, LEDs,
+// DPDT). Isso e correcto para o uso normal — sonda que dirige um pino de
+// periferico parte o periferico.
+//
+// Mas cria um modo de falha inteiro que nenhum instrumento nosso via:
+// FIO QUE VA PARAR A UM DESSES NAO APARECE. Em 28/08 cacei um encoder
+// por meia tarde com quatro mapas de pinos em desacordo, e se um fio
+// tivesse escorregado para o D20 do OLED eu teria lido "parado" em toda
+// a gama e concluido "fio aberto" — a conclusao errada, com a sonda a
+// dizer a verdade sobre os pinos que olhava.
+//
+// `VarreTudo` abre o ponto cego, com o preco declarado: reconfigura TUDO
+// como entrada, e por isso MATA o OLED e o MIDI ate um reboot. Nao ha
+// como nao matar — e o mesmo pino.
+static const int kTodos[] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,
+                             18,19,20,21,22,23,24,25,26,27,28,29,30};
+static const daisy::Pin kTodosPin[] = {
+    seed::D0,  seed::D1,  seed::D2,  seed::D3,  seed::D4,  seed::D5,
+    seed::D6,  seed::D7,  seed::D8,  seed::D9,  seed::D10, seed::D11,
+    seed::D12, seed::D13, seed::D14, seed::D15, seed::D16, seed::D17,
+    seed::D18, seed::D19, seed::D20, seed::D21, seed::D22, seed::D23,
+    seed::D24, seed::D25, seed::D26, seed::D27, seed::D28, seed::D29,
+    seed::D30,
+};
+static constexpr int kNumTodos = (int)(sizeof(kTodos)/sizeof(kTodos[0]));
+static bool varre_tudo = false;
+
+void Reiniciar()
+{
+    // Reset do NUCLEO, nao do bootloader: volta ao app. O
+    // `System::ResetToBootloader` e o outro gesto, e vive no `dfu`.
+    NVIC_SystemReset();
+}
+
+int  PinosTodos(const int** lista) { *lista = kTodos; return kNumTodos; }
+bool VarreTudoAtivo() { return varre_tudo; }
+
+uint32_t VarreTudo()
+{
+    static daisy::GPIO g[kNumTodos];
+    if(!varre_tudo)
+    {
+        for(int i = 0; i < kNumTodos; i++)
+            g[i].Init(kTodosPin[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+        varre_tudo = true;
+    }
+    uint32_t m = 0;
+    for(int i = 0; i < kNumTodos; i++)
+        if(!g[i].Read()) m |= (1u << i);
+    return m;
+}
 static const daisy::Pin kLivresPin[] = {
     seed::D0, seed::D1, seed::D2, seed::D3, seed::D4, seed::D9,
     seed::D11, seed::D12, seed::D15, seed::D16, seed::D17,
