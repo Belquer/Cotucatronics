@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.176.0"
+#define COTUCA_OS_VERSION "0.178.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1079,8 +1079,27 @@ static cotuca::Suave       suave_lvl;
 // inteiro — ligava e desligava o tom de uma amostra para a outra, que e
 // o degrau maximo possivel.
 static cotuca::Suave       suave_tom[cotuca::Manifest::kCadeias];
-// Via DIRETA: um por saida (exciter e jack), pela mesma razao de rampa.
-static cotuca::Suave       suave_dir_e, suave_dir_j;
+// Via DIRETA: um por SAIDA, pela mesma razao de rampa. Chamavam-se
+// `_e`/`_j` de exciter e jack, nomes que a chave DPDT tornou falsos:
+// para onde a saida vai e decisao de cobre, nao de firmware.
+static cotuca::Suave       suave_dir_l, suave_dir_r;
+
+// ---- MATRIZ DE ROTEAMENTO 2x2 ----
+//
+// Qual CADEIA entra em qual SAIDA. Ate 28/08 isto era codigo fixo com
+// as quatro celulas ligadas (`out[0] = out[1] = A + B`), e a matriz
+// cheia reproduz exatamente esse som.
+//
+// AS RAMPAS VIVEM NUM BUFFER, e nao ha jeito mais barato: tres
+// contribuicoes diferentes precisam do MESMO valor suavizado na MESMA
+// amostra — o seco, o freeze e o espaco. Chamar `Passo()` em cada uma
+// adiantaria o filtro tres vezes por amostra, e a rampa deixaria de
+// ser a rampa. Entao passa-se UMA vez, guarda-se, e os tres leem.
+//
+// Indice: [2*c + 0] = cadeia c -> OUT_L, [2*c + 1] = cadeia c -> OUT_R.
+// Custo: 4 x 256 x 4 = 4 KB de SRAM, estatico, sem alocacao.
+static cotuca::Suave       suave_mat[4];
+static float               mat_g[4][kMaxBlock];
 
 // ---- TETO DE SOMA DO CTOS ----
 //
@@ -1726,14 +1745,14 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // o oscilador tem estado, e estado nao se consome em duplicata.
     const int dest_tom = (int)(params.Real(manifest.p_tone_dest) + 0.5f);
     // VIA: 0 = direto (entra depois do `level`), 1 = cadeia.
-    const bool tom_direto = params.Real(manifest.p_tone_via) < 0.5f;
+    const bool tom_direto = params.Real(manifest.p_test_tone_stage) < 0.5f;
     // Gera enquanto o alvo for maior que zero OU enquanto alguma cadeia
     // ainda estiver a escoar: cortar a fonte antes de a rampa acabar
     // reintroduz o degrau que a rampa existe para remover.
     bool tom_vivo = mix > 0.f;
     for(int c = 0; c < cotuca::Manifest::kCadeias && !tom_vivo; c++)
         if(suave_tom[c].Valor() > 1e-4f) tom_vivo = true;
-    if(suave_dir_e.Valor() > 1e-4f || suave_dir_j.Valor() > 1e-4f)
+    if(suave_dir_l.Valor() > 1e-4f || suave_dir_r.Valor() > 1e-4f)
         tom_vivo = true;
     if(tom_vivo)
         for(size_t i = 0; i < size; i++) tone_buf[i] = OscProcess();
@@ -1996,8 +2015,36 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     {
         // SECO: passa inteiro, sempre. Envio e TAP, nao desvio — quem
         // manda 127 pro delay nao some da saida direta.
-        for(size_t i = 0; i < size; i++)
-            out[0][i] = out[1][i] = cad[0].buf[i] + cad[1].buf[i];
+        //
+        // E AQUI QUE A MATRIZ AGE, antes de qualquer efeito, porque e o
+        // unico ponto onde a cadeia de origem ainda e conhecida. Tudo
+        // que vem depois ou sabe dizer de que cadeia veio (freeze,
+        // espaco — instancia por cadeia) e por isso tambem obedece, ou
+        // nao sabe (o delay, uma instancia so com os envios ja somados)
+        // e por isso entra nas duas saidas.
+        //
+        // A REGRA, para o proximo efeito que entrar: a matriz segue a
+        // cadeia; o que nao sabe dizer de que cadeia veio, entra nas
+        // duas. Efeito por cadeia le `mat_g[2*c]` / `mat_g[2*c+1]`.
+        {
+            const float alvo[4] = {
+                params.Real(manifest.p_route_l[0]) >= 0.5f ? 1.f : 0.f,
+                params.Real(manifest.p_route_r[0]) >= 0.5f ? 1.f : 0.f,
+                params.Real(manifest.p_route_l[1]) >= 0.5f ? 1.f : 0.f,
+                params.Real(manifest.p_route_r[1]) >= 0.5f ? 1.f : 0.f,
+            };
+            for(size_t i = 0; i < size; i++)
+            {
+                const float la = mat_g[0][i] = suave_mat[0].Passo(alvo[0]);
+                const float ra = mat_g[1][i] = suave_mat[1].Passo(alvo[1]);
+                const float lb = mat_g[2][i] = suave_mat[2].Passo(alvo[2]);
+                const float rb = mat_g[3][i] = suave_mat[3].Passo(alvo[3]);
+                const float a  = cad[0].buf[i];
+                const float b  = cad[1].buf[i];
+                out[0][i] = a * la + b * lb;
+                out[1][i] = a * ra + b * rb;
+            }
+        }
 
         // ---- DELAY (uma instancia, envio por cadeia) ----
         {
@@ -2045,8 +2092,11 @@ static void AudioCb(const float* const* in, float** out, size_t size)
                     const float x = cad[c].buf[i];
                     float l = x, r = x;
                     freeze_c[c].Process(l, r);
-                    out[0][i] += l - x;   // SO o congelado
-                    out[1][i] += r - x;
+                    // SO o congelado, e pela matriz da cadeia `c`: o
+                    // freeze e instancia POR CADEIA, entao sabe dizer de
+                    // onde veio e obedece ao roteamento.
+                    out[0][i] += (l - x) * mat_g[2 * c + 0][i];
+                    out[1][i] += (r - x) * mat_g[2 * c + 1][i];
                 }
                 const uint32_t us = (cotuca::hal::NowTicks() - t0)
                                     / cotuca::hal::TicksPerUs();
@@ -2131,8 +2181,12 @@ static void AudioCb(const float* const* in, float** out, size_t size)
                 }
                 // RETORNO INTEIRO. Quem dosa e o envio; escalar aqui
                 // tambem seria o mesmo ganho duas vezes.
-                out[0][i] += l * g;
-                out[1][i] += r * g;
+                // Pela matriz da cadeia `c`: a sala e POR CADEIA, entao
+                // a cauda sai do mesmo transdutor que o seco. Sem isto,
+                // trocar as cadeias na matriz deixaria a cauda no lado
+                // velho — roteamento pela metade e pior que nenhum.
+                out[0][i] += l * g * mat_g[2 * c + 0][i];
+                out[1][i] += r * g * mat_g[2 * c + 1][i];
             }
             const uint32_t us = (cotuca::hal::NowTicks() - t0)
                                 / cotuca::hal::TicksPerUs();
@@ -2168,12 +2222,12 @@ static void AudioCb(const float* const* in, float** out, size_t size)
                                  ? mix : 0.f;
         const float alvo_j = (tom_direto && (dest_tom == 0 || dest_tom == 2))
                                  ? mix : 0.f;
-        if(alvo_e > 0.f || suave_dir_e.Valor() > 1e-4f
-           || alvo_j > 0.f || suave_dir_j.Valor() > 1e-4f)
+        if(alvo_e > 0.f || suave_dir_l.Valor() > 1e-4f
+           || alvo_j > 0.f || suave_dir_r.Valor() > 1e-4f)
             for(size_t i = 0; i < size; i++)
             {
-                out[0][i] += tone_buf[i] * suave_dir_e.Passo(alvo_e);
-                out[1][i] += tone_buf[i] * suave_dir_j.Passo(alvo_j);
+                out[0][i] += tone_buf[i] * suave_dir_l.Passo(alvo_e);
+                out[1][i] += tone_buf[i] * suave_dir_r.Passo(alvo_j);
             }
     }
 
@@ -2256,14 +2310,18 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // 8) ROTEAMENTO — só liga/desliga o ramo. Depois do limiter
     //    porque mutar só pode reduzir: nada aqui consegue burlar o
     //    teto.
-    const float r_exc = params.Real(manifest.p_route_exciter) >= 0.5f ? 1.f : 0.f;
-    const float r_jck = params.Real(manifest.p_route_jack) >= 0.5f ? 1.f : 0.f;
-    if(r_exc < 0.5f || r_jck < 0.5f)
+    //    E ESTE E O UNICO MUTE DE VERDADE. Zerar uma coluna da matriz
+    //    cala o seco, o freeze e o espaco daquela cadeia, mas o retorno
+    //    do delay continua a entrar: uma instancia so, envios ja
+    //    somados, e nada nela sabe de que cadeia veio.
+    const float r_l = params.Real(manifest.p_out_l) >= 0.5f ? 1.f : 0.f;
+    const float r_r = params.Real(manifest.p_out_r) >= 0.5f ? 1.f : 0.f;
+    if(r_l < 0.5f || r_r < 0.5f)
     {
         for(size_t i = 0; i < size; i++)
         {
-            out[0][i] *= r_exc;
-            out[1][i] *= r_jck;
+            out[0][i] *= r_l;
+            out[1][i] *= r_r;
         }
     }
     // Autopsia por LED: daqui, porque este contexto sobrevive ao loop.
@@ -3636,8 +3694,8 @@ static void HandleLine(const char* line)
                  params.Real(manifest.p_bench_boost[0]),
                  params.Real(manifest.p_bench_boost[1]));
         hal::Log("route exciter=%d jack=%d",
-                 params.Real(manifest.p_route_exciter) >= 0.5f ? 1 : 0,
-                 params.Real(manifest.p_route_jack) >= 0.5f ? 1 : 0);
+                 params.Real(manifest.p_out_l) >= 0.5f ? 1 : 0,
+                 params.Real(manifest.p_out_r) >= 0.5f ? 1 : 0);
         return;
     }
     // CAIXA-PRETA do voo anterior. E o unico jeito de saber o que o
@@ -4672,8 +4730,14 @@ int main(void)
         suave_lvl.Init(hal::Info().sample_rate, 20.f, 0.f);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
             suave_tom[c].Init(hal::Info().sample_rate, 20.f, 0.f);
-        suave_dir_e.Init(hal::Info().sample_rate, 20.f, 0.f);
-        suave_dir_j.Init(hal::Info().sample_rate, 20.f, 0.f);
+        suave_dir_l.Init(hal::Info().sample_rate, 20.f, 0.f);
+        suave_dir_r.Init(hal::Info().sample_rate, 20.f, 0.f);
+        // A MATRIZ NASCE EM 1, ao contrario dos vizinhos: o param dela
+        // tambem nasce em 1 (ver manifest), e um suavizador que nascesse
+        // em 0 daria um fade-in de 20 ms no primeiro bloco — audivel, e
+        // ninguem o pediu.
+        for(int i = 0; i < 4; i++)
+            suave_mat[i].Init(hal::Info().sample_rate, 20.f, 1.f);
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um

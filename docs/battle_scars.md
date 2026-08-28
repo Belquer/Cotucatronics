@@ -2668,8 +2668,18 @@ e potência que se entrega em vez de potência de catálogo.
 
 **Regra de hardware, e vale para o painel inteiro:** *sinal de áudio não
 passa por contato mecânico em lugar nenhum deste instrumento.* Chave governa
+<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
+<!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 **GPIO**; o firmware corta o ramo. `route_exciter` e `route_jack` existem
 para isso, e as DPDT planejadas em D29/D30 seguem o mesmo desenho.
+
+> **Corrigido em 28/08, e a correção é do enunciado, não do caso.** A regra
+> generalizou demais: ela nasceu de uma chave de POTÊNCIA, cujo contato seco
+> não conduz nível de linha. O DPDT de sinal de três posições
+> (jack \| ambos \| amp) conduz áudio DE PROPÓSITO, e é o que está montado.
+> O que o caso realmente ensinou é mais estreito: **chave de potência não
+> serve para comutar sinal.** Os params passaram a chamar-se `out_l`/`out_r`
+> — o firmware nomeia SAÍDA, o cobre nomeia destino.
 
 **Regra de método:** *causa consertada muda o regime e pode revelar a
 próxima.* Uma medição feita antes do conserto pode ter medido um sistema que
@@ -4766,9 +4776,211 @@ inteira de vereditos musicais sobre um pre-amplificador saturado.
 
 ---
 
+## 15e. A arquitectura era pergunta de COBRE, nao de codigo (28/08)
+
+Tres fontes discordavam sobre o que sao as duas saidas. O codigo somava as
+duas cadeias nas duas (`out[0] = out[1] = A + B`). Os params chamavam-se
+`route_exciter` e `route_jack`. O `HARDWARE.md` dizia *"OUT_L (cadeia A)"*.
+Gastei a sessao a tentar decidir QUAL das tres estava certa, e montei a
+pergunta como escolha entre duas arquitecturas: dois exciters, ou exciter +
+jack.
+
+**Nenhuma das duas.** O dB tem dois DPDT de tres posicoes — `jack | ambos |
+amp` — um por saida. O destino nao e propriedade da saida: e posicao de
+chave, e muda em operacao.
+
+> **O firmware nomeia SAIDA; o cobre nomeia DESTINO.** `out[1]` nunca foi "o
+> jack": e uma saida que PODE estar no jack. Um nome de param que carrega o
+> destino esta a afirmar uma coisa que o firmware nao pode saber.
+
+E o nome falso enganou DENTRO da sessao que o corrigiu: usei
+`route_exciter 0` a pensar que silenciava so o transdutor. Um nome errado
+nao espera pelo proximo colaborador para cobrar — cobra ao proprio autor, no
+mesmo dia.
+
+O conserto tem duas metades, e elas NAO sao a mesma coisa: `out_l`/`out_r`
+(mute de ramo, depois do limiter) e a matriz `route_l_*`/`route_r_*` (qual
+cadeia entra em qual saida, antes dos efeitos). Colapsar as duas teria feito
+o mute deixar de ser mute — zerar uma coluna da matriz cala o seco, o freeze
+e o espaco, mas o retorno do delay continua a entrar.
+
+> **Quando N fontes discordam sobre o que uma coisa E, pergunte se a coisa e
+> uma DECISAO de quem esta a discutir.** Se for de outra pessoa — ou de uma
+> chave de metal — todas as N estao erradas, e escolher entre elas e escolher
+> entre erros.
+
+---
+
+## 15f. A regra do sufixo teria engolido a matriz (28/08)
+
+A pertinencia ao preset e DERIVADA do nome, e isso e um acerto do desenho:
+sufixo `_a`/`_b` diz "e por cadeia", e nao ha segunda lista para divergir.
+
+Os nomes naturais da matriz sao `route_l_a`, `route_l_b`, `route_r_a`,
+`route_r_b`. **Acabam todos em `_a`/`_b`.** Sem excepcao explicita, teriam
+entrado sozinhos nos presets de CADEIA — e nao ha momento em que alguem
+escreva a decisao de os incluir, porque a regra os inclui em silencio.
+
+O destino errado e o pior dos dois possiveis. A matriz compensa como os
+transdutores estao LIGADOS: facto de fiacao. Dentro de cada preset de cadeia,
+cada preset carregaria a fiacao, e desandar um fio obrigaria a regravar a
+biblioteca inteira — a mesma familia do *"corda existiria duas vezes"* que
+fez a biblioteca ser UMA.
+
+Apanhei-o por ler o `presets.h` ANTES de escolher os nomes, nao depois de os
+escrever.
+
+> **Regra derivada classifica o que ainda nao existe, e classifica em
+> silencio.** Ao criar um simbolo novo num sistema com regra automatica de
+> pertinencia, leia a regra primeiro e pergunte onde ELA o poe — nao onde
+> voce queria que ficasse.
+
+---
+
+## 15g. A regra generalizou alem do caso que a gerou (28/08)
+
+*"Audio nao passa por contato mecanico em lugar nenhum deste instrumento"*
+esta escrita no `HARDWARE.md` e neste documento, com autoridade. E ela e
+falsa: o DPDT de sinal do dB conduz audio DE PROPOSITO, e e o que esta
+montado.
+
+O caso que a gerou era mais estreito. Uma chave de POTENCIA de tres posicoes
+(marcada 12 V) tem contato seco e nao conduz nivel de linha — custou uma
+tarde. O que se aprendeu foi *chave de potencia nao serve para comutar
+sinal*. O que se escreveu foi uma proibicao universal.
+
+> **Ao escrever a regra, pergunte qual e a menor afirmacao que cobre o caso.**
+> A regra larga parece mais valiosa e e mais barata de escrever, mas o preco
+> aparece depois: ela contradiz o hardware real e quem a le acredita nela,
+> porque documento tem autoridade.
+
+O `check_docs` nao apanha isto e nao pode: a frase e gramaticalmente
+impecavel e nao cita simbolo nenhum. So o hardware a desmente.
+
+---
+
+## 15h. A folha impressa e anterior ao mapa (28/08)
+
+O `ccmap.html` — e o `ccmap.pdf` que sai dele, o cartao de referencia da
+bancada — tem **27 numeros de CC que ja nao existem** (106, 116-118, 80-88,
+22, 24, 26, 32, 33, 42, 43, 52, 53, 62, 63, 68-70). E anterior ao esquema de
+seis canais. Ninguem notou porque um PDF nao compila, nao roda e nao falha.
+
+Ia emendar as duas linhas do `route_*` e seguir. Teria sido pior que nao
+mexer: **a folha ficaria com dois numeros certos e vinte e sete errados, e a
+correcao recente e o que faz um documento parecer cuidado.**
+
+> **Ao encontrar um erro num documento, meca o resto antes de corrigir esse.**
+> A pergunta nao e "esta linha esta certa?" e sim "que fraccao deste
+> documento ainda descreve o sistema?". Abaixo de um limiar, corrigir uma
+> linha e desinformar.
+
+Marcado com faixa vermelha e ponteiro para o `CCMAP.md`, que e gerado.
+Regerar ou aposentar e decisao do dB — mas nao fica a fingir que esta certo.
+
+---
+
+## 15i. Placa muda: o barramento USB continua a testemunhar (28/08)
+
+Depois de um `dfu`, a placa parou de responder: zero bytes em 8 s de escuta
+passiva e em tres comandos com 3 s cada. Tinha respondido `v0.177.0` minutos
+antes.
+
+A tentacao era concluir "travou". O que a desmentiu nao foi nada que a placa
+dissesse — foi a **marca de tempo do node `/dev`**, que mudou de 11:08 para
+11:12 a cada envio de `dfu go`. Ela estava a reiniciar. Portanto o RX
+funcionava, o comando executava, e so o TX estava morto.
+
+E o `ioreg` disse o resto: `idProduct` 22336 = `0x5740`, o CDC do app — nao
+`0xdf11` do DFU. Ela reiniciava e voltava ao app.
+
+> **Quando o canal principal cala, o sistema operativo continua a ver o
+> dispositivo.** Enumeracao, `idProduct` e a marca de tempo do node sao
+> testemunhas independentes do firmware — e uma testemunha que nao depende do
+> acusado vale mais que dez tentativas de o fazer falar.
+
+Corolario que ja tinha sido escrito e agora tem um segundo caso: **canal mudo
+prova que aquele canal esta mudo, e nada alem disso.**
+
+A gravacao resolveu a mudez — o disjuntor do log vive no app, e o app novo
+nao o tem armado. Nao atribuo a mudez ao meu comando: as duas coisas
+coincidiram no tempo, e coincidencia perfeita ja produziu aqui um "era o
+cabo" que era o dongle.
+
+---
+
+## 15j. A primeira gravacao depois de abrir o dispositivo e lixo (28/08)
+
+A primeira corrida do mapeamento deu numeros que nao fechavam com caminho
+nenhum do codigo: `dest 1` sem sinal, `dest 2` a acender dois canais, e
+`ch3/ch4` a cair 44 dB numa transicao que nao os toca.
+
+Nao acusei o firmware. Corri a verificacao do instrumento — mesmo estado,
+tres medidas — e ele repete a **0,1 dB**. Os -28,8 dBFS em `ch3/ch4` eram
+artefacto de arranque do `sounddevice`: a primeira `rec` depois de abrir o
+dispositivo apanha o transiente da stream.
+
+> **Sonda nova nasce sem procedencia, e "nova" inclui a primeira leitura de
+> uma sonda velha.** Repetir a mesma medida tres vezes custa segundos e
+> separa dado de artefacto — e um numero que nao fecha com nenhum caminho do
+> codigo e suspeita contra o INSTRUMENTO antes de ser contra o sistema.
+
+O medidor ficou com `rms()` a descartar os primeiros 150 ms, e as corridas
+comecam com uma leitura de aquecimento deitada fora.
+
+---
+
+## 15k. Seno continuo e mau instrumento para medir delay (28/08)
+
+No caso que separa os dois andares do roteamento, os numeros absolutos
+mentiram: com tudo ligado e o delay a tocar, a saida media **-44,4 dBFS**,
+mais BAIXA que a base de -35,6. Ligar um efeito baixou o nivel.
+
+A causa e trivial e nao tem nada a ver com o firmware: o seco e a sua propria
+copia atrasada sao o MESMO seno, e somam-se com fase fixa. Interferem.
+
+A conclusao valida saiu de outro par, com uma variavel so e o chao como
+referencia:
+
+```
+route_r_a=0, delay desligado   -69,2 dBFS   (chao)
+route_r_a=0, delay LIGADO      -39,5 dBFS   (+29,7 dB acima do chao)
+```
+
+> **Sinal periodico continuo mede mal tudo o que produz copias de si proprio**
+> — delay, reverb, chorus, freeze. Para "esta ca ou nao esta", compare contra
+> o CHAO com uma variavel so, em vez de comparar dois estados que ambos
+> contem interferencia.
+
+---
+
+## 15l. O contador de quedas mora na RAM que o evento apaga (28/08)
+
+O criterio dos 20 minutos do link BLE tinha falhado com uma queda aos ~6 min.
+Fui ler o contador da ponte para distinguir sono do iPad de instabilidade
+real, e encontrei `quedas: 0 · nenhuma desde o boot` com `msgs 0 · 0 · 0`.
+
+Zero mensagens desde o arranque significa que a ponte reiniciou. Os
+contadores vivem em RAM, e o dado da corrida inteira nao existe mais.
+
+> **Instrumento cuja memoria e apagada pelo evento que ele mede so serve
+> enquanto ninguem precisa dele.** A pergunta de galeria e *"caiu de
+> madrugada?"* — e um piscar de energia, que e uma das causas de queda, zera
+> a testemunha da queda.
+
+Ha onde o por: a Daisy tem BACKUP_SRAM (12 B usados de 4 KB) e o ESP32 tem
+NVS. Nao esta feito — fica registado como defeito aberto, nao como ideia.
+
+Nota de metodo que se repetiu: **abri a porta da ponte com `dtr=False` e
+`rts=False` de proposito**, porque o USB nativo do C3 trata combinacoes de
+DTR/RTS como pedido de reset. Ler um contador com uma sonda que o zera e a
+familia inteira em miniatura.
+
+---
+
 ## 12. Checklist de retomada a frio (colar no início de qualquer sessão futura)
 
-Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.** **Documento gerado acompanha a mudança; escrito à mão, não — separe os dois e trate os escritos como lista de trabalho.** **E o que se pode gerar, gere: cada doc que vira gerador sai da lista de disciplina para sempre.** **TESTE O HARDWARE PRIMEIRO, DE TODAS AS MANEIRAS POSSÍVEIS: torça, puxe, aperte cada conector e veja se algo muda** — contato intermitente é invisível a teste estático por definição. **Intermitência correlacionada com manuseio É o diagnóstico, não o que atrapalha o diagnóstico.** **Toda sonda ganha uma dimensão de movimento: medir enquanto se mexe no chicote, não com tudo parado.** **Tensão presente não é tensão correta: meça com o SINAL, ponta preta num terra do lado de quem alimenta.** **Defeito conhecido e adiado vira a explicação errada do próximo sintoma, e o custo recai sobre quem está com o multímetro na mão.** **Divergência entre dois instrumentos que medem por caminhos diferentes é informação, não ruído a reconciliar.** **O instrumento herda o ponto cego da hipótese que o gerou: supor o mapa e medir contra a suposição só acha o que já se esperava** — alargue o escopo em vez de refinar a mira. **Ocupação que vive só no default de uma biblioteca é irmã da reserva que vive só em documento: declare no fonte, mesmo quando for o default.** **Revisão de pinos contra o esperado entra em toda rotina de fechamento.** **Despacho por prefixo exige ordem: comando novo que começa com o nome de um existente tem que vir ANTES dele** — e o sintoma é o pior tipo, porque o comando responde com mensagem plausível executando outra coisa. **Ao retomar problema já resolvido, releia COMO foi resolvido: decisão registrada tem duas metades — o que saiu e o que ficou no lugar — e lembrar só da primeira reintroduz o que ela evitava.** **Mecanismo aposentado não aposenta o método: procure a peça que sobreviveu.** **Nunca ler e escrever o mesmo arquivo na mesma expressão: `open(f,'w')` trunca antes de o `read()` interno rodar.** **Commitar cedo é o que transforma um destroço em inconveniente.** **Antes de escolher uma configuração, leia o default na fonte: a decisão pode não existir.** **Ao provar um caminho, escolha o teste que falha diferente para cada defeito possível.** **Periférico sem caminho de leitura não é detectável — diga CONFIGURADO, nunca PRESENTE, mesmo com ele funcionando na frente.** **Janela de silêncio conta do FIM do gesto, não do meio: um despejo mais longo que a janela deixa os primeiros desprotegidos.** **Transformar "mandei" em "chegou" é a única forma de descobrir que a coisa não chegava** — toda operação que termina dizendo só que executou é candidata. **Ausência só é evidência quando a presença era possível: antes de concluir do silêncio, prove que havia caminho para o som.** **O gatilho artificial também precisa ser exercitado — "0 erros" onde se esperava vermelho é sinal de exercício que não aconteceu, não de trava errada.** **Antes de concluir do silêncio de uma sonda, prove que ela cobre o caso** — ponto cego não é ausência do fenômeno. **Defesa que nunca agiu e não tem gatilho artificial é hipótese com nome de proteção: faça o inventário do que nunca foi exercitado.** **Linha truncada não é comando: recuse inteira e conte** — meio comando é válido e obedece calado. **Truncagem se anuncia nas duas pontas do canal.** **O formato não pode ter limite que o conteúdo alcance** — alargar o buffer conserta o caso e preserva a forma. **Instrumentar um ramo de três e ler o silêncio como resposta é a armadilha da própria família.** **Operação com perda se declara onde a perda acontece.** **Antes de suspeitar do trabalho de alguém, meça antes da primeira camada** — contador em zero não distingue "não fechou" de "ninguém leu". **Cadeia `else if` esconde ramo morto por ordenação: use saída antecipada, específico antes do genérico.** **Não gravar enquanto uma observação humana está em voo** — a resposta chega depois e responde outra pergunta. **Par array+laço: derive os dois das fontes que já existem; alargar à mão conserta o caso e preserva a forma.** **Todo teste de rejeição precisa do gêmeo que confirma a aceitação** — provar que o portão fecha não prova que ele abre, e o mecanismo largo demais passa em todos os testes de rejeição. **Ao conferir formato binário: primeiro o que torna a conta possível, depois a conta, só então o que a conta protege** — ler campo antes do checksum é consumir antes de configurar (P2), e a coerência de tamanho é segurança de memória, não só diagnóstico. **Para provar que o binário gravado tem a fonte atual, leia NA PLACA um número que só a fonte nova produz** — timestamp, `.map` e toolchain são testemunho do próprio acusado. **Trava que só diz "não" ensina a contornar; trava que diz o que REEXAMINAR ensina a decidir.** **Custo proporcional a uma tabela que cresce regride por CRESCIMENTO, não por edição — e nenhuma ferramenta do projeto vigia isso:** pergunte no audit que custos foram dimensionados quando a tabela era pequena. **Ao proteger ou consertar um caminho, procurar o IRMÃO** — duas rotas de saída, dois relatórios da mesma tabela, dois ramos: o irmão é quase sempre visível de onde se está. **Comando que não consta na ajuda não existe para quem está na bancada** — e a isenção do verificador, escrita larga, transforma-o em carimbo. **Provar que a configuração nova é segura não prova que a TRAVESSIA é: pergunte o que já está em trânsito quando você troca** — e trânsito inclui fio, flash e a cabeça de quem opera. **Pôr uma dimensão nova no endereço converte mensagem órfã em MAL-ENDEREÇADA, e esta não tem gesto humano para correlacionar** — pergunte se acha o dono CERTO, não se acha dono. **Defesa que vira invariante de compilação vence defesa que roda — e ainda assim tem que ser exercitada uma vez.** **Instrumentação nova encontra o que não era o alvo dela: instrumente cedo.** **Desligar um emissor não drena o meio: todo desligamento de transmissor pede carência de drenagem, dimensionada pelo tempo de voo.** **Quando o canal vira parte do endereço, toda estrutura indexada por CC tem que ser reexaminada** — janela, inventário, último-valor e fila de quarentena, e o compilador não cobra nenhuma delas. **Nesta placa o delta entre builds pode ser 25% sem mudar o trabalho** (o código roda da QSPI, logo layout de instrução é variável de primeira ordem): número de CPU sem A/B no mesmo binário é ruído com aparência de resultado, e ganho de teste que permite o A/B fica no firmware. **N falhas crônicas escondem a falha N+1** — suíte vermelha por paisagem é sensor desligado. **Teste dentro de `if(existe)` some em silêncio quando o nome muda: afirme a existência.** **Teste que cita um CC decorado mede o mapa, não a invariante — derive o número da fonte.** **Pasta nova entra sem vigilância por padrão: confira se o verificador alcança.** **Nenhum valor do domínio pode significar "sem dado": ausência se representa FORA do domínio** — flag, sentinela impossível ou par valor+validade; cinco casos num dia provam que a forma é estrutural. **Relatório imprime o CRU e etiqueta a interpretação ao lado.** **Antes de gastar um voo numa hipótese, perguntar se falhar diminui o espaço de busca** — se não diminui, não é experimento, é tentativa, e tentativa se paga com gravação. **Segunda fonte de verdade para a versão deriva com data marcada: número que ninguém imprime não tem quem o corrija.** **Instrumento de medida nao pode depender de estado de utilizador — tom de referencia que obedece ao fader do musico mede o fader.** **Distorcao mede-se por LINEARIDADE em tres niveis, nao pela harmonica: a harmonica diz que ha, a escala diz onde.** **Via de teste entra depois do ganho e ANTES da protecao: o transdutor nao sabe que aquilo era um teste.** **Identidade de dispositivo e uma RELACAO: ao trocar hardware, pergunte QUEM PRECISA DE SABER quem ele e, nao onde esta o nome dele.** **Interpolacao de parametro corre por AMOSTRA: por bloco da a mesma escada, so que mais lenta.** **Quando um estado e descrito por mais de uma variavel, o rearme toca em TODAS — e a de escopo mais estreito e a esquecida, porque nem aparece de onde o rearme e escrito.** **Confirmacao de uma camada nao e prontidao da pilha: criterio de 'pronto' que usa a propria operacao a testar passa cedo demais por construcao — minimo incondicional primeiro, tentativa depois.** **Quando o suspeito e a causa se movem ao mesmo tempo, a coincidencia e indistinguivel da confirmacao — elimine a variavel (hub, adaptador), nao a explique.** **Eliminar por argumento nao e eliminar: 'isso nao pode ser' esconde a hipotese em vez de a descartar.** **Sonda que devolve zero tem de provar que consegue devolver diferente de zero — controlo positivo antes de ler ausencia.** **Quando o espaco de busca nao encolhe, pare de varrer e BISSECTE: um firmware minimo divide o problema ao meio numa gravacao, porque nao partilha nada com o suspeito.** **Antes de explicar um numero, verifique QUEM O ESCREVE — sinal partilhado da teoria errada, e teoria custa mais que numero.** **Hardware so se elimina por REPRODUCAO numa segunda unidade; duas nao falham igual por acaso.** **Deteccao por fall-through transforma 'nao reconheco' em 'e o mais antigo': pergunte a biblioteca o que ela detectou, nunca presuma.** **Quando N tentativas falham de formas diferentes mas todas do MESMO TIPO, o tipo e a resposta — escreva o que todas as falhas tiveram em comum antes da tentativa N+1.** **Constante de protocolo se le na fonte, nao se deduz do comportamento: numero deduzido nao parece suspeito porque EXPLICA os dados.** **Antes do quarto valor da mesma variavel, escreva o que o terceiro descartou — se for nada, troque de variavel.** **Sonda nova nasce sem procedencia: o primeiro uso de qualquer sonda e o controlo de presenca, nunca a medicao.** **Antes de aceitar trabalho manual repetitivo, procure o formato de intercambio — a pergunta e onde isto vive quando nao esta na tela.** **Todo gerador de formato desconhecido reproduz uma amostra conhecida antes de emitir o resto.** **Endereco por posicao transforma edicao de layout em reenderecamento silencioso: regere o conjunto todo, ou nao use posicao.** **Todo contador de verificador precisa de piso: zero onde se esperava populacao ABORTA, nao informa — `ok` ao lado de um zero e a assinatura da familia.**
+Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.** **Documento gerado acompanha a mudança; escrito à mão, não — separe os dois e trate os escritos como lista de trabalho.** **E o que se pode gerar, gere: cada doc que vira gerador sai da lista de disciplina para sempre.** **TESTE O HARDWARE PRIMEIRO, DE TODAS AS MANEIRAS POSSÍVEIS: torça, puxe, aperte cada conector e veja se algo muda** — contato intermitente é invisível a teste estático por definição. **Intermitência correlacionada com manuseio É o diagnóstico, não o que atrapalha o diagnóstico.** **Toda sonda ganha uma dimensão de movimento: medir enquanto se mexe no chicote, não com tudo parado.** **Tensão presente não é tensão correta: meça com o SINAL, ponta preta num terra do lado de quem alimenta.** **Defeito conhecido e adiado vira a explicação errada do próximo sintoma, e o custo recai sobre quem está com o multímetro na mão.** **Divergência entre dois instrumentos que medem por caminhos diferentes é informação, não ruído a reconciliar.** **O instrumento herda o ponto cego da hipótese que o gerou: supor o mapa e medir contra a suposição só acha o que já se esperava** — alargue o escopo em vez de refinar a mira. **Ocupação que vive só no default de uma biblioteca é irmã da reserva que vive só em documento: declare no fonte, mesmo quando for o default.** **Revisão de pinos contra o esperado entra em toda rotina de fechamento.** **Despacho por prefixo exige ordem: comando novo que começa com o nome de um existente tem que vir ANTES dele** — e o sintoma é o pior tipo, porque o comando responde com mensagem plausível executando outra coisa. **Ao retomar problema já resolvido, releia COMO foi resolvido: decisão registrada tem duas metades — o que saiu e o que ficou no lugar — e lembrar só da primeira reintroduz o que ela evitava.** **Mecanismo aposentado não aposenta o método: procure a peça que sobreviveu.** **Nunca ler e escrever o mesmo arquivo na mesma expressão: `open(f,'w')` trunca antes de o `read()` interno rodar.** **Commitar cedo é o que transforma um destroço em inconveniente.** **Antes de escolher uma configuração, leia o default na fonte: a decisão pode não existir.** **Ao provar um caminho, escolha o teste que falha diferente para cada defeito possível.** **Periférico sem caminho de leitura não é detectável — diga CONFIGURADO, nunca PRESENTE, mesmo com ele funcionando na frente.** **Janela de silêncio conta do FIM do gesto, não do meio: um despejo mais longo que a janela deixa os primeiros desprotegidos.** **Transformar "mandei" em "chegou" é a única forma de descobrir que a coisa não chegava** — toda operação que termina dizendo só que executou é candidata. **Ausência só é evidência quando a presença era possível: antes de concluir do silêncio, prove que havia caminho para o som.** **O gatilho artificial também precisa ser exercitado — "0 erros" onde se esperava vermelho é sinal de exercício que não aconteceu, não de trava errada.** **Antes de concluir do silêncio de uma sonda, prove que ela cobre o caso** — ponto cego não é ausência do fenômeno. **Defesa que nunca agiu e não tem gatilho artificial é hipótese com nome de proteção: faça o inventário do que nunca foi exercitado.** **Linha truncada não é comando: recuse inteira e conte** — meio comando é válido e obedece calado. **Truncagem se anuncia nas duas pontas do canal.** **O formato não pode ter limite que o conteúdo alcance** — alargar o buffer conserta o caso e preserva a forma. **Instrumentar um ramo de três e ler o silêncio como resposta é a armadilha da própria família.** **Operação com perda se declara onde a perda acontece.** **Antes de suspeitar do trabalho de alguém, meça antes da primeira camada** — contador em zero não distingue "não fechou" de "ninguém leu". **Cadeia `else if` esconde ramo morto por ordenação: use saída antecipada, específico antes do genérico.** **Não gravar enquanto uma observação humana está em voo** — a resposta chega depois e responde outra pergunta. **Par array+laço: derive os dois das fontes que já existem; alargar à mão conserta o caso e preserva a forma.** **Todo teste de rejeição precisa do gêmeo que confirma a aceitação** — provar que o portão fecha não prova que ele abre, e o mecanismo largo demais passa em todos os testes de rejeição. **Ao conferir formato binário: primeiro o que torna a conta possível, depois a conta, só então o que a conta protege** — ler campo antes do checksum é consumir antes de configurar (P2), e a coerência de tamanho é segurança de memória, não só diagnóstico. **Para provar que o binário gravado tem a fonte atual, leia NA PLACA um número que só a fonte nova produz** — timestamp, `.map` e toolchain são testemunho do próprio acusado. **Trava que só diz "não" ensina a contornar; trava que diz o que REEXAMINAR ensina a decidir.** **Custo proporcional a uma tabela que cresce regride por CRESCIMENTO, não por edição — e nenhuma ferramenta do projeto vigia isso:** pergunte no audit que custos foram dimensionados quando a tabela era pequena. **Ao proteger ou consertar um caminho, procurar o IRMÃO** — duas rotas de saída, dois relatórios da mesma tabela, dois ramos: o irmão é quase sempre visível de onde se está. **Comando que não consta na ajuda não existe para quem está na bancada** — e a isenção do verificador, escrita larga, transforma-o em carimbo. **Provar que a configuração nova é segura não prova que a TRAVESSIA é: pergunte o que já está em trânsito quando você troca** — e trânsito inclui fio, flash e a cabeça de quem opera. **Pôr uma dimensão nova no endereço converte mensagem órfã em MAL-ENDEREÇADA, e esta não tem gesto humano para correlacionar** — pergunte se acha o dono CERTO, não se acha dono. **Defesa que vira invariante de compilação vence defesa que roda — e ainda assim tem que ser exercitada uma vez.** **Instrumentação nova encontra o que não era o alvo dela: instrumente cedo.** **Desligar um emissor não drena o meio: todo desligamento de transmissor pede carência de drenagem, dimensionada pelo tempo de voo.** **Quando o canal vira parte do endereço, toda estrutura indexada por CC tem que ser reexaminada** — janela, inventário, último-valor e fila de quarentena, e o compilador não cobra nenhuma delas. **Nesta placa o delta entre builds pode ser 25% sem mudar o trabalho** (o código roda da QSPI, logo layout de instrução é variável de primeira ordem): número de CPU sem A/B no mesmo binário é ruído com aparência de resultado, e ganho de teste que permite o A/B fica no firmware. **N falhas crônicas escondem a falha N+1** — suíte vermelha por paisagem é sensor desligado. **Teste dentro de `if(existe)` some em silêncio quando o nome muda: afirme a existência.** **Teste que cita um CC decorado mede o mapa, não a invariante — derive o número da fonte.** **Pasta nova entra sem vigilância por padrão: confira se o verificador alcança.** **Nenhum valor do domínio pode significar "sem dado": ausência se representa FORA do domínio** — flag, sentinela impossível ou par valor+validade; cinco casos num dia provam que a forma é estrutural. **Relatório imprime o CRU e etiqueta a interpretação ao lado.** **Antes de gastar um voo numa hipótese, perguntar se falhar diminui o espaço de busca** — se não diminui, não é experimento, é tentativa, e tentativa se paga com gravação. **Segunda fonte de verdade para a versão deriva com data marcada: número que ninguém imprime não tem quem o corrija.** **Instrumento de medida nao pode depender de estado de utilizador — tom de referencia que obedece ao fader do musico mede o fader.** **Distorcao mede-se por LINEARIDADE em tres niveis, nao pela harmonica: a harmonica diz que ha, a escala diz onde.** **Via de teste entra depois do ganho e ANTES da protecao: o transdutor nao sabe que aquilo era um teste.** **Identidade de dispositivo e uma RELACAO: ao trocar hardware, pergunte QUEM PRECISA DE SABER quem ele e, nao onde esta o nome dele.** **Interpolacao de parametro corre por AMOSTRA: por bloco da a mesma escada, so que mais lenta.** **Quando um estado e descrito por mais de uma variavel, o rearme toca em TODAS — e a de escopo mais estreito e a esquecida, porque nem aparece de onde o rearme e escrito.** **Confirmacao de uma camada nao e prontidao da pilha: criterio de 'pronto' que usa a propria operacao a testar passa cedo demais por construcao — minimo incondicional primeiro, tentativa depois.** **Quando o suspeito e a causa se movem ao mesmo tempo, a coincidencia e indistinguivel da confirmacao — elimine a variavel (hub, adaptador), nao a explique.** **Eliminar por argumento nao e eliminar: 'isso nao pode ser' esconde a hipotese em vez de a descartar.** **Sonda que devolve zero tem de provar que consegue devolver diferente de zero — controlo positivo antes de ler ausencia.** **Quando o espaco de busca nao encolhe, pare de varrer e BISSECTE: um firmware minimo divide o problema ao meio numa gravacao, porque nao partilha nada com o suspeito.** **Antes de explicar um numero, verifique QUEM O ESCREVE — sinal partilhado da teoria errada, e teoria custa mais que numero.** **Hardware so se elimina por REPRODUCAO numa segunda unidade; duas nao falham igual por acaso.** **Deteccao por fall-through transforma 'nao reconheco' em 'e o mais antigo': pergunte a biblioteca o que ela detectou, nunca presuma.** **Quando N tentativas falham de formas diferentes mas todas do MESMO TIPO, o tipo e a resposta — escreva o que todas as falhas tiveram em comum antes da tentativa N+1.** **Constante de protocolo se le na fonte, nao se deduz do comportamento: numero deduzido nao parece suspeito porque EXPLICA os dados.** **Antes do quarto valor da mesma variavel, escreva o que o terceiro descartou — se for nada, troque de variavel.** **Sonda nova nasce sem procedencia: o primeiro uso de qualquer sonda e o controlo de presenca, nunca a medicao.** **Antes de aceitar trabalho manual repetitivo, procure o formato de intercambio — a pergunta e onde isto vive quando nao esta na tela.** **Todo gerador de formato desconhecido reproduz uma amostra conhecida antes de emitir o resto.** **Endereco por posicao transforma edicao de layout em reenderecamento silencioso: regere o conjunto todo, ou nao use posicao.** **Todo contador de verificador precisa de piso: zero onde se esperava populacao ABORTA, nao informa — `ok` ao lado de um zero e a assinatura da familia.** **O firmware nomeia SAIDA; o cobre nomeia DESTINO — quando N fontes discordam sobre o que uma coisa E, pergunte se a coisa e decisao de outra pessoa ou de uma chave de metal.** **Regra derivada classifica o que ainda nao existe, e em silencio: ao criar simbolo novo, leia a regra primeiro e pergunte onde ELA o poe.** **Ao escrever a regra, pergunte qual e a MENOR afirmacao que cobre o caso — a regra larga contradiz o hardware real e quem a le acredita nela.** **Ao encontrar um erro num documento, meca o resto antes de corrigir esse: abaixo de um limiar, corrigir uma linha e desinformar.** **Quando o canal principal cala, o sistema operativo continua a testemunhar — enumeracao, idProduct e marca de tempo do node nao dependem do acusado.** **A primeira leitura de qualquer sonda e aquecimento: numero que nao fecha com caminho nenhum do codigo e suspeita contra o INSTRUMENTO primeiro.** **Sinal periodico continuo mede mal tudo o que produz copias de si proprio: compare contra o CHAO com uma variavel so.** **Instrumento cuja memoria e apagada pelo evento que ele mede so serve enquanto ninguem precisa dele.** **Ler um contador com uma sonda que o zera e a familia inteira em miniatura.**
 
 ---
 

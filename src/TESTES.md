@@ -371,8 +371,22 @@ que é o papel de backstop dele.
 
 ### T7c — roteamento
 
-`route_exciter=0` silencia o canal medido; `route_jack=0` não o afeta.
-Confirma que `OUT_L` é o ramo do exciter e que o mute entra depois do limiter.
+`out_l=0` silencia o canal medido; `out_r=0` não o afeta. Confirma que o
+canal medido é `OUT_L` e que o mute entra **depois do limiter**.
+
+> **Nomes de 28/08.** O teste correu como `route_exciter` / `route_jack`, e a
+> conclusão original dizia *"confirma que OUT_L é o ramo do exciter"* — o que
+> o teste não podia mostrar: para onde `OUT_L` vai é decisão do DPDT, fora do
+> alcance de qualquer comando. O que ele mostrou foi mais estreito e continua
+> válido: **`out_l` corta o canal que o pino 18 mede, e corta depois do
+> limiter.**
+>
+> **A REFAZER com a matriz.** Este teste não cobre `route_l_*` / `route_r_*`,
+> que entram ANTES dos efeitos. O caso que falta é o que separa os dois
+> andares: com `route_l_a=0` e um delay a tocar, `OUT_L` deve continuar a
+> receber o retorno do delay (uma instância só, envios já somados) enquanto o
+> seco, o freeze e o espaço da cadeia A somem. Se sumir tudo, a matriz está a
+> agir onde não devia; se não sumir nada, não está a agir.
 
 ### T7d — CPU
 
@@ -488,8 +502,9 @@ mutar um não toca no outro.
 > ficava vazio — o comando enviado era `set route_jack` sem valor, que o
 > `strtof` lê como **0**. O jack esteve mutado durante todo o teste.
 >
-> A conclusão anterior (que `route_exciter` controla o canal medido no pino 18)
-> continuava certa, mas **por acaso**. Refeito com argumentos explícitos.
+> A conclusão anterior (que `route_exciter` — hoje `out_l` — controla o canal
+> medido no pino 18) continuava certa, mas **por acaso**. Refeito com
+> argumentos explícitos.
 >
 > Vale a lição pro roteiro: teste que dá o resultado esperado merece a mesma
 > desconfiança que o que falha — aqui foi o silêncio *inesperado* no pino 19 que

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.3.0 — escreve o .lpcontrolprofile a partir do projeto.
+"""gerar_perfil_loopy v0.4.0 — escreve o .lpcontrolprofile a partir do projeto.
 
     gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
 
@@ -45,10 +45,19 @@ TITULOS = {
  'test_tone_freq':('tone_freq','compart'),
  'test_tone_dest':('tone_dest','compart'),
  'test_tone_out':('tone_dest','compart'),   # nome do switch de 3 posicoes
- 'test_tone_stage':('tone_via','compart'), # pre (directo) / post (cadeia)
- 'test_tone_via':('tone_via','compart'),
+ 'test_tone_stage':('test_tone_stage','compart'), # pre (directo) / post (cadeia)
+ 'test_tone_via':('test_tone_stage','compart'),   # nome antigo, ainda casa
  'tone_freq':('tone_freq','compart'), 'shift_hz':('shift_hz','compart'),
- 'route_jack':('route_jack','compart'), 'route_exciter':('route_exciter','compart'),
+ # MUTE DE RAMO (pos-limiter). Os nomes velhos ainda casam: um perfil
+ # exportado antes de 28/08 continua a encontrar o param certo.
+ 'out_l':('out_l','compart'), 'out_r':('out_r','compart'),
+ 'route_exciter':('out_l','compart'), 'route_jack':('out_r','compart'),
+ # MATRIZ 2x2: qual cadeia entra em qual saida. O canal diz a cadeia.
+ 'route_l':('route_l','a'), 'route_r':('route_r','a'),
+ 'route_l_a':('route_l_a','a'), 'route_l_b':('route_l_b','b'),
+ 'route_r_a':('route_r_a','a'), 'route_r_b':('route_r_b','b'),
+ 'a to l':('route_l_a','a'), 'a to r':('route_r_a','a'),
+ 'b to l':('route_l_b','b'), 'b to r':('route_r_b','b'),
  'exciter_a':('exc_on_a','a'), 'exciter_b':('exc_on_b','b'),
  'gov_ceiling_a':('gov_ceiling_a','a'), 'gov_ceiling_b':('gov_ceiling_b','b'),
  'gov_release_a':('gov_release_a','a'), 'gov_release_b':('gov_release_b','b'),

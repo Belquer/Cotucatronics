@@ -3,7 +3,7 @@
 > **GERADO do `src/manifest.h`.** Não editar à mão: rode `python3 gerar_ccmap.py`.
 > Estado atual: **87 vínculos em 50 números de CC**,
 > em **seis canais**: manda ch1/ch2/ch3, escuta ch4/ch5/ch6 (escuta = manda + 3).
-> Firmware v0.176.0
+> Firmware v0.177.0
 
 ## Como ler
 
@@ -49,7 +49,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 
 ## Tabela
 
-<!-- gerado por gerar_ccmap.py de manifest.h — nao editar a mao -->
+<!-- gerado por gerar_ccmap v0.2.0 de manifest.h — nao editar a mao -->
 | CC | manda | escuta | param | família | faixa real |
 |---|---|---|---|---|---|
 | 20 | ch1 | ch4 | `piezo_mix` | mistura | -1 – 1 |
@@ -126,7 +126,11 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 93 | ch1 | ch4 | `tone_freq` | tom | 80 – 2000 |
 | 94 | ch1 | ch4 | `tone_mix` | tom | 0 – 1 |
 | 95 | ch1 | ch4 | `tone_dest` | tom | 0 – 2 |
-| 96 | ch1 | ch4 | `tone_via` | tom | 0 – 1 |
+| 96 | ch1 | ch4 | `test_tone_stage` | tom | 0 – 1 |
+| 97 | ch2 | ch5 | `route_l_a` | saída | 0 – 1 |
+| 97 | ch3 | ch6 | `route_l_b` | saída | 0 – 1 |
+| 98 | ch2 | ch5 | `route_r_a` | saída | 0 – 1 |
+| 98 | ch3 | ch6 | `route_r_b` | saída | 0 – 1 |
 | 100 | ch1 | ch4 | `level` | saída | 0 – 1 |
 | 105 | ch2 | ch5 | `exc_on_a` | saída | 0 – 1 |
 | 105 | ch3 | ch6 | `exc_on_b` | saída | 0 – 1 |
@@ -135,9 +139,9 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 111 | ch2 | ch5 | `gov_release_a` | proteção | 100 – 3000 |
 | 111 | ch3 | ch6 | `gov_release_b` | proteção | 100 – 3000 |
 | 112 | ch1 | ch4 | `shift_hz` | proteção | 0 – 10 |
-| 113 | ch1 | ch4 | `route_exciter` | saída | 0 – 1 |
-| 114 | ch1 | ch4 | `route_jack` | saída | 0 – 1 |
+| 113 | ch1 | ch4 | `out_l` | saída | 0 – 1 |
+| 114 | ch1 | ch4 | `out_r` | saída | 0 – 1 |
 | 115 | ch2 | ch5 | `bench_boost_a` | bancada | 1 – 8 |
 | 115 | ch3 | ch6 | `bench_boost_b` | bancada | 1 – 8 |
 
-<!-- 87 vinculos em 50 numeros de CC -->
+<!-- 91 vinculos em 52 numeros de CC -->

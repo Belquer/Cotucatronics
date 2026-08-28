@@ -66,13 +66,39 @@ foi **trocar os piezos de canal**, não medir mais fundo.
 
 ---
 
-## 3 · SAÍDA — dois ramos, dois exciters
+## 3 · SAÍDA — dois ramos, e o destino é da CHAVE
 
 ```
-OUT_L (cadeia A) ──> [switch] ──> TPA3110 PBTL ──> exciter Dayton DAEX32QMB-4 (4Ω)
-                 └──> jack TS (sempre ligado)
-OUT_R (cadeia B) ──> idem
+OUT_L ──> [DPDT 3 pos: jack | ambos | amp] ─┬──> jack TS
+                                            └──> TPA3110 PBTL ──> exciter DAEX32QMB-4 (4Ω)
+OUT_R ──> idem, chave própria
 ```
+
+**O firmware não nomeia destino — nomeia SAÍDA.** `OUT_L` não é "o exciter"
+e `OUT_R` não é "o jack": cada um vai para onde a sua chave mandar, e as
+três posições existem justamente porque o destino muda em operação.
+
+<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
+<!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
+Foi por não ver isto que os params se chamaram `route_exciter` /
+`route_jack` até 28/08 — e o nome enganou *dentro da sessão que o
+corrigiu*, quando `route_exciter 0` foi usado a pensar que silenciava só o
+transdutor. Hoje chamam-se `out_l` / `out_r` (CC 113/114), e cortam o ramo
+inteiro, seja qual for o destino em que a chave estiver.
+
+**Qual CADEIA entra em qual SAÍDA é decisão de firmware**, e é a matriz 2×2
+— `route_l_a`, `route_l_b`, `route_r_a`, `route_r_b`, nos CC 97/98 (o CC diz
+a saída, o canal diz a cadeia). Nasce cheia, que reproduz exactamente o
+código fixo que a antecedeu. Serve para inverter as cadeias quando os
+transdutores estão ligados ao contrário, em dois gestos e sem duplicar
+preset nenhum — e por isso **fica fora dos presets**: é facto de fiação, não
+de timbre.
+
+⚠️ **Esta chave contradiz a regra do parágrafo seguinte, e a regra é que
+está mal formulada.** *"Áudio não passa por contato mecânico"* nasceu de uma
+chave de POTÊNCIA (contato seco, não conduz nível de linha) e generalizou
+demais. O DPDT de sinal conduz áudio de propósito. A regra correcta é a que
+o caso original ensinou: **chave de potência não serve para comutar sinal.**
 
 **O switch mora ANTES do amp, em nível de linha.** Nunca depois: o TPA3110 em
 PBTL é ponte — **os dois terminais de saída são quentes**, e encostar um deles

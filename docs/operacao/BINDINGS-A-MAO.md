@@ -117,7 +117,7 @@
 |  | `tone_freq` | **93** | **ch4** |
 |  | `tone_mix` | **94** | **ch4** |
 |  | `tone_dest` | **95** | **ch4** |
-|  | `tone_via` | **96** | **ch4** |
+|  | `test_tone_stage` | **96** | **ch4** |
 |  | `exc_on_a` | **105** | **ch5** |
 |  | `exc_on_b` | **105** | **ch6** |
 |  | `gov_ceiling_a` | **110** | **ch5** |
@@ -125,8 +125,12 @@
 |  | `gov_release_a` | **111** | **ch5** |
 |  | `gov_release_b` | **111** | **ch6** |
 |  | `shift_hz` | **112** | **ch4** |
-|  | `route_exciter` | **113** | **ch4** |
-|  | `route_jack` | **114** | **ch4** |
+|  | `out_l` | **113** | **ch4** |
+|  | `out_r` | **114** | **ch4** |
+|  | `route_l_a` | **97** | **ch5** |
+|  | `route_l_b` | **97** | **ch6** |
+|  | `route_r_a` | **98** | **ch5** |
+|  | `route_r_b` | **98** | **ch6** |
 |  | `bench_boost_a` | **115** | **ch5** |
 |  | `bench_boost_b` | **115** | **ch6** |
 

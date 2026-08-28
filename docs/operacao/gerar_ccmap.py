@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Gera a tabela do CCMAP.md a partir de src/manifest.h.
+"""gerar_ccmap v0.2.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
+
+Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
+se dar por novo um ficheiro que ja tinha historia.
 
 USO:  python3 gerar_ccmap.py [caminho/para/manifest.h]
 
@@ -54,7 +57,8 @@ FAMILIAS = [('piezo', 'mistura'), ('in_gain', 'entrada'), ('gate', 'entrada'),
             ('dly', 'delay'), ('frz', 'freeze'), ('rev', 'reverb'),
             ('shm', 'shimmer'), ('buzios', 'búzios'), ('tone', 'tom'),
             ('level', 'saída'), ('exc', 'saída'), ('gov', 'proteção'),
-            ('shift', 'proteção'), ('route', 'saída'), ('bench', 'bancada')]
+            ('shift', 'proteção'), ('route', 'saída'), ('bench', 'bancada'),
+            ('out_', 'saída'), ('test_tone', 'tom')]
 
 
 def familia(n):
@@ -104,7 +108,7 @@ if faltando:
           file=sys.stderr)
     sys.exit(1)
 
-print(f'<!-- gerado por gerar_ccmap.py de {MANIFEST.name} — nao editar a mao -->')
+print(f'<!-- gerado por gerar_ccmap v0.2.0 de {MANIFEST.name} — nao editar a mao -->')
 print('| CC | manda | escuta | param | família | faixa real |')
 print('|---|---|---|---|---|---|')
 print('\n'.join(linhas))

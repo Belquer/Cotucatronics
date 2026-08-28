@@ -1,6 +1,6 @@
 # CCs por página — Loopy Pro
 
-> **Gerado de `src/manifest.h` (v0.83.0, firmware v0.176.0).** Regerar se o mapa mudar.
+> **Gerado de `src/manifest.h` (v0.85.0, firmware v0.178.0).** Regerar se o mapa mudar.
 
 ## A regra
 
@@ -155,7 +155,7 @@ Tom de teste, exciter, governor, roteamento e boost de bancada.
 | 93 | ch1 | ch4 | `tone_freq` |
 | 94 | ch1 | ch4 | `tone_mix` |
 | 95 | ch1 | ch4 | `tone_dest` |
-| 96 | ch1 | ch4 | `tone_via` |
+| 96 | ch1 | ch4 | `test_tone_stage` |
 | 105 | ch2 | ch5 | `exc_on_a` |
 | 105 | ch3 | ch6 | `exc_on_b` |
 | 110 | ch2 | ch5 | `gov_ceiling_a` |
@@ -163,12 +163,12 @@ Tom de teste, exciter, governor, roteamento e boost de bancada.
 | 111 | ch2 | ch5 | `gov_release_a` |
 | 111 | ch3 | ch6 | `gov_release_b` |
 | 112 | ch1 | ch4 | `shift_hz` |
-| 113 | ch1 | ch4 | `route_exciter` |
-| 114 | ch1 | ch4 | `route_jack` |
+| 113 | ch1 | ch4 | `out_l` |
+| 114 | ch1 | ch4 | `out_r` |
 | 115 | ch2 | ch5 | `bench_boost_a` |
 | 115 | ch3 | ch6 | `bench_boost_b` |
 
-*15 widgets*
+*15 widgets*  ·  **+2 pareados novos: `route_l` cc97, `route_r` cc98**
 
 ## Compartilhados, a lista fechada
 
@@ -183,11 +183,26 @@ se duplica:
 - `tone_freq` — cc93
 - `tone_mix` — cc94
 - `tone_dest` — cc95
-- `tone_via` — cc96
+- `test_tone_stage` — cc96
 - `level` — cc100
 - `shift_hz` — cc112
-- `route_exciter` — cc113
-- `route_jack` — cc114
+- `out_l` — cc113
+- `out_r` — cc114
 
-**13 compartilhados · 74 pareados · 87 vínculos**
+**13 compartilhados · 78 pareados · 91 vínculos**
+
+### A matriz de roteamento — cc97 / cc98
+
+Pareados como qualquer outro: **o CC diz a SAÍDA, o canal diz a CADEIA.**
+
+| CC | ch2 (A) | ch3 (B) |
+|---|---|---|
+| **97** | `route_l_a` | `route_l_b` |
+| **98** | `route_r_a` | `route_r_b` |
+
+Quatro interruptores em dois números. Todos nascem **ligados**, que é o
+que reproduz o som anterior à matriz. Desligar `route_r_a` e `route_l_b`
+deixa a cadeia A só na saída L e a B só na R; trocar as duas colunas
+**inverte as cadeias** — que é para o que ela existe, quando os
+transdutores estão ligados ao contrário.
 

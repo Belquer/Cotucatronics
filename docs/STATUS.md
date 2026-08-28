@@ -1,11 +1,14 @@
 # STATUS — Cotucatronics
+<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e o registo da renomeacao — apagar o nome velho apagaria o que explica por que ele estava errado. Ver battle_scars 15e.) -->
+<!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 
 **Onde estamos.** O par deste documento é
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-08-20 · leva: suíte de cinco efeitos fechada, shimmer
-> suavizado por medição, tetos das tabelas corrigidos
+> Atualizado em 2026-08-28 · leva: **matriz de roteamento 2×2** (qual cadeia
+> entra em qual saída), `route_exciter`/`route_jack` renomeados para
+> `out_l`/`out_r`, T7c medido na placa e passado nos cinco critérios
 
 ---
 
@@ -53,18 +56,22 @@ scars — ele PIOROU; reverter exige remedir tudo).
 build desde 18/08 (decisão de ouvido, revivível). Bloco **48**.
 
 ```
-piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE
-            → DELAY (Fx1) → DETUNE → FREEZE → [SHIMMER ↺ REVERB] → level
-            → OUT_WIDTH (mid/side) → split → governor+SSB (exciter) | jack
+piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE   (por cadeia)
+            → MATRIZ 2×2 ─┬─ DELAY (uma instância, não segue a matriz)
+                          ├─ FREEZE  (por cadeia, segue)
+                          └─ [SHIMMER ↺ REVERB] (por cadeia, segue)
+            → level → governor+SSB por ramo → limiter → out_l / out_r
+            → [DPDT 3 pos: jack | ambos | amp]        ← isto é COBRE
 ```
 
 `piezo_mix` é BALANÇO, não crossfade: no centro os dois piezos entram cheios.
-`out_width` fica entre o LEVEL e o split porque depois do split OUT_L e OUT_R
-deixam de ser uma imagem estéreo — são exciter e jack, com processamentos
-diferentes.
 
-```
-```
+**O `out_width` (mid/side) foi aposentado em 20/08** — com dois transdutores
+no mesmo corpo não há imagem estéreo a alargar: a soma é acústica, no objeto.
+
+**A matriz decide qual CADEIA entra em qual SAÍDA** (`route_l_a` … `route_r_b`,
+CC 97/98). O destino de cada saída não é decisão do firmware: é a posição do
+DPDT. O firmware nomeia SAÍDA; o cobre nomeia destino.
 
 O shimmer não tem reverb próprio: ele realimenta o Freeverb que já está na
 cadeia, e por isso aparece dentro do laço.
@@ -72,7 +79,7 @@ cadeia, e por isso aparece dentro do laço.
 | Recurso | Medido |
 |---|---|
 | CPU (suíte + shimmer + detune) | **59,5% média / 65,8% pico** do prazo de 1000 µs |
-| Tabelas | **55/64 params · 37/48 CCs** (o `board` declara) |
+| Tabelas | **91/96 params · 91/128 CCs** (o `board` declara, 28/08) |
 | Bloco | **48** (1 ms de prazo) |
 | Custo por efeito | drive +21 µs · warble +14 · phaser +26 · detune **+125** |
 
@@ -93,6 +100,57 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 > **Quando o exciter entrar, revisar `level` e `gov_ceiling` juntos.** Lá
 > não há atenuador: o TPA3116 recebe o que a placa mandar, e os dois
 > formam o par que decide onde o laço para de crescer.
+
+---
+
+## 28/08 — a matriz de roteamento, medida na placa
+
+**O que mudou.** Havia dois andares confundidos num só. Agora estão separados:
+
+| | onde age | o que faz |
+|---|---|---|
+| `route_l_a/b`, `route_r_a/b` | antes dos efeitos | qual **cadeia** entra em qual **saída** |
+| `out_l`, `out_r` | depois do limiter | corta o **ramo** inteiro |
+
+A matriz nasce cheia e reproduz exactamente o `out[0] = out[1] = A + B` que a
+antecedeu. Serve para inverter as cadeias quando os transdutores estão ligados
+ao contrário — e **fica fora dos presets**, porque é facto de fiação e não de
+timbre.
+
+**T7c medido em v0.178.0**, chão do caminho a −69,2 dBFS, base a −35,6:
+
+| critério | Δ | |
+|---|---|---|
+| matriz corta o seco em R | −33,6 dB → ao chão | ✅ |
+| mexer no L não afecta o R (matriz) | +0,0 dB | ✅ |
+| mute corta o ramo R | −33,6 dB → ao chão | ✅ |
+| mexer no L não afecta o R (mute) | +0,0 dB | ✅ |
+| o delay sobrevive à matriz | +29,7 dB acima do chão | ✅ |
+
+O último é o que separa os dois andares: com `route_r_a=0` e o delay ligado, a
+saída fica 29,7 dB acima do chão — uma instância só, envios já somados, e nada
+nela sabe de que cadeia veio.
+
+⚠️ **O mapa de params mudou: `0xFD72` → `0xBE1B`.** Como ainda não existe
+preset nenhum, saiu de graça — foi a última janela.
+
+### Defeitos abertos que esta sessão deixou
+
+- 🔴 **`ccmap.html` / `ccmap.pdf` têm 27 CCs que já não existem.** A folha é
+  anterior ao esquema de seis canais. Marcada com faixa vermelha; regerar ou
+  aposentar é decisão do dB.
+- 🟠 **`OUT_L` não chega à MiniFuse.** Com `tone_dest 1` não há sinal em
+  entrada nenhuma; com `dest 2` há. Suspeita: o DPDT esquerdo em `amp`. **Por
+  confirmar** — se estiver em `jack`/`ambos` e continuar sem sinal, há defeito
+  a caçar.
+- 🟠 **O contador de quedas da ponte vive em RAM** e some no power-cycle —
+  apaga-se no evento que mais interessa registar. Há onde o pôr: BACKUP_SRAM
+  (12 B usados de 4 KB) e NVS.
+- 🟡 **Os 20 minutos do link BLE continuam sem dado.** Repetir com o iPad
+  acordado e o Loopy em primeiro plano, que é o confundidor por separar.
+- 🟡 **Folga de params: 91/96.** Restam cinco.
+- ⚪ **`check_docs` só vigia versões em `.h`/`.cpp`.** O `nivel_tempo.py` dizia
+  v0.2.0 no cabeçalho e imprimia v0.1.0, e passou.
 
 ---
 

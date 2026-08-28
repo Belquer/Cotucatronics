@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.4.0
+// Cotucatronics OS — presets v0.5.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -45,6 +45,19 @@ inline bool ForaDoPreset(const char* nome)
     // TOM DE TESTE: preset que ligasse isto poria uma senoide no meio da
     // peca.
     if(!strncmp(nome, "tone_", 5))        return true;
+    // TOPOLOGIA DE SAIDA (28/08). A matriz `route_*` compensa como os
+    // transdutores estao LIGADOS — e facto de fiacao, nao de timbre.
+    // Dentro do preset cada preset carregaria a fiacao, e desandar um
+    // fio obrigaria a regravar a biblioteca inteira: a mesma familia
+    // do "corda existiria duas vezes" que fez a biblioteca ser UMA.
+    //
+    // E ela CAI NA REGRA DO SUFIXO se ninguem a excluir: `route_l_a`
+    // acaba em `_a`, entao sem esta linha ela entraria sozinha nos
+    // presets de CADEIA — que e o pior dos dois destinos possiveis.
+    //
+    // `out_l`/`out_r` NAO saem: qual ramo esta vivo continua a ser
+    // decisao de performance, e o desenho aprovado os inclui.
+    if(!strncmp(nome, "route_", 6))       return true;
     return false;
 }
 

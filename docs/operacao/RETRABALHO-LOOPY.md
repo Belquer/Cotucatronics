@@ -51,8 +51,8 @@ Existem uma vez só. **Não duplicar.**
 | 95 | `tone_dest` |
 | 100 | `level` |
 | 112 | `shift_hz` |
-| 113 | `route_exciter` |
-| 114 | `route_jack` |
+| 113 | `out_l` |
+| 114 | `out_r` |
 
 ## PAREADOS — 37 · manda **ch2**(A)/**ch3**(B) · escuta **ch5**/**ch6**
 

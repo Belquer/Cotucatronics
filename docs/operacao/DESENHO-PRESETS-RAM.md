@@ -60,14 +60,26 @@ Dos 12 compartilhados, o mesmo critério exclui **três**:
 |---|---|
 | `tone_freq`, `tone_mix`, `tone_dest` | **o tom de teste é bancada.** Um preset que o ligasse poria uma senoide no meio da peça |
 
+<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
+<!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 **Preset global = 9 params:** `level`, `piezo_mix`, `dly_time`,
-`route_exciter`, `route_jack`, `shift_hz`, `buzios_on`, `buzios_thresh`,
+`out_l`, `out_r`, `shift_hz`, `buzios_on`, `buzios_thresh`,
 `buzios_cooldown`.
 
-⚠️ **`route_*` fica, com a tensão anotada.** É topologia de saída, o que soa
-como hardware — mas *qual saída está viva* é decisão de performance, e o
-desenho aprovado o inclui. Se um dia virar leitura de chave física, sai pelo
-mesmo critério do `exc_on`.
+⚠️ **`out_*` fica, com a tensão anotada.** É topologia de saída, o que soa
+como hardware — mas *qual ramo está vivo* é decisão de performance, e o
+desenho aprovado o inclui. (Chamavam-se `route_exciter`/`route_jack` até
+28/08; o DPDT de três posições tornou esses nomes falsos.)
+
+🚫 **A matriz `route_*` NÃO entra, e a razão é outra.** Ela compensa como os
+transdutores estão LIGADOS — facto de fiação. Dentro do preset, cada preset
+carregaria a fiação, e desandar um fio obrigaria a regravar a biblioteca
+inteira: a mesma família do *"corda existiria duas vezes"* que fez a
+biblioteca ser UMA.
+
+E ela **cai na regra do sufixo** se ninguém a excluir: `route_l_a` acaba em
+`_a`, logo sem a excepção em `presets.h` entraria sozinha nos presets de
+**cadeia** — o pior dos dois destinos possíveis.
 
 **Global slot 0 = estado de boot**, que é o que mata o `level` nascendo em 0.
 

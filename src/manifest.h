@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.83.0
+// manifest.h (instrumento "bancada") v0.85.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -173,12 +173,30 @@ struct Manifest
     int p_gov_ceiling[2];
     int p_gov_release[2];
 
-    // Roteamento de saída: 0/1. Serial-only por ora — o toggle
-    // físico de 3 posições assume depois, e vira o único lugar
-    // que escreve nestes dois.
-    int p_exc_on[2];   // exciter no ar? gateia a protecao do ramo
-    int p_route_exciter; // OUT_L → amp TPA3116 → exciter
-    int p_route_jack;    // OUT_R → jack de linha
+    // Roteamento de saída: 0/1. DOIS ANDARES, e eles NÃO fazem a
+    // mesma coisa — 28/08, e a confusão entre os dois é o que fez
+    // `route_jack` existir com esse nome:
+    //
+    //   route_*  ANTES dos efeitos. Matriz 2×2: qual CADEIA entra em
+    //            qual SAÍDA (A→L, A→R, B→L, B→R). É aqui que se
+    //            trocam as cadeias quando os transdutores estão
+    //            ligados invertidos, sem duplicar preset nenhum.
+    //   out_*    DEPOIS do limiter. Corta o RAMO inteiro, e continua
+    //            a ser o único mute de verdade: zerar uma coluna da
+    //            matriz cala o seco, o freeze e o espaço daquela
+    //            cadeia, mas o retorno do delay ainda entra (uma
+    //            instância só, envios já somados — ver main.cpp).
+    //
+    // O FIRMWARE NÃO NOMEIA DESTINO, e é por isso que `route_jack`
+    // era um nome falso. Cada saída passa por um DPDT de três
+    // posições — jack | ambos | amp — que mora DEPOIS daqui. `out[1]`
+    // não é "o jack": é uma saída que PODE estar no jack, e a chave é
+    // que decide. O firmware nomeia SAÍDA; o cobre nomeia destino.
+    int p_exc_on[2];    // exciter no ar? gateia a protecao do ramo
+    int p_route_l[2];   // a cadeia A/B entra em OUT_L?
+    int p_route_r[2];   // a cadeia A/B entra em OUT_R?
+    int p_out_l;        // OUT_L no ar?  (mute pos-limiter)
+    int p_out_r;        // OUT_R no ar?
 
     // ============================================================
     // >>>>>>>>>>>>>  FERRAMENTA DE BANCADA  <<<<<<<<<<<<<
@@ -351,7 +369,7 @@ struct Manifest
     // excitada". AMBAS valida simetria de uma vez; A ou B isolam quando
     // o sintoma for assimetrico.
     int p_tone_dest;
-    int p_tone_via;   // 0=direto (pos-level) · 1=cadeia
+    int p_test_tone_stage;   // 0=pre (pos-level) · 1=post (cadeia)
 
     // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
     // onde o estereo existe: sem estereo nao ha spread.
@@ -494,8 +512,9 @@ struct Manifest
     //   gate_*         política sobre o chão de ruído do piezo.
     //   gov_*, limiter proteção do exciter. Sortear proteção é
     //                  sortear se o hardware sobrevive.
-    //   route_*        sortear roteamento pode emudecer a peça, ou
-    //                  mandar pro exciter o que devia ir pro jack.
+    //   route_*, out_* sortear roteamento pode emudecer a peça, ou
+    //                  mandar para o transdutor errado o que estava
+    //                  endereçado ao outro.
     //   shift_hz       anti-feedback. Mesmo argumento do governor.
     //   bench_boost    ferramenta de bancada, nunca de performance.
     //
@@ -815,8 +834,16 @@ struct Manifest
         // que alto por engano — pra alto o limiter já tem resposta.
         p_exc_on[0]     = t.Add("exc_on_a",      1.0f, 0.f, 1.f);
         p_exc_on[1]     = t.Add("exc_on_b",      1.0f, 0.f, 1.f);
-        p_route_exciter = t.Add("route_exciter", 1.0f, 0.f, 1.f);
-        p_route_jack    = t.Add("route_jack",    1.0f, 0.f, 1.f);
+        // A matriz nasce CHEIA, e isso e deliberado: cheia ela
+        // reproduz exatamente o codigo fixo que a antecedeu,
+        // `out[0] = out[1] = A + B`. Feature nova que nasce mudando o
+        // som e feature que se descobre pelo susto.
+        p_route_l[0]    = t.Add("route_l_a",     1.0f, 0.f, 1.f);
+        p_route_l[1]    = t.Add("route_l_b",     1.0f, 0.f, 1.f);
+        p_route_r[0]    = t.Add("route_r_a",     1.0f, 0.f, 1.f);
+        p_route_r[1]    = t.Add("route_r_b",     1.0f, 0.f, 1.f);
+        p_out_l         = t.Add("out_l",         1.0f, 0.f, 1.f);
+        p_out_r         = t.Add("out_r",         1.0f, 0.f, 1.f);
 
         // FERRAMENTA DE BANCADA — ver bloco acima. def_norm 0.0 com
         // faixa [1,8] e curve 1 dá real = 1.0 no boot, sempre.
@@ -987,7 +1014,7 @@ struct Manifest
         //       serve para excitar o processamento com sinal conhecido.
         // Nasce em ZERO (direto): o uso comum e medir, e medicao que
         // depende do que o musico deixou no fader nao e medicao.
-        p_tone_via  = t.Add("tone_via",  0.0f, 0.f, 1.f, 1.0f, 2);
+        p_test_tone_stage = t.Add("test_tone_stage", 0.0f, 0.f, 1.f, 1.0f, 2);
 
         // ---- DESCRITOR POR EFEITO DE CARATER ----
         for(int c = 0; c < kCadeias; c++)
@@ -1471,7 +1498,7 @@ struct Manifest
         AddMidi(93, p_tone_freq, kCanalCompart);   // COMPARTILHADO: so ch1
         AddMidi(94, p_tone_mix, kCanalCompart);   // COMPARTILHADO: so ch1
         AddMidi(95, p_tone_dest, kCanalCompart);         // 0=A+B 1=A 2=B
-        AddMidi(96, p_tone_via, kCanalCompart);          // 0=direto 1=cadeia · COMPARTILHADO: so ch1
+        AddMidi(96, p_test_tone_stage, kCanalCompart);          // 0=direto 1=cadeia · COMPARTILHADO: so ch1
 
         // ---- MASTER: 100 ----
         AddMidi(100, p_level, kCanalCompart);   // COMPARTILHADO: so ch1
@@ -1502,8 +1529,15 @@ struct Manifest
         AddMidi(110, p_gov_ceiling[0], kCanalEntradaA);
         AddMidi(111, p_gov_release[0], kCanalEntradaA);
         AddMidi(112, p_shift_hz, kCanalCompart);         // COMPARTILHADO pelos dois ramos
-        AddMidi(113, p_route_exciter, kCanalCompart);    // 0 = corta o ramo A   // COMPARTILHADO: so ch1
-        AddMidi(114, p_route_jack, kCanalCompart);       // 0 = corta o ramo B   // COMPARTILHADO: so ch1
+        AddMidi(113, p_out_l, kCanalCompart);            // 0 = corta o ramo L   // COMPARTILHADO: so ch1
+        AddMidi(114, p_out_r, kCanalCompart);            // 0 = corta o ramo R   // COMPARTILHADO: so ch1
+        // MATRIZ 2x2 — o CC diz a SAIDA, o canal diz a CADEIA. Mesmo
+        // esquema de todo o instrumento, sem numero novo por celula:
+        // quatro interruptores em dois CCs.
+        AddMidi(97, p_route_l[0], kCanalEntradaA);
+        AddMidi(97, p_route_l[1], kCanalEntradaB);
+        AddMidi(98, p_route_r[0], kCanalEntradaA);
+        AddMidi(98, p_route_r[1], kCanalEntradaB);
         AddMidi(115, p_bench_boost[0], kCanalEntradaA);
         AddMidi(110, p_gov_ceiling[1], kCanalEntradaB);
         AddMidi(111, p_gov_release[1], kCanalEntradaB);
