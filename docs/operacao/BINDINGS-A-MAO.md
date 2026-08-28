@@ -14,8 +14,6 @@
 |---|---|---|---|
 |  | `piezo_mix` | **20** | **ch4** |
 |  | `dly_time` | **64** | **ch4** |
-|  | `in_gain_a` | **21** | **ch5** |
-|  | `in_gain_b` | **21** | **ch6** |
 |  | `gate_thresh_a` | **23** | **ch5** |
 |  | `gate_thresh_b` | **23** | **ch6** |
 |  | `gate_release_a` | **25** | **ch5** |

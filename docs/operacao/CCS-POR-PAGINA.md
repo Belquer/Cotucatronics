@@ -24,8 +24,6 @@ não duplicar esta página.
 |---|---|---|---|
 | 20 | ch1 | ch4 | `piezo_mix` |
 | 64 | ch1 | ch4 | `dly_time` |
-| 21 | ch2 | ch5 | `in_gain_a` |
-| 21 | ch3 | ch6 | `in_gain_b` |
 | 23 | ch2 | ch5 | `gate_thresh_a` |
 | 23 | ch3 | ch6 | `gate_thresh_b` |
 | 25 | ch2 | ch5 | `gate_release_a` |

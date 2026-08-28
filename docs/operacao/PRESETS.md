@@ -115,8 +115,8 @@ destravar, **a biblioteca só muda de casa** — nenhuma linha do sistema muda.
 
 ```
 # presets.txt — biblioteca de cadeia
-1  corda-shimmer   in_gain=64 gate=12 drv_on=0 ... shm_on=1 shm_shift=88
-2  tambor-seco     in_gain=71 gate=40 drv_on=1 ... rev_on=1 rev_size=30
+1  corda-shimmer   gate=12 drv_on=0 ... shm_on=1 shm_shift=88
+2  tambor-seco     gate=40 drv_on=1 ... rev_on=1 rev_size=30
 ```
 
 Reordenar = mover linhas. Renomear = editar texto. Deletar = apagar linha.

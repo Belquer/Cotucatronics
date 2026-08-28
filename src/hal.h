@@ -240,6 +240,18 @@ uint32_t         VarreLivres();
 // um reboot, e uma modalidade que exige o dedo de alguem para sair nao
 // serve a uma bancada remota — nem a uma escultura numa galeria.
 void             Reiniciar();
+
+// ATRASO DA DRENAGEM DE MIDI. `MidiAtrasos` conta as voltas que deixaram
+// bytes para tras; `MidiSobraPico`, a maior sobra vista. Zero nos dois =
+// a drenagem acompanha. A subir = ela esta a perder, e foi perder PARA
+// SEMPRE que travou a placa em 28/08.
+uint32_t         MidiAtrasos();
+uint32_t         MidiSobraPico();
+// O TAMANHO DO ANEL VEM DO HAL, nao de uma copia aqui. Escrevi
+// `constexpr int kMidiRingTam = 256` neste ficheiro e o anel eram 128:
+// uma segunda fonte que nasceu errada, no mesmo dia em que removi tres
+// copias do mapa de pinos pelo mesmo motivo.
+uint32_t         MidiRingTam();
 int              PinosTodos(const int** lista);
 uint32_t         VarreTudo();
 bool             VarreTudoAtivo();

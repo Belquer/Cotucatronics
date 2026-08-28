@@ -64,7 +64,6 @@ separa.
 
 | CC | família |
 |---|---|
-| 21 | `in_gain` |
 | 23 | `gate_thresh` |
 | 25 | `gate_release` |
 

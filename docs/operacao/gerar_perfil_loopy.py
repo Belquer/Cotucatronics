@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.4.0 — escreve o .lpcontrolprofile a partir do projeto.
+"""gerar_perfil_loopy v0.5.0 — escreve o .lpcontrolprofile a partir do projeto.
 
     gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
 
@@ -30,7 +30,6 @@ CANAL = {'compart': (1, 4), 'a': (2, 5), 'b': (3, 6)}
 # 'pag' = herda o lado da pagina (A-mod -> a, B-time -> b)
 TITULOS = {
  'level':('level','compart'), 'piezo_mix':('piezo_mix','compart'),
- 'in_gain_a':('in_gain_a','a'), 'in_gain_b':('in_gain_b','b'),
  'gate_thresh_a':('gate_thresh_a','a'), 'gate_thresh_b':('gate_thresh_b','b'),
  'gate_release_a':('gate_release_a','a'), 'gate_release_b':('gate_release_b','b'),
  'buzios':('buzios_on','compart'), 'buzios_thresh':('buzios_thresh','compart'),
@@ -97,7 +96,7 @@ def ccs_do_manifest(raiz):
     for cc, par in re.findall(r'AddMidi\(\s*(\d+)\s*,\s*p_([A-Za-z0-9_]+)', txt):
         par = re.sub(r'\[\s*0\s*\]$','', par)
         m.setdefault(par, int(cc))
-    # p_in_gain[0]/[1] aparecem como in_gain — repor o sufixo
+    # params por cadeia aparecem sem sufixo no simbolo — repor
     for cc, par, idx in re.findall(r'AddMidi\(\s*(\d+)\s*,\s*p_([A-Za-z0-9_]+)\[\s*(\d)\s*\]', txt):
         m[f"{par}_{'ab'[int(idx)]}"] = int(cc)
     return m

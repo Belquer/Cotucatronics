@@ -39,7 +39,8 @@
 // A curva so molda perto de x ~= 1/d; abaixo disso ela e reta. O
 // histograma do instrumento tocado (22/08) poe 98% das amostras abaixo
 // de -18 dBFS, entao um drive de 12x — joelho em -19 dBFS — fica reto
-// quase o tempo todo. NAO se conserta no in_gain: subir a entrada
+// quase o tempo todo. NAO se conserta subindo a ENTRADA (e o `in_gain`
+// que fazia isso saiu em 28/08, por nao soar): subir a entrada
 // engorda o seco na mesma proporcao e a camada some por comparacao
 // (medido, e foi um conselho errado meu em 22/08). Conserta-se aqui,
 // no alcance do proprio controle. Ver bts 12n e 12o.

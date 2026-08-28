@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.85.0
+// manifest.h (instrumento "bancada") v0.89.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -159,7 +159,9 @@ struct Manifest
     // mede os canais iguais no futuro e conclui que a duplicacao e
     // dispensavel. Justificativa errada envelhece mal.
     static constexpr int kCadeias = 2;
-    int p_in_gain[kCadeias];
+// `in_gain` REMOVIDO em 28/08 — o Governor (AGC) anulava-o e o
+    // `piezo_mix` ja fazia o balanco. Ver a nota no `main.cpp`, secao 1.1,
+    // que guarda o que se perdeu. CC 21 voltou a ficar livre.
     int p_dly_time;   // → módulo RNBO "dly_time"
     int p_dly_mix[kCadeias];    // → módulo RNBO "dly_mix"
     int p_dly_on[kCadeias];     // 0/1 — chave própria (o mix deixa de ser a chave)
@@ -342,7 +344,17 @@ struct Manifest
     // e phaser. Reaceite pelo IFA10000 esta pendente.
     int p_wrb_on[kCadeias];     // chave, POR CANAL
     int p_wrb_mix[kCadeias];    // dry/wet, POR CANAL
-    int p_wrb_rate[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
+// ---- TAROLATOR ----
+    // Nome do dB, e o nome e o diagnostico: nasceu oitavador e nao produz
+    // oitava — numa membrana os modos sao inarmonicos e o divisor treme,
+    // gerando rajada de ruido com o envelope da pancada. Ver tarol.h.
+    //
+    // DUAS CHAVES SO. O tom e o rastreio ficaram FIXOS nos numeros que
+    // produziram o som aprovado: como params davam curso morto, e a regra
+    // e SE NAO SOA, NAO FICA.
+    int p_tarol_on[kCadeias];
+    int p_tarol_mix[kCadeias];
+        int p_wrb_rate[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
     int p_wrb_depth[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
     int p_wrb_irreg[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
 
@@ -753,8 +765,6 @@ struct Manifest
         // defeito novo.
         //
         // norm para 8.0 = topo da faixa = 1.0
-        p_in_gain[0] = t.Add("in_gain_a", 0.0f, 1.f, 8.f, 2.0f); // nasce 1x
-        p_in_gain[1] = t.Add("in_gain_b", 0.0f, 1.f, 8.f, 2.0f);
         // os params do módulo já são 0–1 no export, então min/max reais
         // coincidem com o normalizado e a conversão é identidade.
         // curve 2.5 no dly_time: ERGONOMIA, não DSP. O parâmetro do
@@ -986,8 +996,41 @@ struct Manifest
         p_wrb_on[1]    = t.Add("wrb_on_b",    0.0f, 0.f, 1.f);
         p_wrb_mix[0]   = t.Add("wrb_mix_a",   0.0f, 0.f, 1.f);
         p_wrb_mix[1]   = t.Add("wrb_mix_b",   0.0f, 0.f, 1.f);
-        p_wrb_rate[0] = t.Add("wrb_rate_a", 0.0f, 0.05f, 3.f, 2.0f);
-        p_wrb_rate[1] = t.Add("wrb_rate_b", 0.0f, 0.05f, 3.f, 2.0f);
+        // 0,5–12 Hz desde 28/08, por veredito de ouvido do dB: "vai de
+        // muito devagar a devagar". Era 0,05–3 Hz com curva 2.0, e as duas
+        // coisas empurravam para o mesmo lado — a meio do curso dava
+        // 0,79 Hz, e o TOPO eram 3 Hz, que ja e lento.
+        //
+        // A curva 2.0 FICA: com o minimo em 0,5 o extremo lento deixou de
+        // ser sub-audio, e a curva continua a dar resolucao onde o gesto
+        // e fino. A meio do curso passa a dar ~3,4 Hz — onde ficava o
+        // maximo antigo —, entao tudo o que existia mora agora na metade
+        // de baixo, e a de cima e territorio novo.
+        //
+        // MUDAR FAIXA NAO MUDA O HASH DO MAPA (ele cobre nomes), mas MUDA
+        // o real que um preset velho produziria: o preset guarda o
+        // normalizado. Saiu de graca porque ainda nao existe preset nenhum.
+        // TAROLATOR: nasce DESLIGADO. Feature nova que nasce a mudar o som
+        // e feature que se descobre pelo susto.
+        p_tarol_on[0]  = t.Add("tarol_on_a",  0.0f, 0.f, 1.f);
+        p_tarol_on[1]  = t.Add("tarol_on_b",  0.0f, 0.f, 1.f);
+        // MIX ATE 4x, COM CURVA 0.5, e as duas coisas vem do mesmo relato:
+        // na primeira versao (0–1, linear) o dB so ouvia o efeito no topo
+        // do fader — dois tercos de curso morto.
+        //
+        // O 4x e o teto UTIL, nao um numero redondo: acima disso o tarol
+        // domina a cadeia por completo e o limiter grampeia, entao mais
+        // ganho deixa de significar mais efeito. 100% e o maximo que este
+        // efeito consegue gerar, que foi o pedido.
+        //
+        // A curva 0.5 puxa a resolucao para BAIXO (o contrario do usual
+        // neste manifest): a 10% do curso ja da 1,26x, que e onde o efeito
+        // comecava a ser audivel antes. Assim o fader inteiro faz alguma
+        // coisa — SE NAO SOA, NAO FICA vale tambem para pedacos de curso.
+        p_tarol_mix[0] = t.Add("tarol_mix_a", 0.5f, 0.f, 4.f, 0.5f);
+        p_tarol_mix[1] = t.Add("tarol_mix_b", 0.5f, 0.f, 4.f, 0.5f);
+        p_wrb_rate[0] = t.Add("wrb_rate_a", 0.0f, 0.5f, 12.f, 2.0f);
+        p_wrb_rate[1] = t.Add("wrb_rate_b", 0.0f, 0.5f, 12.f, 2.0f);
         p_wrb_depth[0] = t.Add("wrb_depth_a", 0.0f, 0.f, 3.f);
         p_wrb_depth[1] = t.Add("wrb_depth_b", 0.0f, 0.f, 3.f);
         p_wrb_irreg[0] = t.Add("wrb_irreg_a", 0.0f, 0.f, 1.f);
@@ -1383,8 +1426,6 @@ struct Manifest
         // o que faz a recusa de 3 e 4 ser barata no voo B.
         // ============================================================
         AddMidi(20, p_piezo_mix, kCanalCompart);        // 64 = centro, as duas cadeias   // COMPARTILHADO: so ch1
-        AddMidi(21, p_in_gain[0], kCanalEntradaA);
-        AddMidi(21, p_in_gain[1], kCanalEntradaB);
         AddMidi(23, p_gate_thresh[0], kCanalEntradaA);   // em 0 o gate e PULADO
         AddMidi(23, p_gate_thresh[1], kCanalEntradaB);
         AddMidi(25, p_gate_release[0], kCanalEntradaA);
@@ -1439,7 +1480,14 @@ struct Manifest
         AddMidi(51, p_wrb_mix[0], kCanalEntradaA);
         AddMidi(50, p_wrb_on[1], kCanalEntradaB);
         AddMidi(51, p_wrb_mix[1], kCanalEntradaB);
-        AddMidi(54, p_wrb_rate[0], kCanalEntradaA);
+// TAROLATOR no bloco 80 — uma decada por familia, como drive 30,
+        // phaser 40, warble 50, delay 60. O 82 sobrou quando o `tone`
+        // virou constante.
+        AddMidi(80, p_tarol_on[0], kCanalEntradaA);
+        AddMidi(80, p_tarol_on[1], kCanalEntradaB);
+        AddMidi(81, p_tarol_mix[0], kCanalEntradaA);
+        AddMidi(81, p_tarol_mix[1], kCanalEntradaB);
+                AddMidi(54, p_wrb_rate[0], kCanalEntradaA);
         AddMidi(54, p_wrb_rate[1], kCanalEntradaB);
         AddMidi(55, p_wrb_depth[0], kCanalEntradaA);
         AddMidi(55, p_wrb_depth[1], kCanalEntradaB);

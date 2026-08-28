@@ -972,7 +972,15 @@ necessário** — RESET e toca.
 | `gov_ceiling` | 0.85 | proteção, não cor |
 | `fx2_on` / `buzios_on` | **1 / 1** | nascem ligados |
 
-### `in_gain` — pós-fonte, PRÉ-GATE
+### ~~`in_gain` — pós-fonte, PRÉ-GATE~~ 🗑️ REMOVIDO 28/08
+
+> **O param saiu, e este registo fica.** O `Governor` é um AGC: 18 dB postos
+> no `in_gain` eram 18 dB que ele tirava adiante, e a saída não mudava — o
+> único efeito audível era o degrau, porque o ganho era lido por bloco e
+> aplicado por amostra. **Se não soa, não fica.**
+>
+> O teste abaixo continua verdadeiro sobre o que mediu na altura; o que
+> mudou foi o instrumento.
 
 A promessa mais antiga deste manifest, cumprida no lugar que ela mesma
 reservou no primeiro dia: *"o ganho de compensação do piezo NÃO mora no

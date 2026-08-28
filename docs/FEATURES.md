@@ -1,4 +1,6 @@
 # FEATURES — a caixa única
+<!-- doc-check: ignore in_gain_a (REMOVIDO em 28/08. A lapide fica de proposito: e ela que impede alguem de o reintroduzir sem ler por que saiu, e o que se perdeu com ele.) -->
+<!-- doc-check: ignore in_gain_b (idem) -->
 
 **Documento vivo v0.1.0 · 2026-08-18**
 
@@ -32,7 +34,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 | Feature | Params | CC | Estado |
 |---|---|---|---|
 | **Fonte** — crossfade piezo/jack + tom de teste | `src_mix`, `tone_freq`, `tone_mix` | — | ativo (`src_mix` fora do MIDI por segurança) |
-| **Ganho de entrada** por cadeia | `in_gain_a`, `in_gain_b` | 21, 22 | ativo · nasce em **1,0×**, faixa 1–8× · **medido 22/08 com os piezos montados: não satura** (p1 −9,2 dBFS, p2 −19,5, zero clip) |
+| ~~**Ganho de entrada** por cadeia~~ | ~~`in_gain_a`, `in_gain_b`~~ | ~~21~~ | 🗑️ **REMOVIDO 28/08 — SE NÃO SOA, NÃO FICA.** O `Governor` é um AGC: 18 dB postos aqui eram 18 dB que ele tirava adiante, e a saída não mudava. O único efeito audível era o degrau. O balanço entre piezos já era do `piezo_mix`. **Perdeu-se** o casamento com transdutores de sensibilidade diferente — o governor só REDUZ; se aparecer na replicação, conserta-se no divisor da carrier board |
 | **Mix entre as CADEIAS** (shell) | `piezo_mix` | **58** | ⏳ aceite pendente · **mudou de posição no pivô**: era balanço na entrada entre sinais crus, agora mistura as duas cadeias já processadas. Lei igual: centro = as duas cheias |
 | **Tom de teste: destino** | `tone_dest` | — | ✅ 20/08 · 0=A · 1=B · **2=AMBAS (default)** · injetado **depois do gate**, senão o gate corta o próprio tom e você mede o gate |
 | **Histograma de entrada** por canal | — | — | ✅ 20/08 · `hist` / `hist reset` · baldes de 6 dB pelo expoente do float, cru **e** pós-`in_gain`, clip com latch, e o dB que falta tirar pro atenuador · +27 µs |

@@ -25,14 +25,13 @@ footer { display:block; break-inside:avoid; margin-top:2mm; padding-top:1mm;
          color:#666; }
 footer b { color:#111; }</style></head><body>
 <h1>Cotucatronics OS — Mapa de CC</h1>
-<p class="sub">GERADO por <code>gerar_ccmap.py</code> de <code>manifest.h</code> — nao editar a mao. manifest v0.85.0 · <b>91 vinculos em 52 numeros de CC</b></p>
+<p class="sub">GERADO por <code>gerar_ccmap.py</code> de <code>manifest.h</code> — nao editar a mao. manifest v0.89.0 · <b>93 vinculos em 53 numeros de CC</b></p>
 <div class="canais"><b>MANDA</b> ch1 compartilhados · ch2 cadeia A · ch3 cadeia B &nbsp;&nbsp; <b>ESCUTA</b> ch4 · ch5 · ch6<br>A regra e uma so: <b>escuta = manda + 3</b>. O mesmo numero de CC em todos os seis; o CANAL diz o destino.</div>
 <div class="cols">
 <section><h2>MISTURA</h2><table>
 <tr><td class="cc">20</td><td class="nm">piezo_mix</td><td class="ds"><b>64 = as duas cadeias cheias</b> · 0 = só A · 127 = só B</td></tr>
 </table></section>
 <section><h2>ENTRADA</h2><table>
-<tr class="par"><td class="cc">21</td><td class="nm">in_gain_a/b</td><td class="ds">1 – 8</td></tr>
 <tr class="par"><td class="cc">23</td><td class="nm">gate_thresh_a/b</td><td class="ds"></td></tr>
 <tr class="par"><td class="cc">25</td><td class="nm">gate_release_a/b</td><td class="ds">50 – 2000</td></tr>
 </table></section>
@@ -80,6 +79,10 @@ footer b { color:#111; }</style></head><body>
 <tr class="par"><td class="cc">77</td><td class="nm">shm_feedback_a/b</td><td class="ds"></td></tr>
 <tr class="par"><td class="cc">78</td><td class="nm">shm_shift_a/b</td><td class="ds">0 – 2</td></tr>
 <tr class="par"><td class="cc">79</td><td class="nm">shm_tone_a/b</td><td class="ds"></td></tr>
+</table></section>
+<section><h2>TAROLATOR</h2><table>
+<tr class="par"><td class="cc">80</td><td class="nm">tarol_on_a/b</td><td class="ds"><b>TAROLATOR</b> — ruído percussivo com o envelope da pancada; nasceu oitavador e não faz oitava</td></tr>
+<tr class="par"><td class="cc">81</td><td class="nm">tarol_mix_a/b</td><td class="ds">0…4× — 100% é o máximo que o efeito gera; acima disso o limiter grampeia</td></tr>
 </table></section>
 <section><h2>BÚZIOS</h2><table>
 <tr><td class="cc">90</td><td class="nm">buzios_on</td><td class="ds"></td></tr>

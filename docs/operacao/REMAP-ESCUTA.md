@@ -19,8 +19,6 @@ Escuta = manda + 3. Mesmo número de CC nos seis.
 |---|---|---|---|
 | 100 | ch1 | ch4 | `level` |
 | 20 | ch1 | ch4 | `piezo_mix` |
-| 21 | ch2 | ch5 | `in_gain_a` |
-| 21 | ch3 | ch6 | `in_gain_b` |
 
 *4 widgets · acumulado: 4*
 

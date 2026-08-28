@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.185.0"
+#define COTUCA_OS_VERSION "0.190.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -51,6 +51,7 @@ static inline int CadeiaDoParam(int c) { return g_dup_por_cadeia ? c : 0; }
 // e o detune custava 125 us, cinco vezes o phaser). O arquivo segue no
 // repo, intacto e revivivel. Ver docs/FEATURES.md, secao Arquivo.
 #include "suave.h"
+#include "tarol.h"
 #include "delay.h"
 #include "qspi_raw.h"
 #include "midi.h"
@@ -1109,6 +1110,13 @@ static cotuca::Suave       suave_dir_l, suave_dir_r;
 //
 // Indice: [2*c + 0] = cadeia c -> OUT_L, [2*c + 1] = cadeia c -> OUT_R.
 // Custo: 4 x 256 x 4 = 4 KB de SRAM, estatico, sem alocacao.
+// ---- TAROLATOR, um por cadeia ----
+// Custa ~17 us cada (medido em A/B no mesmo binario) e por isso NAO entra
+// na ordem de sacrificio: efeito que so some sob carga desapareceria
+// exatamente quando se toca forte.
+static cotuca::Tarol       tarol[cotuca::Manifest::kCadeias];
+static cotuca::Suave       suave_tarol[cotuca::Manifest::kCadeias];
+
 static cotuca::Suave       suave_mat[4];
 static float               mat_g[4][kMaxBlock];
 
@@ -1744,9 +1752,9 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
     // 1) DUAS CADEIAS DE CARATER — uma por piezo, em paralelo.
     //
-    //   p1 -> in_gain_A -> gate_A -> [DRIVE PHASER WARBLE] -\
+    //   p1 -> gate_A -> [DRIVE PHASER WARBLE] -\
     //                                                        MIX -> cauda
-    //   p2 -> in_gain_B -> gate_B -> [DRIVE PHASER WARBLE] -/
+    //   p2 -> gate_B -> [DRIVE PHASER WARBLE] -/
     //
     // O gate e o ganho duplicam pelo mesmo motivo dos efeitos: um limiar
     // que deixa a raspagem da mola passar abre demais pro tambor.
@@ -1773,10 +1781,32 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         Cadeia&      k = cad[c];
         float* const b = k.buf;
 
-        // 1.1) ENTRADA + GANHO
-        const float ig = params.Real(manifest.p_in_gain[c]);
+        // 1.1) ENTRADA
+        //
+        // O `in_gain` FOI REMOVIDO em 28/08, por veredito de ouvido e com
+        // mecanismo conhecido: o `Governor` e um AGC — mantem o sinal no
+        // tecto ajustando o proprio ganho —, entao subir 18 dB aqui era
+        // 18 dB que ele baixava adiante. Saida inalterada. O unico efeito
+        // audivel do fader era o DEGRAU, porque o ganho era lido por
+        // bloco e aplicado por amostra.
+        //
+        // E o balanco entre os dois piezos ja era feito pelo `piezo_mix`,
+        // que e balanco de verdade e nao dois ganhos independentes a
+        // disputar o mesmo teto.
+        //
+        // A REGRA QUE ISTO CRIOU, e ela e do dB: SE NAO SOA, NAO FICA.
+        // Controlo que nao muda o som gasta fader, CC, slot de preset, e
+        // ensina que controlos podem ser inertes — que e pior que a soma
+        // dessas coisas.
+        //
+        // O QUE SE PERDEU, escrito para nao ser redescoberto: o casamento
+        // com transdutores de sensibilidade diferente. O governor so
+        // REDUZ; um piezo 20 dB mais fraco nao tem como entrar na faixa
+        // util por software. Se isso aparecer na replicacao, o conserto e
+        // de hardware — os pads do divisor na carrier board — ou volta um
+        // ganho de BANCADA, fora da performance.
         for(size_t i = 0; i < size; i++)
-            b[i] = has_in ? in[c][i] * ig : 0.f;
+            b[i] = has_in ? in[c][i] : 0.f;
 
         // 1.2) GATE — por cadeia
         // CUSTO ZERO COM O PORTAO ABERTO. `thresh` em 0 e o default e
@@ -1804,6 +1834,29 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         }
         else
             k.gate_ativo = false;
+
+        // 1.2b) TAROLATOR — depois do gate, ANTES do drive.
+        //
+        // DEPOIS DO GATE porque o divisor precisa de um sinal ja limpo do
+        // chao de ruido: cruzamento por zero em ruido produz uma oitava
+        // aleatoria, e o portao interno dele e a segunda defesa, nao a
+        // primeira.
+        //
+        // ANTES DO DRIVE porque corpo tem de ser FONTE, nao camada por
+        // cima: o drive, o phaser e a sala devem trabalhar sobre o som ja
+        // com fundamental, e nao ao lado dela. Poe-lo no fim daria uma
+        // oitava colada, audivel como um segundo instrumento.
+        //
+        // CAMADA PARALELA, nao substituicao: o seco passa inteiro e o
+        // tarol SOMA-SE. E por isso que o `Processa` devolve so o efeito —
+        // quem dosa e daqui, onde se ve.
+        {
+            const float alvo_tar = params.Real(manifest.p_tarol_on[c]) >= 0.5f
+                                       ? params.Real(manifest.p_tarol_mix[c]) : 0.f;
+            if(alvo_tar > 0.f || suave_tarol[c].Valor() > 1e-4f)
+                for(size_t i = 0; i < size; i++)
+                    b[i] += tarol[c].Processa(b[i]) * suave_tarol[c].Passo(alvo_tar);
+        }
 
         // 1.3) TOM DE TESTE — DEPOIS DO GATE, e o ponto e documentado.
         //
@@ -2125,10 +2178,30 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             // porque ele NAO tem sala propria: ele e esta sala
             // realimentada com pitch, e entra pelo mesmo caminho.
             const bool  rev_quer = params.Real(manifest.p_rev_on[c]) >= 0.5f;
-            const float alvo = rev_quer ? 1.f : 0.f;
-            if(alvo < 0.5f && e.suave.Valor() <= 0.0001f) continue;
-            const float env = rev_quer ? params.Real(manifest.p_rev_mix[c]) : 0.f;
             const bool  shm_quer = params.Real(manifest.p_shm_on[c]) >= 0.5f;
+            // O SHIMMER ABRE O ESPACO SOZINHO (28/08). Ate aqui o bloco so
+            // corria com `rev_on`, e o envio ficava em zero sem ele: ligar
+            // `shm_on` com o reverb desligado nao fazia NADA. Confuso para
+            // quem toca, e com razao — a chave existia e era surda.
+            //
+            // O QUE NAO MUDA, porque e fisico: o shimmer NAO tem sala
+            // propria. Ele E esta sala realimentada com pitch. Com
+            // `shm_on` sozinho vem cauda de sala junto, e o que a molda e
+            // `rev_size`/`rev_damp` — sala curta e amortecida le como eco
+            // com pitch, sala grande le como lavagem. Shimmer mesmo seco
+            // exigiria uma segunda sala: outro custo, outra conversa.
+            const bool  quer = rev_quer || shm_quer;
+            const float alvo = quer ? 1.f : 0.f;
+            if(alvo < 0.5f && e.suave.Valor() <= 0.0001f) continue;
+            // O ENVIO ABRE PELO QUE PEDIR MAIS, e nao pela soma nem por um
+            // dos dois: `shm_mix` continua a querer dizer "quanto shimmer"
+            // e `rev_mix` "quanto sala". Fazer o envio ser `shm_mix` quando
+            // so o shimmer esta ligado daria DOIS empregos ao mesmo param —
+            // a familia C do audit, e o conserto de um emprego estraga o
+            // outro.
+            const float env_rev = rev_quer ? params.Real(manifest.p_rev_mix[c]) : 0.f;
+            const float env_shm = shm_quer ? params.Real(manifest.p_shm_mix[c]) : 0.f;
+            const float env = env_rev > env_shm ? env_rev : env_shm;
             e.reverb.SetSize(params.Real(manifest.p_rev_size[c]));
             e.reverb.SetDamp(params.Real(manifest.p_rev_damp[c]));
             // Com UMA sala por cadeia a molhadura ainda tem um valor so
@@ -3600,6 +3673,28 @@ static void HandleLine(const char* line)
         // que ja obrigou o `tabelas:` a existir aqui. Estouro do mapa de
         // preset trunca a captura EM SILENCIO: o preset guarda menos
         // params do que devia e carrega-se sem se queixar.
+        // ATRASO DA DRENAGEM DE MIDI — o sensor que faltava. Em 28/08 a
+        // placa travou num laco de drenagem sem fronteira e NADA o disse:
+        // o unico sintoma era o LED da fase a piscar 6 para sempre. Zero
+        // aqui = a drenagem acompanha. A subir = ela esta a perder.
+        // O LIMIAR NAO E "sobrou alguma coisa". Com o instantaneo do
+        // `m_head`, sobrar e NORMAL: o que chega durante a drenagem
+        // espera a volta seguinte, e e esse o contrato. A primeira versao
+        // deste alarme disparava com 9 bytes numa volta — operacao
+        // perfeitamente sa — e alarme que grita no normal ensina o
+        // operador a ignora-lo, que e o carimbo a aparecer do outro lado.
+        //
+        // O que e ANORMAL e a sobra a aproximar-se do anel: ai a drenagem
+        // esta mesmo a perder, e o proximo passo e descartar byte.
+        {
+            const unsigned long sob = (unsigned long)hal::MidiSobraPico();
+            hal::Log("midi: %lu volta(s) com sobra · pico %lu de %d bytes"
+                     " do anel%s",
+                     (unsigned long)hal::MidiAtrasos(), sob,
+                     (int)hal::MidiRingTam(),
+                     sob * 2 >= (unsigned long)hal::MidiRingTam()
+                         ? "   *** a drenagem esta a perder ***" : "");
+        }
         hal::Log("presets: mapa 0x%04X | %d/%d por cadeia + %d/%d global%s",
                  (unsigned)mapa_hash, pmapa.n_cadeia, (int)cotuca::kMaxPresetVals,
                  pmapa.n_global, (int)cotuca::kMaxPresetVals,
@@ -4072,7 +4167,6 @@ static void HandleLine(const char* line)
             hal::Log("hist: nada medido ainda (`hist reset` e toque)");
             return;
         }
-        const float ig = params.Real(manifest.p_in_gain[0]);
         // O REGIME NAO ESTA NO ALCANCE DESTE COMANDO, E ELE DIZ ISSO.
         //
         // Em 20/08 a entrada foi medida com dedo direto no disco solto e
@@ -4084,7 +4178,7 @@ static void HandleLine(const char* line)
         // O firmware nao tem como saber se o piezo esta colado na
         // escultura ou solto na bancada. O que ele pode fazer e nao
         // deixar o leitor esquecer que essa pergunta existe.
-        hal::Log("HISTOGRAMA DE ENTRADA  (in_gain %.2fx)", (double)ig);
+        hal::Log("HISTOGRAMA DE ENTRADA");
         hal::Log("  REGIME: nao sei qual e — declare voce. Piezo solto"
                  " batido a dedo e piezo");
         hal::Log("  montado excitado por vibracao sao instrumentos"
@@ -4154,7 +4248,6 @@ static void HandleLine(const char* line)
         // ENTRADA CRUA POR CANAL, primeiro: e a pergunta mais barata
         // de responder e a que mais vezes ficou sem resposta.
         {
-            const float ig = params.Real(manifest.p_in_gain[0]);
             auto dbfs = [](float v) {
                 return v > 1e-7f ? 20.f * log10f(v) : -140.f;
             };
@@ -4165,11 +4258,13 @@ static void HandleLine(const char* line)
             hal::Log("  IN_R (p2): pico %.5f = %6.1f dBFS | %lu amostras | clip %lu",
                      (double)in_pk_r, (double)dbfs(in_pk_r),
                      (unsigned long)in_n_r, (unsigned long)in_clip_r);
-            hal::Log("  com in_gain %.2fx: L -> %.1f dBFS | R -> %.1f dBFS%s",
-                     (double)ig, (double)dbfs(in_pk_l * ig),
-                     (double)dbfs(in_pk_r * ig),
-                     (in_pk_l * ig >= 1.f || in_pk_r * ig >= 1.f)
-                         ? "   *** SATURA ***" : "");
+            // SEM `in_gain` DESDE 28/08: a entrada vai crua para a cadeia,
+            // entao o pico cru JA E o que a cadeia recebe. A linha que
+            // projetava o ganho saiu com ele — projecao de um ganho que
+            // nao existe e numero com cara de dado.
+            if(in_pk_l >= 0.99f || in_pk_r >= 0.99f)
+                hal::Log("  *** NO TETO — a fonte esta a saturar antes da"
+                         " placa; atenue no hardware.");
             if(in_n_l == 0 && in_n_r == 0)
                 hal::Log("  os DOIS mudos — ninguem tocou, ou a entrada nao chega");
             else if(in_n_r == 0)
@@ -4824,6 +4919,11 @@ int main(void)
         // ninguem o pediu.
         for(int i = 0; i < 4; i++)
             suave_mat[i].Init(hal::Info().sample_rate, 20.f, 1.f);
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+        {
+            tarol[c].Init(hal::Info().sample_rate);
+            suave_tarol[c].Init(hal::Info().sample_rate, 20.f, 0.f);
+        }
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um

@@ -6,9 +6,9 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-08-28 · leva: **matriz de roteamento 2×2** com T7c medido
-> e passado nos seis critérios · **OLED vivo pela primeira vez** · três
-> encoders a contar, com o G invertido no `kEncPin`
+> Atualizado em 2026-08-28 · leva: **matriz de roteamento 2×2** medida ·
+> **OLED vivo** e três encoders a contar · **livelock do MIDI consertado** ·
+> `in_gain` removido · **tarolator**, efeito novo nascido de uma medição
 
 ---
 
@@ -245,6 +245,52 @@ intermitência correlacionada com manuseio é o diagnóstico, não ruído.
 O ponto fraco continua lá e vai reabrir. **Resoldar antes da galeria.** O push
 tem circuito próprio no EC11, o que explica ele ter sobrevivido enquanto as
 duas fases morriam juntas: elas partilham um comum que o botão não usa.
+
+---
+
+## 28/08, fim do dia — a sessão de escuta e o que ela cobrou
+
+**🔴 A placa travou, e o LED de fase foi quem a encontrou.** O `PollMidi`
+drenava com `while(m_tail != m_head)` — condição que persegue um ponteiro
+escrito pela ISR. Sob tráfego BLE contínuo o laço nunca terminava: áudio a
+tocar, tela congelada, serial calada, e nenhum vigia disparou porque a
+chamada sempre retorna. Consertado com instantâneo do ponteiro, **e o irmão
+`PollSerial` levou o mesmo**. O `board` passou a declarar o atraso da
+drenagem — sensor que teria denunciado isto antes de travar.
+
+**🗑️ `in_gain` REMOVIDO — "se não soa, não fica"** (regra do dB). O
+`Governor` é um AGC: 18 dB postos no `in_gain` eram 18 dB que ele tirava
+adiante. O controlo funcionava e era inaudível **por construção**; só restava
+o degrau. Deep clean em código, geradores e sete documentos. **CC 21 livre.**
+
+⚠️ **O que se perdeu:** o casamento com transdutores de sensibilidade
+diferente. O governor só REDUZ. Se aparecer na replicação, conserta-se no
+divisor da carrier board — a lápide está no `FEATURES.md` e no `TESTES.md`.
+
+**🥁 TAROLATOR — efeito novo** (`tarol_on` cc80, `tarol_mix` cc81, por
+cadeia). Nasceu oitavador por divisão de frequência, e não faz oitava: numa
+membrana os modos são inarmónicos e o divisor treme, gerando ruído
+percussivo com o envelope da pancada. **O dB gostou e deu-lhe o nome certo.**
+Tom e rastreio fixos (6000 e 1200 Hz); `mix` 0–4× com curva 0.5, porque
+0–1 linear deixava dois terços de fader mortos. Custo **+2,9 %** nas duas
+cadeias, medido em A/B no mesmo binário — não entra na ordem de sacrifício.
+
+**Também:** `wrb_rate` passou a **0,5–12 Hz** (era 0,05–3, e o topo já era
+lento); **`shm_on` abre o espaço sozinho** — antes só corria com `rev_on`, e
+a chave existia surda.
+
+### A medição que mudou o desenho
+
+A membrana foi medida em vez de descrita: **76,5 % da energia entre 640 e
+1280 Hz, ZERO abaixo de 160 Hz**, modo dominante em **768 Hz**. "Magro" é
+literal. Isso matou a sugestão de drive (acrescentaria onde já sobra) e
+ressuscitou o oitavador que eu tinha objectado — a fundamental não era grave.
+
+### Entrada
+
+Piezos a **−17 dBFS** (corda, toque normal), **−7,5** (corda, forte) e
+**−21,3** (membrana). A membrana chega **14 dB abaixo** da corda. Separação
+entre os dois piezos através do corpo: **34 dB**.
 
 ---
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_ccmap v0.3.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
+"""gerar_ccmap v0.6.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
 
 Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
 se dar por novo um ficheiro que ja tinha historia.
@@ -52,9 +52,9 @@ for m in re.finditer(
         src):
     faixas[m.group(1)] = (m.group(3), m.group(4))
 
-FAMILIAS = [('piezo', 'mistura'), ('in_gain', 'entrada'), ('gate', 'entrada'),
+FAMILIAS = [('piezo', 'mistura'), ('gate', 'entrada'),
             ('drv', 'drive'), ('phs', 'phaser'), ('wrb', 'warble'),
-            ('dly', 'delay'), ('frz', 'freeze'), ('rev', 'reverb'),
+            ('dly', 'delay'), ('tarol', 'tarolator'), ('frz', 'freeze'), ('rev', 'reverb'),
             ('shm', 'shimmer'), ('buzios', 'búzios'), ('tone', 'tom'),
             ('level', 'saída'), ('exc', 'saída'), ('gov', 'proteção'),
             ('shift', 'proteção'), ('route', 'saída'), ('bench', 'bancada'),
@@ -74,7 +74,6 @@ FAMILIAS = [('piezo', 'mistura'), ('in_gain', 'entrada'), ('gate', 'entrada'),
 # Nota orfa — de param que ja nao existe — e denunciada ao gerar.
 NOTAS = {
     "piezo_mix": "<b>64 = as duas cadeias cheias</b> · 0 = só A · 127 = só B",
-    "in_gain_a": "1…8×",
     "gate_thresh_a": "<b>em 0 o gate é PULADO</b>",
     "gate_release_a": "50…2000 ms",
     "drv_drive": "1,5…48×",
@@ -99,6 +98,8 @@ NOTAS = {
     "shm_tone_a": "<b>sobe pra clarear</b>",
     "buzios_cooldown": "10…1000 ms · 2 batidas rápidas = 1",
     "tone_freq": "80…2000 Hz · nasce em 848",
+    "tarol_on": "<b>TAROLATOR</b> — ruído percussivo com o envelope da pancada; nasceu oitavador e não faz oitava",
+    "tarol_mix": "0…4× — 100% é o máximo que o efeito gera; acima disso o limiter grampeia",
     "tone_dest": "<b>0=A+B</b> · 1=A · 2=B",
     "exc_on_a": "<b>gateia a proteção do ramo</b>",
     "shift_hz": "<b>compartilhado</b> pelos dois ramos",
@@ -171,7 +172,7 @@ def html(linhas_dados, versoes, ncc):
            '<div class="cols">']
     for fam in sorted(por_fam, key=lambda f: por_fam[f][0][0]):
         out.append('<section><h2>%s</h2><table>' % fam.upper())
-        # COLAPSA O PAR NUMA LINHA. `in_gain_a` e `in_gain_b` partilham o
+        # COLAPSA O PAR NUMA LINHA. `drv_drive_a` e `drv_drive_b` partilham o
         # numero de CC, a nota e a faixa — so o CANAL os distingue, e isso
         # ja esta na legenda do topo. Duas linhas quase iguais gastavam
         # metade do cartao e empurravam-no para uma segunda folha, que e
@@ -262,7 +263,7 @@ if faltando:
     sys.exit(1)
 
 ncc = len({d[0] for d in dados})
-tabela = ("<!-- gerado por gerar_ccmap v0.3.0 de %s — nao editar a mao -->\n"
+tabela = ("<!-- gerado por gerar_ccmap v0.6.0 de %s — nao editar a mao -->\n"
           "| CC | manda | escuta | param | família | faixa real |\n"
           "|---|---|---|---|---|---|\n%s\n\n"
           "<!-- %d vinculos em %d numeros de CC -->"

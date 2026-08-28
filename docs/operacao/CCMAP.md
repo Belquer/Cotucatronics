@@ -49,12 +49,10 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 
 ## Tabela
 
-<!-- gerado por gerar_ccmap v0.3.0 de manifest.h — nao editar a mao -->
+<!-- gerado por gerar_ccmap v0.6.0 de manifest.h — nao editar a mao -->
 | CC | manda | escuta | param | família | faixa real |
 |---|---|---|---|---|---|
 | 20 | ch1 | ch4 | `piezo_mix` | mistura | -1 – 1 |
-| 21 | ch2 | ch5 | `in_gain_a` | entrada | 1 – 8 |
-| 21 | ch3 | ch6 | `in_gain_b` | entrada | 1 – 8 |
 | 23 | ch2 | ch5 | `gate_thresh_a` | entrada | 0 – 1 |
 | 23 | ch3 | ch6 | `gate_thresh_b` | entrada | 0 – 1 |
 | 25 | ch2 | ch5 | `gate_release_a` | entrada | 50 – 2000 |
@@ -85,8 +83,8 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 50 | ch3 | ch6 | `wrb_on_b` | warble | 0 – 1 |
 | 51 | ch2 | ch5 | `wrb_mix_a` | warble | 0 – 1 |
 | 51 | ch3 | ch6 | `wrb_mix_b` | warble | 0 – 1 |
-| 54 | ch2 | ch5 | `wrb_rate_a` | warble | 0.05 – 3 |
-| 54 | ch3 | ch6 | `wrb_rate_b` | warble | 0.05 – 3 |
+| 54 | ch2 | ch5 | `wrb_rate_a` | warble | 0.5 – 12 |
+| 54 | ch3 | ch6 | `wrb_rate_b` | warble | 0.5 – 12 |
 | 55 | ch2 | ch5 | `wrb_depth_a` | warble | 0 – 3 |
 | 55 | ch3 | ch6 | `wrb_depth_b` | warble | 0 – 3 |
 | 56 | ch2 | ch5 | `wrb_irreg_a` | warble | 0 – 1 |
@@ -120,6 +118,10 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 78 | ch3 | ch6 | `shm_shift_b` | shimmer | 0 – 2 |
 | 79 | ch2 | ch5 | `shm_tone_a` | shimmer | 0 – 1 |
 | 79 | ch3 | ch6 | `shm_tone_b` | shimmer | 0 – 1 |
+| 80 | ch2 | ch5 | `tarol_on_a` | tarolator | 0 – 1 |
+| 80 | ch3 | ch6 | `tarol_on_b` | tarolator | 0 – 1 |
+| 81 | ch2 | ch5 | `tarol_mix_a` | tarolator | 0 – 4 |
+| 81 | ch3 | ch6 | `tarol_mix_b` | tarolator | 0 – 4 |
 | 90 | ch1 | ch4 | `buzios_on` | búzios | 0 – 1 |
 | 91 | ch1 | ch4 | `buzios_thresh` | búzios | 0 – 1 |
 | 92 | ch1 | ch4 | `buzios_cooldown` | búzios | 10 – 1000 |
@@ -144,4 +146,4 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 115 | ch2 | ch5 | `bench_boost_a` | bancada | 1 – 8 |
 | 115 | ch3 | ch6 | `bench_boost_b` | bancada | 1 – 8 |
 
-<!-- 91 vinculos em 52 numeros de CC -->
+<!-- 93 vinculos em 53 numeros de CC -->

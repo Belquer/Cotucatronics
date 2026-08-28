@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.44.0
+// hal_daisy_seed v0.45.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.44.0"
+#define COTUCA_HAL_VERSION "0.45.0"
 
 using namespace daisy;
 
@@ -590,7 +590,13 @@ void SetSerialLineCallback(SerialLineCallback cb) { line_cb = cb; }
 void PollSerial()
 {
     // drena a fila em contexto normal, onde Log() pode transmitir
-    while(q_tail != q_head)
+    // INSTANTANEO PELO MESMO MOTIVO, e este e o IRMAO: forma identica, so
+    // a exposicao difere. Esta fila e alimentada por alguem a escrever,
+    // que nao ganha a drenagem; a do MIDI, por uma maquina a 31250 baud,
+    // que ganha. Consertar so a que mordeu deixaria a outra a espera do
+    // dia em que alguem cole um ficheiro inteiro na serial.
+    const uint32_t qhead = q_head;
+    while(q_tail != qhead)
     {
         // M1/M2 cercam o line_cb. M1 == M2 significa que todo comando
         // que entrou tambem saiu: a prisao seria o proprio while da
@@ -655,7 +661,9 @@ constexpr size_t kMidiRing = 128;
 static uint8_t           midi_ring[kMidiRing];
 static volatile uint32_t m_head       = 0;
 static volatile uint32_t m_tail       = 0;
-static volatile uint32_t midi_dropped = 0;
+static volatile uint32_t midi_dropped    = 0;
+static uint32_t          midi_atrasos    = 0; // voltas que deixaram bytes
+static uint32_t          midi_sobra_pico = 0; // maior sobra numa volta
 static volatile uint32_t midi_err      = 0; // erros de UART na ISR
 static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
 // MARCA D'AGUA DA FILA. O furo conhecido do MIDI: os bytes chegam por
@@ -771,14 +779,42 @@ void PollMidi()
 
     // Despacha em contexto normal, onde o parser pode mexer em params
     // e o Log() pode transmitir. Mesmo contrato do PollSerial().
-    while(m_tail != m_head)
+    // INSTANTANEO DO `m_head`, e e o conserto de um LIVELOCK que travou
+    // a placa em 28/08, depois de vinte minutos de trafego BLE.
+    //
+    // Era `while(m_tail != m_head)`, com o `m_head` escrito pela ISR: a
+    // condicao de paragem PERSEGUIA UM ALVO QUE SE MOVE. Se os bytes
+    // chegam mais depressa do que o callback os consome, o laco NUNCA
+    // termina — e nao e bloqueio, e um laco que corre para sempre, por
+    // isso nenhum vigia de 'chamada que nao retorna' o apanhava. O audio
+    // continuou (e interrupcao), a tela congelou, a serial calou, e o
+    // instrumento de fase piscou 6 para sempre.
+    //
+    // Basta o callback ser MODERADAMENTE lento: a 31250 baud entra um
+    // byte a cada 320 us, e o `Log()` com o host desconectado gasta
+    // muito mais que isso. Ai o laco fecha-se sobre si proprio.
+    const uint32_t head = m_head;
+    while(m_tail != head)
     {
         const uint8_t b = midi_ring[m_tail];
         m_tail          = (m_tail + 1) % kMidiRing;
         if(midi_cb)
             midi_cb(b);
     }
+    // ATRASO CRONICO SE DECLARA. Sobra depois da drenagem significa que
+    // ela nao acompanha a entrada — era isto que teria denunciado o
+    // livelock antes de ele travar a placa.
+    if(m_tail != m_head)
+    {
+        midi_atrasos++;
+        const uint32_t sobra = (m_head + kMidiRing - m_tail) % kMidiRing;
+        if(sobra > midi_sobra_pico) midi_sobra_pico = sobra;
+    }
 }
+
+uint32_t MidiAtrasos()   { return midi_atrasos; }
+uint32_t MidiSobraPico() { return midi_sobra_pico; }
+uint32_t MidiRingTam()   { return (uint32_t)kMidiRing; }
 
 void MidiSendBytes(const uint8_t* bytes, size_t n)
 {
