@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.40.1
+// hal_daisy_seed v0.42.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.40.1"
+#define COTUCA_HAL_VERSION "0.42.0"
 
 using namespace daisy;
 
@@ -847,25 +847,66 @@ uint32_t SerialTruncadas() { return serial_truncadas; }
 static daisy::Encoder enc[kNumEncoders];
 static bool           enc_pronto = false;
 
-bool EncoderInit()
-{
-    if(enc_pronto) return true;
-    //                     fase A       fase B       push
-    enc[0].Init(seed::D0,  seed::D1,  seed::D2);
-    enc[1].Init(seed::D3,  seed::D4,  seed::D9);
-    enc[2].Init(seed::D18, seed::D19, seed::D17);
-    enc_pronto = true;
-    return true;
-}
-
-// Os mesmos pinos do EncoderInit, numa tabela para a sonda poder le-los
-// sem passar pela classe. UMA fonte: se o Init mudar e isto nao, o
-// proximo diagnostico mede o pino errado e culpa a solda certa.
+// A TABELA E A FONTE, e o `EncoderInit` LE dela — nao ao contrario.
+//
+// Ate 28/08 havia duas listas: o `Init` com os pinos escritos a mao e
+// esta tabela para a sonda. O comentario ja dizia "UMA fonte: se o Init
+// mudar e isto nao, o proximo diagnostico mede o pino errado e culpa a
+// solda certa" — e a segunda lista continuou la, a espera. No dia em que
+// o G precisou de ter as fases trocadas, trocar so uma delas teria feito
+// exactamente o que o comentario previa.
+//
+// Havia ainda uma TERCEIRA copia, os nomes em texto no `encpino` do
+// main.cpp. Vive agora aqui ao lado, e sai pelo `EncoderPinNome`.
+//
+//                       fase A       fase B       push
 static const daisy::Pin kEncPin[kNumEncoders][3] = {
     {seed::D0,  seed::D1,  seed::D2},
     {seed::D3,  seed::D4,  seed::D9},
-    {seed::D18, seed::D19, seed::D17},
+    // G COM AS FASES TROCADAS (28/08), e a historia importa porque quase
+    // me fez culpar o codigo certo.
+    //
+    // Troquei-as, o dB reportou que a contagem PAROU DE VEZ, e eu fui
+    // procurar um mapa de pinos alternativo. Estava errado: o
+    // `Encoder::Init` e o `Debounce` da libDaisy tratam `a` e `b` de
+    // forma SIMETRICA — os dois levam INPUT+PULLUP, e a deteccao de
+    // sentido e um espelho perfeito. Trocar so pode inverter, NUNCA
+    // zerar. A simetria era prova, e eu procurei explicacao noutro lado.
+    //
+    // O que tinha acontecido: as duas fases do G abriram, e o `varre`
+    // mostrou-o — quinze pinos livres, e SO o push comutava. Voltaram
+    // durante o manuseio do chicote. O defeito e INTERMITENTE e continua
+    // por resoldar; ver o STATUS.md.
+    //
+    // A troca mora AQUI e nao num sinal invertido no laco porque o
+    // sentido de um encoder E qual fase vem primeiro. Inverter o
+    // resultado depois esconderia a causa e faria a sonda mentir: o
+    // `encpino` mostraria D18 como fase A quando o firmware ja a le
+    // como B. O `enc inverte` fica como ferramenta de BANCADA, para o
+    // proximo encoder que aparecer soldado ao contrario.
+    {seed::D19, seed::D18, seed::D17},
 };
+
+static const char* kEncPinNome[kNumEncoders][3] = {
+    {"D0",  "D1",  "D2"},
+    {"D3",  "D4",  "D9"},
+    {"D19", "D18", "D17"},
+};
+
+const char* EncoderPinNome(int idx, int qual)
+{
+    if(idx < 0 || idx >= kNumEncoders || qual < 0 || qual > 2) return "??";
+    return kEncPinNome[idx][qual];
+}
+
+bool EncoderInit()
+{
+    if(enc_pronto) return true;
+    for(int e = 0; e < kNumEncoders; e++)
+        enc[e].Init(kEncPin[e][0], kEncPin[e][1], kEncPin[e][2]);
+    enc_pronto = true;
+    return true;
+}
 
 bool EncoderNivelCru(int idx, int qual)
 {

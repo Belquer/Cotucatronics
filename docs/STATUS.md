@@ -6,9 +6,9 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-08-28 · leva: **matriz de roteamento 2×2** (qual cadeia
-> entra em qual saída), `route_exciter`/`route_jack` renomeados para
-> `out_l`/`out_r`, T7c medido na placa e passado nos cinco critérios
+> Atualizado em 2026-08-28 · leva: **matriz de roteamento 2×2** com T7c medido
+> e passado nos seis critérios · **OLED vivo pela primeira vez** · três
+> encoders a contar, com o G invertido no `kEncPin`
 
 ---
 
@@ -159,6 +159,46 @@ preset nenhum, saiu de graça — foi a última janela.
 - 🟡 **Folga de params: 91/96.** Restam cinco.
 - ⚪ **`check_docs` só vigia versões em `.h`/`.cpp`.** O `nivel_tempo.py` dizia
   v0.2.0 no cabeçalho e imprimia v0.1.0, e passou.
+
+---
+
+## 28/08 — o painel: OLED vivo, três encoders a contar
+
+**O OLED funciona.** Enche, apaga e escreve texto formatado, e o espelho dos
+encoders desenha as três linhas com os contadores. Foi a primeira vez — o que
+se via antes era **imagem retida** de uma sessão anterior, porque nada
+inicializa o painel no arranque (ver cicatriz 15o).
+
+Ferramenta de bancada que ficou, e que provou os cinco fios um a um:
+
+| comando | o que faz |
+|---|---|
+| `oled` · `oled off` · `oled texto` | inicializa/enche · apaga · **escreve** (prova mais que o encher) |
+| `oledvel <2..256>` | varre o prescaler do SPI — oito velocidades |
+| `fio curto` | caça-ponte nos dez pares |
+| `fio <rst\|dc\|cs\|clk\|din> <0\|1>` | segura o pino para medir **no conector do painel** |
+| `varre` / `varre reset` | lê os **15 pinos livres** de uma vez, sem opinião |
+| `encpino` / `encpino reset` | trava por pino dos encoders, nas duas direcções |
+| `enc inverte <a\|b\|g>` | inverte o sentido **em execução**, sem gravar |
+
+⚠️ **O `varre` lê 15 dos 31 pinos.** Ficam de fora `D5`–`D8`, `D10` (OLED),
+`D13`/`D14` (MIDI) e `D22`–`D30`. Fio que vá parar a um desses não aparece.
+
+**Encoder G: fases trocadas no `kEncPin`** (`D19` fase A · `D18` fase B ·
+`D17` push), porque montado o CW contava para trás. A troca mora no mapa de
+pinos e não num sinal invertido no laço — o sentido de um encoder *é* qual
+fase vem primeiro, e inverter o resultado depois faria o `encpino` mentir.
+
+### 🔴 Defeito aberto: o encoder G é INTERMITENTE
+
+As duas fases do G **abriram durante a sessão**, sem ninguém tocar no
+hardware. O `varre` provou-o: quinze pinos livres, e só o push a comutar
+(`push 14 · crus +0`). **Voltaram durante o manuseio do chicote** — e
+intermitência correlacionada com manuseio é o diagnóstico, não ruído.
+
+O ponto fraco continua lá e vai reabrir. **Resoldar antes da galeria.** O push
+tem circuito próprio no EC11, o que explica ele ter sobrevivido enquanto as
+duas fases morriam juntas: elas partilham um comum que o botão não usa.
 
 ---
 

@@ -236,3 +236,72 @@ base suja o primeiro build falha em massa e a tentação vira baixar a régua.
 casar padrão em texto pega a cicatriz que narra a remoção. Três regras
 resolveram: nome que existe no fonte é legítimo; família conta como nome;
 aposentados vão para uma lista declarada, que vira documentação útil por si.
+
+## Âncora de edição prova EXISTÊNCIA, não unicidade
+
+O padrão que parece cuidadoso e não é:
+
+```python
+assert velho in s          # <-- só prova que existe
+s = s.replace(velho, novo, 1)   # <-- e troca o PRIMEIRO
+```
+
+Caso real (28/08). Ancorei a inserção de um subcomando em
+`if(strncmp(a, "reset", 5) == 0)`. Esse texto existe **três vezes** no
+`main.cpp` — nos comandos `varre`, `encpino` e `enc`. O bloco foi parar ao
+handler do `vistos`, quinhentas linhas acima do destino.
+
+**E então compilou, gravou e não deu erro em lado nenhum.** O comando novo
+respondia com o relatório genérico, porque o `enc` não reconhecia o
+subcomando e caía no caso final. Duas gravações com uma funcionalidade que
+simplesmente não existia — e um `vistos inverte g` acessível que ninguém ia
+digitar.
+
+O guarda custa uma linha:
+
+```python
+assert s.count(velho) == 1, "AMBIGUO: " + tag
+```
+
+**E não basta.** Depois de inserir, verifique **programaticamente** onde o
+bloco caiu, em vez de o reler e achar que está bem:
+
+```python
+alvo = [i for i, l in enumerate(linhas) if 'strncmp(a, "inverte"' in l][0]
+h    = [i for i, l in enumerate(linhas) if 'strncmp(line,' in l and i < alvo][-1]
+print("bloco dentro de:", linhas[h].strip())
+```
+
+> **Escolha âncoras com o CONTEXTO que as torna únicas** — a linha anterior, o
+> nome do handler, o comentário acima. Texto de estrutura repetida (`{`,
+> `return;`, um `if` genérico) nunca é âncora.
+
+O agravante deste caso: **eu tinha o guarda escrito noutro script da mesma
+sessão**, com a mensagem `"AMBIGUO"`. Não o apliquei aqui.
+
+> **Defesa que existe e não se aplica por hábito não é defesa: é sorte.** Se
+> um guarda vale a pena escrever uma vez, ele vira o helper que TODA edição
+> usa — não uma boa prática que se lembra quando dá jeito.
+
+## Isenção de verificador supõe um PAPEL, e refactor muda papel
+
+O `check_docs` recorta de propósito as tabelas de sonda (`kLivresPin`,
+`kEncPin`, `kPino`) antes de procurar `seed::Dnn`: sonda aponta para pinos que
+já têm dono, e sem a isenção todo pino instrumentado viraria conflito.
+
+Em 28/08 promovi o `kEncPin` a **fonte única** — o `EncoderInit` passou a ler
+dela num laço em vez de ter os pinos escritos à mão ao lado. A tabela deixou
+de ser sonda e passou a ser a declaração.
+
+O verificador continuou a recortá-la, e acusou: *"D0, D1, D2, D3, D4, D9,
+D17, D18, D19 no PINOS.md e não aparecem no fonte"* — **nove pinos, todos os
+dos encoders**. Verdade para ele, falso para a placa.
+
+> **Ao promover uma estrutura a fonte única, procure quem a estava a ignorar
+> de propósito.** Isenções são escritas contra um papel; quando o papel muda,
+> a isenção passa a mentir — e mente para o lado silencioso, porque um
+> verificador que ignora não acusa nada.
+
+Neste caso o verificador acusou, e isso foi sorte da forma do erro: ele
+comparava duas direcções. Uma isenção que só suprimisse o falso positivo teria
+ficado calada para sempre.

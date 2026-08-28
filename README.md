@@ -58,7 +58,7 @@ Cinco regras que não se negociam:
 | Arquivo | Versão | O que é |
 |---|---|---|
 | [src/hal.h](src/hal.h) | **v0.34.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.40.1** | Único arquivo que pode incluir `daisy_seed.h`. **4 botões** (D26, D24, D25 rearme CTOS, D22 freeze B) e **2 LEDs de painel** (D27, D23). Debounce de 30 ms, medido |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.42.0** | Único arquivo que pode incluir `daisy_seed.h`. **4 botões** (D26, D24, D25 rearme CTOS, D22 freeze B) e **2 LEDs de painel** (D27, D23). Debounce de 30 ms, medido. **OLED SSD1309 vivo** (SPI1: D5 RST · D6 DC · D7 CS · D8 CLK · D10 DIN) com sonda de fio e caça-ponte. **Três encoders**, e o `kEncPin` é a ÚNICA fonte — o `Init` lê dela e os nomes saem por `EncoderPinNome` |
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/freeze.h](src/freeze.h) | **v0.3.1** | Freeze granular: núcleo de 500 ms, 2 grãos sorteados, Hann. C++ puro |
 | [src/pitch.h](src/pitch.h) | **v0.5.0** | Motor de pitch compartilhado: 1 buffer, até 4 vozes. **Anti-alias automático na escrita** (Butterworth 6ª ordem, custo zero se nenhuma voz sobe). C++ puro |
@@ -75,7 +75,7 @@ Cinco regras que não se negociam:
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.4.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.178.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
+| [src/main.cpp](src/main.cpp) | **v0.182.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.9.1** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
 | [src/manifest.h](src/manifest.h) | **v0.85.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **91 vínculos em 52 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |

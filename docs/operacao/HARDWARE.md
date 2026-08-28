@@ -161,6 +161,35 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
 - **OLED Waveshare 2.42" SSD1309**, 128×64, SPI 4 fios, tradutor de tensão
   embarcado (3,3 V ok). Driver **já existe na libDaisy** (SSD130x).
   Área visível 55,01 × 27,49 mm · módulo 61,50 × 39,50 mm · conector MX1.25 7p.
+
+  **As sete cores do chicote que vem com o painel**, e o pino da Daisy de
+  cada uma. Está aqui porque cor de fio é a única etiqueta que sobrevive à
+  bancada — e em 28/08 um cabo trocado sem marca custou um diagnóstico
+  inteiro, com o defeito atribuído a um conserto que estava certo:
+
+  | cor | sinal | Daisy |
+  |---|---|---|
+  | vermelho | VCC | 3V3 |
+  | preto | GND | GND |
+  | branco | RST | **D5** |
+  | verde | DC | **D6** |
+  | laranja | CS | **D7** |
+  | amarelo | CLK | **D8** |
+  | azul | DIN (MOSI) | **D10** |
+
+  Diagnóstico na placa: `oled` inicializa e acende · `oled off` apaga ·
+  `oled texto` escreve (**prova mais que o fill**: encher pode acontecer com
+  o `DC` preso, escrever exige que ele comute) · `oledvel <2..256>` varre a
+  velocidade do SPI · `fio curto` caça pontes nos dez pares · `fio <rst|dc|
+  cs|clk|din> <0|1>` segura um pino para medir **no conector do painel**.
+
+  ⚠️ **O painel NUNCA responde** — é escrita pura, sem MISO. O firmware só
+  pode dizer *CONFIGURADO*, nunca *presente*. O único detector é o olho.
+
+  ⚠️ **Conferir os jumpers `BS` no verso do módulo.** Eles escolhem o
+  interface — 4-wire SPI, 3-wire SPI, I²C ou paralelo. Em I²C ou 3-wire o
+  pino `DC` deixa de ser `DC`, e o firmware fica a falar a língua errada num
+  painel que responde o suficiente para limpar a tela e mais nada.
 - **Encoder EC11** com detentes e push (push = confirmar). Relativo, não
   absoluto — mata o problema do salto do knob compartilhado.
 - **2 pots de volume**, um por exciter.

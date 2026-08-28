@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.9.1"
+VERSION = "0.10.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -259,12 +259,23 @@ def pinos():
     # As tabelas de SONDA apontam de proposito para pinos ja reclamados;
     # nao sao donos. Sem esta isencao todo pino instrumentado viraria
     # conflito, e o verificador so gritaria.
-    # Recorta os BLOCOS inteiros das tabelas de sonda, nao so a primeira
-    # linha delas: `kLivresPin` e `kEncPin` sao inicializadores de varias
-    # linhas, e filtrar por linha deixava passar as continuacoes — foi o
-    # que acusou seis pinos livres como se fossem donos.
+    # Recorta os BLOCOS inteiros, nao so a primeira linha: sao
+    # inicializadores de varias linhas, e filtrar por linha deixava passar
+    # as continuacoes — foi o que acusou seis pinos livres como donos.
+    #
+    # O `kEncPin` SAIU DESTA LISTA em 28/08, e a razao e uma mudanca de
+    # papel, nao um ajuste: ele era sonda enquanto o `EncoderInit` tinha
+    # os pinos escritos a mao ao lado. Passou a ser a FONTE — o `Init` le
+    # dela num laco, e os nomes saem por `EncoderPinNome`. Continuar a
+    # recorta-la fez o verificador declarar que os nove pinos dos
+    # encoders "nao aparecem no fonte", o que era verdade para ele e
+    # falso para a placa.
+    #
+    # A licao vale alem deste caso: **isencao de verificador supoe um
+    # PAPEL, e refactor muda papel.** Ao promover uma estrutura a fonte
+    # unica, procure quem a estava a ignorar de proposito.
     limpo = src
-    for nome in ("kLivresPin", "kEncPin", "kPino"):
+    for nome in ("kLivresPin", "kPino"):
         limpo = re.sub(nome + r'\s*\[[^\]]*\][^=]*=\s*\{.*?\};',
                        '', limpo, flags=re.S)
     limpo = re.sub(r'strcmp\(nome[^\n]*\n', '', limpo)

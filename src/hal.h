@@ -200,6 +200,10 @@ uint32_t         SerialTruncadas();
 // em vez de sumir.
 static constexpr int kNumEncoders = 3;
 bool             EncoderInit();
+// O NOME DO PINO VEM DO HAL, nao de uma lista no shell. Ate 28/08 o
+// `encpino` carregava os nove nomes escritos a mao: uma terceira copia
+// do mapa, noutro ficheiro, que o compilador nao consegue cruzar.
+const char*      EncoderPinNome(int idx, int qual);   // qual: 0=faseA 1=faseB 2=push
 void             EncoderPoll();            // no LOOP, nunca no callback
 int              EncoderIncremento(int idx);  // -1 / 0 / +1, CRU
 bool             EncoderPushNivel(int idx);   // com debounce

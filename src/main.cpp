@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.179.0"
+#define COTUCA_OS_VERSION "0.182.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -451,6 +451,16 @@ static uint32_t var_ja_baixo = 0;
 // laco poria milissegundos de bloqueio no caminho do MIDI e do serial
 // sem nenhum ganho, porque a tela nao muda mais rapido que o olho le.
 static bool     enc_na_tela   = true;
+// SENTIDO POR ENCODER, +1 ou -1. Existe porque o sentido de um encoder
+// depende de COMO ELE FOI SOLDADO, e isso nao se descobre lendo codigo:
+// descobre-se rodando o knob. Corrigir por gravacao custava um flash por
+// palpite, e cada flash zera o estado da placa.
+//
+// NAO E DESCULPA PARA NAO MEDIR. O lugar certo do conserto e a ordem das
+// fases no `kEncPin` do hal; isto e a via rapida ate o mapa fisico ser
+// medido pelo `varre`. Por isso se DECLARA no `enc` e no `board`: sinal
+// invertido em silencio e a mesma familia do param que nao existe.
+static int      enc_sinal[3]  = {1, 1, 1};
 static uint32_t enc_tela_prox = 0;
 static char     enc_tela_ant[3][24] = {{0},{0},{0}};
 
@@ -3283,9 +3293,8 @@ static void HandleLine(const char* line)
     {
         static const char* kN[] = {"cadeia A", "cadeia B", "global  "};
         static const char* kQ[] = {"faseA", "faseB", "push "};
-        static const char* kP[3][3] = {{"D0","D1","D2"},
-                                       {"D3","D4","D9"},
-                                       {"D18","D19","D17"}};
+        // OS NOMES VEM DO HAL. Estavam aqui a mao, e eram a terceira
+        // copia do mapa de pinos — a que o compilador nunca cruzaria.
         const char* a = line + 7;
         while(*a == ' ') a++;
         if(strncmp(a, "reset", 5) == 0)
@@ -3307,7 +3316,7 @@ static void HandleLine(const char* line)
                 const bool  vb = (enc_ja_baixo & bit) != 0;
                 const bool  va = (enc_ja_alto  & bit) != 0;
                 o += snprintf(l + o, sizeof(l) - o, " %s(%s)=%s", kQ[q],
-                              kP[e][q],
+                              cotuca::hal::EncoderPinNome(e, q),
                               (vb && va) ? "COMUTA"
                               : vb       ? "so BAIXO"
                               : va       ? "so alto"
@@ -3334,6 +3343,29 @@ static void HandleLine(const char* line)
             if(!enc_na_tela) hal::OledPreenche(false);
             hal::Log("enc: espelho na tela %s",
                      enc_na_tela ? "LIGADO" : "desligado");
+            return;
+        }
+        if(strncmp(a, "inverte", 7) == 0)
+        {
+            const char* w = a + 7;
+            while(*w == ' ') w++;
+            int alvo = -1;
+            if(*w == 'a' || *w == 'A') alvo = 0;
+            else if(*w == 'b' || *w == 'B') alvo = 1;
+            else if(*w == 'g' || *w == 'G') alvo = 2;
+            if(alvo < 0)
+            {
+                hal::Log("uso: enc inverte <a|b|g>  — alterna o sentido"
+                         " daquele encoder.");
+                hal::Log("  sinal agora: A %+d · B %+d · G %+d",
+                         enc_sinal[0], enc_sinal[1], enc_sinal[2]);
+                return;
+            }
+            enc_sinal[alvo] = -enc_sinal[alvo];
+            static const char* kNm[] = {"A", "B", "G"};
+            hal::Log("enc: sentido de %s agora %+d. NAO SOBREVIVE AO FLASH"
+                     " — o conserto definitivo e a ordem das fases no"
+                     " kEncPin do hal.", kNm[alvo], enc_sinal[alvo]);
             return;
         }
         if(strncmp(a, "reset", 5) == 0)
@@ -3380,6 +3412,8 @@ static void HandleLine(const char* line)
         }
         hal::Log("  (crus = o que a libDaisy entregou · passos = depois da"
                  " divisao · acel = depois da aceleracao por tempo)");
+        hal::Log("  sentido: A %+d · B %+d · G %+d   (`enc inverte <a|b|g>`)",
+                 enc_sinal[0], enc_sinal[1], enc_sinal[2]);
         hal::Log("  tela: %s | %lu updates ao painel | %lu chars escritos",
                  hal::OledConfigurado() ? (enc_na_tela ? "espelho LIGADO"
                                                        : "espelho desligado")
@@ -4970,7 +5004,7 @@ int main(void)
         for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
         {
             EstadoEnc& st = enc_st[e];
-            const int  inc = hal::EncoderIncremento(e);
+            const int  inc = hal::EncoderIncremento(e) * enc_sinal[e];
             if(inc)
             {
                 st.crus += inc;

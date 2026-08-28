@@ -105,8 +105,8 @@ da casa. O display é escrita pura.
 | D13 | MIDI TX |
 | D14 | MIDI RX |
 | D17 | encoder G push |
-| D18 | encoder G fase A |
-| D19 | encoder G fase B |
+| D18 | encoder G fase **B** |
+| D19 | encoder G fase **A** |
 | D22 | botão B4 freeze B |
 | D23 | LED freeze B |
 | D24 | botão B2 freeze A |
