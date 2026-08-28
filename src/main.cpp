@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.173.0"
+#define COTUCA_OS_VERSION "0.176.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1073,6 +1073,15 @@ static cotuca::Suave       suave_dly, suave_rev;
 // que o disfarce.
 static cotuca::Suave       suave_lvl;
 
+// TOM DE TESTE, UM SUAVIZADOR POR CADEIA. Carrega `tone_mix` e
+// `tone_dest` JUNTOS, porque do ponto de vista do audio eles sao a mesma
+// grandeza: quanto deste tom entra NESTA cadeia. O `dest` era um `if`
+// inteiro — ligava e desligava o tom de uma amostra para a outra, que e
+// o degrau maximo possivel.
+static cotuca::Suave       suave_tom[cotuca::Manifest::kCadeias];
+// Via DIRETA: um por saida (exciter e jack), pela mesma razao de rampa.
+static cotuca::Suave       suave_dir_e, suave_dir_j;
+
 // ---- TETO DE SOMA DO CTOS ----
 //
 // IRMAO DO WATCHDOG, NAO SUBSTITUTO. O watchdog por-efeito pega o
@@ -1716,7 +1725,17 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // avancaria a fase duas vezes por amostra e dobraria a frequencia —
     // o oscilador tem estado, e estado nao se consome em duplicata.
     const int dest_tom = (int)(params.Real(manifest.p_tone_dest) + 0.5f);
-    if(mix > 0.f)
+    // VIA: 0 = direto (entra depois do `level`), 1 = cadeia.
+    const bool tom_direto = params.Real(manifest.p_tone_via) < 0.5f;
+    // Gera enquanto o alvo for maior que zero OU enquanto alguma cadeia
+    // ainda estiver a escoar: cortar a fonte antes de a rampa acabar
+    // reintroduz o degrau que a rampa existe para remover.
+    bool tom_vivo = mix > 0.f;
+    for(int c = 0; c < cotuca::Manifest::kCadeias && !tom_vivo; c++)
+        if(suave_tom[c].Valor() > 1e-4f) tom_vivo = true;
+    if(suave_dir_e.Valor() > 1e-4f || suave_dir_j.Valor() > 1e-4f)
+        tom_vivo = true;
+    if(tom_vivo)
         for(size_t i = 0; i < size; i++) tone_buf[i] = OscProcess();
 
     for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
@@ -1762,9 +1781,23 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // estaria medindo o GATE em vez do alvo. Se algum teste futuro
         // precisar excitar o gate, declara um SEGUNDO ponto de injecao
         // explicitamente — medicao sem regime declarado nao vale.
-        if(mix > 0.f && (dest_tom == 2 || dest_tom == c))
-            for(size_t i = 0; i < size; i++)
-                b[i] = b[i] * (1.f - mix) + tone_buf[i] * mix;
+        {
+            // O alvo desta cadeia junta as duas decisoes: quanto (mix) e
+            // se (dest). Uma grandeza so, uma rampa so.
+            // 0 = A+B · 1 = so a cadeia A · 2 = so a cadeia B.
+            // (c vale 0 para A e 1 para B, dai o c+1.)
+            const float alvo_tom = (!tom_direto
+                                    && (dest_tom == 0 || dest_tom == c + 1))
+                                       ? mix : 0.f;
+            // Mesma guarda do effect_slot: so salta quando o alvo E o
+            // valor escoado estao ambos em zero.
+            if(alvo_tom > 0.f || suave_tom[c].Valor() > 1e-4f)
+                for(size_t i = 0; i < size; i++)
+                {
+                    const float m = suave_tom[c].Passo(alvo_tom);
+                    b[i] = b[i] * (1.f - m) + tone_buf[i] * m;
+                }
+        }
 
         // 1.4) DRIVE — sujeira antes de modulacao, tempo e espaco.
         // Depois do gate de proposito: saturar o chao de ruido e depois
@@ -2119,6 +2152,29 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         const float g = suave_lvl.Passo(level);
         out[0][i] *= g;
         out[1][i] *= g;
+    }
+
+    // 5a) TOM DE TESTE, VIA DIRETA — DEPOIS do `level` e ANTES do
+    //     limiter. Depois do level porque medicao nao pode depender do
+    //     que o musico deixou no fader; antes do limiter porque nenhuma
+    //     via pode contornar a protecao da saida.
+    //
+    //     Aqui o `dest` escolhe SAIDA, nao cadeia: neste ponto as duas
+    //     cadeias ja foram somadas nas duas saidas, entao o que existe e
+    //     exciter (out[0]) e jack (out[1]).
+    //       0 = ambas · 1 = so exciter · 2 = so jack
+    {
+        const float alvo_e = (tom_direto && (dest_tom == 0 || dest_tom == 1))
+                                 ? mix : 0.f;
+        const float alvo_j = (tom_direto && (dest_tom == 0 || dest_tom == 2))
+                                 ? mix : 0.f;
+        if(alvo_e > 0.f || suave_dir_e.Valor() > 1e-4f
+           || alvo_j > 0.f || suave_dir_j.Valor() > 1e-4f)
+            for(size_t i = 0; i < size; i++)
+            {
+                out[0][i] += tone_buf[i] * suave_dir_e.Passo(alvo_e);
+                out[1][i] += tone_buf[i] * suave_dir_j.Passo(alvo_j);
+            }
     }
 
     // 5b) [vago] — aqui morava o OUT_WIDTH (mid/side), aposentado em
@@ -4614,6 +4670,10 @@ int main(void)
         // Nasce em 0 como o param: os params deste instrumento nascem
         // todos em zero por regra, entao nao ha rampa de estreia a evitar.
         suave_lvl.Init(hal::Info().sample_rate, 20.f, 0.f);
+        for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
+            suave_tom[c].Init(hal::Info().sample_rate, 20.f, 0.f);
+        suave_dir_e.Init(hal::Info().sample_rate, 20.f, 0.f);
+        suave_dir_j.Init(hal::Info().sample_rate, 20.f, 0.f);
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um

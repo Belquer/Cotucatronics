@@ -1,8 +1,9 @@
 # CC MAP — Cotucatronics
 
 > **GERADO do `src/manifest.h`.** Não editar à mão: rode `python3 gerar_ccmap.py`.
-> Estado atual: **76 CCs**, canal MIDI **1** na entrada, **canal 2** no espelho.
-> Firmware v0.130.0 · commit `6002a70`
+> Estado atual: **87 vínculos em 50 números de CC**,
+> em **seis canais**: manda ch1/ch2/ch3, escuta ch4/ch5/ch6 (escuta = manda + 3).
+> Firmware v0.176.0
 
 ## Como ler
 
@@ -125,6 +126,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 93 | ch1 | ch4 | `tone_freq` | tom | 80 – 2000 |
 | 94 | ch1 | ch4 | `tone_mix` | tom | 0 – 1 |
 | 95 | ch1 | ch4 | `tone_dest` | tom | 0 – 2 |
+| 96 | ch1 | ch4 | `tone_via` | tom | 0 – 1 |
 | 100 | ch1 | ch4 | `level` | saída | 0 – 1 |
 | 105 | ch2 | ch5 | `exc_on_a` | saída | 0 – 1 |
 | 105 | ch3 | ch6 | `exc_on_b` | saída | 0 – 1 |
@@ -138,10 +140,4 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 115 | ch2 | ch5 | `bench_boost_a` | bancada | 1 – 8 |
 | 115 | ch3 | ch6 | `bench_boost_b` | bancada | 1 – 8 |
 
-<!-- 86 vinculos em 49 numeros de CC -->
-
-## Faixas vazias no mapa
-
-`27–29`, `37–39`, `48–49`, `57–59`, `89`, `96–99`, `101–104`, `107–109`,
-`119+` — reservadas para crescimento por família. **Página de proteção
-(11 CCs) ainda não construída no Loopy.**
+<!-- 87 vinculos em 50 numeros de CC -->

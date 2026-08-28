@@ -75,10 +75,10 @@ Cinco regras que não se negociam:
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.4.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.173.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`. **A versão mora só em `COTUCA_OS_VERSION`** |
+| [src/main.cpp](src/main.cpp) | **v0.176.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`. **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.9.1** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.81.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **86 vínculos em 49 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
+| [src/manifest.h](src/manifest.h) | **v0.83.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **87 vínculos em 50 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
 | [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 41 CCs numa folha A4. Fonte em `ccmap.html`, gerador `ccmap-pdf.sh` / `.command` v0.1.0 |
 | [docs/operacao/RETRABALHO-LOOPY.md](docs/operacao/RETRABALHO-LOOPY.md) | **gerado** | O mapa inteiro para remapear o Loopy: 86 vínculos em 49 CCs, por página |
 | [esp32/ponte/ponte.ino](esp32/ponte/ponte.ino) | **v0.4.0** | **Segundo firmware.** Ponte BLE MIDI ↔ UART no ESP32-C3 — um fio com rádio: sem mapa de CC, sem params. D28 ativo em baixo, aberto-dreno. `board` traz quedas com recência e saturações de TX |

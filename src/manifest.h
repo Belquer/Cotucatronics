@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.81.0
+// manifest.h (instrumento "bancada") v0.83.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -351,6 +351,7 @@ struct Manifest
     // excitada". AMBAS valida simetria de uma vez; A ou B isolam quando
     // o sintoma for assimetrico.
     int p_tone_dest;
+    int p_tone_via;   // 0=direto (pos-level) · 1=cadeia
 
     // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
     // onde o estereo existe: sem estereo nao ha spread.
@@ -969,7 +970,24 @@ struct Manifest
         // (fita estragada — as vezes e o que se quer).
 
         // TOM DE TESTE: destino. 0=A 1=B 2=AMBAS (default).
-        p_tone_dest = t.Add("tone_dest", 1.0f, 0.f, 2.f, 1.0f, 3);
+        // ORDEM DO PAINEL (28/08): 0=A+B, 1=so A, 2=so B.
+        // Nasce em ZERO como todos os outros — e zero e o estado
+        // normal (as duas cadeias), nao um modo de diagnostico. A
+        // ordem anterior (0=A, 1=B, 2=ambas) obrigava o default a
+        // ser 2 e fazia do estado comum uma excecao a regra da casa.
+        p_tone_dest = t.Add("tone_dest", 0.0f, 0.f, 2.f, 1.0f, 3);
+        // VIA DO TOM DE TESTE (28/08). Duas ferramentas diferentes com o
+        // mesmo oscilador, e o switch diz qual:
+        //   0 = DIRETO — entra no estagio de saida, DEPOIS do `level`.
+        //       Referencia limpa: independente do nivel do utilizador e
+        //       do processamento. E o que serve para calibrar e para o
+        //       discriminante do codec.
+        //   1 = CADEIA — entra dentro das cadeias, como sempre entrou.
+        //       Atravessa drive, phaser, reverb e o `level`. E o que
+        //       serve para excitar o processamento com sinal conhecido.
+        // Nasce em ZERO (direto): o uso comum e medir, e medicao que
+        // depende do que o musico deixou no fader nao e medicao.
+        p_tone_via  = t.Add("tone_via",  0.0f, 0.f, 1.f, 1.0f, 2);
 
         // ---- DESCRITOR POR EFEITO DE CARATER ----
         for(int c = 0; c < kCadeias; c++)
@@ -1452,7 +1470,8 @@ struct Manifest
         // ---- TOM DE TESTE: 93-95 ----
         AddMidi(93, p_tone_freq, kCanalCompart);   // COMPARTILHADO: so ch1
         AddMidi(94, p_tone_mix, kCanalCompart);   // COMPARTILHADO: so ch1
-        AddMidi(95, p_tone_dest, kCanalCompart);         // 0=A 1=B 2=AMBAS   // COMPARTILHADO: so ch1
+        AddMidi(95, p_tone_dest, kCanalCompart);         // 0=A+B 1=A 2=B
+        AddMidi(96, p_tone_via, kCanalCompart);          // 0=direto 1=cadeia · COMPARTILHADO: so ch1
 
         // ---- MASTER: 100 ----
         AddMidi(100, p_level, kCanalCompart);   // COMPARTILHADO: so ch1

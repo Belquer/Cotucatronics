@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.2.0 — escreve o .lpcontrolprofile a partir do projeto.
+"""gerar_perfil_loopy v0.3.0 — escreve o .lpcontrolprofile a partir do projeto.
 
     gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
 
@@ -36,6 +36,17 @@ TITULOS = {
  'buzios':('buzios_on','compart'), 'buzios_thresh':('buzios_thresh','compart'),
  'buzios_cooldown':('buzios_cooldown','compart'),
  'tone_mix':('tone_mix','compart'), 'tone_dest':('tone_dest','compart'),
+ # NOMES NOVOS DO PAINEL (28/08). O casamento e por TITULO, entao
+ # renomear um widget torna-o orfao na geracao seguinte — e o sintoma
+ # seria 'esse controlo deixou de funcionar', sem nada a apontar para
+ # a causa. Os titulos antigos ficam: um mapa que aceita os dois nao
+ # custa nada e sobrevive a um projeto que nao foi actualizado.
+ 'test_tone_gain':('tone_mix','compart'),
+ 'test_tone_freq':('tone_freq','compart'),
+ 'test_tone_dest':('tone_dest','compart'),
+ 'test_tone_out':('tone_dest','compart'),   # nome do switch de 3 posicoes
+ 'test_tone_stage':('tone_via','compart'), # pre (directo) / post (cadeia)
+ 'test_tone_via':('tone_via','compart'),
  'tone_freq':('tone_freq','compart'), 'shift_hz':('shift_hz','compart'),
  'route_jack':('route_jack','compart'), 'route_exciter':('route_exciter','compart'),
  'exciter_a':('exc_on_a','a'), 'exciter_b':('exc_on_b','b'),

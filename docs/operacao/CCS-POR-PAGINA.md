@@ -1,6 +1,6 @@
 # CCs por página — Loopy Pro
 
-> **Gerado de `src/manifest.h` (v0.171.0).** Regerar se o mapa mudar.
+> **Gerado de `src/manifest.h` (v0.83.0, firmware v0.176.0).** Regerar se o mapa mudar.
 
 ## A regra
 
@@ -23,6 +23,7 @@ não duplicar esta página.
 | CC | manda | escuta | param |
 |---|---|---|---|
 | 20 | ch1 | ch4 | `piezo_mix` |
+| 64 | ch1 | ch4 | `dly_time` |
 | 21 | ch2 | ch5 | `in_gain_a` |
 | 21 | ch3 | ch6 | `in_gain_b` |
 | 23 | ch2 | ch5 | `gate_thresh_a` |
@@ -31,7 +32,7 @@ não duplicar esta página.
 | 25 | ch3 | ch6 | `gate_release_b` |
 | 100 | ch1 | ch4 | `level` |
 
-*8 widgets*
+*9 widgets*
 
 ## MOD A
 
@@ -110,8 +111,8 @@ Delay, freeze, reverb e shimmer da **cadeia A**.
 
 **Cópia da TIME A com o canal em 3.** Mesmos números.
 
-⚠️ O `dly_time` (cc64) é **compartilhado** e fica só na TIME A —
-ou melhor, na CENTRAL. Não deve entrar na cópia.
+⚠️ O `dly_time` (cc64) é **compartilhado** e mora na **CENTRAL**.
+Não entra nesta cópia — foi o padrão de erro da sessão de 24/08.
 
 | CC | manda | escuta | param |
 |---|---|---|---|
@@ -154,6 +155,7 @@ Tom de teste, exciter, governor, roteamento e boost de bancada.
 | 93 | ch1 | ch4 | `tone_freq` |
 | 94 | ch1 | ch4 | `tone_mix` |
 | 95 | ch1 | ch4 | `tone_dest` |
+| 96 | ch1 | ch4 | `tone_via` |
 | 105 | ch2 | ch5 | `exc_on_a` |
 | 105 | ch3 | ch6 | `exc_on_b` |
 | 110 | ch2 | ch5 | `gov_ceiling_a` |
@@ -166,7 +168,7 @@ Tom de teste, exciter, governor, roteamento e boost de bancada.
 | 115 | ch2 | ch5 | `bench_boost_a` |
 | 115 | ch3 | ch6 | `bench_boost_b` |
 
-*14 widgets*
+*15 widgets*
 
 ## Compartilhados, a lista fechada
 
@@ -181,10 +183,11 @@ se duplica:
 - `tone_freq` — cc93
 - `tone_mix` — cc94
 - `tone_dest` — cc95
+- `tone_via` — cc96
 - `level` — cc100
 - `shift_hz` — cc112
 - `route_exciter` — cc113
 - `route_jack` — cc114
 
-**12 compartilhados · 74 pareados · 86 vínculos**
+**13 compartilhados · 74 pareados · 87 vínculos**
 
