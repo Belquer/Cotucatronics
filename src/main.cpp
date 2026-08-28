@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.172.1"
+#define COTUCA_OS_VERSION "0.173.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1059,6 +1059,20 @@ static float*              delay_mem = nullptr;
 static constexpr float     kDelaySeg = 1.0f;   // teto do tempo
 static cotuca::Suave       suave_dly, suave_rev;
 
+// LEVEL SUAVIZADO — o master de saida era o UNICO ganho aplicado cru.
+//
+// Medido em 27/08 pelo ouvido do dB: mover o fader do `level` depressa
+// produzia um clique. A causa e de forma, nao de valor: o `level` era
+// lido UMA vez por bloco e multiplicado igual nas 48 amostras, entao
+// cada bloco era um degrau. A 48 kHz sao 1 ms por degrau — inaudivel
+// quando o movimento e lento, e um transiente quando nao e.
+//
+// O projeto ja tinha a ferramenta e ja a usava no gate, no delay, no
+// reverb e na chave da sala. Faltava no ganho mestre, que e justamente
+// onde qualquer salto aparece INTEIRO na amplitude, sem nada a seguir
+// que o disfarce.
+static cotuca::Suave       suave_lvl;
+
 // ---- TETO DE SOMA DO CTOS ----
 //
 // IRMAO DO WATCHDOG, NAO SUBSTITUTO. O watchdog por-efeito pega o
@@ -2099,8 +2113,12 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //    precisam segurar.
     for(size_t i = 0; i < size; i++)
     {
-        out[0][i] *= level;
-        out[1][i] *= level;
+        // POR AMOSTRA, nao por bloco: e a interpolacao dentro do bloco
+        // que remove o degrau. Passar o `Suave` uma vez por bloco daria
+        // uma rampa mais lenta com os mesmos degraus.
+        const float g = suave_lvl.Passo(level);
+        out[0][i] *= g;
+        out[1][i] *= g;
     }
 
     // 5b) [vago] — aqui morava o OUT_WIDTH (mid/side), aposentado em
@@ -4593,6 +4611,9 @@ int main(void)
         // alcancavel por MIDI.
         suave_dly.Init(hal::Info().sample_rate, 20.f, 0.f);
         suave_rev.Init(hal::Info().sample_rate, 20.f, 0.f);
+        // Nasce em 0 como o param: os params deste instrumento nascem
+        // todos em zero por regra, entao nao ha rampa de estreia a evitar.
+        suave_lvl.Init(hal::Info().sample_rate, 20.f, 0.f);
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —
         // em vez de rodar lendo memoria alheia, que e o que um

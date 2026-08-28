@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.9.0"
+VERSION = "0.9.1"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -118,6 +118,14 @@ def simbolos_do_fonte():
     simbolo, nem aposentado declarado.
     """
     vistos = set()
+    # NOME DE FICHEIRO OU PASTA TAMBEM E COISA REAL. Em 27/08 o
+    # `teste_minimo` — um banco de provas em `src/teste_minimo/` — foi
+    # acusado de fantasma duas vezes: existe no repo e nao existe como
+    # simbolo C++. A regra desta funcao ja dizia que citar o que EXISTE e
+    # legitimo; faltava-lhe ver a arvore, e nao so o codigo.
+    for x in SRC.rglob("*"):
+        vistos.add(x.stem)
+        vistos.add(x.name)
     for p in list(SRC.glob("*.cpp")) + list(SRC.glob("*.h")):
         vistos |= set(re.findall(r'\b([a-z][a-z0-9]*(?:_[a-z0-9]+)+)\b',
                                  p.read_text(errors="replace")))

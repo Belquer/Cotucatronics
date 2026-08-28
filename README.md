@@ -75,7 +75,7 @@ Cinco regras que não se negociam:
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.4.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.172.1** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`. **A versão mora só em `COTUCA_OS_VERSION`** |
+| [src/main.cpp](src/main.cpp) | **v0.173.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`. **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/params.h](src/params.h) | **v0.9.1** | `ParamTable` + `Macro` (teto **96**). Sem alocação dinâmica |
 | [src/manifest.h](src/manifest.h) | **v0.81.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **86 vínculos em 49 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
@@ -96,7 +96,7 @@ Cinco regras que não se negociam:
 | [src/cotucatronics_qspi.lds](src/cotucatronics_qspi.lds) | **v0.1.0** | Linker script bifurcado da libDaisy (certidão de origem no topo). Acrescenta `.itcm_text` → ITCMRAM |
 | [src/teste_minimo/](src/teste_minimo/) | **v0.4.0** | **Banco de provas na placa.** Trinta linhas que dividem o problema ao meio numa gravação: se fala, a cadeia está boa e o defeito é do app. Já eliminou placa, gravação, USB, init do áudio e 64 MB de SDRAM — e imprime o que o `CheckBoardVersion()` detectou |
 | [src/porta_daisy.py](src/porta_daisy.py) | **v0.1.0** | Acha a Daisy **perguntando**, nunca por posição no `glob`. Nasceu quando o ESP32 entrou na USB e passou a haver dois `usbmodem` — a escolha por índice virou sorte |
-| [src/check_docs.py](src/check_docs.py) | **v0.9.0** | `make check-docs`: dá testemunha à doc contra o manifest: fantasmas, comandos sem ajuda, mapa de pinos, faixas, e **duas versões no mesmo arquivo que discordam**. Aborta se `AddMidi` não casar nenhuma vez. **Imprime a própria versão na primeira linha** |
+| [src/check_docs.py](src/check_docs.py) | **v0.9.1** | `make check-docs`: dá testemunha à doc contra o manifest: fantasmas, comandos sem ajuda, mapa de pinos, faixas, e **duas versões no mesmo arquivo que discordam**. Aborta se `AddMidi` não casar nenhuma vez. **Imprime a própria versão na primeira linha** |
 | [docs/params-aposentados.txt](docs/params-aposentados.txt) | **vivo** | Params aposentados, símbolos removidos e nomes externos — o que o verificador tem licença para não achar |
 | [docs/DESENHO-ESCRITA-QSPI.md](docs/DESENHO-ESCRITA-QSPI.md) | **vivo** | A rota dos presets: janela ITCM (**provada**), protocolo real lido do fonte, e **onde a frente parou com a condição de retomada** |
 | [docs/PAUTA-ESCUTA.md](docs/PAUTA-ESCUTA.md) | **vivo** | O que ouvir, na ordem — ~20 versões sem veredito de ouvido |
