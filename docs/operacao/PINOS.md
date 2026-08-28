@@ -113,7 +113,7 @@ da casa. O display é escrita pura.
 | D25 | botão B3 rearme CTOS |
 | D26 | botão B1 randomize |
 | D27 | LED freeze A |
-| D28 | WIDI LED |
+| D28 | STATUS da ponte ESP32 (ativo em BAIXO, aberto-dreno) |
 | D29 | RESERVADO — DPDT exciter |
 | D30 | RESERVADO — DPDT exciter |
 <!-- pinos: fim -->
