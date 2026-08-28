@@ -167,3 +167,75 @@ Sintoma: sem porta serial, sem DFU, LED aceso. O app subiu e derrubou o USB.
 2. `make program-boot` reinstala o bootloader da Daisy. O erro no
    `leave request` no fim é normal: o dispositivo já saiu.
 3. RESET simples, e gravar o app pela espera descrita acima.
+
+## Recuperação quando a placa ENUMERA mas não fala
+
+Sintoma diferente do anterior, e mais enganador: a porta serial existe, abre
+sem erro, e devolve **zero bytes** — a tudo. Nem saída espontânea, nem
+resposta a comando.
+
+A tentação é concluir "travou". **Não conclua da mudez.** O sistema
+operativo continua a ver o dispositivo, e ele é testemunha independente do
+firmware:
+
+```bash
+ls -l /dev/cu.usbmodem*                       # a marca de tempo do node
+ioreg -p IOUSB -w0 -l | grep -E '"idProduct"|"USB Product Name"'
+```
+
+- **A marca de tempo do node muda a cada re-enumeração.** Se ela muda quando
+  você manda um comando, o **RX funciona e o comando executou** — só o TX
+  está morto.
+- **`idProduct` diz em que modo ela está.** `0x5740` = CDC do app;
+  `0xdf11` = DFU. Uma placa que "não entra em DFU" pode estar a reiniciar e
+  a voltar ao app, e os dois casos são indistinguíveis pelo `/dev`.
+
+Caso real (28/08): a placa calou depois de um `dfu`, e ficou muda a 8 s de
+escuta passiva e a três comandos. O node mudou de 11:08 para 11:12 a cada
+`dfu go` — estava a reiniciar o tempo todo. **A gravação resolveu a mudez**,
+porque o disjuntor do log vive no app.
+
+> **Canal mudo prova que aquele canal está mudo, e nada além disso.**
+> Testemunha que não depende do acusado vale mais que dez tentativas de o
+> fazer falar.
+
+E não atribua a mudez ao seu último comando só porque coincidiram: nesta
+bancada uma coincidência perfeita já produziu um *"era o cabo"* que era o
+dongle.
+
+## Gravação que falha a meio deixa a flash PARCIALMENTE APAGADA
+
+`dfu-util` apaga antes de escrever. Se falhar no apagamento — visto em
+28/08 aos **52%**, com `Error during special command "ERASE_PAGE"
+get_status` e `make: *** Error 74` — **não há app nenhum na placa**, e o
+estado é pior que antes de começar.
+
+O que fazer, por ordem:
+
+1. **Confira se ela ainda está em DFU** (`dfu-util -l | grep 0483:df11`).
+   Depois de um download falhado ela costuma ficar, porque o `:leave` nunca
+   chegou a correr.
+2. **Repita imediatamente**, sem pedir gesto nenhum ao operador. A segunda
+   tentativa correu limpa até `File downloaded successfully`.
+3. Só se ela tiver saído do DFU é que se volta ao BOOT+RST.
+
+**Suspeito habitual: a cadeia de USB.** A placa estava em `1-1.4`, atrás de
+dois hubs. Antes de culpar a flash, tire os hubs do caminho.
+
+> **`Error 74` e `File downloaded successfully` são as duas únicas leituras
+> que importam.** A regra §3 aplicada ao caso: o eco do seu script diz que
+> ele correu, não que o binário subiu.
+
+## Um comando destrutivo pede confirmação — e o eco dela pode não chegar
+
+O `dfu` deste projeto exige `dfu go`; `dfu` sozinho só imprime o aviso. Isso
+está certo — não há volta por software.
+
+Mas repare no modo de falha combinado: se o log estiver mudo, **você manda
+`dfu`, não recebe o aviso, e conclui que o comando não existe ou não pegou.**
+A confirmação existe para o humano, e o humano é justamente quem fica sem
+ver quando o canal de saída morre.
+
+> **Ao mandar um comando e não receber eco, a próxima pergunta não é "mandei
+> certo?" — é "este canal ainda fala?".** Prove o canal com um comando de
+> eco conhecido antes de reescrever o comando.

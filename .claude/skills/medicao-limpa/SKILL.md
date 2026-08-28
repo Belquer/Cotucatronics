@@ -272,6 +272,53 @@ seguiu na fila, citado por mim em vários alinhamentos.
 > **Antes de citar uma pendência, verificá-la** — sobretudo as antigas, que
 > são as que mais provavelmente já foram consertadas por outro caminho.
 
+## 17. A primeira leitura é aquecimento — inclusive de uma sonda velha
+
+A regra §1 diz para provar que o canal fala. Este é o irmão dela do lado do
+instrumento: **a primeira aquisição depois de abrir o dispositivo é lixo.**
+
+Caso (28/08): a primeira corrida de um mapeamento deu `ch3/ch4` a −28,8 dBFS
+onde depois se mediu −77,2 — 48 dB de diferença, e nenhum caminho do código
+que a produzisse. Era o transiente da stream do `sounddevice` a ser apanhado
+pela primeira `rec`.
+
+Duas defesas, as duas baratas:
+
+```python
+rms(0.4)                      # leitura de aquecimento, deitada fora
+x = x[int(0.15*SR):]          # descarta o ataque dentro de cada aquisição
+```
+
+E a verificação que separa dado de artefacto: **medir o MESMO estado três
+vezes.** Com o instrumento quente repetiu a 0,1 dB.
+
+> **Número que não fecha com nenhum caminho do código é suspeita contra o
+> INSTRUMENTO antes de ser contra o sistema.** Verificar a sonda custa
+> segundos; caçar um defeito que não existe custa a sessão.
+
+## 18. Sinal periódico contínuo mede mal tudo o que faz cópia de si próprio
+
+Delay, reverb, chorus, freeze — todos devolvem uma cópia atrasada da entrada.
+Com um seno contínuo, o seco e a cópia somam-se **com fase fixa** e
+interferem. O número resultante não é o nível do efeito: é o resultado da
+interferência.
+
+Caso (28/08): com o delay ligado a saída mediu −44,4 dBFS contra uma base de
+−35,6. **Ligar um efeito baixou o nível 8,8 dB** — e nada no firmware fazia
+isso.
+
+A comparação válida saiu de outro par, com uma variável só e o **chão** como
+referência:
+
+```
+route_r_a=0, delay desligado   −69,2 dBFS   (chão)
+route_r_a=0, delay LIGADO      −39,5 dBFS   (+29,7 dB acima do chão)
+```
+
+> **Para "está cá ou não está", compare contra o CHÃO com uma variável só** —
+> nunca dois estados que ambos contêm interferência. Se precisar do nível
+> absoluto do efeito, use rajada ou ruído, não seno.
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já
