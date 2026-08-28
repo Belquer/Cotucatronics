@@ -164,8 +164,27 @@ preset nenhum, saiu de graça — foi a última janela.
   Escrita diferida (máx. 1×/10 s, fora do callback do BLE, porque a NVS tem
   endurance finita e a peça fica meses ligada). Persistência **provada**: o
   contador de arranques foi 2 → 3 → 4 através de resets.
-- 🟡 **Os 20 minutos do link BLE continuam sem dado.** Repetir com o iPad
-  acordado e o Loopy em primeiro plano, que é o confundidor por separar.
+- ✅ **Os 20 minutos do link BLE — PASSOU em 28/08.** `0 quedas`, com o iPad
+  acordado e o Loopy em primeiro plano. E o `arranques` subiu **exactamente
+  um** desde a leitura anterior — e esse um foi a sonda a abrir a porta —,
+  o que fecha também a outra hipótese: **a ponte não reiniciou.** Piscar de
+  alimentação teria aparecido ali.
+
+  ⚠️ **A sonda derruba o que mede, e isto tem de ficar escrito.** Abrir a
+  porta série do ESP32-C3 **reinicia a placa** (o USB nativo lê a abertura
+  como reset, mesmo com `DTR`/`RTS` em falso). A primeira tentativa deste
+  teste morreu assim: eu li o `board` e derrubei a ligação do dB. Para
+  observar ao vivo, **abrir UMA vez e segurar** — o `/tmp/teste20.py` faz
+  isso. E a corrida anterior, que "falhou aos ~6 min", **não conta como
+  evidência**: eu li o `board` a meio dela.
+
+  **A NVS pagou-se na primeira utilização real.** Ler a ponte exige
+  reiniciá-la, o que apaga os contadores da sessão; só o de vida sobreviveu,
+  e foi ele que deu o resultado. Há três dias este número teria desaparecido
+  no acto de o ir buscar.
+
+  Não provado: os contadores de mensagens foram-se com o reset, logo não há
+  prova numérica de tráfego — só a observação do dB, que estava a tocar.
 - ✅ **Tectos subidos, com folga na mão e não com o estouro.** `kMaxParams`
   96 → **128** e `kMaxPresetVals` 40 → **56** — este era o mais apertado
   (33/40), porque um param de cadeia novo gasta um slot aqui e **dois** na
