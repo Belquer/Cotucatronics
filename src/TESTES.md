@@ -369,24 +369,43 @@ que é o papel de backstop dele.
 > exatamente o piezo com taps — bate no clamp a cada ataque. Quando o piezo
 > chegar, medir de novo com transiente real, não com senóide.
 
-### T7c — roteamento
+### T7c — roteamento, os dois andares
 
-`out_l=0` silencia o canal medido; `out_r=0` não o afeta. Confirma que o
-canal medido é `OUT_L` e que o mute entra **depois do limiter**.
+```bash
+python3 teste_roteamento.py
+```
 
-> **Nomes de 28/08.** O teste correu como `route_exciter` / `route_jack`, e a
-> conclusão original dizia *"confirma que OUT_L é o ramo do exciter"* — o que
-> o teste não podia mostrar: para onde `OUT_L` vai é decisão do DPDT, fora do
-> alcance de qualquer comando. O que ele mostrou foi mais estreito e continua
-> válido: **`out_l` corta o canal que o pino 18 mede, e corta depois do
-> limiter.**
+⚠️ **PRÉ-CONDIÇÃO DE FIAÇÃO, e não é opcional: cada saída num canal PRÓPRIO
+da interface.** O script mede o mapa e **aborta** se as duas caírem no mesmo
+canal — porque foi exactamente isso que invalidou a primeira corrida (ver
+abaixo).
+
+Seis critérios, medidos em v0.178.0 · `OUT_L → ch1`, `OUT_R → ch2` ·
+separação útil 59,6 dB · chão −78,2 / −81,5 dBFS · base −32,6 / −36,7:
+
+| critério | OUT_L | OUT_R | |
+|---|---|---|---|
+| `route_l_a=0` corta A em L, e **só** em L | −44,8 | +0,0 | ✅ |
+| `route_r_a=0` corta A em R, e **só** em R | −0,0 | −43,9 | ✅ |
+| `out_l=0` corta o ramo L, e **só** L | −44,1 | +0,0 | ✅ |
+| `out_r=0` corta o ramo R, e **só** R | +0,0 | −41,5 | ✅ |
+| **inversão**: A só no L → A só no R | −32,6 → −77,4 | −80,9 → −36,7 | ✅ |
+| o delay **sobrevive** a `route_r_a=0` | — | −40,5 contra chão −81,5 | ✅ |
+
+O último é o que separa os andares: a matriz tira o seco, o freeze e o espaço
+da cadeia A, mas o retorno do delay fica **41 dB acima do chão** — uma
+instância só, envios já somados, e nada nela sabe de que cadeia veio.
+
+> **A PRIMEIRA CORRIDA TINHA DOIS CRITÉRIOS VAZIOS.** As duas saídas chegavam
+> somadas a uma entrada só (soma coerente confirmada ao centésimo: −22,1 e
+> −19,1 dBFS dão −14,45, medido −14,5). Com `OUT_L` sem chegar à interface,
+> *"o L não afecta o R"* dava +0,0 dB **fosse qual fosse o firmware**.
+> **Critério que não pode falhar não é critério** — e ele passou, com aspecto
+> de prova.
 >
-> **A REFAZER com a matriz.** Este teste não cobre `route_l_*` / `route_r_*`,
-> que entram ANTES dos efeitos. O caso que falta é o que separa os dois
-> andares: com `route_l_a=0` e um delay a tocar, `OUT_L` deve continuar a
-> receber o retorno do delay (uma instância só, envios já somados) enquanto o
-> seco, o freeze e o espaço da cadeia A somem. Se sumir tudo, a matriz está a
-> agir onde não devia; se não sumir nada, não está a agir.
+> **E o mapa saiu CRUZADO na primeira montagem** (`OUT_L → ch2`). Por isso o
+> script o MEDE em vez de o assumir: índice trocado não produz silêncio, produz
+> veredito trocado de lado.
 
 ### T7d — CPU
 

@@ -114,6 +114,7 @@ Cinco regras que não se negociam:
 | [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
 | [src/cotuca_measure.py](src/cotuca_measure.py) | **v0.1.0** | Mede a frequência de saída por FFT |
+| [src/teste_roteamento.py](src/teste_roteamento.py) | **v0.1.0** | **T7c automatizado** — prova os dois andares do roteamento com o tom de teste. Pergunta a porta, acha a interface pelo nome, **mede** o mapa de canais e aborta se as duas saídas caírem no mesmo (critério que não pode falhar não é critério) |
 | [src/measure.command](src/measure.command) | **v0.1.0** | Wrapper duplo-clicável do medidor |
 
 ## Ambiente que funciona

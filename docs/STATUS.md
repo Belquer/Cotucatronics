@@ -119,17 +119,25 @@ timbre.
 
 **T7c medido em v0.178.0**, chão do caminho a −69,2 dBFS, base a −35,6:
 
-| critério | Δ | |
-|---|---|---|
-| matriz corta o seco em R | −33,6 dB → ao chão | ✅ |
-| mexer no L não afecta o R (matriz) | +0,0 dB | ✅ |
-| mute corta o ramo R | −33,6 dB → ao chão | ✅ |
-| mexer no L não afecta o R (mute) | +0,0 dB | ✅ |
-| o delay sobrevive à matriz | +29,7 dB acima do chão | ✅ |
+**Refeito com uma saída por canal** (`OUT_L → ch1`, `OUT_R → ch2`, separação
+59,6 dB). A primeira corrida tinha as duas saídas somadas numa entrada, e por
+isso dois dos critérios passaram **sem poder falhar** — ver `TESTES.md`.
 
-O último é o que separa os dois andares: com `route_r_a=0` e o delay ligado, a
-saída fica 29,7 dB acima do chão — uma instância só, envios já somados, e nada
-nela sabe de que cadeia veio.
+| critério | OUT_L | OUT_R | |
+|---|---|---|---|
+| `route_l_a=0` corta A em L, e só em L | −44,8 | +0,0 | ✅ |
+| `route_r_a=0` corta A em R, e só em R | −0,0 | −43,9 | ✅ |
+| `out_l=0` corta o ramo L, e só L | −44,1 | +0,0 | ✅ |
+| `out_r=0` corta o ramo R, e só R | +0,0 | −41,5 | ✅ |
+| **inversão** A→L vira A→R | −32,6 → −77,4 | −80,9 → −36,7 | ✅ |
+| o delay sobrevive à matriz | — | +41,0 dB acima do chão | ✅ |
+
+O último separa os andares: a matriz tira o seco, o freeze e o espaço da
+cadeia A, e o retorno do delay fica — uma instância só, envios já somados.
+
+O teste vive em `src/teste_roteamento.py`: pergunta a porta, acha a interface
+pelo nome, **mede** o mapa de canais e aborta se as duas saídas caírem no
+mesmo.
 
 ⚠️ **O mapa de params mudou: `0xFD72` → `0xBE1B`.** Como ainda não existe
 preset nenhum, saiu de graça — foi a última janela.
@@ -139,10 +147,10 @@ preset nenhum, saiu de graça — foi a última janela.
 - 🔴 **`ccmap.html` / `ccmap.pdf` têm 27 CCs que já não existem.** A folha é
   anterior ao esquema de seis canais. Marcada com faixa vermelha; regerar ou
   aposentar é decisão do dB.
-- 🟠 **`OUT_L` não chega à MiniFuse.** Com `tone_dest 1` não há sinal em
-  entrada nenhuma; com `dest 2` há. Suspeita: o DPDT esquerdo em `amp`. **Por
-  confirmar** — se estiver em `jack`/`ambos` e continuar sem sinal, há defeito
-  a caçar.
+- ✅ **`OUT_L` — RESOLVIDO em 28/08.** Era fiação, e a placa foi inocentada
+  por testemunha interna antes de se mexer num fio: com o tom em `dest 1` o
+  `gov A` sobe a 0,285 enquanto o `gov B` fica em 0,001, e invertem-se com
+  `dest 2` — sinal nos dois ramos, simétrico, dentro do firmware.
 - 🟠 **O contador de quedas da ponte vive em RAM** e some no power-cycle —
   apaga-se no evento que mais interessa registar. Há onde o pôr: BACKUP_SRAM
   (12 B usados de 4 KB) e NVS.

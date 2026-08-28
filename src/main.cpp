@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.178.0"
+#define COTUCA_OS_VERSION "0.179.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3693,9 +3693,19 @@ static void HandleLine(const char* line)
         hal::Log("boost A %.2fx | B %.2fx  (BANCADA — nascem em 1.00)",
                  params.Real(manifest.p_bench_boost[0]),
                  params.Real(manifest.p_bench_boost[1]));
-        hal::Log("route exciter=%d jack=%d",
+        // OS DOIS ANDARES, no relatorio onde alguem vai olhar. A linha
+        // anterior dizia "route exciter=1 jack=1" e sobreviveu a
+        // renomeacao porque so os VALORES foram trocados — a string
+        // ficou. Relatorio que imprime nome aposentado e a cicatriz 15e
+        // outra vez, agora com autoridade de instrumento.
+        hal::Log("saida  out_l=%d out_r=%d   (mute de ramo, pos-limiter)",
                  params.Real(manifest.p_out_l) >= 0.5f ? 1 : 0,
                  params.Real(manifest.p_out_r) >= 0.5f ? 1 : 0);
+        hal::Log("matriz A->L=%d A->R=%d  B->L=%d B->R=%d  (pre-efeitos)",
+                 params.Real(manifest.p_route_l[0]) >= 0.5f ? 1 : 0,
+                 params.Real(manifest.p_route_r[0]) >= 0.5f ? 1 : 0,
+                 params.Real(manifest.p_route_l[1]) >= 0.5f ? 1 : 0,
+                 params.Real(manifest.p_route_r[1]) >= 0.5f ? 1 : 0);
         return;
     }
     // CAIXA-PRETA do voo anterior. E o unico jeito de saber o que o
