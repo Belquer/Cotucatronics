@@ -192,7 +192,18 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
   painel que responde o suficiente para limpar a tela e mais nada.
 - **Encoder EC11** com detentes e push (push = confirmar). Relativo, não
   absoluto — mata o problema do salto do knob compartilhado.
-- **2 pots de volume**, um por exciter.
+- **2 pots de volume**, um por ramo — ✅ **soldados e implementados em 28/08**:
+  `A0` = **D15** (ramo L) · `A1` = **D16** (ramo R). Params `vol_l`/`vol_r`
+  (CC 116/117), aplicados **depois do limiter**, onde só se pode reduzir.
+
+  ⚠️ **Não há um terceiro pot possível.** `A0–A4` são aliases de `D15–D19`, e
+  o encoder global ocupa `D17/D18/D19`. O bloco do ADC acabou.
+
+  **Pot é absoluto e o param é partilhado com o MIDI**, então há **captura
+  suave**: o pot só assume quando passa pelo valor actual, e larga quando o
+  iPad escreve. Excepção no arranque — a primeira leitura **adopta** a
+  posição física, porque aí ninguém escreveu ainda e a verdade é o botão.
+  Diagnóstico: `knob` na serial.
 - **Botões de arcade 30 mm** com LED (freeze A e B, búzios).
   LED de 5 V acionado com 3,3 V: **brilho aprovado no ambiente real**; plano B
   do transistor arquivado sem custo.

@@ -104,6 +104,8 @@ da casa. O display é escrita pura.
 | D10 | OLED DIN |
 | D13 | MIDI TX |
 | D14 | MIDI RX |
+| D15 | **pot L** (A0) — volume do ramo L |
+| D16 | **pot R** (A1) — volume do ramo R |
 | D17 | encoder G push |
 | D18 | encoder G fase **B** |
 | D19 | encoder G fase **A** |
@@ -118,7 +120,11 @@ da casa. O display é escrita pura.
 | D30 | RESERVADO — DPDT exciter |
 <!-- pinos: fim -->
 
-**Livres:** D11, D12 (I2C_1 para o INA219), D15, D16, D20, D21.
+**Livres:** D11, D12 (I2C_1 para o INA219), D20, D21.
+
+⚠️ **O bloco do ADC acabou.** `A0–A4` são aliases de `D15–D19`: os pots
+ocupam A0/A1 e o encoder global ocupa D17/D18/D19. **Não há um terceiro pot
+possível** sem mudar o painel — e é por isso que `num_knobs` é 2 e não 5.
 
 > **Esta tabela é conferida pelo `make check-docs`** contra os
 > `seed::Dnn` do `hal_daisy_seed.cpp`. Pino reclamado no código e ausente

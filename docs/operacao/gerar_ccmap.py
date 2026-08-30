@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_ccmap v0.6.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
+"""gerar_ccmap v0.7.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
 
 Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
 se dar por novo um ficheiro que ja tinha historia.
@@ -58,7 +58,7 @@ FAMILIAS = [('piezo', 'mistura'), ('gate', 'entrada'),
             ('shm', 'shimmer'), ('buzios', 'búzios'), ('tone', 'tom'),
             ('level', 'saída'), ('exc', 'saída'), ('gov', 'proteção'),
             ('shift', 'proteção'), ('route', 'saída'), ('bench', 'bancada'),
-            ('out_', 'saída'), ('test_tone', 'tom')]
+            ('out_', 'saída'), ('vol_', 'saída'), ('test_tone', 'tom')]
 
 
 # ==================================================================
@@ -98,6 +98,10 @@ NOTAS = {
     "shm_tone_a": "<b>sobe pra clarear</b>",
     "buzios_cooldown": "10…1000 ms · 2 batidas rápidas = 1",
     "tone_freq": "80…2000 Hz · nasce em 848",
+    "vol_l": "<b>volume do ramo L</b> — POT físico em A0 (D15)",
+    "vol_r": "<b>volume do ramo R</b> — POT físico em A1 (D16)",
+    "out_l": "<b>0 corta o ramo</b> (mute pós-limiter; volume é o vol_l)",
+    "out_r": "<b>0 corta o ramo</b>",
     "tarol_on": "<b>TAROLATOR</b> — ruído percussivo com o envelope da pancada; nasceu oitavador e não faz oitava",
     "tarol_mix": "0…4× — 100% é o máximo que o efeito gera; acima disso o limiter grampeia",
     "tone_dest": "<b>0=A+B</b> · 1=A · 2=B",
@@ -263,7 +267,7 @@ if faltando:
     sys.exit(1)
 
 ncc = len({d[0] for d in dados})
-tabela = ("<!-- gerado por gerar_ccmap v0.6.0 de %s — nao editar a mao -->\n"
+tabela = ("<!-- gerado por gerar_ccmap v0.7.0 de %s — nao editar a mao -->\n"
           "| CC | manda | escuta | param | família | faixa real |\n"
           "|---|---|---|---|---|---|\n%s\n\n"
           "<!-- %d vinculos em %d numeros de CC -->"

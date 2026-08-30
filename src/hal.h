@@ -67,7 +67,13 @@ void             StartAudio(AudioCallback cb);
 // É o manifest quem pede, não a placa quem impõe: bloco define
 // LATÊNCIA, e latência é característica do instrumento.
 void             RequestBlockSize(size_t block_size);
-float            ReadKnob(int index);          // 0.0–1.0 (stub até ter pots)
+// POTS: 0.0–1.0, ou **-1 quando nao ha pot** — ausencia representada
+// FORA do dominio, e nao com um zero que se confunde com pot no fundo.
+// Dois canais: A0 (D15) e A1 (D16); os outros tres do bloco sao o
+// encoder global.
+float            ReadKnob(int index);
+void             AdcInit();
+bool             AdcConfigurado();
 // true = PRESSIONADO. Já com debounce; quem chama vê só transições
 // limpas. O contrato é NÍVEL, não evento: detectar borda é do shell,
 // que é onde se sabe o que uma borda significa.

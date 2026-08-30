@@ -294,6 +294,39 @@ entre os dois piezos através do corpo: **34 dB**.
 
 ---
 
+## 28/08 — os potenciómetros
+
+**Dois pots, e só cabem dois:** `A0` = D15 (ramo L), `A1` = D16 (ramo R). Os
+outros três do bloco ADC são o encoder global — `A0–A4` são aliases de
+`D15–D19`. `num_knobs` passou de **5 para 2**; declarar cinco fazia o laço
+iterar sobre knobs inexistentes.
+
+**Params novos:** `vol_l` / `vol_r` (CC 116/117), volume contínuo por ramo,
+**depois do limiter** — mesmo ponto do mute `out_*`, e pela mesma razão: ali
+só se pode reduzir. São funções diferentes no mesmo sítio — `out_*` mata o
+ramo (segurança, instantâneo), `vol_*` dosa (performance, contínuo).
+
+### Os três problemas, e nenhum era ler o ADC
+
+| | |
+|---|---|
+| **a guarda antiga matava o MIDI** | era `if(v == knob_last[k])` — igualdade de float sobre ruído **nunca dispara**, e o pot escreveria a cada volta do laço. O comentário que lá estava previa-o: *"sem ela o MIDI para de funcionar em silêncio no mesmo dia"* |
+| **pot absoluto, param partilhado** | **captura suave**: só assume quando passa pelo valor actual, larga quando o iPad escreve. Janela de largar maior que a de capturar, senão troca de dono na fronteira |
+| **mas no arranque a verdade é o botão** | primeira leitura **adopta** a posição física — volume que nasce longe do botão assusta quem liga |
+
+**Medidor:** `knob` mostra cru, filtrado, param e dono; `knob <s> <c> <l> <z>`
+ajusta os quatro números sem gravar, porque só a bancada sabe o ruído deste
+ADC.
+
+**Bancos nativos novos:** `src/teste_tarol.cpp` (o divisor em material
+periódico) e `src/teste_macro.cpp` (a ida-e-volta do `Macro::Inverso`, de que
+a captura depende — se ele errar, o pot "não pega" e a bancada culpa o ADC).
+
+⚠️ **Nada disto foi gravado nem medido na placa** — o dB desmontou a bancada.
+O `knob` diz na hora se o ADC lê.
+
+---
+
 ## Versões
 
 **Moram no mapa de arquivos do [README.md](../README.md), em um lugar só.**

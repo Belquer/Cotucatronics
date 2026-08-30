@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.45.0
+// hal_daisy_seed v0.46.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.45.0"
+#define COTUCA_HAL_VERSION "0.46.0"
 
 using namespace daisy;
 
@@ -25,7 +25,13 @@ static DaisySeed hw;
 
 static BoardInfo info = {
     .name         = "Daisy Seed",
-    .num_knobs    = 5, // k1 level, k2 src_mix, k3-k5 macros
+    // DOIS, e nao e escolha: A0–A4 sao ALIASES de D15–D19, e o encoder
+    // global ocupa D17/D18/D19. Sobram D15 e D16 — que sao exatamente os
+    // dois pots de volume que o HARDWARE.md ja previa. Declarar cinco
+    // fazia o laco iterar sobre knobs que nao existem, e o `ReadKnob`
+    // devolvia -1 para todos: inofensivo enquanto era stub, mentira
+    // assim que deixasse de ser.
+    .num_knobs    = 2, // A0=D15 e A1=D16
     .num_buttons  = 4, // B1 rnd · B2 freeze A · B3 rearme CTOS · B4 freeze B
     .has_audio_in = true,
     .sample_rate  = 48000.f,
@@ -286,6 +292,10 @@ bool Init()
     hw.SetAudioBlockSize(info.block_size);
     hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
     info.sample_rate = hw.AudioSampleRate();
+    // ADC ANTES DO AUDIO, e antes do log: familia B do audit (configura
+    // antes de consumir). O laco principal comeca a ler knobs assim que
+    // arranca, e um `GetFloat` antes do `Start` le um periferico parado.
+    AdcInit();
     hw.StartLog(false);
 
     // ---- CARENCIA DE ENUMERACAO, LIMITADA E COM SAIDA ANTECIPADA ----
@@ -376,12 +386,40 @@ void StartAudio(AudioCallback cb)
     hw.StartAudio(DaisyAudioCb);
 }
 
-float ReadKnob(int /*index*/)
+// ---- POTS ----
+//
+// DOIS canais de ADC, em A0 (D15) e A1 (D16). Os outros tres pinos do
+// bloco (D17/D18/D19, ou seja A2/A3/A4) sao o encoder global, e por isso
+// nao ha um terceiro pot possivel sem mudar o painel.
+//
+// O `adc_pronto` NAO e cerimonia: o `GetFloat` de um ADC nao inicializado
+// devolve um numero, e numero de periferico nao configurado e exatamente
+// a familia que este projeto ja pagou tres vezes — instrumento nao
+// inicializado le zero, e zero parece dado. Sem a flag, um erro de ordem
+// no arranque daria pots "a zero" em vez de "sem pots".
+static daisy::AdcChannelConfig adc_cfg[2];
+static bool                    adc_pronto = false;
+
+void AdcInit()
 {
-    // stub: pots físicos ainda não ligados.
-    // Quando ligar: retornar hw.adc.GetFloat(index);
-    return -1.f; // -1 sinaliza "sem hardware, use serial"
+    if(adc_pronto) return;
+    adc_cfg[0].InitSingle(seed::D15);   // A0
+    adc_cfg[1].InitSingle(seed::D16);   // A1
+    hw.adc.Init(adc_cfg, 2);
+    hw.adc.Start();
+    adc_pronto = true;
 }
+
+float ReadKnob(int index)
+{
+    // -1 SIGNIFICA "SEM POT", e continua a ser um valor fora do dominio
+    // de proposito: 0.0 seria indistinguivel de um pot no zero, e a regra
+    // desta casa e que ausencia se representa FORA do dominio.
+    if(!adc_pronto || index < 0 || index >= 2) return -1.f;
+    return hw.adc.GetFloat(index);
+}
+
+bool AdcConfigurado() { return adc_pronto; }
 
 bool ReadWidiLed()
 {

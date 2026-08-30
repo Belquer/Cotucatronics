@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.190.0"
+#define COTUCA_OS_VERSION "0.193.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -452,6 +452,17 @@ static uint32_t var_ja_baixo = 0;
 // laco poria milissegundos de bloqueio no caminho do MIDI e do serial
 // sem nenhum ganho, porque a tela nao muda mais rapido que o olho le.
 static uint32_t var_tudo_alto = 0, var_tudo_baixo = 0;
+// ---- POTS: filtro, posse e zona morta ----
+// Os tres numeros que fazem um pot conviver com MIDI no mesmo param.
+// Ajustaveis por `knob` na serial, porque so a bancada sabe o ruido do
+// ADC desta montagem.
+static float    kKnobSuave     = 0.08f;   // polo do filtro, por volta do laco
+static float    kKnobCaptura   = 0.02f;   // janela para ASSUMIR o param
+static float    kKnobSolta     = 0.06f;   // janela para LARGAR (maior: histerese)
+static float    kKnobZonaMorta = 0.004f;  // ~metade de um passo de MIDI
+static float    knob_filt[cotuca::kNumKnobs] = {0};
+static bool     knob_vivo[cotuca::kNumKnobs] = {false};
+static bool     knob_dono[cotuca::kNumKnobs] = {false};
 static bool     enc_na_tela   = true;
 // SENTIDO POR ENCODER, +1 ou -1. Existe porque o sentido de um encoder
 // depende de COMO ELE FOI SOLDADO, e isso nao se descobre lendo codigo:
@@ -1116,6 +1127,10 @@ static cotuca::Suave       suave_dir_l, suave_dir_r;
 // exatamente quando se toca forte.
 static cotuca::Tarol       tarol[cotuca::Manifest::kCadeias];
 static cotuca::Suave       suave_tarol[cotuca::Manifest::kCadeias];
+// Volume por ramo, dos pots. SUAVIZADO porque e ganho por amostra e o
+// param vem em degraus — a mesma escada que ja mordeu o `level`, o
+// `tone_mix`, o `tone_dest` e o `in_gain`. Quinta ocorrencia da forma.
+static cotuca::Suave       suave_vol_l, suave_vol_r;
 
 static cotuca::Suave       suave_mat[4];
 static float               mat_g[4][kMaxBlock];
@@ -2398,14 +2413,23 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //    cala o seco, o freeze e o espaco daquela cadeia, mas o retorno
     //    do delay continua a entrar: uma instancia so, envios ja
     //    somados, e nada nela sabe de que cadeia veio.
+    //    O VOLUME ENTRA AQUI JUNTO, e pela mesma razao: depois do limiter
+    //    so se pode REDUZIR, entao nem o pot nem o mute conseguem burlar o
+    //    teto. Sao funcoes diferentes no mesmo ponto — `out_*` mata o ramo
+    //    (seguranca, instantaneo), `vol_*` dosa (performance, continuo).
     const float r_l = params.Real(manifest.p_out_l) >= 0.5f ? 1.f : 0.f;
     const float r_r = params.Real(manifest.p_out_r) >= 0.5f ? 1.f : 0.f;
-    if(r_l < 0.5f || r_r < 0.5f)
+    const float v_l = r_l * params.Real(manifest.p_vol_l);
+    const float v_r = r_r * params.Real(manifest.p_vol_r);
+    // Custo zero quando nao ha nada a fazer: os dois no talo, os dois
+    // ramos vivos, e as rampas ja pousadas.
+    if(v_l < 0.9999f || v_r < 0.9999f
+       || suave_vol_l.Valor() < 0.9999f || suave_vol_r.Valor() < 0.9999f)
     {
         for(size_t i = 0; i < size; i++)
         {
-            out[0][i] *= r_l;
-            out[1][i] *= r_r;
+            out[0][i] *= suave_vol_l.Passo(v_l);
+            out[1][i] *= suave_vol_r.Passo(v_r);
         }
     }
     // Autopsia por LED: daqui, porque este contexto sobrevive ao loop.
@@ -3382,6 +3406,56 @@ static void HandleLine(const char* line)
     // ATENCAO A ORDEM: `encpino` antes de `enc` — bts 14c, o prefixo de
     // tres letras engoliria este comando exatamente como o `oled` engoliu
     // o `oledvel`.
+    // `knob` — o medidor dos pots. Canal de sinal novo entra com o
+    // medidor dele junto: sem isto, "o pot nao faz nada" nao distingue
+    // ADC morto, pot sem posse, zona morta larga demais, ou fio.
+    if(strncmp(line, "knob", 4) == 0)
+    {
+        const char* a = line + 4;
+        while(*a == ' ') a++;
+        // `knob <suave> <captura> <solta> <zonamorta>` — so a bancada sabe
+        // o ruido do ADC desta montagem, entao os quatro numeros ajustam-se
+        // sem gravar.
+        if(*a)
+        {
+            float n[4]; int k = 0;
+            const char* p = a;
+            while(k < 4 && *p)
+            {
+                n[k++] = strtof(p, (char**)&p);
+                while(*p == ' ') p++;
+            }
+            if(k >= 1) kKnobSuave     = n[0];
+            if(k >= 2) kKnobCaptura   = n[1];
+            if(k >= 3) kKnobSolta     = n[2];
+            if(k >= 4) kKnobZonaMorta = n[3];
+        }
+        hal::Log("POTS — %d declarado(s) | ADC %s", hal::Info().num_knobs,
+                 hal::AdcConfigurado() ? "configurado (A0=D15 · A1=D16)"
+                                       : "*** NAO CONFIGURADO ***");
+        hal::Log("  suave %.3f · captura %.3f · solta %.3f · zona morta %.4f"
+                 "   (`knob s c l z` ajusta)",
+                 (double)kKnobSuave, (double)kKnobCaptura,
+                 (double)kKnobSolta, (double)kKnobZonaMorta);
+        for(int k = 0; k < hal::Info().num_knobs && k < cotuca::kNumKnobs; k++)
+        {
+            const float cru  = hal::ReadKnob(k);
+            const int   alvo = manifest.knob[k].PrimeiroAlvo();
+            const float pos  = alvo >= 0 ? manifest.knob[k].Inverso(
+                                               params.Get(alvo)) : -1.f;
+            if(cru < 0.f)
+            {
+                hal::Log("  k%d: SEM POT (-1) — o ADC nao devolve valor", k + 1);
+                continue;
+            }
+            hal::Log("  k%d -> %-10s cru %.4f | filtrado %.4f | param %.4f | %s",
+                     k + 1,
+                     alvo >= 0 ? params.Name(alvo) : "(sem alvo)",
+                     (double)cru, (double)knob_filt[k], (double)pos,
+                     knob_dono[k] ? "DONO" : "solto (mova ate cruzar o param)");
+        }
+        return;
+    }
     if(strncmp(line, "encpino", 7) == 0)
     {
         static const char* kN[] = {"cadeia A", "cadeia B", "global  "};
@@ -4756,7 +4830,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l z] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -4919,6 +4993,8 @@ int main(void)
         // ninguem o pediu.
         for(int i = 0; i < 4; i++)
             suave_mat[i].Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_vol_l.Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_vol_r.Init(hal::Info().sample_rate, 20.f, 1.f);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
             tarol[c].Init(hal::Info().sample_rate);
@@ -5121,11 +5197,61 @@ int main(void)
         // funcionar em silêncio no mesmo dia.
         for(int k = 0; k < hal::Info().num_knobs && k < kNumKnobs; k++)
         {
-            const float v = hal::ReadKnob(k);
-            if(v < 0.f)
-                continue; // sem hardware
-            if(v == knob_last[k])
-                continue; // não mexeu: não reescreve, não atropela
+            const float cru = hal::ReadKnob(k);
+            if(cru < 0.f) continue;              // sem pot: -1, fora do dominio
+
+            // 1) SUAVIZA. O ADC treme, e a guarda antiga era
+            //    `if(v == knob_last[k])` — igualdade de float sobre ruido
+            //    NUNCA dispara. O comentario que estava aqui previa a
+            //    consequencia com estas palavras: "sem ela o MIDI para de
+            //    funcionar em silencio no mesmo dia". Previa certo: o pot
+            //    escreveria o param a cada volta do laco e ganharia sempre.
+            // ADOCAO NA PRIMEIRA LEITURA. No arranque ninguem escreveu
+            // ainda o param, entao a verdade e a POSICAO FISICA do pot —
+            // e um volume que nasce longe de onde o botao esta e a
+            // primeira coisa que assusta quem liga o instrumento. Depois
+            // disto vale a captura, que protege do salto.
+            if(!knob_vivo[k])
+            {
+                knob_filt[k] = cru;
+                knob_vivo[k] = true;
+                knob_dono[k] = true;
+                knob_last[k] = cru;
+                manifest.knob[k].Apply(params, cru);
+                continue;
+            }
+            knob_filt[k] += kKnobSuave * (cru - knob_filt[k]);
+            const float v = knob_filt[k];
+
+            const int alvo = manifest.knob[k].PrimeiroAlvo();
+            if(alvo < 0) continue;
+            const float pos = manifest.knob[k].Inverso(params.Get(alvo));
+            if(pos < 0.f) continue;              // macro sem inverso util
+
+            // 2) CAPTURA SUAVE. O pot e ABSOLUTO e o param e partilhado
+            //    com o MIDI e a serial. Sem captura, tocar no pot salta o
+            //    param para a posicao fisica dele — o mesmo defeito que fez
+            //    os encoders serem escolhidos RELATIVOS no painel v2.
+            //
+            //    Ele so assume quando PASSA pelo valor actual, e larga
+            //    quando alguem escreve por outro caminho. A janela de
+            //    largar e maior que a de capturar de proposito: iguais,
+            //    ficariam a trocar de dono na fronteira.
+            if(!knob_dono[k])
+            {
+                if(fabsf(v - pos) > kKnobCaptura) continue;
+                knob_dono[k] = true;
+            }
+            else if(fabsf(v - pos) > kKnobSolta)
+            {
+                knob_dono[k] = false;            // o iPad mexeu: recaptura
+                continue;
+            }
+
+            // 3) ZONA MORTA. Menor que um passo de MIDI (1/127) para o pot
+            //    nao ser mais grosso que o fader, e maior que o ruido do
+            //    ADC para nao reescrever parado.
+            if(fabsf(v - knob_last[k]) < kKnobZonaMorta) continue;
             knob_last[k] = v;
             manifest.knob[k].Apply(params, v);
         }

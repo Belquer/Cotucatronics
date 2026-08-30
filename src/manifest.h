@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.89.0
+// manifest.h (instrumento "bancada") v0.90.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -197,7 +197,9 @@ struct Manifest
     int p_exc_on[2];    // exciter no ar? gateia a protecao do ramo
     int p_route_l[2];   // a cadeia A/B entra em OUT_L?
     int p_route_r[2];   // a cadeia A/B entra em OUT_R?
-    int p_out_l;        // OUT_L no ar?  (mute pos-limiter)
+int p_vol_l;        // volume do ramo L — POT em A0 (D15)
+    int p_vol_r;        // volume do ramo R — POT em A1 (D16)
+        int p_out_l;        // OUT_L no ar?  (mute pos-limiter)
     int p_out_r;        // OUT_R no ar?
 
     // ============================================================
@@ -852,6 +854,17 @@ struct Manifest
         p_route_l[1]    = t.Add("route_l_b",     1.0f, 0.f, 1.f);
         p_route_r[0]    = t.Add("route_r_a",     1.0f, 0.f, 1.f);
         p_route_r[1]    = t.Add("route_r_b",     1.0f, 0.f, 1.f);
+        // VOLUME POR RAMO, e nao e o mesmo que `out_*`. O mute existe para
+        // matar um ramo inteiro depois do limiter — gesto de seguranca,
+        // instantaneo. O volume e performance, continuo, e mora nos dois
+        // pots fisicos soldados em D15/D16.
+        //
+        // Nasce em 1.0, mas quem manda no arranque e a POSICAO DO POT: o
+        // laco adota a leitura fisica na primeira volta. Volume que nasce
+        // diferente de onde o botao esta e a primeira coisa que assusta
+        // quem liga o instrumento.
+        p_vol_l         = t.Add("vol_l",         1.0f, 0.f, 1.f);
+        p_vol_r         = t.Add("vol_r",         1.0f, 0.f, 1.f);
         p_out_l         = t.Add("out_l",         1.0f, 0.f, 1.f);
         p_out_r         = t.Add("out_r",         1.0f, 0.f, 1.f);
 
@@ -1255,10 +1268,16 @@ struct Manifest
         // onde trocar a fonte — sem manual, sem tentativa e erro em
         // público. Mover k1/k2 num manifest quebra isso pra todas as
         // outras esculturas, não só pra esta.
-        knob[0].AddTarget(p_level, 1.0f);    // k1 — volume master
-        knob[1].AddTarget(p_piezo_mix, 1.0f); // k2 — BALANCO dos piezos
-        knob[2].AddTarget(p_dly_time, 1.0f); // k3 — macro do delay
-        knob[3].AddTarget(p_dly_mix[0], 1.0f); // k4 — envio da cadeia A
+        // OS DOIS POTS SOLDADOS, e so ha dois: A0–A4 sao aliases de
+        // D15–D19 e o encoder global ocupa D17/D18/D19. Sobram D15 e D16.
+        knob[0].AddTarget(p_vol_l, 1.0f);    // k1 — volume do ramo L
+        knob[1].AddTarget(p_vol_r, 1.0f);    // k2 — volume do ramo R
+        // k3, k4 e k5 NAO EXISTEM em hardware. Ate 28/08 estavam mapeados
+        // (dly_time, dly_mix_a) e o laco iterava sobre eles com o
+        // `ReadKnob` a devolver -1 — inofensivo enquanto era stub, e
+        // exatamente o tipo de mapeamento que se descobre errado no dia em
+        // que um terceiro pot aparecer e mexer no delay sem aviso.
+        // Se o painel crescer, declaram-se AQUI, com o pino ao lado.
 
         // ---- B1: o que o randomizador pode sortear ----
         // Params de CARÁTER dos módulos, e só. Com o vocoder ligado
@@ -1577,7 +1596,9 @@ struct Manifest
         AddMidi(110, p_gov_ceiling[0], kCanalEntradaA);
         AddMidi(111, p_gov_release[0], kCanalEntradaA);
         AddMidi(112, p_shift_hz, kCanalCompart);         // COMPARTILHADO pelos dois ramos
-        AddMidi(113, p_out_l, kCanalCompart);            // 0 = corta o ramo L   // COMPARTILHADO: so ch1
+AddMidi(116, p_vol_l, kCanalCompart);             // pot A0 (D15)
+        AddMidi(117, p_vol_r, kCanalCompart);             // pot A1 (D16)
+                AddMidi(113, p_out_l, kCanalCompart);            // 0 = corta o ramo L   // COMPARTILHADO: so ch1
         AddMidi(114, p_out_r, kCanalCompart);            // 0 = corta o ramo R   // COMPARTILHADO: so ch1
         // MATRIZ 2x2 — o CC diz a SAIDA, o canal diz a CADEIA. Mesmo
         // esquema de todo o instrumento, sem numero novo por celula:

@@ -49,7 +49,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 
 ## Tabela
 
-<!-- gerado por gerar_ccmap v0.6.0 de manifest.h — nao editar a mao -->
+<!-- gerado por gerar_ccmap v0.7.0 de manifest.h — nao editar a mao -->
 | CC | manda | escuta | param | família | faixa real |
 |---|---|---|---|---|---|
 | 20 | ch1 | ch4 | `piezo_mix` | mistura | -1 – 1 |
@@ -145,5 +145,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 114 | ch1 | ch4 | `out_r` | saída | 0 – 1 |
 | 115 | ch2 | ch5 | `bench_boost_a` | bancada | 1 – 8 |
 | 115 | ch3 | ch6 | `bench_boost_b` | bancada | 1 – 8 |
+| 116 | ch1 | ch4 | `vol_l` | saída | 0 – 1 |
+| 117 | ch1 | ch4 | `vol_r` | saída | 0 – 1 |
 
-<!-- 93 vinculos em 53 numeros de CC -->
+<!-- 95 vinculos em 55 numeros de CC -->

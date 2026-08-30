@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.10.0
+// Cotucatronics OS — params v0.11.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -15,7 +15,7 @@
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.10.0"
+#define COTUCA_PARAMS_VERSION "0.11.0"
 
 // knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
 // 4 de caráter + SRC MIX = 5.
@@ -289,6 +289,29 @@ struct Macro
     }
 
     int TargetCount() const { return n_; }
+
+    // ---- O INVERSO, para a captura suave do pot ----
+    //
+    // Um pot e ABSOLUTO e o param e partilhado com o MIDI: se o pot esta
+    // em 0,2 e o iPad poe o param em 0,9, tocar no pot SALTA. O painel v2
+    // resolveu isso nos encoders escolhendo-os relativos; o pot nao tem
+    // essa saida, entao usa-se captura — ele so assume quando PASSA pelo
+    // valor actual.
+    //
+    // Para saber por onde passar e preciso traduzir o valor do param de
+    // volta para posicao de knob, e e isso que isto faz. Usa o PRIMEIRO
+    // alvo: uma macro com varios alvos nao tem uma posicao unica, e
+    // inventar uma media seria numero com cara de dado.
+    int   PrimeiroAlvo() const { return n_ ? target_[0] : -1; }
+
+    float Inverso(float x) const
+    {
+        if(!n_) return -1.f;
+        const float w = weight_[0];
+        if(w > 0.f)  return Clamp01(x / w);          // x = v*w
+        if(w < 0.f)  return Clamp01((x - 1.f) / w);  // x = 1 + v*w
+        return -1.f;                                  // peso zero: sem inverso
+    }
 
   private:
     int   target_[kMaxMacroTargets] = {};

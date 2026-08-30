@@ -34,6 +34,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 | Feature | Params | CC | Estado |
 |---|---|---|---|
 | **Fonte** — crossfade piezo/jack + tom de teste | `src_mix`, `tone_freq`, `tone_mix` | — | ativo (`src_mix` fora do MIDI por segurança) |
+| **Volume por ramo, nos pots físicos** | `vol_l`, `vol_r` | **116**, **117** | ✅ **28/08** · pots em A0 (D15) e A1 (D16), depois do limiter · **captura suave** contra o salto, e adopção da posição física no arranque · `knob` mede |
 | ~~**Ganho de entrada** por cadeia~~ | ~~`in_gain_a`, `in_gain_b`~~ | ~~21~~ | 🗑️ **REMOVIDO 28/08 — SE NÃO SOA, NÃO FICA.** O `Governor` é um AGC: 18 dB postos aqui eram 18 dB que ele tirava adiante, e a saída não mudava. O único efeito audível era o degrau. O balanço entre piezos já era do `piezo_mix`. **Perdeu-se** o casamento com transdutores de sensibilidade diferente — o governor só REDUZ; se aparecer na replicação, conserta-se no divisor da carrier board |
 | **Mix entre as CADEIAS** (shell) | `piezo_mix` | **58** | ⏳ aceite pendente · **mudou de posição no pivô**: era balanço na entrada entre sinais crus, agora mistura as duas cadeias já processadas. Lei igual: centro = as duas cheias |
 | **Tom de teste: destino** | `tone_dest` | — | ✅ 20/08 · 0=A · 1=B · **2=AMBAS (default)** · injetado **depois do gate**, senão o gate corta o próprio tom e você mede o gate |
