@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.92.0
+// manifest.h (instrumento "bancada") v0.94.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -370,6 +370,13 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
     // e SE NAO SOA, NAO FICA.
     int p_tarol_on[kCadeias];
     int p_tarol_mix[kCadeias];
+
+    // NOTCH ANTI-MICROFONIA — duas bocas por cadeia.
+    // O corpo desta peca e SOLDADO: exciter e piezo na mesma chapa,
+    // sem junta para perder energia. Nenhum gesto mecanico funcionou.
+    int p_ntc_on[kCadeias];
+    int p_ntc_hz[kCadeias][2];
+    int p_ntc_db[kCadeias][2];
         int p_wrb_rate[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
     int p_wrb_depth[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
     int p_wrb_irreg[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
@@ -649,6 +656,60 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
     // `midi_map[n_midi++] = {...}` direto, SEM GUARDA — e a 17a entrada
     // escreveu FORA DO ARRAY. Estouro de capacidade e defeito de
     // PROJETO: quem adiciona o 33o CC precisa saber no boot.
+    // ------------------------------------------------------------
+    // DETECTOR DE COLISAO — devolve quantos pares (CC, canal) estao
+    // repetidos, e escreve o primeiro em `cc_out`/`canal_out`.
+    //
+    // ESTE DETECTOR NASCEU DE UM DEFEITO SEU. Em 31/08 o notch entrou
+    // no CC 115, que ja era do `bench_boost` nos MESMOS canais. O
+    // `Aplica` diz na propria linha "primeiro vence; duplicata e erro"
+    // — e ninguem verificava. O notch foi registado antes, ganhou, e o
+    // `bench_boost` ficou inalcancavel pelo iPad EM SILENCIO.
+    //
+    // O `board` ate dizia "sem CC: 0 de 95 params", e dizia a verdade:
+    // o param sombreado TEM entrada no mapa. Contar quem nao tem CC
+    // nao encontra quem tem CC roubado — sao perguntas diferentes, e
+    // so uma delas estava a ser feita.
+    int Colisoes(uint8_t* cc_out, uint8_t* canal_out) const
+    {
+        int n = 0;
+        for(int i = 0; i < n_midi; i++)
+            for(int j = i + 1; j < n_midi; j++)
+                if(midi_map[i].cc == midi_map[j].cc
+                   && midi_map[i].canal == midi_map[j].canal)
+                {
+                    if(!n)
+                    {
+                        if(cc_out)    *cc_out    = midi_map[i].cc;
+                        if(canal_out) *canal_out = midi_map[i].canal;
+                    }
+                    n++;
+                }
+        return n;
+    }
+
+    // Para quem quer a lista toda: devolve o par `k`-esimo em colisao.
+    bool Colisao(int k, uint8_t* cc, uint8_t* canal,
+                 int* p1, int* p2) const
+    {
+        int n = 0;
+        for(int i = 0; i < n_midi; i++)
+            for(int j = i + 1; j < n_midi; j++)
+                if(midi_map[i].cc == midi_map[j].cc
+                   && midi_map[i].canal == midi_map[j].canal)
+                {
+                    if(n++ == k)
+                    {
+                        if(cc)    *cc    = midi_map[i].cc;
+                        if(canal) *canal = midi_map[i].canal;
+                        if(p1)    *p1    = midi_map[i].param_id;
+                        if(p2)    *p2    = midi_map[j].param_id;
+                        return true;
+                    }
+                }
+        return false;
+    }
+
     void AddMidi(uint8_t cc, int param_id, uint8_t canal = kCanalEntradaA)
     {
         if(n_midi >= kMaxMidiMap) { midi_overflow++; return; }
@@ -1061,6 +1122,24 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         // coisa — SE NAO SOA, NAO FICA vale tambem para pedacos de curso.
         p_tarol_mix[0] = t.Add("tarol_mix_a", 0.5f, 0.f, 4.f, 0.5f);
         p_tarol_mix[1] = t.Add("tarol_mix_b", 0.5f, 0.f, 4.f, 0.5f);
+
+        // NOTCH — 60 Hz a 8 kHz, que e onde vivem os modos de um corpo
+        // metalico deste tamanho. Curva 2.0 porque os modos sao
+        // logaritmicos como o ouvido: faixa linear poria metade do
+        // curso acima de 4 kHz, onde nao grita quase nada.
+        //
+        // `db` e REJEICAO, e nasce em ZERO. Um notch que nascesse a
+        // cortar esconderia um modo antes de alguem o ter ouvido.
+        p_ntc_on[0]    = t.Add("ntc_on_a",    0.0f, 0.f, 1.f);
+        p_ntc_on[1]    = t.Add("ntc_on_b",    0.0f, 0.f, 1.f);
+        p_ntc_hz[0][0] = t.Add("ntc1_hz_a",   0.0f, 60.f, 8000.f, 2.0f);
+        p_ntc_hz[1][0] = t.Add("ntc1_hz_b",   0.0f, 60.f, 8000.f, 2.0f);
+        p_ntc_db[0][0] = t.Add("ntc1_db_a",   0.0f, 0.f, 24.f);
+        p_ntc_db[1][0] = t.Add("ntc1_db_b",   0.0f, 0.f, 24.f);
+        p_ntc_hz[0][1] = t.Add("ntc2_hz_a",   0.0f, 60.f, 8000.f, 2.0f);
+        p_ntc_hz[1][1] = t.Add("ntc2_hz_b",   0.0f, 60.f, 8000.f, 2.0f);
+        p_ntc_db[0][1] = t.Add("ntc2_db_a",   0.0f, 0.f, 24.f);
+        p_ntc_db[1][1] = t.Add("ntc2_db_b",   0.0f, 0.f, 24.f);
         p_wrb_rate[0] = t.Add("wrb_rate_a", 0.0f, 0.5f, 12.f, 2.0f);
         p_wrb_rate[1] = t.Add("wrb_rate_b", 0.0f, 0.5f, 12.f, 2.0f);
         p_wrb_depth[0] = t.Add("wrb_depth_a", 0.0f, 0.f, 3.f);
@@ -1525,6 +1604,16 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(80, p_tarol_on[1], kCanalEntradaB);
         AddMidi(81, p_tarol_mix[0], kCanalEntradaA);
         AddMidi(81, p_tarol_mix[1], kCanalEntradaB);
+        AddMidi(82, p_ntc_on[0], kCanalEntradaA);
+        AddMidi(82, p_ntc_on[1], kCanalEntradaB);
+        AddMidi(83, p_ntc_hz[0][0], kCanalEntradaA);
+        AddMidi(83, p_ntc_hz[1][0], kCanalEntradaB);
+        AddMidi(84, p_ntc_db[0][0], kCanalEntradaA);
+        AddMidi(84, p_ntc_db[1][0], kCanalEntradaB);
+        AddMidi(85, p_ntc_hz[0][1], kCanalEntradaA);
+        AddMidi(85, p_ntc_hz[1][1], kCanalEntradaB);
+        AddMidi(86, p_ntc_db[0][1], kCanalEntradaA);
+        AddMidi(86, p_ntc_db[1][1], kCanalEntradaB);
                 AddMidi(54, p_wrb_rate[0], kCanalEntradaA);
         AddMidi(54, p_wrb_rate[1], kCanalEntradaB);
         AddMidi(55, p_wrb_depth[0], kCanalEntradaA);

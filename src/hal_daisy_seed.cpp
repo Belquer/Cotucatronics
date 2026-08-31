@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.51.0
+// hal_daisy_seed v0.53.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.51.0"
+#define COTUCA_HAL_VERSION "0.53.0"
 
 using namespace daisy;
 
@@ -423,13 +423,71 @@ void AdcInit()
     adc_pronto = true;
 }
 
+// SENTIDO DE ROTACAO — os dois pots estao com as pontas trocadas.
+//
+// Medido em 31/08: girar no sentido HORARIO DIMINUIA o volume. Nao e
+// defeito de software, e a ordem dos dois fios das EXTREMIDADES do pot:
+// o cursor sobe em direcao a ponta que esta no GND em vez da que esta
+// no 3V3. Resolver com ferro de soldar era trocar dois fios numa placa
+// ja lotada; resolver aqui custa uma subtracao e fica DECLARADO.
+//
+// Isto mora no HAL, e nao na macro, por uma razao de fronteira: o
+// sentido de um potenciometro e um fato do COBRE, nao do instrumento.
+// Invertendo na leitura, tudo a jusante — captura, histerese, passos,
+// `Inverso()` — ja trabalha em coordenadas corrigidas, e nao ha um
+// segundo lugar onde alguem possa esquecer o sinal.
+static const bool kKnobInverte[2] = {true, true};   // A0 (L), A1 (R)
+
+// BATENTES — o pot nao chega as pontas, e por isso nao silenciava.
+//
+// Medido em 31/08, varrendo os dois de ponta a ponta (ja invertidos):
+//
+//     k1 (L)  min 0.0250   max 0.9993
+//     k2 (R)  min 0.0247   max 0.9994
+//
+// O fundo em 0.025 nao e silencio: e cerca de -32 dB, audivel. E um pot
+// que nao alcanca o silencio nao tem curso — a mesma regra que aposentou
+// o `in_gain` e que fixou o `mix` do tarolator.
+//
+// A causa e do cobre, nao do codigo: resistencia em serie nas pontas e a
+// referencia do ADC nao coincidirem com os extremos do cursor. Nenhum pot
+// real chega a 0.000 e 1.000, e por isso a correcao mora AQUI, ao lado da
+// inversao, e nao no instrumento.
+//
+// As constantes ficam DENTRO do curso medido, nao nele: assim cada ponta
+// ganha uma pequena zona morta onde o valor assenta exatamente em 0 ou 1
+// e la FICA. Batente colocado no valor medido daria um extremo que so se
+// alcanca com sorte, e que o ruido do ADC faria tremer.
+static const float kKnobFundo = 0.035f;   // abaixo disto e' silencio
+static const float kKnobTopo  = 0.990f;   // acima disto e' unidade
+
+// O valor de COBRE, sem inversao e sem batentes. Existe para se poder
+// RE-MEDIR: depois de esticar as pontas, `ReadKnob` nunca mais mostra
+// onde o pot realmente para, e uma correcao que apaga a propria evidencia
+// nao se pode conferir.
+float ReadKnobCru(int index)
+{
+    if(!adc_pronto || index < 0 || index >= 2) return -1.f;
+    return hw.adc.GetFloat(index);
+}
+
 float ReadKnob(int index)
 {
     // -1 SIGNIFICA "SEM POT", e continua a ser um valor fora do dominio
     // de proposito: 0.0 seria indistinguivel de um pot no zero, e a regra
     // desta casa e que ausencia se representa FORA do dominio.
     if(!adc_pronto || index < 0 || index >= 2) return -1.f;
-    return hw.adc.GetFloat(index);
+    float v = hw.adc.GetFloat(index);
+    // A ausencia NAO se inverte: 1-(-1) daria 2, um valor dentro de
+    // nenhum contrato. So o dominio valido roda.
+    if(kKnobInverte[index]) v = 1.f - v;
+    v = (v - kKnobFundo) / (kKnobTopo - kKnobFundo);
+    return v < 0.f ? 0.f : (v > 1.f ? 1.f : v);
+}
+
+bool KnobInvertido(int index)
+{
+    return (index >= 0 && index < 2) && kKnobInverte[index];
 }
 
 bool AdcConfigurado() { return adc_pronto; }

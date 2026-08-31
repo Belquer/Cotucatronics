@@ -74,6 +74,13 @@ void             RequestBlockSize(size_t block_size);
 float            ReadKnob(int index);
 void             AdcInit();
 bool             AdcConfigurado();
+// O pot `index` esta com as pontas trocadas no cobre? Quem imprime
+// diagnostico precisa saber, ou anuncia como "cru" um numero ja rodado.
+bool             KnobInvertido(int index);
+// O valor de COBRE do pot: sem inversao, sem batentes. Para RE-MEDIR
+// onde ele de facto para — a correcao dos batentes apaga a evidencia
+// dela propria, e correcao que nao se pode conferir vira folclore.
+float            ReadKnobCru(int index);
 // Diz se cada pino do ADC esta SOLTO (segue o pull interno) ou LIGADO a
 // uma fonte de impedancia baixa. Mata o ADC ate um reboot — sao os mesmos
 // pinos. Ver o cabecalho no .cpp.

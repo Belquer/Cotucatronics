@@ -33,6 +33,65 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ---
 
+<!-- doc-check: ignore system_profiler (comando do macOS, nao simbolo do projecto) -->
+
+## 31/08 — o dia do terra e da microfonia
+
+**A placa está FORA DA USB no fim do dia.** Nem série, nem DFU da ROM
+(`BOOT+RST` também não respondeu) — o `system_profiler` não vê `0x0483`. O LED
+tinha parado na **fase 6** (`PollMidi`) antes de sumir. Pode estar ligado à
+sessão longa de microfonia alta (queda no trilho derruba a Daisy), mas **não há
+medição que o prove** e não se acusa sem ela.
+
+**Na flash está a v0.211.0**, gravada com sucesso antes de a placa sumir.
+
+⚠️ **Ao voltar, repor o estado** (o flash apaga tudo, e estes vieram de medição):
+
+```
+set level 0.25
+set ntc1_hz_a 770 · set ntc1_db_a 15
+set ntc2_hz_a 834 · set ntc2_db_a 15
+set ntc_on_a 1
+```
+
+### O que ficou resolvido
+
+| | |
+|---|---|
+| **Pots** | sentido invertido, batentes esticados (o cobre para a 0,0009–0,9756), e a histerese que media do centro e calava o iPad — **210 150 janelas em 20 s parado → 0** |
+| **Microfonia no tambor** | **770 e 834 Hz**, achadas pela vigia (199 e 252 de 999 capturas, dominância 0,96/0,98), cortadas a 15 dB. **Resolveu** |
+| **Ruído do amp** | guincho = banco na entrada do step-down · clique = terra · zumbido = rádio da ponte pelo trilho partilhado |
+| **Colisão de CC** | notch entrara no 115, do `bench_boost`, nos mesmos canais → movido para 82–86, e nasceu `Manifest::Colisoes()` |
+
+### O que ficou por fazer
+
+**Bancada (hardware), com o plano escrito em [`ATERRAMENTO.md`](operacao/ATERRAMENTO.md):**
+1. Separar a **ilha de `AGND`** — piezos, DPDT, jacks, entrada do amp. Conferir
+   com continuidade, **com a Daisy fora do soquete**.
+2. **100 µF + 100 nF** nos pinos da ponte ESP32, e fio de terra próprio à
+   estrela. ⚠️ 100 µF, **não** 2200 — ela pendura-se na saída do step-down.
+3. Afastar os cabos dos piezos dos cabos dos exciters (acoplamento **pelo ar**,
+   imune a esquema de terra).
+
+**Firmware:**
+- **Detector automático de microfonia.** O argumento fechou-se hoje: não é só
+  que cada peça da série terá modos próprios — os modos **mudam durante a
+  sessão**. A vigia já tem as peças (dominância medida, contagem de aparições,
+  95% de ciclo útil); falta a decisão automática.
+- **Duas bocas podem não chegar** — já se viram quatro modos capazes de gritar
+  (770, 834, 930, 1403). Subir para quatro é uma constante em `notch.h`.
+- **O notch não passou pelo IFA10000.** Efeito novo, certificação devida.
+- **Presets** — travados por duas decisões não tomadas (ver abaixo). E hoje
+  ficou concreto o custo: afinou-se por medição dois valores que só existem
+  enquanto a placa não reiniciar.
+
+**Decisões que só o dB pode tomar, e que travam os presets:**
+- `level_l`/`level_r` entram no preset global? *Recomendo que não* — seguem
+  botões físicos, como o `exc_on`.
+- Renomear `tone_*` → `test_tone_*` para alinhar com os widgets do Loopy?
+
+Ambas são livres **só até à primeira captura** congelar o mapa (hoje `0x3505`).
+
 ## Como retomar
 
 ```bash

@@ -8,8 +8,8 @@
 
 | pino | função | como |
 |---|---|---|
-| **D13** | UART TX → **RX** do WIDI | PB6 · USART1 · 31250 8N1 · ★ CRUZADO |
-| **D14** | UART RX ← **TX** do WIDI | PB7 · ★ CRUZADO · é o que recebe MIDI |
+| **D13** | UART TX → **RX** da ponte ESP32 | PB6 · USART1 · 31250 8N1 · ★ CRUZADO |
+| **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI |
 | **D15–D19** | pots (A0–A4) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico |
 | **D22** | botão B4 — freeze B | INPUT + PULLUP, ativo-baixo |
 | **D23** | LED — freeze B | OUTPUT, segue o param `frz_on_b` |
@@ -17,7 +17,7 @@
 | **D25** | botão B3 — rearme do CTOS | INPUT + PULLUP, sem alvo de param |
 | **D26** | botão B1 — búzios (randomizador) | INPUT + PULLUP |
 | **D27** | LED — freeze A | OUTPUT, segue o param `frz_on_a` |
-| **D28** | LB do WIDI (status do link) | INPUT + PULLUP |
+| **D28** | STATUS da ponte ESP32 (link BLE) | INPUT + PULLUP · ativo em BAIXO, aberto-dreno |
 
 ## Livres
 

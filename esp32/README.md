@@ -27,6 +27,28 @@ de tudo**. A cicatriz nasceu com o WIDI e aplica-se igual aqui.
 
 **Bancada: alimenta por USB *ou* pelo pino de 5 V, nunca os dois.**
 
+⚠️ **DESACOPLAMENTO OBRIGATÓRIO — 100 µF + 100 nF nos pinos `5V`/`GND`.**
+
+📖 O porquê está em [`docs/operacao/ATERRAMENTO.md`](../docs/operacao/ATERRAMENTO.md) §4 e §7.
+
+Medido em 31/08: sem eles, **o rádio sai pelo exciter**. As rajadas de
+transmissão são picos de corrente de microssegundos, e sem reservatório local
+eles viram ondulação no trilho partilhado, que o amp amplifica.
+
+E o sintoma tem duas caras, o que o faz parecer dois defeitos:
+
+| estado do BLE | o que se ouve | por quê |
+|---|---|---|
+| **conectado** | zumbido contínuo | rajadas no intervalo de ligação, rápidas |
+| **desconectado** | clique a ~3 Hz | rajadas no intervalo de anúncio, ~100–300 ms |
+
+**E terra própria até ao ponto de estrela**, não pendurada na terra do
+step-down — um conversor comutado abana a própria terra, e quem se pendura
+nela herda o abanão.
+
+**Não pôr 2200 µF aqui.** Ela vive na saída do step-down, e banco grande junto
+a conversor comutado é o caminho para oscilação — ver `HARDWARE.md`.
+
 ### Por que estes GPIO
 
 A GPIO Matrix do C3 põe a UART em quase qualquer pino — o oposto da Daisy.

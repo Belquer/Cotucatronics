@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.6.0
+// Cotucatronics OS — presets v0.7.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -45,6 +45,18 @@ inline bool ForaDoPreset(const char* nome)
     // TOM DE TESTE: preset que ligasse isto poria uma senoide no meio da
     // peca.
     if(!strncmp(nome, "tone_", 5))        return true;
+    // E O `test_tone_*` TAMBEM, que escapava. A exclusao acima e por
+    // prefixo `tone_`, e em 28/08 o `tone_via` foi renomeado para
+    // `test_tone_stage` — que comeca por `test_`. O param saiu da
+    // exclusao sem ninguem tocar na exclusao, e passou a entrar no preset
+    // GLOBAL: carregar um preset poria a via do tom de teste no que
+    // estivesse gravado.
+    //
+    // REGRA POR PREFIXO NAO SOBREVIVE A RENOMEACAO, e falha para o lado
+    // silencioso: o param nao desaparece, muda de categoria. Apanhado na
+    // revisao ANTES da primeira captura, que e a unica altura em que
+    // corrigir isto e de graca.
+    if(!strncmp(nome, "test_tone", 9))    return true;
     // TOPOLOGIA DE SAIDA (28/08). A matriz `route_*` compensa como os
     // transdutores estao LIGADOS — e facto de fiacao, nao de timbre.
     // Dentro do preset cada preset carregaria a fiacao, e desandar um

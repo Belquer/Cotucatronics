@@ -11,10 +11,15 @@
 
 ```
 qualquer powerbank PD ──USB-C──> [decoy PD 15V, 5A] ──> RAIL 15V
-                                                          ├──> amp A (+cap)
-                                                          ├──> amp B (+cap)
-                                                          └──> step-down 5V ──> Daisy VIN + WIDI VI
+                                       ┌──> TPA3116D2 estéreo  (+2200µF +100nF)
+                                       └──> step-down 5V       (SEM banco)
+                                                  └──> Daisy VIN + ponte ESP32
 ```
+
+**UM amp estéreo, não dois.** O desenho dizia `amp A` e `amp B` de quando eram
+dois módulos; hoje é um TPA3116D2 de dois canais, e as duas saídas partilham a
+alimentação dentro da placa — **um banco à entrada serve os dois**. O `WIDI VI`
+também saiu: é a ponte ESP32.
 
 **Por que 15V e não 12V:** 5V/9V/**15V**/20V são os perfis PD **obrigatórios**;
 12V é opcional e muitos powerbanks não oferecem. 15V = qualquer powerbank
@@ -26,19 +31,131 @@ energia pra PICO; se a tensão continua caindo, falta corrente MÉDIA, e nenhum
 capacitor fabrica potência.* O decoy PD não cria tensão, **negocia** — o
 trabalho pesado fica na eletrônica do powerbank, dimensionada de fábrica.
 
-**Obrigatório:** capacitor **2200 µF / 35 V** (derating 2× sobre 15V) + 100 nF
-**colados nos pinos de cada amp**. Dois consumidores no mesmo trilho roubam
-transiente um do outro.
+**Obrigatório:** **2200 µF / 35 V + 100 nF colados nos pinos do amp.**
+Medido em 31/08: sem banco, alimentar a Daisy pelo trilho fazia o exciter
+zumbir, e alimentá-la à parte limpava. **Na galeria não há fonte à parte**,
+portanto isto é requisito da peça, não recomendação.
 
-**Terra em ESTRELA, não margarida.** Um ponto físico onde chegam: GND da
-Daisy, sleeve dos jacks, terra de sinal dos amps, negativo da alimentação. O
-retorno da alimentação do amp é o fio mais curto e grosso.
+🚫 **NADA DE BANCO NA ENTRADA DO STEP-DOWN.** Tentado em 31/08 e desfeito no
+mesmo dia: **guincho agudo** imediato. O amp é carga de corrente pulsada e
+quer o banco; o step-down é carga de **potência constante** e não o tolera.
 
-**Switch só no positivo. Terra nunca passa por chave.**
+📖 O mecanismo (impedância de entrada negativa, critério de Middlebrook) e o
+resto das regras de desacoplamento estão em
+[`ATERRAMENTO.md`](ATERRAMENTO.md) §4.
+
+### Os dois pots estão com as pontas trocadas — corrigido em firmware
+
+Medido em 31/08: **sentido horário DIMINUÍA o volume** nos dois. Não é
+software — é a ordem dos dois fios das **extremidades** do potenciómetro, com
+o cursor a subir na direcção da ponta ligada ao `GND`.
+
+O conserto ficou em `hal_daisy_seed.cpp`, na tabela `kKnobInverte[2]`, e não na
+macro. A fronteira é essa: **o sentido de um potenciómetro é um facto do
+cobre**, e invertendo já na leitura tudo a jusante — captura, histerese,
+passos, `Inverso()` — trabalha em coordenadas corrigidas, sem um segundo sítio
+onde alguém possa esquecer o sinal.
+
+Se algum dia os fios forem re-soldados na ordem certa, **é essa tabela que
+passa a `false`** — não há mais nenhum lugar a mexer.
+
+### Terra, massa e desacoplamento
+
+📖 **O assunto tem capítulo próprio: [`ATERRAMENTO.md`](ATERRAMENTO.md).**
+Taxonomia dos três tipos de terra, estrela, `AGND`/`DGND`, condensadores por
+tipo de carga, entradas de alta impedância, acoplamento pelo ar, e o método de
+medição sob carga. **Quando este arquivo e aquele discordarem, aquele manda.**
+
+Revisão de terra no desenho de placa: skill `revisao-terra`.
+
+O desenho alvo **deste** instrumento:
+
+```
+   ILHA DE ÁUDIO — só sinal
+     AGND ── piezos ── comuns dos DPDT ── sleeve dos jacks ── entrada do amp
+          ↑ encontra o DGND SÓ por dentro da Daisy
+   TRILHO DE FORÇA E LÓGICA
+     DGND ── fio próprio à estrela ── pots (3V3 da Daisy) ── encoders ── botões
+          ── ponte ESP32 (fio próprio à estrela)
+```
+
+### O pot não chega às pontas — batentes esticados em firmware
+
+Medido em 31/08, varrendo os dois de ponta a ponta. **O valor de cobre**, sem
+inversão nem correcção:
+
+| pot | fundo | topo |
+|---|---|---|
+| k1 (L) | 0,0009 | **0,9756** |
+| k2 (R) | 0,0005 | **0,9753** |
+
+O fundo chega quase perfeito; **o topo pára a 0,975** — o cursor nunca entrega
+os 3V3 inteiros. Depois da inversão isso vira um **piso de 0,025**, que não é
+silêncio: é cerca de **−32 dB, audível**. Foi exactamente o que se ouviu com os
+pots no mínimo, e o teste que o provou foi pôr `level_l`/`level_r` a zero por
+comando — aí houve **silêncio total**, o que também absolveu o amp.
+
+O conserto são `kKnobFundo` (0,035) e `kKnobTopo` (0,990) em
+`hal_daisy_seed.cpp`, aplicados depois da inversão.
+
+⚠️ **As constantes ficam DENTRO do curso medido, não nele.** Assim cada ponta
+ganha ~1% de zona morta onde o valor assenta em 0 ou 1 e **lá fica**. Batente
+posto no valor medido daria um extremo que só se alcança com sorte e que o
+ruído do ADC faria tremer.
+
+E há um segundo defeito que o piso causava, menos óbvio: com o parâmetro em 0
+e o pot no seu mínimo de 0,025, a **janela de captura era 0,02** — menor que o
+piso. O pot ficava **permanentemente incapaz de retomar o parâmetro**. Esticar
+os batentes cura os dois de uma vez.
+
+`knob` mostra agora `cobre X INV -> vale Y`: o valor bruto ao lado do tratado,
+porque **uma correcção que apaga a própria evidência não se pode re-conferir**.
+
+### Os condensadores desta peça
+
+| consumidor | precisa | estado |
+|---|---|---|
+| **amp TPA3116** | 2200 µF / 35 V + 100 nF nos pinos | ✅ soldado |
+| **step-down 5 V** | **nada na entrada** | ✅ removido (era o guincho) |
+| **ponte ESP32** | 100 µF / 16 V + 100 nF + terra própria | ⬜ por soldar |
+| **Daisy** | 100 µF / 16 V + 100 nF | ⬜ recomendado |
+
+📖 O porquê de cada valor, e as proibições, em [`ATERRAMENTO.md`](ATERRAMENTO.md) §4.
+
+**Terra em ESTRELA, não margarida.** O ponto é onde o `GND` do decoy PD chega
+ao amp, e é dali que bifurca para o step-down. O retorno do amp é o fio mais
+curto e grosso.
+
+🚫 **Switch só no positivo. Terra nunca passa por chave.**
 
 ---
 
 ## 2 · ENTRADA DOS PIEZOS (×2) — só proteção, ganho intacto
+
+⚠️ **O LAÇO ACÚSTICO É REAL, E CEIFA O ADC — medido em 31/08.**
+
+Exciter e piezo vivem no mesmo corpo, portanto **são** um laço de realimentação.
+Medido com a mesma força de toque, mudando só se a saída toca:
+
+| | saída a tocar | saída muda |
+|---|---|---|
+| **IN_L** | **0,0 dBFS · 313 amostras ceifadas** | **−7,4 dBFS · 0 ceifadas** |
+
+**O laço acrescenta ~7,4 dB**, e é exactamente o que falta para bater no tecto
+com `level` a 0,6. (Para comparar: a corda dava −17 dBFS e a membrana −21 em
+medições sem laço.)
+
+O laço **não é defeito** — é metade do que o instrumento tem de bom. O que não
+presta é o fim dele: **ceifado no ADC**, distorção digital dura e sem controlo.
+
+⚠️ **Hoje não há controlo de ganho de entrada.** O `in_gain` foi aposentado em
+31/08 por estar inerte — decisão certa, mas isto é o primeiro caso que pede um
+trim de entrada a sério. Enquanto não houver, o controlo é **baixar o `level`**
+até o `pk` deixar de acusar `clip`.
+
+**Diagnóstico:** `pk reset`, tocar, `pk`. Se `clip > 0`, está a ceifar. Repetir
+com `set level 0` separa **laço** de **fonte quente**: se o pico cair, é laço.
+
 
 ```
 piezo (+) ──1kΩ──●──> AUDIO IN
@@ -231,6 +348,10 @@ falha em silêncio, em cobre.
 ---
 
 ## Checklist antes de energizar
+
+⚠️ **Antes de energizar montagem nova, correr a revisão de terra** — skill
+`revisao-terra`. Ruído de massa imita defeito de firmware, e diagnosticá-lo
+depois custou uma tarde e três acusações a inocentes.
 
 - [ ] Continuidade +V ↔ GND: **não pode bipar**
 - [ ] Decoy PD medido: **15 V confirmados sem carga**
