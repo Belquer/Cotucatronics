@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.46.0
+// hal_daisy_seed v0.51.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.46.0"
+#define COTUCA_HAL_VERSION "0.51.0"
 
 using namespace daisy;
 
@@ -292,10 +292,6 @@ bool Init()
     hw.SetAudioBlockSize(info.block_size);
     hw.SetAudioSampleRate(SaiHandle::Config::SampleRate::SAI_48KHZ);
     info.sample_rate = hw.AudioSampleRate();
-    // ADC ANTES DO AUDIO, e antes do log: familia B do audit (configura
-    // antes de consumir). O laco principal comeca a ler knobs assim que
-    // arranca, e um `GetFloat` antes do `Start` le um periferico parado.
-    AdcInit();
     hw.StartLog(false);
 
     // ---- CARENCIA DE ENUMERACAO, LIMITADA E COM SAIDA ANTECIPADA ----
@@ -331,6 +327,23 @@ bool Init()
     }
 
     Log("hal_daisy_seed v" COTUCA_HAL_VERSION);
+    // ---- ADC, DEPOIS DO LOG E NAO ANTES ----
+    //
+    // A primeira versao punha isto ANTES do `StartLog`, com o argumento
+    // "configura antes de consumir". O argumento estava certo e a
+    // colocacao errada, e a diferenca so aparece quando algo corre mal:
+    // entre o `hw.Init` (que enumera o USB) e o `StartLog` (que faz o
+    // canal falar) ha uma janela em que a placa JA APARECE ao host e
+    // ainda nao consegue dizer nada. Qualquer coisa que trave ali produz
+    // "enumera e nao fala" — indistinguivel de um travamento no laco, e
+    // com o log morto nao ha como perguntar.
+    //
+    // Regra: **inicializacao que pode falhar nao mora antes do canal que
+    // reportaria a falha.** O ganho de a fazer 20 ms mais cedo nao paga
+    // um modo de falha mudo, e o laco so le knobs muito depois disto.
+    Log("adc: inicializando (A0=D15 · A1=D16)...");
+    AdcInit();
+    Log("adc: %s", AdcConfigurado() ? "pronto" : "*** FALHOU ***");
     hw.usb_handle.SetReceiveCallback(UsbRxCallback, UsbHandle::FS_INTERNAL);
 
     // botões: entrada com pull-up interno, fecham pra GND
@@ -420,6 +433,87 @@ float ReadKnob(int index)
 }
 
 bool AdcConfigurado() { return adc_pronto; }
+
+// ---- SONDA DE PINO DO ADC: solto ou ligado? ----
+//
+// Um pino SOLTO segue o pull interno: com pull-up le alto, com pull-down
+// le baixo. Um pino ligado ao cursor de um pot ve uma fonte de impedancia
+// BAIXA (10 kohm tipico contra ~40 kohm do pull interno) e NAO se deixa
+// arrastar — fica onde o divisor o poe, nas duas leituras.
+//
+// Isto decide sem multimetro o que o valor do ADC nao consegue dizer: um
+// pino solto tambem devolve um numero, e numero de pino solto e
+// indistinguivel de pot parado. Mesma familia do `fio` do OLED.
+//
+// PRECO DECLARADO: reconfigura os pinos como GPIO e MATA o ADC ate um
+// reboot. Nao ha como nao matar — sao os mesmos pinos.
+// ---- CONTROLO POSITIVO DO ADC ----
+//
+// A pergunta que nenhuma leitura de valor responde: o `GetFloat(0)` esta
+// mesmo a ler o D15, ou esta a ler outra coisa? Um ADC mal ligado tambem
+// devolve um numero, e numero de canal errado e indistinguivel de pot
+// parado — foi assim que dois pots diferentes leram o MESMO valor e
+// derivaram juntos, e eu gastei uma sessao a caçar o cobre.
+//
+// Aqui a placa DIRIGE o proprio pino e ve se o ADC acompanha. Se
+// acompanhar, o par (canal, pino) esta certo e o defeito e a montante. Se
+// nao acompanhar, o defeito e meu.
+//
+// A sonda tem de provar que consegue devolver ALGO DIFERENTE antes de a
+// sua leitura valer — regra da casa, e esta e a forma dela para o ADC.
+//
+// SEGURO com o pot ligado: o pino sai por 10 kohm tipico, 0,33 mA.
+void AdcControloPositivo(float* alto_l, float* baixo_l,
+                         float* alto_r, float* baixo_r)
+{
+    const daisy::Pin pinos[2] = {seed::D15, seed::D16};
+    float a[2], b[2];
+    for(int i = 0; i < 2; i++)
+    {
+        daisy::GPIO g;
+        g.Init(pinos[i], GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
+        g.Write(true);  System::Delay(80); a[i] = hw.adc.GetFloat(i);
+        g.Write(false); System::Delay(80); b[i] = hw.adc.GetFloat(i);
+        // devolve o pino ao ADC
+        g.Init(pinos[i], GPIO::Mode::ANALOG, GPIO::Pull::NOPULL);
+    }
+    if(alto_l)  *alto_l  = a[0];
+    if(baixo_l) *baixo_l = b[0];
+    if(alto_r)  *alto_r  = a[1];
+    if(baixo_r) *baixo_r = b[1];
+}
+
+void AdcSondaPinos(bool* solto_l, bool* solto_r)
+{
+    const daisy::Pin pinos[2] = {seed::D15, seed::D16};
+    bool alto[2], baixo[2];
+    for(int i = 0; i < 2; i++)
+    {
+        daisy::GPIO g;
+        // 60 ms, E NAO 5, e a diferenca decide o veredito.
+        //
+        // A primeira versao esperava 5 ms. Com um condensador de filtro de
+        // 0,1 uF no pino — que e a montagem NORMAL — e o pull interno de
+        // ~40 kohm, a constante de tempo e ~4 ms: em 5 ms o condensador
+        // mal comecou a carregar, e a sonda lia o estado ANTERIOR em vez
+        // do que o pull queria. Deu "LIGADO" a um pino que estava
+        // efectivamente solto atras de um condensador em serie.
+        //
+        // 60 ms sao 15 constantes de tempo: o pino chega onde o pull o
+        // quer, se puder chegar. Sonda que nao espera o transiente mede o
+        // transiente.
+        g.Init(pinos[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+        System::Delay(60);
+        alto[i] = g.Read();
+        g.Init(pinos[i], GPIO::Mode::INPUT, GPIO::Pull::PULLDOWN);
+        System::Delay(60);
+        baixo[i] = g.Read();
+    }
+    // SEGUIU O PULL nas duas = solto.
+    if(solto_l) *solto_l = (alto[0] && !baixo[0]);
+    if(solto_r) *solto_r = (alto[1] && !baixo[1]);
+    adc_pronto = false;   // o ADC morreu: quem chama que diga
+}
 
 bool ReadWidiLed()
 {
@@ -1011,7 +1105,21 @@ uint16_t EncoderNiveisCrus()
 
 // Todos os pinos que NAO estao ocupados por periferico. Inclui os nove
 // dos encoders — se o fio estiver noutro lugar, e aqui que aparece.
-static const int kLivres[] = {0,1,2,3,4,9,11,12,15,16,17,18,19,20,21};
+// D15 E D16 SAIRAM DAQUI EM 31/08, e a razao e um defeito que custou uma
+// sessao inteira e uma solda do dB.
+//
+// O `VarreLivres` corre a CADA volta do laco e, na primeira, reconfigura
+// toda esta lista como INPUT+PULLUP. Isso tira os pinos do modo ANALOGICO
+// — e o ADC passa a amostrar uma entrada desligada. Os dois canais dos
+// pots liam o MESMO ~0,4 V para sempre, e nada que se fizesse ao cobre
+// mudava nada, porque o firmware roubava os pinos antes de o cobre ter
+// chance.
+//
+// LISTA DE "LIVRES" E UMA AFIRMACAO SOBRE POSSE, e envelhece: ela estava
+// certa quando foi escrita e passou a mentir no instante em que os pots
+// ganharam dono. Ver a trava em `AdcInit` — a partir de agora um pino
+// reclamado pelo ADC que ainda conste aqui GRITA no arranque.
+static const int kLivres[] = {0,1,2,3,4,9,11,12,17,18,19,20,21};
 
 // ---- O PONTO CEGO DO `varre`, e como se abre ----
 //
@@ -1069,7 +1177,7 @@ uint32_t VarreTudo()
 }
 static const daisy::Pin kLivresPin[] = {
     seed::D0, seed::D1, seed::D2, seed::D3, seed::D4, seed::D9,
-    seed::D11, seed::D12, seed::D15, seed::D16, seed::D17,
+    seed::D11, seed::D12, seed::D17,
     seed::D18, seed::D19, seed::D20, seed::D21};
 static constexpr int kNumLivres = (int)(sizeof(kLivres)/sizeof(kLivres[0]));
 
@@ -1081,6 +1189,19 @@ uint32_t VarreLivres()
     static bool feito = false;
     if(!feito)
     {
+        // TRAVA CONTRA O ROUBO DE PINO, e mora AQUI porque e aqui que o
+        // roubo acontece. Ate 31/08 o D15 e o D16 estavam nesta lista, e
+        // esta linha arrancava-os do modo ANALOGICO na primeira volta do
+        // laco: o ADC passava a amostrar uma entrada desligada e os dois
+        // pots liam o mesmo valor para sempre. Nada que se fizesse ao
+        // cobre mudava nada, porque o firmware chegava primeiro.
+        //
+        // Se alguem voltar a por um pino do ADC aqui, isto GRITA em vez de
+        // o roubar em silencio.
+        for(int i = 0; i < kNumLivres; i++)
+            if(adc_pronto && (kLivres[i] == 15 || kLivres[i] == 16))
+                Log("*** ERRO: D%d e do ADC e esta em kLivres — o varredor"
+                    " acabou de o roubar; o pot vai ler lixo.", kLivres[i]);
         for(int i = 0; i < kNumLivres; i++)
             g[i].Init(kLivresPin[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
         feito = true;

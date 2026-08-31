@@ -301,7 +301,7 @@ outros três do bloco ADC são o encoder global — `A0–A4` são aliases de
 `D15–D19`. `num_knobs` passou de **5 para 2**; declarar cinco fazia o laço
 iterar sobre knobs inexistentes.
 
-**Params novos:** `vol_l` / `vol_r` (CC 116/117), volume contínuo por ramo,
+**Params novos:** `level_l` / `level_r` (CC 116/117), volume contínuo por ramo,
 **depois do limiter** — mesmo ponto do mute `out_*`, e pela mesma razão: ali
 só se pode reduzir. São funções diferentes no mesmo sítio — `out_*` mata o
 ramo (segurança, instantâneo), `vol_*` dosa (performance, contínuo).
@@ -324,6 +324,67 @@ a captura depende — se ele errar, o pot "não pega" e a bancada culpa o ADC).
 
 ⚠️ **Nada disto foi gravado nem medido na placa** — o dB desmontou a bancada.
 O `knob` diz na hora se o ADC lê.
+
+---
+
+## 31/08 — os pots funcionam, e o defeito era firmware
+
+**`level_l` / `level_r`** (CC 116/117) seguem os dois pots físicos. Custou uma
+sessão inteira, e o culpado não era o cobre:
+
+### 🔴 O varredor de pinos livres roubava o pino ao ADC
+
+`D15` e `D16` estavam em `kLivres`, e o `VarreLivres()` — que corre **a cada
+volta do laço** — reconfigurava-os como digitais na primeira passagem,
+arrancando-os do modo **analógico**. O ADC amostrava uma entrada desligada, os
+dois canais liam o mesmo ~0,12, e **nada feito ao cobre podia mudar nada**: o
+firmware chegava sempre primeiro.
+
+O dB trocou fios, removeu um condensador, mediu 3,3 V nos extremos e trocou os
+pinos entre si — tudo em vão, por minha causa.
+
+> **Lista de "pinos livres" é afirmação sobre POSSE, e envelhece.** Terceira
+> vez no mês: `num_knobs = 5` com dois pots, a isenção do `kEncPin` depois de
+> ele virar fonte, e agora esta.
+
+A trava mora agora dentro do `VarreLivres` e grita em vez de roubar calado.
+
+### ⚠️ E as duas sondas que construí para o caçar mentiram
+
+**`knob pino`** segurava o pull 5 ms; com 0,1 µF e ~40 kΩ a constante é ~4 ms —
+lia antes de o condensador carregar, e deu *"LIGADO"* ao caso que existia para
+apanhar. Agora espera 60 ms.
+
+**`knob prova`** dirigia o pino como saída digital, o que nos STM32 **desliga o
+interruptor analógico** — o ADC deixa de ver o pino. Estava garantida a dizer
+*"não segue"*, e eu usei isso para anunciar uma conclusão.
+
+O que resolveu não foi sonda nenhuma: foi ler o código à procura de **quem
+mais tocava naqueles pinos**.
+
+### Estado medido
+
+| | |
+|---|---|
+| escritas em repouso | **0,07/s** (eram 623/s antes da quantização) |
+| ruído `k2` (D16) | σ **0,00085** — limpo |
+| ruído `k1` (D15) | σ **0,0055** — seis vezes pior, sem condensador de filtro |
+
+⚠️ **Repor o 0,1 µF, agora em PARALELO** (pino → GND), pelo menos no D15. Com
+o sinal limpo dá para afrouxar a filtragem e o pot fica mais responsivo.
+
+### Também nesta sessão
+
+- **`min_knobs` 4 → 2.** Baixar o `num_knobs` fez o `CheckRequirements()`
+  recusar arrancar — correctamente. A **recusa passou a explicar-se**: o LED
+  conta o código da falha (1 áudio, 2 RAM, 3 knobs) com a gramática do
+  instrumento de fase, e o texto **repete-se**, para quem ligar a serial depois.
+- **`AdcInit` saiu de antes do `StartLog`.** Inicialização que pode falhar não
+  mora antes do canal que reportaria a falha.
+- **Quantização no passo do fio** (1/127 com histerese de 0,85 passo) em vez de
+  zona morta mágica — o pot tem a resolução do protocolo, nem mais nem menos.
+- **O pot fecha a recepção MIDI do seu param** ao escrever, em vez de esperar
+  que o espelho o anuncie até 8 ms depois.
 
 ---
 

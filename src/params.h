@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — params v0.11.0
+// Cotucatronics OS — params v0.12.0
 // Tabela de parâmetros + macros de knob. Board-agnostic:
 // não inclui hal.h nem header de fabricante nenhum.
 //
@@ -15,7 +15,7 @@
 namespace cotuca
 {
 
-#define COTUCA_PARAMS_VERSION "0.11.0"
+#define COTUCA_PARAMS_VERSION "0.12.0"
 
 // knobs físicos do painel (manifest declara Macro knob[kNumKnobs]).
 // 4 de caráter + SRC MIX = 5.
@@ -303,6 +303,13 @@ struct Macro
     // alvo: uma macro com varios alvos nao tem uma posicao unica, e
     // inventar uma media seria numero com cara de dado.
     int   PrimeiroAlvo() const { return n_ ? target_[0] : -1; }
+
+    // TODOS os alvos, e nao so o primeiro. O `PrimeiroAlvo` serve a
+    // captura (que precisa de UMA posicao de referencia); a janela de
+    // autoria precisa de os fechar TODOS, senao uma macro de tres alvos
+    // protege um e deixa dois expostos — defesa aplicada a um caminho e
+    // nao aos irmaos, que e cicatriz desta casa.
+    int   Alvo(int i) const { return (i >= 0 && i < n_) ? target_[i] : -1; }
 
     float Inverso(float x) const
     {

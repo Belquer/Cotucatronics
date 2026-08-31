@@ -38,7 +38,7 @@ static void volta(const char* rot, float peso)
 int main()
 {
     printf("teste_macro v0.1.0 — Apply seguido de Inverso devolve a posicao\n\n");
-    volta("direto (vol_l/vol_r)",  1.0f);
+    volta("direto (level_l/level_r)",  1.0f);
     volta("meio curso",            0.5f);
     volta("invertido",            -1.0f);
     volta("invertido parcial",    -0.5f);

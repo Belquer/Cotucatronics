@@ -193,7 +193,7 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
 - **Encoder EC11** com detentes e push (push = confirmar). Relativo, não
   absoluto — mata o problema do salto do knob compartilhado.
 - **2 pots de volume**, um por ramo — ✅ **soldados e implementados em 28/08**:
-  `A0` = **D15** (ramo L) · `A1` = **D16** (ramo R). Params `vol_l`/`vol_r`
+  `A0` = **D15** (ramo L) · `A1` = **D16** (ramo R). Params `level_l`/`level_r`
   (CC 116/117), aplicados **depois do limiter**, onde só se pode reduzir.
 
   ⚠️ **Não há um terceiro pot possível.** `A0–A4` são aliases de `D15–D19`, e

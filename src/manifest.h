@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.90.0
+// manifest.h (instrumento "bancada") v0.92.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -22,7 +22,21 @@ struct Requirements
 {
     size_t big_ram_bytes = 0;     // ex: 8MB p/ freeze longo
     bool   needs_audio_in = true; // esculturas com piezo: sim
-    int    min_knobs      = 4;
+    // DOIS, e a mudanca custou uma gravacao muda para o aprender.
+    //
+    // Dizia 4 desde antes de o painel existir. Ao ligar os pots baixei o
+    // `num_knobs` do HAL de 5 para 2 — que e o que a placa comporta — e o
+    // `CheckRequirements` recusou arrancar: exigencia 4 > disponivel 2. A
+    // verificacao fez exatamente o que devia; era o REQUISITO que estava
+    // velho, escrito quando ninguem sabia quantos knobs haveria.
+    //
+    // O sintoma foi o pior possivel de ler: "enumera e nao fala", com o
+    // LED a piscar sem parar. A mensagem de erro SAI — mas sai no boot,
+    // para um host que ainda nao esta a escutar, e depois disso a placa
+    // entra no laco de paragem e nunca mais diz nada. Alarme de boot que
+    // se perde, agora numa forma sem "depois": nao ha comando a que
+    // perguntar, porque o laco principal nunca comeca.
+    int    min_knobs      = 2;
 
     // ---- TAMANHO DE BLOCO: decisão de INSTRUMENTO ----
     //
@@ -197,8 +211,8 @@ struct Manifest
     int p_exc_on[2];    // exciter no ar? gateia a protecao do ramo
     int p_route_l[2];   // a cadeia A/B entra em OUT_L?
     int p_route_r[2];   // a cadeia A/B entra em OUT_R?
-int p_vol_l;        // volume do ramo L — POT em A0 (D15)
-    int p_vol_r;        // volume do ramo R — POT em A1 (D16)
+int p_level_l;        // volume do ramo L — POT em A0 (D15)
+    int p_level_r;        // volume do ramo R — POT em A1 (D16)
         int p_out_l;        // OUT_L no ar?  (mute pos-limiter)
     int p_out_r;        // OUT_R no ar?
 
@@ -854,6 +868,11 @@ int p_vol_l;        // volume do ramo L — POT em A0 (D15)
         p_route_l[1]    = t.Add("route_l_b",     1.0f, 0.f, 1.f);
         p_route_r[0]    = t.Add("route_r_a",     1.0f, 0.f, 1.f);
         p_route_r[1]    = t.Add("route_r_b",     1.0f, 0.f, 1.f);
+        // NOME: `level_l`/`level_r`, e nao `vol_*`. Alinha com o `level`
+        // mestre que ja existia e diz o que sao — o mesmo eixo, em dois
+        // ramos. Renomeados em 30/08, a pedido do dB e de graca: o mapa
+        // muda de hash, e ainda nao existe preset nenhum capturado.
+        //
         // VOLUME POR RAMO, e nao e o mesmo que `out_*`. O mute existe para
         // matar um ramo inteiro depois do limiter — gesto de seguranca,
         // instantaneo. O volume e performance, continuo, e mora nos dois
@@ -863,8 +882,8 @@ int p_vol_l;        // volume do ramo L — POT em A0 (D15)
         // laco adota a leitura fisica na primeira volta. Volume que nasce
         // diferente de onde o botao esta e a primeira coisa que assusta
         // quem liga o instrumento.
-        p_vol_l         = t.Add("vol_l",         1.0f, 0.f, 1.f);
-        p_vol_r         = t.Add("vol_r",         1.0f, 0.f, 1.f);
+        p_level_l         = t.Add("level_l",         1.0f, 0.f, 1.f);
+        p_level_r         = t.Add("level_r",         1.0f, 0.f, 1.f);
         p_out_l         = t.Add("out_l",         1.0f, 0.f, 1.f);
         p_out_r         = t.Add("out_r",         1.0f, 0.f, 1.f);
 
@@ -1270,8 +1289,8 @@ int p_vol_l;        // volume do ramo L — POT em A0 (D15)
         // outras esculturas, não só pra esta.
         // OS DOIS POTS SOLDADOS, e so ha dois: A0–A4 sao aliases de
         // D15–D19 e o encoder global ocupa D17/D18/D19. Sobram D15 e D16.
-        knob[0].AddTarget(p_vol_l, 1.0f);    // k1 — volume do ramo L
-        knob[1].AddTarget(p_vol_r, 1.0f);    // k2 — volume do ramo R
+        knob[0].AddTarget(p_level_l, 1.0f);    // k1 — volume do ramo L
+        knob[1].AddTarget(p_level_r, 1.0f);    // k2 — volume do ramo R
         // k3, k4 e k5 NAO EXISTEM em hardware. Ate 28/08 estavam mapeados
         // (dly_time, dly_mix_a) e o laco iterava sobre eles com o
         // `ReadKnob` a devolver -1 — inofensivo enquanto era stub, e
@@ -1596,8 +1615,8 @@ int p_vol_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(110, p_gov_ceiling[0], kCanalEntradaA);
         AddMidi(111, p_gov_release[0], kCanalEntradaA);
         AddMidi(112, p_shift_hz, kCanalCompart);         // COMPARTILHADO pelos dois ramos
-AddMidi(116, p_vol_l, kCanalCompart);             // pot A0 (D15)
-        AddMidi(117, p_vol_r, kCanalCompart);             // pot A1 (D16)
+AddMidi(116, p_level_l, kCanalCompart);             // pot A0 (D15)
+        AddMidi(117, p_level_r, kCanalCompart);             // pot A1 (D16)
                 AddMidi(113, p_out_l, kCanalCompart);            // 0 = corta o ramo L   // COMPARTILHADO: so ch1
         AddMidi(114, p_out_r, kCanalCompart);            // 0 = corta o ramo R   // COMPARTILHADO: so ch1
         // MATRIZ 2x2 — o CC diz a SAIDA, o canal diz a CADEIA. Mesmo

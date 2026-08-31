@@ -145,7 +145,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 114 | ch1 | ch4 | `out_r` | saída | 0 – 1 |
 | 115 | ch2 | ch5 | `bench_boost_a` | bancada | 1 – 8 |
 | 115 | ch3 | ch6 | `bench_boost_b` | bancada | 1 – 8 |
-| 116 | ch1 | ch4 | `vol_l` | saída | 0 – 1 |
-| 117 | ch1 | ch4 | `vol_r` | saída | 0 – 1 |
+| 116 | ch1 | ch4 | `level_l` | saída | 0 – 1 |
+| 117 | ch1 | ch4 | `level_r` | saída | 0 – 1 |
 
 <!-- 95 vinculos em 55 numeros de CC -->

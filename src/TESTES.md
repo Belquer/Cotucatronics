@@ -1,5 +1,51 @@
 # TESTES.md — Cotucatronics OS · roteiro de bancada
 
+## LED USR — o que ele está a dizer
+
+A placa fala pelo LED em dois momentos, com **a mesma gramática**: conta N
+piscadas, faz uma pausa, e repete.
+
+### Recusa de arranque — o laço de paragem
+
+Se o `CheckRequirements()` falhar, a placa **não arranca de propósito** e o
+LED conta o código de cada requisito em falta, ciclando entre eles:
+
+| piscadas | requisito em falta |
+|---|---|
+| **1** | entrada de áudio — o instrumento exige, a placa não tem |
+| **2** | RAM grande insuficiente |
+| **3** | knobs a menos do que o manifest exige |
+
+⚠️ **Nada mais funciona neste estado** — o laço principal nunca começa, logo
+não há serial a que perguntar. Mas **o texto do erro repete-se** a cada três
+ciclos: ligar a serial a qualquer momento mostra o motivo.
+
+> Custou meia hora em 31/08. O `min_knobs` dizia 4, o painel tem 2, e a placa
+> recusou arrancar — correctamente. Mas piscava 5 Hz constante (indistinguível
+> de um travamento) e dizia o erro **uma vez**, no boot, para um host que ainda
+> não estava a escutar. **Alarme de boot que se perde, numa forma sem
+> "depois".**
+
+### Fase do laço — quando ele está a correr
+
+Com o instrumento vivo, o mesmo LED conta a **fase** em que o laço está. Corre
+no callback de áudio, e por isso **sobrevive a um laço morto** — foi o que
+endereçou o *livelock* do `PollMidi` em 28/08.
+
+| piscadas | fase |
+|---|---|
+| 1 | knobs |
+| 2 | `PollSerial` · encoders · espelho do OLED |
+| 3 | botões do painel |
+| 4 | disparo do sorteio |
+| 5 | rampas do sorteio |
+| 6 | `PollMidi` · LbTick |
+| 7 | espelho MIDI, fim do laço |
+
+**Como distinguir os dois:** a recusa de arranque nunca passa de **3** e a
+placa está muda a comandos; a fase chega a **7** e a placa responde.
+
+
 **Documento v0.24.0** · última execução em placa: 2026-08-18 · firmware
 **v0.47.0 / HAL v0.11.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;

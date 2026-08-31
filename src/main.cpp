@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.193.0"
+#define COTUCA_OS_VERSION "0.201.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -456,10 +456,34 @@ static uint32_t var_tudo_alto = 0, var_tudo_baixo = 0;
 // Os tres numeros que fazem um pot conviver com MIDI no mesmo param.
 // Ajustaveis por `knob` na serial, porque so a bancada sabe o ruido do
 // ADC desta montagem.
-static float    kKnobSuave     = 0.08f;   // polo do filtro, por volta do laco
+// ---- OS QUATRO NUMEROS, E O QUE OS DECIDIU ----
+//
+// MEDIDO na bancada em 31/08, com os pots PARADOS:
+//   cru        espalhamento 0,014–0,021 · desvio 0,0056
+//   filtrado   espalhamento 0,0075–0,0092 · desvio 0,0024
+//   resultado  623 ESCRITAS POR SEGUNDO sem ninguem tocar
+//
+// A primeira versao tinha zona morta de 0,004 — menor que o desvio do
+// filtrado. E nenhum valor dela resolvia bem: grande o bastante para
+// calar o ruido, ficava mais grossa que o fader do iPad.
+//
+// A SAIDA NAO FOI ESCOLHER MELHOR O NUMERO MAGICO — foi tira-lo. O param
+// viaja em 7 bits, entao a resolucao util do pot E a do fio: 1/127. Ele
+// passou a QUANTIZAR no passo de MIDI, com histerese, e so escreve quando
+// o passo MUDA. A zona morta deixou de ser um palpite e passou a ser uma
+// propriedade do protocolo.
+static float    kKnobSuave     = 0.02f;   // polo do filtro (era 0,08)
 static float    kKnobCaptura   = 0.02f;   // janela para ASSUMIR o param
 static float    kKnobSolta     = 0.06f;   // janela para LARGAR (maior: histerese)
-static float    kKnobZonaMorta = 0.004f;  // ~metade de um passo de MIDI
+// Histerese da quantizacao, EM PASSOS de MIDI. 0,85 passo = 0,0067, que
+// e 2,8 desvios do filtrado medido — a fronteira nao treme.
+static float    kKnobHist      = 0.85f;
+static int      knob_passo[cotuca::kNumKnobs] = {0};
+// Quantas vezes um pot fechou a recepcao de um param. Sobe a cada passo
+// util do pot, e e o numero que denuncia um ADC ruidoso: pot que treme
+// abre janela sem parar e deixa aquele param PERMANENTEMENTE surdo ao
+// iPad — defesa a funcionar como avaria, e sem contador ninguem veria.
+static uint32_t knob_janelas = 0;
 static float    knob_filt[cotuca::kNumKnobs] = {0};
 static bool     knob_vivo[cotuca::kNumKnobs] = {false};
 static bool     knob_dono[cotuca::kNumKnobs] = {false};
@@ -1130,7 +1154,7 @@ static cotuca::Suave       suave_tarol[cotuca::Manifest::kCadeias];
 // Volume por ramo, dos pots. SUAVIZADO porque e ganho por amostra e o
 // param vem em degraus — a mesma escada que ja mordeu o `level`, o
 // `tone_mix`, o `tone_dest` e o `in_gain`. Quinta ocorrencia da forma.
-static cotuca::Suave       suave_vol_l, suave_vol_r;
+static cotuca::Suave       suave_level_l, suave_level_r;
 
 static cotuca::Suave       suave_mat[4];
 static float               mat_g[4][kMaxBlock];
@@ -2419,17 +2443,17 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //    (seguranca, instantaneo), `vol_*` dosa (performance, continuo).
     const float r_l = params.Real(manifest.p_out_l) >= 0.5f ? 1.f : 0.f;
     const float r_r = params.Real(manifest.p_out_r) >= 0.5f ? 1.f : 0.f;
-    const float v_l = r_l * params.Real(manifest.p_vol_l);
-    const float v_r = r_r * params.Real(manifest.p_vol_r);
+    const float v_l = r_l * params.Real(manifest.p_level_l);
+    const float v_r = r_r * params.Real(manifest.p_level_r);
     // Custo zero quando nao ha nada a fazer: os dois no talo, os dois
     // ramos vivos, e as rampas ja pousadas.
     if(v_l < 0.9999f || v_r < 0.9999f
-       || suave_vol_l.Valor() < 0.9999f || suave_vol_r.Valor() < 0.9999f)
+       || suave_level_l.Valor() < 0.9999f || suave_level_r.Valor() < 0.9999f)
     {
         for(size_t i = 0; i < size; i++)
         {
-            out[0][i] *= suave_vol_l.Passo(v_l);
-            out[1][i] *= suave_vol_r.Passo(v_r);
+            out[0][i] *= suave_level_l.Passo(v_l);
+            out[1][i] *= suave_level_r.Passo(v_r);
         }
     }
     // Autopsia por LED: daqui, porque este contexto sobrevive ao loop.
@@ -3428,15 +3452,55 @@ static void HandleLine(const char* line)
             if(k >= 1) kKnobSuave     = n[0];
             if(k >= 2) kKnobCaptura   = n[1];
             if(k >= 3) kKnobSolta     = n[2];
-            if(k >= 4) kKnobZonaMorta = n[3];
+            if(k >= 4) kKnobHist       = n[3];
+        }
+        // `knob prova` — o controlo positivo: o ADC le mesmo estes pinos?
+        if(strncmp(a, "prova", 5) == 0)
+        {
+            float al=0, bl=0, ar=0, br=0;
+            hal::AdcControloPositivo(&al, &bl, &ar, &br);
+            hal::Log("CONTROLO POSITIVO DO ADC — a placa dirige o pino e ve"
+                     " se o canal segue:");
+            hal::Log("  ch0/D15:  pino ALTO -> %.4f  |  pino BAIXO -> %.4f  |  %s",
+                     (double)al, (double)bl,
+                     (al - bl) > 0.5f ? "SEGUE (canal e pino batem)"
+                                      : "*** NAO SEGUE — o ADC nao le este pino");
+            hal::Log("  ch1/D16:  pino ALTO -> %.4f  |  pino BAIXO -> %.4f  |  %s",
+                     (double)ar, (double)br,
+                     (ar - br) > 0.5f ? "SEGUE (canal e pino batem)"
+                                      : "*** NAO SEGUE — o ADC nao le este pino");
+            hal::Log("  SEGUE = o firmware esta certo e o defeito e o fio."
+                     "   NAO SEGUE = o defeito e meu.");
+            return;
+        }
+        // `knob pino` — a sonda que separa "pot parado" de "pino solto".
+        if(strncmp(a, "pino", 4) == 0)
+        {
+            bool sl = false, sr = false;
+            hal::AdcSondaPinos(&sl, &sr);
+            hal::Log("SONDA DOS PINOS DO ADC (o ADC MORREU — `reboot` para o ter"
+                     " de volta):");
+            hal::Log("  A0 (D15, ramo L): %s", sl
+                     ? "*** SOLTO *** — seguiu o pull interno nas duas direccoes"
+                     : "LIGADO a fonte de baixa impedancia (o cursor chega)");
+            hal::Log("  A1 (D16, ramo R): %s", sr
+                     ? "*** SOLTO *** — seguiu o pull interno nas duas direccoes"
+                     : "LIGADO a fonte de baixa impedancia (o cursor chega)");
+            hal::Log("  SOLTO = nao ha caminho DC ate ao pino: solda, fio,"
+                     " conector — ou um CONDENSADOR EM SERIE.");
+            hal::Log("  O cap de 0,1 uF vai do pino para a MASSA, em"
+                     " paralelo. Em serie corta o DC, que e o sinal todo.");
+            return;
         }
         hal::Log("POTS — %d declarado(s) | ADC %s", hal::Info().num_knobs,
                  hal::AdcConfigurado() ? "configurado (A0=D15 · A1=D16)"
                                        : "*** NAO CONFIGURADO ***");
-        hal::Log("  suave %.3f · captura %.3f · solta %.3f · zona morta %.4f"
-                 "   (`knob s c l z` ajusta)",
+        hal::Log("  janelas abertas por pot: %lu   (a subir parado = ADC ruidoso,"
+                 " e o param fica surdo ao iPad)", (unsigned long)knob_janelas);
+        hal::Log("  suave %.3f · captura %.3f · solta %.3f · histerese %.2f"
+                 " passo(s) de MIDI   (`knob s c l h` ajusta)",
                  (double)kKnobSuave, (double)kKnobCaptura,
-                 (double)kKnobSolta, (double)kKnobZonaMorta);
+                 (double)kKnobSolta, (double)kKnobHist);
         for(int k = 0; k < hal::Info().num_knobs && k < cotuca::kNumKnobs; k++)
         {
             const float cru  = hal::ReadKnob(k);
@@ -3448,11 +3512,14 @@ static void HandleLine(const char* line)
                 hal::Log("  k%d: SEM POT (-1) — o ADC nao devolve valor", k + 1);
                 continue;
             }
-            hal::Log("  k%d -> %-10s cru %.4f | filtrado %.4f | param %.4f | %s",
+            const bool jan = NaJanela(alvo, hal::NowMs());
+            hal::Log("  k%d -> %-10s cru %.4f | filtrado %.4f | passo %3d |"
+                     " param %.4f | %s%s",
                      k + 1,
                      alvo >= 0 ? params.Name(alvo) : "(sem alvo)",
-                     (double)cru, (double)knob_filt[k], (double)pos,
-                     knob_dono[k] ? "DONO" : "solto (mova ate cruzar o param)");
+                     (double)cru, (double)knob_filt[k], knob_passo[k], (double)pos,
+                     knob_dono[k] ? "DONO" : "solto (mova ate cruzar o param)",
+                     jan ? " | MIDI FECHADO" : "");
         }
         return;
     }
@@ -4830,24 +4897,38 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l z] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k5 <0-1> | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
-static bool CheckRequirements()
+// Devolve MASCARA de falhas: 0 = tudo ok. Bit 0 audio, 1 RAM, 2 knobs.
+static uint32_t CheckRequirements()
 {
     using namespace cotuca;
     const auto& b = hal::Info();
     const auto& r = manifest.req;
-    bool ok = true;
-    if(r.needs_audio_in && !b.has_audio_in)
-    { hal::Log("ERRO: instrumento exige audio in; %s nao tem", b.name); ok = false; }
-    if(r.big_ram_bytes > b.big_ram_bytes)
-    { hal::Log("ERRO: exige %u bytes de RAM grande; %s tem %u",
-               (unsigned)r.big_ram_bytes, b.name, (unsigned)b.big_ram_bytes); ok = false; }
-    if(r.min_knobs > b.num_knobs)
-    { hal::Log("ERRO: exige %d knobs; %s tem %d", r.min_knobs, b.name, b.num_knobs); ok = false; }
-    return ok;
+    uint32_t falhas = 0;
+    if(r.needs_audio_in && !b.has_audio_in)     falhas |= 1u << 0;
+    if(r.big_ram_bytes > b.big_ram_bytes)       falhas |= 1u << 1;
+    if(r.min_knobs > b.num_knobs)               falhas |= 1u << 2;
+    return falhas;
+}
+
+// O TEXTO SEPARADO DA VERIFICACAO, para poder ser REPETIDO. Ver o laco
+// de paragem: a mensagem tem de sair mais de uma vez, e a verificacao
+// nao deve correr mais de uma.
+static void DizRequisitos(uint32_t falhas)
+{
+    const auto& b = cotuca::hal::Info();
+    const auto& r = manifest.req;
+    if(falhas & (1u << 0))
+        cotuca::hal::Log("ERRO [1]: instrumento exige audio in; %s nao tem", b.name);
+    if(falhas & (1u << 1))
+        cotuca::hal::Log("ERRO [2]: exige %u bytes de RAM grande; %s tem %u",
+                 (unsigned)r.big_ram_bytes, b.name, (unsigned)b.big_ram_bytes);
+    if(falhas & (1u << 2))
+        cotuca::hal::Log("ERRO [3]: exige %d knobs; %s tem %d",
+                 r.min_knobs, b.name, b.num_knobs);
 }
 
 int main(void)
@@ -4861,11 +4942,58 @@ int main(void)
     params.Init();
     manifest.Init(params);
 
-    if(!CheckRequirements())
+    const uint32_t falhas = CheckRequirements();
+    if(falhas)
     {
-        // pisca rápido pra sempre: "cérebro errado pra este instrumento"
-        bool led = false;
-        while(1) { hal::SetLed(led); led = !led; hal::DelayMs(100); }
+        // ---- PARAGEM QUE SE EXPLICA, e as duas metades sao precisas ----
+        //
+        // A versao anterior piscava a 5 Hz para sempre e dizia o erro UMA
+        // vez. As duas coisas falharam juntas em 31/08, e custaram meia
+        // hora de caca no sitio errado:
+        //
+        //   - a MENSAGEM sai no boot, para um host que ainda nao esta a
+        //     escutar. Depois disso a placa nunca mais diz nada. E o
+        //     "alarme de boot que se perde", agora numa forma sem depois:
+        //     nao ha comando a que perguntar, porque o laco principal
+        //     nunca comeca.
+        //   - o PISCAR era mudo: 5 Hz constante nao distingue qual dos
+        //     tres requisitos falhou, nem sequer se distingue de outro
+        //     defeito qualquer. Eu li "pisca sem parar" e fui procurar um
+        //     travamento, quando a placa estava a recusar arrancar de
+        //     proposito.
+        //
+        // Agora: o LED conta o CODIGO de cada falha, com a mesma gramatica
+        // do instrumento de fase (N piscadas, pausa) — quem esta na
+        // bancada ja sabe le-la —, e o texto REPETE-SE, para que ligar a
+        // serial a qualquer momento mostre o motivo.
+        hal::Log("=== RECUSA DE ARRANQUE — cerebro errado para este"
+                 " instrumento ===");
+        DizRequisitos(falhas);
+        hal::Log("  o LED conta o codigo de cada falha: N piscadas, pausa,"
+                 " e repete.");
+        uint32_t ciclo = 0;
+        while(1)
+        {
+            // Um codigo por volta, ciclando entre os que falharam: mostrar
+            // so o primeiro esconderia os outros, e a bancada consertaria
+            // um de cada vez sem saber quantos faltam.
+            int cod = 0;
+            for(int i = 0; i < 3 && !cod; i++)
+            {
+                const int k = (int)((ciclo + (uint32_t)i) % 3u);
+                if(falhas & (1u << k)) cod = k + 1;
+            }
+            ciclo++;
+            for(int p = 0; p < cod; p++)
+            {
+                hal::SetLed(true);  hal::DelayMs(150);
+                hal::SetLed(false); hal::DelayMs(150);
+            }
+            hal::DelayMs(1200);
+            // O TEXTO REPETE a cada volta. Quem ligar a serial daqui a uma
+            // hora ve o motivo, que era exatamente o que faltava.
+            if((ciclo % 3u) == 0u) DizRequisitos(falhas);
+        }
     }
 
     // Tamanho de bloco é decisão de INSTRUMENTO, não de placa: define
@@ -4993,8 +5121,8 @@ int main(void)
         // ninguem o pediu.
         for(int i = 0; i < 4; i++)
             suave_mat[i].Init(hal::Info().sample_rate, 20.f, 1.f);
-        suave_vol_l.Init(hal::Info().sample_rate, 20.f, 1.f);
-        suave_vol_r.Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_level_l.Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_level_r.Init(hal::Info().sample_rate, 20.f, 1.f);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
             tarol[c].Init(hal::Info().sample_rate);
@@ -5216,8 +5344,9 @@ int main(void)
                 knob_filt[k] = cru;
                 knob_vivo[k] = true;
                 knob_dono[k] = true;
-                knob_last[k] = cru;
-                manifest.knob[k].Apply(params, cru);
+                knob_passo[k] = (int)(cru * 127.f + 0.5f);
+                knob_last[k] = (float)knob_passo[k] / 127.f;
+                manifest.knob[k].Apply(params, knob_last[k]);
                 continue;
             }
             knob_filt[k] += kKnobSuave * (cru - knob_filt[k]);
@@ -5248,12 +5377,55 @@ int main(void)
                 continue;
             }
 
-            // 3) ZONA MORTA. Menor que um passo de MIDI (1/127) para o pot
-            //    nao ser mais grosso que o fader, e maior que o ruido do
-            //    ADC para nao reescrever parado.
-            if(fabsf(v - knob_last[k]) < kKnobZonaMorta) continue;
-            knob_last[k] = v;
-            manifest.knob[k].Apply(params, v);
+            // 3) QUANTIZA NO PASSO DO FIO, COM HISTERESE.
+            //
+            //    O param sai daqui em 7 bits de qualquer forma — pelo
+            //    espelho, pelo preset, pelo iPad. Fazer o pot mais fino que
+            //    isso nao ganha resolucao nenhuma e ganha ruido: e a
+            //    fronteira entre dois passos que treme.
+            //
+            //    So se muda de passo quando o valor a ultrapassa com
+            //    margem. Sem histerese, um valor parado em cima da
+            //    fronteira alterna para sempre — que e o que produzia 623
+            //    escritas por segundo com os pots parados.
+            const float em_passos = v * 127.f;
+            const float atual     = (float)knob_passo[k];
+            if(fabsf(em_passos - atual) < kKnobHist) continue;
+            knob_passo[k] = (int)(em_passos + (em_passos > atual ? -0.0f : 0.0f) + 0.5f);
+            if(knob_passo[k] < 0)   knob_passo[k] = 0;
+            if(knob_passo[k] > 127) knob_passo[k] = 127;
+            knob_last[k] = (float)knob_passo[k] / 127.f;
+            manifest.knob[k].Apply(params, knob_last[k]);
+
+            // O POT E AUTOR, e fecha a recepcao daquele param — pedido do
+            // dB, e tapa uma corrida real.
+            //
+            // Ate aqui a janela era aberta pelo TRANSMISSOR: o pot
+            // escrevia, e so quando o `MidiEspelha` mandasse — fase 7, ate
+            // 8 ms depois e no maximo dois params por passagem — e que o
+            // `quiet_until` abria. Nesse intervalo um CC do Loopy entrava e
+            // sobrescrevia o gesto em curso. Com o pot a varrer, e uma
+            // corrida que ele perde de vez em quando: o fader "prende" a
+            // meio do movimento e ninguem sabe porque.
+            //
+            // Autor abre a janela no instante em que escreve, e nao quando
+            // alguem o anuncia. Mesma regra que ja vale para o widget do
+            // Loopy — quem mexeu ultimo manda, e tem 250 ms de sossego.
+            //
+            // TODOS os alvos da macro, nao so o primeiro: uma macro de tres
+            // alvos protegeria um e deixaria dois expostos.
+            {
+                const uint32_t ate = hal::NowMs() + kJanelaMs;
+                for(int a = 0; a < manifest.knob[k].TargetCount(); a++)
+                {
+                    const int id = manifest.knob[k].Alvo(a);
+                    if(id >= 0 && id < cotuca::kMaxParams)
+                    {
+                        quiet_until[id] = ate;
+                        knob_janelas++;
+                    }
+                }
+            }
         }
         FASE(2);
         hal::PollSerial();

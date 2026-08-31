@@ -74,6 +74,15 @@ void             RequestBlockSize(size_t block_size);
 float            ReadKnob(int index);
 void             AdcInit();
 bool             AdcConfigurado();
+// Diz se cada pino do ADC esta SOLTO (segue o pull interno) ou LIGADO a
+// uma fonte de impedancia baixa. Mata o ADC ate um reboot — sao os mesmos
+// pinos. Ver o cabecalho no .cpp.
+void             AdcSondaPinos(bool* solto_l, bool* solto_r);
+// CONTROLO POSITIVO: a placa dirige o proprio pino e ve se o ADC segue.
+// Prova que o par (canal, pino) esta certo antes de qualquer leitura
+// valer — sonda que nao consegue devolver diferente nao mede nada.
+void             AdcControloPositivo(float* al, float* bl,
+                                     float* ar, float* br);
 // true = PRESSIONADO. Já com debounce; quem chama vê só transições
 // limpas. O contrato é NÍVEL, não evento: detectar borda é do shell,
 // que é onde se sabe o que uma borda significa.
