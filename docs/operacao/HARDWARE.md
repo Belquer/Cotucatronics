@@ -13,8 +13,29 @@
 qualquer powerbank PD ──USB-C──> [decoy PD 15V, 5A] ──> RAIL 15V
                                        ┌──> TPA3116D2 estéreo  (+2200µF +100nF)
                                        └──> step-down 5V       (SEM banco)
-                                                  └──> Daisy VIN + ponte ESP32
+                                                  ├──> Daisy VIN
+                                                  └──▶|── 5V da ponte ESP32
+                                                    SCHOTTKY
 ```
+
+⚠️ **O SCHOTTKY NA PONTE NÃO É OPCIONAL — SS14 ou 1N5819, ânodo no trilho.**
+
+Na ESP32-C3 SuperMini o pino `5V` liga ao **VBUS do USB directamente no cobre**,
+sem díodo de bordo. Sem o Schottky, ligar o USB da ponte **realimenta o trilho
+de 5 V inteiro** — medido em 31/08: o LED do amp acendia com o powerbank
+desligado, só com o cabo USB na ponte.
+
+Custa ~0,3 V de queda, e a ponte aceita 4,3–6,0 V: sobra folga.
+
+**Por que uma peça e não uma regra:** a regra *"alimenta por USB **ou** pelo
+pino de 5 V, nunca os dois"* já estava escrita no `esp32/README.md` desde o
+início, e foi violada na mesma — por quem a escreveu. O díodo torna o erro
+**impossível**, e regra que depende de alguém a ler não protege peça de galeria.
+
+🚫 **E não se conserta isto por firmware.** Não há transístor nesse caminho: o
+`5V` e o VBUS são o mesmo nó, e nenhum GPIO abre cobre. O que o firmware poderia
+fazer era *avisar* — e um aviso que só detecta hospedeiro USB fica calado
+perante um carregador burro, que é justamente o caso da galeria.
 
 **UM amp estéreo, não dois.** O desenho dizia `amp A` e `amp B` de quando eram
 dois módulos; hoje é um TPA3116D2 de dois canais, e as duas saídas partilham a

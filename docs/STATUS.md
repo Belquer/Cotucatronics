@@ -37,15 +37,30 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ## 31/08 — o dia do terra e da microfonia
 
-🔴 **RESOLVIDO, e a causa era um cabo.** A placa não arrancava — LED preso,
-sem série, reproduzível de instalação limpa. A caça correu o protocolo de três
-voos e isolou **fase 2 · sub-fase 6 = `MidiEspelha()`**, que transmite. A causa:
-**a ponte ESP32 estava desligada**, e com ela fora o `D14` (RX da USART1)
-flutuava com o DMA à escuta, prendendo o `BlockingTransmit`. Religar a ponte
-curou tudo, **sem uma linha de código**.
+🔴 **A PONTE TEM DE ESTAR ALIMENTADA — defeito aberto.**
 
-⚠️ **Fica defeito aberto, e é de peça de galeria:** um cabo solto não pode matar
-o instrumento. Conserto devido em [`HARDWARE.md`](operacao/HARDWARE.md) §4.
+A Daisy não arranca com a ponte ESP32 sem alimentação: o `D14` (RX da USART1)
+fica pendurado num chip morto, e o laço principal deixa de completar voltas.
+**Sintoma de saúde mais rápido: a série abre em 0,0 s quando está sã, e leva
+~59 s quando está doente.**
+
+Testado ao fim de 31/08, e o que o teste corrigiu:
+
+| condição | resultado |
+|---|---|
+| ponte alimentada | ✅ arranca, série instantânea |
+| ponte sem alimentação, **com** laço de terra directo | ❌ trava na mesma |
+| terra directo **ou** pela Daisy | ❌ trava nos dois |
+
+⚠️ **A terra sozinha não cura** — eu disse que curava, antes de testar, e o dB
+soldou por causa disso. O conserto de firmware de hoje (tecto de 3 ms e recuo na
+transmissão, v0.216.0) **também não chega**: recriada a falha, a placa travou.
+
+**Caminho, para amanhã:** o problema é da **recepção**, não da transmissão —
+parar e rearmar o `DmaListen` quando os erros de UART passarem de um limiar.
+⚠️ **Mas com instrumento novo primeiro:** o LED de sub-fases só é válido com o
+laço PARADO; com ele a correr dá números arbitrários, e eu diagnostiquei a
+partir de um deles.
 
 ### O que ficou resolvido
 

@@ -5794,6 +5794,64 @@ escrever la e o **bootloader da Daisy**, que aparece num **RST simples**.
 Conserto do metodo: o vigia de gravacao passou a esperar por `0x90000000` no
 `dfu-util -l`, e nao por `df11` — que os dois DFU partilham.
 
+## 15ak. O instrumento so era valido com o paciente parado (31/08)
+
+As sub-fases apontavam o inquilino da fase 2, e eu li os numeros como
+diagnostico a tarde inteira. Ate o dB reportar **"1 e 6"** — uma combinacao que
+o codigo nao consegue produzir: entre o `SUB(6)` e a `FASE(1)` ha um `SUB(7)` e
+um `SUB(0)`, e nao ha `continue`, `goto` nem `break` que os salte (conferido).
+
+Logo os valores **estavam a mudar durante a leitura**. E o LED le os dois a cada
+volta do callback, mas o padrao dura ~5 s: se mudarem no meio, o `dur` muda, o
+`t = ms % dur` salta, e o numero deixa de significar coisa nenhuma.
+
+> **O instrumento so e valido com o laco PARADO.** Com o laco a correr ele
+> produz numeros arbitrarios — e eu li "2 e 6" como diagnostico quando ja podia
+> ser ruido. Consertei o `BlockingTransmit` a partir dessa leitura, e o conserto
+> nao curou nada: nao havia espera para limitar.
+
+Um instrumento tem de declarar **em que regime e valido**, e recusar-se a
+responder fora dele. Este respondia sempre, e com a mesma cara.
+
+## 15al. Escalei a suspeita antes de ler o documento que eu proprio escrevi (31/08)
+
+O dB reportou que o USB da ponte acendia o LED do amp. Respondi *"para tudo,
+isso e defeito de ligacao e pode danificar pecas"*, e pedi quatro medicoes de
+continuidade.
+
+Era comportamento conhecido, e a regra estava escrita no `esp32/README.md`:
+
+> *"Bancada: alimenta por USB **ou** pelo pino de 5 V, nunca os dois."*
+
+Na ESP32-C3 SuperMini o `5V` liga ao VBUS **directamente no cobre**. Alimentada
+pelos dois, o USB realimenta o trilho. Escrita por mim, violada por nos os dois,
+e nao lida por mim quando o sintoma dela apareceu.
+
+> **Antes de escalar um sintoma a defeito novo, procurar se ele ja esta
+> descrito.** Custa um `grep`. Escalar custa a atencao de quem esta na bancada,
+> num momento em que ela vale muito.
+
+E o conserto certo nao foi o alarme: foi um **Schottky de 5 centimos** que torna
+o erro impossivel. **Regra depende de alguem a ler; peca nao.**
+
+## 15am. Apresentei uma regra por testar como se fosse a causa (31/08)
+
+Descobri que o meu conselho de tirar a terra de sinal estava errado, escrevi a
+correcao na §5b do `ATERRAMENTO.md`, e disse ao dB que **era essa a causa** da
+placa nao arrancar. Ele soldou a terra de volta.
+
+**Nao curou.** Serie ainda a levar 59 s, ainda muda. E o teste seguinte mostrou
+o que faltava: a ponte tem de estar **ALIMENTADA**. Terra sozinha nao chega —
+um chip sem alimentacao pendurado na linha de RX estraga a USART na mesma, com
+ou sem referencia comum. Os dois caminhos de terra funcionam igualmente.
+
+A regra continua boa pratica. Mas eu passei de "descobri um erro meu" para
+"logo, e esta a causa" **sem um unico teste pelo meio** — e fiz o dB soldar por
+causa disso.
+
+> **Descobrir que se errou nao e o mesmo que descobrir a causa.** As duas
+> chegam com a mesma sensacao de alivio, e so uma delas se mede.
+
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.

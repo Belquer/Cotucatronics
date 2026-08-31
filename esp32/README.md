@@ -31,7 +31,16 @@ transmissão e trava o laço principal. Medido em 31/08. Ver
 [`HARDWARE.md`](../docs/operacao/HARDWARE.md) §4. **Defeito aberto do lado da
 Daisy; até lá, a ponte é requisito de arranque.**
 
-**Bancada: alimenta por USB *ou* pelo pino de 5 V, nunca os dois.**
+🔌 **SCHOTTKY EM SÉRIE NA ALIMENTAÇÃO DO TRILHO — SS14 ou 1N5819.**
+Ânodo no trilho de 5 V, cátodo no pino `5V` desta placa.
+
+Nesta placa o `5V` liga ao **VBUS do USB directamente**, sem díodo de bordo.
+Sem o Schottky, o cabo USB **realimenta o trilho inteiro** — medido em 31/08:
+o LED do amp acendia com o powerbank desligado. Com o díodo, podes alimentar
+pelos dois sem consequência, e a regra abaixo deixa de ser necessária.
+
+**Bancada, enquanto o díodo não estiver soldado: alimenta por USB *ou* pelo
+pino de 5 V, nunca os dois.**
 
 ⚠️ **DESACOPLAMENTO OBRIGATÓRIO — 100 µF + 100 nF nos pinos `5V`/`GND`.**
 

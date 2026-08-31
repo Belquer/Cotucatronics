@@ -255,6 +255,25 @@ erro de enquadramento, e quem tenta **transmitir** por ela fica preso.
 trava, por causa da morta. Isso torna o diagnóstico traiçoeiro: procura-se o
 defeito onde ele se manifesta, e ele mora do outro lado do cabo.
 
+### ⚠️ O que o teste mostrou, e corrige esta secção
+
+Escrevi acima que a falta do laço directo era **a causa** da Daisy não arrancar.
+**O teste não sustenta isso.** Medido em 31/08, ao fim do dia:
+
+| condição | resultado |
+|---|---|
+| ponte alimentada, com laço | ✅ arranca, série abre em 0,0 s |
+| ponte **sem alimentação**, com laço directo re-soldado | ❌ trava — série leva 59 s e fica muda |
+| ponte sem alimentação, terra pela Daisy **ou** directo | ❌ trava nos dois |
+
+**A ponte tem de estar ALIMENTADA.** Terra sozinha não chega: um chip sem
+alimentação pendurado na linha de RX continua a estragar a USART, mesmo com
+referência comum.
+
+A regra do laço directo **mantém-se como boa prática** — sem ela não há sequer
+referência, e o comportamento fica indefinido em vez de meramente mau. Mas ela
+**não era a cura**, e eu apresentei-a como se fosse antes de a testar.
+
 ### E o laço que eu queria evitar?
 
 Existe, e é real — mas é o problema **menor**, e tem conserto próprio:
