@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.53.0
+// hal_daisy_seed v0.55.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.53.0"
+#define COTUCA_HAL_VERSION "0.55.0"
 
 using namespace daisy;
 
@@ -1006,18 +1006,155 @@ uint32_t MidiAtrasos()   { return midi_atrasos; }
 uint32_t MidiSobraPico() { return midi_sobra_pico; }
 uint32_t MidiRingTam()   { return (uint32_t)kMidiRing; }
 
+// ---- TRANSMISSAO DE MIDI: FILA, PEDACOS CURTOS E RECUO ----
+//
+// O QUE ISTO CONSERTA, e o preco que cobrou: ate 31/08 esta funcao era
+// uma linha —
+//
+//     midi_uart.BlockingTransmit(tmp, n, 10);
+//
+// — e com a PONTE ESP32 DESLIGADA a placa deixava de arrancar. O D14 e
+// o RX da USART1 e, sem a ponte, flutua com o DMA a escuta permanente;
+// a USART1 e a MESMA para TX e RX, e a linha solta prendia quem
+// tentava transmitir. O `MidiEspelha` entrava aqui e nao voltava.
+// Custou uma tarde: LED preso, sem serie, reproduzivel de instalacao
+// limpa. A cura foi religar um cabo — zero linhas de codigo.
+//
+// ⚠️ E DEFEITO DE PECA DE GALERIA: um cabo solto nao pode matar um
+// instrumento exposto ao publico e replicado em serie.
+//
+// ------------------------------------------------------------
+// DUAS TENTATIVAS FALHADAS ANTES DESTA, e ficam escritas porque quem
+// vier tentara as mesmas:
+//
+//   1. `DmaTransmit` com callback. Parecia a resposta — assincrono,
+//      ISR larga o bastao. Mas o proprio comentario da libDaisy diz:
+//
+//          // queue a job (blocks until the queue position is free)
+//
+//      Ele BLOQUEIA quando o DMA esta ocupado, e o nosso RX vive em
+//      `DmaListenStart`, circular e permanente. MEDIDO: 6 bytes sairam,
+//      a fila encheu (255/256) e 54 bytes foram descartados — o
+//      callback de fim nunca disparou e o bastao ficou preso.
+//
+//   2. `PollTx`. O nome promete sondagem; a implementacao e
+//      `return BlockingTransmit(buff, size, 10);`. A mesma chamada.
+//
+// A libDaisy NAO OFERECE transmissao nao-bloqueante nesta UART com o
+// RX em escuta. Entao o que se controla nao e SE espera, e sim QUANTO
+// espera — e o que se garante e que ela DESISTE.
+// ------------------------------------------------------------
+//
+// COMO FUNCIONA:
+//   MidiSendBytes  enfileira e volta SEMPRE. Cheia = descarta o RESTO
+//                  DA MENSAGEM e conta (meia mensagem de MIDI e pior
+//                  que nenhuma: o receptor espera o byte que falta e
+//                  come o proximo status).
+//   MidiTxPump     do laco. Tira UMA mensagem (3 bytes no maximo) e
+//                  tenta com 3 ms de tecto — folgado para os 0,96 ms
+//                  que tres bytes levam a 31250 baud. So retira da
+//                  fila SE CONSEGUIU: espreita antes de consumir.
+//   RECUO          tres falhas seguidas => cala-se por 500 ms. Com a
+//                  ponte fora isto custa 9 ms em cada 500 (1,8%), em
+//                  vez de 3 ms em cada volta do laco.
+//
+// O PIOR CASO ESTA LIMITADO E E DECLARADO: 3 ms por passagem, e so
+// enquanto o recuo nao arma. O laco continua a servir MIDI, botoes,
+// encoders e painel com o cabo no chao.
+static uint8_t  midi_tx_ring[256];
+static volatile uint32_t midi_tx_head = 0;
+static volatile uint32_t midi_tx_tail = 0;
+static uint32_t midi_tx_descartes = 0;   // bytes que nao couberam
+static uint32_t midi_tx_erros     = 0;   // tentativas falhadas
+static uint32_t midi_tx_uart_err  = 0;   // CheckError() nao-zero
+static uint32_t midi_tx_bytes     = 0;   // bytes entregues
+static uint32_t midi_tx_pico      = 0;   // maior ocupacao da fila
+static uint32_t midi_tx_recuos    = 0;   // quantas vezes se calou
+static uint32_t midi_tx_seguidas  = 0;
+static uint32_t midi_tx_retry_ms  = 0;
+
 void MidiSendBytes(const uint8_t* bytes, size_t n)
 {
     if(!midi_started || !bytes || n == 0)
         return;
-    // BlockingTransmit quer ponteiro não-const; copia pra um buffer
-    // local em vez de fazer cast, que é mentira barata.
-    uint8_t tmp[16];
-    if(n > sizeof(tmp))
-        n = sizeof(tmp);
-    memcpy(tmp, bytes, n);
-    midi_uart.BlockingTransmit(tmp, n, 10);
+    const uint32_t cap = (uint32_t)sizeof(midi_tx_ring);
+    for(size_t i = 0; i < n; i++)
+    {
+        const uint32_t prox = (midi_tx_head + 1u) % cap;
+        if(prox == midi_tx_tail)
+        {
+            midi_tx_descartes += (uint32_t)(n - i);
+            return;
+        }
+        midi_tx_ring[midi_tx_head] = bytes[i];
+        midi_tx_head               = prox;
+    }
+    const uint32_t usado = (midi_tx_head + cap - midi_tx_tail) % cap;
+    if(usado > midi_tx_pico) midi_tx_pico = usado;
 }
+
+void MidiTxPump()
+{
+    if(!midi_started) return;
+    // EM RECUO: nem tenta. Subtraccao em ticks antes de comparar, que
+    // e como esta casa trata a volta do uint32.
+    if(midi_tx_retry_ms && (int32_t)(NowMs() - midi_tx_retry_ms) < 0) return;
+
+    // INSTANTANEO do `head`. Perseguir um alvo que se move travou a
+    // placa em 28/08 no `PollMidi`; mesma cicatriz, mesma defesa.
+    const uint32_t head = midi_tx_head;
+    if(head == midi_tx_tail) return;
+
+    // O erro da UART conta-se E limpa-se: um erro de enquadramento —
+    // que e o que uma linha de RX solta produz — fica a envenenar as
+    // chamadas seguintes se ninguem o ler.
+    if(midi_uart.CheckError()) midi_tx_uart_err++;
+
+    // ESPREITA ANTES DE CONSUMIR: so avanca a cauda se a transmissao
+    // deu certo. Consumir primeiro perderia a mensagem no timeout.
+    const uint32_t cap = (uint32_t)sizeof(midi_tx_ring);
+    uint8_t        tmp[3];
+    uint32_t       k = 0, t = midi_tx_tail;
+    while(t != head && k < sizeof(tmp))
+    {
+        tmp[k++] = midi_tx_ring[t];
+        t        = (t + 1u) % cap;
+    }
+    if(!k) return;
+
+    if(midi_uart.BlockingTransmit(tmp, k, 3) == UartHandler::Result::OK)
+    {
+        midi_tx_tail     = t;
+        midi_tx_bytes   += k;
+        midi_tx_seguidas = 0;
+        midi_tx_retry_ms = 0;
+        return;
+    }
+    midi_tx_erros++;
+    if(++midi_tx_seguidas >= 3u)
+    {
+        midi_tx_seguidas = 0;
+        midi_tx_recuos++;
+        midi_tx_retry_ms = NowMs() + 500u;
+        if(!midi_tx_retry_ms) midi_tx_retry_ms = 1u;   // 0 significa "sem recuo"
+    }
+}
+
+void MidiTxEstado(uint32_t* descartes, uint32_t* erros, uint32_t* uart_err,
+                  uint32_t* bytes, uint32_t* pico, uint32_t* na_fila,
+                  uint32_t* recuos)
+{
+    const uint32_t cap = (uint32_t)sizeof(midi_tx_ring);
+    if(descartes) *descartes = midi_tx_descartes;
+    if(erros)     *erros     = midi_tx_erros;
+    if(uart_err)  *uart_err  = midi_tx_uart_err;
+    if(bytes)     *bytes     = midi_tx_bytes;
+    if(pico)      *pico      = midi_tx_pico;
+    if(na_fila)   *na_fila   = (midi_tx_head + cap - midi_tx_tail) % cap;
+    if(recuos)    *recuos    = midi_tx_recuos;
+}
+
+uint32_t MidiTxRingTam() { return (uint32_t)sizeof(midi_tx_ring); }
 
 void MidiInjectByte(uint8_t b)
 {

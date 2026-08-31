@@ -186,7 +186,25 @@ void             PollMidi();
 // loopback (T10): com um jumper de TX pra RX, o firmware manda uma
 // mensagem MIDI e ela volta pelo caminho real — UART, DMA, ISR, fila,
 // parser. É a única validação que prova baud rate e pino.
+// ENFILEIRA E VOLTA SEMPRE. Nunca bloqueia, nunca espera pelo mundo.
+// Fila cheia = descarta o resto da mensagem e conta.
+//
+// ⚠️ Ate 31/08 isto era um `BlockingTransmit`, e com a ponte ESP32
+// desligada a placa NAO ARRANCAVA: o D14 flutuava, a USART1 entrava em
+// erro, e o `MidiEspelha` ficava la dentro. Um cabo solto matava o
+// instrumento. Ver hal_daisy_seed.cpp e HARDWARE.md §4.
 void             MidiSendBytes(const uint8_t* bytes, size_t n);
+
+// Chamada do LACO, uma vez por volta. Arranca a transferencia por DMA
+// se houver bytes e nada em curso. Volta sempre.
+void             MidiTxPump();
+
+// Contadores da fila de TX. Qualquer ponteiro pode ser nulo.
+void             MidiTxEstado(uint32_t* descartes, uint32_t* erros,
+                              uint32_t* uart_err, uint32_t* bytes,
+                              uint32_t* pico, uint32_t* na_fila,
+                              uint32_t* recuos);
+uint32_t         MidiTxRingTam();
 
 // GANCHO DE BANCADA. Empurra um byte na fila de RX como se tivesse
 // vindo do fio. Prova o parser e o mapeamento sem hardware nenhum —

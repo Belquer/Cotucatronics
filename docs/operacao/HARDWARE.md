@@ -247,28 +247,39 @@ soar menos. Para *"está melhor?"* o instrumento é o ouvido.
 
 ## 4 · A PONTE ESP32 — e o cabo dela NÃO é opcional
 
-🔴 **COM A PONTE DESLIGADA, A DAISY NÃO ARRANCA.** Medido em 31/08, e custou
-uma tarde inteira de caça a um defeito de software que não existia.
+🔴 **A PONTE E A DAISY PRECISAM DE UM LAÇO DE TERRA DIRECTO.**
 
-O `D14` é o RX da USART1, e recebe o TX da ponte. **Com a ponte fora, ele
-flutua** — e o DMA está à escuta permanente. A USART1 é **a mesma** para TX e
-para RX, e a linha solta prende quem tenta transmitir: a `MidiEspelha()` entra
-em `midi_uart.BlockingTransmit` e **não volta**.
+Medido em 31/08, e custou uma tarde a caçar firmware inocente. A sequência que
+o produziu: **tirou-se o fio de terra que ligava a ponte à Daisy** (ficaram a
+encontrar-se só na estrela), e depois **desligou-se a alimentação do trilho**.
 
-**Sintoma:** LED preso a piscar (fase 2, sub-fase 6), sem série, e a porta USB
-a demorar ~1 minuto a abrir em vez de instantaneamente. Reproduz-se de
-instalação limpa — bootloader reinstalado e aplicação regravada.
+A Daisy vinha do USB do portátil e ficou viva; a ponte ficou **sem alimentação
+e sem referência**. O `TX` dela, ainda ligado ao `D14`, passou a injectar
+corrente pelos díodos de protecção de um chip morto. A USART1 é **a mesma** para
+TX e RX, e a linha indefinida prendia quem tentava transmitir — a
+`MidiEspelha()` entrava em `BlockingTransmit` e não voltava.
 
-**Cura:** ligar a ponte. Zero linhas de código.
+⚠️ **O defeito aparecia do lado ALIMENTADO.** A placa viva é que travava, por
+causa da morta. Procurava-se onde se manifestava, e morava do outro lado do cabo.
 
-⚠️ **ISTO É DEFEITO ABERTO, E É DE PEÇA DE GALERIA.** Um cabo solto não pode
-matar um instrumento exposto ao público e replicado em série. O conserto devido
-é **barreira antes do `BlockingTransmit`** — perguntar se a anterior concluiu e,
-se não, **descartar e contar** em vez de esperar — mais rearme do estado de erro
-da USART. Enquanto isso não existir, **a ponte é requisito de arranque**.
+**Sintoma:** LED preso (fase 2 · sub-fase 6), sem série, e a porta USB a demorar
+~1 minuto a abrir em vez de instantaneamente. Reproduzível de instalação limpa.
 
-**Bancada:** se for preciso correr sem a ponte, segurar o `D14` com um pull-up
-de 10 kΩ ao `3V3`. Não testado — proposto pelo mecanismo, não medido.
+**Regra, e ela está no capítulo:** duas placas que trocam sinais e podem ser
+alimentadas separadamente precisam de **laço de terra directo ao lado dos fios
+de sinal** — ver [`ATERRAMENTO.md`](ATERRAMENTO.md) §5b. Tirar a terra de sinal
+para resolver ruído é trocar um zumbido por uma placa morta; ruído resolve-se
+com **desacoplamento local**.
+
+**Do lado do firmware (v0.216.0):** a transmissão passou a ser fila + pedaços de
+3 bytes com tecto de 3 ms e **recuo de 500 ms após três falhas**. Já não existe
+espera sem limite no laço.
+
+⚠️ **NÃO TESTADO CONTRA A FALHA REAL.** Verificou-se que não há regressão e que
+a placa sobrevive com a ponte sem alimentação — mas nessa medição a transmissão
+teve êxito, ou seja **a condição do defeito não se reproduziu**. O teste que
+fecha isto é recriar a condição exacta: sem laço de terra directo, e trilho
+desligado.
 
 ### Gravar: dois DFU diferentes, e trocá-los custa uma tentativa
 

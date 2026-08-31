@@ -110,6 +110,31 @@ Placas com codec juntam os dois **internamente, num ponto só**, de propósito.
 - **O retorno do áudio (jacks, entrada do amp, entradas analógicas) vem do
   `AGND`?** Vir do trilho geral é achado 🟠.
 
+### P3b — Sinal entre placas alimentadas separadamente
+
+Para **cada par de placas ligadas por sinal** (UART, SPI, I2C, GPIO):
+
+> *Existe um estado de alimentação em que uma está viva e a outra não?*
+
+Na bancada há quase sempre — uma no USB, outra no trilho. Se sim:
+
+- 🔴 **Tem laço de terra DIRECTO ao lado dos fios de sinal?** Não ter = achado
+  que **mata a placa viva**, não a morta.
+- Sem ele, a placa alimentada injecta corrente pelos díodos de protecção da
+  desalimentada; a linha fica indefinida, o periférico entra em erro, e quem
+  tenta **transmitir** fica preso.
+
+⚠️ **O defeito aparece do lado ALIMENTADO** — procura-se onde se manifesta, e
+mora do outro lado do cabo.
+
+⚠️ **NÃO tirar a terra de sinal para resolver ruído.** É a troca de um zumbido
+por uma placa morta. Ruído de alimentação resolve-se com **desacoplamento local**
+(§P4), que mata a corrente onde nasce; a terra de sinal não se negoceia.
+
+*(Esta passada nasceu de um conselho errado, dado em 31/08 por aplicação da
+regra da §P0 — "referência não vai à estrela" — a um caso que ela não cobre.
+Custou uma placa que não arrancava e uma tarde a caçar firmware inocente.)*
+
 ### P4 — Desacoplamento por TIPO DE CARGA
 
 A pergunta *"precisa de condensador?"* **não tem resposta única para o

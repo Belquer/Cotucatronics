@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.213.0"
+#define COTUCA_OS_VERSION "0.216.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -4065,6 +4065,24 @@ static void HandleLine(const char* line)
             else
                 hal::Log("colisao de CC: nenhuma");
         }
+
+        // FILA DE TX DO MIDI — o conserto de 31/08 tem de se poder ver.
+        // Contador sem leitor mede para ninguem; e um descarte que
+        // ninguem conta e indistinguivel de um CC que nunca foi mandado.
+        {
+            uint32_t d, e, ue, by, pk, fila, rec;
+            hal::MidiTxEstado(&d, &e, &ue, &by, &pk, &fila, &rec);
+            hal::Log("midi tx: %lu bytes entregues | fila %lu/%lu (pico %lu)",
+                     (unsigned long)by, (unsigned long)fila,
+                     (unsigned long)hal::MidiTxRingTam(), (unsigned long)pk);
+            if(d || e || ue)
+                hal::Log("         DESCARTES %lu | falhas %lu | recuos %lu |"
+                         " erro de UART %lu  <-- a ponte esta ligada?",
+                         (unsigned long)d, (unsigned long)e,
+                         (unsigned long)rec, (unsigned long)ue);
+            else
+                hal::Log("         sem descartes, sem erro de UART");
+        }
         // A TRAVA DO CTOS VEM ANTES DE QUALQUER OUTRO AVISO: enquanto
         // ela esta de pe, todo aviso que le um `_on` le o zero que ela
         // impos, nao a intencao do operador — e cala por causa disso.
@@ -5968,8 +5986,12 @@ int main(void)
             }
         }
 
-        SUB(6);   // MidiEspelha TRANSMITE
+        SUB(6);   // MidiEspelha ENFILEIRA; o pump entrega por DMA
         MidiEspelha();   // LOOP, nunca callback — ver cabecalho
+        // O PUMP LOGO A SEGUIR AO ESPELHO, e nao no fim da volta: assim
+        // o que acabou de ser enfileirado sai nesta mesma passagem, e a
+        // latencia do espelho nao ganha uma volta inteira de laco.
+        hal::MidiTxPump();
 
         SUB(7);   // veredito do sync, com LogAlways
         // VEREDITO DO SYNC. Roda no laco porque so aqui o

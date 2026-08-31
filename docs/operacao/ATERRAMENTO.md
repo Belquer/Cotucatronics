@@ -228,6 +228,56 @@ não o anel em si.
 
 ---
 
+## 5b · Sinal entre duas placas: a terra vai JUNTO com o fio
+
+🔴 **Esta secção nasceu de um conselho errado meu, em 31/08.** Eu disse:
+
+> *"Não acrescentes um fio de terra ao lado dos fios da UART. Isso criaria um
+> segundo caminho entre a ponte e a Daisy, em paralelo com o da estrela."*
+
+O raciocínio era o da §2 — terra de sinal é **referência**, e referência não vai
+à estrela. Mas eu esqueci o que torna este caso diferente, e o custo foi
+**a Daisy deixar de arrancar** e uma tarde de caça a um defeito de firmware que
+não existia.
+
+### A regra
+
+> **Duas placas que trocam sinais e podem ser alimentadas SEPARADAMENTE
+> precisam de um laço de terra DIRECTO entre elas, ao lado dos fios de sinal.**
+
+O que falha sem ele: a Daisy vem do USB do portátil, a ponte vem do trilho. Com
+o trilho **desligado**, a ponte fica sem alimentação **e sem referência** — e o
+`TX` dela, ainda ligado ao `D14` da Daisy, passa a injectar corrente pelos
+díodos de protecção de um chip morto. A linha fica indefinida, a USART entra em
+erro de enquadramento, e quem tenta **transmitir** por ela fica preso.
+
+⚠️ **Repara que o defeito aparece do lado ALIMENTADO.** A placa viva é que
+trava, por causa da morta. Isso torna o diagnóstico traiçoeiro: procura-se o
+defeito onde ele se manifesta, e ele mora do outro lado do cabo.
+
+### E o laço que eu queria evitar?
+
+Existe, e é real — mas é o problema **menor**, e tem conserto próprio:
+
+| problema | conserto certo |
+|---|---|
+| corrente do rádio pela terra partilhada | **condensador local** (100 µF + 100 nF nos pinos) — mata a corrente onde ela nasce |
+| falta de referência entre placas | **laço de terra directo**, ao lado do sinal |
+
+Tirar a terra de sinal para resolver ruído é trocar um zumbido por uma placa
+morta. **O desacoplamento é que resolve o ruído; a terra de sinal não se
+negoceia.**
+
+### Como reconhecer o caso
+
+Perguntar de cada par de placas ligadas por sinal:
+
+> *Existe um estado de alimentação em que uma está viva e a outra não?*
+
+Se sim — e há quase sempre, na bancada, com uma delas no USB — **elas precisam
+do laço directo**. Alimentação comum garantida é a única excepção, e "comum" tem
+de incluir a bancada, não só a peça montada.
+
 ## 6 · Entradas de alta impedância
 
 Um piezo é uma fonte de **impedância altíssima** — e impedância alta é uma
