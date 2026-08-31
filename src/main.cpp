@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.211.0"
+#define COTUCA_OS_VERSION "0.213.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1796,6 +1796,23 @@ static float OscProcess()
 // nada que morreu.
 static volatile uint8_t loop_fase = 0;
 
+// ---- SUB-FASE: qual INQUILINO da fase 2 ----
+//
+// A fase 2 nao e uma linha, sao SETE chamadas — e o instrumento sabia
+// dizer a rua, nao a porta. Medido em 31/08: a placa trava sempre na
+// fase 2, de instalacao limpa, e o prompt apontava o `TransmitInternal`
+// como suspeito. Mas na fase 2 tambem moram a varredura de pinos (que
+// ja roubou o ADC uma vez), o OLED por SPI (que ja foi o meu palpite
+// errado numa travagem), os encoders (com o G intermitente por
+// re-soldar) e o `MidiEspelha`, que TRANSMITE.
+//
+// Sete caminhos capazes de pendurar. Consertar antes de isolar era
+// aposta, e a regra do dB e nao tocar no suspeito antes disso.
+//
+// Enquanto `loop_fase` for 2, o LED conta a SUB-FASE. Assim o numero
+// aponta o inquilino, e nao a rua.
+static volatile uint8_t loop_sub = 0;
+
 // ---- CTOS: WATCHDOG COM VETO (ver docs/CTOS.md §3) ----
 //
 // O CTOS mede o tempo do EFEITO por bloco. Estouro => bypass no MESMO
@@ -1826,10 +1843,30 @@ static void LedFaseTick(size_t block_size, float sample_rate)
     const uint32_t por_ms = (uint32_t)(sample_rate / 1000.f);
     const uint32_t ms     = n / (por_ms ? por_ms : 48u);
 
-    const uint8_t  alvo = loop_fase ? loop_fase : 1u;
-    const uint32_t dur  = (uint32_t)alvo * 300u + 1200u;
-    const uint32_t t    = ms % dur;
-    const bool quer = (t < (uint32_t)alvo * 300u) && ((t % 300u) < 150u);
+    // DOIS NUMEROS, e a razao e uma ambiguidade que custou uma leitura:
+    // com um so, `6` tanto era a FASE 6 (PollMidi) como a SUB-FASE 6
+    // (MidiEspelha) — e eram precisamente os dois candidatos que
+    // interessava separar. Um instrumento que confunde os dois suspeitos
+    // que ele existe para distinguir nao e instrumento.
+    //
+    //   rajada 1 = FASE      pausa curta
+    //   rajada 2 = SUB-FASE  pausa longa
+    //
+    // SUB-FASE ZERO pisca UMA vez, e nao nenhuma: "zero piscos" e
+    // indistinguivel de "LED avariado", e ausencia representa-se com um
+    // valor, nunca com silencio.
+    const uint8_t  fa = loop_fase ? loop_fase : 1u;
+    const uint8_t  su = loop_sub  ? loop_sub  : 1u;
+    const uint32_t t_fa   = (uint32_t)fa * 300u;
+    const uint32_t t_gap  = 700u;
+    const uint32_t t_su   = (uint32_t)su * 300u;
+    const uint32_t dur    = t_fa + t_gap + t_su + 1800u;
+    const uint32_t t      = ms % dur;
+    bool quer = false;
+    if(t < t_fa)
+        quer = (t % 300u) < 150u;
+    else if(t >= t_fa + t_gap && t < t_fa + t_gap + t_su)
+        quer = ((t - t_fa - t_gap) % 300u) < 150u;
     if(quer != aceso)
     {
         aceso = quer;
@@ -5638,6 +5675,9 @@ int main(void)
     // existia, o caminho ate ele e que estava morto.
     #define FASE(n) do { loop_fase = (uint8_t)(n); \
                         if(kDiagFull) cotuca::hal::BlackboxWrite(12, (float)(n)); } while(0)
+    // SUB so tem sentido dentro da fase 2; a `FASE()` limpa-a ao sair,
+    // senao um numero velho sobreviveria a mudanca de rua.
+    #define SUB(n) do { loop_sub = (uint8_t)(n); } while(0)
 
     while(1)
     {
@@ -5855,9 +5895,11 @@ int main(void)
         }
 
         FASE(2);
+        SUB(1);   // PollSerial -> HandleLine -> Log -> TransmitInternal
         hal::PollSerial();
         // ---- ENCODERS, no laco ----
         {
+            SUB(2);   // niveis crus dos encoders + VarreTudo
             const uint16_t m = hal::EncoderNiveisCrus();
             enc_ja_baixo |= m;
             enc_ja_alto  |= (uint16_t)(~m & 0x1FFu);
@@ -5870,11 +5912,13 @@ int main(void)
                 var_tudo_alto  |= (~w) & ((nt >= 32) ? 0xFFFFFFFFu
                                                      : ((1u << nt) - 1u));
             }
+            SUB(3);   // varredura dos pinos livres
             const uint32_t v = hal::VarreLivres();
             var_ja_baixo |= v;
             var_ja_alto  |= (~v) & ((nl >= 32) ? 0xFFFFFFFFu
                                               : ((1u << nl) - 1u));
         }
+        SUB(4);   // EncoderPoll + os tres encoders (G intermitente)
         hal::EncoderPoll();
         for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
         {
@@ -5897,6 +5941,7 @@ int main(void)
             st.push_agora = hal::EncoderPushNivel(e);
         }
 
+        SUB(5);   // OLED por SPI
         // ---- ENCODER NA TELA ----
         if(enc_na_tela && hal::OledConfigurado()
            && (int32_t)(hal::NowMs() - enc_tela_prox) >= 0)
@@ -5923,8 +5968,10 @@ int main(void)
             }
         }
 
+        SUB(6);   // MidiEspelha TRANSMITE
         MidiEspelha();   // LOOP, nunca callback — ver cabecalho
 
+        SUB(7);   // veredito do sync, com LogAlways
         // VEREDITO DO SYNC. Roda no laco porque so aqui o
         // `hal::PollMidi()` ja teve chance de processar o que voltou.
         if(sync_confere_ate
@@ -5978,6 +6025,7 @@ int main(void)
             }
         }
 
+        SUB(0);   // saiu inteira da fase 2
         FASE(3);
         // ---- PAINEL: botões (físico OU simulado por serial) ----
         // Amostra CRUA dos botoes, toda volta do laco. Barato (uma

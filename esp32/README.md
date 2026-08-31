@@ -25,6 +25,12 @@ engordou e a decisão inteira volta à mesa.
 desligado. Se o `midi` da Daisy der 0 bytes, desconfiar do cruzamento **antes
 de tudo**. A cicatriz nasceu com o WIDI e aplica-se igual aqui.
 
+🔴 **A DAISY NÃO ARRANCA SEM ESTA PONTE LIGADA.** O `D14` dela é o RX da
+USART1 e, com a ponte fora, flutua com o DMA à escuta — o que prende a
+transmissão e trava o laço principal. Medido em 31/08. Ver
+[`HARDWARE.md`](../docs/operacao/HARDWARE.md) §4. **Defeito aberto do lado da
+Daisy; até lá, a ponte é requisito de arranque.**
+
 **Bancada: alimenta por USB *ou* pelo pino de 5 V, nunca os dois.**
 
 ⚠️ **DESACOPLAMENTO OBRIGATÓRIO — 100 µF + 100 nF nos pinos `5V`/`GND`.**

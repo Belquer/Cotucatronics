@@ -245,7 +245,43 @@ soar menos. Para *"está melhor?"* o instrumento é o ouvido.
 
 ---
 
-## 4 · WIDI CORE — BLE MIDI, 6 fios
+## 4 · A PONTE ESP32 — e o cabo dela NÃO é opcional
+
+🔴 **COM A PONTE DESLIGADA, A DAISY NÃO ARRANCA.** Medido em 31/08, e custou
+uma tarde inteira de caça a um defeito de software que não existia.
+
+O `D14` é o RX da USART1, e recebe o TX da ponte. **Com a ponte fora, ele
+flutua** — e o DMA está à escuta permanente. A USART1 é **a mesma** para TX e
+para RX, e a linha solta prende quem tenta transmitir: a `MidiEspelha()` entra
+em `midi_uart.BlockingTransmit` e **não volta**.
+
+**Sintoma:** LED preso a piscar (fase 2, sub-fase 6), sem série, e a porta USB
+a demorar ~1 minuto a abrir em vez de instantaneamente. Reproduz-se de
+instalação limpa — bootloader reinstalado e aplicação regravada.
+
+**Cura:** ligar a ponte. Zero linhas de código.
+
+⚠️ **ISTO É DEFEITO ABERTO, E É DE PEÇA DE GALERIA.** Um cabo solto não pode
+matar um instrumento exposto ao público e replicado em série. O conserto devido
+é **barreira antes do `BlockingTransmit`** — perguntar se a anterior concluiu e,
+se não, **descartar e contar** em vez de esperar — mais rearme do estado de erro
+da USART. Enquanto isso não existir, **a ponte é requisito de arranque**.
+
+**Bancada:** se for preciso correr sem a ponte, segurar o `D14` com um pull-up
+de 10 kΩ ao `3V3`. Não testado — proposto pelo mecanismo, não medido.
+
+### Gravar: dois DFU diferentes, e trocá-los custa uma tentativa
+
+| gesto | DFU que aparece | escreve |
+|---|---|---|
+| **`BOOT` + `RST`** | ROM da ST (`@Internal Flash`, `@Option Bytes`) | o **bootloader** |
+| **`RST` simples** | bootloader da Daisy (`0x90000000`) | a **aplicação**, na QSPI |
+
+🚫 `BOOT+RST` **não grava a aplicação** — dá `Last page at 0x9007f663 is not
+writeable`, porque a ROM não conhece a QSPI. Distinguir os dois pelo endereço
+`0x90000000` no `dfu-util -l`, **nunca** por `df11`, que ambos partilham.
+
+## 4b · WIDI CORE — BLE MIDI, 6 fios
 
 > ⚠️ **SUBSTITUIÇÃO DECIDIDA, AINDA NÃO EXECUTADA.** O WIDI sai a favor de um
 > ESP32-C3 (US$ 45 → US$ 4, numa peça replicada em série na ordem de

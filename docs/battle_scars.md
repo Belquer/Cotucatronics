@@ -5696,6 +5696,104 @@ Conserto: notch para 82–86, e `Manifest::Colisoes()` a gritar no `board`.
 E o alarme ganhou via consultavel a qualquer momento, nao so no banner — a
 regra que a §2b da bancada ja impunha, e que aqui se aplicou de primeira.
 
+## 15ag. O instrumento nao distinguia os dois suspeitos que existia para separar (31/08)
+
+A placa travava na FASE 2, e a fase 2 tem **sete** inquilinos. Construi
+sub-fases para apontar o inquilino, e o LED passou a mostrar a sub-fase
+**enquanto a fase fosse 2**:
+
+```c
+const uint8_t bruto = (loop_fase == 2u && loop_sub) ? loop_sub : loop_fase;
+```
+
+O dB contou **6**. E `6` tanto era a **FASE 6** (`PollMidi`, que RECEBE) como a
+**SUB 6** (`MidiEspelha`, que TRANSMITE).
+
+Eu tinha visto a ambiguidade e escrevi-a no aviso ao dB — e mesmo assim gravei
+assim, porque "na pratica ela trava sempre na fase 2". A primeira leitura real
+caiu exactamente no numero ambiguo.
+
+Conserto: **duas rajadas**, fase e sub-fase, com pausas diferentes.
+
+> **Se um instrumento pode confundir os dois candidatos que ele existe para
+> separar, ele nao esta pronto** — por mais improvavel que a colisao pareca. E
+> "improvavel" calculado por mim, sobre o defeito que ainda nao entendi, nao e
+> um calculo: e uma preferencia.
+
+## 15ah. Elevei um sintoma a "condicao que a hipotese exige" (31/08)
+
+Durante a caçada, abrir o CDC da Daisy levava **47, 58,7 e 59,2 segundos** —
+tres medicoes independentes, consistentes. Construi raciocinio em cima:
+
+> *"Ha uma janela de ~1 minuto depois de cada arranque em que nada drena o CDC.
+> E exactamente a condicao que a hipotese exige, e agora esta medida em vez de
+> suposta."*
+
+Quando a causa real foi corrigida, **a porta passou a abrir em 0,0 s**.
+
+Os 59 segundos nao eram condicao de nada. Eram a placa meio-morta a nao
+completar a enumeracao — **sintoma do mesmo defeito**, que eu promovi a
+mecanismo porque encaixava na historia que eu ja tinha.
+
+> **Medir tres vezes o mesmo numero prova que ele e estavel, nao que ele e
+> causa.** A pergunta que faltou: *este numero existe quando a placa esta bem?*
+> Nunca a fiz — nao havia placa boa para comparar, e em vez de declarar isso,
+> usei o numero como se houvesse.
+
+## 15ai. Cacei software durante horas, e o defeito era um cabo (31/08)
+
+Sintoma: LED preso na fase 2, sem serial, reproduzivel de instalacao limpa
+(bootloader reinstalado do DFU da ROM + aplicacao regravada). Todo o desenho da
+caçada — tres voos, uma variavel, suspeito nomeado — apontava para o
+`TransmitInternal` e o CDC entupido.
+
+**Era a ponte ESP32 desligada.** O dB tinha-a removido nessa tarde para caçar
+ruido de amplificador. Com ela fora, o **D14 (RX) ficava a flutuar** com o DMA
+a escuta permanente; a USART1 e a mesma para TX e RX, e a linha solta prendia
+`midi_uart.BlockingTransmit`. A `MidiEspelha` entrava e nao voltava.
+
+Reconectar a ponte curou tudo. **Zero linhas de codigo.**
+
+A prova ficou do outro lado do fio, no `board` da propria ponte:
+
+```
+msgs: BLE->ser 0 · ser->BLE 105 · TX sem espaco 0
+```
+
+105 mensagens vindas da UART — o varrimento completo do espelho, um por param.
+
+> **O que mudou no MUNDO entre "funcionava" e "nao funciona" vem antes de
+> qualquer hipotese sobre codigo.** A ponte saiu naquela tarde, e eu tinha essa
+> informacao o tempo todo — fui eu que a vi sair. So a usei depois de sete
+> inquilinos isolados e cinco gravacoes.
+
+E fica o defeito real, que e de peca de galeria e continua aberto:
+**um cabo de ponte solto mata o instrumento.** Numa peca exposta ao publico,
+replicada em serie, isso nao pode ser. Conserto devido: barreira antes do
+`BlockingTransmit` (perguntar se a anterior concluiu; se nao, **descartar e
+contar**), mais rearme do estado de erro da USART.
+
+## 15aj. Pedi o gesto errado: o DFU da ROM nao conhece a QSPI (31/08)
+
+Pedi `BOOT+RST` para gravar a aplicacao. Resultado:
+
+```
+Downloading element to address = 0x90040000
+dfu-util: Last page at 0x9007f663 is not writeable
+```
+
+`BOOT+RST` entra no **DFU da ROM da ST**, que so oferece `@Internal Flash` e
+`@Option Bytes`. A aplicacao vive na **QSPI**, em `0x90040000`, e quem sabe
+escrever la e o **bootloader da Daisy**, que aparece num **RST simples**.
+
+| gesto | DFU que aparece | escreve |
+|---|---|---|
+| `BOOT` + `RST` | ROM da ST | flash interna (**bootloader**) |
+| `RST` simples | bootloader da Daisy | **QSPI** (aplicacao) |
+
+Conserto do metodo: o vigia de gravacao passou a esperar por `0x90000000` no
+`dfu-util -l`, e nao por `df11` — que os dois DFU partilham.
+
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.

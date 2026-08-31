@@ -37,22 +37,15 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ## 31/08 — o dia do terra e da microfonia
 
-**A placa está FORA DA USB no fim do dia.** Nem série, nem DFU da ROM
-(`BOOT+RST` também não respondeu) — o `system_profiler` não vê `0x0483`. O LED
-tinha parado na **fase 6** (`PollMidi`) antes de sumir. Pode estar ligado à
-sessão longa de microfonia alta (queda no trilho derruba a Daisy), mas **não há
-medição que o prove** e não se acusa sem ela.
+🔴 **RESOLVIDO, e a causa era um cabo.** A placa não arrancava — LED preso,
+sem série, reproduzível de instalação limpa. A caça correu o protocolo de três
+voos e isolou **fase 2 · sub-fase 6 = `MidiEspelha()`**, que transmite. A causa:
+**a ponte ESP32 estava desligada**, e com ela fora o `D14` (RX da USART1)
+flutuava com o DMA à escuta, prendendo o `BlockingTransmit`. Religar a ponte
+curou tudo, **sem uma linha de código**.
 
-**Na flash está a v0.211.0**, gravada com sucesso antes de a placa sumir.
-
-⚠️ **Ao voltar, repor o estado** (o flash apaga tudo, e estes vieram de medição):
-
-```
-set level 0.25
-set ntc1_hz_a 770 · set ntc1_db_a 15
-set ntc2_hz_a 834 · set ntc2_db_a 15
-set ntc_on_a 1
-```
+⚠️ **Fica defeito aberto, e é de peça de galeria:** um cabo solto não pode matar
+o instrumento. Conserto devido em [`HARDWARE.md`](operacao/HARDWARE.md) §4.
 
 ### O que ficou resolvido
 
