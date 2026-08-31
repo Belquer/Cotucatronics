@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.201.0"
+#define COTUCA_OS_VERSION "0.202.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -472,12 +472,25 @@ static uint32_t var_tudo_alto = 0, var_tudo_baixo = 0;
 // passou a QUANTIZAR no passo de MIDI, com histerese, e so escreve quando
 // o passo MUDA. A zona morta deixou de ser um palpite e passou a ser uma
 // propriedade do protocolo.
-static float    kKnobSuave     = 0.02f;   // polo do filtro (era 0,08)
+// AFROUXADOS EM 31/08, e os numeros vieram de medicao, nao de palpite.
+//
+// Os 0,02 e 0,85 foram escolhidos contra um ruido de sigma 0,0056 — que
+// era ARTEFACTO: o `VarreLivres` roubava o pino ao ADC e a entrada estava
+// a flutuar. Com o pino de volta ao modo analogico e o condensador de
+// 0,1 uF no pot, o ruido real e sigma 0,0004: dezanove vezes abaixo de um
+// passo de MIDI.
+//
+// Medido com os dois valores, um a seguir ao outro, na mesma placa:
+//   suave 0,02 · hist 0,85   ->  sigma 0,00022 · 0,00 escritas/s
+//   suave 0,25 · hist 0,35   ->  sigma 0,00041 · 0,00 escritas/s
+// Filtro 12x mais rapido e histerese 2,4x mais fina, sem custo nenhum em
+// estabilidade. Apertar defesa contra ruido que nao existe custa resposta.
+static float    kKnobSuave     = 0.25f;
 static float    kKnobCaptura   = 0.02f;   // janela para ASSUMIR o param
 static float    kKnobSolta     = 0.06f;   // janela para LARGAR (maior: histerese)
 // Histerese da quantizacao, EM PASSOS de MIDI. 0,85 passo = 0,0067, que
 // e 2,8 desvios do filtrado medido — a fronteira nao treme.
-static float    kKnobHist      = 0.85f;
+static float    kKnobHist      = 0.35f;
 static int      knob_passo[cotuca::kNumKnobs] = {0};
 // Quantas vezes um pot fechou a recepcao de um param. Sobe a cada passo
 // util do pot, e e o numero que denuncia um ADC ruidoso: pot que treme

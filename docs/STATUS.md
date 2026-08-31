@@ -327,7 +327,33 @@ O `knob` diz na hora se o ADC lê.
 
 ---
 
-## 31/08 — os pots funcionam, e o defeito era firmware
+## 31/08 — os pots funcionam, ponta a ponta
+
+**`level_l` / `level_r` seguem os dois potenciómetros.** Curso completo
+verificado: `0,9752 → 0,0001` com o param a acompanhar. Ruído em repouso
+**σ 0,0003**, que são 26× abaixo de um passo de MIDI, e **zero escritas**
+com os pots parados.
+
+Condensadores de **0,1 µF do cursor à massa, no próprio pot** — ficam, e
+valem: **29× melhor** no canal ruidoso, e a assimetria entre os dois
+desapareceu. Com o sinal limpo, a filtragem foi afrouxada (filtro 12× mais
+rápido, histerese 2,4× mais fina) sem custo nenhum em estabilidade.
+
+### 🔴 A instabilidade era um curto, e eu acusei três inocentes
+
+A placa caía do barramento durante a montagem. Em duas horas acusei **o hub
+USB** (a Daisy não estava em hub nenhum), **os condensadores** (medi com os
+pots desligados) e **o circuito** (cortava a energia entre os testes, e
+creditava a recuperação à variável errada).
+
+Era um **curto intermitente entre PWR e GND da ponte**, encostado ao mexer nos
+cabos. Brownout — a placa perde alimentação e some do barramento; não é
+travamento. **Encontrou-o o dB, a olhar para os fios.**
+
+⚠️ **Isolar esses dois fios.** Curto de alimentação intermitente desaparece
+sempre que se vai procurar.
+
+## 31/08 — e o defeito do ADC era firmware
 
 **`level_l` / `level_r`** (CC 116/117) seguem os dois pots físicos. Custou uma
 sessão inteira, e o culpado não era o cobre:
