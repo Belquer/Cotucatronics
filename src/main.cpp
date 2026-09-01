@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.222.0"
+#define COTUCA_OS_VERSION "0.223.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -528,6 +528,28 @@ static bool     knob_dono[cotuca::kNumKnobs] = {false};
 static const uint32_t kOledDormeMs = 5000u;
 static bool     enc_na_tela   = false;   // nasce APAGADO
 static uint32_t oled_dorme_em = 0;       // 0 = ja dorme
+
+// ---- O GESTO QUE ACORDA E ENGOLIDO INTEIRO ----
+//
+// A primeira versao engolia UM evento, e o dB apanhou o erro na
+// bancada: "um gesto de ligar o oled e quantos passos forem ate parar.
+// Fica dificil numa situacao de show mexer exactamente um clique."
+//
+// Tem razao, e o erro e meu de modelo: eu pensei em EVENTOS e o dedo
+// pensa em GESTOS. Ninguem roda um detente em palco — pega-se no botao
+// e roda-se ate ver. Engolir so o primeiro deixava os restantes passar
+// as cegas, que e exactamente o que se queria evitar.
+//
+// Entao o engolir dura ate a mao PARAR: cada evento novo adia o fim da
+// janela. Rodar sem parar mantem tudo engolido; parar 400 ms fecha-a, e
+// dai em diante o encoder trabalha.
+//
+// 400 ms, e nao 100: entre detentes de uma rotacao deliberada passam
+// uns 100-200 ms, e uma janela curta demais deixaria o gesto partir-se
+// ao meio. Longa demais faria o painel parecer preso.
+static const uint32_t kOledEngoleMs = 400u;
+static bool     oled_engole     = false;
+static uint32_t oled_engole_ate = 0;
 // SENTIDO POR ENCODER, +1 ou -1. Existe porque o sentido de um encoder
 // depende de COMO ELE FOI SOLDADO, e isso nao se descobre lendo codigo:
 // descobre-se rodando o knob. Corrigir por gravacao custava um flash por
@@ -623,10 +645,12 @@ static inline bool NaJanela(int param, uint32_t agora)
 // mexeu num encoder desde o arranque, o SPI nunca chega a falar.
 static void DespertaPainel()
 {
+    const bool dormia = !enc_na_tela;
     if(!cotuca::hal::OledConfigurado() && !cotuca::hal::OledInit()) return;
     enc_na_tela   = true;
     oled_dorme_em = cotuca::hal::NowMs() + kOledDormeMs;
     if(!oled_dorme_em) oled_dorme_em = 1u;   // 0 significa "ja dorme"
+    if(dormia) oled_engole = true;           // so o gesto que ACORDA
 }
 
 static void MidiEspelha()
@@ -6041,13 +6065,19 @@ int main(void)
             // guardaria o gesto para a volta seguinte, e ele acabaria
             // por ser aplicado na mesma — so que atrasado, que e pior.
             const bool houve = inc || push || hal::EncoderPushNivel(e);
-            if(houve && !enc_na_tela)
+            if(houve)
             {
-                DespertaPainel();
-                st.push_agora = hal::EncoderPushNivel(e);
-                continue;                      // engole este gesto
+                DespertaPainel();              // acende e adia o sono
+                if(oled_engole)
+                {
+                    // Cada evento ADIA o fim da janela: o gesto e
+                    // engolido enquanto a mao nao parar.
+                    oled_engole_ate = hal::NowMs() + kOledEngoleMs;
+                    if(!oled_engole_ate) oled_engole_ate = 1u;
+                    st.push_agora = hal::EncoderPushNivel(e);
+                    continue;
+                }
             }
-            if(houve) DespertaPainel();        // ja acordado: so adia o sono
 
             if(inc)
             {
@@ -6067,12 +6097,24 @@ int main(void)
         }
 
         SUB(5);   // OLED por SPI
+        // A MAO PAROU: fecha a janela de engolir e o encoder volta a
+        // trabalhar. Fica aqui, e nao no laco dos encoders, porque tem
+        // de correr mesmo quando NAO ha evento nenhum — e "parar" e
+        // justamente a ausencia de eventos.
+        if(oled_engole && oled_engole_ate
+           && (int32_t)(hal::NowMs() - oled_engole_ate) >= 0)
+        {
+            oled_engole     = false;
+            oled_engole_ate = 0;
+        }
         // ADORMECE. Subtraccao em ticks antes de comparar, que e como
         // esta casa trata a volta do uint32.
         if(oled_dorme_em && (int32_t)(hal::NowMs() - oled_dorme_em) >= 0)
         {
-            oled_dorme_em = 0;
-            enc_na_tela   = false;
+            oled_dorme_em   = 0;
+            enc_na_tela     = false;
+            oled_engole     = false;   // dormiu: o proximo gesto reacende
+            oled_engole_ate = 0;
             if(hal::OledConfigurado()) hal::OledPreenche(false);
             hal::Log("oled: a dormir (%lu s sem encoder) — o painel"
                      " aceso custa 6 dB de chao de ruido",

@@ -5939,6 +5939,25 @@ quanto. Entao **o gesto que acorda e engolido**.
 para a volta seguinte, e ele seria aplicado na mesma — so que atrasado, que e
 pior do que aplicar logo.
 
+**E a primeira versao engolia um EVENTO, quando devia engolir um GESTO.** O dB
+apanhou-o na bancada:
+
+> *"um gesto de ligar o oled e quantos passos forem ate parar. Fica dificil
+> numa situacao de show mexer exactamente um clique."*
+
+Eu pensei em eventos; o dedo pensa em gestos. Ninguem roda um detente em palco
+— pega-se no botao e roda-se ate ver. Engolir so o primeiro deixava todos os
+outros passar as cegas, que era exactamente o que a regra existia para evitar.
+
+Conserto: **cada evento adia o fim da janela**, e ela fecha 400 ms depois de a
+mao parar. Rodar sem parar mantem tudo engolido. E os 400 ms nao sao palpite:
+entre detentes de uma rotacao deliberada passam 100-200 ms, e janela mais curta
+partiria o gesto ao meio.
+
+> **Interface mede-se em gestos, nao em eventos.** A unidade do codigo e o
+> detente; a unidade da mao e o movimento inteiro. Quando as duas nao coincidem,
+> quem esta a tocar e que paga.
+
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.
