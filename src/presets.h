@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.8.0
+// Cotucatronics OS — presets v0.9.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -47,6 +47,18 @@ inline bool ForaDoPreset(const char* nome)
     // Mesmo criterio que ja tinha aposentado o `exc_on`: um preset que
     // escrevesse isto tentaria mudar uma chave de metal.
     if(!strncmp(nome, "post_level_", 11)) return true;
+
+    // ⚠️ `out_l` / `out_r` CORTAM O RAMO — decisao do dB em 01/09.
+    // Mesma categoria do `route_*`: TOPOLOGIA e SEGURANCA, nao intencao
+    // musical. Um preset que os apanhasse desligados silenciaria o
+    // instrumento a meio da peca, e ninguem ligaria as duas coisas.
+    if(!strncmp(nome, "out_l", 5))         return true;
+    if(!strncmp(nome, "out_r", 5))         return true;
+
+    // ⚠️ `pre_level_ab` e de TESTE e EMERGENCIA, e nasce em 1.0 pela
+    // decisao do mesmo dia. Preset que o mexesse poria o instrumento
+    // mudo — ou muito alto — por razao que nao e musical.
+    if(!strncmp(nome, "pre_level_ab", 12)) return true;
     // FERRAMENTA DE MEDICAO: bancada, nao musica.
     if(!strncmp(nome, "bench_boost", 11)) return true;
     // CALIBRACAO DO RAMO FISICO. O manifest diz por que: cada amp e cada

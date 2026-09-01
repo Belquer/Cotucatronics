@@ -1,3 +1,70 @@
+# ⚠️ MODELO CORRIGIDO EM 01/09 — LER ISTO ANTES DO RESTO
+
+O que está abaixo desta secção descreve o modelo ANTIGO, de **duas
+bibliotecas** (16 de cadeia + 8 globais, com conteúdos diferentes). **Está
+errado**, e o dB corrigiu-o com três frases:
+
+> *"presets são uma lista só. O que muda é se ele é aplicado ao piezo A, B ou
+> global (os dois)."*
+> *"preset sempre admite dois valores porque posso selecionar um para A e outro
+> para B ou vice-versa."*
+> *"selecionar preset A B ou G = giro a lista até achar e confirmo. G contém os
+> valores de A e B."*
+
+## O modelo certo
+
+**UMA lista.** Cada preset guarda um retrato completo:
+
+| | |
+|---|---|
+| valores da **cadeia A** | os 39 params `_a` |
+| valores da **cadeia B** | os 39 params `_b` |
+| **partilhados** | `piezo_mix` · `dly_time` · `shift_hz` · `buzios_on/thresh/cooldown` |
+
+**O destino decide quanto dele entra:**
+
+| aplicar como | o que entra |
+|---|---|
+| **A** | só a parte de A, na cadeia A |
+| **B** | só a parte de B, na cadeia B |
+| **G** | **tudo** — parte-A na A, parte-B na B, e os partilhados |
+
+**O estado são DOIS ponteiros**, um por cadeia: pode estar a parte-A do preset 3
+na cadeia A enquanto a parte-B do preset 7 está na B. Daí `ponteiro[2]`.
+
+## O gesto
+
+**Gira a lista até achar, e confirma.** Não são dezasseis botões — é um
+selector que percorre e um gesto de confirmação, por destino (A, B, G).
+
+⚠️ **E isso deixa uma pergunta de protocolo em aberto**, que é a primeira a
+resolver: com «gira e confirma», o CC 121 com o slot no valor já não descreve o
+gesto. Ou o selector manda o índice e um segundo CC confirma, ou a confirmação
+manda o índice de uma vez. **Decisão do dB antes de se escrever código** — errar
+aqui é reescrever o despacho e a página do Loopy.
+
+## O que JÁ está feito
+
+- **Exclusões** (`presets.h` v0.9.0): saíram `out_l`, `out_r` e `pre_level_ab`,
+  por decisão do dB. Os dois primeiros cortam o ramo — topologia e segurança,
+  como o `route_*`; o terceiro é de teste e emergência.
+- Restam **6 partilhados**, todos musicais.
+- O **CC 121 carrega** e está provado na placa, mas ainda com o modelo antigo:
+  ch1 lê de uma biblioteca global separada em vez de aplicar às duas cadeias.
+
+## O que FALTA, e é a primeira tarefa
+
+Unificar as bibliotecas em `presets.h`, e propagar. **Toca oito sítios**: as
+estruturas, os helpers, o analisador do `dump`, o `capturar`, o `load`, o
+despacho do CC 121, a listagem e os testes.
+
+⚠️ **Não é trabalho de fim de sessão.** É o subsistema que vai guardar o
+resultado da sessão de escuta, e foi tentado em 01/09 ao fim de uma sessão longa
+— a refactorização foi revertida a meio, de propósito, deixando só as exclusões.
+Melhor não começada que meio feita.
+
+---
+
 # PRESETS — a lista, e como os botões a endereçam
 
 > **v0.2.0** · 28/08 · documento **vivo**: a lista cresce durante a sessão de
