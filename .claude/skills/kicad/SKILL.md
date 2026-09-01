@@ -1,6 +1,6 @@
 ---
 name: kicad
-description: Gerar, verificar e entregar esquemáticos KiCad por script (kiutils/Python) — provar que o ficheiro ABRE antes de tudo, correr o ERC a cada edição, encaixar na grade de ligação, e declarar isenções com prazo. Use ao escrever ou alterar geradores de esquemático, ao entregar folhas, e antes de dar qualquer folha por verificada.
+description: Desenhar, gerar, verificar e entregar esquemáticos KiCad — provar que o ficheiro ABRE antes de tudo, ERC a cada edição, ponto de junção como semântica, os três padrões de cruzamento, grade de ligação, o que todo esquema declara, e o contrato com o BOM. Use ao desenhar ou alterar esquemáticos e geradores, ao atribuir footprints ou montar BOM, e antes de dar qualquer folha por verificada.
 ---
 
 # KiCad por script — as regras que custaram folhas
@@ -105,13 +105,59 @@ não aparece em lado nenhum até à fabricação.
 
 **Aceitação:** netlist idêntico antes e depois.
 
-## 4. Pino no MEIO de um fio NÃO liga
+## 4. O PONTO DE JUNÇÃO É SEMÂNTICA, não decoração
 
-Só liga em **ponta de fio** ou onde há **junção explícita**. Um `PWR_FLAG`
-colocado a meio de um segmento fica solto, e o ERC di-lo como
-`pin_not_connected`.
+Esta é a família de defeito mais cara do desenho esquemático, porque **nenhum
+dos dois lados dá erro em lado nenhum**:
 
-## 5. `power_pin_not_driven`: declarar, não isentar
+| | significa | quando está errado |
+|---|---|---|
+| cruzamento **sem** ponto | os fios **não** se ligam | ponto a menos = **circuito aberto** |
+| cruzamento **com** ponto | os fios **ligam-se** | ponto a mais = **curto no papel** |
+
+🚫 **Cruzamento de QUATRO VIAS com ponto é proibido.** É ambíguo: ninguém
+distingue "duas redes que se cruzam e uma tem junção" de "quatro fios todos
+ligados". Parte-se em dois cruzamentos em T, desencontrados.
+
+**E o caso que se descobre tarde:** um **pino a meio de um segmento de fio NÃO
+liga**. Só em ponta de fio, ou com junção explícita. Um `PWR_FLAG` posto a meio
+fica solto — e no desenho está encostado ao fio, indistinguível de ligado.
+
+⚠️ **É a mesma família:** em todos estes casos, o desenho está bonito e a rede
+está errada. **O olho não pode arbitrar** — só o netlist.
+
+## 4b. A família dos CRUZAMENTOS, com os padrões nomeados
+
+Cruzamento não é falha de cuidado; é o desenho a dizer que o **arranjo** está
+errado. Três padrões, e cada um tem conserto próprio:
+
+**C1 — o nó com duas cargas em direcções opostas.** No não-inversor, o `Rf` sobe
+da entrada `−` e o `Rg` desce dela, e o percurso atravessa o fio da entrada `+`.
+🚫 **Não se resolve movendo peças** — o cruzamento é topológico. Resolve-se
+pondo **as duas cargas a sair na mesma direcção**, com o sinal a entrar por
+baixo.
+
+**C2 — o trilho desenhado como linha longa.** Uma linha de alimentação que
+atravessa a folha cruza tudo o que encontra. Resolve-se com a alimentação em
+**sub-secção própria**, ligada por **tocos rotulados** — o rótulo é o fio.
+
+**C3 — colisão de rótulo** com fio ou com outro rótulo. É o único dos três que a
+`design-review` apanha, e o único que não muda a topologia.
+
+## 5. Grelha ANTES de emitir, e gerar por script
+
+**Encaixar na grade é passo de EMISSÃO, não de revisão.** Ver §3 para o
+mecanismo e para as garantias. O que esta secção acrescenta é o momento: se o
+encaixe corre depois de a folha ser dada por boa, ele **desloca tudo** e
+invalida a inspecção que a aprovou.
+
+**E desenhar por script, não à mão.** Um esquemático gerado é reproduzível,
+diffável e corrigível na fonte; um desenhado à mão é um artefacto que ninguém
+sabe refazer. Em 01/09 foram **176 avisos de fora-da-grade** numa folha desenhada
+com coordenadas escolhidas a olho — e o conserto foi uma função de três linhas
+no gerador, aplicada a tudo de uma vez.
+
+## 6. `power_pin_not_driven`: declarar, não isentar
 
 Símbolos caseiros não declaram `power_out`, e todo pino `power_in` fica órfão.
 A resposta é um **PWR_FLAG por rede de energia** — símbolo com pino `power_out`,
@@ -126,7 +172,7 @@ etiqueta cai por cima do rótulo global que está ao lado.
 ⚠️ **E a bandeira não vai na coordenada do rótulo** — tapa-o. Vai num ponto
 livre do mesmo fio, **com junção** (ver §4).
 
-## 6. Isenções: com prazo, com razão, e nunca em bloco
+## 7. Isenções: com prazo, com razão, e nunca em bloco
 
 Isenção generosa transforma verificador em carimbo. Cada uma leva **porquê** e
 **até quando**.
@@ -140,7 +186,44 @@ significado, e quem não marcou a data não repara.
 `.kicad_pro`; sem projecto, o registo é só um documento. **Registo sem aplicação
 é promessa, e diz-se que é.**
 
-## 7. O gerador é a FONTE
+## 7b. O que TODO esquema declara
+
+Um esquemático que não diz estas coisas obriga quem o lê a adivinhar — e quem
+adivinha, adivinha errado uma vez em cada dez:
+
+- **A tensão, e DE ONDE VEM.** «5 V» não chega: 5 V do step-down, do USB, ou do
+  regulador local são três redes diferentes com três comportamentos diferentes.
+- **O que é POR CANAL e o que é PARTILHADO.** Duas cadeias que partilham uma
+  fonte não são duas cadeias independentes, e o desenho tem de o mostrar.
+- **⚠️ O que é AJUSTE DE EXEMPLAR.** Trimpot de ganho, casamento de piezo,
+  nível de exciter: valores que pertencem a **esta** unidade e não à série.
+  Sem essa marca, alguém copia-os para a próxima peça — e leva a calibração de
+  um corpo para outro corpo.
+- **Terras distintos com SÍMBOLOS distintos**, quando são nós distintos. Um
+  `GND` e um `AGND` desenhados com o mesmo símbolo são uma ligação que ninguém
+  vê e ninguém consegue discutir.
+- **Valores que dependem de uma PREMISSA, com a premissa escrita.** «R1 4M7»
+  não diz nada; «R1 4M7 com piezo de ~20 nF corta em 1,7 Hz» diz o que se perde
+  se o piezo mudar.
+
+## 7c. O contrato com o BOM
+
+O esquemático e a lista de compras são o mesmo documento visto de dois lados. O
+que os mantém casados:
+
+- **O designador é CHAVE.** `C7` no desenho e `C7` no BOM são a mesma peça, e
+  qualquer divergência é defeito — não é questão de estilo.
+- **O encapsulamento é parte da COMPRA**, não detalhe de layout. 0805 e 1206 são
+  peças diferentes com o mesmo valor.
+- **MPN sim; código de distribuidor com RESSALVA** — ele muda, esgota e difere
+  por região. E **nunca inventado**: um código plausível e errado custa uma
+  encomenda inteira, e parece certo até chegar a caixa.
+
+⚠️ **Footprint suposto é respin.** O que depende de medir peça em mão — módulos,
+conectores, botões — fica **vazio até a peça chegar**. Vazio é honesto; adivinhado
+não é.
+
+## 8. O gerador é a FONTE
 
 Nunca editar o `.kicad_sch` à mão: as duas versões divergem e ninguém sabe qual
 manda. Todo conserto entra no `.py` e regera-se.
@@ -150,7 +233,7 @@ tinham `/mnt/user-data/outputs/` e `/home/claude/*.svg` gravados — rebentavam
 com `FileNotFoundError` na primeira tentativa noutro computador. Caminhos
 relativos ao próprio ficheiro (`pathlib.Path(__file__).parent`), sempre.
 
-## 8. O laço de saída, e ele inclui o ERC
+## 9. O laço de saída, e ele inclui o ERC
 
 A `design-review` diz: *editou → renderizou → olhou de novo*. Aqui vale o mesmo
 para a verificação eléctrica, e foi por a esquecer que se entregou uma folha com
@@ -168,3 +251,20 @@ Depois de qualquer alteração ao gerador:
 
 Saltar o 2 depois de mexer na geometria foi o que produziu
 `pin_not_connected` numa folha que já tinha dado zero erros.
+
+---
+
+## Procedência
+
+Esta skill absorveu em 01/09 a antiga `esquematico`, que deixou de existir por
+decisão do dB: **uma skill por assunto; duas a dizerem quase o mesmo derivam, e
+aí ninguém sabe qual manda.**
+
+Dela vieram §4b (a família dos cruzamentos, com C1/C2/C3 nomeados), a semântica
+do ponto de junção que abre a §4, §5 (grelha antes de emitir e gerar por
+script), §7b (o que todo esquema declara) e §7c (o contrato com o BOM).
+
+O resto nasceu de uma sessão em que se entregaram **duas folhas que não abriam**
+com o verificador de rede limpo, e em que uma edição foi re-inspeccionada
+visualmente **sem se repetir o ERC** — precisamente o defeito que a `esquematico`
+não podia prever, porque foi descoberto depois dela.
