@@ -5982,6 +5982,16 @@ e ai desenhava. As duas metades do relato eram a mesma causa.
 `// forca redesenho`.** Terceira vez no mesmo dia que a resposta estava escrita
 e eu nao a procurei — depois de ja ter escrito a cicatriz sobre isso.
 
+**A quinta volta foi so o numero.** Com tudo a funcionar, o dB afinou a pausa
+que fecha o gesto: 500 ms pareceu lento, 100 apertado, **200 ficou**. Aguenta
+ser curto porque a janela nao precisa de cobrir a rotacao inteira — cada
+detente ADIA o fim dela, entao so tem de ser maior que o intervalo entre dois
+detentes de uma rotacao continua.
+
+⚠️ **Esse numero e do PULSO de quem toca, e nao de calculo**, e esta escrito
+assim no codigo. Se algum dia parecer errado, o teste e a mao, nao o
+osciloscopio.
+
 > **Tres tentativas de desenho, e nenhuma foi bug.** Foram tres modelos errados
 > do mesmo gesto — evento, depois duracao, depois so a fronteira. O dB corrigiu
 > as tres a operar, e eu nao teria chegado la a medir: nao ha instrumento na

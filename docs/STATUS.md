@@ -39,7 +39,7 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ### Fim de 31/08 — o instrumento está de pé
 
-Firmware **v0.225.0**. Três coisas mudaram no fim do dia:
+Firmware **v0.227.0**. Três coisas mudaram no fim do dia:
 
 **Os níveis passaram a dizer a topologia:** `pre_level_ab` (antes do
 governor/limiter — alimenta a protecção) e `post_level_l`/`post_level_r`

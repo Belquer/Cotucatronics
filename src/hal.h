@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.34.0
+// hal.h v0.35.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.

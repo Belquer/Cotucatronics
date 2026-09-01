@@ -69,6 +69,19 @@ CTOS, o LED conta a verdade. Verificado por serial, sem tocar no botão.
 | DC | **D6** | `PORTC12` | **sobrescrito** (default seria D9) |
 | RST | **D5** | `PORTD2` | **sobrescrito** (default seria D30) |
 
+⚠️ **O PAINEL ACESO CUSTA 6 dB DE CHÃO DE RUÍDO NA ENTRADA** — medido em
+31/08: IN_L de −75,3 para −69,3 dBFS, com um espeto a **7040 Hz** e dominância
+0,95. É a corrente de accionamento das linhas (64 linhas × ~110 Hz de quadro),
+proporcional aos píxeis **acesos**.
+
+Por isso, desde a v0.221.0, **o painel nasce apagado**: acorda quando alguém
+mexe num encoder, acende 200 ms depois de a mão parar, e dorme aos 5 s. Ver
+[`HARDWARE.md`](HARDWARE.md) §1b.
+
+**Item de bancada:** estes cinco fios correm perto dos cabos dos piezos.
+Afastá-los, e cruzá-los em ângulo recto — acoplamento pelo ar não se corrige
+com esquema de terra.
+
 **D5, D6, D7, D8 e D10 saíram do pool de livres.** O **D9** continua livre —
 é o que o default usaria para DC e a solda não usou.
 

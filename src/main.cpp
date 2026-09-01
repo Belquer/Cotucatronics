@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.225.0"
+#define COTUCA_OS_VERSION "0.227.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -550,7 +550,14 @@ static uint32_t oled_dorme_em = 0;       // 0 = ja dorme
 // SEQUENCIA:
 //   apagado --[encoder]--> a engolir (apagado) --[500 ms parado]--> aceso
 //   aceso --[5 s sem tocar]--> apagado
-static const uint32_t kOledGestoMs = 500u;   // pausa que fecha o gesto
+// 200 ms, AFINADO PELA MAO em 31/08 — 500 pareceu lento, 100 apertado,
+// 200 ficou. A janela nao precisa de cobrir a rotacao inteira: cada
+// detente ADIA o fim dela, entao so tem de ser maior que o intervalo
+// entre dois detentes de uma rotacao continua.
+//
+// ⚠️ Este numero e do PULSO DE QUEM TOCA, e nao de calculo. Se algum dia
+// parecer errado, o teste e a mao, nao o osciloscopio.
+static const uint32_t kOledGestoMs = 200u;   // pausa que fecha o gesto
 static uint32_t oled_gesto_ate = 0;          // 0 = sem gesto em curso
 // SENTIDO POR ENCODER, +1 ou -1. Existe porque o sentido de um encoder
 // depende de COMO ELE FOI SOLDADO, e isso nao se descobre lendo codigo:
