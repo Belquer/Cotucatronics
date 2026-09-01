@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.224.0"
+#define COTUCA_OS_VERSION "0.225.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -650,9 +650,28 @@ static inline bool NaJanela(int param, uint32_t agora)
 static void AcendePainel()
 {
     if(!cotuca::hal::OledConfigurado() && !cotuca::hal::OledInit()) return;
-    enc_na_tela   = true;
+    enc_na_tela = true;
+
+    // ⚠️ FORCA O REDESENHO, e sem isto o painel NAO ACENDE.
+    //
+    // O refrescamento so escreve quando o conteudo MUDA — compara com
+    // `enc_tela_ant` e cala-se se for igual. Ao acordar nada mudou (os
+    // encoders estao onde estavam), portanto ele nao desenhava nada e a
+    // tela, que tinha sido apagada ao adormecer, ficava PRETA.
+    //
+    // O sintoma que isso produzia era exactamente o oposto do desenho:
+    // "giro, continua apagado; paro, continua apagado; giro de novo, ele
+    // acende E JA ESTA A MUDAR VALORES" — porque so o SEGUNDO gesto
+    // mexia num valor, e so ai havia diferenca para desenhar.
+    //
+    // Invalidar o "ultimo desenhado" fecha o buraco: o proximo
+    // refrescamento ve tudo diferente e escreve.
+    for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
+        enc_tela_ant[e][0] = '\0';
+    enc_tela_prox = cotuca::hal::NowMs();     // desenha ja, sem esperar
+
     oled_dorme_em = cotuca::hal::NowMs() + kOledDormeMs;
-    if(!oled_dorme_em) oled_dorme_em = 1u;   // 0 significa "ja dorme"
+    if(!oled_dorme_em) oled_dorme_em = 1u;    // 0 significa "ja dorme"
 }
 
 static void MidiEspelha()

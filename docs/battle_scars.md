@@ -5968,10 +5968,25 @@ mao — o painel a acender a meio da rotacao pisca no canto do olho e sinaliza
 acender a **resposta ao gesto completo**, e o que se ve ja e o estado com que se
 vai trabalhar.
 
-> **Tres tentativas, e nenhuma foi bug.** Foram tres modelos errados do mesmo
-> gesto — evento, depois duracao, depois so a fronteira. O dB corrigiu as tres
-> a operar, e eu nao teria chegado la a medir: nao ha instrumento na placa que
-> meça "isto distrai quem esta a tocar".
+**E a quarta volta foi bug, este sim.** Com a fronteira certa, o painel
+continuava apagado — e o dB descreveu-o exactamente: *"giro, continua apagado;
+paro, continua apagado; giro de novo ele acende e ja esta mudando valores."*
+
+O refrescamento so escreve quando o conteudo **muda**: compara com
+`enc_tela_ant` e cala-se se for igual. Ao acordar nada tinha mudado — os
+encoders estao onde estavam — portanto nao desenhava, e a tela, apagada ao
+adormecer, ficava preta. So o SEGUNDO gesto mexia num valor, criava diferenca,
+e ai desenhava. As duas metades do relato eram a mesma causa.
+
+⚠️ **E o padrao ja estava no ficheiro, em dois sitios, com o comentario
+`// forca redesenho`.** Terceira vez no mesmo dia que a resposta estava escrita
+e eu nao a procurei — depois de ja ter escrito a cicatriz sobre isso.
+
+> **Tres tentativas de desenho, e nenhuma foi bug.** Foram tres modelos errados
+> do mesmo gesto — evento, depois duracao, depois so a fronteira. O dB corrigiu
+> as tres a operar, e eu nao teria chegado la a medir: nao ha instrumento na
+> placa que meça "isto distrai quem esta a tocar". A quarta foi bug, e o
+> conserto ja existia no ficheiro.
 
 ---
 
