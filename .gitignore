@@ -17,3 +17,5 @@ __pycache__/
 
 # lixo de bisseccao do ERC — ficheiros de teste, nao fonte nem produto
 docs/operacao/esquematicos/revB/erc/
+# recortes de inspeccao visual — material de trabalho, nao entrega
+docs/operacao/esquematicos/revB/render/*.png

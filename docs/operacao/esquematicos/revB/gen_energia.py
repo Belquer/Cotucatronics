@@ -91,11 +91,46 @@ SYM["CP_V"] = mksym("CP_V",
      line([(-2.0, 2.2), (-1.0, 2.2)]), line([(-1.5, 1.7), (-1.5, 2.7)])],
     [pin("1", "+", 0, 3.81, 270), pin("2", "-", 0, -3.81, 90)], "C")
 
+# ---- PWR_FLAG: declara QUEM ALIMENTA ----
+#
+# O ERC exige que toda rede com pino `power_in` tenha alguem a declarar
+# `power_out`. Os nossos simbolos sao caseiros e nenhum o declara — a
+# alimentacao chega por rotulo global, vinda de outra folha.
+#
+# A alternativa era ISENTAR os dois erros. O dB recusou, e com razao:
+# "declarar quem alimenta e resposta; isentar e mandar o verificador
+# olhar para o lado". Mesma regra do Schottky — peca que impede o erro
+# vale mais que regra que o proibe.
+#
+# ⚠️ UM POR REDE, E SO UM. Dois `power_out` na MESMA rede sao conflito
+# para o ERC, e trocariamos um erro por outro. A distribuicao entre as
+# folhas segue a fonte de cada rede.
+#
+# Referencia comeca por `#`: convencao do KiCad para simbolo que nao
+# entra na BOM. Ele nao e uma peca, e uma AFIRMACAO.
+SYM["PWRFLAG"]=mksym("PWRFLAG",
+                 [line([(0,0),(0,2.54)]),line([(-1.27,2.54),(1.27,2.54)]),
+                  line([(-1.27,2.54),(0,3.81)]),line([(1.27,2.54),(0,3.81)])],
+                 [pin("1","pwr",0,0,90,0,"power_out")],"#FLG")
+
 PINPOS = {n: {p.number: (p.position.X, p.position.Y) for u in s.units if u.pins for p in u.pins}
           for n, s in SYM.items()}
 
 # ---------------- colocacoes ----------------
 PLACE = [
+    # As duas bandeiras desta folha, nas FONTES de cada trilho: o +15V
+    # sai do decoy PD, o +5V do step-down. Nao ha bandeira de GND aqui —
+    # ela vive na folha do pre-amp, que e onde ha pino `power_in` nessa
+    # rede. Um `power_out` por rede, e SO um: dois sao conflito, e
+    # trocariamos um erro por outro.
+    # ⚠️ NUM PONTO LIVRE DO FIO, e NAO na coordenada do rotulo.
+    # A primeira versao punha-as exactamente onde o rotulo global esta,
+    # e o corpo da bandeira tapava-o: o `+15V` lia-se "15V" e o `+5V`
+    # ficava com o triangulo dentro do hexagono. Electricamente certo,
+    # visualmente ilegivel — e o render foi que o mostrou, porque
+    # sobreposicao e propriedade do desenho, nao do fonte.
+    ("#FLG1", "PWRFLAG", "", 128, 45.46),   # +15V, no fio SW1->rotulo
+    ("#FLG2", "PWRFLAG", "", 100, 162),     # +5V,  no fio J3.3->rotulo
     ("J1",  "CONN2_R", "entrada decoy PD",  35,  48),
     ("F1",  "FUSE_H",  "PTC 3A",            62,  45.46),
     ("D1",  "D_V",     "SMBJ24A",           85,  55),
@@ -165,6 +200,23 @@ w(P("J4", "2"), (160, 200.08), (160, 215), (110, 215))
 JUNC = [(85, 45.46), (140, 45.46), (58, 98), (80, 98), (80, 120),
         (88, 195), (110, 195), (110, 215)]
 
+# ⚠️ JUNCAO SOB CADA BANDEIRA — sem ela o pino NAO LIGA.
+#
+# Medido em 01/09: pino que cai no MEIO de um segmento de fio nao se
+# liga no KiCad; ele liga em PONTA de fio ou onde ha juncao explicita.
+# As bandeiras estao a meio do fio de proposito (na coordenada do
+# rotulo tapavam-no), entao precisam da juncao.
+#
+# O ERC apanhou-o como `pin_not_connected`, e so o apanhou porque
+# alguem o voltou a correr: eu tinha movido as bandeiras, re-renderizado
+# e OLHADO o desenho — mas nao repeti a verificacao electrica. Editar
+# invalida TODAS as inspeccoes anteriores, nao so a visual.
+JUNC.extend([(128, 45.46), (100, 162)])
+
+# As duas bandeiras desta folha, nas FONTES de cada trilho: o +15V sai
+# do decoy PD, o +5V sai do step-down. Nao ha bandeira de GND aqui —
+# ela vive na folha do pre-amp, que e onde ha pino `power_in` nela. Um
+# `power_out` por rede, e so um.
 GLBL = [
     ("+15V", 140, 45.46, 0), ("+15V", 35, 98, 180), ("+15V", 35, 142.92, 180),
     ("+5V", 100, 172, 270), ("+5V", 35, 195, 180),
@@ -210,7 +262,12 @@ for ref, typ, val, x, y in PLACE:
                         position=Position(X=x, Y=y, angle=0), unit=1,
                         inBom=True, onBoard=True, uuid=U())
     s.properties = [
-        Property(key="Reference", value=ref, position=Position(X=x, Y=y - 11, angle=0), effects=eff(1.27, "left")),
+        # ⚠️ REFERENCIA `#...` NAO SE MOSTRA — convencao do KiCad para
+        # simbolo que nao e peca. Ver a nota gemea em gen_preamp.py: no
+        # render de 01/09 a etiqueta da bandeira caia por cima do
+        # rotulo global. O corpo estava livre; era o texto que colidia.
+        Property(key="Reference", value=ref, position=Position(X=x, Y=y - 11, angle=0),
+                 effects=eff(1.27, "left", ref.startswith("#"))),
         Property(key="Value",     value=val, position=Position(X=x, Y=y + 13, angle=0), effects=eff(1.0, "left")),
         Property(key="Footprint", value="", position=Position(X=x, Y=y, angle=0), effects=eff(hide=True)),
         Property(key="Datasheet", value="", position=Position(X=x, Y=y, angle=0), effects=eff(hide=True)),

@@ -1,4 +1,4 @@
-ERC report (2026-09-01T16:32:07, Encoding UTF8)
+ERC report (2026-09-01T16:44:59, Encoding UTF8)
 Report includes: Errors, Warnings, Exclusions
 
 ***** Sheet /
@@ -25,6 +25,9 @@ Report includes: Errors, Warnings, Exclusions
     @(87.63 mm, 203.20 mm): Symbol C3 [CP_V]
 [lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
     ; warning
+    @(100.33 mm, 162.56 mm): Symbol #FLG2 [PWRFLAG]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
     @(110.49 mm, 45.72 mm): Symbol SW1 [SW_H]
 [lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
     ; warning
@@ -37,12 +40,15 @@ Report includes: Errors, Warnings, Exclusions
     @(115.57 mm, 148.59 mm): Symbol J3 [CONN3_L]
 [lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
     ; warning
+    @(128.27 mm, 45.72 mm): Symbol #FLG1 [PWRFLAG]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
     @(144.78 mm, 198.12 mm): Symbol J4 [CONN2_L]
 [lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
     ; warning
     @(170.18 mm, 64.77 mm): Symbol J5 [CONN2_L]
 
- ** ERC messages: 13  Errors 0  Warnings 13
+ ** ERC messages: 15  Errors 0  Warnings 15
 
  ** Ignored checks:
     - Global label only appears once in the schematic

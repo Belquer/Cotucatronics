@@ -1,3 +1,15 @@
+<!-- Vocabulario do KiCad e dos geradores da revB, nao simbolos do
+     firmware. O check_docs varre `src/`; estes vivem no KiCad ou em
+     docs/operacao/esquematicos/revB/, que ele nao le. -->
+<!-- doc-check: ignore endpoint_off_grid (codigo de violacao do ERC do KiCad) -->
+<!-- doc-check: ignore lib_symbol_issues (codigo de violacao do ERC do KiCad) -->
+<!-- doc-check: ignore isolated_pin_label (codigo de violacao do ERC do KiCad) -->
+<!-- doc-check: ignore power_pin_not_driven (codigo de violacao do ERC do KiCad) -->
+<!-- doc-check: ignore pin_not_connected (codigo de violacao do ERC do KiCad) -->
+<!-- doc-check: ignore power_out (tipo electrico de pino do KiCad) -->
+<!-- doc-check: ignore power_in (tipo electrico de pino do KiCad) -->
+<!-- doc-check: ignore confere_colisoes (funcao de revB/grade.py, fora do varrimento) -->
+
 # ERC rev B — registo de isenções
 
 **Corrido em 01/09 com `kicad-cli` 10.0.5.** Relatórios em `erc_energia.rpt` e
@@ -47,25 +59,36 @@ isolada têm mesmo um pino só.
 inverte-se:** se continuarem com um pino só *dentro do projecto*, deixa de ser
 falso positivo e passa a ser **rede sem destino** — defeito real.
 
-## Isenção 3 — `power_pin_not_driven` · 2 ERROS
+## ~~Isenção 3~~ — CONSERTADA, não isentada
 
 > *U1C pino 8 (`V+`) e pino 4 (`V-`): pino de alimentação sem `power_out`*
 
-**Razão:** os pinos do amp-op estão declarados `power_in` e a alimentação chega
-por **rótulo global** (`V+PRE`). Nenhum símbolo desta folha declara `power_out`,
-porque a fonte está na folha da energia.
+**Decisão do dB:** *«Declarar quem alimenta é resposta; isentar é mandar o
+verificador olhar para o lado.»* Entraram **quatro `PWR_FLAG`**, um por rede de
+energia — e quatro, não dois, porque o ERC não atravessa o R7: `V+PRE` é rede
+distinta de `+15V` e precisa da sua.
 
-⚠️ **Esta é a mais frágil das três, e tem conserto real:** um `PWR_FLAG` na
-rede — símbolo com pino `power_out` — cala o erro **por declarar quem alimenta**,
-em vez de mandar o verificador olhar para o lado.
+| bandeira | rede | folha |
+|---|---|---|
+| `#FLG1` | `+15V` | energia — fonte: decoy PD |
+| `#FLG2` | `+5V` | energia — fonte: step-down |
+| `#FLG1` | `V+PRE` | preamp |
+| `#FLG2` | `GND` | preamp |
 
-**Recomendação:** consertar, não isentar. É a mesma regra do díodo Schottky —
-**peça que impede o erro vale mais que regra que o proíbe.** Acrescentar o
-`PWR_FLAG` mexe na folha, portanto é decisão do dB.
+⚠️ **Um por rede, e só um.** Dois `power_out` na mesma rede são conflito para o
+ERC — trocaria um erro por outro.
 
-**Prazo, se ficar isenta:** até à revisão do projecto único. Não passa daí —
-alimentação sem origem declarada é exactamente o que este erro existe para
-apanhar, e dois erros isentos são dois erros que ninguém volta a ver.
+**Resultado: zero erros nas duas folhas.**
+
+Três coisas que custaram uma volta cada, e ficam para a próxima:
+
+1. **A bandeira não vai na coordenada do rótulo** — o corpo tapa-o. O `+15V`
+   lia-se «15V» e o `+5V` ficava com o triângulo dentro do hexágono.
+2. **A referência `#...` não se mostra** — além da convenção do KiCad, o texto
+   `#FLG1` caía por cima do rótulo `V+PRE`.
+3. **Pino a meio de um fio NÃO liga** — só em ponta ou com junção explícita. Sem
+   ela, `pin_not_connected`. E **isto é invisível no render**: fio e pino
+   desenhados no mesmo sítio, sem ligação nenhuma.
 
 ---
 

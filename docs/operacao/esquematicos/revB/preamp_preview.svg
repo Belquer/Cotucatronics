@@ -299,6 +299,20 @@
 <circle cx="975.0" cy="761.43" r="2" fill="#c00"/>
 <text x="999.0" y="745.5" font-size="10" font-weight="bold">C5</text>
 <text x="999.0" y="760.5" font-size="8.5" fill="#444">47u</text>
+<polyline points="105.0,708.0 105.0,700.38" fill="none" stroke="#800" stroke-width="1.3"/>
+<polyline points="101.19,700.38 108.81,700.38" fill="none" stroke="#800" stroke-width="1.3"/>
+<polyline points="101.19,700.38 105.0,696.57" fill="none" stroke="#800" stroke-width="1.3"/>
+<polyline points="108.81,700.38 105.0,696.57" fill="none" stroke="#800" stroke-width="1.3"/>
+<circle cx="105.0" cy="708.0" r="2" fill="#c00"/>
+<text x="93.0" y="687.0" font-size="10" font-weight="bold">#FLG1</text>
+<text x="93.0" y="741.0" font-size="8.5" fill="#444"></text>
+<polyline points="150.0,786.0 150.0,778.38" fill="none" stroke="#800" stroke-width="1.3"/>
+<polyline points="146.19,778.38 153.81,778.38" fill="none" stroke="#800" stroke-width="1.3"/>
+<polyline points="146.19,778.38 150.0,774.57" fill="none" stroke="#800" stroke-width="1.3"/>
+<polyline points="153.81,778.38 150.0,774.57" fill="none" stroke="#800" stroke-width="1.3"/>
+<circle cx="150.0" cy="786.0" r="2" fill="#c00"/>
+<text x="138.0" y="765.0" font-size="10" font-weight="bold">#FLG2</text>
+<text x="138.0" y="819.0" font-size="8.5" fill="#444"></text>
 <circle cx="225.0" cy="165.0" r="2.8" fill="#0a0"/>
 <circle cx="306.0" cy="165.0" r="2.8" fill="#0a0"/>
 <circle cx="390.0" cy="165.0" r="2.8" fill="#0a0"/>
@@ -317,6 +331,8 @@
 <circle cx="540.0" cy="438.0" r="2.8" fill="#0a0"/>
 <circle cx="636.0" cy="438.0" r="2.8" fill="#0a0"/>
 <circle cx="636.0" cy="492.0" r="2.8" fill="#0a0"/>
+<circle cx="105.0" cy="708.0" r="2.8" fill="#0a0"/>
+<circle cx="150.0" cy="786.0" r="2.8" fill="#0a0"/>
 <circle cx="240.0" cy="721.14" r="2.8" fill="#0a0"/>
 <circle cx="315.0" cy="721.14" r="2.8" fill="#0a0"/>
 <circle cx="585.0" cy="699.0" r="2.8" fill="#0a0"/>

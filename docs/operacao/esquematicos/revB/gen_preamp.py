@@ -73,6 +73,28 @@ SYM["OPA"]=mksym("OPA",[line([(-7.62,7.62),(-7.62,-7.62),(7.62,0),(-7.62,7.62)])
                  [pin("1","-",-10.16,2.54,0,2.54,"input"),pin("2","+",-10.16,-2.54,0,2.54,"input"),pin("3","O",10.16,0,180,2.54,"output")],"U")
 SYM["OPAPWR"]=mksym("OPAPWR",[rect(-5.08,-5.08,5.08,5.08)],
                  [pin("8","V+",0,7.62,270,2.54,"power_in"),pin("4","V-",0,-7.62,90,2.54,"power_in")],"U")
+# ---- PWR_FLAG: declara QUEM ALIMENTA ----
+#
+# O ERC exige que toda rede com pino `power_in` tenha alguem a declarar
+# `power_out`. Os nossos simbolos sao caseiros e nenhum o declara — a
+# alimentacao chega por rotulo global, vinda de outra folha.
+#
+# A alternativa era ISENTAR os dois erros. O dB recusou, e com razao:
+# "declarar quem alimenta e resposta; isentar e mandar o verificador
+# olhar para o lado". Mesma regra do Schottky — peca que impede o erro
+# vale mais que regra que o proibe.
+#
+# ⚠️ UM POR REDE, E SO UM. Dois `power_out` na MESMA rede sao conflito
+# para o ERC, e trocariamos um erro por outro. A distribuicao entre as
+# folhas segue a fonte de cada rede.
+#
+# Referencia comeca por `#`: convencao do KiCad para simbolo que nao
+# entra na BOM. Ele nao e uma peca, e uma AFIRMACAO.
+SYM["PWRFLAG"]=mksym("PWRFLAG",
+                 [line([(0,0),(0,2.54)]),line([(-1.27,2.54),(1.27,2.54)]),
+                  line([(-1.27,2.54),(0,3.81)]),line([(1.27,2.54),(0,3.81)])],
+                 [pin("1","pwr",0,0,90,0,"power_out")],"#FLG")
+
 PINPOS={n:{p.number:(p.position.X,p.position.Y) for u in s.units if u.pins for p in u.pins} for n,s in SYM.items()}
 
 PLACE=[]; W=[]; JUNC=[]; GLBL=[]; NOTES=[]
@@ -162,7 +184,24 @@ w((300,232), P("R5","1"))
 w(P("R5","2"), (300,260))
 w((300,260), P("R6","1")); w(P("R6","2"), (300,288))
 w((300,260), P("C5","1")); w(P("C5","2"), (335,280))
+# ⚠️ JUNCAO SOB CADA BANDEIRA — sem ela o pino NAO LIGA.
+#
+# Medido em 01/09: pino que cai no MEIO de um segmento de fio nao se
+# liga no KiCad; ele liga em PONTA de fio ou onde ha juncao explicita.
+# As bandeiras estao a meio do fio de proposito (na coordenada do
+# rotulo tapavam-no), entao precisam da juncao.
+#
+# O ERC apanhou-o como `pin_not_connected`, e so o apanhou porque
+# alguem o voltou a correr: eu tinha movido as bandeiras, re-renderizado
+# e OLHADO o desenho — mas nao repeti a verificacao electrica. Editar
+# invalida TODAS as inspeccoes anteriores, nao so a visual.
+JUNC.extend([(45,246),(60,272)])   # sob as bandeiras
 JUNC.extend([(90,250.38),(115,250.38),(205,243),(232,243),(232,266),(300,260),(90,278),(115,278)])
+# As duas bandeiras desta folha, nos nos que os rotulos ja ocupam.
+# ⚠️ NUM PONTO LIVRE DO FIO, e nao na coordenada do rotulo — ver a nota
+# em gen_energia.py: posta sobre o rotulo, a bandeira tapa-o.
+add("#FLG1","PWRFLAG","",45,246)     # V+PRE — no fio U1C.8 -> rotulo
+add("#FLG2","PWRFLAG","",60,272)     # GND   — no fio U1C.4 -> rotulo
 GLBL.extend([("V+PRE",45,238,90),("GND",60,278,270),("GND",115,286,270),
              ("+15V",150,243,180),("V+PRE",255,243,0),("GND",232,276,270),
              ("V+PRE",300,232,90),("VBIAS",300,260,0),("GND",300,288,270),("GND",335,280,270)])
@@ -195,7 +234,14 @@ for ref,typ,val,x,y in PLACE:
                       unit=1,inBom=True,onBoard=True,uuid=U())
     m = LP.get(ref) or ("v" if typ in ("R_V","C_V","CP_V","BAV99","JACK3","OPAPWR") else "h")
     rx,ry,vx,vy = {"v":(x+8,y-2,x+8,y+3), "h":(x-4,y-8,x-4,y+10), "ha":(x-4,y+8,x-4,y-8), "u":(x-4,y-4,x-4,y-9)}[m]
-    s.properties=[Property(key="Reference",value=ref,position=Position(X=rx,Y=ry,angle=0),effects=eff(1.27,"left")),
+    # ⚠️ REFERENCIA `#...` NAO SE MOSTRA — convencao do KiCad para
+    # simbolo que nao e peca (PWR_FLAG e afins). E aqui nao e so
+    # convencao: medido no render de 01/09, o texto "#FLG1" caia por
+    # cima do rotulo `V+PRE` e o "#FLG2" por cima do `GND`. O CORPO da
+    # bandeira estava livre; era a etiqueta que colidia — e etiqueta e
+    # o elemento que mais colide, como a lista fechada diz.
+    _oculta = ref.startswith("#")
+    s.properties=[Property(key="Reference",value=ref,position=Position(X=rx,Y=ry,angle=0),effects=eff(1.27,"left",_oculta)),
                   Property(key="Value",value=val,position=Position(X=vx,Y=vy,angle=0),effects=eff(1.0,"left")),
                   Property(key="Footprint",value="",position=Position(X=x,Y=y,angle=0),effects=eff(hide=True)),
                   Property(key="Datasheet",value="",position=Position(X=x,Y=y,angle=0),effects=eff(hide=True))]

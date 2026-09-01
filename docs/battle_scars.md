@@ -6058,6 +6058,54 @@ serve as ferramentas, nao so a quem le.
 > `gerar_ccmap.py` ja tinha ensinado isto ao falhar oito CCs de um notch com dois
 > indices; foi preciso repetir noutra ferramenta no mesmo dia.
 
+## 15as. Entreguei duas folhas que nao abriam, e o verificador disse que estavam limpas (01/09)
+
+Duas folhas de KiCad entregues com o verificador de netlist limpo e a revisao
+visual feita **tres vezes**. Nenhuma das duas abria: `Failed to load schematic`,
+uma linha, sem apontar para lado nenhum.
+
+```
+gerado    (symbol "D_V_0_1_0_1")   <- quatro numeros
+correcto  (symbol "D_V_0_1")
+```
+
+O `kiutils` acrescenta `_unitId_styleId` sozinho e o gerador ja punha o sufixo a
+mao. O KiCad separa esse sufixo para deduzir o nome do simbolo PAI, encontrava
+`D_V_0_1` — que nao existe — e recusava a folha inteira.
+
+> **"O verificador passou" e "a folha abre" sao perguntas DIFERENTES.** O
+> `check_sch.py` confere CONECTIVIDADE; nada conferia a GRAMATICA do ficheiro. E
+> quem le "verificacao limpa" acredita nas duas.
+
+E o `kicad-cli` estava disponivel o tempo todo, dentro do bundle da aplicacao.
+Deu-se por ausente porque se correu `which kicad-cli`. **Procurar pelo sitio,
+nao pelo nome** — foi por isso que a folha seguiu sem ERC nenhum.
+
+Nasceu daqui a skill `kicad`, porque a licao nao tinha onde carregar sozinha.
+
+<!-- doc-check: ignore pin_not_connected (codigo de violacao do ERC do KiCad) -->
+
+## 15at. Editei, renderizei, olhei — e nao repeti o ERC (01/09)
+
+Ao mover dois `PWR_FLAG` para fora dos rotulos que estavam a tapar, refiz o
+render e inspeccionei o desenho. **Nao voltei a correr o ERC.**
+
+Ele teria dito logo: `pin_not_connected`. **Pino que cai no MEIO de um segmento
+de fio nao liga no KiCad** — liga em ponta de fio, ou onde ha juncao explicita.
+As bandeiras estavam soltas, e o desenho mostrava-as encostadas ao fio, bonitas.
+
+O erro so apareceu na verificacao seguinte, e por acaso: eu estava a conferir
+outra coisa.
+
+> **Editar invalida TODAS as inspeccoes anteriores, nao so a visual.** A
+> `design-review` ja dizia "editou -> renderizou -> olhou de novo"; falta a
+> irma: **editou -> regerou -> VERIFICOU DE NOVO**. Aplica-se ao ERC, ao
+> netlist, aos testes — a tudo o que se corre uma vez e se cita depois.
+
+E ha uma armadilha propria neste caso: o defeito era **invisivel no render**.
+Fio e pino desenhados no mesmo sitio, sem ligacao nenhuma. A inspeccao visual
+nao podia apanha-lo, e a electrica podia — mas so a visual foi refeita.
+
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.
