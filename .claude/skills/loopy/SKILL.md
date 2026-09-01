@@ -96,6 +96,12 @@ tem coordenadas de 0 a 5 na horizontal; `0.5` de largura é meia célula.
 3. Acrescentar a referência do `Scene` à lista `scenes` do `Project`.
 4. Rezipar preservando **todos** os outros ficheiros do bundle.
 
+⚠️ **Ao re-zipar, escrever TAMBÉM as entradas de directório.** Um `os.walk` que
+só escreve ficheiros perde `Control Profiles/` e `Resources/`, que fazem parte
+do bundle. E não chega escrever só as vazias — `Control Profiles/` contém outro
+directório. **O teste que apanha isto é comparar a lista de nomes do zip de
+entrada com a do de saída**; contar ficheiros não apanha nada.
+
 ⚠️ **Nunca escrever por cima do projecto do dB.** Gerar um ficheiro novo, e
 deixá-lo importar — projecto é onde vive o trabalho dele, e um erro aqui apaga
 horas de arranjo de ecrã.
