@@ -5,6 +5,24 @@ description: Gerar, verificar e entregar esquemáticos KiCad por script (kiutils
 
 # KiCad por script — as regras que custaram folhas
 
+## FRONTEIRA COM A `design-review`
+
+Esta skill e o portao **ELECTRICO** de um esquematico; a `design-review` e o
+**VISUAL**. Nao sao dois niveis de rigor da mesma pergunta — sao perguntas
+diferentes, e **nenhuma substitui a outra**:
+
+| pergunta | quem responde | o que NAO ve |
+|---|---|---|
+| o ficheiro **abre**? | `kicad-cli sch erc` (esta skill) | nada disto aparece no desenho |
+| as ligacoes **existem**? | ERC + netlist (esta skill) | pino e fio no mesmo sitio, sem ligacao, sao **identicos** no render |
+| o desenho **le-se**? | `design-review` | texto por cima de texto nao aparece em netlist nenhum |
+
+⚠️ **Uma skill que mande "renderizar e olhar" e nao mande confirmar que o
+ficheiro abre esta errada por OMISSAO** — e o silencio dela tem a mesma cara de
+uma folha boa. Se existir outra skill de esquematicos, ela deve APONTAR para
+esta em vez de repetir o conteudo: duas a dizerem quase o mesmo derivam, e ai
+ninguem sabe qual manda.
+
 ## 0. A REGRA QUE ESTA SKILL EXISTE PARA IMPOR
 
 > **"O verificador passou" e "a folha abre" são perguntas DIFERENTES.**

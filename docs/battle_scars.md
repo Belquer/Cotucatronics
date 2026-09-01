@@ -6097,14 +6097,31 @@ As bandeiras estavam soltas, e o desenho mostrava-as encostadas ao fio, bonitas.
 O erro so apareceu na verificacao seguinte, e por acaso: eu estava a conferir
 outra coisa.
 
-> **Editar invalida TODAS as inspeccoes anteriores, nao so a visual.** A
-> `design-review` ja dizia "editou -> renderizou -> olhou de novo"; falta a
-> irma: **editou -> regerou -> VERIFICOU DE NOVO**. Aplica-se ao ERC, ao
-> netlist, aos testes — a tudo o que se corre uma vez e se cita depois.
+**Editar invalida todas as inspeccoes anteriores** — isso e verdade e e a
+licao facil. Mas o dB afiou o enunciado, e a versao dele e a que importa:
 
-E ha uma armadilha propria neste caso: o defeito era **invisivel no render**.
-Fio e pino desenhados no mesmo sitio, sem ligacao nenhuma. A inspeccao visual
-nao podia apanha-lo, e a electrica podia — mas so a visual foi refeita.
+> **A inspeccao visual era ESTRUTURALMENTE INCAPAZ de apanhar este defeito.**
+> Fio e pino desenhados no mesmo sitio, sem ligacao nenhuma. Nao havia nada
+> para o olho ver — nem com mais atencao, nem com mais ampliacao, nem com
+> mais iteracoes.
+>
+> **Olho e ERC nao sao dois niveis de rigor da MESMA pergunta. Sao perguntas
+> DIFERENTES, e uma nao substitui a outra.**
+
+E e por isso que refazer a visual me deu a sensacao de ter verificado: eu tinha
+mesmo refeito uma inspeccao, com cuidado, e ela passou. So que era a inspeccao
+que nao podia falhar ali.
+
+A **15as** diz o mesmo do outro lado do espelho: verificador de REDE limpo numa
+folha que **nem abria**. As duas juntas formam a regra:
+
+> **Antes de citar uma verificacao, perguntar o que ela e CAPAZ de ver.** Uma
+> verificacao limpa so absolve dentro do seu dominio, e o silencio dela sobre o
+> resto tem exactamente a mesma cara.
+
+Corolario pratico: **editou -> regerou -> repetir TODAS as verificacoes**, e nao
+so a que se lembra. Aqui eram tres — abre, ERC, netlist, render — e refazer uma
+delas nao diz nada sobre as outras.
 
 ---
 
