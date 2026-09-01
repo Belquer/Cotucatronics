@@ -148,6 +148,31 @@ Foi exactamente o que aconteceu em 01/09: um `.lpproj` gerado com 143 widgets e
 passagem**, com os ids novos — ou **reutilizar os ids antigos** para os widgets
 que sobrevivem. Emitir projecto sem perfis é entregar uma página morta.
 
+## O perfil é por DISPOSITIVO, e eles acumulam
+
+Um bundle carrega **um perfil por nome de dispositivo**, e eles ficam lá. Num
+export real de 01/09:
+
+```
+Ctos Midi.lpcontrolprofile/
+    b2d29493.MIDI.Cotucatronics Bluetooth      103 bindings
+    227f559e.MIDI.Cotucatronics1 Bluetooth      99 bindings
+    d51a4338.MIDI.FootCtrlPlus Bluetooth        12 bindings
+```
+
+**Vale o do dispositivo que estiver LIGADO**, e mais nenhum.
+
+⚠️ **Um nome antigo guardado de uma sessão anterior deixa a página inteira
+muda.** Foi o que aconteceu em 01/09: o Loopy estava ligado como
+`Cotucatronics 1` — sobra de um emparelhamento antigo — enquanto o trabalho todo
+estava no perfil `Cotucatronics`. Os widgets no ecrã, o BLE ligado, e **zero
+bytes no instrumento**.
+
+O sintoma não aponta para lá: parece firmware, parece fio, parece o projecto.
+**Conferir a que dispositivo o Loopy está ligado vem antes de desmontar
+seja o que for** — e um bundle com três perfis é o aviso de que há por onde
+errar.
+
 ⚠️ **E o teste que o apanha é do lado do INSTRUMENTO, não do Loopy:** o contador
 de bytes de MIDI recebidos. Zero bytes com o BLE ligado diz que o corte está
 antes da placa, e distingue "não mandou" de "mandou e não aplicou".
