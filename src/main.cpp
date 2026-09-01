@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.227.0"
+#define COTUCA_OS_VERSION "0.230.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -182,6 +182,11 @@ static uint32_t quar_block_to = 0; // fim do bloqueio confirmado
 static uint32_t quar_last_ms  = 0;
 static uint32_t cc_quarentena = 0; // CCs recusados — visivel no `midi`
 
+// Definida la em baixo, depois da biblioteca. Declarada aqui porque o
+// despacho do CC vive antes dela no ficheiro, e nao vale mover uma
+// biblioteca inteira para cima por causa de uma chamada.
+static void CarregaPresetPorCc(uint8_t canal, uint8_t slot);
+
 static void ApplyCcNow(uint8_t canal, uint8_t cc, uint8_t value)
 {
     // O mapa é do manifest, e aplicá-lo também: ver Manifest::ApplyMidiCc.
@@ -347,6 +352,68 @@ static void AbreJanelaEEspelha(int id)
     // desfeito pela metade.
     quiet_until[id] = hal::NowMs() + kJanelaMs;
     eco_ult[id]     = 0xFF;   // forca o espelho a reenviar este param
+}
+
+// ---- CARREGAR PRESET POR CC 121 ----
+//
+// O canal diz o DESTINO e o valor diz o SLOT — mesma gramatica do resto
+// do esquema de seis canais. Ch1 global, ch2 cadeia A, ch3 cadeia B.
+//
+// SLOT VAZIO NAO E ERRO SILENCIOSO. Um botao de palco que nao faz nada
+// e indistinguivel de um botao que nao chegou, e as duas coisas pedem
+// consertos opostos. Diz-se em voz alta qual foi.
+//
+// ⚠️ O CC 122 (gravar) NAO esta implementado, e a omissao e deliberada:
+// um CC que ESCREVE preset destroi uma biblioteca com uma mensagem
+// perdida, e nao traz nome nenhum para lhe dar. Capturar continua no
+// serial, onde o gesto e deliberado e o preset nasce com nome.
+static void CarregaPresetPorCc(uint8_t canal, uint8_t slot)
+{
+    using namespace cotuca;
+    if(canal == kCanalCompart)
+    {
+        if(slot >= kMaxPresetsGlobal)
+        {
+            hal::Log("preset CC: slot %u fora dos %d globais",
+                     (unsigned)slot, kMaxPresetsGlobal);
+            return;
+        }
+        const PresetGlobal& p = biblio.global[slot];
+        if(!p.n) { hal::Log("preset CC: slot global %u VAZIO", (unsigned)slot); return; }
+        for(int k = 0; k < p.n && k < pmapa.n_global; k++)
+        {
+            params.Set(pmapa.global[k], (float)p.val[k] / 127.f);
+            AbreJanelaEEspelha(pmapa.global[k]);
+        }
+        biblio.ponteiro_global = (int)slot;
+        hal::Log("preset CC: global slot %u = \"%s\" (%d params)",
+                 (unsigned)slot, p.nome, (int)p.n);
+        return;
+    }
+    const int c = (canal == kCanalEntradaB) ? 1 : 0;
+    if(canal != kCanalEntradaA && canal != kCanalEntradaB)
+    {
+        hal::Log("preset CC: canal %u nao e destino de preset"
+                 " (ch1 global · ch2 cadeia A · ch3 cadeia B)", (unsigned)canal);
+        return;
+    }
+    if(slot >= kMaxPresetsCadeia)
+    {
+        hal::Log("preset CC: slot %u fora dos %d por cadeia",
+                 (unsigned)slot, kMaxPresetsCadeia);
+        return;
+    }
+    const PresetCadeia& p = biblio.cadeia[slot];
+    if(!p.n) { hal::Log("preset CC: slot %u da cadeia %c VAZIO",
+                        (unsigned)slot, c ? 'B' : 'A'); return; }
+    for(int k = 0; k < p.n && k < pmapa.n_cadeia; k++)
+    {
+        params.Set(pmapa.cadeia[c][k], (float)p.val[k] / 127.f);
+        AbreJanelaEEspelha(pmapa.cadeia[c][k]);
+    }
+    biblio.ponteiro[c] = (int)slot;
+    hal::Log("preset CC: cadeia %c slot %u = \"%s\" (%d params)",
+             c ? 'B' : 'A', (unsigned)slot, p.nome, (int)p.n);
 }
 
 // ---- CONFERENCIA DO SYNC ----
@@ -879,6 +946,35 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
     // CC que chega num canal sem vinculo: nao move nada, e e CONTADO.
     // Sem o contador isto seria indistinguivel de "o widget nao mandou",
     // que e o erro que custou uma sessao inteira em 22/08.
+    // ---- CC DE COMANDO: nao tem param, e morreria na linha abaixo ----
+    //
+    // O 121 nao e um param — e uma ordem. Passa-lo pelo mapa exigiria
+    // inventar um param falso so para o transportar, e esse param
+    // apareceria no `list`, no preset e no espelho: tres sitios onde
+    // ele nao existe.
+    //
+    // Ate 01/09 isto NAO EXISTIA. O `PRESETS-LISTA.md` descrevia o
+    // desenho e nada o implementava, entao os botoes de preset do Loopy
+    // eram inertes — documento a descrever intencao como se fosse
+    // comportamento, que e uma armadilha para quem o le.
+    //
+    // ⚠️ E A PRIMEIRA TENTATIVA FICOU A JUSANTE DESTE PORTAO, o que a
+    // tornou codigo morto: `FindMidiParam` devolve -1 para o 121, e o
+    // `pid < 0` descartava-o antes. O comando nunca corria, e o unico
+    // sintoma era nao acontecer nada — indistinguivel de nao ter
+    // chegado.
+    if(cc == cotuca::Manifest::kCcPresetLoad)
+    {
+        // A QUARENTENA VALE PARA ELE TAMBEM, e mais do que para um
+        // param: um dump de reconexao BLE com um 121 velho carregaria
+        // um preset a meio da peca. Param errado corrige-se com o dedo;
+        // PRESET errado troca o instrumento inteiro numa mensagem.
+        if(quar_block_to && now < quar_block_to) { cc_quarentena++; return; }
+        CarregaPresetPorCc(ch, value);
+        midi.NoteApplied();
+        return;
+    }
+
     if(pid < 0) { cc_sem_dono++; return; }
 
     // JANELA DE AUTORIA, agora por PARAM. Descarte CONTADO — descarte
@@ -1980,10 +2076,10 @@ static void LedFaseTick(size_t block_size, float sample_rate)
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
     const float level = params.Real(manifest.p_pre_level);
-    const float mix   = params.Real(manifest.p_tone_mix);
+    const float mix   = params.Real(manifest.p_test_tone_gain);
     // O balanco dos piezos saiu daqui no pivo de 20/08: ele agora mistura
     // as duas cadeias JA PROCESSADAS, no bloco 2.
-    OscSetFreq(params.Real(manifest.p_tone_freq),
+    OscSetFreq(params.Real(manifest.p_test_tone_freq),
                cotuca::hal::Info().sample_rate);
 
     const bool has_in = cotuca::hal::Info().has_audio_in;
@@ -2029,7 +2125,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // TOM DE TESTE gerado UMA VEZ. Chamar OscProcess() por cadeia
     // avancaria a fase duas vezes por amostra e dobraria a frequencia —
     // o oscilador tem estado, e estado nao se consome em duplicata.
-    const int dest_tom = (int)(params.Real(manifest.p_tone_dest) + 0.5f);
+    const int dest_tom = (int)(params.Real(manifest.p_test_tone_out) + 0.5f);
     // VIA: 0 = direto (entra depois do `level`), 1 = cadeia.
     const bool tom_direto = params.Real(manifest.p_test_tone_stage) < 0.5f;
     // Gera enquanto o alvo for maior que zero OU enquanto alguma cadeia
@@ -3226,9 +3322,9 @@ static void HandleLine(const char* line)
         return;
     }
     if(strncmp(line, "tone on", 7) == 0)
-    { params.Set(manifest.p_tone_mix, 0.5f); hal::Log("tone ON"); return; }
+    { params.Set(manifest.p_test_tone_gain, 0.5f); hal::Log("tone ON"); return; }
     if(strncmp(line, "tone off", 8) == 0)
-    { params.Set(manifest.p_tone_mix, 0.0f); hal::Log("tone OFF"); return; }
+    { params.Set(manifest.p_test_tone_gain, 0.0f); hal::Log("tone OFF"); return; }
     // GANHO DE TESTE DA DRENAGEM. Sem ele a defesa e indemonstravel: a
     // janela de 300 ms fecha antes de a serial USB enumerar, entao
     // ninguem consegue observa-la agindo, e "contador em 0" fica

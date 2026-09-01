@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.7.0
+// Cotucatronics OS — presets v0.8.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -33,6 +33,20 @@ inline bool ForaDoPreset(const char* nome)
     // ESTADO FISICO: vai virar leitura dos DPDT em D29/D30. Um preset
     // que escrevesse isto tentaria mudar uma chave de metal.
     if(!strncmp(nome, "exc_on", 6))       return true;
+    // OS VOLUMES DE SAIDA SEGUEM OS POTS FISICOS — decisao do dB em
+    // 01/09, e a razao e de replicacao, nao de gosto:
+    //
+    //   "seguem os pots — facto de exemplar, nao intencao musical;
+    //    preset de um corpo levaria nivel errado noutro corpo."
+    //
+    // Cada peca da serie tera o seu casamento de piezo, exciter e
+    // corpo. O nivel que soa bem num botijao soldado nao e o mesmo que
+    // soa bem no seguinte, e um preset que o carregasse levaria a
+    // calibracao de UM exemplar para todos.
+    //
+    // Mesmo criterio que ja tinha aposentado o `exc_on`: um preset que
+    // escrevesse isto tentaria mudar uma chave de metal.
+    if(!strncmp(nome, "post_level_", 11)) return true;
     // FERRAMENTA DE MEDICAO: bancada, nao musica.
     if(!strncmp(nome, "bench_boost", 11)) return true;
     // CALIBRACAO DO RAMO FISICO. O manifest diz por que: cada amp e cada
@@ -44,7 +58,14 @@ inline bool ForaDoPreset(const char* nome)
     if(!strncmp(nome, "gov_release", 11)) return true;
     // TOM DE TESTE: preset que ligasse isto poria uma senoide no meio da
     // peca.
-    if(!strncmp(nome, "tone_", 5))        return true;
+    // A FAMILIA INTEIRA DO TOM DE TESTE, numa regra so.
+    //
+    // Eram DUAS ate 01/09 — `tone_` e `test_tone` — porque o
+    // `test_tone_stage` nasceu com prefixo diferente do resto da
+    // familia e escapava a primeira. Duas regras para uma familia e
+    // uma divergencia com data marcada: a terceira a nascer escaparia
+    // as duas. Com o rename, uma regra cobre tudo.
+    if(!strncmp(nome, "test_tone", 9))    return true;
     // E O `test_tone_*` TAMBEM, que escapava. A exclusao acima e por
     // prefixo `tone_`, e em 28/08 o `tone_via` foi renomeado para
     // `test_tone_stage` — que comeca por `test_`. O param saiu da
@@ -56,7 +77,6 @@ inline bool ForaDoPreset(const char* nome)
     // silencioso: o param nao desaparece, muda de categoria. Apanhado na
     // revisao ANTES da primeira captura, que e a unica altura em que
     // corrigir isto e de graca.
-    if(!strncmp(nome, "test_tone", 9))    return true;
     // TOPOLOGIA DE SAIDA (28/08). A matriz `route_*` compensa como os
     // transdutores estao LIGADOS — e facto de fiacao, nao de timbre.
     // Dentro do preset cada preset carregaria a fiacao, e desandar um

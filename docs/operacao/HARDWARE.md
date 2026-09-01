@@ -18,6 +18,15 @@ qualquer powerbank PD ──USB-C──> [decoy PD 15V, 5A] ──> RAIL 15V
                                                     SCHOTTKY
 ```
 
+✅ **SOLDADO E VERIFICADO EM 01/09 — 1N5819.** `VIN` da ponte a **4,72 V**
+(queda certa, sem caminho a contorná-lo). **Teste do gatilho passou:** powerbank
+desligado com o USB da ponte ligado, e o LED do amp **apagado**.
+
+E os **100 µF + 100 nF** ficaram soldados nos pinos da ponte, **depois** do
+díodo. **A terra própria à estrela não se fez, e não faz falta:** 0 mV em AC
+entre o terra dela e a estrela, com tom a tocar — ver
+[`ATERRAMENTO.md`](ATERRAMENTO.md) §8.
+
 ⚠️ **O SCHOTTKY NA PONTE NÃO É OPCIONAL — SS14 ou 1N5819, ânodo no trilho.**
 
 Na ESP32-C3 SuperMini o pino `5V` liga ao **VBUS do USB directamente no cobre**,

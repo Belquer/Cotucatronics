@@ -37,6 +37,34 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ## 31/08 — o dia do terra e da microfonia
 
+### 01/09 — o cobre fechou, e os presets deixaram de ser inertes
+
+**O hardware da ponte está feito e medido pelo dB:** Schottky **1N5819** com
+`VIN` a **4,72 V**, teste do gatilho passado (powerbank desligado + USB na
+ponte = LED do amp apagado), e **100 µF + 100 nF** nos pinos, depois do díodo.
+**A terra própria à estrela não se fez, e não faz falta** — 0 mV medidos.
+
+**A caçada do ruído fechou com veredito:** trilho **único**. Separar as fontes
+**piora**, e monotonamente — +9,6 → +17,3 → +24,3 dB em 8–16 kHz. Mecanismo: o
+cabo de áudio vira o único elo de terra entre amp e Daisy. A resposta é
+**encadeamento de ganho**, que a arquitectura já faz.
+
+**As duas decisões que travavam os presets foram tomadas:** `post_level_l/r`
+fora do preset, e `tone_*` → `test_tone_*`.
+
+**E o CC 121 (carregar preset) passou a existir** — não existia, e os botões do
+Loopy eram inertes. Canal diz o destino, valor diz o slot. O **122 (gravar) não
+existe por decisão**: um CC que escreve preset destrói uma biblioteca com uma
+mensagem perdida.
+
+📄 **`LOOPY-SECAO.md`** é a folha de montagem, gerada do `manifest.h`.
+
+⚠️ **ITEM NOVO, do dB — pente de 1000 Hz exactos**, de 1 a 23 kHz, +17 a +35 dB,
+**imune às três topologias de alimentação**. 48000/48 = taxa de bloco. O teste
+que decide é **bloco 48 → 96**: se o espaçamento cair para 500 Hz, é manipulação
+a confirmar. `src/medir_pente.py` mede o espaçamento (o `cotuca_measure`
+responde outra pergunta — dá o pico, não a distância entre picos).
+
 ### Fim de 31/08 — o instrumento está de pé
 
 Firmware **v0.227.0**. Três coisas mudaram no fim do dia:

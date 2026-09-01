@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.96.0
+// manifest.h (instrumento "bancada") v0.98.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -117,8 +117,8 @@ struct Manifest
 
     // ids de parâmetros preenchidos no Init()
     int p_pre_level;      // volume master
-    int p_tone_freq;  // freq do oscilador de teste
-    int p_tone_mix;   // mistura tom de teste vs entrada
+    int p_test_tone_freq;  // freq do oscilador de teste
+    int p_test_tone_gain;   // mistura tom de teste vs entrada
     // BALANCO dos dois piezos, nao crossfade. Centro = OS DOIS CHEIOS;
     // girar abaixa o dominante sem cortar o outro. O crossfade que
     // estava aqui (`src_mix`, aposentado 20/08) derrubava OS DOIS no
@@ -403,7 +403,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // selecionavel, nenhum teste futuro distingue "B quebrada" de "B nao
     // excitada". AMBAS valida simetria de uma vez; A ou B isolam quando
     // o sintoma for assimetrico.
-    int p_tone_dest;
+    int p_test_tone_out;
     int p_test_tone_stage;   // 0=pre (pos-level) · 1=post (cadeia)
 
     // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
@@ -710,6 +710,15 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         return false;
     }
 
+    // ---- CCs DE COMANDO: nao sao params, e por isso nao entram no mapa ----
+    //
+    // 121 e 122 ficam junto do 120 (`sync`) e longe de tudo o que e
+    // param — ver PRESETS-LISTA.md. O CANAL diz o DESTINO, como em todo
+    // o resto do esquema: ch1 global, ch2 cadeia A, ch3 cadeia B. O
+    // VALOR diz o slot.
+    static constexpr uint8_t kCcPresetLoad = 121;
+    static constexpr uint8_t kCcPresetSave = 122;   // ainda NAO implementado
+
     void AddMidi(uint8_t cc, int param_id, uint8_t canal = kCanalEntradaA)
     {
         if(n_midi >= kMaxMidiMap) { midi_overflow++; return; }
@@ -833,8 +842,8 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // faixa util e depois pedi-la de volta com ganho, que e como se
         // compra ruido.
         p_pre_level     = t.Add("pre_level_ab",     1.0f, 0.f,    1.f);
-        p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
-        p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
+        p_test_tone_freq = t.Add("test_tone_freq", 0.4f, 80.f,   2000.f);
+        p_test_tone_gain  = t.Add("test_tone_gain",  0.0f, 0.f,    1.f);
         // 0.5 NORMALIZADO = 0.0 real = centro. O primeiro argumento do
         // Add() e `def_norm`, e todo param ate hoje tinha min = 0, o
         // que fazia norm e real coincidirem — a distincao nunca doeu e
@@ -1175,7 +1184,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // normal (as duas cadeias), nao um modo de diagnostico. A
         // ordem anterior (0=A, 1=B, 2=ambas) obrigava o default a
         // ser 2 e fazia do estado comum uma excecao a regra da casa.
-        p_tone_dest = t.Add("tone_dest", 0.0f, 0.f, 2.f, 1.0f, 3);
+        p_test_tone_out = t.Add("test_tone_out", 0.0f, 0.f, 2.f, 1.0f, 3);
         // VIA DO TOM DE TESTE (28/08). Duas ferramentas diferentes com o
         // mesmo oscilador, e o switch diz qual:
         //   0 = DIRETO — entra no estagio de saida, DEPOIS do `level`.
@@ -1689,9 +1698,9 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(92, p_buzios_cooldown, kCanalCompart);   // COMPARTILHADO: so ch1
 
         // ---- TOM DE TESTE: 93-95 ----
-        AddMidi(93, p_tone_freq, kCanalCompart);   // COMPARTILHADO: so ch1
-        AddMidi(94, p_tone_mix, kCanalCompart);   // COMPARTILHADO: so ch1
-        AddMidi(95, p_tone_dest, kCanalCompart);         // 0=A+B 1=A 2=B
+        AddMidi(93, p_test_tone_freq, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(94, p_test_tone_gain, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(95, p_test_tone_out, kCanalCompart);         // 0=A+B 1=A 2=B
         AddMidi(96, p_test_tone_stage, kCanalCompart);          // 0=direto 1=cadeia · COMPARTILHADO: so ch1
 
         // ---- MASTER: 100 ----

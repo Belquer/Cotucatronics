@@ -5998,6 +5998,66 @@ osciloscopio.
 > placa que meça "isto distrai quem esta a tocar". A quarta foi bug, e o
 > conserto ja existia no ficheiro.
 
+## 15aq. O comando morria no portao dos "sem dono" — e era codigo morto (01/09)
+
+O `PRESETS-LISTA.md` descrevia o CC 121 (carregar preset) desde sempre, e
+**nada o implementava**: os botoes de preset do Loopy eram inertes. Documento a
+descrever intencao como se fosse comportamento e uma armadilha — quem o le
+acredita.
+
+Implementei, e nao funcionou. O log nem aparecia. A causa:
+
+```cpp
+const int pid = manifest.FindMidiParam(ch, cc);
+if(pid < 0) { cc_sem_dono++; return; }   // <- o 121 morria AQUI
+```
+
+O 121 **nao e um param**, portanto nao tem `pid`, portanto o portao dos "sem
+dono" descartava-o — e eu tinha posto a intercepcao **a jusante** desse portao.
+Era codigo morto, e o unico sintoma era **nao acontecer nada**: indistinguivel
+de o CC nao ter chegado.
+
+> **Um comando que viaja pelo mesmo cano dos dados tem de ser desviado ANTES do
+> filtro que existe para deitar dados fora.** O portao estava certo; o meu
+> lugar e que estava errado.
+
+**E ao mover, apareceu um risco maior que o conserto.** A intercepcao passou
+tambem a frente da QUARENTENA — a defesa contra o dump de reconexao do BLE. Um
+121 velho nesse dump carregaria um preset a meio da peca.
+
+> **Param errado corrige-se com o dedo; PRESET errado troca o instrumento
+> inteiro numa mensagem.** A quarentena passou a valer para o comando tambem, e
+> com mais razao do que para um param.
+
+E o CC 122 (gravar) ficou POR FAZER, deliberadamente: um CC que escreve preset
+destroi uma biblioteca com uma mensagem perdida, e nao traz nome nenhum para lhe
+dar. Capturar fica no serial, onde o gesto e deliberado e o preset nasce com
+nome. **Decisao do dB, e nao omissao minha** — ele concordou por escrito.
+
+## 15ar. A folha de montagem ia mandar montar um interruptor onde e um fader (01/09)
+
+O gerador da seccao do Loopy classificava widgets assim:
+
+```python
+if passos == 2 or (lo == 0.0 and hi == 1.0 and passos in (0, 2)):
+    return "Botao (toggle)"
+```
+
+Tratei "faixa 0-1 sem passos declarados" como interruptor, e e o **contrario**:
+sem passos e CONTINUO. O `pre_level_ab` saiu como botao — e o dB montaria um
+interruptor onde precisa de um fader, num documento cuja unica funcao e dizer o
+que montar.
+
+E `passos` sozinho tambem nao chegava: os `_on` desta casa declaram-se
+`0.f, 1.f` sem passos nenhuns e sao interruptores por convencao. **Entao o NOME
+tambem decide** — o que e mais um retorno de os nomes carregarem a topologia:
+serve as ferramentas, nao so a quem le.
+
+> **Gerador tambem tem premissa, e a dele grita menos que a de uma pessoa:**
+> ele emite a tabela errada com a mesma confianca com que emitiria a certa. O
+> `gerar_ccmap.py` ja tinha ensinado isto ao falhar oito CCs de um notch com dois
+> indices; foi preciso repetir noutra ferramenta no mesmo dia.
+
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.

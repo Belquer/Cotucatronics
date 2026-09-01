@@ -216,6 +216,27 @@ curso — cerca de 1,6 passos de MIDI**, a mexer sozinho.
 Com a placa **fora do soquete**, medir continuidade entre a ilha de áudio e o
 trilho de força. **Se apitar, há uma ligação a mais.**
 
+### ⚠️ Separar as fontes de alimentação PIORA — medido em 01/09
+
+Tentação óbvia: se o trilho partilhado acopla, dá-se a cada um a sua fonte.
+**Três voos, e a tendência é monótona na direcção errada.** Ruído em 8–16 kHz:
+
+| topologia | ruído |
+|---|---|
+| **trilho único** | **+9,6 dB** ← melhor |
+| Daisy na parede | +17,3 dB |
+| dois powerbanks | +24,3 dB |
+
+O mecanismo: separadas as alimentações, **o cabo de áudio passa a ser o único
+elo de terra entre o amp e a Daisy**. Toda a corrente de retorno que antes tinha
+o trilho passa a viajar pelo condutor que carrega o sinal — que é a definição de
+impedância partilhada, agora concentrada no pior sítio possível.
+
+**Veredito: trilho único.** E a resposta ao ruído que sobra **não é separação
+nem filtro em software — é encadeamento de ganho**: entrar quente na dinâmica de
+saída (`pre_level_ab` a 1.0) e dosar depois do limitador (`post_level_l/r`, nos
+pots). A arquitectura já o faz.
+
 ### O que isto não resolve, e é honesto dizer
 
 Amps de entrada não-balanceada ligam o terra de entrada ao de força **dentro
@@ -376,6 +397,16 @@ de um defeito.
 |---|---|---|
 | estrela → amp | 0 mV | 0 mV |
 | estrela → Daisy | **42 mV** | **0 mV** (fio dedicado) |
+| estrela → **ponte** | — | **0 mV** (medido 01/09) |
+
+⚠️ **E foi a medição que dispensou o terceiro fio.** Eu tinha prescrito «terra
+própria à estrela» também para a ponte, por simetria com a Daisy. Medido com
+tom a tocar: **0 mV** — ela já lá chega bem. Os 42 mV da Daisy eram um número
+concreto e justificavam o fio dela; **prescrever o mesmo à ponte sem medir era
+generalizar de um caso**. O fio não se fez, e não faz falta.
+
+> **Simetria não é medição.** Duas placas no mesmo trilho podem ter caminhos de
+> retorno muito diferentes, e o multímetro custa menos que o fio.
 
 ⚠️ **Um clique audível é um medidor de massa gratuito.** Ouvia-se pelo exciter
 um clique a ~3,3 Hz que seguia o LED de diagnóstico da Daisy. Um LED consome
