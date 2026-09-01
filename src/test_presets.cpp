@@ -54,7 +54,7 @@ int main()
     const char* devem_ficar_fora[] = {
         "exc_on_a", "exc_on_b", "bench_boost_a", "bench_boost_b",
         "gov_ceiling_a", "gov_ceiling_b", "gov_release_a", "gov_release_b",
-        "test_tone_freq", "test_tone_gain", "test_tone_out"};
+        "test_tone_freq", "test_tone_mix", "test_tone_out"};
     int erros_fora = 0;
     for(const char* n : devem_ficar_fora)
         if(cotuca::EhDeCadeia(n) || cotuca::EhGlobal(n))

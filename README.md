@@ -223,7 +223,7 @@ serial já morreu.
 
 `set` alcança **qualquer** parâmetro pelo nome, **em unidade real** — Hz, ms, ×
 — e recusa valor fora da faixa citando os limites. Com os knobs 1–3 no delay e
-no level, `tone_freq` e `tone_mix` são **serial-only por design** — o tom de
+no level, `test_tone_freq` e `test_tone_mix` são **serial-only por design** — o tom de
 teste é bancada, não performance:
 
 ```
@@ -313,7 +313,7 @@ painel de 5 pots não existe, o `k4` também aponta pra ele — por isso
 `req.min_knobs` segue em 4: uma placa de 4 knobs ainda alcança o SRC MIX.
 
 Como os knobs físicos ainda não estão ligados, `ReadKnob()` devolve `-1` e o
-painel vive no serial. Conversão pra uma afinação alvo, com `tone_freq` em
+painel vive no serial. Conversão pra uma afinação alvo, com `test_tone_freq` em
 `[80, 2000]`: `norm = (Hz − 80) / 1920` — logo **440 Hz = `k2 0.1875`**.
 
 ### Medir em vez de confiar no ouvido

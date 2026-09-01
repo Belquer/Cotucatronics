@@ -1,0 +1,216 @@
+ERC report (2026-09-01T15:56:48, Encoding UTF8)
+Report includes: Errors, Warnings, Exclusions
+
+***** Sheet /
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(35.00 mm, 48.00 mm): Symbol J1 [CONN2_R]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(35.00 mm, 98.00 mm): Horizontal Wire, length 23.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(35.00 mm, 142.92 mm): Horizontal Wire, length 77.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(35.00 mm, 195.00 mm): Horizontal Wire, length 23.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(37.54 mm, 45.46 mm): Symbol J1 Pin 1 [1, Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(37.54 mm, 45.46 mm): Horizontal Wire, length 18.11 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(37.54 mm, 50.54 mm): Horizontal Wire, length 8.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(46.00 mm, 50.54 mm): Vertical Wire, length 21.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(55.65 mm, 45.46 mm): Symbol F1 Pin 1 [1, Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(58.00 mm, 98.00 mm): Horizontal Wire, length 22.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(58.00 mm, 98.00 mm): Vertical Wire, length 4.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(58.00 mm, 102.19 mm): Symbol C1 Pin 1 [+, Passive, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(58.00 mm, 106.00 mm): Symbol C1 [CP_V]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(58.00 mm, 109.81 mm): Vertical Wire, length 10.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(58.00 mm, 120.00 mm): Horizontal Wire, length 22.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(58.19 mm, 195.00 mm): Symbol D2 Pin 1 [A, Passive, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(62.00 mm, 45.46 mm): Symbol F1 [FUSE_H]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(62.00 mm, 195.00 mm): Symbol D2 [D_H]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(65.81 mm, 195.00 mm): Horizontal Wire, length 22.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(68.35 mm, 45.46 mm): Horizontal Wire, length 16.65 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 98.00 mm): Vertical Wire, length 4.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 98.00 mm): Horizontal Wire, length 32.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 102.19 mm): Symbol C2 Pin 1 [1, Passive, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(80.00 mm, 106.00 mm): Symbol C2 [C_V]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 109.81 mm): Vertical Wire, length 10.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(80.00 mm, 120.00 mm): Vertical Wire, length 7.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(85.00 mm, 45.46 mm): Vertical Wire, length 5.73 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(85.00 mm, 45.46 mm): Horizontal Wire, length 18.65 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(85.00 mm, 51.19 mm): Symbol D1 Pin 1 [K, Passive, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(85.00 mm, 55.00 mm): Symbol D1 [D_V]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(85.00 mm, 58.81 mm): Vertical Wire, length 13.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(85.00 mm, 148.00 mm): Vertical Wire, length 19.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(88.00 mm, 195.00 mm): Horizontal Wire, length 22.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(88.00 mm, 195.00 mm): Vertical Wire, length 4.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(88.00 mm, 199.19 mm): Symbol C3 Pin 1 [+, Passive, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(88.00 mm, 203.00 mm): Symbol C3 [CP_V]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(88.00 mm, 206.81 mm): Vertical Wire, length 8.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(88.00 mm, 215.00 mm): Horizontal Wire, length 22.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(100.00 mm, 153.08 mm): Vertical Wire, length 18.92 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(103.65 mm, 45.46 mm): Symbol SW1 Pin 1 [1, Passive, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(110.00 mm, 45.46 mm): Symbol SW1 [SW_H]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.00 mm, 195.00 mm): Horizontal Wire, length 32.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.00 mm, 195.00 mm): Vertical Wire, length 4.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.00 mm, 199.19 mm): Symbol C4 Pin 1 [1, Passive, Line]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(110.00 mm, 203.00 mm): Symbol C4 [C_V]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.00 mm, 206.81 mm): Vertical Wire, length 8.19 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(110.00 mm, 215.00 mm): Vertical Wire, length 7.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(112.46 mm, 98.00 mm): Symbol J2 Pin 1 [1, Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(112.46 mm, 103.08 mm): Horizontal Wire, length 17.54 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(112.46 mm, 142.92 mm): Symbol J3 Pin 1 [1, Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(112.46 mm, 148.00 mm): Horizontal Wire, length 27.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(112.46 mm, 153.08 mm): Horizontal Wire, length 12.46 mm
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(115.00 mm, 100.54 mm): Symbol J2 [CONN2_L]
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(115.00 mm, 148.00 mm): Symbol J3 [CONN3_L]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(116.35 mm, 45.46 mm): Horizontal Wire, length 23.65 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(130.00 mm, 103.08 mm): Vertical Wire, length 16.92 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(130.00 mm, 120.00 mm): Horizontal Wire, length 50.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(140.00 mm, 45.46 mm): Vertical Wire, length 17.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(140.00 mm, 62.46 mm): Horizontal Wire, length 27.46 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(142.46 mm, 195.00 mm): Symbol J4 Pin 1 [1, Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(142.46 mm, 200.08 mm): Horizontal Wire, length 17.54 mm
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(145.00 mm, 197.54 mm): Symbol J4 [CONN2_L]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(160.00 mm, 200.08 mm): Vertical Wire, length 14.92 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(160.00 mm, 215.00 mm): Horizontal Wire, length 50.00 mm
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(167.46 mm, 62.46 mm): Symbol J5 Pin 1 [1, Passive, Line]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(167.46 mm, 67.54 mm): Horizontal Wire, length 14.54 mm
+[lib_symbol_issues]: The current configuration does not include the symbol library 'cotuca'
+    ; warning
+    @(170.00 mm, 65.00 mm): Symbol J5 [CONN2_L]
+[endpoint_off_grid]: Symbol pin or wire end off connection grid
+    ; warning
+    @(182.00 mm, 67.54 mm): Vertical Wire, length 12.46 mm
+
+ ** ERC messages: 68  Errors 0  Warnings 68
+
+ ** Ignored checks:
+    - Global label only appears once in the schematic
+    - Four connection points are joined together
+    - SPICE model issue
+    - Assigned footprint doesn't match footprint filters

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.230.0"
+#define COTUCA_OS_VERSION "0.231.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2076,7 +2076,7 @@ static void LedFaseTick(size_t block_size, float sample_rate)
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
     const float level = params.Real(manifest.p_pre_level);
-    const float mix   = params.Real(manifest.p_test_tone_gain);
+    const float mix   = params.Real(manifest.p_test_tone_mix);
     // O balanco dos piezos saiu daqui no pivo de 20/08: ele agora mistura
     // as duas cadeias JA PROCESSADAS, no bloco 2.
     OscSetFreq(params.Real(manifest.p_test_tone_freq),
@@ -2127,7 +2127,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // o oscilador tem estado, e estado nao se consome em duplicata.
     const int dest_tom = (int)(params.Real(manifest.p_test_tone_out) + 0.5f);
     // VIA: 0 = direto (entra depois do `level`), 1 = cadeia.
-    const bool tom_direto = params.Real(manifest.p_test_tone_stage) < 0.5f;
+    const bool tom_direto = params.Real(manifest.p_test_tone_via) < 0.5f;
     // Gera enquanto o alvo for maior que zero OU enquanto alguma cadeia
     // ainda estiver a escoar: cortar a fonte antes de a rampa acabar
     // reintroduz o degrau que a rampa existe para remover.
@@ -3322,9 +3322,9 @@ static void HandleLine(const char* line)
         return;
     }
     if(strncmp(line, "tone on", 7) == 0)
-    { params.Set(manifest.p_test_tone_gain, 0.5f); hal::Log("tone ON"); return; }
+    { params.Set(manifest.p_test_tone_mix, 0.5f); hal::Log("tone ON"); return; }
     if(strncmp(line, "tone off", 8) == 0)
-    { params.Set(manifest.p_test_tone_gain, 0.0f); hal::Log("tone OFF"); return; }
+    { params.Set(manifest.p_test_tone_mix, 0.0f); hal::Log("tone OFF"); return; }
     // GANHO DE TESTE DA DRENAGEM. Sem ele a defesa e indemonstravel: a
     // janela de 300 ms fecha antes de a serial USB enumerar, entao
     // ninguem consegue observa-la agindo, e "contador em 0" fica

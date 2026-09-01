@@ -79,3 +79,16 @@ midi_dup          desenho  AUDIT-23-08 achado 2 — sai quando o detector existi
 level
 level_l
 level_r
+
+# RENOMEADOS em 01/09 — familia inteira do tom de teste, para uma regra
+# de exclusao cobrir as quatro (eram duas regras, e a terceira a nascer
+# escaparia as duas):
+#   tone_freq       -> test_tone_freq
+#   tone_mix        -> test_tone_mix     (e MIX: b*(1-m) + tom*m)
+#   tone_dest       -> test_tone_out
+#   test_tone_stage -> test_tone_via
+tone_freq
+tone_mix
+tone_dest
+test_tone_stage
+test_tone_gain

@@ -44,9 +44,9 @@
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
 | **93** | ch1 (compartilhado) | `test_tone_freq` | Fader | 80 – 2000 | 0.4 |
-| **94** | ch1 (compartilhado) | `test_tone_gain` | Fader | 0 – 1 | 0 |
+| **94** | ch1 (compartilhado) | `test_tone_mix` | Fader | 0 – 1 | 0 |
 | **95** | ch1 (compartilhado) | `test_tone_out` | Botao x3 (passos) | 0 – 2 | 0 |
-| **96** | ch1 (compartilhado) | `test_tone_stage` | Botao (toggle) | 0 – 1 | 0 |
+| **96** | ch1 (compartilhado) | `test_tone_via` | Botao (toggle) | 0 – 1 | 0 |
 
 ## GATE
 

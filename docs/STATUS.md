@@ -37,6 +37,41 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ## 31/08 — o dia do terra e da microfonia
 
+### 01/09 — O PORTÃO DOS PRESETS ESTÁ FECHADO
+
+**As duas decisões foram tomadas pelo dB e estão no código.** O mapa é agora
+**`0xFB5A`** — e o global caiu de 11 para **9 params**, que são os dois
+`post_level_*` a sair.
+
+**1 · `post_level_l/r` fora do preset.** Razão dele: *«seguem os pots físicos;
+se o preset os restaurar, firmware e cobre discordam sem ninguém saber qual
+manda. E cada corpo da série tem ganho de exciter próprio.»* Mesma categoria do
+`exc_on` e do `gov_ceiling` — **facto de exemplar, não intenção musical**.
+
+**2 · Família do tom renomeada:** `test_tone_freq · mix · out · via`. Uma regra
+de exclusão cobre as quatro (eram duas, e a terceira a nascer escaparia às duas).
+
+⚠️ **Uma discordância, resolvida pelo código:** o dB pediu `test_tone_on`,
+porque o widget do Loopy diz «Test Tone On». Mas o código faz
+`b[i] = b[i]*(1-m) + tom[i]*m` — **é um crossfade a sério**, e em 0.5 ouve-se
+metade de cada. Um nome em `_on` convidaria a próxima pessoa a escrever
+`>= 0.5f` contra ele, e o crossfade morreria em silêncio. Ficou
+**`test_tone_mix`**. Se um dia dever ser interruptor, muda-se o efeito e o nome
+a seguir — **nome não conserta comportamento**.
+
+### A ORDEM DE TRABALHO, dada pelo dB em 01/09
+
+| | |
+|---|---|
+| **1** | ~~O rename~~ ✅ **feito** — era o portão duro |
+| **2** | **A SESSÃO DE ESCUTA** — o gargalo mais antigo, não depende de peça nenhuma, e é ela que constrói a biblioteca de presets |
+| **3** | Em paralelo, o ERC das folhas da rev B |
+| **4** | A placa **espera as peças** — footprints do step-down, decoy e botão dependem de medir o que chegar. Desenhar antes é adivinhar |
+
+🚫 **O que NÃO fazer agora, decisão dele:** o rearme do `DmaListen`. Tem gatilho
+artificial desde o Schottky, mas **não bloqueia a escuta**, e mexe no caminho
+que toda a telemetria atravessa.
+
 ### 01/09 — o cobre fechou, e os presets deixaram de ser inertes
 
 **O hardware da ponte está feito e medido pelo dB:** Schottky **1N5819** com
@@ -50,7 +85,7 @@ cabo de áudio vira o único elo de terra entre amp e Daisy. A resposta é
 **encadeamento de ganho**, que a arquitectura já faz.
 
 **As duas decisões que travavam os presets foram tomadas:** `post_level_l/r`
-fora do preset, e `tone_*` → `test_tone_*`.
+fora do preset, e `test_tone_*` → `test_tone_*`.
 
 **E o CC 121 (carregar preset) passou a existir** — não existia, e os botões do
 Loopy eram inertes. Canal diz o destino, valor diz o slot. O **122 (gravar) não
@@ -147,7 +182,7 @@ partir de um deles.
 **Decisões que só o dB pode tomar, e que travam os presets:**
 - `post_level_l`/`post_level_r` entram no preset global? *Recomendo que não* — seguem
   botões físicos, como o `exc_on`.
-- Renomear `tone_*` → `test_tone_*` para alinhar com os widgets do Loopy?
+- Renomear `test_tone_*` → `test_tone_*` para alinhar com os widgets do Loopy?
 
 Ambas são livres **só até à primeira captura** congelar o mapa (hoje `0x3505`).
 
@@ -269,7 +304,7 @@ preset nenhum, saiu de graça — foi a última janela.
   não existe) e **nota que mente sobre topologia** (diz "compart." num param
   pareado). Achou **dez notas erradas** à primeira passagem, incluindo o
   `frz_size` a dizer 20–400 ms com o manifest em 20–165 (o caso que gerou a
-  regra das faixas) e o `tone_dest` com a semântica invertida. O par colapsa
+  regra das faixas) e o `test_tone_out` com a semântica invertida. O par colapsa
   numa linha (`in_gain_a/b`), e por isso volta a caber em **uma folha**.
 - ✅ **`OUT_L` — RESOLVIDO em 28/08.** Era fiação, e a placa foi inocentada
   por testemunha interna antes de se mexer num fio: com o tom em `dest 1` o

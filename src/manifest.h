@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.98.0
+// manifest.h (instrumento "bancada") v0.99.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -118,7 +118,7 @@ struct Manifest
     // ids de parâmetros preenchidos no Init()
     int p_pre_level;      // volume master
     int p_test_tone_freq;  // freq do oscilador de teste
-    int p_test_tone_gain;   // mistura tom de teste vs entrada
+    int p_test_tone_mix;   // mistura tom de teste vs entrada
     // BALANCO dos dois piezos, nao crossfade. Centro = OS DOIS CHEIOS;
     // girar abaixa o dominante sem cortar o outro. O crossfade que
     // estava aqui (`src_mix`, aposentado 20/08) derrubava OS DOIS no
@@ -404,7 +404,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // excitada". AMBAS valida simetria de uma vez; A ou B isolam quando
     // o sintoma for assimetrico.
     int p_test_tone_out;
-    int p_test_tone_stage;   // 0=pre (pos-level) · 1=post (cadeia)
+    int p_test_tone_via;   // 0=pre (pos-level) · 1=post (cadeia)
 
     // DETUNE — vozes micro-desafinadas + largura. Depois do modulo,
     // onde o estereo existe: sem estereo nao ha spread.
@@ -843,7 +843,21 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // compra ruido.
         p_pre_level     = t.Add("pre_level_ab",     1.0f, 0.f,    1.f);
         p_test_tone_freq = t.Add("test_tone_freq", 0.4f, 80.f,   2000.f);
-        p_test_tone_gain  = t.Add("test_tone_gain",  0.0f, 0.f,    1.f);
+        // ⚠️ MIX, e nao "gain" nem "on" — o codigo prova qual:
+        //     b[i] = b[i] * (1-m) + tone[i] * m
+        // E um crossfade seco/molhado. Em 0.5 ouve-se metade
+        // instrumento e metade tom, e o comando `tone on` poe 0.5 por
+        // isso mesmo.
+        //
+        // O dB pediu `test_tone_on`, porque o widget do Loopy diz
+        // "Test Tone On" e ele usa-o como interruptor. Mas um nome
+        // acabado em `_on` convida a proxima pessoa a escrever
+        // `>= 0.5f` contra ele — e o crossfade morreria em silencio,
+        // que e a familia de defeito que este projecto mais paga.
+        //
+        // Se um dia ele DEVER ser interruptor, muda-se o efeito e o
+        // nome a seguir. Nome nao conserta comportamento.
+        p_test_tone_mix  = t.Add("test_tone_mix",  0.0f, 0.f,    1.f);
         // 0.5 NORMALIZADO = 0.0 real = centro. O primeiro argumento do
         // Add() e `def_norm`, e todo param ate hoje tinha min = 0, o
         // que fazia norm e real coincidirem — a distincao nunca doeu e
@@ -1196,7 +1210,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         //       serve para excitar o processamento com sinal conhecido.
         // Nasce em ZERO (direto): o uso comum e medir, e medicao que
         // depende do que o musico deixou no fader nao e medicao.
-        p_test_tone_stage = t.Add("test_tone_stage", 0.0f, 0.f, 1.f, 1.0f, 2);
+        p_test_tone_via = t.Add("test_tone_via", 0.0f, 0.f, 1.f, 1.0f, 2);
 
         // ---- DESCRITOR POR EFEITO DE CARATER ----
         for(int c = 0; c < kCadeias; c++)
@@ -1699,9 +1713,9 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
 
         // ---- TOM DE TESTE: 93-95 ----
         AddMidi(93, p_test_tone_freq, kCanalCompart);   // COMPARTILHADO: so ch1
-        AddMidi(94, p_test_tone_gain, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(94, p_test_tone_mix, kCanalCompart);   // COMPARTILHADO: so ch1
         AddMidi(95, p_test_tone_out, kCanalCompart);         // 0=A+B 1=A 2=B
-        AddMidi(96, p_test_tone_stage, kCanalCompart);          // 0=direto 1=cadeia · COMPARTILHADO: so ch1
+        AddMidi(96, p_test_tone_via, kCanalCompart);          // 0=direto 1=cadeia · COMPARTILHADO: so ch1
 
         // ---- MASTER: 100 ----
         AddMidi(100, p_pre_level, kCanalCompart);   // COMPARTILHADO: so ch1

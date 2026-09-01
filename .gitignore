@@ -14,3 +14,6 @@ build/
 # nunca versionar os zips de entrega
 *.zip
 __pycache__/
+
+# lixo de bisseccao do ERC — ficheiros de teste, nao fonte nem produto
+docs/operacao/esquematicos/revB/erc/
