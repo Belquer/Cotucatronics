@@ -39,7 +39,7 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ### Fim de 31/08 — o instrumento está de pé
 
-Firmware **v0.223.0**. Três coisas mudaram no fim do dia:
+Firmware **v0.224.0**. Três coisas mudaram no fim do dia:
 
 **Os níveis passaram a dizer a topologia:** `pre_level_ab` (antes do
 governor/limiter — alimenta a protecção) e `post_level_l`/`post_level_r`
@@ -51,7 +51,7 @@ entrar quente na dinâmica de saída.
 **O `board` grita quando o master está a zero**, e explica porque o tom de teste
 soa e os piezos não. Esse defeito disfarçou-se cinco vezes num dia.
 
-**O painel OLED nasce apagado**, acorda no encoder e dorme aos 5 s — e **o gesto que acorda é engolido inteiro** — roda-se o que for preciso, e só o que vem depois de a mão parar é que mexe em valores — custava
+**O painel OLED nasce apagado**, acorda no encoder e dorme aos 5 s — e **acende só no FIM do gesto** — roda-se o que for preciso com a tela ainda apagada, e ela acende 500 ms depois de a mão parar, sem ter mexido em valor nenhum — custava
 **6 dB de chão de ruído** e um espeto a 7040 Hz. Ver `HARDWARE.md` §1b.
 
 ⚠️ **Estado que ainda se perde a cada gravação** (é o argumento dos presets):

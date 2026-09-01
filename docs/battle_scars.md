@@ -5958,6 +5958,21 @@ partiria o gesto ao meio.
 > detente; a unidade da mao e o movimento inteiro. Quando as duas nao coincidem,
 > quem esta a tocar e que paga.
 
+**E ainda faltava uma volta.** A versao seguinte engolia ate a mao parar, mas
+**acendia no primeiro evento**. O dB: *"ainda nao deu, nao e por tempo."*
+
+A regra que ele queria: ouve o encoder, **fica a engolir com o painel apagado**,
+e so acende 500 ms depois de parar. A diferenca e pequena no codigo e grande na
+mao — o painel a acender a meio da rotacao pisca no canto do olho e sinaliza
+"estou a ouvir-te" enquanto ainda esta a deitar tudo fora. Acender no FIM faz do
+acender a **resposta ao gesto completo**, e o que se ve ja e o estado com que se
+vai trabalhar.
+
+> **Tres tentativas, e nenhuma foi bug.** Foram tres modelos errados do mesmo
+> gesto — evento, depois duracao, depois so a fronteira. O dB corrigiu as tres
+> a operar, e eu nao teria chegado la a medir: nao ha instrumento na placa que
+> meça "isto distrai quem esta a tocar".
+
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.
