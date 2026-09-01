@@ -34,7 +34,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 | Feature | Params | CC | Estado |
 |---|---|---|---|
 | **Fonte** — crossfade piezo/jack + tom de teste | `src_mix`, `tone_freq`, `tone_mix` | — | ativo (`src_mix` fora do MIDI por segurança) |
-| **Volume por ramo, nos pots físicos** | `level_l`, `level_r` | **116**, **117** | ✅ **28/08** · pots em A0 (D15) e A1 (D16), depois do limiter · **captura suave** contra o salto, e adopção da posição física no arranque · `knob` mede |
+| **Volume por ramo, nos pots físicos** | `post_level_l`, `post_level_r` | **116**, **117** | ✅ **28/08** · pots em A0 (D15) e A1 (D16), depois do limiter · **captura suave** contra o salto, e adopção da posição física no arranque · `knob` mede |
 | ~~**Ganho de entrada** por cadeia~~ | ~~`in_gain_a`, `in_gain_b`~~ | ~~21~~ | 🗑️ **REMOVIDO 28/08 — SE NÃO SOA, NÃO FICA.** O `Governor` é um AGC: 18 dB postos aqui eram 18 dB que ele tirava adiante, e a saída não mudava. O único efeito audível era o degrau. O balanço entre piezos já era do `piezo_mix`. **Perdeu-se** o casamento com transdutores de sensibilidade diferente — o governor só REDUZ; se aparecer na replicação, conserta-se no divisor da carrier board |
 | **Mix entre as CADEIAS** (shell) | `piezo_mix` | **58** | ⏳ aceite pendente · **mudou de posição no pivô**: era balanço na entrada entre sinais crus, agora mistura as duas cadeias já processadas. Lei igual: centro = as duas cheias |
 | **Tom de teste: destino** | `tone_dest` | — | ✅ 20/08 · 0=A · 1=B · **2=AMBAS (default)** · injetado **depois do gate**, senão o gate corta o próprio tom e você mede o gate |
@@ -55,10 +55,10 @@ e o custo de cada adição fica invisível até algo quebrar.
 <!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 | **Áudio não passa por contato mecânico** | chave → GPIO → firmware corta | ⬜ **REGRA DE HARDWARE, 22/08** · chave de potência não conduz nível de linha (circuito seco): fecha mecanicamente e segue aberta pro sinal · custou uma tarde · `out_l`/`out_r` cortam o ramo (nomes corrigidos em 28/08: eram `route_exciter`/`route_jack`, e o DPDT de 3 posições — jack \| ambos \| amp — mostrou que o firmware nomeia SAÍDA, não destino) · o polo 2 do DPDT em D29/D30 segue o mesmo desenho (bts 13b) |
 | **Freeze físico com LED** | switch **D24**, LED **D27** | ✅ **22/08, aprovado de ouvido** · arcade 30mm, microswitch NO · **toggle** (bateu congela, bateu solta), não hold · debounce **30 ms MEDIDO**: com 10 ms cinco batidas viravam seis · o LED segue o **param**, nunca o gesto — se o freeze mudar por CC, preset ou queda do CTOS ele conta a verdade · LED de 5 V a 3,3 V: brilho aprovado, plano B do transistor arquivado |
-| **Botões com alvo, generalizado** | tabela no manifest | ✅ **22/08, v0.127.1** · cada botão declara param + índice de LED; o manifest não conhece pino · um só `AlternaBotao()` serve todos, pelo mesmo motivo que o sacrifício do CTOS virou função única · sentinela `-1` com init explícito (zero-init apontava o randomizador pro `level`, bts 13f) |
+| **Botões com alvo, generalizado** | tabela no manifest | ✅ **22/08, v0.127.1** · cada botão declara param + índice de LED; o manifest não conhece pino · um só `AlternaBotao()` serve todos, pelo mesmo motivo que o sacrifício do CTOS virou função única · sentinela `-1` com init explícito (zero-init apontava o randomizador pro `pre_level_ab`, bts 13f) |
 | **Freeze B — fiação pendente** | switch **D22**, LED **D23** | ⬜ firmware pronto e declarado (`B4`), falta soldar |
 | **`frz_size` — curso morto** | faixa 20–165 vs clamp `NucleusLen()/3` ≈ 166,7 | ✅ **corrigido em `d80e45d`** · era 20–165 contra o mesmo clamp: 61% do fader não fazia nada (bts 12i) · o `165` ganhou comentário amarrando ao `kNucleusMs/3` para não dessincronizar em silêncio · **o item ficou meses na FILA descrevendo o estado pré-conserto** — deriva num lugar que o `check-docs` não olha (bts 13i) |
-| **Preset em flash** | salvar e recarregar no boot | ⬜ **aberto 22/08** · toda gravação zera todo param e `level` nasce em 0 · perda silenciosa dos dois lados, e o sintoma imita defeito de efeito (bts 12l) |
+| **Preset em flash** | salvar e recarregar no boot | ⬜ **aberto 22/08** · toda gravação zera todo param e `pre_level_ab` nasce em 0 · perda silenciosa dos dois lados, e o sintoma imita defeito de efeito (bts 12l) |
 | **Gate** por cadeia | `gate_thresh_{a,b}`, `gate_release_{a,b}` | 30, **51** | ativo · duplicado por **material**, não por desequilíbrio: o piezo do tambor lê transiente curto, o da mola lê raspagem contínua |
 | **Delay** (shell, C++) — envio por cadeia | `dly_on_{a,b}`, `dly_mix_{a,b}`, `dly_time` | 60–64 | ⏳ **reaceite pendente** · `delay.h` v0.1.0 · +11 µs (era 45, **sempre**) · piso 50 ms · feedback fixo **0,4**, lido do patch |
 
@@ -161,7 +161,7 @@ e o custo de cada adição fica invisível até algo quebrar.
 | **Passa-alta do Fx2** | `fx2_hp` | — | ⏸ inativo enquanto o slot Fx2 estiver vazio |
 | **Governor / limiter / gate de saída** | `gov_ceiling`, `gov_release` | — | ativo (fora do MIDI por segurança) |
 | **Shifter SSB** | `shift_hz` | — | ✅ certificado T8, desligado (espera o exciter) |
-| **Level** master | `level` | 20 | ativo |
+| **Level** master | `pre_level_ab` | 20 | ativo |
 
 ### Gesto e automação
 | Feature | Params | CC | Estado |

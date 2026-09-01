@@ -67,7 +67,7 @@ int main()
     // E o gemeo: params que TEM que entrar. Sem isto, uma exclusao larga
     // demais (`if(strncmp(nome,"g",1))`) passaria nos testes acima.
     const char* devem_entrar[] = {"drv_drive_a", "drv_drive_b", "gate_thresh_a",
-                                  "shm_tone_b", "level", "dly_time",
+                                  "shm_tone_b", "pre_level_ab", "dly_time",
                                   "piezo_mix", "buzios_thresh"};
     int erros_dentro = 0;
     for(const char* n : devem_entrar)

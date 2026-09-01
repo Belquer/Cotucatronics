@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_ccmap v0.7.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
+"""gerar_ccmap v0.8.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
 
 Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
 se dar por novo um ficheiro que ja tinha historia.
@@ -42,7 +42,12 @@ src = MANIFEST.read_text()
 
 # ---- simbolo -> nome real do param ----
 sym2name = {}
-for m in re.finditer(r'(p_[a-z0-9_]+)(\[\d\])?\s*=\s*t\.Add\("([a-z0-9_]+)"', src):
+# `(\[\d\])*` e nao `(\[\d\])?`: em 31/08 o notch declarou-se com DOIS
+# indices — `p_ntc_hz[cadeia][boca]` — e o gerador, que so sabia ler um,
+# nao resolveu oito CCs. Ele FALHOU ALTO em vez de emitir tabela torta,
+# que e o desenho certo; mas o episodio mostra que o padrao de declaracao
+# tambem evolui, e o leitor tem de acompanhar.
+for m in re.finditer(r'(p_[a-z0-9_]+)((?:\[\d\])*)\s*=\s*t\.Add\("([a-z0-9_]+)"', src):
     sym2name[(m.group(1), m.group(2) or '')] = m.group(3)
 
 # ---- nome -> (min, max) em unidade real ----
@@ -56,7 +61,7 @@ FAMILIAS = [('piezo', 'mistura'), ('gate', 'entrada'),
             ('drv', 'drive'), ('phs', 'phaser'), ('wrb', 'warble'),
             ('dly', 'delay'), ('tarol', 'tarolator'), ('frz', 'freeze'), ('rev', 'reverb'),
             ('shm', 'shimmer'), ('buzios', 'búzios'), ('tone', 'tom'),
-            ('level', 'saída'), ('exc', 'saída'), ('gov', 'proteção'),
+            ('pre_level_ab', 'saída'), ('exc', 'saída'), ('gov', 'proteção'),
             ('shift', 'proteção'), ('route', 'saída'), ('bench', 'bancada'),
             ('out_', 'saída'), ('vol_', 'saída'), ('test_tone', 'tom')]
 
@@ -98,8 +103,8 @@ NOTAS = {
     "shm_tone_a": "<b>sobe pra clarear</b>",
     "buzios_cooldown": "10…1000 ms · 2 batidas rápidas = 1",
     "tone_freq": "80…2000 Hz · nasce em 848",
-    "level_l": "<b>volume do ramo L</b> — POT físico em A0 (D15)",
-    "level_r": "<b>volume do ramo R</b> — POT físico em A1 (D16)",
+    "post_level_l": "<b>volume do ramo L</b> — POT físico em A0 (D15)",
+    "post_level_r": "<b>volume do ramo R</b> — POT físico em A1 (D16)",
     "out_l": "<b>0 corta o ramo</b> (mute pós-limiter; volume é o level_l)",
     "out_r": "<b>0 corta o ramo</b>",
     "tarol_on": "<b>TAROLATOR</b> — ruído percussivo com o envelope da pancada; nasceu oitavador e não faz oitava",
@@ -242,7 +247,7 @@ achados = re.findall(r'AddMidi\(\s*(\d+)\s*,\s*([^,)]+)\s*(?:,\s*(\w+)\s*)?\)',
 for cc, expr, canal in sorted(achados,
                               key=lambda x: (int(x[0]), CANAIS.get(x[2], 1))):
     e = expr.strip()
-    mm = re.match(r'(p_[a-z0-9_]+)(\[\d\])?$', e)
+    mm = re.match(r'(p_[a-z0-9_]+)((?:\[\d\])*)$', e)
     nome = sym2name.get((mm.group(1), mm.group(2) or '')) if mm else None
     if not nome:
         faltando.append((cc, e))

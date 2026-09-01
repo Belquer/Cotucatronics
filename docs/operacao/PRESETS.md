@@ -30,7 +30,7 @@ PRESET GLOBAL          m presets × ~22 bytes   ← ponteiro único
 ```
 
 Carrega "corda" no A e "tambor" no B. Se um dia houver duas cordas, carrega
-"corda" nos dois. **Global slot 0 = estado de boot** — é o que mata o `level`
+"corda" nos dois. **Global slot 0 = estado de boot** — é o que mata o `pre_level_ab`
 nascendo em 0 e os diagnósticos falsos que ele causou.
 
 Uma **cena** = global + ponteiro A + ponteiro B.

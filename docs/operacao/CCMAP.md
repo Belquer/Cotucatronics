@@ -122,6 +122,16 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 80 | ch3 | ch6 | `tarol_on_b` | tarolator | 0 – 1 |
 | 81 | ch2 | ch5 | `tarol_mix_a` | tarolator | 0 – 4 |
 | 81 | ch3 | ch6 | `tarol_mix_b` | tarolator | 0 – 4 |
+| 82 | ch2 | ch5 | `ntc_on_a` | — | 0 – 1 |
+| 82 | ch3 | ch6 | `ntc_on_b` | — | 0 – 1 |
+| 83 | ch2 | ch5 | `ntc1_hz_a` | — | 60 – 8000 |
+| 83 | ch3 | ch6 | `ntc1_hz_b` | — | 60 – 8000 |
+| 84 | ch2 | ch5 | `ntc1_db_a` | — | 0 – 24 |
+| 84 | ch3 | ch6 | `ntc1_db_b` | — | 0 – 24 |
+| 85 | ch2 | ch5 | `ntc2_hz_a` | — | 60 – 8000 |
+| 85 | ch3 | ch6 | `ntc2_hz_b` | — | 60 – 8000 |
+| 86 | ch2 | ch5 | `ntc2_db_a` | — | 0 – 24 |
+| 86 | ch3 | ch6 | `ntc2_db_b` | — | 0 – 24 |
 | 90 | ch1 | ch4 | `buzios_on` | búzios | 0 – 1 |
 | 91 | ch1 | ch4 | `buzios_thresh` | búzios | 0 – 1 |
 | 92 | ch1 | ch4 | `buzios_cooldown` | búzios | 10 – 1000 |
@@ -133,7 +143,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 97 | ch3 | ch6 | `route_l_b` | saída | 0 – 1 |
 | 98 | ch2 | ch5 | `route_r_a` | saída | 0 – 1 |
 | 98 | ch3 | ch6 | `route_r_b` | saída | 0 – 1 |
-| 100 | ch1 | ch4 | `level` | saída | 0 – 1 |
+| 100 | ch1 | ch4 | `pre_level_ab` | saída | 0 – 1 |
 | 105 | ch2 | ch5 | `exc_on_a` | saída | 0 – 1 |
 | 105 | ch3 | ch6 | `exc_on_b` | saída | 0 – 1 |
 | 110 | ch2 | ch5 | `gov_ceiling_a` | proteção | 0 – 1 |
@@ -145,7 +155,7 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 114 | ch1 | ch4 | `out_r` | saída | 0 – 1 |
 | 115 | ch2 | ch5 | `bench_boost_a` | bancada | 1 – 8 |
 | 115 | ch3 | ch6 | `bench_boost_b` | bancada | 1 – 8 |
-| 116 | ch1 | ch4 | `level_l` | saída | 0 – 1 |
-| 117 | ch1 | ch4 | `level_r` | saída | 0 – 1 |
+| 116 | ch1 | ch4 | `post_level_l` | — | 0 – 1 |
+| 117 | ch1 | ch4 | `post_level_r` | — | 0 – 1 |
 
-<!-- 95 vinculos em 55 numeros de CC -->
+<!-- 105 vinculos em 60 numeros de CC -->

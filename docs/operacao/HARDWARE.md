@@ -113,7 +113,7 @@ inversão nem correcção:
 O fundo chega quase perfeito; **o topo pára a 0,975** — o cursor nunca entrega
 os 3V3 inteiros. Depois da inversão isso vira um **piso de 0,025**, que não é
 silêncio: é cerca de **−32 dB, audível**. Foi exactamente o que se ouviu com os
-pots no mínimo, e o teste que o provou foi pôr `level_l`/`level_r` a zero por
+pots no mínimo, e o teste que o provou foi pôr `post_level_l`/`post_level_r` a zero por
 comando — aí houve **silêncio total**, o que também absolveu o amp.
 
 O conserto são `kKnobFundo` (0,035) e `kKnobTopo` (0,990) em
@@ -151,6 +151,34 @@ curto e grosso.
 
 ---
 
+## 1b · O PAINEL OLED CUSTA 6 dB — por isso nasce apagado
+
+Medido em 31/08, com o instrumento parado:
+
+| | painel apagado | painel aceso |
+|---|---|---|
+| IN_L | −75,3 dBFS | **−69,3 dBFS** |
+| IN_R | −77,7 dBFS | **−71,3 dBFS** |
+| pico espectral | 119,7 Hz · dom 0,28 | **7040,8 Hz · dom 0,95** |
+
+Dominância 0,95 é assinatura de **relógio**, não de ruído térmico. E 7040 Hz
+tem explicação exacta: **64 linhas × ~110 Hz de quadro = 7040 varrimentos de
+linha por segundo**. É a corrente de accionamento das linhas, proporcional aos
+píxeis **acesos** — por isso a medição com os píxeis apagados ficou limpa.
+
+**A regra (v0.221.0):** o painel nasce apagado, acorda quando alguém gira ou
+prime um encoder, e dorme ao fim de **5 s** sem actividade. Durante a
+performance ninguém lhe toca, portanto está apagado quando o ouvido trabalha.
+
+🚫 **Não se conserta com notch.** Um notch de 201 Hz a 7 kHz seria musicalmente
+barato, mas **não escala**: a peça é replicada em série e cada painel terá o seu
+relógio. Painel apagado acerta em todas as unidades, custa zero DSP, e deixa as
+bocas do notch livres para a microfonia.
+
+⚠️ **Item de bancada:** os cinco fios do OLED (`D5 D6 D7 D8 D10`) correm perto
+dos cabos dos piezos. Vale afastá-los e cruzá-los em ângulo recto — mesma regra
+do acoplamento pelo ar que vale para a saída do amp classe D.
+
 ## 2 · ENTRADA DOS PIEZOS (×2) — só proteção, ganho intacto
 
 ⚠️ **O LAÇO ACÚSTICO É REAL, E CEIFA O ADC — medido em 31/08.**
@@ -163,7 +191,7 @@ Medido com a mesma força de toque, mudando só se a saída toca:
 | **IN_L** | **0,0 dBFS · 313 amostras ceifadas** | **−7,4 dBFS · 0 ceifadas** |
 
 **O laço acrescenta ~7,4 dB**, e é exactamente o que falta para bater no tecto
-com `level` a 0,6. (Para comparar: a corda dava −17 dBFS e a membrana −21 em
+com `pre_level_ab` a 0,6. (Para comparar: a corda dava −17 dBFS e a membrana −21 em
 medições sem laço.)
 
 O laço **não é defeito** — é metade do que o instrumento tem de bom. O que não
@@ -171,11 +199,11 @@ presta é o fim dele: **ceifado no ADC**, distorção digital dura e sem control
 
 ⚠️ **Hoje não há controlo de ganho de entrada.** O `in_gain` foi aposentado em
 31/08 por estar inerte — decisão certa, mas isto é o primeiro caso que pede um
-trim de entrada a sério. Enquanto não houver, o controlo é **baixar o `level`**
+trim de entrada a sério. Enquanto não houver, o controlo é **baixar o `pre_level_ab`**
 até o `pk` deixar de acusar `clip`.
 
 **Diagnóstico:** `pk reset`, tocar, `pk`. Se `clip > 0`, está a ceifar. Repetir
-com `set level 0` separa **laço** de **fonte quente**: se o pico cair, é laço.
+com `set pre_level_ab 0` separa **laço** de **fonte quente**: se o pico cair, é laço.
 
 
 ```
@@ -378,7 +406,7 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
 - **Encoder EC11** com detentes e push (push = confirmar). Relativo, não
   absoluto — mata o problema do salto do knob compartilhado.
 - **2 pots de volume**, um por ramo — ✅ **soldados e implementados em 28/08**:
-  `A0` = **D15** (ramo L) · `A1` = **D16** (ramo R). Params `level_l`/`level_r`
+  `A0` = **D15** (ramo L) · `A1` = **D16** (ramo R). Params `post_level_l`/`post_level_r`
   (CC 116/117), aplicados **depois do limiter**, onde só se pode reduzir.
 
   ⚠️ **Não há um terceiro pot possível.** `A0–A4` são aliases de `D15–D19`, e
@@ -427,4 +455,4 @@ depois custou uma tarde e três acusações a inocentes.
 - [ ] Polaridade do capacitor (tarja = negativo) e dos diodos (faixa = cátodo)
 - [ ] Switch no **+V**, terra contínuo em estrela, zero loops
 - [ ] V3 do WIDI ≈ 3,3 V depois de energizar
-- [ ] Exciter **por último**, com `level` baixo e anti-feedback conferido
+- [ ] Exciter **por último**, com `pre_level_ab` baixo e anti-feedback conferido

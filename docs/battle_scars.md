@@ -5852,6 +5852,93 @@ causa disso.
 > **Descobrir que se errou nao e o mesmo que descobrir a causa.** As duas
 > chegam com a mesma sensacao de alivio, e so uma delas se mede.
 
+## 15an. O master mudo disfarcou-se de piezo avariado cinco vezes (31/08)
+
+Sintoma: o tom de teste sai alto e limpo, os piezos nao soam. O dB ia
+**subir o ganho dos piezos** — mudanca permanente no instrumento, paga em
+margem de microfonia, num sitio onde ninguem ligaria as duas coisas depois.
+
+Era o `level` a zero. O tom entra **DEPOIS** dele; os piezos, antes. Essa
+assimetria e que engana, e ela apontava para piezo, cabo, jack, ADC — tudo
+menos para o param que ninguem ve.
+
+Aconteceu **cinco vezes num dia**, sempre depois de gravar, porque todo param
+nasce em zero por regra da casa e um master a zero e silencio.
+
+Tres consertos, e sao de tipos diferentes:
+
+1. **Os nomes passaram a carregar a topologia** — `level` -> `pre_level_ab`
+   (antes do governor/limiter: alimenta a proteccao), `level_l`/`level_r` ->
+   `post_level_l`/`post_level_r` (depois do limiter: so reduzem). O dB
+   perguntou se nao eram redundantes; o codigo diz que nao, e agora o nome
+   diz tambem.
+2. **O `pre_level_ab` nasce a 1.0** — primeira excepcao deliberada a "todo
+   param nasce em zero", com o motivo ao lado: ele e de TESTE e EMERGENCIA,
+   o volume de performance sao os `post_*`, e o piezo deve entrar quente na
+   dinamica de saida.
+3. **O instrumento passou a explicar-se.** O `board` grita quando o master
+   esta a zero, e diz PORQUE o tom soa e os piezos nao.
+
+> **Um param sem controlo fisico, que nasce em silencio e mata so METADE das
+> vias, e uma armadilha desenhada.** A metade que sobrevive e que faz o
+> diagnostico apontar para o lado errado.
+
+## 15ao. A rampa que nao soou nao ficou (31/08)
+
+Gravar produzia um estalo seco. Isolei por eliminacao — abrir a porta, comando
+curto, comando longo, fechar: **nenhum estalava** — e conclui que era o reset a
+cortar o audio a meio de um bloco. Pus uma rampa de 30 ms no callback para
+chegar ao reset ja em silencio. Desenho correcto, raciocinio correcto.
+
+**Estalou exactamente igual.**
+
+Logo o degrau nao esta nas amostras: esta no codec a perder relogio, ou no amp
+a ver a entrada em alta impedancia. E a rampa custava uma espera de ate 200 ms
+no caminho do reset.
+
+> **SE NAO SOA, NAO FICA — e a regra vale contra o proprio conserto.** Ela
+> saiu, com o registo no lugar dela para ninguem a reinventar com o mesmo
+> raciocinio, que continua a parecer bom.
+
+## 15ap. O painel custava 6 dB, e o numero desenhou a regra (31/08)
+
+O dB reportou ruido novo ao ligar o OLED. Medido, com o instrumento parado:
+
+| | painel apagado | painel aceso |
+|---|---|---|
+| IN_L | -75,3 dBFS | **-69,3 dBFS** |
+| pico espectral | 119,7 Hz, dom 0,28 | **7040,8 Hz, dom 0,95** |
+
+Dominancia 0,95 e assinatura de **relogio**, nao de ruido termico. E 7040 Hz
+tem explicacao exacta: um painel de **64 linhas** a ~110 Hz de quadro varre
+64 x 110 = **7040 linhas por segundo**. E a corrente de accionamento das
+linhas, proporcional aos pixeis ACESOS — foi por isso que a medicao com os
+pixeis apagados ficou limpa.
+
+O dB perguntou se nao se podia filtrar. Podia — um notch de 201 Hz a 7 kHz e
+musicalmente quase de graca. **Mas nao escala:** a peca e replicada em serie e
+cada painel tera o seu relogio. Notch fixo acerta numa unidade e falha nas
+outras; **painel apagado acerta em todas**, custa zero DSP, e deixa as bocas do
+notch livres para a microfonia.
+
+A regra que ele desenhou: painel nasce apagado, acorda no encoder, dorme aos
+5 s. Durante a performance ninguem lhe toca — logo esta apagado exactamente
+quando o ouvido esta a trabalhar.
+
+> **Quando o conserto que escala e o mais simples, e porque a pergunta estava
+> mal posta.** "Como filtro este ruido" tinha resposta; "porque e que ele
+> existe quando ninguem olha para o painel" nao precisava de filtro nenhum.
+
+**E o painel ganhou uma regra de operacao que o dB viu e eu nao:** com a tela
+apagada, quem gira nao ve o que muda. Se o primeiro gesto ja mexesse no valor,
+alterava-se as cegas e so se descobria depois de a tela acender — sem saber de
+quanto. Entao **o gesto que acorda e engolido**.
+
+⚠️ E engolir e LER E DEITAR FORA, nao "nao ler": `EncoderIncremento` e
+`EncoderPushBorda` **consomem** o evento. Deixa-los por ler guardaria o gesto
+para a volta seguinte, e ele seria aplicado na mesma — so que atrasado, que e
+pior do que aplicar logo.
+
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.

@@ -477,12 +477,12 @@ int main()
         // forma de todo knob deste manifest — e nao contra um indice de
         // knob nem contra um numero de CC. A invariante nao depende de
         // qual CC carrega o param, e agora o teste tambem nao.
-        const int id_lvl = t.Find("level");
+        const int id_lvl = t.Find("pre_level_ab");
         Check("manifest expoe level", id_lvl >= 0);
         if(id_lvl >= 0)
         {
             const int cc_lvl = CcDe(id_lvl);
-            Check("level tem CC no mapa", cc_lvl >= 0);
+            Check("pre_level_ab tem CC no mapa", cc_lvl >= 0);
             if(cc_lvl >= 0)
             {
                 const uint8_t msg3[] = {0xB0, (uint8_t)cc_lvl, 127};
@@ -493,12 +493,12 @@ int main()
                 t2.Init();
                 m2.Init(t2);
                 cotuca::Macro remoto;
-                remoto.AddTarget(t2.Find("level"), 1.0f);
+                remoto.AddTarget(t2.Find("pre_level_ab"), 1.0f);
                 remoto.Apply(t2, 1.0f); // o mesmo gesto, pela via do knob
                 snprintf(d, sizeof(d), "cc=%d midi=%.4f knob=%.4f",
-                         cc_lvl, t.Get(id_lvl), t2.Get(t2.Find("level")));
+                         cc_lvl, t.Get(id_lvl), t2.Get(t2.Find("pre_level_ab")));
                 Check("CC e knob no mesmo param dao o MESMO valor",
-                      fabsf(t.Get(id_lvl) - t2.Get(t2.Find("level"))) < 1e-6f, d);
+                      fabsf(t.Get(id_lvl) - t2.Get(t2.Find("pre_level_ab"))) < 1e-6f, d);
             }
         }
 

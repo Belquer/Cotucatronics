@@ -68,3 +68,14 @@ check_docs        # nome do proprio verificador, citado na 13m
 #  existir em presets.h — a divida foi cobrada pelo proprio mecanismo,
 #  que era o ponto de escrever o prazo.)
 midi_dup          desenho  AUDIT-23-08 achado 2 — sai quando o detector existir
+
+# RENOMEADOS em 31/08 — o nome passou a carregar a TOPOLOGIA, porque a
+# ordem em relacao ao limitador e o que os torna NAO redundantes:
+#   level   -> pre_level_ab    (ANTES do governor/limiter: alimenta a proteccao)
+#   level_l -> post_level_l    (DEPOIS do limiter: so reduz, nao fura o teto)
+#   level_r -> post_level_r
+# Os nomes velhos aparecem nas cicatrizes e nos commits, que sao registo
+# historico e nao se reescrevem.
+level
+level_l
+level_r

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.216.0"
+#define COTUCA_OS_VERSION "0.222.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -502,7 +502,32 @@ static uint32_t knob_janelas = 0;
 static float    knob_filt[cotuca::kNumKnobs] = {0};
 static bool     knob_vivo[cotuca::kNumKnobs] = {false};
 static bool     knob_dono[cotuca::kNumKnobs] = {false};
-static bool     enc_na_tela   = true;
+// ---- PAINEL TEMPORARIO ----
+//
+// MEDIDO EM 31/08, e o numero decidiu o desenho: com o painel aceso o
+// chao de ruido da ENTRADA sobe 6 dB nos dois canais (-75,3 -> -69,3
+// dBFS) e aparece um espeto a 7040 Hz com dominancia 0,95 — 22 dB
+// acima do que la estava. Espeto com dominancia dessas e acoplamento
+// de RELOGIO, nao ruido termico.
+//
+// 7040 Hz nao e coincidencia: um painel de 64 linhas a ~110 Hz de
+// quadro varre 64 x 110 = 7040 linhas por segundo. E a corrente de
+// accionamento das linhas — proporcional aos pixeis ACESOS, e foi por
+// isso que a medicao com os pixeis apagados ficou limpa.
+//
+// POR QUE NAO SE CONSERTA COM NOTCH: a peca e replicada em serie, na
+// ordem de centenas, e cada painel tera o seu relogio — 6900 aqui,
+// 7200 ali. Notch fixo acerta numa unidade e falha nas outras. Painel
+// apagado acerta em todas, custa zero DSP, e deixa as duas bocas do
+// notch livres para a microfonia, que ja mostrou querer mais de duas.
+//
+// A REGRA, decidida pelo dB: o painel nasce APAGADO. Acorda quando
+// alguem mexe num encoder — girar ou premir — e volta a dormir sozinho
+// ao fim de 5 s sem actividade. Durante a performance ninguem lhe
+// toca, portanto ele esta apagado quando o ouvido esta a trabalhar.
+static const uint32_t kOledDormeMs = 5000u;
+static bool     enc_na_tela   = false;   // nasce APAGADO
+static uint32_t oled_dorme_em = 0;       // 0 = ja dorme
 // SENTIDO POR ENCODER, +1 ou -1. Existe porque o sentido de um encoder
 // depende de COMO ELE FOI SOLDADO, e isso nao se descobre lendo codigo:
 // descobre-se rodando o knob. Corrigir por gravacao custava um flash por
@@ -594,6 +619,16 @@ static inline bool NaJanela(int param, uint32_t agora)
 
 // Chamado do LOOP, nunca do callback. A regra ja custou uma placa
 // pendurada: MidiSendBytes de dentro do audio starva o ISR do USB.
+// Acende o painel e adia o sono. Inicializa a pedido: se ninguem
+// mexeu num encoder desde o arranque, o SPI nunca chega a falar.
+static void DespertaPainel()
+{
+    if(!cotuca::hal::OledConfigurado() && !cotuca::hal::OledInit()) return;
+    enc_na_tela   = true;
+    oled_dorme_em = cotuca::hal::NowMs() + kOledDormeMs;
+    if(!oled_dorme_em) oled_dorme_em = 1u;   // 0 significa "ja dorme"
+}
+
 static void MidiEspelha()
 {
     using namespace cotuca;
@@ -1133,7 +1168,7 @@ static cotuca::Suave       suave_dly, suave_rev;
 // reverb e na chave da sala. Faltava no ganho mestre, que e justamente
 // onde qualquer salto aparece INTEIRO na amplitude, sem nada a seguir
 // que o disfarce.
-static cotuca::Suave       suave_lvl;
+static cotuca::Suave       suave_pre;
 
 // TOM DE TESTE, UM SUAVIZADOR POR CADEIA. Carrega `tone_mix` e
 // `tone_dest` JUNTOS, porque do ponto de vista do audio eles sao a mesma
@@ -1242,7 +1277,7 @@ static float               vigia_piso = -25.f;
 // Volume por ramo, dos pots. SUAVIZADO porque e ganho por amostra e o
 // param vem em degraus — a mesma escada que ja mordeu o `level`, o
 // `tone_mix`, o `tone_dest` e o `in_gain`. Quinta ocorrencia da forma.
-static cotuca::Suave       suave_level_l, suave_level_r;
+static cotuca::Suave       suave_post_l, suave_post_r;
 
 static cotuca::Suave       suave_mat[4];
 static float               mat_g[4][kMaxBlock];
@@ -1813,6 +1848,7 @@ static volatile uint8_t loop_fase = 0;
 // aponta o inquilino, e nao a rua.
 static volatile uint8_t loop_sub = 0;
 
+
 // ---- CTOS: WATCHDOG COM VETO (ver docs/CTOS.md §3) ----
 //
 // O CTOS mede o tempo do EFEITO por bloco. Estouro => bypass no MESMO
@@ -1874,9 +1910,24 @@ static void LedFaseTick(size_t block_size, float sample_rate)
     }
 }
 
+// ⚠️ AQUI VIVEU UMA RAMPA DE DESPEDIDA, E ELA SAIU — 31/08.
+//
+// O estalo da gravacao foi isolado por eliminacao (abrir a porta,
+// comando curto, comando longo, fechar: nenhum estalava), e a hipotese
+// era o reset a cortar o audio a meio de um bloco. Pos-se uma rampa de
+// 30 ms no callback para chegar ao reset ja em silencio.
+//
+// MEDIDO A OUVIDO: estalou exactamente igual. Logo o degrau NAO esta
+// nas amostras — esta no codec a perder relogio, ou no amp a ver a
+// entrada em alta impedancia quando a Daisy reinicia. Conserto de
+// cobre, se algum dia valer a pena.
+//
+// SE NAO SOA, NAO FICA. Ela custava uma espera de ate 200 ms no
+// caminho do reset, e nao fazia nada pelo ouvido. Fica o registo para
+// ninguem a reinventar com o mesmo raciocinio.
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
-    const float level = params.Real(manifest.p_level);
+    const float level = params.Real(manifest.p_pre_level);
     const float mix   = params.Real(manifest.p_tone_mix);
     // O balanco dos piezos saiu daqui no pivo de 20/08: ele agora mistura
     // as duas cadeias JA PROCESSADAS, no bloco 2.
@@ -2488,7 +2539,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // POR AMOSTRA, nao por bloco: e a interpolacao dentro do bloco
         // que remove o degrau. Passar o `Suave` uma vez por bloco daria
         // uma rampa mais lenta com os mesmos degraus.
-        const float g = suave_lvl.Passo(level);
+        const float g = suave_pre.Passo(level);
         out[0][i] *= g;
         out[1][i] *= g;
     }
@@ -2605,17 +2656,17 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //    (seguranca, instantaneo), `vol_*` dosa (performance, continuo).
     const float r_l = params.Real(manifest.p_out_l) >= 0.5f ? 1.f : 0.f;
     const float r_r = params.Real(manifest.p_out_r) >= 0.5f ? 1.f : 0.f;
-    const float v_l = r_l * params.Real(manifest.p_level_l);
-    const float v_r = r_r * params.Real(manifest.p_level_r);
+    const float v_l = r_l * params.Real(manifest.p_post_level_l);
+    const float v_r = r_r * params.Real(manifest.p_post_level_r);
     // Custo zero quando nao ha nada a fazer: os dois no talo, os dois
     // ramos vivos, e as rampas ja pousadas.
     if(v_l < 0.9999f || v_r < 0.9999f
-       || suave_level_l.Valor() < 0.9999f || suave_level_r.Valor() < 0.9999f)
+       || suave_post_l.Valor() < 0.9999f || suave_post_r.Valor() < 0.9999f)
     {
         for(size_t i = 0; i < size; i++)
         {
-            out[0][i] *= suave_level_l.Passo(v_l);
-            out[1][i] *= suave_level_r.Passo(v_r);
+            out[0][i] *= suave_post_l.Passo(v_l);
+            out[1][i] *= suave_post_r.Passo(v_r);
         }
     }
     // Autopsia por LED: daqui, porque este contexto sobrevive ao loop.
@@ -4066,6 +4117,34 @@ static void HandleLine(const char* line)
                 hal::Log("colisao de CC: nenhuma");
         }
 
+        // ⚠️ MASTER A ZERO — o defeito que se disfarçou cinco vezes em 31/08.
+        //
+        // O `pre_level_ab` nasce em zero (regra da casa: todo param
+        // nasce em zero) e nao tem botao fisico. Depois de cada
+        // gravacao o instrumento fica MUDO pela via das cadeias — e o
+        // tom de teste continua a soar, porque entra DEPOIS dele.
+        //
+        // Essa assimetria e que engana: "o tom sai, os piezos nao" leva
+        // a suspeitar dos piezos, do cabo, do jack, do ADC. O dB esteve
+        // a um passo de subir o ganho dos piezos — o que teria mudado o
+        // instrumento em definitivo para compensar um param perdido, e
+        // pago em margem de microfonia num sitio onde ninguem ligaria as
+        // duas coisas.
+        //
+        // A casa ja sabe o que fazer com defeito silencioso: FAZE-LO
+        // FALAR. A trava do CTOS fala, o detector de colisao grita.
+        {
+            const float pre = params.Real(manifest.p_pre_level);
+            if(pre <= 0.0001f)
+            {
+                hal::Log("*** pre_level_ab = 0 — O INSTRUMENTO ESTA MUDO"
+                         " pela via das cadeias ***");
+                hal::Log("    o tom de teste entra DEPOIS dele e soa na"
+                         " mesma: e por isso que o tom sai e os piezos nao.");
+                hal::Log("    `set pre_level_ab 0.25` devolve o som.");
+            }
+        }
+
         // FILA DE TX DO MIDI — o conserto de 31/08 tem de se poder ver.
         // Contador sem leitor mede para ninguem; e um descarte que
         // ninguem conta e indistinguivel de um CC que nunca foi mandado.
@@ -5490,7 +5569,7 @@ int main(void)
         suave_rev.Init(hal::Info().sample_rate, 20.f, 0.f);
         // Nasce em 0 como o param: os params deste instrumento nascem
         // todos em zero por regra, entao nao ha rampa de estreia a evitar.
-        suave_lvl.Init(hal::Info().sample_rate, 20.f, 0.f);
+        suave_pre.Init(hal::Info().sample_rate, 20.f, 0.f);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
             suave_tom[c].Init(hal::Info().sample_rate, 20.f, 0.f);
         suave_dir_l.Init(hal::Info().sample_rate, 20.f, 0.f);
@@ -5501,8 +5580,8 @@ int main(void)
         // ninguem o pediu.
         for(int i = 0; i < 4; i++)
             suave_mat[i].Init(hal::Info().sample_rate, 20.f, 1.f);
-        suave_level_l.Init(hal::Info().sample_rate, 20.f, 1.f);
-        suave_level_r.Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_post_l.Init(hal::Info().sample_rate, 20.f, 1.f);
+        suave_post_r.Init(hal::Info().sample_rate, 20.f, 1.f);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
             tarol[c].Init(hal::Info().sample_rate);
@@ -5941,7 +6020,35 @@ int main(void)
         for(int e = 0; e < cotuca::hal::kNumEncoders; e++)
         {
             EstadoEnc& st = enc_st[e];
-            const int  inc = hal::EncoderIncremento(e) * enc_sinal[e];
+            const int  inc  = hal::EncoderIncremento(e) * enc_sinal[e];
+            const bool push = hal::EncoderPushBorda(e);
+
+            // ---- O PRIMEIRO GESTO SO ACENDE ----
+            //
+            // Pedido do dB, e e regra de OPERACAO, nao de codigo: com o
+            // painel apagado, quem gira nao ve o que esta a mudar. Se o
+            // primeiro gesto ja mexesse no valor, o utilizador alterava
+            // as cegas e so descobria depois de a tela acender — e nao
+            // saberia de quanto.
+            //
+            // Entao o gesto que acorda e ENGOLIDO: o incremento e a
+            // borda de push sao lidos (para nao ficarem na fila e
+            // dispararem depois) e DEITADOS FORA. A partir do segundo
+            // gesto, tudo normal.
+            //
+            // ⚠️ Ler e descartar, e nao "nao ler": `EncoderIncremento` e
+            // `EncoderPushBorda` CONSOMEM o evento. Deixa-los por ler
+            // guardaria o gesto para a volta seguinte, e ele acabaria
+            // por ser aplicado na mesma — so que atrasado, que e pior.
+            const bool houve = inc || push || hal::EncoderPushNivel(e);
+            if(houve && !enc_na_tela)
+            {
+                DespertaPainel();
+                st.push_agora = hal::EncoderPushNivel(e);
+                continue;                      // engole este gesto
+            }
+            if(houve) DespertaPainel();        // ja acordado: so adia o sono
+
             if(inc)
             {
                 st.crus += inc;
@@ -5955,11 +6062,22 @@ int main(void)
                 while(st.resto <= -enc_por_detente)
                 { st.resto += enc_por_detente; st.passos -= 1; AplicaAcel(st, -1); }
             }
-            if(hal::EncoderPushBorda(e)) st.pushes++;
+            if(push) st.pushes++;
             st.push_agora = hal::EncoderPushNivel(e);
         }
 
         SUB(5);   // OLED por SPI
+        // ADORMECE. Subtraccao em ticks antes de comparar, que e como
+        // esta casa trata a volta do uint32.
+        if(oled_dorme_em && (int32_t)(hal::NowMs() - oled_dorme_em) >= 0)
+        {
+            oled_dorme_em = 0;
+            enc_na_tela   = false;
+            if(hal::OledConfigurado()) hal::OledPreenche(false);
+            hal::Log("oled: a dormir (%lu s sem encoder) — o painel"
+                     " aceso custa 6 dB de chao de ruido",
+                     (unsigned long)(kOledDormeMs / 1000u));
+        }
         // ---- ENCODER NA TELA ----
         if(enc_na_tela && hal::OledConfigurado()
            && (int32_t)(hal::NowMs() - enc_tela_prox) >= 0)

@@ -27,7 +27,7 @@ inteiro** — `rev_on/mix/size/damp`, `shm_on/mix/feedback/shift/tone`. Mais
 
 **Compartilhado (22 params):** afinação dos efeitos de caráter (`drv_drive/
 tone/sujeira`, `phs_rate/depth/fb/stages`, `wrb_rate/depth/irreg`), `dly_time`,
-`piezo_mix`, `level`, `buzios_*`, `tone_*`, `route_*`, `shift_hz`.
+`piezo_mix`, `pre_level_ab`, `buzios_*`, `tone_*`, `route_*`, `shift_hz`.
 
 **Razão musical dos dois espaços:** corda dá tom sustentado, e pitch shift
 sobre altura definida soa harmônico; tambor dá transiente de espectro largo, e

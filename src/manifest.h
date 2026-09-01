@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v0.94.0
+// manifest.h (instrumento "bancada") v0.96.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -116,7 +116,7 @@ struct Manifest
     Requirements req; // instrumento de teste: defaults servem
 
     // ids de parâmetros preenchidos no Init()
-    int p_level;      // volume master
+    int p_pre_level;      // volume master
     int p_tone_freq;  // freq do oscilador de teste
     int p_tone_mix;   // mistura tom de teste vs entrada
     // BALANCO dos dois piezos, nao crossfade. Centro = OS DOIS CHEIOS;
@@ -211,8 +211,8 @@ struct Manifest
     int p_exc_on[2];    // exciter no ar? gateia a protecao do ramo
     int p_route_l[2];   // a cadeia A/B entra em OUT_L?
     int p_route_r[2];   // a cadeia A/B entra em OUT_R?
-int p_level_l;        // volume do ramo L — POT em A0 (D15)
-    int p_level_r;        // volume do ramo R — POT em A1 (D16)
+int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
+    int p_post_level_r;        // volume do ramo R — POT em A1 (D16)
         int p_out_l;        // OUT_L no ar?  (mute pos-limiter)
     int p_out_r;        // OUT_R no ar?
 
@@ -813,7 +813,26 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         // O contrato [0,1] segue intacto: 1.0 é o topo do curso do knob,
         // não uma exceção. Quem precisar de mais que isso está pedindo
         // ganho de ENTRADA, que mora pós-entrada/pré-gate — nunca aqui.
-        p_level     = t.Add("level",     0.0f, 0.f,    1.f);   // MIDI: nasce 0
+        // ⚠️ EXCEPCAO DECLARADA A "TODO PARAM NASCE EM ZERO".
+        //
+        // Decisao do dB em 31/08, e a razao e o que ele faz: o
+        // `pre_level_ab` esta ANTES do governor e do limiter, e serve
+        // para TESTE e EMERGENCIA — nao para tocar. O volume de
+        // performance sao os `post_level_*`, que seguem os pots.
+        //
+        // Nascer em zero fazia o instrumento acordar MUDO pela via das
+        // cadeias, enquanto o tom de teste — que entra depois dele —
+        // continuava a soar. Essa assimetria disfarcou-se de defeito de
+        // piezo CINCO VEZES num dia, e uma delas quase custou uma
+        // subida permanente do ganho de entrada para compensar um param
+        // perdido.
+        //
+        // E a unidade e o valor certo por desenho, nao so por
+        // conveniencia: o sinal do piezo deve entrar QUENTE E SAUDAVEL
+        // na dinamica de saida. Atenuar antes da proteccao e desperdicar
+        // faixa util e depois pedi-la de volta com ganho, que e como se
+        // compra ruido.
+        p_pre_level     = t.Add("pre_level_ab",     1.0f, 0.f,    1.f);
         p_tone_freq = t.Add("tone_freq", 0.4f, 80.f,   2000.f);
         p_tone_mix  = t.Add("tone_mix",  0.0f, 0.f,    1.f);
         // 0.5 NORMALIZADO = 0.0 real = centro. O primeiro argumento do
@@ -943,8 +962,8 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         // laco adota a leitura fisica na primeira volta. Volume que nasce
         // diferente de onde o botao esta e a primeira coisa que assusta
         // quem liga o instrumento.
-        p_level_l         = t.Add("level_l",         1.0f, 0.f, 1.f);
-        p_level_r         = t.Add("level_r",         1.0f, 0.f, 1.f);
+        p_post_level_l         = t.Add("post_level_l",         1.0f, 0.f, 1.f);
+        p_post_level_r         = t.Add("post_level_r",         1.0f, 0.f, 1.f);
         p_out_l         = t.Add("out_l",         1.0f, 0.f, 1.f);
         p_out_r         = t.Add("out_r",         1.0f, 0.f, 1.f);
 
@@ -1343,7 +1362,7 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         // porque -1 nao aparece e 0 e um id perfeitamente valido.
         //
         // O `mods` mostra o nome do parametro de origem justamente pra
-        // isso saltar aos olhos: quatro linhas dizendo "level ->" e o
+        // isso saltar aos olhos: quatro linhas dizendo "pre_level_ab ->" e o
         // sintoma.
         // O DELAY DEIXOU DE SER MODULO em 20/08 — virou C++ no shell
         // (delay.h). Nao ha mais bind: o callback le os params direto,
@@ -1368,8 +1387,8 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         // outras esculturas, não só pra esta.
         // OS DOIS POTS SOLDADOS, e so ha dois: A0–A4 sao aliases de
         // D15–D19 e o encoder global ocupa D17/D18/D19. Sobram D15 e D16.
-        knob[0].AddTarget(p_level_l, 1.0f);    // k1 — volume do ramo L
-        knob[1].AddTarget(p_level_r, 1.0f);    // k2 — volume do ramo R
+        knob[0].AddTarget(p_post_level_l, 1.0f);    // k1 — volume do ramo L
+        knob[1].AddTarget(p_post_level_r, 1.0f);    // k2 — volume do ramo R
         // k3, k4 e k5 NAO EXISTEM em hardware. Ate 28/08 estavam mapeados
         // (dly_time, dly_mix_a) e o laco iterava sobre eles com o
         // `ReadKnob` a devolver -1 — inofensivo enquanto era stub, e
@@ -1676,7 +1695,7 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(96, p_test_tone_stage, kCanalCompart);          // 0=direto 1=cadeia · COMPARTILHADO: so ch1
 
         // ---- MASTER: 100 ----
-        AddMidi(100, p_level, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(100, p_pre_level, kCanalCompart);   // COMPARTILHADO: so ch1
 
         // ---- PROTECAO E ROTEAMENTO: 110-115 ----
         //
@@ -1704,8 +1723,8 @@ int p_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(110, p_gov_ceiling[0], kCanalEntradaA);
         AddMidi(111, p_gov_release[0], kCanalEntradaA);
         AddMidi(112, p_shift_hz, kCanalCompart);         // COMPARTILHADO pelos dois ramos
-AddMidi(116, p_level_l, kCanalCompart);             // pot A0 (D15)
-        AddMidi(117, p_level_r, kCanalCompart);             // pot A1 (D16)
+AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
+        AddMidi(117, p_post_level_r, kCanalCompart);             // pot A1 (D16)
                 AddMidi(113, p_out_l, kCanalCompart);            // 0 = corta o ramo L   // COMPARTILHADO: so ch1
         AddMidi(114, p_out_r, kCanalCompart);            // 0 = corta o ramo R   // COMPARTILHADO: so ch1
         // MATRIZ 2x2 — o CC diz a SAIDA, o canal diz a CADEIA. Mesmo

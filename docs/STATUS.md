@@ -37,6 +37,29 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ## 31/08 — o dia do terra e da microfonia
 
+### Fim de 31/08 — o instrumento está de pé
+
+Firmware **v0.222.0**. Três coisas mudaram no fim do dia:
+
+**Os níveis passaram a dizer a topologia:** `pre_level_ab` (antes do
+governor/limiter — alimenta a protecção) e `post_level_l`/`post_level_r`
+(depois do limiter — só reduzem). Não são redundantes: estão em lados opostos
+da protecção. E o `pre_level_ab` **nasce a 1.0**, primeira excepção deliberada
+a «todo param nasce em zero» — ele é de teste e emergência, e o piezo deve
+entrar quente na dinâmica de saída.
+
+**O `board` grita quando o master está a zero**, e explica porque o tom de teste
+soa e os piezos não. Esse defeito disfarçou-se cinco vezes num dia.
+
+**O painel OLED nasce apagado**, acorda no encoder e dorme aos 5 s — e **o primeiro gesto só acende**, para ninguém mexer às cegas — custava
+**6 dB de chão de ruído** e um espeto a 7040 Hz. Ver `HARDWARE.md` §1b.
+
+⚠️ **Estado que ainda se perde a cada gravação** (é o argumento dos presets):
+```
+set ntc1_hz_a 770 · set ntc1_db_a 15
+set ntc2_hz_a 834 · set ntc2_db_a 15 · set ntc_on_a 1
+```
+
 🔴 **A PONTE TEM DE ESTAR ALIMENTADA — defeito aberto.**
 
 A Daisy não arranca com a ponte ESP32 sem alimentação: o `D14` (RX da USART1)
@@ -94,7 +117,7 @@ partir de um deles.
   enquanto a placa não reiniciar.
 
 **Decisões que só o dB pode tomar, e que travam os presets:**
-- `level_l`/`level_r` entram no preset global? *Recomendo que não* — seguem
+- `post_level_l`/`post_level_r` entram no preset global? *Recomendo que não* — seguem
   botões físicos, como o `exc_on`.
 - Renomear `tone_*` → `test_tone_*` para alinhar com os widgets do Loopy?
 
@@ -158,13 +181,13 @@ Resolvido em 2026-08-17. A dinâmica voltou e a placa **sobe tocando**:
 
 | | |
 |---|---|
-| `level` 1.00 · `in_gain` **8×** | `gate_thresh` 0.02 · `gov_ceiling` 0.85 |
+| `pre_level_ab` 1.00 · `in_gain` **8×** | `gate_thresh` 0.02 · `gov_ceiling` 0.85 |
 | `rev_mix` 0.35 · `fx2_hp` 120 Hz | `fx2_on` 1 · `buzios_on` 1 · `buzios_thresh` 0.04 |
 
 `shift_hz` segue em 0: é anti-feedback do laço piezo→corpo→piezo, e liga
 quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 
-> **Quando o exciter entrar, revisar `level` e `gov_ceiling` juntos.** Lá
+> **Quando o exciter entrar, revisar `pre_level_ab` e `gov_ceiling` juntos.** Lá
 > não há atenuador: o TPA3116 recebe o que a placa mandar, e os dois
 > formam o par que decide onde o laço para de crescer.
 
@@ -368,7 +391,7 @@ outros três do bloco ADC são o encoder global — `A0–A4` são aliases de
 `D15–D19`. `num_knobs` passou de **5 para 2**; declarar cinco fazia o laço
 iterar sobre knobs inexistentes.
 
-**Params novos:** `level_l` / `level_r` (CC 116/117), volume contínuo por ramo,
+**Params novos:** `post_level_l` / `post_level_r` (CC 116/117), volume contínuo por ramo,
 **depois do limiter** — mesmo ponto do mute `out_*`, e pela mesma razão: ali
 só se pode reduzir. São funções diferentes no mesmo sítio — `out_*` mata o
 ramo (segurança, instantâneo), `vol_*` dosa (performance, contínuo).
@@ -396,7 +419,7 @@ O `knob` diz na hora se o ADC lê.
 
 ## 31/08 — os pots funcionam, ponta a ponta
 
-**`level_l` / `level_r` seguem os dois potenciómetros.** Curso completo
+**`post_level_l` / `post_level_r` seguem os dois potenciómetros.** Curso completo
 verificado: `0,9752 → 0,0001` com o param a acompanhar. Ruído em repouso
 **σ 0,0003**, que são 26× abaixo de um passo de MIDI, e **zero escritas**
 com os pots parados.
@@ -422,7 +445,7 @@ sempre que se vai procurar.
 
 ## 31/08 — e o defeito do ADC era firmware
 
-**`level_l` / `level_r`** (CC 116/117) seguem os dois pots físicos. Custou uma
+**`post_level_l` / `post_level_r`** (CC 116/117) seguem os dois pots físicos. Custou uma
 sessão inteira, e o culpado não era o cobre:
 
 ### 🔴 O varredor de pinos livres roubava o pino ao ADC
@@ -788,7 +811,7 @@ aperte B3**; congelado = loop morto. O alarme entrou na cadência
 justamente pra não gastar o estado, que é a prova de aliveness.
 
 **Aberto, e é o mais caro agora: não há preset em flash.** Toda gravação
-zera todo parâmetro e `level` nasce em 0. A perda é silenciosa dos dois
+zera todo parâmetro e `pre_level_ab` nasce em 0. A perda é silenciosa dos dois
 lados e o sintoma imita defeito de efeito — custou dois diagnósticos
 falsos em 22/08 (bts 12l).
 
