@@ -207,6 +207,30 @@ for pts in W:
 for x,y in JUNC: sch.junctions.append(Junction(position=Position(X=x,Y=y),uuid=U()))
 for t,x,y,a in GLBL: sch.globalLabels.append(GlobalLabel(text=t,shape="bidirectional",position=Position(X=x,Y=y,angle=a),effects=eff(1.27),uuid=U()))
 for t,x,y,sz in NOTES: sch.texts.append(SchText(text=t,position=Position(X=x,Y=y,angle=0),effects=eff(sz,"left"),uuid=U()))
+
+# ---- ENCAIXE NA GRADE, imediatamente antes de escrever ----
+# Ver grade.py para o porque. So a COLOCACAO e os fios; o desenho dentro
+# dos simbolos fica intacto, porque os pinos internos ja estao na grade.
+from grade import encaixa, confere_colisoes
+
+_antes, _depois = [], []
+def _enc_lista(itens, attr="position"):
+    for it in itens or []:
+        p = getattr(it, attr, None)
+        if p is None:
+            continue
+        _antes.append((p.X, p.Y)); encaixa(p); _depois.append((p.X, p.Y))
+
+_enc_lista(sch.schematicSymbols)
+_enc_lista(sch.junctions)
+_enc_lista(sch.labels)
+_enc_lista(sch.globalLabels)
+for _w in (sch.graphicalItems or []):
+    for _p in (getattr(_w, "points", None) or []):
+        _antes.append((_p.X, _p.Y)); encaixa(_p); _depois.append((_p.X, _p.Y))
+confere_colisoes(_antes, _depois, __file__)
+print("grade: %d pontos encaixados em 1,27 mm" % len(_antes))
+
 sch.to_file(str(AQUI / "cotuca_preamp.kicad_sch"))
 print("escrito:", AQUI / "cotuca_preamp.kicad_sch")
 print("kicad_sch escrito")
