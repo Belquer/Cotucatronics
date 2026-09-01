@@ -224,7 +224,7 @@ serial já morreu.
 
 `set` alcança **qualquer** parâmetro pelo nome, **em unidade real** — Hz, ms, ×
 — e recusa valor fora da faixa citando os limites. Com os knobs 1–3 no delay e
-no level, `test_tone_freq` e `test_tone_mix` são **serial-only por design** — o tom de
+no level, `test_tone_freq` e `test_tone_level` são **serial-only por design** — o tom de
 teste é bancada, não performance:
 
 ```

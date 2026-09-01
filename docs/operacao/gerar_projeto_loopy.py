@@ -54,7 +54,7 @@ PAGINAS = [
 # um widget para ele so serviria para alguem o mexer em palco.
 FORA = ("bench_boost",)
 
-FAMILIAS = [("pre_level", "NIVEIS"), ("post_level", "NIVEIS"), ("ntc", "NOTCH"),
+FAMILIAS = [("pre_level", "NIVEIS"), ("post_level", "NIVEIS"), ("notch", "NOTCH"),
             ("test_tone", "TOM DE TESTE"), ("gate", "GATE"), ("drv", "DRIVE"),
             ("phs", "PHASER"), ("wrb", "WARBLE"), ("tarol", "TAROLATOR"),
             ("frz", "FREEZE"), ("rev", "REVERB"), ("shm", "SHIMMER"),
@@ -68,7 +68,7 @@ def familia(n):
 
 
 def titulo(n):
-    """`ntc1_hz_a` -> `Ntc1 Hz A`. O casamento do PERFIL e por titulo,
+    """`notch1_hz_a` -> `Ntc1 Hz A`. O casamento do PERFIL e por titulo,
     entao esta funcao e contrato: mudar aqui reendereca tudo."""
     return " ".join(p.capitalize() for p in n.split("_"))
 

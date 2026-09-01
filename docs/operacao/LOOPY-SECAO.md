@@ -1,6 +1,6 @@
 # Loopy Pro — secção nova, com MIDI learn
 
-**Gerado por `gerar_secao_loopy.py v0.2.0` a partir do `manifest.h`.** Não editar à mão — correr o gerador.
+**Gerado por `gerar_secao_loopy.py v0.3.0` a partir do `manifest.h`.** Não editar à mão — correr o gerador.
 
 ⚠️ **Isto é a ORDEM DE APRENDIZAGEM, não o layout.** O Loopy endereça widgets por índice de array dentro da cena, e esse índice só existe depois de alguém os criar. Cria os widgets na ordem abaixo e faz `learn` um a um — assim o mapa fica igual ao documento.
 
@@ -28,23 +28,23 @@
 
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
-| **82** | ch2 (cadeia A) | `ntc_on_a` | Botao (toggle) | 0 – 1 | 0 |
-| **82** | ch3 (cadeia B) | `ntc_on_b` | Botao (toggle) | 0 – 1 | 0 |
-| **83** | ch2 (cadeia A) | `ntc1_hz_a` | Fader | 60 – 8000 | 0 |
-| **83** | ch3 (cadeia B) | `ntc1_hz_b` | Fader | 60 – 8000 | 0 |
-| **84** | ch2 (cadeia A) | `ntc1_db_a` | Fader | 0 – 24 | 0 |
-| **84** | ch3 (cadeia B) | `ntc1_db_b` | Fader | 0 – 24 | 0 |
-| **85** | ch2 (cadeia A) | `ntc2_hz_a` | Fader | 60 – 8000 | 0 |
-| **85** | ch3 (cadeia B) | `ntc2_hz_b` | Fader | 60 – 8000 | 0 |
-| **86** | ch2 (cadeia A) | `ntc2_db_a` | Fader | 0 – 24 | 0 |
-| **86** | ch3 (cadeia B) | `ntc2_db_b` | Fader | 0 – 24 | 0 |
+| **82** | ch2 (cadeia A) | `notch_on_a` | Botao (toggle) | 0 – 1 | 0 |
+| **82** | ch3 (cadeia B) | `notch_on_b` | Botao (toggle) | 0 – 1 | 0 |
+| **83** | ch2 (cadeia A) | `notch1_hz_a` | Fader | 60 – 8000 | 0 |
+| **83** | ch3 (cadeia B) | `notch1_hz_b` | Fader | 60 – 8000 | 0 |
+| **84** | ch2 (cadeia A) | `notch1_db_a` | Fader | 0 – 24 | 0 |
+| **84** | ch3 (cadeia B) | `notch1_db_b` | Fader | 0 – 24 | 0 |
+| **85** | ch2 (cadeia A) | `notch2_hz_a` | Fader | 60 – 8000 | 0 |
+| **85** | ch3 (cadeia B) | `notch2_hz_b` | Fader | 60 – 8000 | 0 |
+| **86** | ch2 (cadeia A) | `notch2_db_a` | Fader | 0 – 24 | 0 |
+| **86** | ch3 (cadeia B) | `notch2_db_b` | Fader | 0 – 24 | 0 |
 
 ## TOM DE TESTE
 
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
 | **93** | ch1 (compartilhado) | `test_tone_freq` | Fader | 80 – 2000 | 0.4 |
-| **94** | ch1 (compartilhado) | `test_tone_mix` | Fader | 0 – 1 | 0 |
+| **94** | ch1 (compartilhado) | `test_tone_level` | Fader | 0 – 1 | 0 |
 | **95** | ch1 (compartilhado) | `test_tone_out` | Botao x3 (passos) | 0 – 2 | 0 |
 | **96** | ch1 (compartilhado) | `test_tone_via` | Botao (toggle) | 0 – 1 | 0 |
 
@@ -200,14 +200,24 @@
 | **111** | ch2 (cadeia A) | `gov_release_a` | Fader | 100 – 3000 | 0.2414 |
 | **111** | ch3 (cadeia B) | `gov_release_b` | Fader | 100 – 3000 | 0.2414 |
 
-## OUTROS
+## BUZIOS — sorteio
 
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
 | **90** | ch1 (compartilhado) | `buzios_on` | Botao (toggle) | 0 – 1 | 0 |
 | **91** | ch1 (compartilhado) | `buzios_thresh` | Fader | 0 – 1 | 0.04 |
 | **92** | ch1 (compartilhado) | `buzios_cooldown` | Fader | 10 – 1000 | 0.091 |
+
+## SHIFT
+
+| CC | canal | parâmetro | widget | faixa | nasce |
+|---|---|---|---|---|---|
 | **112** | ch1 (compartilhado) | `shift_hz` | Fader | 0 – 10 | 0 |
+
+## BANCADA — nao vai para o painel
+
+| CC | canal | parâmetro | widget | faixa | nasce |
+|---|---|---|---|---|---|
 | **115** | ch2 (cadeia A) | `bench_boost_a` | Fader | 1 – 8 | 0 |
 | **115** | ch3 (cadeia B) | `bench_boost_b` | Fader | 1 – 8 | 0 |
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_secao_loopy v0.2.0 — escreve LOOPY-SECAO.md a partir do manifest.h.
+"""gerar_secao_loopy v0.3.0 — escreve LOOPY-SECAO.md a partir do manifest.h.
 
     ./gerar_secao_loopy.py
 
@@ -16,7 +16,7 @@ APRENDIZAGEM, nao o layout.
 """
 import re, sys, pathlib
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 AQUI = pathlib.Path(__file__).resolve().parent
 SRC = (AQUI / ".." / ".." / "src" / "manifest.h").resolve()
 
@@ -28,7 +28,7 @@ CANAIS = {"kCanalCompart": ("ch1", "compartilhado"),
 FAMILIAS = [
     ("pre_level", "NIVEIS — antes e depois do limitador"),
     ("post_level", "NIVEIS — antes e depois do limitador"),
-    ("ntc", "NOTCH anti-microfonia"),
+    ("notch", "NOTCH anti-microfonia"),
     ("test_tone", "TOM DE TESTE"),
     ("gate", "GATE"),
     ("drv", "DRIVE"),
@@ -44,6 +44,9 @@ FAMILIAS = [
     ("exc", "EXCITERS"),
     ("piezo", "FONTE"),
     ("gov", "GOVERNOR"),
+    ("buzios", "BUZIOS — sorteio"),
+    ("shift", "SHIFT"),
+    ("bench", "BANCADA — nao vai para o painel"),
 ]
 
 

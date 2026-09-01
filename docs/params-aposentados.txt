@@ -92,3 +92,22 @@ tone_mix
 tone_dest
 test_tone_stage
 test_tone_gain
+
+# RENOMEADOS em 01/09, os dois por o nome nao dizer a verdade:
+#   ntc_* -> notch_*        NTC e um COMPONENTE (termistor), e este repo tem
+#                           esquematicos ao lado. O dB perguntou "o que e ntc?"
+#                           — e se o dono nao reconhece, o nome falhou.
+#   test_tone_mix/gain -> test_tone_level    o nome segue o WIDGET, porque o
+#                           casamento no Loopy e por titulo.
+ntc_on_a
+ntc_on_b
+ntc1_hz_a
+ntc1_hz_b
+ntc1_db_a
+ntc1_db_b
+ntc2_hz_a
+ntc2_hz_b
+ntc2_db_a
+ntc2_db_b
+test_tone_mix
+test_tone_gain

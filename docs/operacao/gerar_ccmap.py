@@ -43,7 +43,7 @@ src = MANIFEST.read_text()
 # ---- simbolo -> nome real do param ----
 sym2name = {}
 # `(\[\d\])*` e nao `(\[\d\])?`: em 31/08 o notch declarou-se com DOIS
-# indices — `p_ntc_hz[cadeia][boca]` — e o gerador, que so sabia ler um,
+# indices — `p_notch_hz[cadeia][boca]` — e o gerador, que so sabia ler um,
 # nao resolveu oito CCs. Ele FALHOU ALTO em vez de emitir tabela torta,
 # que e o desenho certo; mas o episodio mostra que o padrao de declaracao
 # tambem evolui, e o leitor tem de acompanhar.

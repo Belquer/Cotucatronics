@@ -51,13 +51,29 @@ manda. E cada corpo da série tem ganho de exciter próprio.»* Mesma categoria 
 **2 · Família do tom renomeada:** `test_tone_freq · mix · out · via`. Uma regra
 de exclusão cobre as quatro (eram duas, e a terceira a nascer escaparia às duas).
 
-⚠️ **Uma discordância, resolvida pelo código:** o dB pediu `test_tone_on`,
-porque o widget do Loopy diz «Test Tone On». Mas o código faz
-`b[i] = b[i]*(1-m) + tom[i]*m` — **é um crossfade a sério**, e em 0.5 ouve-se
-metade de cada. Um nome em `_on` convidaria a próxima pessoa a escrever
-`>= 0.5f` contra ele, e o crossfade morreria em silêncio. Ficou
-**`test_tone_mix`**. Se um dia dever ser interruptor, muda-se o efeito e o nome
-a seguir — **nome não conserta comportamento**.
+<!-- doc-check: ignore test_tone_on (nome PROPOSTO e nunca criado — registo da decisao) -->
+
+⚠️ **O nome passou por três, e o último é o que fica: `test_tone_level`.**
+Primeiro `test_tone_mix`, porque o código faz um crossfade a sério
+(`b*(1-m) + tom*m`, e em 0.5 ouve-se metade de cada). Depois `gain`, depois
+**`level`** — escolha do dB.
+
+E o critério que decidiu não foi a literalidade: **o casamento widget↔param no
+Loopy é por TÍTULO**, portanto quem manda no nome é o que está pintado no vidro,
+não o que é exacto no código. Obrigá-lo a repintar o painel para acompanhar um
+nome de código é a troca errada.
+
+⚠️ **Consequência prática:** o widget tem de passar a **«Test Tone Level»**.
+Enquanto disser outra coisa, o gerador de perfil deixa-o órfão e o fader não
+manda nada — **falha silenciosa, sem erro nenhum**.
+
+Fica registado o que ele FAZ, para ninguém escrever `>= 0.5f` contra ele: é um
+crossfade, não um interruptor.
+
+⚠️ **E o `ntc_*` passou a `notch_*`.** O dB perguntou *«o que é ntc?»* — e se o
+dono do instrumento não reconhece o nome, o nome falhou. Pior neste repositório:
+**NTC é um componente** (termistor de coeficiente negativo), e há folhas de KiCad
+ao lado do firmware. Os CCs (82–86) não mudaram.
 
 ### A ORDEM DE TRABALHO, dada pelo dB em 01/09
 
@@ -119,8 +135,8 @@ soa e os piezos não. Esse defeito disfarçou-se cinco vezes num dia.
 
 ⚠️ **Estado que ainda se perde a cada gravação** (é o argumento dos presets):
 ```
-set ntc1_hz_a 770 · set ntc1_db_a 15
-set ntc2_hz_a 834 · set ntc2_db_a 15 · set ntc_on_a 1
+set notch1_hz_a 770 · set notch1_db_a 15
+set notch2_hz_a 834 · set notch2_db_a 15 · set notch_on_a 1
 ```
 
 🔴 **A PONTE TEM DE ESTAR ALIMENTADA — defeito aberto.**

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.231.0"
+#define COTUCA_OS_VERSION "0.233.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2076,7 +2076,7 @@ static void LedFaseTick(size_t block_size, float sample_rate)
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
     const float level = params.Real(manifest.p_pre_level);
-    const float mix   = params.Real(manifest.p_test_tone_mix);
+    const float mix   = params.Real(manifest.p_test_tone_level);
     // O balanco dos piezos saiu daqui no pivo de 20/08: ele agora mistura
     // as duas cadeias JA PROCESSADAS, no bloco 2.
     OscSetFreq(params.Real(manifest.p_test_tone_freq),
@@ -2197,12 +2197,12 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // CUSTO ZERO DESLIGADO: sem `on`, nem se toca nos biquads. E ao
         // desligar, limpa-se a cauda — biquad guarda o passado, e
         // religar cuspiria o que la ficou.
-        if(params.Real(manifest.p_ntc_on[c]) >= 0.5f)
+        if(params.Real(manifest.p_notch_on[c]) >= 0.5f)
         {
             if(!notch_vivo[c]) { notch[c].Limpa(); notch_vivo[c] = true; }
             for(int q = 0; q < cotuca::Notch::kBocas; q++)
-                notch[c].Set(q, params.Real(manifest.p_ntc_hz[c][q]),
-                             params.Real(manifest.p_ntc_db[c][q]));
+                notch[c].Set(q, params.Real(manifest.p_notch_hz[c][q]),
+                             params.Real(manifest.p_notch_db[c][q]));
             for(size_t i = 0; i < size; i++) b[i] = notch[c].Processa(b[i]);
         }
         else
@@ -3322,9 +3322,9 @@ static void HandleLine(const char* line)
         return;
     }
     if(strncmp(line, "tone on", 7) == 0)
-    { params.Set(manifest.p_test_tone_mix, 0.5f); hal::Log("tone ON"); return; }
+    { params.Set(manifest.p_test_tone_level, 0.5f); hal::Log("tone ON"); return; }
     if(strncmp(line, "tone off", 8) == 0)
-    { params.Set(manifest.p_test_tone_mix, 0.0f); hal::Log("tone OFF"); return; }
+    { params.Set(manifest.p_test_tone_level, 0.0f); hal::Log("tone OFF"); return; }
     // GANHO DE TESTE DA DRENAGEM. Sem ele a defesa e indemonstravel: a
     // janela de 300 ms fecha antes de a serial USB enumerar, entao
     // ninguem consegue observa-la agindo, e "contador em 0" fica
@@ -4931,7 +4931,7 @@ static void HandleLine(const char* line)
             // O `auto` RECUSA-SE a cortar o que nao parece microfonia.
             // Um notch posto sobre uma nota apaga a nota, e o pior e
             // que ninguem liga as duas coisas depois. Quem quiser
-            // insistir tem a porta aberta pelo `set ntc1_hz_a <hz>` —
+            // insistir tem a porta aberta pelo `set notch1_hz_a <hz>` —
             // mas ai e decisao com nome, e nao efeito colateral.
             if(domin < 0.60f)
             {
@@ -4939,7 +4939,7 @@ static void HandleLine(const char* line)
                          " microfonia. Cortar aqui apagaria a nota.",
                          (double)domin);
                 hal::Log("     Se for mesmo para cortar:"
-                         " `set ntc1_hz_%c %.0f` e `set ntc1_db_%c 12`",
+                         " `set notch1_hz_%c %.0f` e `set notch1_db_%c 12`",
                          cad ? 'b' : 'a', (double)hz, cad ? 'b' : 'a');
                 return;
             }
@@ -4950,7 +4950,7 @@ static void HandleLine(const char* line)
             // comecar no maximo esconde quanto era mesmo preciso.
             int boca = -1;
             for(int q = 0; q < cotuca::Notch::kBocas; q++)
-                if(params.Real(manifest.p_ntc_db[cad][q]) <= 0.f) { boca = q; break; }
+                if(params.Real(manifest.p_notch_db[cad][q]) <= 0.f) { boca = q; break; }
             if(boca < 0)
             {
                 hal::Log("     as duas bocas ja estao ocupadas."
@@ -4958,10 +4958,10 @@ static void HandleLine(const char* line)
                          cad ? 'b' : 'a');
                 return;
             }
-            params.SetReal(manifest.p_ntc_hz[cad][boca], hz);
-            params.SetReal(manifest.p_ntc_db[cad][boca], 12.f);
-            params.Set(manifest.p_ntc_on[cad], 1.f);
-            hal::Log("     boca %d <- %.1f Hz, 12 dB. ntc_on_%c LIGADO.",
+            params.SetReal(manifest.p_notch_hz[cad][boca], hz);
+            params.SetReal(manifest.p_notch_db[cad][boca], 12.f);
+            params.Set(manifest.p_notch_on[cad], 1.f);
+            hal::Log("     boca %d <- %.1f Hz, 12 dB. notch_on_%c LIGADO.",
                      boca + 1, (double)hz, cad ? 'b' : 'a');
             return;
         }
@@ -4999,8 +4999,8 @@ static void HandleLine(const char* line)
             const char* q = a + 3; while(*q == ' ') q++;
             const int cad = (*q == 'b' || *q == 'B') ? 1 : 0;
             for(int b = 0; b < cotuca::Notch::kBocas; b++)
-                params.SetReal(manifest.p_ntc_db[cad][b], 0.f);
-            params.Set(manifest.p_ntc_on[cad], 0.f);
+                params.SetReal(manifest.p_notch_db[cad][b], 0.f);
+            params.Set(manifest.p_notch_on[cad], 0.f);
             hal::Log("notch: cadeia %c limpa e desligada.", cad ? 'B' : 'A');
             return;
         }
@@ -5009,12 +5009,12 @@ static void HandleLine(const char* line)
                  (double)cotuca::Notch::kQ, (double)cotuca::Notch::kQ);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
-            const bool on = params.Real(manifest.p_ntc_on[c]) >= 0.5f;
+            const bool on = params.Real(manifest.p_notch_on[c]) >= 0.5f;
             hal::Log("  cadeia %c: %s", c ? 'B' : 'A', on ? "LIGADO" : "desligado");
             for(int b = 0; b < cotuca::Notch::kBocas; b++)
             {
-                const float f = params.Real(manifest.p_ntc_hz[c][b]);
-                const float d = params.Real(manifest.p_ntc_db[c][b]);
+                const float f = params.Real(manifest.p_notch_hz[c][b]);
+                const float d = params.Real(manifest.p_notch_db[c][b]);
                 hal::Log("    boca %d: %7.1f Hz | %4.1f dB %s", b + 1,
                          (double)f, (double)d,
                          d <= 0.f ? "(livre)" : (on ? "(a cortar)" : "(armada, mas OFF)"));
@@ -6083,8 +6083,8 @@ int main(void)
                              (double)vigia_db[i], vigia_n[i], (double)vigia_dm[i]);
                 }
                 if(vigia_q)
-                    hal::Log("  poe a mao com `set ntc1_hz_%c <hz>` +"
-                             " `set ntc1_db_%c 12` (idem ntc2)",
+                    hal::Log("  poe a mao com `set notch1_hz_%c <hz>` +"
+                             " `set notch1_db_%c 12` (idem notch2)",
                              vigia_cad ? 'b' : 'a', vigia_cad ? 'b' : 'a');
             }
             else if(caca_cheio)
