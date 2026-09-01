@@ -112,22 +112,45 @@ horas de arranjo de ecrã.
 
 Decodificado em 24/08 e confirmado contra dois bindings feitos à mão.
 
+🔴 **CORRIGIDO EM 01/09, e o erro anterior custou um projecto inutilizado.**
+Esta skill dizia que o `Subject` era posicional — `"<Tipo>:<cena>:<posição>"`.
+**Não é.** Verificado num export real:
+
 ```
-Trigger  = [prefixo:] <status><cc>[<valor>]      em hex
-           status = 0xB0 | (canal-1)             b0=ch1  b3=ch4  b4=ch5  b5=ch6
-           sem valor  -> contínuo (Absolute)
-           com valor  -> gesto de botão
-Subject  = "<TipoWidget>:<índice da cena>:<posição entre os do mesmo tipo>"
+Subject = "#<id do objecto do widget>"      ex: "#1526"
 ```
 
-🚫 **O `índice` NÃO é a posição no ecrã nem na nossa lista.** É a ordem do array
-`widgets` da `Scene`, **contada por tipo**. Foi o que dois bindings feitos à mão
-provaram: `Sli:1:2` era o *Gate Thresh A* e `Sli:1:6` o *Piezo Mix*.
+E há **DOIS perfis, um por direcção**, e ambos endereçam por `id`:
 
-⚠️ **O endereço é POSICIONAL, e isso é uma armadilha silenciosa:** reordenar
-widgets numa página **reendereça todos os bindings** sem aviso nenhum. O perfil
-continua a carregar, os controlos passam a mexer noutros parâmetros, e nada
-denuncia. **Regerar o perfil depois de mexer no layout**, sempre.
+| ficheiro | direcção | trigger | alvo |
+|---|---|---|---|
+| `Control Profile.lpcontrolprofile/Internal…` | **widget → MIDI** (envio) | `"1482:Value"` — id do widget e a acção | — |
+| `Control Profiles/<nome>/<dev>.MIDI.…` | **MIDI → widget** (retorno) | `"b364"` — MIDI em hex | `"#1526"` |
+
+```
+Trigger MIDI = <status><cc>[<valor>]        em hex
+               status = 0xB0 | (canal-1)    b0=ch1  b3=ch4  b4=ch5  b5=ch6
+               sem valor -> contínuo · com valor -> gesto de botão
+Action       = {"Identifier":"Trigger Widget",
+                "Parameters":{"Widget Action":"Value"},
+                "Subject":"#<id>", "Timing":"Sequential"}
+```
+
+🔴 **CONSEQUÊNCIA QUE DESTRÓI UM PROJECTO:** regerar as páginas **apaga os ids**,
+e todos os bindings dos dois perfis passam a apontar para objectos que já não
+existem. O projecto abre, os widgets aparecem, **e não sai nem entra um único
+byte** — sem erro em lado nenhum.
+
+Foi exactamente o que aconteceu em 01/09: um `.lpproj` gerado com 143 widgets e
+158 + 202 bindings órfãos. O sintoma no instrumento era `bytes 0 | cc 0`.
+
+**Portanto: quem regenera páginas TEM de regenerar os dois perfis na mesma
+passagem**, com os ids novos — ou **reutilizar os ids antigos** para os widgets
+que sobrevivem. Emitir projecto sem perfis é entregar uma página morta.
+
+⚠️ **E o teste que o apanha é do lado do INSTRUMENTO, não do Loopy:** o contador
+de bytes de MIDI recebidos. Zero bytes com o BLE ligado diz que o corte está
+antes da placa, e distingue "não mandou" de "mandou e não aplicou".
 
 ---
 
