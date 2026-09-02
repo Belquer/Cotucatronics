@@ -366,7 +366,18 @@ uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
 uint32_t         MidiRestarts();
 // Rearmes CONSECUTIVOS sem a escuta pegar. >= 4 significa que o recuo
 // esta activo, ou seja: a linha de RX esta morta.
-uint32_t         MidiRearmeSeguidos();    // vezes que a escuta DMA foi rearmada
+uint32_t         MidiRearmeSeguidos();
+// Erros de linha limpos na ultima janela de 1 s, total, e quantas vezes
+// o receptor teve de se calar por a linha estar suja demais.
+// Limpa a bandeira de erro da UART. CHAMA-SE DO CALLBACK DE AUDIO, que e
+// o unico contexto que sobrevive ao laco preso — ver o comentario na
+// implementacao. Duas escritas em registo, sem espera.
+void             MidiLimpaErroDoCallback();
+// Reinicio duro, igual ao botao de RESET. Nao vai para o DFU.
+void             ReiniciaAgora();
+uint32_t         MidiErrTaxa();
+uint32_t         MidiErrLimpos();
+uint32_t         MidiCalados();    // vezes que a escuta DMA foi rearmada
 
 // Reinicia a escuta DMA. Erro de UART pode abortar a recepcao no stack
 // da ST, e ela NAO volta sozinha — o sintoma e "funcionou e parou pra

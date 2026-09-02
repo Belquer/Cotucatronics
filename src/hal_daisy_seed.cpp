@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.63.0
+// hal_daisy_seed v0.68.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.63.0"
+#define COTUCA_HAL_VERSION "0.68.0"
 
 using namespace daisy;
 
@@ -885,6 +885,13 @@ static volatile uint32_t midi_err      = 0; // erros de UART na ISR
 // defeito, nao o conserto.
 static uint32_t midi_rearme_em       = 0;   // proximo instante permitido
 static uint32_t midi_rearme_seguidos = 0;   // falhas consecutivas
+// TETO DE ERROS DA LINHA. Ver o bloco no `PollMidi`.
+static uint32_t midi_err_limpos   = 0;   // bandeiras que tivemos de limpar
+static uint32_t midi_err_jan_base = 0;
+static uint32_t midi_err_jan_ms   = 0;
+static uint32_t midi_err_taxa     = 0;   // limpezas na ultima janela de 1 s
+static uint32_t midi_calado_ate   = 0;   // receptor calado ate este instante
+static uint32_t midi_calados      = 0;   // quantas vezes se calou
 static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
 // MARCA D'AGUA DA FILA. O furo conhecido do MIDI: os bytes chegam por
 // DMA (imune a carga) mas quem DESPACHA e o loop principal, que sob
@@ -953,6 +960,42 @@ void SetMidiByteCallback(MidiByteCallback cb)
         Log("ERRO: UART MIDI nao inicializou (USART1 D13/D14)");
         return;
     }
+
+    // ---- PULL-UP NO RX, E E ISTO QUE FAZ O CASO DEIXAR DE EXISTIR ----
+    //
+    // ⚠️ A libDaisy inicia os pinos da UART com `GPIO_NOPULL`
+    //    (src/per/uart.cpp). Com a ponte ESP32 sem alimentacao o pino
+    //    dela fica em alta impedancia, e o nosso RX FICA A FLUTUAR.
+    //
+    // Entrada CMOS solta apanha ruido a MHz. A USART ve arestas ao ritmo
+    // da propria amostragem, e FE/NE/ORE disparam a uma taxa que se
+    // aproxima do tempo de servico da interrupcao: o CPU fica na ISR da
+    // USART e o laco morre a fome. MEDIDO em 01/09 — a placa deixava de
+    // responder em menos de 4 s e NAO voltava com a linha ja em repouso.
+    //
+    // Repouso de uma linha de UART e ALTO, por definicao. Se o
+    // transmissor desaparece, alguem tem de segurar o alto — e o STM32
+    // tem pull-up interno (~40 kOhm) a espera de ser pedido. Com ~100 pF
+    // de cabo a subida e de ~4 us contra 32 us por bit: sobra de longe.
+    //
+    // Isto e a PRIMEIRA camada, e a defesa por software e a segunda:
+    // quando um caso de falha depende de um estado fisico que a placa
+    // pode impedir de existir, impede-se. Mesma licao do Schottky da
+    // ponte, e do pull-up interno que o D28 ja usava.
+    //
+    // Efeito lateral conhecido e aceite: com a ESP32 desligada, o
+    // pull-up injecta ~80 uA pelo diodo de proteccao do pino dela.
+    // Inofensivo a esse nivel; com 10 kOhm externo seriam ~330 uA.
+    {
+        __HAL_RCC_GPIOB_CLK_ENABLE();
+        GPIO_InitTypeDef g = {};
+        g.Pin       = GPIO_PIN_7;          // PB7 = seed::D14 = USART1_RX
+        g.Mode      = GPIO_MODE_AF_PP;
+        g.Pull      = GPIO_PULLUP;
+        g.Speed     = GPIO_SPEED_FREQ_VERY_HIGH;
+        g.Alternate = GPIO_AF7_USART1;
+        HAL_GPIO_Init(GPIOB, &g);
+    }
     memset(midi_dma_buf, 0, sizeof(midi_dma_buf));
     if(midi_uart.DmaListenStart(
            midi_dma_buf, sizeof(midi_dma_buf), MidiRxCallback, nullptr)
@@ -990,9 +1033,93 @@ bool MidiRestart()
 uint32_t MidiErrors() { return midi_err; }
 uint32_t MidiRestarts() { return midi_restarts; }
 uint32_t MidiRearmeSeguidos() { return midi_rearme_seguidos; }
+// ⚠️ CHAMA-SE DO CALLBACK DE AUDIO, e e excepcao DECLARADA a regra.
+//
+// A regra da casa proibe trabalho no callback: Log, MIDI, alocacao,
+// espera. Isto nao e nada disso — sao duas escritas em registo, sem
+// espera nenhuma e sem ramo que dependa de dados.
+//
+// E TEM de ser aqui, e a razao esta medida. Em 01/09 pus esta limpeza no
+// `PollMidi`, que e fase 2 do laco. Com a linha suja o laco morre na
+// fase 1 (o LED disse `1 e 5`: OLED por SPI), portanto o `PollMidi`
+// NUNCA CORRIA. Escrevi um remedio que so funcionava enquanto o problema
+// nao existia — e gravei-o e testei-o antes de reparar nisso.
+//
+// O callback e o unico contexto que continua a andar com o laco preso:
+// e ele que mantem o LED a piscar, e foi por isso que o LED conseguiu
+// testemunhar a paragem. Quem sobrevive a falha e quem a pode tratar.
+// Reinicio duro. NAO e o DFU: e o mesmo que o botao de RESET faz.
+void ReiniciaAgora() { NVIC_SystemReset(); }
+
+void MidiLimpaErroDoCallback()
+{
+    if(!midi_started) return;
+    if(USART1->ISR & (USART_ISR_ORE | USART_ISR_FE | USART_ISR_NE | USART_ISR_PE))
+    {
+        USART1->ICR = USART_ICR_ORECF | USART_ICR_FECF
+                    | USART_ICR_NECF  | USART_ICR_PECF;
+        midi_err_limpos++;
+    }
+}
+
+uint32_t MidiErrTaxa()        { return midi_err_taxa; }
+uint32_t MidiErrLimpos()      { return midi_err_limpos; }
+uint32_t MidiCalados()        { return midi_calados; }
 
 void PollMidi()
 {
+    // ---- BANDEIRA DE ERRO: LIMPAR, e nao so contar ----
+    //
+    // ⚠️ MEDIDO em 01/09, com a linha de RX A FLUTUAR: o laco NAO parava,
+    // arrastava-se. O LED mostrou os numeros a VARIAR (1, 2, 5) com a
+    // pausa longa acesa so em alguns ciclos — ou seja, davam-se voltas,
+    // mas as vezes passavam mais de 300 ms entre elas. Laco esfomeado,
+    // nao laco preso. Eu tinha assumido "preso" durante horas sem nunca
+    // o medir, e caçei em tres sitios errados por causa disso.
+    //
+    // Esfomear assim so tem uma causa: interrupcao de alta prioridade a
+    // reentrar sem fim. A UART levanta ORE/FE/NE na linha suja, e se a
+    // BANDEIRA NAO FOR LIMPA a interrupcao volta a entrar para sempre. E
+    // e tambem a unica explicacao para nao recuperar com a linha ja sa:
+    // a bandeira fica trancada, e ninguem a destranca.
+    //
+    // A `CheckError()` da libDaisy LE o erro, e o nosso codigo CONTAVA-O.
+    // Ninguem o limpava. Outra vez medido e nao tratado, que e a familia
+    // do dia inteiro.
+    {
+        if(midi_uart.CheckError())
+        {
+            USART1->ICR = USART_ICR_ORECF | USART_ICR_FECF
+                        | USART_ICR_NECF  | USART_ICR_PECF;
+            midi_err_limpos++;
+        }
+        const uint32_t ag = NowMs();
+        if((int32_t)(ag - midi_err_jan_ms) >= 0)
+        {
+            midi_err_taxa     = midi_err_limpos - midi_err_jan_base;
+            midi_err_jan_base = midi_err_limpos;
+            midi_err_jan_ms   = ag + 1000u;
+
+            // TETO. Limpar nao chega se o erro se repete a taxa de linha:
+            // ai a fonte tem de ser cortada. MIDI real nunca produz isto
+            // — 200 erros por segundo e ruido, nao musica.
+            if(midi_err_taxa > 200u && !midi_calado_ate)
+            {
+                midi_uart.DmaListenStop();
+                midi_calado_ate = ag + 1000u;
+                midi_calados++;
+            }
+        }
+        // Volta a escutar passado o recuo: se a linha sarou, recupera
+        // sozinha; se nao, cala-se outra vez na janela seguinte.
+        if(midi_calado_ate && (int32_t)(ag - midi_calado_ate) >= 0)
+        {
+            midi_calado_ate = 0;
+            MidiRestart();
+        }
+        if(midi_calado_ate) return;   // calado: nao rearmar nem drenar
+    }
+
     // VIGIA DA ESCUTA — COM TETO E RECUO, e o motivo esta MEDIDO.
     //
     // ⚠️ ATE 01/09 ISTO ERA `if(!IsListening()) MidiRestart();` sem mais
@@ -1196,14 +1323,45 @@ void MidiTxPump()
     }
     if(!k) return;
 
-    if(midi_uart.BlockingTransmit(tmp, k, 3) == UartHandler::Result::OK)
+    // ⚠️ NUNCA UM BLOQUEANTE DA HAL NO LACO. Isto travou a placa, e o
+    //    instrumento de fase apontou o sitio exacto.
+    //
+    // MEDIDO em 01/09, com a linha de RX A FLUTUAR (o comando `pino 4 2`
+    // na ponte poe o TX dela em alta impedancia): o LED ficou em `2 e 6`
+    // PARA SEMPRE — fase 2, inquilino 6, que e este pump. O OLED parou,
+    // a serial calou, e nao voltou nem com a linha restaurada, porque o
+    // laco ja estava la dentro.
+    //
+    // A causa e o tecto que nao e tecto. O `BlockingTransmit` da libDaisy
+    // e `HAL_UART_Transmit(..., 3)`, e a HAL sai da espera por
+    //     (HAL_GetTick() - Tickstart) > Timeout
+    // — o que exige que o TICK ANDE. Com o periferico a levar uma
+    // tempestade de interrupcoes da linha suja, essa condicao pode nunca
+    // dar verdade, e o `while` da HAL fica preso. Um tecto medido pelo
+    // relogio de quem pode estar a ser esfomeado nao e um tecto.
+    //
+    // Entao nao se pede a HAL que espere: PERGUNTA-SE se o periferico ja
+    // aceita, e so entao se escreve. Sem espera nenhuma, o pior caso e
+    // exactamente zero. Um byte por passagem sobra: o laco da ~20 000
+    // voltas/s e a linha leva 3 125 bytes/s.
+    //
+    // Escrever no TDR daqui e legitimo — este e o unico ficheiro que
+    // pode tocar no fornecedor — e o periferico e conhecido: o `Init`
+    // acima pede `Peripheral::USART_1`.
+    uint32_t enviados = 0;
+    while(enviados < k && (USART1->ISR & USART_ISR_TXE_TXFNF))
     {
-        midi_tx_tail     = t;
-        midi_tx_bytes   += k;
+        USART1->TDR = tmp[enviados++];
+    }
+    if(enviados)
+    {
+        midi_tx_tail     = (midi_tx_tail + enviados) % cap;
+        midi_tx_bytes   += enviados;
         midi_tx_seguidas = 0;
         midi_tx_retry_ms = 0;
         return;
     }
+    // Periferico nao aceitou nada: nao se insiste nesta volta.
     midi_tx_erros++;
     if(++midi_tx_seguidas >= 3u)
     {

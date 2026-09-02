@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.245.0"
+#define COTUCA_OS_VERSION "0.254.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2164,8 +2164,55 @@ static void LedFaseTick(size_t block_size, float sample_rate)
     // SUB-FASE ZERO pisca UMA vez, e nao nenhuma: "zero piscos" e
     // indistinguivel de "LED avariado", e ausencia representa-se com um
     // valor, nunca com silencio.
-    const uint8_t  fa = loop_fase ? loop_fase : 1u;
-    const uint8_t  su = loop_sub  ? loop_sub  : 1u;
+    // ⚠️ O PAR TEM DE SER TIRADO NO MESMO INSTANTE, e a fase 0 nao pode
+    //    piscar como a fase 1. Duas correcoes, e as duas custaram uma
+    //    leitura inutil em 01/09.
+    //
+    // (1) QUIMERA. `fa` e `su` eram lidos a cada callback, e o padrao
+    //     dura ~3,7 s. Com o laco vivo — mesmo lentissimo — a rajada da
+    //     fase saia de um instante e a da sub-fase de outro, e o par
+    //     exibido podia ser uma combinacao que o codigo NUNCA produz.
+    //     Foi o que aconteceu: o dB leu `1 e 3`, que e impossivel pela
+    //     ordem das etapas, e eu gastei a analise a tentar explicar um
+    //     numero que o instrumento inventou. Agora o par e LATCHADO no
+    //     inicio de cada ciclo e nao muda ate o ciclo acabar.
+    //
+    // (2) ZERO. `loop_fase ? loop_fase : 1` fazia a fase 0 — "o laco
+    //     nunca la chegou" — piscar exactamente como a fase 1. A
+    //     justificacao ("zero piscos e indistinguivel de LED avariado")
+    //     vale para a SUB-fase, onde zero nao e estado; para a FASE,
+    //     zero E um estado, e colapsa-lo apaga a unica leitura que
+    //     distingue "parou no inicio" de "nunca comecou".
+    //     Fase 0 pisca agora SETE vezes: impossivel de confundir, e
+    //     nenhuma fase real chega la.
+    // ⚠️ SINAL DE VIDA, e nao se conta: le-se.
+    //
+    // "Preso no SUB(8)" e "a correr, mas com a serial morta" produzem o
+    // MESMO silencio do meu lado, e ate agora eu deduzia qual era. Este
+    // callback ve o `loop_voltas` de fora do laco, entao pode responder
+    // a pergunta em vez de a deixar em aberto.
+    //
+    // Codificacao pensada para o olho e nao para a contagem: com o laco
+    // MORTO o LED fica ACESO durante a pausa longa. Solido contra escuro
+    // decide-se de relance; contar piscadas ja me deu um numero errado
+    // hoje (`1 e 3`).
+    static uint32_t voltas_ant = 0, voltas_ms = 0;
+    static bool     laco_vivo  = true;
+    if(loop_voltas != voltas_ant) { voltas_ant = loop_voltas;
+                                    voltas_ms  = ms; laco_vivo = true; }
+    else if((uint32_t)(ms - voltas_ms) > 300u) laco_vivo = false;
+
+    static uint8_t  fa_lat = 0, su_lat = 0;
+    static uint32_t ciclo_ate = 0;
+    if(!ciclo_ate || (int32_t)(ms - ciclo_ate) >= 0)
+    {
+        fa_lat = loop_fase ? loop_fase : 7u;   // 7 = NUNCA ENTROU
+        su_lat = loop_sub  ? loop_sub  : 1u;
+        ciclo_ate = ms + (uint32_t)fa_lat * 300u + 700u
+                       + (uint32_t)su_lat * 300u + 1800u;
+    }
+    const uint8_t  fa = fa_lat;
+    const uint8_t  su = su_lat;
     const uint32_t t_fa   = (uint32_t)fa * 300u;
     const uint32_t t_gap  = 700u;
     const uint32_t t_su   = (uint32_t)su * 300u;
@@ -2176,6 +2223,8 @@ static void LedFaseTick(size_t block_size, float sample_rate)
         quer = (t % 300u) < 150u;
     else if(t >= t_fa + t_gap && t < t_fa + t_gap + t_su)
         quer = ((t - t_fa - t_gap) % 300u) < 150u;
+    else if(!laco_vivo && t >= t_fa + t_gap + t_su)
+        quer = true;   // PAUSA LONGA ACESA = o laco parou de andar
     if(quer != aceso)
     {
         aceso = quer;
@@ -2200,6 +2249,69 @@ static void LedFaseTick(size_t block_size, float sample_rate)
 // ninguem a reinventar com o mesmo raciocinio.
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
+    // ⚠️ PRIMEIRA LINHA DO CALLBACK, e de proposito.
+    //
+    // A bandeira de erro da UART, se nao for limpa, faz a interrupcao
+    // reentrar sem fim: o tique para de andar, e TODA a espera da HAL
+    // passa a ser infinita — a do OLED por SPI e a do MIDI por UART. Foi
+    // isso que travou a placa em 01/09 com a linha de RX a flutuar, e o
+    // sitio da paragem MUDAVA (`2 e 6`, `2 e 8`, `1 e 5`) porque nao ha
+    // um ponto que pendura: ha uma CLASSE de pontos, todos com a mesma
+    // forma — bloqueante da HAL com tecto medido pelo tique.
+    //
+    // Aqui e nao no laco porque o laco e o que morre. Este callback e o
+    // unico que continua a andar, e foi ele que testemunhou a paragem
+    // pelo LED. Quem sobrevive a falha e quem a pode tratar.
+    cotuca::hal::MidiLimpaErroDoCallback();
+
+    // ---- VIGIA DO LACO: se ele parar, a placa reinicia-se ----
+    //
+    // ⚠️ REQUISITO DE CAMPO, e nao conveniencia de bancada. Sao pecas
+    // replicadas em serie, na ordem de centenas: ninguem vai estar ao
+    // lado de cada uma para carregar num botao quando a ponte tiver um
+    // solucao. Placa presa que so um dedo recupera nao e uma peca que
+    // se possa deixar sozinha.
+    //
+    // Vive AQUI porque este e o unico contexto que sobrevive ao laco
+    // preso — o mesmo que mantem o LED a piscar e que testemunhou a
+    // paragem. Duas comparacoes e uma escrita, sem espera.
+    //
+    // TRES SEGUNDOS: o laco sao ~20 000 voltas/s quando esta bem, e as
+    // pausas legitimas mais longas que se conhecem (gravacao do OLED,
+    // varredura de pinos) sao de milissegundos. Tres segundos nao apanha
+    // nenhuma delas e nao deixa o instrumento mudo mais que isso.
+    // ⚠️ O RELOGIO E FEITO DE AMOSTRAS, e NAO do `NowMs()`.
+    //
+    // A primeira versao disto usava `hal::NowMs()`, que e
+    // `System::GetNow()` -> `HAL_GetTick()` — exactamente o tique que eu
+    // tinha acabado de acusar de parar. Construi, na mesma sessao e no
+    // conserto do proprio defeito, o defeito que tinha nomeado: tecto
+    // medido pelo relogio de quem pode estar a ser esfomeado. O vigia
+    // nunca disparava.
+    //
+    // Aqui o tempo conta-se em AMOSTRAS que este callback ja processou.
+    // E um relogio feito da coisa que sobrevive: se ele nao anda, este
+    // codigo tambem nao corre, e a questao nao se poe. Foi assim que o
+    // LED conseguiu continuar a falar com o laco preso — e eu tinha o
+    // exemplo trinta linhas abaixo.
+    {
+        static uint32_t vig_voltas = 0, vig_amostras = 0;
+        if(loop_voltas != vig_voltas) { vig_voltas = loop_voltas; vig_amostras = 0; }
+        else
+        {
+            vig_amostras += (uint32_t)size;
+            // 1 s de audio. O laco sao ~20 000 voltas/s quando esta bem e
+            // as pausas legitimas mais longas sao de milissegundos: um
+            // laco que nao completa UMA volta num segundo e um
+            // instrumento morto, esteja preso ou so a arrastar-se.
+            // 48 000 amostras = 1 s. Literal e nao `sample_rate` porque
+            // este bloco corre ANTES de a taxa estar em ambito, e o valor
+            // e fixo neste projecto (ver `hal::Info().sample_rate`).
+            if(vig_amostras > 48000u)
+                cotuca::hal::ReiniciaAgora();
+        }
+    }
+
     const float level = params.Real(manifest.p_pre_level);
     const float mix   = params.Real(manifest.p_test_tone_level);
     // O balanco dos piezos saiu daqui no pivo de 20/08: ele agora mistura
@@ -5662,6 +5774,12 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRearmeSeguidos(),
                  hal::MidiRearmeSeguidos() >= 4
                      ? "  <- RECUO ACTIVO: a linha de RX esta morta" : "");
+        hal::Log("  erros de linha: %lu limpos (%lu/s agora) | receptor"
+                 " calado %lu vez(es)%s",
+                 (unsigned long)hal::MidiErrLimpos(),
+                 (unsigned long)hal::MidiErrTaxa(),
+                 (unsigned long)hal::MidiCalados(),
+                 hal::MidiErrTaxa() > 200u ? "  <- LINHA SUJA" : "");
         // FURO DO PollMidi, fechado com numero: os bytes entram por DMA
         // (imune a carga), mas quem despacha e o loop. A marca d'agua diz
         // quanta folga sobrou entre uma volta e outra.
@@ -6650,11 +6768,20 @@ int main(void)
             }
         }
 
-        SUB(6);   // MidiEspelha ENFILEIRA; o pump entrega por DMA
+        // ⚠️ DUAS CHAMADAS, DOIS CARIMBOS. O `SUB(6)` cobria as duas, e
+        //    quando o LED apontou 6 eu tratei-as como uma so — consertei
+        //    o pump, a placa continuou a travar, e a medicao seguinte
+        //    teria dito o mesmo `6`. O instrumento dava a rua; a porta
+        //    exigia mais um carimbo. Foi exactamente para isto que a
+        //    sub-fase nasceu (ver o cabecalho do `loop_sub`).
+        //
+        //    8 = dentro do MidiEspelha · 9 = dentro do MidiTxPump
+        SUB(8);
         MidiEspelha();   // LOOP, nunca callback — ver cabecalho
         // O PUMP LOGO A SEGUIR AO ESPELHO, e nao no fim da volta: assim
         // o que acabou de ser enfileirado sai nesta mesma passagem, e a
         // latencia do espelho nao ganha uma volta inteira de laco.
+        SUB(9);
         hal::MidiTxPump();
 
         SUB(7);   // veredito do sync, com LogAlways
