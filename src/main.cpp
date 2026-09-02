@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.255.0"
+#define COTUCA_OS_VERSION "0.256.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2028,6 +2028,26 @@ static volatile uint8_t loop_fase = 0;
 // aponta o inquilino, e nao a rua.
 static volatile uint8_t loop_sub = 0;
 
+// ⚠️ INSTANTANEO ATOMICO, e substitui a leitura das duas separadas.
+//
+// O `loop_fase` e o `loop_sub` sao escritos pelo laco a ~20 000 voltas/s e
+// lidos pelo callback de audio. Ler DUAS volateis nao e ler um par: o laco
+// avanca entre uma leitura e a outra, e o que sai pode ser uma combinacao
+// que o codigo NUNCA produz. Aconteceu em 01/09 — li `1 e 3`, que e
+// impossivel pela ordem das etapas, gastei uma analise inteira a
+// explica-lo, e fui procurar no sitio errado por causa dele.
+//
+// Uma palavra de 32 bits alinhada escreve-se com UM `STR`, e o compilador
+// nao pode partir um acesso `volatile`: o valor monta-se em registo e a
+// escrita na memoria e uma so. Entao o par sai sempre coerente.
+//
+// Formato:  [31:24] fase  ·  [23:16] sub  ·  [15:0] voltas do laco
+//
+// As voltas vao la dentro DE PROPOSITO: com elas, quem le sabe no mesmo
+// instantaneo se o laco andou desde a leitura anterior. Estado composto
+// vence estado esparso, e vence contagem.
+static volatile uint32_t loop_snap = 0;
+
 
 // ---- CTOS: WATCHDOG COM VETO (ver docs/CTOS.md §3) ----
 //
@@ -2206,8 +2226,11 @@ static void LedFaseTick(size_t block_size, float sample_rate)
     static uint32_t ciclo_ate = 0;
     if(!ciclo_ate || (int32_t)(ms - ciclo_ate) >= 0)
     {
-        fa_lat = loop_fase ? loop_fase : 7u;   // 7 = NUNCA ENTROU
-        su_lat = loop_sub  ? loop_sub  : 1u;
+        const uint32_t snap = loop_snap;       // UMA leitura, par coerente
+        const uint8_t  f = (uint8_t)(snap >> 24);
+        const uint8_t  u = (uint8_t)(snap >> 16);
+        fa_lat = f ? f : 7u;                   // 7 = NUNCA ENTROU
+        su_lat = u ? u : 1u;
         ciclo_ate = ms + (uint32_t)fa_lat * 300u + 700u
                        + (uint32_t)su_lat * 300u + 1800u;
     }
@@ -6335,10 +6358,16 @@ int main(void)
     // se le pela serial, e a serial morre junto com o loop: o dado
     // existia, o caminho ate ele e que estava morto.
     #define FASE(n) do { loop_fase = (uint8_t)(n); \
+                        loop_snap = ((uint32_t)(n) << 24) \
+                                  | ((uint32_t)loop_sub << 16) \
+                                  | (loop_voltas & 0xFFFFu); \
                         if(kDiagFull) cotuca::hal::BlackboxWrite(12, (float)(n)); } while(0)
     // SUB so tem sentido dentro da fase 2; a `FASE()` limpa-a ao sair,
     // senao um numero velho sobreviveria a mudanca de rua.
-    #define SUB(n) do { loop_sub = (uint8_t)(n); } while(0)
+    #define SUB(n) do { loop_sub = (uint8_t)(n); \
+                        loop_snap = ((uint32_t)loop_fase << 24) \
+                                  | ((uint32_t)(n) << 16) \
+                                  | (loop_voltas & 0xFFFFu); } while(0)
 
     while(1)
     {

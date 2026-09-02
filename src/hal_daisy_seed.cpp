@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.69.0
+// hal_daisy_seed v0.70.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.69.0"
+#define COTUCA_HAL_VERSION "0.70.0"
 
 using namespace daisy;
 
@@ -954,6 +954,35 @@ void SetMidiByteCallback(MidiByteCallback cb)
         Log("ERRO: UART MIDI nao inicializou (USART1 D13/D14)");
         return;
     }
+
+    // ---- PRIORIDADE DA USART1 ABAIXO DA DO SEU PROPRIO DMA ----
+    //
+    // ⚠️ LIDO NA FONTE DA libDaisy, nao deduzido: USART1, DMA1_Stream5,
+    //    DMA2_Stream4, SPI e USB sao TODOS postos em (0, 0).
+    //      src/per/uart.cpp:897 · src/sys/dma.c:32-35 · src/per/spi.cpp:992
+    //
+    // Prioridade IGUAL no Cortex-M nao permite preempcao: uma ISR em 0 nao
+    // pode ser interrompida por outra em 0. O `HAL_DMA_Abort_IT` que o HAL
+    // dispara ao tratar um erro em modo DMA e ASSINCRONO e completa na ISR
+    // do stream. Com a USART1 a reentrar sem parar, essa ISR nunca corre:
+    // o abort nunca completa, a UART fica em estado de abort, o
+    // `IsListening()` da falso para sempre e o rearme devolve BUSY.
+    //
+    // Nao e defeito que se veja hoje — o pull-up acima tirou a tempestade
+    // que o dispara. E condicao LATENTE, e fica corrigida por leitura e
+    // nao por sintoma: as fontes de erro que restam (ponte ligada a mandar
+    // lixo, baud errado, cabo comprido) sao de BAIXA taxa, e com baixa
+    // taxa o abort completa mesmo com a ordem plana — mas depender disso e
+    // depender da sorte.
+    //
+    // Baixo SO a USART1, para 1. Os streams de DMA ficam em 0 e passam a
+    // poder preemptar. O SAI do audio tambem fica em 0: continua acima de
+    // tudo isto, que e como tem de ser.
+    //
+    // ⚠️ SEM GATILHO ARTIFICIAL: o `pino 4 2` da ponte ja nao exercita
+    //    este caminho, porque o pull-up o matou. Isto e aceitavel porque o
+    //    caso morreu — seria inaceitavel se estivesse so a "sobreviver".
+    HAL_NVIC_SetPriority(USART1_IRQn, 1, 0);
 
     // ---- PULL-UP NO RX, E E ISTO QUE FAZ O CASO DEIXAR DE EXISTIR ----
     //
