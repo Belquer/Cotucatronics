@@ -1,4 +1,4 @@
-// splash v0.1.0 — a abertura: jogada de buzios, uma concha cresce, vira
+// splash v0.2.0 — a abertura: jogada de buzios, uma concha cresce, vira
 // marca, o nome entra letra a letra, a versao assina.
 //
 // C++ PURO. Nao inclui hal, nao toca em periferico, nao dorme. Quem chama
@@ -15,15 +15,24 @@
 
 namespace cotuca { namespace splash {
 
-#define COTUCA_SPLASH_VERSION "0.1.0"
+#define COTUCA_SPLASH_VERSION "0.2.0"
 
 static const int kBuzios = 16;
 
 // ---- linha do tempo, em quadros a 20 Hz ----
 // Completo: 50 quadros = 2,50 s. Curto: 12 quadros = 0,60 s.
 struct Tempo { int jogada, cresce, nome, fim; };
-static const Tempo kCheio = { 30, 39, 45, 50 };
-static const Tempo kCurto = {  0,  5, 10, 12 };
+
+// ABERTURA: so no arranque. 50 quadros = 2,50 s.
+static const Tempo kAbertura = { 30, 39, 45, 50 };
+
+// JOGADA: quando os BUZIOS DISPARAM de verdade. Termina onde a jogada
+// assenta — sem concha a crescer, sem marca, sem nome. O ecra mostra a
+// jogada que o instrumento acabou de fazer, e nao a sua assinatura.
+//
+// Com `jogada == fim`, o ramo da marca nunca corre: nao ha bandeira nova
+// a testar dentro do desenho, so uma linha do tempo que acaba mais cedo.
+static const Tempo kJogada = { 30, 30, 30, 30 };
 
 class Splash
 {
@@ -31,9 +40,9 @@ class Splash
     // Semente vem do gerador de buzios do proprio instrumento: cada
     // arranque e uma jogada diferente, e nao um enfeite pseudo-aleatorio
     // que e sempre o mesmo.
-    void Comeca(uint32_t semente, bool curto = false)
+    void Comeca(uint32_t semente, bool so_jogada = false)
     {
-        t_      = curto ? kCurto : kCheio;
+        t_      = so_jogada ? kJogada : kAbertura;
         rng_    = semente ? semente : 0x1F35Cu;
         quadro_ = 0;
         ativo_  = true;
@@ -162,7 +171,7 @@ class Splash
     static const int  kNomeLen = 13;
     static constexpr const char* kNome = "COTUCATRONICS";
 
-    Tempo    t_       = kCheio;
+    Tempo    t_       = kAbertura;
     Buzio    bz_[kBuzios] = {};
     uint32_t rng_     = 0x1F35Cu;
     int      quadro_  = 0;

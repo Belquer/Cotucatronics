@@ -83,10 +83,30 @@ não foi medido** e fica declarado como desconhecido.
    já girado e são genuinamente diferentes.
 2. **Faltam 7% de base do laço.** O `noinline` recuperou 8 dos 13 pontos
    perdidos; os outros não têm explicação e não são arredondamento.
-3. **A abertura do despertar tem um conflito por decidir.** Doze quadros ao
-   acordar põem 0,6 s entre o gesto e a resposta do painel — e foram cinco
-   iterações a afinar essa resposta para ser imediata. Ou o painel é rápido,
-   ou tem abertura. **Decisão do dB, não implementada.**
+3. ~~A abertura do despertar~~ — **RESOLVIDO pelo dB em 01/09**, e a decisão
+   deu à animação um emprego melhor do que enfeite. Ver abaixo.
+
+### A decisão do dB: três estados, e a jogada passa a ser instrumento
+
+> *"a abertura corre quando ligo o aparelho · o oled funciona normalmente como
+> tínhamos estabelecido para os presets, sem a abertura · quando ativarmos os
+> búzios a animação volta mas sem a logo"*
+
+| quando | o que o vidro mostra |
+|---|---|
+| Arranque | **abertura completa** — jogada, marca, nome, versão (50 quadros) |
+| Uso normal | o painel de presets, **imediato**, sem animação nenhuma |
+| Búzios disparam | **só a jogada** — 30 quadros, sem concha a crescer, sem marca |
+
+A terceira é a que muda a natureza da coisa: **a jogada no vidro é a jogada que
+o instrumento acabou de fazer.** Deixa de ser decoração e passa a ser mostrador.
+
+Segue o `buzios_on` que já governa o sorteio — **sem parâmetro novo**, porque um
+interruptor próprio seria um segundo sítio onde a mesma decisão mora, e os dois
+divergiriam. Disparo novo a meio da animação **reinicia**: são duas jogadas, e a
+segunda não espera pela primeira. No fim devolve o vidro a quem o tinha, e o
+`splash curto` de 12 quadros **foi removido** — existia para o despertar, que
+acabou de ser cancelado.
 
 **Ainda por fazer, pedido e não feito:** medir o espectro do ruído a 7040 Hz
 **antes e depois** com o framebuffer a 20 Hz, mesma posição, mesma alternância.

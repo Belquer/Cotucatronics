@@ -100,6 +100,27 @@ tocando. Se a decisão for deixar zerado (teste seco, por exemplo), **dizer
 isso também** — silêncio deliberado e silêncio acidental são indistinguíveis
 do outro lado.
 
+## 2d. IDENTIFIQUE A PLACA PELA RESPOSTA, NUNCA PELO NOME DA PORTA
+
+Com duas placas na USB, o seletor por nome (`if '11201' not in x`) é uma aposta
+em como o sistema operativo vai enumerar hoje. Em 01/09 a ESP32 apareceu como
+`usbmodem101`, passou o filtro, e **ficou em primeiro na ordem alfabética**:
+cinco comandos de configuração foram para a ponte BLE.
+
+```python
+# a porta certa é a que RESPONDE
+for p in sorted(glob.glob('/dev/cu.usbmodem*')):
+    s = serial.Serial(p, 115200, timeout=1); time.sleep(0.8)
+    s.write(b'board\n'); time.sleep(1.0)
+    if 'Cotucatronics OS' in s.read(300).decode('utf8','replace'):
+        return s
+```
+
+E o agravante não foi o seletor, foi o relatório: o script imprimia
+`notches repostos: ...` **incondicionalmente**, então dizia a mesma coisa quer
+tivesse funcionado quer não. **Script auxiliar de bancada obedece à mesma regra
+que o firmware: não se imprime "feito", imprime-se a leitura de volta.**
+
 ## 3. SAÍDA DE FERRAMENTA ≠ CONFIRMAÇÃO DE INTENÇÃO
 
 São confirmações **diferentes**, e cada uma cobre só o seu pedaço:

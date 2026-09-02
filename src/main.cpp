@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.241.2"
+#define COTUCA_OS_VERSION "0.242.1"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -732,6 +732,16 @@ static inline bool NaJanela(int param, uint32_t agora)
 //
 // Este atributo e o unico delta entre os dois builds medidos.
 __attribute__((noinline)) static void PassoDaAbertura();
+
+// Invalida a memoria do refrescamento SEM acordar nada.
+//
+// O `AcendePainel` faz isto E acende E adia o sono, que e o que se quer
+// num gesto do encoder. Depois de uma jogada de buzios nao se quer nada
+// disso: o painel volta ao estado em que estava, e so precisa de ser
+// redesenhado porque a animacao escreveu por cima. Reusar o `AcendePainel`
+// aqui acenderia um painel que estava a dormir — a cada disparo, e ao
+// preco de 6 dB de chao de ruido.
+static void ForcaRedesenhoDoPainel();
 
 static void AcendePainel()
 {
@@ -2049,6 +2059,17 @@ static uint32_t splash_prox     = 0;
 static uint32_t splash_apaga_em = 0;
 static const uint32_t kSplashMs   = 50;    // 20 Hz — medido a 3811 us/quadro
 static const uint32_t kSplashHold = 2000;  // segura a marca, depois apaga
+// A jogada dos buzios NAO e a abertura: acaba onde as conchas assentam, e
+// devolve o vidro a quem o tinha. Por isso preciso de saber o que la
+// estava antes — restaurar as cegas apagaria o painel de presets.
+static bool     splash_jogada     = false;
+static bool     splash_tinha_tela = false;
+
+static void ForcaRedesenhoDoPainel()
+{
+    for(int e = 0; e < cotuca::hal::kNumEncoders; e++) enc_tela_ant[e][0] = '\0';
+    enc_tela_prox = cotuca::hal::NowMs();
+}
 
 __attribute__((noinline)) static void PassoDaAbertura()
 {
@@ -2059,8 +2080,18 @@ __attribute__((noinline)) static void PassoDaAbertura()
     cotuca::hal::OledDesenha(oled_fb);
     if(!abertura.Ativo())
     {
-        splash_ativo    = false;
-        splash_apaga_em = ag + kSplashHold;
+        splash_ativo = false;
+        if(splash_jogada)
+        {
+            // A jogada devolve o vidro NA HORA — ja segurou 0,45 s de
+            // conchas assentes dentro da propria animacao, e o painel de
+            // presets nao pode ficar 2 s fora do ar por causa de um
+            // disparo. A abertura e que segura a marca.
+            splash_jogada = false;
+            if(splash_tinha_tela) ForcaRedesenhoDoPainel();
+            else                  cotuca::hal::OledPreenche(false);
+        }
+        else splash_apaga_em = ag + kSplashHold;
     }
 }
 static bool     oled_bench_on   = false;
@@ -3739,16 +3770,26 @@ static void HandleLine(const char* line)
     {
         if(!hal::OledConfigurado() && !hal::OledInit())
         { hal::Log("splash: painel nao inicializa"); return; }
-        const bool curto = strstr(line, "curto") != nullptr;
-        enc_na_tela     = false;      // o painel de texto nao disputa o vidro
+        // "curto" foi-se: existia para a abertura do despertar, e o dB
+        // decidiu que o painel acorda IMEDIATO, sem animacao. Codigo que
+        // servia uma decisao revogada nao fica a espera de voltar a ser
+        // util — battle_scars: se nao soa, nao fica.
+        const bool jogada = strstr(line, "jogada") != nullptr;
+        // ⚠️ NAO se mexe no `enc_na_tela` aqui. Escrever `false` desligava
+        // o painel de presets PARA SEMPRE, quando a intencao era so nao
+        // disputar o vidro durante a animacao — e disso ja trata o
+        // `!splash_ativo &&` no refrescamento. Suspender e desligar sao
+        // coisas diferentes, e eu escrevi a segunda a querer a primeira.
+        splash_tinha_tela = enc_na_tela;
         oled_bench_on   = false;
         splash_apaga_em = 0;
         abertura.Versao("v" COTUCA_OS_VERSION);
-        abertura.Comeca(rng_state, curto);
-        splash_ativo = true;
-        splash_prox  = hal::NowMs();
+        abertura.Comeca(rng_state, jogada);
+        splash_jogada = jogada;
+        splash_ativo  = true;
+        splash_prox   = hal::NowMs();
         hal::Log("splash: %s, %d quadros a %lu Hz (~%.2f s), semente %08lX",
-                 curto ? "curto" : "cheio", abertura.Quadros(),
+                 jogada ? "so a jogada" : "abertura", abertura.Quadros(),
                  (unsigned long)(1000u / kSplashMs),
                  abertura.Quadros() * (kSplashMs / 1000.f),
                  (unsigned long)rng_state);
@@ -5668,7 +5709,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [curto] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -6416,7 +6457,12 @@ int main(void)
         if(splash_apaga_em && (int32_t)(hal::NowMs() - splash_apaga_em) >= 0)
         {
             splash_apaga_em = 0;
-            if(!enc_na_tela) hal::OledPreenche(false);
+            // ⚠️ COM O PAINEL LIGADO, APAGAR NAO CHEGA: o refrescamento so
+            // escreve quando o conteudo MUDA, e nada mudou enquanto a
+            // abertura corria — a marca ficaria no vidro para sempre. E a
+            // mesma armadilha que ja tinha impedido o painel de acender.
+            if(splash_tinha_tela) ForcaRedesenhoDoPainel();
+            else                  hal::OledPreenche(false);
         }
         // ---- BANCO DE ENSAIO: um quadro por periodo, sem delay ----
         if(!splash_ativo && oled_bench_on)
@@ -6677,6 +6723,24 @@ int main(void)
                 static uint32_t consumidos = 0;
                 hal::BlackboxWrite(11, (float)++consumidos);
                 TriggerRandomize(true);
+
+                // A JOGADA NO VIDRO E A JOGADA QUE ACABOU DE ACONTECER.
+                //
+                // Sem parametro novo: segue o `buzios_on` que ja governa o
+                // sorteio. Um interruptor proprio seria um segundo sitio
+                // onde a mesma decisao mora, e os dois divergiam.
+                //
+                // Disparo novo a meio da animacao REINICIA — sao duas
+                // jogadas, e a segunda nao espera pela primeira.
+                if(hal::OledConfigurado())
+                {
+                    if(!splash_ativo) splash_tinha_tela = enc_na_tela;
+                    abertura.Comeca(rng_state, true);
+                    splash_jogada   = true;
+                    splash_ativo    = true;
+                    splash_apaga_em = 0;
+                    splash_prox     = hal::NowMs();
+                }
             }
         }
 

@@ -6233,3 +6233,49 @@ existia por outro motivo**. Eu media o custo do painel, tinha o numero de ontem 
 mesma sessao, e a comparacao ofereceu-se sozinha. Medicao guardada apanha
 regressao que ninguem foi procurar.
 
+---
+
+## 15ax. Nome de porta nao e identidade: cinco comandos foram para a ponte enquanto eu anunciava que tinham sido aplicados (01/09)
+
+O meu seletor de porta serial era este, ha semanas:
+
+```python
+[x for x in glob.glob('/dev/cu.usbmodem*') if '11201' not in x]
+```
+
+Exclusao por nome. Funcionou enquanto a ESP32 enumerou como `usbmodem11201`.
+Nesse dia enumerou como **`usbmodem101`**, passou o filtro, e ficou em primeiro
+lugar na ordem alfabetica.
+
+Mandei `board` e cinco `set` de notch. Todos foram para a **ponte BLE**. E eu
+imprimi, na mesma corrida:
+
+```
+notches repostos: 770/834 Hz a 15 dB, cadeia A
+```
+
+**Um `print` meu, incondicional, a narrar uma accao que nunca aconteceu.** Nao
+havia bug de firmware nenhum: havia uma afirmacao minha sem verificacao por
+tras. Se a linha anterior nao tivesse por acaso imprimido `ponte v0.5.0`, eu
+teria seguido a sessao inteira convencido de que os notches estavam la.
+
+O conserto tem duas partes, e a segunda importa mais:
+
+1. **Identificar pela RESPOSTA, nao pelo nome.** A porta certa e aquela que
+   responde `Cotucatronics OS` ao `board`. Nome de dispositivo e uma etiqueta
+   que o sistema operativo atribui; identidade e o que o outro lado diz ser.
+
+2. **Nao imprimir "feito" — imprimir o que foi LIDO DE VOLTA.** Trocado por
+   `notch` e as quatro linhas que ele devolve, a mesma sessao passou a mostrar
+   `boca 1: 770.0 Hz | 15.0 dB (a cortar)`, que e a placa a confirmar, e nao eu
+   a afirmar.
+
+> **Toda linha de relatorio que diz "apliquei" tem de citar a leitura de volta,
+> ou nao pode ser escrita.** Isto ja esta na skill `instrumentacao` — e eu
+> violei-a num `print` de script auxiliar, que e onde a regra parece nao valer
+> por o codigo ser "so de bancada". Vale igual: o relatorio e o mesmo.
+
+Nota de familia: e o mesmo defeito da **15av** (o teste cuja falha se parecia
+com o sucesso) noutro suporte. La era o olho que nao distinguia; aqui era o meu
+proprio `print`, que dizia a mesma coisa quer tivesse funcionado quer nao.
+
