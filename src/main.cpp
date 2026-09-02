@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.242.1"
+#define COTUCA_OS_VERSION "0.243.1"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -732,6 +732,7 @@ static inline bool NaJanela(int param, uint32_t agora)
 //
 // Este atributo e o unico delta entre os dois builds medidos.
 __attribute__((noinline)) static void PassoDaAbertura();
+__attribute__((noinline)) static void ColheEntropia();
 
 // Invalida a memoria do refrescamento SEM acordar nada.
 //
@@ -2058,7 +2059,26 @@ static bool     splash_ativo    = false;
 static uint32_t splash_prox     = 0;
 static uint32_t splash_apaga_em = 0;
 static const uint32_t kSplashMs   = 50;    // 20 Hz — medido a 3811 us/quadro
-static const uint32_t kSplashHold = 2000;  // segura a marca, depois apaga
+static const uint32_t kSplashHold = 3000;  // segura a marca, depois apaga
+// COLHEITA DE ENTROPIA, antes de semear a jogada de arranque.
+//
+// O `rng_state` dos buzios vale 0 no arranque (so gira dentro do laco), e
+// o relogio no boot varia pouco — a jogada saia quase sempre igual. Estes
+// 150 ms colhem ruido do ADC, que e fisico e ja foi MEDIDO: ~119 contagens
+// de 65535 nos pots. A ~20 000 voltas/s sao alguns milhares de amostras.
+//
+// O ecra fica preto durante a colheita, e o primeiro quadro da jogada e
+// preto de qualquer forma.
+static const uint32_t kColheitaMs  = 150;
+static uint32_t splash_semeia_em   = 0;
+static uint32_t ent_acc            = 0;
+static uint32_t ent_ant            = 0;
+static uint32_t ent_distintas      = 0;
+// ⚠️ GEMEO CONSULTAVEL do aviso de arranque (regra 2 da bancada-firmware).
+// A linha da abertura sai 150 ms depois do StartAudio, e o `reboot` derruba
+// a USB: quem reconecta a seguir NUNCA a ve. Entao a semente e a qualidade
+// da entropia ficam guardadas e saem no `board`, a qualquer momento.
+static uint32_t splash_semente     = 0;
 // A jogada dos buzios NAO e a abertura: acaba onde as conchas assentam, e
 // devolve o vidro a quem o tinha. Por isso preciso de saber o que la
 // estava antes — restaurar as cegas apagaria o painel de presets.
@@ -2069,6 +2089,15 @@ static void ForcaRedesenhoDoPainel()
 {
     for(int e = 0; e < cotuca::hal::kNumEncoders; e++) enc_tela_ant[e][0] = '\0';
     enc_tela_prox = cotuca::hal::NowMs();
+}
+
+// `noinline` pela mesma razao do `PassoDaAbertura` — ver 15aw. Isto corre
+// 150 ms por arranque e nao pode inchar a funcao quente para sempre.
+__attribute__((noinline)) static void ColheEntropia()
+{
+    const uint32_t e = cotuca::hal::EntropiaAdc();
+    if(e != ent_ant) { ent_distintas++; ent_ant = e; }
+    ent_acc = ent_acc * 1664525u + e + 1013904223u;
 }
 
 __attribute__((noinline)) static void PassoDaAbertura()
@@ -4369,6 +4398,9 @@ static void HandleLine(const char* line)
                      ? "configurado (D5 D6 D7 D8 D10) — presenca NAO e"
                        " verificavel: o painel nunca responde"
                      : "nao configurado ainda — `oled` inicializa e acende");
+        hal::Log("abertura: semente %08lX · %lu leituras distintas do ADC%s",
+                 (unsigned long)splash_semente, (unsigned long)ent_distintas,
+                 ent_distintas < 8 ? "  <- ENTROPIA FRACA" : "");
         if(hal::SerialTruncadas())
             hal::Log("serial: %lu linha(s) RECUSADA(S) por passar de %d chars"
                      " — comando pela metade nao e comando",
@@ -6078,11 +6110,9 @@ int main(void)
     // voltas, e ai a jogada e diferente de cada vez.
     if(hal::OledConfigurado() || hal::OledInit())
     {
-        rng_state += 0x9E3779B9u ^ hal::NowTicks();
         abertura.Versao("v" COTUCA_OS_VERSION);
-        abertura.Comeca(rng_state, false);
-        splash_ativo = true;
-        splash_prox  = hal::NowMs();
+        splash_semeia_em = hal::NowMs() + kColheitaMs;
+        if(!splash_semeia_em) splash_semeia_em = 1u;   // 0 significa "feito"
     }
 
     // Tick de ~1 ms. Nada de bloqueio longo aqui: o serial responde na
@@ -6450,6 +6480,29 @@ int main(void)
 
         SUB(5);   // OLED por SPI
         // ---- A ABERTURA: um quadro por periodo, NUNCA um laco de espera ----
+        if(splash_semeia_em)
+        {
+            ColheEntropia();
+            if((int32_t)(hal::NowMs() - splash_semeia_em) >= 0)
+            {
+                splash_semeia_em = 0;
+                rng_state ^= ent_acc ^ hal::NowTicks();
+                splash_semente = rng_state;
+                abertura.Comeca(rng_state, false);
+                splash_ativo = true;
+                splash_prox  = hal::NowMs();
+                // ⚠️ A QUALIDADE DA ENTROPIA E DITA, nao presumida. Se o
+                // ADC estiver morto, `EntropiaAdc` devolve 0 sempre e
+                // `distintas` fica em 1 — e a linha denuncia-o, em vez de
+                // eu jurar que a jogada e diferente de cada vez.
+                hal::Log("abertura: semente %08lX · %lu leituras distintas"
+                         " do ADC em %lu ms%s",
+                         (unsigned long)rng_state,
+                         (unsigned long)ent_distintas,
+                         (unsigned long)kColheitaMs,
+                         ent_distintas < 8 ? "  <- ENTROPIA FRACA" : "");
+            }
+        }
         if(splash_ativo) PassoDaAbertura();
         // A marca fica no vidro, e depois APAGA. Painel aceso custa 6 dB de
         // chao de ruido (medido) — deixar a assinatura acesa para sempre

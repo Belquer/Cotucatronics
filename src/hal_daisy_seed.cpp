@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.61.0
+// hal_daisy_seed v0.62.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.61.0"
+#define COTUCA_HAL_VERSION "0.62.0"
 
 using namespace daisy;
 
@@ -491,6 +491,32 @@ bool KnobInvertido(int index)
 }
 
 bool AdcConfigurado() { return adc_pronto; }
+
+// ENTROPIA FISICA, e SO ela — sem relogio misturado aqui de proposito.
+//
+// Quem chama tem de poder perguntar "o ADC esta mesmo a variar?", e isso
+// so se responde se o que sai daqui for exclusivamente ADC. Misturar o
+// contador de ciclos tornaria o valor sempre diferente, e a variacao
+// deixaria de dizer se o conversor esta vivo — mediria o relogio.
+//
+// O ruido e real e ja foi medido: 0,23 passos de 127 nos pots, que sao
+// ~119 contagens de 65535. Os bits baixos da mantissa mexem sozinhos.
+//
+// Devolve 0 se o ADC nao estiver pronto: zero e a resposta honesta de
+// "nao sei", e quem chama que decida.
+uint32_t EntropiaAdc()
+{
+    if(!adc_pronto) return 0;
+    uint32_t e = 0;
+    for(int k = 0; k < 2; k++)
+    {
+        const float v = ReadKnobCru(k);
+        uint32_t     b;
+        memcpy(&b, &v, sizeof(b));
+        e = (e << 16) ^ (e >> 16) ^ b;
+    }
+    return e;
+}
 
 // ---- SONDA DE PINO DO ADC: solto ou ligado? ----
 //

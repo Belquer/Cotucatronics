@@ -81,6 +81,10 @@ bool             KnobInvertido(int index);
 // onde ele de facto para — a correcao dos batentes apaga a evidencia
 // dela propria, e correcao que nao se pode conferir vira folclore.
 float            ReadKnobCru(int index);
+
+// Entropia FISICA do conversor, sem relogio misturado — para quem chama
+// poder medir se o ADC esta mesmo a variar. 0 = ADC nao pronto.
+uint32_t         EntropiaAdc();
 // Diz se cada pino do ADC esta SOLTO (segue o pull interno) ou LIGADO a
 // uma fonte de impedancia baixa. Mata o ADC ate um reboot — sao os mesmos
 // pinos. Ver o cabecalho no .cpp.

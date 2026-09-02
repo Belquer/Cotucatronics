@@ -76,11 +76,19 @@ não foi medido** e fica declarado como desconhecido.
 
 **Três dívidas abertas, escritas como dívidas:**
 
-1. **A semente da jogada de arranque é fraca.** O `rng_state` dos búzios só
-   gira dentro do laço, e no boot o laço ainda não deu volta nenhuma: vale
-   zero. Semeio do relógio, que varia pouco — **a jogada de arranque vai ser
-   quase sempre a mesma**. As do `splash` e do despertar apanham o `rng_state`
-   já girado e são genuinamente diferentes.
+1. ~~A semente da jogada de arranque é fraca~~ — **PAGA em 01/09.** A jogada
+   passou a ser semeada do **ruído do próprio ADC**, colhido durante 150 ms
+   antes de a animação começar. Quatro arranques deram `AB25A781`, `771E58D9`,
+   `6E671930`, `190173E9` — e **917 leituras distintas** do conversor em cada
+   colheita. Esse número tem sentido físico: 917 em 150 ms são **6 113 Hz**,
+   a taxa de conversão do ADC. É a melhor prova de que a entropia é real e não
+   fabricada — bate com um relógio de hardware que ninguém escolheu.
+
+   A qualidade **é dita, não presumida**: `board` imprime a semente e a
+   contagem, e grita `<- ENTROPIA FRACA` se cair abaixo de 8 leituras
+   distintas (que é o que aconteceria se o ADC estivesse morto). Gémeo
+   consultável, porque a linha de arranque sai 150 ms depois do `StartAudio`
+   e o `reboot` derruba a USB — quem reconecta a seguir nunca a veria.
 2. **Faltam 7% de base do laço.** O `noinline` recuperou 8 dos 13 pontos
    perdidos; os outros não têm explicação e não são arredondamento.
 3. ~~A abertura do despertar~~ — **RESOLVIDO pelo dB em 01/09**, e a decisão
@@ -94,7 +102,7 @@ não foi medido** e fica declarado como desconhecido.
 
 | quando | o que o vidro mostra |
 |---|---|
-| Arranque | **abertura completa** — jogada, marca, nome, versão (50 quadros) |
+| Arranque | **abertura completa** — jogada, marca, nome, versão (50 quadros), e a marca fica **3 s** no vidro |
 | Uso normal | o painel de presets, **imediato**, sem animação nenhuma |
 | Búzios disparam | **só a jogada** — 30 quadros, sem concha a crescer, sem marca |
 
