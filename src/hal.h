@@ -367,6 +367,9 @@ uint32_t         MidiRestarts();
 // Rearmes CONSECUTIVOS sem a escuta pegar. >= 4 significa que o recuo
 // esta activo, ou seja: a linha de RX esta morta.
 uint32_t         MidiRearmeSeguidos();
+// Falso = o agrupamento de prioridades NAO e o assumido, e a prioridade
+// posta na USART1 nao preempta nada. Ver o comentario no Init do MIDI.
+bool             NvicGrupoOk();
 
 // Reinicio duro, igual ao botao de RESET. Nao vai para o DFU.
 // Usado pelo vigia de laco, que vive no callback de audio.

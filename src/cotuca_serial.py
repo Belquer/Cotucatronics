@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_serial v0.2.0 — monitor/tester serial do Cotucatronics OS.
+"""cotuca_serial v0.3.0 — monitor/tester serial do Cotucatronics OS.
 
 Sem dependencias externas (nada de pyserial): fala direto com o tty
 via stty + file descriptor, que e o suficiente pra USB CDC da Daisy.
@@ -10,7 +10,7 @@ Uso:
     ./cotuca_serial.py --port /dev/cu.usbmodemXXXX --listen 5
 """
 
-VERSION = "0.2.0"
+VERSION = "0.3.0"
 
 import argparse
 import glob
@@ -22,6 +22,25 @@ import threading
 import time
 
 BAUD = 115200
+
+
+# ⚠️ REGIME DE VALIDADE DESTE SONDADOR, e ele recusa julgar fora dele.
+#
+# A placa tem um vigia no callback de audio que a REINICIA se o laco nao
+# completar uma volta em 48 000 amostras (1 s). Somando o arranque, ha uma
+# janela em que ela esta viva e nao responde — porque esta a reiniciar.
+#
+# Um sondador com janela menor que (vigia + arranque) pode SEMPRE dizer
+# "muda" a uma placa viva. Aconteceu tres vezes em 01-02/09, e uma delas
+# quase me fez reportar como morta uma placa que estava a recuperar
+# sozinha, que era exactamente o comportamento desejado.
+#
+# Entao a janela minima e essa soma, e o veredicto passa a ter tres
+# valores em vez de dois: RESPONDE · REINICIOU E VOLTOU · MUDA. O do meio
+# e informacao, nao ruido.
+VIGIA_S    = 1.0     # o vigia dispara em 48 000 amostras
+ARRANQUE_S = 8.0     # medido: RESET ate responder ao `board`
+JANELA_MIN = VIGIA_S + ARRANQUE_S
 
 
 def find_port(quieto=False):

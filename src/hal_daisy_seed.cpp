@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.70.0
+// hal_daisy_seed v0.71.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.70.0"
+#define COTUCA_HAL_VERSION "0.71.0"
 
 using namespace daisy;
 
@@ -885,6 +885,9 @@ static volatile uint32_t midi_err      = 0; // erros de UART na ISR
 // defeito, nao o conserto.
 static uint32_t midi_rearme_em       = 0;   // proximo instante permitido
 static uint32_t midi_rearme_seguidos = 0;   // falhas consecutivas
+// Agrupamento de prioridades conferido no Init do MIDI. Falso = o
+// `SetPriority` acima nao preempta nada e o conserto e um no-op.
+static bool     nvic_grupo_ok        = false;
 // (os contadores do teto de erros sairam com o teto — 01/09)
 static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
 // MARCA D'AGUA DA FILA. O furo conhecido do MIDI: os bytes chegam por
@@ -982,6 +985,20 @@ void SetMidiByteCallback(MidiByteCallback cb)
     // ⚠️ SEM GATILHO ARTIFICIAL: o `pino 4 2` da ponte ja nao exercita
     //    este caminho, porque o pull-up o matou. Isto e aceitavel porque o
     //    caso morreu — seria inaceitavel se estivesse so a "sobreviver".
+    // ⚠️ ESTE `1` SO PREEMPTA DENTRO DO AGRUPAMENTO CERTO.
+    //
+    // `HAL_NVIC_SetPriority(irq, 1, 0)` poe preempcao 1 SE houver bits de
+    // preempcao. Com `NVIC_PRIORITYGROUP_4` (4 de preempcao, 0 de sub) ha;
+    // com um agrupamento que gaste os bits em subprioridade, o `1` vira
+    // SUBprioridade e nao preempta coisa nenhuma — o conserto seria um
+    // no-op silencioso, com ar de feito.
+    //
+    // Lido em 02/09: `HAL_Init` poe GROUP_4
+    // (Drivers/.../stm32h7xx_hal.c:147) e ninguem na libDaisy nem aqui
+    // volta a chamar `SetPriorityGrouping`. Mas leitura de hoje nao e
+    // garantia de amanha, entao a placa CONFERE e grita — a prioridade so
+    // vale dentro do agrupamento, e verificacao so absolve no seu dominio.
+    nvic_grupo_ok = (HAL_NVIC_GetPriorityGrouping() == NVIC_PRIORITYGROUP_4);
     HAL_NVIC_SetPriority(USART1_IRQn, 1, 0);
 
     // ---- PULL-UP NO RX, E E ISTO QUE FAZ O CASO DEIXAR DE EXISTIR ----
@@ -1056,6 +1073,7 @@ bool MidiRestart()
 uint32_t MidiErrors() { return midi_err; }
 uint32_t MidiRestarts() { return midi_restarts; }
 uint32_t MidiRearmeSeguidos() { return midi_rearme_seguidos; }
+bool     NvicGrupoOk()        { return nvic_grupo_ok; }
 
 // Reinicio duro. NAO e o DFU: e o mesmo que o botao de RESET faz.
 // Chamado pelo vigia de laco, que vive no callback de audio — o unico

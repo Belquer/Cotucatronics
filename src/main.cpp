@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.256.0"
+#define COTUCA_OS_VERSION "0.257.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -5802,6 +5802,10 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRearmeSeguidos(),
                  hal::MidiRearmeSeguidos() >= 4
                      ? "  <- RECUO ACTIVO: a linha de RX esta morta" : "");
+        if(!hal::NvicGrupoOk())
+            hal::Log("  ⚠️ AGRUPAMENTO NVIC INESPERADO — a prioridade posta"
+                     " na USART1 NAO preempta: o abort do DMA pode nao"
+                     " completar sob rajada de erros");
         // (a linha "erros de linha" saiu com os contadores que a
         //  alimentavam — leitor sem escritor imprime zero para sempre, e
         //  zero com cara de dado e o defeito do dia)
