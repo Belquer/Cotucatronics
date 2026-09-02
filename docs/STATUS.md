@@ -6,7 +6,14 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-09-02 · leva: **o travamento com a ponte, fechado na
+> Atualizado em 2026-09-02 (fim do dia) · leva: **a marca da abertura
+> encolhida e subida** a pedido do dB — folga de 3 para 6 linhas até ao
+> nome · o **PS_2 medido** e o mapa do prescaler fechado · o **espectro a
+> 7 kHz** medido (o framebuffer não lhe mexe, mas o chão de banda larga
+> sobe 5,4/6,9 dB) · **20 órfãos da caixa-preta a 0** · e todos os
+> verificadores a zero
+>
+> Antes, 2026-09-02 · leva: **o travamento com a ponte, fechado na
 > raiz** — faltava um `GPIO_PULLUP` no RX do MIDI · **vigia de laço** que
 > reinicia a placa sozinha · **caixa-preta consertada**: 20 órfãos e uma
 > colisão de endereços · e a regra que organiza o resto, **15az**

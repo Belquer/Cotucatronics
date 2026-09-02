@@ -1,4 +1,4 @@
-// splash v0.2.0 — a abertura: jogada de buzios, uma concha cresce, vira
+// splash v0.3.0 — a abertura: jogada de buzios, uma concha cresce, vira
 // marca, o nome entra letra a letra, a versao assina.
 //
 // C++ PURO. Nao inclui hal, nao toca em periferico, nao dorme. Quem chama
@@ -15,7 +15,7 @@
 
 namespace cotuca { namespace splash {
 
-#define COTUCA_SPLASH_VERSION "0.2.0"
+#define COTUCA_SPLASH_VERSION "0.3.0"
 
 static const int kBuzios = 16;
 
@@ -79,14 +79,21 @@ class Splash
             // vidro tambem e um so movimento
             const int   d = t_.cresce - t_.jogada;
             const float p = d > 0 ? Clamp01((float)(f - t_.jogada) / (float)d) : 1.f;
-            const int   ra = 6  + (int)(24.f * p + 0.5f);
-            const int   rb = 4  + (int)( 9.f * p + 0.5f);
+            // ⚠️ MEDIDO EM PIXEIS, e nao a olho. Com ra=30/rb=13 e cy=20
+            //    o anel exterior (ra+5, rb+4) acabava em y=37 e o nome
+            //    comeca em y=40: TRES pixeis de folga, e a marca colava-se
+            //    as letras. Pedido do dB em 02/09.
+            //
+            //    Agora ra=26/rb=11 -> anel em (31,15), centro em cy=17:
+            //    a marca ocupa y=2..32 e a folga passa a OITO pixeis.
+            const int   ra = 6  + (int)(20.f * p + 0.5f);
+            const int   rb = 4  + (int)( 7.f * p + 0.5f);
             // A que cresce e UMA DAS QUE CAIRAM — parte de onde o
             // buzio 0 pousou e sobe ao centro. Nascer no meio do nada
             // seria outra concha, e a jogada deixava de ter consequencia.
             const int   x0 = bz_[0].xf, y0 = bz_[0].yf;
             const int   cx = x0 + (int)((64 - x0) * p);
-            const int   cy = y0 + (int)((20 - y0) * p);
+            const int   cy = y0 + (int)((17 - y0) * p);
             Concha(fb, cx, cy, ra, rb, true);
 
             if(f >= t_.cresce)

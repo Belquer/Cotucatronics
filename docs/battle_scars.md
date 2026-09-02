@@ -6687,3 +6687,94 @@ Conserto no instrumento, para nao depender de eu me lembrar: o `oledbench`
 DECLARA quando e a primeira corrida desde o arranque, e diz que aquilo e
 aquecimento e nao base.
 
+---
+
+## 15bf. Consertei metade do ficheiro, e o grep com que declarei o resto limpo nao podia casar (02/09)
+
+O dB perguntou se sobrava algum bug. Fui **correr** o `flash.sh` — que eu
+tinha consertado nessa manha e nunca exercitado — e saiu isto:
+
+```
+flash v0.1.4 — fonte diz v0.262.0
+  gravado (tentativa 1)
+  placa diz v?
+  *** NAO CONFERE: fonte v0.262.0, placa v? ***
+```
+
+Quatro defeitos numa corrida, e todos meus, desse mesmo dia.
+
+### 1. A 15bd repetiu-se DENTRO DO FICHEIRO ONDE A ESCREVI
+
+O `flash.sh` tem **dois** sitios que acham a placa: o `dfu go` no topo e a
+leitura de volta da versao no fim. Adoptei o `porta_daisy` no primeiro e
+**deixei o segundo em `p[-1]`**.
+
+A **15bd**, escrita duas horas antes, diz exactamente isto: *um conserto
+nao adoptado por TODOS os chamadores nao esta feito*. Falhei-a no proprio
+ficheiro que a motivou.
+
+E o sintoma matava a razao de o script existir: `placa diz v?` e o
+contrario da regra 2 da bancada — conferir que a versao na placa bate com
+a do fonte.
+
+### 2. E EU TINHA DECLARADO O FICHEIRO LIMPO COM UM GREP INCAPAZ
+
+Depois de consertar, corri:
+
+```
+grep -rnE "usbmodem\*'\)\[-1\]" *.py *.sh
+```
+
+Nada. Escrevi **"nenhum caminho velho sobrou"**.
+
+Mas o codigo real e:
+
+```python
+p=glob.glob('/dev/cu.usbmodem*')
+...
+s=serial.Serial(p[-1], ...)
+```
+
+**Duas linhas.** O meu padrao exigia-as na mesma. A busca nao podia
+encontrar o que procurava, e a resposta vazia foi lida como ausencia.
+
+> **Um `grep` que nao casa a forma real do codigo devolve "limpo" com a
+> mesma cara com que devolveria "nao ha".** E a **15av** no suporte da
+> busca: verificacao estruturalmente incapaz de apanhar o alvo. E aqui nao
+> houve ninguem a corrigir-me — a verificacao era minha, para mim, e
+> passou.
+
+Corolario pratico: **grep por padrao antigo escreve-se largo e le-se a
+olho**, nao estreito e a contar zeros. Um `grep usbmodem` inteiro teria
+dado a linha na hora.
+
+### 3. Duas versoes no mesmo ficheiro, e o verificador nao varria `.sh`
+
+O banner dizia `v0.1.4` e o cabecalho `v0.3.0`. O `check_docs` tem uma
+passagem exactamente para isto e devolvia **zero**, porque so varria
+`.h`, `.cpp` e `.py`. Consertado: varre `.sh`.
+
+Mesma familia do dominio da verificacao — ela so absolve onde olha, e o
+silencio dela sobre o resto tem a mesma cara.
+
+### 4. Adoptar funcao partilhada custou-me DUAS deducoes de contrato
+
+Ao ligar os scripts ao `porta_daisy`:
+
+- tratei o retorno como string, e ele e o **par** `(porta, versao)`;
+- apanhei `SystemExit`, e ele levanta **`RuntimeError`**.
+
+Os dois apanhados **a correr**, nao a ler — e o segundo dois minutos
+depois de eu escrever, no comentario do primeiro, que adoptar funcao
+partilhada exige respeitar o contrato dela.
+
+> **Adoptar nao e chamar: e ler a assinatura, o retorno e o que ela
+> levanta.** Deduzir qualquer um dos tres e escrever um bug com ar de
+> reutilizacao.
+
+### O que fecha isto
+
+Nenhum dos quatro apareceria sem **correr a ferramenta**. Eu tinha-a
+consertado, commitado e declarado feita sem a executar uma vez. A
+verificacao que a apanhou custou seis segundos.
+
