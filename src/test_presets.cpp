@@ -1,4 +1,4 @@
-// test_presets v0.3.1 — validação nativa das estruturas de preset.
+// test_presets v0.4.0 — validação nativa das estruturas de preset.
 //
 // Roda no Mac, sem placa: `presets.h` é C++ puro e a pergunta que ele
 // responde — "este preset foi gravado sob este mapa?" — não depende de
@@ -45,8 +45,24 @@ int main()
              cad, cad / 2, glob, fora, t.Count());
     Check("a soma das tres classes cobre a tabela inteira",
           cad + glob + fora == t.Count(), d);
-    Check("preset de cadeia tem 33 params por cadeia", cad / 2 == 33);
-    Check("preset global tem 9 params", glob == 9);
+    // ⚠️ ESTES NUMEROS ENVELHECEM, E E ESSE O TRABALHO DELES.
+    //
+    // Eram 33 e 9. Em 02/09 este teste falhava com 39 e 6, e as tres
+    // falhas eram DO TESTE: ele guardava requisitos que o dB tinha
+    // revogado e alteracoes que eu tinha feito sem o correr.
+    //
+    //   33 -> 39 por cadeia: os notches anti-microfonia entraram em 01/09
+    //         (notch1_hz, notch1_db, notch2_hz, notch2_db, notch_on).
+    //    9 ->  6 globais: o dB tirou `post_level_l/r`, `out_l/r` e
+    //         `pre_level_ab` do preset em 01/09 — sao ajuste de sala e de
+    //         botao fisico, nao de musica.
+    //
+    // Nao se apagam por incomodarem: e a contagem que denuncia um param
+    // que entrou ou saiu do preset SEM ninguem decidir. Quando falharem
+    // outra vez, a pergunta e "quem mudou a pertinencia, e foi de
+    // proposito?" — e a resposta actualiza-se AQUI, com a data.
+    Check("preset de cadeia tem 39 params por cadeia", cad / 2 == 39);
+    Check("preset global tem 6 params", glob == 6);
     Check("as duas cadeias tem o MESMO numero de params", cad % 2 == 0);
 
     // As exclusoes, uma a uma e por NOME: a contagem sozinha passaria se
@@ -54,7 +70,17 @@ int main()
     const char* devem_ficar_fora[] = {
         "exc_on_a", "exc_on_b", "bench_boost_a", "bench_boost_b",
         "gov_ceiling_a", "gov_ceiling_b", "gov_release_a", "gov_release_b",
-        "test_tone_freq", "test_tone_level", "test_tone_out"};
+        "test_tone_freq", "test_tone_level", "test_tone_out",
+        // ⚠️ DECISOES DO dB DE 01/09, e agora GUARDADAS e nao apenas
+        //    nao-contrariadas. Tira-los da lista de "tem de entrar" so
+        //    deixava o teste de os exigir; poe-los aqui obriga o codigo a
+        //    manter a decisao.
+        //
+        //    "pode tirar level l r do preset, usuario ajusta no botao
+        //     fisico" e "tira out_l, out_r e pre_level_ab" — sao ajuste de
+        //    sala e de botao, nao de musica. Se voltarem ao preset, isto
+        //    grita em vez de o descobrirmos numa sessao de escuta.
+        "pre_level_ab", "out_l", "out_r", "post_level_l", "post_level_r"};
     int erros_fora = 0;
     for(const char* n : devem_ficar_fora)
         if(cotuca::EhDeCadeia(n) || cotuca::EhGlobal(n))
@@ -67,7 +93,12 @@ int main()
     // E o gemeo: params que TEM que entrar. Sem isto, uma exclusao larga
     // demais (`if(strncmp(nome,"g",1))`) passaria nos testes acima.
     const char* devem_entrar[] = {"drv_drive_a", "drv_drive_b", "gate_thresh_a",
-                                  "shm_tone_b", "pre_level_ab", "dly_time",
+                                  "shm_tone_b", "dly_time",
+        // `pre_level_ab` SAIU desta lista em 02/09. Estava aqui como
+        // "param de musica que tem de entrar no preset", e o dB tirou-o do
+        // preset em 01/09 junto com `out_l`, `out_r` e `post_level_l/r`:
+        // sao ajuste de sala e de botao fisico, nao de musica. O teste
+        // guardava o requisito revogado e acusava o codigo por o cumprir.
                                   "piezo_mix", "buzios_thresh"};
     int erros_dentro = 0;
     for(const char* n : devem_entrar)

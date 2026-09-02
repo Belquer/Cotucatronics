@@ -6778,3 +6778,65 @@ Nenhum dos quatro apareceria sem **correr a ferramenta**. Eu tinha-a
 consertado, commitado e declarado feita sem a executar uma vez. A
 verificacao que a apanhou custou seis segundos.
 
+---
+
+## 15bg. O corredor de testes chamava tres dos cinco, e o teste que ninguem corre guarda requisitos revogados (02/09)
+
+Segunda vez que o dB pergunta "sobrou algum bug?". Da primeira eu tinha
+respondido com um `grep` e ele apanhou-me. Desta vez **corri tudo o que e
+executavel no repo** — e sairam tres.
+
+### 1. Um teste falhava ha semanas e ninguem sabia
+
+`test_presets` falhava com **tres** falhas. Nenhuma era do codigo:
+
+| falha | esperava | real | porque |
+|---|---|---|---|
+| params por cadeia | 33 | **39** | os notches entraram em 01/09 |
+| params globais | 9 | **6** | o dB tirou `post_level_l/r`, `out_l/r`, `pre_level_ab` |
+| `pre_level_ab` tem de entrar | sim | **nao** | *"tira out_l, out_r e pre_level_ab"* — decisao dele |
+
+> **Teste que ninguem corre nao e teste — e uma opiniao antiga.** E o modo
+> de falha e perverso: ele acusa o CODIGO de violar um requisito que o
+> dono do requisito ja revogou. Quem o correr sem contexto vai consertar o
+> codigo certo.
+
+E eu subi-lhe a versao nesse mesmo dia (`v0.3.0 -> v0.3.1`, por uma
+renomeacao de string) **sem o executar uma vez**.
+
+Consertado e ENDURECIDO: as contagens passam a 39/6 com a data e o motivo
+ao lado, e `pre_level_ab`, `out_l`, `out_r`, `post_level_l/r` mudaram de
+lista — sairam de "tem de entrar" e entraram em **"tem de ficar fora"**.
+Tira-los da primeira so deixava o teste de os exigir; poe-los na segunda
+**obriga o codigo a manter a decisao do dB**.
+
+### 2. O corredor chamava TRES dos cinco
+
+`test.command` — o caminho que uma pessoa usa — corria `test_dynamics`,
+`test_midi` e `test_presets`. O `teste_macro` e o `teste_tarol` nasceram
+depois, compilavam, passavam, e **nunca foram ligados ao corredor**.
+
+E por isso apodreciam sem ruido: um teste que so corre quando alguem se
+lembra do nome do ficheiro nao corre. **Familia da 15bd** — a ferramenta
+existe e o caminho de uso nao a adopta.
+
+### 3. E o `flash.sh` nao tinha `.command`
+
+Regra da casa: todo helper corrivel por shell tem um wrapper de
+duplo-clique ao lado. Era o unico da bancada sem um.
+
+### O que apanhou os tres
+
+Nao foi olhar. Foi **executar**: `make check`, os cinco testes compilados a
+mao, o `./test.command`, o `./flash.sh`, e o `porta_daisy` como programa.
+
+> **"Sobrou algum bug?" nao se responde com uma busca. Responde-se
+> correndo.** Das duas vezes que o dB perguntou, a resposta honesta so
+> apareceu depois de executar — e das duas vezes eu tinha dito que estava
+> tudo limpo com base em leitura.
+
+Nota lateral, e tambem minha: corri o `./test.command` sem terminal
+interactivo e ele pendurou seis minutos. Nao e defeito — os `.command`
+terminam em `read -p "Press Enter to close..."` por regra. Invocacao
+errada de uma ferramenta certa, e o susto valeu a leitura do ficheiro.
+
