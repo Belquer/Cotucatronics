@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_serial v0.3.0 — monitor/tester serial do Cotucatronics OS.
+"""cotuca_serial v0.4.0 — monitor/tester serial do Cotucatronics OS.
 
 Sem dependencias externas (nada de pyserial): fala direto com o tty
 via stty + file descriptor, que e o suficiente pra USB CDC da Daisy.
@@ -10,7 +10,7 @@ Uso:
     ./cotuca_serial.py --port /dev/cu.usbmodemXXXX --listen 5
 """
 
-VERSION = "0.3.0"
+VERSION = "0.4.0"
 
 import argparse
 import glob
@@ -44,44 +44,32 @@ JANELA_MIN = VIGIA_S + ARRANQUE_S
 
 
 def find_port(quieto=False):
-    """A porta certa e a que RESPONDE, nunca a que tem o nome certo.
+    """A porta certa e a que RESPONDE — e quem sabe perguntar e o
+    `porta_daisy`, que existe desde 25/08 EXACTAMENTE para isto.
 
-    ⚠️ Ate 01/09 isto era `sorted(glob(...))[-1]` — ordem alfabetica. Nesse
-    dia a ponte ESP32 enumerou como `usbmodem101`, entrou na lista, e cinco
-    comandos de configuracao foram para ela enquanto o script anunciava que
-    tinham sido aplicados. `[-1]` calhava dar certo umas vezes e errado
-    noutras, que e o pior dos casos: nao falha o suficiente para se notar.
+    ⚠️ ATE 02/09 ESTE FICHEIRO TINHA A SUA PROPRIA COPIA. Antes disso
+    tinha `sorted(glob(...))[-1]`, que mandou cinco comandos para a ponte
+    ESP32 enquanto o script anunciava que tinham sido aplicados — e o
+    `porta_daisy.py` ja tinha ESSE defeito escrito na docstring, como
+    PREVISAO, uma semana antes:
 
-    Nome de dispositivo e uma etiqueta que o sistema operativo atribui.
-    Identidade e o que o outro lado responde. Ver battle_scars 15ax.
+        "o modo de falha seria mandar comandos da Daisy para o ESP32: sem
+         erro, sem resposta, e um diagnostico que procuraria o defeito no
+         lado errado."
+
+    O conserto existia, estava certo, e nao tinha sido adoptado. Corrigir
+    isto com uma copia nova teria criado a TERCEIRA implementacao da mesma
+    coisa — e tres implementacoes divergem, sempre. Ver battle_scars 15bd.
     """
-    ports = sorted(glob.glob("/dev/cu.usbmodem*"))
-    if not ports:
-        sys.exit("nenhuma /dev/cu.usbmodem* encontrada — a Daisy esta plugada e fora do DFU?")
-    if _pyserial is None:
-        print("[AVISO] sem pyserial: NAO consigo confirmar identidade da porta.\n"
-              f"        a escolher {ports[-1]} pelo NOME, que ja mandou comandos\n"
-              "        para a ponte ESP32 uma vez (battle_scars 15ax).\n"
-              "        `pip3 install pyserial` faz a sonda voltar.", file=sys.stderr)
-        return ports[-1]
-    for cand in ports:
-        try:
-            with _pyserial.Serial(cand, BAUD, timeout=1) as s:
-                time.sleep(0.8)
-                s.reset_input_buffer()
-                s.write(b"board\n")
-                time.sleep(1.2)
-                if b"Cotucatronics OS" in s.read(400):
-                    if not quieto:
-                        print(f"[porta] {cand} respondeu Cotucatronics OS",
-                              file=sys.stderr)
-                    return cand
-        except Exception:
-            pass
-    sys.exit("NENHUMA porta respondeu 'Cotucatronics OS' ao `board`.\n"
-             f"  candidatas: {ports}\n"
-             "  a placa pode estar em DFU, presa, ou so ha a ponte ligada.")
-
+    try:
+        import porta_daisy
+    except ImportError:
+        sys.exit("porta_daisy.py nao encontrado ao lado deste script")
+    # ⚠️ `achar()` devolve o PAR (porta, versao) — apanhado a correr, nao
+    #    a ler, dois minutos depois de eu escrever que adoptar funcao
+    #    partilhada exige respeitar o contrato dela.
+    porta, _versao = porta_daisy.achar(verboso=not quieto)
+    return porta
 
 def configure(port):
     # raw, sem echo, sem tratamento de CR/LF. A CDC ignora o baud, mas

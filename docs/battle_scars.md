@@ -6580,3 +6580,52 @@ FECHAM entre si (14 080 x 48 / 48 000 = 14,08 s de audio, contra 17,46 s de
 tempo ligada, o que da os ~3,4 s de inicializacao). E o fecho que prova a
 medicao, e nao a plausibilidade de cada numero sozinho (**15au**).
 
+---
+
+## 15bd. O conserto existia, previa o meu erro por escrito, e nao tinha sido adoptado (02/09)
+
+Depois de fechar a sessao, o dB perguntou se sobrava algum bug. Fui
+verificar em vez de responder de memoria, e o `check_docs` apontou
+`porta_daisy.py` na lista de ficheiros tocados sem subir a versao.
+
+Abri-o. Escrito em **25/08**, uma semana antes. Docstring:
+
+> **POR QUE EXISTE (25/08).** Todo script desta bancada fazia
+> `glob.glob('/dev/cu.usbmodem*')[-1]`. Funcionou enquanto havia UMA
+> placa. No dia em que o ESP32 entrou na USB passaram a existir dois
+> `usbmodem` [...] **o modo de falha seria mandar comandos da Daisy para o
+> ESP32: sem erro, sem resposta, e um diagnostico que procuraria o defeito
+> no lado errado.**
+
+Foi **exactamente** isso que me aconteceu em 01/09, e eu escrevi-o como
+descoberta na **15ax**.
+
+O conserto existia. Estava certo. **Previa o meu erro por escrito.** E era
+usado por **um** script (`teste_roteamento.py`) — o `flash.sh` e o
+`cotuca_serial.py` nunca o adoptaram, e eu escrevi uma TERCEIRA
+implementacao no scratchpad sem o procurar.
+
+### O defeito nao e "porta por nome". E adopcao.
+
+Consertar o `flash.sh` e o `cotuca_serial.py` com copias novas — que foi o
+que eu fiz primeiro — deixou o repo com **tres implementacoes** da mesma
+regra. Tres divergem, sempre; e a que diverge e a que se usa no dia mau.
+
+> **Um conserto que nao e adoptado nao esta feito.** Escrever a funcao
+> certa e metade; a outra metade e nao sobrar nenhum chamador com a versao
+> velha — e essa metade nao tem quem a grite, porque o codigo antigo
+> compila e corre.
+
+### E o que isto diz sobre a 15az
+
+A **15az** diz que conserto adiado vira o equipamento da proxima
+emergencia. Esta e a irma: **conserto FEITO mas nao adoptado tem o mesmo
+efeito, e e mais dificil de ver** — porque a busca por "isto esta
+consertado?" encontra a funcao certa e para ali.
+
+O sinal a procurar nao e "existe conserto", e **"quantos chamadores ainda
+usam o caminho velho?"**. Um `grep` pelo padrao antigo, e nao pelo novo.
+
+Feito agora: os dois scripts passam a chamar `porta_daisy.achar()`. Nenhum
+`glob(...)[-1]` sobrou na bancada.
+

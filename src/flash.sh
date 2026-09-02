@@ -1,5 +1,5 @@
 #!/bin/bash
-# flash v0.2.0 — grava SO se o build passou, e confere a versao na placa.
+# flash v0.3.0 — grava SO se o build passou, e confere a versao na placa.
 #
 # Existe porque `make program-dfu` grava o BINARIO EM DISCO, que pode ser
 # de um build anterior se o atual falhou. Em 20/08 isso me fez medir o
@@ -31,28 +31,21 @@ if dfu-util -l 2>/dev/null | grep -q "Found DFU"; then
     echo "  ja esta em DFU"
 else
     python3 - <<'PY' 2>/dev/null || true
-import glob,time,serial
-# ⚠️ A PORTA CERTA E A QUE RESPONDE, nunca a que tem o nome certo.
-#
-# Isto era `p[-1]` — ordem alfabetica. Em 01/09 a ponte ESP32 enumerou
-# como `usbmodem101` e comandos foram parar la enquanto o script dizia
-# que tinham sido aplicados. Mandar `dfu go` a ponte nao a poe em DFU e
-# nao poe a Daisy tambem: a gravacao falha por um motivo que nao aparece
-# em lado nenhum. Ver battle_scars 15ax.
-for cand in sorted(glob.glob('/dev/cu.usbmodem*')):
-    try:
-        s=serial.Serial(cand,115200,timeout=1); time.sleep(0.9)
-        s.reset_input_buffer(); s.write(b'board\n'); time.sleep(1.2)
-        if b'Cotucatronics OS' in s.read(400):
-            print('  dfu go -> ' + cand)
-            s.reset_input_buffer(); s.write(b'dfu go\n'); time.sleep(2.0)
-            s.close(); break
-        s.close()
-    except Exception:
-        pass
-else:
-    print('  nenhuma porta respondeu Cotucatronics OS — a placa pode ja'
-          ' estar em DFU, ou presa')
+import sys, time, serial
+# A porta certa e a que RESPONDE, e quem sabe perguntar e o `porta_daisy`,
+# que existe desde 25/08 para isto. Uma copia local aqui seria a terceira
+# implementacao da mesma coisa. Ver battle_scars 15bd.
+sys.path.insert(0, '.')
+try:
+    import porta_daisy
+    p, _v = porta_daisy.achar()   # devolve o PAR (porta, versao)
+except Exception as e:
+    p = None
+    print('  porta_daisy: %s (a placa pode ja estar em DFU, ou presa)' % e)
+if p:
+    print('  dfu go -> ' + p)
+    s = serial.Serial(p, 115200, timeout=1); time.sleep(0.4)
+    s.write(b'dfu go\n'); time.sleep(2.0); s.close()
 PY
     sleep 3
 fi
