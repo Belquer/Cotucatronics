@@ -204,8 +204,41 @@ Novo comando de serial **`buzios`** parte a pergunta em três: `disparos`,
 `passaram o buzios_on`, `foram a animação`, e mostra o pico que o envelope
 alcançou ao lado do limiar.
 
-**Ainda por fazer, pedido e não feito:** medir o espectro do ruído a 7040 Hz
-**antes e depois** com o framebuffer a 20 Hz, mesma posição, mesma alternância.
+### O espectro a 7 kHz com o framebuffer a 20 Hz — MEDIDO em 02/09
+
+Pedido em 01/09 e feito agora. Alternância respeitada, primeira leitura
+descartada, piso do vigia em −80 dB.
+
+| condição | pico | ocorrências |
+|---|---|---|
+| QUIETO 1 | 7017,6 Hz · **−24,9 dB** | 88 |
+| 20 Hz 1 | 7018,3 Hz · **−25,0 dB** | 86 |
+| QUIETO 2 | 7018,9 Hz · **−25,1 dB** | 86 |
+| 20 Hz 2 | 7019,8 Hz · **−25,3 dB** | 81 |
+
+**O framebuffer a 20 Hz NÃO mexe no espeto de 7 kHz** — ±0,4 dB, com as
+ocorrências a sobrepor-se. Resultado negativo, e fica escrito.
+
+**Mas duas coisas apareceram que não estavam na pergunta:**
+
+**1. A frequência deriva, sempre no mesmo sentido** — 7016,9 → 7017,6 →
+7018,3 → 7018,9 → 7019,8 Hz, ~0,7 Hz por corrida. Artefacto digital do MCU
+estaria preso ao cristal e **não derivaria**. Isto é analógico, e
+provavelmente térmico — o suspeito natural é o step-down da caça de 31/08.
+
+**2. O `pk` de banda larga SOBE ao desenhar**: −69,6 → −64,2 dBFS no L e
+−75,2 → −68,3 no R. **+5,4 e +6,9 dB.** O framebuffer adiciona ruído de
+banda larga (comutação da SPI) e **não alimenta o tom de 7 kHz**. São dois
+fenómenos no mesmo sinal, e só se separam porque foram medidos os dois.
+
+**Nota de método:** a primeira tentativa passou `-95` como piso e o
+instrumento usou `-25` em silêncio — ele espera **magnitude**. Os quatro
+picos deram todos `−24,6/−24,7` contra um piso de `−25`: valor encostado à
+fronteira é sinal de que se está a medir o piso, não o pico. Não foi
+publicado.
+
+**Por medir:** PS_2 no prescaler do OLED — o olho do dB decide se desenha
+limpo, e "não medido" não é "provavelmente bom".
 
 ---
 

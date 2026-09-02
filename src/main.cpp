@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.261.0"
+#define COTUCA_OS_VERSION "0.262.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -5301,6 +5301,22 @@ static void HandleLine(const char* line)
     }
     if(strncmp(line, "pk", 2) == 0)
     {
+        // ⚠️ `pk reset` — sem ele isto e um MAXIMO RETIDO desde o arranque,
+        //    e um maximo so sobe: mede a historia, nao a janela.
+        //
+        // Apanhado em 02/09 a montar a medicao do espectro. O `pk` dizia
+        // -0,5 dBFS nos dois canais — quase fundo de escala — e era um
+        // transitorio de arranque de ha meia hora. Como etapa 0 ("o canal
+        // fala AGORA?") nao servia de nada, e teria feito a medicao inteira
+        // partir de um numero que nao descrevia o presente. Familia da 15au.
+        if(strstr(line, "reset"))
+        {
+            in_pk_l = in_pk_r = 0.f;
+            in_n_l  = in_n_r  = 0;
+            in_clip_l = in_clip_r = 0;
+            hal::Log("pk: zerado — a proxima leitura mede desta janela");
+            return;
+        }
         // ENTRADA CRUA POR CANAL, primeiro: e a pergunta mais barata
         // de responder e a que mais vezes ficou sem resposta.
         {
@@ -5996,7 +6012,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
