@@ -497,6 +497,33 @@ está a medir o antecessor.
 Isto é a **15at** virada contra o próprio autor: lá, o olho era incapaz de ver o
 defeito; aqui, **fui eu que desenhei a verificação incapaz de falhar**.
 
+## Diagnóstico só post-mortem não serve para depurar
+
+Todo contador que vive apenas na caixa-preta precisa de **gémeo consultável a
+qualquer momento**. É a regra dos alarmes de arranque, aplicada aos contadores
+de evento.
+
+*O detector de búzios escrevia nos slots 8/9/11 e em mais lado nenhum. Quando a
+pergunta "dispararam?" ficou viva, a resposta só existia depois de um reset — e
+eu não conseguia separar "não disparou" de "disparou e não chegou ao desenho"
+de "desenhou e não se viu". Três contadores resolveram-no; a falta deles custou
+uma volta inteira.*
+
+## Antes de entregar um teste, verifique a PRÉ-CONDIÇÃO — não a feature
+
+"Armado" é uma afirmação sobre a **cadeia inteira até ao sinal**, não sobre a
+bandeira no fim dela.
+
+*Liguei `buzios_on`, liguei o painel, li os notches de volta e disse "está
+pronto, toca". Nunca verifiquei se o detector conseguia OUVIR: ele lê a soma das
+cadeias pós-gate, e gravar zera todos os params. Entrada crua a −0,6 dBFS,
+envelope do detector a −70 dBFS. Mandei tocar num instrumento surdo e chamei-lhe
+pronto — e o dB reportou um defeito na animação que não existia.*
+
+Par com a regra acima (falha≠sucesso): **um teste que não pode falhar e um teste
+que não pode passar são o mesmo defeito** — não perguntei o que o teste era
+capaz de mostrar antes de o entregar.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

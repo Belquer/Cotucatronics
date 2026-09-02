@@ -116,6 +116,23 @@ segunda não espera pela primeira. No fim devolve o vidro a quem o tinha, e o
 `splash curto` de 12 quadros **foi removido** — existia para o despertar, que
 acabou de ser cancelado.
 
+### A jogada por búzios: funciona, e o que ela NÃO é
+
+Confirmado pelo dB em 01/09: **funciona**. Mas custou uma volta a chegar lá, por
+duas razões que ficam escritas.
+
+**`buzios_on` é interruptor, não gatilho.** Ele arma o detector; quem atira a
+jogada é a pancada. Mandar o CC pelo Loopy não dispara nada — e a expectativa
+contrária é razoável, então está agora no [CCMAP](operacao/CCMAP.md) e não na
+cabeça de ninguém. **Lacuna aberta:** não existe forma de atirar os búzios por
+comando. Se se fizer, tem de passar pelo mesmo caminho do detector — sorteio
+**e** animação — para não haver dois sítios onde a jogada nasce.
+
+**O detector escuta pós-gate, não o piezo.** Com a cadeia fechada fica surdo.
+Novo comando de serial **`buzios`** parte a pergunta em três: `disparos`,
+`passaram o buzios_on`, `foram a animação`, e mostra o pico que o envelope
+alcançou ao lado do limiar.
+
 **Ainda por fazer, pedido e não feito:** medir o espectro do ruído a 7040 Hz
 **antes e depois** com o framebuffer a 20 Hz, mesma posição, mesma alternância.
 

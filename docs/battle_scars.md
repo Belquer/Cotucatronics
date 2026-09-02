@@ -6279,3 +6279,72 @@ Nota de familia: e o mesmo defeito da **15av** (o teste cuja falha se parecia
 com o sucesso) noutro suporte. La era o olho que nao distinguia; aqui era o meu
 proprio `print`, que dizia a mesma coisa quer tivesse funcionado quer nao.
 
+---
+
+## 15ay. Chamei "armada" a uma placa surda, e mandei o dB bater nela (01/09)
+
+Liguei o `buzios_on`, liguei o painel, li os notches de volta, e escrevi:
+
+> *"Está pronto para o teu toque. Toca no instrumento e a jogada deve cair no
+> vidro."*
+
+Ele tocou. Nao caiu nada.
+
+O que eu tinha verificado era o **interruptor** e o **painel**. O que eu nunca
+verifiquei era a unica coisa de que o teste dependia: **se o detector conseguia
+ouvir**. Ele le a soma das duas cadeias **ja processadas, pos-gate** — nao o
+piezo cru — e a cadeia estava fechada porque gravar zera todos os params.
+
+Os numeros, quando finalmente os fui buscar:
+
+```
+entrada crua      -0,6 dBFS   (os dois piezos, sinal enorme)
+envelope buzios  -70 dBFS     (0,0003)
+limiar             0,040
+disparos           0
+```
+
+**Setenta decibeis entre a entrada e o que o detector escutava.** O instrumento
+estava surdo, e eu chamei-lhe pronto.
+
+E a **15av** de manha diz a mesma coisa do lado oposto: la construi um teste que
+nao podia FALHAR, aqui montei um que nao podia PASSAR. Nos dois casos o defeito
+foi o mesmo e nao esta no teste:
+
+> **Antes de entregar um teste a alguem, verificar a PRE-CONDICAO dele — nao a
+> feature.** Eu confirmei o que ia ser testado e nao confirmei o que tornava o
+> teste possivel. "Armado" e uma afirmacao sobre a cadeia INTEIRA ate ao sinal,
+> nao sobre a bandeira no fim dela.
+
+Custo real: o dB fez o teste, viu-o falhar, e reportou um defeito na animacao
+que nao existia. **Uma volta inteira gasta a diagnosticar a minha propria
+montagem em vez da funcionalidade.**
+
+### O defeito de fundo: instrumentacao so post-mortem
+
+Quando ele disse "os buzios nao disparam a animacao", eu nao tinha como
+distinguir tres casos:
+
+1. nao disparou · 2. disparou e nao chegou ao desenho · 3. desenhou e nao se viu
+
+Porque o detector **so escrevia na caixa-preta** (slots 8/9/11), que so se le
+**depois de um reset**. Havia instrumentacao, e ela era ilegivel enquanto a
+duvida estava viva.
+
+> **Diagnostico que so se le depois de morrer nao serve para depurar.** Todo
+> contador post-mortem precisa de gemeo consultavel a qualquer momento —
+> a mesma regra que ja existia para os alarmes de arranque, aplicada aos
+> contadores de evento.
+
+O `buzios` novo parte a pergunta em tres respostas: `disparos`,
+`passaram o buzios_on`, `foram a animacao` — e imprime o PICO que o envelope
+alcancou ao lado do limiar, que e a linha que resolveu isto em dois segundos.
+
+### E uma expectativa do dB que era razoavel, e o codigo nao cumpre
+
+> *"pensava que so o comando midi do loopy ja dispararia"*
+
+Nao dispara, e a expectativa faz sentido: `buzios_on` **liga o detector**, nao
+atira a jogada. Nao existe hoje nenhum CC que atire os buzios por comando — so
+a pancada. Fica registado como lacuna, nao como mal-entendido.
+

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.243.1"
+#define COTUCA_OS_VERSION "0.244.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1952,6 +1952,15 @@ static volatile uint32_t buzios_cd    = 0; // cooldown, em blocos
 // que e o estado normal com o vocoder ligado.
 static float             buzios_env_peak = 0.f;
 static uint32_t          buzios_fires    = 0;
+// ⚠️ VIA VIVA, porque a caixa-preta e POST-MORTEM.
+//
+// Ate aqui o detector so escrevia nos slots 8/9/11 da caixa-preta, que so
+// se leem DEPOIS de um reset. Quando o dB disse "os buzios nao disparam a
+// animacao", eu nao tinha como distinguir tres casos: nao disparou · disparou
+// e nao chegou ao desenho · desenhou e nao se viu. Tres contadores, e a
+// pergunta parte-se em tres respostas.
+static uint32_t          buzios_consumidos = 0;   // passou o `buzios_on`
+static uint32_t          buzios_anim       = 0;   // chegou a animacao
 
 static uint32_t rng_state = 0;
 static float    RandNorm()
@@ -4691,6 +4700,33 @@ static void HandleLine(const char* line)
         hal::Log("caixa-preta armada; log mudo ate o proximo reset");
         return;
     }
+    // `buzios` — o estado VIVO do detector, que a caixa-preta so conta
+    // depois de morrer.
+    if(strncmp(line, "buzios", 6) == 0)
+    {
+        hal::Log("BUZIOS — detector");
+        hal::Log("  buzios_on %.0f · limiar %.3f · cooldown %.0f ms",
+                 (double)params.Real(manifest.p_buzios_on),
+                 (double)params.Real(manifest.p_buzios_thresh),
+                 (double)params.Real(manifest.p_buzios_cooldown));
+        // Escritos pelo callback de audio, lidos aqui: sao float, a leitura
+        // e atomica no M7, e um valor a meio caminho num diagnostico nao
+        // muda decisao nenhuma. Excecao ESCRITA, nao omitida.
+        hal::Log("  envelope agora %.4f · PICO que ja alcancou %.4f",
+                 (double)buzios_env, (double)buzios_env_peak);
+        hal::Log("  disparos %lu · passaram o buzios_on %lu · foram a animacao %lu",
+                 (unsigned long)buzios_fires,
+                 (unsigned long)buzios_consumidos,
+                 (unsigned long)buzios_anim);
+        if(!buzios_fires)
+            hal::Log("  ZERO disparos: o envelope nunca passou o limiar."
+                     " Compare o PICO acima com o limiar.");
+        else if(!buzios_anim)
+            hal::Log("  disparou e NAO chegou a animacao: buzios_on a zero"
+                     " no instante, ou OLED nao configurado.");
+        return;
+    }
+
     if(strncmp(line, "bb", 2) == 0 && (line[2] == 0 || line[2] == ' '))
     {
         if(!hal::BlackboxValid())
@@ -5741,7 +5777,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -6773,8 +6809,7 @@ int main(void)
             if(params.Real(manifest.p_buzios_on) >= 0.5f)
             {
                 FASE(4);
-                static uint32_t consumidos = 0;
-                hal::BlackboxWrite(11, (float)++consumidos);
+                hal::BlackboxWrite(11, (float)++buzios_consumidos);
                 TriggerRandomize(true);
 
                 // A JOGADA NO VIDRO E A JOGADA QUE ACABOU DE ACONTECER.
@@ -6793,6 +6828,7 @@ int main(void)
                     splash_ativo    = true;
                     splash_apaga_em = 0;
                     splash_prox     = hal::NowMs();
+                    buzios_anim++;
                 }
             }
         }

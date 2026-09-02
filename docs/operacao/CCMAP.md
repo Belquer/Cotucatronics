@@ -135,6 +135,18 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 90 | ch1 | ch4 | `buzios_on` | búzios | 0 – 1 |
 | 91 | ch1 | ch4 | `buzios_thresh` | búzios | 0 – 1 |
 | 92 | ch1 | ch4 | `buzios_cooldown` | búzios | 10 – 1000 |
+
+> ⚠️ **`buzios_on` é um INTERRUPTOR, não um gatilho.** Ele liga o detector; quem
+> atira a jogada é a **pancada no instrumento**. Não existe hoje nenhum CC que
+> dispare os búzios por comando — mandar `buzios_on = 1` pelo Loopy arma o
+> detector e mais nada.
+>
+> E o detector escuta a **soma das duas cadeias já processadas, pós-gate** — não
+> o piezo cru. Com a cadeia fechada ele fica surdo por mais forte que se bata.
+> Medido em 01/09: entrada crua a −0,6 dBFS e envelope do detector a −70 dBFS,
+> zero disparos. O comando `buzios` na serial mostra o pico que o envelope
+> alcançou ao lado do limiar, que é a linha que responde a isto. Ver
+> battle_scars **15ay**.
 | 93 | ch1 | ch4 | `test_tone_freq` | tom | 80 – 2000 |
 | 94 | ch1 | ch4 | `test_tone_level` | tom | 0 – 1 |
 | 95 | ch1 | ch4 | `test_tone_out` | tom | 0 – 2 |
