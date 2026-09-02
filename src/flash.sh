@@ -1,5 +1,5 @@
 #!/bin/bash
-# flash v0.3.0 — grava SO se o build passou, e confere a versao na placa.
+# flash v0.3.2 — grava SO se o build passou, e confere a versao na placa.
 #
 # Existe porque `make program-dfu` grava o BINARIO EM DISCO, que pode ser
 # de um build anterior se o atual falhou. Em 20/08 isso me fez medir o
@@ -10,7 +10,10 @@
 set -e
 cd "$(dirname "$0")"
 VER=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' main.cpp | head -1 | tr -d '"')
-echo "flash v0.1.4 — fonte diz v$VER"
+# ⚠️ UMA VERSAO SO. Este `echo` ficou em v0.1.4 enquanto o cabecalho ia em
+# v0.3.0, e o `check_docs` nao apanhou porque nao varria `.sh`. Duas
+# versoes no mesmo ficheiro sao duas afirmacoes sobre a mesma coisa.
+echo "flash v0.3.2 — fonte diz v$VER"
 # CODIGO DE SAIDA, nao presenca de linha. A primeira versao procurava
 # "objcopy -O binary" na saida e dava BUILD FALHOU num build ja
 # ATUALIZADO, que nao reimprime nada. A guarda contra instrumento que
@@ -66,15 +69,35 @@ esp=sys.argv[1]
 # ESPERA A PORTA VOLTAR em vez de supor um sleep fixo. A placa
 # re-enumera depois do DFU e o tempo varia; um `sleep 9` que quase
 # sempre basta falha silenciosamente na vez em que nao basta.
-p=[]
+# ⚠️ TAMBEM AQUI, e nao so no `dfu go` la em cima.
+#
+# Em 02/09 consertei o bloco do `dfu go` para usar o `porta_daisy` e
+# DEIXEI ESTE no `p[-1]`. E a 15bd a repetir-se dentro do mesmo ficheiro,
+# no mesmo dia: um conserto nao adoptado por TODOS os chamadores nao esta
+# feito.
+#
+# E o grep com que declarei "nenhum caminho velho sobrou" exigia
+# `glob(...)[-1]` numa linha so — aqui estao em linhas separadas. Verifiquei
+# com um padrao incapaz de casar a forma real do codigo, que e a familia da
+# 15av no suporte da busca.
+sys.path.insert(0, '.')
+import porta_daisy
+p = None
 for _ in range(40):
-    p=glob.glob('/dev/cu.usbmodem*')
-    if p: break
-    time.sleep(1.0)
+    try:
+        p, _v = porta_daisy.achar()
+        break
+    except Exception:
+        # ⚠️ `Exception` e nao `SystemExit`: o `achar()` levanta
+        #    RuntimeError. Errei o contrato desta funcao DUAS vezes hoje
+        #    ao adopta-la — primeiro tratei o retorno (par) como string,
+        #    agora o tipo da excepcao. Adoptar funcao partilhada exige LER
+        #    a assinatura e o que ela levanta, e eu deduzi as duas.
+        time.sleep(1.0)
 if not p:
-    print("  a porta serial nao voltou — nao da pra conferir a versao"); sys.exit(1)
-time.sleep(2.0)
-s=serial.Serial(p[-1],115200,timeout=1); time.sleep(2.0); s.reset_input_buffer()
+    print("  nenhuma placa respondeu `board` — nao da pra conferir a versao")
+    sys.exit(1)
+s=serial.Serial(p,115200,timeout=1); time.sleep(1.5); s.reset_input_buffer()
 s.write(b"log on\n"); time.sleep(1.2); s.read(3000)
 s.write(b"board\n"); time.sleep(2.0)
 t=s.read(4000).decode('utf-8','replace'); s.close()

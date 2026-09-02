@@ -25,7 +25,7 @@ import re, sys, pathlib
 # A versao mora AQUI e e impressa na primeira linha da saida. Ela ja
 # viveu so no docstring, onde envelheceu de 0.1.0 a 0.3.1 sem ser
 # corrigida — porque nunca aparecia em lugar nenhum.
-VERSION = "0.13.0"
+VERSION = "0.14.0"
 
 RAIZ = pathlib.Path(__file__).resolve().parent.parent
 SRC  = RAIZ / "src"
@@ -116,7 +116,7 @@ def versoes_divergentes():
     # A (3) e a que mais importa: e a unica que o operador ve. Numero que
     # ninguem imprime nao tem quem o corrija — e numero que se imprime
     # errado mente com autoridade.
-    for f in sorted(SRC.glob("*.py")):
+    for f in sorted(SRC.glob("*.py")) + sorted(SRC.glob("*.sh")):
         txt = f.read_text(errors="replace")
         achados = {}
         doc = re.match(r'\s*(?:#![^\n]*\n)?\s*"""([^\n]*)', txt)
@@ -229,7 +229,7 @@ def versao_derivada():
     import subprocess
     fora = []
     arquivos = sorted(SRC.glob("*.h")) + sorted(SRC.glob("*.cpp")) \
-             + sorted(SRC.glob("*.py"))
+             + sorted(SRC.glob("*.py")) + sorted(SRC.glob("*.sh"))
     for p in arquivos:
         rel = str(p.relative_to(RAIZ))
         try:
