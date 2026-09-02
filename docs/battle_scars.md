@@ -6844,3 +6844,67 @@ interactivo e ele pendurou seis minutos. Nao e defeito — os `.command`
 terminam em `read -p "Press Enter to close..."` por regra. Invocacao
 errada de uma ferramenta certa, e o susto valeu a leitura do ficheiro.
 
+---
+
+## 15bh. A decisao que resolvia a portabilidade criou um perigo no arranque (02/09)
+
+O dB decidiu, e bem, que as bocas de microfonia **nao vivem em preset
+nenhum**: sao efemeras, morrem quando a Daisy desliga. A razao era solida —
+as pecas sao replicadas em serie, cada soldadura tem modos proprios, e uma
+frequencia certa numa peca e ruido noutra. Nao persistindo, nao viaja.
+
+**E eu nao perguntei o que isso fazia ao ARRANQUE.**
+
+A placa liga com as saidas ABERTAS (`out_l`/`out_r` nascem em 1.0) e as
+bocas VAZIAS. Se o volume fisico estiver alto, o laco tem ganho de sobra no
+primeiro bloco de audio. Palavras dele:
+
+> *"Meu volume estava alto quando liguei e a microfonia veio com tudo, quase
+> explodiu meus timpanos"*
+
+Nao foi um bug de codigo. Foi uma decisao correcta num eixo que abriu um
+buraco noutro, e eu avaliei-a so no eixo em que ela era boa.
+
+> **Toda decisao de NAO persistir e tambem uma decisao sobre o arranque.**
+> "Nasce limpo" e a mesma frase que "nasce desprotegido", e qual das duas
+> vale depende do que estava ligado do outro lado.
+
+### O conserto NAO foi memoria, e o argumento importa
+
+O pedido natural — e o do dB — era guardar o estado e restaura-lo antes de
+abrir o som. Duas razoes para nao ser isso:
+
+**A escrita na QSPI esta desenhada e nao implementada** (ver
+docs/DESENHO-ESCRITA-QSPI.md): o app corre da QSPI, escrever nela exige
+codigo residente em ITCM, e a cadeia de dependencias atravessa a libDaisy e
+entra no HAL da ST. E a SRAM de backup sobrevive ao NRST mas nao ao corte de
+energia — nao ha VBAT.
+
+**Mas a razao boa nao e essa, e so apareceu a pensar melhor:** estado
+guardado seria protecao afinada para o instrumento de ONTEM. O corpo
+arrefece e os modos derivam; o pote pode ter sido mexido com a placa
+desligada; alguem pode ter trocado o exciter de corpo. E abrir o som a
+ACREDITAR que se esta protegido e pior que abrir sabendo que nao se esta.
+
+### RAMPA DE ARRANQUE — 8 s, quadratica
+
+Realimentacao precisa de VOLTAS para crescer. A subir devagar, o modo nasce
+pequeno e aparece muito antes de doer — e e ai que o supressor o apanha,
+com a rampa a continuar ja protegida.
+
+> **A rampa de arranque E a calibracao**, e nao confia em nada: mede o
+> instrumento que esta ali, agora.
+
+Quadratica e nao linear porque linear dava metade do volume a meio caminho,
+e metade ja chega para magoar. Independente do `out_*`: e uma rampa, nao um
+mute — quem quer silencio usa o mute, e **quem quer abrir mais depressa nao
+tem como, de proposito**.
+
+Confirmado pelo dB no arranque seguinte, com o volume onde estava.
+
+Nota para quando o supressor existir: se 8 s for longo demais para o palco,
+a memoria volta a fazer sentido — mas como ACELERADOR da rampa e nao como
+substituto dela. Comeca nas frequencias que ja conhece, CONFIRMA-AS em dois
+segundos, e abre mais depressa por ter verificado. Guardar para confirmar e
+diferente de guardar para confiar.
+

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.274.0"
+#define COTUCA_OS_VERSION "0.275.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2092,6 +2092,10 @@ static volatile uint32_t loop_voltas       = 0;
 // ⚠️ O FRAMEBUFFER E ESTATICO, e tem de ser: o DMA le-o DEPOIS de o
 // `OledDesenha` voltar. Um buffer local seria lixo a caminho do painel.
 // E fica em RAM normal, nao em DTCM — o DMA nao alcanca a DTCM.
+// 8 s de rampa a 48 kHz. Longo de proposito: e o tempo que o supressor
+// tem para apanhar um modo antes de ele ter ganho para doer.
+static const uint32_t kRampaArranqueAmostras = 48000u * 8u;
+
 static uint8_t  oled_fb[1024];
 // SPLASH. O objeto tem ~120 bytes e vive aqui, ao lado do framebuffer,
 // em RAM normal — nada disto e caminho quente e nada disto entra no
@@ -3134,6 +3138,42 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //    so se pode REDUZIR, entao nem o pot nem o mute conseguem burlar o
     //    teto. Sao funcoes diferentes no mesmo ponto — `out_*` mata o ramo
     //    (seguranca, instantaneo), `vol_*` dosa (performance, continuo).
+    // ---- RAMPA DE ARRANQUE ----
+    //
+    // ⚠️ SEGURANCA, e nasceu de um susto. Em 02/09 o dB ligou a escultura
+    // com o volume alto e a microfonia entrou COM TUDO — palavras dele,
+    // "quase explodiu meus timpanos". A placa arranca com as saidas
+    // ABERTAS e as bocas de microfonia VAZIAS, e o laco tem ganho de sobra
+    // no primeiro bloco de audio.
+    //
+    // A rampa nao e cosmetica: e o que da tempo ao laco de NASCER pequeno.
+    // Realimentacao precisa de voltas para crescer, e a subir devagar ela
+    // aparece muito antes de doer — o supressor (quando existir) apanha-a
+    // ai, e a rampa continua ja protegida. A RAMPA DE ARRANQUE E A
+    // CALIBRACAO, e e mais segura que estado guardado: os modos mudam com
+    // a temperatura do corpo e com a posicao do pote, que pode ter sido
+    // mexida com a placa desligada.
+    //
+    // Curva quadratica: os primeiros segundos ficam MUITO baixos, que e
+    // onde a protecao ainda nao existe. Linear daria metade do volume a
+    // meio caminho, e metade ja chega para magoar.
+    //
+    // Independente do `out_*`: e uma rampa, nao um mute. Quem quiser
+    // silencio usa o mute; quem quiser abrir mais depressa nao tem como, e
+    // e de proposito.
+    {
+        static uint32_t ramp_n = 0;
+        if(ramp_n < kRampaArranqueAmostras)
+        {
+            ramp_n += (uint32_t)size;
+            if(ramp_n > kRampaArranqueAmostras) ramp_n = kRampaArranqueAmostras;
+            const float t = (float)ramp_n / (float)kRampaArranqueAmostras;
+            const float g = t * t;
+            for(int b = 0; b < 2; b++)
+                for(size_t i = 0; i < size; i++) out[b][i] *= g;
+        }
+    }
+
     const float r_l = params.Real(manifest.p_out_l) >= 0.5f ? 1.f : 0.f;
     const float r_r = params.Real(manifest.p_out_r) >= 0.5f ? 1.f : 0.f;
     const float v_l = r_l * params.Real(manifest.p_post_level_l);
