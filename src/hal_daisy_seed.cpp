@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.55.0
+// hal_daisy_seed v0.61.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.55.0"
+#define COTUCA_HAL_VERSION "0.61.0"
 
 using namespace daisy;
 
@@ -1443,7 +1443,54 @@ bool EncoderPushBorda(int i)
 // O INVOLUCRO, nao o driver cru: `OledDisplay` traz `SetCursor` e
 // `WriteString`, e o driver sozinho so tem `DrawPixel`. Escrever texto a
 // mao a partir do FontDef seria reimplementar o que ja existe testado.
-static daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver> oled;
+// ---- ESCRITA DO FRAMEBUFFER INTEIRO ----
+//
+// ⚠️ UM DRIVER SO, E E O QUE ESTA INICIALIZADO.
+//
+// A primeira versao criou um SEGUNDO driver ao lado (`oled_dma`), nunca
+// lhe chamou `Init`, e mandou-o transmitir. Travou a placa duas vezes —
+// e eu cheguei a escrever uma cicatriz a acusar o DMA da libDaisy. O
+// defeito era meu: OBJECTO POR INICIALIZAR, que e a familia que esta
+// casa tem escrita desde o `adc_pronto` ("periferico nao configurado
+// devolve um numero, e numero parece dado").
+//
+// O `driver_` do `OledDisplay` e PRIVADO — nao se alcanca nem por
+// subclasse. Mas ele e parametro de template, e isso da a saida: a
+// subclasse REGISTA-SE a si propria no `Init`, e o HAL usa o ponteiro.
+// Sem segunda instancia, sem tocar na biblioteca.
+class OledFb : public daisy::SSD130x4WireSpi128x64Driver
+{
+  public:
+    static OledFb* eu;
+    void Init(Config c)
+    {
+        daisy::SSD130x4WireSpi128x64Driver::Init(c);
+        eu = this;
+    }
+    // ⚠️ `memcpy`, e nao 8192 chamadas a `DrawPixel`.
+    //
+    // A conversao pixel a pixel custava 23 933 us por quadro — MEDIDO.
+    // O SPI a PS_64 gasta ~4 ms, portanto vinte desses milissegundos
+    // eram so o laco de conversao. A 5 Hz isso tirava 12% das voltas
+    // (21 523 -> 18 831 por segundo); a 20 Hz tiraria metade.
+    //
+    // O `buffer_` do driver tem exactamente o formato do nosso
+    // framebuffer — pagina de 128 bytes, bit `p` do byte e a linha
+    // `pagina*8 + p`. Entao e uma copia e mais nada.
+    //
+    // A licao: o custo estava no CODIGO, nao no periferico. Fui desenhar
+    // DMA para um problema que era um laco de 8192 iteracoes.
+    void Copia(const uint8_t* fb) { memcpy(buffer_, fb, sizeof(buffer_)); }
+};
+OledFb* OledFb::eu = nullptr;
+
+static daisy::OledDisplay<OledFb> oled;
+
+static uint32_t oled_fb_quadros    = 0;   // quadros desenhados
+static uint32_t oled_fb_descartes  = 0;   // nunca, no caminho bloqueante
+static uint32_t oled_fb_us_pico    = 0;   // pior caso do QUADRO INTEIRO, em us
+
+
 // CONTADORES DO PROPRIO DESENHO. Faltavam, e a falta custou uma rodada
 // inteira de hipoteses: sem eles, "o bloco nao executou" e "executou e
 // pintou preto" leem exatamente igual — uma tela apagada.
@@ -1453,7 +1500,7 @@ static uint32_t oled_chars   = 0;
 // configuracao. Cravar um prescaler custaria uma gravacao por tentativa;
 // assim a varredura inteira cabe numa. Mesma familia do `ctos prazo` e
 // do `dup on|off`.
-static int oled_ps = 64;
+static int oled_ps = 8;   // VERIFICADO no vidro: PS_4 e PS_8 desenham limpo.
 static bool oled_pronto = false;
 
 // Reinicializa DE VERDADE quando o prescaler muda: o `if(oled_pronto)`
@@ -1473,7 +1520,7 @@ int OledVelocidadeAtual() { return oled_ps; }
 bool OledInit()
 {
     if(oled_pronto) return true;
-    daisy::OledDisplay<daisy::SSD130x4WireSpi128x64Driver>::Config cfg;
+    daisy::OledDisplay<OledFb>::Config cfg;
     // Defaults ja dao MODO 0 (polarity LOW + phase ONE_EDGE), que e o que
     // o SSD1309 quer. Nao se toca no que ja esta certo.
     cfg.driver_config.transport_config.pin_config.dc    = seed::D6;
@@ -1517,6 +1564,76 @@ bool OledInit()
     // que dizer isso com essas palavras.
     oled_pronto = true;
     return true;
+}
+
+// ---- O UNICO PONTO DE ENTRADA NOVO ----
+//
+// 1024 bytes, ordem de pagina do SSD1309: `fb[pagina*128 + coluna]`, e o
+// bit `p` do byte e a linha `pagina*8 + p`.
+//
+// ⚠️ O BUFFER TEM DE SOBREVIVER A CHAMADA. O DMA le-o DEPOIS de esta
+// funcao voltar — um buffer local do chamador seria lixo a caminho do
+// painel. Quem chama guarda-o em estatico.
+//
+// Devolve `false` quando havia transferencia em curso e o quadro foi
+// descartado. Descarte nao e erro: a 20 Hz nao devia acontecer, e se
+// acontecer e sinal de que a taxa esta acima do que o SPI aguenta.
+// ⚠️ O CAMINHO DE DMA TRAVA A PLACA. MEDIDO EM 01/09, DUAS VEZES.
+//
+// A ideia era boa e e do dB: por DMA o laco paga o DISPARO e a
+// transferencia atravessa o periferico — os 20 KB/s existem no
+// barramento SPI, nao no orcamento do laco. Mesma distincao do `Log()`
+// com fila drenada por ISR.
+//
+// Mas na pratica, com o `SpiHandle::DmaTransmit` desta libDaisy, o laco
+// morre. Reproduzido a 5 Hz — nao e questao de taxa. Assinatura: a USB
+// continua a enumerar em 0,0 s e o CDC aceita ligacao, mas o laco nao
+// responde. Ou seja: as ISRs vivem e o laco fica preso.
+//
+// ⚠️ E DISTINGUE-SE DA OUTRA TRAVAGEM DO DIA: a da ponte sem
+// alimentacao dava ~59 s para abrir a porta. Esta abre instantaneamente.
+// Dois modos de falha, duas assinaturas — e foi o tempo de abertura que
+// os separou.
+//
+// NAO ESTA DIAGNOSTICADO ao nivel do token. Fica o caminho para quem
+// voltar: o `SendDataDma` faz `SCB_CleanInvalidateDCache_by_Addr`, e o
+// `DmaTransmit` da libDaisy tem o mesmo "queue a job (blocks until the
+// queue position is free)" que ja travou a UART hoje. A bandeira
+// `ocupado` devia impedir a fila — mas so impede a NOSSA, e o painel
+// partilha o SPI1 com o que mais lá estiver.
+//
+// Ate isso estar medido, o caminho e o BLOQUEANTE, com a taxa a ceder
+// se o numero mandar. O `oled.Update()` da libDaisy e conhecido e
+// funciona ha semanas nesta placa.
+bool OledDesenha(const uint8_t* fb)
+{
+    if(!oled_pronto || !fb) return false;
+    const uint32_t t0 = NowTicks();
+    if(!OledFb::eu) return false;
+    OledFb::eu->Copia(fb);
+    oled.Update();
+    const bool ok = true;
+    const uint32_t us = (NowTicks() - t0) / TicksPerUs();
+    if(us > oled_fb_us_pico) oled_fb_us_pico = us;
+    if(ok) { oled_fb_quadros++; oled_updates++; }
+    else   { oled_fb_descartes++; }
+    return ok;
+}
+
+// ⚠️ O PICO E RETIDO, entao quem mede TEM de o zerar antes.
+//
+// Medido em 01/09: tres corridas seguidas a prescalers diferentes
+// imprimiram todas `23288 us` — o pico da PRIMEIRA, com PS_64. As duas
+// seguintes eram muito mais rapidas e o numero nao mexeu, porque um
+// maximo so sobe. Numero velho com cara de novo, que e a familia que
+// este dia inteiro pagou.
+void OledFbZeraPico() { oled_fb_us_pico = 0; }
+
+void OledDmaEstado(uint32_t* quadros, uint32_t* descartes, uint32_t* us_pico)
+{
+    if(quadros)   *quadros   = oled_fb_quadros;
+    if(descartes) *descartes = oled_fb_descartes;
+    if(us_pico)   *us_pico   = oled_fb_us_pico;
 }
 
 void OledPreenche(bool aceso)

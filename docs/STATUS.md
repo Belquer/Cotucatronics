@@ -6,7 +6,12 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-08-28 · leva: **matriz de roteamento 2×2** medida ·
+> Atualizado em 2026-09-01 · leva: **a abertura do OLED** viva (jogada de
+> búzios → marca → nome → versão, 50 quadros a 20 Hz) · **framebuffer inteiro
+> por SPI a PS_8**, 3 811 µs/quadro, verificado no vidro · fonte 5×7 gerada
+> de glifos legíveis · o enfeite que cobrava **13% ao laço parado**
+>
+> Antes, 2026-08-28: **matriz de roteamento 2×2** medida ·
 > **OLED vivo** e três encoders a contar · **livelock do MIDI consertado** ·
 > `in_gain` removido · **tarolator**, efeito novo nascido de uma medição
 
@@ -34,6 +39,59 @@ desalinho só aparece quando alguém precisa da versão certa.
 ---
 
 <!-- doc-check: ignore system_profiler (comando do macOS, nao simbolo do projecto) -->
+
+## 01/09 — o painel passou a desenhar, e o custo ficou medido
+
+**O que existe agora.** O OLED deixou de ser duas linhas de texto e passou a
+receber **o framebuffer inteiro** por `hal::OledDesenha(fb)` — uma entrada só,
+com a fronteira do HAL intacta. Em cima disso, três peças de C++ **puro**, sem
+hardware nenhum: `desenho.h` (primitivas), `fonte5x7.h` (43 glifos, gerados de
+arte legível por `fonte5x7.py`) e `splash.h` (a abertura). Tudo isto vê-se
+inteiro no computador antes de haver vidro, e o Bresenham é **inteiro**, então
+o que sai no painel é bit a bit o que saiu no teste em terra.
+
+**A abertura.** Jogada de búzios que entra pelo topo e abre em leque (1,05 s),
+**fica assente** 0,45 s, uma das conchas que caiu sobe e cresce até virar
+marca, o nome entra letra a letra, a versão assina. 50 quadros a 20 Hz, 2,50 s.
+Corre **depois** do `StartAudio` — o instrumento já soa enquanto a jogada cai —
+e apaga-se 2 s depois de acabar, porque painel aceso custa 6 dB de chão de
+ruído e assinatura acesa para sempre cobrava esse preço por um enfeite.
+
+Repete-se sem gravar: `splash` e `splash curto`.
+
+**Os números, e os que faltam.**
+
+| | medido |
+|---|---|
+| Quadro a PS_64 | 23 401 µs |
+| Quadro a PS_16 | 6 945 µs |
+| **Quadro a PS_8** (por omissão) | **3 811 µs** — custa 7% do laço a 20 Hz |
+| Quadro a PS_4 | 2 023 µs |
+| Custo fixo, deduzido dos dois pontos rápidos | ~300 µs + ~440 µs por unidade |
+
+PS_8 e PS_4 desenham **limpo**, confirmado no vidro com padrão de 1 px. PS_8
+é o escolhido, não PS_4: os dois servem, mas PS_8 tem uma oitava de folga
+**provada** por baixo, e margem medida vale mais que os 3% que custa. **PS_2
+não foi medido** e fica declarado como desconhecido.
+
+**Três dívidas abertas, escritas como dívidas:**
+
+1. **A semente da jogada de arranque é fraca.** O `rng_state` dos búzios só
+   gira dentro do laço, e no boot o laço ainda não deu volta nenhuma: vale
+   zero. Semeio do relógio, que varia pouco — **a jogada de arranque vai ser
+   quase sempre a mesma**. As do `splash` e do despertar apanham o `rng_state`
+   já girado e são genuinamente diferentes.
+2. **Faltam 7% de base do laço.** O `noinline` recuperou 8 dos 13 pontos
+   perdidos; os outros não têm explicação e não são arredondamento.
+3. **A abertura do despertar tem um conflito por decidir.** Doze quadros ao
+   acordar põem 0,6 s entre o gesto e a resposta do painel — e foram cinco
+   iterações a afinar essa resposta para ser imediata. Ou o painel é rápido,
+   ou tem abertura. **Decisão do dB, não implementada.**
+
+**Ainda por fazer, pedido e não feito:** medir o espectro do ruído a 7040 Hz
+**antes e depois** com o framebuffer a 20 Hz, mesma posição, mesma alternância.
+
+---
 
 ## 31/08 — o dia do terra e da microfonia
 

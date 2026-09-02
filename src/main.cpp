@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.233.0"
+#define COTUCA_OS_VERSION "0.241.2"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -53,6 +53,7 @@ static inline int CadeiaDoParam(int c) { return g_dup_por_cadeia ? c : 0; }
 #include "suave.h"
 #include "tarol.h"
 #include "notch.h"
+#include "splash.h"
 #include "espectro.h"
 #include "delay.h"
 #include "qspi_raw.h"
@@ -721,6 +722,17 @@ static inline bool NaJanela(int param, uint32_t agora)
 // mexeu num encoder desde o arranque, o SPI nunca chega a falar.
 // Acende agora e arma o sono. Inicializa a pedido: se ninguem mexeu num
 // encoder desde o arranque, o SPI nunca chega a falar.
+// ⚠️ `noinline` DE PROPOSITO, e o motivo esta medido.
+//
+// Com a chamada inline no corpo do laco, o compilador arrastou para
+// dentro da funcao quente a fonte, o elipse, o Bresenham e o Texto — e a
+// base do laco caiu de ~21 500 para ~18 600 voltas/s, 13%, com o splash
+// PARADO. O trabalho nao aumentou; o codigo e que inchou e a I-cache
+// pagou. Custo de enfeite cobrado ao caminho quente que nunca o corre.
+//
+// Este atributo e o unico delta entre os dois builds medidos.
+__attribute__((noinline)) static void PassoDaAbertura();
+
 static void AcendePainel()
 {
     if(!cotuca::hal::OledConfigurado() && !cotuca::hal::OledInit()) return;
@@ -2017,6 +2029,50 @@ static volatile uint32_t ctos_pico_us      = 0;   // pior caso visto
 static volatile uint32_t ctos_orcamento_us = 0;
 static volatile uint32_t ctos_ocorrencias  = 0;
 static volatile uint32_t loop_voltas       = 0;
+
+// ---- BANCO DE ENSAIO DO PAINEL ----
+//
+// EXISTE ANTES DO SPLASH, e de proposito: o numero que interessa e o
+// EFEITO nas voltas do laco, e medi-lo depois de o splash estar escrito
+// seria medir quando ja nao ha por onde recuar. Regra do dB.
+//
+// ⚠️ O FRAMEBUFFER E ESTATICO, e tem de ser: o DMA le-o DEPOIS de o
+// `OledDesenha` voltar. Um buffer local seria lixo a caminho do painel.
+// E fica em RAM normal, nao em DTCM — o DMA nao alcanca a DTCM.
+static uint8_t  oled_fb[1024];
+// SPLASH. O objeto tem ~120 bytes e vive aqui, ao lado do framebuffer,
+// em RAM normal — nada disto e caminho quente e nada disto entra no
+// callback de audio.
+static cotuca::splash::Splash abertura;   // nao "splash": colide com o namespace
+static bool     splash_ativo    = false;
+static uint32_t splash_prox     = 0;
+static uint32_t splash_apaga_em = 0;
+static const uint32_t kSplashMs   = 50;    // 20 Hz — medido a 3811 us/quadro
+static const uint32_t kSplashHold = 2000;  // segura a marca, depois apaga
+
+__attribute__((noinline)) static void PassoDaAbertura()
+{
+    const uint32_t ag = cotuca::hal::NowMs();
+    if((int32_t)(ag - splash_prox) < 0) return;
+    splash_prox = ag + kSplashMs;
+    abertura.Quadro(oled_fb);
+    cotuca::hal::OledDesenha(oled_fb);
+    if(!abertura.Ativo())
+    {
+        splash_ativo    = false;
+        splash_apaga_em = ag + kSplashHold;
+    }
+}
+static bool     oled_bench_on   = false;
+static uint32_t oled_bench_ate  = 0;
+static uint32_t oled_bench_prox = 0;
+static uint32_t oled_bench_ms   = 50;   // 20 Hz por omissao
+static uint32_t oled_bench_v0   = 0;    // voltas no arranque da medida
+static uint32_t oled_bench_t0   = 0;
+static uint32_t oled_voltas_seg_base = 0;   // voltas/s com o painel quieto
+static uint32_t oled_bench_seg  = 5;
+static int      oled_bench_fase = 0;   // 0 = base · 1 = a desenhar
+static uint32_t oled_bench_q0   = 0;
 
 static void LedFaseTick(size_t block_size, float sample_rate)
 {
@@ -3658,6 +3714,114 @@ static void HandleLine(const char* line)
     // mesma armadilha para `miditest`/`midiloop` contra `midi`.
     //
     // Licao escrita a dois comandos de distancia e licao nao aplicada.
+    // ⚠️ ANTES DO `oled`, e nao depois: o despacho e por prefixo, e
+    // "oledbench" comeca por "oled". Posto a seguir, ele NUNCA corria —
+    // e o sintoma seria o painel a acender em vez de medir, que ninguem
+    // liga a um comando que nao existe. E a mesma cicatriz que o
+    // `oledvel` ja tem escrita duas linhas abaixo.
+    // ---- BANCO DE ENSAIO DO PAINEL ----
+    //
+    // `oledbench [hz] [segundos]` — mede o EFEITO do painel nas voltas do
+    // laco. Mede primeiro a linha de base com o painel quieto, depois
+    // com ele a desenhar, e imprime os dois lado a lado.
+    //
+    // A pergunta que ele responde nao e "quanto custa um quadro" — e
+    // "quantas voltas o laco perde". Sao coisas diferentes: com DMA o
+    // quadro custa 1 KB de SPI e o laco paga so o disparo.
+    // `splash [curto]` — repete a abertura sem gravar.
+    //
+    // Sem isto, iterar num desenho de 2,5 s que so corre no arranque custa
+    // uma GRAVACAO por tentativa — e gravar apaga o estado (§2b), entao
+    // cada iteracao de enfeite custava repor os notches. Aqui a semente
+    // vem do `rng_state` ja girado por milhoes de voltas: jogada nova
+    // de cada vez, ao contrario da do arranque.
+    if(strncmp(line, "splash", 6) == 0)
+    {
+        if(!hal::OledConfigurado() && !hal::OledInit())
+        { hal::Log("splash: painel nao inicializa"); return; }
+        const bool curto = strstr(line, "curto") != nullptr;
+        enc_na_tela     = false;      // o painel de texto nao disputa o vidro
+        oled_bench_on   = false;
+        splash_apaga_em = 0;
+        abertura.Versao("v" COTUCA_OS_VERSION);
+        abertura.Comeca(rng_state, curto);
+        splash_ativo = true;
+        splash_prox  = hal::NowMs();
+        hal::Log("splash: %s, %d quadros a %lu Hz (~%.2f s), semente %08lX",
+                 curto ? "curto" : "cheio", abertura.Quadros(),
+                 (unsigned long)(1000u / kSplashMs),
+                 abertura.Quadros() * (kSplashMs / 1000.f),
+                 (unsigned long)rng_state);
+        return;
+    }
+
+    // `oledpad` — desenha UMA vez o padrao mais hostil que existe (pixel
+    // sim, pixel nao) e deixa parado, para o OLHO julgar a integridade.
+    //
+    // Contar quadros nao prova que os pixels chegaram limpos: SPI rapida em
+    // fio comprido CORROMPE, nao emudece. O `oledbench` mede velocidade; a
+    // correcao so o olho fecha. Tem de vir ANTES de "oled" no despacho.
+    if(strncmp(line, "oledpad", 7) == 0)
+    {
+        if(!hal::OledConfigurado()) { hal::Log("oledpad: painel nao inicializa"); return; }
+        oled_bench_on = false;              // solta o bench, se estiver a correr
+        enc_na_tela   = false;              // e o painel de texto, que sobrescreveria
+        oled_dorme_em = 0;
+        for(int i = 0; i < 1024; i++) oled_fb[i] = (uint8_t)((i & 1) ? 0xAA : 0x55);
+        hal::OledFbZeraPico();              // <-- OU O NUMERO E DE OUTRA CORRIDA
+        const bool ok = hal::OledDesenha(oled_fb);
+        uint32_t us = 0; hal::OledDmaEstado(nullptr, nullptr, &us);
+        hal::Log("oledpad: padrao 1 px %s · quadro %lu us · prescaler %d",
+                 ok ? "no ar" : "RECUSADO", (unsigned long)us, hal::OledVelocidadeAtual());
+        hal::Log("  olha o painel: cinza UNIFORME = limpo · faixas/blocos = corrompeu");
+        return;
+    }
+
+    if(strncmp(line, "oledbench", 9) == 0)
+    {
+        if(!hal::OledConfigurado() && !hal::OledInit())
+        { hal::Log("oledbench: painel nao inicializa"); return; }
+        const char* a = line + 9;
+        while(*a == ' ') a++;
+        uint32_t hz = 0; while(*a >= '0' && *a <= '9') hz = hz * 10 + (*a++ - '0');
+        while(*a == ' ') a++;
+        uint32_t seg = 0; while(*a >= '0' && *a <= '9') seg = seg * 10 + (*a++ - '0');
+        if(!hz)  hz  = 20;
+        if(hz > 60) hz = 60;
+        if(!seg) seg = 5;
+        if(seg > 60) seg = 60;
+
+        // PADRAO DE TESTE com metade dos bits acesos: um quadro todo a
+        // zeros nao prova que o caminho de dados funciona — preto e
+        // indistinguivel de "nao chegou".
+        for(int i = 0; i < 1024; i++) oled_fb[i] = (uint8_t)((i & 1) ? 0xAA : 0x55);
+
+        // ⚠️ A LINHA DE BASE MEDE-SE PELO LACO, NAO DENTRO DELE.
+        //
+        // A primeira versao fazia `while(NowMs() < t0+1000) {}` aqui —
+        // e este handler CORRE NO LACO. Segurar o laco enquanto se
+        // contam as voltas dele da zero por construcao, e foi o que
+        // deu: "base 0 voltas/s". O instrumento mediu o proprio garrote.
+        //
+        // Entao sao duas fases da mesma maquina: 1 s a NAO fazer nada, e
+        // so depois a desenhar. O laco corre livre nas duas.
+        oled_bench_ms   = 1000u / hz;
+        oled_bench_seg  = seg;
+        oled_bench_fase = 0;                 // 0 = base · 1 = a desenhar
+        oled_bench_t0   = hal::NowMs();
+        oled_bench_ate  = oled_bench_t0 + 1000u;
+        oled_bench_v0   = loop_voltas;
+        // zera o pico E guarda a contagem de quadros, para o relatorio
+        // falar DESTA corrida e nao da historia toda
+        hal::OledFbZeraPico();
+        hal::OledDmaEstado(&oled_bench_q0, nullptr, nullptr);
+        oled_bench_on   = true;
+        hal::Log("oledbench: 1 s de base com o painel quieto, depois %lu Hz"
+                 " por %lu s. O veredito sai sozinho.",
+                 (unsigned long)hz, (unsigned long)seg);
+        return;
+    }
+
     if(strncmp(line, "oledvel", 7) == 0)
     {
         const char* a = line + 7;
@@ -5504,7 +5668,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [curto] | pino [reset] | dreno <ms> | pk (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -5858,6 +6022,27 @@ int main(void)
     hal::Log("SDRAM via AllocBig: %u de %u bytes",
              (unsigned)hal::AllocBigUsed(),
              (unsigned)hal::Info().big_ram_bytes);
+
+    // ---- A ABERTURA ----
+    //
+    // DEPOIS do StartAudio, de proposito: o instrumento ja soa enquanto a
+    // jogada corre. Um splash que atrasa o audio troca 2,5 s de som por
+    // 2,5 s de enfeite, e nesta casa isso nao se troca.
+    //
+    // ⚠️ SEMENTE FRACA NO ARRANQUE, e digo-o. O `rng_state` dos buzios so
+    // gira DENTRO do laco (uma soma aurea por volta), e aqui o laco ainda
+    // nao deu volta nenhuma: vale 0. Entao semeio do relogio, que no boot
+    // varia pouco — a jogada de arranque e quase sempre a mesma. A do
+    // despertar, essa sim, apanha o `rng_state` ja girado por milhoes de
+    // voltas, e ai a jogada e diferente de cada vez.
+    if(hal::OledConfigurado() || hal::OledInit())
+    {
+        rng_state += 0x9E3779B9u ^ hal::NowTicks();
+        abertura.Versao("v" COTUCA_OS_VERSION);
+        abertura.Comeca(rng_state, false);
+        splash_ativo = true;
+        splash_prox  = hal::NowMs();
+    }
 
     // Tick de ~1 ms. Nada de bloqueio longo aqui: o serial responde na
     // hora e o LED vira heartbeat contado, não um sleep de meio segundo.
@@ -6223,6 +6408,63 @@ int main(void)
         }
 
         SUB(5);   // OLED por SPI
+        // ---- A ABERTURA: um quadro por periodo, NUNCA um laco de espera ----
+        if(splash_ativo) PassoDaAbertura();
+        // A marca fica no vidro, e depois APAGA. Painel aceso custa 6 dB de
+        // chao de ruido (medido) — deixar a assinatura acesa para sempre
+        // seria cobrar esse preco por um enfeite.
+        if(splash_apaga_em && (int32_t)(hal::NowMs() - splash_apaga_em) >= 0)
+        {
+            splash_apaga_em = 0;
+            if(!enc_na_tela) hal::OledPreenche(false);
+        }
+        // ---- BANCO DE ENSAIO: um quadro por periodo, sem delay ----
+        if(!splash_ativo && oled_bench_on)
+        {
+            const uint32_t ag = hal::NowMs();
+            if(oled_bench_fase == 1 && (int32_t)(ag - oled_bench_prox) >= 0)
+            {
+                oled_bench_prox = ag + oled_bench_ms;
+                hal::OledDesenha(oled_fb);
+            }
+            if(oled_bench_fase == 0 && (int32_t)(ag - oled_bench_ate) >= 0)
+            {
+                const uint32_t dt = ag - oled_bench_t0;
+                oled_voltas_seg_base = dt ? (loop_voltas - oled_bench_v0)
+                                                * 1000u / dt : 0;
+                hal::OledDmaEstado(nullptr, nullptr, nullptr);
+                oled_bench_fase = 1;
+                oled_bench_t0   = ag;
+                oled_bench_ate  = ag + oled_bench_seg * 1000u;
+                oled_bench_prox = ag;
+                oled_bench_v0   = loop_voltas;
+                hal::Log("oledbench: base %lu voltas/s — agora a desenhar.",
+                         (unsigned long)oled_voltas_seg_base);
+            }
+            else if(oled_bench_fase == 1 && (int32_t)(ag - oled_bench_ate) >= 0)
+            {
+                oled_bench_on = false;
+                uint32_t q, d, us;
+                hal::OledDmaEstado(&q, &d, &us);
+                const uint32_t dt = ag - oled_bench_t0;
+                const uint32_t vs = dt ? (loop_voltas - oled_bench_v0) * 1000u / dt : 0;
+                hal::Log("OLED BENCH: %lu Hz por %lu ms", 
+                         (unsigned long)(1000u / (oled_bench_ms ? oled_bench_ms : 1)),
+                         (unsigned long)dt);
+                hal::Log("  voltas/s: %lu com o painel · %lu quieto · %+ld%%",
+                         (unsigned long)vs, (unsigned long)oled_voltas_seg_base,
+                         oled_voltas_seg_base
+                             ? (long)((long)vs - (long)oled_voltas_seg_base) * 100
+                                   / (long)oled_voltas_seg_base
+                             : 0L);
+                hal::Log("  quadros %lu nesta corrida · descartes %lu ·"
+                         " QUADRO pico %lu us",
+                         (unsigned long)(q - oled_bench_q0),
+                         (unsigned long)d, (unsigned long)us);
+                hal::Log("  (o \"disparo\" e o quadro INTEIRO enquanto o"
+                         " caminho for bloqueante — memcpy + SPI)");
+            }
+        }
         // A MAO PAROU: agora sim acende. Fica aqui, e nao no laco dos
         // encoders, porque tem de correr mesmo quando NAO ha evento —
         // e "parar" e justamente a ausencia de eventos.
@@ -6244,7 +6486,7 @@ int main(void)
                      (unsigned long)(kOledDormeMs / 1000u));
         }
         // ---- ENCODER NA TELA ----
-        if(enc_na_tela && hal::OledConfigurado()
+        if(!splash_ativo && enc_na_tela && hal::OledConfigurado()
            && (int32_t)(hal::NowMs() - enc_tela_prox) >= 0)
         {
             char l[3][24];

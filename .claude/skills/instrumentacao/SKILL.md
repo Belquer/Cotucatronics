@@ -454,6 +454,49 @@ produzível pelo dado real?* Se for, ele não pode ser o sentinela.
 lado.** Nunca só a interpretação. Na mesma linha, o leitor pode discordar da
 segunda sem perder a primeira.
 
+## Contador que não se zera mede a HISTÓRIA, não a corrida
+
+Todo máximo retido, soma acumulada ou contagem citada como resultado **desta**
+corrida tem de ser **zerada por quem mede**, no início. Senão o número é de
+outra corrida com cara de número desta.
+
+*Custou três medições de prescalers diferentes imprimirem `23288 us` idêntico —
+o pico da primeira. O verdadeiro era 3 811 µs, seis vezes menor. E repeti o
+defeito uma hora depois, num comando novo que lia o mesmo contador sem o zerar:
+a família não se cura por ter sido nomeada num sítio, cura-se em cada leitor
+novo do contador.*
+
+## Antes de publicar dois números, MULTIPLIQUE-OS
+
+Custo por evento × taxa **tem de dar** a fração. Se não der, um dos dois está
+errado — e descobre-se **de graça**, sem placa e sem serial, na própria frase
+que se ia escrever.
+
+*Entreguei `-3%` e `23288 us` na mesma linha. Vinte quadros por segundo a
+23,3 ms são 47% do laço, não 3%. As duas metades da contradição estavam no meu
+próprio relatório.*
+
+Depois de consertado, os dois passaram a fechar: 20 × 3 811 µs = 4,05%, e o laço
+mediu 4%. **É o fecho que prova a medição**, não a plausibilidade de cada número
+sozinho.
+
+## Antes de pedir que alguém OLHE, descreva o que a FALHA vai parecer
+
+Se a descrição da falha e a descrição do sucesso são a mesma, **não há teste** —
+há uma pergunta que só tem uma resposta possível.
+
+*Pedi "cinza uniforme = limpo, faixas = corrompeu" para um xadrez de 1 px. Mas o
+comando anterior deixava o ecrã **todo aceso**, e um xadrez de 1 px à distância
+de trabalho também lê como branco. "Aterrou" e "não aterrou" davam a mesma
+resposta ocular. Três respostas "limpo" viraram zero verificações.*
+
+Corolário: **um teste tem de partir de um estado que não se confunda com o
+resultado.** Teste que herda o ecrã, o buffer ou o contador de quem correu antes
+está a medir o antecessor.
+
+Isto é a **15at** virada contra o próprio autor: lá, o olho era incapaz de ver o
+defeito; aqui, **fui eu que desenhei a verificação incapaz de falhar**.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

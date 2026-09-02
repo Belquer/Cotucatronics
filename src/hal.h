@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.35.0
+// hal.h v0.36.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -312,6 +312,20 @@ void             OledPreenche(bool aceso);   // tela toda acesa/apagada
 void             OledTexto(const char* l1, const char* l2);
 // Tres linhas pequenas — o formato de instrumento, nao de titulo.
 void             OledLinhas(const char* l1, const char* l2, const char* l3);
+// ---- O UNICO PONTO DE ENTRADA NOVO DO PAINEL ----
+//
+// 1024 bytes em ordem de pagina do SSD1309 (`fb[pagina*128 + coluna]`),
+// entregues por DMA: o laco paga o DISPARO, nao a transferencia.
+//
+// ⚠️ O BUFFER TEM DE SOBREVIVER A CHAMADA — o DMA le-o depois dela
+// voltar. Estatico, nunca local.
+//
+// `false` = havia transferencia em curso e o quadro foi DESCARTADO.
+bool             OledDesenha(const uint8_t* fb);
+void             OledFbZeraPico();
+void             OledDmaEstado(uint32_t* quadros, uint32_t* descartes,
+                               uint32_t* us_pico);
+
 bool             OledConfigurado();
 // Quantos `Update` foram ao painel e quantos caracteres foram escritos.
 // Sem estes dois, tela preta tem duas causas indistinguiveis: o desenho

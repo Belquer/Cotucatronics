@@ -6126,3 +6126,110 @@ delas nao diz nada sobre as outras.
 ---
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.
+
+## 15au. Tres medicoes, o mesmo numero, e eu publiquei as duas metades sem as multiplicar (01/09)
+
+Media o custo do painel OLED em tres prescalers. As tres corridas imprimiram
+`DISPARO pico 23288 us` — **exactamente o mesmo numero**, ate ao microssegundo.
+
+Era o pico da PRIMEIRA corrida. `oled_fb_us_pico` e um maximo retido, e um maximo
+so sobe: as duas corridas seguintes eram seis vezes mais rapidas e o numero nao
+mexeu. **Numero de outra corrida com cara de numero desta.**
+
+E eu entreguei ao dB, na mesma frase:
+
+> `voltas/s: 19835 ... -3%` e `DISPARO pico 23288 us`
+
+**As duas nao podem ser verdade juntas, e a conta cabe na cabeca.** Vinte quadros
+por segundo a 23,3 ms sao 466 ms por segundo — 47% do laco, nao 3%. Eu tinha as
+duas metades da contradicao na mesma linha do meu proprio relatorio e nao as
+multipliquei.
+
+Depois de zerar o pico em cada corrida, o verdadeiro apareceu: **3 811 us**. Vinte
+vezes isso da 4,05%, e o laco media 4%. **Os dois numeros passaram a fechar**, e e
+esse fecho que prova a medicao — nao a plausibilidade de cada um sozinho.
+
+> **Contador que nao se zera nao mede a corrida, mede a historia.** Todo maximo,
+> soma ou contagem citada como resultado DESTA corrida tem de ser zerada por quem
+> mede, no inicio, ou nao pode ser citada assim.
+
+E a regra que vale mais, porque nao custa ferramenta nenhuma:
+
+> **Antes de publicar dois numeros, multiplica-os.** Custo por evento vezes taxa
+> tem de dar a fraccao. Se nao der, um dos dois esta errado — e descobre-se de
+> graca, sem placa, sem serial, na propria frase que se ia escrever.
+
+Cometi o mesmo defeito **outra vez, uma hora depois**, no `oledpad`: acabara de
+zerar o pico no `oledbench` e escrevi um comando novo que o le sem o zerar. Dois
+prescalers, o mesmo `22865 us`. A familia nao se cura por ter sido nomeada num
+sitio — cura-se em cada leitor novo do contador.
+
+---
+
+## 15av. Construi um teste cuja falha se parecia com o sucesso, e tres respostas nao provaram nada (01/09)
+
+Contar quadros nao prova que os pixeis chegaram: **SPI rapida em fio comprido
+corrompe, nao emudece**. Para fechar a integridade fiz um comando que desenha o
+padrao mais hostil que existe — pixel sim, pixel nao — e pedi ao dB para olhar:
+
+> "cinza UNIFORME = limpo · faixas/blocos = corrompeu"
+
+Ele respondeu **limpo** tres vezes, em tres prescalers. Eu declarei os tres
+verificados.
+
+Duas coisas estavam erradas ao mesmo tempo:
+
+1. O `oledvel` termina com `OledPreenche(true)` — **deixa o ecra todo aceso**. Se
+   o padrao nao aterrasse, o que ficava no vidro era branco cheio.
+2. Um xadrez de 1 px, visto a distancia de trabalho, tambem le como branco.
+
+Entao **"aterrou" e "nao aterrou" produziam a mesma resposta ocular**. Nao era um
+teste com um resultado ambiguo: era uma pergunta que nao tinha como distinguir os
+dois estados que eu mandava distinguir.
+
+O dB desfez o no com cinco palavras — *"por limpo quis dizer tela toda branca
+acesa"* — e nesse momento as tres verificacoes viraram zero verificacoes.
+
+A **15at** diz que olho e ERC sao perguntas diferentes, e que uma verificacao so
+absolve dentro do que e CAPAZ de ver. Aqui o agravante e meu: **eu proprio
+desenhei a verificacao, e desenhei-a incapaz de falhar.**
+
+> **Antes de pedir a alguem que olhe, descreve o que a FALHA vai parecer.** Se a
+> descricao da falha e a descricao do sucesso, nao ha teste — ha uma pergunta que
+> so tem uma resposta possivel.
+
+E o corolario que sobrevive a este caso: **um teste tem de partir de um estado que
+nao se confunda com o resultado.** O `oledpad` herdava o ecra aceso de quem corria
+antes; um teste que nao limpa o seu proprio ponto de partida esta a medir o
+antecessor.
+
+---
+
+## 15aw. O enfeite de 2,5 s cobrou 13% ao laco que nunca o corre (01/09)
+
+Liguei a abertura do OLED — jogada de buzios, fonte 5x7, elipses, Bresenham — com
+a chamada `abertura.Quadro(fb)` no corpo do laco principal, guardada por um `if`.
+
+Com a abertura **parada**, a base do laco caiu de **~21 500 para ~18 600
+voltas/s**. Treze por cento, com o codigo do splash a nao correr.
+
+O trabalho nao aumentou. **O codigo e que inchou**: o compilador arrastou a fonte,
+o elipse e o Bresenham para dentro da funcao quente, e a I-cache pagou a conta a
+cada volta, para servir um desenho que corre 2,5 s por arranque.
+
+Um `__attribute__((noinline))` na chamada devolveu **oito dos treze pontos** —
+base de 18 600 para 20 100, tres medicoes com dispersao abaixo de 0,5%. O
+atributo foi o **unico delta entre os dois builds**, que e o A/B mais apertado
+que este projecto consegue.
+
+> **Codigo raro no caminho quente nao custa pelo que corre, custa pelo espaco que
+> ocupa.** Um `if` que quase nunca da verdade e barato; o corpo dele, inlinado, nao e.
+
+Os **7% que faltam continuam por explicar**, e ficam escritos como divida — nao
+como arredondamento.
+
+E o que apanhou o defeito nao foi uma suspeita: foi **uma linha de base que
+existia por outro motivo**. Eu media o custo do painel, tinha o numero de ontem na
+mesma sessao, e a comparacao ofereceu-se sozinha. Medicao guardada apanha
+regressao que ninguem foi procurar.
+

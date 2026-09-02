@@ -319,6 +319,30 @@ route_r_a=0, delay LIGADO      −39,5 dBFS   (+29,7 dB acima do chão)
 > nunca dois estados que ambos contêm interferência. Se precisar do nível
 > absoluto do efeito, use rajada ou ruído, não seno.
 
+## 19. Código raro no caminho quente custa pelo TAMANHO, não pelo que corre
+
+Um `if` que quase nunca dá verdade é barato. **O corpo dele, inlinado, não é.**
+Se o compilador arrasta para dentro da função quente um desenho, uma fonte ou um
+parser que corre uma vez por arranque, a I-cache paga a conta **a cada volta**.
+
+*Medido: ligar a abertura do OLED no corpo do laço derrubou a base de ~21 500
+para ~18 600 voltas/s **com o splash parado**. Um `__attribute__((noinline))`
+devolveu oito dos treze pontos — e foi o **único delta** entre os dois builds,
+que é o A/B mais apertado que este projecto consegue.*
+
+Sintoma que denuncia: **a base mudou e o trabalho não.** Se o número de voltas
+por segundo cai sem que nada novo corra, procure inchaço de código antes de
+procurar trabalho novo.
+
+## 20. Linha de base guardada apanha regressão que ninguém foi procurar
+
+O defeito acima não foi apanhado por suspeita. Foi apanhado porque **havia um
+número de base da mesma sessão** e a comparação ofereceu-se sozinha.
+
+> Toda medição vale duas vezes: uma para a pergunta que a motivou, outra como
+> linha de base para a pergunta seguinte. **Registe a base mesmo quando ela não
+> é a resposta.**
+
 ## Ao terminar
 
 Relatar o número **com a unidade e o regime junto**. Número sem unidade já
