@@ -524,6 +524,41 @@ Par com a regra acima (falha≠sucesso): **um teste que não pode falhar e um te
 que não pode passar são o mesmo defeito** — não perguntei o que o teste era
 capaz de mostrar antes de o entregar.
 
+## Conserto adiado vira o EQUIPAMENTO da próxima emergência
+
+Um instrumento torto é um defeito cosmético **enquanto não há crise**. Na crise
+ele é a única coisa entre você e a resposta — e passa a ser um multiplicador.
+
+*Medido em 02/09: o defeito real era uma linha (`GPIO_PULLUP` num pino de RX).
+Entre "a placa trava" e essa linha passaram-se cinco horas, oito pedidos de
+RESET e cinco gravações de conserto. **Nenhum dos defeitos encontrados pelo
+caminho foi causado pelo defeito real** — eram nove instrumentos e ferramentas
+com problemas antigos, cada um sozinho "não valia o desvio":*
+
+- *contador de rearmes marcava 10 029 há semanas e ninguém perguntou*
+- *o LED confundia fase 0 com fase 1, e lia duas voláteis em instantes
+  diferentes — inventou um par que o código não produz*
+- *a porta serial era escolhida por NOME: cinco comandos foram para a outra placa*
+- *`bb arm` calava o log antes de imprimir a confirmação — armar e não armar
+  tinham a mesma cara*
+- ***o campo "o laço ficou preso?" era lido e ninguém o escrevia** — a pergunta
+  central da sessão tinha campo e não tinha caneta*
+
+Nenhum deles cresceu. Ficaram todos do mesmo tamanho. O que mudou foi que
+passaram a ser usados.
+
+**Assimetria que decide:** instrumento consertado em paz custa minutos, com a
+placa a responder. Consertado dentro de uma prisão custa uma gravação, um RESET
+humano, e a dúvida de saber se o conserto mexeu no que se estava a medir.
+
+**Adiar não se decide, acontece.** Ninguém escolhe deixar um contador mentir —
+deixa-se porque há outra coisa a fazer, e a sessão seguinte herda um instrumento
+com menos um bocado de verdade.
+
+**Contrapeso, senão isto vira desculpa para dispersão:** consertar agora não é
+consertar tudo o que se vê. É consertar **o que a tarefa de agora está a usar**.
+Numa caçada, isso é sempre o instrumento.
+
 ## Ao terminar
 
 Perguntar: *"se esta instrumentação estivesse quebrada, o resultado seria

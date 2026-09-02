@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.257.0"
+#define COTUCA_OS_VERSION "0.260.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2323,6 +2323,16 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // LED conseguiu continuar a falar com o laco preso — e eu tinha o
     // exemplo trinta linhas abaixo.
     {
+        // Slots 2 e 3: o relatorio LIA-OS e ninguem os escrevia — dois
+        // zeros com cara de dado no topo da autopsia, e sao as duas
+        // primeiras perguntas que se fazem ("o audio correu?" e "quanto
+        // custou?"). Escritos daqui, que e onde se sabem.
+        static uint32_t blocos = 0;
+        if((++blocos & 0xFFu) == 0)          // 1 em 256, ~5 Hz
+        {
+            cotuca::hal::BlackboxWrite(2, (float)blocos);
+            cotuca::hal::BlackboxWrite(3, (float)soma_pico_us / 1333.f);
+        }
         static uint32_t vig_voltas = 0, vig_amostras = 0;
         if(loop_voltas != vig_voltas) { vig_voltas = loop_voltas; vig_amostras = 0; }
         else
@@ -2336,7 +2346,24 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             // este bloco corre ANTES de a taxa estar em ambito, e o valor
             // e fixo neste projecto (ver `hal::Info().sample_rate`).
             if(vig_amostras > 48000u)
+            {
+                // ⚠️ CARIMBA A AUTOPSIA ANTES DE MORRER.
+                //
+                // Em 01/09 a caixa-preta nao sabia dizer se o laco tinha
+                // ficado preso — o slot 30 ("TOKEN de linha, 1 = PRESA")
+                // era lido no relatorio e ninguem o escrevia. Passei a
+                // sessao a perguntar a placa uma coisa que ela tinha um
+                // campo para responder e nenhuma caneta para o preencher.
+                //
+                // Agora quem sabe e quem escreve: este callback e o unico
+                // contexto que sobrevive ao laco preso, e carimba onde ele
+                // estava antes de reiniciar.
+                cotuca::hal::BlackboxWrite(30, 1.f);
+                cotuca::hal::BlackboxWrite(31, (float)(loop_snap >> 24));
+                cotuca::hal::BlackboxWrite(19,
+                                (float)((loop_snap >> 16) & 0xFFu));
                 cotuca::hal::ReiniciaAgora();
+            }
         }
     }
 
@@ -4837,7 +4864,20 @@ static void HandleLine(const char* line)
     {
         hal::BlackboxArm();
         hal::LogMute(true);
-        hal::Log("caixa-preta armada; log mudo ate o proximo reset");
+        // ⚠️ `LogAlways` E NAO `Log`: a linha anterior acabou de calar o
+        //    log, e o `Log` sai cedo quando calado — o ANUNCIO da mudanca
+        //    de estado era comido pela propria mudanca. Quem armava a
+        //    caixa-preta nao recebia confirmacao NENHUMA, e o comando
+        //    parecia nao existir. Descoberto em 02/09 a tentar usa-la.
+        //
+        //    E isso alimentava o suspeito "nao estava armada" quando a
+        //    caixa vinha vazia: sem confirmacao, armar e nao armar tem
+        //    exactamente a mesma cara.
+        //
+        //    O `LogAlways` existe para isto — atravessa o mudo, uma linha,
+        //    em contexto de comando.
+        hal::LogAlways("caixa-preta ARMADA; o log fica mudo ate ao proximo"
+                       " reset — silencio a seguir e esperado, nao avaria");
         return;
     }
     // `buzios` — o estado VIVO do detector, que a caixa-preta so conta
@@ -4895,17 +4935,19 @@ static void HandleLine(const char* line)
                  (double)hal::BlackboxRead(10), (double)hal::BlackboxRead(12));
         hal::Log("  fases: 1 knobs 2 serial 3 botoes 4 sorteio 5 rampas"
                  " 6 midi 7 watchdog 8 push-modulo");
-        hal::Log("  --- PICO POR NOTA (pre-level/limiter) ---");
-        for(int b = 0; b <= 12; b++)
-        {
-            const float pk = hal::BlackboxRead(32 + b);
-            if(pk <= 0.f) continue;
-            const float pn = 0.5f + (float)b / 24.f;
-            const float hz = powf(2.f, (pn * 48.f - 24.f) / 12.f) * 110.f;
-            hal::Log("   %6.1f Hz : pico %.3f %s", (double)hz, (double)pk,
-                     pk > 0.95f ? "<<< ESTOURA" : (pk > 0.7f ? "<< quente" : ""));
-        }
-        hal::Log("  --- MIDI no voo ---");
+        // ⚠️ AQUI ESTEVE O "PICO POR NOTA", E ELE MENTIA. (02/09)
+        //
+        // Lia `BlackboxRead(32 + b)` para b em 0..12, ou seja os slots
+        // 32..44. Mas 33..39 sao CONTADORES DE MIDI e 40..44 sao o DIARIO
+        // POR MINUTO. Nada escrevia 32.
+        //
+        // Com trafego MIDI, este bloco imprimia `midi.Bytes()` como se
+        // fosse um pico de audio — "110.0 Hz : pico 1509.000 <<< ESTOURA".
+        // Nao e instrumentacao orfa: e colisao de enderecos, e o mesmo
+        // slot com dois empregos (Familia C) aplicado a caixa-preta.
+        //
+        // A funcionalidade (pico por nota pre-level) esta APOSENTADA: nao
+        // ha escritor nenhum e nao houve em toda a historia deste ficheiro.        hal::Log("  --- MIDI no voo ---");
         hal::Log("   bytes %.0f | msgs %.0f | aplicadas %.0f"
                  " | ressync %.0f | fila perdeu %.0f",
                  (double)hal::BlackboxRead(33), (double)hal::BlackboxRead(34),
@@ -4938,23 +4980,27 @@ static void HandleLine(const char* line)
         }
         hal::Log("   erros de uart %.0f | rearmes %.0f",
                  (double)hal::BlackboxRead(38), (double)hal::BlackboxRead(39));
-        hal::Log("  TOKEN de linha no fim do voo=%.0f  (1 = PRESA)",
-                 (double)hal::BlackboxRead(30));
-        hal::Log("  ultimo Log chamado comecava com '%c'",
-                 (char)(int)hal::BlackboxRead(31));
+        // AUTOPSIA DO LACO. Escrita pelo vigia no callback de audio, que e
+        // o unico contexto que sobrevive a prisao. Em 01/09 este campo era
+        // lido e ninguem o escrevia: passei a sessao a perguntar a placa
+        // uma coisa que ela tinha campo para responder e caneta nenhuma.
+        if(hal::BlackboxRead(30) > 0.5f)
+            hal::Log("  ⚠️ O LACO FICOU PRESO e o vigia reiniciou a placa"
+                     " — parou na FASE %.0f, sub-fase %.0f",
+                     (double)hal::BlackboxRead(31),
+                     (double)hal::BlackboxRead(19));
+        else
+            hal::Log("  laco: nao ficou preso neste voo");
+        // Slots 85-89: eram escritos e ninguem os lia. Medir para ninguem
+        // custa igual a nao medir, e engana mais.
+        hal::Log("  fila MIDI: marca d'agua %.0f de 128",
+                 (double)hal::BlackboxRead(85));
+        hal::Log("  BLE: quedas %.0f | reconexoes %.0f | %.0f s desde o"
+                 " ultimo RX | CCs em quarentena %.0f",
+                 (double)hal::BlackboxRead(86), (double)hal::BlackboxRead(87),
+                 (double)hal::BlackboxRead(88), (double)hal::BlackboxRead(89));
         hal::Log("  VOLTAS completas=%.0f, ultimo carimbo=%.0f ms",
                  (double)hal::BlackboxRead(28), (double)hal::BlackboxRead(29));
-        hal::Log("  fila de eventos RNBO (max)=%.0f",
-                 (double)hal::BlackboxRead(27));
-        hal::Log("  cdc: declarado morto no voo? %s",
-                 hal::BlackboxRead(26) > 0.5f ? "SIM" : "nao");
-        hal::Log("  autopsia: M1=%.0f (entrou cmd) M2=%.0f (saiu cmd)"
-                 " M3=%.0f (entrou TX) | log descartados=%.0f",
-                 (double)hal::BlackboxRead(22), (double)hal::BlackboxRead(23),
-                 (double)hal::BlackboxRead(24), (double)hal::BlackboxRead(25));
-        hal::Log("  push-laco: iteracoes=%.0f | bind0 shaped=%.4f last=%.4f",
-                 (double)hal::BlackboxRead(19), (double)hal::BlackboxRead(20),
-                 (double)hal::BlackboxRead(21));
         hal::Log("  rampa: passos=%.0f, escrito=%.4f, lido=%.4f",
                  (double)hal::BlackboxRead(16), (double)hal::BlackboxRead(17),
                  (double)hal::BlackboxRead(18));
@@ -6376,7 +6422,8 @@ int main(void)
     while(1)
     {
         // Declarado NO TOPO: quem configura vem antes de quem consome.
-        const bool voando = params.Real(manifest.p_buzios_on) >= 0.5f;
+        // (`voando` saiu: era a condicao que prendia o registador de voo ao
+        //  `buzios_on`. Ver o bloco das escritas 28/29 mais abaixo.)
         FASE(1);
         // Knobs físicos. Pares do MIDI e do serial: quem mexeu por
         // último vence. Hoje ReadKnob() devolve -1 (sem pot ligado) e
@@ -7269,7 +7316,18 @@ int main(void)
         //   voltas paradas → PRISAO (nenhuma volta fecha)
         //   voltas lentas  → STARVATION (dezenas em 30 s, nao zero)
         // O carimbo diz QUANDO parou, cruzavel com o fx2_on.
-        if(voando)
+        // ⚠️ SEM `if(voando)`. O registador de voo estava preso ao
+        //    `buzios_on`, que e um parametro MUSICAL sem relacao nenhuma
+        //    com voar — e que nasce a ZERO depois de cada gravacao.
+        //
+        // Efeito: a caixa-preta so registava o laco quando alguem tinha
+        // ligado os buzios. Em 02/09 ela veio com `VOLTAS completas=0`
+        // depois de um voo real, e eu li isso como "o laco nao andou" em
+        // vez de "ninguem escreveu". Zero com cara de dado, outra vez.
+        //
+        // O orcamento ja estava declarado no cabecalho do rastreador:
+        // com `kDiagFull=false` sao DUAS escritas por volta, voltas e
+        // carimbo. Sao estas. Nao tem condicao nenhuma.
         {
             static uint32_t voltas = 0;
             hal::BlackboxWrite(28, (float)++voltas);
