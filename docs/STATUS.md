@@ -237,8 +237,30 @@ picos deram todos `−24,6/−24,7` contra um piso de `−25`: valor encostado �
 fronteira é sinal de que se está a medir o piso, não o pico. Não foi
 publicado.
 
-**Por medir:** PS_2 no prescaler do OLED — o olho do dB decide se desenha
-limpo, e "não medido" não é "provavelmente bom".
+### PS_2 — MEDIDO em 02/09, e o mapa do prescaler fecha
+
+| prescaler | quadro | custo a 20 Hz | vidro |
+|---|---|---|---|
+| PS_64 | 23 401 µs | −45 % | limpo |
+| PS_16 | 6 945 µs | −12 % | — |
+| **PS_8** ← escolhido | **3 861 µs** | **−7 %** | **limpo** |
+| PS_4 | 2 050 µs | −4 % | limpo |
+| PS_2 | 1 419 µs | −4 % | **limpo** (foto) |
+
+**PS_2 desenha limpo** — confirmado por fotografia do padrão de 1 px, não
+por descrição: xadrez fino e uniforme, sem blocos nem costuras. O
+periférico não parte até ao chão.
+
+**A decisão continua PS_8, e agora com razão medida em vez de prudência.**
+De PS_4 para PS_2 o relógio duplica e o quadro só cai 31 % (2 050 → 1 419
+µs): a ~300 µs de custo fixo já são 21 % do quadro, e o laço não sente a
+diferença — **−4 % nos dois**. PS_2 não compra nada que PS_4 já não dê, e
+gasta a última oitava de margem eléctrica.
+
+**Nota de leitura:** a foto mostrava uma banda escura no terço inferior, e
+foi tratada como candidato a defeito até ser descartada — é **obturador
+rolante contra a varredura do OLED**, artefacto da câmara. O vidro está
+homogéneo. Verificar custou dois minutos; presumir teria custado uma caça.
 
 ---
 
