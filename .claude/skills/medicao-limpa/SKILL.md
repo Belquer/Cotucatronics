@@ -319,6 +319,26 @@ route_r_a=0, delay LIGADO      −39,5 dBFS   (+29,7 dB acima do chão)
 > nunca dois estados que ambos contêm interferência. Se precisar do nível
 > absoluto do efeito, use rajada ou ruído, não seno.
 
+## 17b. O aquecimento aplica-se à PLACA inteira, não só à sonda
+
+O item 17 diz que a primeira leitura é aquecimento. **Vale também para a
+primeira medição depois de uma GRAVAÇÃO** — e nesse caso o erro é enorme, não
+marginal.
+
+*Medido em 02/09 com dois builds inertes (só um comentário a mudar): a primeira
+leitura após o flash deu ~15 000 voltas/s e as três seguintes ~22 800, nos dois.
+Descartada a primeira, os builds diferem **0,27%** — contra 1,3% de dispersão do
+próprio instrumento no mesmo binário.*
+
+Esse artefacto gerou um item aberto — "5 pontos de base por explicar" — que
+sobreviveu dois dias, atravessou dois pedidos de conselho, e quase levou a um
+diff de mapa do linker e a mover o laço para ITCM. **A regra estava escrita e o
+número que a aplicava custava três minutos.**
+
+> **Antes de atribuir uma diferença entre builds, meça a dispersão DENTRO de
+> um.** Se a diferença não sair desse envelope, não há o que caçar — e o
+> envelope mede-se descartando a primeira leitura.
+
 ## 19. Código raro no caminho quente custa pelo TAMANHO, não pelo que corre
 
 Um `if` que quase nunca dá verdade é barato. **O corpo dele, inlinado, não é.**

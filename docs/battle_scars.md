@@ -6629,3 +6629,61 @@ usam o caminho velho?"**. Um `grep` pelo padrao antigo, e nao pelo novo.
 Feito agora: os dois scripts passam a chamar `porta_daisy.achar()`. Nenhum
 `glob(...)[-1]` sobrou na bancada.
 
+---
+
+## 15be. Os "5 pontos por explicar" eram aquecimento, e a regra estava escrita (02/09)
+
+Durante dois dias carreguei um item aberto: ligar o splash do OLED derrubou
+a base do laco de ~21 500 para ~18 600 voltas/s COM O SPLASH PARADO, e um
+`noinline` devolveu oito dos treze pontos. **Os outros cinco ficavam "por
+explicar"** — escritos como divida, citados em dois pedidos de conselho, e
+com um plano a serio pela frente: diff do mapa do linker, `aligned(N)` como
+variavel vazia, e o caminho quente para ITCM.
+
+O conselho externo pos a pergunta certa e ela custou tres minutos:
+**existem?**
+
+Dois builds INERTES — so um comentario a mudar, de comprimentos diferentes:
+
+```
+INERTE 1   [15049, 22933, 22838, 22956]
+INERTE 2   [15000, 22762, 22727, 23056]
+            ^^^^^ a PRIMEIRA leitura depois da gravacao
+```
+
+**A primeira medicao a seguir a um flash da ~15 000; as seguintes dao
+~22 800, nos dois.** Descartada a primeira, os builds diferem **0,27%** —
+contra **1,3%** de dispersao do proprio instrumento no mesmo binario.
+
+Nao ha 5 pontos. Nunca houve. Era **aquecimento**, e as minhas medicoes de
+01/09 caiam em posicoes diferentes relativamente ao arranque.
+
+### A regra ja estava escrita, e e a numero 17
+
+A skill `medicao-limpa`, item **17**: *"a primeira leitura e aquecimento —
+inclusive de uma sonda velha."*
+
+Escrita por mim, citada por mim noutras coisas, e ignorada durante dois
+dias sobre a medicao que dela dependia inteira.
+
+> **Antes de atribuir uma diferenca entre builds, meca a dispersao DENTRO
+> de um.** Se a diferenca nao sair desse envelope, nao ha o que cacar. E o
+> envelope mede-se descartando a primeira leitura.
+
+E o custo do que nao se fez: o plano que eu tinha — mapa do linker,
+`aligned(N)`, ITCM — era **trabalho serio e bem desenhado** para caçar um
+fenomeno que nao existe. Metodo correcto aplicado a um facto que ninguem
+tinha verificado ser facto.
+
+### Familia
+
+E a mesma da **15au** (dois numeros que nao se multiplicam), da **15av** (o
+teste que nao podia falhar) e da **15ay** (a pre-condicao por verificar):
+**afirmacao sobre a medicao aceite sem a medicao que a sustenta.** Aqui a
+afirmacao era "ha uma diferenca", e ela nunca foi confrontada com o ruido
+do proprio instrumento.
+
+Conserto no instrumento, para nao depender de eu me lembrar: o `oledbench`
+DECLARA quando e a primeira corrida desde o arranque, e diz que aquilo e
+aquecimento e nao base.
+

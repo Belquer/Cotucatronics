@@ -102,9 +102,12 @@ desenho dos presets já tem a resposta — **global slot 0 = estado de boot**
 A escuta não é só o estrangulamento mais antigo, é o que **aposenta esse
 aviso**. Ver [PRESETS-LISTA.md](operacao/PRESETS-LISTA.md).
 
-**Aberto:** os ~5% de base do laço, e a primeira pergunta é *"existem?"* —
-três builds da mesma fonte com mudanças inertes, antes de qualquer
-isolamento.
+~~**Aberto:** os ~5% de base do laço~~ — **FECHADO em 02/09, e não
+existiam.** Dois builds inertes mostraram que a primeira medição depois de
+uma gravação dá ~15 000 voltas/s e as seguintes ~22 800. Descartada a
+primeira, os builds diferem **0,27%** contra **1,3%** de dispersão do
+próprio instrumento. Era **aquecimento** — e a regra estava escrita na
+skill `medicao-limpa`, item 17. Ver battle_scars **15be**.
 
 ---
 

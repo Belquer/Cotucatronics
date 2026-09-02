@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.260.0"
+#define COTUCA_OS_VERSION "0.261.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2162,6 +2162,7 @@ static uint32_t oled_voltas_seg_base = 0;   // voltas/s com o painel quieto
 static uint32_t oled_bench_seg  = 5;
 static int      oled_bench_fase = 0;   // 0 = base · 1 = a desenhar
 static uint32_t oled_bench_q0   = 0;
+static bool     oled_bench_ja_correu = false;
 
 static void LedFaseTick(size_t block_size, float sample_rate)
 {
@@ -4062,6 +4063,27 @@ static void HandleLine(const char* line)
         hal::OledFbZeraPico();
         hal::OledDmaEstado(&oled_bench_q0, nullptr, nullptr);
         oled_bench_on   = true;
+        // ⚠️ A PRIMEIRA CORRIDA DEPOIS DO ARRANQUE E AQUECIMENTO.
+        //
+        // MEDIDO em 02/09, com dois builds INERTES (so um comentario a
+        // mudar): a primeira leitura a seguir a uma gravacao deu ~15 000
+        // voltas/s e as tres seguintes ~22 800, nos DOIS. Descartada a
+        // primeira, os builds diferem 0,27% — contra 1,3% de dispersao do
+        // proprio instrumento no mesmo binario.
+        //
+        // Foi este artefacto que gerou o falso mistério dos "5 pontos de
+        // base por explicar", que sobreviveu dois dias e quase levou a um
+        // diff de mapa do linker e a mover o laco para ITCM. A regra ja
+        // estava escrita na skill `medicao-limpa`, item 17: a primeira
+        // leitura e aquecimento.
+        //
+        // Entao o instrumento DECLARA, em vez de deixar quem le adivinhar.
+        if(!oled_bench_ja_correu)
+        {
+            oled_bench_ja_correu = true;
+            hal::Log("oledbench: ⚠️ PRIMEIRA corrida desde o arranque —"
+                     " isto e AQUECIMENTO, nao base. Repete e usa a segunda.");
+        }
         hal::Log("oledbench: 1 s de base com o painel quieto, depois %lu Hz"
                  " por %lu s. O veredito sai sozinho.",
                  (unsigned long)hz, (unsigned long)seg);
