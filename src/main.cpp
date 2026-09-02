@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.244.0"
+#define COTUCA_OS_VERSION "0.245.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -5655,9 +5655,13 @@ static void HandleLine(const char* line)
         // A primeira coisa a consultar no dia da solda. A pergunta que
         // ele responde é em qual etapa o sinal parou: fio, parser,
         // canal ou mapa.
-        hal::Log("  uart: erros %lu | rearmes da escuta %lu",
+        hal::Log("  uart: erros %lu | rearmes da escuta %lu"
+                 " | seguidos %lu%s",
                  (unsigned long)hal::MidiErrors(),
-                 (unsigned long)hal::MidiRestarts());
+                 (unsigned long)hal::MidiRestarts(),
+                 (unsigned long)hal::MidiRearmeSeguidos(),
+                 hal::MidiRearmeSeguidos() >= 4
+                     ? "  <- RECUO ACTIVO: a linha de RX esta morta" : "");
         // FURO DO PollMidi, fechado com numero: os bytes entram por DMA
         // (imune a carga), mas quem despacha e o loop. A marca d'agua diz
         // quanta folga sobrou entre uma volta e outra.

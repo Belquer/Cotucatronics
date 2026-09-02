@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.62.0
+// hal_daisy_seed v0.63.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.62.0"
+#define COTUCA_HAL_VERSION "0.63.0"
 
 using namespace daisy;
 
@@ -881,6 +881,10 @@ static volatile uint32_t midi_dropped    = 0;
 static uint32_t          midi_atrasos    = 0; // voltas que deixaram bytes
 static uint32_t          midi_sobra_pico = 0; // maior sobra numa volta
 static volatile uint32_t midi_err      = 0; // erros de UART na ISR
+// TETO DO REARME. Ver o bloco no `PollMidi` — sem isto o rearme e o
+// defeito, nao o conserto.
+static uint32_t midi_rearme_em       = 0;   // proximo instante permitido
+static uint32_t midi_rearme_seguidos = 0;   // falhas consecutivas
 static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
 // MARCA D'AGUA DA FILA. O furo conhecido do MIDI: os bytes chegam por
 // DMA (imune a carga) mas quem DESPACHA e o loop principal, que sob
@@ -985,13 +989,57 @@ bool MidiRestart()
 
 uint32_t MidiErrors() { return midi_err; }
 uint32_t MidiRestarts() { return midi_restarts; }
+uint32_t MidiRearmeSeguidos() { return midi_rearme_seguidos; }
 
 void PollMidi()
 {
-    // VIGIA DA ESCUTA. Se o DMA caiu, rearma sozinho. Roda no loop,
-    // custo de uma leitura de flag por volta.
+    // VIGIA DA ESCUTA — COM TETO E RECUO, e o motivo esta MEDIDO.
+    //
+    // ⚠️ ATE 01/09 ISTO ERA `if(!IsListening()) MidiRestart();` sem mais
+    // nada, e ERA O DEFEITO, nao o conserto.
+    //
+    // Com o RX preso em baixo — que e o que a ponte ESP32 faz quando
+    // esta sem alimentacao: BREAK permanente — o `IsListening()` volta a
+    // dar falso no instante seguinte ao rearme. O laco passava a nao
+    // fazer mais nada senao parar e arrancar o DMA, a cada volta.
+    //
+    // MEDIDO nesse dia, com a falha injetada por software (o comando
+    // `pino 4 0` na propria ponte poe o TX dela em baixo, que para a
+    // Daisy e indistinguivel de estar desligada):
+    //
+    //   a placa deixa de responder a serial E DEIXA DE ENUMERAR NA USB,
+    //   e NAO volta quando a linha se restaura — porque o laco nunca sai
+    //   da rajada para dar por isso.
+    //
+    // E com a ponte SA e a linha em repouso ja se contavam 10 029
+    // rearmes: a rajada existia mesmo sem falha nenhuma.
+    //
+    // A regra ja estava escrita na skill `instrumentacao` — "retentativa
+    // automatica precisa de teto E de contador". So o contador estava
+    // aqui. O contador tornou o problema VISIVEL e nao o impediu.
+    //
+    // Recuo: 2 ms enquanto pode ser um glitch de linha, 1 s quando e uma
+    // linha morta. O canal volta sozinho quando a ponte voltar — ao
+    // ritmo da sonda, e nao ao ritmo do laco.
     if(midi_started && !midi_uart.IsListening())
-        MidiRestart();
+    {
+        const uint32_t ag = NowMs();
+        if((int32_t)(ag - midi_rearme_em) >= 0)
+        {
+            MidiRestart();
+            if(midi_rearme_seguidos < 0xFFFFFFFFu) midi_rearme_seguidos++;
+            midi_rearme_em = ag + (midi_rearme_seguidos < 4 ? 2u : 1000u);
+        }
+    }
+    else
+    {
+        // ⚠️ O UNICO SINAL DE SUCESSO E `IsListening()` DAR VERDADE.
+        //
+        // Zerar o contador pelo retorno do `DmaListenStart` seria mentira:
+        // sob break ele devolve OK e a escuta cai outra vez a seguir, e o
+        // recuo nunca chegaria a acontecer.
+        midi_rearme_seguidos = 0;
+    }
 
     // Despacha em contexto normal, onde o parser pode mexer em params
     // e o Log() pode transmitir. Mesmo contrato do PollSerial().

@@ -363,7 +363,10 @@ int              OledCacaPonte(char* achados, int cap);
 bool             OledVelocidade(int ps);   // 2,4,8,16,32,64,128,256
 int              OledVelocidadeAtual();
 uint32_t         MidiErrors();      // erros de UART (overrun/framing/ruido)
-uint32_t         MidiRestarts();    // vezes que a escuta DMA foi rearmada
+uint32_t         MidiRestarts();
+// Rearmes CONSECUTIVOS sem a escuta pegar. >= 4 significa que o recuo
+// esta activo, ou seja: a linha de RX esta morta.
+uint32_t         MidiRearmeSeguidos();    // vezes que a escuta DMA foi rearmada
 
 // Reinicia a escuta DMA. Erro de UART pode abortar a recepcao no stack
 // da ST, e ela NAO volta sozinha — o sintoma e "funcionou e parou pra
