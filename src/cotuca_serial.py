@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_serial v0.1.0 — monitor/tester serial do Cotucatronics OS.
+"""cotuca_serial v0.2.0 — monitor/tester serial do Cotucatronics OS.
 
 Sem dependencias externas (nada de pyserial): fala direto com o tty
 via stty + file descriptor, que e o suficiente pra USB CDC da Daisy.
@@ -10,10 +10,11 @@ Uso:
     ./cotuca_serial.py --port /dev/cu.usbmodemXXXX --listen 5
 """
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 
 import argparse
 import glob
+import serial
 import os
 import subprocess
 import sys
@@ -23,14 +24,44 @@ import time
 BAUD = 115200
 
 
-def find_port():
-    """Daisy em modo app aparece como /dev/cu.usbmodem*."""
+def find_port(quieto=False):
+    """A porta certa e a que RESPONDE, nunca a que tem o nome certo.
+
+    ⚠️ Ate 01/09 isto era `sorted(glob(...))[-1]` — ordem alfabetica. Nesse
+    dia a ponte ESP32 enumerou como `usbmodem101`, entrou na lista, e cinco
+    comandos de configuracao foram para ela enquanto o script anunciava que
+    tinham sido aplicados. `[-1]` calhava dar certo umas vezes e errado
+    noutras, que e o pior dos casos: nao falha o suficiente para se notar.
+
+    Nome de dispositivo e uma etiqueta que o sistema operativo atribui.
+    Identidade e o que o outro lado responde. Ver battle_scars 15ax.
+    """
     ports = sorted(glob.glob("/dev/cu.usbmodem*"))
     if not ports:
         sys.exit("nenhuma /dev/cu.usbmodem* encontrada — a Daisy esta plugada e fora do DFU?")
-    if len(ports) > 1:
-        print(f"[aviso] varias portas: {ports} — usando {ports[-1]}", file=sys.stderr)
-    return ports[-1]
+    if _pyserial is None:
+        print("[AVISO] sem pyserial: NAO consigo confirmar identidade da porta.\n"
+              f"        a escolher {ports[-1]} pelo NOME, que ja mandou comandos\n"
+              "        para a ponte ESP32 uma vez (battle_scars 15ax).\n"
+              "        `pip3 install pyserial` faz a sonda voltar.", file=sys.stderr)
+        return ports[-1]
+    for cand in ports:
+        try:
+            with _pyserial.Serial(cand, BAUD, timeout=1) as s:
+                time.sleep(0.8)
+                s.reset_input_buffer()
+                s.write(b"board\n")
+                time.sleep(1.2)
+                if b"Cotucatronics OS" in s.read(400):
+                    if not quieto:
+                        print(f"[porta] {cand} respondeu Cotucatronics OS",
+                              file=sys.stderr)
+                    return cand
+        except Exception:
+            pass
+    sys.exit("NENHUMA porta respondeu 'Cotucatronics OS' ao `board`.\n"
+             f"  candidatas: {ports}\n"
+             "  a placa pode estar em DFU, presa, ou so ha a ponte ligada.")
 
 
 def configure(port):

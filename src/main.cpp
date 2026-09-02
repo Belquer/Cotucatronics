@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.254.0"
+#define COTUCA_OS_VERSION "0.255.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2249,20 +2249,25 @@ static void LedFaseTick(size_t block_size, float sample_rate)
 // ninguem a reinventar com o mesmo raciocinio.
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
-    // ⚠️ PRIMEIRA LINHA DO CALLBACK, e de proposito.
+    // ⚠️ AQUI ESTEVE UMA LIMPEZA DE BANDEIRA DA UART, E ELA SAIU. (01/09)
     //
-    // A bandeira de erro da UART, se nao for limpa, faz a interrupcao
-    // reentrar sem fim: o tique para de andar, e TODA a espera da HAL
-    // passa a ser infinita — a do OLED por SPI e a do MIDI por UART. Foi
-    // isso que travou a placa em 01/09 com a linha de RX a flutuar, e o
-    // sitio da paragem MUDAVA (`2 e 6`, `2 e 8`, `1 e 5`) porque nao ha
-    // um ponto que pendura: ha uma CLASSE de pontos, todos com a mesma
-    // forma — bloqueante da HAL com tecto medido pelo tique.
+    // Escrevi-a a acreditar que a linha suja travava a placa por bandeira
+    // de erro nao limpa. A causa era outra — faltava PULL-UP no RX, e o
+    // pino a flutuar fazia tempestade POR TAXA, nao por bandeira presa.
     //
-    // Aqui e nao no laco porque o laco e o que morre. Este callback e o
-    // unico que continua a andar, e foi ele que testemunhou a paragem
-    // pelo LED. Quem sobrevive a falha e quem a pode tratar.
-    cotuca::hal::MidiLimpaErroDoCallback();
+    // Ela nao so era inutil como era PERIGOSA, e por duas razoes:
+    //
+    //   · varredura a 1 kHz (a taxa do bloco) contra uma ISR capaz de
+    //     reentrar a 100 kHz nao reduz taxa nenhuma;
+    //   · dois contextos a limpar as MESMAS bandeiras — este callback e a
+    //     propria ISR da USART — e a Familia A do catalogo, corrida de
+    //     contexto. Podia limpar uma bandeira no instante em que a ISR ia
+    //     le-la, e transformar uma reentrada num erro silencioso.
+    //
+    // O sitio certo, se algum dia fizer falta, e DENTRO da ISR: ela tem de
+    // ser capaz de desligar a propria fonte (EIE/IDLEIE/RE) e marcar uma
+    // flag para o laco rearmar. Disparo onde a tempestade acontece, e nao
+    // no contexto que ela mata.
 
     // ---- VIGIA DO LACO: se ele parar, a placa reinicia-se ----
     //
@@ -5774,12 +5779,9 @@ static void HandleLine(const char* line)
                  (unsigned long)hal::MidiRearmeSeguidos(),
                  hal::MidiRearmeSeguidos() >= 4
                      ? "  <- RECUO ACTIVO: a linha de RX esta morta" : "");
-        hal::Log("  erros de linha: %lu limpos (%lu/s agora) | receptor"
-                 " calado %lu vez(es)%s",
-                 (unsigned long)hal::MidiErrLimpos(),
-                 (unsigned long)hal::MidiErrTaxa(),
-                 (unsigned long)hal::MidiCalados(),
-                 hal::MidiErrTaxa() > 200u ? "  <- LINHA SUJA" : "");
+        // (a linha "erros de linha" saiu com os contadores que a
+        //  alimentavam — leitor sem escritor imprime zero para sempre, e
+        //  zero com cara de dado e o defeito do dia)
         // FURO DO PollMidi, fechado com numero: os bytes entram por DMA
         // (imune a carga), mas quem despacha e o loop. A marca d'agua diz
         // quanta folga sobrou entre uma volta e outra.

@@ -1,5 +1,5 @@
 #!/bin/bash
-# flash v0.1.4 — grava SO se o build passou, e confere a versao na placa.
+# flash v0.2.0 — grava SO se o build passou, e confere a versao na placa.
 #
 # Existe porque `make program-dfu` grava o BINARIO EM DISCO, que pode ser
 # de um build anterior se o atual falhou. Em 20/08 isso me fez medir o
@@ -32,10 +32,27 @@ if dfu-util -l 2>/dev/null | grep -q "Found DFU"; then
 else
     python3 - <<'PY' 2>/dev/null || true
 import glob,time,serial
-p=glob.glob('/dev/cu.usbmodem*')
-if p:
-    s=serial.Serial(p[-1],115200,timeout=1); time.sleep(1.0); s.reset_input_buffer()
-    s.write(b'dfu go\n'); time.sleep(2.0); s.close()
+# ⚠️ A PORTA CERTA E A QUE RESPONDE, nunca a que tem o nome certo.
+#
+# Isto era `p[-1]` — ordem alfabetica. Em 01/09 a ponte ESP32 enumerou
+# como `usbmodem101` e comandos foram parar la enquanto o script dizia
+# que tinham sido aplicados. Mandar `dfu go` a ponte nao a poe em DFU e
+# nao poe a Daisy tambem: a gravacao falha por um motivo que nao aparece
+# em lado nenhum. Ver battle_scars 15ax.
+for cand in sorted(glob.glob('/dev/cu.usbmodem*')):
+    try:
+        s=serial.Serial(cand,115200,timeout=1); time.sleep(0.9)
+        s.reset_input_buffer(); s.write(b'board\n'); time.sleep(1.2)
+        if b'Cotucatronics OS' in s.read(400):
+            print('  dfu go -> ' + cand)
+            s.reset_input_buffer(); s.write(b'dfu go\n'); time.sleep(2.0)
+            s.close(); break
+        s.close()
+    except Exception:
+        pass
+else:
+    print('  nenhuma porta respondeu Cotucatronics OS — a placa pode ja'
+          ' estar em DFU, ou presa')
 PY
     sleep 3
 fi
