@@ -6,7 +6,12 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-09-01 · leva: **a abertura do OLED** viva (jogada de
+> Atualizado em 2026-09-02 · leva: **o travamento com a ponte, fechado na
+> raiz** — faltava um `GPIO_PULLUP` no RX do MIDI · **vigia de laço** que
+> reinicia a placa sozinha · **caixa-preta consertada**: 20 órfãos e uma
+> colisão de endereços · e a regra que organiza o resto, **15az**
+>
+> Antes, 2026-09-01 · leva: **a abertura do OLED** viva (jogada de
 > búzios → marca → nome → versão, 50 quadros a 20 Hz) · **framebuffer inteiro
 > por SPI a PS_8**, 3 811 µs/quadro, verificado no vidro · fonte 5×7 gerada
 > de glifos legíveis · o enfeite que cobrava **13% ao laço parado**
@@ -39,6 +44,62 @@ desalinho só aparece quando alguém precisa da versão certa.
 ---
 
 <!-- doc-check: ignore system_profiler (comando do macOS, nao simbolo do projecto) -->
+
+## 02/09 — o dia em que um pino sem pull-up custou cinco horas
+
+**A causa era uma linha.** A libDaisy inicia os pinos da UART com
+`GPIO_NOPULL`; com a ponte ESP32 sem alimentação o RX (PB7) ficava a
+flutuar, e uma entrada CMOS solta apanha ruído a MHz. A USART entrava em
+tempestade **por taxa**, o CPU ficava na interrupção e o laço morria à
+fome — em menos de 4 s, e sem voltar quando a linha sarava.
+
+`g.Pull = GPIO_PULLUP`. **Verificado: 7/7 sondagens com a linha a flutuar
+e todos os contadores a ZERO** — a falha não é sobrevivida, não acontece.
+
+### O que sobreviveu como defesa, e porquê
+
+| defesa | porque fica |
+|---|---|
+| tecto e recuo no rearme do `DmaListen` | a linha **presa em baixo** ainda o exercita (deu `rearmes 2`), e sem ele corria ao ritmo do laço — **10 029 rearmes com a ponte sã** |
+| vigia de laço no callback de áudio | requisito de campo: peças em série, ninguém carrega num botão por elas. Reinicia se o laço não completar uma volta em 48 000 amostras |
+| USART1 em prioridade 1 | estavam **todas** em `(0,0)`, e prioridade igual não permite preempção: o abort do DMA nunca completava. O agrupamento virou **invariante que a placa confere e grita** |
+
+Saíram duas que fingiam defender: limpeza de bandeira no callback (inútil
+contra tempestade por taxa, e corrida de contexto com a própria ISR) e
+tecto de erros no `PollMidi` (fase 2, para uma falha que mata na fase 1 —
+só corria enquanto o problema não existisse).
+
+### A caixa-preta estava a mentir de duas maneiras
+
+Varredura de órfãos nas duas direcções: **14 slots lidos e nunca escritos**
+(zero por construção) e **6 escritos e nunca lidos**. Um deles era a
+pergunta central da sessão — o slot 30 lê-se como *"laço PRESO?"* e
+**ninguém o escrevia**.
+
+E pior que órfão: **colisão de endereços.** O bloco "PICO POR NOTA" lia
+`32..44`, mas 33–39 são contadores de MIDI e 40–44 o diário por minuto —
+imprimia `midi.Bytes()` disfarçado de pico de áudio.
+
+**20 órfãos → 0.** O registador de voo também estava preso a `if(voando)`
+(`buzios_on`, que nasce a zero após cada gravação). Verificado:
+`blocos 14 080 · CPU 29% · voltas 218 780 · laço não ficou preso`, e os
+três **fecham entre si**.
+
+### A regra que organiza as outras
+
+**15az** — conserto adiado não fica pequeno: fica a ser o **equipamento da
+próxima emergência**. Nenhum dos nove defeitos encontrados foi causado
+pelo pull-up, e nenhum cresceu. O que mudou foi que passaram a ser usados,
+e todos eram instrumento, ferramenta ou relatório.
+
+Contrapeso: consertar agora não é consertar tudo o que se vê — é consertar
+**o que a tarefa de agora está a usar**. Numa caçada, isso é o instrumento.
+
+**Aberto:** os ~5% de base do laço, e a primeira pergunta é *"existem?"* —
+três builds da mesma fonte com mudanças inertes, antes de qualquer
+isolamento.
+
+---
 
 ## 01/09 — o painel passou a desenhar, e o custo ficou medido
 

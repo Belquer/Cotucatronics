@@ -9,7 +9,7 @@
 | pino | função | como |
 |---|---|---|
 | **D13** | UART TX → **RX** da ponte ESP32 | PB6 · USART1 · 31250 8N1 · ★ CRUZADO |
-| **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI |
+| **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI · **PULL-UP INTERNO LIGADO** (~40 kΩ) desde 02/09 — ver abaixo |
 | **D15–D19** | pots (A0–A4) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico |
 | **D22** | botão B4 — freeze B | INPUT + PULLUP, ativo-baixo |
 | **D23** | LED — freeze B | OUTPUT, segue o param `frz_on_b` |
@@ -149,3 +149,30 @@ possível** sem mudar o painel — e é por isso que `num_knobs` é 2 e não 5.
 > encoder global estava em D17/D18/D19 e o firmware media D20/D21,
 > então todo instrumento apontava para o lugar errado e nenhum podia
 > dizer isso.
+
+---
+
+## D14 tem pull-up interno, e não é detalhe
+
+A libDaisy inicia os pinos da UART com **`GPIO_NOPULL`**
+(`src/per/uart.cpp`). Com a ponte ESP32 sem alimentação o pino dela fica em
+alta impedância e o nosso RX **fica a flutuar** — e uma entrada CMOS solta
+apanha ruído a MHz. A USART entra em tempestade **por taxa** (FE/NE/ORE ao
+ritmo do serviço da interrupção), o CPU fica na ISR e o laço morre à fome.
+
+Medido em 01/09: a placa deixava de responder à serial em **menos de 4 s** e
+**não voltava** com a linha já em repouso.
+
+Repouso de uma linha de UART é **alto, por definição**. Se o transmissor
+desaparece, alguém tem de segurar o alto. O `hal_daisy_seed.cpp` reconfigura
+PB7 com `GPIO_PULLUP` logo a seguir ao `Init` da UART — com ~100 pF de cabo a
+subida é ~4 µs contra 32 µs por bit.
+
+**Efeito lateral conhecido e aceite:** com a ESP32 desligada, o pull-up injecta
+~80 µA pelo díodo de protecção do pino dela. Inofensivo a esse nível; com
+10 kΩ externo seriam ~330 µA.
+
+**Se alguém reescrever o `Init` do MIDI, esta linha tem de sobreviver.** Sem
+ela o defeito volta, e volta de uma forma que parece firmware.
+
+Ver battle_scars **15az**.

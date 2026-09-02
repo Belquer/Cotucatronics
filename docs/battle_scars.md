@@ -6418,3 +6418,165 @@ tarefa de agora esta a **usar** — e nesta sessao isso era, sempre, o
 instrumento. Ver **15av**, **15ay** e a regra do travao: um conserto que
 muda a falha de sitio e um diagnostico.
 
+---
+
+## 15ba. Cinco voos, e nenhum devolveu um dado (02/09)
+
+Entre "a placa trava com a linha a flutuar" e o conserto (um pull-up)
+gravei CINCO consertos. Cada um falhou de maneira diferente:
+
+1. **Tecto no rearme do `DmaListen`.** Este era real e ficou — a linha
+   presa em baixo continua a precisar dele. Mas nao era a causa.
+2. **`TDR` directo em vez do `BlockingTransmit`.** A paragem apenas
+   MUDOU-SE para o OLED.
+3. **Limpar a bandeira no `PollMidi`.** Fase 2 do laco, para uma falha que
+   mata na fase 1: so corria enquanto o problema nao existisse.
+4. **Limpar a bandeira no callback de audio.** Varredura a 1 kHz contra
+   uma ISR capaz de reentrar a 100 kHz — e ainda criava corrida de
+   contexto com a propria ISR sobre as mesmas bandeiras (Familia A).
+5. **Vigia de laco medido com `hal::NowMs()`.** Ver **15bb**.
+
+O custo nao foi voar cinco vezes. Foi que eram **consertos, e nao
+medicoes**:
+
+> **Um voo tem de devolver um DADO mesmo quando o conserto falha.** Se a
+> unica coisa que se aprende com a falha e "nao era isso", nao foi um voo
+> — foi um palpite com ferro de soldar.
+
+Tres deltas amostrados no callback (o tique entre piscadelas, um contador
+no topo da ISR da USART, as voltas do laco) teriam sido **um** voo e
+teriam decidido. O conselho externo formulou-o assim, e e exacto.
+
+### As tres perguntas, e a ordem importa
+
+**1. Este instrumento mede a variavel da PERGUNTA, ou uma adjacente?**
+O meu reportava ONDE o laco estava; a pergunta era se o relogio ANDAVA.
+Cinco voos sobre dados adjacentes. **Nenhuma teoria sobrevive a um
+instrumento que mede a coisa errada** — e por isso esta vem primeiro,
+sempre.
+
+**2. Esta teoria explica TODOS os factos ja medidos, ou so alguns?**
+Eu defendia "tique congelado por tempestade". Mas tique congelado
+DESCONGELA quando a tempestade acaba, e a placa nao recuperava. Tinha o
+facto medido e nunca o confrontei com a explicacao.
+
+> **Um facto que a teoria nao explica nao e detalhe para depois — e o
+> obituario da teoria.**
+
+**3. O caso pode ser IMPEDIDO de existir?**
+Se sim, "sobreviver" e a camada errada. Passei a tarde a defender por
+software um estado electrico que uma linha de configuracao torna
+impossivel. E nao faltava conhecimento: o mesmo ficheiro ja usa pull-up
+interno noutro pino, e um Schottky tinha resolvido um problema analogo na
+mesma semana.
+
+### E a que nao precisa de ser lembrada, porque aparece nos dados
+
+> **Um conserto que muda a falha de sitio nao e um conserto. E um
+> diagnostico.**
+
+O conserto 2 mudou a paragem do `MidiTxPump` para o OLED. Eu escrevi, em
+texto, *"isso sugere que eu estava a tratar sintomas"* — e continuei na
+mesma direccao com a frase ainda no ecra.
+
+**Nao me faltou o dado nem a interpretacao. Faltou o TRAVAO.** Quando a
+falha se move, para-se e le-se o movimento como o dado mais valioso do
+dia: ele esta a dizer que nao ha um ponto, ha uma classe.
+
+---
+
+## 15bb. Nomeei a classe do defeito e construi-a no conserto seguinte (02/09)
+
+Diagnostiquei, com a fonte da HAL na mao, que
+`UART_WaitOnFlagUntilTimeout` sai por `(HAL_GetTick() - Tickstart) >
+Timeout` — e que um tecto medido pelo tique nao e tecto nenhum se o tique
+puder parar.
+
+Escrevi a seguir o vigia que devia salvar a placa desse defeito. Medi-o
+com `hal::NowMs()`, que e `System::GetNow()` -> **`HAL_GetTick()`**.
+
+Na mesma sessao, no conserto do proprio defeito, reproduzi o defeito. O
+vigia nao disparava, e eu gastei outra gravacao a perceber porque.
+
+E o exemplo certo estava a **trinta linhas de distancia no mesmo
+ficheiro**: o LED conta o tempo em AMOSTRAS de audio (`n += block_size`).
+E por isso que ele continuou a falar com o laco preso — o relogio dele e
+feito da coisa que sobrevive.
+
+> **Nomear uma classe de defeito obriga a procura-la EM CASA antes de
+> seguir.** A casa ja tinha a regra para DADOS — "grep pelos dados e ache
+> o irmao". Falta va aplica-la a MECANISMOS.
+
+Feita a varredura depois: `grep` por tectos medidos com `NowMs()` em
+contexto que sobrevive ao laco. O callback usa `NowTicks()` (temporizador
+de hardware, imune) em todo o lado; o unico irmao e `soma_caiu_ms` no
+`SacrificaUm`, e e **carimbo de relatorio, nao tecto** — tique parado
+deixa-o velho, nao pendura nada.
+
+Escrever **"um irmao, benigno"** e o resultado. Escrever "nenhum" sem ter
+varrido teria sido a mesma frase com zero informacao — e e isso que separa
+uma varredura de uma ausencia.
+
+---
+
+## 15bc. O comando calava o log antes de anunciar que ia calar o log (02/09)
+
+`bb arm` fazia, por esta ordem:
+
+```c
+hal::BlackboxArm();
+hal::LogMute(true);                                  // cala
+hal::Log("caixa-preta armada; log mudo ate o reset");// ...e morre aqui
+```
+
+O `Log()` sai cedo quando calado. **O anuncio da mudanca de estado era
+comido pela propria mudanca.** Quem armava nao recebia confirmacao
+nenhuma, e o comando parecia nao existir.
+
+Isso alimentou meses de suspeita errada: sempre que a caixa-preta vinha
+`vazia (ligou agora, sem voo anterior)`, o suspeito era o mecanismo. Nao
+era. **A SRAM de backup atravessa o NRST como devia** — as leituras vazias
+eram porque nunca fora armada. E sem confirmacao, **armar e nao armar tem
+exactamente a mesma cara**.
+
+Conserto: `LogAlways`, que existe precisamente para atravessar o mudo, e a
+mensagem passa a dizer que o silencio seguinte e esperado.
+
+> **Toda transicao para um estado silencioso anuncia-se ANTES de entrar
+> nele, ou por um canal que o atravessa.** Senao o estado e
+> indistinguivel de avaria — inclusive para quem o pediu.
+
+### E o que a caixa-preta escondia por baixo
+
+Aberta a caixa, uma varredura de orfaos nas duas direccoes deu:
+
+| | |
+|---|---|
+| lidos e nunca escritos | **14** slots — imprimiam zero POR CONSTRUCAO |
+| escritos e nunca lidos | **6** slots — mediam para ninguem |
+
+E um deles era a pergunta central da sessao: o slot 30 le-se como
+**"TOKEN de linha, 1 = PRESA"** e **ninguem o escrevia**. Passei horas a
+perguntar a placa se o laco tinha ficado preso — e ela tinha um campo para
+responder e caneta nenhuma para o preencher.
+
+Pior que orfao, havia **colisao de enderecos**: o bloco "PICO POR NOTA"
+lia `32 + b` para b em 0..12, ou seja os slots 32..44 — mas **33..39 sao
+contadores de MIDI e 40..44 sao o diario por minuto**. Com trafego, aquilo
+imprimia `midi.Bytes()` disfarcado de pico de audio:
+`110.0 Hz : pico 1509.000 <<< ESTOURA`.
+
+> **Instrumentacao orfa mente por omissao; instrumentacao COLIDIDA mente
+> por afirmacao, e e muito pior.** A primeira mostra zero e pode passar por
+> "nao aconteceu"; a segunda mostra um numero plausivel de outra grandeza.
+
+Consertados os 20, mais o registador de voo que estava preso a `if(voando)`
+— isto e, so registava o laco quando o `buzios_on` estava ligado, e ele
+nasce a zero depois de cada gravacao.
+
+Verificado: a caixa-preta passou a dizer `blocos 14 080`, `CPU 29%`,
+`voltas 218 780`, `laco: nao ficou preso neste voo` — e os tres primeiros
+FECHAM entre si (14 080 x 48 / 48 000 = 14,08 s de audio, contra 17,46 s de
+tempo ligada, o que da os ~3,4 s de inicializacao). E o fecho que prova a
+medicao, e nao a plausibilidade de cada numero sozinho (**15au**).
+
