@@ -240,6 +240,24 @@ def versao_derivada():
             continue
         if not d:
             continue
+        # ⚠️ COMMIT QUE NAO MUDA LINHA NENHUMA NAO E UM TOQUE.
+        #
+        # `chmod +x` aparece no `git log` do ficheiro com "0 insertions,
+        # 0 deletions". O criterio "o ultimo commit que o tocou mexeu na
+        # versao?" acusava-o na mesma, e subir a versao por causa de um
+        # bit de permissao seria escrever um numero que nao descreve
+        # alteracao nenhuma — mentira com cara de disciplina.
+        #
+        # Apanhado em 02/09 no `porta_daisy.py`. O verificador estava a
+        # cobrar a regra a quem nao a tinha violado, e isso gasta a
+        # credibilidade dele: aviso que se aprende a ignorar deixa de ser
+        # aviso, e leva os verdadeiros com ele.
+        tem_conteudo = any(
+            (l.startswith("+") and not l.startswith("+++")) or
+            (l.startswith("-") and not l.startswith("---"))
+            for l in d.splitlines())
+        if not tem_conteudo:
+            continue
         # linha ADICIONADA que carrega um numero de versao
         # RECONHECER A VERSAO EM QUALQUER LINGUAGEM DA CASA.
         #

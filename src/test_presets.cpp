@@ -1,4 +1,4 @@
-// test_presets v0.3.0 — validação nativa das estruturas de preset.
+// test_presets v0.3.1 — validação nativa das estruturas de preset.
 //
 // Roda no Mac, sem placa: `presets.h` é C++ puro e a pergunta que ele
 // responde — "este preset foi gravado sob este mapa?" — não depende de

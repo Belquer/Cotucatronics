@@ -1,4 +1,4 @@
-// teste_macro v0.1.0 — a ida e a volta da Macro, que a captura do pot usa.
+// teste_macro v0.1.1 — a ida e a volta da Macro, que a captura do pot usa.
 //
 // POR QUE ISTO EXISTE. O pot e ABSOLUTO e o param e partilhado com o MIDI:
 // para nao saltar, ele so assume quando PASSA pelo valor actual. Saber por

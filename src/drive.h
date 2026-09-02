@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — drive v0.4.0
+// Cotucatronics OS — drive v0.4.1
 // Waveshaper tanh como COLA, nao como fuzz.
 //
 // O alvo e engordar percussao, kalimba, monocordio e molas — material
