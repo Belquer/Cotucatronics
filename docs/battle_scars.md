@@ -1,4 +1,8 @@
 # Battle Scars — Cotucatronics
+<!-- doc-check: ignore route_l_a  (nome ANTERIOR da matriz, renomeado em 02/09 para `route_a_l` — entrada primeiro, saida depois. A mencao aqui e o REGISTO do que se aprendeu com o nome velho; apaga-lo apagava o que explica a cicatriz.) -->
+<!-- doc-check: ignore route_l_b (idem) -->
+<!-- doc-check: ignore route_r_a (idem) -->
+<!-- doc-check: ignore route_r_b (idem) -->
 <!-- doc-check: ignore in_gain_a (REMOVIDO em 28/08 — cicatriz 15v. O nome aparece aqui porque a cicatriz E sobre a remocao dele; apaga-lo apagaria o assunto.) -->
 <!-- doc-check: ignore in_gain_b (idem) -->
 <!-- doc-check: ignore oct_on (renomeado para tarol_on em 28/08 — cicatriz 15u) -->

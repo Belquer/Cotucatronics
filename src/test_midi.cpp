@@ -1,4 +1,4 @@
-// test_midi v0.5.0 — validação nativa do parser MIDI e do mapa.
+// test_midi v0.6.0 — validação nativa do parser MIDI e do mapa.
 //
 // midi.h é C++ puro e board-agnostic, e manifest.h também (só inclui
 // params.h, module.h e midi.h). Então a máquina de estados E a via
@@ -356,6 +356,26 @@ int main()
                 const bool pareado = L >= 3 && nm[L-2] == '_'
                                      && (nm[L-1]=='a' || nm[L-1]=='b');
                 if(pareado) continue;
+
+                // ⚠️ EXCEPCAO DECLARADA: a MATRIZ DE ROTEAMENTO.
+                //
+                // A regra "nome sem sufixo `_a`/`_b` mora no ch1" assume
+                // que o sufixo e o unico portador do eixo de cadeia. Nos
+                // `route_*` nao e: o CANAL diz a ENTRADA (ch2 = cadeia A,
+                // ch3 = cadeia B) e o CC diz a SAIDA (97 = para L, 98 =
+                // para R). Sao os dois eixos de uma matriz 2x2, e nenhum
+                // cabe no sufixo.
+                //
+                // Renomeados em 02/09 de `route_l_a` para `route_a_l`
+                // (entrada primeiro, saida depois, a pedido do dB) — e foi
+                // essa renomeacao que os fez cair nesta regra, porque o
+                // sufixo deixou de ser `_a`/`_b`. O endereco MIDI nao
+                // mudou, e continua certo.
+                //
+                // Nao se relaxa a regra: abre-se-lhe UMA porta, com nome e
+                // motivo. Regra sem excepcao escrita vira regra ignorada.
+                if(!strncmp(nm, "route_", 6)) continue;
+
                 compart++;
                 if(m.midi_map[k].canal != cotuca::kCanalCompart)
                     compart_fora_do_canal++;
@@ -400,7 +420,7 @@ int main()
         // sessao. Este teste era a trava dessa decisao.
         //
         // A decisao foi revista com o hardware: com dois exciters a
-        // protecao duplicou, virou `gov_ceiling_a/_b`, e a pagina de
+        // protecao duplicou, virou `gov_ceiling_l/_b`, e a pagina de
         // protecao entrou no mapa em 110/116 — a razao esta no manifest,
         // ao lado do AddMidi.
         //
@@ -410,12 +430,12 @@ int main()
         // antigo, que nao existia mais — e o sinal se perdeu no ruido de
         // tres falhas cronicas. Falha cronica nao e divida: e um sensor
         // desligado que ninguem lembra de ter desligado.
-        const int id_gov_a = t.Find("gov_ceiling_a");
-        const int id_gov_b = t.Find("gov_ceiling_b");
-        Check("manifest expoe gov_ceiling_a e _b (protecao POR RAMO)",
+        const int id_gov_a = t.Find("gov_ceiling_l");
+        const int id_gov_b = t.Find("gov_ceiling_r");
+        Check("manifest expoe gov_ceiling_l e _b (protecao POR RAMO)",
               id_gov_a >= 0 && id_gov_b >= 0);
         snprintf(d, sizeof(d), "cc_a=%d cc_b=%d", CcDe(id_gov_a), CcDe(id_gov_b));
-        Check("gov_ceiling_a/_b ESTAO no mapa (pagina de protecao)",
+        Check("gov_ceiling_l/_b ESTAO no mapa (pagina de protecao)",
               CcDe(id_gov_a) >= 0 && CcDe(id_gov_b) >= 0, d);
 
         // SRC_MIX: APOSENTADO em 20/08. O teste antigo vivia dentro de

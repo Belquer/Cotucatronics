@@ -371,8 +371,8 @@ soa e os piezos não. Esse defeito disfarçou-se cinco vezes num dia.
 
 ⚠️ **Estado que ainda se perde a cada gravação** (é o argumento dos presets):
 ```
-set notch1_hz_a 770 · set notch1_db_a 15
-set notch2_hz_a 834 · set notch2_db_a 15 · set notch_on_a 1
+set microfonia1_hz_l 770 · set microfonia1_db_l 15
+set microfonia2_hz_l 834 · set microfonia2_db_l 15 · set microfonia_on_l 1
 ```
 
 🔴 **A PONTE TEM DE ESTAR ALIMENTADA — defeito aberto.**
@@ -474,7 +474,7 @@ piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE   (
 **O `out_width` (mid/side) foi aposentado em 20/08** — com dois transdutores
 no mesmo corpo não há imagem estéreo a alargar: a soma é acústica, no objeto.
 
-**A matriz decide qual CADEIA entra em qual SAÍDA** (`route_l_a` … `route_r_b`,
+**A matriz decide qual CADEIA entra em qual SAÍDA** (`route_a_l` … `route_b_r`,
 CC 97/98). O destino de cada saída não é decisão do firmware: é a posição do
 DPDT. O firmware nomeia SAÍDA; o cobre nomeia destino.
 
@@ -514,7 +514,7 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 
 | | onde age | o que faz |
 |---|---|---|
-| `route_l_a/b`, `route_r_a/b` | antes dos efeitos | qual **cadeia** entra em qual **saída** |
+| `route_a_l/b`, `route_a_r/b` | antes dos efeitos | qual **cadeia** entra em qual **saída** |
 | `out_l`, `out_r` | depois do limiter | corta o **ramo** inteiro |
 
 A matriz nasce cheia e reproduz exactamente o `out[0] = out[1] = A + B` que a
@@ -530,8 +530,8 @@ isso dois dos critérios passaram **sem poder falhar** — ver `TESTES.md`.
 
 | critério | OUT_L | OUT_R | |
 |---|---|---|---|
-| `route_l_a=0` corta A em L, e só em L | −44,8 | +0,0 | ✅ |
-| `route_r_a=0` corta A em R, e só em R | −0,0 | −43,9 | ✅ |
+| `route_a_l=0` corta A em L, e só em L | −44,8 | +0,0 | ✅ |
+| `route_a_r=0` corta A em R, e só em R | −0,0 | −43,9 | ✅ |
 | `out_l=0` corta o ramo L, e só L | −44,1 | +0,0 | ✅ |
 | `out_r=0` corta o ramo R, e só R | +0,0 | −41,5 | ✅ |
 | **inversão** A→L vira A→R | −32,6 → −77,4 | −80,9 → −36,7 | ✅ |
@@ -1130,7 +1130,7 @@ zera todo parâmetro e `pre_level_ab` nasce em 0. A perda é silenciosa dos dois
 lados e o sintoma imita defeito de efeito — custou dois diagnósticos
 falsos em 22/08 (bts 12l).
 
-`exc_on_a/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
+`exc_filter_l/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
 substituem o param pelo estado real.
 
 **Simplificação depois (v0.106.0):** `esp_on/esp_mix` e o `rev_mix` antigo

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_ccmap v0.8.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
+"""gerar_ccmap v0.9.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
 
 Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
 se dar por novo um ficheiro que ja tinha historia.
@@ -110,9 +110,9 @@ NOTAS = {
     "tarol_on": "<b>TAROLATOR</b> — ruído percussivo com o envelope da pancada; nasceu oitavador e não faz oitava",
     "tarol_mix": "0…4× — 100% é o máximo que o efeito gera; acima disso o limiter grampeia",
     "test_tone_out": "<b>0=A+B</b> · 1=A · 2=B",
-    "exc_on_a": "<b>gateia a proteção do ramo</b>",
+    "exc_filter_l": "<b>filtra o exciter: shift + governor</b>",
     "shift_hz": "<b>compartilhado</b> pelos dois ramos",
-    "bench_boost_a": "bancada"
+    "bench_boost_l": "bancada — NUNCA a knob nem a cena"
 }
 
 MENTIRAS = []

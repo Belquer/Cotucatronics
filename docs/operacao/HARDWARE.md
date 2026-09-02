@@ -262,7 +262,7 @@ transdutor. Hoje chamam-se `out_l` / `out_r` (CC 113/114), e cortam o ramo
 inteiro, seja qual for o destino em que a chave estiver.
 
 **Qual CADEIA entra em qual SAÍDA é decisão de firmware**, e é a matriz 2×2
-— `route_l_a`, `route_l_b`, `route_r_a`, `route_r_b`, nos CC 97/98 (o CC diz
+— `route_a_l`, `route_b_l`, `route_a_r`, `route_b_r`, nos CC 97/98 (o CC diz
 a saída, o canal diz a cadeia). Nasce cheia, que reproduz exactamente o
 código fixo que a antecedeu. Serve para inverter as cadeias quando os
 transdutores estão ligados ao contrário, em dois gestos e sem duplicar

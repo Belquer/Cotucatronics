@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.71.0
+// hal_daisy_seed v0.72.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.71.0"
+#define COTUCA_HAL_VERSION "0.72.0"
 
 using namespace daisy;
 
@@ -1074,6 +1074,21 @@ uint32_t MidiErrors() { return midi_err; }
 uint32_t MidiRestarts() { return midi_restarts; }
 uint32_t MidiRearmeSeguidos() { return midi_rearme_seguidos; }
 bool     NvicGrupoOk()        { return nvic_grupo_ok; }
+
+// Estado CRU do periferico e do pino, para nao bissectar as cegas.
+// Em 02/09 o RX parou depois de eu mexer em tres coisas no mesmo dia
+// (pull-up no PB7, prioridade da USART1, escrita directa no TDR). Em vez
+// de tirar uma de cada vez e gravar tres vezes, pergunta-se ao silicio.
+void UartDiag(uint32_t* cr1, uint32_t* cr3, uint32_t* isr,
+              uint32_t* moder, uint32_t* pupdr, uint32_t* afrl)
+{
+    if(cr1)   *cr1   = USART1->CR1;
+    if(cr3)   *cr3   = USART1->CR3;
+    if(isr)   *isr   = USART1->ISR;
+    if(moder) *moder = (GPIOB->MODER >> (7 * 2)) & 0x3u;   // PB7
+    if(pupdr) *pupdr = (GPIOB->PUPDR >> (7 * 2)) & 0x3u;
+    if(afrl)  *afrl  = (GPIOB->AFR[0] >> (7 * 4)) & 0xFu;
+}
 
 // Reinicio duro. NAO e o DFU: e o mesmo que o botao de RESET faz.
 // Chamado pelo vigia de laco, que vive no callback de audio — o unico

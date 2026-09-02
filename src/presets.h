@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.9.0
+// Cotucatronics OS — presets v0.10.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -32,7 +32,7 @@ inline bool ForaDoPreset(const char* nome)
 {
     // ESTADO FISICO: vai virar leitura dos DPDT em D29/D30. Um preset
     // que escrevesse isto tentaria mudar uma chave de metal.
-    if(!strncmp(nome, "exc_on", 6))       return true;
+    if(!strncmp(nome, "exc_filter", 10)) return true;
     // OS VOLUMES DE SAIDA SEGUEM OS POTS FISICOS — decisao do dB em
     // 01/09, e a razao e de replicacao, nao de gosto:
     //
@@ -44,7 +44,7 @@ inline bool ForaDoPreset(const char* nome)
     // soa bem no seguinte, e um preset que o carregasse levaria a
     // calibracao de UM exemplar para todos.
     //
-    // Mesmo criterio que ja tinha aposentado o `exc_on`: um preset que
+    // Mesmo criterio que ja tinha aposentado o `exc_filter`: um preset que
     // escrevesse isto tentaria mudar uma chave de metal.
     if(!strncmp(nome, "post_level_", 11)) return true;
 

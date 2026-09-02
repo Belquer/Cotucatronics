@@ -52,6 +52,24 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 <!-- gerado por gerar_ccmap v0.7.0 de manifest.h — nao editar a mao -->
 | CC | manda | escuta | param | família | faixa real |
 |---|---|---|---|---|---|
+| 1 | ch1 | ch4 | `microfonia_on_l` | — | 0 – 1 |
+| 2 | ch1 | ch4 | `microfonia_on_r` | — | 0 – 1 |
+| 3 | ch1 | ch4 | `microfonia1_hz_l` | — | 60 – 8000 |
+| 4 | ch1 | ch4 | `microfonia1_hz_r` | — | 60 – 8000 |
+| 5 | ch1 | ch4 | `microfonia1_db_l` | — | 0 – 24 |
+| 6 | ch1 | ch4 | `microfonia1_db_r` | — | 0 – 24 |
+| 7 | ch1 | ch4 | `microfonia2_hz_l` | — | 60 – 8000 |
+| 8 | ch1 | ch4 | `microfonia2_hz_r` | — | 60 – 8000 |
+| 9 | ch1 | ch4 | `microfonia2_db_l` | — | 0 – 24 |
+| 10 | ch1 | ch4 | `microfonia2_db_r` | — | 0 – 24 |
+| 11 | ch1 | ch4 | `microfonia3_hz_l` | — | 60 – 8000 |
+| 12 | ch1 | ch4 | `microfonia3_hz_r` | — | 60 – 8000 |
+| 13 | ch1 | ch4 | `microfonia3_db_l` | — | 0 – 24 |
+| 14 | ch1 | ch4 | `microfonia3_db_r` | — | 0 – 24 |
+| 15 | ch1 | ch4 | `microfonia4_hz_l` | — | 60 – 8000 |
+| 16 | ch1 | ch4 | `microfonia4_hz_r` | — | 60 – 8000 |
+| 17 | ch1 | ch4 | `microfonia4_db_l` | — | 0 – 24 |
+| 18 | ch1 | ch4 | `microfonia4_db_r` | — | 0 – 24 |
 | 20 | ch1 | ch4 | `piezo_mix` | mistura | -1 – 1 |
 | 23 | ch2 | ch5 | `gate_thresh_a` | entrada | 0 – 1 |
 | 23 | ch3 | ch6 | `gate_thresh_b` | entrada | 0 – 1 |
@@ -122,52 +140,30 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 80 | ch3 | ch6 | `tarol_on_b` | tarolator | 0 – 1 |
 | 81 | ch2 | ch5 | `tarol_mix_a` | tarolator | 0 – 4 |
 | 81 | ch3 | ch6 | `tarol_mix_b` | tarolator | 0 – 4 |
-| 82 | ch2 | ch5 | `notch_on_a` | — | 0 – 1 |
-| 82 | ch3 | ch6 | `notch_on_b` | — | 0 – 1 |
-| 83 | ch2 | ch5 | `notch1_hz_a` | — | 60 – 8000 |
-| 83 | ch3 | ch6 | `notch1_hz_b` | — | 60 – 8000 |
-| 84 | ch2 | ch5 | `notch1_db_a` | — | 0 – 24 |
-| 84 | ch3 | ch6 | `notch1_db_b` | — | 0 – 24 |
-| 85 | ch2 | ch5 | `notch2_hz_a` | — | 60 – 8000 |
-| 85 | ch3 | ch6 | `notch2_hz_b` | — | 60 – 8000 |
-| 86 | ch2 | ch5 | `notch2_db_a` | — | 0 – 24 |
-| 86 | ch3 | ch6 | `notch2_db_b` | — | 0 – 24 |
 | 90 | ch1 | ch4 | `buzios_on` | búzios | 0 – 1 |
 | 91 | ch1 | ch4 | `buzios_thresh` | búzios | 0 – 1 |
 | 92 | ch1 | ch4 | `buzios_cooldown` | búzios | 10 – 1000 |
-
-> ⚠️ **`buzios_on` é um INTERRUPTOR, não um gatilho.** Ele liga o detector; quem
-> atira a jogada é a **pancada no instrumento**. Não existe hoje nenhum CC que
-> dispare os búzios por comando — mandar `buzios_on = 1` pelo Loopy arma o
-> detector e mais nada.
->
-> E o detector escuta a **soma das duas cadeias já processadas, pós-gate** — não
-> o piezo cru. Com a cadeia fechada ele fica surdo por mais forte que se bata.
-> Medido em 01/09: entrada crua a −0,6 dBFS e envelope do detector a −70 dBFS,
-> zero disparos. O comando `buzios` na serial mostra o pico que o envelope
-> alcançou ao lado do limiar, que é a linha que responde a isto. Ver
-> battle_scars **15ay**.
 | 93 | ch1 | ch4 | `test_tone_freq` | tom | 80 – 2000 |
 | 94 | ch1 | ch4 | `test_tone_level` | tom | 0 – 1 |
 | 95 | ch1 | ch4 | `test_tone_out` | tom | 0 – 2 |
 | 96 | ch1 | ch4 | `test_tone_via` | tom | 0 – 1 |
-| 97 | ch2 | ch5 | `route_l_a` | saída | 0 – 1 |
-| 97 | ch3 | ch6 | `route_l_b` | saída | 0 – 1 |
-| 98 | ch2 | ch5 | `route_r_a` | saída | 0 – 1 |
-| 98 | ch3 | ch6 | `route_r_b` | saída | 0 – 1 |
+| 97 | ch2 | ch5 | `route_a_l` | saída | 0 – 1 |
+| 97 | ch3 | ch6 | `route_b_l` | saída | 0 – 1 |
+| 98 | ch2 | ch5 | `route_a_r` | saída | 0 – 1 |
+| 98 | ch3 | ch6 | `route_b_r` | saída | 0 – 1 |
 | 100 | ch1 | ch4 | `pre_level_ab` | saída | 0 – 1 |
-| 105 | ch2 | ch5 | `exc_on_a` | saída | 0 – 1 |
-| 105 | ch3 | ch6 | `exc_on_b` | saída | 0 – 1 |
-| 110 | ch2 | ch5 | `gov_ceiling_a` | proteção | 0 – 1 |
-| 110 | ch3 | ch6 | `gov_ceiling_b` | proteção | 0 – 1 |
-| 111 | ch2 | ch5 | `gov_release_a` | proteção | 100 – 3000 |
-| 111 | ch3 | ch6 | `gov_release_b` | proteção | 100 – 3000 |
+| 101 | ch1 | ch4 | `gov_ceiling_l` | proteção | 0 – 1 |
+| 102 | ch1 | ch4 | `gov_ceiling_r` | proteção | 0 – 1 |
+| 103 | ch1 | ch4 | `gov_release_l` | proteção | 100 – 3000 |
+| 104 | ch1 | ch4 | `gov_release_r` | proteção | 100 – 3000 |
+| 105 | ch1 | ch4 | `bench_boost_l` | bancada | 1 – 8 |
+| 106 | ch1 | ch4 | `bench_boost_r` | bancada | 1 – 8 |
 | 112 | ch1 | ch4 | `shift_hz` | proteção | 0 – 10 |
 | 113 | ch1 | ch4 | `out_l` | saída | 0 – 1 |
 | 114 | ch1 | ch4 | `out_r` | saída | 0 – 1 |
-| 115 | ch2 | ch5 | `bench_boost_a` | bancada | 1 – 8 |
-| 115 | ch3 | ch6 | `bench_boost_b` | bancada | 1 – 8 |
 | 116 | ch1 | ch4 | `post_level_l` | — | 0 – 1 |
 | 117 | ch1 | ch4 | `post_level_r` | — | 0 – 1 |
+| 118 | ch1 | ch4 | `exc_filter_l` | saída | 0 – 1 |
+| 119 | ch1 | ch4 | `exc_filter_r` | saída | 0 – 1 |
 
-<!-- 105 vinculos em 60 numeros de CC -->
+<!-- 113 vinculos em 77 numeros de CC -->

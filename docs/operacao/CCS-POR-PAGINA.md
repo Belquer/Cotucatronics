@@ -154,19 +154,19 @@ Tom de teste, exciter, governor, roteamento e boost de bancada.
 | 94 | ch1 | ch4 | `tone_mix` |
 | 95 | ch1 | ch4 | `tone_dest` |
 | 96 | ch1 | ch4 | `test_tone_stage` |
-| 105 | ch2 | ch5 | `exc_on_a` |
-| 105 | ch3 | ch6 | `exc_on_b` |
-| 110 | ch2 | ch5 | `gov_ceiling_a` |
-| 110 | ch3 | ch6 | `gov_ceiling_b` |
-| 111 | ch2 | ch5 | `gov_release_a` |
-| 111 | ch3 | ch6 | `gov_release_b` |
+| 105 | ch2 | ch5 | `exc_filter_l` |
+| 105 | ch3 | ch6 | `exc_filter_r` |
+| 110 | ch2 | ch5 | `gov_ceiling_l` |
+| 110 | ch3 | ch6 | `gov_ceiling_r` |
+| 111 | ch2 | ch5 | `gov_release_l` |
+| 111 | ch3 | ch6 | `gov_release_r` |
 | 112 | ch1 | ch4 | `shift_hz` |
 | 113 | ch1 | ch4 | `out_l` |
 | 114 | ch1 | ch4 | `out_r` |
-| 115 | ch2 | ch5 | `bench_boost_a` |
-| 115 | ch3 | ch6 | `bench_boost_b` |
+| 115 | ch2 | ch5 | `bench_boost_l` |
+| 115 | ch3 | ch6 | `bench_boost_r` |
 
-*15 widgets*  ·  **+2 pareados novos: `route_l` cc97, `route_r` cc98**
+*15 widgets*  ·  **+2 pareados novos: `route_a_l`/`route_b_l` cc97, `route_a_r`/`route_b_r` cc98**
 
 ## Compartilhados, a lista fechada
 
@@ -195,11 +195,11 @@ Pareados como qualquer outro: **o CC diz a SAÍDA, o canal diz a CADEIA.**
 
 | CC | ch2 (A) | ch3 (B) |
 |---|---|---|
-| **97** | `route_l_a` | `route_l_b` |
-| **98** | `route_r_a` | `route_r_b` |
+| **97** | `route_a_l` | `route_b_l` |
+| **98** | `route_a_r` | `route_b_r` |
 
 Quatro interruptores em dois números. Todos nascem **ligados**, que é o
-que reproduz o som anterior à matriz. Desligar `route_r_a` e `route_l_b`
+que reproduz o som anterior à matriz. Desligar `route_a_r` e `route_b_l`
 deixa a cadeia A só na saída L e a B só na R; trocar as duas colunas
 **inverte as cadeias** — que é para o que ela existe, quando os
 transdutores estão ligados ao contrário.

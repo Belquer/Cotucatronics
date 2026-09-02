@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — notch v0.1.0
+// Cotucatronics OS — notch v0.2.0
 // Filtros de rejeicao estreitos, contra microfonia.
 //
 // POR QUE ISTO EXISTE, e por que nao ha alternativa mecanica:
@@ -56,7 +56,16 @@ namespace cotuca
 class Notch
 {
   public:
-    static const int kBocas = 2;   // notches por cadeia
+        // QUATRO, e nao duas. Subido em 02/09, no meio de uma sessao de
+    // escuta em que cada modo morto entregava o lugar ao seguinte: 1536,
+    // 3276, 535 Hz — e a segunda boca acabou-se ao terceiro. Para por o
+    // 3276 tive de APAGAR os 834 que o dB tinha afinado, e a escolha foi
+    // minha e nao dele.
+    //
+    // Custo MEDIDO antes de subir: ~0,5% de CPU por boca (27,1% com zero,
+    // 28,3% com duas, 29,0% com quatro). Oito bocas no total custam ~4%,
+    // com o pico em 42,7% e margem ate 80%. Nao e a CPU que limita.
+    static const int kBocas = 4;   // notches por RAMO (exciter)
 
     // Q FIXO, e a escolha e declarada. Ele podia ser param, mas cada
     // param novo e um CC novo no iPad e uma linha no preset — e o

@@ -1,4 +1,4 @@
-// test_presets v0.4.0 — validação nativa das estruturas de preset.
+// test_presets v0.6.0 — validação nativa das estruturas de preset.
 //
 // Roda no Mac, sem placa: `presets.h` é C++ puro e a pergunta que ele
 // responde — "este preset foi gravado sob este mapa?" — não depende de
@@ -61,15 +61,30 @@ int main()
     // que entrou ou saiu do preset SEM ninguem decidir. Quando falharem
     // outra vez, a pergunta e "quem mudou a pertinencia, e foi de
     // proposito?" — e a resposta actualiza-se AQUI, com a data.
-    Check("preset de cadeia tem 39 params por cadeia", cad / 2 == 39);
-    Check("preset global tem 6 params", glob == 6);
+    //   39 -> 34 por cadeia e 6 -> 16 globais em 02/09: os CINCO params
+    //         de notch por lado deixaram de ser `_a`/`_b` e passaram a
+    //         `_l`/`_r`, porque o notch mudou da CADEIA para o RAMO. Sao
+    //         dez params que atravessaram a fronteira de uma vez.
+    //
+    // ⚠️ E ISSO ABRE UMA PERGUNTA POR DECIDIR (ver STATUS): notch em
+    //    preset GLOBAL viaja entre unidades, e as pecas sao replicadas em
+    //    serie com modos proprios de cada soldadura. Uma frequencia certa
+    //    numa peca e ruido noutra.
+    Check("preset de cadeia tem 34 params por cadeia", cad / 2 == 34);
+    //   16 -> 24 globais em 02/09: as bocas 3 e 4 da microfonia, oito
+    //         params (hz+db x 2 bocas x 2 ramos). Subiu de 2 para 4 bocas
+    //         no meio de uma sessao de escuta em que cada modo morto
+    //         entregava o lugar ao seguinte — 1536, 3276, 535 Hz — e a
+    //         segunda boca acabou-se ao terceiro. Ver
+    //         docs/operacao/SUPRESSOR-MICROFONIA.md.
+    Check("preset global tem 24 params", glob == 24);
     Check("as duas cadeias tem o MESMO numero de params", cad % 2 == 0);
 
     // As exclusoes, uma a uma e por NOME: a contagem sozinha passaria se
     // duas exclusoes se cancelassem com duas inclusoes indevidas.
     const char* devem_ficar_fora[] = {
-        "exc_on_a", "exc_on_b", "bench_boost_a", "bench_boost_b",
-        "gov_ceiling_a", "gov_ceiling_b", "gov_release_a", "gov_release_b",
+        "exc_filter_l", "exc_filter_r", "bench_boost_l", "bench_boost_r",
+        "gov_ceiling_l", "gov_ceiling_r", "gov_release_l", "gov_release_r",
         "test_tone_freq", "test_tone_level", "test_tone_out",
         // ⚠️ DECISOES DO dB DE 01/09, e agora GUARDADAS e nao apenas
         //    nao-contrariadas. Tira-los da lista de "tem de entrar" so

@@ -24,21 +24,6 @@
 | **116** | ch1 (compartilhado) | `post_level_l` | Fader | 0 – 1 | 1 |
 | **117** | ch1 (compartilhado) | `post_level_r` | Fader | 0 – 1 | 1 |
 
-## NOTCH anti-microfonia
-
-| CC | canal | parâmetro | widget | faixa | nasce |
-|---|---|---|---|---|---|
-| **82** | ch2 (cadeia A) | `notch_on_a` | Botao (toggle) | 0 – 1 | 0 |
-| **82** | ch3 (cadeia B) | `notch_on_b` | Botao (toggle) | 0 – 1 | 0 |
-| **83** | ch2 (cadeia A) | `notch1_hz_a` | Fader | 60 – 8000 | 0 |
-| **83** | ch3 (cadeia B) | `notch1_hz_b` | Fader | 60 – 8000 | 0 |
-| **84** | ch2 (cadeia A) | `notch1_db_a` | Fader | 0 – 24 | 0 |
-| **84** | ch3 (cadeia B) | `notch1_db_b` | Fader | 0 – 24 | 0 |
-| **85** | ch2 (cadeia A) | `notch2_hz_a` | Fader | 60 – 8000 | 0 |
-| **85** | ch3 (cadeia B) | `notch2_hz_b` | Fader | 60 – 8000 | 0 |
-| **86** | ch2 (cadeia A) | `notch2_db_a` | Fader | 0 – 24 | 0 |
-| **86** | ch3 (cadeia B) | `notch2_db_b` | Fader | 0 – 24 | 0 |
-
 ## TOM DE TESTE
 
 | CC | canal | parâmetro | widget | faixa | nasce |
@@ -166,10 +151,10 @@
 
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
-| **97** | ch2 (cadeia A) | `route_l_a` | Botao (corta o ramo) | 0 – 1 | 1 |
-| **97** | ch3 (cadeia B) | `route_l_b` | Botao (corta o ramo) | 0 – 1 | 1 |
-| **98** | ch2 (cadeia A) | `route_r_a` | Botao (corta o ramo) | 0 – 1 | 1 |
-| **98** | ch3 (cadeia B) | `route_r_b` | Botao (corta o ramo) | 0 – 1 | 1 |
+| **97** | ch2 (cadeia A) | `route_a_l` | Botao (corta o ramo) | 0 – 1 | 1 |
+| **97** | ch3 (cadeia B) | `route_b_l` | Botao (corta o ramo) | 0 – 1 | 1 |
+| **98** | ch2 (cadeia A) | `route_a_r` | Botao (corta o ramo) | 0 – 1 | 1 |
+| **98** | ch3 (cadeia B) | `route_b_r` | Botao (corta o ramo) | 0 – 1 | 1 |
 
 ## SAIDA
 
@@ -182,8 +167,8 @@
 
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
-| **105** | ch2 (cadeia A) | `exc_on_a` | Botao (toggle) | 0 – 1 | 1 |
-| **105** | ch3 (cadeia B) | `exc_on_b` | Botao (toggle) | 0 – 1 | 1 |
+| **118** | ch1 (compartilhado) | `exc_filter_l` | Fader | 0 – 1 | 1 |
+| **119** | ch1 (compartilhado) | `exc_filter_r` | Fader | 0 – 1 | 1 |
 
 ## FONTE
 
@@ -195,10 +180,10 @@
 
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
-| **110** | ch2 (cadeia A) | `gov_ceiling_a` | Fader | 0 – 1 | 0.85 |
-| **110** | ch3 (cadeia B) | `gov_ceiling_b` | Fader | 0 – 1 | 0.85 |
-| **111** | ch2 (cadeia A) | `gov_release_a` | Fader | 100 – 3000 | 0.2414 |
-| **111** | ch3 (cadeia B) | `gov_release_b` | Fader | 100 – 3000 | 0.2414 |
+| **101** | ch1 (compartilhado) | `gov_ceiling_l` | Fader | 0 – 1 | 0.85 |
+| **102** | ch1 (compartilhado) | `gov_ceiling_r` | Fader | 0 – 1 | 0.85 |
+| **103** | ch1 (compartilhado) | `gov_release_l` | Fader | 100 – 3000 | 0.2414 |
+| **104** | ch1 (compartilhado) | `gov_release_r` | Fader | 100 – 3000 | 0.2414 |
 
 ## BUZIOS — sorteio
 
@@ -218,8 +203,31 @@
 
 | CC | canal | parâmetro | widget | faixa | nasce |
 |---|---|---|---|---|---|
-| **115** | ch2 (cadeia A) | `bench_boost_a` | Fader | 1 – 8 | 0 |
-| **115** | ch3 (cadeia B) | `bench_boost_b` | Fader | 1 – 8 | 0 |
+| **105** | ch1 (compartilhado) | `bench_boost_l` | Fader | 1 – 8 | 0 |
+| **106** | ch1 (compartilhado) | `bench_boost_r` | Fader | 1 – 8 | 0 |
+
+## OUTROS
+
+| CC | canal | parâmetro | widget | faixa | nasce |
+|---|---|---|---|---|---|
+| **1** | ch1 (compartilhado) | `microfonia_on_l` | Botao (toggle) | 0 – 1 | 0 |
+| **2** | ch1 (compartilhado) | `microfonia_on_r` | Botao (toggle) | 0 – 1 | 0 |
+| **3** | ch1 (compartilhado) | `microfonia1_hz_l` | Fader | 60 – 8000 | 0 |
+| **4** | ch1 (compartilhado) | `microfonia1_hz_r` | Fader | 60 – 8000 | 0 |
+| **5** | ch1 (compartilhado) | `microfonia1_db_l` | Fader | 0 – 24 | 0 |
+| **6** | ch1 (compartilhado) | `microfonia1_db_r` | Fader | 0 – 24 | 0 |
+| **7** | ch1 (compartilhado) | `microfonia2_hz_l` | Fader | 60 – 8000 | 0 |
+| **8** | ch1 (compartilhado) | `microfonia2_hz_r` | Fader | 60 – 8000 | 0 |
+| **9** | ch1 (compartilhado) | `microfonia2_db_l` | Fader | 0 – 24 | 0 |
+| **10** | ch1 (compartilhado) | `microfonia2_db_r` | Fader | 0 – 24 | 0 |
+| **11** | ch1 (compartilhado) | `microfonia3_hz_l` | Fader | 60 – 8000 | 0 |
+| **12** | ch1 (compartilhado) | `microfonia3_hz_r` | Fader | 60 – 8000 | 0 |
+| **13** | ch1 (compartilhado) | `microfonia3_db_l` | Fader | 0 – 24 | 0 |
+| **14** | ch1 (compartilhado) | `microfonia3_db_r` | Fader | 0 – 24 | 0 |
+| **15** | ch1 (compartilhado) | `microfonia4_hz_l` | Fader | 60 – 8000 | 0 |
+| **16** | ch1 (compartilhado) | `microfonia4_hz_r` | Fader | 60 – 8000 | 0 |
+| **17** | ch1 (compartilhado) | `microfonia4_db_l` | Fader | 0 – 24 | 0 |
+| **18** | ch1 (compartilhado) | `microfonia4_db_r` | Fader | 0 – 24 | 0 |
 
 ## Página de PRESETS
 
@@ -243,4 +251,4 @@ São **botões de valor fixo**, não faders: cada botão manda o CC 121 com o se
 
 ---
 
-**105 vínculos** nesta folha.
+**113 vínculos** nesta folha.

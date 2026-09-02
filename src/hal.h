@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.37.0
+// hal.h v0.38.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -370,6 +370,9 @@ uint32_t         MidiRearmeSeguidos();
 // Falso = o agrupamento de prioridades NAO e o assumido, e a prioridade
 // posta na USART1 nao preempta nada. Ver o comentario no Init do MIDI.
 bool             NvicGrupoOk();
+// Estado CRU da USART1 e do pino PB7 — para diagnosticar sem bissectar.
+void             UartDiag(uint32_t* cr1, uint32_t* cr3, uint32_t* isr,
+                          uint32_t* moder, uint32_t* pupdr, uint32_t* afrl);
 
 // Reinicio duro, igual ao botao de RESET. Nao vai para o DFU.
 // Usado pelo vigia de laco, que vive no callback de audio.

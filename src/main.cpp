@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.263.0"
+#define COTUCA_OS_VERSION "0.274.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -486,8 +486,21 @@ struct EstadoEnc
     uint32_t pushes     = 0;   // CONTAGEM, nao paridade (bts 13e)
     bool     push_agora = false;
     uint32_t rapidos    = 0;   // passos que a aceleracao multiplicou
+
 };
 static EstadoEnc enc_st[cotuca::hal::kNumEncoders];
+
+// ⚠️ AQUI ESTEVE UM AVISO NO PAINEL E UM GESTO DE TRES CLIQUES. (02/09)
+//
+// Serviam para armar a calibracao de microfonia por gesto no encoder G. O
+// dB substituiu o gatilho por um melhor — o supressor corre no ARRANQUE e
+// a cada mexida de POTE, porque o ganho do laco escala com o volume e um
+// ajuste feito a um volume nao vale a outro (ver
+// docs/operacao/SUPRESSOR-MICROFONIA.md).
+//
+// Com o gatilho revogado, o gesto, o detector de multi-clique e o aviso
+// ficaram sem leitor. Nao ficam a espera de voltar a ser uteis: quando o
+// supressor precisar de anunciar-se no painel, escreve-se para esse fim.
 
 // DIVISAO POR DETENTE — nasce em 1 e se ajusta DEPOIS DE MEDIR.
 //
@@ -1410,7 +1423,7 @@ static float               caca_im[kCacaN];
 static volatile int        caca_i    = 0;
 static volatile bool       caca_cheio = false;
 static volatile bool       caca_quer  = false;   // o laco pediu
-static volatile int        caca_cad   = 0;       // de que cadeia
+static volatile int        caca_cad   = 0;       // de que RAMO (0=L, 1=R)
 
 // ---- VIGIA: a placa caca sozinha, sem o ida-e-volta da serie ----
 //
@@ -2471,35 +2484,29 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // apontaria para o modo seguinte como se fosse o primeiro.
         // Medir depois do proprio remedio e a familia de defeito que
         // faz o segundo notch cacar o fantasma do primeiro.
-        if(caca_quer && !caca_cheio && (int)c == caca_cad)
-        {
-            int j = caca_i;
-            for(size_t i = 0; i < size && j < kCacaN; i++) caca_buf[j++] = b[i];
-            caca_i = j;
-            if(j >= kCacaN) caca_cheio = true;   // o bastao passa ao laco
-        }
+        // (a captura do cacador saiu daqui em 02/09 — foi para o RAMO,
+        //  junto com o notch. Cacar na cadeia daria os modos do PIEZO, e
+        //  o que interessa sao os do corpo que o exciter excita.)
 
-        // 1.1c) NOTCH ANTI-MICROFONIA — ANTES DO GATE, e a ordem importa.
+        // ⚠️ O NOTCH SAIU DAQUI EM 02/09, e foi para o RAMO (bloco 6).
         //
-        // Se a microfonia passasse primeiro pelo gate, seria ELA a
-        // segurar o portao aberto: um tom sustentado acima do limiar
-        // mantem o gate escancarado, e tudo a jusante fica ligado a
-        // alimentar o laco. Cortar antes do portao deixa o gate voltar
-        // a julgar o instrumento, e nao o proprio defeito.
+        // Vivia na cadeia, antes do gate, e a razao era boa: microfonia
+        // que passa o gate SEGURA O PORTAO ABERTO, e tudo a jusante fica
+        // a alimentar o laco. Mas essa razao foi escrita quando havia UM
+        // corpo.
         //
-        // CUSTO ZERO DESLIGADO: sem `on`, nem se toca nos biquads. E ao
-        // desligar, limpa-se a cauda — biquad guarda o passado, e
-        // religar cuspiria o que la ficou.
-        if(params.Real(manifest.p_notch_on[c]) >= 0.5f)
-        {
-            if(!notch_vivo[c]) { notch[c].Limpa(); notch_vivo[c] = true; }
-            for(int q = 0; q < cotuca::Notch::kBocas; q++)
-                notch[c].Set(q, params.Real(manifest.p_notch_hz[c][q]),
-                             params.Real(manifest.p_notch_db[c][q]));
-            for(size_t i = 0; i < size; i++) b[i] = notch[c].Processa(b[i]);
-        }
-        else
-            notch_vivo[c] = false;
+        // O dB tem dois: tambor no exciter L, botijao no exciter R. O
+        // laco fecha-se pelo par EXCITER+CORPO, e cada corpo tem os seus
+        // modos — um notch por cadeia obriga a mesma frequencia a servir
+        // os dois, e nao serve. O R estava inutilizavel com o ajuste do
+        // tambor. Argumento dele, e esta certo:
+        //
+        //   "se tenho os dois piezos indo para uma saida com varios
+        //    efeitos, posso filtrar aquela frequencia"
+        //
+        // O QUE SE PERDE, e fica escrito: o corte deixa de ser antes do
+        // gate. Com o laco quebrado no ramo o tom decai e o gate fecha
+        // sozinho, mas durante o transitorio ele abre. Perda real, aceite.
 
         // 1.2) GATE — por cadeia
         // CUSTO ZERO COM O PORTAO ABERTO. `thresh` em 0 e o default e
@@ -3039,6 +3046,38 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //
     // Antes do governor de proposito: o governor deve reagir ao sinal
     // que de fato vai pro exciter, ja deslocado.
+    // 6a) NOTCH ANTI-MICROFONIA, POR RAMO — antes do shift e do governor,
+    //     para que os dois ja vejam o sinal limpo. Um exciter, um corpo,
+    //     um conjunto de bocas. Ver o bloco de onde ele saiu, na cadeia.
+    //
+    //     CUSTO ZERO DESLIGADO: sem `on`, nem se toca nos biquads. E ao
+    //     desligar limpa-se a cauda — biquad guarda o passado, e religar
+    //     cuspiria o que la ficou.
+    for(int b = 0; b < 2; b++)
+    {
+        // CAPTURA DO CACADOR — ANTES do notch, de proposito: ele procura
+        // modos que o notch AINDA NAO apanhou. Depois do notch veria o
+        // proprio conserto e declararia o corpo limpo.
+        if(caca_quer && !caca_cheio && b == caca_cad)
+        {
+            int j = caca_i;
+            for(size_t i = 0; i < size && j < kCacaN; i++) caca_buf[j++] = out[b][i];
+            caca_i = j;
+            if(j >= kCacaN) caca_cheio = true;   // o bastao passa ao laco
+        }
+        if(params.Real(manifest.p_notch_on[b]) >= 0.5f)
+        {
+            if(!notch_vivo[b]) { notch[b].Limpa(); notch_vivo[b] = true; }
+            for(int q = 0; q < cotuca::Notch::kBocas; q++)
+                notch[b].Set(q, params.Real(manifest.p_notch_hz[b][q]),
+                             params.Real(manifest.p_notch_db[b][q]));
+            float* o = out[b];
+            for(size_t i = 0; i < size; i++) o[i] = notch[b].Processa(o[i]);
+        }
+        else
+            notch_vivo[b] = false;
+    }
+
     {
         const float hz = params.Real(manifest.p_shift_hz);
         shift_l.SetShift(hz);
@@ -5357,16 +5396,24 @@ static void HandleLine(const char* line)
     // multiplicacoes: no callback estouraria o prazo do bloco com
     // folga. A regra da casa e explicita — callback nao faz trabalho
     // de tamanho variavel.
-    if(strncmp(line, "notch", 5) == 0)
+    // ⚠️ `microfonia` e nao `notch`. Nome do dB, 02/09: o comando trata do
+    //    PROBLEMA, e `notch` e a tecnica. Quem chega a bancada quer dizer
+    //    "microfonia", nao "filtro de rejeicao de banda estreita".
+    //    A classe C++ continua `Notch` — ela E um notch, e essa camada
+    //    fala de DSP. Nome de comando e para as maos; nome de classe e
+    //    para quem le o filtro.
+    if(strncmp(line, "microfonia", 10) == 0)
     {
-        const char* a = line + 5;
+        const char* a = line + 10;
         while(*a == ' ') a++;
 
         if(strncmp(a, "caca", 4) == 0 || strncmp(a, "auto", 4) == 0)
         {
             const bool poe = (*a == 'a');
             const char* q  = a + 4; while(*q == ' ') q++;
-            const int cad  = (*q == 'b' || *q == 'B') ? 1 : 0;
+            // 'l'/'r' agora, e 'a'/'b' ainda aceites para nao partir o
+            // dedo de quem escreve depressa — mas o relatorio diz L/R.
+            const int cad  = (*q=='r'||*q=='R'||*q=='b'||*q=='B') ? 1 : 0;
 
             // Passa o bastao ao callback e espera. `caca_cheio` e a
             // unica coisa que o laco le enquanto o callback escreve.
@@ -5376,7 +5423,7 @@ static void HandleLine(const char* line)
             caca_quer = false;
             if(!caca_cheio)
             {
-                hal::Log("notch: a captura nao encheu em 500 ms — audio parado?");
+                hal::Log("microfonia: a captura nao encheu em 500 ms — audio parado?");
                 return;
             }
 
@@ -5394,7 +5441,7 @@ static void HandleLine(const char* line)
             }
             if(e0 < 1e-9f)
             {
-                hal::Log("notch: entrada MUDA — nao ha o que cacar."
+                hal::Log("microfonia: entrada MUDA — nao ha o que cacar."
                          " Poe o instrumento a gritar e repete.");
                 return;
             }
@@ -5407,7 +5454,7 @@ static void HandleLine(const char* line)
                 100.f, 8000.f, &nivel, &domin);
             if(hz <= 0.f)
             {
-                hal::Log("notch: sem pico na faixa de 100 Hz a 8 kHz.");
+                hal::Log("microfonia: sem pico na faixa de 100 Hz a 8 kHz.");
                 return;
             }
 
@@ -5415,8 +5462,8 @@ static void HandleLine(const char* line)
             // sozinho fica perto de 1; uma nota espalha-se pelos
             // harmonicos e cai. Medido na prova: tom puro 0,93-1,00,
             // nota com quatro harmonicos 0,70.
-            hal::Log("notch: cadeia %c -> %.1f Hz | %.1f dB | dominancia %.2f",
-                     cad ? 'B' : 'A', (double)hz, (double)nivel, (double)domin);
+            hal::Log("microfonia: cadeia %c -> %.1f Hz | %.1f dB | dominancia %.2f",
+                     cad ? 'R' : 'L', (double)hz, (double)nivel, (double)domin);
             hal::Log("     %s", domin >= 0.85f
                          ? "espeto sozinho — cara de MICROFONIA"
                          : (domin >= 0.60f
@@ -5487,7 +5534,7 @@ static void HandleLine(const char* line)
             vigia_on  = true;
             hal::Log("VIGIA na cadeia %c por %d s, piso %.0f dB — POE A"
                      " GRITAR. O relatorio sai sozinho no fim.",
-                     vigia_cad ? 'B' : 'A', seg, (double)vigia_piso);
+                     vigia_cad ? 'R' : 'L', seg, (double)vigia_piso);
             return;
         }
 
@@ -5498,16 +5545,16 @@ static void HandleLine(const char* line)
             for(int b = 0; b < cotuca::Notch::kBocas; b++)
                 params.SetReal(manifest.p_notch_db[cad][b], 0.f);
             params.Set(manifest.p_notch_on[cad], 0.f);
-            hal::Log("notch: cadeia %c limpa e desligada.", cad ? 'B' : 'A');
+            hal::Log("microfonia: cadeia %c limpa e desligada.", cad ? 'R' : 'L');
             return;
         }
 
-        hal::Log("NOTCH ANTI-MICROFONIA — Q fixo %.0f (largura ~f/%.0f)",
+        hal::Log("MICROFONIA — Q fixo %.0f (largura ~f/%.0f)",
                  (double)cotuca::Notch::kQ, (double)cotuca::Notch::kQ);
         for(int c = 0; c < cotuca::Manifest::kCadeias; c++)
         {
             const bool on = params.Real(manifest.p_notch_on[c]) >= 0.5f;
-            hal::Log("  cadeia %c: %s", c ? 'B' : 'A', on ? "LIGADO" : "desligado");
+            hal::Log("  exciter %c: %s", c ? 'R' : 'L', on ? "LIGADO" : "desligado");
             for(int b = 0; b < cotuca::Notch::kBocas; b++)
             {
                 const float f = params.Real(manifest.p_notch_hz[c][b]);
@@ -5517,8 +5564,8 @@ static void HandleLine(const char* line)
                          d <= 0.f ? "(livre)" : (on ? "(a cortar)" : "(armada, mas OFF)"));
             }
         }
-        hal::Log("  `notch caca [a|b]` mede · `notch auto [a|b]` mede E poe"
-                 " · `notch off [a|b]` limpa");
+        hal::Log("  `microfonia caca [l|r]` mede · `microfonia auto [l|r]`"
+                 " mede E poe · `microfonia off [l|r]` limpa");
         hal::Log("  MEDIR COM O INSTRUMENTO A GRITAR — o cacador aponta o"
                  " que for mais forte, e se nao houver microfonia aponta a nota.");
         return;
@@ -5896,6 +5943,19 @@ static void HandleLine(const char* line)
         // FURO DO PollMidi, fechado com numero: os bytes entram por DMA
         // (imune a carga), mas quem despacha e o loop. A marca d'agua diz
         // quanta folga sobrou entre uma volta e outra.
+        {
+            uint32_t cr1=0,cr3=0,isr=0,mo=0,pu=0,af=0;
+            hal::UartDiag(&cr1,&cr3,&isr,&mo,&pu,&af);
+            hal::Log("  USART1 CR1=%08lX  RE=%lu UE=%lu RXNEIE=%lu IDLEIE=%lu",
+                     (unsigned long)cr1, (unsigned long)((cr1>>2)&1),
+                     (unsigned long)(cr1&1), (unsigned long)((cr1>>5)&1),
+                     (unsigned long)((cr1>>4)&1));
+            hal::Log("  USART1 CR3=%08lX  DMAR=%lu   ISR=%08lX",
+                     (unsigned long)cr3, (unsigned long)((cr3>>6)&1),
+                     (unsigned long)isr);
+            hal::Log("  PB7  MODER=%lu (2=AF)  PUPDR=%lu (1=pull-up)  AF=%lu (7=USART1)",
+                     (unsigned long)mo, (unsigned long)pu, (unsigned long)af);
+        }
         hal::Log("  quarentena: %lu CCs recusados (dumps de reconexao)",
                  (unsigned long)cc_quarentena);
         hal::Log("  fila: pico %lu de %lu bytes (%.0f%% cheia no pior caso)",
@@ -6012,7 +6072,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | notch [caca|auto|vigia <a|b> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -6704,6 +6764,7 @@ int main(void)
             EstadoEnc& st = enc_st[e];
             const int  inc  = hal::EncoderIncremento(e) * enc_sinal[e];
             const bool push = hal::EncoderPushBorda(e);
+
 
             // ---- O PRIMEIRO GESTO SO ACENDE ----
             //

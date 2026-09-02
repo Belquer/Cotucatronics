@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v1.1.0
+// manifest.h (instrumento "bancada") v1.7.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -208,7 +208,7 @@ struct Manifest
     // posições — jack | ambos | amp — que mora DEPOIS daqui. `out[1]`
     // não é "o jack": é uma saída que PODE estar no jack, e a chave é
     // que decide. O firmware nomeia SAÍDA; o cobre nomeia destino.
-    int p_exc_on[2];    // exciter no ar? gateia a protecao do ramo
+    int p_exc_on[2];    // [0]=exciter L, [1]=exciter R. Gateia shift+governor
     int p_route_l[2];   // a cadeia A/B entra em OUT_L?
     int p_route_r[2];   // a cadeia A/B entra em OUT_R?
 int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
@@ -382,8 +382,8 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // O corpo desta peca e SOLDADO: exciter e piezo na mesma chapa,
     // sem junta para perder energia. Nenhum gesto mecanico funcionou.
     int p_notch_on[kCadeias];
-    int p_notch_hz[kCadeias][2];
-    int p_notch_db[kCadeias][2];
+    int p_notch_hz[kCadeias][4];   // 4 bocas por ramo
+    int p_notch_db[kCadeias][4];
         int p_wrb_rate[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
     int p_wrb_depth[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
     int p_wrb_irreg[kCadeias];   // POR CADEIA (era compartilhado ate v0.131.0)
@@ -959,24 +959,65 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // Governor em 0.85, não nos 0.5 de antes: com o level em 0.85 um
         // teto de 0.5 comprimiria o instrumento o tempo todo. Ele volta
         // como PROTEÇÃO (segura o crescimento do laço), não como cor.
-        p_gov_ceiling[0] = t.Add("gov_ceiling_a", 0.85f,    0.f,  1.f);
-        p_gov_ceiling[1] = t.Add("gov_ceiling_b", 0.85f,    0.f,  1.f);
+        p_gov_ceiling[0] = t.Add("gov_ceiling_l", 0.85f,    0.f,  1.f);
+        p_gov_ceiling[1] = t.Add("gov_ceiling_r", 0.85f,    0.f,  1.f);
         // release em ms: 100–3000, default 800
-        p_gov_release[0]  = t.Add("gov_release_a",  0.2414f, 100.f, 3000.f);
-        p_gov_release[1]  = t.Add("gov_release_b",  0.2414f, 100.f, 3000.f);
+        p_gov_release[0]  = t.Add("gov_release_l",  0.2414f, 100.f, 3000.f);
+        p_gov_release[1]  = t.Add("gov_release_r",  0.2414f, 100.f, 3000.f);
 
         // ROTEAMENTO. Os dois ligados no boot: mudo por engano é pior
         // que alto por engano — pra alto o limiter já tem resposta.
-        p_exc_on[0]     = t.Add("exc_on_a",      1.0f, 0.f, 1.f);
-        p_exc_on[1]     = t.Add("exc_on_b",      1.0f, 0.f, 1.f);
+    // ⚠️ `exc_filter`, e nao `exc_on`. Nome do dB, 02/09: o param FILTRA
+    //    o sinal do exciter (deslocador + governor); nao liga nem desliga
+    //    o exciter. Ele perguntou "corta a saida L do amp?" — e nao corta,
+    //    quem corta e o `out_l`. Nome que provoca essa pergunta esta errado.
+    //
+    // ⚠️ `_l`/`_r` E NAO `_a`/`_b`, e o sufixo aqui tem significado de
+    //    MAQUINA e nao de estilo.
+    //
+    // Terminologia do dB, fixada em 02/09: PIEZO e A ou B, porque o que o
+    // define e a COLOCACAO no instrumento; EXCITER e L ou R, porque o que
+    // o define e a saida do amp estereo de que ele pega.
+    //
+    // Estes params governam `out[0]`/`out[1]`, que sao OUT_L e OUT_R —
+    // sao de SAIDA. Chamar-lhes `_a`/`_b` fazia tres estragos:
+    //
+    //   1. o `EhDeCadeia()` classifica pelo sufixo, e eles PARECIAM params
+    //      de cadeia — so escapavam pela lista de excepcoes. Nome que
+    //      obriga a uma excepcao numa regra e defeito, nao estilo;
+    //   2. o MIDI endereçava-os nos canais de ENTRADA (ch2/ch3), quando
+    //      todo o resto do lado da saida vive no ch1 compartilhado
+    //      (`out_l`, `out_r`, `post_level_l`, `post_level_r`);
+    //   3. na bancada obrigava a traduzir "cadeia A" para "saida L" de
+    //      cabeca, e era a pergunta que a sessao de escuta precisava de
+    //      fazer sem ambiguidade.
+    p_exc_on[0]     = t.Add("exc_filter_l",      1.0f, 0.f, 1.f);
+    p_exc_on[1]     = t.Add("exc_filter_r",      1.0f, 0.f, 1.f);
         // A matriz nasce CHEIA, e isso e deliberado: cheia ela
         // reproduz exatamente o codigo fixo que a antecedeu,
         // `out[0] = out[1] = A + B`. Feature nova que nasce mudando o
         // som e feature que se descobre pelo susto.
-        p_route_l[0]    = t.Add("route_l_a",     1.0f, 0.f, 1.f);
-        p_route_l[1]    = t.Add("route_l_b",     1.0f, 0.f, 1.f);
-        p_route_r[0]    = t.Add("route_r_a",     1.0f, 0.f, 1.f);
-        p_route_r[1]    = t.Add("route_r_b",     1.0f, 0.f, 1.f);
+    // ⚠️ ENTRADA PRIMEIRO, SAIDA DEPOIS — nome do dB, 02/09.
+    //
+    // Eram `route_l_a` (saida, entrada). Lidos em voz alta davam "rota L
+    // do A", e a pergunta que a bancada faz e a outra: "para onde vai o
+    // A?". Agora `route_a_l` le-se "rota A para L", que e a ordem do
+    // sinal e a ordem do pensamento.
+    //
+    // O eixo do MIDI ja estava certo aqui, e continua: o CANAL diz a
+    // ENTRADA (ch2 = cadeia A, ch3 = cadeia B) e o CC diz a SAIDA (97 =
+    // para L, 98 = para R). Ao contrario do `exc_filter`, que era de
+    // saida e estava endereçado pelos canais de entrada, a rota E de
+    // cadeia — o canal e o eixo certo dela.
+    //
+    // Os membros C++ ficam `p_route_l[c]` / `p_route_r[c]`: o array e
+    // indexado pela CADEIA, que e o eixo natural do vector, e o sufixo
+    // diz o destino. Nome de string e para quem digita e para o iPad;
+    // nome de membro e para quem indexa.
+    p_route_l[0]    = t.Add("route_a_l",     1.0f, 0.f, 1.f);
+    p_route_l[1]    = t.Add("route_b_l",     1.0f, 0.f, 1.f);
+    p_route_r[0]    = t.Add("route_a_r",     1.0f, 0.f, 1.f);
+    p_route_r[1]    = t.Add("route_b_r",     1.0f, 0.f, 1.f);
         // NOME: `level_l`/`level_r`, e nao `vol_*`. Alinha com o `level`
         // mestre que ja existia e diz o que sao — o mesmo eixo, em dois
         // ramos. Renomeados em 30/08, a pedido do dB e de graca: o mapa
@@ -998,8 +1039,8 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
 
         // FERRAMENTA DE BANCADA — ver bloco acima. def_norm 0.0 com
         // faixa [1,8] e curve 1 dá real = 1.0 no boot, sempre.
-        p_bench_boost[0]   = t.Add("bench_boost_a",   0.0f, 1.f, 8.f);
-        p_bench_boost[1]   = t.Add("bench_boost_b",   0.0f, 1.f, 8.f);
+        p_bench_boost[0]   = t.Add("bench_boost_l",   0.0f, 1.f, 8.f);
+        p_bench_boost[1]   = t.Add("bench_boost_r",   0.0f, 1.f, 8.f);
 
         // SHIFTER. Faixa 0–10 Hz, default 4 Hz (norm 0.4). Linear
         // pelo mesmo motivo do gov_ceiling: a borda se procura de
@@ -1178,16 +1219,24 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         //
         // `db` e REJEICAO, e nasce em ZERO. Um notch que nascesse a
         // cortar esconderia um modo antes de alguem o ter ouvido.
-        p_notch_on[0]    = t.Add("notch_on_a",    0.0f, 0.f, 1.f);
-        p_notch_on[1]    = t.Add("notch_on_b",    0.0f, 0.f, 1.f);
-        p_notch_hz[0][0] = t.Add("notch1_hz_a",   0.0f, 60.f, 8000.f, 2.0f);
-        p_notch_hz[1][0] = t.Add("notch1_hz_b",   0.0f, 60.f, 8000.f, 2.0f);
-        p_notch_db[0][0] = t.Add("notch1_db_a",   0.0f, 0.f, 24.f);
-        p_notch_db[1][0] = t.Add("notch1_db_b",   0.0f, 0.f, 24.f);
-        p_notch_hz[0][1] = t.Add("notch2_hz_a",   0.0f, 60.f, 8000.f, 2.0f);
-        p_notch_hz[1][1] = t.Add("notch2_hz_b",   0.0f, 60.f, 8000.f, 2.0f);
-        p_notch_db[0][1] = t.Add("notch2_db_a",   0.0f, 0.f, 24.f);
-        p_notch_db[1][1] = t.Add("notch2_db_b",   0.0f, 0.f, 24.f);
+        p_notch_on[0]    = t.Add("microfonia_on_l",    0.0f, 0.f, 1.f);
+        p_notch_on[1]    = t.Add("microfonia_on_r",    0.0f, 0.f, 1.f);
+        p_notch_hz[0][0] = t.Add("microfonia1_hz_l",   0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_hz[1][0] = t.Add("microfonia1_hz_r",   0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_db[0][0] = t.Add("microfonia1_db_l",   0.0f, 0.f, 24.f);
+        p_notch_db[1][0] = t.Add("microfonia1_db_r",   0.0f, 0.f, 24.f);
+        p_notch_hz[0][1] = t.Add("microfonia2_hz_l",   0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_hz[1][1] = t.Add("microfonia2_hz_r",   0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_db[0][1] = t.Add("microfonia2_db_l",   0.0f, 0.f, 24.f);
+        p_notch_db[1][1] = t.Add("microfonia2_db_r",   0.0f, 0.f, 24.f);
+        p_notch_hz[0][2] = t.Add("microfonia3_hz_l",  0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_db[0][2] = t.Add("microfonia3_db_l",  0.0f,  0.f,   24.f);
+        p_notch_hz[1][2] = t.Add("microfonia3_hz_r",  0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_db[1][2] = t.Add("microfonia3_db_r",  0.0f,  0.f,   24.f);
+        p_notch_hz[0][3] = t.Add("microfonia4_hz_l",  0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_db[0][3] = t.Add("microfonia4_db_l",  0.0f,  0.f,   24.f);
+        p_notch_hz[1][3] = t.Add("microfonia4_hz_r",  0.0f, 60.f, 8000.f, 2.0f);
+        p_notch_db[1][3] = t.Add("microfonia4_db_r",  0.0f,  0.f,   24.f);
         p_wrb_rate[0] = t.Add("wrb_rate_a", 0.0f, 0.5f, 12.f, 2.0f);
         p_wrb_rate[1] = t.Add("wrb_rate_b", 0.0f, 0.5f, 12.f, 2.0f);
         p_wrb_depth[0] = t.Add("wrb_depth_a", 0.0f, 0.f, 3.f);
@@ -1652,16 +1701,24 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(80, p_tarol_on[1], kCanalEntradaB);
         AddMidi(81, p_tarol_mix[0], kCanalEntradaA);
         AddMidi(81, p_tarol_mix[1], kCanalEntradaB);
-        AddMidi(82, p_notch_on[0], kCanalEntradaA);
-        AddMidi(82, p_notch_on[1], kCanalEntradaB);
-        AddMidi(83, p_notch_hz[0][0], kCanalEntradaA);
-        AddMidi(83, p_notch_hz[1][0], kCanalEntradaB);
-        AddMidi(84, p_notch_db[0][0], kCanalEntradaA);
-        AddMidi(84, p_notch_db[1][0], kCanalEntradaB);
-        AddMidi(85, p_notch_hz[0][1], kCanalEntradaA);
-        AddMidi(85, p_notch_hz[1][1], kCanalEntradaB);
-        AddMidi(86, p_notch_db[0][1], kCanalEntradaA);
-        AddMidi(86, p_notch_db[1][1], kCanalEntradaB);
+        AddMidi(1, p_notch_on[0], kCanalCompart);   // exciter L
+        AddMidi(2, p_notch_on[1], kCanalCompart);   // exciter R
+        AddMidi(3, p_notch_hz[0][0], kCanalCompart);   // exciter L
+        AddMidi(4, p_notch_hz[1][0], kCanalCompart);   // exciter R
+        AddMidi(5, p_notch_db[0][0], kCanalCompart);   // exciter L
+        AddMidi(6, p_notch_db[1][0], kCanalCompart);   // exciter R
+        AddMidi(7, p_notch_hz[0][1], kCanalCompart);   // exciter L
+        AddMidi(8, p_notch_hz[1][1], kCanalCompart);   // exciter R
+        AddMidi(9, p_notch_db[0][1], kCanalCompart);   // exciter L
+        AddMidi(10, p_notch_db[1][1], kCanalCompart);   // exciter R
+        AddMidi(11, p_notch_hz[0][2], kCanalCompart);   // exciter L
+        AddMidi(12, p_notch_hz[1][2], kCanalCompart);   // exciter R
+        AddMidi(13, p_notch_db[0][2], kCanalCompart);   // exciter L
+        AddMidi(14, p_notch_db[1][2], kCanalCompart);   // exciter R
+        AddMidi(15, p_notch_hz[0][3], kCanalCompart);   // exciter L
+        AddMidi(16, p_notch_hz[1][3], kCanalCompart);   // exciter R
+        AddMidi(17, p_notch_db[0][3], kCanalCompart);   // exciter L
+        AddMidi(18, p_notch_db[1][3], kCanalCompart);   // exciter R
                 AddMidi(54, p_wrb_rate[0], kCanalEntradaA);
         AddMidi(54, p_wrb_rate[1], kCanalEntradaB);
         AddMidi(55, p_wrb_depth[0], kCanalEntradaA);
@@ -1749,8 +1806,8 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         //
         // Governor e boost sao POR RAMO: cada amp e cada exciter tem
         // ganho e acoplamento proprios, entao o teto util difere.
-        AddMidi(110, p_gov_ceiling[0], kCanalEntradaA);
-        AddMidi(111, p_gov_release[0], kCanalEntradaA);
+        AddMidi(101, p_gov_ceiling[0], kCanalCompart);   // exciter L
+        AddMidi(103, p_gov_release[0], kCanalCompart);   // exciter L
         AddMidi(112, p_shift_hz, kCanalCompart);         // COMPARTILHADO pelos dois ramos
 AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         AddMidi(117, p_post_level_r, kCanalCompart);             // pot A1 (D16)
@@ -1763,16 +1820,19 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         AddMidi(97, p_route_l[1], kCanalEntradaB);
         AddMidi(98, p_route_r[0], kCanalEntradaA);
         AddMidi(98, p_route_r[1], kCanalEntradaB);
-        AddMidi(115, p_bench_boost[0], kCanalEntradaA);
-        AddMidi(110, p_gov_ceiling[1], kCanalEntradaB);
-        AddMidi(111, p_gov_release[1], kCanalEntradaB);
-        AddMidi(115, p_bench_boost[1], kCanalEntradaB);
+        AddMidi(105, p_bench_boost[0], kCanalCompart);   // exciter L
+        AddMidi(102, p_gov_ceiling[1], kCanalCompart);   // exciter R
+        AddMidi(104, p_gov_release[1], kCanalCompart);   // exciter R
+        AddMidi(106, p_bench_boost[1], kCanalCompart);   // exciter R
         // O PORTAO DA PROTECAO, um por ramo. Nasce LIGADO: proteger sem
         // precisar custa timbre, nao proteger quando precisa custa o
         // instrumento. Quando os DPDT forem soldados, D29/D30 dizem o
         // estado REAL e estes params viram o espelho do que o polo 2 le.
-        AddMidi(105, p_exc_on[0], kCanalEntradaA);
-        AddMidi(105, p_exc_on[1], kCanalEntradaB);
+        // CC 118/119 no ch1, com os outros params de saida (113/114 out,
+        // 116/117 post_level). Eram 105 nos canais de ENTRADA, o que
+        // punha um param de saida a ser endereçado pelo eixo errado.
+        AddMidi(118, p_exc_on[0], kCanalCompart);   // exciter L
+        AddMidi(119, p_exc_on[1], kCanalCompart);   // exciter R
 
         // ---- ORDEM DE SACRIFICIO (indice 0 cai primeiro) ----
         //
