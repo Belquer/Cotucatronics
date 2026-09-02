@@ -203,3 +203,28 @@ julgamento, e ele é mais fácil de escrever quando ainda se está a ouvir.
 `gravado sob outro mapa de params` — comportamento correcto. Se o mapa mudar,
 a biblioteca inteira precisa de ser recapturada, e por isso as renomeações de
 param foram feitas **antes** da primeira captura.
+
+---
+
+## O slot 0 do global aposenta o aviso "gravar zera os params"
+
+Observação do dB em 02/09, e muda a prioridade da biblioteca.
+
+**"Gravar zera os params" aparece em todos os briefings desde agosto** e é
+gerido por memória: repor à mão e declarar o que se repôs. Já custou pelo
+menos duas vezes — um estado afirmado que o flash tinha apagado, e uma
+sessão inteira a re-dialar `level` sem saber porquê.
+
+O desenho da biblioteca já tem a resposta e ninguém a tinha nomeado:
+
+> **Global, slot 0 = estado de boot.**
+
+No dia em que a biblioteca existir, gravar deixa de zerar. Carrega o 0.
+
+Isso muda o argumento da sessão de escuta: ela não é só o estrangulamento
+mais antigo do projecto — é o que **aposenta uma regra de operação inteira**
+e o erro humano que ela existe para conter. Regra que depende de alguém se
+lembrar é dívida; regra que o arranque cumpre sozinho é desenho.
+
+Ver a rotina de gravação na skill `bancada-firmware` §2b/§2c — as duas
+deixam de fazer falta no dia em que isto existir.

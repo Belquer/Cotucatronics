@@ -95,6 +95,13 @@ e todos eram instrumento, ferramenta ou relatório.
 Contrapeso: consertar agora não é consertar tudo o que se vê — é consertar
 **o que a tarefa de agora está a usar**. Numa caçada, isso é o instrumento.
 
+**A sessão de escuta ganhou um argumento novo** (dB, 02/09): o aviso
+"gravar zera os params" é repetido desde agosto e gerido por memória. O
+desenho dos presets já tem a resposta — **global slot 0 = estado de boot**
+— e no dia em que a biblioteca existir, gravar deixa de zerar: carrega o 0.
+A escuta não é só o estrangulamento mais antigo, é o que **aposenta esse
+aviso**. Ver [PRESETS-LISTA.md](operacao/PRESETS-LISTA.md).
+
 **Aberto:** os ~5% de base do laço, e a primeira pergunta é *"existem?"* —
 três builds da mesma fonte com mudanças inertes, antes de qualquer
 isolamento.
