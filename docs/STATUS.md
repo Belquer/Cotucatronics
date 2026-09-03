@@ -6,7 +6,12 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-09-02 (noite) · leva: **SuMiAu™** — supressor de
+> Atualizado em 2026-09-02 (fecho) · leva: **compressor** (49 dB de factor
+> de crista, medidos) · **medidor de saída** `pkout` · e o **chiado de banda
+> larga** diagnosticado até uma regra com nome — `AGND`/`DGND` unidos fora
+> da placa, P3 da varredura de terra, **por confirmar com o multímetro**
+>
+> Antes, 2026-09-02 (noite) · leva: **SuMiAu™** — supressor de
 > microfonias automatizado, por exciter, quatro bocas, provado num **banco
 > de ensaio** sem a escultura · o notch mudou de eixo (cadeia → **ramo**) ·
 > **rampa de arranque supervisionada**, que recua quando apanha um modo ·
@@ -57,6 +62,53 @@ desalinho só aparece quando alguém precisa da versão certa.
 ---
 
 <!-- doc-check: ignore system_profiler (comando do macOS, nao simbolo do projecto) -->
+
+## 02/09, fecho — o chiado, e a medição que derrubou dois planos meus
+
+**O ruído branco perene**, que o dB descreveu como *"um chiado como um rádio
+fora da estação"*. Quatro factos, todos medidos por ele:
+
+| teste | resultado |
+|---|---|
+| mexer o pote (volume digital) | **não muda** → entra depois do conversor |
+| volume de **entrada do amp a zero** | **não muda** → não entra pela entrada |
+| tirar o cabo, ou desligar a Daisy | **pára** → é a Daisy, pelo cabo |
+| tirar a USB do Mac | **melhora, não resolve** |
+
+E do lado do código, provado por leitura: com `out_l = out_r = 0` o único
+código depois do mute é o LED e a contabilidade de CPU. **O conversor recebe
+zeros exactos** — o firmware está ilibado por construção.
+
+**Diagnóstico, pela varredura de terra (P3):** `AGND` e `DGND` **combinados
+fora da placa**, no trilho de permaproto. A Daisy já os une internamente num
+ponto; uni-los outra vez faz um **anel**, a corrente divide-se, e a fracção
+que escolhe o caminho de dentro atravessa a **referência do codec**. Explica
+os quatro factos de uma vez, e é branco porque é a soma de tudo o que corre
+no trilho.
+
+**Por confirmar com o multímetro**, em AC/mV e sob carga. O plano de ataque
+e o critério de aceitação estão escritos no relatório da varredura.
+
+### O compressor, e a medição que o pediu
+
+Construído o **`pkout`** — faltava o outro lado da conta do `pk`. A primeira
+leitura deu **74,7 dB de margem** e eu ia construir um andar de ganho em
+cima dela. Era o **ambiente**. Com o dB a bater:
+
+```
+ENTRADA  IN_L  0,0 dBFS · 24 CLIPS   (piezo directo, sem pré-amp)
+SAÍDA    OUT_L pico −0,4 dBFS · média −49,2 dBFS   →  MARGEM 0,4 dB
+```
+
+**49 dB de factor de crista.** O amp precisava de tanto ganho porque estava
+a ser pedido para tornar audível a **média**. Logo a resposta não era ganho
+— era **compressão**. Novo bloco `Compressor` em `dynamics.h`, params
+partilhados, **nasce desligado**.
+
+**Requisito de hardware, medido:** o piezo precisa de ~6 dB de atenuação
+antes do conversor, ou os transitórios continuam a ser destruídos.
+
+---
 
 ## 02/09, noite — SuMiAu™, e o preço de iterar num ser humano
 

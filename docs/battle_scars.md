@@ -7019,3 +7019,87 @@ E o que se perde fica DECLARADO no codigo: o tom **nao testa se o notch
 quebra um laco real** — isso so o corpo responde. Banco que nao declara o
 que nao cobre convida a confiar nele para o que ele nao viu.
 
+---
+
+## 15bl. Media com o instrumento parado e ia construir em cima disso (02/09)
+
+O dB caçava um chiado de banda larga. Eu tinha afirmado "o amp tem ganho a
+mais" a partir da POSICAO DOS POTES — inferencia vestida de diagnostico — e
+construi o medidor de saida (`pkout`) para transformar isso num numero.
+
+Primeira leitura, com ninguem a tocar:
+
+```
+OUT_L pico -74,7 dBFS · media -89,6      MARGEM: 74,7 dB
+```
+
+**Setenta e quatro decibeis de margem.** Eu ia construir um andar de ganho
+em cima disso — e ja tinha o sitio escolhido, pos-entrada/pre-gate, citando
+um comentario do proprio manifesto.
+
+Pedi ao dB para bater no instrumento antes. Com o sinal REAL:
+
+```
+ENTRADA IN_L 0,0 dBFS com 24 CLIPS
+OUT_L   pico -0,4 dBFS · media -49,2     MARGEM: 0,4 dB
+```
+
+**Nao ha margem nenhuma.** A primeira leitura era o AMBIENTE.
+
+> **Um medidor de pico com o instrumento parado nao mede o instrumento:
+> mede a sala.** E a etapa 0 da `medicao-limpa` — provar que o canal fala —
+> aplicada ao SINAL e nao ao canal: o canal falava, so nao tinha nada para
+> dizer.
+
+### E o retrato verdadeiro era outro, e melhor
+
+**Quarenta e nove decibeis de factor de crista.** Pico no tecto, media a
+-49 dBFS. E o retrato de um instrumento percussivo, e explica porque o amp
+precisava de tanto ganho: ele estava a ser pedido para tornar audivel a
+MEDIA.
+
+Logo a resposta a "amplia o ganho o maximo que puderes" **nao era ganho**.
+Ganho subiria o pico, que ja estava no tecto, e cortava-o. Era COMPRESSAO —
+subir a media sem tocar no pico.
+
+**A medicao nao confirmou o plano: derrubou-o e deu outro melhor.** E o
+segundo plano nunca teria aparecido sem o numero.
+
+---
+
+## 15bm. Duas conclusoes minhas mortas por dois testes de dez segundos (02/09)
+
+O chiado de banda larga, e a sequencia inteira e uma aula do dB a fazer o
+meu trabalho:
+
+**Eu disse:** e o chao do conversor amplificado pelo amp — estrutura de
+ganho. **Ele testou:** poe o volume de entrada do AMP a zero. **O ruido
+ficou.** Se o caminho de sinal esta cortado e ele passa na mesma, nao entra
+pela entrada. Conclusao morta.
+
+**Eu disse:** entao e laco de terra pelo Mac — duas alimentacoes unidas so
+pelo cabo de audio. **Ele testou:** tirou a USB do Mac. **Melhorou mas nao
+resolveu.** A hipotese estava certa em parte e incompleta.
+
+> **Cada uma das minhas hipoteses caiu num teste que custou dez segundos e
+> que eu podia ter pedido antes de a escrever.** A regra da §R4 da
+> `revisao-terra` — "hipotese sem teste que a derrube e narrativa, nao
+> diagnostico" — pede que o teste seja escrito JUNTO com a hipotese. Eu
+> escrevi as hipoteses e deixei os testes para ele descobrir.
+
+### O que a varredura apontou depois
+
+`AGND` e `DGND` **combinados fora da placa**, num trilho de permaproto. A
+Daisy ja os une internamente num ponto; uni-los outra vez faz um ANEL, a
+corrente divide-se, e a fraccao que escolhe o caminho de dentro atravessa a
+**referencia do codec**.
+
+Isso explica os quatro factos de uma vez: passa depois do volume digital,
+passa depois do volume do amp, so existe com a Daisy ligada, e viaja pelo
+cabo. E e branco porque e a soma de tudo o que corre no trilho, nao uma
+comutacao.
+
+Por confirmar com o multimetro. Mas repare-se no que mudou: **deixou de ser
+uma hipotese com uma historia e passou a ser uma REGRA VIOLADA com nome** —
+P3 da varredura, escrita muito antes deste caso.
+

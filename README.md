@@ -70,12 +70,12 @@ Cinco regras que não se negociam:
 | [src/delay.h](src/delay.h) | **v0.2.0** | Delay em C++: linha de 1 s, feedback fixo 0,4, piso 50 ms. **Clamp da leitura contra NaN/Inf, com contador `clamps_`** |
 | [src/effect_slot.h](src/effect_slot.h) | **v0.3.0** | Moldura: fade assimétrico, custo-zero desligado, cronometragem |
 | [src/pitch_spectrum.py](src/pitch_spectrum.py) | **v0.2.0** | Os N maiores picos do espectro — pico dominante mente com laterais fortes |
-| [src/dynamics.h](src/dynamics.h) | **v0.5.1** | Gate, governor, limiter e **shifter SSB**. C++ puro |
+| [src/dynamics.h](src/dynamics.h) | **v0.6.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
 | [src/midi.h](src/midi.h) | **v0.8.1** | Máquina de estados MIDI + **os seis canais** e a invariante `escuta = manda + 3`, travada em `static_assert`. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.4.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.284.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
+| [src/main.cpp](src/main.cpp) | **v0.286.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/teste_tarol.cpp](src/teste_tarol.cpp) | **v0.2.0** | Banco nativo do tarolator. **Declara o que NÃO prova**: passou com senóides enquanto o efeito soava a caixa — banco prova a álgebra, não o timbre (cicatriz 15u) |
 | [src/teste_macro.cpp](src/teste_macro.cpp) | **v0.1.1** | Ida-e-volta do `Macro::Inverso`, de que a captura do pot depende. Se ele errar, o pot "não pega" e a bancada culpa o ADC |
