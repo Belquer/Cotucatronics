@@ -95,7 +95,9 @@ int main()
         //     fisico" e "tira out_l, out_r e pre_level_ab" — sao ajuste de
         //    sala e de botao, nao de musica. Se voltarem ao preset, isto
         //    grita em vez de o descobrirmos numa sessao de escuta.
-        "pre_level_ab", "out_l", "out_r", "post_level_l", "post_level_r"};
+        "pre_level_ab", "out_l", "out_r", "post_level_l", "post_level_r",
+        // o interruptor da protecao NAO viaja em cena — 15bh
+        "micro_auto", "micro_dom"};
     int erros_fora = 0;
     for(const char* n : devem_ficar_fora)
         if(cotuca::EhDeCadeia(n) || cotuca::EhGlobal(n))

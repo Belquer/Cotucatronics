@@ -6,7 +6,13 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-09-02 (fim do dia) · leva: **a marca da abertura
+> Atualizado em 2026-09-02 (noite) · leva: **SuMiAu™** — supressor de
+> microfonias automatizado, por exciter, quatro bocas, provado num **banco
+> de ensaio** sem a escultura · o notch mudou de eixo (cadeia → **ramo**) ·
+> **rampa de arranque supervisionada**, que recua quando apanha um modo ·
+> e três incidentes de microfonia que ferem, todos meus
+>
+> Antes, 2026-09-02 (fim do dia) · leva: **a marca da abertura
 > encolhida e subida** a pedido do dB — folga de 3 para 6 linhas até ao
 > nome · o **PS_2 medido** e o mapa do prescaler fechado · o **espectro a
 > 7 kHz** medido (o framebuffer não lhe mexe, mas o chão de banda larga
@@ -51,6 +57,57 @@ desalinho só aparece quando alguém precisa da versão certa.
 ---
 
 <!-- doc-check: ignore system_profiler (comando do macOS, nao simbolo do projecto) -->
+
+## 02/09, noite — SuMiAu™, e o preço de iterar num ser humano
+
+**O que existe agora.** O `notch` chama-se **`microfonia`** e mudou de eixo:
+era por cadeia (piezo), é por **ramo** (exciter). O laço fecha-se pelo par
+exciter+corpo, e o dB tem tambor no L e botijão no R — um ajuste por cadeia
+obrigava a mesma frequência a servir os dois. **Quatro bocas por ramo**,
+CC 1–18 no ch1.
+
+**O SuMiAu™** (nome dele; o trocadilho é exacto) corre no laço, 250 ms
+alternando ramos. Detecta pela **dominância**, age à primeira vista,
+**aprofunda** de 18 até 24 dB quando a boca não chega, e **despeja a mais
+grave** quando estão cheias — regra dele: *"as mais agudas porque são as
+mais dolorosas"*. Nunca toca em boca posta à mão. Não persiste, não entra
+em preset, e **`micro_auto` está fora do preset por segurança**: uma cena
+não pode desligar a protecção.
+
+**A rampa de arranque é supervisionada.** Sobe em 8 s, curva quadrática, e
+**recua 25%** sempre que o SuMiAu apanha um modo — a boca ganha tempo de
+morder e o que já soava baixa. Um corpo que uiva muito demora mais a abrir;
+um corpo limpo abre nos 8 s. **A peça negoceia com o próprio corpo.**
+
+### O achado da escuta: o laço atravessava DOIS corpos
+
+Com as quatro células da matriz abertas: **1536,4 Hz a +24,4 dB,
+dominância 0,99**. Com `A→L` e `B→R` apenas: **1543,1 Hz a −24,3 dB,
+dominância 0,27**. **Quarenta e nove decibéis.**
+
+E mesmo com a matriz separada, os dois ramos reportaram **3275,7 e 3275,8
+Hz** — o tambor está **soldado** ao botijão. A matriz separa os caminhos
+eléctricos; **não separa o metal**. Por isso qualquer pote tem de rearmar
+os dois caçadores.
+
+### O banco de ensaio, e porque devia ter vindo primeiro
+
+O SuMiAu foi afinado **com a escultura ligada ao lado de uma criança**, e
+três vezes a microfonia chegou aos ouvidos dela — uma delas fez o filho do
+dB gritar. Ver **15bi**, **15bj**, **15bk**.
+
+Existe agora um **tom de ensaio** (`sim_laco`, `sim_hz`, `sim_fb`) que
+injecta um pico de amplitude conhecida antes do notch, com as saídas mudas.
+Provou os cinco comportamentos em **dez minutos**: erro de detecção
+< 0,3 Hz, preenchimento por ordem, aprofundamento 18→21→24, despejo da mais
+grave, e silêncio quando resolvido.
+
+**Declarado no código:** o tom **não** testa se o notch quebra um laço
+real. Isso só o corpo responde.
+
+**Aberto, e é o próximo:** o **ruído branco perene** que toca o tempo todo.
+
+---
 
 ## 02/09 — o dia em que um pino sem pull-up custou cinco horas
 

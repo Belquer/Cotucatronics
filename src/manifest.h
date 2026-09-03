@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v1.7.0
+// manifest.h (instrumento "bancada") v1.11.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -213,7 +213,12 @@ struct Manifest
     int p_route_r[2];   // a cadeia A/B entra em OUT_R?
 int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     int p_post_level_r;        // volume do ramo R — POT em A1 (D16)
-        int p_out_l;        // OUT_L no ar?  (mute pos-limiter)
+        int p_sim_laco;     // laco simulado: microfonia sem escultura
+    int p_sim_hz;       // frequencia do modo simulado
+    int p_sim_fb;       // ganho da realimentacao simulada
+    int p_micro_auto;   // supressor automatico ligado?
+    int p_micro_dom;    // limiar de dominancia para agir
+    int p_out_l;        // OUT_L no ar?  (mute pos-limiter)
     int p_out_r;        // OUT_R no ar?
 
     // ============================================================
@@ -1034,8 +1039,69 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // quem liga o instrumento.
         p_post_level_l         = t.Add("post_level_l",         1.0f, 0.f, 1.f);
         p_post_level_r         = t.Add("post_level_r",         1.0f, 0.f, 1.f);
-        p_out_l         = t.Add("out_l",         1.0f, 0.f, 1.f);
-        p_out_r         = t.Add("out_r",         1.0f, 0.f, 1.f);
+        // ---- SIMULADOR DE LACO: microfonia SEM escultura ----
+        //
+        // ⚠️ EXISTE PORQUE O dB ERA O BANCO DE ENSAIO, e isso acabou.
+        //
+        // Em 02/09 o supressor foi afinado com a escultura ligada ao lado
+        // de uma pessoa: cada defeito meu chegou-lhe aos ouvidos, e uma
+        // das vezes o filho dele gritou. Um actuador que so se prova a
+        // gritar num corpo real nao se pode iterar.
+        //
+        // Isto fecha um laco DENTRO do firmware — ressoador de Q alto mais
+        // realimentacao — com o notch LA DENTRO, como no corpo. Sobe-se o
+        // `sim_fb` ate oscilar e ve-se o supressor trabalhar, com as saidas
+        // MUDAS.
+        //
+        // `sim_laco` tambem conta como "ha laco" para o portao do
+        // supressor: sem isso ele recusava-se a cacar com o som cortado, e
+        // era essa recusa que tornava o teste seguro impossivel.
+        p_sim_laco      = t.Add("sim_laco",      0.0f, 0.f, 1.f);
+        p_sim_hz        = t.Add("sim_hz",        0.0f, 60.f, 8000.f, 2.0f);
+        p_sim_fb        = t.Add("sim_fb",        0.0f, 0.f, 2.f);
+
+        // ---- SuMiAu(tm): supressor de microfonias automatizado ----
+        //
+        // `micro_auto` nasce LIGADO. Um instrumento que arranca com a
+        // protecao desligada e o cenario de 02/09, em que o dB levou com
+        // microfonia a volume alto — e o lado seguro e proteger sem
+        // precisar, nao o contrario.
+        //
+        // `micro_dom` e o limiar de dominancia, e a faixa saiu de
+        // MEDICOES e nao de teoria: 0,97-1,00 com o instrumento a gritar,
+        // 0,14-0,29 depois de cortado, e microfonia real ja mediu 0,61 em
+        // 31/08. Uma calibracao anterior em senoides sinteticas dera 0,85,
+        // que teria RECUSADO os casos reais. 0,50 fica no meio da vala,
+        // longe dos dois lados, e e ajustavel porque o ouvido decide.
+        p_micro_auto    = t.Add("micro_auto",    1.0f, 0.f, 1.f);
+        p_micro_dom     = t.Add("micro_dom",     0.5f, 0.f, 1.f);
+    // ⚠️ NASCEM FECHADAS. A PLACA ARRANCA MUDA, e isto custou dois sustos.
+    //
+    // Nasciam em 1.0. Cada GRAVACAO e cada arranque abriam o som com as
+    // bocas de microfonia VAZIAS — os params nascem nos defaults — e o
+    // laco tinha tudo o que precisava. Em 02/09 aconteceu duas vezes: a
+    // primeira apanhou o dB com o volume alto, a segunda fez o filho dele
+    // gritar. A rampa de 8 s nao chega: ela sobe o som na mesma.
+    //
+    // Nascer fechado inverte o lado do erro. Antes, esquecer de proteger
+    // custava um uivo; agora, esquecer de abrir custa silencio. Silencio
+    // nao magoa ninguem.
+    //
+    // Quem abre e o operador, com `out_l 1` / `out_r 1` — ou, no futuro, o
+    // supressor, DEPOIS de ter provado que o corpo esta seguro.
+    // NASCEM ABERTAS — a escultura tem de soar SOZINHA.
+    //
+    // Estiveram a 0.0f durante meia hora em 02/09, depois de dois sustos
+    // com microfonia no arranque. O dB desfez essa decisao com uma frase
+    // que a mata: "quero que ele funcione sem o loopy". Uma peca em
+    // exposicao nao tem ninguem para escrever `out_l 1`.
+    //
+    // A seguranca nao vem daqui: vem da RAMPA SUPERVISIONADA (ver
+    // `kRampaArranqueAmostras` e o recuo em `PassoDoSupressor`). Ela sobe
+    // sozinha, e RECUA sempre que o supressor apanha um modo — o som
+    // aparece, mas nunca chega a crescer.
+    p_out_l         = t.Add("out_l",         1.0f, 0.f, 1.f);
+    p_out_r         = t.Add("out_r",         1.0f, 0.f, 1.f);
 
         // FERRAMENTA DE BANCADA — ver bloco acima. def_norm 0.0 com
         // faixa [1,8] e curve 1 dá real = 1.0 no boot, sempre.
@@ -1719,6 +1785,10 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(16, p_notch_hz[1][3], kCanalCompart);   // exciter R
         AddMidi(17, p_notch_db[0][3], kCanalCompart);   // exciter L
         AddMidi(18, p_notch_db[1][3], kCanalCompart);   // exciter R
+        AddMidi(19, p_micro_auto, kCanalCompart);
+        AddMidi(21, p_micro_dom,  kCanalCompart);
+        // O simulador NAO vai a MIDI: e ferramenta de bancada, alcancavel
+        // so por `set`. Mesma regra do `bench_boost`.
                 AddMidi(54, p_wrb_rate[0], kCanalEntradaA);
         AddMidi(54, p_wrb_rate[1], kCanalEntradaB);
         AddMidi(55, p_wrb_depth[0], kCanalEntradaA);

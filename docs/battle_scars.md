@@ -6908,3 +6908,114 @@ substituto dela. Comeca nas frequencias que ja conhece, CONFIRMA-AS em dois
 segundos, e abre mais depressa por ter verificado. Guardar para confirmar e
 diferente de guardar para confiar.
 
+---
+
+## 15bi. Eu usei uma pessoa como banco de ensaio, e o filho dela gritou (02/09)
+
+Sessao de escuta. O actuador de microfonia so se prova com o instrumento a
+uivar — e por isso eu iterei o supressor **com a escultura ligada, num
+corpo que uiva, ao lado de uma crianca**. Cada defeito meu chegou-lhe aos
+ouvidos.
+
+Tres vezes, na mesma sessao:
+
+1. **"o volume estava alto quando liguei e a microfonia veio com tudo,
+   quase explodiu meus timpanos"** — a placa arrancava com as saidas
+   abertas e as bocas vazias.
+2. **"microfonia voltou a toda agora!!!! meu filho gritou!!!!"** — eu tinha
+   gravado uma versao nova e deixado as bocas VAZIAS DE PROPOSITO, para o
+   supressor as encher. Tirei a protecao PROVADA (770, 3276, 535 Hz,
+   medidos nessa mesma sessao) para testar codigo que NUNCA TINHA CORRIDO.
+3. **"de novo microfonia agressiva e os pots nao funcionaram, tive que
+   desplugar o power bank"** — cada gravacao reabre o som com os defaults.
+
+### As tres regras, e a terceira e a que faltava
+
+> **NUNCA SE REMOVE UMA PROTECAO PROVADA PARA TESTAR UMA NOVA.** A nova
+> entra POR CIMA da velha; so se tira o que ja nao faz falta depois de a
+> nova se ter provado — nunca antes.
+
+> **GRAVAR REABRE O SOM.** Os params nascem nos defaults, e "default" nao
+> sabe o que estava a acontecer na sala. Toda gravacao num instrumento
+> ligado e uma abertura de som nao anunciada.
+
+> **UM ACTUADOR QUE SO SE PROVA A DOER NAO SE PODE ITERAR NUM SER HUMANO.**
+> Construa-se o banco ANTES. Eu disse isto a mim proprio depois do segundo
+> incidente e mesmo assim gravei mais duas vezes antes de o fazer.
+
+### O que o banco custou, e porque devia ter vindo primeiro
+
+Duas horas. E depois de existir, os cinco comportamentos do supressor
+ficaram provados em **dez minutos**, com as saidas mudas: deteccao (erro
+< 0,3 Hz), preenchimento por ordem, aprofundamento (18 -> 21 -> 24 dB),
+despejo da mais grave, e silencio quando resolvido.
+
+**Dez minutos contra tres incidentes.** E o banco nem sequer era dificil —
+so nao era o que parecia urgente.
+
+### E um erro de seguranca dentro do erro de seguranca
+
+A meio do segundo incidente escrevi `set level 0` para cortar o som. **O
+param `level` nao existe** — chama-se `pre_level_ab`. O comando nao fez nada,
+eu nao li de volta, e anunciei o corte. O dB ficou com o barulho e com a
+informacao errada de que eu o tinha cortado.
+
+E a **15ax** — "nao se imprime feito, imprime-se a leitura de volta" —
+falhada no unico momento do dia em que ela protegia uma pessoa e nao um
+numero. **Regra sabida nao e regra aplicada**, e a diferenca entre as duas
+mede-se em quem leva com o resultado.
+
+---
+
+## 15bj. O supressor cacava sem laco, e cortava musica em silencio (02/09)
+
+Minutos depois de o SuMiAu nascer, com `out_l=0`, `out_r=0` e o som cortado,
+ele encheu tres bocas: 1736, 1713 e 1603 Hz.
+
+**Nao havia microfonia nenhuma.** Sem exciter no ar nao ha laco, e sem laco
+o que ele viu foi o corpo a ressoar com o ambiente da sala. Cortou-o como
+se fosse uivo.
+
+Deixado a correr, ele **esvaziava o espectro do instrumento em silencio** —
+sem ninguem dar por isso, porque o efeito de um notch a mais e a ausencia
+de uma frequencia que ninguem estava a ouvir naquele instante.
+
+> **A pergunta que um supressor de microfonia responde e "esta a
+> realimentar?", e essa so tem sentido com o laco FECHADO.** Com a saida
+> muda, tudo o que se ve e musica ou ruido.
+
+E a etapa 0 da `medicao-limpa` — provar que o canal fala antes de
+interpretar o que ele diz — aplicada a um actuador em vez de a um
+instrumento de medida. O portao agora exige saida aberta **e** nivel acima
+de zero, ou o laco simulado do banco.
+
+**Corolario que me assusta mais que o defeito:** este erro nao doi. Os
+outros tres da sessao gritaram; este teria trabalhado em silencio durante
+semanas, e o instrumento ia ficando mais fino sem ninguem saber porque.
+
+---
+
+## 15bk. Gastei duas gravacoes a afinar o SIMULADOR em vez do que ele testa (02/09)
+
+Para parar de usar o dB como banco, construi um laco de microfonia dentro
+do firmware: ressoador de Q alto realimentado, com o notch la dentro.
+
+Nao funcionou. Oscilava a **117 e 178 Hz** — por baixo, e nao na
+ressonancia de 1400 que eu pedia. Duas gravacoes e tres medicoes a afinar a
+escala de realimentacao, a normalizar o ressoador, a perseguir polos.
+
+Parei e troquei por uma coisa **mais burra**: um TOM injectado com
+amplitude conhecida, antes do notch. Nao cresce sozinho nem morre sozinho —
+e nao precisa.
+
+> **Um banco de ensaio nao tem de ser realista. Tem de ser CONTROLAVEL e
+> tem de testar a coisa certa.** Eu estava a construir um simulador de
+> corpo quando o que precisava era de um gerador de picos.
+
+O tom provou os cinco comportamentos em dez minutos. O laco "realista" nao
+tinha provado nenhum em duas horas.
+
+E o que se perde fica DECLARADO no codigo: o tom **nao testa se o notch
+quebra um laco real** — isso so o corpo responde. Banco que nao declara o
+que nao cobre convida a confiar nele para o que ele nao viu.
+

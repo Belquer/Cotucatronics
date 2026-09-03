@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.275.0"
+#define COTUCA_OS_VERSION "0.284.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2095,6 +2095,12 @@ static volatile uint32_t loop_voltas       = 0;
 // 8 s de rampa a 48 kHz. Longo de proposito: e o tempo que o supressor
 // tem para apanhar um modo antes de ele ter ganho para doer.
 static const uint32_t kRampaArranqueAmostras = 48000u * 8u;
+// Progresso da rampa, em amostras. Vive fora do callback porque o
+// SUPRESSOR tambem lhe mexe: cada vez que apanha um modo, faz a rampa
+// RECUAR. Escrito pelo callback e pelo laco — os dois so somam ou
+// subtraem, e um passo perdido custa milissegundos de rampa.
+static volatile uint32_t ramp_n = 0;
+
 
 static uint8_t  oled_fb[1024];
 // SPLASH. O objeto tem ~120 bytes e vive aqui, ao lado do framebuffer,
@@ -2144,6 +2150,251 @@ __attribute__((noinline)) static void ColheEntropia()
     const uint32_t e = cotuca::hal::EntropiaAdc();
     if(e != ent_ant) { ent_distintas++; ent_ant = e; }
     ent_acc = ent_acc * 1664525u + e + 1013904223u;
+}
+
+// ============================================================
+// SuMiAu(tm) — SUPRESSOR DE MICROFONIAS AUTOMATIZADO
+//
+// Nome do dB, 02/09. E um trocadilho exacto: e o que a microfonia faz.
+//
+// Contrato completo em docs/operacao/SUPRESSOR-MICROFONIA.md, decidido
+// com o dB na sessao de escuta de 02/09. O essencial:
+//
+// POR RAMO, e nao por cadeia. O laco fecha-se pelo par EXCITER+CORPO. O
+// dB tem tambor no L e botijao no R, e um ajuste por cadeia obrigava a
+// mesma frequencia a servir os dois corpos.
+//
+// CONTINUO, e nao um ritual. Os dois gatilhos que ele pediu — arranque e
+// mexida de pote — ficam cobertos por caçar sempre, e ainda apanha a
+// deriva termica dos modos. Nao sobe ganho nenhum: a RAMPA DE ARRANQUE ja
+// faz o laco nascer pequeno, e e ai que ele apanha o modo antes de doer.
+//
+// AGE A PRIMEIRA VISTA, sem esperar confirmacao. As contas sao
+// assimetricas: um falso positivo custa ~20 Hz a Q 35, inaudivel; um
+// falso negativo custa o uivo. Mesma razao por que NAO HA RECUO — o notch
+// esconde a prova de que ainda e preciso, e testar seria deixar o uivo
+// voltar de proposito.
+//
+// ARBITRAGEM PELA MAIS AGUDA, criterio do dB: "as mais agudas porque sao
+// as mais dolorosas". Bocas cheias e modo novo mais agudo que a mais
+// grave em uso -> despeja a grave. Mais grave que as quatro -> nao entra.
+// ============================================================
+
+// 250 ms entre analises, alternando os ramos: cada um e visto 2x/s. O
+// custo e um FFT de 2048 pontos a cada 250 ms, fora do callback.
+static const uint32_t kMicroCadenciaMs = 250;
+// Acima disto e uivo, abaixo e o corpo a ressoar. MEDIDO em 02/09: a
+// gritar deu +21,3 e +31,1 dB; depois de cortado, -21,4 e -33,2 dB.
+static const float    kMicroNivelDb    = 0.f;
+// Profundidade de entrada. 15 dB resolveu tudo o que apareceu a mao.
+// ENTRA JA A 18 dB, e APROFUNDA ate 24. Medido em 02/09: com 15 dB os
+// modos deste corpo escapavam — 1414 Hz continuou a uivar COM a boca la, e
+// 1531 escapou por cima de uma boca a 1528. Um notch raso demais nao e
+// meia protecao: e uma boca gasta que nao protege.
+static const float    kMicroDb         = 18.f;
+static const float    kMicroDbMax      = 24.f;   // tecto do param
+static const float    kMicroDbPasso    = 3.f;    // por deteccao repetida
+// Uma boca ja cobre a vizinhanca de Q 35 (~f/35). Sem isto, deriva
+// termica de 3 Hz gastava uma boca nova a cada analise.
+// ⚠️ O SUPRESSOR SO MEXE NO QUE FOI ELE A POR.
+//
+// Regra do dB, 02/09, e nasceu de um erro meu que doeu: eu gravei uma
+// versao nova e deixei as bocas VAZIAS de proposito, para o supressor as
+// encher — numa escultura que eu sabia uivar, ao lado de uma crianca. Tirei
+// a protecao PROVADA (770, 3276, 535 Hz, medidos nesta sessao) para testar
+// codigo que nunca tinha corrido. O filho dele gritou.
+//
+//   NUNCA SE REMOVE UMA PROTECAO PROVADA PARA TESTAR UMA NOVA.
+//   A nova entra POR CIMA da velha, e so se tira o que ja nao faz falta
+//   depois de a nova se ter provado — nunca antes.
+//
+// Em codigo isso e: o supressor preenche as bocas LIVRES, e ao despejar so
+// pode despejar bocas SUAS. Uma boca posta a mao e intocavel.
+//
+// A posse perde-se se o valor mudar: se a frequencia nao e a que ele
+// escreveu, alguem mexeu, e a boca passa a ser dessa pessoa.
+static float micro_minha_hz[2][cotuca::Notch::kBocas] = {{0}};
+// Nivel a que cada boca dele foi posta — para o desempate por FORCA.
+static float micro_minha_db[2][cotuca::Notch::kBocas] = {{0}};
+
+static inline bool MicroEhMinha(int r, int q, float hz_actual)
+{
+    const float m = micro_minha_hz[r][q];
+    if(m < 1.f) return false;
+    const float d = hz_actual > m ? hz_actual - m : m - hz_actual;
+    return d < 0.6f;   // folga do arredondamento do param
+}
+
+static inline bool MicroJaCoberta(float hz_boca, float hz_novo)
+{
+    if(hz_boca < 1.f) return false;
+    const float meia = hz_boca / 35.f;
+    const float d    = hz_novo > hz_boca ? hz_novo - hz_boca : hz_boca - hz_novo;
+    return d <= meia;
+}
+
+__attribute__((noinline)) static void PassoDoSupressor()
+{
+    using namespace cotuca;
+    if(params.Real(manifest.p_micro_auto) < 0.5f) return;
+
+    // ⚠️ SEM LACO NAO HA MICROFONIA — e sem exciter no ar nao ha laco.
+    //
+    // Apanhado em 02/09, minutos depois de o supressor nascer: com
+    // `out_l=0`, `out_r=0` e `level=0` ele encheu tres bocas — 1736, 1713 e
+    // 1603 Hz. Nao era microfonia nenhuma: era o corpo a ressoar com o
+    // ambiente, e ele cortou-o como se fosse uivo. Deixado a correr,
+    // esvaziava o espectro do instrumento EM SILENCIO.
+    //
+    // A pergunta que ele responde e "esta a realimentar?", e essa so tem
+    // sentido com o laco fechado. Com a saida muda, tudo o que se ve e
+    // musica ou ruido — e cortar musica e o unico erro que este supressor
+    // nao pode cometer, porque nao tem recuo para o desfazer.
+    //
+    // Mesma familia da etapa 0 da `medicao-limpa`: prova que o canal fala
+    // ANTES de interpretar o que ele diz.
+    {
+        // O laco SIMULADO conta como laco: e todo o proposito dele. Sem
+        // isto o portao recusava-se a cacar com as saidas mudas, e o teste
+        // seguro — que e a razao de o simulador existir — era impossivel.
+        const bool sim = params.Real(manifest.p_sim_laco) >= 0.5f;
+        const bool ha_saida = params.Real(manifest.p_out_l) >= 0.5f
+                           || params.Real(manifest.p_out_r) >= 0.5f;
+        if(!sim && !ha_saida) return;
+        if(!sim && params.Real(manifest.p_pre_level) < 0.02f) return;
+    }
+
+    static uint32_t prox = 0;
+    static int      ramo = 0;
+    const uint32_t ag = hal::NowMs();
+
+    // Fase 1: pedir a captura. O callback enche `caca_buf` do `out[ramo]`.
+    if(!caca_quer && !caca_cheio)
+    {
+        if((int32_t)(ag - prox) < 0) return;
+        caca_cad = ramo; caca_i = 0; caca_cheio = false; caca_quer = true;
+        return;
+    }
+    // Fase 2: ainda a encher. Sai e volta na proxima volta do laco — NUNCA
+    // se espera aqui, que era o que a versao de comando fazia com um
+    // busy-wait de 500 ms.
+    if(!caca_cheio) return;
+
+    caca_quer = false;
+    prox = ag + kMicroCadenciaMs;
+    const int r = ramo;
+    ramo = 1 - ramo;
+
+    // Tira a media: DC vira um pico enorme no bin 0 e vaza pelos vizinhos.
+    float med = 0.f;
+    for(int i = 0; i < kCacaN; i++) med += caca_buf[i];
+    med /= (float)kCacaN;
+    float e0 = 0.f;
+    for(int i = 0; i < kCacaN; i++)
+    {
+        caca_re[i] = caca_buf[i] - med;
+        e0 += caca_re[i] * caca_re[i];
+    }
+    caca_cheio = false;
+    if(e0 < 1e-9f) return;                 // mudo: nao ha o que cacar
+
+    float nivel = -200.f, domin = 0.f;
+    const float hz = Espectro::Pico(caca_re, caca_im, kCacaN,
+                                    hal::Info().sample_rate,
+                                    100.f, 8000.f, &nivel, &domin);
+    if(hz <= 0.f) return;
+    if(domin < params.Real(manifest.p_micro_dom)) return;   // nota, nao uivo
+    if(nivel < kMicroNivelDb) return;
+
+    // Ja coberta? A deriva termica nao merece boca nova.
+    int livre = -1, grave = -1, fraca = -1;
+    float hz_grave = 1e9f, nivel_fraco = 1e9f;
+    for(int q = 0; q < Notch::kBocas; q++)
+    {
+        const float hb = params.Real(manifest.p_notch_hz[r][q]);
+        const float db = params.Real(manifest.p_notch_db[r][q]);
+        // ⚠️ COBERTA MAS AINDA A UIVAR = APROFUNDA, nao ignora.
+        //
+        // Era `return` seco: se ja havia boca ali, ele dava por resolvido.
+        // Mas em 02/09 o dB ouviu 1414 Hz a uivar COM uma boca a 1408, e
+        // 1531 por cima de uma a 1528 — a boca estava la e era rasa. O
+        // supressor via cobertura e nao via que ela nao chegava.
+        //
+        // Se chegou aqui, o modo passou os limiares de dominancia E de
+        // nivel: esta MESMO a uivar. Cobertura que nao silencia nao e
+        // cobertura — e uma boca gasta.
+        if(db >= 0.5f && MicroJaCoberta(hb, hz))
+        {
+            if(db >= kMicroDbMax - 0.1f) return;   // ja no tecto
+            const float novo = db + kMicroDbPasso > kMicroDbMax
+                             ? kMicroDbMax : db + kMicroDbPasso;
+            params.SetReal(manifest.p_notch_db[r][q], novo);
+            {   // a rampa recua tambem aqui: o modo esta a soar AGORA
+                const uint32_t rn = ramp_n;
+                const uint32_t rc = kRampaArranqueAmostras / 4u;
+                ramp_n = rn > rc ? (rn - rc) : 0u;
+            }
+            hal::Log("SuMiAu: exciter %c boca %d APROFUNDA"
+                     " %.0f -> %.0f dB (%.1f Hz ainda a %.1f dB, dom %.2f)",
+                     r ? 'R' : 'L', q + 1, (double)db, (double)novo,
+                     (double)hz, (double)nivel, (double)domin);
+            return;
+        }
+        if(db < 0.5f) { if(livre < 0) livre = q; }
+        // CANDIDATA A DESPEJO SO SE FOR DELE. Boca posta a mao nao se toca,
+        // por mais grave que seja.
+        else if(MicroEhMinha(r, q, hb))
+        {
+            if(hb < hz_grave) { hz_grave = hb; grave = q; }
+            // E a MAIS FRACA das dele, para o desempate por forca.
+            const float nb = micro_minha_db[r][q];
+            if(nb < nivel_fraco) { nivel_fraco = nb; fraca = q; }
+        }
+    }
+
+    int alvo = livre;
+    if(alvo < 0)
+    {
+        // Cheias. Regra do dB: ganha a mais AGUDA, porque as agudas doem
+        // mais. Mas em 02/09 essa regra sozinha BLOQUEOU um conserto: o
+        // exciter R tinha as quatro bocas em 1527..1905 e o corpo uivava a
+        // 1414 — mais GRAVE que todas, logo recusado, e o uivo continuou.
+        //
+        // Entao a regra ganha o desempate que o proprio caso pediu: se o
+        // modo novo for mais agudo, despeja a mais grave (regra do dB); se
+        // for mais grave MAS MAIS FORTE que a mais fraca dele, despeja a
+        // fraca. Dor primeiro, forca como recurso — e nunca toca no que o
+        // dB pos a mao.
+        if(grave >= 0 && hz > hz_grave)      alvo = grave;
+        else if(fraca >= 0 && nivel > nivel_fraco + 6.f) alvo = fraca;
+        else return;
+    }
+    params.SetReal(manifest.p_notch_hz[r][alvo], hz);
+    params.SetReal(manifest.p_notch_db[r][alvo], kMicroDb);
+    micro_minha_hz[r][alvo] = params.Real(manifest.p_notch_hz[r][alvo]);
+    micro_minha_db[r][alvo] = nivel;
+    params.SetReal(manifest.p_notch_on[r], 1.f);
+    // ⚠️ A RAMPA RECUA. Este e o coracao da seguranca no arranque.
+    //
+    // Apanhar o modo nao chega: o notch leva alguns blocos a agir, e a
+    // rampa continuava a subir nesse intervalo. Recuar 25% do progresso da
+    // a boca tempo de morder E baixa o que ja estava a soar — o som ducka,
+    // e volta a subir JA PROTEGIDO.
+    //
+    // E o que torna a abertura automatica aceitavel: a escultura abre-se
+    // sozinha (o dB precisa dela a funcionar sem o Loopy), mas cada modo
+    // que aparece custa-lhe altura. Um corpo que uive muito demora mais a
+    // abrir; um corpo limpo abre nos 8 s. A peca negoceia com o proprio
+    // corpo em vez de confiar num numero.
+    {
+        const uint32_t r_now = ramp_n;
+        const uint32_t recuo = kRampaArranqueAmostras / 4u;
+        ramp_n = r_now > recuo ? (r_now - recuo) : 0u;
+    }
+    hal::Log("SuMiAu: exciter %c boca %d <- %.1f Hz"
+             " (%.1f dB, dom %.2f)%s",
+             r ? 'R' : 'L', alvo + 1, (double)hz, (double)nivel,
+             (double)domin, livre < 0 ? "  [despejou a mais grave]" : "");
 }
 
 __attribute__((noinline)) static void PassoDaAbertura()
@@ -3050,6 +3301,41 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //
     // Antes do governor de proposito: o governor deve reagir ao sinal
     // que de fato vai pro exciter, ja deslocado.
+        // 6-sim) TOM DE ENSAIO — microfonia sem escultura.
+    //
+    // ⚠️ EXISTE PORQUE O dB ERA O BANCO DE ENSAIO, e isso acabou. Em 02/09
+    // o SuMiAu foi afinado com a escultura ligada ao lado de uma pessoa;
+    // cada defeito meu chegou-lhe aos ouvidos, e numa delas o filho gritou.
+    //
+    // COMECOU POR SER UM LACO A SERIO — ressoador de Q alto realimentado —
+    // e nao chegou a funcionar: oscilava a 117 e 178 Hz, por baixo, e nao
+    // na ressonancia. Duas gravacoes gastas a afinar o SIMULADOR em vez do
+    // que ele existe para testar.
+    //
+    // Isto e mais burro e faz o trabalho: injecta um TOM de amplitude
+    // conhecida, ANTES do notch. Nao reproduz a dinamica do laco (nao
+    // cresce sozinho, nao morre sozinho), e isso esta declarado — mas
+    // testa o que importa: se o SuMiAu DETECTA, se APROFUNDA quando a boca
+    // nao chega, e se DESPEJA quando estao cheias. E nao pode fugir.
+    //
+    // O que ele NAO testa, e fica escrito: se o notch quebra um laco real.
+    // Isso so o corpo responde.
+    if(params.Real(manifest.p_sim_laco) >= 0.5f)
+    {
+        static float fase[2] = {0.f, 0.f};
+        const float hz  = params.Real(manifest.p_sim_hz);
+        const float amp = params.Real(manifest.p_sim_fb) * 0.25f;
+        const float dw  = 2.f * 3.14159265f * hz
+                        / cotuca::hal::Info().sample_rate;
+        for(int b = 0; b < 2; b++)
+            for(size_t i = 0; i < size; i++)
+            {
+                out[b][i] += amp * sinf(fase[b]);
+                fase[b] += dw;
+                if(fase[b] > 6.2831853f) fase[b] -= 6.2831853f;
+            }
+    }
+
     // 6a) NOTCH ANTI-MICROFONIA, POR RAMO — antes do shift e do governor,
     //     para que os dois ja vejam o sinal limpo. Um exciter, um corpo,
     //     um conjunto de bocas. Ver o bloco de onde ele saiu, na cadeia.
@@ -3080,6 +3366,8 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         }
         else
             notch_vivo[b] = false;
+
+
     }
 
     {
@@ -3162,7 +3450,6 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // silencio usa o mute; quem quiser abrir mais depressa nao tem como, e
     // e de proposito.
     {
-        static uint32_t ramp_n = 0;
         if(ramp_n < kRampaArranqueAmostras)
         {
             ramp_n += (uint32_t)size;
@@ -6883,6 +7170,7 @@ int main(void)
             }
         }
         if(splash_ativo) PassoDaAbertura();
+        PassoDoSupressor();
         // A marca fica no vidro, e depois APAGA. Painel aceso custa 6 dB de
         // chao de ruido (medido) — deixar a assinatura acesa para sempre
         // seria cobrar esse preco por um enfeite.

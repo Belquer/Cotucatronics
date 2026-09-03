@@ -1,5 +1,5 @@
 #pragma once
-// Cotucatronics OS — presets v0.10.0
+// Cotucatronics OS — presets v0.11.0
 // ============================================================
 // Biblioteca de presets: estruturas e a versao do mapa.
 //
@@ -33,6 +33,20 @@ inline bool ForaDoPreset(const char* nome)
     // ESTADO FISICO: vai virar leitura dos DPDT em D29/D30. Um preset
     // que escrevesse isto tentaria mudar uma chave de metal.
     if(!strncmp(nome, "exc_filter", 10)) return true;
+    // ⚠️ O SUPRESSOR NAO ENTRA EM PRESET, e o argumento e de SEGURANCA.
+    //
+    // `micro_auto` e o interruptor da protecao. Num preset, carregar uma
+    // cena podia DESLIGA-LA — e foi exactamente com a protecao ausente que
+    // o dB levou com microfonia a volume alto em 02/09 (ver 15bh). Estado
+    // de seguranca nao viaja em cena.
+    //
+    // `micro_dom` e limiar de CALIBRACAO, afinado ao ouvido nesta peca. As
+    // pecas sao replicadas em serie com modos proprios: um limiar certo
+    // numa e cego noutra.
+    if(!strncmp(nome, "micro_", 6))      return true;
+    // Simulador de laco: bancada, nunca cena. Uma cena que ligasse o
+    // `sim_laco` poria a peca a realimentar-se sozinha.
+    if(!strncmp(nome, "sim_", 4))        return true;
     // OS VOLUMES DE SAIDA SEGUEM OS POTS FISICOS — decisao do dB em
     // 01/09, e a razao e de replicacao, nao de gosto:
     //
