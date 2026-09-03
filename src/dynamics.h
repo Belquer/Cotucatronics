@@ -1,5 +1,5 @@
 #pragma once
-// dynamics.h v0.5.1
+// dynamics.h v0.6.0
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
@@ -29,7 +29,7 @@
 namespace cotuca
 {
 
-#define COTUCA_DYNAMICS_VERSION "0.5.1"
+#define COTUCA_DYNAMICS_VERSION "0.6.0"
 
 // ------------------------------------------------------------
 // EnvFollower — detector de envelope de um polo, com constantes
@@ -287,6 +287,80 @@ class Governor
 // realimentado a latência é parte do laço acústico. Preferimos
 // 1 ms de rampa e o clamp de segurança a atraso no laço.
 // ------------------------------------------------------------
+// ============================================================
+// COMPRESSOR — sobe a MEDIA sem tocar no pico.
+//
+// POR QUE EXISTE, e o numero que o pediu: em 02/09 o dB caçava um chiado
+// de banda larga. Medido, com ele a bater no instrumento:
+//
+//     OUT_L  pico -0,4 dBFS   media -49,2 dBFS
+//
+// QUARENTA E NOVE DECIBEIS DE FACTOR DE CRISTA. E o retrato de um
+// instrumento percussivo: transitorio enorme, sustain quase nada.
+//
+// E e por isso que o amp precisava de tanto ganho — ele estava a ser
+// pedido para tornar audivel a MEDIA, e ao faze-lo amplificava o chao de
+// ruido do codec ate ser audivel. O pico nao precisava de ajuda nenhuma:
+// ja estava no fundo de escala, com 24 clips a entrada.
+//
+// ⚠️ POR ISSO A RESPOSTA NAO E UM ANDAR DE GANHO. Eu ia construir um, a
+// partir de uma medicao de AMBIENTE que dizia 74,7 dB de margem. Com o
+// instrumento a tocar a margem era 0,4 dB. Ganho subiria o pico, que ja
+// estava no tecto, e cortava-o. O que e preciso e subir a media SEM tocar
+// no pico — e isso chama-se compressao.
+//
+// NAO E O GOVERNOR, e a distincao importa. O governor tem razao fixa, nao
+// tem makeup, e o trabalho dele e PROTECCAO — segurar o tecto para o laco
+// nao crescer. Este tem o trabalho oposto: levantar o que esta em baixo.
+// Mesma forma de DSP, intencoes contrarias; um bloco com dois empregos e a
+// familia C do catalogo.
+// ============================================================
+class Compressor
+{
+  public:
+    void Init(float sample_rate)
+    {
+        sr_ = sample_rate > 0.f ? sample_rate : 48000.f;
+        det_.Init(sr_);
+        // Ataque rapido apanha o transitorio; queda media levanta o
+        // sustain sem bombear. Fixos: sao dois params que o ouvido ainda
+        // nao pediu, e cada param novo e um CC e uma linha de preset.
+        det_.SetTimes(3.f, 120.f);
+        a_ = EnvFollower::Coef(3.f, sr_);
+        r_ = EnvFollower::Coef(120.f, sr_);
+        thresh_ = 0.1f; razao_ = 4.f; makeup_ = 1.f; gain_ = 1.f;
+    }
+    void Set(float thresh, float razao, float makeup)
+    {
+        thresh_ = thresh > 1e-4f ? thresh : 1e-4f;
+        razao_  = razao  > 1.f   ? razao  : 1.f;
+        makeup_ = makeup > 0.f   ? makeup : 0.f;
+    }
+    float Process(float x)
+    {
+        const float env = det_.Process(x);
+        float alvo = 1.f;
+        if(env > thresh_)
+        {
+            // Em dominio linear, sem log: acima do limiar, a excursao
+            // passa a valer 1/razao. Nao ha powf no caminho da amostra.
+            const float excesso = env - thresh_;
+            const float saida   = thresh_ + excesso / razao_;
+            alvo = saida / env;
+        }
+        const float c = (alvo < gain_) ? a_ : r_;
+        gain_ = alvo + (gain_ - alvo) * c;
+        return x * gain_ * makeup_;
+    }
+    float Gain() const { return gain_; }
+    float Env() const { return det_.Value(); }
+
+  private:
+    EnvFollower det_;
+    float sr_ = 48000.f, a_ = 0.f, r_ = 0.f;
+    float thresh_ = 0.1f, razao_ = 4.f, makeup_ = 1.f, gain_ = 1.f;
+};
+
 class Limiter
 {
   public:

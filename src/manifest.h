@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v1.11.0
+// manifest.h (instrumento "bancada") v1.12.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -213,7 +213,11 @@ struct Manifest
     int p_route_r[2];   // a cadeia A/B entra em OUT_R?
 int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     int p_post_level_r;        // volume do ramo R — POT em A1 (D16)
-        int p_sim_laco;     // laco simulado: microfonia sem escultura
+        int p_comp_on;      // compressor: sobe a media sem tocar no pico
+    int p_comp_thresh;
+    int p_comp_razao;
+    int p_comp_makeup;
+    int p_sim_laco;     // laco simulado: microfonia sem escultura
     int p_sim_hz;       // frequencia do modo simulado
     int p_sim_fb;       // ganho da realimentacao simulada
     int p_micro_auto;   // supressor automatico ligado?
@@ -1060,6 +1064,25 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         p_sim_hz        = t.Add("sim_hz",        0.0f, 60.f, 8000.f, 2.0f);
         p_sim_fb        = t.Add("sim_fb",        0.0f, 0.f, 2.f);
 
+        // ---- COMPRESSOR — sobe a MEDIA, nao o pico ----
+        //
+        // PARTILHADO pelos dois ramos, de proposito: os dois exciters vivem
+        // no mesmo corpo e no mesmo amp, e quatro params por ramo nao cabem
+        // (a tabela ia em 121 de 128). Se o ouvido pedir separacao, separa-se
+        // — mas nao se gasta oito lugares antes de alguem os pedir.
+        //
+        // Nasce DESLIGADO. Compressao muda o timbre, e um instrumento que
+        // arranca com o som alterado sem ninguem escolher e uma decisao
+        // tomada por omissao.
+        //
+        // Limiar 0,05 e razao 4 sao o ponto de partida para 49 dB de crista
+        // — o valor final sai do ouvido do dB, e o `makeup` tem tecto em 8x
+        // porque acima disso o limiter passa a trabalhar sempre.
+        p_comp_on       = t.Add("comp_on",       0.0f, 0.f, 1.f);
+        p_comp_thresh   = t.Add("comp_thresh",   0.05f, 0.001f, 1.f);
+        p_comp_razao    = t.Add("comp_razao",    0.3f, 1.f, 20.f);
+        p_comp_makeup   = t.Add("comp_makeup",   0.0f, 1.f, 8.f);
+
         // ---- SuMiAu(tm): supressor de microfonias automatizado ----
         //
         // `micro_auto` nasce LIGADO. Um instrumento que arranca com a
@@ -1787,6 +1810,10 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(18, p_notch_db[1][3], kCanalCompart);   // exciter R
         AddMidi(19, p_micro_auto, kCanalCompart);
         AddMidi(21, p_micro_dom,  kCanalCompart);
+        AddMidi(22, p_comp_on,     kCanalCompart);
+        AddMidi(23, p_comp_thresh, kCanalCompart);
+        AddMidi(24, p_comp_razao,  kCanalCompart);
+        AddMidi(25, p_comp_makeup, kCanalCompart);
         // O simulador NAO vai a MIDI: e ferramenta de bancada, alcancavel
         // so por `set`. Mesma regra do `bench_boost`.
                 AddMidi(54, p_wrb_rate[0], kCanalEntradaA);

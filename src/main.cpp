@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.284.0"
+#define COTUCA_OS_VERSION "0.286.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1985,6 +1985,7 @@ static float    RandNorm()
 }
 
 // ---- cadeia de dinâmica do shell ----
+static cotuca::Compressor comp_l, comp_r;   // sobe a media
 static cotuca::Governor gov_l, gov_r; // só no ramo OUT_L (exciter)
 static cotuca::Limiter  lim_l; // um por ramo: estados independentes
 static cotuca::Limiter  lim_r;
@@ -2100,6 +2101,12 @@ static const uint32_t kRampaArranqueAmostras = 48000u * 8u;
 // RECUAR. Escrito pelo callback e pelo laco — os dois so somam ou
 // subtraem, e um passo perdido custa milissegundos de rampa.
 static volatile uint32_t ramp_n = 0;
+// Medidor de saida: pico, soma para a media, e contagem de amostras no
+// tecto. Escritos pelo callback, lidos e zerados pelo comando `pkout`.
+static volatile float    out_pk[2]   = {0.f, 0.f};
+static volatile float    out_soma[2] = {0.f, 0.f};
+static volatile uint32_t out_clip[2] = {0, 0};
+static volatile uint32_t out_n       = 0;
 
 
 static uint8_t  oled_fb[1024];
@@ -3336,6 +3343,26 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             }
     }
 
+    // 6-comp) COMPRESSOR — ANTES do notch, do shift e do governor.
+    //
+    // Antes do governor porque o governor tem de reagir ao sinal que VAI
+    // mesmo para o exciter, ja comprimido. Se o compressor viesse depois,
+    // ele desfazia o trabalho da proteccao — subia o que o governor tinha
+    // acabado de segurar, que e o desenho ao contrario.
+    if(params.Real(manifest.p_comp_on) >= 0.5f)
+    {
+        cotuca::Compressor* cp[2] = {&comp_l, &comp_r};
+        const float th = params.Real(manifest.p_comp_thresh);
+        const float rz = params.Real(manifest.p_comp_razao);
+        const float mk = params.Real(manifest.p_comp_makeup);
+        for(int b = 0; b < 2; b++)
+        {
+            cp[b]->Set(th, rz, mk);
+            float* o = out[b];
+            for(size_t i = 0; i < size; i++) o[i] = cp[b]->Process(o[i]);
+        }
+    }
+
     // 6a) NOTCH ANTI-MICROFONIA, POR RAMO — antes do shift e do governor,
     //     para que os dois ja vejam o sinal limpo. Um exciter, um corpo,
     //     um conjunto de bocas. Ver o bloco de onde ele saiu, na cadeia.
@@ -3477,6 +3504,31 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         }
     }
     // Autopsia por LED: daqui, porque este contexto sobrevive ao loop.
+    // ---- MEDIDOR DE SAIDA — o ultimo ponto antes do conversor ----
+    //
+    // ⚠️ EXISTE PORQUE FALTAVA O OUTRO LADO DA CONTA. O `pk` diz quanto
+    // ENTRA; nada dizia quanto SAI. Em 02/09, a caçar um chiado de banda
+    // larga, eu disse ao dB que "o amp tem ganho a mais" — e isso era uma
+    // INFERENCIA a partir da posicao dos potes, nao uma medicao.
+    //
+    // O numero que interessa e a distancia ao fundo de escala. Se a saida
+    // so chega a -20 dBFS, ha vinte decibeis de ganho a viver DEPOIS do
+    // conversor que podiam viver antes — e cada um deles amplifica o chao
+    // de ruido do codec na mesma proporcao.
+    //
+    // Pico E media: o pico diz se ha margem, a media diz se o amp esta a
+    // ser pedido para trabalhar muito. Um pico alto com media baixa e um
+    // transitorio; os dois altos e um sinal que enche o canal.
+    for(int b = 0; b < 2; b++)
+        for(size_t i = 0; i < size; i++)
+        {
+            const float a2 = out[b][i] < 0.f ? -out[b][i] : out[b][i];
+            if(a2 > out_pk[b]) out_pk[b] = a2;
+            out_soma[b] += a2;
+            if(a2 >= 0.999f) out_clip[b]++;
+        }
+    out_n += (uint32_t)size;
+
     LedFaseTick(size, cotuca::hal::Info().sample_rate);
 
     // ---- TETO DE SOMA: mede o bloco inteiro e decide ----
@@ -5665,6 +5717,37 @@ static void HandleLine(const char* line)
         }
         return;
     }
+    // `pkout [reset]` — o outro lado da conta do `pk`. TEM de vir antes do
+    // `pk` no despacho: "pkout" comeca por "pk".
+    if(strncmp(line, "pkout", 5) == 0)
+    {
+        if(strstr(line, "reset"))
+        {
+            for(int b = 0; b < 2; b++)
+            { out_pk[b] = 0.f; out_soma[b] = 0.f; out_clip[b] = 0; }
+            out_n = 0;
+            hal::Log("pkout: zerado — a proxima leitura mede desta janela");
+            return;
+        }
+        auto dbfs = [](float v) { return v > 1e-7f ? 20.f * log10f(v) : -140.f; };
+        const uint32_t n = out_n ? out_n : 1;
+        hal::Log("SAIDA (ultimo ponto antes do conversor):");
+        for(int b = 0; b < 2; b++)
+        {
+            const float pk  = out_pk[b];
+            const float med = out_soma[b] / (float)n;
+            hal::Log("  OUT_%c: pico %.5f = %6.1f dBFS | media %6.1f dBFS"
+                     " | no tecto %lu",
+                     b ? 'R' : 'L', (double)pk, (double)dbfs(pk),
+                     (double)dbfs(med), (unsigned long)out_clip[b]);
+        }
+        const float folga = dbfs(out_pk[0] > out_pk[1] ? out_pk[0] : out_pk[1]);
+        hal::Log("  MARGEM ATE AO FUNDO DE ESCALA: %.1f dB — e este o ganho"
+                 " que vive depois do conversor e podia viver antes.",
+                 (double)-folga);
+        return;
+    }
+
     if(strncmp(line, "pk", 2) == 0)
     {
         // ⚠️ `pk reset` — sem ele isto e um MAXIMO RETIDO desde o arranque,
@@ -6399,7 +6482,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] (entrada crua por canal) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] | pkout [reset] (entrada / saida) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.
@@ -6630,6 +6713,10 @@ int main(void)
             tarol[c].Init(hal::Info().sample_rate);
             suave_tarol[c].Init(hal::Info().sample_rate, 20.f, 0.f);
             notch[c].Init(hal::Info().sample_rate);
+        }
+        comp_l.Init(hal::Info().sample_rate);
+        comp_r.Init(hal::Info().sample_rate);
+        {
         }
         // Loga OS DOIS numeros. Se a taxa mudar e o `need` passar o
         // `have`, o reverb recusa (passthrough) e o log diz por que —

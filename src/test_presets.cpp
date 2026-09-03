@@ -1,4 +1,4 @@
-// test_presets v0.6.0 — validação nativa das estruturas de preset.
+// test_presets v0.7.0 — validação nativa das estruturas de preset.
 //
 // Roda no Mac, sem placa: `presets.h` é C++ puro e a pergunta que ele
 // responde — "este preset foi gravado sob este mapa?" — não depende de
@@ -77,7 +77,12 @@ int main()
     //         entregava o lugar ao seguinte — 1536, 3276, 535 Hz — e a
     //         segunda boca acabou-se ao terceiro. Ver
     //         docs/operacao/SUPRESSOR-MICROFONIA.md.
-    Check("preset global tem 24 params", glob == 24);
+    //   24 -> 28 globais em 02/09: os quatro do COMPRESSOR (`comp_on`,
+    //         `comp_thresh`, `comp_razao`, `comp_makeup`). Nasceu de uma
+    //         medicao: 49 dB de factor de crista, pico no tecto e media a
+    //         -49 dBFS. Ele ENTRA no preset, ao contrario do supressor —
+    //         compressao e decisao musical, e viaja bem entre unidades.
+    Check("preset global tem 28 params", glob == 28);
     Check("as duas cadeias tem o MESMO numero de params", cad % 2 == 0);
 
     // As exclusoes, uma a uma e por NOME: a contagem sozinha passaria se
