@@ -1,0 +1,1607 @@
+(kicad_symbol_lib
+  (version 20211014)
+  (generator cotucatronics)
+  (symbol "BAV99" (pin_numbers hide) (in_bom yes) (on_board yes)
+        (property "Reference" "D" (at 0 7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Value" "" (at 0 -7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Footprint" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (property "Datasheet" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (symbol "BAV99_0_1"
+          (rectangle (start -5.08 -3.81) (end 5.08 3.81)
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy -2.54 -2.2)
+              (xy -2.54 2.2)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy -4.2 2.2)
+              (xy -0.9 2.2)
+              (xy -2.54 -1.0)
+              (xy -4.2 2.2)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy 2.54 2.2)
+              (xy 2.54 -2.2)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy 0.9 -2.2)
+              (xy 4.2 -2.2)
+              (xy 2.54 1.0)
+              (xy 0.9 -2.2)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+        )
+        (symbol "BAV99_1_1"
+          (pin passive line (at 0 6.35 270) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "3" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin passive line (at -2.54 -6.35 90) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "1" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin passive line (at 2.54 -6.35 90) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "2" (effects (font (size 1.0 1.0)) hide))
+          )
+        )
+      )
+  (symbol "CONN2_L"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "J"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "CONN2_L_0_1"
+  				(rectangle
+  					(start 0 -3.81)
+  					(end 5.08 3.81)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "CONN2_L_1_1"
+  				(pin passive line
+  					(at -2.54 2.54 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at -2.54 -2.54 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "CONN2_R"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "J"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "CONN2_R_0_1"
+  				(rectangle
+  					(start -5.08 -3.81)
+  					(end 0 3.81)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "CONN2_R_1_1"
+  				(pin passive line
+  					(at 2.54 2.54 180)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 2.54 -2.54 180)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "CONN3_L"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "J"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "CONN3_L_0_1"
+  				(rectangle
+  					(start 0 -6.35)
+  					(end 5.08 6.35)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "CONN3_L_1_1"
+  				(pin passive line
+  					(at -2.54 5.08 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at -2.54 0 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at -2.54 -5.08 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "3"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "CP_V"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "C"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "CP_V_0_1"
+  				(polyline
+  					(pts
+  						(xy -2.54 0.762) (xy 2.54 0.762)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(polyline
+  					(pts
+  						(xy -2.54 -0.762) (xy 2.54 -0.762)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(polyline
+  					(pts
+  						(xy -2 2.2) (xy -1 2.2)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(polyline
+  					(pts
+  						(xy -1.5 1.7) (xy -1.5 2.7)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "CP_V_1_1"
+  				(pin passive line
+  					(at 0 3.81 270)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 0 -3.81 90)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "C_H" (pin_numbers hide) (in_bom yes) (on_board yes)
+        (property "Reference" "C" (at 0 7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Value" "" (at 0 -7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Footprint" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (property "Datasheet" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (symbol "C_H_0_1"
+          (polyline
+            (pts
+              (xy -0.762 -2.54)
+              (xy -0.762 2.54)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy 0.762 -2.54)
+              (xy 0.762 2.54)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+        )
+        (symbol "C_H_1_1"
+          (pin passive line (at -3.81 0 0) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "1" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin passive line (at 3.81 0 180) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "2" (effects (font (size 1.0 1.0)) hide))
+          )
+        )
+      )
+  (symbol "C_V"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "C"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "C_V_0_1"
+  				(polyline
+  					(pts
+  						(xy -2.54 0.762) (xy 2.54 0.762)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(polyline
+  					(pts
+  						(xy -2.54 -0.762) (xy 2.54 -0.762)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "C_V_1_1"
+  				(pin passive line
+  					(at 0 3.81 270)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 0 -3.81 90)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "D_H"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "D"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "D_H_0_1"
+  				(polyline
+  					(pts
+  						(xy -1.27 1.905) (xy -1.27 -1.905) (xy 1.27 0) (xy -1.27 1.905)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(polyline
+  					(pts
+  						(xy 1.27 -1.905) (xy 1.27 1.905)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "D_H_1_1"
+  				(pin passive line
+  					(at -3.81 0 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 3.81 0 180)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "D_V"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "D"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "D_V_0_1"
+  				(polyline
+  					(pts
+  						(xy -1.905 1.27) (xy 1.905 1.27)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(polyline
+  					(pts
+  						(xy -1.905 -1.27) (xy 1.905 -1.27) (xy 0 1.27) (xy -1.905 -1.27)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "D_V_1_1"
+  				(pin passive line
+  					(at 0 3.81 270)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 0 -3.81 90)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "FUSE_H"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "F"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "FUSE_H_0_1"
+  				(polyline
+  					(pts
+  						(xy -3.81 0) (xy 3.81 0)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(rectangle
+  					(start -3.81 -1.27)
+  					(end 3.81 1.27)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "FUSE_H_1_1"
+  				(pin passive line
+  					(at -6.35 0 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 6.35 0 180)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "JACK3" (pin_numbers hide) (in_bom yes) (on_board yes)
+        (property "Reference" "J" (at 0 7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Value" "" (at 0 -7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Footprint" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (property "Datasheet" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (symbol "JACK3_0_1"
+          (rectangle (start -6.35 -6.35) (end 0 6.35)
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy -4 4)
+              (xy -1.5 4)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy -4 0)
+              (xy -1.5 0)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy -4 -4)
+              (xy -1.5 -4)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+        )
+        (symbol "JACK3_1_1"
+          (pin passive line (at 2.54 5.08 180) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "1" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin passive line (at 2.54 0 180) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "2" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin passive line (at 2.54 -5.08 180) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "3" (effects (font (size 1.0 1.0)) hide))
+          )
+        )
+      )
+  (symbol "OPA" (pin_numbers hide) (in_bom yes) (on_board yes)
+        (property "Reference" "U" (at 0 7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Value" "" (at 0 -7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Footprint" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (property "Datasheet" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (symbol "OPA_0_1"
+          (polyline
+            (pts
+              (xy -7.62 7.62)
+              (xy -7.62 -7.62)
+              (xy 7.62 0)
+              (xy -7.62 7.62)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+        )
+        (symbol "OPA_1_1"
+          (pin input line (at -10.16 2.54 0) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "1" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin input line (at -10.16 -2.54 0) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "2" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin output line (at 10.16 0 180) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "3" (effects (font (size 1.0 1.0)) hide))
+          )
+        )
+      )
+  (symbol "OPAPWR" (pin_numbers hide) (in_bom yes) (on_board yes)
+        (property "Reference" "U" (at 0 7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Value" "" (at 0 -7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Footprint" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (property "Datasheet" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (symbol "OPAPWR_0_1"
+          (rectangle (start -5.08 -5.08) (end 5.08 5.08)
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+        )
+        (symbol "OPAPWR_1_1"
+          (pin power_in line (at 0 7.62 270) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "8" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin power_in line (at 0 -7.62 90) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "4" (effects (font (size 1.0 1.0)) hide))
+          )
+        )
+      )
+  (symbol "RV_H" (pin_numbers hide) (in_bom yes) (on_board yes)
+        (property "Reference" "RV" (at 0 7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Value" "" (at 0 -7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Footprint" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (property "Datasheet" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (symbol "RV_H_0_1"
+          (rectangle (start -3.81 -1.27) (end 3.81 1.27)
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy -2.2 3.4)
+              (xy 2.2 -1.9)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy 2.2 -1.9)
+              (xy 0.6 -1.5)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+          (polyline
+            (pts
+              (xy 2.2 -1.9)
+              (xy 1.6 -0.4)
+            )
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+        )
+        (symbol "RV_H_1_1"
+          (pin passive line (at -6.35 0 0) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "1" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin passive line (at 6.35 0 180) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "2" (effects (font (size 1.0 1.0)) hide))
+          )
+        )
+      )
+  (symbol "R_H" (pin_numbers hide) (in_bom yes) (on_board yes)
+        (property "Reference" "R" (at 0 7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Value" "" (at 0 -7.62 0)
+          (effects (font (size 1.27 1.27)))
+        )
+        (property "Footprint" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (property "Datasheet" "" (at 0 0 0)
+          (effects (font (size 1.27 1.27)) hide)
+        )
+        (symbol "R_H_0_1"
+          (rectangle (start -3.81 -1.27) (end 3.81 1.27)
+            (stroke (width 0.254))
+            (fill (type none))
+          )
+        )
+        (symbol "R_H_1_1"
+          (pin passive line (at -6.35 0 0) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "1" (effects (font (size 1.0 1.0)) hide))
+          )
+          (pin passive line (at 6.35 0 180) (length 2.54)
+            (name "~" (effects (font (size 1.0 1.0)) hide))
+            (number "2" (effects (font (size 1.0 1.0)) hide))
+          )
+        )
+      )
+  (symbol "R_V"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "R"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "R_V_0_1"
+  				(rectangle
+  					(start -1.27 -3.81)
+  					(end 1.27 3.81)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "R_V_1_1"
+  				(pin passive line
+  					(at 0 6.35 270)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 0 -6.35 90)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+  (symbol "SW_H"
+  			(pin_numbers
+  				(hide yes)
+  			)
+  			(exclude_from_sim no)
+  			(in_bom yes)
+  			(on_board yes)
+  			(in_pos_files yes)
+  			(duplicate_pin_numbers_are_jumpers no)
+  			(property "Reference" "SW"
+  				(at 0 6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Value" ""
+  				(at 0 -6.35 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Footprint" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Datasheet" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(property "Description" ""
+  				(at 0 0 0)
+  				(show_name no)
+  				(do_not_autoplace no)
+  				(hide yes)
+  				(effects
+  					(font
+  						(size 1.27 1.27)
+  					)
+  				)
+  			)
+  			(symbol "SW_H_0_1"
+  				(circle
+  					(center -3.81 0)
+  					(radius 0.635)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(polyline
+  					(pts
+  						(xy -3.175 0.635) (xy 3.81 3.175)
+  					)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  				(circle
+  					(center 3.81 0)
+  					(radius 0.635)
+  					(stroke
+  						(width 0.254)
+  						(type default)
+  					)
+  					(fill
+  						(type none)
+  					)
+  				)
+  			)
+  			(symbol "SW_H_1_1"
+  				(pin passive line
+  					(at -6.35 0 0)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "1"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  				(pin passive line
+  					(at 6.35 0 180)
+  					(length 2.54)
+  					(name ""
+  						(effects
+  							(font
+  								(size 1.27 1.27)
+  							)
+  						)
+  					)
+  					(number "2"
+  						(effects
+  							(font
+  								(size 1 1)
+  							)
+  						)
+  					)
+  				)
+  			)
+  			(embedded_fonts no)
+  		)
+)
