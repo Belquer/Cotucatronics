@@ -1,4 +1,15 @@
 #!/usr/bin/env python3
+#
+# ⚠️ ESTE GERADOR NAO E MAIS A FONTE. A 04/09 o projeto passou a ser
+# `kicad/cotuca_cerebro/` — um projeto KiCad a serio, com `.kicad_pro` e
+# folha raiz, que e o que as folhas multiplas exigem. As copias soltas que
+# viviam aqui foram removidas: havia TRES do `cotuca_energia.kicad_sch`, com
+# ERC de 0, 15 e 66 violacoes, e ninguem sabia qual mandava.
+#
+# Este ficheiro fica pelo DESENHO que documenta — as escolhas, os porques e
+# as medidas — e como ponto de partida se alguem quiser voltar a gerar por
+# script. Nao regerar por cima do projeto sem falar com o dB.
+#
 # Folha PRE-AMP do carrier rev B: dois canais + polarizacao e alimentacao
 # partilhadas. Simbolos auto-contidos. Gera .kicad_sch + previa SVG.
 #

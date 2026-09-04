@@ -19,3 +19,20 @@ __pycache__/
 docs/operacao/esquematicos/revB/erc/
 # recortes de inspeccao visual — material de trabalho, nao entrega
 docs/operacao/esquematicos/revB/render/*.png
+
+# --- projeto KiCad (kicad/) ---
+# O projeto ENTRA no git a partir de 04/09; fica de fora o que nao e desenho.
+#
+# ⚠️ COMENTARIO EM LINHA PROPRIA. O git NAO aceita comentario no fim da linha
+# de um padrao: o texto todo passa a fazer parte do padrao e a regra deixa de
+# casar. Escrito primeiro com `.history/  # historico local` — e o `.history/`
+# continuou a aparecer como nao-ignorado, com o seu .git dentro.
+#
+# historico local do editor — traz um .git DENTRO dele
+.history/
+# preferencias locais da maquina, nao do projeto
+*.kicad_prl
+# ficheiro de bloqueio: existe enquanto o KiCad esta aberto
+*.lck
+*-backups/
+fp-info-cache
