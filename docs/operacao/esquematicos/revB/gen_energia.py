@@ -1,6 +1,26 @@
 #!/usr/bin/env python3
 # Gera a folha ENERGIA do carrier rev B em .kicad_sch, com simbolos
 # auto-contidos (nenhuma biblioteca externa) + uma previa SVG para conferencia.
+#
+# ⚠️ O `.kicad_sch` NO REPO ESTA UM PASSO A FRENTE DESTE GERADOR.
+#
+# O `kiutils` escreve o formato `20211014` (KiCad 6). A 04/09 as duas folhas
+# foram migradas com `kicad-cli sch upgrade` para `20260306` (KiCad 10.0.5),
+# que e o que a maquina do dB abre.
+#
+# Se regerar, o ficheiro VOLTA a 20211014. O passo que falta a seguir e:
+#
+#     /Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli sch upgrade FICHEIRO
+#
+# Aceitacao da migracao, medida e nao suposta: ERC com a MESMA contagem de
+# violacoes antes e depois, e netlist IDENTICO (redes e nos). Foi verificado
+# nas duas folhas.
+#
+# ⚠️ E O GERADOR NAO CORRE NESTA MAQUINA: falta o `kiutils`
+# (`pip3 install kiutils`). Enquanto assim for, o `.kicad_sch` e o unico
+# artefacto vivo — o que inverte a regra §8 da skill `kicad` sem que nada
+# no repo o dissesse.
+
 import uuid, math
 from kiutils.schematic import Schematic
 from kiutils.items.schitems import SchematicSymbol, Connection, GlobalLabel, Junction

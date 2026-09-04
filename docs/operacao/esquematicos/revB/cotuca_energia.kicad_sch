@@ -1,1003 +1,3240 @@
-(kicad_sch (version 20211014) (generator kiutils)
-
-  (uuid 9901f7f1-a930-4562-a2f0-cb6ae206b79b)
-
-  (paper "A3")
-
-  (lib_symbols
-    (symbol "cotuca:CONN2_R" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "J" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "CONN2_R_0_1"
-        (rectangle (start -5.08 -3.81) (end 0 3.81)
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "CONN2_R_1_1"
-        (pin passive line (at 2.54 2.54 180) (length 2.54)
-          (name "1" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at 2.54 -2.54 180) (length 2.54)
-          (name "2" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:CONN2_L" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "J" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "CONN2_L_0_1"
-        (rectangle (start 0 -3.81) (end 5.08 3.81)
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "CONN2_L_1_1"
-        (pin passive line (at -2.54 2.54 0) (length 2.54)
-          (name "1" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at -2.54 -2.54 0) (length 2.54)
-          (name "2" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:CONN3_L" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "J" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "CONN3_L_0_1"
-        (rectangle (start 0 -6.35) (end 5.08 6.35)
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "CONN3_L_1_1"
-        (pin passive line (at -2.54 5.08 0) (length 2.54)
-          (name "1" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at -2.54 0 0) (length 2.54)
-          (name "2" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at -2.54 -5.08 0) (length 2.54)
-          (name "3" (effects (font (size 1.27 1.27)) hide))
-          (number "3" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:FUSE_H" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "F" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "FUSE_H_0_1"
-        (rectangle (start -3.81 -1.27) (end 3.81 1.27)
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -3.81 0)
-            (xy 3.81 0)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "FUSE_H_1_1"
-        (pin passive line (at -6.35 0 0) (length 2.54)
-          (name "1" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at 6.35 0 180) (length 2.54)
-          (name "2" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:SW_H" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "SW" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "SW_H_0_1"
-        (circle (center -3.81 0) (radius 0.635)
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (circle (center 3.81 0) (radius 0.635)
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -3.175 0.635)
-            (xy 3.81 3.175)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "SW_H_1_1"
-        (pin passive line (at -6.35 0 0) (length 2.54)
-          (name "1" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at 6.35 0 180) (length 2.54)
-          (name "2" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:D_V" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "D" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "D_V_0_1"
-        (polyline
-          (pts
-            (xy -1.905 1.27)
-            (xy 1.905 1.27)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -1.905 -1.27)
-            (xy 1.905 -1.27)
-            (xy 0 1.27)
-            (xy -1.905 -1.27)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "D_V_1_1"
-        (pin passive line (at 0 3.81 270) (length 2.54)
-          (name "K" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at 0 -3.81 90) (length 2.54)
-          (name "A" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:D_H" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "D" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "D_H_0_1"
-        (polyline
-          (pts
-            (xy 1.27 -1.905)
-            (xy 1.27 1.905)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -1.27 1.905)
-            (xy -1.27 -1.905)
-            (xy 1.27 0)
-            (xy -1.27 1.905)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "D_H_1_1"
-        (pin passive line (at -3.81 0 0) (length 2.54)
-          (name "A" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at 3.81 0 180) (length 2.54)
-          (name "K" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:C_V" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "C" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "C_V_0_1"
-        (polyline
-          (pts
-            (xy -2.54 0.762)
-            (xy 2.54 0.762)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -2.54 -0.762)
-            (xy 2.54 -0.762)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "C_V_1_1"
-        (pin passive line (at 0 3.81 270) (length 2.54)
-          (name "1" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at 0 -3.81 90) (length 2.54)
-          (name "2" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:CP_V" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "C" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "CP_V_0_1"
-        (polyline
-          (pts
-            (xy -2.54 0.762)
-            (xy 2.54 0.762)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -2.54 -0.762)
-            (xy 2.54 -0.762)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -2.0 2.2)
-            (xy -1.0 2.2)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -1.5 1.7)
-            (xy -1.5 2.7)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "CP_V_1_1"
-        (pin passive line (at 0 3.81 270) (length 2.54)
-          (name "+" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-        (pin passive line (at 0 -3.81 90) (length 2.54)
-          (name "-" (effects (font (size 1.27 1.27)) hide))
-          (number "2" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-
-    (symbol "cotuca:PWRFLAG" (pin_numbers hide) (in_bom yes) (on_board yes)
-      (property "Reference" "#FLG" (at 0 6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Value" "" (at 0 -6.35 0)
-        (effects (font (size 1.27 1.27)))
-      )
-      (property "Footprint" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at 0 0 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "PWRFLAG_0_1"
-        (polyline
-          (pts
-            (xy 0 0)
-            (xy 0 2.54)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -1.27 2.54)
-            (xy 1.27 2.54)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -1.27 2.54)
-            (xy 0 3.81)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 1.27 2.54)
-            (xy 0 3.81)
-          )
-          (stroke (width 0.254))
-          (fill (type none))
-        )
-      )
-      (symbol "PWRFLAG_1_1"
-        (pin power_out line (at 0 0 90) (length 0)
-          (name "pwr" (effects (font (size 1.27 1.27)) hide))
-          (number "1" (effects (font (size 1.0 1.0)) hide))
-        )
-      )
-    )
-  )
-
-  (junction (at 85.09 45.72) (diameter 0) (color 0 0 0 0)
-    (uuid 1efe839d-a2f8-4e39-98f2-cfd655adbb86)
-  )
-  (junction (at 139.7 45.72) (diameter 0) (color 0 0 0 0)
-    (uuid de1d2b36-f581-4958-929c-c12c99d09907)
-  )
-  (junction (at 58.42 97.79) (diameter 0) (color 0 0 0 0)
-    (uuid 361e3435-1d8f-4d22-a3eb-5f640117934e)
-  )
-  (junction (at 80.01 97.79) (diameter 0) (color 0 0 0 0)
-    (uuid b9be5b35-24c5-4347-913e-278168c18682)
-  )
-  (junction (at 80.01 119.38) (diameter 0) (color 0 0 0 0)
-    (uuid 054f756c-a34f-4205-969b-4076cb3816a9)
-  )
-  (junction (at 87.63 195.58) (diameter 0) (color 0 0 0 0)
-    (uuid 9fa830cc-d870-424f-9001-567ada9dc3b2)
-  )
-  (junction (at 110.49 195.58) (diameter 0) (color 0 0 0 0)
-    (uuid f7df67d0-7f11-47c5-b735-a89c5bf93d85)
-  )
-  (junction (at 110.49 214.63) (diameter 0) (color 0 0 0 0)
-    (uuid 55ee0a71-8e5f-44e0-9906-32a83275c0d1)
-  )
-  (junction (at 128.27 45.72) (diameter 0) (color 0 0 0 0)
-    (uuid 5993ea73-978c-4f0b-96cf-6f79c02bf83b)
-  )
-  (junction (at 100.33 162.56) (diameter 0) (color 0 0 0 0)
-    (uuid 29d46788-0f07-4ebd-b280-0f7cce0736a0)
-  )
-
-  (wire (pts (xy 38.1 45.72) (xy 55.88 45.72))
-    (stroke (width 0))
-    (uuid 1741c344-be32-4b78-82f1-9923b909d39d)
-  )
-  (wire (pts (xy 68.58 45.72) (xy 85.09 45.72))
-    (stroke (width 0))
-    (uuid 2b293351-7470-4475-97ba-50b33d79eaac)
-  )
-  (wire (pts (xy 85.09 45.72) (xy 85.09 50.8))
-    (stroke (width 0))
-    (uuid 57570e7f-cb70-4ec1-aff0-aa7041b050ac)
-  )
-  (wire (pts (xy 85.09 45.72) (xy 104.14 45.72))
-    (stroke (width 0))
-    (uuid 46d5c39d-3411-497f-a71e-79cbc28fe881)
-  )
-  (wire (pts (xy 85.09 58.42) (xy 85.09 72.39))
-    (stroke (width 0))
-    (uuid fe3a8fc5-c1f0-4c4e-a8a6-3935494343ca)
-  )
-  (wire (pts (xy 38.1 50.8) (xy 45.72 50.8))
-    (stroke (width 0))
-    (uuid 2e6e780a-761a-41f0-80f8-d2586b933c9c)
-  )
-  (wire (pts (xy 45.72 50.8) (xy 45.72 72.39))
-    (stroke (width 0))
-    (uuid 46a6d79b-504d-4e79-835b-ce7973a06c0d)
-  )
-  (wire (pts (xy 116.84 45.72) (xy 139.7 45.72))
-    (stroke (width 0))
-    (uuid 2c936354-de19-46bf-8e30-1a851b46b58c)
-  )
-  (wire (pts (xy 139.7 45.72) (xy 139.7 62.23))
-    (stroke (width 0))
-    (uuid eebafd2e-e1c9-4692-a832-dcb671f910d6)
-  )
-  (wire (pts (xy 139.7 62.23) (xy 167.64 62.23))
-    (stroke (width 0))
-    (uuid e7e55fc2-0796-44ec-8540-6d8092ffcf44)
-  )
-  (wire (pts (xy 167.64 67.31) (xy 181.61 67.31))
-    (stroke (width 0))
-    (uuid be67d3cf-6307-49d5-98c2-40d819699b13)
-  )
-  (wire (pts (xy 181.61 67.31) (xy 181.61 80.01))
-    (stroke (width 0))
-    (uuid 8e2af057-05b6-418e-90f2-e122f09b828c)
-  )
-  (wire (pts (xy 35.56 97.79) (xy 58.42 97.79))
-    (stroke (width 0))
-    (uuid bed0a9e2-42d4-463d-9735-8db067f48550)
-  )
-  (wire (pts (xy 58.42 97.79) (xy 58.42 101.6))
-    (stroke (width 0))
-    (uuid b9a386fa-d039-4b9b-95f1-ecaa4afe7931)
-  )
-  (wire (pts (xy 58.42 97.79) (xy 80.01 97.79))
-    (stroke (width 0))
-    (uuid b2bd9371-f308-4f4b-a8a1-d3b5c8bd4b14)
-  )
-  (wire (pts (xy 80.01 97.79) (xy 80.01 101.6))
-    (stroke (width 0))
-    (uuid 6a0b4827-f557-41f5-b753-fd16618b6b39)
-  )
-  (wire (pts (xy 80.01 97.79) (xy 113.03 97.79))
-    (stroke (width 0))
-    (uuid 5f1781ca-6394-4bcf-a48a-00e527676d4e)
-  )
-  (wire (pts (xy 58.42 109.22) (xy 58.42 119.38))
-    (stroke (width 0))
-    (uuid 8af4b9b6-207e-40b1-8026-221a983a2be0)
-  )
-  (wire (pts (xy 80.01 109.22) (xy 80.01 119.38))
-    (stroke (width 0))
-    (uuid b5d8389e-1733-459b-9df5-46cb36ef5982)
-  )
-  (wire (pts (xy 58.42 119.38) (xy 80.01 119.38))
-    (stroke (width 0))
-    (uuid 2bfa2fef-d628-46d2-8bfb-1a8ba059768e)
-  )
-  (wire (pts (xy 80.01 119.38) (xy 80.01 127.0))
-    (stroke (width 0))
-    (uuid fdff99b0-6d86-4e89-a13b-9821371cbf3a)
-  )
-  (wire (pts (xy 113.03 102.87) (xy 129.54 102.87))
-    (stroke (width 0))
-    (uuid 471c2d2e-08b3-4686-a670-cf53a03dff39)
-  )
-  (wire (pts (xy 129.54 102.87) (xy 129.54 119.38))
-    (stroke (width 0))
-    (uuid 55e5e59e-80ec-4279-a3c6-13e0a509e1a2)
-  )
-  (wire (pts (xy 129.54 119.38) (xy 80.01 119.38))
-    (stroke (width 0))
-    (uuid 3762e22b-5d96-4519-b4f0-c6fab3e00699)
-  )
-  (wire (pts (xy 35.56 143.51) (xy 113.03 143.51))
-    (stroke (width 0))
-    (uuid 3491bf36-fcf2-41c4-9ac7-23a771851dba)
-  )
-  (wire (pts (xy 113.03 148.59) (xy 85.09 148.59))
-    (stroke (width 0))
-    (uuid 2e9f64ea-8a34-4eed-998d-382f078666e1)
-  )
-  (wire (pts (xy 85.09 148.59) (xy 85.09 166.37))
-    (stroke (width 0))
-    (uuid 2127779e-e0ea-4387-8cc9-da99592afb18)
-  )
-  (wire (pts (xy 113.03 153.67) (xy 100.33 153.67))
-    (stroke (width 0))
-    (uuid 96489a9d-b5a5-4b59-8798-87070d1d585e)
-  )
-  (wire (pts (xy 100.33 153.67) (xy 100.33 171.45))
-    (stroke (width 0))
-    (uuid fcf51c5d-bf15-42fd-9d66-f8b2b1fee9ef)
-  )
-  (wire (pts (xy 35.56 195.58) (xy 58.42 195.58))
-    (stroke (width 0))
-    (uuid d4ea6ba4-a989-42a3-9e0c-d9e2385cbb3d)
-  )
-  (wire (pts (xy 66.04 195.58) (xy 87.63 195.58))
-    (stroke (width 0))
-    (uuid bc9a018e-c897-42ce-952c-e505f0d8a1a9)
-  )
-  (wire (pts (xy 87.63 195.58) (xy 87.63 199.39))
-    (stroke (width 0))
-    (uuid 67a59f40-0fae-4057-8f1c-ecff60b69eaa)
-  )
-  (wire (pts (xy 87.63 195.58) (xy 110.49 195.58))
-    (stroke (width 0))
-    (uuid ef7fa627-b021-41b6-b186-f108e0f3087d)
-  )
-  (wire (pts (xy 110.49 195.58) (xy 110.49 199.39))
-    (stroke (width 0))
-    (uuid e838ffa0-9643-443d-815d-a0b5a0fa7eb8)
-  )
-  (wire (pts (xy 110.49 195.58) (xy 142.24 195.58))
-    (stroke (width 0))
-    (uuid 0eafbd28-528f-470f-9b0b-3ab90ce48885)
-  )
-  (wire (pts (xy 87.63 207.01) (xy 87.63 214.63))
-    (stroke (width 0))
-    (uuid 5003884f-b767-4e38-86ff-faf769aed61a)
-  )
-  (wire (pts (xy 110.49 207.01) (xy 110.49 214.63))
-    (stroke (width 0))
-    (uuid 24694e1b-7e61-41e4-9680-056195c24746)
-  )
-  (wire (pts (xy 87.63 214.63) (xy 110.49 214.63))
-    (stroke (width 0))
-    (uuid a6d7e776-eb94-47d2-9260-542c24a6328b)
-  )
-  (wire (pts (xy 110.49 214.63) (xy 110.49 222.25))
-    (stroke (width 0))
-    (uuid 5d5f3c83-d660-43e4-bf54-8a7da40fa447)
-  )
-  (wire (pts (xy 142.24 200.66) (xy 160.02 200.66))
-    (stroke (width 0))
-    (uuid 29ec71e6-0b7d-4b4a-bbee-7797de66d4ef)
-  )
-  (wire (pts (xy 160.02 200.66) (xy 160.02 214.63))
-    (stroke (width 0))
-    (uuid 56dd3543-065f-43b7-99af-43ca94aab921)
-  )
-  (wire (pts (xy 160.02 214.63) (xy 110.49 214.63))
-    (stroke (width 0))
-    (uuid e52f9ff9-6f13-4192-a4df-1a7951c0df1d)
-  )
-
-  (text "ENERGIA - Cotucatronics carrier rev B" (at 25 18 0)
-    (effects (font (size 2.5 2.5)) (justify left))
-    (uuid d0e3b4d1-91df-4ffb-b662-06662c50b6d0)
-  )
-  (text "1  Decoy PD sempre energizado: a negociacao acontece com SW1 desligado. Ligar depois nao renegoceia."
-    (at 25 236.0 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 4f861452-f3ba-4f0e-8c9e-81433cda0268)
-  )
-  (text "2  SW1 latching, LED em WIRING A (a jusante do contacto) = indicador de TRILHO VIVO, nao de gesto."
-    (at 25 240.6 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid b2cf4417-e374-4597-ae96-81983e5a4652)
-  )
-  (text "   Powerbank que nao negoceia fica em 5V, e o LED denuncia em vez de os amps ficarem mudos sem razao."
-    (at 25 245.2 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 2f25160b-b0d5-4ff6-9980-bb7822714e6a)
-  )
-  (text "3  C1 2200u/35V low-ESR + C2 100n colados no TERMINAL do amp. Medido 31/08: sem banco, o exciter zumbe."
-    (at 25 249.8 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 78bf2f10-381c-4645-9751-aaf6836e5e3a)
-  )
-  (text "4  Modulos FORA da placa: decoy PD, step-down, TPA3116 estereo. Todos com terminais de parafuso."
-    (at 25 254.4 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 7da290ce-52aa-4404-bd1e-a4b274d28bf2)
-  )
-  (text "5  SEM banco na entrada do step-down: tentado em 31/08 e desfeito."
-    (at 25 259.0 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 7e406611-4912-432a-8c27-3e501015f1f4)
-  )
-  (text "6  Step-down de saida FIXA, por decisao. Modulo com regime selecionavel poe 24V a um jumper do VIN da Daisy,"
-    (at 25 263.6 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 33234f7a-7f8a-4dc7-b846-d5c2956f318f)
-  )
-  (text "   e numa serie de dezenas uma seleccao que pode estar errada vai estar errada nalguma."
-    (at 25 268.2 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 7e702bd2-47cd-49e0-afbb-ea21dad0d996)
-  )
-  (text "7  D2 1N5819: sem ele, o USB da ponte realimenta o trilho de 5V inteiro (medido 31/08). Faixa = catodo,"
-    (at 25 272.8 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid 197e0960-7d6a-4153-b572-03bc2d2157dc)
-  )
-  (text "   virada para a ponte. Cerca de 0,3V de queda; a ponte aceita 4,3-6,0V. Medido: 4,72V no VIN dela."
-    (at 25 277.4 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid a1fb145a-6495-4e77-affb-f6f928ba09b4)
-  )
-  (text "8  Orcamento do trilho de 5V: Daisy 300 + ponte 100 (pico 300) + OLED 30 + LEDs 2x30 = ~490 mA de ~1,5A."
-    (at 25 282.0 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid e335bb2a-f666-407a-9280-c5233a89ffe7)
-  )
-  (text "   O resistor de serie dos LEDs, dimensionado para ~30 mA, e o que mantem a folga em 3x."
-    (at 25 286.6 0)
-    (effects (font (size 1.5 1.5)) (justify left))
-    (uuid c047f03d-3046-4034-b5c2-48bb771049b0)
-  )
-
-  (global_label "+15V" (shape bidirectional) (at 139.7 45.72 0)
-    (effects (font (size 1.27 1.27)))
-    (uuid 828366af-5d8c-46a0-a91f-ace7c834dc26)
-  )
-  (global_label "+15V" (shape bidirectional) (at 35.56 97.79 180)
-    (effects (font (size 1.27 1.27)))
-    (uuid 9eb38ebf-8b5c-46e8-9d61-8fa70c1ac503)
-  )
-  (global_label "+15V" (shape bidirectional) (at 35.56 143.51 180)
-    (effects (font (size 1.27 1.27)))
-    (uuid 27170e4b-e64c-4540-982b-e2f92728bd8b)
-  )
-  (global_label "+5V" (shape bidirectional) (at 100.33 171.45 270)
-    (effects (font (size 1.27 1.27)))
-    (uuid 007e126b-b8db-423d-9e15-d9c3130e3494)
-  )
-  (global_label "+5V" (shape bidirectional) (at 35.56 195.58 180)
-    (effects (font (size 1.27 1.27)))
-    (uuid ff506e1e-b996-4a26-95cd-8fe61e3bb38e)
-  )
-  (global_label "GND" (shape bidirectional) (at 85.09 72.39 270)
-    (effects (font (size 1.27 1.27)))
-    (uuid 8af208ed-887b-451b-82a4-046afb61c1ca)
-  )
-  (global_label "GND" (shape bidirectional) (at 45.72 72.39 270)
-    (effects (font (size 1.27 1.27)))
-    (uuid 5a865980-6751-4970-9c2f-ecf58c39c2be)
-  )
-  (global_label "GND" (shape bidirectional) (at 181.61 80.01 270)
-    (effects (font (size 1.27 1.27)))
-    (uuid 8183605d-eb9c-452f-9b7b-7bc69d6f5b2f)
-  )
-  (global_label "GND" (shape bidirectional) (at 80.01 127.0 270)
-    (effects (font (size 1.27 1.27)))
-    (uuid 0172c687-f1bd-4b56-b4be-8eb7ae388645)
-  )
-  (global_label "GND" (shape bidirectional) (at 85.09 166.37 270)
-    (effects (font (size 1.27 1.27)))
-    (uuid f92dc2d2-a68f-4505-bce6-90b3d79c2262)
-  )
-  (global_label "GND" (shape bidirectional) (at 110.49 222.25 270)
-    (effects (font (size 1.27 1.27)))
-    (uuid 3b95c754-a74b-434b-8deb-0c2d93a61850)
-  )
-
-  (symbol (lib_id "cotuca:PWRFLAG") (at 128.27 45.72 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 1ef179c8-de45-4eef-969d-c9378f893afc)
-    (property "Reference" "#FLG1" (at 128 34.46 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "" (at 128 58.46 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 128 45.46 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 128 45.46 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:PWRFLAG") (at 100.33 162.56 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 92f2c211-60f1-4d6d-941e-46c4aeb1c4b9)
-    (property "Reference" "#FLG2" (at 100 151 0)
-      (effects (font (size 1.27 1.27)) (justify left) hide)
-    )
-    (property "Value" "" (at 100 175 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 100 162 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 100 162 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:CONN2_R") (at 35.56 48.26 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid b206362a-2a37-4242-a791-e27fb1fa29d7)
-    (property "Reference" "J1" (at 35 37 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "entrada decoy PD" (at 35 61 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 35 48 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 35 48 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:FUSE_H") (at 62.23 45.72 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid df62444b-958f-45b9-a3ef-4fe1e3a31734)
-    (property "Reference" "F1" (at 62 34.46 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "PTC 3A" (at 62 58.46 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 62 45.46 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 62 45.46 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:D_V") (at 85.09 54.61 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 93c5292c-8abd-498a-b286-fb89a33516a9)
-    (property "Reference" "D1" (at 85 44 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "SMBJ24A" (at 85 68 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 85 55 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 85 55 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:SW_H") (at 110.49 45.72 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 8f8d5902-9ef0-4645-a174-08053c64b103)
-    (property "Reference" "SW1" (at 110 34.46 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "latching" (at 110 58.46 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 110 45.46 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 110 45.46 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:CONN2_L") (at 170.18 64.77 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 5c56a246-25f6-46a7-b964-0207809e4245)
-    (property "Reference" "J5" (at 170 54 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "LED do SW1" (at 170 78 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 170 65 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 170 65 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:CP_V") (at 58.42 105.41 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid bc2f86a8-da85-4593-8669-7e904bcaefd8)
-    (property "Reference" "C1" (at 58 95 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "2200u/35V" (at 58 119 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 58 106 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 58 106 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:C_V") (at 80.01 105.41 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid f1d5975e-ec97-4523-934b-1a97959d01ff)
-    (property "Reference" "C2" (at 80 95 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "100n" (at 80 119 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 80 106 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 80 106 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:CONN2_L") (at 115.57 100.33 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid fc65d137-fcb5-40d6-8cf2-43cad07d2f10)
-    (property "Reference" "J2" (at 115 89.54 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "ao amp TPA3116" (at 115 113.54 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 115 100.54 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 115 100.54 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:CONN3_L") (at 115.57 148.59 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid cf5df506-489c-4c48-8db8-9eda7ed10548)
-    (property "Reference" "J3" (at 115 137 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "step-down 5V fixo" (at 115 161 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 115 148 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 115 148 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:D_H") (at 62.23 195.58 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 1cfad9df-3ee7-413c-8a15-9ccc49a6bfba)
-    (property "Reference" "D2" (at 62 184 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "1N5819" (at 62 208 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 62 195 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 62 195 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:CP_V") (at 87.63 203.2 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid 835772a9-4b49-4c96-8e38-7385b0499049)
-    (property "Reference" "C3" (at 88 192 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "100u" (at 88 216 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 88 203 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 88 203 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:C_V") (at 110.49 203.2 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid f743a7e8-57d4-4841-9108-a040c254e0b6)
-    (property "Reference" "C4" (at 110 192 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "100n" (at 110 216 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 110 203 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 110 203 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (symbol (lib_id "cotuca:CONN2_L") (at 144.78 198.12 0) (unit 1)
-    (in_bom yes) (on_board yes)
-    (uuid d250e3b3-b759-4545-9257-f6de7b837387)
-    (property "Reference" "J4" (at 145 186.54 0)
-      (effects (font (size 1.27 1.27)) (justify left))
-    )
-    (property "Value" "a ponte ESP32" (at 145 210.54 0)
-      (effects (font (size 1.0 1.0)) (justify left))
-    )
-    (property "Footprint" "" (at 145 197.54 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 145 197.54 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-  )
-
-  (sheet_instances
-    (path "/" (page "1"))
-  )
+(kicad_sch
+	(version 20260306)
+	(generator "eeschema")
+	(generator_version "10.0")
+	(uuid "9901f7f1-a930-4562-a2f0-cb6ae206b79b")
+	(paper "A3")
+	(lib_symbols
+		(symbol "cotuca:CONN2_L"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "CONN2_L_0_1"
+				(rectangle
+					(start 0 -3.81)
+					(end 5.08 3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "CONN2_L_1_1"
+				(pin passive line
+					(at -2.54 2.54 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -2.54 -2.54 0)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:CONN2_R"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "CONN2_R_0_1"
+				(rectangle
+					(start -5.08 -3.81)
+					(end 0 3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "CONN2_R_1_1"
+				(pin passive line
+					(at 2.54 2.54 180)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 2.54 -2.54 180)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:CONN3_L"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "CONN3_L_0_1"
+				(rectangle
+					(start 0 -6.35)
+					(end 5.08 6.35)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "CONN3_L_1_1"
+				(pin passive line
+					(at -2.54 5.08 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -2.54 0 0)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at -2.54 -5.08 0)
+					(length 2.54)
+					(name "3"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "3"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:CP_V"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "C"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "CP_V_0_1"
+				(polyline
+					(pts
+						(xy -2.54 0.762) (xy 2.54 0.762)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -2.54 -0.762) (xy 2.54 -0.762)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -2 2.2) (xy -1 2.2)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.5 1.7) (xy -1.5 2.7)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "CP_V_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 2.54)
+					(name "+"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 2.54)
+					(name "-"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:C_V"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "C"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "C_V_0_1"
+				(polyline
+					(pts
+						(xy -2.54 0.762) (xy 2.54 0.762)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -2.54 -0.762) (xy 2.54 -0.762)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "C_V_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:D_H"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_H_0_1"
+				(polyline
+					(pts
+						(xy -1.27 1.905) (xy -1.27 -1.905) (xy 1.27 0) (xy -1.27 1.905)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 -1.905) (xy 1.27 1.905)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_H_1_1"
+				(pin passive line
+					(at -3.81 0 0)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 3.81 0 180)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:D_V"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "D"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "D_V_0_1"
+				(polyline
+					(pts
+						(xy -1.905 1.27) (xy 1.905 1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.905 -1.27) (xy 1.905 -1.27) (xy 0 1.27) (xy -1.905 -1.27)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "D_V_1_1"
+				(pin passive line
+					(at 0 3.81 270)
+					(length 2.54)
+					(name "K"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -3.81 90)
+					(length 2.54)
+					(name "A"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:FUSE_H"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "F"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "FUSE_H_0_1"
+				(polyline
+					(pts
+						(xy -3.81 0) (xy 3.81 0)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -3.81 -1.27)
+					(end 3.81 1.27)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "FUSE_H_1_1"
+				(pin passive line
+					(at -6.35 0 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 6.35 0 180)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:PWRFLAG"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#FLG"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "PWRFLAG_0_1"
+				(polyline
+					(pts
+						(xy -1.27 2.54) (xy 0 3.81)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 2.54) (xy 1.27 2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 2.54)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 1.27 2.54) (xy 0 3.81)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "PWRFLAG_1_1"
+				(pin power_out line
+					(at 0 0 90)
+					(length 0)
+					(name "pwr"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+		(symbol "cotuca:SW_H"
+			(pin_numbers
+				(hide yes)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "SW"
+				(at 0 6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" ""
+				(at 0 -6.35 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "SW_H_0_1"
+				(circle
+					(center -3.81 0)
+					(radius 0.635)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy -3.175 0.635) (xy 3.81 3.175)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 3.81 0)
+					(radius 0.635)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "SW_H_1_1"
+				(pin passive line
+					(at -6.35 0 0)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 6.35 0 180)
+					(length 2.54)
+					(name "2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "2"
+						(effects
+							(font
+								(size 1 1)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
+	)
+	(text "7  D2 1N5819: sem ele, o USB da ponte realimenta o trilho de 5V inteiro (medido 31/08). Faixa = catodo,"
+		(exclude_from_sim no)
+		(at 25 272.8 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "197e0960-7d6a-4153-b572-03bc2d2157dc")
+	)
+	(text "   Powerbank que nao negoceia fica em 5V, e o LED denuncia em vez de os amps ficarem mudos sem razao."
+		(exclude_from_sim no)
+		(at 25 245.2 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "2f25160b-b0d5-4ff6-9980-bb7822714e6a")
+	)
+	(text "6  Step-down de saida FIXA, por decisao. Modulo com regime selecionavel poe 24V a um jumper do VIN da Daisy,"
+		(exclude_from_sim no)
+		(at 25 263.6 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "33234f7a-7f8a-4dc7-b846-d5c2956f318f")
+	)
+	(text "1  Decoy PD sempre energizado: a negociacao acontece com SW1 desligado. Ligar depois nao renegoceia."
+		(exclude_from_sim no)
+		(at 25 236 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "4f861452-f3ba-4f0e-8c9e-81433cda0268")
+	)
+	(text "3  C1 2200u/35V low-ESR + C2 100n colados no TERMINAL do amp. Medido 31/08: sem banco, o exciter zumbe."
+		(exclude_from_sim no)
+		(at 25 249.8 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "78bf2f10-381c-4645-9751-aaf6836e5e3a")
+	)
+	(text "4  Modulos FORA da placa: decoy PD, step-down, TPA3116 estereo. Todos com terminais de parafuso."
+		(exclude_from_sim no)
+		(at 25 254.4 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "7da290ce-52aa-4404-bd1e-a4b274d28bf2")
+	)
+	(text "5  SEM banco na entrada do step-down: tentado em 31/08 e desfeito."
+		(exclude_from_sim no)
+		(at 25 259 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "7e406611-4912-432a-8c27-3e501015f1f4")
+	)
+	(text "   e numa serie de dezenas uma seleccao que pode estar errada vai estar errada nalguma."
+		(exclude_from_sim no)
+		(at 25 268.2 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "7e702bd2-47cd-49e0-afbb-ea21dad0d996")
+	)
+	(text "   virada para a ponte. Cerca de 0,3V de queda; a ponte aceita 4,3-6,0V. Medido: 4,72V no VIN dela."
+		(exclude_from_sim no)
+		(at 25 277.4 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "a1fb145a-6495-4e77-affb-f6f928ba09b4")
+	)
+	(text "2  SW1 latching, LED em WIRING A (a jusante do contacto) = indicador de TRILHO VIVO, nao de gesto."
+		(exclude_from_sim no)
+		(at 25 240.6 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "b2cf4417-e374-4597-ae96-81983e5a4652")
+	)
+	(text "   O resistor de serie dos LEDs, dimensionado para ~30 mA, e o que mantem a folga em 3x."
+		(exclude_from_sim no)
+		(at 25 286.6 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "c047f03d-3046-4034-b5c2-48bb771049b0")
+	)
+	(text "ENERGIA - Cotucatronics carrier rev B"
+		(exclude_from_sim no)
+		(at 25 18 0)
+		(effects
+			(font
+				(size 2.5 2.5)
+			)
+			(justify left)
+		)
+		(uuid "d0e3b4d1-91df-4ffb-b662-06662c50b6d0")
+	)
+	(text "8  Orcamento do trilho de 5V: Daisy 300 + ponte 100 (pico 300) + OLED 30 + LEDs 2x30 = ~490 mA de ~1,5A."
+		(exclude_from_sim no)
+		(at 25 282 0)
+		(effects
+			(font
+				(size 1.5 1.5)
+			)
+			(justify left)
+		)
+		(uuid "e335bb2a-f666-407a-9280-c5233a89ffe7")
+	)
+	(junction
+		(at 80.01 119.38)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "054f756c-a34f-4205-969b-4076cb3816a9")
+	)
+	(junction
+		(at 85.09 45.72)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "1efe839d-a2f8-4e39-98f2-cfd655adbb86")
+	)
+	(junction
+		(at 100.33 162.56)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "29d46788-0f07-4ebd-b280-0f7cce0736a0")
+	)
+	(junction
+		(at 58.42 97.79)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "361e3435-1d8f-4d22-a3eb-5f640117934e")
+	)
+	(junction
+		(at 110.49 214.63)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "55ee0a71-8e5f-44e0-9906-32a83275c0d1")
+	)
+	(junction
+		(at 128.27 45.72)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "5993ea73-978c-4f0b-96cf-6f79c02bf83b")
+	)
+	(junction
+		(at 87.63 195.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9fa830cc-d870-424f-9001-567ada9dc3b2")
+	)
+	(junction
+		(at 80.01 97.79)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "b9be5b35-24c5-4347-913e-278168c18682")
+	)
+	(junction
+		(at 139.7 45.72)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "de1d2b36-f581-4958-929c-c12c99d09907")
+	)
+	(junction
+		(at 110.49 195.58)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "f7df67d0-7f11-47c5-b735-a89c5bf93d85")
+	)
+	(wire
+		(pts
+			(xy 110.49 195.58) (xy 142.24 195.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0eafbd28-528f-470f-9b0b-3ab90ce48885")
+	)
+	(wire
+		(pts
+			(xy 38.1 45.72) (xy 55.88 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1741c344-be32-4b78-82f1-9923b909d39d")
+	)
+	(wire
+		(pts
+			(xy 85.09 148.59) (xy 85.09 166.37)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2127779e-e0ea-4387-8cc9-da99592afb18")
+	)
+	(wire
+		(pts
+			(xy 110.49 207.01) (xy 110.49 214.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "24694e1b-7e61-41e4-9680-056195c24746")
+	)
+	(wire
+		(pts
+			(xy 142.24 200.66) (xy 160.02 200.66)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "29ec71e6-0b7d-4b4a-bbee-7797de66d4ef")
+	)
+	(wire
+		(pts
+			(xy 68.58 45.72) (xy 85.09 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2b293351-7470-4475-97ba-50b33d79eaac")
+	)
+	(wire
+		(pts
+			(xy 58.42 119.38) (xy 80.01 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2bfa2fef-d628-46d2-8bfb-1a8ba059768e")
+	)
+	(wire
+		(pts
+			(xy 116.84 45.72) (xy 139.7 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2c936354-de19-46bf-8e30-1a851b46b58c")
+	)
+	(wire
+		(pts
+			(xy 38.1 50.8) (xy 45.72 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2e6e780a-761a-41f0-80f8-d2586b933c9c")
+	)
+	(wire
+		(pts
+			(xy 113.03 148.59) (xy 85.09 148.59)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "2e9f64ea-8a34-4eed-998d-382f078666e1")
+	)
+	(wire
+		(pts
+			(xy 35.56 143.51) (xy 113.03 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3491bf36-fcf2-41c4-9ac7-23a771851dba")
+	)
+	(wire
+		(pts
+			(xy 129.54 119.38) (xy 80.01 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "3762e22b-5d96-4519-b4f0-c6fab3e00699")
+	)
+	(wire
+		(pts
+			(xy 45.72 50.8) (xy 45.72 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "46a6d79b-504d-4e79-835b-ce7973a06c0d")
+	)
+	(wire
+		(pts
+			(xy 85.09 45.72) (xy 104.14 45.72)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "46d5c39d-3411-497f-a71e-79cbc28fe881")
+	)
+	(wire
+		(pts
+			(xy 113.03 102.87) (xy 129.54 102.87)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "471c2d2e-08b3-4686-a670-cf53a03dff39")
+	)
+	(wire
+		(pts
+			(xy 87.63 207.01) (xy 87.63 214.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5003884f-b767-4e38-86ff-faf769aed61a")
+	)
+	(wire
+		(pts
+			(xy 129.54 102.87) (xy 129.54 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "55e5e59e-80ec-4279-a3c6-13e0a509e1a2")
+	)
+	(wire
+		(pts
+			(xy 160.02 200.66) (xy 160.02 214.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "56dd3543-065f-43b7-99af-43ca94aab921")
+	)
+	(wire
+		(pts
+			(xy 85.09 45.72) (xy 85.09 50.8)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "57570e7f-cb70-4ec1-aff0-aa7041b050ac")
+	)
+	(wire
+		(pts
+			(xy 110.49 214.63) (xy 110.49 222.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5d5f3c83-d660-43e4-bf54-8a7da40fa447")
+	)
+	(wire
+		(pts
+			(xy 80.01 97.79) (xy 113.03 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5f1781ca-6394-4bcf-a48a-00e527676d4e")
+	)
+	(wire
+		(pts
+			(xy 87.63 195.58) (xy 87.63 199.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "67a59f40-0fae-4057-8f1c-ecff60b69eaa")
+	)
+	(wire
+		(pts
+			(xy 80.01 97.79) (xy 80.01 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "6a0b4827-f557-41f5-b753-fd16618b6b39")
+	)
+	(wire
+		(pts
+			(xy 58.42 109.22) (xy 58.42 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8af4b9b6-207e-40b1-8026-221a983a2be0")
+	)
+	(wire
+		(pts
+			(xy 181.61 67.31) (xy 181.61 80.01)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8e2af057-05b6-418e-90f2-e122f09b828c")
+	)
+	(wire
+		(pts
+			(xy 113.03 153.67) (xy 100.33 153.67)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "96489a9d-b5a5-4b59-8798-87070d1d585e")
+	)
+	(wire
+		(pts
+			(xy 87.63 214.63) (xy 110.49 214.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a6d7e776-eb94-47d2-9260-542c24a6328b")
+	)
+	(wire
+		(pts
+			(xy 58.42 97.79) (xy 80.01 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b2bd9371-f308-4f4b-a8a1-d3b5c8bd4b14")
+	)
+	(wire
+		(pts
+			(xy 80.01 109.22) (xy 80.01 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b5d8389e-1733-459b-9df5-46cb36ef5982")
+	)
+	(wire
+		(pts
+			(xy 58.42 97.79) (xy 58.42 101.6)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b9a386fa-d039-4b9b-95f1-ecaa4afe7931")
+	)
+	(wire
+		(pts
+			(xy 66.04 195.58) (xy 87.63 195.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bc9a018e-c897-42ce-952c-e505f0d8a1a9")
+	)
+	(wire
+		(pts
+			(xy 167.64 67.31) (xy 181.61 67.31)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "be67d3cf-6307-49d5-98c2-40d819699b13")
+	)
+	(wire
+		(pts
+			(xy 35.56 97.79) (xy 58.42 97.79)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "bed0a9e2-42d4-463d-9735-8db067f48550")
+	)
+	(wire
+		(pts
+			(xy 35.56 195.58) (xy 58.42 195.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d4ea6ba4-a989-42a3-9e0c-d9e2385cbb3d")
+	)
+	(wire
+		(pts
+			(xy 160.02 214.63) (xy 110.49 214.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e52f9ff9-6f13-4192-a4df-1a7951c0df1d")
+	)
+	(wire
+		(pts
+			(xy 139.7 62.23) (xy 167.64 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e7e55fc2-0796-44ec-8540-6d8092ffcf44")
+	)
+	(wire
+		(pts
+			(xy 110.49 195.58) (xy 110.49 199.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "e838ffa0-9643-443d-815d-a0b5a0fa7eb8")
+	)
+	(wire
+		(pts
+			(xy 139.7 45.72) (xy 139.7 62.23)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "eebafd2e-e1c9-4692-a832-dcb671f910d6")
+	)
+	(wire
+		(pts
+			(xy 87.63 195.58) (xy 110.49 195.58)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ef7fa627-b021-41b6-b186-f108e0f3087d")
+	)
+	(wire
+		(pts
+			(xy 100.33 153.67) (xy 100.33 171.45)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fcf51c5d-bf15-42fd-9d66-f8b2b1fee9ef")
+	)
+	(wire
+		(pts
+			(xy 80.01 119.38) (xy 80.01 127)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fdff99b0-6d86-4e89-a13b-9821371cbf3a")
+	)
+	(wire
+		(pts
+			(xy 85.09 58.42) (xy 85.09 72.39)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fe3a8fc5-c1f0-4c4e-a8a6-3935494343ca")
+	)
+	(global_label "+5V"
+		(shape bidirectional)
+		(at 100.33 171.45 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "007e126b-b8db-423d-9e15-d9c3130e3494")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 100.33 171.45 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 80.01 127 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "0172c687-f1bd-4b56-b4be-8eb7ae388645")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 80.01 127 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "+15V"
+		(shape bidirectional)
+		(at 35.56 143.51 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "27170e4b-e64c-4540-982b-e2f92728bd8b")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 35.56 143.51 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 110.49 222.25 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "3b95c754-a74b-434b-8deb-0c2d93a61850")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 110.49 222.25 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 45.72 72.39 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "5a865980-6751-4970-9c2f-ecf58c39c2be")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 45.72 72.39 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 181.61 80.01 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "8183605d-eb9c-452f-9b7b-7bc69d6f5b2f")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 181.61 80.01 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "+15V"
+		(shape bidirectional)
+		(at 139.7 45.72 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "828366af-5d8c-46a0-a91f-ace7c834dc26")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 139.7 45.72 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 85.09 72.39 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "8af208ed-887b-451b-82a4-046afb61c1ca")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 85.09 72.39 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "+15V"
+		(shape bidirectional)
+		(at 35.56 97.79 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "9eb38ebf-8b5c-46e8-9d61-8fa70c1ac503")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 35.56 97.79 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 85.09 166.37 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "f92dc2d2-a68f-4505-bce6-90b3d79c2262")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 85.09 166.37 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(global_label "+5V"
+		(shape bidirectional)
+		(at 35.56 195.58 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+		)
+		(uuid "ff506e1e-b996-4a26-95cd-8fe61e3bb38e")
+		(property "Intersheetrefs" "${INTERSHEET_REFS}"
+			(at 35.56 195.58 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "cotuca:D_H")
+		(at 62.23 195.58 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "1cfad9df-3ee7-413c-8a15-9ccc49a6bfba")
+		(property "Reference" "D2"
+			(at 62 184 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "1N5819"
+			(at 62 208 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 62 195 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 62 195 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 62.23 195.58 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "d0c4eb53-d79f-414d-8ea2-9be32bc5fae7")
+		)
+		(pin "2"
+			(uuid "7d76c5d3-ca98-465d-811f-2946b48272ed")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:PWRFLAG")
+		(at 128.27 45.72 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "1ef179c8-de45-4eef-969d-c9378f893afc")
+		(property "Reference" "#FLG1"
+			(at 128 34.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" ""
+			(at 128 58.46 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 128 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 128 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 128.27 45.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "013ab233-cde6-49d7-9061-566613bca9c2")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 170.18 64.77 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5c56a246-25f6-46a7-b964-0207809e4245")
+		(property "Reference" "J5"
+			(at 170 54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "LED do SW1"
+			(at 170 78 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 170 65 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 170 65 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 170.18 64.77 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "9bba3dd5-8a6d-4f24-93eb-469766359e25")
+		)
+		(pin "1"
+			(uuid "ec5af44b-9910-4d2b-b9aa-3e103a0c3bef")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:CP_V")
+		(at 87.63 203.2 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "835772a9-4b49-4c96-8e38-7385b0499049")
+		(property "Reference" "C3"
+			(at 88 192 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "100u"
+			(at 88 216 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 88 203 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 88 203 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 87.63 203.2 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9b334502-fb62-4a3e-b59a-6adf72b29d08")
+		)
+		(pin "2"
+			(uuid "f303b4c3-202a-44a0-955d-3d012cc61f6c")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:SW_H")
+		(at 110.49 45.72 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "8f8d5902-9ef0-4645-a174-08053c64b103")
+		(property "Reference" "SW1"
+			(at 110 34.46 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "latching"
+			(at 110 58.46 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 110 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 110 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 110.49 45.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "56af7a30-f2b5-4a6f-801e-1c7d91d16333")
+		)
+		(pin "1"
+			(uuid "f03779aa-b458-46e1-a047-ee5a6154940c")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:PWRFLAG")
+		(at 100.33 162.56 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "92f2c211-60f1-4d6d-941e-46c4aeb1c4b9")
+		(property "Reference" "#FLG2"
+			(at 100 151 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" ""
+			(at 100 175 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 100 162 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 100 162 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 100.33 162.56 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "c0c3eed1-f42b-4b5c-9f21-bd2f82693212")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:D_V")
+		(at 85.09 54.61 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "93c5292c-8abd-498a-b286-fb89a33516a9")
+		(property "Reference" "D1"
+			(at 85 44 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "SMBJ24A"
+			(at 85 68 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 85 55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 85 55 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 85.09 54.61 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "9324ed3d-45d8-4044-9c6f-56069737baa5")
+		)
+		(pin "2"
+			(uuid "8e749027-b5d5-474f-909f-ac1f6e53f248")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_R")
+		(at 35.56 48.26 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "b206362a-2a37-4242-a791-e27fb1fa29d7")
+		(property "Reference" "J1"
+			(at 35 37 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "entrada decoy PD"
+			(at 35 61 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 35 48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 35 48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 35.56 48.26 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "8b720bf8-2eba-49ac-b157-52de4dc5f4da")
+		)
+		(pin "1"
+			(uuid "0d66870d-b1de-46a4-a230-ec44739eb853")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:CP_V")
+		(at 58.42 105.41 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bc2f86a8-da85-4593-8669-7e904bcaefd8")
+		(property "Reference" "C1"
+			(at 58 95 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "2200u/35V"
+			(at 58 119 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 58 106 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 58 106 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 58.42 105.41 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "022827e8-710d-40cb-bf37-96f058e03655")
+		)
+		(pin "1"
+			(uuid "f6564250-ebb6-431c-90d3-a88d010ee608")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:CONN3_L")
+		(at 115.57 148.59 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "cf5df506-489c-4c48-8db8-9eda7ed10548")
+		(property "Reference" "J3"
+			(at 115 137 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "step-down 5V fixo"
+			(at 115 161 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 115 148 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 115 148 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 115.57 148.59 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "49971f6b-60ed-4051-b631-62461a0e90f1")
+		)
+		(pin "2"
+			(uuid "c5e0d66f-98a2-4d01-9c50-1160767dff4a")
+		)
+		(pin "3"
+			(uuid "61f1d835-3242-4c90-af95-b815692679ff")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 144.78 198.12 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d250e3b3-b759-4545-9257-f6de7b837387")
+		(property "Reference" "J4"
+			(at 145 186.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "a ponte ESP32"
+			(at 145 210.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 145 197.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 145 197.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 144.78 198.12 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "78352bf1-b66f-4d71-b5ef-39dbf19d8e72")
+		)
+		(pin "2"
+			(uuid "21d814eb-8fc3-4561-a7ab-ddd7b7819561")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:FUSE_H")
+		(at 62.23 45.72 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "df62444b-958f-45b9-a3ef-4fe1e3a31734")
+		(property "Reference" "F1"
+			(at 62 34.46 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "PTC 3A"
+			(at 62 58.46 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 62 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 62 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 62.23 45.72 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "86343293-8a8a-45a5-910c-52058a6b8230")
+		)
+		(pin "1"
+			(uuid "36b0c33c-9775-4d39-a92c-9b7bc17d0929")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:C_V")
+		(at 80.01 105.41 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f1d5975e-ec97-4523-934b-1a97959d01ff")
+		(property "Reference" "C2"
+			(at 80 95 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "100n"
+			(at 80 119 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 80 106 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 80 106 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 80.01 105.41 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "29a3a71a-2713-46ca-b0ac-9ca28b182567")
+		)
+		(pin "1"
+			(uuid "560382c0-eb50-4de0-8fbf-89f8edc096a9")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:C_V")
+		(at 110.49 203.2 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f743a7e8-57d4-4841-9108-a040c254e0b6")
+		(property "Reference" "C4"
+			(at 110 192 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "100n"
+			(at 110 216 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 110 203 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 110 203 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 110.49 203.2 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "1"
+			(uuid "590ac5b4-75c0-4450-bcc2-9331e0164ac6")
+		)
+		(pin "2"
+			(uuid "2d8d54ab-f360-49ed-b6e8-42810ff199b5")
+		)
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 115.57 100.33 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "fc65d137-fcb5-40d6-8cf2-43cad07d2f10")
+		(property "Reference" "J2"
+			(at 115 89.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "ao amp TPA3116"
+			(at 115 113.54 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 115 100.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 115 100.54 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 115.57 100.33 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(pin "2"
+			(uuid "18ecab51-de99-4f17-8a61-3a96efe8d941")
+		)
+		(pin "1"
+			(uuid "22054d30-4290-423e-aef9-80e25f9997fd")
+		)
+	)
 )
