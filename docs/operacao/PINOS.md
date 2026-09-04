@@ -1,6 +1,6 @@
 # MAPA DE PINOS — Cotucatronics
 
-> Verificado em `src/hal_daisy_seed.cpp` e `src/manifest.h` @ `6002a70`.
+> Verificado em `src/hal_daisy_seed.cpp` e `src/manifest.h` @ `hal v0.74.1` (04/09).
 > **Pino se confirma no fonte, não na memória.** Se este documento e o
 > código divergirem, o código está certo e este documento está velho.
 
@@ -10,7 +10,11 @@
 |---|---|---|
 | **D13** | UART TX → **RX** da ponte ESP32 | PB6 · USART1 · 31250 8N1 · ★ CRUZADO |
 | **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI · **PULL-UP INTERNO LIGADO** (~40 kΩ) desde 02/09 — ver abaixo |
-| **D15–D19** | pots (A0–A4) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico |
+| **D15, D16** | pots ×2 (A0, A1) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico. **Só D15 e D16 são pots**; `board` diz `knobs:2`. Ambos com leitura **invertida** (`kKnobInverte`) — medido nos dois extremos, cru 0,0008 no máximo e 0,9753 no mínimo |
+| **D0, D1, D2** | encoder A — fase A, fase B, push | `kEncPin[0]` |
+| **D3, D4, D9** | encoder B — fase A, fase B, push | `kEncPin[1]` |
+| **D19, D18, D17** | encoder G — fase A, fase B, push | `kEncPin[2]` · ⚠️ **fases trocadas de propósito** (28/08); a troca mora na tabela, não num sinal invertido no laço |
+| **D5, D6, D7, D8, D10** | OLED SSD1309 SPI | ver a tabela do painel, mais abaixo |
 | **D22** | botão B4 — freeze B | INPUT + PULLUP, ativo-baixo |
 | **D23** | LED — freeze B | OUTPUT, segue o param `frz_on_b` |
 | **D24** | botão B2 — freeze A | INPUT + PULLUP, ativo-baixo |
@@ -21,7 +25,22 @@
 
 ## Livres
 
-**D0–D12** · **D20** · **D21** · **D29** · **D30**
+**D11** · **D12** · **D20** · **D21** · **D29** · **D30** — seis, não vinte.
+
+> ⚠️ Esta linha dizia **`D0–D12`** até 04/09, e estava errada de duas
+> maneiras ao mesmo tempo: D0–D4 e D9 são os encoders A e B, e D5–D8 e D10
+> são o OLED — que este mesmo documento lista como ocupado três secções
+> abaixo. **O documento contradizia-se a si próprio**, e ninguém reparou
+> porque as duas afirmações nunca são lidas na mesma passagem.
+>
+> Apanhado pelo exame de pinos do `bts`, que é para isto que existe: ler o
+> fonte e o documento lado a lado em vez de confiar em qualquer um deles.
+
+⚠️ **Não confundir com `kLivresPin` no fonte** (`hal_daisy_seed.cpp`). Essa
+lista chama-se "livres" mas quer dizer **"que a varredura pode reconfigurar
+sem matar o OLED nem o MIDI"** — e inclui D17/D18/D19, que são o encoder G.
+O nome mente; o comportamento é intencional (a varredura existe justamente
+para descobrir cablagem de encoder).
 
 D29/D30 estão **reservados** para o sense dos DPDT dos exciters (`exc_on`
 lendo estado real do hardware, não intenção de software).
@@ -31,8 +50,8 @@ lendo estado real do hardware, não intenção de software).
 | bloco | pinos | nota |
 |---|---|---|
 | OLED SSD1309 SPI | 5 | **SOLDADO 23/08** — ver a tabela abaixo. SPI1, modo 0, MISO não atribuído |
-| Encoder EC11 | 3 (A, B, push) | push = confirmar |
-| Pots de volume ×2 | 2 (ADC) | um por exciter |
+| Encoder EC11 | 3 (A, B, push) | ✅ **JÁ SÃO TRÊS E ESTÃO LIGADOS** — ver os `kEncPin` na tabela de ocupados |
+| Pots de volume ×2 | 2 (ADC) | ✅ **LIGADOS** em D15/D16, um por exciter |
 
 ## A regra de hardware que custou uma gravação
 

@@ -7103,3 +7103,199 @@ Por confirmar com o multimetro. Mas repare-se no que mudou: **deixou de ser
 uma hipotese com uma historia e passou a ser uma REGRA VIOLADA com nome** —
 P3 da varredura, escrita muito antes deste caso.
 
+
+---
+
+## 15bn. Construi uma ferramenta de reposicao sobre um contrato que DEDUZI (04/09)
+
+O dB deu uma regra permanente: **"faca isso sempre, ao gravar reponha os
+valores"**. A regra ja existia na skill `bancada-firmware` (§2c) desde 20/08 e
+vivia so na minha cabeca — por isso falhava. Escrevi o `estado.py` para a por
+no `flash.sh`, nos dois lados do DFU.
+
+A v0.1.0 guardava e mandava o **`norm`**. O `set` aceita o **`real`**:
+
+```
+> set gate_release_a 0.13
+fora da faixa: gate_release_a aceita [50.000 .. 2000.000]
+> set gate_release_a 300
+gate_release_a -> real=300.000 (norm=0.128, curve 1.0)
+```
+
+Para os params cuja faixa real calha em `0..1` — ganhos, chaves, rotas — o
+norm coincide com o real e funcionava. Para todos os outros a placa recusava.
+
+**E eu deitava fora a resposta.** A ferramenta imprimia `repos ...` para seis
+reposicoes que nunca aconteceram, e a unica coisa que sabia a verdade era a
+linha que eu descartava.
+
+> **Duas licoes na mesma linha, e as duas ja estavam escritas noutro sitio.**
+> Deduzi o contrato de um comando em vez de o LER — a mesma coisa que fiz
+> duas vezes com o `porta_daisy.achar()` em 02/09. E construi uma verificacao
+> **incapaz de reprovar**, porque nao olhava para o unico sinal disponivel.
+
+Sem estrago: todas as recusas foram recusas. Mas o modo de falha era o pior
+possivel — uma ferramenta de seguranca a anunciar seguranca que nao repunha.
+
+### E o `list` quantizava o que a ferramenta repunha
+
+`list` imprimia `norm=%.2f real=%.2f`. No dia em que passou a ser a FONTE da
+reposicao, duas casas deixaram de chegar: repor um notch de 0–1500 Hz erra
+ate 7,5 Hz, e um ganho 0..1 erra 1%. Passou a `%.4f` nos dois.
+
+**Instrumento muda de contrato quando muda de leitor.** Era leitura para
+humano; virou entrada de maquina, e ninguem reavaliou a precisao.
+
+---
+
+## 15bo. O espigao que eu apaguei era o que fechava o casco (04/09)
+
+O dB: *"tem um quadradinho branco no topo"*. Era um pixel em (64, 4) — o
+apice da superelipse: na linha `y = -rb` a curva vale `x = 0`, e com `n = 3,2`
+(topo achatado) isso sai como um espeto de 1 px por cima da barra chata.
+
+Consertei bem: **uma linha de pixels e uma faixa, nao uma aresta**, e a
+largura de uma linha e a da sua parte mais larga, meia linha para dentro
+(`|y| - 0,5`). O espigao desapareceu.
+
+**E o casco abriu.** Era aquele pixel que fechava o contorno: a linha seguinte
+fazia a ponte de `x = 0` ate a sua largura, e dai saia a barra chata do topo.
+Sem ele, a primeira e a ultima linha ficavam com dois pixels soltos nas
+pontas.
+
+> **Conserto que remove um sintoma e abre um buraco ao lado.** So apanhei
+> porque renderizei DEPOIS de consertar, em vez de gravar a seguir a edicao.
+
+Conserto da segunda metade: a tampa e um **traco**, nao dois extremos.
+
+---
+
+## 15bp. Engrossar um contorno desenhando-o duas vezes nao fecha (04/09)
+
+O dB: *"a linha debaixo esta interrompida"*. O casco era **contorno (ra,rb) +
+contorno (ra-1,rb-1)**. Dois tracos vizinhos so se tocam onde a curva anda
+devagar; nos topos ela salta, e ali a TAMPA do interno cai na mesma linha que
+o ARCO do externo sem se encontrarem — 3 px de buraco de cada lado.
+
+Conserto: o anel e **cheio menos cheio**. Uma superelipse cheia, e outra
+`ra-2, rb-2` apagada por dentro. Assim nao ha duas curvas para casar: ha uma
+regiao e um buraco dentro dela.
+
+### O teste que provei ANTES de acreditar nele
+
+Alagamento do preto a partir de (0,0), 4-conexo: se a agua entra no miolo, o
+anel tem furo. E corri-o contra o codigo VELHO para ver se tinha dentes:
+
+```
+codigo ANTIGO: *** CASCO ABERTO: 490 px do miolo alcancados de fora
+               VAZA em (54,6)          <-- no TOPO
+codigo NOVO:   casco FECHADO
+```
+
+**O primeiro furo era no topo, e o dB tinha visto o de baixo.** A
+interrupcao que ele apanhou tinha uma gemea que nem ele nem eu viamos —
+por cima, onde a curva e o texto disfarcam. Um teste que nao reprova nao e
+teste; um que reprova o passado mede o presente.
+
+---
+
+## 15bq. Ler a palavra e inferencia; ver a imagem e medicao (04/09)
+
+O dB escreveu *"as laterais um pouco mais pontiagudas"*. Li **laterais** como
+os BICOS e baixei o expoente da superelipse de 2,6 para 2,2. Ele falava das
+**arestas longas** — topo e base — e queria-as mais CHATAS, que e o expoente a
+SUBIR. Fui na direccao contraria.
+
+Tres gravacoes depois ele mandou um render em vez de uma frase, e a duvida
+morreu em dois segundos: o casco era retangulo arredondado, `n = 3,2`.
+
+> **Quando o assunto e forma, pedir imagem em vez de adivinhar palavra.** E
+> quando ha imagem, MEDIR contra ela em vez de opinar: passei a renderizar
+> folhas de variantes e a deixar o olho dele escolher a celula.
+
+Aplica-se a mesma familia da 15bl: eu a inventar o contexto de um dado que
+so ele tem.
+
+---
+
+## 15br. Chamei "prova" a comparar com uma copia minha (04/09)
+
+Ele escolheu uma celula de uma folha de quatro. Para provar que a apliquei,
+escrevi um programa que gerava a celula e a comparava pixel a pixel com o
+firmware. Deu `0 px de diferenca` e eu anunciei prova.
+
+**A celula do programa era uma re-escrita minha do codigo da folha.** Se eu a
+tivesse copiado mal, as duas estariam erradas juntas e a comparacao diria
+"identica" na mesma. Verificacao circular com cara de rigor.
+
+Ele respondeu *"nao e a mesma"*. A medicao que valeu foi outra, e nasceu de
+um criterio que **ele** deu e que era mensuravel — "a linha horizontal do
+canto esquerdo mais longa do que a do direito":
+
+```
+FIRMWARE       rabo esq  7 px | dir 4 px | +3
+folha INF-ESQ  rabo esq  7 px | dir 4 px | +3
+```
+
+Iguais — logo o problema nao era identidade, era **quantidade**. Dai saiu uma
+escala numerada de expoentes com os rabos medidos, e ele apontou.
+
+> **Prova mede contra algo que nao passou pela minha mao.** Contra o
+> artefacto original, contra o hardware, ou contra um criterio que o outro
+> lado deu. Nunca contra a minha propria transcricao.
+
+E o criterio dele valia mais que a minha folha: transformou "esta diferente"
+em `+3 px vs +6 px`, que se resolve numa gravacao.
+
+---
+
+## 15bs. A minha propria medida de simetria estava errada (04/09)
+
+Escrevi um medidor de simetria e ele disse **33% de assimetria** numa marca
+que o ASCII mostrava espelhada linha a linha. O espelho de `x` na caixa
+`[x0,x1]` e `x0 + x1 - x`; eu escrevi `x1 - (x - x0) + x0`, que soma `x0`
+duas vezes.
+
+Depois do conserto: **0 px de 1215**.
+
+> **Foi o absurdo que denunciou, nao uma revisao.** Se o defeito tivesse dado
+> 4% em vez de 33% eu tinha acreditado e ido afinar a forma — a caca a um
+> defeito que so existia no instrumento.
+
+Terceira vez que o instrumento de medida mente antes do medido (12c, 15av).
+O reflexo que falta: **quando um numero surpreende, duvidar primeiro de quem
+o mediu.**
+
+---
+
+## 15bt. Um comentario meu com autoridade re-ensinava o defeito (04/09)
+
+Na `Concha` eu tinha escrito, e o codigo obedecia:
+
+> *"o risco fino corre por todo o labio, mesmo onde nao ha vao — e ele que
+> liga a ponta magra a boca larga"*
+
+O efeito real era o oposto: partia em dois o traco que vai do canto ao
+centro. O dB pediu *"sem a interrupcao da linha do canto esquerdo ao
+centro"* — exactamente a coisa que o meu comentario justificava.
+
+E ao olhar a imagem apareceu um SEGUNDO corte que o ASCII nao denunciava:
+onde a boca comeca a abrir, um "dente" tinha 1 px e saia separado do rabo por
+uma coluna escura. **Vao de 1 px nao da dente, da cocega.**
+
+> Doc com autoridade re-ensina o defeito (familia P6 do audit). E o meu
+> comentario era mais persuasivo do que o codigo, porque explicava uma
+> INTENCAO — e intencao errada escrita com confianca sobrevive a leituras
+> que corrigiriam o codigo.
+
+### Exame de pinos do mesmo dia: o PINOS.md contradizia-se
+
+`Livres: D0–D12` — mas D0–D4 e D9 sao os encoders A e B, e D5–D8 e D10 sao o
+OLED, que o MESMO documento lista como ocupado tres seccoes abaixo. E os pots
+estavam como `D15–D19` quando sao dois, D15 e D16 (`board` diz `knobs:2`).
+
+Livres a serio: **D11, D12, D20, D21, D29, D30** — seis, nao vinte.
+
+**Duas afirmacoes contrarias no mesmo ficheiro sobrevivem enquanto nunca
+forem lidas na mesma passagem.** E para isso que o exame de pinos existe no
+`bts`: le o fonte e o documento lado a lado, sem confiar em nenhum dos dois.

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.286.0"
+#define COTUCA_OS_VERSION "0.300.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2232,10 +2232,49 @@ static inline bool MicroEhMinha(int r, int q, float hz_actual)
     return d < 0.6f;   // folga do arredondamento do param
 }
 
+// ⚠️ TRES LARGURAS, e nao uma. MEDIDO em 03/09.
+//
+// Era `d <= meia` — so contava como coberto o que caisse DENTRO da boca.
+// Resultado, com um modo LARGO: ele cortava 20 Hz, o pico reaparecia 30 Hz
+// ao lado, e ele gastava outra boca. As oito encheram-se numa banda so:
+//
+//   exciter L  585 · 701 · 792 · 848 Hz
+//   exciter R  516 · 551 · 569 · 653 Hz    (16 a 34 Hz de distancia!)
+//
+// Nao eram oito modos. Era UM modo largo perseguido pelos vizinhos — e um
+// notch estreito nao mata uma ressonancia larga, so a empurra de lado.
+//
+// A 3x a largura, o vizinho conta como o MESMO modo e o supressor
+// APROFUNDA em vez de gastar boca nova. Se 24 dB nao chegarem, o problema
+// nao e falta de bocas: e o Q errado para este corpo, e isso e outra
+// conversa (e provavelmente um param de largura).
+// ⚠️ AQUI ESTEVE UM "RECUO DA RAMPA", E ELE SAIU. (03/09)
+//
+// A ideia: cada vez que o supressor apanhasse um modo, a rampa de arranque
+// recuava 25% para dar tempo a boca de morder. Custou DOIS defeitos
+// audiveis em duas horas, e o segundo mediu-se:
+//
+//   "os ganhos ficam indo e voltando"  -> bombeamento; pus um tecto de
+//                                         ritmo de 1/s e nao chegou
+//   "o ganho do sistema todo esta em torno de 10% do que era"
+//
+// A aritmetica condena-o: a rampa sobe 1/8 por segundo e cada recuo tirava
+// 25%. Um recuo por segundo e -25% contra +12,5% — SALDO NEGATIVO. A rampa
+// colapsava e ficava em baixo, e a 25% de progresso o ganho e 0,25^2 = 6%.
+//
+// E a escala nunca fez sentido: uma boca morde em MILISSEGUNDOS, e eu
+// gastava DOIS SEGUNDOS de rampa para o cobrir. Errado por tres ordens de
+// grandeza — nao era um numero mal afinado, era a ideia errada.
+//
+// A rampa sozinha ja resolve o que motivou tudo isto: o som a abrir de
+// repente no arranque. O recuo era invencao minha por cima dela, e "se nao
+// soa, nao fica" vale para o que eu invento tambem.
+static void MicroRecuaRampa() { }
+
 static inline bool MicroJaCoberta(float hz_boca, float hz_novo)
 {
     if(hz_boca < 1.f) return false;
-    const float meia = hz_boca / 35.f;
+    const float meia = (hz_boca / 35.f) * 3.f;
     const float d    = hz_novo > hz_boca ? hz_novo - hz_boca : hz_boca - hz_novo;
     return d <= meia;
 }
@@ -2336,11 +2375,7 @@ __attribute__((noinline)) static void PassoDoSupressor()
             const float novo = db + kMicroDbPasso > kMicroDbMax
                              ? kMicroDbMax : db + kMicroDbPasso;
             params.SetReal(manifest.p_notch_db[r][q], novo);
-            {   // a rampa recua tambem aqui: o modo esta a soar AGORA
-                const uint32_t rn = ramp_n;
-                const uint32_t rc = kRampaArranqueAmostras / 4u;
-                ramp_n = rn > rc ? (rn - rc) : 0u;
-            }
+            MicroRecuaRampa();
             hal::Log("SuMiAu: exciter %c boca %d APROFUNDA"
                      " %.0f -> %.0f dB (%.1f Hz ainda a %.1f dB, dom %.2f)",
                      r ? 'R' : 'L', q + 1, (double)db, (double)novo,
@@ -2393,11 +2428,7 @@ __attribute__((noinline)) static void PassoDoSupressor()
     // que aparece custa-lhe altura. Um corpo que uive muito demora mais a
     // abrir; um corpo limpo abre nos 8 s. A peca negoceia com o proprio
     // corpo em vez de confiar num numero.
-    {
-        const uint32_t r_now = ramp_n;
-        const uint32_t recuo = kRampaArranqueAmostras / 4u;
-        ramp_n = r_now > recuo ? (r_now - recuo) : 0u;
-    }
+    MicroRecuaRampa();
     hal::Log("SuMiAu: exciter %c boca %d <- %.1f Hz"
              " (%.1f dB, dom %.2f)%s",
              r ? 'R' : 'L', alvo + 1, (double)hz, (double)nivel,
@@ -5482,7 +5513,11 @@ static void HandleLine(const char* line)
     if(strncmp(line, "list", 4) == 0)
     {
         for(int i = 0; i < params.Count(); i++)
-            hal::Log("%2d %-10s norm=%.2f real=%.2f%s",
+            // %.4f nos DOIS: o `list` deixou de ser so leitura para humano
+            // no dia em que virou a FONTE da reposicao pos-gravacao, e quem
+            // repoe fala em REAL (e o que o `set` aceita), nao em norm.
+            // Com 2 casas, repor um ganho 0..1 erra 1%.
+            hal::Log("%2d %-10s norm=%.4f real=%.4f%s",
                      i, params.Name(i), params.Get(i), params.Real(i),
                      SacrifTravado(i) >= 0 ? "   *** TRAVADO PELO CTOS ***"
                                           : "");

@@ -6,7 +6,19 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-09-02 (fecho) · leva: **compressor** (49 dB de factor
+> Atualizado em 2026-09-04 · leva: **gravar passou a repor o estado** —
+> `flash.sh` v0.4.0 + `estado.py`, guardando antes do DFU e repondo depois,
+> porque a regra existia na skill e vivia só na minha cabeça · a **marca da
+> abertura refeita em três peças** (casco vazado, lábio, boca) contra
+> desenhos e renders do dB, com **espelho cima↔baixo a 0 px de 1215** e o
+> casco provado fechado por **alagamento** · e o **exame de pinos** a apanhar
+> o `PINOS.md` a contradizer-se a si próprio
+>
+> ⚠️ **Continua por confirmar com o multímetro** o `AGND`/`DGND` unidos fora
+> da placa (P3 da varredura de terra) — o dB refez o aterramento em 03/09 e
+> reportou som mais limpo, mas a medida não foi feita.
+>
+> Antes, 2026-09-02 (fecho) · leva: **compressor** (49 dB de factor
 > de crista, medidos) · **medidor de saída** `pkout` · e o **chiado de banda
 > larga** diagnosticado até uma regra com nome — `AGND`/`DGND` unidos fora
 > da placa, P3 da varredura de terra, **por confirmar com o multímetro**

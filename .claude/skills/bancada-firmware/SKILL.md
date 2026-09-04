@@ -100,6 +100,51 @@ tocando. Se a decisão for deixar zerado (teste seco, por exemplo), **dizer
 isso também** — silêncio deliberado e silêncio acidental são indistinguíveis
 do outro lado.
 
+### E em 04/09 esta regra deixou de depender de eu a lembrar
+
+Ela estava escrita aqui desde 20/08 **e falhou na mesma**, porque uma regra
+que só existe como texto é executada por memória — e memória não é
+instrumento. O dB tornou-a permanente: *"faça isso sempre, ao gravar reponha
+os valores"*.
+
+> **Regra de bancada que depende de lembrança não é regra, é sorte.** O
+> conserto é pô-la no script que já se corre de qualquer maneira.
+
+No Cotucatronics vive no `flash.sh` (v0.4.0), que chama `estado.py` nos
+**dois lados** do DFU:
+
+```bash
+python3 estado.py guardar build/estado_antes.txt   # ANTES do `dfu go`
+# ... DFU, gravação, conferência de versão ...
+python3 estado.py repor   build/estado_antes.txt   # DEPOIS
+```
+
+O `guardar` tem de vir **antes** do `dfu go`: dois passos à frente a placa
+está em bootloader e não responde a `list`.
+
+**Três armadilhas, todas encontradas ao construir a coisa:**
+
+1. **Descobrir em que unidade o comando de escrita fala, LENDO-O.** Aqui o
+   `set` aceita o **valor real** (`set gate_release_a 300`), não o
+   normalizado. A v0.1.0 mandava `norm`, e para os params cuja faixa real
+   calha em `0..1` coincidia e funcionava — só os outros eram recusados.
+   Uma classe de defeito que funciona em metade dos casos é pior que uma
+   que nunca funciona.
+2. **Ler a resposta de cada escrita.** Ela é a única coisa que sabe se
+   pegou: `nome -> real=...` ou `fora da faixa: aceita [...]`. Descartá-la
+   fez a ferramenta imprimir "repôs" para seis reposições que nunca
+   aconteceram.
+3. **Conferir a precisão do que se lê.** O `list` imprimia `%.2f` — ótimo
+   para olho humano, e errado como fonte de reposição (±7,5 Hz num notch de
+   0–1500 Hz). **Instrumento muda de contrato quando muda de leitor**: era
+   leitura para humano, virou entrada de máquina, e ninguém reavaliou.
+
+E o que a ferramenta **não** faz: repor o que a gravação mudou de propósito.
+Se uma versão nova nasce com outro valor de fábrica, repor seria desfazer a
+alteração às escondidas — por isso tudo o que ela mexe é impresso com o
+antes e o depois, e o que não reconhece (param que sumiu, param novo) é dito
+em voz alta em vez de ignorado.
+
 ## 2d. IDENTIFIQUE A PLACA PELA RESPOSTA, NUNCA PELO NOME DA PORTA
 
 Com duas placas na USB, o seletor por nome (`if '11201' not in x`) é uma aposta

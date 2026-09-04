@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.72.0
+// hal_daisy_seed v0.74.1
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.72.0"
+#define COTUCA_HAL_VERSION "0.74.1"
 
 using namespace daisy;
 
@@ -437,6 +437,25 @@ void AdcInit()
 // `Inverso()` — ja trabalha em coordenadas corrigidas, e nao ha um
 // segundo lugar onde alguem possa esquecer o sinal.
 static const bool kKnobInverte[2] = {true, true};   // A0 (L), A1 (R)
+// ⚠️ LIGADA, E MEDIDA COM OS DOIS EXTREMOS DECLARADOS PELO dB (03/09).
+//
+//     pote no MAXIMO  ->  cru 0.0008
+//     pote no MINIMO  ->  cru 0.9753
+//
+// O potenciometro le ao contrario, e por isso a inversao fica.
+//
+// EU DESLIGUEI-A DURANTE MEIA HORA, e o erro merece ficar escrito porque o
+// dB o nomeou como regra: eu li `0,975` no ADC e ASSUMI que aquela posicao
+// era o maximo. Nunca perguntei onde o botao estava. Errei a direccao duas
+// vezes — em 31/08 e hoje — e as duas por inferir a posicao a partir do
+// valor.
+//
+//   O VALOR CRU DIZ *QUANTO*. NAO DIZ *ONDE*.
+//   A posicao fisica e informacao que so quem esta na bancada tem, e esta
+//   sempre a uma pergunta de distancia.
+//
+// Se algum dia isto voltar a parecer errado: NAO mexer no bool. Ler o cru
+// nos dois extremos, com alguem a dizer qual e qual, e so entao decidir.
 
 // BATENTES — o pot nao chega as pontas, e por isso nao silenciava.
 //

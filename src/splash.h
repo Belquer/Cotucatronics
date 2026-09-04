@@ -1,4 +1,4 @@
-// splash v0.3.0 — a abertura: jogada de buzios, uma concha cresce, vira
+// splash v0.11.1 — a abertura: jogada de buzios, uma concha cresce, vira
 // marca, o nome entra letra a letra, a versao assina.
 //
 // C++ PURO. Nao inclui hal, nao toca em periferico, nao dorme. Quem chama
@@ -11,11 +11,12 @@
 // maior e mais dentes. Se fossem dois, divergiam na primeira alteracao.
 #pragma once
 #include <stdint.h>
+#include <math.h>
 #include "desenho.h"
 
 namespace cotuca { namespace splash {
 
-#define COTUCA_SPLASH_VERSION "0.3.0"
+#define COTUCA_SPLASH_VERSION "0.11.1"
 
 static const int kBuzios = 16;
 
@@ -86,8 +87,10 @@ class Splash
             //
             //    Agora ra=26/rb=11 -> anel em (31,15), centro em cy=17:
             //    a marca ocupa y=2..32 e a folga passa a OITO pixeis.
-            const int   ra = 6  + (int)(20.f * p + 0.5f);
-            const int   rb = 4  + (int)( 7.f * p + 0.5f);
+            // proporcao ~1,7:1 na marca (era 2,4:1), pela foto
+            // marca um pouco MENOR, a pedido do dB: 26 -> 22 de raio
+            const int   ra = 7  + (int)(15.f * p + 0.5f);
+            const int   rb = 5  + (int)( 8.f * p + 0.5f);
             // A que cresce e UMA DAS QUE CAIRAM — parte de onde o
             // buzio 0 pousou e sobe ao centro. Nascer no meio do nada
             // seria outra concha, e a jogada deixava de ter consequencia.
@@ -155,23 +158,143 @@ class Splash
     // A CONCHA, unica. `aberto` = a fenda dentada virada para cima; caido
     // fechado e o dorso liso. Os dentes escalam com o raio, entao a mesma
     // funcao serve o buzio de 13 px e a marca de 61 px.
+    // A CONCHA, unica. `aberto` = a fenda dentada virada para cima; caido
+    // fechado e o dorso liso. Serve o buzio de 13 px e a marca de 61.
+    //
+    // ⚠️ REDESENHADA EM 03/09, com buzios de verdade a frente.
+    //
+    // Era uma ELIPSE com a fenda ao centro, e o dB viu logo o que estava
+    // mal: "me lembra um pouco uma bola de futebol americano". Estava
+    // certo — elipse pura e uma lente com bicos, e um buzio nao tem bicos.
+    //
+    // Tres correcoes, todas da foto:
+    //
+    //   1. SUPERELIPSE em vez de elipse (n = 2,6). Enche os lados e
+    //      arredonda as pontas — "os buzios tem a lateral um pouco mais
+    //      arredondada".
+    //   2. MENOS ALONGADA: a proporcao passa de ~2,4:1 para ~1,7:1, que e
+    //      a da foto.
+    //   3. FENDA ASSIMETRICA: descentrada para baixo e mais curta que a
+    //      concha — "a abertura e assimetrica". Na elipse antiga ela
+    //      atravessava a peca ao meio, que e o que fazia a costura de bola.
     static void Concha(uint8_t* fb, int cx, int cy, int ra, int rb, bool aberto)
     {
-        if(ra >= 16) desenho::Elipse(fb, cx, cy, ra + 5, rb + 4, true, false);
-        desenho::Elipse(fb, cx, cy, ra, rb, true, true);
-        if(!aberto) { desenho::Linha(fb, cx-ra+2, cy, cx+ra-2, cy, false); return; }
+        // Anatomia do buzio, do desenho do dB (IMG_5910, 04/09). Nao e uma
+        // elipse com um corte: sao TRES pecas encaixadas.
+        //
+        //   1. o CASCO e um contorno vazado, nao um vulto macico;
+        //   2. dentro dele flutua a massa do LABIO, cheia — pontuda numa
+        //      ponta e bojuda na outra;
+        //   3. so dentro do labio e que abre a BOCA, com dentes de cima e
+        //      de baixo que se alternam e nunca se tocam.
+        //
+        // Eu tinha as tres coladas numa peca so, e por isso lia bola.
+        // n = 3,2 achata o topo e a base e arredonda os cantos: o casco
+        // le RETANGULO ARREDONDADO, nao elipse. Eu tinha-o em 2,2 por ter
+        // lido "laterais mais pontiagudas" como os BICOS quando o dB
+        // falava das arestas longas — inferencia minha sobre a palavra.
+        // O render que ele mandou a seguir resolveu em dois segundos o que
+        // eu vinha a adivinhar: imagem e medicao, leitura de palavra nao e.
+        const float kN = 3.2f;
 
-        const int fa = ra * 3 / 4;                 // meia-largura da fenda
-        const int fe = rb <= 4 ? 1 : rb / 3;       // meia-altura
-        for(int y = -fe; y <= fe; y++)
-            desenho::Linha(fb, cx - fa, cy + y, cx + fa, cy + y, false);
-        // Dente GROSSO na marca, fino no buzio: a 61 px de largura uma
-        // risca de 1 px com folga de 3 le-se como poeira, nao como dente.
-        const int esp   = ra >= 16 ? 2 : 1;
-        const int passo = esp * 2;
-        for(int x = -fa + 1; x <= fa - 1; x += passo)
-            for(int e = 0; e < esp && x + e <= fa - 1; e++)
-                desenho::Linha(fb, cx + x + e, cy - fe, cx + x + e, cy + fe, true);
+        // pequeno demais para anatomia: um vulto cheio com um risco
+        if(ra < 12)
+        {
+            desenho::SuperElipse(fb, cx, cy, ra, rb, kN, true, true);
+            desenho::Linha(fb, cx - ra + 2, cy, cx + ra - 2, cy, false);
+            return;
+        }
+
+        // 1. casco vazado: CHEIO MENOS CHEIO, e nao contorno + contorno.
+        //
+        // ⚠️ Engrossar um contorno desenhando-o duas vezes com raios
+        // diferentes parece bater certo e nao bate: a TAMPA do interno cai
+        // na mesma linha que o ARCO do externo, e as duas nao se encontram.
+        // Saiam 3 px de buraco de cada lado na penultima linha — "a linha
+        // debaixo esta interrompida", 04/09. Dois tracos vizinhos so se
+        // tocam onde a curva anda devagar; nos topos ela salta.
+        //
+        // Um anel feito de cheio-menos-cheio nao pode abrir, porque nao ha
+        // duas curvas para casar: ha uma regiao e um buraco dentro dela.
+        desenho::SuperElipse(fb, cx, cy, ra,     rb,     kN, true,  true);
+        desenho::SuperElipse(fb, cx, cy, ra - 2, rb - 2, kN, false, true);
+        if(!aberto) return;
+
+        // 2. o labio. A boca fica CENTRADA no casco (pedido do dB), e a
+        // assimetria vive na FORMA, nao na posicao: o envelope sin(pi*t^k)
+        // sobe devagar de um lado e engorda no outro, o que da a ponta fina
+        // numa ponta e o bojo na outra.
+        //
+        // k=1,5 — ESCOLHIDO PELO OLHO DELE numa escala medida, nao
+        // deduzido por mim. O caminho foi 2 -> 1,3 -> 1 (simetrica) -> 1,15
+        // -> 1,5, e o criterio final foi dele e era mensuravel: "a linha
+        // horizontal do canto esquerdo mais longa do que a do direito".
+        //
+        // Em px de rabo macico (esquerda/direita): k=1 da 4/4, k=1,15 da
+        // 7/4, k=1,5 da 10/4, k=1,8 da 11/4. Acima de ~2,2 satura em 16/3 —
+        // o rabo bate no fim do labio e o expoente deixa de o alongar.
+        // Para ir alem disso mexe-se em `la`, nao aqui.
+        //
+        // Nao substituir por sin(pi*t): isso e k=1, e ja foi recusado.
+        const int   la = (ra * 4) / 5;          // meio-comprimento
+        const int   lb = (rb * 3) / 5;          // meia-altura no bojo
+        const int   el = ra >= 20 ? 2 : 1;      // espessura do labio
+        const int   passo = ra >= 20 ? 3 : 2;   // largura de um dente
+
+        for(int x = -la; x <= la; x++)
+        {
+            const float t = (float)(x + la) / (float)(2 * la);
+            int h = (int)(lb * sinf(3.14159265f * powf(t, 1.50f)) + 0.5f);
+            if(h < 0) h = 0;
+            for(int y = -h; y <= h; y++)
+                desenho::Pixel(fb, cx + x, cy + y, true);
+        }
+
+        // 3. a boca, aberta por dentro do labio
+        for(int x = -la + el; x <= la - el; x++)
+        {
+            const float t = (float)(x + la) / (float)(2 * la);
+            const int   h = (int)(lb * sinf(3.14159265f * powf(t, 1.50f)) + 0.5f);
+            const int   ha = h - el;            // meia-altura da abertura
+
+            // ⚠️ O RABO E LINHA CHEIA. Ate a v0.10.0 este risco escuro
+            // corria por TODO o labio, inclusive onde nao ha vao nenhum —
+            // eu tinha-o posto de proposito, para "ligar a ponta magra a
+            // boca larga". O efeito real era partir em dois o traco que
+            // vai do canto ao centro: "sem a interrupcao da linha do canto
+            // esquerdo ao centro", 04/09.
+            //
+            // A boca abre onde HA boca. No rabo, o labio fica macico.
+            if(ha < 1) continue;
+            for(int y = -ha; y <= ha; y++)
+                desenho::Pixel(fb, cx + x, cy + y, false);
+
+            // dentes EMPARELHADOS: onde ha dente, ha em cima E em baixo,
+            // um por cima do outro. Ate a v0.10.0 alternavam, e alternar e
+            // uma assimetria — a marca nao fechava no espelho horizontal.
+            //
+            // Eles MORDEM SO UM PEDACO (d = metade do vao). Dente que
+            // atravessa a abertura toda le listra; o que faz ler boca e o
+            // canal escuro que sobra a correr no meio, entre as duas
+            // fileiras. E e esse canal que garante que nao se tocam.
+            // ⚠️ VAO DE 1 px NAO DA DENTE, DA COCEGA. Onde a boca so agora
+            // comeca a abrir, um "dente" tem 1 px e sai separado do rabo
+            // por uma coluna escura — le ponto solto, e era o que ainda
+            // partia a linha que vai do canto ao centro depois de eu ja ter
+            // consertado o risco. O rabo entra na boca inteiro; os dentes
+            // comecam onde ha vao para eles.
+            if(ha < 2) continue;
+            int d = ha / 2; if(d < 1) d = 1;
+            // ⚠️ A FASE CONTA-SE DO CENTRO, nao da ponta. Contada de `-la`,
+            // a fileira so por acaso cairia espelhada — e era ela que ainda
+            // torcia a marca depois de o labio ja estar simetrico.
+            const int ax = (x < 0 ? -x : x);
+            if((((ax + passo / 2) / passo) % 2) != 0) continue;
+            for(int y = -ha; y <= -ha + d - 1; y++)
+                desenho::Pixel(fb, cx + x, cy + y, true);
+            for(int y = ha - d + 1; y <= ha; y++)
+                desenho::Pixel(fb, cx + x, cy + y, true);
+        }
     }
 
     static const int  kVoo     = 14;     // quadros de queda por buzio

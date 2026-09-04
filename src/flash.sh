@@ -1,5 +1,6 @@
 #!/bin/bash
-# flash v0.3.2 — grava SO se o build passou, e confere a versao na placa.
+# flash v0.4.0 — grava SO se o build passou, confere a versao na placa, e
+# REPOE o estado que a gravacao apagou (ver `estado.py`).
 #
 # Existe porque `make program-dfu` grava o BINARIO EM DISCO, que pode ser
 # de um build anterior se o atual falhou. Em 20/08 isso me fez medir o
@@ -13,7 +14,7 @@ VER=$(grep -oE '"[0-9]+\.[0-9]+\.[0-9]+"' main.cpp | head -1 | tr -d '"')
 # ⚠️ UMA VERSAO SO. Este `echo` ficou em v0.1.4 enquanto o cabecalho ia em
 # v0.3.0, e o `check_docs` nao apanhou porque nao varria `.sh`. Duas
 # versoes no mesmo ficheiro sao duas afirmacoes sobre a mesma coisa.
-echo "flash v0.3.2 — fonte diz v$VER"
+echo "flash v0.4.0 — fonte diz v$VER"
 # CODIGO DE SAIDA, nao presenca de linha. A primeira versao procurava
 # "objcopy -O binary" na saida e dava BUILD FALHOU num build ja
 # ATUALIZADO, que nao reimprime nada. A guarda contra instrumento que
@@ -28,6 +29,13 @@ if [ $RC -ne 0 ]; then
     exit 1
 fi
 echo "  build ok"
+# GUARDAR O ESTADO ANTES DO DFU, nao depois: dali a dois passos a placa
+# esta em bootloader e nao responde a `list`. Pedido do dB, 04/09 —
+# "ao gravar reponha os valores" — e a §2c da bancada, que dizia isto
+# desde 20/08 e vivia so na minha cabeca. Agora vive no script.
+ESTADO=build/estado_antes.txt
+python3 estado.py guardar "$ESTADO" || true
+
 # A placa pode JA estar em DFU (de uma tentativa anterior que morreu no
 # meio). Perguntar antes de mandar `dfu go` numa serial que nao existe.
 if dfu-util -l 2>/dev/null | grep -q "Found DFU"; then
@@ -107,3 +115,9 @@ print(f"  placa diz v{viu}")
 print("  CONFERE" if viu==esp else f"  *** NAO CONFERE: fonte v{esp}, placa v{viu} ***")
 sys.exit(0 if viu==esp else 1)
 PY
+
+# ⚠️ Gravar NAO termina no "File downloaded successfully" nem na
+# versao conferida. Termina em repor o estado de operacao e DIZER
+# qual foi. O `set -e` no topo faz uma reposicao falhada derrubar o
+# script — reposicao que falha em silencio seria pior que nenhuma.
+python3 estado.py repor "$ESTADO"

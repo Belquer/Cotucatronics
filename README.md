@@ -58,7 +58,7 @@ Cinco regras que não se negociam:
 | Arquivo | Versão | O que é |
 |---|---|---|
 | [src/hal.h](src/hal.h) | **v0.34.0** | O contrato. A fronteira de independência de fornecedor |
-| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.62.0** | Único arquivo que pode incluir `daisy_seed.h`. **4 botões** (D26, D24, D25 rearme CTOS, D22 freeze B) e **2 LEDs de painel** (D27, D23). Debounce de 30 ms, medido. **OLED SSD1309 vivo** (SPI1: D5 RST · D6 DC · D7 CS · D8 CLK · D10 DIN) com sonda de fio e caça-ponte. **PULL-UP interno no RX do MIDI (PB7)** — a libDaisy inicia a UART com `GPIO_NOPULL`, e o pino a flutuar com a ponte desligada punha a USART em tempestade por taxa e matava o laço em 4 s. **USART1 em prioridade 1**, abaixo do seu próprio stream de DMA, senão o abort assíncrono nunca completa. **Rearme do `DmaListen` com tecto e recuo** — sem ele corria ao ritmo do laço e consumia-o (10 029 rearmes com a ponte sã). **Framebuffer inteiro por `OledDesenha`** (`memcpy`, não 8192 `DrawPixel`), e o prescaler do SPI nasce em **PS_8** — 3 811 µs por quadro, verificado no vidro com padrão de 1 px. PS_64 custava 23 401 µs. **Três encoders**, e o `kEncPin` é a ÚNICA fonte — o `Init` lê dela e os nomes saem por `EncoderPinNome`. **`VarreTudo`** lê os 31 pinos (mata OLED e MIDI até um reboot) e **`Reiniciar`** desfaz. O `PollMidi`/`PollSerial` drenam por **instantâneo** do ponteiro — perseguir o ponteiro vivo travou a placa em 28/08 |
+| [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.74.1** | Único arquivo que pode incluir `daisy_seed.h`. **4 botões** (D26, D24, D25 rearme CTOS, D22 freeze B) e **2 LEDs de painel** (D27, D23). Debounce de 30 ms, medido. **OLED SSD1309 vivo** (SPI1: D5 RST · D6 DC · D7 CS · D8 CLK · D10 DIN) com sonda de fio e caça-ponte. **PULL-UP interno no RX do MIDI (PB7)** — a libDaisy inicia a UART com `GPIO_NOPULL`, e o pino a flutuar com a ponte desligada punha a USART em tempestade por taxa e matava o laço em 4 s. **USART1 em prioridade 1**, abaixo do seu próprio stream de DMA, senão o abort assíncrono nunca completa. **Rearme do `DmaListen` com tecto e recuo** — sem ele corria ao ritmo do laço e consumia-o (10 029 rearmes com a ponte sã). **Framebuffer inteiro por `OledDesenha`** (`memcpy`, não 8192 `DrawPixel`), e o prescaler do SPI nasce em **PS_8** — 3 811 µs por quadro, verificado no vidro com padrão de 1 px. PS_64 custava 23 401 µs. **Três encoders**, e o `kEncPin` é a ÚNICA fonte — o `Init` lê dela e os nomes saem por `EncoderPinNome`. **`VarreTudo`** lê os 31 pinos (mata OLED e MIDI até um reboot) e **`Reiniciar`** desfaz. O `PollMidi`/`PollSerial` drenam por **instantâneo** do ponteiro — perseguir o ponteiro vivo travou a placa em 28/08 |
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/freeze.h](src/freeze.h) | **v0.3.1** | Freeze granular: núcleo de 500 ms, 2 grãos sorteados, Hann. C++ puro |
 | [src/pitch.h](src/pitch.h) | **v0.5.0** | Motor de pitch compartilhado: 1 buffer, até 4 vozes. **Anti-alias automático na escrita** (Butterworth 6ª ordem, custo zero se nenhuma voz sobe). C++ puro |
@@ -75,13 +75,13 @@ Cinco regras que não se negociam:
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
 | [src/test_midi.cpp](src/test_midi.cpp) | **v0.4.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
 | [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.286.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
+| [src/main.cpp](src/main.cpp) | **v0.300.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/teste_tarol.cpp](src/teste_tarol.cpp) | **v0.2.0** | Banco nativo do tarolator. **Declara o que NÃO prova**: passou com senóides enquanto o efeito soava a caixa — banco prova a álgebra, não o timbre (cicatriz 15u) |
 | [src/teste_macro.cpp](src/teste_macro.cpp) | **v0.1.1** | Ida-e-volta do `Macro::Inverso`, de que a captura do pot depende. Se ele errar, o pot "não pega" e a bancada culpa o ADC |
 | [src/notch.h](src/notch.h) | **v0.2.0** | **Notch anti-microfonia**, duas bocas por cadeia, Q 35 fixo, profundidade em dB. EQ de pico com ganho negativo (e não notch puro, que não tem profundidade ajustável). Nasceu de uma peça de corpo **soldado** — exciter e piezo na mesma chapa, sem junta para perder energia, e por isso nenhum gesto mecânico funcionou. Entra **antes do gate**: se a microfonia passasse pelo portão, seria ela a segurá-lo aberto |
-| [src/splash.h](src/splash.h) | **v0.3.0** | **A abertura**: jogada de búzios que cai de cima em leque, fica **assente**, e então uma das conchas sobe e cresce até virar marca — nome letra a letra, versão a assinar. **Três estados**: abertura completa no arranque (50 quadros, marca segura 3 s; a marca é `ra=26/rb=11` em `cy=17` — medido em pixeis, para deixar 6 linhas de folga até ao nome, que a 30/13 eram 3), semeada do **ruído do próprio ADC** — 917 leituras distintas em 150 ms, que a 6 113 Hz é a taxa de conversão do conversor, e por isso cada arranque é uma jogada diferente; painel de presets **imediato** no uso normal, sem animação; e **só a jogada** (30 quadros, sem marca) quando os búzios disparam de verdade — o vidro mostra a jogada que o instrumento acabou de fazer. 20 Hz. C++ **puro**, sem HAL: vê-se inteira no computador antes de haver vidro. Corre **depois** do `StartAudio`, e o passo é `noinline` — inline no laço custava 13% com o splash parado |
-| [src/desenho.h](src/desenho.h) | **v0.1.0** | Primitivas sobre o framebuffer de 1024 bytes: `Pixel/Le/Linha/Retangulo/Caixa/Elipse/Texto/Largura/TextoCentrado`. Bresenham **inteiro**, sem float — o desenho na placa é bit a bit o do teste em terra. O **recorte mora só no `Pixel`**, e não um `if` por primitiva, que é como se esquece um |
+| [src/splash.h](src/splash.h) | **v0.11.1** | **A abertura**: jogada de búzios que cai de cima em leque, fica **assente**, e então uma das conchas sobe e cresce até virar marca — nome letra a letra, versão a assinar, marca segura 3 s. Semeada do **ruído do próprio ADC**, e por isso cada arranque é uma jogada diferente. Três estados: abertura completa no arranque, painel de presets **imediato** no uso normal, e **só a jogada** quando os búzios disparam de verdade. 20 Hz, C++ **puro**, passo `noinline`. **A marca são três peças, não uma**: casco vazado (anel *cheio menos cheio* — contorno duplo não fecha nos topos), massa do lábio com envelope `sin(π·t^1,5)`, e a boca aberta só por dentro do lábio, com dentes **emparelhados** cima/baixo que mordem meio vão. Espelho cima↔baixo **0 px de 1215, medido**; a assimetria esquerda↔direita é de propósito e foi escolhida pelo dB numa escala de rabos medidos. Caixa da marca: **45 × 27 px** em `cy=17` |
+| [src/desenho.h](src/desenho.h) | **v0.3.1** | Primitivas sobre o framebuffer de 1024 bytes: `Pixel/Le/Linha/Retangulo/Caixa/Elipse/SuperElipse/Texto/Largura/TextoCentrado`. Bresenham **inteiro**, sem float — o desenho na placa é bit a bit o do teste em terra. O **recorte mora só no `Pixel`**, e não um `if` por primitiva, que é como se esquece um. Na `SuperElipse`, **uma linha de pixels é uma faixa e não uma aresta** (largura medida em `|y|−0,5`) e **a tampa é um traço** — foi o espigão do ápice que, ao ser removido, abriu o contorno por cima |
 | [src/fonte5x7.py](src/fonte5x7.py) → [src/fonte5x7.h](src/fonte5x7.h) | **v0.1.0** | 43 glifos em **arte legível**, não hex cego; `--ver` re-desenha a partir do resultado gerado, que é a volta completa. Caractere sem glifo desenha **caixa**, nunca espaço: falta silenciosa de glifo é indistinguível de texto certo |
 | [src/espectro.h](src/espectro.h) | **v0.2.0** | FFT radix-2 escrita à mão, Hann, pico com **interpolação parabólica em dB**, e **dominância** — a fracção da energia no pico, que separa espeto de nota. Substituiu uma autocorrelação que falhou **6 de 6** na prova (pico em múltiplos, e mede periodicidade em vez de força do parcial) |
 | [src/tarol.h](src/tarol.h) | **v0.1.0** | **TAROLATOR** — ruído percussivo com o envelope da pancada, por divisão de frequência. Nasceu oitavador e não faz oitava: numa membrana os modos são inarmónicos e o divisor treme. Nome do dB, e o nome é o diagnóstico. Tom e rastreio FIXOS: como params davam curso morto |
@@ -108,6 +108,8 @@ Cinco regras que não se negociam:
 | [src/qspi_raw.cpp](src/qspi_raw.cpp) | **v0.2.0** | Registradores da QUADSPI na mão, tudo marcado `COTUCA_ITCM`. **ABORT ao sair do memory-mapped** — ver `docs/DESENHO-ESCRITA-QSPI.md` |
 | [src/cotucatronics_qspi.lds](src/cotucatronics_qspi.lds) | **v0.1.0** | Linker script bifurcado da libDaisy (certidão de origem no topo). Acrescenta `.itcm_text` → ITCMRAM |
 | [src/teste_minimo/](src/teste_minimo/) | **v0.4.0** | **Banco de provas na placa.** Trinta linhas que dividem o problema ao meio numa gravação: se fala, a cadeia está boa e o defeito é do app. Já eliminou placa, gravação, USB, init do áudio e 64 MB de SDRAM — e imprime o que o `CheckBoardVersion()` detectou |
+| [src/flash.sh](src/flash.sh) | **v0.4.0** | Grava **só se o build passou**, confere a versão **no fonte e na placa**, e **repõe o estado que a gravação apagou**. Entra no bootloader por `dfu go` e espera o DFU aparecer, em vez de pedir o RESET |
+| [src/estado.py](src/estado.py) | **v0.2.0** | Guarda os params antes do DFU e repõe-os depois. ⚠️ Fala em **`real`**, que é o que o `set` aceita — a v0.1.0 mandava `norm`, era recusada com `fora da faixa`, e **imprimia "repos" na mesma** porque eu deitava fora a resposta. Lê a resposta, e grita o que recusa |
 | [src/porta_daisy.py](src/porta_daisy.py) | **v0.1.0** | Acha a Daisy **perguntando**, nunca por posição no `glob`. Nasceu quando o ESP32 entrou na USB e passou a haver dois `usbmodem` — a escolha por índice virou sorte |
 | [src/check_docs.py](src/check_docs.py) | **v0.12.0** | `make check-docs`: dá testemunha à doc contra o manifest: fantasmas, comandos sem ajuda, mapa de pinos, faixas, e **duas versões no mesmo arquivo que discordam**. Aborta se `AddMidi` não casar nenhuma vez. **Imprime a própria versão na primeira linha**. A regra das duas versões cobre também `.py`, onde não há `#define`: cruza docstring, constante e **o que o script imprime** |
 | [docs/params-aposentados.txt](docs/params-aposentados.txt) | **vivo** | Params aposentados, símbolos removidos e nomes externos — o que o verificador tem licença para não achar |
@@ -157,6 +159,31 @@ make -C ~/dev/libDaisy
 
 ```bash
 cd src && make BOARD=daisy_seed
+```
+
+Para gravar, **use o `flash.sh` e não o `make program-dfu`**:
+
+```bash
+cd src && ./flash.sh
+```
+
+Ele faz três coisas que a regra da casa exige e o `make` não faz: grava **só
+se o build desta vez passou** (o `make program-dfu` grava o binário em disco,
+que pode ser de um build anterior que falhou), confere que a versão **na
+placa** bate com a **do fonte**, e — desde a v0.4.0 —
+
+> ⚠️ **repõe o estado que a gravação apagou, e diz qual repôs.**
+
+Os params são voláteis: a gravação devolve-os todos ao valor de nascença do
+manifesto. Isso já custou quatro gravações seguidas a zerar o `level` sem
+aviso, e — pior — um notch de microfonia que desaparecia no flash. O
+`estado.py` guarda antes do DFU e repõe depois:
+
+```
+  estado: 122 params guardados
+  placa diz v0.300.0
+  CONFERE
+  estado: 122 params conferidos, nenhum divergiu — nada a repor.
 ```
 
 > ⚠️ **A manobra de gravar o dia a dia é SÓ O RESET.** `BOOT + RESET` entra
