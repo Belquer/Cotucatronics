@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""encaixa_grade v0.2.0 — poe a geometria de um .kicad_sch na grade de 1,27 mm.
+"""encaixa_grade v0.3.0 — poe a geometria de um .kicad_sch na grade de 1,27 mm.
 
     ./encaixa_grade.py --medir  FICHEIRO...     # so conta, nao escreve
     ./encaixa_grade.py          FICHEIRO...     # escreve
@@ -25,7 +25,7 @@ Aceitacao: netlist identico antes e depois. Nao e opcional.
 """
 import io, re, sys
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 G = 1.27
 
 
@@ -68,13 +68,24 @@ def processa(p, escrever):
 
     # ⚠️ APENAS estes construtores. `(at` de um `(property` nao entra: e a
     # posicao do TEXTO do rotulo, e move-lo nao muda ligacao nenhuma.
-    padroes = [
-        r'(\(xy )(-?[\d.]+) (-?[\d.]+)()\)',                       # pontas de fio
-        r'(\(junction \(at )(-?[\d.]+) (-?[\d.]+)()\)',            # juncoes
-        r'(\(no_connect \(at )(-?[\d.]+) (-?[\d.]+)()\)',
-    ]
-    for pat in padroes:
-        fora = re.sub(pat, lambda m: coord(m) + ')', fora)
+    # ⚠️ SO O `(xy` fica por regex, porque nao tem forma alternativa.
+    #
+    # As juncoes e os `no_connect` estavam aqui, casados por
+    # `\(junction \(at ` — que exige tudo numa linha. No formato expandido
+    # do KiCad 10 o `(at` vai para a linha seguinte, e o padrao apanhou
+    # ZERO das 26 juncoes da folha do pre-amp.
+    #
+    # E juncao e SEMANTICA (skill `kicad` §4): e ela que faz os fios
+    # ligarem-se num ponto. Mover os fios e deixar as juncoes mata toda a
+    # ligacao em T — as redes de dois membros sobreviveram e as de tres ou
+    # mais morreram, que foi exactamente o sintoma.
+    #
+    # E o pior: e o MESMO erro que a v0.2.0 corrigiu para os simbolos.
+    # Consertei o casamento por estrutura num sitio e deixei-o por
+    # indentacao no outro. Um conserto nao adoptado por TODOS os chamadores
+    # nao esta feito.
+    fora = re.sub(r'(\(xy )(-?[\d.]+) (-?[\d.]+)()\)',
+                  lambda m: coord(m) + ')', fora)
     # COLOCACAO de simbolos e rotulos.
     #
     # ⚠️ POR ESTRUTURA, NUNCA POR INDENTACAO. A v0.1.0 casava
@@ -91,7 +102,7 @@ def processa(p, escrever):
     # seguintes pertencem a `(property`, e sao posicao de texto.
     def coloca(txt):
         out, i = [], 0
-        alvo = re.compile(r'\((symbol|global_label|hierarchical_label|label|text)\b')
+        alvo = re.compile(r'\((symbol|global_label|hierarchical_label|label|text|junction|no_connect)\b')
         while True:
             m = alvo.search(txt, i)
             if not m:

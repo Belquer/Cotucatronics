@@ -378,7 +378,7 @@
 			(in_pos_files yes)
 			(duplicate_pin_numbers_are_jumpers no)
 			(property "Reference" "C"
-				(at 0 6.35 0)
+				(at 0 7.62 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -388,7 +388,7 @@
 				)
 			)
 			(property "Value" ""
-				(at 0 -6.35 0)
+				(at 0 -7.62 0)
 				(show_name no)
 				(do_not_autoplace no)
 				(effects
@@ -457,7 +457,7 @@
 				)
 				(polyline
 					(pts
-						(xy -2 2.2) (xy -1 2.2)
+						(xy -2.2 2.2) (xy -1.2 2.2)
 					)
 					(stroke
 						(width 0.254)
@@ -469,7 +469,7 @@
 				)
 				(polyline
 					(pts
-						(xy -1.5 1.7) (xy -1.5 2.7)
+						(xy -1.7 1.7) (xy -1.7 2.7)
 					)
 					(stroke
 						(width 0.254)
@@ -487,7 +487,7 @@
 					(name ""
 						(effects
 							(font
-								(size 1.27 1.27)
+								(size 1 1)
 							)
 						)
 					)
@@ -505,7 +505,7 @@
 					(name ""
 						(effects
 							(font
-								(size 1.27 1.27)
+								(size 1 1)
 							)
 						)
 					)

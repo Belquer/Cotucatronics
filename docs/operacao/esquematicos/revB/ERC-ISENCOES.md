@@ -102,3 +102,41 @@ Três coisas que custaram uma volta cada, e ficam para a próxima:
 - **A gramática do ficheiro**, que o `check_sch.py` não vê — ele confere a
   rede. Foi por isso que a duplicação de sufixo (`D_V_0_1_0_1`) passou por ele
   e fez o KiCad recusar a folha inteira.
+
+---
+
+## 04/09 — `isolated_pin_label` em `AUDIO_IN_L` e `AUDIO_IN_R`
+
+**Estado:** isenção **COM PRAZO**. Expira quando a folha do soquete existir.
+
+```
+[isolated_pin_label]: Label connected to only one pin
+    @(299.72 mm,  68.58 mm): Global Label 'AUDIO_IN_L'
+    @(299.72 mm, 173.99 mm): Global Label 'AUDIO_IN_R'
+```
+
+**Porquê agora é falso positivo:** são as saídas do pré-amp. O destino delas
+são os pinos de áudio da Daisy, que vivem na **folha do soquete — que ainda
+não foi desenhada**. Hoje o rótulo toca um pino só porque só existe uma ponta.
+
+⚠️ **E esta é exactamente a isenção que se INVERTE** (skill `kicad` §7): num
+projecto de folha única é falso positivo legítimo; **assim que a folha do
+soquete entrar, a mesma linha do relatório passa a significar rede sem
+destino — defeito real.** A mesma frase, dois significados, e quem não marcar
+a data não repara.
+
+**Prazo:** morre no commit que acrescentar `cotuca_soquete.kicad_sch`. Se
+sobreviver a esse commit, **não é isenção, é defeito**.
+
+## 04/09 — `power_pin_not_driven` no U1C (pinos 4 e 8)
+
+**Estado: NÃO isento — pendente.** Faz parte do passo do pré-amp.
+
+Símbolos caseiros não declaram `power_out`, então todo pino `power_in` fica
+órfão. A resposta é um **PWR_FLAG por rede de energia** (skill §6), e não uma
+isenção: aqui a rede `V+PRE` é mesmo alimentada através de `R7` a partir do
+`+15V`, e é isso que o desenho tem de dizer.
+
+⚠️ **UM por rede, e só um** — dois `power_out` na mesma rede trocam um erro
+por outro. E a bandeira não vai na coordenada do rótulo (tapa-o): vai num
+ponto livre do mesmo fio, com junção.
