@@ -1163,6 +1163,108 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "cotuca:PWR_FLAG"
+			(pin_numbers
+				(hide yes)
+			)
+			(pin_names
+				(offset 0)
+				(hide yes)
+			)
+			(exclude_from_sim yes)
+			(in_bom no)
+			(on_board yes)
+			(in_pos_files no)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "#FLG"
+				(at 0 2.54 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "PWR_FLAG"
+				(at 0 -4.44 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(effects
+					(font
+						(size 1 1)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no)
+				(do_not_autoplace no)
+				(hide yes)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(symbol "PWR_FLAG_0_1"
+				(polyline
+					(pts
+						(xy 0 0) (xy 0 -1.27) (xy -1.016 -1.905) (xy 0 -2.54) (xy 1.016 -1.905) (xy 0 -1.27)
+					)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "PWR_FLAG_1_1"
+				(pin power_out line
+					(at 0 0 90)
+					(length 0)
+					(name "pwr"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "cotuca:R_H"
 			(pin_numbers
 				(hide yes)
@@ -3189,13 +3291,12 @@
 		(lib_id "cotuca:R_H")
 		(at 149.86 160.02 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "088a6621-33ac-4a1d-8abb-66ce204cee73")
 		(property "Reference" "R3B"
 			(at 146 168 0)
@@ -3481,13 +3582,12 @@
 		(lib_id "cotuca:C_H")
 		(at 204.47 36.83 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "2a6296c2-349e-433c-a72b-3b96336b01bd")
 		(property "Reference" "C1A"
 			(at 201 33 0)
@@ -3626,13 +3726,12 @@
 		(lib_id "cotuca:CP_V")
 		(at 128.27 49.53 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "3c78f646-86fd-4469-8c9d-2acd3ab8c612")
 		(property "Reference" "C3A"
 			(at 134 46 0)
@@ -3915,13 +4014,12 @@
 		(lib_id "cotuca:CP_V")
 		(at 128.27 153.67 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "5417d56f-4a45-4fe0-8f94-3f7c0834521e")
 		(property "Reference" "C3B"
 			(at 134 151 0)
@@ -4135,13 +4233,12 @@
 		(lib_id "cotuca:R_H")
 		(at 149.86 54.61 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "6b36bdcc-f65a-495c-b45d-81abf65ada5b")
 		(property "Reference" "R3A"
 			(at 146 63 0)
@@ -5081,13 +5178,12 @@
 		(lib_id "cotuca:RV_H")
 		(at 204.47 156.21 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "ab84bc98-75d5-4675-8031-250cc59353f3")
 		(property "Reference" "RVB"
 			(at 201 147 0)
@@ -5373,13 +5469,12 @@
 		(lib_id "cotuca:C_H")
 		(at 204.47 142.24 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "c1895086-fd27-41a2-bcde-4eabd1739951")
 		(property "Reference" "C1B"
 			(at 201 138 0)
@@ -5518,13 +5613,12 @@
 		(lib_id "cotuca:RV_H")
 		(at 204.47 50.8 0)
 		(unit 1)
-		(dnp yes)
 		(body_style 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(in_pos_files yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "dd19503b-5011-4ef4-b1c2-035f7b2516f1")
 		(property "Reference" "RVA"
 			(at 201 42 0)
@@ -5719,6 +5813,84 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "fed3ebd7-1e77-4391-8e6d-98f75811d043")
+	)
+	(symbol
+		(lib_id "cotuca:PWR_FLAG")
+		(at 247.65 250.19 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim yes)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files no)
+		(dnp no)
+		(uuid "5bbfadb7-712e-4aac-aaa4-e79232ad9437")
+		(property "Reference" "#FLG1"
+			(at 247.65 252.73 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "PWR_FLAG"
+			(at 247.65 245.75 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1 1)))
+		)
+		(property "Footprint" "" (at 247.65 250.19 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Datasheet" "" (at 247.65 250.19 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Description" "" (at 247.65 250.19 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "5f6f327e-a64f-4352-9859-b7be397b101d"))
+	)
+	(wire
+		(pts
+			(xy 247.65 250.19) (xy 247.65 242.57)
+		)
+		(stroke (width 0) (type default))
+		(uuid "b69ddd0d-7b4c-405b-89e2-b6a6e21fafbb")
+	)
+	(junction
+		(at 247.65 242.57)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "1d559b38-21cb-473c-beac-3e51955c257f")
+	)
+	(symbol
+		(lib_id "cotuca:PWR_FLAG")
+		(at 88.9 285.75 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim yes)
+		(in_bom no)
+		(on_board yes)
+		(in_pos_files no)
+		(dnp no)
+		(uuid "7f8b59cf-b3ec-496a-aaf2-f67b8720dfdc")
+		(property "Reference" "#FLG2"
+			(at 88.9 288.29 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "PWR_FLAG"
+			(at 88.9 281.31 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1 1)))
+		)
+		(property "Footprint" "" (at 88.9 285.75 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Datasheet" "" (at 88.9 285.75 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(property "Description" "" (at 88.9 285.75 0) (hide yes) (show_name no) (do_not_autoplace no) (effects (font (size 1.27 1.27))))
+		(pin "1" (uuid "6ed92e94-b871-4cca-bbeb-f17bc8c888a1"))
+	)
+	(wire
+		(pts
+			(xy 88.9 285.75) (xy 88.9 278.13)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9d891bbe-9cce-4855-af09-755cc5b27baa")
+	)
+	(junction
+		(at 88.9 278.13)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "053872dd-2af6-40d6-8f59-c8fa2e358c8d")
 	)
 
 )

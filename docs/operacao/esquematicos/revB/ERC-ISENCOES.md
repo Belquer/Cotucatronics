@@ -130,7 +130,7 @@ sobreviver a esse commit, **não é isenção, é defeito**.
 
 ## 04/09 — `power_pin_not_driven` no U1C (pinos 4 e 8)
 
-**Estado: NÃO isento — pendente.** Faz parte do passo do pré-amp.
+**Estado: ✅ RESOLVIDO em 04/09** — não por isenção, por PWR_FLAG.
 
 Símbolos caseiros não declaram `power_out`, então todo pino `power_in` fica
 órfão. A resposta é um **PWR_FLAG por rede de energia** (skill §6), e não uma
@@ -140,3 +140,15 @@ isenção: aqui a rede `V+PRE` é mesmo alimentada através de `R7` a partir do
 ⚠️ **UM por rede, e só um** — dois `power_out` na mesma rede trocam um erro
 por outro. E a bandeira não vai na coordenada do rótulo (tapa-o): vai num
 ponto livre do mesmo fio, com junção.
+
+**Como ficou:** símbolo `cotuca:PWR_FLAG` novo (pino `power_out`, referência
+`#FLG`, não entra na BOM), com uma bandeira em `V+PRE` e outra em `AGND`.
+Cada uma fica num ponto livre do fio, com junção — **não** na coordenada do
+rótulo, que taparia o rótulo.
+
+**Uma por rede, e só uma.** Duas `power_out` na mesma rede trocam um erro por
+outro.
+
+Efeito: ERC do projeto de **4 para 2 violações**, e o netlist **não mudou** —
+23 redes, 103 nós. As bandeiras alimentam a rede para o ERC sem entrar como
+componente, que é o que a convenção da referência `#` existe para fazer.
