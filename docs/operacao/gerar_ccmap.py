@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_ccmap v0.9.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
+"""gerar_ccmap v0.10.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
 
 Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
 se dar por novo um ficheiro que ja tinha historia.
@@ -18,6 +18,14 @@ tabela gerada com buraco e pior que tabela ausente.
 import os
 import pathlib
 import re
+import subprocess
+from datetime import datetime
+
+# ⚠️ UMA VERSAO SO, e por isso e uma CONSTANTE e nao texto repetido.
+# Ate 04/09 a docstring dizia 0.9.0 e a tabela emitida dizia 0.7.0:
+# duas afirmacoes sobre a mesma coisa no mesmo ficheiro, e a que o
+# leitor ve era a velha.
+VERSAO = "0.10.0"
 import sys
 
 
@@ -272,11 +280,11 @@ if faltando:
     sys.exit(1)
 
 ncc = len({d[0] for d in dados})
-tabela = ("<!-- gerado por gerar_ccmap v0.7.0 de %s — nao editar a mao -->\n"
+tabela = ("<!-- gerado por gerar_ccmap v%s de %s — nao editar a mao -->\n"
           "| CC | manda | escuta | param | família | faixa real |\n"
           "|---|---|---|---|---|---|\n%s\n\n"
           "<!-- %d vinculos em %d numeros de CC -->"
-          % (MANIFEST.name, "\n".join(linhas), len(dados), ncc))
+          % (VERSAO, MANIFEST.name, "\n".join(linhas), len(dados), ncc))
 
 if "--stdout" in sys.argv:
     print(tabela)
@@ -291,17 +299,67 @@ if "--stdout" in sys.argv:
 #
 # Gerador que nao ESCREVE deixa a ultima milha para a disciplina humana,
 # e e exatamente ai que o documento se descola do codigo.
+def carimbo(nvinc, ncc, ver_manifest):
+    """Data, contagens, firmware e limpeza da arvore.
+
+    ⚠️ O CARIMBO E DO GERADOR, NAO DA LEMBRANCA DE QUEM O CORRE. Pedido do
+    dB, 04/09: "sempre adiciona a data a lista de CCs pra eu saber quando
+    ela foi gerada". Ate aqui o cabecalho do CCMAP.md era escrito a mao, e
+    ficou a dizer "87 vinculos em 50 numeros de CC / Firmware v0.177.0"
+    enquanto o fonte tinha 119 em 81 — sem data, ninguem podia sequer
+    suspeitar de quao velho era.
+
+    E diz mais do que o dia: de que COMMIT saiu e se a arvore esta suja. Um
+    mapa gerado sobre `manifest.h` por commitar descreve codigo que mais
+    ninguem tem.
+    """
+    quando = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M %Z")
+    raiz = pathlib.Path(__file__).resolve().parents[2]
+    rel = "src/manifest.h"
+    try:
+        sha = subprocess.run(["git", "-C", str(raiz), "log", "-1", "--format=%h",
+                              "--", rel], capture_output=True, text=True).stdout.strip()
+        sujo = subprocess.run(["git", "-C", str(raiz), "status", "--porcelain",
+                               "--", rel], capture_output=True, text=True).stdout.strip()
+    except OSError:
+        sha, sujo = "?", ""
+    L = ["<!-- CARIMBO gerar_ccmap -->",
+         "> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v%s` em **%s**."
+         % (VERSAO, quando),
+         "> Nao editar a mao: rode `python3 docs/operacao/gerar_ccmap.py`.",
+         ">",
+         "> **%d vinculos em %d numeros de CC** · `%s` @ `%s` · manifest %s"
+         % (nvinc, ncc, rel, sha or "?", ver_manifest),
+         ">",
+         "> Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6`"
+         " (escuta = manda + 3)."]
+    if sujo:
+        L += [">", "> ⚠️ **ARVORE SUJA** — `%s` tem alteracoes por commitar." % rel,
+              "> Este mapa descreve codigo que mais ninguem tem."]
+    L.append("<!-- FIM CARIMBO -->")
+    return L
+
+
 AQUI = pathlib.Path(__file__).resolve().parent
 md   = AQUI / "CCMAP.md"
 t    = md.read_text(encoding="utf-8").split("\n")
 i = next(k for k, x in enumerate(t) if "gerado por gerar_ccmap" in x)
 j = next(k for k, x in enumerate(t) if "vinculos em" in x)
-md.write_text("\n".join(t[:i] + tabela.split("\n") + t[j + 1:]), encoding="utf-8")
-print("escrito: %s" % md.name)
+t = t[:i] + tabela.split("\n") + t[j + 1:]
 
 mv = re.search(r'manifest\.h[^\n]*?v(\d+\.\d+\.\d+)', src)
+fw = "v%s" % (mv.group(1) if mv else "?")
+ci = next((k for k, x in enumerate(t) if "<!-- CARIMBO gerar_ccmap -->" in x), None)
+cj = next((k for k, x in enumerate(t) if "<!-- FIM CARIMBO -->" in x), None)
+if ci is None:                      # primeira vez: entra logo abaixo do titulo
+    ci = cj = next(k for k, x in enumerate(t) if x.startswith("# ")) + 1
+    t.insert(ci, "")
+    cj = ci
+t = t[:ci] + carimbo(len(dados), ncc, fw) + t[cj + 1:]
+md.write_text("\n".join(t), encoding="utf-8")
+print("escrito: %s" % md.name)
 card = (AQUI / ".." / "ccmap.html").resolve()
-card.write_text(html(dados, "manifest v%s" % (mv.group(1) if mv else "?"),
+card.write_text(html(dados, "manifest %s · %s" % (fw, datetime.now().strftime("%Y-%m-%d")),
                      ncc), encoding="utf-8")
 print("escrito: %s" % card.name)
 vivos = set(d[3] for d in dados)

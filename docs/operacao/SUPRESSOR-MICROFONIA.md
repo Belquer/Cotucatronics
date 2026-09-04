@@ -1,7 +1,21 @@
-# Supressor de microfonia — desenho
+# SuMiA™ — supressor de microfonias automatizado
 
-Escrito em 02/09, na sessão de escuta em que ele foi decidido. Ainda **não
-construído**: isto é o contrato, medido, antes do código.
+> **CONSTRUÍDO E A CORRER** desde 02/09 (`main.cpp`, `PassoDoSupressor`).
+> Este documento nasceu como o *contrato*, escrito antes do código, e ficou
+> a dizer "ainda não construído" durante dois dias depois de o código
+> existir — apanhado no deep clean de 04/09.
+>
+> **O que ele já fez em serviço:** a 04/09, na escultura real e não no banco
+> de ensaio, encheu as quatro bocas dos dois ramos sozinho — 3025,7 · 4523,4
+> · 790,9 · 5434,5 Hz no L e semelhantes no R. É a primeira vez que segura
+> achados próprios fora da bancada.
+>
+> ⚠️ **Ligado por omissão** (`micro_auto` nasce em 1). Durante uma sessão de
+> escuta deve ser **desligado** — um caçador que muda um notch a meio do
+> julgamento faz atribuir ao efeito uma mudança que foi dele.
+
+O contrato original, medido antes do código, segue abaixo — vale como
+desenho e como registo do que se decidiu e porquê.
 
 ## O que ele é, e o que não é
 

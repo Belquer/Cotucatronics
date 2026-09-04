@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.300.0"
+#define COTUCA_OS_VERSION "0.301.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -2160,7 +2160,7 @@ __attribute__((noinline)) static void ColheEntropia()
 }
 
 // ============================================================
-// SuMiAu(tm) — SUPRESSOR DE MICROFONIAS AUTOMATIZADO
+// SuMiA™ — SUPRESSOR DE MICROFONIAS AUTOMATIZADO
 //
 // Nome do dB, 02/09. E um trocadilho exacto: e o que a microfonia faz.
 //
@@ -2376,7 +2376,7 @@ __attribute__((noinline)) static void PassoDoSupressor()
                              ? kMicroDbMax : db + kMicroDbPasso;
             params.SetReal(manifest.p_notch_db[r][q], novo);
             MicroRecuaRampa();
-            hal::Log("SuMiAu: exciter %c boca %d APROFUNDA"
+            hal::Log("SuMiA™: exciter %c boca %d APROFUNDA"
                      " %.0f -> %.0f dB (%.1f Hz ainda a %.1f dB, dom %.2f)",
                      r ? 'R' : 'L', q + 1, (double)db, (double)novo,
                      (double)hz, (double)nivel, (double)domin);
@@ -2429,7 +2429,7 @@ __attribute__((noinline)) static void PassoDoSupressor()
     // abrir; um corpo limpo abre nos 8 s. A peca negoceia com o proprio
     // corpo em vez de confiar num numero.
     MicroRecuaRampa();
-    hal::Log("SuMiAu: exciter %c boca %d <- %.1f Hz"
+    hal::Log("SuMiA™: exciter %c boca %d <- %.1f Hz"
              " (%.1f dB, dom %.2f)%s",
              r ? 'R' : 'L', alvo + 1, (double)hz, (double)nivel,
              (double)domin, livre < 0 ? "  [despejou a mais grave]" : "");
@@ -3342,7 +3342,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // 6-sim) TOM DE ENSAIO — microfonia sem escultura.
     //
     // ⚠️ EXISTE PORQUE O dB ERA O BANCO DE ENSAIO, e isso acabou. Em 02/09
-    // o SuMiAu foi afinado com a escultura ligada ao lado de uma pessoa;
+    // o SuMiA™ foi afinado com a escultura ligada ao lado de uma pessoa;
     // cada defeito meu chegou-lhe aos ouvidos, e numa delas o filho gritou.
     //
     // COMECOU POR SER UM LACO A SERIO — ressoador de Q alto realimentado —
@@ -3353,7 +3353,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // Isto e mais burro e faz o trabalho: injecta um TOM de amplitude
     // conhecida, ANTES do notch. Nao reproduz a dinamica do laco (nao
     // cresce sozinho, nao morre sozinho), e isso esta declarado — mas
-    // testa o que importa: se o SuMiAu DETECTA, se APROFUNDA quando a boca
+    // testa o que importa: se o SuMiA™ DETECTA, se APROFUNDA quando a boca
     // nao chega, e se DESPEJA quando estao cheias. E nao pode fugir.
     //
     // O que ele NAO testa, e fica escrito: se o notch quebra um laco real.

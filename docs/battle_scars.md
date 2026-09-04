@@ -6969,7 +6969,7 @@ mede-se em quem leva com o resultado.
 
 ## 15bj. O supressor cacava sem laco, e cortava musica em silencio (02/09)
 
-Minutos depois de o SuMiAu nascer, com `out_l=0`, `out_r=0` e o som cortado,
+Minutos depois de o SuMiA™ nascer, com `out_l=0`, `out_r=0` e o som cortado,
 ele encheu tres bocas: 1736, 1713 e 1603 Hz.
 
 **Nao havia microfonia nenhuma.** Sem exciter no ar nao ha laco, e sem laco
@@ -7299,3 +7299,95 @@ Livres a serio: **D11, D12, D20, D21, D29, D30** — seis, nao vinte.
 **Duas afirmacoes contrarias no mesmo ficheiro sobrevivem enquanto nunca
 forem lidas na mesma passagem.** E para isso que o exame de pinos existe no
 `bts`: le o fonte e o documento lado a lado, sem confiar em nenhum dos dois.
+
+---
+
+## 15bu. Escrevi o segundo gerador de CCs, e o primeiro dizia-me onde estava (04/09)
+
+O dB pediu que a lista de CCs saisse sempre com a data. Escrevi um `ccmap.py`
+novo, com carimbo, envolucro clicavel e uma docstring a explicar por que
+existia.
+
+**Ja existia** — `docs/operacao/gerar_ccmap.py`, desde 28/08, seguido pelo
+git. E melhor que o meu: resolve simbolo→nome, emite faixa real e familia,
+sai com codigo 1 se algum CC nao resolver, e **escreve os dois destinos**
+(`CCMAP.md` e o cartao A4 `ccmap.html`), com um comentario a explicar que
+gerador que so imprime "deixa a ultima milha para a disciplina humana, e e
+exactamente ai que o documento se descola do codigo".
+
+E a terceira linha do `CCMAP.md`, que eu tinha aberto minutos antes para
+comparar com o fonte, dizia:
+
+> *"**GERADO do `src/manifest.h`.** Nao editar a mao: rode `python3
+> gerar_ccmap.py`."*
+
+Li aquele ficheiro a procura de CCs em falta e nao vi a instrucao no topo.
+
+> **Antes de escrever uma ferramenta, procurar se ela ja existe — e o sitio
+> mais provavel de a encontrar e o CABECALHO DO ARTEFACTO que ela produz.**
+> Um documento gerado quase sempre diz quem o gerou; e a pergunta "quem fez
+> isto?" e mais barata que "como faco isto?".
+
+Terceira vez desta familia: o `porta_daisy.py` (15bd) existia havia dias e
+previa no proprio docstring o defeito que me mordeu; o `flash.sh` teve o
+conserto adoptado num sitio e nao noutro. **Um conserto nao adoptado por
+todos os chamadores nao esta feito — e uma ferramenta que ninguem procura
+nao esta escrita.**
+
+### O conserto certo era menor do que o que eu tinha feito
+
+Apagar o meu duplicado e por o carimbo no gerador que existe: quatro linhas
+de funcao e um bloco de marcadores no `CCMAP.md`. O trabalho que eu tinha
+feito era maior E pior.
+
+### E o gerador tinha duas versoes a discordar dentro de si
+
+A docstring dizia `v0.9.0` e a tabela que ele emite dizia
+`gerado por gerar_ccmap v0.7.0`. Duas afirmacoes sobre a mesma coisa no mesmo
+ficheiro, e **a que o leitor ve era a velha**. Passou a ser uma constante
+`VERSAO` usada nos dois sitios — que e a regra da casa desde a 15bd, aplicada
+aqui pela primeira vez.
+
+---
+
+## 15bv. Deep clean: o README contradizia-se em vinte linhas (04/09)
+
+Pedido do dB: *"faz um deep clean em toda a documentacao, inclusive pastas do
+Max antiga, incoerencias no Readme"*. O que a varredura achou:
+
+**O README declarava dois estados incompativeis, com quinze linhas entre
+eles.** A linha 8 dizia *"bloco 48, sem RNBO"*; a linha 28 abria um bloco
+intitulado **"Estado versionado — VOCODER LIGADO"** e dizia *"bloco 256 ·
+vocoder no Fx2"*, com a justificacao *"o bloco 256 e exigencia do vocoder"*.
+O RNBO foi aposentado a 20/08 e a placa corre `48000Hz/blk48`.
+
+Dizia ainda **"Estado atual: v0.172.0"** (o fonte estava em v0.301.0, 129
+versoes a frente) e **"os pots e botoes ainda nao foram soldados"** — no
+mesmo dia em que se mapeou dois pots, quatro botoes, dois LEDs e tres
+encoders soldados.
+
+**`docs/operacao/SUPRESSOR-MICROFONIA.md` dizia "Ainda nao construido"** dois
+dias depois de o supressor existir e correr — e nunca usava o nome dele.
+
+**`docs/operacao/CCMAP.md` dizia "87 vinculos em 50 numeros de CC · Firmware
+v0.177.0"** quando o fonte tinha 119 em 81. O cabecalho era escrito a mao
+enquanto a tabela por baixo era gerada: **metade do documento actualizava-se
+sozinha e a outra metade nao**, e era a metade parada que o leitor lia
+primeiro.
+
+**`Max/`** guardava 1,8 MB de `.maxpat` do RNBO aposentado, intocados desde
+15–23/08, referidos por nenhum documento. Removidos da arvore, com o caminho
+de volta escrito no `FEATURES.md` e **provado antes de apagar**
+(`git show 8271e97:Max/rnbo_delay.maxpat` devolve os 104 335 bytes).
+
+**Dez documentos vivos estavam fora do mapa do README** — o `PINOS.md` entre
+eles, que e a fonte de pinos e se confere a cada `bts`.
+
+> **O padrao, e e o mesmo da 15bt:** duas afirmacoes contrarias sobrevivem no
+> mesmo repositorio enquanto nunca forem lidas na mesma passagem. O README
+> tinha-as a quinze linhas de distancia e ninguem as leu juntas durante tres
+> semanas.
+>
+> **A defesa nao e reler:** e fazer o documento nascer do codigo. Onde isso
+> ja acontecia — a tabela do `CCMAP.md` — o conteudo estava certo. Onde nao
+> acontecia, envelheceu.

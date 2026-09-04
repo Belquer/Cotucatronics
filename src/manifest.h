@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v1.12.0
+// manifest.h (instrumento "bancada") v1.12.1
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -1083,7 +1083,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         p_comp_razao    = t.Add("comp_razao",    0.3f, 1.f, 20.f);
         p_comp_makeup   = t.Add("comp_makeup",   0.0f, 1.f, 8.f);
 
-        // ---- SuMiAu(tm): supressor de microfonias automatizado ----
+        // ---- SuMiA™: supressor de microfonias automatizado ----
         //
         // `micro_auto` nasce LIGADO. Um instrumento que arranca com a
         // protecao desligada e o cenario de 02/09, em que o dB levou com

@@ -6,7 +6,21 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-09-04 · leva: **gravar passou a repor o estado** —
+> Atualizado em 2026-09-04 (deep clean) · leva: o supressor passa a
+> chamar-se **SuMiA™** em todas as instâncias · **deep clean da documentação**
+> — o README declarava dois estados incompatíveis a quinze linhas um do outro
+> ("bloco 48, sem RNBO" e "VOCODER LIGADO · bloco 256"), anunciava v0.172.0 com
+> o fonte em v0.301.0, e dizia que os pots e botões não estavam soldados · a
+> pasta `Max/` (1,8 MB de RNBO aposentado) saiu da árvore com o caminho de
+> volta provado · o `CCMAP.md` tinha o cabeçalho à mão a envelhecer por cima
+> de uma tabela gerada · e dez documentos vivos entraram no mapa do README
+>
+> ⚠️ **HARDWARE NOVO: o pré-amp está montado e testado** (04/09), com som mais
+> cheio. Isso invalida toda a medição de ganho anterior — §14 da
+> `medicao-limpa`. A sessão de escuta estava a começar quando o deep clean a
+> interrompeu; **o pré-voo tem de ser refeito do zero.**
+>
+> Antes, 2026-09-04 · leva: **gravar passou a repor o estado** —
 > `flash.sh` v0.4.0 + `estado.py`, guardando antes do DFU e repondo depois,
 > porque a regra existia na skill e vivia só na minha cabeça · a **marca da
 > abertura refeita em três peças** (casco vazado, lábio, boca) contra
@@ -23,7 +37,7 @@ aqui*. Leia os dois antes de tocar em código.
 > larga** diagnosticado até uma regra com nome — `AGND`/`DGND` unidos fora
 > da placa, P3 da varredura de terra, **por confirmar com o multímetro**
 >
-> Antes, 2026-09-02 (noite) · leva: **SuMiAu™** — supressor de
+> Antes, 2026-09-02 (noite) · leva: **SuMiA™** — supressor de
 > microfonias automatizado, por exciter, quatro bocas, provado num **banco
 > de ensaio** sem a escultura · o notch mudou de eixo (cadeia → **ramo**) ·
 > **rampa de arranque supervisionada**, que recua quando apanha um modo ·
@@ -122,7 +136,7 @@ antes do conversor, ou os transitórios continuam a ser destruídos.
 
 ---
 
-## 02/09, noite — SuMiAu™, e o preço de iterar num ser humano
+## 02/09, noite — SuMiA™, e o preço de iterar num ser humano
 
 **O que existe agora.** O `notch` chama-se **`microfonia`** e mudou de eixo:
 era por cadeia (piezo), é por **ramo** (exciter). O laço fecha-se pelo par
@@ -130,7 +144,7 @@ exciter+corpo, e o dB tem tambor no L e botijão no R — um ajuste por cadeia
 obrigava a mesma frequência a servir os dois. **Quatro bocas por ramo**,
 CC 1–18 no ch1.
 
-**O SuMiAu™** (nome dele; o trocadilho é exacto) corre no laço, 250 ms
+**O SuMiA™** (nome dele; o trocadilho é exacto) corre no laço, 250 ms
 alternando ramos. Detecta pela **dominância**, age à primeira vista,
 **aprofunda** de 18 até 24 dB quando a boca não chega, e **despeja a mais
 grave** quando estão cheias — regra dele: *"as mais agudas porque são as
@@ -139,7 +153,7 @@ em preset, e **`micro_auto` está fora do preset por segurança**: uma cena
 não pode desligar a protecção.
 
 **A rampa de arranque é supervisionada.** Sobe em 8 s, curva quadrática, e
-**recua 25%** sempre que o SuMiAu apanha um modo — a boca ganha tempo de
+**recua 25%** sempre que o SuMiA™ apanha um modo — a boca ganha tempo de
 morder e o que já soava baixa. Um corpo que uiva muito demora mais a abrir;
 um corpo limpo abre nos 8 s. **A peça negoceia com o próprio corpo.**
 
@@ -156,7 +170,7 @@ os dois caçadores.
 
 ### O banco de ensaio, e porque devia ter vindo primeiro
 
-O SuMiAu foi afinado **com a escultura ligada ao lado de uma criança**, e
+O SuMiA™ foi afinado **com a escultura ligada ao lado de uma criança**, e
 três vezes a microfonia chegou aos ouvidos dela — uma delas fez o filho do
 dB gritar. Ver **15bi**, **15bj**, **15bk**.
 

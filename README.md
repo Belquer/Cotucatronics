@@ -5,33 +5,42 @@ o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico
 placa, e trocar de hardware significa escrever um arquivo novo — não reescrever
 o sistema.
 
-Projeto colaborativo. Estado atual: **v0.172.0** — **duas cadeias de caráter** (drive, phaser, warble por piezo) sobre uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), bloco 48, **sem RNBO** (o delay virou C++ em 20/08 e levou o runtime inteiro junto),
-**stack anti-feedback completo em software** (gate, governor, limiter e
-shifter SSB, os quatro em C++ do shell), **entrada MIDI** por CC,
-**painel v2** (5 pots + 2 botões, com randomizador e hold) e **caixa-preta**
-em BACKUP_SRAM.
-**T1, T2, T3, T5, T6, T7 e T8 do [TESTES.md](src/TESTES.md) passaram em bancada**;
-T4 espera hardware.
+Projeto colaborativo.
 
-> ### O que ainda NÃO foi validado em placa
+> ### Estado, 2026-09-04 — **v0.301.0**
 >
-> - **MIDI (T10b).** Parser e mapa passam no banco nativo — 16 verificações —
->   mas a UART (baud rate, pino, DMA) só o loopback com jumper prova.
-> - **Painel v2 (T11).** Firmware pronto e simulável por serial (`b1`, `b2`);
->   os pots e botões ainda não foram soldados.
-> - **Vocoder no build.** Ligado em 2026-08-16 com export novo; ainda não
->   ouvido em placa nesta configuração.
+> **480 MHz · 48 kHz · bloco 48** (prazo de 1 000 µs) · app na QSPI · **sem RNBO**
+>
+> **Duas cadeias de caráter** (drive, phaser, warble, tarolator por piezo) sobre
+> uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), com **matriz de
+> roteamento 2×2** — qual cadeia entra em qual saída.
+>
+> **Stack anti-realimentação em quatro camadas**, todas em C++ do shell: gate,
+> Governor, limiter e shifter SSB — mais o **SuMiA™**, supressor de microfonias
+> automatizado, quatro bocas por ramo, que caça e preenche sozinho.
+>
+> **MIDI em seis canais** por ponte BLE↔UART num ESP32-C3 (`ch1` compartilhados
+> · `ch2` cadeia A · `ch3` cadeia B · escuta = manda + 3), **81 CCs**, presets
+> em RAM, **caixa-preta** em BACKUP_SRAM.
+>
+> **Painel soldado e vivo:** OLED SSD1309 por SPI com abertura animada, **três
+> encoders**, **dois pots** (volume por ramo) e **quatro botões** com dois LEDs.
+> O mapa está em [`docs/operacao/PINOS.md`](docs/operacao/PINOS.md), que é a
+> fonte — e o fonte é que manda sobre ele.
 
-> ### Estado versionado — VOCODER LIGADO
+> ### O que ainda NÃO passou pelo ouvido ou pelo multímetro
 >
-> **480 MHz · bloco 256 (5,3 ms de latência) · delay no slot Instrument ·
-> vocoder no Fx2** · app na QSPI
->
-> **O bloco 256 é exigência do vocoder, não preferência:** ele pede
-> ~3 520 µs de pico e o prazo do bloco 48 é 1 000 µs. `Makefile` e
-> `manifest.h` mudam **juntos** — módulo no build e `block_size` — e o
-> comentário está nos dois. Pra voltar ao estado instrumento (bloco 48,
-> só o delay), a receita está em [BOARDS.md](src/BOARDS.md).
+> - **O compressor nunca foi ouvido.** Existe desde 02/09 (`dynamics.h`) e
+>   nunca foi ligado com som.
+> - **Quatro itens da [pauta de escuta](docs/PAUTA-ESCUTA.md)** — o topo do
+>   `drv_sujeira` (só aprovado em 0), o shimmer com transposição a sério, o
+>   delay reescrito, e ~20 versões sem veredito de ouvido.
+> - **O chiado de banda larga** está diagnosticado até uma regra com nome —
+>   `AGND`/`DGND` unidos fora da placa, P3 da varredura de terra — e o
+>   aterramento foi refeito a 03/09 com som mais limpo, **mas a medição com
+>   multímetro nunca foi feita**.
+> - **Os comuns dos DPDT** esperam duas continuidades: o amp é BTL? e o
+>   terminal que vai à ilha é saída de potência ou só o sleeve do TRS?
 
 ---
 
@@ -116,7 +125,16 @@ Cinco regras que não se negociam:
 | [docs/DESENHO-ESCRITA-QSPI.md](docs/DESENHO-ESCRITA-QSPI.md) | **vivo** | A rota dos presets: janela ITCM (**provada**), protocolo real lido do fonte, e **onde a frente parou com a condição de retomada** |
 | [docs/PAUTA-ESCUTA.md](docs/PAUTA-ESCUTA.md) | **vivo** | O que ouvir, na ordem — ~20 versões sem veredito de ouvido |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
-| [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura` |
+| [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — nove skills: `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura`, `bancada-firmware`, `revisao-terra`, `kicad`, `loopy` |
+| [docs/operacao/PINOS.md](docs/operacao/PINOS.md) | **vivo** | **O mapa de pinos, e a fonte é o fonte.** Conferido a cada `bts`. Em 04/09 apanhou-se a dizer `Livres: D0–D12` enquanto listava o OLED como ocupado três secções abaixo — livres a sério são seis |
+| [docs/operacao/SUPRESSOR-MICROFONIA.md](docs/operacao/SUPRESSOR-MICROFONIA.md) | **vivo** | O contrato do **SuMiA™**, medido antes do código, mais o que ele já fez em serviço |
+| [docs/operacao/ATERRAMENTO.md](docs/operacao/ATERRAMENTO.md) · [TERRA-REFAZER.md](docs/operacao/TERRA-REFAZER.md) | **vivo** | A varredura de terra e a folha de bancada com que o aterramento foi refeito a 03/09 |
+| [docs/operacao/ARQUITETURA.md](docs/operacao/ARQUITETURA.md) | **vivo** | O desenho do sinal, ponta a ponta |
+| [docs/operacao/PRESETS.md](docs/operacao/PRESETS.md) · [DESENHO-PRESETS-RAM.md](docs/operacao/DESENHO-PRESETS-RAM.md) · [PRESETS-LISTA.md](docs/operacao/PRESETS-LISTA.md) | **vivo** | Presets: o contrato, o desenho em RAM, e a lista |
+| [docs/operacao/REMAP-ESCUTA.md](docs/operacao/REMAP-ESCUTA.md) · [ROTINAS.md](docs/operacao/ROTINAS.md) | **vivo** | O remapeamento da escuta e as rotinas de bancada |
+| [docs/operacao/gerar_ccmap.py](docs/operacao/gerar_ccmap.py) | **v0.10.0** | **O gerador do mapa de CCs** — escreve o `CCMAP.md` *e* o cartão `ccmap.html`, e **carimba data, commit e árvore suja** (regra do dB, 04/09). ⚠️ Não escrever outro: em 04/09 escrevi um segundo sem procurar este, e o próprio `CCMAP.md` dizia na 3ª linha qual era o certo |
+| [docs/operacao/esquematicos/](docs/operacao/esquematicos/) | **vivo** | A placa de suporte em KiCad — `brief` e `bom` da revA, `brief` e `ERC-ISENCOES` da revB. Regras de desenho na skill `kicad` |
+| [docs/ROTEIRO-BOOT-SRAM.md](docs/ROTEIRO-BOOT-SRAM.md) · [AUDIT-23-08.md](docs/AUDIT-23-08.md) | **histórico** | Registos fechados: o roteiro do boot em SRAM e a varredura de 23/08. Guardados pelo que explicam, não como pendências |
 | [docs/FEATURES.md](docs/FEATURES.md) | **vivo** | **A CAIXA ÚNICA** — toda feature vigente, e as aposentadas no arquivo |
 | [docs/CTOS.md](docs/CTOS.md) | **v0.4.0** | A base à prova de falha, a fronteira CTOS/Efeito, a suíte, e o **teto de soma** (§3b) |
 | [docs/PROCEDIMENTO-MIDI-LEARN.md](docs/PROCEDIMENTO-MIDI-LEARN.md) | **novo** | Endereçar as páginas do Loopy pelo modo `learn`. Inclui os três "não faça" que custaram rodada |
