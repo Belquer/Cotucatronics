@@ -84,18 +84,63 @@ lá não sai para mais lado nenhum.
      comuns dos DPDT ────────────────┼── AGND ──┐
      sleeve dos TRS de linha ────────┤          │
      10 k das entradas do amp ───────┘          │
-                                                │  ⚠️ A PONTE, E É A ÚNICA
-   PLANO DE GND (força e lógica)                │
+                                        AGND ── pino 20 do soquete
+                                                │
+                                          [ NetTie-2 ]  ⚠️ A PONTE, E É A ÚNICA
+                                                │
+   PLANO DE GND (força e lógica)          GND ── pino 40 do soquete
      estrela ── amp · step-down · decoy         │
      Daisy DGND · ESP32 · painel ───────────────┘
-                          nos pinos da Daisy, na folha do soquete
+                     20 e 40 sao VIZINHOS no header: o fio e curto de propósito
 ```
 
-**A ponte mora num sítio só, e o desenho tem de dizer onde**: nos pinos da
-Daisy, na folha do soquete. Não é um `net tie` espalhado nem "os planos
-tocam-se ali no canto" — é um ponto que se aponta com o dedo.
+### ⚠️ A PONTE DESENHA-SE. A SEED NÃO JUNTA OS TERRAS POR DENTRO.
 
----
+> **Corrigido em 04/09, contra o que este mesmo documento dizia horas antes.**
+> A versão anterior afirmava que a Daisy junta `AGND` e `DGND` internamente e
+> que desenhar a ponte seria criar uma segunda. **É o contrário.**
+
+A documentação da libDaisy diz que, ao trabalhar com a Daisy e hardware
+externo, se devem **sempre ligar os pinos `DGND` e `AGND` fora da Daisy**. A
+Seed expõe-os em dois pinos distintos do header — **20 (`AGND`)** e
+**40 (`GND`)**, conferidos no `Daisy_Seed_Rev4_Pinout.csv` do fabricante — e
+**não os une internamente**.
+
+E a regra geral de conversores (Analog Devices) diz onde: a ligação óptima do
+`DGND` é ao `AGND` **no próprio encapsulamento**, ao mesmo potencial, **e em
+mais lado nenhum**. Juntar ali minimiza a diferença de potencial entre os dois
+terras do conversor, que é o que injecta ruído digital no analógico.
+
+### O que isto reescreve, e é grande
+
+🔴 **O P3 não era "tirar uma segunda ponte".** O trilho da permaproto era a
+**única** ponte. Separar o `AGND` do trilho — como o plano dizia — deixa o
+codec **sem referência nenhuma**. É exactamente o que aconteceu em 31/08:
+*"tirar a terra de sinal trocou um zumbido por uma placa morta."*
+
+> **O P3 certo é MOVER a ponte, não removê-la.** Sai do trilho partilhado e
+> entra num fio curto entre o pino 20 e o pino 40, no soquete. **No mesmo
+> gesto, nunca em dois.**
+
+E o anel do P3 continua a ser defeito — mas por outra razão. Não era a ponte
+existir: era ela ser um **trilho partilhado com corrente** em vez de um fio
+curto nos pinos.
+
+### Como se desenha
+
+`AGND` e `GND` continuam **duas redes** no esquema. Ligam-se por **um
+`NetTie-2` junto ao soquete**, nos pinos 20 e 40 — que são vizinhos no header
+2×20, e é isso que torna o fio curto.
+
+| | |
+|---|---|
+| o net-tie dá | **exactamente uma** ligação de cobre, num sítio escolhido |
+| o ERC continua a ver | **duas** redes, cada uma com o seu `PWR_FLAG` |
+| sem net-tie | o `AGND` **flutua** na placa — o codec sem referência |
+
+🚫 **Continua proibido:** qualquer *outra* ligação entre as duas. Planos que
+se tocam num canto, um segundo net-tie, um fio de conveniência. **Uma, e só
+uma, e é a do soquete.**
 
 ## 3 · Desacoplamento, por tipo de carga
 
@@ -158,44 +203,61 @@ resolve-se com desacoplamento local (§3), não cortando terra de sinal.
 > aparece no esquema, não aparece no render, não dá erro no ERC nem no DRC, e
 > não se ouve até haver corrente a correr. Só um teste a apanha.
 
-**E a placa foi desenhada para o tornar possível:** a Daisy está em **soquete**.
-Com ela fora, a ponte física desaparece — e é isso que se mede.
+### 6a · Primeiro, a premissa — e desta vez mede-se
 
-### O teste, em três passos
+Antes de tudo, provar que a Seed **não** junta os terras por dentro. Com uma
+Daisy na mão, fora de tudo, multímetro em continuidade entre o **pino 20
+(`AGND`)** e o **pino 40 (`GND`)** do header:
+
+| resultado | significa |
+|---|---|
+| **aberto** | ✅ confirma a documentação: não estão juntos. **A ponte é nossa para desenhar** |
+| **apita** | 🔴 a documentação está errada ou a placa é outra revisão. **Parar e repensar** — com o net-tie montado haveria duas |
+
+⚠️ **Fazer este teste mesmo estando "resolvido no papel".** A premissa
+anterior deste documento — "a Daisy junta-os por dentro" — foi afirmada com
+confiança, repetida, e estava errada. Custa trinta segundos.
+
+### 6b · Depois, a ponte é única?
+
+Com o net-tie montado, a ilha e a estrela **apitam mesmo com a Daisy fora** —
+e isso é o **correcto**, não um defeito. Por isso o teste de unicidade deixa
+de ser "medir com a Daisy fora" e passa a ser:
 
 ```
-1. Daisy FORA do soquete. Placa sem alimentação.
-2. Multímetro em continuidade (apito).
-3. Ponta A na ilha de AGND    (sleeve de um jack de piezo)
-   Ponta B no plano de GND    (terra do módulo do amp)
+1. Placa sem alimentação.
+2. LEVANTAR uma perna do net-tie (ou não o povoar ainda).
+3. Multímetro em continuidade:
+     ponta A na ilha de AGND  (sleeve de um jack de piezo)
+     ponta B no plano de GND  (terra do módulo do amp)
 ```
 
 | resultado | veredito |
 |---|---|
-| **não apita** (aberto) | ✅ **a ponte é única** — só existe através da Daisy |
-| **apita** | 🔴 **há uma segunda ponte.** Não montar. Achar e cortar |
+| **abre** | ✅ **a ponte é única** — só existe através do net-tie |
+| **continua a apitar** | 🔴 **há uma segunda ponte.** Não montar. Achar e cortar |
 
-### E a confirmação positiva, para não confundir "único" com "nenhum"
+### 6c · E a confirmação positiva
 
 ```
-4. Daisy DENTRO do soquete, ainda sem alimentação.
+4. Net-tie povoado/reposto, ainda sem alimentação.
 5. Mesmas duas pontas.
 ```
 
 | resultado | veredito |
 |---|---|
-| **apita** | ✅ a ponte existe e passa pela Daisy, como desenhado |
-| **não apita** | 🔴 **a ilha está flutuante** — o áudio não tem referência |
+| **apita** | ✅ a ponte existe e passa pelo net-tie, como desenhado |
+| **abre** | 🔴 **a ilha está flutuante** — o codec sem referência |
 
-⚠️ **Os dois passos são obrigatórios, e por ordem.** O passo 3 sozinho não
-distingue "ponte única" de "nenhuma ponte": as duas dão aberto, e uma delas é
-um defeito grave. **Um teste que não separa os dois desfechos não é teste.**
+⚠️ **Os três passos, e por ordem.** O 6b sozinho não distingue "ponte única"
+de "nenhuma ponte", e uma delas mata o áudio. **Um teste que não separa os
+dois desfechos não é teste.**
 
 ### Critério de aceitação, escrito antes do conserto
 
-> **Passa se, e só se: aberto sem a Daisy E fechado com ela.** Escrever os
-> dois resultados no relatório, mesmo quando passam — resultado negativo é
-> achado (R6 da `revisao-terra`).
+> **Passa se, e só se: 20↔40 aberto na Daisy nua · ilha↔estrela aberto com o
+> net-tie levantado · ilha↔estrela fechado com ele posto.** Escrever os três
+> resultados no relatório, mesmo quando passam.
 
 ### Depois, sob carga
 

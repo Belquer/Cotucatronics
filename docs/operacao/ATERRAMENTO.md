@@ -166,20 +166,40 @@ ao ligar, é isto — não um defeito novo.
 
 ## 5 · `AGND` e `DGND` — a ponte estreita
 
-Placas com codec de áudio (a Daisy entre elas) juntam `AGND` e `DGND`
-**internamente, num ponto só**. É uma ligação estreita **de propósito**: assim
-a corrente do lado digital não tem por onde atravessar a referência do codec.
+> ⚠️ **CORRIGIDO EM 04/09, E A VERSÃO ANTERIOR DESTA SECÇÃO ESTAVA ERRADA.**
+> Ela afirmava que a Daisy junta `AGND` e `DGND` internamente. **Não junta.**
+> A documentação da libDaisy diz que se devem **sempre ligar os pinos `DGND` e
+> `AGND` fora da Daisy**, e a Seed expõe-os em dois pinos distintos do header
+> — 20 e 40, conferidos no `Daisy_Seed_Rev4_Pinout.csv` do fabricante.
+>
+> O erro foi afirmado com confiança e repetido, e mandou a análise do ruído
+> branco na direcção errada. Ver `battle_scars.md`.
 
-🚫 **Juntá-los outra vez fora da placa desfaz isso.** Dois pontos de encontro
-formam um anel, e a corrente que percorre o trilho divide-se pelos dois
-caminhos — a fracção que escolhe o de dentro passa **exactamente** pela
-referência do áudio.
+**A ponte tem de existir, e é nossa para a fazer.** A regra geral de
+conversores (Analog Devices) diz onde: a ligação óptima do `DGND` é ao `AGND`
+**no próprio encapsulamento**, ao mesmo potencial, **e em mais lado nenhum** —
+juntar ali minimiza a diferença de potencial entre os dois terras do
+conversor, que é o que injecta ruído digital no analógico.
+
+🚫 **O que continua proibido é ela ser MAIS DO QUE UMA, e ser um trilho.** Dois
+pontos de encontro formam um anel, e a corrente divide-se pelos dois caminhos
+— a fracção que escolhe o de dentro passa **exactamente** pela referência do
+áudio.
 
 ```
-        ┌─── ponte interna da placa (estreita, de propósito) ───┐
-   AGND ┤                                                       ├ DGND
-        └─────── trilho da permaproto (a ligação a mais) ───────┘
+   ERRADO — dois encontros, e um deles partilha corrente
+        ┌──── fio curto nos pinos 20/40 (a ponte que queremos) ────┐
+   AGND ┤                                                          ├ DGND
+        └──────── trilho da permaproto (a ligação A MAIS) ─────────┘
+
+   CERTO — um encontro só, e num fio curto
+   AGND ──── pino 20 ──[ NetTie-2 ]── pino 40 ──── DGND
 ```
+
+> **O anel do P3 não era a ponte existir: era ela ser um trilho partilhado com
+> corrente, em vez de um fio curto nos pinos.** E por isso o conserto é
+> **MOVER** a ponte, nunca removê-la — remover deixa o codec sem referência,
+> que foi o que em 31/08 "trocou um zumbido por uma placa morta".
 
 🚫 **Nunca puxar a alimentação pelo `AGND`.** O retorno de toda a placa
 atravessaria a ponte estreita e aterraria na referência do codec — o oposto
@@ -193,7 +213,8 @@ exacto do que o pino existe para fazer. **A força entra pelo `DGND`.**
           ── comuns dos DPDT
           ── sleeve dos jacks
           ── terra de entrada do amp
-          ↑ encontra o DGND SÓ por dentro da placa
+          ↑ encontra o DGND num ponto SÓ: o net-tie nos pinos 20/40
+            do soquete. NAO por dentro da Daisy — ela nao os junta.
 
    TRILHO DE FORÇA E LÓGICA
      DGND ── fio próprio à estrela

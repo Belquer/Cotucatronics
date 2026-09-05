@@ -7391,3 +7391,71 @@ eles, que e a fonte de pinos e se confere a cada `bts`.
 > **A defesa nao e reler:** e fazer o documento nascer do codigo. Onde isso
 > ja acontecia — a tabela do `CCMAP.md` — o conteudo estava certo. Onde nao
 > acontecia, envelheceu.
+
+---
+
+## 15bw. Um facto de hardware afirmado sem fonte, e escrito em dois documentos (04/09)
+
+O `ATERRAMENTO.md` §5 dizia, desde que foi escrito:
+
+> *"Placas com codec de áudio (a Daisy entre elas) juntam `AGND` e `DGND`
+> internamente, num ponto só."*
+
+**Nao juntam.** A documentacao da libDaisy diz que se devem **sempre ligar os
+pinos `DGND` e `AGND` fora da Daisy**, e a Seed expoe-os em dois pinos
+distintos do header — 20 e 40, no `Daisy_Seed_Rev4_Pinout.csv` do fabricante.
+A regra geral de conversores (Analog Devices) diz onde juntar: ao `AGND` no
+proprio encapsulamento, ao mesmo potencial, e em mais lado nenhum.
+
+O erro nao ficou parado. Em 04/09 o dB reformulou-o com mais forca, para me
+guiar no passo do soquete — *"a ponte nao e um fio, e a propria Daisy; se
+alguem desenhar um net-tie o PCB ganha uma segunda ponte"* — e **eu escrevi-o
+no `MAPA-DE-TERRA.md` §2 tal e qual**, com o simbolo de proibido, sem pedir
+fonte nenhuma. Duas afirmacoes minhas, em dois documentos, a dizer o
+contrario do que o fabricante diz.
+
+### O que isto mandou para o lado errado
+
+**Toda a analise do ruido branco.** O P3 da varredura de terra foi escrito
+como *"AGND e DGND unidos FORA da placa — a ligacao a mais"*, e o conserto
+proposto era **separar** o AGND do trilho. Mas o trilho da permaproto era a
+**UNICA** ponte: separa-lo deixaria o codec sem referencia.
+
+E ja tinha acontecido uma vez. Em 31/08, seguindo esta mesma premissa, deu-se
+um conselho que **matou uma placa**: *"tirar a terra de sinal trocou um
+zumbido por uma placa morta"*. A skill `revisao-terra` ate ganhou uma passada
+nova por causa disso (P3b), sem que ninguem tenha voltado a duvidar da
+premissa que a gerou.
+
+> **O P3 certo e MOVER a ponte, nao remove-la.** Sai do trilho partilhado com
+> corrente e entra num fio curto entre os pinos 20 e 40, no soquete. E o anel
+> continua a ser defeito — mas porque a ponte era um TRILHO, nao porque ela
+> existia.
+
+### A regra, e ela ja estava escrita no mesmo prompt
+
+O prompt que me deu o passo 3 dizia, sobre a pinagem: **"a folha de dados da
+Seed para o `Dnn` → header, e nada de memoria."** E na mesma mensagem afirmava
+de memoria, sem fonte, o facto mais consequente do desenho.
+
+> **"Nada de memoria" nao se aplica so aos numeros que se procuram — aplica-se
+> com mais forca aos factos que se tem por sabidos.** Um numero que nao se
+> sabe manda procurar; um facto que se julga saber nao manda nada, e por isso
+> atravessa dois documentos sem ninguem o parar.
+
+E o meu papel nisto tem nome: **recebi um facto de hardware sem fonte e
+escrevi-o como regra, com sinal de proibido.** A pergunta que faltou custava
+uma linha: *"isto vem da folha de dados ou da memoria?"*
+
+### O que apanhou
+
+Uma busca pela pinagem, feita por outra razao. O resumo trouxe de passagem
+*"DGND and AGND must be connected to each other outside of the Seed"* — e a
+regra da [[prova-externa]] valeu duas vezes: nao aceitei o resumo como facto
+(fonte primaria inacessivel, 403 e 404), **parei**, e disse que nao desenhava
+a folha com a questao aberta. Foi o dB que trouxe a fonte primaria, contra si
+proprio.
+
+⚠️ **E o teste continua a fazer-se.** Continuidade 20↔40 numa Daisy nua tem de
+dar **aberto**. A premissa nova tambem e para medir — sobretudo esta, que ja
+foi afirmada com confianca duas vezes em sentidos opostos.
