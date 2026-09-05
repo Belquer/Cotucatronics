@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="720" viewBox="0 0 1000 720" font-family="Helvetica, Arial, sans-serif">
+<rect width="1000" height="720" fill="#fff"/>
+<style>
+ .box{fill:#fafafa;stroke:#111;stroke-width:1.8}
+ .h{fill:#fdeceb;stroke:#b8322c;stroke-width:1.4}
+ .hc{fill:none;stroke:#b8322c;stroke-width:1}
+ .z{fill:#e8f0e8;stroke:#4a7a4a;stroke-width:1;stroke-dasharray:4 3}
+ .d{stroke:#3a6ea5;stroke-width:0.8;fill:none}
+ .dt{font-size:9.5px;fill:#3a6ea5}
+ .t{font-size:10px;fill:#111}
+ .ts{font-size:8.5px;fill:#555}
+ .tz{font-size:9px;fill:#2c5a2c}
+ .hd{font-size:12.5px;fill:#111;font-weight:bold}
+ .ti{font-size:17px;fill:#111;font-weight:bold}
+ .warn{font-size:9px;fill:#8a4a00}
+ .tab{fill:#fff;stroke:#111;stroke-width:1.2}
+</style>
+<text class="ti" x="28" y="30" text-anchor="start">Página 5 — JUNTAS, LISTA DE CORTE E FERRAGENS</text>
+<text class="ts" x="28" y="48" text-anchor="start">Dentes de 10 mm, profundidade = espessura (6). Kerf 0,2 mm: dentes +0,1 por lado. Só a base tem dentes; a tampa assenta a topo.</text>
+<text class="hd" x="60" y="90" text-anchor="start">Lista de corte (acrílico cast)</text>
+<text class="t" x="60" y="110" text-anchor="start">peça</text>
+<text class="t" x="180" y="110" text-anchor="start">dimensão externa</text>
+<text class="t" x="400" y="110" text-anchor="start">esp.</text>
+<text class="t" x="450" y="110" text-anchor="start">bordas</text>
+<text class="ts" x="60" y="126" text-anchor="start">fundo</text>
+<text class="ts" x="180" y="126" text-anchor="start">200 × 120</text>
+<text class="ts" x="400" y="126" text-anchor="start">6</text>
+<text class="ts" x="450" y="126" text-anchor="start">dentes nas 4 bordas (para as paredes)</text>
+<text class="ts" x="60" y="142" text-anchor="start">frente</text>
+<text class="ts" x="180" y="142" text-anchor="start">200 × 40</text>
+<text class="ts" x="400" y="142" text-anchor="start">6</text>
+<text class="ts" x="450" y="142" text-anchor="start">dentes em baixo e nos 2 lados</text>
+<text class="ts" x="60" y="158" text-anchor="start">trás</text>
+<text class="ts" x="180" y="158" text-anchor="start">200 × 70</text>
+<text class="ts" x="400" y="158" text-anchor="start">6</text>
+<text class="ts" x="450" y="158" text-anchor="start">dentes em baixo e nos 2 lados</text>
+<text class="ts" x="60" y="174" text-anchor="start">esquerda</text>
+<text class="ts" x="180" y="174" text-anchor="start">120 × 40→70 (trapézio)</text>
+<text class="ts" x="400" y="174" text-anchor="start">6</text>
+<text class="ts" x="450" y="174" text-anchor="start">ranhuras em baixo e nos 2 lados; topo liso inclinado</text>
+<text class="ts" x="60" y="190" text-anchor="start">direita</text>
+<text class="ts" x="180" y="190" text-anchor="start">120 × 70→40 (espelho)</text>
+<text class="ts" x="400" y="190" text-anchor="start">6</text>
+<text class="ts" x="450" y="190" text-anchor="start">idem</text>
+<text class="ts" x="60" y="206" text-anchor="start">tampa</text>
+<text class="ts" x="180" y="206" text-anchor="start">200 × 123,7</text>
+<text class="ts" x="400" y="206" text-anchor="start">8</text>
+<text class="ts" x="450" y="206" text-anchor="start">sem dentes; 6 furos M3 escareados</text>
+<text class="ts" x="60" y="222" text-anchor="start">blocos</text>
+<text class="ts" x="180" y="222" text-anchor="start">12 × 12 × 25 (×6)</text>
+<text class="ts" x="400" y="222" text-anchor="start">12</text>
+<text class="ts" x="450" y="222" text-anchor="start">de barra; inserto M3</text>
+<text class="hd" x="60" y="252" text-anchor="start">Padrão de dentes — exemplo da borda de baixo da FRENTE (200 mm)</text>
+<rect class="box" x="60" y="288.0" width="520.0" height="52.0"/>
+<rect class="h" x="117.2" y="340" width="26.0" height="15.6"/>
+<rect class="h" x="195.2" y="340" width="26.0" height="15.6"/>
+<rect class="h" x="273.2" y="340" width="26.0" height="15.6"/>
+<rect class="h" x="351.2" y="340" width="26.0" height="15.6"/>
+<rect class="h" x="429.2" y="340" width="26.0" height="15.6"/>
+<rect class="h" x="507.2" y="340" width="26.0" height="15.6"/>
+<text class="ts" x="320.0" y="369.6" text-anchor="middle">6 dentes de 10 × 6, passo 30, o primeiro a 22 mm da borda esquerda</text>
+<path class="d" d="M60 278.0 L117.2 278.0 M60 274.0 L60 282.0 M117.2 274.0 L117.2 282.0"/>
+<text class="dt" x="88.6" y="271.0" text-anchor="middle">22</text>
+<path class="d" d="M117.2 278.0 L143.2 278.0 M117.2 274.0 L117.2 282.0 M143.2 274.0 L143.2 282.0"/>
+<text class="dt" x="130.2" y="271.0" text-anchor="middle">10</text>
+<path class="d" d="M143.2 278.0 L195.2 278.0 M143.2 274.0 L143.2 282.0 M195.2 274.0 L195.2 282.0"/>
+<text class="dt" x="169.2" y="271.0" text-anchor="middle">20</text>
+<text class="ts" x="60" y="400" text-anchor="start">As paredes esquerda/direita recebem RANHURAS onde a frente/trás têm dentes (complementares).</text>
+<text class="ts" x="60" y="414" text-anchor="start">O fundo tem dentes para cima nas 4 bordas; as paredes têm ranhuras em baixo. Um gerador (boxes.py) produz o DXF a partir destes números.</text>
+<text class="hd" x="60" y="450" text-anchor="start">Ferragens e consumíveis</text>
+<text class="ts" x="60" y="470" text-anchor="start">parafuso M3 × 12 escareado</text>
+<text class="ts" x="380" y="470" text-anchor="start">6</text>
+<text class="ts" x="480" y="470" text-anchor="start">tampa → blocos</text>
+<text class="ts" x="60" y="485" text-anchor="start">inserto M3 para acrílico</text>
+<text class="ts" x="380" y="485" text-anchor="start">6</text>
+<text class="ts" x="480" y="485" text-anchor="start">nos blocos</text>
+<text class="ts" x="60" y="500" text-anchor="start">espaçador M3 × 8 fêmea-fêmea + parafuso M3 × 6</text>
+<text class="ts" x="380" y="500" text-anchor="start">4 + 8</text>
+<text class="ts" x="480" y="500" text-anchor="start">carrier</text>
+<text class="ts" x="60" y="515" text-anchor="start">espaçador M3 × 6 + parafuso</text>
+<text class="ts" x="380" y="515" text-anchor="start">4 + 8</text>
+<text class="ts" x="480" y="515" text-anchor="start">módulo do amp — confirmar padrão</text>
+<text class="ts" x="60" y="530" text-anchor="start">pé de borracha ø15 adesivo</text>
+<text class="ts" x="380" y="530" text-anchor="start">4</text>
+<text class="ts" x="480" y="530" text-anchor="start">fundo</text>
+<text class="ts" x="60" y="545" text-anchor="start">cimento de acrílico (Weld-On 4 ou equiv.)</text>
+<text class="ts" x="380" y="545" text-anchor="start">1</text>
+<text class="ts" x="480" y="545" text-anchor="start">juntas e blocos</text>
+<text class="ts" x="60" y="560" text-anchor="start">porcas dos jacks / pots / encoder / DPDT</text>
+<text class="ts" x="380" y="560" text-anchor="start">vêm com as peças</text>
+<text class="ts" x="480" y="560" text-anchor="start">—</text>
+<text class="ts" x="60" y="575" text-anchor="start">cabo USB-C curto 10–15 cm</text>
+<text class="ts" x="380" y="575" text-anchor="start">1</text>
+<text class="ts" x="480" y="575" text-anchor="start">berço → decoy</text>
+<text class="warn" x="60" y="620" text-anchor="start">Ordem de fabrico: cortar UMA caixa → montar a base (sem tampa) → conferir furos com as peças → só então a tampa → só então a série.</text>
+</svg>

@@ -23,7 +23,15 @@ PARES = [
     ("docs/desenhos/esquematicos/cotuca_energia.svg", "kicad/cotuca_cerebro/cotuca_energia.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_preamp.svg",  "kicad/cotuca_cerebro/cotuca_preamp.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_soquete.svg", "kicad/cotuca_cerebro/cotuca_soquete.kicad_sch"),
+    # a caixa: cinco paginas de um gerador proprio
+    ("docs/desenhos/caixa/caixa-fabricacao-p2-tampa.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
+    ("docs/desenhos/caixa/caixa-fabricacao-p3-fundo.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
+    ("docs/desenhos/caixa/caixa-fabricacao-p4-interior.svg", "docs/desenhos/caixa/gen_caixa_paginas.py"),
+    ("docs/desenhos/caixa/caixa-fabricacao-p5-juntas.svg",   "docs/desenhos/caixa/gen_caixa_paginas.py"),
+    ("docs/desenhos/caixa/caixa-fabricacao-p6-berco.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
 ]
+# ⚠️ `caixa-fabricacao.svg` (pagina 1) NAO esta aqui: nao ha gerador dela
+# neste repo. E a unica da pasta que pode divergir sem que nada acuse.
 
 
 def gerar(fonte, destino):
@@ -49,8 +57,10 @@ def main():
         fd, ff = RAIZ / destino, RAIZ / fonte
         if not ff.exists():
             print("  ? fonte ausente: %s" % fonte); velhos += 1; continue
-        if ger:
+        if ger and fonte.endswith(".kicad_sch"):
             gerar(fonte, destino)
+        elif ger and fonte.endswith("gen_caixa_paginas.py"):
+            subprocess.run([sys.executable, str(RAIZ / fonte)], capture_output=True)
         if not fd.exists():
             print("  ✗ FALTA      %s" % destino); velhos += 1; continue
         # ⚠️ a FONTE mais nova que o DESENHO e a definicao de velho.

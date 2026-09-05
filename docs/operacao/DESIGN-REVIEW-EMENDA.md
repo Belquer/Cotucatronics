@@ -69,7 +69,7 @@ Qualquer edição depois de qualquer um dos três reinicia os três.
 |---|---|---|
 | caixa-fabricacao.svg | 30 acusações (2 reais visíveis, 4 quase-toques, 24 falsos por trapézio) | **0**, ferramenta corrigida para contentores |
 | preamp-piezo.svg | 3 quase-toques que o olho nunca viu em três revisões | **0** |
-| caixa-pedal-4-faces.svg | 2 falsos por sombreado | **0**, com o filtro de opacidade |
-| caixa-pedal-layout.svg | 1 falso por sombreado | **0** |
+| `caixa-pedal-4-faces.svg` *(aposentado 05/09)* | 2 falsos por sombreado | **0**, com o filtro de opacidade |
+| `caixa-pedal-layout.svg` *(aposentado 05/09)* | 1 falso por sombreado | **0** |
 
 A ferramenta apanhou o defeito que o dB viu **e** três que ninguém tinha visto.

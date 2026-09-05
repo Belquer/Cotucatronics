@@ -32,6 +32,28 @@ essa pergunta é onde a disciplina se perde.
 Saem do mesmo ficheiro que a fábrica vai ler, portanto **não podem divergir —
 não têm vida própria.**
 
+### `caixa/` — **gerados**, menos a página 1
+
+Seis páginas do desenho de fabricação da caixa, por `gen_caixa_paginas.py`
+(v0.2.0), que corre daqui:
+
+```bash
+python3 docs/desenhos/caixa/gen_caixa_paginas.py
+```
+
+⚠️ **As cotas marcadas "confirmar" mudam depois de medir as peças — e mudam
+no `.py`, nunca no SVG.** Um SVG editado à mão diverge do gerador na primeira
+regeneração, e aí ninguém sabe qual manda.
+
+⚠️ **A página 1 (`caixa-fabricacao.svg`) NÃO é escrita por este gerador** —
+ele só emite as p2 a p6. Ela não tem fonte neste repo, e por isso é a única
+da pasta que pode divergir sem que nada acuse. Fica assinalada até ganhar
+gerador ou morrer.
+
+Ao contrário dos esquemáticos, estas **passam o `svg_colisoes`** — são
+`<text>` a sério — e o próprio gerador corre o portão a cada página, com
+`assert` no fim: com colisões, não entrega.
+
 ### ⚠️ O que se perde nessa troca, e é honesto dizê-lo
 
 Estes SVG **não passam o portão do `svg_colisoes.py`**: o `kicad-cli` desenha
@@ -60,19 +82,25 @@ ser a fonte quando o projecto KiCad entrou.
 
 ## Ainda fora daqui, e a decidir
 
-Desenhos que **não** têm fonte KiCad e por isso não se geram — ficam por
-julgar um a um, com a pergunta que vale mais que o conserto: **isto ainda
-serve para quê?**
+Desenhos que **não** têm fonte e por isso não se geram — ficam por julgar um
+a um, com a pergunta que vale mais que o conserto: **isto ainda serve para
+quê?**
 
-- `docs/operacao/esquematicos/revB/caixa-pedal-4-faces.svg` — citado pelo
-  `ROTEIRO-KICAD.md` §3. As seis páginas que o substituiriam **não existem
-  neste repo**.
-- `docs/operacao/esquematicos/revB/caixa-pedal-layout.svg` — citado só pela
-  emenda da `design-review`, como prova histórica.
 - `docs/operacao/esquematicos/piezo_v2_protecao.svg` — a protecção do piezo
   **já vive** no `cotuca_preamp.kicad_sch` (D1 BAV99, R1, R2). Pela regra
-  acima, é candidato a morrer.
+  desta pasta, é candidato a morrer.
 - `cotucatronics_esquematicos_v3.svg` — superseded pelo `v4`, citado por
   ninguém.
 - `cotucatronics_esquematicos_v4.svg` · `cotucatronics_build_sheet.svg` —
-  citados por ninguém; o `build_sheet` não tem equivalente em KiCad.
+  citados por ninguém. O `build_sheet` não tem equivalente em KiCad, portanto
+  sobrevive à regra — mas não necessariamente à pergunta.
+
+## Já morreram
+
+| desenho | quando | porquê |
+|---|---|---|
+| `preamp-piezo.svg` | 05/09 | descrevia o pré-amp de antes do `.kicad_sch` — `C2 1 nF` e `RV1` vivo, contra `20n` e `DNP` |
+| `caixa-pedal-4-faces.svg` · `caixa-pedal-layout.svg` | 05/09 | as duas versões anteriores da caixa, substituídas pelas seis páginas |
+| `cotuca_energia_previa.svg` · `energia_preview.svg` · `preamp_preview.svg` | 05/09 | prévias dos `gen_*.py`, que deixaram de ser a fonte |
+
+Todos continuam em git.

@@ -43,7 +43,8 @@ projetos, via a via.
 
 ## 3 · A caixa: quatro faces
 
-Desenho em `caixa-pedal-4-faces.svg`. **Cunha** de madeira, 200 × 120:
+Desenho em [`docs/desenhos/caixa/`](../../../desenhos/caixa/) — seis páginas,
+geradas por `gen_caixa_paginas.py`. **Cunha** de madeira, 200 × 120:
 **frente 40 mm, trás 70 mm**. Sem interruptor de energia — ligar o USB é ligar.
 
 **Perfil de altura, e é restrição de layout antes da primeira peça:** os arcade
