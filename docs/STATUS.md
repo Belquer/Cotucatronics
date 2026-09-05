@@ -118,6 +118,16 @@ aqui*. Leia os dois antes de tocar em código.
 > casco provado fechado por **alagamento** · e o **exame de pinos** a apanhar
 > o `PINOS.md` a contradizer-se a si próprio
 >
+> **05/09 — o teste do terra no documento dono estava velho.** O
+> `ATERRAMENTO.md` (v0.2.0) é, pelo README, o dono do assunto, mas a sua
+> secção *Conferência* ainda mandava medir a ilha contra o trilho e dizia *"se
+> apitar, há uma ligação a mais"*. **Com o net-tie do revB, apitar é o
+> correcto** — o teste velho faria ler uma placa certa como defeituosa. Passou
+> a espelhar o `MAPA-DE-TERRA.md` §6: três medições e por ordem, porque o
+> teste do meio sozinho não separa *"ponte única"* de *"nenhuma ponte"*, e uma
+> delas mata o áudio. A premissa (20↔40 aberto na Daisy nua) está **medida em
+> 04/09**; o que continua por medir é a placa montada.
+>
 > ⚠️ **Continua por confirmar com o multímetro** o `AGND`/`DGND` unidos fora
 > da placa (P3 da varredura de terra) — o dB refez o aterramento em 03/09 e
 > reportou som mais limpo, mas a medida não foi feita.

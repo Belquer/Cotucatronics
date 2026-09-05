@@ -1,6 +1,6 @@
 # ATERRAMENTO — o capítulo
 
-**v0.1.0** · escrito em 31/08/2026, depois de uma tarde a caçar três ruídos
+**v0.2.0** · escrito em 31/08/2026, depois de uma tarde a caçar três ruídos
 que tinham três causas diferentes e um sintoma parecido.
 
 > Este é o documento **dono** do assunto. O `HARDWARE.md` descreve *este*
@@ -232,10 +232,42 @@ directamente na leitura.
 estrela antes do fio dedicado. Sobre uma referência de 3,3 V isso é **1,3% do
 curso — cerca de 1,6 passos de MIDI**, a mexer sozinho.
 
-### Conferência
+### Conferência — TRÊS medições, e por esta ordem
 
-Com a placa **fora do soquete**, medir continuidade entre a ilha de áudio e o
-trilho de força. **Se apitar, há uma ligação a mais.**
+> ⚠️ **CORRIGIDO EM 05/09.** A versão anterior desta secção mandava medir a
+> ilha contra o trilho com a placa fora do soquete e dizia *"se apitar, há uma
+> ligação a mais"*. **Com o net-tie desenhado, apitar é o CORRECTO** — e o
+> teste velho faria ler uma placa certa como defeituosa. O teste vivo é o do
+> [`MAPA-DE-TERRA.md`](esquematicos/revB/MAPA-DE-TERRA.md) §6, reproduzido
+> aqui porque é este o documento que manda no assunto.
+
+**1 · A premissa, na Daisy nua.** Continuidade entre o pino 20 (`AGND`) e o
+pino 40 (`GND`), com a placa fora de tudo.
+
+| resultado | significa |
+|---|---|
+| **aberto** | ✅ **medido em 04/09.** A ponte é nossa para fazer |
+| **apita** | 🔴 seria outra revisão. Parar e repensar |
+
+**2 · A ponte é única?** Sem alimentação, **levantar uma perna do net-tie**
+(ou ainda não o povoar). Ponta A na ilha de `AGND` (sleeve de um jack de
+piezo), ponta B no plano de `GND` (terra do módulo do amp).
+
+| resultado | veredito |
+|---|---|
+| **abre** | ✅ a ponte é única — só existe através do net-tie |
+| **continua a apitar** | 🔴 há uma segunda ponte. Não montar. Achar e cortar |
+
+**3 · A ponte existe?** Net-tie reposto, ainda sem alimentação, mesmas pontas.
+
+| resultado | veredito |
+|---|---|
+| **apita** | ✅ a ponte existe e passa pelo net-tie, como desenhado |
+| **abre** | 🔴 a ilha está flutuante — o codec sem referência |
+
+⚠️ **Os três, e por ordem.** O passo 2 sozinho não distingue *"ponte única"*
+de *"nenhuma ponte"*, e uma delas mata o áudio. **Um teste que não separa os
+dois desfechos não é teste.**
 
 ### ⚠️ Separar as fontes de alimentação PIORA — medido em 01/09
 
