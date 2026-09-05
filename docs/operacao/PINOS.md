@@ -78,10 +78,11 @@ para descobrir cablagem de encoder).
 >
 > **Este documento reservava-as para o sense dos DPDT.** Não vão lá.
 
-**Sense dos DPDT: usar `D11`/`D12`** (`I2C1_SCL`/`SDA`, PB8/PB9) ou
-`D20`/`D21` (`ADC_INP11`/`ADC1_INP4`, PC1/PC4). Todos livres e sem função
-amarrada ao silício. O objectivo mantém-se: `exc_on` a ler estado **real** do
-hardware, não intenção de software.
+**O sense dos DPDT foi DESCARTADO a 05/09.** A DPDT tipo 2 usa os dois polos
+para o mesmo canal (comuns amarrados), portanto não sobra contacto para ler o
+estado. `exc_on` continua a ser **intenção de software** — o firmware acredita
+no que lhe dizem. As opções e o que cada uma custa estão em
+[`FUTURO.md`](../FUTURO.md) §1, incluindo uma que não gasta pino nenhum.
 
 ⚠️ **`D0` é o `USB_HS_ID`** e está a ser usado como fase A do encoder A. Em
 modo dispositivo o pino ID não é usado, portanto funciona — mas fica escrito,

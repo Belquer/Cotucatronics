@@ -142,7 +142,11 @@ LIGA = {
     # dissolveu o conflito sem se tocar em firmware que funcionava.
     "D15":"POT_L","D16":"POT_R",
     "D22":"BOT_FRZ_B","D23":"LED_FRZ_B","D24":"BOT_FRZ_A",    "D26":"BOT_BUZIOS","D27":"LED_FRZ_A",  # o buzios ganha botao branco no painel
-    "D11":"DPDT_SENSE_L","D12":"DPDT_SENSE_R",
+    # ⚠️ O SENSE DOS DPDT NAO EXISTE, e a decisao e de 05/09. A DPDT tipo 2
+    # usa os DOIS polos para o mesmo canal (comuns amarrados), logo nao sobra
+    # contacto para ler o estado. `exc_on` continua a ser INTENCAO de
+    # software, e nao leitura de hardware — o que quer dizer que o firmware
+    # acredita no que lhe dizem. Ver docs/FUTURO.md.
 }
 # ⚠️ D29 e D30 NAO entram. Sao USB_HS_D-/D+ (pinos 36/37). Ver PINOS.md.
 
