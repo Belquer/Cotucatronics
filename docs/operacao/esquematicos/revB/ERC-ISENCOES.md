@@ -107,7 +107,11 @@ Três coisas que custaram uma volta cada, e ficam para a próxima:
 
 ## 04/09 — `isolated_pin_label` em `AUDIO_IN_L` e `AUDIO_IN_R`
 
-**Estado:** isenção **COM PRAZO**. Expira quando a folha do soquete existir.
+**Estado: ✅ MORREU EM 05/09**, no commit que criou `cotuca_soquete.kicad_sch`.
+`AUDIO_IN_L` liga a `C4A.2` e `U2.16`; `AUDIO_IN_R` a `C4B.2` e `U2.17`.
+Zero menções no relatório. **O prazo cumpriu-se como estava escrito** — e é
+a primeira vez que uma isenção deste repo expira por ter sido resolvida, e
+não por alguém a apagar.
 
 ```
 [isolated_pin_label]: Label connected to only one pin
@@ -152,3 +156,28 @@ outro.
 Efeito: ERC do projeto de **4 para 2 violações**, e o netlist **não mudou** —
 23 redes, 103 nós. As bandeiras alimentam a rede para o ERC sem entrar como
 componente, que é o que a convenção da referência `#` existe para fazer.
+
+---
+
+## 05/09 — `isolated_pin_label` × 25, sinais do painel
+
+**Estado:** isenção **COM PRAZO**. Expira no commit que criar a folha do
+conector IDC 2×13 (`ROTEIRO-KICAD.md` §5).
+
+São os rótulos que a folha do soquete leva da Daisy para o painel — OLED
+(`RST/DC/CS/CLK/DIN`), os três encoders, os dois pots, os quatro botões e os
+dois LED. Hoje tocam um pino só porque só existe uma ponta.
+
+⚠️ **É a mesma isenção que se inverte** (skill `kicad` §7): quando a folha do
+conector entrar, a mesma linha passa a significar **rede sem destino**.
+
+## 05/09 — `pin_not_connected` × 4: D20, D21, D29, D30
+
+**Estado: NÃO é isenção — é o desenho certo, e fica declarado.**
+
+`D20` e `D21` estão livres de propósito. **`D29` e `D30` são as linhas de
+dados do USB** (pinos 36/37, `USB_HS_D−`/`D+`): não podem ser usados, e a
+ausência de ligação é o comportamento correto — ver `PINOS.md`.
+
+Se algum dia estes quatro deixarem de aparecer aqui, alguém ligou alguma
+coisa a eles, e nos dois últimos isso mata a serial.

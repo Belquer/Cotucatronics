@@ -55,6 +55,27 @@
 			)
 		)
 	)
+	(sheet
+		(at 30.48 121.92)
+		(size 76.2 25.4)
+		(fields_autoplaced yes)
+		(stroke (width 0.1524) (type solid))
+		(fill (color 0 0 0 0.0000))
+		(uuid "3747994b-b177-4088-93e8-14962e07c5b9")
+		(property "Sheetname" "SOQUETE + PONTE + DPDT + SAIDAS"
+			(at 30.48 121.22 0)
+			(effects (font (size 1.27 1.27)) (justify left bottom))
+		)
+		(property "Sheetfile" "cotuca_soquete.kicad_sch"
+			(at 30.48 148.02 0)
+			(effects (font (size 1.27 1.27)) (justify left top))
+		)
+		(instances
+			(project "cotuca_cerebro"
+				(path "/" (page "4"))
+			)
+		)
+	)
 	(sheet_instances
 		(path "/" (page "1"))
 	)

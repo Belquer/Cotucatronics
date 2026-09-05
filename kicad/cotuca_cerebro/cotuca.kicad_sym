@@ -2820,4 +2820,354 @@
   	)
   )
   )
+  (symbol "NETTIE2"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "NT"
+  	(at 0 3.81 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "NetTie-2  AGND<->GND"
+  	(at 0 -3.81 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "NETTIE2_0_1"
+  	(rectangle
+  		(start -2.54 1.27)
+  		(end 2.54 -1.27)
+  		(stroke (width 0.254) (type default))
+  		(fill (type outline))
+  	)
+  )
+  (symbol "NETTIE2_1_1"
+  	(pin passive line
+  		(at -7.62 0 0)
+  		(length 5.08)
+  		(name "A"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 7.62 0 180)
+  		(length 5.08)
+  		(name "B"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+  (symbol "DPDT"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "SW"
+  	(at 0 11.43 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "DPDT tipo 2"
+  	(at 0 -11.43 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "DPDT_0_1"
+  	(rectangle
+  		(start -6.35 8.89)
+  		(end 6.35 -8.89)
+  		(stroke (width 0.254) (type default))
+  		(fill (type background))
+  	)
+  )
+  (symbol "DPDT_1_1"
+  	(pin passive line
+  		(at -11.43 5.08 0)
+  		(length 5.08)
+  		(name "COM_A"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 11.43 7.62 180)
+  		(length 5.08)
+  		(name "A1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 11.43 2.54 180)
+  		(length 5.08)
+  		(name "A2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -11.43 -5.08 0)
+  		(length 5.08)
+  		(name "COM_B"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 11.43 -2.54 180)
+  		(length 5.08)
+  		(name "B1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "5"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 11.43 -7.62 180)
+  		(length 5.08)
+  		(name "B2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "6"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+  (symbol "CONN4_L"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "J"
+  	(at 0 8.89 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "conector 4p"
+  	(at 0 -8.89 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "CONN4_L_0_1"
+  	(rectangle
+  		(start -2.54 6.35)
+  		(end 2.54 -6.35)
+  		(stroke (width 0.254) (type default))
+  		(fill (type background))
+  	)
+  )
+  (symbol "CONN4_L_1_1"
+  	(pin passive line
+  		(at -7.62 5.08 0)
+  		(length 5.08)
+  		(name "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 2.54 0)
+  		(length 5.08)
+  		(name "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 0.0 0)
+  		(length 5.08)
+  		(name "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 -2.54 0)
+  		(length 5.08)
+  		(name "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+  (symbol "CONN5_L"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "J"
+  	(at 0 10.16 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "conector 5p"
+  	(at 0 -10.16 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "CONN5_L_0_1"
+  	(rectangle
+  		(start -2.54 7.62)
+  		(end 2.54 -7.62)
+  		(stroke (width 0.254) (type default))
+  		(fill (type background))
+  	)
+  )
+  (symbol "CONN5_L_1_1"
+  	(pin passive line
+  		(at -7.62 6.35 0)
+  		(length 5.08)
+  		(name "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 3.8099999999999996 0)
+  		(length 5.08)
+  		(name "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 1.2699999999999996 0)
+  		(length 5.08)
+  		(name "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 -1.2700000000000005 0)
+  		(length 5.08)
+  		(name "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 -3.8100000000000005 0)
+  		(length 5.08)
+  		(name "5"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "5"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
 )
