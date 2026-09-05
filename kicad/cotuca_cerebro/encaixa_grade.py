@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""encaixa_grade v0.3.0 — poe a geometria de um .kicad_sch na grade de 1,27 mm.
+"""encaixa_grade v0.3.1 — poe a geometria de um .kicad_sch na grade de 1,27 mm.
 
     ./encaixa_grade.py --medir  FICHEIRO...     # so conta, nao escreve
     ./encaixa_grade.py          FICHEIRO...     # escreve
@@ -25,7 +25,7 @@ Aceitacao: netlist identico antes e depois. Nao e opcional.
 """
 import io, re, sys
 
-VERSAO = "0.3.0"
+VERSAO = "0.3.1"
 G = 1.27
 
 
@@ -84,7 +84,7 @@ def processa(p, escrever):
     # Consertei o casamento por estrutura num sitio e deixei-o por
     # indentacao no outro. Um conserto nao adoptado por TODOS os chamadores
     # nao esta feito.
-    fora = re.sub(r'(\(xy )(-?[\d.]+) (-?[\d.]+)()\)',
+    fora = re.sub(r'(\(xy )(-?[\d.]+(?:[eE][-+]?\d+)?) (-?[\d.]+(?:[eE][-+]?\d+)?)()\)',
                   lambda m: coord(m) + ')', fora)
     # COLOCACAO de simbolos e rotulos.
     #
@@ -117,7 +117,7 @@ def processa(p, escrever):
             else:
                 out.append(txt[i:]); break
             bloco = txt[j:fim]
-            novo = re.sub(r'\(at (-?[\d.]+) (-?[\d.]+)( -?[\d.]+)?\)',
+            novo = re.sub(r'\(at (-?[\d.]+(?:[eE][-+]?\d+)?) (-?[\d.]+(?:[eE][-+]?\d+)?)( -?[\d.]+(?:[eE][-+]?\d+)?)?\)',
                           lambda mm: coord2(mm), bloco, count=1)
             out.append(txt[i:j]); out.append(novo); i = fim
         return ''.join(out)

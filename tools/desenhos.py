@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""desenhos v0.2.0 — regenera os desenhos tecnicos e denuncia os velhos.
+"""desenhos v0.3.0 — regenera os desenhos tecnicos e denuncia os velhos.
 
     python3 tools/desenhos.py            # confere; sai != 0 se algum esta velho
     python3 tools/desenhos.py --gerar    # regenera e confere
@@ -14,7 +14,7 @@ DESENHO, o desenho esta velho.** Nao se pergunta se mudou o que importa.
 """
 import os, subprocess, sys, pathlib
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 RAIZ = pathlib.Path(__file__).resolve().parents[1]
 CLI = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 
@@ -23,6 +23,8 @@ PARES = [
     ("docs/desenhos/esquematicos/cotuca_energia.svg", "kicad/cotuca_cerebro/cotuca_energia.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_preamp.svg",  "kicad/cotuca_cerebro/cotuca_preamp.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_soquete.svg", "kicad/cotuca_cerebro/cotuca_soquete.kicad_sch"),
+    ("docs/desenhos/esquematicos/cotuca_conector.svg", "kicad/cotuca_cerebro/cotuca_conector.kicad_sch"),
+    ("docs/desenhos/esquematicos/cotuca_painel.svg",   "kicad/cotuca_painel/cotuca_painel.kicad_sch"),
     # a caixa: pagina 1 tem gerador proprio desde 05/09; as p2..p6 outro
     ("docs/desenhos/caixa/caixa-fabricacao.svg",             "docs/desenhos/caixa/gen_caixa.py"),
     ("docs/desenhos/caixa/caixa-fabricacao-p2-tampa.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),

@@ -37,7 +37,7 @@ Uso: python3 svg_colisoes.py ficheiro.svg [--contentor 0.6] [--largura 0.55]
 """
 import re, sys, math, xml.etree.ElementTree as ET
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 
 W_CHAR = 0.55
 

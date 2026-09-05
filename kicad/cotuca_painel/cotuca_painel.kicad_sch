@@ -1,0 +1,3219 @@
+(kicad_sch
+	(version 20260306)
+	(generator "cotucatronics")
+	(generator_version "10.0")
+	(uuid "de128d62-4042-4c6e-a783-d968ae52c1c6")
+	(paper "A2")
+	(title_block
+		(title "PAINEL — tampa da caixa — rev B")
+		(date "2026-09-05")
+		(rev "B")
+		(comment 3 "Contrato com o cerebro: IDC 2x13, mesmo nome de rede via a via.")
+		(comment 2 "UM terra so. A separacao AGND/GND vive no cerebro, no net-tie.")
+		(comment 1 "Pull-down de 10k no gate dos MOSFET: obrigatorio, nao opcional.")
+	)
+	(lib_symbols
+		(symbol "cotuca:CONN2_L"
+					(pin_numbers
+						(hide yes)
+					)
+					(exclude_from_sim no)
+					(in_bom yes)
+					(on_board yes)
+					(in_pos_files yes)
+					(duplicate_pin_numbers_are_jumpers no)
+					(property "Reference" "J"
+						(at 0 6.35 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Value" ""
+						(at 0 -6.35 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Footprint" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Datasheet" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Description" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(symbol "CONN2_L_0_1"
+						(rectangle
+							(start 0 -3.81)
+							(end 5.08 3.81)
+							(stroke
+								(width 0.254)
+								(type default)
+							)
+							(fill
+								(type none)
+							)
+						)
+					)
+					(symbol "CONN2_L_1_1"
+						(pin passive line
+							(at -2.54 2.54 0)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1.27 1.27)
+									)
+								)
+							)
+							(number "1"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+						(pin passive line
+							(at -2.54 -2.54 0)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1.27 1.27)
+									)
+								)
+							)
+							(number "2"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+					)
+					(embedded_fonts no)
+				)
+		(symbol "cotuca:CONN7_L"
+		(pin_names
+			(offset 1.016)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "J"
+			(at 0 12.7 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "conector 7p"
+			(at 0 -12.7 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1 1)))
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "CONN7_L_0_1"
+			(rectangle
+				(start -2.54 10.16)
+				(end 2.54 -10.16)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+		)
+		(symbol "CONN7_L_1_1"
+			(pin passive line
+				(at -7.62 8.89 0)
+				(length 5.08)
+				(name "1"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "1"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -7.62 6.35 0)
+				(length 5.08)
+				(name "2"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "2"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -7.62 3.81 0)
+				(length 5.08)
+				(name "3"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "3"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -7.62 1.27 0)
+				(length 5.08)
+				(name "4"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "4"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -7.62 -1.27 0)
+				(length 5.08)
+				(name "5"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "5"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -7.62 -3.81 0)
+				(length 5.08)
+				(name "6"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "6"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -7.62 -6.35 0)
+				(length 5.08)
+				(name "7"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "7"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+		)
+		)
+		(symbol "cotuca:C_V"
+					(pin_numbers
+						(hide yes)
+					)
+					(exclude_from_sim no)
+					(in_bom yes)
+					(on_board yes)
+					(in_pos_files yes)
+					(duplicate_pin_numbers_are_jumpers no)
+					(property "Reference" "C"
+						(at 0 7.62 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Value" ""
+						(at 0 -7.62 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Footprint" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Datasheet" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Description" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(symbol "C_V_0_1"
+						(polyline
+							(pts
+								(xy -2.54 0.762) (xy 2.54 0.762)
+							)
+							(stroke
+								(width 0.254)
+								(type default)
+							)
+							(fill
+								(type none)
+							)
+						)
+						(polyline
+							(pts
+								(xy -2.54 -0.762) (xy 2.54 -0.762)
+							)
+							(stroke
+								(width 0.254)
+								(type default)
+							)
+							(fill
+								(type none)
+							)
+						)
+					)
+					(symbol "C_V_1_1"
+						(pin passive line
+							(at 0 3.81 270)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+							(number "1"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+						(pin passive line
+							(at 0 -3.81 90)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+							(number "2"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+					)
+					(embedded_fonts no)
+				)
+		(symbol "cotuca:EC11"
+		(pin_names
+			(offset 1.016)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "SW"
+			(at 0 10.16 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "EC11 encoder"
+			(at 0 -10.16 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1 1)))
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "EC11_0_1"
+			(rectangle
+				(start -6.35 7.62)
+				(end 6.35 -7.62)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+		)
+		(symbol "EC11_1_1"
+			(pin passive line
+				(at -11.43 5.08 0)
+				(length 5.08)
+				(name "A"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "1"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -11.43 2.54 0)
+				(length 5.08)
+				(name "C"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "2"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -11.43 0 0)
+				(length 5.08)
+				(name "B"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "3"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -11.43 -2.54 0)
+				(length 5.08)
+				(name "PUSH1"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "4"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -11.43 -5.08 0)
+				(length 5.08)
+				(name "PUSH2"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "5"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+		)
+		)
+		(symbol "cotuca:IDC26"
+		(pin_names
+			(offset 1.016)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "J"
+			(at 0 20.32 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "IDC 2x13 macho"
+			(at 0 -20.32 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1 1)))
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "IDC26_0_1"
+			(rectangle
+				(start -7.62 17.78)
+				(end 7.62 -17.78)
+				(stroke (width 0.254) (type default))
+				(fill (type background))
+			)
+		)
+		(symbol "IDC26_1_1"
+			(pin passive line
+				(at -12.7 15.24 0)
+				(length 5.08)
+				(name "1"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "1"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 15.24 180)
+				(length 5.08)
+				(name "2"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "2"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 12.7 0)
+				(length 5.08)
+				(name "3"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "3"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 12.7 180)
+				(length 5.08)
+				(name "4"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "4"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 10.16 0)
+				(length 5.08)
+				(name "5"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "5"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 10.16 180)
+				(length 5.08)
+				(name "6"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "6"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 7.62 0)
+				(length 5.08)
+				(name "7"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "7"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 7.62 180)
+				(length 5.08)
+				(name "8"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "8"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 5.08 0)
+				(length 5.08)
+				(name "9"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "9"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 5.08 180)
+				(length 5.08)
+				(name "10"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "10"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 2.54 0)
+				(length 5.08)
+				(name "11"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "11"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 2.54 180)
+				(length 5.08)
+				(name "12"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "12"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 0 0)
+				(length 5.08)
+				(name "13"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "13"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 0 180)
+				(length 5.08)
+				(name "14"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "14"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 -2.54 0)
+				(length 5.08)
+				(name "15"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "15"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 -2.54 180)
+				(length 5.08)
+				(name "16"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "16"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 -5.08 0)
+				(length 5.08)
+				(name "17"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "17"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 -5.08 180)
+				(length 5.08)
+				(name "18"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "18"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 -7.62 0)
+				(length 5.08)
+				(name "19"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "19"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 -7.62 180)
+				(length 5.08)
+				(name "20"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "20"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 -10.16 0)
+				(length 5.08)
+				(name "21"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "21"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 -10.16 180)
+				(length 5.08)
+				(name "22"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "22"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 -12.7 0)
+				(length 5.08)
+				(name "23"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "23"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 -12.7 180)
+				(length 5.08)
+				(name "24"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "24"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at -12.7 -15.24 0)
+				(length 5.08)
+				(name "25"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "25"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 12.7 -15.24 180)
+				(length 5.08)
+				(name "26"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "26"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+		)
+		)
+		(symbol "cotuca:MOSFET_N"
+		(pin_names
+			(offset 1.016)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "Q"
+			(at 0 11.43 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "AO3400A"
+			(at 0 -11.43 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1 1)))
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "MOSFET_N_0_1"
+			(rectangle
+				(start -2.54 3.81)
+				(end 2.54 -3.81)
+				(stroke (width 0.254) (type default))
+				(fill (type none))
+			)
+		)
+		(symbol "MOSFET_N_1_1"
+			(pin passive line
+				(at -7.62 0 0)
+				(length 5.08)
+				(name "G"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "1"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 0 8.89 270)
+				(length 5.08)
+				(name "D"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "2"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 0 -8.89 90)
+				(length 5.08)
+				(name "S"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "3"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+		)
+		)
+		(symbol "cotuca:POT3"
+		(pin_names
+			(offset 1.016)
+		)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(duplicate_pin_numbers_are_jumpers no)
+		(property "Reference" "RV"
+			(at 0 10.16 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10k lin"
+			(at 0 -5.08 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1 1)))
+		)
+		(property "Footprint" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(show_name no) (do_not_autoplace no) (hide yes)
+			(effects (font (size 1.27 1.27)))
+		)
+		(symbol "POT3_0_1"
+			(rectangle
+				(start -5.08 2.54)
+				(end 5.08 -2.54)
+				(stroke (width 0.254) (type default))
+				(fill (type none))
+			)
+		)
+		(symbol "POT3_1_1"
+			(pin passive line
+				(at -10.16 0 0)
+				(length 5.08)
+				(name "1"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "1"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 0 7.62 270)
+				(length 5.08)
+				(name "CURSOR"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "2"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+			(pin passive line
+				(at 10.16 0 180)
+				(length 5.08)
+				(name "3"
+					(effects (font (size 1.27 1.27)))
+				)
+				(number "3"
+					(effects (font (size 1.27 1.27)))
+				)
+			)
+		)
+		)
+		(symbol "cotuca:R_H"
+					(pin_numbers
+						(hide yes)
+					)
+					(exclude_from_sim no)
+					(in_bom yes)
+					(on_board yes)
+					(in_pos_files yes)
+					(duplicate_pin_numbers_are_jumpers no)
+					(property "Reference" "R"
+						(at 0 7.62 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Value" ""
+						(at 0 -7.62 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Footprint" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Datasheet" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Description" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(symbol "R_H_0_1"
+						(rectangle
+							(start -3.81 -1.27)
+							(end 3.81 1.27)
+							(stroke
+								(width 0.254)
+								(type default)
+							)
+							(fill
+								(type none)
+							)
+						)
+					)
+					(symbol "R_H_1_1"
+						(pin passive line
+							(at -6.35 0 0)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+							(number "1"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+						(pin passive line
+							(at 6.35 0 180)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+							(number "2"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+					)
+					(embedded_fonts no)
+				)
+		(symbol "cotuca:R_V"
+					(pin_numbers
+						(hide yes)
+					)
+					(exclude_from_sim no)
+					(in_bom yes)
+					(on_board yes)
+					(in_pos_files yes)
+					(duplicate_pin_numbers_are_jumpers no)
+					(property "Reference" "R"
+						(at 0 7.62 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Value" ""
+						(at 0 -7.62 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Footprint" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Datasheet" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(property "Description" ""
+						(at 0 0 0)
+						(show_name no)
+						(do_not_autoplace no)
+						(hide yes)
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(symbol "R_V_0_1"
+						(rectangle
+							(start -1.27 -3.81)
+							(end 1.27 3.81)
+							(stroke
+								(width 0.254)
+								(type default)
+							)
+							(fill
+								(type none)
+							)
+						)
+					)
+					(symbol "R_V_1_1"
+						(pin passive line
+							(at 0 6.35 270)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+							(number "1"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+						(pin passive line
+							(at 0 -6.35 90)
+							(length 2.54)
+							(name ""
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+							(number "2"
+								(effects
+									(font
+										(size 1 1)
+									)
+								)
+							)
+						)
+					)
+					(embedded_fonts no)
+				)
+	)
+	(symbol
+		(lib_id "cotuca:IDC26")
+		(at 90.17 119.38 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "89d3924e-040d-4eef-80c7-4b389d4b173f")
+		(property "Reference" "J1"
+			(at 90.17 97.79 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "IDC 2x13 femea <- cerebro"
+			(at 90.17 140.97 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Connector_IDC:IDC-Header_2x13_P2.54mm_Vertical"
+			(at 90.17 119.38 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 90.17 119.38 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 90.17 119.38 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "J1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 77.47 104.14) (xy 67.31 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "39ba4309-5886-4dcf-aad5-7c0cf01e6963")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 67.31 104.14 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "8a745202-e013-4bd4-b956-f33b851a83b2")
+	)
+	(wire
+		(pts
+			(xy 102.87 104.14) (xy 113.03 104.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "064500da-c64e-4585-a1c9-a7c7f29b9817")
+	)
+	(global_label "OLED_CLK"
+		(shape bidirectional)
+		(at 113.03 104.14 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "982eec60-44ba-418f-9481-ff995a292663")
+	)
+	(wire
+		(pts
+			(xy 77.47 106.68) (xy 67.31 106.68)
+		)
+		(stroke (width 0) (type default))
+		(uuid "13128f9e-5242-479a-981f-fd4043a2a7a6")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 67.31 106.68 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "cd9bb337-5a1c-4d8c-a91a-0be61863cedb")
+	)
+	(wire
+		(pts
+			(xy 102.87 106.68) (xy 113.03 106.68)
+		)
+		(stroke (width 0) (type default))
+		(uuid "f6d3d5d5-de28-40ad-bb89-864fc25fce28")
+	)
+	(global_label "OLED_DIN"
+		(shape bidirectional)
+		(at 113.03 106.68 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "046522c3-c269-4e9c-938b-1de0acfca1cd")
+	)
+	(wire
+		(pts
+			(xy 77.47 109.22) (xy 67.31 109.22)
+		)
+		(stroke (width 0) (type default))
+		(uuid "f7f5a51a-19ac-4825-acfd-1d7439023545")
+	)
+	(global_label "OLED_CS"
+		(shape bidirectional)
+		(at 67.31 109.22 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "51183e53-206a-4836-81e3-08aa75ebd4ac")
+	)
+	(wire
+		(pts
+			(xy 102.87 109.22) (xy 113.03 109.22)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0250226d-3e68-4549-818f-3648664ca7fb")
+	)
+	(global_label "OLED_DC"
+		(shape bidirectional)
+		(at 113.03 109.22 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "0b3e195c-9c75-4670-a062-68028c14aed2")
+	)
+	(wire
+		(pts
+			(xy 77.47 111.76) (xy 67.31 111.76)
+		)
+		(stroke (width 0) (type default))
+		(uuid "29ee7d9e-c448-474d-8a2e-69f999ed23cd")
+	)
+	(global_label "OLED_RST"
+		(shape bidirectional)
+		(at 67.31 111.76 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "2077a502-101b-4fae-9567-b7d11690286f")
+	)
+	(wire
+		(pts
+			(xy 102.87 111.76) (xy 113.03 111.76)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e21a4f46-e023-47c4-a966-ca8157aa91c4")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 113.03 111.76 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "67af9c10-395e-45ea-972e-3bcfec8185cf")
+	)
+	(wire
+		(pts
+			(xy 77.47 114.3) (xy 67.31 114.3)
+		)
+		(stroke (width 0) (type default))
+		(uuid "10e07e8a-0b90-4d8f-8c30-fe1a7ee7a024")
+	)
+	(global_label "+3V3"
+		(shape bidirectional)
+		(at 67.31 114.3 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "de4c63a5-ddfb-4381-90a4-a3d3e1fd7f6a")
+	)
+	(wire
+		(pts
+			(xy 102.87 114.3) (xy 113.03 114.3)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9d2c9087-585c-4f9d-90f2-974c2b2d1068")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 113.03 114.3 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "3976b387-fa08-4c8a-91a9-ffe9bead6237")
+	)
+	(wire
+		(pts
+			(xy 77.47 116.84) (xy 67.31 116.84)
+		)
+		(stroke (width 0) (type default))
+		(uuid "fb320e9b-4a61-43dc-9996-eaaa368dbbf5")
+	)
+	(global_label "+5V"
+		(shape bidirectional)
+		(at 67.31 116.84 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "e0382914-de62-407c-8dcb-083631a1283f")
+	)
+	(wire
+		(pts
+			(xy 102.87 116.84) (xy 113.03 116.84)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e573f69e-8b1d-4dc8-83f3-f9edb077856d")
+	)
+	(global_label "+5V"
+		(shape bidirectional)
+		(at 113.03 116.84 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "9b6ec7e5-fe2e-4e87-8bc8-5c630150a738")
+	)
+	(wire
+		(pts
+			(xy 77.47 119.38) (xy 67.31 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "32a35690-ee31-4f32-8aaf-49a97b6157c0")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 67.31 119.38 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "96ef5689-c231-421d-98ea-0e39c586a67f")
+	)
+	(wire
+		(pts
+			(xy 102.87 119.38) (xy 113.03 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "120eb9d0-d3c4-468e-b042-2451f399b57f")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 113.03 119.38 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "ec633a70-3688-4703-a4c7-eedc0df65330")
+	)
+	(wire
+		(pts
+			(xy 77.47 121.92) (xy 67.31 121.92)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3570faf9-14cb-4f01-9c86-c3da4fd08ca2")
+	)
+	(global_label "LED_FRZ_A"
+		(shape bidirectional)
+		(at 67.31 121.92 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "c780c217-f137-4230-bf24-85ff04486cf6")
+	)
+	(wire
+		(pts
+			(xy 102.87 121.92) (xy 113.03 121.92)
+		)
+		(stroke (width 0) (type default))
+		(uuid "12fb2337-7007-4f9e-b798-69affee2b221")
+	)
+	(global_label "LED_FRZ_B"
+		(shape bidirectional)
+		(at 113.03 121.92 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "625cf326-6c1e-4fb5-a287-c10284fb1ec7")
+	)
+	(wire
+		(pts
+			(xy 77.47 124.46) (xy 67.31 124.46)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e2d7ecf2-7663-4d53-b392-ed9050cb6333")
+	)
+	(global_label "BOT_FRZ_A"
+		(shape bidirectional)
+		(at 67.31 124.46 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "5e46ff31-0f8a-4be7-af33-912411a72205")
+	)
+	(wire
+		(pts
+			(xy 102.87 124.46) (xy 113.03 124.46)
+		)
+		(stroke (width 0) (type default))
+		(uuid "bc61a177-c36f-470b-a4c2-437ecbf0acaa")
+	)
+	(global_label "BOT_FRZ_B"
+		(shape bidirectional)
+		(at 113.03 124.46 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "c4862500-b77b-4f77-8f3a-36b3df9cc65c")
+	)
+	(wire
+		(pts
+			(xy 77.47 127.0) (xy 67.31 127.0)
+		)
+		(stroke (width 0) (type default))
+		(uuid "52810caa-9f67-498f-89f1-10659e18e58f")
+	)
+	(global_label "BOT_BUZIOS"
+		(shape bidirectional)
+		(at 67.31 127.0 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "6c72579a-49ed-4856-b388-3d48a3d38328")
+	)
+	(wire
+		(pts
+			(xy 102.87 127.0) (xy 113.03 127.0)
+		)
+		(stroke (width 0) (type default))
+		(uuid "79762767-2702-4ba4-94e1-d86419708b5d")
+	)
+	(global_label "ENC_A_A"
+		(shape bidirectional)
+		(at 113.03 127.0 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "f4a624a7-a40e-4c31-a7e5-dc8e8067806d")
+	)
+	(wire
+		(pts
+			(xy 77.47 129.54) (xy 67.31 129.54)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3b26e36e-d196-4df9-a242-9d4021e5bb7a")
+	)
+	(global_label "ENC_A_B"
+		(shape bidirectional)
+		(at 67.31 129.54 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "97831ec6-28d5-4263-aeed-9c8a21726adf")
+	)
+	(wire
+		(pts
+			(xy 102.87 129.54) (xy 113.03 129.54)
+		)
+		(stroke (width 0) (type default))
+		(uuid "df98c52e-92ba-4351-b1f8-92845c3d713b")
+	)
+	(global_label "ENC_A_PUSH"
+		(shape bidirectional)
+		(at 113.03 129.54 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "ba725ab0-49dc-41c1-b23a-455b1cb98050")
+	)
+	(wire
+		(pts
+			(xy 77.47 132.08) (xy 67.31 132.08)
+		)
+		(stroke (width 0) (type default))
+		(uuid "02532ebb-6429-43d3-80c8-f2473e531153")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 67.31 132.08 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "3dc89ecf-fa2e-4ef6-b4a1-bb431ff93bd0")
+	)
+	(wire
+		(pts
+			(xy 102.87 132.08) (xy 113.03 132.08)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3480929d-ece6-4709-ac34-c77d84c1f2cb")
+	)
+	(global_label "POT_L"
+		(shape bidirectional)
+		(at 113.03 132.08 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "6438eca0-6e7c-4dad-b0d7-37fab97659f4")
+	)
+	(wire
+		(pts
+			(xy 77.47 134.62) (xy 67.31 134.62)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4ff73d13-471e-4bc8-bc35-ee0f7528f2e4")
+	)
+	(global_label "POT_R"
+		(shape bidirectional)
+		(at 67.31 134.62 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "55cb0990-0e30-41a2-b2af-4b9a03c46fdd")
+	)
+	(wire
+		(pts
+			(xy 102.87 134.62) (xy 113.03 134.62)
+		)
+		(stroke (width 0) (type default))
+		(uuid "b2074753-796e-41d6-bf50-3ea4214fbeac")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 113.03 134.62 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "b2441b2d-b3b1-4753-95b0-246f2acc829e")
+	)
+	(text "O CONTRATO. Estes 26 nomes sao IDENTICOS aos da folha do soquete do"
+		(exclude_from_sim no)
+		(at 54.61 83.82 0)
+		(effects (font (size 1.6 1.6)) (justify left))
+		(uuid "e59341f9-2837-4ccd-becf-dab64061546a")
+	)
+	(text "cerebro — e o `tools/contrato_idc.py` confere as duas listas uma contra"
+		(exclude_from_sim no)
+		(at 54.61 87.63 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "117d3a89-6af4-446b-8f3e-864d7c6b71fb")
+	)
+	(text "a outra. O ERC nao apanha uma grafia trocada: rotulo global sozinho e legal."
+		(exclude_from_sim no)
+		(at 54.61 91.44 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "66ea249a-1a20-4de0-a34d-98e3e57a5345")
+	)
+	(symbol
+		(lib_id "cotuca:CONN7_L")
+		(at 209.55 59.69 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "00605cf5-7593-440f-9cf0-d5cd34d5a50c")
+		(property "Reference" "J2"
+			(at 209.55 52.07 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "OLED SSD1309 MX1.25 7p"
+			(at 209.55 67.31 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Connector_Molex:Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical"
+			(at 209.55 59.69 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 209.55 59.69 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 209.55 59.69 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "J2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 201.93 50.8) (xy 191.77 50.8)
+		)
+		(stroke (width 0) (type default))
+		(uuid "daff78bd-c3a8-4669-a19d-f03e2380a06d")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 191.77 50.8 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "9ac7e644-3eda-433c-b562-332d303697df")
+	)
+	(wire
+		(pts
+			(xy 201.93 53.34) (xy 191.77 53.34)
+		)
+		(stroke (width 0) (type default))
+		(uuid "074f5bcb-a4a1-4c9a-80ca-78ed5f6db8b8")
+	)
+	(global_label "+3V3"
+		(shape bidirectional)
+		(at 191.77 53.34 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "85fc4d87-122d-43b3-92cb-c6766f72426e")
+	)
+	(wire
+		(pts
+			(xy 201.93 55.88) (xy 191.77 55.88)
+		)
+		(stroke (width 0) (type default))
+		(uuid "48ac1b44-c522-4378-8555-233da7c1e1e2")
+	)
+	(global_label "OLED_CLK"
+		(shape bidirectional)
+		(at 191.77 55.88 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "bcc2f273-1f28-4645-95b2-10f7126ca458")
+	)
+	(wire
+		(pts
+			(xy 201.93 58.42) (xy 191.77 58.42)
+		)
+		(stroke (width 0) (type default))
+		(uuid "aaadf63a-3a2c-42ed-a47b-edaa8d79d5b1")
+	)
+	(global_label "OLED_DIN"
+		(shape bidirectional)
+		(at 191.77 58.42 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "9a9eada5-8299-4188-a2db-db3cd141ae5b")
+	)
+	(wire
+		(pts
+			(xy 201.93 60.96) (xy 191.77 60.96)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4bc9b7f0-8c43-4efd-b507-c5224a4e3095")
+	)
+	(global_label "OLED_CS"
+		(shape bidirectional)
+		(at 191.77 60.96 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "57039c59-2219-491f-8286-83e51ac664be")
+	)
+	(wire
+		(pts
+			(xy 201.93 63.5) (xy 191.77 63.5)
+		)
+		(stroke (width 0) (type default))
+		(uuid "1f5e03a9-756a-4a6f-aff6-a4b621cd8d2c")
+	)
+	(global_label "OLED_DC"
+		(shape bidirectional)
+		(at 191.77 63.5 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "40f10026-2453-424d-afac-a9a8d451020a")
+	)
+	(wire
+		(pts
+			(xy 201.93 66.04) (xy 191.77 66.04)
+		)
+		(stroke (width 0) (type default))
+		(uuid "cb85075e-ab05-4787-b9a6-56f0b98dda86")
+	)
+	(global_label "OLED_RST"
+		(shape bidirectional)
+		(at 191.77 66.04 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "301c1a12-79fa-476b-9979-8d1fb2a4cc7c")
+	)
+	(text "OLED — 3V3 vem da Daisy, pelo IDC. O painel nao gera tensao nenhuma."
+		(exclude_from_sim no)
+		(at 175.26 39.37 0)
+		(effects (font (size 1.6 1.6)) (justify left))
+		(uuid "869e1bf7-e4c2-4717-ad9b-d5aa4a303865")
+	)
+	(symbol
+		(lib_id "cotuca:EC11")
+		(at 209.55 119.38 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "78818550-257a-45aa-9b29-bcb84bbfefae")
+		(property "Reference" "SW1"
+			(at 209.55 111.76 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "EC11 — o unico encoder"
+			(at 209.55 127.0 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm"
+			(at 209.55 119.38 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 209.55 119.38 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 209.55 119.38 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "SW1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 198.12 114.3) (xy 187.96 114.3)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e1d6c8c7-7eae-4f95-96d7-b4c6d3a0fde7")
+	)
+	(global_label "ENC_A_A"
+		(shape bidirectional)
+		(at 187.96 114.3 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "49db86bc-aa41-4b8f-b68b-8ce9315d6106")
+	)
+	(wire
+		(pts
+			(xy 198.12 116.84) (xy 187.96 116.84)
+		)
+		(stroke (width 0) (type default))
+		(uuid "687dfef5-c141-457a-9dae-10d8a6c31a51")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 187.96 116.84 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "6c513d18-8769-431b-bb44-17408dc452e0")
+	)
+	(wire
+		(pts
+			(xy 198.12 119.38) (xy 187.96 119.38)
+		)
+		(stroke (width 0) (type default))
+		(uuid "28df93f2-1315-4fc6-a562-f8c2dc0c5462")
+	)
+	(global_label "ENC_A_B"
+		(shape bidirectional)
+		(at 187.96 119.38 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "034122e0-4aed-4f4d-9f78-5d8a203a3285")
+	)
+	(wire
+		(pts
+			(xy 198.12 121.92) (xy 187.96 121.92)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a7792962-e1d1-4488-a8be-6d0dc6d6f5ce")
+	)
+	(global_label "ENC_A_PUSH"
+		(shape bidirectional)
+		(at 187.96 121.92 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "2d1dfa50-743a-4fa9-adbd-7907eaf23b3c")
+	)
+	(wire
+		(pts
+			(xy 198.12 124.46) (xy 187.96 124.46)
+		)
+		(stroke (width 0) (type default))
+		(uuid "d345fc20-54a3-4389-9cce-318dfc4c8e74")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 187.96 124.46 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "7299a80d-7e2b-4bf0-9437-250a3235d221")
+	)
+	(text "ENCODER — comum (C) e um pino do push ao GND. E o UNICO desde 05/09:"
+		(exclude_from_sim no)
+		(at 175.26 99.06 0)
+		(effects (font (size 1.6 1.6)) (justify left))
+		(uuid "91ed14a1-40bc-44ff-a5ed-963834ad1159")
+	)
+	(text "push+giro dao os outros controlos, e a lista de presets e simples."
+		(exclude_from_sim no)
+		(at 175.26 102.87 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "2d00f5af-690e-456e-8d44-60e8081a9762")
+	)
+	(symbol
+		(lib_id "cotuca:POT3")
+		(at 209.55 175.26 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f19efffd-9148-41be-b504-3a8bdbf2f379")
+		(property "Reference" "RV1"
+			(at 209.55 167.64 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10k lin"
+			(at 209.55 182.88 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" ""
+			(at 209.55 175.26 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 209.55 175.26 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 209.55 175.26 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "RV1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 199.39 175.26) (xy 189.23 175.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "90ba8ced-0ad4-42c1-9892-f6b6652e6eb2")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 189.23 175.26 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "214a3283-c4c4-45b8-879b-04da10632e5e")
+	)
+	(wire
+		(pts
+			(xy 209.55 167.64) (xy 219.71 167.64)
+		)
+		(stroke (width 0) (type default))
+		(uuid "beb65f82-1d81-494c-83ef-c56c01684752")
+	)
+	(global_label "POT_L"
+		(shape bidirectional)
+		(at 219.71 167.64 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "e4ef535e-4a50-4e67-83cf-0dd78a7ab09f")
+	)
+	(wire
+		(pts
+			(xy 219.71 175.26) (xy 229.87 175.26)
+		)
+		(stroke (width 0) (type default))
+		(uuid "51f4769d-813c-4446-8ad0-9c1128460f3a")
+	)
+	(global_label "+3V3"
+		(shape bidirectional)
+		(at 229.87 175.26 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "16f2cb1c-0452-4e29-995f-0e02986fa771")
+	)
+	(symbol
+		(lib_id "cotuca:C_V")
+		(at 240.03 187.96 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "5e47128e-983b-40cf-bfb4-8f8b584f62fc")
+		(property "Reference" "C1"
+			(at 240.03 180.34 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100n COLADO ao cursor"
+			(at 240.03 195.58 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 240.03 187.96 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 240.03 187.96 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 240.03 187.96 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "C1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 240.03 184.15) (xy 250.19 184.15)
+		)
+		(stroke (width 0) (type default))
+		(uuid "b85c3608-a070-4f4a-aece-3e6c60bfbc12")
+	)
+	(global_label "POT_L"
+		(shape bidirectional)
+		(at 250.19 184.15 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "9bf9715a-ce10-4544-8380-f2f40b781fcd")
+	)
+	(wire
+		(pts
+			(xy 240.03 191.77) (xy 250.19 191.77)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a1cd22ea-90cd-483c-9101-22359c093760")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 250.19 191.77 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "416306a8-3851-4fd9-b9ed-a522ffefe951")
+	)
+	(symbol
+		(lib_id "cotuca:POT3")
+		(at 209.55 214.63 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "fdc43ea1-e356-4be4-a4df-ad00d9f846ca")
+		(property "Reference" "RV2"
+			(at 209.55 207.01 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10k lin"
+			(at 209.55 222.25 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" ""
+			(at 209.55 214.63 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 209.55 214.63 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 209.55 214.63 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "RV2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 199.39 214.63) (xy 189.23 214.63)
+		)
+		(stroke (width 0) (type default))
+		(uuid "59620d55-df93-4d98-95fd-8a94415eb68b")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 189.23 214.63 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "f257f3ea-f5f8-4c7c-9d29-c40390f39685")
+	)
+	(wire
+		(pts
+			(xy 209.55 207.01) (xy 219.71 207.01)
+		)
+		(stroke (width 0) (type default))
+		(uuid "caa68095-b433-4fe1-9a9a-e883dc5e056b")
+	)
+	(global_label "POT_R"
+		(shape bidirectional)
+		(at 219.71 207.01 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "b495b39d-a0ab-4492-8418-a40b44e49a1f")
+	)
+	(wire
+		(pts
+			(xy 219.71 214.63) (xy 229.87 214.63)
+		)
+		(stroke (width 0) (type default))
+		(uuid "1a6521f1-6df1-4d70-aaf6-e16f249a3c65")
+	)
+	(global_label "+3V3"
+		(shape bidirectional)
+		(at 229.87 214.63 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "3f270bd7-e0ce-4f64-9b7b-8f0e6b55535b")
+	)
+	(symbol
+		(lib_id "cotuca:C_V")
+		(at 240.03 227.33 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "414025f9-c140-4c11-b1ff-e91b892b98cc")
+		(property "Reference" "C2"
+			(at 240.03 219.71 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100n COLADO ao cursor"
+			(at 240.03 234.95 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
+			(at 240.03 227.33 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 240.03 227.33 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 240.03 227.33 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "C2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 240.03 223.52) (xy 250.19 223.52)
+		)
+		(stroke (width 0) (type default))
+		(uuid "b2851d38-7532-43ab-a9b9-6aca33f21c18")
+	)
+	(global_label "POT_R"
+		(shape bidirectional)
+		(at 250.19 223.52 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "4bc86080-e59a-40e4-a97f-fe5bfd9ac88c")
+	)
+	(wire
+		(pts
+			(xy 240.03 231.14) (xy 250.19 231.14)
+		)
+		(stroke (width 0) (type default))
+		(uuid "fd87e969-b976-4ce7-8a78-85452ed59c66")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 250.19 231.14 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "48f2a387-349c-4e08-ab3f-66390713e40d")
+	)
+	(text "POTS — 1 ao GND, 3 ao 3V3 da MESMA Daisy que os le. Alimentar de uma"
+		(exclude_from_sim no)
+		(at 175.26 153.67 0)
+		(effects (font (size 1.6 1.6)) (justify left))
+		(uuid "875a4840-acdc-4335-8ab7-d08e77e11644")
+	)
+	(text "fonte e referenciar noutra poe a diferenca entre as duas na leitura."
+		(exclude_from_sim no)
+		(at 175.26 157.48 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "b8dd37cc-3110-49c1-bbe9-d915932975c6")
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 85.09 250.19 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "f836b441-1e40-443b-aa8f-f054dd7d57f5")
+		(property "Reference" "J3"
+			(at 85.09 242.57 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "fio -> arcade AZUL freeze A"
+			(at 85.09 257.81 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 85.09 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 85.09 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 85.09 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "J3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 82.55 247.65) (xy 72.39 247.65)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a3268eb1-365b-45a4-ab1f-736e2952c990")
+	)
+	(global_label "BOT_FRZ_A"
+		(shape bidirectional)
+		(at 72.39 247.65 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "0d35cbb8-bd18-48bd-84f7-bcf1379ec19b")
+	)
+	(wire
+		(pts
+			(xy 82.55 252.73) (xy 72.39 252.73)
+		)
+		(stroke (width 0) (type default))
+		(uuid "59acefcd-83db-4802-9d52-646ebe55817b")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 72.39 252.73 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "c133d124-0a26-4394-a7f3-04f58c8f3b3a")
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 85.09 270.51 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "af28bfa8-a191-4aab-8a0a-27e839864af3")
+		(property "Reference" "J4"
+			(at 85.09 262.89 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "fio -> arcade AZUL freeze B"
+			(at 85.09 278.13 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 85.09 270.51 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 85.09 270.51 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 85.09 270.51 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "J4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 82.55 267.97) (xy 72.39 267.97)
+		)
+		(stroke (width 0) (type default))
+		(uuid "61d2bda4-41eb-48f0-a5c7-1aedd7b36154")
+	)
+	(global_label "BOT_FRZ_B"
+		(shape bidirectional)
+		(at 72.39 267.97 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "6f2dbf9e-03f6-4ca4-972e-c37507abe09e")
+	)
+	(wire
+		(pts
+			(xy 82.55 273.05) (xy 72.39 273.05)
+		)
+		(stroke (width 0) (type default))
+		(uuid "932ea373-ab94-4abd-8e56-3c6c8d9a0c99")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 72.39 273.05 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "1634da8a-2e45-4274-89b8-172866ef9265")
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 85.09 289.56 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "7d551f7f-dd4e-48f9-9a0e-cb3770ecd82b")
+		(property "Reference" "J5"
+			(at 85.09 281.94 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "fio -> arcade BRANCO buzios"
+			(at 85.09 297.18 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 85.09 289.56 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 85.09 289.56 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 85.09 289.56 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "J5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 82.55 287.02) (xy 72.39 287.02)
+		)
+		(stroke (width 0) (type default))
+		(uuid "b93970f5-2c43-46ae-9d69-6da13889c350")
+	)
+	(global_label "BOT_BUZIOS"
+		(shape bidirectional)
+		(at 72.39 287.02 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "d31cddb5-7ab8-4471-b3ea-efcd4098bf54")
+	)
+	(wire
+		(pts
+			(xy 82.55 292.1) (xy 72.39 292.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "9cd4f006-a389-40b2-827e-986c3da11bda")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 72.39 292.1 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "e8fccaaf-8aa3-4020-a320-ac38f7020c87")
+	)
+	(text "BOTOES E LEDS SAO CONECTORES, nao pecas da placa: o arcade de 30 mm"
+		(exclude_from_sim no)
+		(at 64.77 232.41 0)
+		(effects (font (size 1.6 1.6)) (justify left))
+		(uuid "da641b30-7a1c-44f0-8243-c2f9dcdd17f1")
+	)
+	(text "prende no painel e chega por fio. Um lado ao GND; o pull-up e interno"
+		(exclude_from_sim no)
+		(at 64.77 236.22 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "4a90822e-b0c9-49fb-8554-c372c420e43a")
+	)
+	(text "ao MCU, no cerebro. Dois azuis (freeze) e UM BRANCO (buzios)."
+		(exclude_from_sim no)
+		(at 64.77 240.03 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "233b29bc-4bcb-4fb3-a815-9c57477a18aa")
+	)
+	(symbol
+		(lib_id "cotuca:R_H")
+		(at 144.78 250.19 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "4d1761a8-f00b-4030-abbc-6aab5f5572d5")
+		(property "Reference" "R1"
+			(at 144.78 242.57 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100R gate"
+			(at 144.78 257.81 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
+			(at 144.78 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 144.78 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 144.78 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "R1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 138.43 250.19) (xy 128.27 250.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2dfa4835-521e-428d-8be4-cc35ba210e74")
+	)
+	(global_label "LED_FRZ_A"
+		(shape bidirectional)
+		(at 128.27 250.19 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "710104d5-a7d3-4054-a2a3-402b9b0b0f8f")
+	)
+	(wire
+		(pts
+			(xy 151.13 250.19) (xy 161.29 250.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "edfef3c8-71d1-4ead-977e-4e070fa7313b")
+	)
+	(global_label "GATE_A"
+		(shape bidirectional)
+		(at 161.29 250.19 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "9f2e7245-80a1-47f5-be6e-da98eee215bc")
+	)
+	(symbol
+		(lib_id "cotuca:R_V")
+		(at 160.02 266.7 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "504933f5-44ed-4a3c-b98a-532c56260668")
+		(property "Reference" "R3"
+			(at 160.02 259.08 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10k pull-down"
+			(at 160.02 274.32 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
+			(at 160.02 266.7 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 160.02 266.7 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 160.02 266.7 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "R3")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 160.02 260.35) (xy 170.18 260.35)
+		)
+		(stroke (width 0) (type default))
+		(uuid "e36631d3-2738-4181-a28b-a45dd3ce8881")
+	)
+	(global_label "GATE_A"
+		(shape bidirectional)
+		(at 170.18 260.35 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "1cfc7395-6f2d-4d69-a334-4b67575f6256")
+	)
+	(wire
+		(pts
+			(xy 160.02 273.05) (xy 170.18 273.05)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3ee8e9fe-e21c-413a-a6b9-181c1f0839a6")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 170.18 273.05 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "792aacef-c638-4169-bfc0-ee00164876ee")
+	)
+	(symbol
+		(lib_id "cotuca:MOSFET_N")
+		(at 175.26 250.19 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "35ca8235-4361-4927-b8ac-c8e40f77112c")
+		(property "Reference" "Q1"
+			(at 175.26 242.57 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "AO3400A"
+			(at 175.26 257.81 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+			(at 175.26 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 175.26 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 175.26 250.19 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "Q1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 167.64 250.19) (xy 157.48 250.19)
+		)
+		(stroke (width 0) (type default))
+		(uuid "f2c178bb-c31d-4579-94b6-464333c856b4")
+	)
+	(global_label "GATE_A"
+		(shape bidirectional)
+		(at 157.48 250.19 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "1cfb5815-cb88-423e-b28f-dcaea537f4ec")
+	)
+	(wire
+		(pts
+			(xy 175.26 241.3) (xy 185.42 241.3)
+		)
+		(stroke (width 0) (type default))
+		(uuid "4f0fe825-5fb0-4423-a356-868694895a50")
+	)
+	(global_label "LED_K_A"
+		(shape bidirectional)
+		(at 185.42 241.3 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "cf999d24-242b-43bb-988d-cc232185c457")
+	)
+	(wire
+		(pts
+			(xy 175.26 259.08) (xy 185.42 259.08)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a6767190-e255-4167-af3d-7b4ccc68036f")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 185.42 259.08 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "2f88dbb8-cb44-4a04-ae0c-d171c8cd0d89")
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 175.26 224.79 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "4f53b473-9a1a-4739-b48a-bb9f4eaf95db")
+		(property "Reference" "J6"
+			(at 175.26 217.17 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "fio -> LED do arcade A (1=A, 2=K)"
+			(at 175.26 232.41 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 175.26 224.79 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 175.26 224.79 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 175.26 224.79 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "J6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 172.72 222.25) (xy 162.56 222.25)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2d894d87-a91a-4b16-8b1e-1e5459ecd21d")
+	)
+	(global_label "+5V"
+		(shape bidirectional)
+		(at 162.56 222.25 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "08350550-ad58-4860-b3af-ebf8c42f537a")
+	)
+	(wire
+		(pts
+			(xy 172.72 227.33) (xy 162.56 227.33)
+		)
+		(stroke (width 0) (type default))
+		(uuid "847e2eb3-e9d1-42aa-9b60-07817ec66066")
+	)
+	(global_label "LED_R_A"
+		(shape bidirectional)
+		(at 162.56 227.33 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "9619390a-bf72-4c43-a2a7-3e8b8d862c69")
+	)
+	(symbol
+		(lib_id "cotuca:R_H")
+		(at 200.66 224.79 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "d1e9fc0f-135b-4962-8abb-2777a2e30e72")
+		(property "Reference" "R5"
+			(at 200.66 217.17 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100R serie (~30 mA)"
+			(at 200.66 232.41 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Resistor_SMD:R_1210_3225Metric"
+			(at 200.66 224.79 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 200.66 224.79 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 200.66 224.79 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "R5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 194.31 224.79) (xy 184.15 224.79)
+		)
+		(stroke (width 0) (type default))
+		(uuid "5dcb126d-2e0e-4ef4-a254-640c8430eba9")
+	)
+	(global_label "LED_R_A"
+		(shape bidirectional)
+		(at 184.15 224.79 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "b0829b84-db7e-42ec-85de-6c58b22f085d")
+	)
+	(wire
+		(pts
+			(xy 207.01 224.79) (xy 217.17 224.79)
+		)
+		(stroke (width 0) (type default))
+		(uuid "0e107a4c-f785-4c54-b87e-6c5b32aada0b")
+	)
+	(global_label "LED_K_A"
+		(shape bidirectional)
+		(at 217.17 224.79 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "6926e608-8cb8-4724-b29f-3ab99070bd55")
+	)
+	(symbol
+		(lib_id "cotuca:R_H")
+		(at 144.78 312.42 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "e9b4e75b-37a0-4295-b641-72ca707ec92f")
+		(property "Reference" "R2"
+			(at 144.78 304.8 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100R gate"
+			(at 144.78 320.04 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
+			(at 144.78 312.42 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 144.78 312.42 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 144.78 312.42 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "R2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 138.43 312.42) (xy 128.27 312.42)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3655688b-d73b-403a-ab19-26c41995b7ca")
+	)
+	(global_label "LED_FRZ_B"
+		(shape bidirectional)
+		(at 128.27 312.42 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "51329d1f-0ff3-4864-9638-3269d4ec7d83")
+	)
+	(wire
+		(pts
+			(xy 151.13 312.42) (xy 161.29 312.42)
+		)
+		(stroke (width 0) (type default))
+		(uuid "745bf065-f35f-4cba-a9d4-16d05ecb893b")
+	)
+	(global_label "GATE_B"
+		(shape bidirectional)
+		(at 161.29 312.42 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "c20400a7-7a33-4f75-9312-72f53caf9a9b")
+	)
+	(symbol
+		(lib_id "cotuca:R_V")
+		(at 160.02 328.93 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "64aa8c5b-6a8f-4ffb-abb9-d913e6c92042")
+		(property "Reference" "R4"
+			(at 160.02 321.31 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "10k pull-down"
+			(at 160.02 336.55 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
+			(at 160.02 328.93 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 160.02 328.93 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 160.02 328.93 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "R4")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 160.02 322.58) (xy 170.18 322.58)
+		)
+		(stroke (width 0) (type default))
+		(uuid "a209038d-e200-4cef-b00b-ad19c39bcabd")
+	)
+	(global_label "GATE_B"
+		(shape bidirectional)
+		(at 170.18 322.58 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "44b363a3-a234-464d-9b08-7140e06a864d")
+	)
+	(wire
+		(pts
+			(xy 160.02 335.28) (xy 170.18 335.28)
+		)
+		(stroke (width 0) (type default))
+		(uuid "7d3a58cb-4c51-4dc2-a306-b93accc1ab89")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 170.18 335.28 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "aa903a79-8939-42b7-bbdd-01dd4c84c7e7")
+	)
+	(symbol
+		(lib_id "cotuca:MOSFET_N")
+		(at 175.26 312.42 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "bcb870ef-8446-4210-89d7-df3bb95688ee")
+		(property "Reference" "Q2"
+			(at 175.26 304.8 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "AO3400A"
+			(at 175.26 320.04 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Package_TO_SOT_SMD:SOT-23"
+			(at 175.26 312.42 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 175.26 312.42 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 175.26 312.42 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "Q2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 167.64 312.42) (xy 157.48 312.42)
+		)
+		(stroke (width 0) (type default))
+		(uuid "998719cf-6855-4ac4-bdd2-9932039872f0")
+	)
+	(global_label "GATE_B"
+		(shape bidirectional)
+		(at 157.48 312.42 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "83cb7f1c-18eb-499a-ba21-92ff698f0edc")
+	)
+	(wire
+		(pts
+			(xy 175.26 303.53) (xy 185.42 303.53)
+		)
+		(stroke (width 0) (type default))
+		(uuid "6e800f9a-4ede-4a3d-8eba-3410b4bd8a62")
+	)
+	(global_label "LED_K_B"
+		(shape bidirectional)
+		(at 185.42 303.53 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "8cbd9edc-a1f8-46b1-869f-c126eba3eb7a")
+	)
+	(wire
+		(pts
+			(xy 175.26 321.31) (xy 185.42 321.31)
+		)
+		(stroke (width 0) (type default))
+		(uuid "90955aec-6e91-4145-9643-d24c33e118b9")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 185.42 321.31 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "fe1ff04e-aa32-40ab-a36f-826b94e69d00")
+	)
+	(symbol
+		(lib_id "cotuca:CONN2_L")
+		(at 175.26 287.02 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "a95d5b94-e29f-4c09-92a5-c03d764746a7")
+		(property "Reference" "J7"
+			(at 175.26 279.4 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "fio -> LED do arcade B (1=A, 2=K)"
+			(at 175.26 294.64 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical"
+			(at 175.26 287.02 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 175.26 287.02 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 175.26 287.02 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "J7")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 172.72 284.48) (xy 162.56 284.48)
+		)
+		(stroke (width 0) (type default))
+		(uuid "91036669-c79e-4caa-a685-29a83bb653e9")
+	)
+	(global_label "+5V"
+		(shape bidirectional)
+		(at 162.56 284.48 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "1fadaccc-7d91-46e2-8150-b73d28ba07a9")
+	)
+	(wire
+		(pts
+			(xy 172.72 289.56) (xy 162.56 289.56)
+		)
+		(stroke (width 0) (type default))
+		(uuid "5d239f57-7a43-4f53-a976-1abcdf0e7f5a")
+	)
+	(global_label "LED_R_B"
+		(shape bidirectional)
+		(at 162.56 289.56 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "6e154435-3cfa-478e-8364-bdca599dc9d7")
+	)
+	(symbol
+		(lib_id "cotuca:R_H")
+		(at 200.66 287.02 0)
+		(unit 1)
+		(body_style 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(in_pos_files yes)
+		(dnp no)
+		(uuid "ea66e13a-3449-44b7-9e90-b0dc30fef6c3")
+		(property "Reference" "R6"
+			(at 200.66 279.4 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Value" "100R serie (~30 mA)"
+			(at 200.66 294.64 0)
+			(show_name no) (do_not_autoplace no)
+			(effects (font (size 1.0 1.0)))
+		)
+		(property "Footprint" "Resistor_SMD:R_1210_3225Metric"
+			(at 200.66 287.02 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Datasheet" ""
+			(at 200.66 287.02 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(property "Description" ""
+			(at 200.66 287.02 0)
+			(hide yes) (show_name no) (do_not_autoplace no)
+			(effects (font (size 1.27 1.27)))
+		)
+		(instances
+			(project "cotuca_painel"
+				(path "/de128d62-4042-4c6e-a783-d968ae52c1c6"
+					(reference "R6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(wire
+		(pts
+			(xy 194.31 287.02) (xy 184.15 287.02)
+		)
+		(stroke (width 0) (type default))
+		(uuid "2e9db8a9-a6d4-484e-9de9-d7bbe824e69e")
+	)
+	(global_label "LED_R_B"
+		(shape bidirectional)
+		(at 184.15 287.02 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "0ac62b20-1a8d-43a2-9cbd-9ebde0365d65")
+	)
+	(wire
+		(pts
+			(xy 207.01 287.02) (xy 217.17 287.02)
+		)
+		(stroke (width 0) (type default))
+		(uuid "3c21b641-08bc-4723-8ef1-8606f8a30875")
+	)
+	(global_label "LED_K_B"
+		(shape bidirectional)
+		(at 217.17 287.02 0)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "304f11b6-fd30-40b1-8f24-053b3934145d")
+	)
+	(text "LED DOS ARCADE — 5 V, MOSFET em baixo, e o PULL-DOWN DE 10 k NO GATE"
+		(exclude_from_sim no)
+		(at 30.48 195.58 0)
+		(effects (font (size 1.6 1.6)) (justify left))
+		(uuid "30e9a758-d7dd-45de-a87c-a678b9eb6675")
+	)
+	(text "e obrigatorio: entre o arranque e o Init o pino esta em alta impedancia"
+		(exclude_from_sim no)
+		(at 30.48 199.39 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "360cb2c2-c8bc-40dc-bdfe-f78e68508fda")
+	)
+	(text "e o gate flutua. Sem ele o LED acende sozinho, ou fica a meio a dissipar."
+		(exclude_from_sim no)
+		(at 30.48 203.2 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "a6e40120-ff48-4099-8912-f734de13b407")
+	)
+	(text "(!) R serie de 100R e VALOR A CONFIRMAR: depende do Vf do LED do arcade"
+		(exclude_from_sim no)
+		(at 30.48 345.44 0)
+		(effects (font (size 1.6 1.6)) (justify left))
+		(uuid "3d5dd821-7436-41b4-80ae-d1057647ff49")
+	)
+	(text "que o dB comprar. Com Vf 2,0 V da 30 mA; com 3,2 V (azul/branco) da 18 mA."
+		(exclude_from_sim no)
+		(at 30.48 349.25 0)
+		(effects (font (size 1.27 1.27)) (justify left))
+		(uuid "e4e012a0-20c5-41b1-abf1-2e8bd2dae3be")
+	)
+	(sheet_instances
+		(path "/" (page "1"))
+	)
+	(embedded_fonts no)
+)

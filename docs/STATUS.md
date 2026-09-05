@@ -4,6 +4,40 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
+> Atualizado em **2026-09-05 (KiCad para a JLCPCB)** · leva: **o painel nasceu**
+> (`kicad/cotuca_painel/`, ERC 0) e o contrato entre as duas placas passou a ser
+> verificável — `tools/contrato_idc.py` lê as 26 vias dos dois projectos por
+> geometria e confere uma contra a outra; a netlist do próprio KiCad confirma
+> 26/26. Duas delas (13 e 14, terra do LED) **nunca tinham sido desenhadas**:
+> saíam como `1.7763568394002505e-15` e nenhum leitor com `[\d.]+` as via.
+>
+> **O OPA1642 estava errado de três maneiras ao mesmo tempo** — pinos 1 e 3
+> trocados face ao SOIC-8 real, os dois amplificadores no mesmo encapsulamento,
+> e três linhas de BOM para um chip. É agora um símbolo de três unidades, com a
+> pinagem tirada do `LM2904` da biblioteca oficial do KiCad. Nada disto se via
+> no protótipo, que é ligado à mão.
+>
+> **29 referências renomeadas** (`R0A`→`R10`…): o KiCad trata uma referência
+> sem parte numérica como não anotada e renumera-a sozinho ao gravar. A dezena
+> passou a dizer o canal. Provado por comparação de netlist sob o mapa.
+>
+> **Placa: Daisy Seed3**, conferida pino a pino contra o rev4 — o nome STM32
+> bate nos 40 pinos. Codec TI TAC5242, 32 bit / 192 kHz. Símbolo, footprint e
+> netlist idênticos.
+>
+> **Footprints: 77 de 79**, todos os nomes verificados contra as bibliotecas
+> instaladas. Faltam os dois pots. **`docs/COTUCA_BOM.md`** é a BOM do
+> instrumento inteiro, **gerada das folhas** — ≈ US$ 22 em componentes de placa,
+> ≈ US$ 97 com os módulos.
+>
+> ⚠️ **O que trava a fábrica:** o `OPA1642` na biblioteca de peças da JLC (stock
+> da LCSC não é o mesmo armazém), o footprint dos pots, e o valor de `R5`/`R6`
+> do painel. **Não há `.kicad_pcb` nenhum** — o layout é o passo seguinte.
+>
+> Ferramentas novas: `colisoes_sch.py` (o portão dos esquemáticos, que o
+> `svg_colisoes` não conseguia ser), `contrato_idc.py`, `bom_completa.py`.
+> Cicatrizes 15cb–15ce, e a skill `kicad` de 270 para ~600 linhas.
+
 > Atualizado em 2026-09-04 (limpeza) · leva: **o efeito aposentado do slot
 > Fx2 saiu da documentação inteira** — 43 menções em oito ficheiros (`STATUS`,
 > `battle_scars`, `FEATURES`, `IFA10000`, `CTOS`, `params-aposentados` e

@@ -1,5 +1,16 @@
 # MAPA DE PINOS — Cotucatronics
 
+> ⚠️ **05/09 — a placa e o Daisy Seed3, nao o rev4.** A pinagem e a MESMA: o
+> nome STM32 bate nos 40 pinos entre os dois CSV do fabricante, e a doc diz
+> *"maintaining pin-to-pin compatibility with the original Seed pinout and
+> footprint"*. Tudo o que este ficheiro diz continua a valer. A fonte passou a
+> ser `kicad/cotuca_cerebro/Seed3_pinout.csv`, versionado no repo.
+>
+> A diferenca pratica e uma so, e e a favor: o codec passa a **TI TAC5242**
+> (32 bit / 192 kHz, -120 dB). O conector e USB-C, mas a bancada ja grava por
+> USB-C desde que a primeira placa queimou — nao muda nada no fluxo.
+
+
 > Verificado em `src/hal_daisy_seed.cpp` e `src/manifest.h` @ `hal v0.74.1` (04/09).
 > **Pino se confirma no fonte, não na memória.** Se este documento e o
 > código divergirem, o código está certo e este documento está velho.
@@ -113,7 +124,7 @@ novo.
 |---|---|---|---|---|
 | B1 | búzios | D26 | — | randomizador |
 | B2 | freeze A | D24 | D27 (LED 0) | `frz_on_a` |
-| B3 | rearme CTOS | D25 | — | age no CTOS direto |
+| ~~B3~~ | ~~rearme CTOS~~ · **REMOVIDO 05/09** | ~~D25~~ | — | a função fica pelo `b3` da serial; o painel não leva botão |
 | B4 | freeze B | D22 | D23 (LED 1) | `frz_on_b` |
 
 **Debounce: 30 ms, MEDIDO** — com 10 ms, cinco batidas viravam seis.

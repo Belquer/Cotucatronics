@@ -63,6 +63,11 @@ falso positivo e passa a ser **rede sem destino** — defeito real.
 
 > *U1C pino 8 (`V+`) e pino 4 (`V-`): pino de alimentação sem `power_out`*
 
+> ⚠️ **05/09 — `U1C` passou a chamar-se `U1` unidade 3.** O OPA1642 era três
+> símbolos de uma unidade (`U1A`/`U1B`/`U1C`) a fingir de multi-unidade, o que
+> dava três linhas de BOM e três pegadas para um chip. É agora um símbolo de
+> três unidades. Os pinos 4 e 8 são os mesmos; o nome é que mudou.
+
 **Decisão do dB:** *«Declarar quem alimenta é resposta; isentar é mandar o
 verificador olhar para o lado.»* Entraram **quatro `PWR_FLAG`**, um por rede de
 energia — e quatro, não dois, porque o ERC não atravessa o R7: `V+PRE` é rede
@@ -108,7 +113,8 @@ Três coisas que custaram uma volta cada, e ficam para a próxima:
 ## 04/09 — `isolated_pin_label` em `AUDIO_IN_L` e `AUDIO_IN_R`
 
 **Estado: ✅ MORREU EM 05/09**, no commit que criou `cotuca_soquete.kicad_sch`.
-`AUDIO_IN_L` liga a `C4A.2` e `U2.16`; `AUDIO_IN_R` a `C4B.2` e `U2.17`.
+`AUDIO_IN_L` liga a `C14.2` e `U2.16`; `AUDIO_IN_R` a `C24.2` e `U2.17`.
+*(eram `C4A` e `C4B` até 05/09 — ver a nota de renomeação no fim.)*
 Zero menções no relatório. **O prazo cumpriu-se como estava escrito** — e é
 a primeira vez que uma isenção deste repo expira por ter sido resolvida, e
 não por alguém a apagar.
@@ -132,7 +138,7 @@ a data não repara.
 **Prazo:** morre no commit que acrescentar `cotuca_soquete.kicad_sch`. Se
 sobreviver a esse commit, **não é isenção, é defeito**.
 
-## 04/09 — `power_pin_not_driven` no U1C (pinos 4 e 8)
+## 04/09 — `power_pin_not_driven` no U1 unidade 3 (pinos 4 e 8)
 
 **Estado: ✅ RESOLVIDO em 04/09** — não por isenção, por PWR_FLAG.
 
@@ -181,3 +187,30 @@ ausência de ligação é o comportamento correto — ver `PINOS.md`.
 
 Se algum dia estes quatro deixarem de aparecer aqui, alguém ligou alguma
 coisa a eles, e nos dois últimos isso mata a serial.
+
+---
+
+## 05/09 — as referências foram renomeadas, e porquê
+
+O KiCad trata uma referência que **não termina em dígito** como não anotada, e
+renumera-a sozinho ao gravar — a correspondência com os desenhos e a BOM
+quebrava em silêncio. As 29 que estavam nesse estado foram renomeadas antes de
+ir para a fábrica. **A dezena passou a dizer o canal.**
+
+| era | é | | era | é |
+|---|---|---|---|---|
+| `R0A`…`R4A` | `R10`…`R14` | | `R0B`…`R4B` | `R20`…`R24` |
+| `C1A`…`C4A` | `C11`…`C14` | | `C1B`…`C4B` | `C21`…`C24` |
+| `RVA` / `RVB` | `RV1` / `RV2` | | `DA` / `DB` | `D11` / `D21` |
+| `JA` / `JB` | `J5` / `J6` | | `SWL` / `SWR` | `SW1` / `SW2` |
+| `U1A`/`U1B`/`U1C` | `U1` unidades 1/2/3 | | `R20`/`R21` (soquete) | `R50`/`R51` |
+
+Os `R20`/`R21` do soquete tiveram de sair da dezena 2 porque a referência é
+única em **toda a hierarquia**, não por folha, e o canal B do pré-amp passou a
+ocupá-la.
+
+**Critério de aceitação da renomeação:** a netlist ficou idêntica depois de
+aplicar o mapa — comparada pela *pertença* de cada rede, o conjunto de
+`(referência, pino)`, e não pelos nomes das redes, que mudam de propósito. Foi
+essa comparação que apanhou um símbolo (`R0A`) que escapara à renomeação porque
+o seu bloco começava colado ao parêntesis do anterior.

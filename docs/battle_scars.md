@@ -7697,3 +7697,146 @@ morrem neste commit, como o prazo dizia.
 > **Nota do Code, para não haver dívida silenciosa:** a folha do soquete ainda
 > não existe, portanto as duas isenções de `AUDIO_IN` **continuam vivas**. O
 > prazo delas morre no commit que a criar, e é lá que se confere.
+
+---
+
+## 15cb — MPN escolhido sem abrir a ficha é palpite com número de peça (05/09)
+
+**05/09.** Três peças escolhidas pela família, sem ler o código de estilo. As
+três desmentidas pela ficha, e nenhuma delas se via no esquema:
+
+| escolhido | o que a ficha diz |
+|---|---|
+| `PTV09A-4020F-B103` | o `F` é eixo **liso**; a nota ao lado dizia "estriado" |
+| `PEC11R-4220F-S0024` | pinos do encoder a **5,0 mm** — o footprint do KiCad é do Alps, a **2,5** |
+| `2920L300/24MR` | não existe em stock; o que há a 24 V é o **3,3 A** |
+
+> **Um número de peça parece um facto e é uma afirmação.** Enquanto ninguém
+> abrir a ficha, "MPN escolhido" e "MPN adivinhado" são indistinguíveis — e
+> escrevem-se exactamente da mesma maneira na BOM.
+
+O que falha é sempre a mesma casa: **o sufixo**. A família está certa, o
+fabricante está certo, o valor está certo. É o carácter que diz o estilo de
+montagem, o tipo de eixo ou a tensão que desmente tudo.
+
+**E eu também errei a ler.** Reportei que o `PTV09A-4` "não serve" por ser
+*bushingless* — mas com o pot **na placa**, o furo do painel é passagem e quem
+segura é o PCB. O `-4` serve; o que ele não permite é apertar porca ao painel.
+Cheguei a essa conclusão de um resumo de busca, não da tabela de estilos, e o
+dB decidiu com base nela. A tabela só apareceu quando um distribuidor
+descreveu a mesma peça de outra maneira e a contradição obrigou a ir à fonte.
+
+> **Resumo de busca não é ficha.** Um resumo diz o que alguém entendeu; a
+> ficha diz o que o fabricante afirma. Só a segunda serve para decidir — e
+> quando as duas discordam, a busca não empata: perde.
+
+**A defesa que funcionou nas três** foi a mesma: ir à fonte primária. A ficha
+da Bourns em PDF (extraída e **olhada** como imagem, porque o texto saía
+baralhado), a tabela de estilos em texto puro, e a página do distribuidor com
+stock. Nenhuma das três teria sido apanhada por ERC, netlist ou verificador —
+**o esquema fica igualmente limpo com o MPN errado.**
+
+**A regra:** todo MPN entra na BOM com a linha da ficha que justifica **cada
+carácter do sufixo**. Sem isso, é família com número.
+
+---
+
+## 15cc — O leitor que perde linhas em silêncio aprova tudo (05/09)
+
+Três ferramentas, no mesmo dia, leram menos do que existia e **não disseram
+nada**. Uma delas era o verificador escrito para apanhar as outras duas:
+
+| leitor | tinha | leu | o que anunciou |
+|---|---|---|---|
+| `pinos_de()`, em 4 geradores | 26 pinos | 24 | desenhou 24 rótulos |
+| `contrato_idc.py` v0.1.0 | 26 vias | 24 | *"as 26 vias batem"* |
+| `colisoes_sch.py` v0.3.0 | 40 propriedades | 0 | *"0 colisões"* |
+
+A causa da primeira: `h/2 − 1.27 − 6×2.54` não dá zero, dá
+**`1.7763568394002505e-15`**. O KiCad aceita; nenhuma regex escrita com
+`[\d.]+` — que é como toda a gente escreve — apanha essa linha. **Os dois
+pinos que sumiram eram terra**, e a folha saiu com 24 rótulos em vez de 26 sem
+um único aviso.
+
+> **Um leitor que perde linhas em silêncio não reprova nada — aprova tudo.**
+
+**A guarda é contar.** Quantos blocos existem, contra quantos a leitura
+apanhou. E a guarda tem de contar **o mesmo universo** que o leitor: contar
+propriedades escondidas, que o leitor salta de propósito, dá alarme falso — e
+guarda que dá alarme falso é guarda que se desliga.
+
+**Provar a guarda pede DOIS testes.** Injectar o defeito conhecido prova a
+*correcção*, não a guarda: a regex nova lê-o e a guarda cala-se, como deve.
+Só um defeito **desconhecido** prova que a guarda existe.
+
+E a variante que me apanhou à terceira: um `.kicad_sch` pode ter `)\t(symbol`
+— o bloco seguinte a começar na MESMA linha em que o anterior fecha. Numa
+renomeação de 27 referências, **uma** escapou; o relatório disse "26
+renomeadas" e eu aceitei o número **sem o comparar com 27**. Quem a apanhou
+foi a comparação de netlist.
+
+> **Varre por contagem de parêntesis, não por indentação.** E quando um
+> relatório diz "N feitos", compara N com o que era esperado.
+
+---
+
+## 15cd — Portão de linha de comando todo verde não prova que o ficheiro abre (05/09)
+
+O dB abriu o KiCad e apareceu: *"An error was found when loading the schematic
+that has been automatically fixed. Please save the schematic to repair the
+broken file."* Os portões estavam **todos verdes**.
+
+| ferramenta | o que dizia de um ficheiro sem `(instances)` |
+|---|---|
+| `sch erc` | as violações de sempre, nem mais nem menos |
+| `sch export netlist` | exportava bem — o aviso que dava era de anotação, outra coisa |
+| `sch upgrade` | *"Schematic file was not updated"* — o formato já era o corrente |
+
+A causa era o bloco `(instances)` em falta nos símbolos. **Nenhum comando o
+denuncia.** Só o editor repara.
+
+**Gastei três hipóteses erradas antes de medir** — `(instances)` em falta, a
+forma do caminho, dados obsoletos — e cheguei a escrever na skill que
+"`(instances)` não era a causa". Era, do problema do editor; não era, do aviso
+de anotação que eu estava a medir. Medir a coisa errada e concluir sobre a
+certa.
+
+**O método que respondeu:** pedir ao dB para abrir, clicar `OK` e **gravar** —
+e depois `diff` entre o que o KiCad gravou e o que estava lá. **O diff é o
+KiCad a dizer literalmente o que reparou.** Guardar a cópia ANTES de mandar
+abrir, senão o diff mistura as nossas edições com as dele.
+
+> **Quando a ferramenta que reclama é a única que sabe, é a ela que se
+> pergunta.** Não se adivinha em três rondas o que um `⌘S` responde numa.
+
+E o corolário que fecha o laço: **o gerador tem de reproduzir o que o editor
+escreve**, senão a regeneração seguinte apaga a reparação e a caixa volta.
+
+---
+
+## 15ce — Lista escrita à mão ao lado de coisa gerada envelhece sempre (05/09)
+
+O `gera_painel.py` tinha a biblioteca embutida declarada assim:
+
+```python
+lib_embutida({"IDC26","CONN7_L","EC11","POT3","SW_H","MOSFET_N","LED",...})
+```
+
+Uma **lista literal**, ao lado de uma folha gerada. Ao trocar os botões e os
+LEDs por conectores, a lista continuou a dizer `SW_H` e `LED`: a folha saiu a
+referir um símbolo que a biblioteca embutida não tinha, **o KiCad viu um
+símbolo SEM PINOS**, e os 10 fios ficaram soltos. ERC saltou de 0 para 20 e o
+gerador não disse uma palavra.
+
+A mesma família estava em três sítios no mesmo dia: esta lista, o `USADOS` do
+`gera_soquete.py`, e a `BOM-MPN-revB.md` — que divergia do esquema em quatro
+pontos ao mesmo tempo (nomes anteriores a uma renomeação, contagens, número de
+`PWR_FLAG`, e seis peças já decididas como fio mas ainda desenhadas como peça).
+
+> **A cura não é actualizar a lista. É a lista não existir** — derivar do que
+> foi realmente colocado, e recusar-se a escrever quando não bate.
+
+O que ficou: `USADOS` preenchido por `simbolo()`, `lib_embutida()` a recusar um
+símbolo que não encontra, e uma verificação **depois de escrever** de que todo
+`lib_id` tem entrada no `lib_symbols`. E a BOM do instrumento passou a ser
+**gerada das folhas** (`tools/bom_completa.py`).

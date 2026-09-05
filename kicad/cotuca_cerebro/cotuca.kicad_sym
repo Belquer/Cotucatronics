@@ -2376,450 +2376,450 @@
   )
   )
   (symbol "DAISY_SEED"
-  (pin_names
-  	(offset 1.016)
-  )
-  (exclude_from_sim no)
-  (in_bom yes)
-  (on_board yes)
-  (in_pos_files yes)
-  (duplicate_pin_numbers_are_jumpers no)
-  (property "Reference" "U"
-  	(at 0 30.48 0)
-  	(show_name no) (do_not_autoplace no)
-  	(effects (font (size 1.27 1.27)))
-  )
-  (property "Value" "Daisy Seed rev4"
-  	(at 0 -30.48 0)
-  	(show_name no) (do_not_autoplace no)
-  	(effects (font (size 1.27 1.27)))
-  )
-  (property "Footprint" ""
-  	(at 0 0 0)
-  	(show_name no) (do_not_autoplace no) (hide yes)
-  	(effects (font (size 1.27 1.27)))
-  )
-  (property "Datasheet" "Daisy_Seed_Rev4_Pinout.csv"
-  	(at 0 0 0)
-  	(show_name no) (do_not_autoplace no) (hide yes)
-  	(effects (font (size 1.27 1.27)))
-  )
-  (property "Description" "SOM em soquete 2x20. Simbolo GERADO do CSV do fabricante."
-  	(at 0 0 0)
-  	(show_name no) (do_not_autoplace no) (hide yes)
-  	(effects (font (size 1.27 1.27)))
-  )
-  (symbol "DAISY_SEED_0_1"
-  	(rectangle
-  		(start -25.4 26.67)
-  		(end 25.4 -26.67)
-  		(stroke (width 0.254) (type default))
-  		(fill (type background))
-  	)
-  )
-  (symbol "DAISY_SEED_1_1"
-  	(pin bidirectional line
-  		(at -30.479999999999997 25.4 0)
-  		(length 5.08)
-  		(name "D0"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "1"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 22.86 0)
-  		(length 5.08)
-  		(name "D1"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "2"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 20.32 0)
-  		(length 5.08)
-  		(name "D2"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "3"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 17.779999999999998 0)
-  		(length 5.08)
-  		(name "D3"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "4"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 15.239999999999998 0)
-  		(length 5.08)
-  		(name "D4"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "5"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 12.7 0)
-  		(length 5.08)
-  		(name "D5"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "6"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 10.159999999999998 0)
-  		(length 5.08)
-  		(name "D6"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "7"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 7.619999999999997 0)
-  		(length 5.08)
-  		(name "D7"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "8"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 5.079999999999998 0)
-  		(length 5.08)
-  		(name "D8"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "9"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 2.539999999999999 0)
-  		(length 5.08)
-  		(name "D9"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "10"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 0.0 0)
-  		(length 5.08)
-  		(name "D10"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "11"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -2.5400000000000027 0)
-  		(length 5.08)
-  		(name "D11"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "12"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -5.080000000000002 0)
-  		(length 5.08)
-  		(name "D12"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "13"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -7.6200000000000045 0)
-  		(length 5.08)
-  		(name "D13"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "14"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -10.160000000000004 0)
-  		(length 5.08)
-  		(name "D14"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "15"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -12.700000000000003 0)
-  		(length 5.08)
-  		(name "AUDIO_IN_L"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "16"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -15.240000000000002 0)
-  		(length 5.08)
-  		(name "AUDIO_INR"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "17"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -17.78 0)
-  		(length 5.08)
-  		(name "AUDIO_OUT_L"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "18"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at -30.479999999999997 -20.32 0)
-  		(length 5.08)
-  		(name "AUDIO_OUT_R"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "19"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin power_in line
-  		(at -30.479999999999997 -22.86 0)
-  		(length 5.08)
-  		(name "AGND"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "20"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin power_out line
-  		(at 30.479999999999997 25.4 180)
-  		(length 5.08)
-  		(name "3v3A"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "21"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 22.86 180)
-  		(length 5.08)
-  		(name "D15"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "22"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 20.32 180)
-  		(length 5.08)
-  		(name "D16"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "23"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 17.779999999999998 180)
-  		(length 5.08)
-  		(name "D17"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "24"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 15.239999999999998 180)
-  		(length 5.08)
-  		(name "D18"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "25"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 12.7 180)
-  		(length 5.08)
-  		(name "D19"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "26"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 10.159999999999998 180)
-  		(length 5.08)
-  		(name "D20"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "27"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 7.619999999999997 180)
-  		(length 5.08)
-  		(name "D21"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "28"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 5.079999999999998 180)
-  		(length 5.08)
-  		(name "D22"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "29"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 2.539999999999999 180)
-  		(length 5.08)
-  		(name "D23"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "30"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 0.0 180)
-  		(length 5.08)
-  		(name "D24"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "31"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 -2.5400000000000027 180)
-  		(length 5.08)
-  		(name "D25"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "32"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 -5.080000000000002 180)
-  		(length 5.08)
-  		(name "D26"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "33"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 -7.6200000000000045 180)
-  		(length 5.08)
-  		(name "D27"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "34"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 -10.160000000000004 180)
-  		(length 5.08)
-  		(name "D28"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "35"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 -12.700000000000003 180)
-  		(length 5.08)
-  		(name "D29"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "36"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin bidirectional line
-  		(at 30.479999999999997 -15.240000000000002 180)
-  		(length 5.08)
-  		(name "D30"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "37"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin power_out line
-  		(at 30.479999999999997 -17.78 180)
-  		(length 5.08)
-  		(name "3v3D"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "38"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin power_in line
-  		(at 30.479999999999997 -20.32 180)
-  		(length 5.08)
-  		(name "VIN"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "39"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  	(pin power_in line
-  		(at 30.479999999999997 -22.86 180)
-  		(length 5.08)
-  		(name "GND"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  		(number "40"
-  			(effects (font (size 1.27 1.27)))
-  		)
-  	)
-  )
-  )
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at 0 30.48 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Value" "Daisy Seed3"
+				(at 0 -30.48 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Datasheet" "Seed3_pinout.csv"
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Description" "SOM em soquete 2x20. Simbolo GERADO do CSV do fabricante."
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(symbol "DAISY_SEED_0_1"
+				(rectangle
+					(start -25.4 26.67)
+					(end 25.4 -26.67)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+			)
+			(symbol "DAISY_SEED_1_1"
+				(pin bidirectional line
+					(at -30.48 25.4 0)
+					(length 5.08)
+					(name "D0"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "1"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 22.86 0)
+					(length 5.08)
+					(name "D1"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "2"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 20.32 0)
+					(length 5.08)
+					(name "D2"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "3"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 17.78 0)
+					(length 5.08)
+					(name "D3"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "4"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 15.24 0)
+					(length 5.08)
+					(name "D4"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "5"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 12.7 0)
+					(length 5.08)
+					(name "D5"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "6"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 10.16 0)
+					(length 5.08)
+					(name "D6"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "7"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 7.62 0)
+					(length 5.08)
+					(name "D7"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "8"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 5.08 0)
+					(length 5.08)
+					(name "D8"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "9"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 2.54 0)
+					(length 5.08)
+					(name "D9"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "10"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 0 0)
+					(length 5.08)
+					(name "D10"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "11"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -2.54 0)
+					(length 5.08)
+					(name "D11"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "12"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -5.08 0)
+					(length 5.08)
+					(name "D12"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "13"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -7.62 0)
+					(length 5.08)
+					(name "D13"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "14"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -10.16 0)
+					(length 5.08)
+					(name "D14"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "15"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -12.7 0)
+					(length 5.08)
+					(name "AUDIO_IN_L"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "16"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -15.24 0)
+					(length 5.08)
+					(name "AUDIO_IN_R"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "17"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -17.78 0)
+					(length 5.08)
+					(name "AUDIO_OUT_L"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "18"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at -30.48 -20.32 0)
+					(length 5.08)
+					(name "AUDIO_OUT_R"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "19"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin power_in line
+					(at -30.48 -22.86 0)
+					(length 5.08)
+					(name "AGND"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "20"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin power_out line
+					(at 30.48 25.4 180)
+					(length 5.08)
+					(name "3v3A"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "21"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 22.86 180)
+					(length 5.08)
+					(name "D15"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "22"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 20.32 180)
+					(length 5.08)
+					(name "D16"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "23"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 17.78 180)
+					(length 5.08)
+					(name "D17"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "24"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 15.24 180)
+					(length 5.08)
+					(name "D18"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "25"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 12.7 180)
+					(length 5.08)
+					(name "D19"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "26"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 10.16 180)
+					(length 5.08)
+					(name "D20"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "27"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 7.62 180)
+					(length 5.08)
+					(name "D21"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "28"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 5.08 180)
+					(length 5.08)
+					(name "D22"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "29"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 2.54 180)
+					(length 5.08)
+					(name "D23"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "30"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 0 180)
+					(length 5.08)
+					(name "D24"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "31"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 -2.54 180)
+					(length 5.08)
+					(name "D25"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "32"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 -5.08 180)
+					(length 5.08)
+					(name "D26"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "33"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 -7.62 180)
+					(length 5.08)
+					(name "D27"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "34"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 -10.16 180)
+					(length 5.08)
+					(name "D28"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "35"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 -12.7 180)
+					(length 5.08)
+					(name "D29"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "36"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin bidirectional line
+					(at 30.48 -15.24 180)
+					(length 5.08)
+					(name "D30"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "37"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin power_out line
+					(at 30.48 -17.78 180)
+					(length 5.08)
+					(name "3v3D"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "38"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin power_in line
+					(at 30.48 -20.32 180)
+					(length 5.08)
+					(name "VIN"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "39"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin power_in line
+					(at 30.48 -22.86 180)
+					(length 5.08)
+					(name "GND"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "40"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+			)
+		)
   (symbol "NETTIE2"
   (pin_names
   	(offset 1.016)
@@ -3054,7 +3054,7 @@
   		)
   	)
   	(pin passive line
-  		(at -7.62 0.0 0)
+  		(at -7.62 0 0)
   		(length 5.08)
   		(name "3"
   			(effects (font (size 1.27 1.27)))
@@ -3129,7 +3129,7 @@
   		)
   	)
   	(pin passive line
-  		(at -7.62 3.8099999999999996 0)
+  		(at -7.62 3.81 0)
   		(length 5.08)
   		(name "2"
   			(effects (font (size 1.27 1.27)))
@@ -3139,7 +3139,7 @@
   		)
   	)
   	(pin passive line
-  		(at -7.62 1.2699999999999996 0)
+  		(at -7.62 1.27 0)
   		(length 5.08)
   		(name "3"
   			(effects (font (size 1.27 1.27)))
@@ -3149,7 +3149,7 @@
   		)
   	)
   	(pin passive line
-  		(at -7.62 -1.2700000000000005 0)
+  		(at -7.62 -1.27 0)
   		(length 5.08)
   		(name "4"
   			(effects (font (size 1.27 1.27)))
@@ -3159,7 +3159,7 @@
   		)
   	)
   	(pin passive line
-  		(at -7.62 -3.8100000000000005 0)
+  		(at -7.62 -3.81 0)
   		(length 5.08)
   		(name "5"
   			(effects (font (size 1.27 1.27)))
@@ -3214,7 +3214,7 @@
   )
   (symbol "IDC26_1_1"
   	(pin passive line
-  		(at -12.7 15.240000000000002 0)
+  		(at -12.7 15.24 0)
   		(length 5.08)
   		(name "1"
   			(effects (font (size 1.27 1.27)))
@@ -3224,7 +3224,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 15.240000000000002 180)
+  		(at 12.7 15.24 180)
   		(length 5.08)
   		(name "2"
   			(effects (font (size 1.27 1.27)))
@@ -3234,7 +3234,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 12.700000000000003 0)
+  		(at -12.7 12.7 0)
   		(length 5.08)
   		(name "3"
   			(effects (font (size 1.27 1.27)))
@@ -3244,7 +3244,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 12.700000000000003 180)
+  		(at 12.7 12.7 180)
   		(length 5.08)
   		(name "4"
   			(effects (font (size 1.27 1.27)))
@@ -3254,7 +3254,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 10.160000000000002 0)
+  		(at -12.7 10.16 0)
   		(length 5.08)
   		(name "5"
   			(effects (font (size 1.27 1.27)))
@@ -3264,7 +3264,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 10.160000000000002 180)
+  		(at 12.7 10.16 180)
   		(length 5.08)
   		(name "6"
   			(effects (font (size 1.27 1.27)))
@@ -3274,7 +3274,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 7.620000000000002 0)
+  		(at -12.7 7.62 0)
   		(length 5.08)
   		(name "7"
   			(effects (font (size 1.27 1.27)))
@@ -3284,7 +3284,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 7.620000000000002 180)
+  		(at 12.7 7.62 180)
   		(length 5.08)
   		(name "8"
   			(effects (font (size 1.27 1.27)))
@@ -3294,7 +3294,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 5.080000000000002 0)
+  		(at -12.7 5.08 0)
   		(length 5.08)
   		(name "9"
   			(effects (font (size 1.27 1.27)))
@@ -3304,7 +3304,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 5.080000000000002 180)
+  		(at 12.7 5.08 180)
   		(length 5.08)
   		(name "10"
   			(effects (font (size 1.27 1.27)))
@@ -3314,7 +3314,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 2.5400000000000027 0)
+  		(at -12.7 2.54 0)
   		(length 5.08)
   		(name "11"
   			(effects (font (size 1.27 1.27)))
@@ -3324,7 +3324,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 2.5400000000000027 180)
+  		(at 12.7 2.54 180)
   		(length 5.08)
   		(name "12"
   			(effects (font (size 1.27 1.27)))
@@ -3334,7 +3334,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 1.7763568394002505e-15 0)
+  		(at -12.7 0 0)
   		(length 5.08)
   		(name "13"
   			(effects (font (size 1.27 1.27)))
@@ -3344,7 +3344,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 1.7763568394002505e-15 180)
+  		(at 12.7 0 180)
   		(length 5.08)
   		(name "14"
   			(effects (font (size 1.27 1.27)))
@@ -3354,7 +3354,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 -2.539999999999999 0)
+  		(at -12.7 -2.54 0)
   		(length 5.08)
   		(name "15"
   			(effects (font (size 1.27 1.27)))
@@ -3364,7 +3364,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 -2.539999999999999 180)
+  		(at 12.7 -2.54 180)
   		(length 5.08)
   		(name "16"
   			(effects (font (size 1.27 1.27)))
@@ -3374,7 +3374,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 -5.079999999999998 0)
+  		(at -12.7 -5.08 0)
   		(length 5.08)
   		(name "17"
   			(effects (font (size 1.27 1.27)))
@@ -3384,7 +3384,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 -5.079999999999998 180)
+  		(at 12.7 -5.08 180)
   		(length 5.08)
   		(name "18"
   			(effects (font (size 1.27 1.27)))
@@ -3394,7 +3394,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 -7.619999999999997 0)
+  		(at -12.7 -7.62 0)
   		(length 5.08)
   		(name "19"
   			(effects (font (size 1.27 1.27)))
@@ -3404,7 +3404,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 -7.619999999999997 180)
+  		(at 12.7 -7.62 180)
   		(length 5.08)
   		(name "20"
   			(effects (font (size 1.27 1.27)))
@@ -3414,7 +3414,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 -10.159999999999997 0)
+  		(at -12.7 -10.16 0)
   		(length 5.08)
   		(name "21"
   			(effects (font (size 1.27 1.27)))
@@ -3424,7 +3424,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 -10.159999999999997 180)
+  		(at 12.7 -10.16 180)
   		(length 5.08)
   		(name "22"
   			(effects (font (size 1.27 1.27)))
@@ -3454,7 +3454,7 @@
   		)
   	)
   	(pin passive line
-  		(at -12.7 -15.239999999999998 0)
+  		(at -12.7 -15.24 0)
   		(length 5.08)
   		(name "25"
   			(effects (font (size 1.27 1.27)))
@@ -3464,7 +3464,7 @@
   		)
   	)
   	(pin passive line
-  		(at 12.7 -15.239999999999998 180)
+  		(at 12.7 -15.24 180)
   		(length 5.08)
   		(name "26"
   			(effects (font (size 1.27 1.27)))
@@ -3475,4 +3475,758 @@
   	)
   )
   )
+  (symbol "CONN7_L"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "J"
+  	(at 0 12.7 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "conector 7p"
+  	(at 0 -12.7 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "CONN7_L_0_1"
+  	(rectangle
+  		(start -2.54 10.16)
+  		(end 2.54 -10.16)
+  		(stroke (width 0.254) (type default))
+  		(fill (type background))
+  	)
+  )
+  (symbol "CONN7_L_1_1"
+  	(pin passive line
+  		(at -7.62 8.89 0)
+  		(length 5.08)
+  		(name "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 6.35 0)
+  		(length 5.08)
+  		(name "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 3.81 0)
+  		(length 5.08)
+  		(name "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 1.27 0)
+  		(length 5.08)
+  		(name "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 -1.27 0)
+  		(length 5.08)
+  		(name "5"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "5"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 -3.81 0)
+  		(length 5.08)
+  		(name "6"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "6"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -7.62 -6.35 0)
+  		(length 5.08)
+  		(name "7"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "7"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+  (symbol "POT3"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "RV"
+  	(at 0 10.16 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "10k lin"
+  	(at 0 -5.08 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "POT3_0_1"
+  	(rectangle
+  		(start -5.08 2.54)
+  		(end 5.08 -2.54)
+  		(stroke (width 0.254) (type default))
+  		(fill (type none))
+  	)
+  )
+  (symbol "POT3_1_1"
+  	(pin passive line
+  		(at -10.16 0 0)
+  		(length 5.08)
+  		(name "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 0 7.62 270)
+  		(length 5.08)
+  		(name "CURSOR"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 10.16 0 180)
+  		(length 5.08)
+  		(name "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+  (symbol "EC11"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "SW"
+  	(at 0 10.16 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "EC11 encoder"
+  	(at 0 -10.16 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "EC11_0_1"
+  	(rectangle
+  		(start -6.35 7.62)
+  		(end 6.35 -7.62)
+  		(stroke (width 0.254) (type default))
+  		(fill (type background))
+  	)
+  )
+  (symbol "EC11_1_1"
+  	(pin passive line
+  		(at -11.43 5.08 0)
+  		(length 5.08)
+  		(name "A"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -11.43 2.54 0)
+  		(length 5.08)
+  		(name "C"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -11.43 0 0)
+  		(length 5.08)
+  		(name "B"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -11.43 -2.54 0)
+  		(length 5.08)
+  		(name "PUSH1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "4"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at -11.43 -5.08 0)
+  		(length 5.08)
+  		(name "PUSH2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "5"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+  (symbol "MOSFET_N"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "Q"
+  	(at 0 11.43 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "AO3400A"
+  	(at 0 -11.43 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "MOSFET_N_0_1"
+  	(rectangle
+  		(start -2.54 3.81)
+  		(end 2.54 -3.81)
+  		(stroke (width 0.254) (type default))
+  		(fill (type none))
+  	)
+  )
+  (symbol "MOSFET_N_1_1"
+  	(pin passive line
+  		(at -7.62 0 0)
+  		(length 5.08)
+  		(name "G"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 0 8.89 270)
+  		(length 5.08)
+  		(name "D"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 0 -8.89 90)
+  		(length 5.08)
+  		(name "S"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "3"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+  (symbol "LED"
+  (pin_names
+  	(offset 1.016)
+  )
+  (exclude_from_sim no)
+  (in_bom yes)
+  (on_board yes)
+  (in_pos_files yes)
+  (duplicate_pin_numbers_are_jumpers no)
+  (property "Reference" "D"
+  	(at 0 5.08 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Value" "LED"
+  	(at 0 -5.08 0)
+  	(show_name no) (do_not_autoplace no)
+  	(effects (font (size 1 1)))
+  )
+  (property "Footprint" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Datasheet" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (property "Description" ""
+  	(at 0 0 0)
+  	(show_name no) (do_not_autoplace no) (hide yes)
+  	(effects (font (size 1.27 1.27)))
+  )
+  (symbol "LED_0_1"
+  	(polyline
+  		(pts
+  			(xy -1.27 2.54) (xy -1.27 -2.54)
+  		)
+  		(stroke (width 0.254) (type default))
+  		(fill (type none))
+  	)
+  	(polyline
+  		(pts
+  			(xy 1.27 2.54) (xy 1.27 -2.54) (xy -1.27 0) (xy 1.27 2.54)
+  		)
+  		(stroke (width 0.254) (type default))
+  		(fill (type none))
+  	)
+  )
+  (symbol "LED_1_1"
+  	(pin passive line
+  		(at -6.35 0 0)
+  		(length 5.08)
+  		(name "A"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "1"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  	(pin passive line
+  		(at 6.35 0 180)
+  		(length 5.08)
+  		(name "K"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  		(number "2"
+  			(effects (font (size 1.27 1.27)))
+  		)
+  	)
+  )
+  )
+	(symbol "OPA1642"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "U"
+				(at 0 10.16 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Value" "OPA1642"
+				(at 0 -10.16 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1 1)))
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(symbol "OPA1642_1_1"
+				(polyline
+					(pts
+						(xy -7.62 7.62) (xy -7.62 -7.62) (xy 7.62 0) (xy -7.62 7.62)
+					)
+					(stroke (width 0.254) (type default))
+					(fill (type none))
+				)
+				(pin input line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "+"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "3"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "-"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "2"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin output line
+					(at 10.16 0 180)
+					(length 2.54)
+					(name ""
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "1"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+			)
+			(symbol "OPA1642_2_1"
+				(polyline
+					(pts
+						(xy -7.62 7.62) (xy -7.62 -7.62) (xy 7.62 0) (xy -7.62 7.62)
+					)
+					(stroke (width 0.254) (type default))
+					(fill (type none))
+				)
+				(pin input line
+					(at -10.16 2.54 0)
+					(length 2.54)
+					(name "+"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "5"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin input line
+					(at -10.16 -2.54 0)
+					(length 2.54)
+					(name "-"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "6"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin output line
+					(at 10.16 0 180)
+					(length 2.54)
+					(name ""
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "7"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+			)
+			(symbol "OPA1642_3_1"
+				(rectangle
+					(start -5.08 -5.08)
+					(end 5.08 5.08)
+					(stroke (width 0.254) (type default))
+					(fill (type none))
+				)
+				(pin power_in line
+					(at 0 -7.62 90)
+					(length 2.54)
+					(name "V-"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "4"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin power_in line
+					(at 0 7.62 270)
+					(length 2.54)
+					(name "V+"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "8"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+			)
+		)
+	(symbol "CONN6_L"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 11.43 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Value" "conector 6p"
+				(at 0 -11.43 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1 1)))
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(symbol "CONN6_L_0_1"
+				(rectangle
+					(start -2.54 8.89)
+					(end 2.54 -8.89)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+			)
+			(symbol "CONN6_L_1_1"
+				(pin passive line
+					(at -7.62 7.62 0)
+					(length 5.08)
+					(name "1"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "1"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin passive line
+					(at -7.62 5.08 0)
+					(length 5.08)
+					(name "2"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "2"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin passive line
+					(at -7.62 2.54 0)
+					(length 5.08)
+					(name "3"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "3"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin passive line
+					(at -7.62 0 0)
+					(length 5.08)
+					(name "4"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "4"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin passive line
+					(at -7.62 -2.54 0)
+					(length 5.08)
+					(name "5"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "5"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin passive line
+					(at -7.62 -5.08 0)
+					(length 5.08)
+					(name "6"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "6"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+			)
+		)
+	(symbol "CONN3_R"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(in_pos_files yes)
+			(duplicate_pin_numbers_are_jumpers no)
+			(property "Reference" "J"
+				(at 0 7.62 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Value" "conector 3p"
+				(at 0 -7.62 0)
+				(show_name no) (do_not_autoplace no)
+				(effects (font (size 1 1)))
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Datasheet" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(property "Description" ""
+				(at 0 0 0)
+				(show_name no) (do_not_autoplace no) (hide yes)
+				(effects (font (size 1.27 1.27)))
+			)
+			(symbol "CONN3_R_0_1"
+				(rectangle
+					(start -2.54 6.35)
+					(end 2.54 -6.35)
+					(stroke (width 0.254) (type default))
+					(fill (type background))
+				)
+			)
+			(symbol "CONN3_R_1_1"
+				(pin passive line
+					(at 2.54 5.08 180)
+					(length 2.54)
+					(name "1"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "1"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin passive line
+					(at 2.54 0 180)
+					(length 2.54)
+					(name "2"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "2"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+				(pin passive line
+					(at 2.54 -5.08 180)
+					(length 2.54)
+					(name "3"
+						(effects (font (size 1.27 1.27)))
+					)
+					(number "3"
+						(effects (font (size 1.27 1.27)))
+					)
+				)
+			)
+		)
 )

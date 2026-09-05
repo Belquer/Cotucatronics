@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "cotuca")(type "KiCad")(uri "${KIPRJMOD}/../cotuca_cerebro/cotuca.kicad_sym")(options "")(descr "A MESMA biblioteca do cerebro. Uma so, para as duas placas: duas copias derivavam, e o contrato entre elas e nomes iguais."))
+)

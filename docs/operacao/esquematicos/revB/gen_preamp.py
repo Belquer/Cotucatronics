@@ -15,6 +15,20 @@
 #
 # ⚠️ O `.kicad_sch` NO REPO ESTA UM PASSO A FRENTE DESTE GERADOR.
 #
+# ⚠️⚠️ 05/09 — ESTE GERADOR ESTA AGORA DUAS GERACOES ATRAS, E NAO SE CORRE.
+#
+# Ele ainda emite `U1A`/`U1B`/`U1C` sobre os simbolos `OPA` e `OPAPWR`, que
+# foram APOSENTADOS por estarem errados de duas maneiras: os pinos 1 e 3
+# trocados face ao SOIC-8 real, e tres referencias (tres linhas de BOM, tres
+# pegadas) para um unico chip. A folha viva usa um `OPA1642` de TRES UNIDADES.
+#
+# Ele emite tambem as referencias `R0A`, `C1A`, `RVA`, `DA`, `JA` — que o KiCad
+# trata como NAO ANOTADAS e renumera sozinho ao gravar. A folha viva usa a
+# dezena para dizer o canal: `R10..R14` / `R20..R24`, `C11..C14` / `C21..C24`.
+#
+# Ver `docs/operacao/esquematicos/revB/ERC-ISENCOES.md` (mapa completo) e a
+# skill `kicad` §6b e §7d. Correr isto reintroduz os dois defeitos de uma vez.
+#
 # O `kiutils` escreve o formato `20211014` (KiCad 6). A 04/09 as duas folhas
 # foram migradas com `kicad-cli sch upgrade` para `20260306` (KiCad 10.0.5),
 # que e o que a maquina do dB abre.

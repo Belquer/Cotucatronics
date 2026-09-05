@@ -1,104 +1,206 @@
 (kicad_sch
 	(version 20260306)
-	(generator "cotucatronics")
+	(generator "eeschema")
 	(generator_version "10.0")
-	(uuid "2a678ab8-8884-4d5c-9a7d-68f591779afd")
+	(uuid "2ad2d1f2-b370-4f4e-9e84-b07766bec7e4")
 	(paper "A4")
 	(title_block
 		(title "COTUCATRONICS — carrier rev B")
 		(date "2026-09-04")
 		(rev "B")
-		(comment 1 "Raiz hierarquica. As folhas ligam-se por ROTULOS GLOBAIS,")
+		(comment 1 "A ponte unica AGND<->GND vive na folha do SOQUETE — MAPA-DE-TERRA.md §6.")
 		(comment 2 "nao por pinos de folha: GND, AGND, +15V, +5V, V+PRE, AUDIO_*.")
-		(comment 3 "A ponte unica AGND<->GND vive na folha do SOQUETE — MAPA-DE-TERRA.md §6.")
+		(comment 3 "Raiz hierarquica. As folhas ligam-se por ROTULOS GLOBAIS,")
 	)
 	(lib_symbols)
 	(sheet
-		(at 30.48 30.48)
+		(at 30.48 121.92)
 		(size 76.2 25.4)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(fields_autoplaced yes)
-		(stroke (width 0.1524) (type solid))
-		(fill (color 0 0 0 0.0000))
-		(uuid "42a21d5f-b459-4203-8dce-d7e992ca5c72")
-		(property "Sheetname" "ENERGIA"
-			(at 30.48 29.78 0)
-			(effects (font (size 1.27 1.27)) (justify left bottom))
+		(stroke
+			(width 0.1524)
+			(type solid)
 		)
-		(property "Sheetfile" "cotuca_energia.kicad_sch"
-			(at 30.48 56.58 0)
-			(effects (font (size 1.27 1.27)) (justify left top))
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "3747994b-b177-4088-93e8-14962e07c5b9")
+		(property "Sheetname" "SOQUETE + PONTE + DPDT + SAIDAS"
+			(at 30.48 121.22 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "cotuca_soquete.kicad_sch"
+			(at 30.48 148.02 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
 		)
 		(instances
 			(project "cotuca_cerebro"
-				(path "/" (page "2"))
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4"
+					(page "4")
+				)
 			)
 		)
 	)
 	(sheet
 		(at 30.48 76.2)
 		(size 76.2 25.4)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(fields_autoplaced yes)
-		(stroke (width 0.1524) (type solid))
-		(fill (color 0 0 0 0.0000))
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
 		(uuid "3fdc5423-54ad-40b9-b9c4-d2ddfe2d5b43")
 		(property "Sheetname" "PRE-AMP"
 			(at 30.48 75.5 0)
-			(effects (font (size 1.27 1.27)) (justify left bottom))
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
 		)
 		(property "Sheetfile" "cotuca_preamp.kicad_sch"
-			(at 30.48 102.30000000000001 0)
-			(effects (font (size 1.27 1.27)) (justify left top))
+			(at 30.48 102.3 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
 		)
 		(instances
 			(project "cotuca_cerebro"
-				(path "/" (page "3"))
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4"
+					(page "3")
+				)
 			)
 		)
 	)
 	(sheet
-		(at 30.48 121.92)
+		(at 30.48 30.48)
 		(size 76.2 25.4)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(fields_autoplaced yes)
-		(stroke (width 0.1524) (type solid))
-		(fill (color 0 0 0 0.0000))
-		(uuid "3747994b-b177-4088-93e8-14962e07c5b9")
-		(property "Sheetname" "SOQUETE + PONTE + DPDT + SAIDAS"
-			(at 30.48 121.22 0)
-			(effects (font (size 1.27 1.27)) (justify left bottom))
+		(stroke
+			(width 0.1524)
+			(type solid)
 		)
-		(property "Sheetfile" "cotuca_soquete.kicad_sch"
-			(at 30.48 148.02 0)
-			(effects (font (size 1.27 1.27)) (justify left top))
+		(fill
+			(color 0 0 0 0)
+		)
+		(uuid "42a21d5f-b459-4203-8dce-d7e992ca5c72")
+		(property "Sheetname" "ENERGIA"
+			(at 30.48 29.78 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "cotuca_energia.kicad_sch"
+			(at 30.48 56.58 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
 		)
 		(instances
 			(project "cotuca_cerebro"
-				(path "/" (page "4"))
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4"
+					(page "2")
+				)
 			)
 		)
 	)
 	(sheet
 		(at 30.48 167.64)
 		(size 76.2 25.4)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
 		(fields_autoplaced yes)
-		(stroke (width 0.1524) (type solid))
-		(fill (color 0 0 0 0.0000))
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0)
+		)
 		(uuid "49c1c7af-14dc-4cd2-a083-868e223e46c0")
 		(property "Sheetname" "CONECTOR DO PAINEL — IDC 2x13"
 			(at 30.48 166.94 0)
-			(effects (font (size 1.27 1.27)) (justify left bottom))
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
 		)
 		(property "Sheetfile" "cotuca_conector.kicad_sch"
-			(at 30.48 193.73999999999998 0)
-			(effects (font (size 1.27 1.27)) (justify left top))
+			(at 30.48 193.74 0)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
 		)
 		(instances
 			(project "cotuca_cerebro"
-				(path "/" (page "5"))
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4"
+					(page "5")
+				)
 			)
 		)
 	)
 	(sheet_instances
-		(path "/" (page "1"))
+		(path "/"
+			(page "1")
+		)
 	)
 	(embedded_fonts no)
 )

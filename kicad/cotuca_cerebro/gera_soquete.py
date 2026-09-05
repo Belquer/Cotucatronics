@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_soquete v0.1.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
+"""gera_soquete v0.10.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
 
 Desenhada por SCRIPT e nao a mao (skill `kicad` §5): reproduzivel, diffavel,
 e corrigivel na fonte. Toda a geometria cai na grade de 1,27 mm.
@@ -14,7 +14,8 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
    MAPA-DE-TERRA.md §2 para a consequencia de layout.
 
  · `Dnn` -> pino do header sai da folha de dados, nunca de memoria. O mapa
-   vem do `Daisy_Seed_Rev4_Pinout.csv` via `gera_daisy_sym.py`.
+   vem do `Seed3_pinout.csv` via `gera_daisy_sym.py`. (Era o CSV do rev4
+   ate 05/09; a pinagem dos dois bate nos 40 pinos, conferida.)
    ⚠️ D29/D30 SAO O USB (pinos 36/37). Nao se usam. O sense dos DPDT vai
    para D11/D12.
 
@@ -23,14 +24,16 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, sys, uuid
 
-VERSAO = "0.1.0"
+VERSAO = "0.10.0"
 G = 1.27
 def u(): return str(uuid.uuid4())
 def g(v): return round(round(v / G) * G, 4)
 
-L = []   # blocos do ficheiro
+L = []
+USADOS = set()   # blocos do ficheiro
 
 def simbolo(lib, ref, val, x, y, ang=0, campos=()):
+    USADOS.add(lib)
     x, y = g(x), g(y)
     ps = "".join(
         f'\t\t(property "{k}" "{v}"\n\t\t\t(at {g(x+dx)} {g(y+dy)} 0)\n'
@@ -43,13 +46,98 @@ def simbolo(lib, ref, val, x, y, ang=0, campos=()):
 \t\t(unit 1)
 \t\t(body_style 1)
 \t\t(exclude_from_sim no)
-\t\t(in_bom yes)
+\t\t(in_bom {_bom(ref)})
 \t\t(on_board yes)
-\t\t(in_pos_files yes)
+\t\t(in_pos_files {_bom(ref)})
 \t\t(dnp no)
 \t\t(uuid "{u()}")
-{ps}\t)
+{ps}{_instancia(ref)}\t)
 ''')
+
+
+# ------------------------------------------------------------- FOOTPRINTS
+#
+# ⚠️ SO O QUE ESTA DETERMINADO. As pecas mecanicas (DPDT tipo 2, jacks TRS,
+# EC11, pots, recept. do OLED, eletroliticos radiais, terminais de parafuso)
+# dependem do EXEMPLAR FISICO e ficam VAZIAS ate o dB medir — o brief diz
+# "medir antes de soldar". Footprint mecanico errado e placa inutil, e um
+# footprint plausivel escrito hoje parece verdade amanha.
+#
+# A JLC monta so o lado SMD (decidido com o dB a 05/09); o THT solda o dB.
+FOOTPRINT = {
+    "U2":  "Module:Electrosmith_Daisy_Seed",      # o footprint do fabricante
+    "NT1": "NetTie:NetTie-2_SMD_Pad2.0mm",        # ⚠️ FORA da BOM: nao e peca
+    "R50": "Resistor_SMD:R_0805_2012Metric",
+    "R51": "Resistor_SMD:R_0805_2012Metric",
+    "J10": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+    "J11": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
+    "J12": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
+    "J13": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
+    "J15": "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical",
+    "J16": "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical",
+}
+
+
+def _fp(ref):
+    return FOOTPRINT.get(ref, "")
+
+
+# Referencias que NAO sao pecas: cobre no desenho, nada para comprar nem para
+# a maquina pousar. Sem isto o net-tie sai como LINHA DE BOM e como entrada no
+# ficheiro de posicionamento da JLC — a fabrica ia procurar um componente que
+# nao existe.
+NAO_E_PECA = {"NT1", "#FLG3", "#FLG4"}
+
+
+def _bom(ref):
+    return "no" if ref in NAO_E_PECA else "yes"
+
+def _instancia(ref, unidade=1):
+    """O bloco `(instances)` de um simbolo. NAO E OPCIONAL.
+
+    Sem ele o KiCad repara o ficheiro ao abrir e mostra uma caixa a pedir que
+    se grave: *"An error was found when loading the schematic that has been
+    automatically fixed."* Nenhuma ferramenta de linha de comando denuncia
+    isto — nem o ERC, nem a netlist, nem o `sch upgrade`, que devolve "not
+    updated" porque o formato ja e o corrente. A 05/09 gastaram-se tres
+    hipoteses erradas a caca disto ate se pedir ao KiCad para gravar e se
+    comparar o ficheiro dele com o meu; a resposta estava no diff.
+
+    ⚠️ O PRIMEIRO SEGMENTO DO CAMINHO SAI DO `.kicad_pro`, NAO DO `(uuid)` DA
+    RAIZ. Neste projecto os dois divergem — `.kicad_pro` diz
+    `2ad2d1f2...`, o `cotuca_cerebro.kicad_sch` diz `2a678ab8...` — e o KiCad
+    usa o do `.kicad_pro`. Escrever o outro produz dados de instancia que
+    nascem obsoletos, que e pior do que nao os escrever.
+
+    O caminho de uma folha-filha e `/<raiz>/<folha>`; o de um simbolo na
+    propria raiz e so `/<raiz>`.
+    """
+    import json as _json
+    import re as _re
+    pro = _json.load(io.open("cotuca_cerebro.kicad_pro", encoding="utf-8"))
+    raiz = pro["sheets"][0][0]
+    _u = _re.search(r'^\t\(uuid "([0-9a-f-]{36})"\)',
+                    io.open("cotuca_cerebro.kicad_sch", encoding="utf-8").read(),
+                    _re.M)
+    if not _u or _u.group(1) != raiz:
+        raise SystemExit("*** o (uuid) da raiz (%s) nao bate com o do .kicad_pro "
+                         "(%s). Escrever (instances) assim produz dados que "
+                         "nascem obsoletos e o KiCad repara o ficheiro ao abrir."
+                         % (_u.group(1) if _u else "ausente", raiz))
+    r = io.open("cotuca_cerebro.kicad_sch", encoding="utf-8").read()
+    minha = None
+    for m in _re.finditer(r'\(sheet\s*\n(?:.|\n)*?\(uuid "([0-9a-f-]{36})"\)'
+                          r'((?:.|\n)*?)\n\t\)', r):
+        if '"cotuca_soquete.kicad_sch"' in m.group(2):
+            minha = m.group(1); break
+    if minha is None:
+        raise SystemExit("*** nao achei a folha cotuca_soquete.kicad_sch na raiz — sem isso o "
+                         "(instances) sai errado e o KiCad repara o ficheiro "
+                         "ao abrir, em silencio para a linha de comando")
+    return ('\t\t(instances\n\t\t\t(project "cotuca_cerebro"\n'
+            '\t\t\t\t(path "/%s/%s"\n\t\t\t\t\t(reference "%s")\n'
+            '\t\t\t\t\t(unit %d)\n\t\t\t\t)\n\t\t\t)\n\t\t)\n'
+            % (raiz, minha, ref, unidade))
 
 def fio(x1, y1, x2, y2):
     L.append(f'\t(wire\n\t\t(pts\n\t\t\t(xy {g(x1)} {g(y1)}) (xy {g(x2)} {g(y2)})\n\t\t)\n'
@@ -68,6 +156,20 @@ def rotulo(nome, x, y, ang=0, just="left"):
 def texto(s, x, y, tam=1.27):
     L.append(f'\t(text "{s}"\n\t\t(exclude_from_sim no)\n\t\t(at {g(x)} {g(y)} 0)\n'
              f'\t\t(effects (font (size {tam} {tam})) (justify left))\n\t\t(uuid "{u()}")\n\t)\n')
+
+def nota(x, y, *linhas, tam=1.6, passo=3.81):
+    """Uma nota de varias linhas. O SINAL DO Y VIVE SO AQUI.
+
+    Na FOLHA o y cresce para BAIXO; no SIMBOLO cresce para CIMA. Escrever as
+    continuacoes com `y - 3.8` — que e o que a intuicao do simbolo dita —
+    imprime a nota de tras para a frente, e o render mostra o ultimo periodo
+    primeiro. Aconteceu em 8 notas do painel e 1 do soquete de uma vez, porque
+    a coordenada estava repetida em cada sitio de chamada. Aqui esta uma vez.
+
+    A primeira linha e o titulo (tam maior); as seguintes vao a 1.27."""
+    for i, s in enumerate(linhas):
+        texto(s, x, y + i * passo, tam if i == 0 else 1.27)
+
 
 def juncao(x, y):
     L.append(f'\t(junction\n\t\t(at {g(x)} {g(y)})\n\t\t(diameter 0)\n\t\t(color 0 0 0 0)\n\t\t(uuid "{u()}")\n\t)\n')
@@ -95,16 +197,25 @@ def pinos_de(nome):
             if d == 0: b = L[i:k+1]; break
     import re as _re
     out = []
-    for m in _re.finditer(r'\(pin\s+\S+\s+\S+\s*\n\s*\(at (-?[\d.]+) (-?[\d.]+)'
-                          r'(?:\s+-?[\d.]+)?\)(?:.|\n)*?\(number "([^"]+)"', b):
+    for m in _re.finditer(r'\(pin\s+\S+\s+\S+\s*\n\s*\(at (-?[\d.]+(?:[eE][-+]?\d+)?) (-?[\d.]+(?:[eE][-+]?\d+)?)'
+                          r'(?:\s+-?[\d.]+(?:[eE][-+]?\d+)?)?\)(?:.|\n)*?\(number "([^"]+)"', b):
         out.append((m.group(3), float(m.group(1)), float(m.group(2))))
+    # GUARDA: contar os blocos (pin e exigir que a leitura os apanhe todos.
+    # A doc acima diz que a geometria mora no simbolo — mas um leitor que perde
+    # linhas em silencio nao le o simbolo, le uma parte dele. Os pinos 13 e 14
+    # do IDC26 saiam como 1.7763568394002505e-15 e escapavam a `[\d.]+`.
+    blocos = len(_re.findall(r'\(pin\s', b))
+    if blocos != len(out):
+        raise SystemExit("*** pinos_de(%s): o simbolo tem %d pinos, a leitura "
+                         "apanhou %d — LEITURA INCOMPLETA, nada a jusante "
+                         "e confiavel" % (nome, blocos, len(out)))
     return out
 
 
 def campos(ref, val, dx=0, dy=0):
     return (("Reference", ref, dx, dy - 2.54, 1.27, False, ""),
             ("Value", val, dx, dy + 2.54, 1.0, False, ""),
-            ("Footprint", "", 0, 0, 1.27, True, ""),
+            ("Footprint", _fp(ref), 0, 0, 1.27, True, ""),
             ("Datasheet", "", 0, 0, 1.27, True, ""),
             ("Description", "", 0, 0, 1.27, True, ""))
 
@@ -150,11 +261,11 @@ LIGA = {
 }
 # ⚠️ D29 e D30 NAO entram. Sao USB_HS_D-/D+ (pinos 36/37). Ver PINOS.md.
 
-simbolo("DAISY_SEED", "U2", "Daisy Seed rev4", DX, DY,
+simbolo("DAISY_SEED", "U2", "Daisy Seed3", DX, DY,
         campos=(("Reference","U2",0,-30.48,1.27,False,""),
-                ("Value","Daisy Seed rev4",0,30.48,1.0,False,""),
-                ("Footprint","",0,0,1.27,True,""),
-                ("Datasheet","Daisy_Seed_Rev4_Pinout.csv",0,0,1.27,True,""),
+                ("Value","Daisy Seed3",0,30.48,1.0,False,""),
+                ("Footprint",_fp("U2"),0,0,1.27,True,""),
+                ("Datasheet","Seed3_pinout.csv",0,0,1.27,True,""),
                 ("Description","",0,0,1.27,True,"")))
 
 TOCO = 10.16
@@ -193,13 +304,13 @@ simbolo("CONN5_L", "J10", "ponte ESP32-C3", EX, EY, campos=campos("J10", "ponte 
 # `abs_y = simbolo_y - offset`, com MENOS. Somar espelha o conector: o +5V
 # do pino 1 ia parar ao pino 5, e o unico sinal era um `pin_not_connected`
 # num extremo — os do meio calham bater por simetria.
-for (_n, px, py), (rot, nota) in zip(
+for (_n, px, py), (rot, obs) in zip(
         pinos_de("CONN5_L"),
         [("+5V",""), ("GND",""), ("MIDI_TX","-> RX da ponte"),
          ("MIDI_RX","<- TX da ponte"), ("PONTE_STATUS","")]):
     x, y = EX + px, EY - py
     fio(x, y, x - 10.16, y); rotulo(rot, x - 10.16, y, 180, "right")
-    if nota: texto(nota, EX + 3.81, y, 1.0)
+    if obs: texto(obs, EX + 3.81, y, 1.0)
 texto("PONTE ESP32 — TX/RX CRUZADOS. E a terra de sinal vai JUNTO", EX - 40, EY - 15.24, 1.6)
 texto("com os fios: sem ela, a placa viva injecta pelos diodos da morta.", EX - 40, EY - 11.43)
 
@@ -216,43 +327,70 @@ texto("MODULO DO AMP — 15 V e as duas linhas.", AX - 40, AY - 11.43, 1.6)
 #
 # Comum = a saida da Daisy. Uma posicao vai ao borne do exciter, a outra ao
 # TRS de linha. Os DOIS comuns amarrados (o dB decide os dois canais juntos).
-for canal, (SX, SY) in (("L", (300.0, 175.0)), ("R", (300.0, 235.0))):
-    simbolo("DPDT", f"SW{canal}", "DPDT tipo 2", SX, SY,
-            campos=campos(f"SW{canal}", "DPDT tipo 2"))
-    # comuns: os dois polos recebem a MESMA saida da Daisy
-    for dy in (5.08, -5.08):
-        fio(SX - 11.43, SY + dy, SX - 21.59, SY + dy)
-        rotulo(f"OUT_{canal}_DAISY", SX - 21.59, SY + dy, 180, "right")
-    # posicao 1 -> exciter · posicao 2 -> linha
-    for py, rot in ((7.62, f"EXC_{canal}"), (2.54, f"LINHA_{canal}"),
-                    (-2.54, f"EXC_{canal}"), (-7.62, f"LINHA_{canal}")):
-        fio(SX + 11.43, SY + py, SX + 21.59, SY + py)
-        rotulo(rot, SX + 21.59, SY + py, 0, "left")
-    texto(f"DPDT canal {canal} — exciter OU linha. Comuns amarrados.",
-          SX - 30, SY - 13.97, 1.6)
+# ⚠️ A referencia leva NUMERO, nunca letra. `SWL`/`SWR` liam-se bem mas o
+# KiCad trata uma referencia sem parte numerica como NAO ANOTADA, e renumera-a
+# sozinho ao gravar — a correspondencia com os desenhos quebra em silencio.
+# O canal continua a ler-se: esta no valor e na nota, que e onde se le.
+# ⚠️ CONECTOR, E NAO A CHAVE. O DPDT tipo 2 e de PAINEL: prende pela rosca na
+# caixa e liga por fio. A BOM-MPN ja o dizia ("J DPDT | header 1x6"), mas o
+# esquema desenhava a chave — e o layout ia tentar pousa-la no PCB. Mesma
+# correcao feita aos botoes arcade do painel a 05/09.
+#
+# Comum = a saida da Daisy, nos DOIS polos. Uma posicao vai ao borne do
+# exciter, a outra ao TRS de linha. Os dois comuns amarrados.
+for n, (canal, (SX, SY)) in enumerate((("L", (300.0, 175.0)),
+                                       ("R", (300.0, 235.0))), start=15):
+    ref = f"J{n}"
+    simbolo("CONN6_L", ref, f"fio -> DPDT tipo 2, canal {canal}", SX, SY,
+            campos=campos(ref, f"fio -> DPDT tipo 2, canal {canal}"))
+    # a ordem das vias e a dos pinos da chave: 1 e 4 comuns, 2/5 exciter,
+    # 3/6 linha. Mantida para o cabo poder ser crimpado pino a pino.
+    # ⚠️ 2/5 = LINHA e 3/6 = EXCITER, e nao o contrario. No desenho antigo o
+    # fio em SY+7,62 encontrava o pino cujo y no SIMBOLO era -7,62 (na folha o
+    # y cresce para baixo), e a leitura do codigo dava a troca. Quem apanhou
+    # foi a comparacao de netlist, nao o olho.
+    mapa = {"1": f"OUT_{canal}_DAISY", "4": f"OUT_{canal}_DAISY",
+            "2": f"LINHA_{canal}",     "5": f"LINHA_{canal}",
+            "3": f"EXC_{canal}",       "6": f"EXC_{canal}"}
+    for num, px, py in pinos_de("CONN6_L"):
+        x, y = SX + px, SY - py
+        esq = px < 0
+        dx = -10.16 if esq else 10.16
+        fio(x, y, x + dx, y)
+        rotulo(mapa[num], x + dx, y, 180 if esq else 0, "right" if esq else "left")
+    texto(f"canal {canal} — exciter OU linha, comuns amarrados. 1,4=comum "
+          f"2,5=linha 3,6=exciter", SX - 30, SY - 16.51, 1.27)
 
 # ------------------------ 10 k de cada entrada do amp ao GND do modulo
 #
 # Referencia de entrada do amp. Nao e forca: fica na ilha do modulo.
 for i, (canal, RY) in enumerate((("L", 285.0), ("R", 300.0))):
     RX = 120.0
-    simbolo("R_H", f"R2{i}", "10k", RX, RY, campos=campos(f"R2{i}", "10k"))
+    # R5x e nao R2x: o pre-amp usa a dezena 2 para o canal B dos seus
+    # resistores, e a referencia tem de ser unica em TODA a hierarquia.
+    simbolo("R_H", f"R5{i}", f"10k — {canal}", RX, RY,
+            campos=campos(f"R5{i}", f"10k — {canal}"))
     fio(RX - 6.35, RY, RX - 16.51, RY); rotulo(f"AMP_IN_{canal}", RX - 16.51, RY, 180, "right")
     fio(RX + 6.35, RY, RX + 16.51, RY); rotulo("GND", RX + 16.51, RY, 0, "left")
-texto("10 k de cada entrada do amp ao GND do modulo — referencia,", 90.0, 275.0, 1.6)
-texto("nao forca. Sem eles a entrada flutua quando o DPDT comuta.", 90.0, 271.2)
+nota(90.0, 271.2,
+     "10 k de cada entrada do amp ao GND do modulo — referencia,",
+     "nao forca. Sem eles a entrada flutua quando o DPDT comuta.")
 
 # ---------------------------------------------- TRS de linha, sleeve ao AGND
 for i, (canal, JY) in enumerate((("L", 175.0), ("R", 235.0))):
     JX = 385.0
-    simbolo("JACK3", f"J1{i+2}", f"TRS linha {canal}", JX, JY,
-            campos=campos(f"J1{i+2}", f"TRS linha {canal}"))
-    # ⚠️ o JACK3 tem os pinos a DIREITA (x = +2,54), nao a esquerda.
+    # ⚠️ CONECTOR: o jack TRS de 1/4" e de painel (Neutrik NMJ6HCD2), prende
+    # na caixa e liga por fio — a BOM-MPN diz "header 1x3".
+    simbolo("CONN3_L", f"J1{i+2}", f"fio -> TRS linha {canal}", JX, JY,
+            campos=campos(f"J1{i+2}", f"fio -> TRS linha {canal}"))
     # 1 = tip (sinal) · 2 = ring · 3 = sleeve. Ring E sleeve ao AGND.
-    for (n, px, py), rot in zip(pinos_de("JACK3"),
+    for (n, px, py), rot in zip(pinos_de("CONN3_L"),
                                 [f"LINHA_{canal}", "AGND", "AGND"]):
         x, y = JX + px, JY - py
-        fio(x, y, x + 10.16, y); rotulo(rot, x + 10.16, y, 0, "left")
+        esq = px < 0
+        dx = -10.16 if esq else 10.16
+        fio(x, y, x + dx, y)
+        rotulo(rot, x + dx, y, 180 if esq else 0, "right" if esq else "left")
 texto("TRS de linha — sleeve E ring ao AGND, como os jacks de piezo.", 350.0, 155.0, 1.6)
 
 # --------------------------------------------------------------- escrever
@@ -261,6 +399,50 @@ texto("TRS de linha — sleeve E ring ao AGND, como os jacks de piezo.", 350.0, 
 # rotulos soltos, em pares perfeitos — que e a assinatura de "nao ha pinos",
 # nao de "ha ligacoes erradas". A `sym-lib-table` serve o editor; o ficheiro
 # tem de se bastar.
+def _confere_lib(caminho):
+    """Depois de escrever: todo `lib_id` tem entrada no `lib_symbols`?
+
+    Um simbolo referido e nao embutido nao da erro nenhum — o KiCad ve um
+    simbolo SEM PINOS e cada fio fica solto. A 05/09 custou 10 fios soltos no
+    painel, sem uma palavra do gerador."""
+    import re as _r
+    t = io.open(caminho, encoding="utf-8").read()
+    i = t.find("(lib_symbols"); d = 0
+    for k in range(i, len(t)):
+        if t[k] == "(": d += 1
+        elif t[k] == ")":
+            d -= 1
+            if d == 0:
+                lib, fora = t[i:k+1], t[:i] + t[k+1:]; break
+    usa = set(_r.findall(r'\(lib_id "([^"]+)"\)', fora))
+    tem = set(_r.findall(r'\(symbol "(cotuca:[^"]+)"', lib))
+    if usa - tem:
+        raise SystemExit("*** " + caminho + " refere simbolos que a biblioteca "
+                         "embutida nao tem: " + str(sorted(usa - tem)) +
+                         " — o KiCad ve-os SEM PINOS e os fios ficam soltos")
+    return len(usa)
+
+# ------------------------------------------- os dois PWR_FLAG que faltavam
+#
+# ⚠️ O `ERC-ISENCOES.md` e a BOM diziam QUATRO `PWR_FLAG`; o esquema tinha
+# DOIS, e sobravam exactamente 2 `power_pin_not_driven` — os pinos 39 (+5V) e
+# 40 (GND) da Daisy. Simbolo caseiro nao declara `power_out`, entao todo pino
+# `power_in` fica orfao; a resposta e declarar quem alimenta, nao isentar.
+# Estes dois NAO sao pecas: `in_bom no`, fora da BOM e do CPL.
+for k, (rede, FX, FY) in enumerate((("+5V", 60.0, 300.0), ("GND", 90.0, 300.0)), start=3):
+    ref = f"#FLG{k}"
+    simbolo("PWR_FLAG", ref, "PWR_FLAG", FX, FY,
+            campos=(("Reference", ref, 0, -2.54, 1.27, True, ""),
+                    ("Value", "PWR_FLAG", 0, 4.44, 1.0, False, ""),
+                    ("Footprint", "", 0, 0, 1.27, True, ""),
+                    ("Datasheet", "", 0, 0, 1.27, True, ""),
+                    ("Description", "", 0, 0, 1.27, True, "")))
+    # o fio sobe: com o rotulo em baixo ele batia no valor "PWR_FLAG",
+    # que o campos() poe a +4,44 (na folha, +y e para BAIXO).
+    fio(FX, FY, FX, FY - 5.08)
+    rotulo(rede, FX, FY - 5.08, 90, "left")
+
+
 def lib_embutida(usados):
     L = io.open("cotuca.kicad_sym", encoding="utf-8").read()
     out = []
@@ -279,7 +461,7 @@ def lib_embutida(usados):
         out.append("\t\t" + b.replace("\n  ", "\n\t\t"))
     return "\t(lib_symbols\n" + "\n".join(out) + "\n\t)\n"
 
-USADOS = {"DAISY_SEED", "NETTIE2", "CONN5_L", "CONN4_L", "DPDT", "R_H", "JACK3"}
+# USADOS sai de simbolo(), nunca de uma lista a mao — ver gera_painel v0.7.1.
 
 CAB = f'''(kicad_sch
 \t(version 20260306)
@@ -291,12 +473,15 @@ CAB = f'''(kicad_sch
 \t\t(title "SOQUETE + PONTE + DPDT + SAIDAS — carrier rev B")
 \t\t(date "2026-09-05")
 \t\t(rev "B")
-\t\t(comment 1 "A ponte AGND<->GND e o NT1, e e a UNICA. Duas redes no ERC.")
-\t\t(comment 2 "Dnn -> pino do header: Daisy_Seed_Rev4_Pinout.csv, nunca memoria.")
-\t\t(comment 3 "D29/D30 sao o USB e nao se usam. Sense dos DPDT em D11/D12.")
+\t\t(comment 3 "A ponte AGND<->GND e o NT1, e e a UNICA. Duas redes no ERC.")
+\t\t(comment 2 "Dnn -> pino do header: Seed3_pinout.csv, nunca memoria.")
+\t\t(comment 1 "D29/D30 sao o USB e nao se usam. Os DPDT nao tem sense (FUTURO.md).")
 \t)
 {lib_embutida(USADOS)}
 '''
 FIM = '\t(sheet_instances\n\t\t(path "/" (page "4"))\n\t)\n\t(embedded_fonts no)\n)\n'
 io.open("cotuca_soquete.kicad_sch", "w", encoding="utf-8").write(CAB + "".join(L) + FIM)
-print("cotuca_soquete.kicad_sch: %d blocos" % len(L), file=sys.stderr)
+print("gera_soquete v%s -> cotuca_soquete.kicad_sch: %d blocos"
+      % (VERSAO, len(L)), file=sys.stderr)
+print("  lib_symbols coerente: " + str(_confere_lib("cotuca_soquete.kicad_sch")) + " simbolos",
+      file=sys.stderr)

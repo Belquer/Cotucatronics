@@ -252,6 +252,357 @@ Depois de qualquer alteração ao gerador:
 Saltar o 2 depois de mexer na geometria foi o que produziu
 `pin_not_connected` numa folha que já tinha dado zero erros.
 
+
+## 2b. RUÍDO DE VÍRGULA FLUTUANTE: o número que nenhuma ferramenta lê
+
+`h/2 - 1.27 - 6*2.54` não dá zero. Dá **`1.7763568394002505e-15`**, e o KiCad
+aceita-o sem se queixar. Nenhum leitor escrito com `(-?[\d.]+)` — que é como
+toda a gente escreve — apanha essa linha.
+
+O efeito não é um número feio. É **desaparecimento silencioso**: os pinos 13 e
+14 de um IDC26 sumiram de QUATRO geradores ao mesmo tempo, e a folha saiu com
+24 rótulos em vez de 26. Sem erro, sem aviso, sem ERC. As duas vias que
+faltavam eram terra.
+
+**As duas metades do conserto, e são precisas as duas:**
+
+1. **Na geração** — todo número que entra num ficheiro KiCad passa por um
+   formatador. `round(float(v), 4)` mata a notação científica na origem; 0,1 µm
+   está três ordens de grandeza abaixo de qualquer tolerância de fabrico.
+   ```python
+   def num(v):
+       return "%g" % (round(float(v), 4) + 0.0)   # o +0.0 troca -0.0 por 0
+   ```
+2. **Na leitura** — toda regex de coordenada aceita expoente:
+   `(-?[\d.]+(?:[eE][-+]?\d+)?)`. Consertar só a geração deixa a ferramenta
+   cega ao próximo ficheiro que venha de outra mão.
+
+> **Ao contar coordenadas suspeitas, não uses `[0-9]e-?[0-9]+` cru:** ele apanha
+> UUIDs em hexadecimal e infla a contagem. Ancorar em `\((at|xy|start|end) `.
+
+## 2c. TODO LEITOR CONTA O QUE LEU
+
+A lição a seguir apareceu **três vezes no mesmo dia**, em três ferramentas
+diferentes, e uma delas era o verificador escrito para apanhar as outras duas:
+
+| leitor | tinha | leu | o que anunciou |
+|---|---|---|---|
+| `pinos_de()` (×4 geradores) | 26 pinos | 24 | desenhou 24 rótulos |
+| `contrato_idc.py` v0.1.0 | 26 vias | 24 | *"as 26 vias batem"* |
+| `colisoes_sch.py` v0.3.0 | 40 propriedades | 0 | *"0 colisões"* |
+
+> **Um leitor que perde linhas em silêncio não reprova nada — aprova tudo.**
+
+**A guarda, e é barata:** contar quantos blocos existem e exigir que a leitura
+os apanhe todos.
+
+```python
+blocos = len(re.findall(r'\(pin\s', b))
+if blocos != len(lidos):
+    raise SystemExit("*** o símbolo tem %d pinos e a leitura apanhou %d "
+                     "— LEITURA INCOMPLETA, nada a jusante é confiável"
+                     % (blocos, len(lidos)))
+```
+
+E a guarda **conta o mesmo universo que o leitor**: contar propriedades
+escondidas (`(hide yes)`), que o leitor salta de propósito, dá alarme falso — e
+guarda que dá alarme falso é guarda que se desliga.
+
+**Provar a guarda pede DOIS testes**, porque um só engana:
+
+- injectar o defeito **conhecido** → a regex nova lê-o, a guarda cala-se;
+- injectar um defeito **desconhecido** (por exemplo renomear `(number` para
+  `(numero`) → a guarda **reprova**.
+
+Só o primeiro teste prova a regex, não a guarda.
+
+## 2d. O BLOCO COLADO À LINHA ANTERIOR
+
+Um `.kicad_sch` pode ter `)\t(symbol` — o bloco seguinte a começar na MESMA
+linha em que o anterior fecha. Uma varredura ancorada em `\n\t(symbol` salta-o
+sem um aviso. Foi assim que, numa renomeação de 27 referências, **uma** escapou;
+o relatório disse "26 renomeadas" e eu aceitei o número sem o comparar com 27.
+
+> **Varre por contagem de parêntesis, não por indentação.** E quando um
+> relatório diz "N feitos", compara N com o que era esperado.
+
+## 5b. O SINAL DO `y` VIVE NUM SÍTIO SÓ
+
+Na **folha** o `y` cresce para BAIXO. No **símbolo** cresce para CIMA. Escrever
+as linhas de continuação de uma nota com `y - 3.8` — que é o que a intuição do
+símbolo dita — imprime a nota **de trás para a frente**: o render mostra o
+último período primeiro.
+
+Aconteceu em **9 notas de dois geradores ao mesmo tempo**, porque a coordenada
+estava repetida em cada sítio de chamada. O conserto não é acertar as 9:
+
+```python
+def nota(x, y, *linhas, tam=1.6, passo=3.81):
+    """O SINAL DO Y VIVE SÓ AQUI."""
+    for i, s in enumerate(linhas):
+        texto(s, x, y + i * passo, tam if i == 0 else 1.27)
+```
+
+⚠️ **Cuidado com o nome:** `rot, nota = VIAS[n]` num laço tapa a função `nota()`
+e o erro que sai é `TypeError: 'str' object is not callable`. Renomeia a
+VARIÁVEL, nunca a função.
+
+⚠️ **O KiCad não desenha emoji.** Um `⚠️` numa nota sai como quadrado vazio.
+Usa `(!)`.
+
+## 6b. ANOTAÇÃO: a referência TEM de terminar em dígito
+
+`SWL`, `SWR`, `RVA`, `R0A`, `C1B`, `DA`, `JA` lêem-se muito bem e **o KiCad
+trata-as como NÃO ANOTADAS**. O aviso é discreto:
+
+```
+Warning: schematic has annotation errors, please use the schematic editor to fix them
+```
+
+sai do `kicad-cli sch export netlist`, **não do ERC**, e é fácil passar-lhe por
+cima. O risco não é o aviso: é o editor **renumerar essas referências sozinho
+ao gravar**, e a correspondência com desenhos, BOM e documentos quebrar em
+silêncio.
+
+> **A referência é `PREFIXO` + `NÚMERO`. O significado (canal, lado, função)
+> mora no VALOR e na nota, que é onde se lê.**
+
+Esquema que funciona: **a dezena diz o canal** — canal A `R10..R14`,
+canal B `R20..R24`, `C11..C14` / `C21..C24`, `RV1`/`RV2`. E a referência é única
+em TODA a hierarquia, não por folha: escolher a dezena sem verificar as outras
+folhas cria um choque (aqui, o soquete já usava `R20`/`R21` e teve de ir para
+`R50`/`R51`).
+
+**A outra causa do mesmo aviso, e é traiçoeira:** unidades do mesmo componente
+têm de concordar em **valor** e **footprint**. `U1` unidade 3 dizia
+`"OPA1642 8/4"` e as unidades 1 e 2 diziam `"OPA1642"` — e isso sozinho mantém
+o aviso de anotação depois de todas as referências estarem correctas. Custou
+três hipóteses erradas antes de ser medido.
+
+**O que NÃO era a causa DESTE aviso**, testado e descartado: blocos
+`(instances)` em falta ou obsoletos. ⚠️ **Isso não os torna dispensáveis** — são
+a causa de OUTRA coisa, a caixa de reparação ao carregar; ver §6c. Foi
+precisamente por medir só o aviso de anotação que se concluiu cedo de mais que
+`(instances)` não importava.
+
+## 6c. A CAIXA DE REPARAÇÃO AO CARREGAR — e nenhum comando a vê
+
+> *"An error was found when loading the schematic that has been automatically
+> fixed. Please save the schematic to repair the broken file or it may not be
+> usable with other versions of KiCad."*
+
+**A causa é o `(instances)` em falta nos símbolos.** Todo símbolo colocado
+precisa de:
+
+```
+(instances
+  (project "<nome do projecto>"
+    (path "/<raiz>/<folha>"      ; numa folha-filha
+      (reference "R50")
+      (unit 1))))
+```
+e, para um símbolo na própria raiz, o caminho é só `/<raiz>`.
+
+⚠️ **O primeiro segmento sai do `.kicad_pro`, não do `(uuid)` do `.kicad_sch`
+da raiz.** Os dois podem divergir — aqui divergiam — e o KiCad usa o do
+`.kicad_pro`. Escrever o outro produz dados que nascem obsoletos.
+
+⚠️ **Um gerador que mine um uuid novo a cada corrida garante que nunca batem.**
+A identidade da raiz é FIXA: constante no gerador e igual à do `.kicad_pro`.
+(E um `.kicad_pro` copiado de outro projecto traz a identidade do outro: aqui
+dois projectos reclamavam a mesma raiz.)
+
+**O que torna isto perigoso é que NENHUMA ferramenta de linha de comando o
+denuncia:**
+
+| ferramenta | o que diz sobre um ficheiro sem `(instances)` |
+|---|---|
+| `sch erc` | as violações de sempre, nem mais nem menos |
+| `sch export netlist` | exporta bem; o aviso que dá é de **anotação**, outra coisa |
+| `sch upgrade` | *"Schematic file was not updated"* — o formato já é o corrente |
+
+> **Só o editor repara, e só o editor conta.** Um portão de linha de comando
+> completamente verde não prova que o ficheiro abre limpo.
+
+**O método que respondeu, depois de três hipóteses erradas:** pedir ao dB para
+abrir, clicar `OK` e **gravar** — e depois `diff` entre o que o KiCad gravou e
+o que estava lá. O diff é o KiCad a dizer literalmente o que reparou. Guarda a
+cópia ANTES de mandar abrir, senão o diff mistura as tuas edições com as dele.
+
+**E o gerador tem de reproduzir o que o KiCad escreve**, senão a regeneração
+seguinte apaga a reparação e a caixa volta. Critério de aceitação: gerar para
+uma cópia e comparar os blocos `(instances)` com os do ficheiro que o KiCad
+gravou — **iguais, um a um**.
+
+## 7f. O MPN É UMA AFIRMAÇÃO, NÃO UM FACTO
+
+Nenhum verificador apanha um MPN errado. O ERC fica limpo, a netlist fica
+limpa, o footprint até pode existir — e a peça que chega não é a peça que o
+desenho supõe. **O esquema fica igualmente limpo com o número de peça errado.**
+
+E o que falha é quase sempre **o sufixo**, não a família:
+
+| escolhido | o que a ficha dizia |
+|---|---|
+| `PTV09A-4020**F**-B103` | `F` = eixo liso; a nota ao lado pedia estriado (`S`) |
+| `PEC11R` | pinos a **5,0 mm**; o footprint do KiCad é do Alps, a **2,5** |
+| `2920L300/24MR` | não existe; o que há a 24 V é o 3,3 A |
+
+> **Todo MPN entra na BOM com a linha da ficha que justifica cada carácter do
+> sufixo.** Sem isso é família com número.
+
+⚠️ **Resumo de busca não é ficha.** Um resumo diz o que alguém entendeu. A
+05/09 um resumo disse que um estilo de pot "não servia", e a conclusão foi
+reportada e decidida — até um distribuidor descrever a mesma peça de outra
+maneira e a contradição obrigar a ir à tabela de estilos. A tabela deu razão
+a metade de cada lado.
+
+**Truque que funcionou:** quando o PDF da ficha sai baralhado em texto (são
+desenhos em colunas), **renderiza a página e OLHA** — `pdftoppm -png` e ler a
+imagem. As cotas estão no desenho, não no fluxo de texto.
+
+**E o stock também é uma afirmação:** stock na LCSC **não é** stock de
+montagem da JLC. São armazéns diferentes, e o tier Basic/Extended confirma-se
+na biblioteca de peças da JLC.
+
+## 7d. MULTI-UNIDADE: um chip é UMA referência
+
+Um dual op-amp desenhado como **dois símbolos de uma unidade** (`U1A`, `U1B`)
+mais um símbolo de alimentação (`U1C`) parece certo no desenho e está errado de
+três maneiras ao mesmo tempo:
+
+1. **Três linhas de BOM e três pegadas** para um único chip.
+2. Os dois amplificadores usam **os mesmos números de pino** (1/2/3): o
+   amplificador B fica no encapsulamento do A.
+3. As referências não terminam em dígito (§6b).
+
+O certo é **um símbolo multi-unidade**: referência `U1`, unidades 1, 2, 3.
+
+**A pinagem tira-se da biblioteca oficial do KiCad, não da cabeça.** O símbolo
+base dos duais SOIC-8 é o `LM2904` de `Amplifier_Operational.kicad_sym` — de
+que `OPA1602`, `OPA1612AxD`, `OPA2134`, `LM4562` e `NE5532` todos herdam por
+`extends`:
+
+| | amp A (u1) | amp B (u2) | alimentação (u3) |
+|---|---|---|---|
+| saída | **1** | **7** | — |
+| −IN | 2 | 6 | — |
+| +IN | 3 | 5 | — |
+| V− / V+ | — | — | 4 / 8 |
+
+⚠️ Cinco duais independentes concordarem é **evidência forte, não é a folha da
+peça que se vai comprar**. Fica por confirmar no datasheet antes de submeter.
+
+**E o erro que isto destapou:** no símbolo caseiro o pino **1** estava na
+posição do `+IN` e o pino **3** na da saída — **trocados**. Numa placa
+fabricada, a rede de entrada iria soldada ao pino de saída do chip. Não aparecia
+no protótipo, porque esse é ligado à mão e nunca passou pelo mapeamento de
+pinos do encapsulamento.
+
+> **O protótipo que soa bem não valida a pinagem do símbolo.** Ele valida a
+> topologia. A numeração dos pinos só é exercida quando a fábrica solda.
+
+**Ao trocar um símbolo por outro, mantém a GEOMETRIA dos pinos** (aqui ±10,16 e
+não os ±7,62 da biblioteca oficial): os fios já encostam nesses pontos, e mover
+o pino parte ligações que estavam certas. Só os **números** mudam.
+
+**Critério de aceitação da troca:** a netlist tem de ficar idêntica *depois de
+aplicar o mapa de renomeação e o mapa de pinos*. Compara-se a **pertença** de
+cada rede — o conjunto de `(referência, pino)` — nunca os nomes das redes, que
+mudam de propósito.
+
+```
+so ANTES : [('C11','1'), ('R10','1'), ('RV1','1'), ('U1','3')]
+so DEPOIS: [('C11','1'), ('R0A','1'), ('RV1','1'), ('U1','3')]
+```
+Foi esta comparação que apanhou o `R0A` da §2d. **Sem ela, teria ido para a
+fábrica um resistor com o nome que o KiCad ia renumerar.**
+
+⚠️ `Net-(U1A-+)` numa netlist com um símbolo multi-unidade **não é resto do
+nome antigo**: é o KiCad a escrever "U1, unidade A". É sinal de que funciona.
+
+## 9b. O PORTÃO DE COLISÕES DOS ESQUEMÁTICOS
+
+O `tools/svg_colisoes.py` devolvia **código 3 — NÃO VERIFICÁVEL** em todo
+esquemático exportado, e a explicação aceite era "o KiCad escreve as letras como
+paths". **Era meia verdade e o portão estava cego:** o KiCad escreve TAMBÉM um
+`<text>` por cada cadeia, com `opacity="0"` e com **`textLength`** — a largura
+exacta que ele próprio calculou. A ferramenta descartava-os por opacidade (regra
+pensada para sombreado decorativo) e anunciava "não verificável" a ficheiros com
+336 textos medidos lá dentro.
+
+- **Se o ficheiro traz `textLength`, não se estima: mede-se.** A estimativa
+  `n × corpo × 0,6` erra por **18 mm** numa nota de 73 caracteres — o suficiente
+  para dizer "limpo" sobre um texto que atravessa um potenciómetro inteiro.
+- O avanço real da fonte de traços do KiCad, medido no `textLength`, é
+  **≈0,80–0,85 do corpo nominal**, não 0,6.
+- Em esquemáticos o `svg_colisoes` é **ruidoso** (cada texto sai duplicado, e
+  todo rótulo toca no seu próprio fio). Para esses o portão é o
+  **`tools/colisoes_sch.py`**, que lê o `.kicad_sch`.
+
+**A regra de comparação do `colisoes_sch`, e a excepção que faltou:**
+
+| texto | contra | vale? |
+|---|---|---|
+| nota | tudo | sim |
+| referência / valor | corpo do **próprio** símbolo | não — é onde moram |
+| referência / valor | corpo de **outro** símbolo | **sim, é defeito** |
+| referência / valor | fio | não |
+
+A v0.4.1 comparava **só as notas** contra formas, com o argumento de que
+"rótulo colado ao seu fio é normal" — verdade para o fio, falso para o corpo de
+outro componente. O valor `22p C0G` estava desenhado DENTRO do corpo do `R10`,
+o olho viu e a ferramenta disse "0 colisões".
+
+> **Uma excepção larga de mais é uma cegueira com desculpa.** Calibra sempre o
+> verificador contra um defeito que já confirmaste com os olhos: se ele não o
+> apanha, é ele que está errado, não o olho.
+
+E o corolário, que vale para os dois portões: **código 0 não autoriza saltar o
+olho.** Autoriza olhar sabendo onde.
+
+
+## 7e. O RECTÂNGULO VAZIO NÃO É DEFEITO — é a escolha a aparecer
+
+Numa raiz hierárquica, o rectângulo de cada folha desenha o nome, o ficheiro e
+**os pinos de folha**. Se o projecto liga as folhas por **rótulos globais** —
+que é a escolha deste — não há pinos de folha nenhuns, e os rectângulos saem
+vazios. Aqui: **0 pinos de folha, 125 rótulos globais**.
+
+O custo dessa escolha é este: **a raiz deixa de dizer o que liga a quê.** Quem
+abre o projecto vê quatro caixas vazias. É por isso que a legenda da raiz
+declara a escolha em texto — sem essa declaração, o desenho parece incompleto
+em vez de deliberado.
+
+> Rectângulo vazio **com** a escolha declarada na legenda: correcto.
+> Rectângulo vazio **sem** ela: indistinguível de trabalho por acabar.
+
+## 9c. A LEGENDA IMPRIME-SE DE BAIXO PARA CIMA
+
+O KiCad desenha o `(comment N ...)` de **maior número mais ACIMA**. Numerar
+1, 2, 3 pela ordem de leitura imprime a legenda **de trás para a frente**:
+
+```
+;; ficheiro          ;; render (de cima para baixo)
+(comment 1 "A")       C
+(comment 2 "B")       B
+(comment 3 "C")       A
+```
+
+> **A ordem no ficheiro é a INVERSA da ordem de leitura.** O primeiro período
+> a ler leva o número mais alto.
+
+Estava assim nas quatro folhas com legenda, e só se vê no render — nenhum
+verificador o apanha, porque cada linha está correcta e no sítio certo. É a
+mesma família do §5b (o sinal do `y`), com causa diferente: ali era aritmética
+minha, aqui é convenção do KiCad. **O sintoma comum — texto que se lê ao
+contrário — só o olho no render final o denuncia.**
+
+⚠️ E a legenda é DOCUMENTAÇÃO COM AUTORIDADE: a do soquete afirmava *"Sense dos
+DPDT em D11/D12"* meses depois de o sense ter sido abandonado. Quando uma
+decisão morre, a legenda que a repete morre com ela — senão reensina-a a quem
+abrir o ficheiro, que é exactamente quem não tem como saber que está errada.
+
 ---
 
 ## Procedência
@@ -268,3 +619,11 @@ O resto nasceu de uma sessão em que se entregaram **duas folhas que não abriam
 com o verificador de rede limpo, e em que uma edição foi re-inspeccionada
 visualmente **sem se repetir o ERC** — precisamente o defeito que a `esquematico`
 não podia prever, porque foi descoberto depois dela.
+
+Em 05/09 entraram §2b, §2c, §2d, §5b, §6b, §6c, §7d, §7e, §7f, §9b e §9c, de uma sessão a preparar
+os ficheiros para a JLCPCB. O fio que as liga é um só: **ferramentas que perdiam
+linhas em silêncio e por isso aprovavam tudo** — quatro geradores a saltar dois
+pinos escritos em notação científica, um verificador de contrato a dizer "as 26
+batem" tendo lido 24, e o verificador de colisões a dizer "0" cego a 40
+propriedades. O que as apanhou não foi ler o código: foi **comparar o que a
+ferramenta leu com o que existia**, e comparar a netlist com a de antes.

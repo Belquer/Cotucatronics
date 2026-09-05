@@ -2176,7 +2176,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
 			(at 145 197.54 0)
 			(hide yes)
 			(show_name no)
@@ -2215,8 +2215,8 @@
 			(uuid "106b4378-7cc0-4131-8623-0ba7220f4ab1")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "J4")
 					(unit 1)
 				)
@@ -2256,7 +2256,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 185 62 0)
 			(hide yes)
 			(show_name no)
@@ -2295,8 +2295,8 @@
 			(uuid "2dad9d6c-feb0-46c8-aea6-77f49d2ce331")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "R9")
 					(unit 1)
 				)
@@ -2336,7 +2336,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 110 203 0)
 			(hide yes)
 			(show_name no)
@@ -2375,8 +2375,8 @@
 			(uuid "2fe37073-45b6-4a37-9776-a2c3d93db74c")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "C4")
 					(unit 1)
 				)
@@ -2416,7 +2416,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Fuse:Fuse_2920_7451Metric"
 			(at 62 45.46 0)
 			(hide yes)
 			(show_name no)
@@ -2455,8 +2455,8 @@
 			(uuid "30d0a60e-37b6-4fc1-b6db-a3e87d3891e3")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "F1")
 					(unit 1)
 				)
@@ -2496,7 +2496,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_SMD:C_0805_2012Metric"
 			(at 80 106 0)
 			(hide yes)
 			(show_name no)
@@ -2535,8 +2535,8 @@
 			(uuid "d9668c27-9a7d-4a34-95a7-0483896f303f")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "C2")
 					(unit 1)
 				)
@@ -2576,7 +2576,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 			(at 88 203 0)
 			(hide yes)
 			(show_name no)
@@ -2615,8 +2615,8 @@
 			(uuid "c87edc62-9261-4006-9c68-5c51ca900677")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "C3")
 					(unit 1)
 				)
@@ -2656,7 +2656,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
 			(at 115 148 0)
 			(hide yes)
 			(show_name no)
@@ -2698,8 +2698,8 @@
 			(uuid "413cd1bf-897d-4947-85aa-8d9e08864ba8")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "J3")
 					(unit 1)
 				)
@@ -2739,7 +2739,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Capacitor_THT:CP_Radial_D16.0mm_P7.50mm"
 			(at 58 106 0)
 			(hide yes)
 			(show_name no)
@@ -2778,8 +2778,8 @@
 			(uuid "d5e054ff-4520-4f65-bf9c-08fdac0a0a6a")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "C1")
 					(unit 1)
 				)
@@ -2819,7 +2819,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
 			(at 35 48 0)
 			(hide yes)
 			(show_name no)
@@ -2858,8 +2858,8 @@
 			(uuid "e5f9f5f9-459a-4402-ac5c-67d06f3477d3")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "J1")
 					(unit 1)
 				)
@@ -2899,7 +2899,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Diode_SMD:D_SMB"
 			(at 85 55 0)
 			(hide yes)
 			(show_name no)
@@ -2938,8 +2938,8 @@
 			(uuid "40942e6d-b4a0-4a7a-a0e0-950456034fea")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "D1")
 					(unit 1)
 				)
@@ -2979,7 +2979,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Resistor_SMD:R_0805_2012Metric"
 			(at 160 45.46 0)
 			(hide yes)
 			(show_name no)
@@ -3018,8 +3018,8 @@
 			(uuid "beea0eab-0721-4df5-9645-ad9f48313999")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "R8")
 					(unit 1)
 				)
@@ -3059,7 +3059,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal"
 			(at 115 100.54 0)
 			(hide yes)
 			(show_name no)
@@ -3098,8 +3098,8 @@
 			(uuid "90fbd667-8a3d-476a-961a-c0b38f37003e")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "J2")
 					(unit 1)
 				)
@@ -3139,7 +3139,7 @@
 				(justify left)
 			)
 		)
-		(property "Footprint" ""
+		(property "Footprint" "Diode_SMD:D_SMA"
 			(at 62 195 0)
 			(hide yes)
 			(show_name no)
@@ -3178,18 +3178,12 @@
 			(uuid "0c4c35c4-98d2-4aad-a34e-7aefe1d7d09a")
 		)
 		(instances
-			(project "cotuca_energia"
-				(path "/ec86fb39-fa3e-4c1c-a85e-11499a52d5d8"
+			(project "cotuca_cerebro"
+				(path "/2ad2d1f2-b370-4f4e-9e84-b07766bec7e4/42a21d5f-b459-4203-8dce-d7e992ca5c72"
 					(reference "D2")
 					(unit 1)
 				)
 			)
 		)
 	)
-	(sheet_instances
-		(path "/"
-			(page "1")
-		)
-	)
-	(embedded_fonts no)
 )

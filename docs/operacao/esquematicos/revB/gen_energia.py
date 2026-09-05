@@ -15,6 +15,11 @@
 #
 # ⚠️ O `.kicad_sch` NO REPO ESTA UM PASSO A FRENTE DESTE GERADOR.
 #
+# ⚠️ 05/09 — a folha viva perdeu 13 blocos `(instances)` obsoletos que este
+# gerador nao escreve e que apontavam para uma folha (`/ec86fb39...`) que nao
+# existe, com o nome de projecto errado. Nao os voltes a escrever a mao: o
+# KiCad escreve-os certos quando grava, e as outras tres folhas nao tem nenhum.
+#
 # O `kiutils` escreve o formato `20211014` (KiCad 6). A 04/09 as duas folhas
 # foram migradas com `kicad-cli sch upgrade` para `20260306` (KiCad 10.0.5),
 # que e o que a maquina do dB abre.

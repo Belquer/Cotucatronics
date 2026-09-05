@@ -240,7 +240,7 @@
       "internal_id": "",
       "mfg": "",
       "mpn": "",
-      "sch_revision": ""
+      "sch_revision": "B"
     },
     "layer_pairs": [],
     "layer_presets": [],
@@ -661,13 +661,29 @@
         "uuid": "2ad2d1f2-b370-4f4e-9e84-b07766bec7e4"
       }
     ],
-    "used_designators": "J1-4,F1,D1-2,R1-2,C1-4",
+    "used_designators": "C1-4,R1-2,D1-2,F1,J1-4",
     "variants": []
   },
   "sheets": [
     [
       "2ad2d1f2-b370-4f4e-9e84-b07766bec7e4",
       ""
+    ],
+    [
+      "42a21d5f-b459-4203-8dce-d7e992ca5c72",
+      "ENERGIA"
+    ],
+    [
+      "3fdc5423-54ad-40b9-b9c4-d2ddfe2d5b43",
+      "PRE-AMP"
+    ],
+    [
+      "3747994b-b177-4088-93e8-14962e07c5b9",
+      "SOQUETE + PONTE + DPDT + SAIDAS"
+    ],
+    [
+      "49c1c7af-14dc-4cd2-a083-868e223e46c0",
+      "CONECTOR DO PAINEL — IDC 2x13"
     ]
   ],
   "text_variables": {},
