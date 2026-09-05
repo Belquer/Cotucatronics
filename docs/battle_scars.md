@@ -7605,3 +7605,95 @@ ele passa deixa de ser detalhe e passa a ser decisao de layout.
 O simbolo continua com o 20 e o 40 frente a frente no DESENHO, porque isso
 torna o net-tie legivel no esquema. Fica anotado no gerador que e conveniencia
 de papel e nao a placa.
+
+---
+
+## 15ca — A ponte não estava dentro da Daisy, e a instrução matou uma Seed (05/09)
+
+> **Escrita pelo dB.** Entrou como `15ca` e não como `15bn`, que era o número
+> no original: o `15bn` já estava ocupado pela ferramenta de reposição
+> construída sobre um contrato deduzido. Texto dele, preservado.
+
+**O que aconteceu.** O `ATERRAMENTO.md` e a conversa de arquitetura partiam de
+uma premissa: "AGND e DGND encontram-se só dentro da Daisy". A documentação
+oficial da libDaisy diz o contrário — *ao trabalhar com hardware externo,
+ligar sempre DGND e AGND fora da Daisy*. A premissa foi afirmada duas vezes
+pelo chat, sem fonte, no mesmo dia em que o prompt escrito por ele dizia
+"nada de memória". O Code recusou um resumo de busca, procurou a fonte
+primária, não a alcançou, e **parou**. Devia ter sido o chat a parar.
+
+Com a premissa errada veio uma instrução de refazer terra: "pôr fio 20–40,
+depois tirar o AGND do trilho". Na bancada, o trilho e a ilha eram o mesmo
+cobre. "Tirar do trilho" foi lido como "tirar da ilha", e a ilha inteira —
+pré-amp, jacks, DPDT — ficou sem referência nenhuma. Custou horas e uma
+Daisy Seed 3.
+
+**O facto corrigido.** A Seed **não** junta AGND e DGND por dentro. A ponte
+única tem de ser um fio, e vai nos pinos 20 (AGND) e 40 (GND) do soquete —
+~~vizinhos, ~5 mm~~, no encapsulamento do conversor, como a Analog Devices
+recomenda para qualquer ADC/DAC. No KiCad é um **NetTie-2**, uma ligação de
+cobre só, num sítio escolhido; `AGND` e `GND` continuam duas redes. O P3
+nunca foi "tirar uma segunda ponte": o trilho da permaproto era a **única**,
+e o erro dele era ser trilho partilhado com corrente, não ser ponte. O 31/08
+("tirar a terra de sinal matou a placa") era isto mesmo, e não se leu.
+
+> ⚠️ **O "vizinhos, ~5 mm" acima está riscado porque está errado, e o próprio
+> dB corrigiu-o na mesma sessão** — ver a nota do chat logo abaixo. Fica
+> visível em vez de apagado: é uma cicatriz sobre afirmar posição de hardware
+> sem fonte, e apagar o erro de dentro dela tirava-lhe a prova.
+
+**As regras, e são para o chat cumprir, não só para a bancada:**
+
+1. **Terra e alimentação só se refazem com a Daisy FORA do soquete.** Volta
+   depois de a continuidade confirmar o estado final. Um erro de instrução
+   custa uma hora; nunca uma placa. É a regra que não depende de ninguém
+   acertar em nada.
+2. **Nenhuma instrução de fiação sem antes ver a fiação real** — foto,
+   descrição em palavras do construtor, ou tabela de continuidade do estado
+   atual. Sem isso, perguntas; não passos.
+3. **Refazer vem como tabela antes/depois em continuidade, e o primeiro
+   passo mede o "antes".** Se não bater com a tabela, a instrução está errada
+   para esta bancada, e descobre-se com o multímetro.
+4. **Reversão escrita antes do gesto.** Uma linha: "se piorar, faz X".
+5. **Facto de hardware sem fonte citada é hipótese, e diz-se como hipótese.**
+   O tom confiante do chat não correlaciona com estar certo; trata-se assim
+   dos dois lados. Se a folha de dados não está aberta, escreve-se "não sei".
+6. **O construtor repete o plano por palavras suas antes de pegar no ferro.**
+   Teria apanhado "trilho" ≠ "ilha" em dez segundos.
+
+**A que organiza estas:** *quando uma instrução pode matar hardware, a garantia
+não é a instrução estar certa — é a instrução não poder matar.* A regra 1 é a
+única que sobrevive a um chat errado, e por isso vem primeiro.
+
+**Origem do erro, nomeada:** a hipótese plausível é a perigosa (regra antiga),
+agora aplicada ao próprio conselheiro. E "nomear uma classe obriga a procurá-la
+em casa" — nomeei "nada de memória" e não fiz grep à minha própria afirmação.
+
+### As três notas do chat, no fecho
+
+**"Vizinhos, ~5 mm" estava errado.** Os pinos 20 e 40 ficam em cantos opostos
+do 2×20 — eu afirmei a adjacência sem olhar a pinagem, no mesmo dia desta
+cicatriz. O Code leu o CSV e acertou. A colocação dele é a certa: net-tie
+**encostado ao pino 20**, dentro da ilha, e a outra ponta do tie cai no plano
+de GND ali mesmo por uma via. O caminho curto é do pino 20 à ponte; a
+distância até ao pino 40 é do plano, não do condutor.
+
+**O roteiro tem os pinos livres errados.** Eu listei D25, D26, D29, D30 como
+livres; D29/D30 são o USB, e a lista real é **D11, D12, D20, D21**. O
+`ROTEIRO-KICAD.md` §4 corrige-se pela lista do Code — o CSV manda, o meu
+resumo não.
+
+**O número que paga a semana:** −34,2 → −69,2 / −73,4 dBFS em repouso.
+**Trinta e cinco a trinta e nove decibéis** de chão, e simétricos nos dois
+canais — o que confirma que era referência, como o Code escreveu. O sustain a
+−49 passa de 15 dB de margem para 20–24, com a placa ainda em permaproto. É o
+resultado que custou a Daisy, e vale dizer que existe.
+
+Sobre a folha do soquete, um detalhe para o ERC: com o net-tie, `AGND` e `GND`
+continuam duas redes e as duas PWR_FLAG existentes ficam certas — uma em cada.
+O net-tie **não** substitui nenhuma delas. E as duas isenções de `AUDIO_IN`
+morrem neste commit, como o prazo dizia.
+
+> **Nota do Code, para não haver dívida silenciosa:** a folha do soquete ainda
+> não existe, portanto as duas isenções de `AUDIO_IN` **continuam vivas**. O
+> prazo delas morre no commit que a criar, e é lá que se confere.

@@ -92,7 +92,20 @@ no header 2×20 sai da **folha de dados da Seed**, não do PINOS.
 | D15 D16 | pot L, pot R (A0/A1) | D22 D24 | freeze B, freeze A |
 | D23 D27 | gate LED B, gate LED A | AUDIO IN/OUT L/R | pré-amp / DPDT |
 
-Livres: D3 D4 D9 D11 D12 D18 D19 D20 D21 D25 D26 D29 D30. **D17 = A2 = V_TRILHO.**
+**Livres: D11 D12 D20 D21** — quatro. **D17 = A2 = V_TRILHO.**
+
+> ⚠️ **Corrigido em 05/09. A lista anterior estava errada de duas maneiras.**
+> Dizia `D3 D4 D9 D11 D12 D18 D19 D20 D21 D25 D26 D29 D30`, e:
+>
+> - **`D29`/`D30` são as linhas de dados do USB** (pinos 36/37,
+>   `USB_HS_D−`/`D+`, no CSV do fabricante). Usá-las como GPIO mata a serial.
+>   O sense dos DPDT ia para lá — vai agora para `D11`/`D12` ou `D20`/`D21`.
+> - **`D3 D4 D9` são o encoder B, `D18 D19` o encoder G, `D25` o botão de
+>   rearme e `D26` o dos búzios.** Estão todos ocupados e soldados.
+>
+> A fonte é o `Daisy_Seed_Rev4_Pinout.csv` cruzado com o
+> `hal_daisy_seed.cpp` — ver `docs/operacao/PINOS.md`, que é onde esta lista
+> vive. **O CSV manda; um resumo de memória não.**
 DPDT tipo 2, comuns amarrados, 10 kΩ de cada entrada do amp ao GND do módulo.
 **AGND e GND ligam-se num ponto só, nesta folha, nos pinos da Daisy.**
 
