@@ -218,7 +218,7 @@ filtro a ferramenta assinalava 211 vizinhanças — ruído a fingir de achado, q
 aperta para os casos em que a **cauda removida continha o nome**, 16.
 
 ```bash
-python3 docs/operacao/vizinhos.py --termo=vocoder
+python3 docs/operacao/vizinhos.py --termo=<nome-que-sai>
 ```
 
 Ela não decide — manda ler. Numa remoção de nome, ler essas dez ou vinte
