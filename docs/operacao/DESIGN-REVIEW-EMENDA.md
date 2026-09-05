@@ -4,7 +4,8 @@
 > do que se descobriu e da prova que o motivou; **se os dois divergirem, a
 > skill está certa e isto está velho.**
 >
-> A ferramenta vive em `tools/svg_colisoes.py` (v0.2.0).
+> A ferramenta vive em `tools/svg_colisoes.py` — a versão corrente está no
+> mapa do README, e não aqui, para não haver dois sítios a envelhecer.
 
 # design-review — emenda 05/09: o portão que pode dizer não
 

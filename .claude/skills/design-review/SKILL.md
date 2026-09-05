@@ -41,8 +41,22 @@ mesmo assim defeito.
 python3 tools/svg_colisoes.py ficheiro.svg
 ```
 
-**Zero colisões é o portão.** Sai com código ≠ 0 se houver alguma — e é isso
-que o torna portão: **pode dizer não, e um script que o chama pára.**
+**Zero colisões é o portão** — e ele sabe dizer não, que é o que o torna
+portão: um script que o chama pára.
+
+⚠️ **São TRÊS desfechos, não dois, e o terceiro não é reprovação:**
+
+| saída | quer dizer |
+|---|---|
+| **0** | verificado, zero colisões — **passa** |
+| **1** | verificado, há colisões — **defeito no desenho** |
+| **3** | **NÃO VERIFICÁVEL** — não consegui olhar. Nem aprovação nem reprovação |
+
+Ler o 3 como "há colisões" é o erro fácil, porque ambos são ≠ 0 e querem dizer
+o contrário um do outro. O 3 sai quando não há `<text>` nenhum — as letras
+podem estar como paths — e aí *"zero colisões" seria uma frase verdadeira
+sobre nada*. **Verificação sem objeto é a classe que a skill `audit` persegue,
+e esta ferramenta recusa-se a cometê-la.**
 
 O que ele testa:
 
@@ -68,9 +82,59 @@ fatiar em regiões e olhar cada uma — **mais** a lição de 05/09: *olhar o to
 não substitui olhar a fatia, porque o todo esconde exatamente o que é
 pequeno.*
 
-Para o KiCad há caminho: `kicad-cli sch export svg` **e depois esta mesma
-ferramenta**. O portão elétrico é a skill `kicad`; este é o visual, e nenhum
-substitui o outro.
+### O KiCad tem caminho, mas com `--esquematico`
+
+```bash
+kicad-cli sch export svg --output /tmp/x  ficheiro.kicad_sch
+python3 tools/svg_colisoes.py /tmp/x/ficheiro.svg --esquematico
+```
+
+⚠️ **Sem a bandeira, um esquema limpo acusa dezenas — e todas são convenção.**
+Medido a 05/09 nas três folhas do revB:
+
+| folha | sem o modo | com `--esquematico` |
+|---|---|---|
+| `cotuca_energia` | 39 | **6** |
+| `cotuca_preamp` | 74 | **7** |
+| `cotuca_soquete` | 116 | **26** |
+
+A razão é de desenho, não de ferramenta: **num esquemático, texto a tocar
+linha é a convenção.** Um rótulo de rede *prende-se* ao fio — é o que um
+rótulo é; um número de pino *assenta* na perna. Dos 74 do pré-amp, 67 eram
+`AGND` (13×), `VBIAS`, `V+PRE`, `PWR_FLAG` e os pinos 1–8.
+
+> **Acusar a convenção é pior do que não acusar nada:** ensina a ignorar o
+> portão, e é o anti-padrão do §6 desta mesma skill.
+
+O modo mantém `texto × texto` e `texto × borda`, que continuam a ser defeito
+num esquemático — foi assim que apareceu um `V-` por cima do pino `4` no
+pré-amp, que três revisões de olho não tinham visto.
+
+### ⚠️ Há DOIS portões para esquemático, e não são o mesmo
+
+| | lê | vê |
+|---|---|---|
+| `tools/colisoes_sch.py` | o **fonte** `.kicad_sch` | coordenadas exactas em mm, antes de virarem curvas |
+| `tools/svg_colisoes.py --esquematico` | o **render** exportado | o que está realmente desenhado na folha |
+
+**Correr os dois, e a discordância é informação.** Medido a 05/09 no pré-amp:
+o do fonte diz **117 textos, 0 colisões**; o do render diz **194 textos, 7** —
+entre elas um `V-` por cima do pino `4`. **Não confirmei o mecanismo** da
+diferença; sei que leem populações diferentes e que só um deles viu aquele
+par. Enquanto isso não estiver medido, um `0` de qualquer um dos dois **não
+autoriza dispensar o outro**.
+
+> Dois verificadores que respondem à mesma pergunta e discordam: o correcto
+> não é escolher o que agrada, é registar a discordância e ir medir porquê.
+
+⚠️ E o cabeçalho do `colisoes_sch.py` justifica-se com uma premissa que hoje
+se mediu **falsa** — diz que o `svg_colisoes` devolve sempre código 3 nos
+exports do KiCad *"porque não há um único `<text>` para medir"*. Há **222**,
+invisíveis (`opacity="0"`) mas com `textLength`. A ferramenta continua útil; a
+razão escrita para ela existir é que está velha.
+
+O portão elétrico é a skill `kicad`; este é o visual, e nenhum substitui o
+outro.
 
 ---
 

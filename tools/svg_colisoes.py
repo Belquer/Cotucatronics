@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""svg_colisoes v0.2.0 — verificador de sobreposicao para SVGs entregues.
+"""svg_colisoes v0.4.0 — verificador de sobreposicao para SVGs entregues.
 
 ⚠️ ESTE E O PASSO 1 DA SKILL `design-review`, e vem ANTES do olho.
    Zero colisoes e o portao, e ele sabe dizer NAO — e sabe dizer
@@ -37,14 +37,23 @@ Uso: python3 svg_colisoes.py ficheiro.svg [--contentor 0.6] [--largura 0.55]
 """
 import re, sys, math, xml.etree.ElementTree as ET
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 
 W_CHAR = 0.55
 
 def bbox_text(el, fs):
+    """A caixa de um <text>. Usa a largura MEDIDA quando o ficheiro a traz.
+
+    O KiCad escreve `textLength` em cada <text> — a largura exacta que ele
+    proprio calculou com a fonte de tracos — e depois desenha os glifos como
+    paths ao lado. Havendo esse numero, nao se estima: mede-se. A estimativa
+    `n × corpo × 0,6` erra por 18 mm numa nota de 73 caracteres (medido a
+    05/09 na folha do painel), o suficiente para dizer "limpo" sobre um texto
+    que atravessa um potenciometro."""
     x = float(el.get("x", 0)); y = float(el.get("y", 0))
     s = "".join(el.itertext())
-    w = len(s) * fs * W_CHAR
+    tl = el.get("textLength")
+    w = float(tl) if tl else len(s) * fs * W_CHAR
     anc = el.get("text-anchor", "start")
     if anc == "middle": x0 = x - w / 2
     elif anc == "end":  x0 = x - w
@@ -90,9 +99,17 @@ def main():
     if len(sys.argv) < 2: print(__doc__); sys.exit(2)
     fn = sys.argv[1]
     contentor = 0.6; global W_CHAR
+    # --esquematico: NUM ESQUEMATICO, TEXTO A TOCAR LINHA E A CONVENCAO.
+    # Um rotulo de rede PRENDE-SE ao fio — e o que um rotulo e; um numero de
+    # pino ASSENTA na perna. Medido no preamp: dos 74 restantes, 67 eram
+    # `AGND` (13x), `VBIAS`, `V+PRE`, `PWR_FLAG` e os pinos 1..8. Acusa-los
+    # ensina a ignorar o portao, que e o anti-padrao §6 da skill.
+    # Com o modo: 1 texto×texto + 6 texto×borda — numero que alguem olha.
+    esquematico = False
     for i, a in enumerate(sys.argv):
         if a == "--contentor": contentor = float(sys.argv[i+1])
         if a == "--largura": W_CHAR = float(sys.argv[i+1])
+        if a == "--esquematico": esquematico = True
     root = ET.parse(fn).getroot()
     ns = {"s": "http://www.w3.org/2000/svg"}
     # canvas: o viewBox manda quando width/height vem em percentagem
@@ -118,13 +135,45 @@ def main():
             if c in css: return css[c]
         return 12.0
 
-    texts, shapes, segs = [], [], []
+    # ⚠️ OS GLIFOS NAO SAO DESENHO. O kicad-cli escreve cada texto DUAS vezes:
+    # um <text opacity=0> (que diz o que la esta e que largura tem) e um
+    # <g class="stroked-text"> com as letras desenhadas como paths. No preamp
+    # sao 18 483 paths de letra para 333 de desenho a serio — 98%.
+    #
+    # Sem esta excepcao cada rotulo colidia com o seu PROPRIO desenho: 256
+    # acusacoes num esquema limpo. Portao que acusa 256 vezes e portao que se
+    # desliga na primeira semana, e ai deixa de haver portao.
+    glifos = set()
+    for g in root.iter():
+        if g.tag.split("}")[-1] == "g" and "stroked-text" in (g.get("class") or ""):
+            for e2 in g.iter():
+                if e2 is not g: glifos.add(id(e2))
+
+    texts, shapes, segs, vistos = [], [], [], set()
     for el in root.iter():
+        if id(el) in glifos: continue          # e a letra, nao o desenho
         tag = el.tag.split("}")[-1]
-        try:
-            if float(el.get("opacity", 1)) < 0.5: continue   # sombreado decorativo
-        except ValueError: pass
+        # ⚠️ O <text> do KiCad e INVISIVEL de proposito: `opacity="0"`, com os
+        # glifos desenhados como paths num <g class="stroked-text"> ao lado. Ele
+        # esta la para dizer o texto e a largura. Descartar por opacidade — que
+        # era a regra para sombreado decorativo — apagava TODOS os textos de
+        # todo esquematico exportado, e a ferramenta respondia "NAO VERIFICAVEL"
+        # a ficheiros com 336 textos medidos la dentro. O portao existia e
+        # estava cego.
+        if tag != "text":
+            try:
+                if float(el.get("opacity", 1)) < 0.5: continue   # decorativo
+            except ValueError: pass
         if tag == "text":
+            # ⚠️ O MESMO TEXTO, DUAS VEZES, NA MESMA COORDENADA nao sao dois
+            # textos sobrepostos: e um texto desenhado duas vezes. O kicad-cli
+            # emite cada um em duplicado (`C21` em 202.9557,138.6350 aparecia
+            # 2x), e cada rotulo acusava colisao com o seu proprio gemeo.
+            # Conteudo + coordenada + corpo iguais e o mesmo texto; textos
+            # diferentes nao partilham os tres.
+            chave = ((el.text or "").strip(), el.get("x"), el.get("y"), el.get("font-size"))
+            if chave in vistos: continue
+            vistos.add(chave)
             texts.append(bbox_text(el, fsize(el)))
         elif tag == "rect":
             x, y = num(el.get("x"), cw, 0.0), num(el.get("y"), ch, 0.0)
@@ -171,6 +220,7 @@ def main():
     for a in texts:
         for (p1, p2) in segs:
             if seg_rect(p1, p2, a[:4]):
+                if esquematico: continue          # rotulo no fio e convencao
                 probs.append(("texto×linha", a[4][:40], f"seg {int(p1[0])},{int(p1[1])}-{int(p2[0])},{int(p2[1])}"))
                 break
     # ⚠️ ZERO TEXTOS E AUSENCIA DE DADO, NAO APROVACAO. Sem `<text>` nao ha
