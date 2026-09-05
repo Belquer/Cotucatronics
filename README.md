@@ -1,4 +1,14 @@
 # Cotucatronics OS
+<!-- doc-check: ignore build_sheet (nome de um SVG em docs/operacao/esquematicos/, nao simbolo de src/. Fica citado no README enquanto o desenho existir.) -->
+
+<!-- doc-check: ignore svg_colisoes (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
+<!-- doc-check: ignore desenhos (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
+<!-- doc-check: ignore gen_caixa (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
+<!-- doc-check: ignore gen_caixa_paginas (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
+<!-- doc-check: ignore gera_soquete (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
+<!-- doc-check: ignore gera_conector (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
+<!-- doc-check: ignore gera_simbolos (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
+<!-- doc-check: ignore encaixa_grade (ferramenta fora de src/. O check_docs varre `src/`; estas vivem em `tools/`, `docs/desenhos/caixa/` ou `kicad/cotuca_cerebro/`, que ele nao le. Nao e fantasma: e limite de alcance do verificador.) -->
 
 Firmware modular para **instrumentos-escultura sonora**. A ideia central é que
 o mesmo cérebro rode qualquer escultura: o código de instrumento é agnóstico de

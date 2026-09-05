@@ -76,6 +76,27 @@
 			)
 		)
 	)
+	(sheet
+		(at 30.48 167.64)
+		(size 76.2 25.4)
+		(fields_autoplaced yes)
+		(stroke (width 0.1524) (type solid))
+		(fill (color 0 0 0 0.0000))
+		(uuid "49c1c7af-14dc-4cd2-a083-868e223e46c0")
+		(property "Sheetname" "CONECTOR DO PAINEL — IDC 2x13"
+			(at 30.48 166.94 0)
+			(effects (font (size 1.27 1.27)) (justify left bottom))
+		)
+		(property "Sheetfile" "cotuca_conector.kicad_sch"
+			(at 30.48 193.73999999999998 0)
+			(effects (font (size 1.27 1.27)) (justify left top))
+		)
+		(instances
+			(project "cotuca_cerebro"
+				(path "/" (page "5"))
+			)
+		)
+	)
 	(sheet_instances
 		(path "/" (page "1"))
 	)

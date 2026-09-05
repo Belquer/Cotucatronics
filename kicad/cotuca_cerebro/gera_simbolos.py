@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_simbolos v0.1.0 — os simbolos que faltavam para a folha do soquete.
+"""gera_simbolos v0.2.0 — os simbolos que faltavam para a folha do soquete.
 
 Emite, para juntar a `cotuca.kicad_sym`:
   NETTIE2   a ponte AGND<->GND. Duas redes no ERC, uma ligacao de cobre.
@@ -14,7 +14,7 @@ capacidade de detectar uma segunda ponte. Ver MAPA-DE-TERRA.md §2.
 """
 import sys
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 
 
 def _pino(n, nome, x, y, ang, tipo="passive", ln=5.08):
@@ -78,7 +78,25 @@ def conn(n):
     return _cab("CONN%d_L" % n, "J", "conector %dp" % n, h / 2 + 3.81, -h / 2 - 3.81) + corpo + "".join(p) + '\t\t)'
 
 
+def idc26():
+    """IDC 2x13 macho. Numeracao em serpentina: impares a esquerda de cima
+    para baixo, pares a direita — que e como um IDC e numerado de facto."""
+    h = 13 * 2.54
+    corpo = ('\t\t\t(symbol "IDC26_0_1"\n'
+             '\t\t\t\t(rectangle\n\t\t\t\t\t(start -7.62 %g)\n\t\t\t\t\t(end 7.62 %g)\n'
+             % (h / 2 + 1.27, -h / 2 - 1.27) +
+             '\t\t\t\t\t(stroke (width 0.254) (type default))\n'
+             '\t\t\t\t\t(fill (type background))\n\t\t\t\t)\n\t\t\t)\n')
+    p = ['\t\t\t(symbol "IDC26_1_1"\n']
+    for i in range(13):
+        y = h / 2 - 1.27 - i * 2.54
+        p.append(_pino(2 * i + 1, "%d" % (2 * i + 1), -12.7, y, 0))
+        p.append(_pino(2 * i + 2, "%d" % (2 * i + 2), 12.7, y, 180))
+    p.append('\t\t\t)\n')
+    return _cab("IDC26", "J", "IDC 2x13 macho", h / 2 + 3.81, -h / 2 - 3.81) + corpo + "".join(p) + '\t\t)'
+
+
 if __name__ == "__main__":
     print("gera_simbolos v%s" % VERSAO, file=sys.stderr)
-    for s in (nettie2(), dpdt(), conn(4), conn(5)):
+    for s in (nettie2(), dpdt(), conn(4), conn(5), idc26()):
         print(s)

@@ -1,4 +1,9 @@
 # Desenhos técnicos
+<!-- doc-check: ignore build_sheet (nome de um SVG em docs/operacao/esquematicos/, nao simbolo de src/.) -->
+<!-- doc-check: ignore svg_colisoes (a ferramenta vive em `tools/`, e o check_docs varre so `src/`. Nao e fantasma: e limite de alcance dele.) -->
+<!-- doc-check: ignore cotuca_energia_previa (desenho APOSENTADO em 05/09. A lapide fica: e ela que impede alguem de o regenerar sem ler por que saiu.) -->
+<!-- doc-check: ignore energia_preview (idem) -->
+<!-- doc-check: ignore preamp_preview (idem) -->
 
 **Uma pasta, e uma regra que a governa inteira:**
 

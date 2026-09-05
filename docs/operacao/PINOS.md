@@ -13,7 +13,7 @@
 | **D15, D16** | pots ×2 (A0, A1) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico. **Só D15 e D16 são pots**; `board` diz `knobs:2`. Ambos com leitura **invertida** (`kKnobInverte`) — medido nos dois extremos, cru 0,0008 no máximo e 0,9753 no mínimo |
 | **D0, D1, D2** | encoder A — fase A, fase B, push | `kEncPin[0]` |
 | **D3, D4, D9** | encoder B — fase A, fase B, push | `kEncPin[1]` |
-| **D19, D18, D17** | encoder G — fase A, fase B, push | `kEncPin[2]` · ⚠️ **fases trocadas de propósito** (28/08); a troca mora na tabela, não num sinal invertido no laço |
+| **D19, D18, D17** | encoder G — fase A, fase B, push · 🔴 **D17 EM CONFLITO** | `kEncPin[2]` · ⚠️ **fases trocadas de propósito** (28/08); a troca mora na tabela, não num sinal invertido no laço |
 | **D5, D6, D7, D8, D10** | OLED SSD1309 SPI | ver a tabela do painel, mais abaixo |
 | **D22** | botão B4 — freeze B | INPUT + PULLUP, ativo-baixo |
 | **D23** | LED — freeze B | OUTPUT, segue o param `frz_on_b` |
@@ -22,6 +22,33 @@
 | **D26** | botão B1 — búzios (randomizador) | INPUT + PULLUP |
 | **D27** | LED — freeze A | OUTPUT, segue o param `frz_on_a` |
 | **D28** | STATUS da ponte ESP32 (link BLE) | INPUT + PULLUP · ativo em BAIXO, aberto-dreno |
+
+> 🔴 **`D17` ESTÁ DUPLAMENTE RESERVADO. Descoberto em 05/09.**
+>
+> | quem o quer | para quê |
+> |---|---|
+> | `hal_daisy_seed.cpp` · `kEncPin[2]` | **push do encoder G** |
+> | `ROTEIRO-KICAD.md` §4 | **divisor 100 k/22 k → A2**, a leitura da tensão do trilho |
+>
+> Os dois estão escritos, os dois são intencionais, e **não podem coexistir**:
+> o botão põe o divisor à massa a cada clique, e a leitura de tensão dá zero
+> exatamente quando alguém carrega. O firmware recusaria ligar o amp por ler
+> 0 V — a proteção a disparar por causa de um gesto de interface.
+>
+> **Nenhum verificador podia apanhar isto:** o `check_docs` cruza o PINOS com
+> o fonte e os dois dizem "D17 = encoder G"; o roteiro é outro documento e
+> fala de A2. A colisão só apareceu ao desenhar a folha, quando o
+> `ENC_G_PUSH` **desapareceu da lista de rótulos sem que nada acusasse** —
+> porque eu tinha dado o D17 ao divisor.
+>
+> **Por decidir, e é escolha do dB:**
+> - mover o **divisor** para outro ADC — `D20` ou `D21` são livres e são ADC
+>   (`ADC_INP11`/`ADC1_INP4`); ou
+> - mover o **push do encoder G** para `D11`/`D12`, que são livres mas **não
+>   são ADC**, e por isso não servem ao divisor.
+>
+> A segunda parece melhor: um push é GPIO simples e cabe em qualquer pino, e
+> o divisor exige ADC. Mas mexer no `kEncPin` mexe em firmware que funciona.
 
 ## Livres
 
