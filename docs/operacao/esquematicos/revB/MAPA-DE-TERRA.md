@@ -91,7 +91,8 @@ lá não sai para mais lado nenhum.
    PLANO DE GND (força e lógica)          GND ── pino 40 do soquete
      estrela ── amp · step-down · decoy         │
      Daisy DGND · ESP32 · painel ───────────────┘
-                     20 e 40 sao VIZINHOS no header: o fio e curto de propósito
+        20 e 40 estao na DIAGONAL do modulo (20 junto ao USB-C, 40 no oposto):
+        o condutor da ponte atravessa o modulo, e o caminho dele e escolha
 ```
 
 ### ⚠️ A PONTE DESENHA-SE. A SEED NÃO JUNTA OS TERRAS POR DENTRO.
@@ -129,8 +130,30 @@ curto nos pinos.
 ### Como se desenha
 
 `AGND` e `GND` continuam **duas redes** no esquema. Ligam-se por **um
-`NetTie-2` junto ao soquete**, nos pinos 20 e 40 — que são vizinhos no header
-2×20, e é isso que torna o fio curto.
+`NetTie-2`**, nos pinos 20 e 40.
+
+> ⚠️ **E NÃO SÃO VIZINHOS.** Esta secção dizia que eram, e estava errada —
+> outra afirmação de posição feita sem olhar para a placa. **Medido pelo dB
+> em 04/09: o pino 20 fica no canto INFERIOR ESQUERDO, colado ao USB-C, e o
+> 40 no canto SUPERIOR DIREITO, no extremo oposto ao USB.** Estão na diagonal
+> do módulo.
+
+**Consequência de layout, e não é pequena:** a ponte não pode ser um fio curto
+entre pinos ao lado um do outro. O condutor que une as duas terras atravessa
+o comprimento do módulo, e **por onde ele passa é uma escolha, não um
+acidente**.
+
+A regra da Analog Devices — juntar ao pé do conversor — fica ambígua quando os
+dois pinos estão em cantos opostos. A resolução proposta, a decidir com o dB
+no layout:
+
+> **O `NetTie-2` vive encostado ao pino 20**, dentro da ilha de `AGND`, e dali
+> sai **um único condutor dedicado** até ao pino 40. Assim a ilha termina no
+> net-tie, e só uma coisa sai dela — que é a definição de ilha-folha da §2.
+>
+> 🚫 O que **não** se faz: deixar o plano de `GND` aproximar-se da ilha e
+> tocá-la ao pé do pino 20. Isso seria a ponte no sítio certo com o cobre
+> errado — plano em vez de condutor, e área de laço a acompanhar.
 
 | | |
 |---|---|
@@ -209,10 +232,15 @@ Antes de tudo, provar que a Seed **não** junta os terras por dentro. Com uma
 Daisy na mão, fora de tudo, multímetro em continuidade entre o **pino 20
 (`AGND`)** e o **pino 40 (`GND`)** do header:
 
+✅ **MEDIDO EM 04/09: NÃO HÁ CONTINUIDADE ENTRE 20 E 40.** Aberto, como a
+documentação diz. A premissa está agora confirmada em três frentes
+independentes — a doc da libDaisy, o CSV do fabricante, e o multímetro do dB
+numa placa em mão. **A ponte é nossa para desenhar.**
+
 | resultado | significa |
 |---|---|
-| **aberto** | ✅ confirma a documentação: não estão juntos. **A ponte é nossa para desenhar** |
-| **apita** | 🔴 a documentação está errada ou a placa é outra revisão. **Parar e repensar** — com o net-tie montado haveria duas |
+| **aberto** | ✅ é o que se mediu. A ponte é nossa |
+| **apita** | 🔴 seria outra revisão. Parar e repensar |
 
 ⚠️ **Fazer este teste mesmo estando "resolvido no papel".** A premissa
 anterior deste documento — "a Daisy junta-os por dentro" — foi afirmada com

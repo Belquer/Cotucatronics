@@ -7532,3 +7532,76 @@ Uma Daisy de fabrica nao tem o bootloader da Electrosmith. A ordem e:
 
 ⚠️ **E o app NAO cabe na flash interna** — 283 KB contra 128 KB. Nao ha
 atalho por `APP_TYPE=BOOT_NONE`: tem de passar pelo bootloader.
+
+---
+
+## 15by. `D29` e `D30` sao o USB, e o PINOS.md reservava-os para os DPDT (04/09)
+
+Achado ao gerar o simbolo da Seed a partir do
+`Daisy_Seed_Rev4_Pinout.csv` do fabricante — nao por suspeita, e nao por
+nenhum verificador. Apareceu porque, pela primeira vez, alguem cruzou o
+`Dnn` com o NOME DE ESQUEMA do pino:
+
+    pino 36  ->  D29  =  USB_HS_D_-   (PB14)
+    pino 37  ->  D30  =  USB_HS_D_+   (PB15)
+    pino  1  ->  D0   =  USB_HS_ID    (PB12)
+
+E o `PINOS.md` dizia, ha semanas: *"D29/D30 estao reservados para o sense dos
+DPDT dos exciters"*.
+
+**Sao as linhas de dados do proprio USB** — as que o conector usa e por onde
+passa a serial. Reconfigura-las como GPIO mata a porta.
+
+### Por que este passou por todos os filtros
+
+O `check_docs` cruza o PINOS.md com o FONTE, e o fonte nao usa D29/D30 — logo
+"0 no codigo e fora do doc, 0 no doc e nao usados". **Passa limpo.** O
+verificador so podia ver uma colisao entre o documento e o codigo NOSSO; a
+colisao era entre o documento e o SILICIO.
+
+> **Um verificador delimita o que consegue ver, e o silencio dele tem a mesma
+> cara dentro e fora desse limite.** Aqui o limite era "o que o nosso codigo
+> faz". A folha de dados estava fora, e ficou fora durante semanas.
+
+### E o modo de falha era um que ja conheciamos
+
+Uma placa com D29/D30 ligados aos DPDT teria dado: firmware a correr, painel
+bom, alimentacao normal, **e nenhuma forma de falar com ela**. E exactamente
+o quadro em que passamos o dia 04/09 por outra causa — e teriamos passado
+outro, com cinco placas feitas e a causa no cobre.
+
+**Sense dos DPDT passa para `D11`/`D12`** (I2C1, PB8/PB9) ou `D20`/`D21`
+(ADC, PC1/PC4). Livres, e sem funcao amarrada ao silicio.
+
+⚠️ Fica registado tambem que **`D0` e o `USB_HS_ID`** e esta a servir de fase
+A do encoder A. Em modo dispositivo o ID nao e usado, portanto funciona — mas
+ninguem sabia, e e a mesma familia.
+
+---
+
+## 15bz. Afirmei posicao fisica de pinos sem olhar para a placa (04/09)
+
+O dB disse que os pinos 20 e 40 eram "vizinhos no header 2x20", e eu escrevi
+isso no `MAPA-DE-TERRA.md` como facto, com a consequencia agarrada — *"e e
+isso que torna o fio curto"*.
+
+**Medido por ele no fim do dia: nao sao.** O pino 20 fica no canto INFERIOR
+ESQUERDO, colado ao USB-C; o 40 no SUPERIOR DIREITO, no extremo oposto.
+Estao na diagonal do modulo.
+
+E a consequencia inverte-se: **a ponte de terra nao pode ser um fio curto
+entre vizinhos.** O condutor atravessa o comprimento do modulo, e por onde
+ele passa deixa de ser detalhe e passa a ser decisao de layout.
+
+> E a SEGUNDA vez no mesmo dia que aceito uma afirmacao de hardware sem
+> fonte e a escrevo como regra (a primeira e a 15bw, sobre os terras
+> internos). Da primeira vez eu ate desconfiei — escrevi "nao confirmei que
+> 20 e 40 sao vizinhos" no commit do simbolo — e mesmo assim deixei a
+> afirmacao contraria de pe no mapa, num sitio que ninguem cruza com o
+> outro.
+>
+> **Duvidar num ficheiro e afirmar noutro nao e duvidar: e espalhar.**
+
+O simbolo continua com o 20 e o 40 frente a frente no DESENHO, porque isso
+torna o net-tie legivel no esquema. Fica anotado no gerador que e conveniencia
+de papel e nao a placa.

@@ -49,8 +49,14 @@ def gerar():
                 f'\t\t\t\t)\n')
     ps = []
     # ⚠️ esquerda 1..20 e direita 21..40, os DOIS de cima para baixo. Assim o
-    # pino 20 (AGND) e o 40 (GND) caem frente a frente em baixo, e o net-tie
-    # entre eles fica curto tambem no papel.
+    # pino 20 (AGND) e o 40 (GND) caem frente a frente em baixo, o que torna
+    # o net-tie da ponte legivel no ESQUEMA.
+    #
+    # ⚠️ ISTO E CONVENIENCIA DE DESENHO, NAO A PLACA. No modulo real eles
+    # estao na DIAGONAL — medido pelo dB em 04/09: o 20 no canto inferior
+    # esquerdo, colado ao USB-C, e o 40 no superior direito, no extremo
+    # oposto. O condutor da ponte atravessa o modulo, e isso e restricao de
+    # LAYOUT que o esquema nao mostra. Ver MAPA-DE-TERRA.md §2.
     for i in range(20):
         ps.append(p(i + 1, pin[i + 1], -W - 5.08, 25.4 - i * 2.54, 0))
     for i in range(20):

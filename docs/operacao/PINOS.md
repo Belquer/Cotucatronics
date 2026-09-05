@@ -25,7 +25,10 @@
 
 ## Livres
 
-**D11** · **D12** · **D20** · **D21** · **D29** · **D30** — seis, não vinte.
+**D11** · **D12** · **D20** · **D21** — quatro.
+
+⚠️ **`D29` e `D30` saíram desta lista em 04/09: são as linhas de dados do
+USB** (pinos 36 e 37, `USB_HS_D−`/`D+`). Ver o aviso abaixo.
 
 > ⚠️ Esta linha dizia **`D0–D12`** até 04/09, e estava errada de duas
 > maneiras ao mesmo tempo: D0–D4 e D9 são os encoders A e B, e D5–D8 e D10
@@ -42,8 +45,33 @@ sem matar o OLED nem o MIDI"** — e inclui D17/D18/D19, que são o encoder G.
 O nome mente; o comportamento é intencional (a varredura existe justamente
 para descobrir cablagem de encoder).
 
-D29/D30 estão **reservados** para o sense dos DPDT dos exciters (`exc_on`
-lendo estado real do hardware, não intenção de software).
+> 🔴 **D29 E D30 NAO PODEM SER USADOS. SAO O USB.**
+>
+> Descoberto em 04/09, ao gerar o símbolo da Seed do
+> `Daisy_Seed_Rev4_Pinout.csv` do fabricante:
+>
+> ```
+> pino 36  →  D29  =  USB_HS_D_-   (PB14)
+> pino 37  →  D30  =  USB_HS_D_+   (PB15)
+> pino  1  →  D0   =  USB_HS_ID    (PB12)
+> ```
+>
+> São **as linhas de dados do próprio USB** — as que o conector usa e por onde
+> passa a serial. Reconfigurá-las como GPIO mata a porta, e o defeito só
+> apareceria com a placa feita: firmware a correr, painel bom, e nenhuma
+> forma de falar com ele. Passámos um dia inteiro nesse quadro por outra
+> causa, e sabemos como é.
+>
+> **Este documento reservava-as para o sense dos DPDT.** Não vão lá.
+
+**Sense dos DPDT: usar `D11`/`D12`** (`I2C1_SCL`/`SDA`, PB8/PB9) ou
+`D20`/`D21` (`ADC_INP11`/`ADC1_INP4`, PC1/PC4). Todos livres e sem função
+amarrada ao silício. O objectivo mantém-se: `exc_on` a ler estado **real** do
+hardware, não intenção de software.
+
+⚠️ **`D0` é o `USB_HS_ID`** e está a ser usado como fase A do encoder A. Em
+modo dispositivo o pino ID não é usado, portanto funciona — mas fica escrito,
+porque é a mesma família e ninguém o sabia.
 
 ## Reservado para o painel v2
 
