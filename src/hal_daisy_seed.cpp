@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.74.1
+// hal_daisy_seed v0.75.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.74.1"
+#define COTUCA_HAL_VERSION "0.75.0"
 
 using namespace daisy;
 
@@ -1459,38 +1459,26 @@ static bool           enc_pronto = false;
 // Havia ainda uma TERCEIRA copia, os nomes em texto no `encpino` do
 // main.cpp. Vive agora aqui ao lado, e sai pelo `EncoderPinNome`.
 //
+// ⚠️ A LICAO DO ENCODER G FICA, MESMO COM ELE FORA (removido a 05/09).
+//
+// Ele tinha as fases trocadas de proposito, e quando isso se fez o dB
+// reportou que a contagem PAROU DE VEZ. Fui procurar um mapa de pinos
+// alternativo e estava errado: o `Encoder::Init` e o `Debounce` tratam `a` e
+// `b` de forma SIMETRICA, logo trocar so pode INVERTER, nunca zerar. A
+// simetria era prova, e eu procurei explicacao noutro lado. O que tinha
+// acontecido: as duas fases abriram no chicote, e o `varre` mostrou-o.
+//
+// E a troca morava AQUI e nao num sinal invertido no laco, porque o sentido
+// de um encoder E qual fase vem primeiro. Inverter o resultado depois
+// esconderia a causa e faria a sonda mentir.
+//
 //                       fase A       fase B       push
 static const daisy::Pin kEncPin[kNumEncoders][3] = {
     {seed::D0,  seed::D1,  seed::D2},
-    {seed::D3,  seed::D4,  seed::D9},
-    // G COM AS FASES TROCADAS (28/08), e a historia importa porque quase
-    // me fez culpar o codigo certo.
-    //
-    // Troquei-as, o dB reportou que a contagem PAROU DE VEZ, e eu fui
-    // procurar um mapa de pinos alternativo. Estava errado: o
-    // `Encoder::Init` e o `Debounce` da libDaisy tratam `a` e `b` de
-    // forma SIMETRICA — os dois levam INPUT+PULLUP, e a deteccao de
-    // sentido e um espelho perfeito. Trocar so pode inverter, NUNCA
-    // zerar. A simetria era prova, e eu procurei explicacao noutro lado.
-    //
-    // O que tinha acontecido: as duas fases do G abriram, e o `varre`
-    // mostrou-o — quinze pinos livres, e SO o push comutava. Voltaram
-    // durante o manuseio do chicote. O defeito e INTERMITENTE e continua
-    // por resoldar; ver o STATUS.md.
-    //
-    // A troca mora AQUI e nao num sinal invertido no laco porque o
-    // sentido de um encoder E qual fase vem primeiro. Inverter o
-    // resultado depois esconderia a causa e faria a sonda mentir: o
-    // `encpino` mostraria D18 como fase A quando o firmware ja a le
-    // como B. O `enc inverte` fica como ferramenta de BANCADA, para o
-    // proximo encoder que aparecer soldado ao contrario.
-    {seed::D19, seed::D18, seed::D17},
 };
 
 static const char* kEncPinNome[kNumEncoders][3] = {
     {"D0",  "D1",  "D2"},
-    {"D3",  "D4",  "D9"},
-    {"D19", "D18", "D17"},
 };
 
 const char* EncoderPinNome(int idx, int qual)

@@ -242,7 +242,15 @@ uint32_t         SerialTruncadas();
 // por padrao de quadratura. Transicao mais curta que 1 ms se perde. Por
 // isso quem chama ACUMULA e CONTA, para que a perda apareca como numero
 // em vez de sumir.
-static constexpr int kNumEncoders = 3;
+// UM encoder. Foram tres ate 05/09; o dB fechou a interface num so, com
+// combinacao de push+giro a fazer o resto e uma lista de presets simples.
+//
+// ⚠️ E ISSO RESOLVEU O CONFLITO DO D17 DE GRACA. O push do encoder G vivia
+// no D17, que o desenho da placa queria para o divisor 100k/22k do trilho
+// (A2). Os dois estavam escritos e nenhum verificador via a colisao, porque
+// moravam em documentos diferentes. Nenhuma das duas saidas que se propos
+// foi precisa: a decisao de INTERFACE dissolveu o problema de HARDWARE.
+static constexpr int kNumEncoders = 1;
 bool             EncoderInit();
 // O NOME DO PINO VEM DO HAL, nao de uma lista no shell. Ate 28/08 o
 // `encpino` carregava os nove nomes escritos a mao: uma terceira copia

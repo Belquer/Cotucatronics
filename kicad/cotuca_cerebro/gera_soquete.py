@@ -136,12 +136,12 @@ LIGA = {
     "D13":"MIDI_TX", "D14":"MIDI_RX", "D28":"PONTE_STATUS",
     "D17":"V_TRILHO_A2",
     "D5":"OLED_RST","D6":"OLED_DC","D7":"OLED_CS","D8":"OLED_CLK","D10":"OLED_DIN",
-    "D0":"ENC_A_A","D1":"ENC_A_B","D2":"ENC_A_PUSH",
-    "D3":"ENC_B_A","D4":"ENC_B_B","D9":"ENC_B_PUSH",
-    "D19":"ENC_G_A","D18":"ENC_G_B","D17_":"",
+    "D0":"ENC_A_A","D1":"ENC_A_B","D2":"ENC_A_PUSH",   # o unico encoder
+    # ⚠️ UM encoder desde 05/09. D3/D4/D9 (enc B) e D18/D19 (enc G) sairam,
+    # e o D17 deixou de ser o push do G para ser o A2 do divisor — que
+    # dissolveu o conflito sem se tocar em firmware que funcionava.
     "D15":"POT_L","D16":"POT_R",
-    "D22":"BOT_FRZ_B","D23":"LED_FRZ_B","D24":"BOT_FRZ_A","D25":"BOT_REARME",
-    "D26":"BOT_BUZIOS","D27":"LED_FRZ_A",
+    "D22":"BOT_FRZ_B","D23":"LED_FRZ_B","D24":"BOT_FRZ_A",    "D26":"BOT_BUZIOS","D27":"LED_FRZ_A",  # o buzios ganha botao branco no painel
     "D11":"DPDT_SENSE_L","D12":"DPDT_SENSE_R",
 }
 # ⚠️ D29 e D30 NAO entram. Sao USB_HS_D-/D+ (pinos 36/37). Ver PINOS.md.

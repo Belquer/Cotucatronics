@@ -88,12 +88,13 @@ no header 2×20 sai da **folha de dados da Seed**, não do PINOS.
 
 | pino lógico | função | pino lógico | função |
 |---|---|---|---|
-| D0 D1 D2 | encoder A, B, push | D13 → RX · D14 ← TX | ponte, cruzado |
+| D0 D1 D2 | **o** encoder — A, B, push | D13 → RX · D14 ← TX | ponte, cruzado |
 | D5 D6 D7 D8 D10 | OLED RST DC CS CLK DIN | D28 | status da ponte, ativo baixo |
 | D15 D16 | pot L, pot R (A0/A1) | D22 D24 | freeze B, freeze A |
 | D23 D27 | gate LED B, gate LED A | AUDIO IN/OUT L/R | pré-amp / DPDT |
 
-**Livres: D11 D12 D20 D21** — quatro. **D17 = A2 = V_TRILHO.**
+**Livres: D3 D4 D9 D11 D12 D18 D19 D20 D21 D25** — dez. **D17 = A2 = V_TRILHO**, e
+desde 05/09 sem conflito: o encoder G saiu.
 
 > ⚠️ **Corrigido em 05/09. A lista anterior estava errada de duas maneiras.**
 > Dizia `D3 D4 D9 D11 D12 D18 D19 D20 D21 D25 D26 D29 D30`, e:
@@ -131,7 +132,7 @@ ao GND colado) · 2 botões arcade **azuis** (um lado ao GND) · 2× AO3400A
 | 3 | GND | 16 | gate LED B D23 |
 | 4 | OLED DIN D10 | 17 | botão A D24 |
 | 5 | OLED CS D7 | 18 | botão B D22 |
-| 6 | OLED DC D6 | 19 | GND |
+| 6 | OLED DC D6 | **19** | **botão búzios D26** | 20 | encoder A D0 |
 | 7 | OLED RST D5 | 20 | encoder A D0 |
 | 8 | GND | 21 | encoder B D1 |
 | 9 | 3V3 | 22 | encoder push D2 |

@@ -33,7 +33,13 @@ VIAS = {
     13: ("GND", "retorno LED"),      14: ("GND", "retorno LED"),
     15: ("LED_FRZ_A", "D27"),        16: ("LED_FRZ_B", "D23"),
     17: ("BOT_FRZ_A", "D24"),        18: ("BOT_FRZ_B", "D22"),
-    19: ("GND", ""),                 20: ("ENC_A_A", "D0"),
+    # ⚠️ A VIA 19 DEIXOU DE SER TERRA a 05/09, para o botao branco dos
+    # buzios. Das nove terras, era a unica que nao guardava nenhuma das tres
+    # coisas medidas — o relogio do OLED (1 e 3), os pots (23 e 26) e o par
+    # dos LED (13 e 14). E o que la entra e um botao: digital lento, corrente
+    # nenhuma, o vizinho menos exigente que existe.
+    19: ("BOT_BUZIOS", "D26 · botao branco"),
+                                     20: ("ENC_A_A", "D0 · o unico encoder"),
     21: ("ENC_A_B", "D1"),           22: ("ENC_A_PUSH", "D2"),
     23: ("GND", ""),                 24: ("POT_L", "D15"),
     25: ("POT_R", "D16"),            26: ("GND", ""),

@@ -11,48 +11,35 @@
 | **D13** | UART TX → **RX** da ponte ESP32 | PB6 · USART1 · 31250 8N1 · ★ CRUZADO |
 | **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI · **PULL-UP INTERNO LIGADO** (~40 kΩ) desde 02/09 — ver abaixo |
 | **D15, D16** | pots ×2 (A0, A1) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico. **Só D15 e D16 são pots**; `board` diz `knobs:2`. Ambos com leitura **invertida** (`kKnobInverte`) — medido nos dois extremos, cru 0,0008 no máximo e 0,9753 no mínimo |
-| **D0, D1, D2** | encoder A — fase A, fase B, push | `kEncPin[0]` |
-| **D3, D4, D9** | encoder B — fase A, fase B, push | `kEncPin[1]` |
-| **D19, D18, D17** | encoder G — fase A, fase B, push · 🔴 **D17 EM CONFLITO** | `kEncPin[2]` · ⚠️ **fases trocadas de propósito** (28/08); a troca mora na tabela, não num sinal invertido no laço |
+| **D0, D1, D2** | **o encoder** — fase A, fase B, push | `kEncPin[0]`, e é o único desde 05/09 |
+| **D17** | **A2 — divisor 100 k/22 k do trilho de 15 V** | leitura da tensão; o firmware recusa ligar o amp abaixo de 12 V |
 | **D5, D6, D7, D8, D10** | OLED SSD1309 SPI | ver a tabela do painel, mais abaixo |
 | **D22** | botão B4 — freeze B | INPUT + PULLUP, ativo-baixo |
 | **D23** | LED — freeze B | OUTPUT, segue o param `frz_on_b` |
 | **D24** | botão B2 — freeze A | INPUT + PULLUP, ativo-baixo |
-| **D25** | botão B3 — rearme do CTOS | INPUT + PULLUP, sem alvo de param |
+| ~~**D25**~~ | ~~botão B3 — rearme do CTOS~~ · **REMOVIDO 05/09** | a função fica pelo `b3` da serial; o painel não leva botão |
 | **D26** | botão B1 — búzios (randomizador) | INPUT + PULLUP |
 | **D27** | LED — freeze A | OUTPUT, segue o param `frz_on_a` |
 | **D28** | STATUS da ponte ESP32 (link BLE) | INPUT + PULLUP · ativo em BAIXO, aberto-dreno |
 
-> 🔴 **`D17` ESTÁ DUPLAMENTE RESERVADO. Descoberto em 05/09.**
+> ✅ **O CONFLITO DO `D17` MORREU EM 05/09, e não por conserto.**
 >
-> | quem o quer | para quê |
-> |---|---|
-> | `hal_daisy_seed.cpp` · `kEncPin[2]` | **push do encoder G** |
-> | `ROTEIRO-KICAD.md` §4 | **divisor 100 k/22 k → A2**, a leitura da tensão do trilho |
+> O `D17` era o push do encoder G *e* o A2 do divisor do trilho — dois usos
+> escritos, ambos intencionais, e nenhum verificador os via porque moravam em
+> documentos diferentes. Propus duas saídas, e **nenhuma foi precisa**: o dB
+> fechou a interface num **encoder só**, o encoder G saiu, e o `D17` ficou
+> livre para o divisor sem se tocar em firmware que funcionava.
 >
-> Os dois estão escritos, os dois são intencionais, e **não podem coexistir**:
-> o botão põe o divisor à massa a cada clique, e a leitura de tensão dá zero
-> exatamente quando alguém carrega. O firmware recusaria ligar o amp por ler
-> 0 V — a proteção a disparar por causa de um gesto de interface.
->
-> **Nenhum verificador podia apanhar isto:** o `check_docs` cruza o PINOS com
-> o fonte e os dois dizem "D17 = encoder G"; o roteiro é outro documento e
-> fala de A2. A colisão só apareceu ao desenhar a folha, quando o
-> `ENC_G_PUSH` **desapareceu da lista de rótulos sem que nada acusasse** —
-> porque eu tinha dado o D17 ao divisor.
->
-> **Por decidir, e é escolha do dB:**
-> - mover o **divisor** para outro ADC — `D20` ou `D21` são livres e são ADC
->   (`ADC_INP11`/`ADC1_INP4`); ou
-> - mover o **push do encoder G** para `D11`/`D12`, que são livres mas **não
->   são ADC**, e por isso não servem ao divisor.
->
-> A segunda parece melhor: um push é GPIO simples e cabe em qualquer pino, e
-> o divisor exige ADC. Mas mexer no `kEncPin` mexe em firmware que funciona.
+> **Uma decisão de interface dissolveu um problema de hardware.** Fica
+> escrito porque a próxima colisão pode ter a mesma saída, e ninguém a
+> procura desse lado.
 
 ## Livres
 
-**D11** · **D12** · **D20** · **D21** — quatro.
+**D3** · **D4** · **D9** · **D11** · **D12** · **D18** · **D19** · **D20** · **D21** · **D25** — dez.
+
+Passaram de quatro a dez a 05/09: saíram os encoders B e G (`D3 D4 D9 D18 D19`)
+e o botão de rearme (`D25`). O `D17` **não** está aqui — é o A2 do divisor.
 
 ⚠️ **`D29` e `D30` saíram desta lista em 04/09: são as linhas de dados do
 USB** (pinos 36 e 37, `USB_HS_D−`/`D+`). Ver o aviso abaixo.
