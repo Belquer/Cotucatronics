@@ -10,7 +10,7 @@ import subprocess, sys
 # tudo. Ver .claude/skills/design-review/SKILL.md §1.
 import pathlib as _pl
 AQUI = _pl.Path(__file__).resolve().parent
-RAIZ = AQUI.parents[2]
+RAIZ = AQUI.parent
 PORTAO = RAIZ / "tools" / "svg_colisoes.py"
 S = 2.6
 def mm(v): return round(v * S, 2)
@@ -90,7 +90,7 @@ class Page:
         print(r.stdout.strip())
         return r.returncode == 0
 
-OUT = str(AQUI) + "/"
+OUT = str(AQUI / "paginas") + "/"
 
 # ======================= PAGINA 2: TAMPA =======================
 p = Page(1100, 700, "Página 2 — TAMPA (acrílico cast 8 mm) · 200 × 123,7 no plano",

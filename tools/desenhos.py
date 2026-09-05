@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""desenhos v0.3.0 — regenera os desenhos tecnicos e denuncia os velhos.
+"""desenhos v0.4.0 — regenera os desenhos tecnicos e denuncia os velhos.
 
     python3 tools/desenhos.py            # confere; sai != 0 se algum esta velho
     python3 tools/desenhos.py --gerar    # regenera e confere
@@ -14,7 +14,7 @@ DESENHO, o desenho esta velho.** Nao se pergunta se mudou o que importa.
 """
 import os, subprocess, sys, pathlib
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 RAIZ = pathlib.Path(__file__).resolve().parents[1]
 CLI = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 
@@ -26,12 +26,12 @@ PARES = [
     ("docs/desenhos/esquematicos/cotuca_conector.svg", "kicad/cotuca_cerebro/cotuca_conector.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_painel.svg",   "kicad/cotuca_painel/cotuca_painel.kicad_sch"),
     # a caixa: pagina 1 tem gerador proprio desde 05/09; as p2..p6 outro
-    ("docs/desenhos/caixa/caixa-fabricacao.svg",             "docs/desenhos/caixa/gen_caixa.py"),
-    ("docs/desenhos/caixa/caixa-fabricacao-p2-tampa.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
-    ("docs/desenhos/caixa/caixa-fabricacao-p3-fundo.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
-    ("docs/desenhos/caixa/caixa-fabricacao-p4-interior.svg", "docs/desenhos/caixa/gen_caixa_paginas.py"),
-    ("docs/desenhos/caixa/caixa-fabricacao-p5-juntas.svg",   "docs/desenhos/caixa/gen_caixa_paginas.py"),
-    ("docs/desenhos/caixa/caixa-fabricacao-p6-berco.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
+    ("caixa/paginas/caixa-fabricacao.svg",             "caixa/gen_caixa.py"),
+    ("caixa/paginas/caixa-fabricacao-p2-tampa.svg",    "caixa/gen_caixa_paginas.py"),
+    ("caixa/paginas/caixa-fabricacao-p3-fundo.svg",    "caixa/gen_caixa_paginas.py"),
+    ("caixa/paginas/caixa-fabricacao-p4-interior.svg", "caixa/gen_caixa_paginas.py"),
+    ("caixa/paginas/caixa-fabricacao-p5-juntas.svg",   "caixa/gen_caixa_paginas.py"),
+    ("caixa/paginas/caixa-fabricacao-p6-berco.svg",    "caixa/gen_caixa_paginas.py"),
 ]
 # ⚠️ Ate 05/09 a pagina 1 nao estava aqui, por nao ter gerador no repo. Ganhou
 # um (`gen_caixa.py`) e entrou. Agora TODOS os desenhos desta pasta tem fonte.

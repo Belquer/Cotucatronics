@@ -9,7 +9,7 @@
 import subprocess, sys, pathlib
 
 AQUI = pathlib.Path(__file__).resolve().parent
-RAIZ = AQUI.parents[2]
+RAIZ = AQUI.parent
 PORTAO = RAIZ / "tools" / "svg_colisoes.py"
 
 S = 2.6  # px por mm
@@ -178,7 +178,7 @@ text(60, 1192, "Tampa aparafusada por dentro em 6 pontos, com inserto roscado �
 text(60, 1210, "Ordem: 1) medir todas as peças marcadas 'confirmar'  2) atualizar este desenho", "warn")
 text(60, 1222, "3) cortar UMA caixa e montar  4) só depois a série.", "warn")
 out.append('</svg>')
-FN = str(AQUI / "caixa-fabricacao.svg")
+FN = str(AQUI / "paginas" / "caixa-fabricacao.svg")
 open(FN, "w").write("\n".join(out))
 
 # ⚠️ O PORTAO CORRE AQUI, E PODE DIZER NAO. Gerador que so escreve deixa a

@@ -3694,7 +3694,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "20n C0G"
+		(property "Value" "22n C0G"
 			(at 146 184 0)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5490,7 +5490,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "20n C0G"
+		(property "Value" "22n C0G"
 			(at 146 79 0)
 			(show_name no)
 			(do_not_autoplace no)

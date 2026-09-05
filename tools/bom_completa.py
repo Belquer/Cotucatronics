@@ -263,7 +263,7 @@ Os DNP nao contam para o total: o footprint fica na placa, a peca nao se compra.
 
 | ref | esquema | MPN escolhido | |
 |---|---|---|---|
-| `C12`, `C22` | `20n C0G` | `C1206C223J5GACTU` = **22 nF** | 20 nF C0G nao e valor de serie; 22 nF e. **O esquema e que tem de mudar**, e muda a esquina do divisor em 10%%. |
+| ~~`C12`, `C22`~~ | ~~`20n C0G`~~ | | **RESOLVIDO 05/09**: o esquema passou a `22n C0G`. 20 nF C0G nao e valor de serie; o esquema mentia ao BOM. |
 | `R5`, `R6` (painel) | `100R serie (~30 mA)` | 47 Ω 1/2 W na `BOM-MPN-revB` | por medir na bancada com o azul a 5 V |
 
 Enquanto nao baterem, a BOM esta a comprar uma peca e o desenho a descrever

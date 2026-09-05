@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.1.0 · **2026-09-05** · commit `0c0ea0a`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.1.0 · **2026-09-05** · commit `0d6bd37`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e
@@ -25,9 +25,9 @@
 | `C8` | 10u | condensador 1206 — ver o valor p/ dielectrico | — | `C_1206_3216Metric` | 0.0200 | estimado |
 | `C9` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C11` **(DNP)** | 22p C0G | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | — | estimado |
-| `C12` | 20n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
+| `C12` | 22n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
 | `C21` **(DNP)** | 22p C0G | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | — | estimado |
-| `C22` | 20n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
+| `C22` | 22n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
 | `D1` | SMBJ24A | SMBJ24A (Littelfuse) | LCSC | `D_SMB` | 0.0790 | medido |
 | `D2` | 1N5819 | SS14 (SMA) | LCSC | `D_SMA` | 0.0200 | estimado |
 | `D11` | BAV99 | BAV99,215 (Nexperia) | LCSC | `SOT-23` | 0.0200 | estimado |
@@ -143,7 +143,7 @@ Os DNP nao contam para o total: o footprint fica na placa, a peca nao se compra.
 
 | ref | esquema | MPN escolhido | |
 |---|---|---|---|
-| `C12`, `C22` | `20n C0G` | `C1206C223J5GACTU` = **22 nF** | 20 nF C0G nao e valor de serie; 22 nF e. **O esquema e que tem de mudar**, e muda a esquina do divisor em 10%. |
+| ~~`C12`, `C22`~~ | ~~`20n C0G`~~ | | **RESOLVIDO 05/09**: o esquema passou a `22n C0G`. 20 nF C0G nao e valor de serie; o esquema mentia ao BOM. |
 | `R5`, `R6` (painel) | `100R serie (~30 mA)` | 47 Ω 1/2 W na `BOM-MPN-revB` | por medir na bancada com o azul a 5 V |
 
 Enquanto nao baterem, a BOM esta a comprar uma peca e o desenho a descrever
