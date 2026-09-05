@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v1.12.2
+// manifest.h (instrumento "bancada") v1.13.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -1915,6 +1915,33 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         AddMidi(102, p_gov_ceiling[1], kCanalCompart);   // exciter R
         AddMidi(104, p_gov_release[1], kCanalCompart);   // exciter R
         AddMidi(106, p_bench_boost[1], kCanalCompart);   // exciter R
+
+        // ---- BANCO DE ENSAIO DO SUPRESSOR (05/09) ----
+        // Os tres `sim_*` fecham um laco DENTRO do firmware para se ver o
+        // supressor trabalhar com as saidas MUDAS. Ate 05/09 so o `set` os
+        // alcancava, e o `board` acusava-os: "sem CC: 3 de 122 params —
+        // alcancaveis por `set`, invisiveis ao iPad".
+        //
+        // Ficam AQUI, colados ao `bench_boost` (105/106), porque sao a mesma
+        // familia: coisas de bancada, nao de palco. A vizinhanca e defesa e
+        // nao estetica — um widget mal configurado atinge o VIZINHO, e o
+        // vizinho destes tem de ser outra coisa de ensaio, nunca o `level`
+        // nem o portao.
+        //
+        // 107/108/109: livres nas DUAS fontes (fonte e CCMAP gerado), e na
+        // faixa "undefined" da spec. Para um PARAM evitou-se 0/32 (Bank
+        // Select) e 32-63 (os LSB de 0-31, que colidem com controlador de 14
+        // bits). Evitou-se tambem 120-127 — mas note-se que 120/121/122 estao
+        // TOMADOS de proposito pelos CCs DE COMANDO (`sync`, preset load,
+        // preset save), que nao sao params e por isso nao entram no mapa. A
+        // faixa alta nao esta livre: esta reservada a outra coisa.
+        //
+        // ⚠️ NAO ha widget no Loopy para estes, por decisao do dB — o CC
+        // existe para o param deixar de ser invisivel ao iPad, nao porque
+        // haja pagina a espera dele.
+        AddMidi(107, p_sim_laco, kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(108, p_sim_hz,   kCanalCompart);   // COMPARTILHADO: so ch1
+        AddMidi(109, p_sim_fb,   kCanalCompart);   // COMPARTILHADO: so ch1
         // O PORTAO DA PROTECAO, um por ramo. Nasce LIGADO: proteger sem
         // precisar custa timbre, nao proteger quando precisa custa o
         // instrumento. Quando os DPDT forem soldados, D29/D30 dizem o

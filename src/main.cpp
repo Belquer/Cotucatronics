@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.301.1"
+#define COTUCA_OS_VERSION "0.302.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //

@@ -71,8 +71,45 @@ aqui*. Leia os dois antes de tocar em código.
 >
 > **⚪5 do `AUDIT-23-08` fechado:** o `"76 CCs"` estava em três comentários do
 > `main.cpp` (v0.301.1), não dois, e o número real são 119. Corrigido nos três.
-> **🟡2 continua aberto** — é feature (detector de duplicata de CC), quer
-> gravação e medição, e não há placa ligada: o `porta_daisy` não a encontra.
+> **🟡2 estava fechado e ninguém tinha dado por isso.** Fui escrevê-lo e
+> encontrei-o feito: `Colisoes()`/`Colisao()` no `manifest.h`, chamadas em
+> `main.cpp:5134`, e o `board` a imprimir `colisao de CC`. Implementado depois
+> do audit de 23/08, com a entrada por fechar. Construir por cima teria sido
+> trabalho a duplicar código que já existia.
+>
+> **05/09 — placa nova gravada, e os três params invisíveis deixaram de o ser.**
+> A Daisy nova entrou (uma unidade só, por agora), com o bootloader já lá — o
+> DFU que apareceu expunha `0x90000000`, a QSPI. Gravada e conferida nos dois
+> lados: fonte e placa em **v0.302.0**.
+>
+> O `board` acusava `sem CC: 3 de 122 params — alcançáveis por `set`,
+> invisíveis ao iPad`: `sim_laco`, `sim_hz`, `sim_fb`, o banco de ensaio do
+> supressor. Ganharam **CC 107/108/109** em `ch1`, colados ao `bench_boost`
+> (105/106) porque são a mesma família — coisas de bancada, não de palco, e a
+> vizinhança é defesa: um widget mal configurado atinge o vizinho. Escolhidos
+> livres nas **duas** fontes (fonte e `CCMAP` gerado) e fora de 120–127
+> (Channel Mode), 0/32 (Bank Select) e 32–63 (os LSB de 0–31).
+>
+> Medido na placa depois de gravar: **`sem CC` 3 → 0 · CCs 119 → 122 ·
+> `colisao de CC: nenhuma`** — dita pelo detector que já lá estava, que é
+> exactamente o trabalho dele. ⚠️ **Não há widget no Loopy para estes**, por
+> decisão do dB: o CC existe para o param deixar de ser invisível, não porque
+> haja página à espera.
+>
+> **E o `check_docs` acusou-me 10 ficheiros "tocados sem subir a versão"** —
+> os do commit `1cc896c`. Olhados, não presumidos, que é o que a docstring
+> dele pede: são **comentário puro**, e a prova é o binário byte a byte igual
+> (QSPI 283 196 B · SRAM 322 488 B · ITCM 308 B, antes e depois). **Não
+> bumpados de propósito:** `hal`, `params` e `dynamics` reportam versão no
+> `board`, e subi-la anunciaria uma mudança que não existe — além de obrigar a
+> regravar para nada. Fica escrito para não se voltar a discutir.
+>
+> **Uma contradição minha, apanhada na varredura de pendentes.** Ao escolher
+> os CCs escrevi que 120–127 são Channel Mode e não se usam. Mas o projecto
+> usa **120/121/122 de propósito** como CCs de COMANDO (`sync`, preset load,
+> preset save) — não são params, por isso não entram no mapa. O comentário
+> lia-se como proibição geral e passou a dizer o que é: a faixa alta não está
+> livre, está reservada a outra coisa.
 >
 > **O `/audit` foi apertado contra as duas falhas desta sessão** (`auditar.sh`
 > v1.2.0). A primeira: varri o fonte com `*.h *.cpp Makefile` — 33 ficheiros —
@@ -645,8 +682,11 @@ partir de um deles.
 ### O que ficou por fazer
 
 **Bancada (hardware), com o plano escrito em [`ATERRAMENTO.md`](operacao/ATERRAMENTO.md):**
-1. Separar a **ilha de `AGND`** — piezos, DPDT, jacks, entrada do amp. Conferir
-   com continuidade, **com a Daisy fora do soquete**.
+1. Separar a **ilha de `AGND`** — piezos, DPDT, jacks, entrada do amp.
+   Conferir com as **três medições por ordem** do
+   [`ATERRAMENTO.md`](operacao/ATERRAMENTO.md) v0.2.0 — "com a Daisy fora do
+   soquete" era o método antigo, e com o net-tie do revB dá o veredito ao
+   contrário.
 2. **100 µF + 100 nF** nos pinos da ponte ESP32, e fio de terra próprio à
    estrela. ⚠️ 100 µF, **não** 2200 — ela pendura-se na saída do step-down.
 3. Afastar os cabos dos piezos dos cabos dos exciters (acoplamento **pelo ar**,

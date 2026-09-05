@@ -18,8 +18,16 @@
 >   dois comentários de `main.cpp:1114` e `1290`: hoje são **três**
 >   (`1521`, `1697`, `1708`), e o número real são **119** vínculos, não 86.
 >   Não foi tocado — é `src/`, e está com outra sessão.
-> - **🟠 1 · 🟡 2 · 🟡 3 — não reverificados.** Não os declaro fechados sem
->   medir; ausência de verificação não é ausência de defeito.
+> - **🟡 2 (detector de duplicata de CC) — JÁ ESTAVA FECHADO, 05/09.** O item
+>   pedia varredura no `Init` e o `board` a gritar. Existe: `Colisoes()` e
+>   `Colisao()` no `manifest.h`, chamadas em `main.cpp:5134`, e o `board`
+>   imprime `colisao de CC`. Foi implementado depois do audit e ninguém fechou
+>   a entrada. O comentário da função narra o caso que a motivou — o notch
+>   registado no CC 115 que já era do `bench_boost` — e deixa a frase que vale
+>   por si: *"contar quem não tem CC não encontra quem tem CC roubado — são
+>   perguntas diferentes, e só uma delas estava a ser feita."*
+> - **🟠 1 · 🟡 3 — não reverificados.** Não os declaro fechados sem medir;
+>   ausência de verificação não é ausência de defeito.
 
 ## O que passou
 
