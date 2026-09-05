@@ -7458,3 +7458,77 @@ proprio.
 ⚠️ **E o teste continua a fazer-se.** Continuidade 20↔40 numa Daisy nua tem de
 dar **aberto**. A premissa nova tambem e para medir — sobretudo esta, que ja
 foi afirmada com confianca duas vezes em sentidos opostos.
+
+---
+
+## 15bx. Uma Daisy morreu, e a pergunta que a matou tinha resposta na doc (04/09)
+
+Fim do dia 04/09, e custou uma placa.
+
+**O que aconteceu.** Sob orientacao minha — a premissa errada da 15bw — o dB
+tinha DESLIGADO o AGND do DGND. Ao reconectar, o instrumento ficou sem som.
+Durante a investigacao a primeira Daisy foi encontrada **muito quente**, sem
+USB, sem serial, e sem DFU nem com `BOOT+RST`. Substituida.
+
+**A premissa, agora verificada em PRIMEIRA MAO.** A doc da libDaisy, na pagina
+dos ADCs, diz textualmente:
+
+> *"When working with the Daisy and external hardware, always connect the
+> DGND and AGND pins outside of the Daisy"*
+
+Ligam-se. Sempre. E o que restava era **onde** — e a resposta e nos pinos,
+num fio curto, nunca num trilho partilhado com corrente.
+
+**O resultado, medido.** Com o aterramento refeito e o encoder G resoldado, o
+chao de ruido na entrada, em repouso:
+
+    antes   IN_L -34,2 dBFS   IN_R -34,2 dBFS
+    depois  IN_L -69,2 dBFS   IN_R -73,4 dBFS      35 a 39 dB
+
+E o sintoma tinha assinatura: **-34,2 dBFS IGUAL nos dois canais.** Ruido
+simetrico e problema de REFERENCIA; um piezo ou um cabo estragado seria
+assimetrico. O numero dizia "terra" antes de qualquer hipotese.
+
+### Tres erros meus na investigacao, e sao de familias conhecidas
+
+**1. Identifiquei um dispositivo pelo NOME e construi conclusao em cima.**
+Vi um `/dev/cu.wchusbserial` e anunciei "o ESP32 continua a enumerar, logo o
+Mac e o cabo estao bons, a falha esta isolada na Daisy". O ESP32 nem estava
+ligado. Efeito pratico: **descartei o cabo e a porta**, que eram suspeitos
+legitimos, durante varias rondas. E a cicatriz do `porta_daisy` (15bd) — nao
+inferir identidade por posicao ou por nome, PERGUNTAR — cometida dentro de um
+diagnostico.
+
+**2. Testei curtos e nao testei aberturas.** Pedi tres continuidades das
+linhas de USB CONTRA A MASSA. Passaram as tres, e eu dei a hipotese por
+morta. Mas uma linha PARTIDA da "aberto contra a massa" e passa nesse teste.
+A medicao que faltava era ao LONGO da linha, do conector ao pino.
+
+> **Um conjunto de testes que so procura curtos declara sao o que esta
+> aberto.** Toda familia de defeito tem dois lados, e testar um deles nao e
+> testar a familia.
+
+**3. Corri atras de uma janela de 2 s com uma conversa de 30 s.** A janela de
+DFU do bootloader dura 2 segundos. Passei mais de uma hora a pedir `rst` e a
+verificar depois, seis vezes, sempre com o mesmo nada — porque entre o toque
+dele e a minha verificacao passavam trinta segundos.
+
+A regra da bancada ate diz "a lacada primeiro, o toque depois". Eu li-a como
+uma ordem DENTRO da minha mensagem, e nao como o que ela e:
+
+> **Quando a janela e mais curta que a latencia da conversa, a espera tem de
+> viver do lado de quem carrega no botao.** A ferramenta e a primeira coisa a
+> escrever, nao a ultima. `grava_placa_nova.command` devia ter existido na
+> primeira tentativa, e existiu na decima.
+
+### E o que se aprendeu sobre gravar uma placa nova
+
+Uma Daisy de fabrica nao tem o bootloader da Electrosmith. A ordem e:
+
+    BOOT+RST            -> DFU da ROM da ST (0483:df11), flash interna
+    make program-boot   -> instala o bootloader (o erro no `leave` e normal)
+    RST, depois BOOT    -> DFU do bootloader, que expoe a QSPI
+    make program-dfu    -> o app
+
+⚠️ **E o app NAO cabe na flash interna** — 283 KB contra 128 KB. Nao ha
+atalho por `APP_TYPE=BOOT_NONE`: tem de passar pelo bootloader.
