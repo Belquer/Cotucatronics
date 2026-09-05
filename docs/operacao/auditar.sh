@@ -1,5 +1,5 @@
 #!/bin/bash
-# auditar v1.2.0 — varredura mecanica de inconsistencia na documentacao.
+# auditar v1.3.0 — varredura mecanica de inconsistencia na documentacao.
 #
 # So reporta o que consegue PROVAR. As classes de julgamento (declaracao
 # falsa, gap, numero morto que passa por actual) nao sao detectaveis por
@@ -10,7 +10,7 @@
 # USO:  ./auditar.sh            varredura geral
 #       ./auditar.sh <termo>    + inventario de um termo nos tres destinos
 set -uo pipefail
-echo "auditar v1.2.0"
+echo "auditar v1.3.0"
 
 cd "$(dirname "$0")/../.." || exit 1
 RAIZ=$(pwd)
@@ -39,6 +39,12 @@ echo "== 2+3. ISENCOES E LISTA DE APOSENTADOS (criterio do check_docs) =="
 # ficheiro inteiro. Passou para o coerencia.py, que usa o criterio certo.
 if [ -f docs/operacao/coerencia.py ]; then
   python3 docs/operacao/coerencia.py | tail -n +2 | sed 's/^/  /'
+fi
+
+echo
+echo "== 3c. DERIVADOS: o rotulo \"gerado\" e verdade? =="
+if [ -f docs/operacao/derivados.py ]; then
+  python3 docs/operacao/derivados.py | tail -n +2 | sed 's/^/  /'
 fi
 
 echo

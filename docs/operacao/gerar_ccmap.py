@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_ccmap v0.10.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
+"""gerar_ccmap v0.11.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
 
 Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
 se dar por novo um ficheiro que ja tinha historia.
@@ -25,7 +25,7 @@ from datetime import datetime
 # Ate 04/09 a docstring dizia 0.9.0 e a tabela emitida dizia 0.7.0:
 # duas afirmacoes sobre a mesma coisa no mesmo ficheiro, e a que o
 # leitor ve era a velha.
-VERSAO = "0.10.0"
+VERSAO = "0.11.0"
 import sys
 
 
@@ -344,7 +344,17 @@ AQUI = pathlib.Path(__file__).resolve().parent
 md   = AQUI / "CCMAP.md"
 t    = md.read_text(encoding="utf-8").split("\n")
 i = next(k for k, x in enumerate(t) if "gerado por gerar_ccmap" in x)
-j = next(k for k, x in enumerate(t) if "vinculos em" in x)
+# ⚠️ A SENTINELA DE FIM PROCURA-SE DEPOIS DO INICIO, e a razao custou o
+# ficheiro. O carimbo — que nasceu DEPOIS desta funcao — escreve "N vinculos
+# em M numeros de CC" no cabecalho, LINHA 6. O `next()` sem limite achava
+# essa, que esta ANTES do `i`, e `t[:i] + tabela + t[j+1:]` re-anexava o
+# corpo inteiro. Cada corrida duplicava a tabela, em silencio, num ficheiro
+# gerado que ninguem le ate ao fim. Estavam la TRES copias, duas delas com
+# numeros velhos.
+#
+# Texto novo que colide com uma sentinela existente e a familia de sempre:
+# a sentinela supunha ser unica, e deixou de ser sem ninguem lhe tocar.
+j = next(k for k, x in enumerate(t) if k > i and "vinculos em" in x)
 t = t[:i] + tabela.split("\n") + t[j + 1:]
 
 mv = re.search(r'manifest\.h[^\n]*?v(\d+\.\d+\.\d+)', src)
