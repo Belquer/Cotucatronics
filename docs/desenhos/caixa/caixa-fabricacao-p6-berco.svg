@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" font-family="Helvetica, Arial, sans-serif">
-<rect width="1000" height="560" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="620" viewBox="0 0 1100 620" font-family="Helvetica, Arial, sans-serif">
+<rect width="1100" height="620" fill="#fff"/>
 <style>
  .box{fill:#fafafa;stroke:#111;stroke-width:1.8}
  .h{fill:#fdeceb;stroke:#b8322c;stroke-width:1.4}
@@ -17,51 +17,83 @@
 </style>
 <text class="ti" x="28" y="30" text-anchor="start">Página 6 — BERÇO DO POWERBANK (opcional) · na face de TRÁS</text>
 <text class="ts" x="28" y="48" text-anchor="start">Rebaixo em acrílico 6 mm, à medida de UM modelo. Powerbank de referência: a definir (típico 100 × 60 × 25). O berço ocupa x 0..110 da face de trás; os conectores movem-se para a direita.</text>
-<rect class="box" x="60" y="198.0" width="520.0" height="182.0"/>
-<text class="hd" x="60" y="190.0" text-anchor="start">TRÁS com berço — datum canto esquerdo-baixo</text>
-<path class="d" d="M60 396 L580.0 396 M60 392 L60 400 M580.0 392 L580.0 400"/>
-<text class="dt" x="320.0" y="410" text-anchor="middle">200</text>
-<path class="d" d="M592.0 198.0 L592.0 380 M588.0 198.0 L596.0 198.0 M588.0 380 L596.0 380"/>
-<text class="dt" x="598.0" y="292.0" text-anchor="start">70</text>
-<rect class="z" x="70.4" y="208.4" width="275.6" height="161.2"/>
-<text class="tz" x="208.2" y="220.4" text-anchor="middle">BERÇO 106 × 62</text>
-<text class="ts" x="208.2" y="230.4" text-anchor="middle">powerbank deitado, cabo curto ao decoy</text>
-<rect class="h" x="122.4" y="294.2" width="31.2" height="15.6"/>
-<text class="t" x="138.0" y="324.8" text-anchor="middle">USB-C 12×6</text>
-<text class="ts" x="138.0" y="334.8" text-anchor="middle">centro (30, 30)</text>
-<circle class="h" cx="80.8" cy="359.2" r="4.16"/>
-<circle class="h" cx="335.6" cy="359.2" r="4.16"/>
-<circle class="h" cx="80.8" cy="218.8" r="4.16"/>
-<circle class="h" cx="335.6" cy="218.8" r="4.16"/>
-<text class="ts" x="620" y="340" text-anchor="start">Berço: 4× ø3,2 em (8 | 106, 8 | 62). USB-C dentro do berço em (30, 30).</text>
-<circle class="h" cx="382.4" cy="281.2" r="12.35"/>
-<path class="hc" d="M366.04999999999995 281.2 L398.75 281.2 M382.4 264.84999999999997 L382.4 297.55"/>
-<text class="t" x="382.4" y="308.55" text-anchor="middle">linha L ø9.5</text>
-<text class="ts" x="382.4" y="318.55" text-anchor="middle">(124, 38)</text>
-<circle class="h" cx="444.8" cy="281.2" r="12.35"/>
-<path class="hc" d="M428.45 281.2 L461.15000000000003 281.2 M444.8 264.84999999999997 L444.8 297.55"/>
-<text class="t" x="444.8" y="327.55" text-anchor="middle">linha R ø9.5</text>
-<text class="ts" x="444.8" y="337.55" text-anchor="middle">(148, 38)</text>
-<circle class="h" cx="507.2" cy="281.2" r="7.8"/>
-<path class="hc" d="M495.4 281.2 L519.0 281.2 M507.2 269.4 L507.2 293.0"/>
-<text class="t" x="507.2" y="304.0" text-anchor="middle">DPDT L ø6</text>
-<text class="ts" x="507.2" y="314.0" text-anchor="middle">(172, 38)</text>
-<circle class="h" cx="554.0" cy="281.2" r="7.8"/>
-<path class="hc" d="M542.2 281.2 L565.8 281.2 M554.0 269.4 L554.0 293.0"/>
-<text class="t" x="554.0" y="323.0" text-anchor="middle">DPDT R ø6</text>
-<text class="ts" x="554.0" y="333.0" text-anchor="middle">(190, 38)</text>
-<text class="warn" x="620" y="354" text-anchor="start">Furos de linha e DPDT: confirmar diâmetros nas peças.</text>
-<text class="hd" x="620" y="120" text-anchor="start">Como funciona</text>
-<text class="ts" x="620" y="140" text-anchor="start">· Rebaixo de 6 mm com abas laterais de 8 mm: o powerbank entra por cima e</text>
-<text class="ts" x="620" y="154" text-anchor="start">  fica preso por uma tira elástica ou mola de chapa.</text>
-<text class="ts" x="620" y="168" text-anchor="start">· O display do powerbank fica visível. O calor fica fora da caixa.</text>
-<text class="ts" x="620" y="182" text-anchor="start">· Troca em 5 s, sem abrir nada.</text>
-<text class="hd" x="620" y="202" text-anchor="start">O preço</text>
-<text class="ts" x="620" y="222" text-anchor="start">· O berço é de UM modelo. Escrever no brief: 'powerbank de referência X,</text>
-<text class="ts" x="620" y="236" text-anchor="start">  A × B × C mm'. Se sair de linha, redesenha-se o berço, não o instrumento.</text>
-<text class="ts" x="620" y="250" text-anchor="start">· Os conectores da face de trás mudam para a direita (cotas acima).</text>
-<text class="ts" x="620" y="264" text-anchor="start">· DPDT a 16 mm entre centros: porcas de ø12 ainda cabem.</text>
-<text class="hd" x="620" y="284" text-anchor="start">Alternativa</text>
-<text class="ts" x="620" y="304" text-anchor="start">Baía interna ao longo da parede de trás: a caixa cresce 30 em profundidade,</text>
-<text class="ts" x="620" y="318" text-anchor="start">ganha uma porta, o powerbank some — e o display e o calor ficam dentro.</text>
+<rect class="box" x="150" y="178.0" width="520.0" height="182.0"/>
+<text class="hd" x="150" y="170.0" text-anchor="start">TRÁS com berço — datum canto esquerdo-baixo</text>
+<path class="d" d="M150 394 L670.0 394"/>
+<text class="dt" x="150" y="406" text-anchor="middle">0</text>
+<path class="d" d="M160.4 360 L160.4 398" stroke-dasharray="2 2"/>
+<text class="dt" x="160.4" y="406" text-anchor="middle">4</text>
+<path class="d" d="M170.8 360 L170.8 409" stroke-dasharray="2 2"/>
+<text class="dt" x="170.8" y="417" text-anchor="middle">8</text>
+<path class="d" d="M228.0 360 L228.0 420" stroke-dasharray="2 2"/>
+<text class="dt" x="228.0" y="428" text-anchor="middle">30</text>
+<path class="d" d="M425.6 360 L425.6 398" stroke-dasharray="2 2"/>
+<text class="dt" x="425.6" y="406" text-anchor="middle">106</text>
+<path class="d" d="M436.0 360 L436.0 409" stroke-dasharray="2 2"/>
+<text class="dt" x="436.0" y="417" text-anchor="middle">110</text>
+<path class="d" d="M472.4 360 L472.4 420" stroke-dasharray="2 2"/>
+<text class="dt" x="472.4" y="428" text-anchor="middle">124</text>
+<path class="d" d="M534.8 360 L534.8 398" stroke-dasharray="2 2"/>
+<text class="dt" x="534.8" y="406" text-anchor="middle">148</text>
+<path class="d" d="M597.2 360 L597.2 409" stroke-dasharray="2 2"/>
+<text class="dt" x="597.2" y="417" text-anchor="middle">172</text>
+<path class="d" d="M644.0 360 L644.0 420" stroke-dasharray="2 2"/>
+<text class="dt" x="644.0" y="428" text-anchor="middle">190</text>
+<text class="dt" x="670.0" y="441" text-anchor="middle">200</text>
+<path class="d" d="M120 360 L120 178.0"/>
+<text class="dt" x="116" y="363" text-anchor="end">0</text>
+<path class="d" d="M150 349.6 L116 349.6" stroke-dasharray="2 2"/>
+<text class="dt" x="114" y="352.6" text-anchor="end">4</text>
+<path class="d" d="M150 339.2 L86 339.2" stroke-dasharray="2 2"/>
+<text class="dt" x="84" y="342.2" text-anchor="end">8</text>
+<path class="d" d="M150 282.0 L116 282.0" stroke-dasharray="2 2"/>
+<text class="dt" x="114" y="285.0" text-anchor="end">30</text>
+<path class="d" d="M150 261.2 L86 261.2" stroke-dasharray="2 2"/>
+<text class="dt" x="84" y="264.2" text-anchor="end">38</text>
+<path class="d" d="M150 198.8 L116 198.8" stroke-dasharray="2 2"/>
+<text class="dt" x="114" y="201.8" text-anchor="end">62</text>
+<path class="d" d="M150 188.4 L86 188.4" stroke-dasharray="2 2"/>
+<text class="dt" x="84" y="191.4" text-anchor="end">66</text>
+<text class="dt" x="114" y="181.0" text-anchor="end">70</text>
+<rect class="z" x="160.4" y="188.4" width="275.6" height="161.2"/>
+<text class="tz" x="298.2" y="200.4" text-anchor="middle">BERÇO 106 × 62</text>
+<text class="ts" x="298.2" y="210.4" text-anchor="middle">powerbank deitado, cabo curto ao decoy</text>
+<rect class="h" x="212.4" y="274.2" width="31.2" height="15.6"/>
+<text class="t" x="228.0" y="304.8" text-anchor="middle">USB-C 12×6</text>
+<text class="ts" x="228.0" y="314.8" text-anchor="middle">centro (30, 30)</text>
+<circle class="h" cx="170.8" cy="339.2" r="4.16"/>
+<circle class="h" cx="425.6" cy="339.2" r="4.16"/>
+<circle class="h" cx="170.8" cy="198.8" r="4.16"/>
+<circle class="h" cx="425.6" cy="198.8" r="4.16"/>
+<text class="ts" x="720" y="340" text-anchor="start">Berço: 4× ø3,2 em (8 | 106, 8 | 62). USB-C dentro do berço em (30, 30).</text>
+<circle class="h" cx="472.4" cy="261.2" r="12.35"/>
+<path class="hc" d="M456.04999999999995 261.2 L488.75 261.2 M472.4 244.85 L472.4 277.55"/>
+<text class="t" x="472.4" y="288.55" text-anchor="middle">linha L ø9.5</text>
+<text class="ts" x="472.4" y="298.55" text-anchor="middle">(124, 38)</text>
+<circle class="h" cx="534.8" cy="261.2" r="12.35"/>
+<path class="hc" d="M518.4499999999999 261.2 L551.15 261.2 M534.8 244.85 L534.8 277.55"/>
+<text class="t" x="534.8" y="307.55" text-anchor="middle">linha R ø9.5</text>
+<text class="ts" x="534.8" y="317.55" text-anchor="middle">(148, 38)</text>
+<circle class="h" cx="597.2" cy="261.2" r="7.8"/>
+<path class="hc" d="M585.4000000000001 261.2 L609.0 261.2 M597.2 249.39999999999998 L597.2 273.0"/>
+<text class="t" x="597.2" y="284.0" text-anchor="middle">DPDT L ø6</text>
+<text class="ts" x="597.2" y="294.0" text-anchor="middle">(172, 38)</text>
+<circle class="h" cx="644.0" cy="261.2" r="7.8"/>
+<path class="hc" d="M632.2 261.2 L655.8 261.2 M644.0 249.39999999999998 L644.0 273.0"/>
+<text class="t" x="644.0" y="303.0" text-anchor="middle">DPDT R ø6</text>
+<text class="ts" x="644.0" y="313.0" text-anchor="middle">(190, 38)</text>
+<text class="warn" x="720" y="354" text-anchor="start">Furos de linha e DPDT: confirmar diâmetros nas peças.</text>
+<text class="hd" x="720" y="120" text-anchor="start">Como funciona</text>
+<text class="ts" x="720" y="140" text-anchor="start">· Rebaixo de 6 mm com abas laterais de 8 mm: o powerbank entra por cima e</text>
+<text class="ts" x="720" y="154" text-anchor="start">  fica preso por uma tira elástica ou mola de chapa.</text>
+<text class="ts" x="720" y="168" text-anchor="start">· O display do powerbank fica visível. O calor fica fora da caixa.</text>
+<text class="ts" x="720" y="182" text-anchor="start">· Troca em 5 s, sem abrir nada.</text>
+<text class="hd" x="720" y="202" text-anchor="start">O preço</text>
+<text class="ts" x="720" y="222" text-anchor="start">· O berço é de UM modelo. Escrever no brief: 'powerbank de referência X,</text>
+<text class="ts" x="720" y="236" text-anchor="start">  A × B × C mm'. Se sair de linha, redesenha-se o berço, não o instrumento.</text>
+<text class="ts" x="720" y="250" text-anchor="start">· Os conectores da face de trás mudam para a direita (cotas acima).</text>
+<text class="ts" x="720" y="264" text-anchor="start">· DPDT a 16 mm entre centros: porcas de ø12 ainda cabem.</text>
+<text class="hd" x="720" y="284" text-anchor="start">Alternativa</text>
+<text class="ts" x="720" y="304" text-anchor="start">Baía interna ao longo da parede de trás: a caixa cresce 30 em profundidade,</text>
+<text class="ts" x="720" y="318" text-anchor="start">ganha uma porta, o powerbank some — e o display e o calor ficam dentro.</text>
 </svg>

@@ -34,8 +34,8 @@ não têm vida própria.**
 
 ### `caixa/` — **gerados**, menos a página 1
 
-Seis páginas do desenho de fabricação da caixa, por `gen_caixa_paginas.py`
-(v0.2.0), que corre daqui:
+Seis páginas do desenho de fabricação da caixa, por dois geradores que
+correm daqui:
 
 ```bash
 python3 docs/desenhos/caixa/gen_caixa_paginas.py
@@ -45,10 +45,14 @@ python3 docs/desenhos/caixa/gen_caixa_paginas.py
 no `.py`, nunca no SVG.** Um SVG editado à mão diverge do gerador na primeira
 regeneração, e aí ninguém sabe qual manda.
 
-⚠️ **A página 1 (`caixa-fabricacao.svg`) NÃO é escrita por este gerador** —
-ele só emite as p2 a p6. Ela não tem fonte neste repo, e por isso é a única
-da pasta que pode divergir sem que nada acuse. Fica assinalada até ganhar
-gerador ou morrer.
+**A página 1** (`caixa-fabricacao.svg`) tem gerador próprio, o `gen_caixa.py`
+— chegou a 05/09 e fechou o único buraco que esta pasta tinha. **Agora todos
+os desenhos daqui têm fonte**, e todos estão sob o `tools/desenhos.py`.
+
+```bash
+python3 docs/desenhos/caixa/gen_caixa.py           # página 1
+python3 docs/desenhos/caixa/gen_caixa_paginas.py   # páginas 2 a 6
+```
 
 Ao contrário dos esquemáticos, estas **passam o `svg_colisoes`** — são
 `<text>` a sério — e o próprio gerador corre o portão a cada página, com

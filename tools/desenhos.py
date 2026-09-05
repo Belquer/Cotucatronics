@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""desenhos v0.1.0 — regenera os desenhos tecnicos e denuncia os velhos.
+"""desenhos v0.2.0 — regenera os desenhos tecnicos e denuncia os velhos.
 
     python3 tools/desenhos.py            # confere; sai != 0 se algum esta velho
     python3 tools/desenhos.py --gerar    # regenera e confere
@@ -14,7 +14,7 @@ DESENHO, o desenho esta velho.** Nao se pergunta se mudou o que importa.
 """
 import os, subprocess, sys, pathlib
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 RAIZ = pathlib.Path(__file__).resolve().parents[1]
 CLI = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 
@@ -23,15 +23,16 @@ PARES = [
     ("docs/desenhos/esquematicos/cotuca_energia.svg", "kicad/cotuca_cerebro/cotuca_energia.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_preamp.svg",  "kicad/cotuca_cerebro/cotuca_preamp.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_soquete.svg", "kicad/cotuca_cerebro/cotuca_soquete.kicad_sch"),
-    # a caixa: cinco paginas de um gerador proprio
+    # a caixa: pagina 1 tem gerador proprio desde 05/09; as p2..p6 outro
+    ("docs/desenhos/caixa/caixa-fabricacao.svg",             "docs/desenhos/caixa/gen_caixa.py"),
     ("docs/desenhos/caixa/caixa-fabricacao-p2-tampa.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
     ("docs/desenhos/caixa/caixa-fabricacao-p3-fundo.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
     ("docs/desenhos/caixa/caixa-fabricacao-p4-interior.svg", "docs/desenhos/caixa/gen_caixa_paginas.py"),
     ("docs/desenhos/caixa/caixa-fabricacao-p5-juntas.svg",   "docs/desenhos/caixa/gen_caixa_paginas.py"),
     ("docs/desenhos/caixa/caixa-fabricacao-p6-berco.svg",    "docs/desenhos/caixa/gen_caixa_paginas.py"),
 ]
-# ⚠️ `caixa-fabricacao.svg` (pagina 1) NAO esta aqui: nao ha gerador dela
-# neste repo. E a unica da pasta que pode divergir sem que nada acuse.
+# ⚠️ Ate 05/09 a pagina 1 nao estava aqui, por nao ter gerador no repo. Ganhou
+# um (`gen_caixa.py`) e entrou. Agora TODOS os desenhos desta pasta tem fonte.
 
 
 def gerar(fonte, destino):
@@ -59,7 +60,7 @@ def main():
             print("  ? fonte ausente: %s" % fonte); velhos += 1; continue
         if ger and fonte.endswith(".kicad_sch"):
             gerar(fonte, destino)
-        elif ger and fonte.endswith("gen_caixa_paginas.py"):
+        elif ger and fonte.endswith(".py"):
             subprocess.run([sys.executable, str(RAIZ / fonte)], capture_output=True)
         if not fd.exists():
             print("  ✗ FALTA      %s" % destino); velhos += 1; continue

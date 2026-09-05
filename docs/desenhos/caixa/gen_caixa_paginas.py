@@ -1,23 +1,15 @@
 #!/usr/bin/env python3
-"""gen_caixa_paginas v0.2.0 — as paginas 2 a 6 do desenho de fabricacao.
+# Paginas 2-5 do desenho de fabricacao. Cada pagina e um SVG. Cotas em mm.
+import subprocess, sys
 
-Cada pagina e um SVG. Cotas em mm. Corre-se daqui:
-
-    python3 docs/desenhos/caixa/gen_caixa_paginas.py
-
-⚠️ O GERADOR E A FONTE. As cotas marcadas "confirmar" mudam depois de medir
-as pecas — e mudam AQUI, nunca no SVG. Um SVG editado a mao diverge do `.py`
-na primeira regeneracao, e ninguem sabe qual manda.
-
-⚠️ CAMINHOS RELATIVOS AO PROPRIO FICHEIRO. A v0.1.0 tinha
-`/mnt/user-data/outputs/` e `/home/claude/svg_colisoes.py` gravados: rebentava
-com FileNotFoundError na primeira tentativa noutro computador — que e a §8 da
-skill `kicad`, e foi exactamente o que aconteceu ao chegar a este repo.
-"""
-import subprocess, sys, pathlib
-
-VERSAO = "0.2.0"
-AQUI = pathlib.Path(__file__).resolve().parent
+# ⚠️ CAMINHOS RELATIVOS AO PROPRIO FICHEIRO, e o portao e o do repo.
+# A versao que chegou tinha `/mnt/user-data/outputs/` e um `svg_colisoes.py`
+# LOCAL de 7344 bytes — a v0.1.0, de antes de tres consertos: ela rebentava
+# em `width="100%"`, devolvia rc=1 tanto para colisao como para crash, e
+# aprovava com zero textos. Um gerador guardado por um portao cego passa
+# tudo. Ver .claude/skills/design-review/SKILL.md §1.
+import pathlib as _pl
+AQUI = _pl.Path(__file__).resolve().parent
 RAIZ = AQUI.parents[2]
 PORTAO = RAIZ / "tools" / "svg_colisoes.py"
 S = 2.6
@@ -57,8 +49,6 @@ class Page:
     def face(self, ox, oy, w, h, title):
         self.o.append(f'<rect class="box" x="{ox}" y="{oy-mm(h)}" width="{mm(w)}" height="{mm(h)}"/>')
         self.text(ox, oy-mm(h)-8, title, "hd")
-        self.hdim(ox, ox+mm(w), oy+16, f"{w}", above=False)
-        self.vdim(ox+mm(w)+12, oy-mm(h), oy, f"{h}")
     def hole(self, ox, oy, x, y, d, label, note="", lab_dy=15):
         cx, cy = ox+mm(x), oy-mm(y); r = mm(d/2)
         self.o.append(f'<circle class="h" cx="{cx}" cy="{cy}" r="{r}"/>')
@@ -76,6 +66,24 @@ class Page:
         self.o.append(f'<rect class="z" x="{ox+mm(x0)}" y="{oy-mm(y1)}" width="{mm(x1-x0)}" height="{mm(y1-y0)}"/>')
         self.text(ox+mm((x0+x1)/2), oy-mm(y1)+12, label, "tz", "middle")
         if alt: self.text(ox+mm((x0+x1)/2), oy-mm(y1)+22, alt, "ts", "middle")
+    def ordinate(self, ox, oy, w, h, feats, xrows=2, yrows=2):
+        xs = sorted(set(round(f[0], 2) for f in feats)); ys = sorted(set(round(f[1], 2) for f in feats))
+        base = oy + 34
+        self.o.append(f'<path class="d" d="M{ox} {base} L{ox+mm(w)} {base}"/>')
+        self.text(ox, base + 12, "0", "dt", "middle")
+        for i, x in enumerate(xs):
+            px = ox + mm(x); row = i % xrows
+            self.o.append(f'<path class="d" d="M{px} {oy} L{px} {base + 4 + row*11}" stroke-dasharray="2 2"/>')
+            self.text(px, base + 12 + row*11, f"{x:g}", "dt", "middle")
+        self.text(ox + mm(w), base + 12 + xrows*11 + 2, f"{w:g}", "dt", "middle")
+        left = ox - 30
+        self.o.append(f'<path class="d" d="M{left} {oy} L{left} {oy-mm(h)}"/>')
+        self.text(left - 4, oy + 3, "0", "dt", "end")
+        for i, y in enumerate(ys):
+            py = oy - mm(y); row = i % yrows
+            self.o.append(f'<path class="d" d="M{ox} {py} L{left - 4 - row*30} {py}" stroke-dasharray="2 2"/>')
+            self.text(left - 6 - row*30, py + 3, f"{y:g}", "dt", "end")
+        self.text(left - 6, oy - mm(h) + 3, f"{h:g}", "dt", "end")
     def save(self, fn):
         self.o.append('</svg>'); open(fn, 'w').write("\n".join(self.o))
         r = subprocess.run([sys.executable, str(PORTAO), fn], capture_output=True, text=True)
@@ -85,43 +93,40 @@ class Page:
 OUT = str(AQUI) + "/"
 
 # ======================= PAGINA 2: TAMPA =======================
-p = Page(1000, 640, "Página 2 — TAMPA (acrílico cast 8 mm) · 200 × 123,7 no plano",
+p = Page(1100, 700, "Página 2 — TAMPA (acrílico cast 8 mm) · 200 × 123,7 no plano",
          "Datum = canto inferior-esquerdo da tampa vista de cima (frente em baixo). y ao longo da inclinação. Tampa removível: assenta nas paredes e aparafusa a blocos internos.")
-ox, oy = 60, 420
+ox, oy = 150, 400
 p.face(ox, oy, 200, 123.7, "vista de cima")
 p.hole(ox, oy, 50, 35, 30, "freeze A"); p.hole(ox, oy, 150, 35, 30, "freeze B")
 p.rect(ox, oy, 45, 92, 55, 27.5, "janela OLED", "só se a tampa for opaca; em fumado dispensa-se")
 for (x, y) in [(17.25, 75.25), (72.75, 75.25), (17.25, 108.75), (72.75, 108.75)]:
     cx, cy = ox+mm(x), oy-mm(y)
     p.o.append(f'<circle class="hc" cx="{cx}" cy="{cy}" r="{mm(1.25)}"/>')
-p.text(620, 300, "OLED: 4× ø2,5 (M2.5) nos cantos do módulo,", "warn")
-p.text(620, 314, "55,5 × 33,5 entre centros — CONFIRMAR no módulo.", "warn")
+p.text(720, 300, "OLED: 4× ø2,5 (M2.5) nos cantos do módulo,", "warn")
+p.text(720, 314, "55,5 × 33,5 entre centros — CONFIRMAR no módulo.", "warn")
 p.hole(ox, oy, 105, 92, 7, "encoder", "ø7 ou 9 — confirmar")
 p.hole(ox, oy, 140, 92, 7, "pot L", "confirmar")
 p.hole(ox, oy, 175, 92, 7, "pot R", "confirmar")
 for (x, y) in [(10, 8), (100, 8), (190, 8), (10, 115.7), (100, 115.7), (190, 115.7)]:
     cx, cy = ox+mm(x), oy-mm(y)
     p.o.append(f'<circle class="h" cx="{cx}" cy="{cy}" r="{mm(1.7)}"/>')
-p.text(ox+mm(100), oy-mm(1.5)-2, "6× ø3,4 escareado — parafusos M3 da tampa, em (10 | 100 | 190, 8) e (10 | 100 | 190, 115,7)", "ts", "middle")
-p.hdim(ox+mm(10), ox+mm(100), oy+40, "90"); p.hdim(ox+mm(100), ox+mm(190), oy+40, "90")
-p.vdim(ox-22, oy-mm(115.7), oy-mm(8), "107,7", left=True)
-p.hdim(ox+mm(50), ox+mm(150), oy-mm(35)-mm(15)-8, "100 entre eixos")
-p.hdim(ox+mm(105), ox+mm(140), oy-mm(92)-mm(6), "35"); p.hdim(ox+mm(140), ox+mm(175), oy-mm(92)-mm(6), "35")
-p.text(620, 120, "Notas", "hd")
-p.text(620, 140, "· Furos de knobs a 92 mm da frente, no plano da tampa.", "ts")
-p.text(620, 154, "· Freeze a 35 mm da frente: o pé chega sem tocar nos knobs (26 mm livres).", "ts")
-p.text(620, 168, "· Escareado dos M3: 90°, ø6,5 na face — a cabeça fica rente.", "ts")
-p.text(620, 182, "· Bordas da tampa SEM dentes: assenta a topo nas paredes.", "ts")
-p.text(620, 196, "· Furos em acrílico: broca própria ou laser; nunca broca de metal a alta rotação.", "ts")
-p.text(620, 216, "Folgas medidas", "hd")
-p.text(620, 236, "encoder ø18 → pot L ø13: 19,5 mm · pot L → pot R: 22 · pot R → borda: 18,5", "ts")
-p.text(620, 250, "encoder → janela OLED: 23,5 · knobs → freeze: 33", "ts")
+p.text(ox+mm(100), oy-mm(1.5)-2, "6× ø3,4 escareado — parafusos M3 da tampa", "ts", "middle")
+p.ordinate(ox, oy, 200, 123.7, [(10,8),(100,8),(190,8),(10,115.7),(17.25,75.25),(72.75,75.25),(17.25,108.75),(50,35),(150,35),(45,92),(105,92),(140,92),(175,92)], xrows=3, yrows=3)
+p.text(720, 120, "Notas", "hd")
+p.text(720, 140, "· Furos de knobs a 92 mm da frente, no plano da tampa.", "ts")
+p.text(720, 154, "· Freeze a 35 mm da frente: o pé chega sem tocar nos knobs (26 mm livres).", "ts")
+p.text(720, 168, "· Escareado dos M3: 90°, ø6,5 na face — a cabeça fica rente.", "ts")
+p.text(720, 182, "· Bordas da tampa SEM dentes: assenta a topo nas paredes.", "ts")
+p.text(720, 196, "· Furos em acrílico: broca própria ou laser; nunca broca de metal a alta rotação.", "ts")
+p.text(720, 216, "Folgas medidas", "hd")
+p.text(720, 236, "encoder ø18 → pot L ø13: 19,5 mm · pot L → pot R: 22 · pot R → borda: 18,5", "ts")
+p.text(720, 250, "encoder → janela OLED: 23,5 · knobs → freeze: 33", "ts")
 ok2 = p.save(OUT + "caixa-fabricacao-p2-tampa.svg")
 
 # ======================= PAGINA 3: FUNDO =======================
-p = Page(1000, 700, "Página 3 — FUNDO (acrílico cast 6 mm) · 200 × 120",
+p = Page(1100, 760, "Página 3 — FUNDO (acrílico cast 6 mm) · 200 × 120",
          "Datum = canto esquerdo-frente visto de CIMA (de dentro da caixa). Paredes assentam por cima; dentes das paredes entram em ranhuras no fundo.")
-ox, oy = 60, 460
+ox, oy = 150, 440
 p.face(ox, oy, 200, 120, "vista de cima, de dentro")
 p.o.append(f'<rect class="hc" x="{ox+mm(6)}" y="{oy-mm(114)}" width="{mm(188)}" height="{mm(108)}" stroke-dasharray="6 3"/>')
 p.text(ox+mm(100), oy-mm(117), "interior 188 × 108 (linha das paredes)", "ts", "middle")
@@ -134,58 +139,59 @@ p.zone(ox, oy, 148, 44, 190, 96, "AMP", "")
 for i in range(5):
     y = 50 + i*8
     p.o.append(f'<rect class="h" x="{ox+mm(151)}" y="{oy-mm(y+1.5)}" width="{mm(36)}" height="{mm(3)}"/>')
-p.text(620, 300, "Ventilação sob o amp: 5 rasgos 36 × 3, passo 8, de y=50 a 82.", "ts")
+p.text(720, 300, "Ventilação sob o amp: 5 rasgos 36 × 3, passo 8, de y=50 a 82.", "ts")
 for (x, y) in [(12, 12), (188, 12), (12, 108), (188, 108)]:
     cx, cy = ox+mm(x), oy-mm(y)
     p.o.append(f'<circle class="hc" cx="{cx}" cy="{cy}" r="{mm(7.5)}" stroke-dasharray="3 2"/>')
-p.text(620, 314, "Pés: 4× ø15 adesivos a 12 mm dos cantos (tracejado). Sem furos.", "ts")
+p.text(720, 314, "Pés: 4× ø15 adesivos a 12 mm dos cantos (tracejado). Sem furos.", "ts")
 p.zone(ox, oy, 150, 100, 176, 114, "DECOY", "")
-p.hdim(ox+mm(25.5), ox+mm(138.5), oy+40, "113"); p.vdim(ox-22, oy-mm(106.5), oy-mm(13.5), "93", left=True)
-p.text(620, 120, "Ranhuras dos dentes das paredes", "hd")
-p.text(620, 140, "Frente e trás: 6 ranhuras 10 × 6 cada, passo 30, a 3 mm da borda.", "ts")
-p.text(620, 154, "Esquerda e direita: 4 ranhuras 10 × 6, passo 30, a 3 mm da borda.", "ts")
-p.text(620, 168, "Geometria exata dos dentes: página 5 (gerada do mesmo ficheiro, kerf 0,2).", "ts")
-p.text(620, 188, "Alturas por zona", "hd")
-p.text(620, 208, "sob os freeze (frente): ≤ 8 mm livres depois de montado", "ts")
-p.text(620, 222, "carrier + espaçador 8 + Daisy no soquete 20 = 30 → fica na metade de trás", "ts")
-p.text(620, 236, "amp com dissipador ~25 → zona alta, direita", "ts")
-p.text(620, 250, "step-down e ESP32: encaixam no carrier por header — sem furos no fundo", "ts")
+p.ordinate(ox, oy, 200, 120, [(25.5,13.5),(138.5,13.5),(25.5,106.5),(138.5,106.5),(151,50),(151,82)], xrows=2, yrows=2)
+p.text(720, 120, "Ranhuras dos dentes das paredes", "hd")
+p.text(720, 140, "Frente e trás: 6 ranhuras 10 × 6 cada, passo 30, a 3 mm da borda.", "ts")
+p.text(720, 154, "Esquerda e direita: 4 ranhuras 10 × 6, passo 30, a 3 mm da borda.", "ts")
+p.text(720, 168, "Geometria exata dos dentes: página 5 (gerada do mesmo ficheiro, kerf 0,2).", "ts")
+p.text(720, 188, "Alturas por zona", "hd")
+p.text(720, 208, "sob os freeze (frente): ≤ 8 mm livres depois de montado", "ts")
+p.text(720, 222, "carrier + espaçador 8 + Daisy no soquete 20 = 30 → fica na metade de trás", "ts")
+p.text(720, 236, "amp com dissipador ~25 → zona alta, direita", "ts")
+p.text(720, 250, "step-down e ESP32: encaixam no carrier por header — sem furos no fundo", "ts")
 ok3 = p.save(OUT + "caixa-fabricacao-p3-fundo.svg")
 
 # ======================= PAGINA 4: INTERIOR E CABOS =======================
-p = Page(1000, 640, "Página 4 — INTERIOR: blocos da tampa, percursos de cabo, alturas",
+p = Page(1100, 700, "Página 4 — INTERIOR: blocos da tampa, percursos de cabo, alturas",
          "Vista de cima com a tampa retirada. Blocos de acrílico 12 × 12 × 25 colados nos cantos e a meio das paredes longas, com inserto M3 — recebem os 6 parafusos da tampa.")
-ox, oy = 60, 440
+ox, oy = 150, 420
 p.face(ox, oy, 200, 120, "planta interior")
+p.ordinate(ox, oy, 200, 120, [(6,6),(18,18),(94,6),(106,18),(182,6),(194,18),(8,20),(60,100),(70,20),(142,100),(148,44),(190,96)], xrows=3, yrows=3)
 p.o.append(f'<rect class="hc" x="{ox+mm(6)}" y="{oy-mm(114)}" width="{mm(188)}" height="{mm(108)}" stroke-dasharray="6 3"/>')
 for (bx, by) in [(6, 6), (182, 6), (6, 102), (182, 102), (94, 6), (94, 102)]:
     p.o.append(f'<rect class="tab" x="{ox+mm(bx)}" y="{oy-mm(by+12)}" width="{mm(12)}" height="{mm(12)}"/>')
-p.text(660, 338, "6 blocos 12×12×25 (quadrados brancos), inserto M3,", "ts")
-p.text(660, 352, "alinhados com os furos da tampa em x = 10 | 100 | 190.", "ts")
+p.text(760, 338, "6 blocos 12×12×25 (quadrados brancos), inserto M3,", "ts")
+p.text(760, 352, "alinhados com os furos da tampa em x = 10 | 100 | 190.", "ts")
 p.zone(ox, oy, 8, 20, 60, 100, "PRÉ-AMP", "ilha AGND · junto aos jacks")
 p.zone(ox, oy, 70, 20, 142, 100, "DAISY + PONTE", "zona alta")
 p.zone(ox, oy, 148, 44, 190, 96, "AMP", "dissipador para cima")
 # percursos de cabo
-p.o.append(f'<path class="d" d="M{ox-24} {oy-mm(35)} L{ox+mm(8)} {oy-mm(35)}" stroke-width="2"/>')
-p.o.append(f'<path class="d" d="M{ox-24} {oy-mm(85)} L{ox+mm(8)} {oy-mm(85)}" stroke-width="2"/>')
-p.text(ox-30, oy-mm(60), "piezos", "dt", "end")
+p.o.append(f'<path class="d" d="M{ox-12} {oy-mm(35)} L{ox+mm(8)} {oy-mm(35)}" stroke-width="2"/>')
+p.o.append(f'<path class="d" d="M{ox-12} {oy-mm(85)} L{ox+mm(8)} {oy-mm(85)}" stroke-width="2"/>')
+p.text(ox+mm(1), oy-mm(60)-8, "in", "dt")
 p.o.append(f'<path class="d" d="M{ox+mm(190)} {oy-mm(80)} L{ox+mm(200)+6} {oy-mm(80)}" stroke-width="2"/>')
 p.text(ox+mm(200)+14, oy-mm(80)-6, "exciters", "dt")
-p.text(660, 372, "Chicote do painel: sai do carrier pela borda de TRÁS", "ts")
-p.text(660, 386, "e sobe colado à parede até à tampa.", "ts")
-p.text(660, 120, "Regras de percurso", "hd")
-p.text(660, 140, "· Cabo dos piezos entra pela esquerda e vai direto ao pré-amp: < 60 mm.", "ts")
-p.text(660, 154, "· Cabo dos exciters sai do amp pela direita. Nunca cruza o pré-amp.", "ts")
-p.text(660, 168, "· IDC do painel (26 vias) corre pela parede de trás, longe da esquerda.", "ts")
-p.text(660, 182, "· Linha para a mesa: do DPDT (parede de trás) ao amp e aos jacks de trás.", "ts")
-p.text(660, 196, "· Malha do cabo do piezo: só do lado da placa.", "ts")
-p.text(660, 216, "Alturas úteis (interior)", "hd")
-p.text(660, 236, "frente (y=0): 40 − 6 fundo − 8 tampa = 26 mm", "ts")
-p.text(660, 250, "trás (y=120): 70 − 14 = 56 mm", "ts")
-p.text(660, 264, "a meio (y=60): 41 mm", "ts")
-p.text(660, 284, "Blocos da tampa", "hd")
-p.text(660, 304, "Colados com cimento de acrílico ANTES de furar o inserto.", "ts")
-p.text(660, 318, "Inserto M3 a quente ou roscado; nunca forçar — racha.", "ts")
+p.text(760, 372, "Chicote do painel: sai do carrier pela borda de TRÁS", "ts")
+p.text(760, 386, "e sobe colado à parede até à tampa.", "ts")
+p.text(760, 120, "Regras de percurso", "hd")
+p.text(760, 140, "· Cabo dos piezos entra pela esquerda e vai direto ao pré-amp: < 60 mm.", "ts")
+p.text(760, 154, "· Cabo dos exciters sai do amp pela direita. Nunca cruza o pré-amp.", "ts")
+p.text(760, 168, "· IDC do painel (26 vias) corre pela parede de trás, longe da esquerda.", "ts")
+p.text(760, 182, "· Linha para a mesa: do DPDT (parede de trás) ao amp e aos jacks de trás.", "ts")
+p.text(760, 196, "· Malha do cabo do piezo: só do lado da placa.", "ts")
+p.text(760, 216, "Alturas úteis (interior)", "hd")
+p.text(760, 236, "frente (y=0): 40 − 6 fundo − 8 tampa = 26 mm", "ts")
+p.text(760, 250, "trás (y=120): 70 − 14 = 56 mm", "ts")
+p.text(760, 264, "a meio (y=60): 41 mm", "ts")
+p.text(760, 284, "Blocos da tampa", "hd")
+p.text(760, 304, "Colados com cimento de acrílico ANTES de furar o inserto.", "ts")
+p.text(760, 318, "Inserto M3 a quente ou roscado; nunca forçar — racha.", "ts")
 ok4 = p.save(OUT + "caixa-fabricacao-p4-interior.svg")
 
 # ======================= PAGINA 5: JUNTAS, CORTE, FERRAGENS =======================
@@ -231,31 +237,32 @@ p.text(60, 620, "Ordem de fabrico: cortar UMA caixa → montar a base (sem tampa
 ok5 = p.save(OUT + "caixa-fabricacao-p5-juntas.svg")
 
 # ======================= PAGINA 6: BERCO DO POWERBANK =======================
-p = Page(1000, 560, "Página 6 — BERÇO DO POWERBANK (opcional) · na face de TRÁS",
+p = Page(1100, 620, "Página 6 — BERÇO DO POWERBANK (opcional) · na face de TRÁS",
          "Rebaixo em acrílico 6 mm, à medida de UM modelo. Powerbank de referência: a definir (típico 100 × 60 × 25). O berço ocupa x 0..110 da face de trás; os conectores movem-se para a direita.")
-ox, oy = 60, 380
+ox, oy = 150, 360
 p.face(ox, oy, 200, 70, "TRÁS com berço — datum canto esquerdo-baixo")
+p.ordinate(ox, oy, 200, 70, [(4,4),(110,66),(8,8),(106,62),(30,30),(124,38),(148,38),(172,38),(190,38)], xrows=3, yrows=2)
 p.zone(ox, oy, 4, 4, 110, 66, "BERÇO 106 × 62", "powerbank deitado, cabo curto ao decoy")
 p.rect(ox, oy, 30, 30, 12, 6, "USB-C", "")
 for (x, y) in [(8, 8), (106, 8), (8, 62), (106, 62)]:
     cx, cy = ox+mm(x), oy-mm(y)
     p.o.append(f'<circle class="h" cx="{cx}" cy="{cy}" r="{mm(1.6)}"/>')
-p.text(620, 340, "Berço: 4× ø3,2 em (8 | 106, 8 | 62). USB-C dentro do berço em (30, 30).", "ts")
+p.text(720, 340, "Berço: 4× ø3,2 em (8 | 106, 8 | 62). USB-C dentro do berço em (30, 30).", "ts")
 p.hole(ox, oy, 124, 38, 9.5, "linha L", "", lab_dy=15); p.hole(ox, oy, 148, 38, 9.5, "linha R", "", lab_dy=34)
 p.hole(ox, oy, 172, 38, 6, "DPDT L", "", lab_dy=15); p.hole(ox, oy, 190, 38, 6, "DPDT R", "", lab_dy=34)
-p.text(620, 354, "Furos de linha e DPDT: confirmar diâmetros nas peças.", "warn")
-p.text(620, 120, "Como funciona", "hd")
-p.text(620, 140, "· Rebaixo de 6 mm com abas laterais de 8 mm: o powerbank entra por cima e", "ts")
-p.text(620, 154, "  fica preso por uma tira elástica ou mola de chapa.", "ts")
-p.text(620, 168, "· O display do powerbank fica visível. O calor fica fora da caixa.", "ts")
-p.text(620, 182, "· Troca em 5 s, sem abrir nada.", "ts")
-p.text(620, 202, "O preço", "hd")
-p.text(620, 222, "· O berço é de UM modelo. Escrever no brief: 'powerbank de referência X,", "ts")
-p.text(620, 236, "  A × B × C mm'. Se sair de linha, redesenha-se o berço, não o instrumento.", "ts")
-p.text(620, 250, "· Os conectores da face de trás mudam para a direita (cotas acima).", "ts")
-p.text(620, 264, "· DPDT a 16 mm entre centros: porcas de ø12 ainda cabem.", "ts")
-p.text(620, 284, "Alternativa", "hd")
-p.text(620, 304, "Baía interna ao longo da parede de trás: a caixa cresce 30 em profundidade,", "ts")
-p.text(620, 318, "ganha uma porta, o powerbank some — e o display e o calor ficam dentro.", "ts")
+p.text(720, 354, "Furos de linha e DPDT: confirmar diâmetros nas peças.", "warn")
+p.text(720, 120, "Como funciona", "hd")
+p.text(720, 140, "· Rebaixo de 6 mm com abas laterais de 8 mm: o powerbank entra por cima e", "ts")
+p.text(720, 154, "  fica preso por uma tira elástica ou mola de chapa.", "ts")
+p.text(720, 168, "· O display do powerbank fica visível. O calor fica fora da caixa.", "ts")
+p.text(720, 182, "· Troca em 5 s, sem abrir nada.", "ts")
+p.text(720, 202, "O preço", "hd")
+p.text(720, 222, "· O berço é de UM modelo. Escrever no brief: 'powerbank de referência X,", "ts")
+p.text(720, 236, "  A × B × C mm'. Se sair de linha, redesenha-se o berço, não o instrumento.", "ts")
+p.text(720, 250, "· Os conectores da face de trás mudam para a direita (cotas acima).", "ts")
+p.text(720, 264, "· DPDT a 16 mm entre centros: porcas de ø12 ainda cabem.", "ts")
+p.text(720, 284, "Alternativa", "hd")
+p.text(720, 304, "Baía interna ao longo da parede de trás: a caixa cresce 30 em profundidade,", "ts")
+p.text(720, 318, "ganha uma porta, o powerbank some — e o display e o calor ficam dentro.", "ts")
 ok6 = p.save(OUT + "caixa-fabricacao-p6-berco.svg")
 print("TODAS LIMPAS" if all([ok2, ok3, ok4, ok5, ok6]) else "HÁ COLISÕES")

@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="640" viewBox="0 0 1000 640" font-family="Helvetica, Arial, sans-serif">
-<rect width="1000" height="640" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700" font-family="Helvetica, Arial, sans-serif">
+<rect width="1100" height="700" fill="#fff"/>
 <style>
  .box{fill:#fafafa;stroke:#111;stroke-width:1.8}
  .h{fill:#fdeceb;stroke:#b8322c;stroke-width:1.4}
@@ -17,48 +17,86 @@
 </style>
 <text class="ti" x="28" y="30" text-anchor="start">Página 4 — INTERIOR: blocos da tampa, percursos de cabo, alturas</text>
 <text class="ts" x="28" y="48" text-anchor="start">Vista de cima com a tampa retirada. Blocos de acrílico 12 × 12 × 25 colados nos cantos e a meio das paredes longas, com inserto M3 — recebem os 6 parafusos da tampa.</text>
-<rect class="box" x="60" y="128.0" width="520.0" height="312.0"/>
-<text class="hd" x="60" y="120.0" text-anchor="start">planta interior</text>
-<path class="d" d="M60 456 L580.0 456 M60 452 L60 460 M580.0 452 L580.0 460"/>
-<text class="dt" x="320.0" y="470" text-anchor="middle">200</text>
-<path class="d" d="M592.0 128.0 L592.0 440 M588.0 128.0 L596.0 128.0 M588.0 440 L596.0 440"/>
-<text class="dt" x="598.0" y="287.0" text-anchor="start">120</text>
-<rect class="hc" x="75.6" y="143.60000000000002" width="488.8" height="280.8" stroke-dasharray="6 3"/>
-<rect class="tab" x="75.6" y="393.2" width="31.2" height="31.2"/>
-<rect class="tab" x="533.2" y="393.2" width="31.2" height="31.2"/>
-<rect class="tab" x="75.6" y="143.60000000000002" width="31.2" height="31.2"/>
-<rect class="tab" x="533.2" y="143.60000000000002" width="31.2" height="31.2"/>
-<rect class="tab" x="304.4" y="393.2" width="31.2" height="31.2"/>
-<rect class="tab" x="304.4" y="143.60000000000002" width="31.2" height="31.2"/>
-<text class="ts" x="660" y="338" text-anchor="start">6 blocos 12×12×25 (quadrados brancos), inserto M3,</text>
-<text class="ts" x="660" y="352" text-anchor="start">alinhados com os furos da tampa em x = 10 | 100 | 190.</text>
-<rect class="z" x="80.8" y="180.0" width="135.2" height="208.0"/>
-<text class="tz" x="148.4" y="192.0" text-anchor="middle">PRÉ-AMP</text>
-<text class="ts" x="148.4" y="202.0" text-anchor="middle">ilha AGND · junto aos jacks</text>
-<rect class="z" x="242.0" y="180.0" width="187.2" height="208.0"/>
-<text class="tz" x="335.6" y="192.0" text-anchor="middle">DAISY + PONTE</text>
-<text class="ts" x="335.6" y="202.0" text-anchor="middle">zona alta</text>
-<rect class="z" x="444.8" y="190.4" width="109.2" height="135.2"/>
-<text class="tz" x="499.4" y="202.4" text-anchor="middle">AMP</text>
-<text class="ts" x="499.4" y="212.4" text-anchor="middle">dissipador para cima</text>
-<path class="d" d="M36 349.0 L80.8 349.0" stroke-width="2"/>
-<path class="d" d="M36 219.0 L80.8 219.0" stroke-width="2"/>
-<text class="dt" x="30" y="284.0" text-anchor="end">piezos</text>
-<path class="d" d="M554.0 232.0 L586.0 232.0" stroke-width="2"/>
-<text class="dt" x="594.0" y="226.0" text-anchor="start">exciters</text>
-<text class="ts" x="660" y="372" text-anchor="start">Chicote do painel: sai do carrier pela borda de TRÁS</text>
-<text class="ts" x="660" y="386" text-anchor="start">e sobe colado à parede até à tampa.</text>
-<text class="hd" x="660" y="120" text-anchor="start">Regras de percurso</text>
-<text class="ts" x="660" y="140" text-anchor="start">· Cabo dos piezos entra pela esquerda e vai direto ao pré-amp: &lt; 60 mm.</text>
-<text class="ts" x="660" y="154" text-anchor="start">· Cabo dos exciters sai do amp pela direita. Nunca cruza o pré-amp.</text>
-<text class="ts" x="660" y="168" text-anchor="start">· IDC do painel (26 vias) corre pela parede de trás, longe da esquerda.</text>
-<text class="ts" x="660" y="182" text-anchor="start">· Linha para a mesa: do DPDT (parede de trás) ao amp e aos jacks de trás.</text>
-<text class="ts" x="660" y="196" text-anchor="start">· Malha do cabo do piezo: só do lado da placa.</text>
-<text class="hd" x="660" y="216" text-anchor="start">Alturas úteis (interior)</text>
-<text class="ts" x="660" y="236" text-anchor="start">frente (y=0): 40 − 6 fundo − 8 tampa = 26 mm</text>
-<text class="ts" x="660" y="250" text-anchor="start">trás (y=120): 70 − 14 = 56 mm</text>
-<text class="ts" x="660" y="264" text-anchor="start">a meio (y=60): 41 mm</text>
-<text class="hd" x="660" y="284" text-anchor="start">Blocos da tampa</text>
-<text class="ts" x="660" y="304" text-anchor="start">Colados com cimento de acrílico ANTES de furar o inserto.</text>
-<text class="ts" x="660" y="318" text-anchor="start">Inserto M3 a quente ou roscado; nunca forçar — racha.</text>
+<rect class="box" x="150" y="108.0" width="520.0" height="312.0"/>
+<text class="hd" x="150" y="100.0" text-anchor="start">planta interior</text>
+<path class="d" d="M150 454 L670.0 454"/>
+<text class="dt" x="150" y="466" text-anchor="middle">0</text>
+<path class="d" d="M165.6 420 L165.6 458" stroke-dasharray="2 2"/>
+<text class="dt" x="165.6" y="466" text-anchor="middle">6</text>
+<path class="d" d="M170.8 420 L170.8 469" stroke-dasharray="2 2"/>
+<text class="dt" x="170.8" y="477" text-anchor="middle">8</text>
+<path class="d" d="M196.8 420 L196.8 480" stroke-dasharray="2 2"/>
+<text class="dt" x="196.8" y="488" text-anchor="middle">18</text>
+<path class="d" d="M306.0 420 L306.0 458" stroke-dasharray="2 2"/>
+<text class="dt" x="306.0" y="466" text-anchor="middle">60</text>
+<path class="d" d="M332.0 420 L332.0 469" stroke-dasharray="2 2"/>
+<text class="dt" x="332.0" y="477" text-anchor="middle">70</text>
+<path class="d" d="M394.4 420 L394.4 480" stroke-dasharray="2 2"/>
+<text class="dt" x="394.4" y="488" text-anchor="middle">94</text>
+<path class="d" d="M425.6 420 L425.6 458" stroke-dasharray="2 2"/>
+<text class="dt" x="425.6" y="466" text-anchor="middle">106</text>
+<path class="d" d="M519.2 420 L519.2 469" stroke-dasharray="2 2"/>
+<text class="dt" x="519.2" y="477" text-anchor="middle">142</text>
+<path class="d" d="M534.8 420 L534.8 480" stroke-dasharray="2 2"/>
+<text class="dt" x="534.8" y="488" text-anchor="middle">148</text>
+<path class="d" d="M623.2 420 L623.2 458" stroke-dasharray="2 2"/>
+<text class="dt" x="623.2" y="466" text-anchor="middle">182</text>
+<path class="d" d="M644.0 420 L644.0 469" stroke-dasharray="2 2"/>
+<text class="dt" x="644.0" y="477" text-anchor="middle">190</text>
+<path class="d" d="M654.4 420 L654.4 480" stroke-dasharray="2 2"/>
+<text class="dt" x="654.4" y="488" text-anchor="middle">194</text>
+<text class="dt" x="670.0" y="501" text-anchor="middle">200</text>
+<path class="d" d="M120 420 L120 108.0"/>
+<text class="dt" x="116" y="423" text-anchor="end">0</text>
+<path class="d" d="M150 404.4 L116 404.4" stroke-dasharray="2 2"/>
+<text class="dt" x="114" y="407.4" text-anchor="end">6</text>
+<path class="d" d="M150 373.2 L86 373.2" stroke-dasharray="2 2"/>
+<text class="dt" x="84" y="376.2" text-anchor="end">18</text>
+<path class="d" d="M150 368.0 L56 368.0" stroke-dasharray="2 2"/>
+<text class="dt" x="54" y="371.0" text-anchor="end">20</text>
+<path class="d" d="M150 305.6 L116 305.6" stroke-dasharray="2 2"/>
+<text class="dt" x="114" y="308.6" text-anchor="end">44</text>
+<path class="d" d="M150 170.4 L86 170.4" stroke-dasharray="2 2"/>
+<text class="dt" x="84" y="173.4" text-anchor="end">96</text>
+<path class="d" d="M150 160.0 L56 160.0" stroke-dasharray="2 2"/>
+<text class="dt" x="54" y="163.0" text-anchor="end">100</text>
+<text class="dt" x="114" y="111.0" text-anchor="end">120</text>
+<rect class="hc" x="165.6" y="123.60000000000002" width="488.8" height="280.8" stroke-dasharray="6 3"/>
+<rect class="tab" x="165.6" y="373.2" width="31.2" height="31.2"/>
+<rect class="tab" x="623.2" y="373.2" width="31.2" height="31.2"/>
+<rect class="tab" x="165.6" y="123.60000000000002" width="31.2" height="31.2"/>
+<rect class="tab" x="623.2" y="123.60000000000002" width="31.2" height="31.2"/>
+<rect class="tab" x="394.4" y="373.2" width="31.2" height="31.2"/>
+<rect class="tab" x="394.4" y="123.60000000000002" width="31.2" height="31.2"/>
+<text class="ts" x="760" y="338" text-anchor="start">6 blocos 12×12×25 (quadrados brancos), inserto M3,</text>
+<text class="ts" x="760" y="352" text-anchor="start">alinhados com os furos da tampa em x = 10 | 100 | 190.</text>
+<rect class="z" x="170.8" y="160.0" width="135.2" height="208.0"/>
+<text class="tz" x="238.4" y="172.0" text-anchor="middle">PRÉ-AMP</text>
+<text class="ts" x="238.4" y="182.0" text-anchor="middle">ilha AGND · junto aos jacks</text>
+<rect class="z" x="332.0" y="160.0" width="187.2" height="208.0"/>
+<text class="tz" x="425.6" y="172.0" text-anchor="middle">DAISY + PONTE</text>
+<text class="ts" x="425.6" y="182.0" text-anchor="middle">zona alta</text>
+<rect class="z" x="534.8" y="170.4" width="109.2" height="135.2"/>
+<text class="tz" x="589.4" y="182.4" text-anchor="middle">AMP</text>
+<text class="ts" x="589.4" y="192.4" text-anchor="middle">dissipador para cima</text>
+<path class="d" d="M138 329.0 L170.8 329.0" stroke-width="2"/>
+<path class="d" d="M138 199.0 L170.8 199.0" stroke-width="2"/>
+<text class="dt" x="152.6" y="256.0" text-anchor="start">in</text>
+<path class="d" d="M644.0 212.0 L676.0 212.0" stroke-width="2"/>
+<text class="dt" x="684.0" y="206.0" text-anchor="start">exciters</text>
+<text class="ts" x="760" y="372" text-anchor="start">Chicote do painel: sai do carrier pela borda de TRÁS</text>
+<text class="ts" x="760" y="386" text-anchor="start">e sobe colado à parede até à tampa.</text>
+<text class="hd" x="760" y="120" text-anchor="start">Regras de percurso</text>
+<text class="ts" x="760" y="140" text-anchor="start">· Cabo dos piezos entra pela esquerda e vai direto ao pré-amp: &lt; 60 mm.</text>
+<text class="ts" x="760" y="154" text-anchor="start">· Cabo dos exciters sai do amp pela direita. Nunca cruza o pré-amp.</text>
+<text class="ts" x="760" y="168" text-anchor="start">· IDC do painel (26 vias) corre pela parede de trás, longe da esquerda.</text>
+<text class="ts" x="760" y="182" text-anchor="start">· Linha para a mesa: do DPDT (parede de trás) ao amp e aos jacks de trás.</text>
+<text class="ts" x="760" y="196" text-anchor="start">· Malha do cabo do piezo: só do lado da placa.</text>
+<text class="hd" x="760" y="216" text-anchor="start">Alturas úteis (interior)</text>
+<text class="ts" x="760" y="236" text-anchor="start">frente (y=0): 40 − 6 fundo − 8 tampa = 26 mm</text>
+<text class="ts" x="760" y="250" text-anchor="start">trás (y=120): 70 − 14 = 56 mm</text>
+<text class="ts" x="760" y="264" text-anchor="start">a meio (y=60): 41 mm</text>
+<text class="hd" x="760" y="284" text-anchor="start">Blocos da tampa</text>
+<text class="ts" x="760" y="304" text-anchor="start">Colados com cimento de acrílico ANTES de furar o inserto.</text>
+<text class="ts" x="760" y="318" text-anchor="start">Inserto M3 a quente ou roscado; nunca forçar — racha.</text>
 </svg>

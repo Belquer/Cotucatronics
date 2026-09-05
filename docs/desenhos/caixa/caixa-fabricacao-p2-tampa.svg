@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="640" viewBox="0 0 1000 640" font-family="Helvetica, Arial, sans-serif">
-<rect width="1000" height="640" fill="#fff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="700" viewBox="0 0 1100 700" font-family="Helvetica, Arial, sans-serif">
+<rect width="1100" height="700" fill="#fff"/>
 <style>
  .box{fill:#fafafa;stroke:#111;stroke-width:1.8}
  .h{fill:#fdeceb;stroke:#b8322c;stroke-width:1.4}
@@ -17,71 +17,95 @@
 </style>
 <text class="ti" x="28" y="30" text-anchor="start">Página 2 — TAMPA (acrílico cast 8 mm) · 200 × 123,7 no plano</text>
 <text class="ts" x="28" y="48" text-anchor="start">Datum = canto inferior-esquerdo da tampa vista de cima (frente em baixo). y ao longo da inclinação. Tampa removível: assenta nas paredes e aparafusa a blocos internos.</text>
-<rect class="box" x="60" y="98.38" width="520.0" height="321.62"/>
-<text class="hd" x="60" y="90.38" text-anchor="start">vista de cima</text>
-<path class="d" d="M60 436 L580.0 436 M60 432 L60 440 M580.0 432 L580.0 440"/>
-<text class="dt" x="320.0" y="450" text-anchor="middle">200</text>
-<path class="d" d="M592.0 98.38 L592.0 420 M588.0 98.38 L596.0 98.38 M588.0 420 L596.0 420"/>
-<text class="dt" x="598.0" y="262.19" text-anchor="start">123.7</text>
-<circle class="h" cx="190.0" cy="329.0" r="39.0"/>
-<path class="hc" d="M147.0 329.0 L233.0 329.0 M190.0 286.0 L190.0 372.0"/>
-<text class="t" x="190.0" y="383.0" text-anchor="middle">freeze A ø30</text>
-<text class="ts" x="190.0" y="393.0" text-anchor="middle">(50, 35)</text>
-<circle class="h" cx="450.0" cy="329.0" r="39.0"/>
-<path class="hc" d="M407.0 329.0 L493.0 329.0 M450.0 286.0 L450.0 372.0"/>
-<text class="t" x="450.0" y="383.0" text-anchor="middle">freeze B ø30</text>
-<text class="ts" x="450.0" y="393.0" text-anchor="middle">(150, 35)</text>
-<rect class="h" x="105.5" y="145.05" width="143.0" height="71.5"/>
-<text class="t" x="177.0" y="231.55" text-anchor="middle">janela OLED 55×27.5</text>
-<text class="ts" x="177.0" y="241.55" text-anchor="middle">centro (45, 92)</text>
-<text class="warn" x="177.0" y="250.55" text-anchor="middle">só se a tampa for opaca; em fumado dispensa-se</text>
-<circle class="hc" cx="104.85" cy="224.35" r="3.25"/>
-<circle class="hc" cx="249.15" cy="224.35" r="3.25"/>
-<circle class="hc" cx="104.85" cy="137.25" r="3.25"/>
-<circle class="hc" cx="249.15" cy="137.25" r="3.25"/>
-<text class="warn" x="620" y="300" text-anchor="start">OLED: 4× ø2,5 (M2.5) nos cantos do módulo,</text>
-<text class="warn" x="620" y="314" text-anchor="start">55,5 × 33,5 entre centros — CONFIRMAR no módulo.</text>
-<circle class="h" cx="333.0" cy="180.8" r="9.1"/>
-<path class="hc" d="M319.9 180.8 L346.1 180.8 M333.0 167.70000000000002 L333.0 193.9"/>
-<text class="t" x="333.0" y="204.9" text-anchor="middle">encoder ø7</text>
-<text class="ts" x="333.0" y="214.9" text-anchor="middle">(105, 92)</text>
-<text class="warn" x="333.0" y="223.9" text-anchor="middle">ø7 ou 9 — confirmar</text>
-<circle class="h" cx="424.0" cy="180.8" r="9.1"/>
-<path class="hc" d="M410.9 180.8 L437.1 180.8 M424.0 167.70000000000002 L424.0 193.9"/>
-<text class="t" x="424.0" y="204.9" text-anchor="middle">pot L ø7</text>
-<text class="ts" x="424.0" y="214.9" text-anchor="middle">(140, 92)</text>
-<text class="warn" x="424.0" y="223.9" text-anchor="middle">confirmar</text>
-<circle class="h" cx="515.0" cy="180.8" r="9.1"/>
-<path class="hc" d="M501.9 180.8 L528.1 180.8 M515.0 167.70000000000002 L515.0 193.9"/>
-<text class="t" x="515.0" y="204.9" text-anchor="middle">pot R ø7</text>
-<text class="ts" x="515.0" y="214.9" text-anchor="middle">(175, 92)</text>
-<text class="warn" x="515.0" y="223.9" text-anchor="middle">confirmar</text>
-<circle class="h" cx="86.0" cy="399.2" r="4.42"/>
-<circle class="h" cx="320.0" cy="399.2" r="4.42"/>
-<circle class="h" cx="554.0" cy="399.2" r="4.42"/>
-<circle class="h" cx="86.0" cy="119.18" r="4.42"/>
-<circle class="h" cx="320.0" cy="119.18" r="4.42"/>
-<circle class="h" cx="554.0" cy="119.18" r="4.42"/>
-<text class="ts" x="320.0" y="414.1" text-anchor="middle">6× ø3,4 escareado — parafusos M3 da tampa, em (10 | 100 | 190, 8) e (10 | 100 | 190, 115,7)</text>
-<path class="d" d="M86.0 460 L320.0 460 M86.0 456 L86.0 464 M320.0 456 L320.0 464"/>
-<text class="dt" x="203.0" y="453" text-anchor="middle">90</text>
-<path class="d" d="M320.0 460 L554.0 460 M320.0 456 L320.0 464 M554.0 456 L554.0 464"/>
-<text class="dt" x="437.0" y="453" text-anchor="middle">90</text>
-<path class="d" d="M38 119.18 L38 399.2 M34 119.18 L42 119.18 M34 399.2 L42 399.2"/>
-<text class="dt" x="32" y="262.19" text-anchor="end">107,7</text>
-<path class="d" d="M190.0 282.0 L450.0 282.0 M190.0 278.0 L190.0 286.0 M450.0 278.0 L450.0 286.0"/>
-<text class="dt" x="320.0" y="275.0" text-anchor="middle">100 entre eixos</text>
-<path class="d" d="M333.0 165.20000000000002 L424.0 165.20000000000002 M333.0 161.20000000000002 L333.0 169.20000000000002 M424.0 161.20000000000002 L424.0 169.20000000000002"/>
-<text class="dt" x="378.5" y="158.20000000000002" text-anchor="middle">35</text>
-<path class="d" d="M424.0 165.20000000000002 L515.0 165.20000000000002 M424.0 161.20000000000002 L424.0 169.20000000000002 M515.0 161.20000000000002 L515.0 169.20000000000002"/>
-<text class="dt" x="469.5" y="158.20000000000002" text-anchor="middle">35</text>
-<text class="hd" x="620" y="120" text-anchor="start">Notas</text>
-<text class="ts" x="620" y="140" text-anchor="start">· Furos de knobs a 92 mm da frente, no plano da tampa.</text>
-<text class="ts" x="620" y="154" text-anchor="start">· Freeze a 35 mm da frente: o pé chega sem tocar nos knobs (26 mm livres).</text>
-<text class="ts" x="620" y="168" text-anchor="start">· Escareado dos M3: 90°, ø6,5 na face — a cabeça fica rente.</text>
-<text class="ts" x="620" y="182" text-anchor="start">· Bordas da tampa SEM dentes: assenta a topo nas paredes.</text>
-<text class="ts" x="620" y="196" text-anchor="start">· Furos em acrílico: broca própria ou laser; nunca broca de metal a alta rotação.</text>
-<text class="hd" x="620" y="216" text-anchor="start">Folgas medidas</text>
-<text class="ts" x="620" y="236" text-anchor="start">encoder ø18 → pot L ø13: 19,5 mm · pot L → pot R: 22 · pot R → borda: 18,5</text>
-<text class="ts" x="620" y="250" text-anchor="start">encoder → janela OLED: 23,5 · knobs → freeze: 33</text>
+<rect class="box" x="150" y="78.38" width="520.0" height="321.62"/>
+<text class="hd" x="150" y="70.38" text-anchor="start">vista de cima</text>
+<circle class="h" cx="280.0" cy="309.0" r="39.0"/>
+<path class="hc" d="M237.0 309.0 L323.0 309.0 M280.0 266.0 L280.0 352.0"/>
+<text class="t" x="280.0" y="363.0" text-anchor="middle">freeze A ø30</text>
+<text class="ts" x="280.0" y="373.0" text-anchor="middle">(50, 35)</text>
+<circle class="h" cx="540.0" cy="309.0" r="39.0"/>
+<path class="hc" d="M497.0 309.0 L583.0 309.0 M540.0 266.0 L540.0 352.0"/>
+<text class="t" x="540.0" y="363.0" text-anchor="middle">freeze B ø30</text>
+<text class="ts" x="540.0" y="373.0" text-anchor="middle">(150, 35)</text>
+<rect class="h" x="195.5" y="125.05000000000001" width="143.0" height="71.5"/>
+<text class="t" x="267.0" y="211.55" text-anchor="middle">janela OLED 55×27.5</text>
+<text class="ts" x="267.0" y="221.55" text-anchor="middle">centro (45, 92)</text>
+<text class="warn" x="267.0" y="230.55" text-anchor="middle">só se a tampa for opaca; em fumado dispensa-se</text>
+<circle class="hc" cx="194.85" cy="204.35" r="3.25"/>
+<circle class="hc" cx="339.15" cy="204.35" r="3.25"/>
+<circle class="hc" cx="194.85" cy="117.25" r="3.25"/>
+<circle class="hc" cx="339.15" cy="117.25" r="3.25"/>
+<text class="warn" x="720" y="300" text-anchor="start">OLED: 4× ø2,5 (M2.5) nos cantos do módulo,</text>
+<text class="warn" x="720" y="314" text-anchor="start">55,5 × 33,5 entre centros — CONFIRMAR no módulo.</text>
+<circle class="h" cx="423.0" cy="160.8" r="9.1"/>
+<path class="hc" d="M409.9 160.8 L436.1 160.8 M423.0 147.70000000000002 L423.0 173.9"/>
+<text class="t" x="423.0" y="184.9" text-anchor="middle">encoder ø7</text>
+<text class="ts" x="423.0" y="194.9" text-anchor="middle">(105, 92)</text>
+<text class="warn" x="423.0" y="203.9" text-anchor="middle">ø7 ou 9 — confirmar</text>
+<circle class="h" cx="514.0" cy="160.8" r="9.1"/>
+<path class="hc" d="M500.9 160.8 L527.1 160.8 M514.0 147.70000000000002 L514.0 173.9"/>
+<text class="t" x="514.0" y="184.9" text-anchor="middle">pot L ø7</text>
+<text class="ts" x="514.0" y="194.9" text-anchor="middle">(140, 92)</text>
+<text class="warn" x="514.0" y="203.9" text-anchor="middle">confirmar</text>
+<circle class="h" cx="605.0" cy="160.8" r="9.1"/>
+<path class="hc" d="M591.9 160.8 L618.1 160.8 M605.0 147.70000000000002 L605.0 173.9"/>
+<text class="t" x="605.0" y="184.9" text-anchor="middle">pot R ø7</text>
+<text class="ts" x="605.0" y="194.9" text-anchor="middle">(175, 92)</text>
+<text class="warn" x="605.0" y="203.9" text-anchor="middle">confirmar</text>
+<circle class="h" cx="176.0" cy="379.2" r="4.42"/>
+<circle class="h" cx="410.0" cy="379.2" r="4.42"/>
+<circle class="h" cx="644.0" cy="379.2" r="4.42"/>
+<circle class="h" cx="176.0" cy="99.18" r="4.42"/>
+<circle class="h" cx="410.0" cy="99.18" r="4.42"/>
+<circle class="h" cx="644.0" cy="99.18" r="4.42"/>
+<text class="ts" x="410.0" y="394.1" text-anchor="middle">6× ø3,4 escareado — parafusos M3 da tampa</text>
+<path class="d" d="M150 434 L670.0 434"/>
+<text class="dt" x="150" y="446" text-anchor="middle">0</text>
+<path class="d" d="M176.0 400 L176.0 438" stroke-dasharray="2 2"/>
+<text class="dt" x="176.0" y="446" text-anchor="middle">10</text>
+<path class="d" d="M194.85 400 L194.85 449" stroke-dasharray="2 2"/>
+<text class="dt" x="194.85" y="457" text-anchor="middle">17.25</text>
+<path class="d" d="M267.0 400 L267.0 460" stroke-dasharray="2 2"/>
+<text class="dt" x="267.0" y="468" text-anchor="middle">45</text>
+<path class="d" d="M280.0 400 L280.0 438" stroke-dasharray="2 2"/>
+<text class="dt" x="280.0" y="446" text-anchor="middle">50</text>
+<path class="d" d="M339.15 400 L339.15 449" stroke-dasharray="2 2"/>
+<text class="dt" x="339.15" y="457" text-anchor="middle">72.75</text>
+<path class="d" d="M410.0 400 L410.0 460" stroke-dasharray="2 2"/>
+<text class="dt" x="410.0" y="468" text-anchor="middle">100</text>
+<path class="d" d="M423.0 400 L423.0 438" stroke-dasharray="2 2"/>
+<text class="dt" x="423.0" y="446" text-anchor="middle">105</text>
+<path class="d" d="M514.0 400 L514.0 449" stroke-dasharray="2 2"/>
+<text class="dt" x="514.0" y="457" text-anchor="middle">140</text>
+<path class="d" d="M540.0 400 L540.0 460" stroke-dasharray="2 2"/>
+<text class="dt" x="540.0" y="468" text-anchor="middle">150</text>
+<path class="d" d="M605.0 400 L605.0 438" stroke-dasharray="2 2"/>
+<text class="dt" x="605.0" y="446" text-anchor="middle">175</text>
+<path class="d" d="M644.0 400 L644.0 449" stroke-dasharray="2 2"/>
+<text class="dt" x="644.0" y="457" text-anchor="middle">190</text>
+<text class="dt" x="670.0" y="481" text-anchor="middle">200</text>
+<path class="d" d="M120 400 L120 78.38"/>
+<text class="dt" x="116" y="403" text-anchor="end">0</text>
+<path class="d" d="M150 379.2 L116 379.2" stroke-dasharray="2 2"/>
+<text class="dt" x="114" y="382.2" text-anchor="end">8</text>
+<path class="d" d="M150 309.0 L86 309.0" stroke-dasharray="2 2"/>
+<text class="dt" x="84" y="312.0" text-anchor="end">35</text>
+<path class="d" d="M150 204.35 L56 204.35" stroke-dasharray="2 2"/>
+<text class="dt" x="54" y="207.35" text-anchor="end">75.25</text>
+<path class="d" d="M150 160.8 L116 160.8" stroke-dasharray="2 2"/>
+<text class="dt" x="114" y="163.8" text-anchor="end">92</text>
+<path class="d" d="M150 117.25 L86 117.25" stroke-dasharray="2 2"/>
+<text class="dt" x="84" y="120.25" text-anchor="end">108.75</text>
+<path class="d" d="M150 99.18 L56 99.18" stroke-dasharray="2 2"/>
+<text class="dt" x="54" y="102.18" text-anchor="end">115.7</text>
+<text class="dt" x="114" y="81.38" text-anchor="end">123.7</text>
+<text class="hd" x="720" y="120" text-anchor="start">Notas</text>
+<text class="ts" x="720" y="140" text-anchor="start">· Furos de knobs a 92 mm da frente, no plano da tampa.</text>
+<text class="ts" x="720" y="154" text-anchor="start">· Freeze a 35 mm da frente: o pé chega sem tocar nos knobs (26 mm livres).</text>
+<text class="ts" x="720" y="168" text-anchor="start">· Escareado dos M3: 90°, ø6,5 na face — a cabeça fica rente.</text>
+<text class="ts" x="720" y="182" text-anchor="start">· Bordas da tampa SEM dentes: assenta a topo nas paredes.</text>
+<text class="ts" x="720" y="196" text-anchor="start">· Furos em acrílico: broca própria ou laser; nunca broca de metal a alta rotação.</text>
+<text class="hd" x="720" y="216" text-anchor="start">Folgas medidas</text>
+<text class="ts" x="720" y="236" text-anchor="start">encoder ø18 → pot L ø13: 19,5 mm · pot L → pot R: 22 · pot R → borda: 18,5</text>
+<text class="ts" x="720" y="250" text-anchor="start">encoder → janela OLED: 23,5 · knobs → freeze: 33</text>
 </svg>
