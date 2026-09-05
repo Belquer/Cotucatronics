@@ -104,7 +104,7 @@
   <text class="val" x="400" y="348">RAIL 5V</text>
   <line class="w5" x1="380" y1="357" x2="290" y2="357"/>
   <text class="lbl" x="130" y="352">→ Daisy VIN</text>
-  <text class="lbl" x="130" y="372">→ WIDI VI (+jumper ON)</text>
+  <text class="lbl" x="130" y="386">→ WIDI VI (+jumper ON)</text>
   <line class="w5" x1="290" y1="357" x2="270" y2="347"/>
   <line class="w5" x1="290" y1="357" x2="270" y2="367"/>
 
@@ -165,7 +165,7 @@
   <line class="comp" x1="470" y1="636" x2="490" y2="636"/>
   <line class="wg" x1="480" y1="652" x2="480" y2="690"/>
   <circle class="node" cx="480" cy="690" r="3.5"/>
-  <text class="note" x="495" y="642">D2 · faixa p/ cima</text>
+  <text class="note" x="565" y="642">D2 · faixa p/ cima</text>
 
   <!-- DAISY -->
   <rect class="box" x="565" y="535" width="150" height="75" rx="4"/>
@@ -264,14 +264,14 @@
   <rect class="card" x="40" y="1180" width="450" height="380" rx="8"/>
   <text class="h" x="60" y="1208">4 · PAINEL (5 pots + 2 botões)</text>
 
-  <text class="lblb" x="60" y="1240">POT (×5) — 10kΩ LINEAR (B10K)</text>
+  <text class="lblb" x="60" y="1226">POT (×5) — 10kΩ LINEAR (B10K)</text>
   <!-- pot drawing -->
   <rect class="comp" x="70" y="1258" width="90" height="34" rx="3"/>
   <text class="note" x="82" y="1280">10kΩ lin</text>
   <line class="wg" x1="70" y1="1275" x2="45" y2="1275"/>
   <text class="pin" x="170" y="1252">pino 1 → GND</text>
   <line class="waud" x1="115" y1="1258" x2="115" y2="1230"/>
-  <text class="pin" x="170" y="1272">wiper (2) → D15..D19</text>
+  <text class="pin" x="210" y="1272">wiper (2) → D15..D19</text>
   <line class="w5" x1="160" y1="1275" x2="185" y2="1275"/>
   <text class="pin" x="170" y="1292">pino 3 → 3V3</text>
   <text class="red" x="60" y="1318">+ 100nF de cada wiper p/ GND (anti-jitter)</text>

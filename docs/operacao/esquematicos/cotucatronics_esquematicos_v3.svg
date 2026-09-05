@@ -65,7 +65,7 @@
   <line class="wg" x1="450" y1="291" x2="450" y2="330"/>
   <circle class="node" cx="450" cy="330" r="4"/>
   <text class="val" x="470" y="292">D2 · 1N4148</text>
-  <text class="red" x="470" y="306">cátodo → nó do sinal</text>
+  <text class="red" x="470" y="250">cátodo → nó do sinal</text>
 
   <!-- daisy -->
   <rect class="box" x="600" y="192" width="165" height="82" rx="4"/>
@@ -127,8 +127,8 @@
   <circle class="node" cx="675" cy="708" r="3.5"/>
   <text class="pin" x="695" y="713">TX</text>
   <circle class="node" cx="675" cy="738" r="3.5"/>
-  <text class="pin" x="695" y="743">LB</text>
-  <text class="note" x="800" y="743">V3 ≈ 3,3V = vivo</text>
+  <text class="pin" x="695" y="729">LB</text>
+  <text class="note" x="800" y="757">V3 ≈ 3,3V = vivo</text>
 
   <path class="w5" d="M 325 568 L 675 568"/>
   <text class="val" x="470" y="561">+5V</text>

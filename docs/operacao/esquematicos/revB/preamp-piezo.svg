@@ -24,7 +24,7 @@
 <path class="w" d="M370 205 L370 120 L440 120"/>
 <rect class="b" x="440" y="112" width="60" height="16"/>
 <path class="w" d="M500 120 L560 120 L560 230"/>
-<text class="t" x="418" y="146">RV1  100 k trim  (ganho)</text>
+<text class="t" x="378" y="146">RV1  100 k trim  (ganho)</text>
 
 <!-- ============ Rg + Cg ============ -->
 <path class="w" d="M370 205 L280 205 L280 178"/>
@@ -41,7 +41,7 @@
 <path class="b" d="M410 180 L410 280 L510 230 Z"/>
 <text class="t" x="420" y="210">−</text>
 <text class="t" x="420" y="264">+</text>
-<text class="t" x="432" y="236">U1  OPA1642</text>
+<text class="t" x="322" y="236">U1  OPA1642</text>
 <path class="w" d="M410 205 L370 205"/>
 <path class="w" d="M410 255 L390 255"/>
 <circle cx="370" cy="205" r="3.2" fill="#111"/>
@@ -50,7 +50,7 @@
 <text class="t" x="468" y="168">V+ (pino 8)</text>
 <path class="w" d="M460 263 L460 300"/>
 <path class="c" d="M448 300 L472 300"/><path class="c" d="M452 305 L468 305"/><path class="c" d="M456 310 L464 310"/>
-<text class="t" x="468" y="298">AGND (pino 4)</text>
+<text class="t" x="468" y="284">AGND (pino 4)</text>
 
 <!-- ============ INPUT CHAIN y=340 ============ -->
 <text class="t" x="42" y="316">PIEZO  ~20 nF</text>

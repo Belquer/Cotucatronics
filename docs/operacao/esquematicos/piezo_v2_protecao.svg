@@ -68,7 +68,7 @@
   <line class="wg" x1="470" y1="309" x2="470" y2="360"/>
   <circle class="node" cx="470" cy="360" r="4"/>
   <text class="val" x="490" y="326">D2 · 1N4148</text>
-  <text class="red" x="490" y="340">cátodo (faixa) → nó do sinal</text>
+  <text class="red" x="490" y="396">cátodo (faixa) → nó do sinal</text>
 
   <!-- DAISY -->
   <rect class="box" x="640" y="200" width="170" height="90" rx="4"/>
