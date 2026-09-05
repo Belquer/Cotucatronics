@@ -271,6 +271,9 @@ outra — e nenhum verificador apanha isso.
 
 ## %d · O que ainda trava o pedido
 
+0. ~~`+3V3A` sem dono.~~ **RESOLVIDO 05/09** — e era defeito, nao ruido: os
+   pots estavam no trilho DIGITAL e lidos contra o ANALOGICO, que e o fundo de
+   escala do ADC. Via 9 passou a `+3V3A`, OLED foi para 5 V. Ver ERC-ISENCOES.
 1. **`OPA1642AIDR` na biblioteca da JLC.** As 980 unidades na LCSC nao dizem
    nada sobre isso. Se nao estiver: **`OPA1652AIDR`** (mesmo SOIC-8, CMOS,
    4,5 nV), ou pedir a JLC que compre na LCSC como *pre-order*.

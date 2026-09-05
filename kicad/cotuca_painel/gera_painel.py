@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_painel v0.8.0 — o projecto do PAINEL (tampa da caixa).
+"""gera_painel v0.9.0 — o projecto do PAINEL (tampa da caixa).
 
 Segunda placa. A primeira e `cotuca_cerebro`, e o CONTRATO entre as duas e o
 IDC 2x13: **o mesmo nome de rede dos dois lados, via a via**.
@@ -18,7 +18,7 @@ atravessa este cabo.
 """
 import io, sys, uuid
 
-VERSAO = "0.8.0"
+VERSAO = "0.9.0"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -181,7 +181,7 @@ def liga(lib, ref, x, y, mapa, val="", ry=-7.62, vy=7.62, comp=10.16):
 
 # ---------------------------------------------------- o IDC, o contrato
 VIAS = {1:"GND", 2:"OLED_CLK", 3:"GND", 4:"OLED_DIN", 5:"OLED_CS", 6:"OLED_DC",
-        7:"OLED_RST", 8:"GND", 9:"+3V3", 10:"GND", 11:"+5V", 12:"+5V",
+        7:"OLED_RST", 8:"GND", 9:"+3V3A", 10:"GND", 11:"+5V", 12:"+5V",
         13:"GND", 14:"GND", 15:"LED_FRZ_A", 16:"LED_FRZ_B", 17:"BOT_FRZ_A",
         18:"BOT_FRZ_B", 19:"BOT_BUZIOS", 20:"ENC_A_A", 21:"ENC_A_B",
         22:"ENC_A_PUSH", 23:"GND", 24:"POT_L", 25:"POT_R", 26:"GND"}
@@ -194,9 +194,13 @@ nota(55.0, 84.4,
 
 # ------------------------------------------------------------------ OLED
 liga("CONN7_L", "J2", 210.0, 60.0,
-     {"1":"GND", "2":"+3V3", "3":"OLED_CLK", "4":"OLED_DIN",
+     {"1":"GND", "2":"+5V", "3":"OLED_CLK", "4":"OLED_DIN",
       "5":"OLED_CS", "6":"OLED_DC", "7":"OLED_RST"}, "OLED SSD1309 MX1.25 7p")
-nota(175.0, 40.0, "OLED — 3V3 vem da Daisy, pelo IDC. O painel nao gera tensao nenhuma.")
+nota(175.0, 36.2,
+     "OLED a 5 V, e nao a 3V3 — decidido a 05/09. O modulo Waveshare aceita",
+     "3,3 ou 5 V (tem tradutor de nivel a bordo), e tira-lo do trilho de 3V3",
+     "liberta a via 9 para o +3V3A dos pots. Ecra comutado no fundo de escala",
+     "do ADC e pior do que o problema que se resolvia. O painel nao gera nada.")
 
 # --------------------------------------------------------------- encoder
 liga("EC11", "SW1", 210.0, 120.0,
@@ -208,14 +212,22 @@ nota(175.0, 99.2,
 
 # ------------------------------------------------------------------ pots
 for i, (ref, sinal, y) in enumerate((("RV1", "POT_L", 175.0), ("RV2", "POT_R", 215.0))):
-    liga("POT3", ref, 210.0, y, {"1":"GND", "2":sinal, "3":"+3V3"}, "10k lin")
+    # ⚠️ +3V3A, NAO +3V3. Sao DOIS REGULADORES na Daisy — a ficha do Seed3
+    # diz "Both the Digital and Analog +3.3V pins will output the voltage from
+    # THEIR regulators" — e o fundo de escala do ADC e o **3V3A**: "65535
+    # corresponding to +3V3A". Alimentar o pot de um trilho e le-lo contra o
+    # outro poe a diferenca dos dois reguladores dentro da leitura. A propria
+    # ficha da a figura "4.1 - Potentiometer" alimentada do pino +3V3A.
+    liga("POT3", ref, 210.0, y, {"1":"GND", "2":sinal, "3":"+3V3A"}, "10k lin")
     # ⚠️ 100 nF do cursor ao GND, COLADO ao pote. A distancia e o ponto:
     # longe, o condensador filtra a pista e nao o cursor.
     cx, cy = 240.0, y + 12.7
     liga("C_V", f"C{i+1}", cx, cy, {"1":sinal, "2":"GND"}, "100n COLADO ao cursor")
 nota(175.0, 154.2,
-     "POTS — 1 ao GND, 3 ao 3V3 da MESMA Daisy que os le. Alimentar de uma",
-     "fonte e referenciar noutra poe a diferenca entre as duas na leitura.")
+     "POTS — 1 ao GND, 3 ao +3V3A: o MESMO trilho que o ADC usa como fundo",
+     "de escala. Alimentar de um regulador e referenciar noutro poe a",
+     "diferenca dos dois dentro da leitura. Sao dois na Daisy, e a ficha da a",
+     "figura do potenciometro alimentada do pino +3V3A.")
 
 # --------------------------------------------------- botoes: 2 azuis + 1 branco
 # passo de 20 mm e nao 15: a 15 o VALOR de um botao (22 caracteres) caia em

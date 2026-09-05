@@ -214,3 +214,43 @@ aplicar o mapa — comparada pela *pertença* de cada rede, o conjunto de
 `(referência, pino)`, e não pelos nomes das redes, que mudam de propósito. Foi
 essa comparação que apanhou um símbolo (`R0A`) que escapara à renomeação porque
 o seu bloco começava colado ao parêntesis do anterior.
+
+---
+
+## 05/09 — `isolated_pin_label` no `+3V3A`: **RESOLVIDO, e era um defeito**
+
+O aviso apontava o pino 21 da Daisy (`+3V3A`) com rótulo global e nenhum
+consumidor. Não era ruído de ERC: era o sintoma de os **pots estarem
+alimentados pelo trilho errado**.
+
+A ficha do Seed3 diz, textualmente, *"Both the Digital and Analog +3.3V pins
+will output the voltage from **their regulators**"* — são dois reguladores — e
+*"65535 corresponding to **+3V3A**"*: o fundo de escala do ADC é o analógico.
+A figura de aplicação do próprio fabricante chama-se *"4.1 - Potentiometer"* e
+alimenta-a do pino `+3V3A`.
+
+Os pots estavam no `+3V3` digital e lidos contra o analógico. **A diferença
+entre dois reguladores independentes ia inteira para a leitura** — que é
+exactamente o que a nota do painel já avisava, enquanto o esquema fazia o
+contrário dela.
+
+**O que mudou (05/09):**
+- a **via 9** do IDC passou de `+3V3` a **`+3V3A`**, e alimenta só os dois pots
+  (0,66 mA);
+- o **OLED foi para os 5 V** — o módulo Waveshare aceita 3,3 ou 5 V, e um ecrã
+  comutado no fundo de escala do ADC seria pior do que o problema resolvido;
+- o rótulo `+3V3` do pino 38 **saiu**: nada o consome, e rótulo global com um
+  pino só não é uma rede, é um aviso a fingir de ligação. O pino continua
+  disponível como saída para quem declare o consumidor.
+
+**Não foi isenção. Foi conserto**, e o guarda de terra não foi tocado.
+
+## 05/09 — `D29`/`D30` deixaram de ser pinos livres
+
+São o `USB_HS_D−`/`D+`. Levavam a regra só em documento (cicatriz 15by, em que
+o `PINOS.md` chegou a reservá-los para os DPDT). Passaram a ter **`no_connect`
+no esquema**: o ERC recusa agora quem lá ligue um fio.
+
+Os outros 11 pinos livres **não** levam `no_connect` — são reserva declarada no
+`FUTURO.md`, e prometer "nada se liga aqui" seria mentir sobre eles. Por isso o
+ERC do cérebro fica em **11 `pin_not_connected`**, e é o número certo.

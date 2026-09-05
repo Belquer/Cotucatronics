@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_soquete v0.10.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
+"""gera_soquete v0.12.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
 
 Desenhada por SCRIPT e nao a mao (skill `kicad` §5): reproduzivel, diffavel,
 e corrigivel na fonte. Toda a geometria cai na grade de 1,27 mm.
@@ -24,7 +24,7 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, sys, uuid
 
-VERSAO = "0.10.0"
+VERSAO = "0.12.0"
 G = 1.27
 def u(): return str(uuid.uuid4())
 def g(v): return round(round(v / G) * G, 4)
@@ -243,7 +243,12 @@ PINO = {"D0":1,"D1":2,"D2":3,"D3":4,"D4":5,"D5":6,"D6":7,"D7":8,"D8":9,"D9":10,
 LIGA = {
     "AUDIO_IN_L":"AUDIO_IN_L", "AUDIO_IN_R":"AUDIO_IN_R",
     "AUDIO_OUT_L":"OUT_L_DAISY", "AUDIO_OUT_R":"OUT_R_DAISY",
-    "AGND":"AGND", "GND":"GND", "VIN":"+5V", "3v3D":"+3V3", "3v3A":"+3V3A",
+    # ⚠️ O `3v3D` (pino 38) NAO leva rotulo: desde 05/09 nada o consome. Os
+    # pots passaram para o `+3V3A` (pino 21), que e o fundo de escala do ADC,
+    # e o OLED foi para os 5 V. Um rotulo global com um pino so nao e uma
+    # rede: e um aviso de ERC a fingir de ligacao. O pino continua a ser uma
+    # SAIDA disponivel — quem a quiser, liga-a e declara o consumidor.
+    "AGND":"AGND", "GND":"GND", "VIN":"+5V", "3v3A":"+3V3A",
     "D13":"MIDI_TX", "D14":"MIDI_RX", "D28":"PONTE_STATUS",
     "D17":"V_TRILHO_A2",
     "D5":"OLED_RST","D6":"OLED_DC","D7":"OLED_CS","D8":"OLED_CLK","D10":"OLED_DIN",
@@ -421,6 +426,20 @@ def _confere_lib(caminho):
                          "embutida nao tem: " + str(sorted(usa - tem)) +
                          " — o KiCad ve-os SEM PINOS e os fios ficam soltos")
     return len(usa)
+
+# ------------------------------------- D29 e D30 sao o USB: NO-CONNECT
+#
+# ⚠️ Nao sao "pinos livres", sao PROIBIDOS. Sao o USB_HS_D-/D+ (pinos 36 e 37)
+# e usa-los como GPIO mata a enumeracao — cicatriz 15by, em que o PINOS.md os
+# reservava para os DPDT. Ate agora isso vivia so em documento; o `no_connect`
+# poe a regra dentro do ficheiro, e o ERC passa a recusar quem la ligue um fio.
+#
+# Os outros 11 pinos livres NAO levam no-connect: sao reserva declarada no
+# FUTURO.md, e prometer "nada se liga aqui" seria mentir sobre eles.
+for _n in (36, 37):
+    _x, _y = pin_xy(_n)
+    L.append('\t(no_connect\n\t\t(at %s %s)\n\t\t(uuid "%s")\n\t)\n' % (g(_x), g(_y), u()))
+
 
 # ------------------------------------------- os dois PWR_FLAG que faltavam
 #

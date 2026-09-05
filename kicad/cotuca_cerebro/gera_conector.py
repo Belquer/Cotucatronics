@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_conector v0.7.0 — a folha do CONECTOR DO PAINEL (IDC 2x13).
+"""gera_conector v0.8.0 — a folha do CONECTOR DO PAINEL (IDC 2x13).
 
 A pinagem sai do `ROTEIRO-KICAD.md` §5, e e o CONTRATO entre as duas placas:
 o mesmo nome de rede dos dois lados, via a via. Este ficheiro e uma das duas
@@ -16,7 +16,7 @@ era este cabo.
 """
 import io, sys, uuid
 
-VERSAO = "0.7.0"
+VERSAO = "0.8.0"
 G = 1.27
 def u(): return str(uuid.uuid4())
 def g(v): return round(round(v / G) * G, 4)
@@ -29,7 +29,7 @@ VIAS = {
      3: ("GND", ""),                  4: ("OLED_DIN", "D10"),
      5: ("OLED_CS", "D7"),            6: ("OLED_DC", "D6"),
      7: ("OLED_RST", "D5"),           8: ("GND", ""),
-     9: ("+3V3", ""),                10: ("GND", ""),
+     9: ("+3V3A", "pino 21 · ADC ref"), 10: ("GND", ""),
     11: ("+5V", "LED"),              12: ("+5V", "LED"),
     13: ("GND", "retorno LED"),      14: ("GND", "retorno LED"),
     15: ("LED_FRZ_A", "D27"),        16: ("LED_FRZ_B", "D23"),
