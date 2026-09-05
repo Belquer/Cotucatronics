@@ -6,7 +6,7 @@
 //
 // Regra de ouro: NADA fora de hal_<board>.cpp pode incluir
 // headers de fabricante (daisy_seed.h, Arduino.h, etc).
-// main.cpp, params, macros, manifests e módulos RNBO só
+// main.cpp, params, macros, manifests e módulos externos só
 // conhecem este arquivo.
 //
 // Trocar de placa = escrever um novo hal_<board>.cpp

@@ -57,7 +57,7 @@
 // grave, entao a varredura cobre 200 Hz a 2 kHz — os medio-graves onde
 // a kalimba, o monocordio e as molas vivem.
 //
-// C++ puro: sem hal, sem RNBO, sem alocacao.
+// C++ puro: sem hal, sem motor externo, sem alocacao.
 // ============================================================
 
 #include <cmath>

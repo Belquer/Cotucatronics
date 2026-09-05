@@ -1,12 +1,12 @@
 #pragma once
-// manifest.h (instrumento "bancada") v1.12.1
+// manifest.h (instrumento "bancada") v1.12.2
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
-// junto com o export do RNBO em modules/<nome>/.
+// junto com o export do motor em modules/<nome>/.
 //
 // Instrumento de teste: "bancada" — entrada + tom de teste
-// atravessando o módulo RNBO "delay".
+// atravessando o módulo externo "delay".
 // ============================================================
 
 #include "params.h"
@@ -52,13 +52,13 @@ struct Requirements
     //   128  →  2667 us  — 2,7x de orçamento, 2,7 ms de latência
     //   256  →  5333 us  — 5,3x de orçamento, 5,3 ms de latência
     //
-    // Medido com o vocoder (FFT 2048/hop 1024): pico de 5609 us em
+    // Medido com o módulo de FFT (2048/hop 1024): pico de 5609 us em
     // regime — não coube nem no 256, por 5%. A variante FFT
     // 1024/hop 512 deve cair pra faixa de 2,5–2,8k us e caber no 256
     // com folga.
-    // VOCODER FORA DO BUILD (2026-08-18, decisão de ouvido do dB):
+    // MÓDULO DO Fx2 FORA DO BUILD (2026-08-18, decisão de ouvido do dB):
     // volta pra 48. O 256 nunca foi escolha — era exigência da FFT do
-    // vocoder, e saiu junto com ela.
+    // desse módulo, e saiu junto com ela.
     //
     // O que se ganha de volta é o que o 256 custava: a latência cai de
     // 5,3 ms pra 1 ms, e num instrumento realimentado isso REPÕE onde
@@ -66,7 +66,7 @@ struct Requirements
     // no domínio do tempo — não tem prazo mínimo de janela, roda em
     // qualquer bloco.
     //
-    // Pra reviver o vocoder: 256 aqui e o módulo de volta no Makefile.
+    // Pra reviver um módulo de FFT: 256 aqui, e o módulo no Makefile.
     // Os dois arquivos mudam JUNTOS — é por isso que a nota está nos
     // dois.
     size_t block_size = 48;
@@ -146,7 +146,7 @@ struct Manifest
     // SAÍDA contra o governor e o limiter — mais volume ali é mais
     // compressão, que é o artefato que se quer evitar. O ganho de
     // entrada levanta o sinal ANTES da cadeia inteira, então delay,
-    // vocoder e reverb recebem material mais quente e a dinâmica
+    // o Fx2 e o reverb recebem material mais quente e a dinâmica
     // continua trabalhando na mesma proporção.
     //
     // O QUE ELE NÃO RESOLVE, e é honesto dizer: ele levanta o CHÃO DE
@@ -176,11 +176,11 @@ struct Manifest
 // `in_gain` REMOVIDO em 28/08 — o Governor (AGC) anulava-o e o
     // `piezo_mix` ja fazia o balanco. Ver a nota no `main.cpp`, secao 1.1,
     // que guarda o que se perdeu. CC 21 voltou a ficar livre.
-    int p_dly_time;   // → módulo RNBO "dly_time"
-    int p_dly_mix[kCadeias];    // → módulo RNBO "dly_mix"
+    int p_dly_time;   // → módulo externo "dly_time"
+    int p_dly_mix[kCadeias];    // → módulo externo "dly_mix"
     int p_dly_on[kCadeias];     // 0/1 — chave própria (o mix deixa de ser a chave)
 
-    // ---- cadeia de dinâmica do shell (C++ puro, não RNBO) ----
+    // ---- cadeia de dinâmica do shell (C++ puro, não externo) ----
     // Todos serial-only: são política de segurança e comportamento,
     // não gesto de performance. O painel tem 5 knobs e nenhum deles
     // se gasta aqui.
@@ -273,7 +273,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // rev_mix nasce em 0.15: presença de sala sem virar efeito. Reverb
     // é o ar em volta da escultura, e ar demais afoga o gesto do piezo.
     // Passa-alta NO CAMINHO DO FX2, não no master. O estouro só
-    // acontece com o vocoder ligado (medido), então filtrar o master
+    // acontece com o módulo do Fx2 ligado (medido), então filtrar o master
     // castigaria o delay de graça. 0 Hz = desligado.
 
     // ENVIO DA CADEIA PRO ESPACO — mesma forma do delay e do freeze.
@@ -297,7 +297,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     int p_rev_damp[kCadeias];
 
     // FREEZE — bloco permanente do shell (freeze.h), no lugar do
-    // vocoder na cadeia: pós-delay, pré-reverb. O congelado ganha a
+    // o do Fx2 na cadeia: pós-delay, pré-reverb. O congelado ganha a
     // sala junto, que é o que faz ele PERTENCER ao instrumento em vez
     // de flutuar por cima.
     // FREEZE: UM POR CADEIA, e SEM chave separada.
@@ -497,7 +497,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // ---- FREEZE (slot Fx2) ----
     // Serial-only: os cinco knobs estao todos ocupados. As faixas
     // ESPELHAM as do export, porque o modulo recebe normalizado e o
-    // RNBO remapeia — declarar [-24,24] aqui faz `set frz_transp 12`
+    // o motor remapeia — declarar [-24,24] aqui faz `set frz_transp 12`
     // significar 12 semitons de verdade.
     // BYPASS do slot Fx2. NASCE DESLIGADO de proposito.
     //
@@ -515,15 +515,15 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // direct, auto, autodel, fade e pitchjit — nao ligamos porque,
     // segundo o autor, estao fixos por dentro; ligar daria a ilusao
     // de controle sobre algo que nao responde.
-    // ---- VOCODER (slot Fx2) ----
+    // ---- MÓDULO DO SLOT Fx2 ----
     // Cross-synthesis: ch1 = escultura (modulador), ch2 = jack de
     // linha CRU (portadora).
     //
-    // `voc_tone` nasceu no export de 2026-08-16 e ficou com o k5, que
+    // A carta de timbre nasceu no export de 2026-08-16 e ficou com o k5, que
     // estava livre desde o painel v2. mix e pitch seguem serial-only.
 
     // ---- GANHO DE COMPENSAÇÃO DO SLOT Fx2 ----
-    // O vocoder sai MUITO mais baixo que o delay. Não é defeito:
+    // O módulo do Fx2 saía MUITO mais baixo que o delay. Não é defeito:
     // cross-synthesis espectral só devolve energia onde as duas fontes
     // coincidem, e coincidência é raríssima comparada com um delay, que
     // devolve o sinal inteiro.
@@ -632,11 +632,11 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     ButtonMode button2_mode   = ButtonMode::Hold;
 
     // ---- ligação com o módulo DSP, POR NOME ----
-    // O manifest não conhece índice de parâmetro do RNBO: reexportar
+    // O manifest não conhecia índice de parâmetro do motor: reexportar
     // o patch reordena tudo. Declara-se o nome, e o boot resolve o
     // índice via Module::FindParam(). Nome que não existe = erro
     // claro no log, não parâmetro fantasma mexendo em nada.
-    // O SISTEMA DE MODULOS SAIU EM 20/08 junto com o RNBO. O delay,
+    // O SISTEMA DE MODULOS EXTERNOS SAIU INTEIRO EM 20/08. O delay,
     // ultimo modulo, virou C++ no shell (delay.h). Nao ha mais slot,
     // bind, nem push por nome — todo efeito le os params direto, como
     // sempre foi pros efeitos da casa.
@@ -905,7 +905,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // patch é linear em 0–1, e linear na mão significa que quase
         // todo delay curto se amontoa no primeiro décimo do knob. Com
         // 2.5, metade do curso cobre os primeiros ~18% da faixa, que é
-        // onde moram os slapbacks e os flams. O RNBO recebe o valor já
+        // onde moram os slapbacks e os flams. O motor recebia o valor já
         // curvado e não sabe que houve curva.
         // norm 0.69 com curve 2.5 da real ~0.40: eco audivel e
         // claramente separado, nem slapback nem cauda longa.
@@ -1157,7 +1157,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // de 174–220 Hz que o histograma mostrou saudável (0,70–0,75).
         // Cortar mais alto levaria junto o corpo do som.
         //
-        // NO CAMINHO DO FX2, não no master: sem vocoder não estoura
+        // NO CAMINHO DO FX2, não no master: sem módulo não estoura
         // (medido), então filtrar o master castigaria o delay de graça.
         // Faixa 0–400, curva 2 — resolução embaixo, que é onde se
         // procura. 0 Hz desliga.
@@ -1396,7 +1396,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // O Fx2 nasce LIGADO aqui, contra a regra do bloco de
         // declaracao. Nao e descuido: a serial esta caindo a cada 2-3
         // comandos, entao configurar por serial deixou de ser viavel e
-        // o unico jeito de ouvir o vocoder e o boot ja subir no estado
+        // o unico jeito de ouvir o modulo era o boot ja subir no estado
         // certo.
         //
         // A regra do bypass existe pra proteger de modulo que estoura o
@@ -1411,15 +1411,15 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // com ele desligado. A ferramenta de medicao ficava inacessivel
         // justamente pela mudanca feita pra poder medir.
         //
-        // Os outros defaults de escuta FICAM (dly_mix 0, voc_tone 0,
-        // voc_mix 1, fx2_gain 16x), entao voar custa UM comando:
+        // Os outros defaults de escuta FICAM (dly_mix 0, as duas cartas
+        // do Fx2, fx2_gain 16x), entao voar custa UM comando:
         //   set fx2_on 1
         // Um comando cabe no orcamento da serial; seis nao cabiam.
         // >>> NASCE LIGADO a partir de 2026-08-17. <<<
         //
         // A regra do bypass existia porque modulo pesado que estoura o
         // prazo mata o loop e a placa fica surda. Esse risco foi MEDIDO
-        // e afastado: vocoder em 37% do prazo, watchdog intacto, e a
+        // e afastado: o modulo em 37% do prazo, watchdog intacto, e a
         // morte do loop que se culpava tinha outra causa (DelayMs, ver
         // battle_scars cap. 7) — ja consertada.
         //
@@ -1454,10 +1454,10 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // Default 1x — UNIDADE — e desta vez o numero e MEDIDO.
         //
         // A caixa-preta (voo de 16440 blocos, 2026-08-16): entrada
-        // pico 0.215, saida crua do vocoder pico 2.359. A saida e 11x
+        // pico 0.215, saida crua do modulo pico 2.359. A saida e 11x
         // MAIS QUENTE que a entrada. Com o ganho em 64x o pico virava
         // ~151 em fundo de escala 1.0 e o limiter esmagava tudo com
-        // ~44 dB de reducao — o vocoder soava "baixo" porque estava
+        // ~44 dB de reducao — o modulo soava "baixo" porque estava
         // sendo pisoteado, nao porque era fraco.
         //
         // A escalada 8->48->64 foi toda na direcao errada, calibrada
@@ -1493,8 +1493,8 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // estar certo — o instrumento passaria a viver comprimido.
         //
         // A calibracao de verdade e com a caixa-preta no caso BANDA
-        // LARGA: voc_tone 0 (portadora de ruido) ou o piezo tocando.
-        // Ver T12 no TESTES.md. Ate la, 8x e um chute conservador —
+        // LARGA: portadora de ruido, ou o piezo tocando.
+        // Ate la, 8x e um chute conservador —
         // erra pra baixo, que e o lado seguro de errar.
         //
         // norm = ((8-1)/255)^(1/3) = 0.301
@@ -1540,7 +1540,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // ligado antes do Add() correspondente lê id AINDA ZERO, e id 0
         // é o `level`. Este bloco morava lá em cima e só não quebrava
         // por acaso — k1–k4 apontam pra params declarados cedo. O k5
-        // apontando pro vocoder foi o primeiro a cruzar a linha.
+        // apontando pro modulo do Fx2 foi o primeiro a cruzar a linha.
         //
         // REGRA DO PROJETO, não sugestão: k1 e k2 são FIXOS em TODA
         // escultura — k1 volume, k2 fonte. Só k3–k5 são livres, e é só
@@ -1564,10 +1564,10 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // Se o painel crescer, declaram-se AQUI, com o pino ao lado.
 
         // ---- B1: o que o randomizador pode sortear ----
-        // Params de CARÁTER dos módulos, e só. Com o vocoder ligado
-        // entram os dois dele que mexem em timbre.
+        // Params de CARÁTER dos módulos, e só. Com o módulo do Fx2
+        // ligado entravam os dois dele que mexem em timbre.
         //
-        // `voc_mix` fica DE FORA: com o Fx2 no caminho, mix não é
+        // A mistura do Fx2 fica DE FORA: com ele no caminho, mix não é
         // caráter — é quanto do módulo existe. Sortear isso é da mesma
         // família de `src_mix`, que decide qual instrumento se está
         // tocando, e não como ele soa.
@@ -1586,7 +1586,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
                                           nullptr, 0, 0.5f, 0.f,
                                           true, 0.0505f};
         randomizable[n_randomizable++] = {p_dly_mix[0], 0.30f, 0.80f};
-        // voc_pitch: UMA NOTA NOVA POR HIT, repetição aceita (sorteio
+        // Carta de nota: UMA NOTA NOVA POR HIT, repetição aceita (sorteio
         // uniforme, sem memória). ±12 st ao redor do centro (110 Hz =
         // Lá), quantizado em Lá menor — nunca cromático fora da
         // escala. 1 st = 1/48 do curso (a faixa inteira é ±24 st).
@@ -1594,13 +1594,9 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // 110..440 Hz. O registro anterior (centro 110 Hz) sorteava
         // certo mas soava tudo GRAVE e parecido — o registro aprovado
         // de ouvido foi o de cima.
-        // >>> voc_pitch e voc_tone SAIRAM da whitelist em 18/08 porque o
-        // >>> vocoder saiu do build. Nao e decisao de musica, e
-        // >>> aritmetica: param de modulo ausente nao tem o que
-        // >>> sortear. Voltam junto com o modulo, e a cerca de La menor
-        // >>> abaixo continua valendo pra quando isso acontecer:
-        //   {p_voc_pitch, 0.50f, 1.00f, kScaleAminor, 7, 0.75f, 1.f/48.f}
-        //   {p_voc_tone,  0.40f, 1.00f}
+        // >>> As duas cartas do Fx2 SAIRAM da whitelist em 18/08 porque
+        // >>> o modulo saiu do build. Nao e decisao de musica, e
+        // >>> aritmetica: param de modulo ausente nao tem o que sortear.
         //
         // CONSEQUENCIA A OLHO NU: sobram dly_time e dly_mix. Os buzios
         // ficaram com DUAS cartas em vez de quatro, e o sorteio soa
@@ -1655,17 +1651,15 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         button2_mode   = ButtonMode::Hold;
 
         // ---- SLOT Fx2 VAZIO (2026-08-18) ----
-        // O vocoder saiu do build por decisão de ouvido do dB. Slot
-        // vazio é passthrough silencioso, não erro — e os binds abaixo
-        // ficam prontos pro dia da volta, conferidos contra o
-        // description.json do export de 16/08:
-        //   bind[n_bind++] = {ModuleSlot::Fx2, p_voc_mix,   "voc_mix"};
-        //   bind[n_bind++] = {ModuleSlot::Fx2, p_voc_pitch, "voc_pitch"};
-        //   bind[n_bind++] = {ModuleSlot::Fx2, p_voc_tone,  "voc_tone"};
+        // Slot vazio e passthrough silencioso, nao erro.
         //
-        // Os params p_voc_* CONTINUAM na tabela de propósito: mexer
-        // neles com o módulo fora não faz nada, e é exatamente esse
-        // silêncio inofensivo que mantém o caminho de volta barato.
+        // ATE 04/09 este bloco trazia os binds do modulo antigo em
+        // comentario e afirmava que os params dele CONTINUAVAM na
+        // tabela. Nao continuavam — nenhum `Add()` os cria — e a
+        // afirmacao chegou a mandar-me procurar codigo que nao existe.
+        // Comentario que descreve o estado do codigo e a afirmacao
+        // menos fiavel do ficheiro: nao compila, ninguem o testa, e
+        // sobrevive a mudanca que o desmente.
 
         // ---- MAPA MIDI ----
         // Aqui embaixo pelo MESMO motivo dos bind[]: um id lido antes
@@ -1679,7 +1673,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // MAPA v2 (dB, 18/08) — contiguo de 20, sem CCs mortos
         //
         // Renumerado porque o mapa antigo tinha buracos (23 e 24 sairam
-        // por seguranca) e dois CCs MORTOS apontando pro slot RNBO
+        // por seguranca) e dois CCs MORTOS apontando pro slot Fx2
         // vazio: mexer neles nao fazia nada, em silencio. Tres params
         // que so a serial alcancava ganharam controle.
         //
@@ -1974,7 +1968,7 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         //   gov_ceiling borda de feedback
         // O QUE NAO ESTA MAPEADO NAO PODE SER DERRUBADO POR FANTASMA.
 
-        // >>> voc_pitch tem steps=49: o Set() quantiza em semitons, e o
+        // >>> A carta de nota tinha steps=49: o Set() quantiza em semitons, e o
         // >>> CC de 128 passos cai na grade cromatica sozinho. Nada a
         // >>> fazer aqui — a quantizacao mora no ponto UNICO de escrita,
         // >>> entao MIDI, serial e knob herdam a mesma grade de graca.

@@ -13,9 +13,9 @@
 # novo exige tira-lo daqui — senao o verificador para de vigia-lo.
 
 src_mix        20/08   crossfade das duas fontes; virou piezo_mix (BALANCO)
-voc_mix        20/08   saiu com o vocoder RNBO
-voc_tone       20/08   saiu com o vocoder RNBO
-fx2_on         18/08   slot RNBO Fx2; saiu do mapa MIDI, depois do codigo
+oct_on         28/08   renomeado para tarol_on (cicatriz 15u)
+test_tone_on   --      nome PROPOSTO e nunca criado; registo da decisao
+fx2_on         18/08   slot Fx2; saiu do mapa MIDI, depois do codigo
 fx2_gain       18/08   idem
 fx2_hp         18/08   idem
 fx2_want       18/08   idem
@@ -110,4 +110,3 @@ ntc2_hz_b
 ntc2_db_a
 ntc2_db_b
 test_tone_mix
-test_tone_gain

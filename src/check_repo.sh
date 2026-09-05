@@ -1,8 +1,8 @@
 #!/bin/bash
-# check_repo v0.2.0 — o repo compila num CLONE LIMPO?
+# check_repo v0.2.1 — o repo compila num CLONE LIMPO?
 #
-# Existe por um defeito real: module_rnbo_alloc.h foi incluido pelos
-# tres modulos e NUNCA commitado. O build local sempre funcionou
+# Existe por um defeito real: o cabecalho de alocacao do modulo foi
+# incluido pelos tres modulos e NUNCA commitado. O build local sempre funcionou
 # porque o arquivo estava na arvore; um clone novo quebrava. Varios
 # commits foram empurrados assim.
 #
@@ -26,7 +26,7 @@ echo "1. headers locais em #include \"...\""
 for f in *.cpp *.h; do
     [ -f "$f" ] || continue
     # so os includes entre aspas, e so os que existem AQUI (os de
-    # sistema e os do RNBO vem por -I e nao sao nossos)
+    # sistema e os de terceiros vem por -I e nao sao nossos)
     grep -ho '#include "[^"]*\.h"' "$f" 2>/dev/null \
         | sed 's/#include "//; s/"//' \
         | while read -r h; do
@@ -60,9 +60,9 @@ else
     [ "$miss" = 0 ] && echo "   ok — todos rastreados" || fail=1
 fi
 
-# ---- 3. o RNBO saiu: nada a checar ----
-# Havia aqui um bloco que conferia os exports do RNBO referenciados por
-# caminho pelos module_rnbo_*.cpp. Em 20/08 o delay virou C++ no shell
+# ---- 3. o motor externo saiu: nada a checar ----
+# Havia aqui um bloco que conferia os exports referenciados por caminho
+# pelos .cpp de modulo. Em 20/08 o delay virou C++ no shell
 # (delay.h) e o runtime inteiro saiu do projeto — os arquivos, os
 # includes e o sistema de slots. Verificacao sem objeto e ruido que o
 # proximo leitor vai tentar entender.

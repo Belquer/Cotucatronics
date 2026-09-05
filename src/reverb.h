@@ -3,11 +3,11 @@
 // Cotucatronics OS — reverb + passa-alta v0.2.0
 // Freeverb clássico: 8 combs + 4 allpass por canal, estéreo.
 //
-// BLOCO PERMANENTE DO SHELL, não módulo RNBO. Duas razões, e as
+// BLOCO PERMANENTE DO SHELL, não módulo externo. Duas razões, e as
 // duas são de projeto, não de gosto:
 //
 //   1. O pool de SRAM dos módulos está a 92,4% com delay +
-//      vocoder. Um terceiro módulo RNBO não entra sem mudar a
+//      o do Fx2. Um terceiro módulo externo não entra sem mudar a
 //      estratégia de alocação — a porta está fechada por
 //      aritmética, não por preferência.
 //   2. Reverb é FIM DE LINHA. Ele não é o caráter da escultura,
@@ -15,7 +15,7 @@
 //      exatamente o lugar de quem molha o resultado de todo
 //      mundo e não muda de escultura pra escultura.
 //
-// C++ puro: sem headers de fabricante, sem RNBO, sem hal. Os
+// C++ puro: sem headers de fabricante, sem motor externo, sem hal. Os
 // buffers vêm DE FORA (ver Init) porque `hal::AllocBig()` é o
 // único portão da RAM grande e ele mora no main — a regra vale
 // pra este arquivo como vale pros módulos. De quebra, isso deixa
@@ -244,7 +244,7 @@ class Reverb
 // ------------------------------------------------------------
 // PASSA-ALTA de 2ª ordem (dois polos de 1ª em série).
 //
-// Existe pro caminho do Fx2: certas portadoras do vocoder fazem a
+// Existe pro caminho do Fx2: certas portadoras do modulo fazem a
 // saída picar 1,4–1,5 enquanto outras ficam em 0,55. O que ainda
 // NÃO se sabe é se o excesso é energia grave (e aí isto resolve)
 // ou desequilíbrio de nível por nota (e aí isto não resolve, e o

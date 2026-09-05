@@ -3,7 +3,7 @@
 **04/09/2026 · v1.0.0 · o contrato de massa da placa, antes do layout**
 
 > **Este documento não ensina aterramento** — isso é o
-> [`../ATERRAMENTO.md`](../ATERRAMENTO.md), e a varredura é a skill
+> [`../../ATERRAMENTO.md`](../../ATERRAMENTO.md), e a varredura é a skill
 > `revisao-terra`. Aqui está **este desenho**: que condutores existem, de que
 > tipo é cada um, para onde vai, e **como se prova** que ficou como está
 > escrito.
@@ -15,7 +15,7 @@
 
 O chiado de banda larga que custou três sessões foi diagnosticado até uma
 regra com nome: `AGND` e `DGND` unidos **fora** da placa, formando um anel
-([`ATERRAMENTO.md`](../ATERRAMENTO.md) §5). Na permaproto isso aconteceu
+([`ATERRAMENTO.md`](../../ATERRAMENTO.md) §5). Na permaproto isso aconteceu
 porque não havia desenho — havia um trilho, e tudo o que precisava de terra
 foi lá parar.
 
@@ -144,7 +144,7 @@ uma, e é a do soquete.**
 
 ## 3 · Desacoplamento, por tipo de carga
 
-Ver [`ATERRAMENTO.md`](../ATERRAMENTO.md) §4 para o porquê. Nesta placa:
+Ver [`ATERRAMENTO.md`](../../ATERRAMENTO.md) §4 para o porquê. Nesta placa:
 
 | consumidor | leva | ⚠️ |
 |---|---|---|
@@ -263,7 +263,7 @@ dois desfechos não é teste.**
 
 O teste acima é de cobre, com a placa morta. O de **massa** exige corrente —
 uma medição de terra em repouso dá zero em cima de um defeito. O método está
-no [`ATERRAMENTO.md`](../ATERRAMENTO.md) §8: multímetro em **AC/mV**, ponta
+no [`ATERRAMENTO.md`](../../ATERRAMENTO.md) §8: multímetro em **AC/mV**, ponta
 preta na estrela, som a tocar de verdade, **todos os números anotados antes de
 mexer em nada**.
 

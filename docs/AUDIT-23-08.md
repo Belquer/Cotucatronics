@@ -6,6 +6,21 @@
 >
 > **O audit não conserta** (R4). Os fixes são commits separados.
 
+> **FECHO PARCIAL, 2026-09-04.** Este documento é um instantâneo datado e
+> **não se reescreve** — o que caiu desde então fica registado aqui, por cima.
+>
+> - **⚪ 4 (README com versões velhas) — FECHADO.** Não só as sete: o
+>   `versoes_readme.py` v1.0.0 achou **15 de 58** derivadas, uma delas com o
+>   README à FRENTE do fonte. Hoje **61 de 61 batem**, e a classe passou a ter
+>   verificador — era exactamente o que o item pedia (*"o `check_docs` não
+>   pega… Fix: código + doc"*). Corre dentro do `/audit`.
+> - **⚪ 5 ("76 CCs") — ABERTO, e maior do que estava escrito.** Já não são os
+>   dois comentários de `main.cpp:1114` e `1290`: hoje são **três**
+>   (`1521`, `1697`, `1708`), e o número real são **119** vínculos, não 86.
+>   Não foi tocado — é `src/`, e está com outra sessão.
+> - **🟠 1 · 🟡 2 · 🟡 3 — não reverificados.** Não os declaro fechados sem
+>   medir; ausência de verificação não é ausência de defeito.
+
 ## O que passou
 
 | passada | resultado |

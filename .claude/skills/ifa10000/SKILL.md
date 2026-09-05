@@ -1,6 +1,6 @@
 ---
 name: ifa10000
-description: Protocolo de certificação de todo efeito que entra no Cotucatronics — 10 etapas com critério de passagem explícito, mais a etapa 0 de medição limpa. Use ao embarcar qualquer efeito novo (módulo RNBO ou bloco permanente do shell), ao revalidar um efeito existente, ou quando perguntarem se algo está certificado.
+description: Protocolo de certificação de todo efeito que entra no Cotucatronics — 10 etapas com critério de passagem explícito, mais a etapa 0 de medição limpa. Use ao embarcar qualquer efeito novo (módulo externo ou bloco permanente do shell), ao revalidar um efeito existente, ou quando perguntarem se algo está certificado.
 ---
 
 # IFÁ10000 — certificação de efeitos
@@ -85,7 +85,7 @@ código que continua lá porque ninguém lembra por quê.
 | 0 | **MEDIÇÃO LIMPA** | canal provado, ambiente zerado, unidade e regime declarados |
 | 1 | CONTRATO | wrapper e `description.json` contam a mesma história |
 | 2 | EMBARQUE | boot limpo, nenhum `-1` em ligação de param |
-| 3 | MOTOR *(RNBO)* | param mexido ao vivo muda o som na hora |
+| 3 | MOTOR *(motor externo)* | param mexido ao vivo muda o som na hora |
 | 4 | MEMÓRIA | cabe com folga declarada, região justificada no código |
 | 5 | CARGA | pico cabe no prazo com folga ≥ 25%, nos dois blocos |
 | 6 | MATERIAL | responde ao sinal certo, e o registro diz qual foi |
@@ -116,7 +116,7 @@ músico vai relatar é *"está baixo"*, que manda procurar ganho em vez de fiaç
 
 ## Regras que valem em qualquer etapa
 
-- **Pico decide, média mente.** Vocoder: média 7,8%, pico 210%.
+- **Pico decide, média mente.** Um módulo de FFT: média 7,8%, pico 210%.
 - **Estreia é o preço da mudança; regime é o aluguel.** Medir separado.
 - **Padrão de acesso importa mais que tamanho.** 108 KB em SDRAM = +12,9 pp
   de CPU; os mesmos em SRAM = +5,6 pp.

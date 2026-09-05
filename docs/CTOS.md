@@ -175,7 +175,7 @@ CTOS v0.1.0 | loop vivo | fase 6 | uptime 412 s
 ```
 
 **Isto ressuscita por desenho o bypass do fx2**, que existiu e foi revogado
-quando o vocoder passou a nascer ligado. A diferença é de natureza: antes era
+quando o módulo do Fx2 passou a nascer ligado. A diferença é de natureza: antes era
 **proteção pontual**, decidida caso a caso e revogável por conveniência;
 agora é **lei estrutural do CTOS**, e a condição de retorno já estava escrita
 no IFÁ10000 — *módulo não-certificado entra em bypass até passar pelo
@@ -403,7 +403,7 @@ compartilhamento continua real — apenas é **por ponto**, não global:
 | `pitch_tail` | saída do reverb | shimmer (1 ou 2 vozes: +12 e +7) |
 
 Custo: 150 KB de SDRAM cada, acesso sequencial. Com 64 MB disponíveis, o
-gargalo nunca foi memória — era o pool de SRAM dos módulos RNBO, e nenhum
+gargalo nunca foi memória — era o pool de SRAM dos módulos externos, e nenhum
 destes usa aquele pool.
 
 **A lição do erro:** *"compartilhado" é uma afirmação sobre a FONTE, não sobre

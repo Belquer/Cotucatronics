@@ -120,7 +120,7 @@ mensagens no boot, zero aplicadas, instrumento mudo, sintoma idêntico a
 
 **Ao remover uma classe de ameaça, liste o que existia por causa dela.**
 Defesa que perdeu o inimigo raramente some sozinha — a menos que esteja no
-**escopo do defeito** (ver o passa-alta que saiu junto com o vocoder, cap.
+**escopo do defeito** (ver o passa-alta que saiu junto com o módulo, cap.
 11b do battle_scars). Escopo largo = sobrevivência indevida.
 
 **Rebaixar costuma ser melhor que remover:** a quarentena virou sensor —

@@ -9,7 +9,7 @@ Projeto colaborativo.
 
 > ### Estado, 2026-09-04 — **v0.301.0**
 >
-> **480 MHz · 48 kHz · bloco 48** (prazo de 1 000 µs) · app na QSPI · **sem RNBO**
+> **480 MHz · 48 kHz · bloco 48** (prazo de 1 000 µs) · app na QSPI
 >
 > **Duas cadeias de caráter** (drive, phaser, warble, tarolator por piezo) sobre
 > uma **cauda compartilhada** (delay, freeze, shimmer↺reverb), com **matriz de
@@ -55,7 +55,7 @@ Cinco regras que não se negociam:
    é quem traduz pra Hz, segundos, dB.
 3. **Macros.** Um knob físico pode mover vários parâmetros, com peso e inversão.
 4. **Manifest por instrumento.** É o único arquivo que muda de escultura pra
-   escultura (junto com o futuro módulo RNBO). Declara `Requirements` — RAM
+   escultura. Declara `Requirements` — RAM
    grande, audio in, nº de knobs — conferidos no boot: placa insuficiente dá
    erro claro em vez de bug misterioso no palco.
 5. **`AllocBig()`.** Abstrai a SDRAM de 64 MB. Alocador bump, só no boot, nunca
@@ -66,13 +66,13 @@ Cinco regras que não se negociam:
 
 | Arquivo | Versão | O que é |
 |---|---|---|
-| [src/hal.h](src/hal.h) | **v0.34.0** | O contrato. A fronteira de independência de fornecedor |
+| [src/hal.h](src/hal.h) | **v0.38.0** | O contrato. A fronteira de independência de fornecedor |
 | [src/hal_daisy_seed.cpp](src/hal_daisy_seed.cpp) | **v0.74.1** | Único arquivo que pode incluir `daisy_seed.h`. **4 botões** (D26, D24, D25 rearme CTOS, D22 freeze B) e **2 LEDs de painel** (D27, D23). Debounce de 30 ms, medido. **OLED SSD1309 vivo** (SPI1: D5 RST · D6 DC · D7 CS · D8 CLK · D10 DIN) com sonda de fio e caça-ponte. **PULL-UP interno no RX do MIDI (PB7)** — a libDaisy inicia a UART com `GPIO_NOPULL`, e o pino a flutuar com a ponte desligada punha a USART em tempestade por taxa e matava o laço em 4 s. **USART1 em prioridade 1**, abaixo do seu próprio stream de DMA, senão o abort assíncrono nunca completa. **Rearme do `DmaListen` com tecto e recuo** — sem ele corria ao ritmo do laço e consumia-o (10 029 rearmes com a ponte sã). **Framebuffer inteiro por `OledDesenha`** (`memcpy`, não 8192 `DrawPixel`), e o prescaler do SPI nasce em **PS_8** — 3 811 µs por quadro, verificado no vidro com padrão de 1 px. PS_64 custava 23 401 µs. **Três encoders**, e o `kEncPin` é a ÚNICA fonte — o `Init` lê dela e os nomes saem por `EncoderPinNome`. **`VarreTudo`** lê os 31 pinos (mata OLED e MIDI até um reboot) e **`Reiniciar`** desfaz. O `PollMidi`/`PollSerial` drenam por **instantâneo** do ponteiro — perseguir o ponteiro vivo travou a placa em 28/08 |
 | [src/reverb.h](src/reverb.h) | **v0.2.0** | Freeverb + passa-alta. C++ puro, buffers vêm de fora |
 | [src/freeze.h](src/freeze.h) | **v0.3.1** | Freeze granular: núcleo de 500 ms, 2 grãos sorteados, Hann. C++ puro |
 | [src/pitch.h](src/pitch.h) | **v0.5.0** | Motor de pitch compartilhado: 1 buffer, até 4 vozes. **Anti-alias automático na escrita** (Butterworth 6ª ordem, custo zero se nenhuma voz sobe). C++ puro |
 | [src/shimmer.h](src/shimmer.h) | **v0.3.0** | Shimmer: reverb + pitch num laço. Realimenta o Freeverb existente. **Tom = corte + sino de presença em 3 kHz** |
-| [src/drive.h](src/drive.h) | **v0.4.0** | Drive: tanh normalizado, **1,5–48×** (o joelho tem que alcançar −30 dBFS), + `drv_sujeira`: morph pra wavefolder com anti-alias próprio |
+| [src/drive.h](src/drive.h) | **v0.4.1** | Drive: tanh normalizado, **1,5–48×** (o joelho tem que alcançar −30 dBFS), + `drv_sujeira`: morph pra wavefolder com anti-alias próprio |
 | [src/phaser.h](src/phaser.h) | **v0.3.0** | Phaser: N allpass varridos por LFO triangular. Zero buffer |
 | [src/warble.h](src/warble.h) | **v0.1.1** | Warble: deriva de fita por delay curto modulado. O dry/wet dele chama-se `wrb_mix` e **é nome, não param** |
 | [src/detune.h](src/detune.h) | **v0.1.0** | Detune. **FORA do build desde 20/08** — revivível, ver `docs/FEATURES.md` |
@@ -82,9 +82,9 @@ Cinco regras que não se negociam:
 | [src/dynamics.h](src/dynamics.h) | **v0.6.0** | Gate, governor, limiter e **shifter SSB**. C++ puro |
 | [src/midi.h](src/midi.h) | **v0.8.1** | Máquina de estados MIDI + **os seis canais** e a invariante `escuta = manda + 3`, travada em `static_assert`. C++ puro, board-agnostic |
 | [src/test_dynamics.cpp](src/test_dynamics.cpp) | **v0.1.0** | Banco de teste nativo — roda no Mac, sem placa |
-| [src/test_midi.cpp](src/test_midi.cpp) | **v0.4.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
-| [src/test.command](src/test.command) | **v0.3.0** | Wrapper duplo-clicável dos dois bancos de teste |
-| [src/main.cpp](src/main.cpp) | **v0.300.0** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
+| [src/test_midi.cpp](src/test_midi.cpp) | **v0.6.0** | Banco nativo do parser MIDI e da via CC→ParamTable |
+| [src/test.command](src/test.command) | **v0.4.0** | Wrapper duplo-clicável dos dois bancos de teste |
+| [src/main.cpp](src/main.cpp) | **v0.301.1** | Loop, callback de áudio, painel falso via serial. Duas cadeias + cauda compartilhada. **Espelho MIDI em seis canais** (`escuta = manda + 3`) com janela de autoria de 250 ms, inventário `vistos`, botões físicos de freeze, sondas `qspi`, **matriz de roteamento 2×2** (qual cadeia entra em qual saída, com as rampas num buffer para o seco, o freeze e o espaço lerem o mesmo valor). **A versão mora só em `COTUCA_OS_VERSION`** |
 | [src/suave.h](src/suave.h) | **v0.1.0** | Suavizador de parâmetro de um polo. C++ puro — a quarta ocorrência da forma virando única |
 | [src/teste_tarol.cpp](src/teste_tarol.cpp) | **v0.2.0** | Banco nativo do tarolator. **Declara o que NÃO prova**: passou com senóides enquanto o efeito soava a caixa — banco prova a álgebra, não o timbre (cicatriz 15u) |
 | [src/teste_macro.cpp](src/teste_macro.cpp) | **v0.1.1** | Ida-e-volta do `Macro::Inverso`, de que a captura do pot depende. Se ele errar, o pot "não pega" e a bancada culpa o ADC |
@@ -95,24 +95,24 @@ Cinco regras que não se negociam:
 | [src/espectro.h](src/espectro.h) | **v0.2.0** | FFT radix-2 escrita à mão, Hann, pico com **interpolação parabólica em dB**, e **dominância** — a fracção da energia no pico, que separa espeto de nota. Substituiu uma autocorrelação que falhou **6 de 6** na prova (pico em múltiplos, e mede periodicidade em vez de força do parcial) |
 | [src/tarol.h](src/tarol.h) | **v0.1.0** | **TAROLATOR** — ruído percussivo com o envelope da pancada, por divisão de frequência. Nasceu oitavador e não faz oitava: numa membrana os modos são inarmónicos e o divisor treme. Nome do dB, e o nome é o diagnóstico. Tom e rastreio FIXOS: como params davam curso morto |
 | [src/params.h](src/params.h) | **v0.12.0** | `ParamTable` + `Macro` (teto **128** desde 28/08, subido com 91 ocupados — folga na mão, não com o estouro). Sem alocação dinâmica |
-| [src/manifest.h](src/manifest.h) | **v0.98.0** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **95 vínculos em 55 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
-| [docs/operacao/gerar_ccmap.py](docs/operacao/gerar_ccmap.py) | **v0.7.0** | **Dono do `CCMAP.md` E do cartão A4** — escreve os dois do `manifest.h`. A única parte à mão é a tabela `NOTAS`, e o gerador denuncia nota órfã e nota que mente sobre topologia ("compart." num param pareado). Achou dez notas erradas na estreia |
+| [src/manifest.h](src/manifest.h) | **v1.12.2** | Duas cadeias, params de caráter compartilhados, chave e dry/wet por canal, **95 vínculos em 55 CCs**, distribuídos por seis canais + CC 120 = sync. **Tabela de botões físicos** (`BotaoAlvo`: param + LED + nome) |
+| [docs/operacao/gerar_ccmap.py](docs/operacao/gerar_ccmap.py) | **v0.10.0** | **Dono do `CCMAP.md` E do cartão A4** — escreve os dois do `manifest.h`. A única parte à mão é a tabela `NOTAS`, e o gerador denuncia nota órfã e nota que mente sobre topologia ("compart." num param pareado). Achou dez notas erradas na estreia |
 | [docs/ccmap.pdf](docs/ccmap.pdf) | **gerado** | **O cartão de referência** — 91 vínculos em 52 CCs numa folha A4, com os pares colapsados. `ccmap.html` é **gerado** pelo `gerar_ccmap.py`; o PDF sai do `ccmap-pdf.sh` / `.command` v0.1.0, que avisa se passar de uma folha |
 | [docs/operacao/RETRABALHO-LOOPY.md](docs/operacao/RETRABALHO-LOOPY.md) | **gerado** | O mapa inteiro para remapear o Loopy: 86 vínculos em 49 CCs, por página |
-| [esp32/ponte/ponte.ino](esp32/ponte/ponte.ino) | **v0.5.0** | **Segundo firmware.** Ponte BLE MIDI ↔ UART no ESP32-C3 — um fio com rádio: sem mapa de CC, sem params. D28 ativo em baixo, aberto-dreno. `board` traz quedas com recência e saturações de TX, e desde a v0.5.0 **quedas que sobrevivem ao corte de energia** (NVS, escrita diferida): uma conta desta sessão, outra desde sempre com o número de arranques |
+| [esp32/ponte/ponte.ino](esp32/ponte/ponte.ino) | **v0.4.0** | **Segundo firmware.** Ponte BLE MIDI ↔ UART no ESP32-C3 — um fio com rádio: sem mapa de CC, sem params. D28 ativo em baixo, aberto-dreno. `board` traz quedas com recência e saturações de TX, e desde a v0.5.0 **quedas que sobrevivem ao corte de energia** (NVS, escrita diferida): uma conta desta sessão, outra desde sempre com o número de arranques |
 | [esp32/README.md](esp32/README.md) | — | Fiação, pinos escolhidos, como gravar, e o ambiente que se sabe funcionar (⚠️ NimBLE **1.4.3**, o 2.x não compila) |
 | [docs/operacao/ATERRAMENTO.md](docs/operacao/ATERRAMENTO.md) | **v0.1.0** | **O capítulo do terra** — os três tipos de condutor e o destino legal de cada um, estrela contra margarida, `AGND`/`DGND` e a ponte estreita, condensadores **por tipo de carga** (o que o amp exige, o step-down recusa e o rádio precisa), entradas de alta impedância, acoplamento pelo ar, e o método de medição **sob carga**. É o dono do assunto: quando discordar do `HARDWARE.md`, manda |
 | [docs/operacao/GEAR-AUDIT.md](docs/operacao/GEAR-AUDIT.md) | **v0.1.0** | A decisão de trocar o WIDI Core por um ESP32-C3: US$ 45 → US$ 4 numa peça replicada em série. **Sem plano B — o aceite é portão**, e o que ele trava é a encomenda |
 | [docs/operacao/VOO-ESP32-PONTE.md](docs/operacao/VOO-ESP32-PONTE.md) | **v0.1.0** | O voo da ponte BLE↔UART. **O firmware da Daisy não muda uma linha** — o `sync` automático é o voo 2. Traz as três verificações feitas antes de escrever |
 | [docs/operacao/gerar_projeto_loopy.py](docs/operacao/gerar_projeto_loopy.py) | **v0.2.0** | **Escreve um `.lpproj` COMPLETO** do `manifest.h` — 9 páginas, 143 widgets, cores por canal. Parte de um molde e preserva a cena de loops e todo o bundle: um projecto sem `Clock` nem `Sequence` nem abre. **Nunca escreve por cima do molde** |
 | [docs/operacao/gerar_perfil_loopy.py](docs/operacao/gerar_perfil_loopy.py) | **v0.5.0** | Lê o projeto exportado do Loopy (`.lpproj`, zip com SQLite) e **emite os bindings** já endereçados, com os CCs vindos do `manifest.h`. ⚠️ O endereço é posicional — regerar depois de mexer no layout |
-| [docs/operacao/gerar_secao_loopy.py](docs/operacao/gerar_secao_loopy.py) | **v0.2.0** | **Dono do `LOOPY-SECAO.md`** — folha de montagem da secção nova, com CC, canal, tipo de widget, faixa e valor de nascimento, mais a página de presets. Gerado porque numa só sessão mudaram **seis CCs**: folha à mão deriva na primeira mudança, e quem a segue monta o instrumento de ontem |
+| [docs/operacao/gerar_secao_loopy.py](docs/operacao/gerar_secao_loopy.py) | **v0.3.0** | **Dono do `LOOPY-SECAO.md`** — folha de montagem da secção nova, com CC, canal, tipo de widget, faixa e valor de nascimento, mais a página de presets. Gerado porque numa só sessão mudaram **seis CCs**: folha à mão deriva na primeira mudança, e quem a segue monta o instrumento de ontem |
 | [docs/operacao/LOOPY-SECAO.md](docs/operacao/LOOPY-SECAO.md) | **gerado** | 105 vínculos, 72 faders e 33 botões, na ordem de aprendizagem — não é layout: o Loopy endereça por índice de array, que só existe depois de os widgets serem criados |
 | [docs/operacao/CCS-POR-PAGINA.md](docs/operacao/CCS-POR-PAGINA.md) | **gerado** | Os CCs na ordem das páginas do Loopy: central / mod a / mod b / time a / time b / random / tech |
 | [docs/operacao/BINDINGS-A-MAO.md](docs/operacao/BINDINGS-A-MAO.md) | **gerado** | Plano B: folha de entrada manual em Control Settings, com CC e canal por linha |
 | [docs/operacao/ACEITE-MULTIPLEXACAO.md](docs/operacao/ACEITE-MULTIPLEXACAO.md) | **vivo** | Roteiro do aceite de MIDI — o lado do firmware está verde |
-| [src/presets.h](src/presets.h) | **v0.6.0** | Estruturas de preset e a **versão do mapa derivada** (FNV-1a dos nomes; hoje **`0xBE1B`**). C++ puro — prova-se inteiro em banco nativo. A pertinência ao preset é DERIVADA do nome, e `route_*` está na lista curta de excepções. Teto por preset **56** |
-| [src/test_presets.cpp](src/test_presets.cpp) | **v0.4.0** | Banco nativo dos presets: pertinência, hash (as duas metades) e cada veredito de recusa |
+| [src/presets.h](src/presets.h) | **v0.11.0** | Estruturas de preset e a **versão do mapa derivada** (FNV-1a dos nomes; hoje **`0xBE1B`**). C++ puro — prova-se inteiro em banco nativo. A pertinência ao preset é DERIVADA do nome, e `route_*` está na lista curta de excepções. Teto por preset **56** |
+| [src/test_presets.cpp](src/test_presets.cpp) | **v0.7.0** | Banco nativo dos presets: pertinência, hash (as duas metades) e cada veredito de recusa |
 | [src/qspi_raw.h](src/qspi_raw.h) | **v0.2.0** | Contrato do acesso cru à QUADSPI. **Fecho transitivo zero** — nada que ele chame pode morar na QSPI |
 | [src/qspi_raw.cpp](src/qspi_raw.cpp) | **v0.2.0** | Registradores da QUADSPI na mão, tudo marcado `COTUCA_ITCM`. **ABORT ao sair do memory-mapped** — ver `docs/DESENHO-ESCRITA-QSPI.md` |
 | [src/cotucatronics_qspi.lds](src/cotucatronics_qspi.lds) | **v0.1.0** | Linker script bifurcado da libDaisy (certidão de origem no topo). Acrescenta `.itcm_text` → ITCMRAM |
@@ -120,12 +120,16 @@ Cinco regras que não se negociam:
 | [src/flash.sh](src/flash.sh) | **v0.4.0** | Grava **só se o build passou**, confere a versão **no fonte e na placa**, e **repõe o estado que a gravação apagou**. Entra no bootloader por `dfu go` e espera o DFU aparecer, em vez de pedir o RESET |
 | [src/estado.py](src/estado.py) | **v0.2.0** | Guarda os params antes do DFU e repõe-os depois. ⚠️ Fala em **`real`**, que é o que o `set` aceita — a v0.1.0 mandava `norm`, era recusada com `fora da faixa`, e **imprimia "repos" na mesma** porque eu deitava fora a resposta. Lê a resposta, e grita o que recusa |
 | [src/porta_daisy.py](src/porta_daisy.py) | **v0.1.0** | Acha a Daisy **perguntando**, nunca por posição no `glob`. Nasceu quando o ESP32 entrou na USB e passou a haver dois `usbmodem` — a escolha por índice virou sorte |
-| [src/check_docs.py](src/check_docs.py) | **v0.12.0** | `make check-docs`: dá testemunha à doc contra o manifest: fantasmas, comandos sem ajuda, mapa de pinos, faixas, e **duas versões no mesmo arquivo que discordam**. Aborta se `AddMidi` não casar nenhuma vez. **Imprime a própria versão na primeira linha**. A regra das duas versões cobre também `.py`, onde não há `#define`: cruza docstring, constante e **o que o script imprime** |
+| [docs/operacao/auditar.sh](docs/operacao/auditar.sh) · [.command](docs/operacao/auditar.command) | **v1.2.0** | **A varredura mecânica do `/audit`** — links mortos, isenções órfãs, aposentados órfãos e duplicados, destinos dessincronizados (repo/vault), `check_docs` e o mapa de versões. **Só reporta o que prova**: as classes de julgamento estão na skill, não aqui. Na estreia achou 5 links mortos no `MAPA-DE-TERRA.md` e uma entrada duplicada |
+| [docs/operacao/vizinhos.py](docs/operacao/vizinhos.py) | **v1.0.0** | Caça a **frase partida pela renomeação** — o caso em que a âncora casou, o `grep` confirmou, o `make` passou, e a frase ficou sem sentido porque a continuação estava na linha seguinte. Só assinala quando a edição tocou o **fim** da linha; `--termo=<nome>` aperta para onde a cauda removida trazia o nome (211 → 89 → 16 vizinhanças) |
+| [docs/operacao/coerencia.py](docs/operacao/coerencia.py) | **v1.1.0** | As checagens que o `grep` não faz direito — isenções que não cobrem nada (pelo critério do `check_docs`: **entre crases**, escopo de ficheiro), saúde da lista de aposentados, e a **passada de itens pendentes**. Nasceu a corrigir duas checagens em bash que acusavam pelo critério errado |
+| [docs/operacao/versoes_readme.py](docs/operacao/versoes_readme.py) | **v1.0.0** | Confere o mapa de ficheiros acima contra os ficheiros — o `CLAUDE.md` exige a versão actual em cada linha e nada cobrava isso. `--write` acerta. **Na estreia: 15 de 58 tinham derivado**, uma delas com o README à FRENTE do fonte (`ponte.ino`). Reporta o que não consegue ler, em vez de saltar calado |
+| [src/check_docs.py](src/check_docs.py) | **v0.14.0** | `make check-docs`: dá testemunha à doc contra o manifest: fantasmas, comandos sem ajuda, mapa de pinos, faixas, e **duas versões no mesmo arquivo que discordam**. Aborta se `AddMidi` não casar nenhuma vez. **Imprime a própria versão na primeira linha**. A regra das duas versões cobre também `.py`, onde não há `#define`: cruza docstring, constante e **o que o script imprime** |
 | [docs/params-aposentados.txt](docs/params-aposentados.txt) | **vivo** | Params aposentados, símbolos removidos e nomes externos — o que o verificador tem licença para não achar |
 | [docs/DESENHO-ESCRITA-QSPI.md](docs/DESENHO-ESCRITA-QSPI.md) | **vivo** | A rota dos presets: janela ITCM (**provada**), protocolo real lido do fonte, e **onde a frente parou com a condição de retomada** |
 | [docs/PAUTA-ESCUTA.md](docs/PAUTA-ESCUTA.md) | **vivo** | O que ouvir, na ordem — ~20 versões sem veredito de ouvido |
 | [src/Makefile](src/Makefile) | **v0.2.0** | Build por placa. `APP_TYPE=BOOT_QSPI`. Sem DaisySP |
-| [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — nove skills: `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura`, `bancada-firmware`, `revisao-terra`, `kicad`, `loopy` |
+| [.claude/skills/](.claude/skills/) | **vivo** | **O braço executável do IFÁ10000** — dez skills: `ifa10000`, `medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura`, `bancada-firmware`, `revisao-terra`, `kicad`, `loopy`, `audit` |
 | [docs/operacao/PINOS.md](docs/operacao/PINOS.md) | **vivo** | **O mapa de pinos, e a fonte é o fonte.** Conferido a cada `bts`. Em 04/09 apanhou-se a dizer `Livres: D0–D12` enquanto listava o OLED como ocupado três secções abaixo — livres a sério são seis |
 | [docs/operacao/SUPRESSOR-MICROFONIA.md](docs/operacao/SUPRESSOR-MICROFONIA.md) | **vivo** | O contrato do **SuMiA™**, medido antes do código, mais o que ele já fez em serviço |
 | [docs/operacao/ATERRAMENTO.md](docs/operacao/ATERRAMENTO.md) · [TERRA-REFAZER.md](docs/operacao/TERRA-REFAZER.md) | **vivo** | A varredura de terra e a folha de bancada com que o aterramento foi refeito a 03/09 |
@@ -140,11 +144,11 @@ Cinco regras que não se negociam:
 | [docs/PROCEDIMENTO-MIDI-LEARN.md](docs/PROCEDIMENTO-MIDI-LEARN.md) | **novo** | Endereçar as páginas do Loopy pelo modo `learn`. Inclui os três "não faça" que custaram rodada |
 | [docs/IFA10000.md](docs/IFA10000.md) | **vivo** | **Certificação de efeitos** — as 10 etapas que todo efeito passa |
 | [docs/STATUS.md](docs/STATUS.md) | **vivo** | **Onde estamos** — estado da placa, defeitos abertos, próximos passos |
-| [docs/operacao/PRESETS-LISTA.md](docs/operacao/PRESETS-LISTA.md) | **v0.2.0** | **A lista de presets e como os botões a endereçam** — CC 121 carrega / 122 grava, canal diz o destino. Vive vazia até à sessão de escuta; traz o hash do mapa em vigor (`0xBE1B`) |
+| [docs/operacao/PRESETS-LISTA.md](docs/operacao/PRESETS-LISTA.md) | **v0.9.0** | **A lista de presets e como os botões a endereçam** — CC 121 carrega / 122 grava, canal diz o destino. Vive vazia até à sessão de escuta; traz o hash do mapa em vigor (`0xBE1B`) |
 | [docs/battle_scars.md](docs/battle_scars.md) | **vivo** | **Aprendizados e metodologia** — as cicatrizes, pra não pagar duas vezes |
-| [src/TESTES.md](src/TESTES.md) | **v0.24.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
-| [src/BOARDS.md](src/BOARDS.md) | **v0.12.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
-| [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.1.0** | Monitor serial, sem dependências |
+| [src/TESTES.md](src/TESTES.md) | **v0.25.0** | Roteiro T1–T12, fluxo de gravação e defeitos conhecidos |
+| [src/BOARDS.md](src/BOARDS.md) | **v0.14.0** | Placas suportadas, a regra da SDRAM e a nota do bootloader |
+| [src/cotuca_serial.py](src/cotuca_serial.py) | **v0.4.0** | Monitor serial, sem dependências |
 | [src/monitor.command](src/monitor.command) | **v0.1.0** | Wrapper duplo-clicável do monitor |
 | [src/cotuca_measure.py](src/cotuca_measure.py) | **v0.1.0** | Mede a frequência de saída por FFT |
 | [src/teste_roteamento.py](src/teste_roteamento.py) | **v0.1.0** | **T7c automatizado** — prova os dois andares do roteamento com o tom de teste. Pergunta a porta, acha a interface pelo nome, **mede** o mapa de canais e aborta se as duas saídas caírem no mesmo (critério que não pode falhar não é critério) |
@@ -159,7 +163,6 @@ Cinco regras que não se negociam:
 | libDaisy | `~/dev/libDaisy` |
 | dfu-util | 0.11 |
 | Bootloader | Electrosmith `dsy_bootloader_v6_4-intdfu-2000ms.bin` (vem com a libDaisy) |
-| RNBO / Max | 1.4.3 / 9.1.4 |
 
 > **Não use o `arm-none-eabi-gcc` do Homebrew.** Ele vem sem newlib e a libDaisy
 > morre em `stdint.h: No such file or directory`. Use o cask (pede senha de admin):
@@ -215,8 +218,8 @@ aviso, e — pior — um notch de microfonia que desaparecia no flash. O
 
 Desde a v0.4.0 o firmware é compilado com `APP_TYPE=BOOT_QSPI`: **o app vive nos
 8 MB da QSPI e os 128 KB de flash interna são do bootloader** da Electrosmith. O
-motivo é direto — com um único módulo RNBO o firmware já ocupava **94,14%** dos
-128 KB internos; o segundo módulo não caberia. Na QSPI o mesmo firmware ocupa
+motivo é direto — com um único módulo de DSP externo o firmware já ocupava
+**94,14%** dos 128 KB internos; o segundo módulo não caberia. Na QSPI o mesmo firmware ocupa
 **1,52%** de 7 936 KB.
 
 **Uma vez por placa**, grave o bootloader. Ponha a Seed no DFU da STM —
@@ -298,15 +301,16 @@ faixa, que é onde moram os delays curtos.
 
 **Curva é decisão de manifest, não de módulo.** É ergonomia — como o knob se
 comporta na mão. O DSP recebe o valor já curvado e não sabe que houve curva; o
-mesmo export do RNBO serve a esculturas com curvas diferentes.
+mesmo motor de DSP serve a esculturas com curvas diferentes.
 
-`cpu` reporta a carga do bloco de áudio (média e pico). Com o delay RNBO
-carregado: **5,7% média, 9,9% pico** a 48 kHz / bloco 48 — constante, porque a
-linha de delay lê e escreve toda amostra independente do ajuste.
+`cpu` reporta a carga do bloco de áudio (média e pico). Com a suíte inteira
+(mais shimmer e detune): **59,5% média, 65,8% pico** do prazo de 1 000 µs,
+medido e registado no [STATUS.md](docs/STATUS.md). A linha de delay é
+constante: lê e escreve toda amostra independente do ajuste.
 
 `mods` mostra o módulo DSP carregado, os parâmetros que ele expôs (descobertos
 **por nome**, não por índice), as ligações do manifest e o extrato de memória do
-alocador do RNBO.
+alocador de SDRAM.
 
 ### MIDI
 
@@ -396,7 +400,8 @@ código, e é inaudível (1 cent é ~1/100 de semitom).
   `hal::Log` transmite por conta própria, com buffer duplo e retry.
 - **`sdram_pool` pede a região SDRAM inteira, e agora aparece nos 100%.** Até a
   v0.3.0 o `--gc-sections` descartava o pool porque nada chamava `AllocBig`. O
-  módulo RNBO chama, então os 64 MB voltaram de uma vez: o mapa mostra `SDRAM:
+  delay, o freeze, o reverb e os motores de pitch chamam, então os 64 MB
+  voltaram de uma vez: o mapa mostra `SDRAM:
   100%`. **É o pool, não o consumo** — mas não sobra espaço pra mais nada em
   `.sdram_bss`.
 - **`AllocBig()` é o único acesso à SDRAM.** Declarar `DSY_SDRAM_BSS` fora de
@@ -405,32 +410,36 @@ código, e é inaudível (1 cent é ~1/100 de semitom).
   alocar por fora, o número não fecha.
 - **`FLASH: 0 B` no mapa de memória está certo.** O app roda da QSPI; a flash
   interna é do bootloader. Não é build vazia.
-- **As macros do RNBO têm que vir antes dos includes.** `RNBO_NOTHROW`,
-  `RNBO_USE_FLOAT32` e `RNBO_USECUSTOMALLOCATOR` são lidas pelos headers —
-  chegar depois é o mesmo que não existir, e a falha é silenciosa. Por isso o
-  export do RNBO entra como `#include` de fonte dentro de `module_rnbo.cpp`, e
-  **não** como unidade de compilação separada. Receita inteira em
-  [src/modules/README.md](src/modules/README.md).
-- **Todo export novo do RNBO precisa de um Class Name próprio.** O export do
-  `delay` saiu com o padrão `rnbomatic`; um segundo export com o mesmo nome
-  colide no link. Detalhes em [src/modules/README.md](src/modules/README.md).
 
 ## Defeitos em aberto
 
-Nenhum defeito conhecido. Os quatro encontrados na bancada estão corrigidos —
-diagnóstico de cada um no [TESTES.md](src/TESTES.md).
+**A lista viva está no [STATUS.md](docs/STATUS.md)** — é lá que se abre e se
+fecha. Resumo de hoje, 04/09:
 
-**Em aberto, porém: a v0.4.0 não foi validada em placa.** O módulo RNBO e a
-migração QSPI compilam limpo, mas gravar exige o botão BOOT. Até o **T5** rodar,
-o módulo é código que compila, não módulo que funciona.
+- **🔴 A serial morre sob callback longo** — prioridade 1. As rajadas de
+  ~3,4 ms do callback starvam a ISR do USB. Contornado por `log_mute`,
+  caixa-preta e MIDI; o conserto certo (**ring de log kick-and-forget**) está
+  desenhado e não feito.
+- **🟡 Pool SRAM a 92,4%** — terceiro módulo não entra sem mudar a estratégia
+  de alocação.
+- **🟡 Bloco 256 custa 5,3 ms de latência** — a razão de o bloco ser 48.
+- **🟢 Off-by-one no contador de aplicadas** — diferença fixa de 1, não taxa
+  de perda. Confirmar antes de chamar de cosmético.
+
+Diagnóstico dos que já fecharam: [TESTES.md](src/TESTES.md).
 
 ## Signal path do sistema completo
 
-Ainda não implementado — o hardware está a caminho. Registrado aqui pra não
-bloquear decisões de arquitetura:
+**Montado e a tocar.** O pré-amp entrou a 04/09 e o aterramento foi refeito a
+03/09; o que continua por confirmar com o multímetro está marcado no
+[STATUS.md](docs/STATUS.md). O mapa de pinos vivo é o
+[PINOS.md](docs/operacao/PINOS.md), que se confere a cada fecho:
 
 - **Entradas.** `IN_L` = piezo via buffer de alta impedância (circuito externo);
-  `IN_R` = jack TS/TRS de linha. **Pot 5 (SRC MIX)** faz crossfade entre os dois.
+  `IN_R` = jack TS/TRS de linha. **Pot 5** faz o `piezo_mix`, que é **balanço,
+  não crossfade**: no centro as duas fontes entram cheias. (O `src_mix`, que
+  era crossfade e derrubava as duas em −6 dB no centro, foi aposentado a
+  20/08 — ver [FEATURES.md](docs/FEATURES.md).)
 - **Saídas.** `OUT_L` → amp TPA3116 → exciter no corpo da escultura;
 - **Painel (22/08).** `D24` switch do freeze A · `D27` LED do freeze A ·
   `D22`/`D23` freeze B (firmware pronto, fiação pendente) · `D25` B3 rearme
@@ -447,11 +456,16 @@ bloquear decisões de arquitetura:
 
 ## Próximos passos
 
-- **Rodar o T5** — gravar o bootloader, gravar o v0.4.0 na QSPI e fazer a
-  confirmação sonora do delay. É o que falta pra v0.4.0 deixar de ser teórica.
-- **Class Name próprio no export do `delay`**, antes do segundo módulo existir.
-- Segundo módulo RNBO, seguindo [src/modules/README.md](src/modules/README.md).
-- Stack anti-feedback: frequency shifter Hilbert, gain governor, notch bank
-  adaptativo, limiter de segurança.
+**A fila viva é a do [STATUS.md](docs/STATUS.md)** — não se duplica aqui, que
+é como as duas versões divergem. O que está no topo dela, a 04/09:
+
+- **Refazer o pré-voo de medição limpa.** O pré-amp entrou a 04/09 e invalidou
+  toda a medição de ganho anterior.
+- **Confirmar o `AGND`/`DGND` com o multímetro**, em AC/mV e sob carga.
+- **Ring de log kick-and-forget** — mata o defeito 🔴 prioridade 1 por
+  arquitetura, em vez de o contornar.
+
+Fica aqui só o que é de arquitetura e não envelhece:
+
 - Segunda placa: **Teensy 4.1**, via um `hal_teensy41.cpp` novo — sem tocar em
-  mais nada.
+  mais nada. É o que a fronteira do `hal.h` existe para permitir.

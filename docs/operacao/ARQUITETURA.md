@@ -1,6 +1,6 @@
 # ARQUITETURA DE SINAL — Cotucatronics
 
-> Firmware v0.130.0 · `6002a70` · Daisy Seed 2, BOOT_QSPI, C++ puro (sem RNBO)
+> Firmware v0.130.0 · `6002a70` · Daisy Seed 2, BOOT_QSPI, C++ puro
 
 ## Topologia
 

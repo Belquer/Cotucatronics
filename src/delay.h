@@ -1,8 +1,8 @@
 #pragma once
 // ============================================================
 // Cotucatronics OS — delay v0.2.0
-// Reescrita em C++ do patch RNBO `cotucatronics_delay`, que era o
-// ULTIMO consumidor do runtime RNBO no instrumento.
+// Reescrita em C++ do patch `cotucatronics_delay`, que era o ULTIMO
+// consumidor do runtime do motor externo no instrumento.
 //
 // O GRAFO DO PATCH, LIDO DO EXPORT E REPRODUZIDO AQUI:
 //
@@ -34,7 +34,7 @@
 // ------------------------------------------------------------
 // DUAS DIFERENCAS DELIBERADAS, DECLARADAS:
 //
-// 1. REALIMENTACAO POR AMOSTRA. O `feedback~` do RNBO quebra o ciclo
+// 1. REALIMENTACAO POR AMOSTRA. O `feedback~` do patch quebra o ciclo
 //    com um bloco de atraso, entao la o laco fechava com delay + 1
 //    bloco (~1 ms). Aqui fecha por amostra. Diferenca inaudivel contra
 //    59-1000 ms de delay, e e o comportamento natural em C++ — mas

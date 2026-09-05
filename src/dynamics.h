@@ -3,7 +3,7 @@
 // ============================================================
 // Cotucatronics OS — cadeia de dinâmica do shell
 //
-// C++ puro, board-agnostic, SEM RNBO. Isto não é DSP de
+// C++ puro, board-agnostic, SEM motor externo. Isto não é DSP de
 // instrumento: é a política de segurança e comportamento do
 // shell, que vale pra toda escultura independente de qual
 // módulo está carregado. Por isso vive aqui e não num patch.

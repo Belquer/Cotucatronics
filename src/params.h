@@ -62,7 +62,7 @@ inline float Clamp01(float v)
 // ------------------------------------------------------------
 // ParamTable
 // Guarda cada parâmetro em duas formas:
-//   - normalizado 0..1  → o que knob/serial/RNBO falam
+//   - normalizado 0..1  → o que knob/serial/motor falam
 //   - real (min..max)   → o que o DSP consome
 // A conversão tem EXPOENTE por parâmetro (`curve`):
 //

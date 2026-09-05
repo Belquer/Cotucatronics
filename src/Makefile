@@ -16,7 +16,7 @@ BOARD  ?= daisy_seed
 # ---- onde o app roda ----
 # BOOT_QSPI: o app vive nos 8 MB da QSPI e os 128 KB de flash interna
 # ficam pro bootloader da Electrosmith. Migramos porque o app já ocupava
-# 94% dos 128 KB internos com um único módulo RNBO — o segundo não
+# 94% dos 128 KB internos com um unico modulo externo — o segundo nao
 # caberia. Na QSPI o teto some como problema.
 #
 # Custo: o M7 executa da QSPI mais devagar que da flash interna (mitigado
@@ -47,42 +47,38 @@ LIBDAISY_DIR ?= $(HOME)/dev/libDaisy
 
 HAL_SRC = hal_$(BOARD).cpp
 
-# Motores de DSP. Cada module_rnbo_*.cpp inclui o .cpp gerado como
-# fonte, dentro de um namespace proprio — os exports nao entram aqui
-# como unidades de compilacao separadas.
-# O freeze saiu do build: nao cabe no prazo do bloco (7349 us medidos
-# contra 2667 de orcamento) e ocupava 89% do pool de SRAM, que o
-# vocoder precisa. O arquivo continua no repo — module_rnbo_freeze.cpp
-# aponta pra modules/xxxfreeze/ — pra voltar quando o patch emagrecer.
-# VOCODER FORA (2026-08-18, decisao de ouvido do dB). Sobra o delay no
-# slot Instrument, e o slot Fx2 fica VAZIO — passthrough silencioso,
-# nao erro. O block_size voltou pra 48 no manifest na mesma leva: o 256
-# era exigencia da FFT do vocoder e saiu junto com ela. Os dois
-# arquivos mudam JUNTOS, e e por isso que a nota esta nos dois.
+# O SISTEMA DE MODULOS EXTERNOS SAIU INTEIRO A 20/08, quando o delay —
+# o ultimo consumidor — virou C++ no shell (delay.h). NAO ha aqui
+# nenhum MODULE_SRC nem diretorio de export, e os .cpp de modulo nao
+# existem no repo: ate 04/09 este bloco mandava devolve-los, o que era
+# receita para ficheiros que nao estao ca.
 #
-# Pra reviver: devolve module_rnbo_vocoder.cpp aqui e poe 256 la. O
-# export, o wrapper, os binds e a cerca de La menor dos buzios seguem
-# no repo, comentados e conferidos — a volta e de minutos.
+# O que sobrevive como decisao:
+#   - block_size 48. O 256 era exigencia da FFT de um modulo externo e
+#     saiu com ele. Bloco e manifest mudam JUNTOS.
+#   - O freeze de hoje e o freeze.h, granular em C++ no shell. O de
+#     motor externo foi reprovado na etapa 5 do IFA10000 (7 349 us
+#     contra 2 667 de orcamento) e nunca voltou.
+#   - O slot Fx2 fica VAZIO: passthrough silencioso, nao erro.
 #
-# O FREEZE que entrou no lugar NAO e este module_rnbo_freeze.cpp: e o
-# freeze.h, granular em C++ no shell. O RNBO foi reprovado na etapa 5
-# do IFA10000 (7 349 us contra 2 667 de orcamento) e segue fora.
+# Reviver exige ir ao git buscar tudo — ver FEATURES.md, que tem o
+# caminho de volta e o commit.
 
 CPP_SOURCES = \
 	qspi_raw.cpp \
 main.cpp \
 $(HAL_SRC)
 
-# So os modules_rnbo_*.cpp usam, mas o -I e global.
-# Sem -I do RNBO: o runtime saiu inteiro em 20/08 quando o delay
-# virou C++ no shell. O instrumento nao depende mais de RNBO.
+# O -I e global. Ja nao ha include de motor externo: o runtime saiu
+# inteiro em 20/08 quando o delay virou C++ no shell. O instrumento
+# nao depende de nenhum motor de fora.
 C_INCLUDES += -I.
 
-# O RNBO usa <cmath>/<algorithm> com a STL; nada de excecoes nem RTTI,
+# O shell usa <cmath>/<algorithm> com a STL; nada de excecoes nem RTTI,
 # que o Makefile da libDaisy ja desliga.
 CPPFLAGS += -Wno-unused-parameter -Wno-sign-compare
 
-$(info Cotucatronics Makefile v0.4.0 — BOARD=$(BOARD) APP_TYPE=$(APP_TYPE) LIBDAISY_DIR=$(LIBDAISY_DIR))
+$(info Cotucatronics Makefile v0.4.1 — BOARD=$(BOARD) APP_TYPE=$(APP_TYPE) LIBDAISY_DIR=$(LIBDAISY_DIR))
 
 # ---- checagens com mensagem legível, em vez de erro críptico ----
 ifeq ($(wildcard $(HAL_SRC)),)
@@ -107,7 +103,7 @@ endif
 # MODO BANCADA — alavanca 1 de 3
 # O core/Makefile da libDaisy usa "OPT ?= -O2", entao esta
 # atribuicao vence. -O3 vale pro projeto INTEIRO, nao so pros
-# modulos RNBO: separar por arquivo exigiria sobrepor a regra de
+# modulos externos: separar por arquivo exigiria sobrepor a regra de
 # padrao do Makefile da libDaisy, que nao expoe gancho pra isso.
 # O delta medido no delay serve de calibracao do que -O3 rende.
 # ============================================================
@@ -121,7 +117,7 @@ include $(SYSTEM_FILES_DIR)/Makefile
 
 # ---- checagem de repo ----
 # `make check` responde: um CLONE LIMPO compila? Existe porque
-# module_rnbo_alloc.h ficou meses fora do repo sem ninguem notar — o
+# o cabecalho de alocacao do modulo ficou meses fora do repo sem ninguem notar — o
 # build local funcionava porque o arquivo estava na arvore. Conferir
 # a arvore nao e conferir o repositorio.
 .PHONY: check print-cpp-sources

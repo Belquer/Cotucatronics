@@ -62,7 +62,7 @@
 // E o efeito mais barato da suite, e serve pra validar o EffectSlot na
 // classe "sem historico" antes dos que reusam o motor granular.
 //
-// C++ puro: sem hal, sem RNBO, sem alocacao.
+// C++ puro: sem hal, sem motor externo, sem alocacao.
 // ============================================================
 
 #include <cmath>

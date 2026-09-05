@@ -46,14 +46,14 @@ endereçou o *livelock* do `PollMidi` em 28/08.
 placa está muda a comandos; a fase chega a **7** e a placa responde.
 
 
-**Documento v0.24.0** · última execução em placa: 2026-08-18 · firmware
+**Documento v0.25.0** · última execução em placa: 2026-08-18 · firmware
 **v0.47.0 / HAL v0.11.0** na QSPI. **T1, T2, T3, T5, T6, T7 e T8 passaram**; T4 espera
 hardware, e o T7e (gate com piezo) espera junto. **T10a passou nativo;
 T10b espera um jumper.**
 
 Roteiro mínimo pra dizer "a placa está viva e o painel falso responde"
 antes de encostar em DSP. T1–T3 rodam só com USB; T4 espera hardware;
-T5 é o critério de aceite do primeiro módulo RNBO; T10 é o do MIDI.
+T5 é o critério de aceite do primeiro módulo externo; T10 é o do MIDI.
 
 > **Os bancos nativos rodam sem placa e sem flash:** `./test.command`
 > valida `dynamics.h` e `midi.h` no Mac em um segundo. Eles não
@@ -74,7 +74,7 @@ T5 é o critério de aceite do primeiro módulo RNBO; T10 é o do MIDI.
 | Bootloader | Electrosmith `dsy_bootloader_v6_4-intdfu-2000ms.bin` (vem com a libDaisy) |
 | Firmware | Cotucatronics OS v0.5.0 / `hal_daisy_seed v0.4.0` · `APP_TYPE=BOOT_QSPI` |
 
-Ocupação do firmware v0.4.1 (com módulo RNBO e medidor de CPU):
+Ocupação do firmware v0.4.1 (com módulo externo e medidor de CPU):
 
 | Região | Usado | Total | % |
 |---|---|---|---|
@@ -84,7 +84,7 @@ Ocupação do firmware v0.4.1 (com módulo RNBO e medidor de CPU):
 | SDRAM | 64 MB | 64 MB | 100,00% (o `sdram_pool` inteiro — ver nota no fim) |
 
 > **Antes da migração o mesmo firmware ocupava 123 392 B / 128 KB = 94,14%
-> da flash interna.** Um único módulo RNBO comeu quase tudo; o segundo não
+> da flash interna.** Um único módulo externo comeu quase tudo; o segundo não
 > caberia. Daí o `APP_TYPE=BOOT_QSPI`.
 
 > O toolchain do Homebrew (`brew install arm-none-eabi-gcc`) **não serve**:
@@ -203,7 +203,7 @@ passada tinha soado como um bip curto; foi observação parcial, não defeito.
 
 Espera o buffer de alta impedância, o TPA3116 e o painel. Nada a rodar.
 
-## T5 — módulo RNBO "delay" · ✅ PASSOU
+## T5 — módulo externo "delay" · ✅ PASSOU
 
 **O critério de aceite do primeiro módulo.** Compilar não é evidência: o
 patcher pode estar montado e mudo. Aqui a conta foi fechada por medição, não
@@ -290,7 +290,7 @@ Com o tom ligado e 100% molhado: 848,23 Hz a −23,4 dBFS; logo após o corte,
 
 O par `dly_mix = 0` → seco / `dly_mix = 1` → cauda é o controle que fecha a
 cadeia inteira: **ParamTable → ligação por nome → `setParameterValue` do
-RNBO → mudança audível**.
+motor → mudança audível**.
 
 ### T5c — CPU
 
@@ -327,7 +327,7 @@ ganharam metade útil do percurso, que era o objetivo.
 
 ### T6b — o valor CURVADO chega no DSP
 
-O teste que importa: não basta o `list` mostrar o número certo, o RNBO tem que
+O teste que importa: não basta o `list` mostrar o número certo, o motor tem que
 receber esse número. Medindo a cauda 1 s após cortar a fonte (440 Hz,
 `dly_mix = 1.0`):
 
@@ -342,7 +342,7 @@ decai mais rápido. Se o módulo estivesse recebendo o normalizado cru (0.5 e
 
 > **Armadilha que isso apanha.** O push pro módulo usava `params.Get()` — o
 > normalizado **cru**. Com a curva só dentro do `Real()`, ela ficaria presa do
-> nosso lado e nunca chegaria no RNBO: o sintoma seria "a curva não faz nada",
+> nosso lado e nunca chegaria ao motor: o sintoma seria "a curva não faz nada",
 > sem erro, sem log, sem pista. O push agora usa `Real()`. **Todo parâmetro
 > futuro herda isso:** o que chega no módulo é `Real()`, e é por ali que
 > qualquer transformação de manifest passa a valer.
@@ -457,7 +457,7 @@ instância só, envios já somados, e nada nela sabe de que cadeia veio.
 
 | Configuração | Média | Pico |
 |---|---|---|
-| Sem cadeia (v0.5.0, só delay RNBO) | 5,7% | 9,9% |
+| Sem cadeia (v0.5.0, só o delay do motor externo) | 5,7% | 9,9% |
 | Repouso, cadeia carregada | 10,2% | 20,5% |
 | **Tudo engajado** (gate aberto + governor comprimindo + boost 8× + limiter atuando + delay) | **11,0%** | **20,5%** |
 
@@ -764,103 +764,14 @@ GPIO, pull-up e debounce. `b1`/`b2` entram depois disso. Um botão que
 quica ou um pino trocado passa neste teste e falha no painel — a
 validação do hardware é bater no botão de verdade e ver o log.
 
-## T12 — vocoder: coincidência espectral · ⏳
+## T12 — RETIRADO
 
-**O teste que impede um diagnóstico errado de virar bug report.**
-
-Em 2026-08-16 o vocoder pareceu quebrado: rodava, custava 61% do prazo
-do bloco, e não saía som. Não era defeito. **Molde espectralmente
-esparso (tom senoidal) × portadora esparsa (drone de 3 parciais) = os
-bins não coincidem, e a saída é ~zero por construção.**
-
-O comentário do `fx2_gain` no manifest já dizia isso — *"cross-synthesis
-só devolve energia onde as duas fontes coincidem"* — mas ninguém tinha
-transformado a frase num teste, então o silêncio continuou parecendo
-falha. É o que este T12 conserta.
-
-### T12a — a coincidência liga e desliga o som
-
-Com `voc_tone` no default (portadora tonal) e `voc_pitch` centrado:
-
-```bash
-./cotuca_serial.py --send "tone on" "set tone_freq 220" "set fx2_on 1" --gap 2.5
-```
-
-**Esperado:** saída FORTE. Depois, num voo novo, `tone_freq 300` deve
-**despencar** — 300 Hz não cai em cima das parciais do drone.
-
-A razão `pin/pout` da caixa-preta (`bb`) nos dois casos **documenta o
-fenômeno com número**. Sem isso a explicação continua sendo teoria.
-
-### T12b — portadora de ruído passa qualquer coisa
-
-```bash
-./cotuca_serial.py --send "set voc_tone 0" "tone on" "set tone_freq 300" "set fx2_on 1" --gap 2.5
-```
-
-`voc_tone 0` põe ruído na portadora — espectro cheio, coincidência
-garantida. **Qualquer `tone_freq` deve passar.** Se 300 Hz passar aqui e
-não passar no T12a, o fenômeno está provado e o vocoder está são.
-
-### T12c — critério de aceite REAL é o piezo
-
-Tom senoidal é o **pior caso possível**: energia numa raia só. A
-escultura pelo piezo é banda larga, as coincidências são muitas, e é
-esse o caso que decide se o módulo serve. **T12a e T12b são diagnóstico;
-T12c é aceite.** Espera o dB tocar.
-
-### Calibração do `fx2_gain` — no caso banda larga, nunca no senoidal
-
-> **Armadilha, e já caímos nela.** Calibrar ganho contra o tom senoidal
-> mede o caso de menor saída que existe. O valor que resulta (chegamos a
-> 48x) **estoura no primeiro tap** quando o piezo entra, porque aí a
-> saída é muito maior. Governor e limiter seguram — mas segurar não é o
-> mesmo que estar certo: o instrumento passaria a viver comprimido.
->
-> Calibrar com `voc_tone 0` (ruído) ou com o piezo tocando, lendo
-> `pin/pout` do `bb`. O default caiu pra **8x** justamente por isso:
-> provisório, e errando pro lado seguro.
-
-### T12e — delay + vocoder JUNTOS, aprovados de ouvido · ✅ 2026-08-16
-
-"Tudo perfeito" — dB, com piezo, os dois módulos no caminho:
-`dly_mix 0.5 → voc_mix 0.5, voc_pitch 1.0 (base 440 Hz), voc_tone 0.7,
-ganho 1x, level 0.4`. CPU 64% do prazo de 5333 us. Este é o primeiro
-estado da cadeia inteira aprovado pelo autor do patch.
-
-**Atenção: é estado de BANCADA.** A dinâmica do shell está neutralizada
-(gate 0, shifter 0, governor fora) pro A/B com o Max. Quanto de proteção
-volta, e a que custo tímbrico, é decisão do dB — pendente. Até lá o
-manifest carrega os valores aprovados com as exceções comentadas.
-
-### T12d — VOCODER FUNCIONANDO em placa · ✅ 2026-08-16
-
-Confirmado de ouvido pelo dB com piezo, portadora tonal em `voc_pitch
-1.0`. A cadeia inteira que levou até aqui, porque nenhum passo sozinho
-resolvia:
-
-1. **Motor RNBO não era dirigido** (a causa raiz do mudo total). O
-   wrapper chamava `patcher_.process()` direto; o `MinimalEngine` exige
-   `processEventsUntil()` + `advanceTime()` por bloco. Sem isso o
-   relógio fica em zero e nenhum evento executa. Corrigido em
-   `module_rnbo_vocoder v0.5.0` — **vale pra todo módulo RNBO futuro.**
-2. **Ganho de compensação era fantasma.** A caixa-preta mediu: entrada
-   pico 0.215, saída crua do vocoder 2.359 — **11x mais quente**. Os
-   48–64x de "compensação" empurravam picos de ~151 contra um limiter
-   de 0.95 (~44 dB de esmagamento) — o vocoder soava "baixo" porque
-   estava sendo pisoteado. Ganho correto do host: **1x, unidade**.
-3. **A cadeia de dinâmica do shell mastigava o resto**: governor com
-   teto 0.5 contra picos de 2.36, shifter de 4 Hz sempre ligado, gate
-   cortando as caudas do piezo. Neutralizada pra A/B (bancada).
-4. **O "abafado" era a portadora tonal GRAVE**, não defeito: a base é
-   `2^((pitch*48-24)/12)*110` — pitch 0.5 = 110 Hz. Em pitch 1.0
-   (440 Hz) o vocoder soa como deve. A cadeia param→expr→cycle~ é
-   síncrona e responde ao vivo.
-
-**Pergunta que ficou aberta:** se o push de BOOT propaga até os
-cycle~ (os pushes por serial comprovadamente propagam). O "re-kick
-pós-warm-up" proposto pelo dB — reenviar todos os params ligados no fim
-do Init — é seguro barato contra essa classe inteira; decidir com ele.
+O ensaio de coincidência espectral saiu com o efeito que o motivava. As duas
+lições que ele comprou vivem onde servem a qualquer efeito futuro: o material
+de prova por família está na etapa 6 do [IFÁ10000](../docs/IFA10000.md)
+(*banda larga é a régua de cross-synthesis; senóide é a de delay e shifter*),
+e o custo de a errar está no cap. 6 do
+[battle_scars](../docs/battle_scars.md).
 
 ## T13 — BÚZIOS: sorteio por transiente em Lá menor · ✅ PASSOU
 
@@ -879,8 +790,8 @@ sem nota errada.
 | Alvo | Sorteio |
 |---|---|
 | `dly_time` | 100–500 ms em **degraus de 50 ms** (cerca em REAL) |
-| `voc_pitch` | nota nova em **Lá menor**, repetição aceita |
-| `dly_mix` / `voc_tone` | [0.3–0.8] / [0.4–1.0] |
+| carta de nota do Fx2 | nota nova em **Lá menor**, repetição aceita |
+| `dly_mix` / carta de timbre do Fx2 | [0.3–0.8] / [0.4–1.0] |
 
 Proibidos por design: `level`, `src_mix`, gate, governor, limiter,
 roteamento, shift. **O búzio pode surpreender o TIMBRE, nunca a
@@ -900,7 +811,7 @@ teoria por medição a cada passo:
 | **conserto** | `DelayMs` fora | **9 711 576** | **vivo aos 62,9 s** |
 
 **`hal::DelayMs(1)` no fim do loop era o assassino.** Com o callback do
-vocoder segurando a CPU em rajadas de ~3,4 ms, a espera baseada em tick
+o módulo do Fx2 segurando a CPU em rajadas de ~3,4 ms, a espera baseada em tick
 engole tick e em algum momento não termina. O carimbo de tempo é escrito
 imediatamente ANTES do delay: o loop chegou lá aos 12 674 ms e nunca
 mais voltou — entrou e não saiu.
@@ -917,9 +828,9 @@ era da coincidência espectral.)
 Cada batida no piezo sorteia:
 - **tempo de delay novo, uniforme entre 100 e 500 ms** (cerca em REAL,
   porque a curva 2.5 do param entortaria um sorteio em norm);
-- **nota nova do vocoder em Lá menor natural** ({0,2,3,5,7,8,10} sobre
+- **nota nova do módulo do Fx2 em Lá menor natural** ({0,2,3,5,7,8,10} sobre
   110 Hz — que JÁ é um Lá), repetição aceita: sorteio sem memória;
-- `dly_mix` [0.3–0.8] e `voc_tone` [0.4–1.0].
+- `dly_mix` [0.3–0.8] e a carta de timbre do Fx2 [0.4–1.0].
 
 ```bash
 ./cotuca_serial.py --send "set arand_on 1" "set fx2_on 1" --gap 2.5
@@ -927,14 +838,14 @@ Cada batida no piezo sorteia:
 
 **Esperado, de ouvido:**
 - cada batida move o eco (derrapagem de pitch na cauda do delay =
-  esperado e DESEJADO) e salta a nota do vocoder;
+  esperado e DESEJADO) e salta a nota do módulo do Fx2;
 - a nota **nunca soa "errada"** — sempre dentro de Lá menor;
 - duas batidas em < 100 ms = UM sorteio só (cooldown);
-- `set arand_on 0` congela tudo (exige serial viva; com o vocoder
+- `set arand_on 0` congela tudo (exige serial viva; com o módulo
   ligado ela morre — RESET também congela, arand_on nasce em 0).
 
 **Registro:** enquanto a serial viver, cada sorteio loga
-`arand: dly_time=… voc_pitch=…`. Depois dela, os **últimos 4 sorteios**
+`arand: dly_time=… <nota>=…`. Depois dela, os **últimos 4 sorteios**
 ficam na caixa-preta (slots 4–7: id na parte inteira, norm na fração)
 e saem no `bb` após o reset.
 
@@ -966,7 +877,7 @@ Certificado pelo [IFÁ10000](../docs/IFA10000.md) em 2026-08-17.
 amostra espalhados em 24 linhas de atraso — 2,3 M/s, o pior caso possível
 pra cache. Os mesmos 108 KB na região certa custam menos da metade.
 
-Pico com vocoder: 71,3% (3800 µs de 5333), folga de 29%.
+Pico com o módulo do Fx2: 71,3% (3800 µs de 5333), folga de 29%.
 
 **Fora dos búzios de propósito:** o reverb é MOLDURA, não caráter. Com
 tudo saltando a cada batida, a sala constante é o que faz as jogadas
@@ -998,7 +909,7 @@ achatasse o histograma, era energia grave; se não, o problema seria
 desequilíbrio de nível por nota e o filtro sairia.
 
 **Achatou.** `fx2_hp` = **120 Hz**, aprovado de ouvido ("não estoura
-mais"). Fica **no caminho do Fx2**, não no master — sem vocoder não
+mais"). Fica **no caminho do Fx2**, não no master — sem módulo não
 estoura (medido), então filtrar o master castigaria o delay de graça. E
 120 Hz fica **abaixo** da região de 174–220 Hz que o histograma mostrou
 saudável: cortar mais alto levaria o corpo do som junto.
@@ -1052,7 +963,7 @@ ganho.
 ### A regra do bypass, revogada por medição
 
 `fx2_on` nascia em 0 porque módulo pesado que estoura o prazo mata o loop.
-O risco foi **medido e afastado**: vocoder em 37% do prazo, watchdog
+O risco foi **medido e afastado**: o módulo em 37% do prazo, watchdog
 intacto, e a morte do loop que se culpava tinha outra causa (`DelayMs`,
 cap. 7 do battle scars) — já consertada.
 
@@ -1092,7 +1003,7 @@ canal de entrada devia nascer com o seu par assim.
 > dispositivo → parear → testar*. Ver [BOARDS.md](BOARDS.md).
 
 Reprodutível por qualquer um com um cabo USB. **Sessão fria primeiro** —
-`fx2_on 0` pra serial viver — depois com o vocoder, pela caixa-preta.
+`fx2_on 0` pra serial viver — depois com o módulo, pela caixa-preta.
 
 ### T16a — sessão fria, fader deslizando
 
@@ -1117,18 +1028,18 @@ Fonte determinística (MIDI Wrench, knobs 20–23 e botões 24–33):
 
 | CC | msgs | | CC | msgs |
 |---|---|---|---|---|
-| 20 `dly_time` | 62 | | 28 `voc_mix` | 42 |
+| 20 `dly_time` | 62 | | 28 (mistura do Fx2) | 42 |
 | 21 `dly_mix` | 49 | | 29 `rev_mix` | 58 |
 | **22 `level`** | **381** | | 30 `in_gain` | 27 |
 | 23 `src_mix` | 53 | | 31 `gate_thresh` | 25 |
 | 24 `gov_ceiling` | 43 | | 32 `buzios_on` | 19 |
-| 25 `fx2_gain` | 72 | | 26 `voc_pitch` | 57 |
+| 25 `fx2_gain` | 72 | | 26 (nota do Fx2) | 57 |
 
 **914 mensagens · órfãos 0 · truncadas 0 · faixa 0–127 em todos.**
 
 O `cc 33` apareceu como "(fora do mapa)" neste voo e por isso foi mapeado
 pro `fx2_on` — **instrumentação que mostra o que NÃO está mapeado fez a
-lacuna aparecer sozinha.** Agora o vocoder liga por MIDI, e o instrumento
+lacuna aparecer sozinha.** Agora o módulo do Fx2 liga por MIDI, e o instrumento
 não depende mais de serial nem de boot pra tocar.
 
 ### T16b (histórico) — rajada de 200 CCs
@@ -1139,9 +1050,9 @@ de propósito — é o caso que o modo `stats` existe pra cobrir.
 
 **Passa se:** `ressync` fica em 0 e `fila perdeu` fica em 0.
 
-### T16c — MIDI sob carga do vocoder · ✅ PASSOU (2026-08-18, v0.40.0)
+### T16c — MIDI sob carga do módulo do Fx2 · ✅ PASSOU (2026-08-18, v0.40.0)
 
-**A pergunta:** o MIDI sobrevive com o vocoder consumindo 65% do prazo do
+**A pergunta:** o MIDI sobrevive com o módulo consumindo 65% do prazo do
 bloco? O furo conhecido era o `hal::PollMidi()`, que roda no loop
 principal — os bytes chegam por DMA (imune a carga), mas **quem despacha é
 o loop**. Se o loop engasga, o canal cai junto.
@@ -1153,7 +1064,7 @@ log on            → conferir eco. Sem eco, aborta.
 board             → confirma versão
 tone off ; set buzios_on 0     → zera o ambiente
 midi              → baseline da marca d'água
-set fx2_on 1      → sobe o vocoder (uma variável trocada)
+set fx2_on 1      → sobe o módulo (uma variável trocada)
 mscope stats      → janela de 90 s varrendo o CC 22 sem parar
 midi ; cpu        → veredito
 ```
@@ -1169,7 +1080,7 @@ midi ; cpu        → veredito
 | erros de UART / rearmes | 0 / 0 | **0 / 0** |
 | **pico da fila** | **32 de 128** | **32 de 128** |
 
-**Passa.** A marca d'água **não subiu um byte** com o vocoder ligado: o
+**Passa.** A marca d'água **não subiu um byte** com o módulo ligado: o
 loop drena a fila na mesma velocidade a 65% de CPU que a vazio. O furo do
 `PollMidi` está fechado **com número**, não com suposição.
 
@@ -1216,7 +1127,7 @@ e o dB percebeu antes de mim.
 
 Faltam: `level`, `src mix`, `gov ceiling`, `reverb mix`, `in gain`,
 `gate thresh`, `buzios on`, `freeze size`, e os dois **esperados-mortos**
-`fx2 gain` (CC 25) e `fx2 on` (CC 33) — slot RNBO vazio, o esperado é o CC
+`fx2 gain` (CC 25) e `fx2 on` (CC 33) — slot Fx2 vazio, o esperado é o CC
 chegar e não fazer nada.
 
 **#1 e #2 DESBLOQUEADOS em 18/08:** o freeze v0.3.1 passou no aceite de 10 s
@@ -1341,7 +1252,7 @@ contador de voltas completas.
 
 ## Defeitos conhecidos
 
-### A serial morre quando o vocoder liga · ABERTO
+### A serial morre sob callback longo · ABERTO
 
 Com o Fx2 ativo, o USB CDC cai poucos blocos depois (`Device not
 configured`) e não volta até o RESET. **O áudio continua rodando o tempo
@@ -1354,22 +1265,22 @@ serviço da interrupção do USB o bastante pra quebrar o timing do CDC.
 **Não medido — é hipótese, não diagnóstico.**
 
 **Impacto prático, que é o que importa:** nenhum parâmetro pode ser
-ajustado com o vocoder ligado, então todo ajuste vira uma regravação.
+ajustado sob a carga, então todo ajuste vira uma regravação.
 Foi a causa de quase toda a lentidão da sessão de 2026-08-16.
 
 Contornos que existem hoje: a **caixa-preta** (`bb`) grava durante o voo
 e é lida depois do reset; o **CC 25** ajusta o `fx2_gain` por MIDI, que
 é o único caminho de controle que sobrevive.
 
-### Motor RNBO não dirigido: módulo roda mas eventos nunca executam · CORRIGIDO
+### Motor externo não dirigido: módulo roda mas eventos nunca executam · CORRIGIDO
 
 `MinimalEngine` exige que o HOST rode `processEventsUntil()` e
 `advanceTime()` a cada bloco. Chamar só `patcher_.process()` deixa
 `_currentTime` em zero pra sempre: sinal puro roda (FFT, delay), mas
 tudo que depende de evento — clock, rampa, captura — fica morto. No Max
 funciona porque o motor é do Max. Assinatura: **roda, custa CPU, não
-soa (ou soa errado), sem log**. Corrigido em `module_rnbo_vocoder
-v0.5.0`; o delay tem a mesma violação e funciona por ser só sinal —
+soa (ou soa errado), sem log**. Corrigido no wrapper do módulo do Fx2,
+v0.5.0; o delay tinha a mesma violação e funcionava por ser só sinal —
 corrigir quando for mexido.
 
 ### Caixa-preta: três armadilhas silenciosas até a primeira leitura · CORRIGIDO
@@ -1389,14 +1300,14 @@ corrigir quando for mexido.
 então `getSizeInBytes()` devolve 0 sempre e o código que "lê o tamanho do
 próprio dataref" nunca executou. O fallback estava em 2048 pra uma FFT de
 1024: o patch lia meia janela — uma rampa — e o overlap-add nunca somou
-plano. Corrigido em `module_rnbo_vocoder v0.3.0`.
+plano. Corrigido no wrapper do módulo do Fx2, v0.3.0.
 
 ### Backup SRAM: destravar o domínio antes de qualquer acesso · CORRIGIDO
 
 Só ligar o clock não basta. No H7 o domínio de backup nasce com proteção
 de escrita, e acesso a `0x38800000` sem `HAL_PWR_EnableBkUpAccess()` dá
 **bus fault**, não escrita ignorada — a placa morre no primeiro `bb`,
-parecendo defeito de boot sem relação com o vocoder. Sequência completa
+parecendo defeito de boot sem relação com o módulo. Sequência completa
 em `hal_daisy_seed v0.10.1`.
 
 | # | Sintoma | Estado |
@@ -1483,7 +1394,7 @@ a curva de cabeça pra digitar o valor certo.
 
 **O `AllocBig()` deixou de ser descartado pelo linker.** Até a v0.3.0 a SDRAM
 aparecia como `0 B / 64 MB` porque nada chamava a função e o `--gc-sections`
-comia o pool inteiro. Com o módulo RNBO alocando a linha de delay, os 64 MB
+comia o pool inteiro. Com o módulo externo alocando a linha de delay, os 64 MB
 voltaram de uma vez: o mapa agora mostra `SDRAM: 64 MB / 64 MB = 100%`.
 
 Isso é **esperado, não estouro**. O `sdram_pool` em `hal_daisy_seed.cpp` reserva
@@ -1498,16 +1409,16 @@ A consequência prática é a de sempre: **não sobra byte pra mais nada em
 `.sdram_bss`**. Todo acesso à SDRAM tem que passar pelo portão. Regra completa
 em [BOARDS.md](BOARDS.md).
 
-### Quanto o RNBO pede — previsão vs. medido
+### Quanto o motor externo pedia — previsão vs. medido
 
 A previsão errou por exatamente **2×**, e a causa é instrutiva:
 
 | Origem | Conta | Bytes |
 |---|---|---|
-| Previsto | 131 072 samples × **4 B**, supondo que `RNBO_USE_FLOAT32` valesse pra linha de delay | 524 296 |
+| Previsto | 131 072 samples × **4 B**, supondo que a macro de float32 valesse pra linha de delay | 524 296 |
 | **Medido** | 131 072 samples × **8 B** + 8 B de header | **1 048 584** |
 
-**Por que o dobro:** `RNBO_USE_FLOAT32` troca o `SampleValue` (os sinais do
+**Por que o dobro:** a macro de float32 troca o `SampleValue` (os sinais do
 patcher) para `float`, mas a linha de delay é um `buffer~`, e o código gerado
 a instancia como **`Float64Buffer`** — 8 B por amostra, independente da macro:
 
@@ -1526,5 +1437,5 @@ Os demais buffers do patcher são do tamanho do bloco e **couberam no pool de
 32 KB em SRAM**, como previsto: 2 000 B em 15 blocos, 6% do pool. Só a linha de
 delay foi pra SDRAM.
 
-> **Nota sobre `RNBO_USE_FLOAT32`:** sem essa macro, `SampleValue` seria
-> `double` e a mesma linha de delay pediria **1 MB** em vez de 512 KB.
+> **Nota sobre a macro de float32:** sem ela, `SampleValue` seria `double` e a
+> mesma linha de delay pediria **1 MB** em vez de 512 KB.

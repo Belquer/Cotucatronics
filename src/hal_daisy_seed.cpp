@@ -733,8 +733,8 @@ void Log(const char* fmt, ...)
     // DISJUNTOR. O teto de 50 ms por Log parecia generoso — e virou
     // arma: com o host fora, um fluxo de logs continuos custa 50 ms
     // CADA, e o loop principal vira zumbi gastando o dia inteiro em
-    // retry. Foi o mecanismo por tras de "a serial morre com o vocoder
-    // ligado": quem morria era o LOOP, afogado aqui dentro.
+    // retry. Foi o mecanismo por tras de "a serial morre sob callback
+    // longo": quem morria era o LOOP, afogado aqui dentro.
     //
     // Com o disjuntor: a primeira falha ARMA o mudo, e dai em diante
     // cada Log tenta UMA vez, sem espera — custo ~zero. O primeiro
@@ -746,7 +746,7 @@ void Log(const char* fmt, ...)
     // de virar parada cardiaca do loop.
     //
     // Serial e conveniencia de bancada. O instrumento nao pode morrer
-    // por ela — com o vocoder a 65% do prazo, o USB e oficialmente
+    // por ela — com a carga a 65% do prazo, o USB e oficialmente
     // hostil, e o canal de controle de voo passa a ser o MIDI.
     // MIGALHA DE PAO: primeiro caractere do formato identifica QUEM
     // chamou. No voo morto, o ultimo valor e o endereco da cela.
@@ -911,7 +911,7 @@ static bool     nvic_grupo_ok        = false;
 static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
 // MARCA D'AGUA DA FILA. O furo conhecido do MIDI: os bytes chegam por
 // DMA (imune a carga) mas quem DESPACHA e o loop principal, que sob
-// vocoder gasta 65% do prazo. Se o loop atrasa, a fila enche. Este e o
+// a carga gasta 65% do prazo. Se o loop atrasa, a fila enche. Este e o
 // numero que fecha esse furo — nao "caiu ou nao caiu", mas QUANTO de
 // folga sobrou. Max monotonico: grava o pico e trava, nunca atualiza
 // pra baixo (regra 1 da instrumentacao).

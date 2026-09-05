@@ -1,6 +1,6 @@
 # BOARDS.md — placas suportadas e regras de recurso
 
-**Documento v0.13.0**
+**Documento v0.14.0**
 
 Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
 valem em todas elas.
@@ -36,7 +36,7 @@ dentro. **Nada disso vaza pro nosso código.**
 > da Electrosmith. Nenhum byte do nosso código mora na flash interna — o mapa de
 > memória mostra `FLASH: 0 B`, e isso está certo.
 >
-> **Por quê:** o primeiro módulo RNBO sozinho levou o firmware a 94,14% dos
+> **Por quê:** o primeiro módulo de DSP externo sozinho levou o firmware a 94,14% dos
 > 128 KB internos. O segundo não caberia. Na QSPI o mesmo firmware ocupa 1,52%
 > de 7 936 KB.
 >
@@ -204,30 +204,26 @@ Antes de encostar o ferro, o estado que importa:
 - **Mapa de CC:** 13 entradas (limite 16). Ver a tabela abaixo.
 
 > **O MIDI deixou de ser conveniência e virou CONTROLE DE VOO.** A serial
-> USB morre segundos depois do vocoder subir (defeito conhecido, ver
+> USB morre segundos depois de o callback ficar longo (defeito conhecido, ver
 > [TESTES.md](TESTES.md)); o MIDI é imune — UART própria, DMA, nada a ver
 > com o CDC. Todo param que só a serial alcançava está no mapa agora.
 
-### Mapa de CC do instrumento atual
+### Mapa de CC
 
-| CC | Parâmetro | | CC | Parâmetro |
-|---|---|---|---|---|
-| 20 | `dly_time` | | 27 | `voc_tone` |
-| 21 | `dly_mix` | | 28 | `voc_mix` |
-| 22 | `level` | | 29 | `rev_mix` |
-| 23 | `src_mix` | | 30 | `in_gain` |
-| 24 | `gov_ceiling` | | 31 | `gate_thresh` |
-| 25 | `fx2_gain` | | 32 | `buzios_on` (0–63 off, 64–127 on) |
-| 26 | `voc_pitch` (grade cromática) | | | |
+**O mapa vive em [docs/operacao/CCMAP.md](../docs/operacao/CCMAP.md), que é
+GERADO** do `manifest.h` pelo `gerar_ccmap.py` — e é lá que se lê, não aqui.
 
-CCs 20–31 são a faixa "undefined" da spec MIDI — não colidem com nada
-padrão (1 é mod wheel, 7 é volume, 64 é sustain), então controlador
-genérico sai de fábrica sem usá-las.
+Até 04/09 esta secção trazia uma tabela à mão intitulada *"do instrumento
+atual"* que listava quatro params já inexistentes. Tabela de mão a envelhecer
+por cima de uma gerada mente com ar de autoridade; foi removida em vez de
+corrigida, porque corrigi-la seria manter viva a que mente.
 
-**`voc_pitch` tem `steps=49`:** o `Set()` quantiza em semitons, e os 128
-passos do CC caem na grade cromática sozinhos. A quantização mora no
-ponto ÚNICO de escrita, então MIDI, serial e knob herdam a mesma grade —
-nada a tratar aqui.
+A faixa escolhida continua a valer como decisão: os CCs baixos ficam na faixa
+"undefined" da spec MIDI — não colidem com nada padrão (1 é mod wheel, 7 é
+volume, 64 é sustain), então controlador genérico sai de fábrica sem as usar.
+
+**Param com `steps` quantiza no ponto ÚNICO de escrita:** o `Set()` arredonda
+à grade, e MIDI, serial e knob herdam a mesma. Nada a tratar em cada via.
 
 **`buzios_on` vira chave sem tratamento especial:** o param é [0,1], o
 `main` testa `>= 0.5`, e `MidiNorm(63)=0.496` cai abaixo enquanto
@@ -570,32 +566,6 @@ uma delas separa as duas.
 | App | QSPI via bootloader | `APP_TYPE=BOOT_QSPI` |
 | CPU medida | **188 µs de 1 000 — 18,8%** | |
 
-### Como remontar a bancada do vocoder
-
-Duas mudanças, nesta ordem:
-
-```make
-# Makefile
-MODULE_SRC ?= module_rnbo_delay.cpp module_rnbo_vocoder.cpp
-```
-
-```cpp
-// manifest.h, em Requirements
-size_t block_size = 256;
-```
-
-O bloco 256 é **exigência do vocoder**, não preferência: ele pede 3 520 µs
-de pico e o prazo do bloco 48 é 1 000 µs. Custa 5,3 ms de latência, que
-num instrumento realimentado não é neutro.
-
-Depois: gravar, `set fx2_on 1`, e o watchdog cuida do resto. A janela de
-graça absorve a estreia; `probe` dá o perfil bloco a bloco; `cpu` dá o
-regime em µs contra o prazo.
-
-O **freeze** segue fora de qualquer regime: 7 349 µs de pico, não cabe
-em prazo nenhum que valha a latência. `module_rnbo_freeze.cpp` e o export
-em `modules/xxxfreeze/` continuam no repo pra quando o patch emagrecer.
-
 ### Nota sobre `-O3`
 
 Fica até o orçamento apertar. Medido contra `-O2`: média **piorou** de
@@ -604,22 +574,26 @@ binário inflou 13% (260 → 295 KB) — mais código, mais falha de I-cache,
 e em memória externa isso custa mais que o inlining rende.
 
 > **Ao reverter, REMEDIR TUDO.** Todos os números deste documento e dos
-> commits — 188 µs do instrumento, 3 520 do vocoder, 7 349 do freeze —
+> commits — 188 µs do instrumento, 3 520 do módulo de FFT, 7 349 do freeze —
 > têm `-O3` como base. Comparar número novo com número velho depois de
 > trocar a otimização é comparar coisas diferentes.
 
 ---
 
-## Pool de SRAM dos módulos: 96,6% ocupado
+## Pool de SRAM dos módulos — HISTÓRICO (até 20/08)
 
-O alocador dos módulos RNBO (`module_rnbo_alloc.h`) serve de um pool
-estático de **48 KB** em SRAM e só cai pra `AllocBig()` (SDRAM) no que
-não couber. Estado com dois módulos:
+> ⚠️ **Os números desta secção são do sistema de módulos externos, que saiu
+> inteiro a 20/08.** Ficam porque a lição de dimensionamento sobrevive à
+> ferramenta. **O valor de hoje é outro: 92,4%**, e vive no
+> [STATUS.md](../docs/STATUS.md). Não comparar os dois.
+
+O alocador servia um pool estático de **48 KB** em SRAM e só caía pra
+`AllocBig()` (SDRAM) no que não coubesse. Estado com dois módulos:
 
 | Módulo | SRAM | Blocos |
 |---|---|---|
 | delay | 9 368 B | 12 |
-| vocoder | 38 128 B | 22 |
+| o do slot Fx2 | 38 128 B | 22 |
 | **total** | **47 496 B de 49 152** | **96,6%** |
 
 **Um terceiro módulo não cabe.** O número sempre foi esse; o warm-up no
@@ -646,7 +620,7 @@ Crescer o pool às cegas rouba SRAM de quem talvez precise mais; migrar
 onde não havia. **Sem o mapa, as duas escolhas são apostas.**
 
 > Ressalva honesta sobre o rótulo: o alocador **não sabe** a semântica
-> de quem chama — o RNBO pede memória sem dizer pra quê. Rotular por
+> de quem chama — o motor externo pedia memória sem dizer pra quê. Rotular por
 > origem exige ou anotação manual por módulo, ou heurística por
 > tamanho e fase de alocação. A heurística é barata e imperfeita; a
 > anotação é exata e não escala pra patch que muda. Escolher entre as
@@ -663,8 +637,8 @@ onde não havia. **Sem o mapa, as duas escolhas são apostas.**
 ### Proibido
 
 Declarar `DSY_SDRAM_BSS` — ou o macro de seção equivalente de qualquer outra
-placa — **fora de `hal_<board>.cpp`**. Isso inclui módulos, exports do RNBO,
-buffers de freeze, delays longos e notch banks.
+placa — **fora de `hal_<board>.cpp`**. Isso inclui módulos, exports de motor
+externo, buffers de freeze, delays longos e notch banks.
 
 ```cpp
 // ERRADO: prende o módulo à Daisy e fura a fronteira
@@ -710,16 +684,15 @@ SDRAM via AllocBig: 524296 de 67108864 bytes
 Se um módulo alocar por fora, **esse número não fecha** — é o detector de
 violação da regra.
 
-O módulo RNBO tem seu próprio extrato, mais detalhado, no comando `mods`: ele
-serve de um pool de 32 KB em SRAM primeiro e só cai pra `AllocBig()` no que não
-couber. Receita completa em [modules/README.md](modules/README.md).
+O comando `mods` traz o seu próprio extrato, mais detalhado.
 
 ### Armadilha conhecida — agora ativa
 
 `sdram_pool` em `hal_daisy_seed.cpp` reserva a região SDRAM **inteira**
 (64 MB). Até a v0.3.0 o `--gc-sections` descartava o pool porque nada chamava
-`AllocBig()`, e o mapa mostrava `SDRAM: 0 B`. **A partir da v0.4.0 o módulo
-RNBO chama, e os 64 MB voltaram de uma vez:** o mapa mostra `SDRAM: 100%`.
+`AllocBig()`, e o mapa mostrava `SDRAM: 0 B`. **A partir da v0.4.0 há quem
+chame — delay, freeze, reverb e os motores de pitch — e os 64 MB voltaram de
+uma vez:** o mapa mostra `SDRAM: 100%`.
 
 Isso é o pool, não o consumo — mas a consequência é real: **não sobra byte pra
 mais nada em `.sdram_bss`**. Toda alocação tem que passar pelo portão. Como

@@ -1,17 +1,107 @@
 # STATUS — Cotucatronics
-<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e o registo da renomeacao — apagar o nome velho apagaria o que explica por que ele estava errado. Ver battle_scars 15e.) -->
-<!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 
 **Onde estamos.** O par deste documento é
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em 2026-09-04 (deep clean) · leva: o supressor passa a
+> Atualizado em 2026-09-04 (limpeza) · leva: **o efeito aposentado do slot
+> Fx2 saiu da documentação inteira** — 43 menções em oito ficheiros (`STATUS`,
+> `battle_scars`, `FEATURES`, `IFA10000`, `CTOS`, `params-aposentados` e
+> três skills). Onde ele era a RAZÃO de uma decisão viva, a razão ficou e
+> só o nome saiu: o bloco 48, o defeito 🔴 da serial (que é starvation da
+> ISR do USB por callback longo, e não de um efeito), o passa-alta do Fx2
+> e as quatro etapas do IFÁ10000 que ele ensinava.
+>
+> Na mesma leva, **o motor de DSP externo saiu da documentação inteira** —
+> mais 53 menções, incluindo 15 no README. Onde o nome era identificador de
+> API (as macros da receita de embarque) a receita saiu em vez de ser
+> renomeada: macro com nome inventado é pior que macro nenhuma. As três
+> directivas `doc-check: ignore` do `FEATURES.md` saíram com os nomes que
+> isentavam, e o caminho de volta para os `.maxpat` do dB foi **reprovado
+> antes de reescrito** (`git show 8271e97:Max/` lista os quatro; o do delay
+> devolve 104 335 bytes). `check_docs` a 0 fantasmas nas duas rondas.
+>
+> Do processo nasceu a skill **`/audit`** + `auditar.sh` v1.0.0 e
+> `versoes_readme.py` v1.0.0. Na estreia contra esta árvore apanhou **5
+> links mortos** no `MAPA-DE-TERRA.md` (apontava `../` estando um nível
+> mais fundo), uma **entrada duplicada** na lista de aposentados, e **15 de
+> 58 versões do mapa do README derivadas** — uma delas com o README à
+> FRENTE do fonte (`ponte.ino` v0.5.0 anunciada, v0.4.0 no ficheiro).
+> Todas consertadas; o mapa está a 60/60.
+>
+> Segunda passagem do `/audit` (`auditar.sh` v1.1.0 + `coerencia.py` v1.0.0):
+> **duas das minhas próprias checagens estavam a acusar pelo critério errado**
+> — contavam ocorrências simples quando o `check_docs` só vê nomes **entre
+> crases**, e supunham escopo de linha quando `isentos()` varre o ficheiro
+> inteiro. Reescritas em Python. As **6 isenções órfãs** foram a zero sem
+> perder história: `oct_on` e `test_tone_on` **migraram** para a lista de
+> aposentados (52 → 54) por carregarem registo único; as outras quatro eram
+> cópias de um registo que vive no `battle_scars`. O **vault** ficou alinhado
+> nos três ficheiros em atraso — o `HARDWARE.md` de lá ainda tinha os nomes
+> velhos da matriz (`route_l_a`), renomeados a 02/09.
+>
+> Passada nova de **itens pendentes**: 186 linhas marcadas na árvore. Fechou-se
+> o **⚪4 do `AUDIT-23-08`** (versões velhas no README), com prova; e o **⚪5**
+> ficou registado como **aberto e maior**: o `"76 CCs"` está hoje em três
+> comentários do `main.cpp`, não dois, e o número real são 119.
+>
+> **04/09, fecho: a limpeza acabou, ponta a ponta.** Com a decisão do dB:
+> `src/TESTES.md` (v0.25.0) e `src/BOARDS.md` (v0.14.0) limpos sem esperar
+> pela outra sessão, e **os 86 comentários de fonte** em 13 ficheiros. O build
+> prova que foram só comentários: **QSPI 283 196 B, SRAM 322 488 B, ITCM 308 B
+> — idênticos ao baseline**, antes e depois.
+>
+> Saíram três **receitas falsas** — mandavam usar ficheiros que não existem:
+> a "bancada" do `BOARDS.md`, o bloco de revivência do `Makefile` (v0.4.1), e
+> os binds comentados do `manifest.h` (v1.12.2), onde vivia a afirmação de que
+> os params do módulo **continuavam na tabela**. Não continuavam, e foi ela
+> que me mandou procurar código que não existe. Está lá agora a dizê-lo.
+>
+> O **T12** do `TESTES.md` (98 linhas, o ensaio de coincidência espectral)
+> virou lápide de 8 linhas: as duas lições que ele comprou vivem na etapa 6 do
+> IFÁ10000 e no cap. 6 do battle_scars, que é onde servem a qualquer efeito.
+> O mapa de CC à mão do `BOARDS.md`, que dizia "instrumento atual" e listava
+> quatro params mortos, foi **removido em vez de corrigido** — apontar para o
+> `CCMAP.md`, que é gerado, em vez de manter viva a tabela que mente.
+>
+> A cauda do README foi consertada: os defeitos em aberto passam a espelhar
+> este documento, o signal path deixa de estar "à espera de hardware", o Pot 5
+> deixa de fazer um crossfade aposentado a 20/08, e os "próximos passos"
+> apontam para aqui em vez de duplicarem uma lista que volta a derivar.
+>
+> **⚪5 do `AUDIT-23-08` fechado:** o `"76 CCs"` estava em três comentários do
+> `main.cpp` (v0.301.1), não dois, e o número real são 119. Corrigido nos três.
+> **🟡2 continua aberto** — é feature (detector de duplicata de CC), quer
+> gravação e medição, e não há placa ligada: o `porta_daisy` não a encontra.
+>
+> **O `/audit` foi apertado contra as duas falhas desta sessão** (`auditar.sh`
+> v1.2.0). A primeira: varri o fonte com `*.h *.cpp Makefile` — 33 ficheiros —
+> e a árvore tem **137 rastreados em 14 extensões**; o `check_repo.sh` escapou
+> e só apareceu por acaso na varredura final. O inventário passa a ser por
+> `git ls-files`, e imprime as extensões da árvore ao lado, para que tipo novo
+> apareça à vista. A segunda: a **frase partida pela renomeação** — âncora
+> única, `grep` limpo, `make` a passar, e a frase a ficar *"morre sob callback
+> ligado"* porque a continuação estava na linha seguinte. Nasceu o
+> `vizinhos.py` v1.0.0, que lê o diff e assinala só onde a edição tocou o FIM
+> da linha. Corrido sobre esta sessão: **16 vizinhanças, todas lidas, nenhuma
+> outra partida.** E a varredura exaustiva confirma **zero em 137 ficheiros**.
+>
+> ⚠️ **A cauda do README está podre por conta própria** e a limpeza só a
+> destapou: dizia "Nenhum defeito conhecido" com um 🔴 prioridade 1 aberto;
+> dizia que gravar "exige o botão BOOT" quinze linhas depois de anunciar o
+> `flash.sh` a entrar por `dfu go`; dava o signal path como "ainda não
+> implementado, hardware a caminho"; e apontava três vezes para
+> `src/modules/README.md`, que não existe. **Isto não foi consertado** —
+> está fora do pedido, e é decisão do dB.
+>
+> Antes, 2026-09-04 (deep clean) · leva: o supressor passa a
 > chamar-se **SuMiA™** em todas as instâncias · **deep clean da documentação**
 > — o README declarava dois estados incompatíveis a quinze linhas um do outro
-> ("bloco 48, sem RNBO" e "VOCODER LIGADO · bloco 256"), anunciava v0.172.0 com
+> ("bloco 48, sem motor externo" e um módulo de FFT ligado com bloco 256),
+> anunciava
+> v0.172.0 com
 > o fonte em v0.301.0, e dizia que os pots e botões não estavam soldados · a
-> pasta `Max/` (1,8 MB de RNBO aposentado) saiu da árvore com o caminho de
+> pasta `Max/` (1,8 MB de patches aposentados) saiu da árvore com o caminho de
 > volta provado · o `CCMAP.md` tinha o cabeçalho à mão a envelhecer por cima
 > de uma tabela gerada · e dez documentos vivos entraram no mapa do README
 >
@@ -78,7 +168,7 @@ destinos na mesma ação:**
 
 Os dois servem leitores diferentes e nenhum substitui o outro. O **repo**
 é o que sobrevive ao clone limpo — documento citado que não existe no
-clone é a mesma classe do `module_rnbo_alloc.h` que faltou por semanas.
+clone é a mesma classe do cabeçalho de alocação que faltou por semanas.
 O **vault** é onde se lê, linka e pensa entre sessões, com tags e
 backlinks que o Markdown cru não tem.
 
@@ -87,7 +177,6 @@ desalinho só aparece quando alguém precisa da versão certa.
 
 ---
 
-<!-- doc-check: ignore system_profiler (comando do macOS, nao simbolo do projecto) -->
 
 ## 02/09, fecho — o chiado, e a medição que derrubou dois planos meus
 
@@ -422,7 +511,6 @@ manda. E cada corpo da série tem ganho de exciter próprio.»* Mesma categoria 
 **2 · Família do tom renomeada:** `test_tone_freq · mix · out · via`. Uma regra
 de exclusão cobre as quatro (eram duas, e a terceira a nascer escaparia às duas).
 
-<!-- doc-check: ignore test_tone_on (nome PROPOSTO e nunca criado — registo da decisao) -->
 
 ⚠️ **O nome passou por três, e o último é o que fica: `test_tone_level`.**
 Primeiro `test_tone_mix`, porque o código faz um crossfade a sério
@@ -592,8 +680,7 @@ scars — ele PIOROU; reverter exige remedir tudo).
 
 ## O que toca hoje
 
-**Pedaleira de cinco efeitos residentes, em ordem fixa.** Vocoder fora do
-build desde 18/08 (decisão de ouvido, revivível). Bloco **48**.
+**Pedaleira de cinco efeitos residentes, em ordem fixa.** Bloco **48**.
 
 ```
 piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE   (por cadeia)
@@ -971,7 +1058,7 @@ contra o binário depois de gravar.
 
 ## Fechado em 18/08 — MIDI certificado sob carga
 
-**T16c passou.** 2 779 CCs em 90 s com o vocoder a **65,1%** do prazo do
+**T16c passou.** 2 779 CCs em 90 s com a carga a **65,1%** do prazo do
 bloco: zero órfão, zero ressync, zero perdido, zero erro de UART. A marca
 d'água da fila ficou em **32 de 128 bytes — idêntica com e sem carga**, o
 que fecha com número o furo do `PollMidi` (bytes entram por DMA, mas quem
@@ -995,8 +1082,8 @@ Aceite do dB, sem eu ter mexido em nada de timbre: **"presença de grave que
 nunca teve antes, muito melhor sonoramente."**
 
 **Causa, verificada no código:** o passa-alta de 120 Hz mora dentro do bloco
-do Fx2. Vocoder fora ⇒ slot vazio ⇒ `fx2_want` falso ⇒ bloco pulado ⇒ **sem
-filtro**. Ele existia só pra conter o estouro de grave que o vocoder
+do Fx2. Slot Fx2 vazio ⇒ `fx2_want` falso ⇒ bloco pulado ⇒ **sem
+filtro**. Ele existia só pra conter o estouro de grave que o módulo do Fx2
 causava, e saiu junto com a causa porque foi instalado no escopo certo.
 
 **Contribuição secundária, não medida:** `block_size` de 256 → 48 derruba a
@@ -1171,11 +1258,11 @@ efeitos nas novas posições (não herdam o aceite da cadeia antiga).
 
 ---
 
-## Fechado em 20/08 — RNBO fora, inteiro
+## Fechado em 20/08 — o motor de DSP externo saiu, inteiro
 
 O delay era o último consumidor do runtime. Reescrito em C++ (`delay.h`, grafo
 lido do export: feedback fixo **0,4**, crossfade, mono nos dois canais), o
-RNBO saiu por completo.
+runtime saiu por completo.
 
 | | antes | depois |
 |---|---|---|
@@ -1191,8 +1278,9 @@ ou desligado, porque o módulo não sabe que está em bypass. Custo-zero-desliga
 que todo efeito da casa segue, era **estruturalmente impossível** dentro do
 sistema de slots.
 
-Saíram junto: `MODULE_SRC`, `RNBO_DIR`, `module.h`, `mod_slot[]`, `ModBind` e o
-push-por-nome, seis arquivos, quatro exports, os seis params órfãos do vocoder,
+Saíram junto: `MODULE_SRC`, o diretório de export, `module.h`, `mod_slot[]`,
+`ModBind` e o
+push-por-nome, seis arquivos, quatro exports, os seis params órfãos do módulo,
 o watchdog do fx2 que julgava pelo CPU global (**achado 8**), o comando `probe`
 e o histograma nota-a-nota (**achado 7**).
 
@@ -1376,7 +1464,7 @@ espremidos — conferir de cabeça falha exatamente quando errar custa mais.*
 
 **Os búzios estão com DUAS cartas** — `dly_time` e `dly_mix_a`, num array que
 cabe 8. O manifest já registrava isso como empobrecimento conhecido, herdado
-da saída do vocoder do build:
+da saída do módulo de caráter do build:
 
 > *"Os búzios ficaram com DUAS cartas em vez de quatro, e o sorteio soa
 > proporcionalmente mais pobre. Não há conserto silencioso pra isso — ou volta
@@ -1403,8 +1491,9 @@ estava vazia.**
 
 Subir o teto do array é trivial. **O trabalho é a FAIXA de sorteio de cada
 um**, e ela é de ouvido: sortear `drv_drive` no curso inteiro produz do limpo
-ao destruído a cada batida. O registro do `voc_pitch` mostra o padrão — faixa
-estreita, centro escolhido, e no caso dele até quantização em escala.
+ao destruído a cada batida. O registro do antigo sorteio de nota mostra o
+padrão — faixa estreita, centro escolhido, e no caso dele até quantização
+em escala.
 
 E o aviso que o próprio manifest deixou: *"o registro anterior sorteava certo
 mas soava tudo grave e parecido — o registro aprovado de ouvido foi o de
@@ -1484,15 +1573,16 @@ execução ou acoplamento, e a medição não distingue — a separação é **t
 piezos de canal** (cicatriz 12b). Enquanto não se faz, `in_gain_a/b` existem
 justamente para casar os dois.
 
-**🔴 A serial morre com o vocoder ligado — prioridade 1.**
+**🔴 A serial morre sob callback longo — prioridade 1.**
 As rajadas de ~3,4 ms do callback starvam a ISR do USB; o CDC do host
 apodrece. Contornado por `log_mute`, caixa-preta e MIDI, mas o conserto
 certo está desenhado e não feito: **ring de log kick-and-forget**, em que
 o loop nunca toca o USB e a drenagem acontece por ISR.
 
-**🟡 Vocoder exige bloco 256.** 5,3 ms de latência num instrumento
-realimentado desloca onde o feedback se estabelece. Preço aceito, não
-resolvido.
+**🟡 Bloco 256 custa 5,3 ms de latência.** Num instrumento realimentado
+isso desloca onde o feedback se estabelece — é o preço de qualquer módulo
+de FFT que o exija, e a razão de o bloco ser 48. Restrição conhecida, não
+resolvida.
 
 **🟢 Off-by-one no contador de aplicadas.** `msgs completas N` vem sempre
 **exatamente 1** acima de `APLICADAS`, com e sem carga (65/64 e
@@ -1517,6 +1607,5 @@ Búzios).
 1. **Decisão do dB:** quanto de proteção volta → grava o estado
    instrumento como default do repo.
 2. **Ring de log** — mata o defeito prioridade 1 por arquitetura.
-3. **Defaults de palco:** `voc_mix`, `voc_tone`, `buzios_thresh`,
-   `buzios_cooldown`.
+3. **Defaults de palco:** `buzios_thresh`, `buzios_cooldown`.
 4. **Painel v2** quando o hardware chegar (T11 já testa por serial).

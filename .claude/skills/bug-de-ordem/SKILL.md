@@ -25,7 +25,7 @@ quando o par vinha de linhas diferentes.
 *Configurar antes de consumir.*
 
 Um valor lido antes de ser configurado não dá erro — dá o default, em silêncio.
-Foi assim que o vocoder ficou mudo: `r_window` preenchido depois do
+Foi assim que um módulo ficou mudo: `r_window` preenchido depois do
 `prepareToProcess`, quando o patch já tinha lido o tamanho.
 
 **Pergunta diagnóstica:** *quem lê esse valor, e já leu antes de eu escrever?*

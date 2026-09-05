@@ -7,11 +7,11 @@
 // era impresso, e numero que ninguem le nao tem quem o corrija.
 // Segunda fonte de verdade e deriva com data marcada.
 // Este arquivo NÃO sabe qual placa é o cérebro, nem qual motor de
-// DSP está rodando: fala com `Module`, não com o RNBO.
+// DSP está rodando: fala com `Module`, não com o motor.
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.301.0"
+#define COTUCA_OS_VERSION "0.301.1"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -1231,8 +1231,8 @@ static Espaco esp[cotuca::Manifest::kCadeias];
 static cotuca::Reverb reverb;
 static bool           reverb_ok = false;
 
-// FREEZE — bloco permanente do shell, no lugar que era do vocoder na
-// cadeia. Ver freeze.h pro porquê de ser C++ e não módulo RNBO.
+// FREEZE — bloco permanente do shell, no lugar que era do módulo do Fx2
+// na cadeia. Ver freeze.h pro porquê de ser C++ e não módulo externo.
 //
 // O buffer vai pra SDRAM via AllocBig e ISSO ESTA CERTO, ao contrário
 // do reverb, que teve que sair de lá. A diferença é o PADRAO DE
@@ -1331,8 +1331,8 @@ static cotuca::EffectSlot warble_slot;
 // pra nao produzirem um fade-in de estreia que ninguem pediu.
 static cotuca::Suave       suave_gl, suave_gr;
 
-// DELAY EM C++ — substitui o modulo RNBO em 20/08. Era o ultimo
-// consumidor do runtime RNBO no instrumento. Ver delay.h: o grafo do
+// DELAY EM C++ — substitui o modulo externo em 20/08. Era o ultimo
+// consumidor daquele runtime no instrumento. Ver delay.h: o grafo do
 // patch foi lido do export e reproduzido, feedback 0.4 incluido.
 static cotuca::Delay       delay_fx;
 static bool                delay_ok  = false;
@@ -1518,7 +1518,7 @@ static bool     soma_sem_saida = false;
 //
 // O CTOS guardava o PICO e mais nada. Um pico de 1035 us num prazo de
 // 1000 pode ser evento unico (uma varredura de fader, o `sync`
-// empurrando 76 CCs) ou pode ser rotina — diagnosticos OPOSTOS com o
+// empurrando 119 CCs) ou pode ser rotina — diagnosticos OPOSTOS com o
 // mesmo numero. Maximo sem denominador nao decide politica.
 //
 // POR REGIME, NAO GLOBAL: um contador que atravessa mudancas de
@@ -1694,7 +1694,7 @@ static bool SacrificaUm(uint32_t us, uint32_t prazo, bool por_estouro)
 // evitar, que e a razao pela qual baixar o teto foi descartado.
 //
 // Estouro de PRAZO e falha real, e mede ZERO nos dois regimes e sob
-// provocacao (`sync` de 76 CCs, varredura de fader, chaveamento do
+// provocacao (`sync` de 119 CCs, varredura de fader, chaveamento do
 // wavefolder). Entao esta defesa nasce quieta — que e o certo: ela
 // existe e nao age ate o fenomeno aparecer.
 //
@@ -1705,7 +1705,7 @@ static bool SacrificaUm(uint32_t us, uint32_t prazo, bool por_estouro)
 //
 // 22/08: o contador de estouros mediu ZERO em todo regime de bancada
 // (uso desenhado, extremo com tudo ligado, e sob provocacao dirigida
-// ao `sync` de 76 CCs, varredura de fader e chaveamento do
+// ao `sync` de 119 CCs, varredura de fader e chaveamento do
 // wavefolder). Sem estouro observado, nao ha dado do qual derivar
 // estes numeros: eles vem de um CRITERIO declarado, nao de medicao.
 //
@@ -1962,7 +1962,7 @@ static volatile uint32_t buzios_cd    = 0; // cooldown, em blocos
 // Diagnostico do detector, direto na caixa-preta: o pico que o
 // envelope ALCANCOU (slot 8) e quantas vezes disparou (slot 9).
 // Separa "limiar alto demais" de "disparou e nao soou" sem serial —
-// que e o estado normal com o vocoder ligado.
+// que e o estado normal sob callback longo.
 static float             buzios_env_peak = 0.f;
 static uint32_t          buzios_fires    = 0;
 // ⚠️ VIA VIVA, porque a caixa-preta e POST-MORTEM.
@@ -3648,7 +3648,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 // Sorteia UM valor dentro da cerca de um alvo; com máscara, pousa só
 // em graus da escala. O valor vai pela MESMA via dos knobs — Set() no
 // loop, Shaped() empurrado ao módulo com o motor vivo — via que o
-// nudge de voc_pitch já provou propagar ao vivo (T12d).
+// nudge de um param de nota já provou propagar ao vivo.
 static float DrawTarget(const cotuca::RandTarget& rt)
 {
     if(rt.n_scale > 0 && rt.norm_per_semi > 0.f)
@@ -3711,7 +3711,7 @@ static void TriggerRandomize(bool autorand)
         ramps[n_ramps].done     = false;
         // Caixa-preta, slots 4..7 rotativos: id na parte inteira, norm
         // na fracao. E o unico registro que sobrevive quando a serial
-        // ja caiu — que e o estado normal com o vocoder ligado.
+        // ja caiu — que e o estado normal sob callback longo.
         static int bb_rot = 0;
         hal::BlackboxWrite(4 + bb_rot,
                            (float)rt.id + ramps[n_ramps].to * 0.999f);
@@ -5326,7 +5326,7 @@ static void HandleLine(const char* line)
         return;
     }
     // CAIXA-PRETA do voo anterior. E o unico jeito de saber o que o
-    // vocoder fez depois que a serial caiu: ele grava durante o voo,
+    // o modulo do Fx2 fez depois que a serial caiu: ele grava durante o voo,
     // a gente le aqui, com o Fx2 desligado e o USB de novo vivo.
     // `bb arm` — arma o gravador e SILENCIA o log ANTES do voo, nunca
     // no meio de uma linha. Conserta a raiz da assimetria que fez os
@@ -6471,7 +6471,7 @@ static void HandleLine(const char* line)
                  (unsigned long)midi.CcCount() + midi.Other(),
                  (unsigned long)midi.Applied(),
                  (unsigned long)midi.Resync());
-        // Espelho na caixa-preta: com o vocoder ligado a serial morre,
+        // Espelho na caixa-preta: sob callback longo a serial morre,
         // e estes numeros sao a unica autopsia possivel do MIDI sob
         // carga. Slots 33-37.
         hal::BlackboxWrite(33, (float)midi.Bytes());
@@ -6939,7 +6939,7 @@ int main(void)
     //
     // E o carimbo diz o mecanismo: ele e escrito IMEDIATAMENTE ANTES do
     // delay. O loop chegou la aos 12 674 ms e nunca mais voltou — entrou
-    // e nao saiu. Com o callback do vocoder segurando a CPU em rajadas
+    // e nao saiu. Com o callback pesado segurando a CPU em rajadas
     // de ~3,4 ms, a espera baseada em tick engole tick e em algum
     // momento nao termina.
     //
@@ -7778,7 +7778,7 @@ int main(void)
         }
 
         // ESPELHO CONTINUO do MIDI na caixa-preta. Nao adianta so
-        // espelhar quando alguem digita `midi`: com o vocoder ligado a
+        // espelhar quando alguem digita `midi`: sob callback longo a
         // serial ja morreu e ninguem digita nada. Uma vez por segundo,
         // custo desprezivel.
         {
@@ -7831,7 +7831,7 @@ int main(void)
         // com o host desconectado, cada Log gastava o teto de 50 ms de
         // retry e chegava um novo a cada 21 ms — o loop virava zumbi
         // dentro do proprio instrumento de medicao, e foi ESSA a causa
-        // de "a serial morre com o vocoder ligado". O cerco ja tinha
+        // de "a serial morre sob callback longo". O cerco ja tinha
         // cumprido o papel; as medicoes vivem na caixa-preta.)
 
 

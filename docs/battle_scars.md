@@ -4,8 +4,6 @@
 <!-- doc-check: ignore route_r_a (idem) -->
 <!-- doc-check: ignore route_r_b (idem) -->
 <!-- doc-check: ignore in_gain_a (REMOVIDO em 28/08 — cicatriz 15v. O nome aparece aqui porque a cicatriz E sobre a remocao dele; apaga-lo apagaria o assunto.) -->
-<!-- doc-check: ignore in_gain_b (idem) -->
-<!-- doc-check: ignore oct_on (renomeado para tarol_on em 28/08 — cicatriz 15u) -->
 ### O que o firmware nos ensinou enquanto a gente o ensinava a cantar
 *Registro de aprendizados — resultados e metodologia. Atualizado ao fim da caçada do shimmer ardido e dos dois controles de I/O.*
 
@@ -13,9 +11,9 @@
 
 ## 0. Por que este documento existe
 
-O Cotucatronics saiu do zero até um instrumento com delay, vocoder espectral com portadora própria, stack anti-feedback completo e randomização por transiente ("Búzios") em poucas semanas de bancada. No caminho, cometemos e catalogamos dezenas de erros — e o padrão mais valioso que emergiu não foi nenhum truque de DSP: foi **uma disciplina forense de bancada**. Este documento registra as cicatrizes para que os próximos módulos, esculturas e colaboradores herdem as lições sem pagar o preço de novo.
+O Cotucatronics saiu do zero até um instrumento com delay, cross-synthesis espectral com portadora própria, stack anti-feedback completo e randomização por transiente ("Búzios") em poucas semanas de bancada. No caminho, cometemos e catalogamos dezenas de erros — e o padrão mais valioso que emergiu não foi nenhum truque de DSP: foi **uma disciplina forense de bancada**. Este documento registra as cicatrizes para que os próximos módulos, esculturas e colaboradores herdem as lições sem pagar o preço de novo.
 
-Personagens: **dB** (design de instrumento, patches Max/RNBO, ouvido e decisões musicais), **Claude Code** (compilação, gravação, medição em hardware), **Claude chat** (arquitetura, hipóteses, prompts, auditoria externa via /gitsync). O triângulo funciona porque cada vértice pode vetar os outros dois com dados.
+Personagens: **dB** (design de instrumento, patches Max, ouvido e decisões musicais), **Claude Code** (compilação, gravação, medição em hardware), **Claude chat** (arquitetura, hipóteses, prompts, auditoria externa via /gitsync). O triângulo funciona porque cada vértice pode vetar os outros dois com dados.
 
 ---
 
@@ -27,7 +25,7 @@ Todos os bugs graves de firmware desta fase tinham **lógica correta e ordem err
 
 **Família B — Ordem de configuração.** Sem concorrência nenhuma; sequência errada dentro de uma função só. Engana mais justamente porque o código lê certo de cima pra baixo. Casos: `bind[]` preenchido antes do `Add()` dos params; `RequestBlockSize` depois do `Init()` dos módulos (módulos preparados pra bloco 48 recebendo 256 — estouro de heap silencioso rodando por baixo de medições que pareciam limpas). Conserto: **quem configura vem antes de quem consome.** Risco de confundir com a Família A: leva a "sincronizar" o que só precisava ser reordenado — resposta cara pra problema barato.
 
-**Família C — Variável com dois empregos.** Uma coisa servindo a dois propósitos, e um teste (ou conserto) mexendo nos dois de uma vez. Casos: o `DelayMs(1)` era relógio do loop **e** metrônomo da rampa — removê-lo para testar o relógio destruiu a rampa junto, contaminando a conclusão auditiva do voo; o `@title`/classname default (`rnbomatic`) servindo a todos os exports até colidir. Conserto: **antes de mexer numa variável, listar todos os empregos dela.** No desenho experimental: um voo, uma variável — e conferir que a variável é mesmo uma.
+**Família C — Variável com dois empregos.** Uma coisa servindo a dois propósitos, e um teste (ou conserto) mexendo nos dois de uma vez. Casos: o `DelayMs(1)` era relógio do loop **e** metrônomo da rampa — removê-lo para testar o relógio destruiu a rampa junto, contaminando a conclusão auditiva do voo; o `@title`/classname default servindo a todos os exports até colidir. Conserto: **antes de mexer numa variável, listar todos os empregos dela.** No desenho experimental: um voo, uma variável — e conferir que a variável é mesmo uma.
 
 ---
 
@@ -83,7 +81,7 @@ vira outro silêncio. Juiz que aceita prova corrompida condena o inocente.
 
 **A estreia morava no hop, não no primeiro Process.** O warm-up desenhado por intuição (uma chamada de silêncio) não teria consertado nada — o bloco 1 era barato; o custo caía no bloco 2 (primeiro hop) e decaía em dois hops. A medição bloco-a-bloco corrigiu o desenho: warm-up cobre ~4096 amostras. **A prova de que funcionou não foi o tempo — foi a memória aparecer no lugar certo** (14 KB migrando pro `MemReport` do Init).
 
-**Pico decide, média mente.** Vocoder: média 7,8%, pico 210%. Custo FFT concentra no bloco do hop (1 a cada N). O watchdog julga o pico. Corolário do bloco: dobrar o bloco dobra o prazo mas o pico sobe junto (~19%) — **dobrar o bloco não dobra a folga.**
+**Pico decide, média mente.** Um módulo de FFT: média 7,8%, pico 210%. Custo FFT concentra no bloco do hop (1 a cada N). O watchdog julga o pico. Corolário do bloco: dobrar o bloco dobra o prazo mas o pico sobe junto (~19%) — **dobrar o bloco não dobra a folga.**
 
 **`-O3` piorou.** Binário +13%, média de CPU +15% — app executando da QSPI paga I-cache miss por byte de código. **Nesta plataforma, código menor é código mais rápido.** Regra registrada: ao reverter, remedir tudo (todos os números têm -O3 como base).
 
@@ -103,7 +101,7 @@ vira outro silêncio. Juiz que aceita prova corrompida condena o inocente.
 
 ## 4. Cultura de hipótese (como erramos melhor)
 
-Hipóteses erradas com testes certos resolveram o projeto. O diagnóstico "cycle~ a 0 Hz por eventos não propagados" errou o mecanismo exato — mas o **teste de um comando** (`set voc_pitch 0.6`) que ele gerou apontou a região certa e destravou tudo. **Teste bom sobrevive a hipótese ruim.** Registrar apostas com percentuais ("60% relógio, 30% instrumentação, 10% resto") mantém o placar honesto e ensina a calibrar.
+Hipóteses erradas com testes certos resolveram o projeto. O diagnóstico "cycle~ a 0 Hz por eventos não propagados" errou o mecanismo exato — mas o **teste de um comando** (um `set` de uma nota) que ele gerou apontou a região certa e destravou tudo. **Teste bom sobrevive a hipótese ruim.** Registrar apostas com percentuais ("60% relógio, 30% instrumentação, 10% resto") mantém o placar honesto e ensina a calibrar.
 
 Derrubar a própria hipótese com dado é vitória, não derrota: o M1==M2 derrubou a hipótese da prisão no line_cb — e depois o furo do M1==M2 (armamento no meio da linha) a reabilitou — e depois o token a derrubou de vez. Três reviravoltas, todas por medição, nenhuma por teimosia.
 
@@ -115,7 +113,7 @@ Quando as hipóteses acabam, **pedir olhos novos com um relatório estruturado**
 
 **HAL:** includes de fabricante só em `hal_<board>.cpp`. Trocar de cérebro = um arquivo + uma entrada de Makefile. Auditado em clone limpo múltiplas vezes; nunca violado.
 
-**Módulos:** headers RNBO só em `module_rnbo_*.cpp`; o `main` fala com `Module`, nunca com motor. A fronteira fechou inclusive a porta dos fundos (`RnboAllocStatsGet` → `Module::Memory()`).
+**Módulos:** headers do motor externo só nos `.cpp` de módulo; o `main` fala com `Module`, nunca com motor. A fronteira fechou inclusive a porta dos fundos (as estatísticas de alocação passaram a sair por `Module::Memory()`).
 
 **Portão único da SDRAM:** `AllocBig()` é o único acesso; `DSY_SDRAM_BSS` proibido fora do HAL. O linker passou a **auto-aplicar** a regra (pool reivindica a região inteira; clandestino nem linka).
 
@@ -125,29 +123,29 @@ Quando as hipóteses acabam, **pedir olhos novos com um relatório estruturado**
 
 **Repo versiona o instrumento; bancada é estado transitório.** O default do repo é o que a placa É quando alguém clona e grava. Modo bancada vira *receita documentada*, nunca estado commitado.
 
-**Clone limpo é o teste.** O `module_rnbo_alloc.h` nunca commitado ("funciona na minha máquina" por semanas) gerou o `make check` — que **na primeira execução** pegou outro defeito (export do freeze não rastreado). Hábito automatizado vence hábito lembrado; a prova é que a checagem manual recém-escrita não teria pego o segundo caso.
+**Clone limpo é o teste.** O cabeçalho de alocação do módulo, nunca commitado, ("funciona na minha máquina" por semanas) gerou o `make check` — que **na primeira execução** pegou outro defeito (export do freeze não rastreado). Hábito automatizado vence hábito lembrado; a prova é que a checagem manual recém-escrita não teria pego o segundo caso.
 
 ---
 
-## 6. RNBO embarcado — o manual das cicatrizes
+## 6. Patch embarcado — o manual das cicatrizes
 
 **Domínios evento vs sinal são a fonte nº 1 de bug de patch.** A régua: *olha a boca de quem come.* Freq de `cycle~` (nesta versão) = evento (param → expr → cycle~, direto). Ganho de `*~` = sinal (param → `sig~` → inlet). `delay~` (sinal) ≠ `delay` (evento). Operadores que alimentam entradas de sinal precisam ser variante `~`. Feedback fecha **só** com `feedback~` no ciclo. Na dúvida: autocomplete descreve, help patcher demonstra — copiar exemplo vivo venceu três vezes.
 
 **Memórias:** `data @external 0` tranca como interna; `buffer~` é externo *por natureza* (o @external não pega). Receita oficial: **janelas matemáticas são do host** (firmware aloca via AllocBig, gera sqrt(hann), entrega via dataref, lendo o tamanho do próprio dataref); **memórias de estado são do patch** (`data @external 0`). Dataref se resolve **por nome**, nunca por índice (reexport reordena). `poke~`/`peek~` referenciando nome inexistente cria buffer externo fantasma no Max — funciona lá, sai mudo na placa.
 
-**Custo:** todo `buffer~` custa **8 B/amostra** (Float64Buffer, ignora RNBO_USE_FLOAT32) + arredondamento pra potência de 2 — estimativa ingênua erra por até 4×. Patch grande mata por **tempo**, não memória (freeze: 2% da SDRAM, 275% do prazo). Custo FFT concentra no bloco do hop.
+**Custo:** todo `buffer~` custa **8 B/amostra** (Float64Buffer, ignora a macro de float32) + arredondamento pra potência de 2 — estimativa ingênua erra por até 4×. Patch grande mata por **tempo**, não memória (freeze: 2% da SDRAM, 275% do prazo). Custo FFT concentra no bloco do hop.
 
-**Embarque (a receita canônica):** `RNBO.cpp` de desktop é inutilizável — incluir o export como fonte + `MinimalEngine`. Três macros antes dos includes: `RNBO_NOTHROW`, `RNBO_USE_FLOAT32`, `RNBO_USECUSTOMALLOCATOR`. Alocador híbrido (pool SRAM → AllocBig), free no-op, memória vitalícia. **O motor precisa ser dirigido:** `processEventsUntil()` + `advanceTime()` por bloco — sem isso, relógio preso em 0, nenhum evento executa, patch com portadora interna sai mudo. **Warm-up no Init** (política de slot, ~4096 amostras de silêncio) paga a estreia no boot. **Re-kick de params pós-warm-up** (reenviar todos os valores com o motor vivo) mata a classe "estado inicial que não propagou".
+**Embarque:** o runtime de desktop é inutilizável — o export entra como fonte, com um motor mínimo. As macros de configuração têm de vir **antes** dos includes: chegar depois é o mesmo que não existir, e a falha é silenciosa. Alocador híbrido (pool SRAM → AllocBig), free no-op, memória vitalícia. **O motor precisa ser dirigido:** `processEventsUntil()` + `advanceTime()` por bloco — sem isso, relógio preso em 0, nenhum evento executa, patch com portadora interna sai mudo. **Warm-up no Init** (política de slot, ~4096 amostras de silêncio) paga a estreia no boot. **Re-kick de params pós-warm-up** (reenviar todos os valores com o motor vivo) mata a classe "estado inicial que não propagou".
 
-**Conferência pré-embarque do `description.json` é obrigatória e já pagou três vezes:** datarefs externos inesperados, params faltando (`voc_mix` sumido), saída mono onde o slot espera par, classname default. Ler o JSON custa um minuto; um vocoder mudo custou horas.
+**Conferência pré-embarque do `description.json` é obrigatória e já pagou três vezes:** datarefs externos inesperados, params faltando (um param de mistura sumido), saída mono onde o slot espera par, classname default. Ler o JSON custa um minuto; um módulo mudo custou horas.
 
-**Vocoder é peneira:** só devolve energia onde molde e portadora coincidem. Senóide × drone esparso ≈ silêncio (e "sem diferença perceptível" que não era bug). **Banda larga é a régua de vocoder; senóide é a régua de delay e shifter.** Cada efeito tem seu material de prova.
+**Cross-synthesis é peneira:** só devolve energia onde molde e portadora coincidem. Senóide × drone esparso ≈ silêncio (e "sem diferença perceptível" que não era bug). **Banda larga é a régua de cross-synthesis; senóide é a régua de delay e shifter.** Cada efeito tem seu material de prova.
 
 ---
 
 ## 7. O loop principal sob carga (a caçada do DelayMs)
 
-Com o vocoder a 65% do bloco, o mundo do loop principal muda de clima e três verdades ficaram gravadas:
+Com a carga a 65% do bloco, o mundo do loop principal muda de clima e três verdades ficaram gravadas:
 
 **Serial USB é hostil sob carga.** As rajadas de ~3,4 ms do callback starvam a ISR de USB; o CDC do host apodrece; transmit pode não retornar. Hierarquia de canais promovida a arquitetura: **caixa-preta = registro de voo** (sempre); **serial = telemetria oportunista** (quando o universo colabora); **MIDI = controle** (imune). `Log()` com orçamento duro (descarta e conta, nunca espera); destino final: ring buffer kick-and-forget drenado por ISR — o loop nunca toca o USB.
 
@@ -175,7 +173,7 @@ O piezo grande direto na entrada da Daisy preserva nível e grave — **opamp di
 
 ## 9. Búzios — o resultado que as cicatrizes compraram
 
-Cada transiente na escultura é uma jogada; o que cai decide o timbre. `dly_time` sorteia em degraus de 50 ms **em unidade real** (a curva 2.5 entortaria sorteio uniforme em norm — mais uma vez, a moeda certa no lugar certo); `voc_pitch` sorteia nota a nota **sempre em Lá menor natural** (máscara de escala é dado de manifest; a base 110 Hz já é Lá, então a máscara nasce afinada); knob manual segue cromático — *a máquina se comporta, a mão pode tudo*. Cerca de segurança inegociável: level, gate, governor, limiter, routing e src_mix jamais sorteáveis. Aceite: **1 minuto de taps, 74 transientes, 74 sorteios — razão 1:1, julgada pelo músico.** O critério final de qualquer feature é o ouvido de quem toca; caixa-preta prova encanamento, não flor.
+Cada transiente na escultura é uma jogada; o que cai decide o timbre. `dly_time` sorteia em degraus de 50 ms **em unidade real** (a curva 2.5 entortaria sorteio uniforme em norm — mais uma vez, a moeda certa no lugar certo); a carta de nota do Fx2 sorteava nota a nota **sempre em Lá menor natural** (máscara de escala é dado de manifest; a base 110 Hz já é Lá, então a máscara nasce afinada); knob manual segue cromático — *a máquina se comporta, a mão pode tudo*. Cerca de segurança inegociável: level, gate, governor, limiter, routing e src_mix jamais sorteáveis. Aceite: **1 minuto de taps, 74 transientes, 74 sorteios — razão 1:1, julgada pelo músico.** O critério final de qualquer feature é o ouvido de quem toca; caixa-preta prova encanamento, não flor.
 
 ---
 
@@ -183,7 +181,7 @@ Cada transiente na escultura é uma jogada; o que cai decide o timbre. `dly_time
 
 **Estado de diagnóstico que sobrevive ao diagnóstico.** O `level` ficou em 0.4 desde o A/B com o Max e virou default do repo por três commits, junto com gate e governor desligados. Pior que o descuido: eu **documentei a violação no STATUS como temporária** e segui em frente. Registro que se sabe errado e não conserta não é aviso — é permissão. O dB só descobriu indo tocar o instrumento real. É prima da instrumentação-que-apaga-o-dado, mas pior: aquela estraga a medição, esta estraga o instrumento, e some do radar justamente por estar anotada. **Estado de bancada tem prazo, e o prazo é a mesma sessão.**
 
-**Regra que sobrevive ao motivo.** O `fx2_on` nascia em bypass pra proteger de um risco que a medição já tinha eliminado — vocoder em 37% do prazo, watchdog funcionando, morte do loop com outra causa já consertada. A regra continuava cobrando preço (o dB encontrou "só o delay" seis vezes num dia) por um perigo que não existia mais. E o custo era invisível de um lado e óbvio do outro: **quem escreve a regra não é quem aperta o RESET.** Regra de segurança precisa de data de revisão, senão vira superstição.
+**Regra que sobrevive ao motivo.** O `fx2_on` nascia em bypass pra proteger de um risco que a medição já tinha eliminado — o módulo em 37% do prazo, watchdog funcionando, morte do loop com outra causa já consertada. A regra continuava cobrando preço (o dB encontrou "só o delay" seis vezes num dia) por um perigo que não existia mais. E o custo era invisível de um lado e óbvio do outro: **quem escreve a regra não é quem aperta o RESET.** Regra de segurança precisa de data de revisão, senão vira superstição.
 
 **`bytes 0` tem três causas, e a ordem de suspeita muda com o contexto.** No dia da solda é cruzamento TX/RX (o guia manda desconfiar dele primeiro, e está certo). Depois que o fio está provado, é quase sempre o **link BLE** — que cai sozinho, some depois de RESET, e é derrubado por outro central que se conecte ao mesmo periférico. No palco vai ser sempre essa. Receita: *esquecer o device → parear de novo → reiniciar o app que manda*. E **"conectado" num app prova que aquele aparelho tem o link, não que o CC sai de lá** — BLE MIDI costuma aceitar um central por vez, e um segundo app toma a conexão em silêncio.
 
@@ -286,7 +284,7 @@ obrigatória de um DMA circular que ruído de linha pode derrubar.**
 
 **Estado de teste anterior contamina o teste seguinte.** Os búzios ficaram
 ligados de uma rodada passada, com limiar 0.04, sorteando `dly_time`,
-`dly_mix`, `voc_pitch` e `voc_tone` **continuamente** durante os testes de
+`dly_mix` e as duas cartas do Fx2 **continuamente** durante os testes de
 MIDI — o instrumento se modificava sozinho enquanto eu media outra coisa.
 É a prima do `tone on` esquecido durante a medição do reverb. **Zerar o
 ambiente antes de medir é parte da medição.** (E de brinde: 0.04 dispara
@@ -297,7 +295,7 @@ acidente.)
 
 ## 11b. O conserto que quase sobreviveu ao problema (18/08)
 
-Com o vocoder fora do build, o dB ouviu o instrumento e disse: **"o som está
+Com o slot Fx2 vazio, o dB ouviu o instrumento e disse: **"o som está
 com uma presença de grave que nunca teve antes, muito melhor sonoramente."**
 
 A causa está em uma linha de escopo. O passa-alta de 120 Hz vive **dentro**
@@ -311,12 +309,12 @@ Slot vazio ⇒ bloco pulado ⇒ **filtro não existe mais**. O grave do piezo
 passa inteiro.
 
 **Por que isso é um acerto e não sorte.** Aquele filtro nasceu pra tratar um
-defeito *do vocoder* — o estouro de grave que só acontecia com ele ligado. O
-estouro se **ouvia na saída**, então o lugar óbvio pra filtrar era o master.
-A decisão foi outra, e está escrita no manifest: *"NO CAMINHO DO FX2, não no
-master: sem vocoder não estoura."*
+defeito *do módulo do Fx2* — o estouro de grave que só acontecia com ele
+ligado. O estouro se **ouvia na saída**, então o lugar óbvio pra filtrar era
+o master. A decisão foi outra, e está escrita no manifest: *"NO CAMINHO DO
+FX2, não no master: sem módulo não estoura."*
 
-Se tivesse ido pro master, ele teria sobrevivido à saída do vocoder e o
+Se tivesse ido pro master, ele teria sobrevivido à saída do módulo e o
 instrumento ficaria fino **para sempre**, sem ninguém saber por quê — um
 filtro sem dono, tratando um problema que não existe mais.
 
@@ -523,7 +521,7 @@ exatamente o que fora mandada fazer.
 mundo em volta dela, e ninguém revisou a defesa quando isso aconteceu.
 
 **É a família do passa-alta de 120 Hz** (cap. 11b) — conserto que existia por
-causa do vocoder. A diferença é instrutiva: **aquele saiu sozinho porque
+causa do módulo do Fx2. A diferença é instrutiva: **aquele saiu sozinho porque
 estava no escopo do defeito** (dentro do bloco do Fx2), e este não saiu porque
 estava no escopo do sistema inteiro.
 
@@ -608,8 +606,8 @@ Daí [`docs/FEATURES.md`](FEATURES.md), decidido pelo dB em 18/08:
   está aqui que eu deveria revisar antes de acrescentar mais?*
 
 **Por que o arquivo importa tanto quanto a lista:** este projeto já tem
-**sete** features aposentadas, e cada uma deixou rastro — o vocoder deixou
-params vivos e CCs mortos, o freeze RNBO deixou um wrapper, a regra do
+**sete** features aposentadas, e cada uma deixou rastro — o módulo do Fx2 deixou
+params vivos e CCs mortos, o freeze externo deixou um wrapper, a regra do
 pareamento deixou um procedimento que ninguém precisava seguir. **Aposentar
 sem registrar produz folclore**: coisas que continuam no código porque ninguém
 lembra por que estão lá.
@@ -1196,7 +1194,7 @@ Aqui o `board` passou a imprimir, e só quando a combinação acontece:
 
 **O delay é módulo opaco.** A regra da casa — *"bypass pula o processamento,
 nunca a gravação"*, que nasceu do clique da Peça 2 — **não é aplicável a um
-módulo RNBO**, que não separa as duas coisas. Pular o `Process()` zera o custo
+módulo externo opaco**, que não separa as duas coisas. Pular o `Process()` zera o custo
 e deixa a linha de delay rançosa: ao religar sai um pedaço de áudio velho.
 
 Não há terceira opção, então a escolha é declarada: o `dly_on` mistura para o
@@ -1535,7 +1533,8 @@ descartada exatamente na hora em que valia mais.
 
 ## 12f. Eliminação cirúrgica: o compilador como inventário (20/08)
 
-Tirar o RNBO do projeto era remover 56 sítios espalhados por três arquivos,
+Tirar o motor externo do projeto era remover 56 sítios espalhados por três
+arquivos,
 seis arquivos-fonte, quatro diretórios de export e o sistema de slots inteiro.
 Um mês antes eu teria feito isso apagando faixas e rezando — e acabara de
 escrever a cicatriz 12e sobre por que isso não funciona.
@@ -1565,14 +1564,14 @@ some, mas vê perfeitamente o que ficou órfão.
 **Onde o método não alcança, e isso importa.** Ele só enumera o que tem
 dependência de símbolo. O que sobrou invisível:
 
-- **params órfãos** (`voc_mix`, `fx2_gain`…) — existiam na tabela e ninguém
+- **params órfãos** (`fx2_gain`, `fx2_hp`…) — existiam na tabela e ninguém
   os lia. Só apareceram quando removi as declarações e o compilador reclamou
-  do único consumidor restante, que era um histograma que media um vocoder
+  do único consumidor restante, que era um histograma que media um módulo
   fora do build havia dois dias.
 - **prosa** — comentários explicando um sistema que não existe mais. Nenhum
   compilador reclama de um parágrafo órfão.
 - **verificações sem objeto** — o `check_repo.sh` tinha um bloco inteiro
-  conferindo exports do RNBO. Passava sempre, e ia continuar passando para
+  conferindo exports que já não existiam. Passava sempre, e ia continuar passando para
   sempre, verificando nada.
 
 > **Depois que o compilador parar de reclamar, ainda falta o que ele não vê:
@@ -1590,7 +1589,7 @@ dependência de símbolo. O que sobrou invisível:
 | params | 61 | 54 |
 | repo | — | −8 MB de export |
 
-Os **67 µs da base** são o dado que interessa: o módulo RNBO rodava **ligado ou
+Os **67 µs da base** são o dado que interessa: o módulo externo rodava **ligado ou
 desligado**, porque um `Module::Process` não sabe se está em bypass. O efeito
 que substituiu custa 11 µs quando ligado e **zero** quando não — a disciplina de
 custo-zero-desligado, que todo efeito da casa segue, era estruturalmente
@@ -6129,7 +6128,7 @@ delas nao diz nada sobre as outras.
 
 ---
 
-*"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o vocoder descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.
+*"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o módulo do Fx2 descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.
 
 ## 15au. Tres medicoes, o mesmo numero, e eu publiquei as duas metades sem as multiplicar (01/09)
 
@@ -7356,10 +7355,10 @@ Pedido do dB: *"faz um deep clean em toda a documentacao, inclusive pastas do
 Max antiga, incoerencias no Readme"*. O que a varredura achou:
 
 **O README declarava dois estados incompativeis, com quinze linhas entre
-eles.** A linha 8 dizia *"bloco 48, sem RNBO"*; a linha 28 abria um bloco
-intitulado **"Estado versionado — VOCODER LIGADO"** e dizia *"bloco 256 ·
-vocoder no Fx2"*, com a justificacao *"o bloco 256 e exigencia do vocoder"*.
-O RNBO foi aposentado a 20/08 e a placa corre `48000Hz/blk48`.
+eles.** A linha 8 dizia *"bloco 48, sem motor externo"*; a linha 28 abria um bloco
+intitulado **"Estado versionado — MODULO LIGADO"** e dizia *"bloco 256 ·
+modulo no Fx2"*, com a justificacao *"o bloco 256 e exigencia do modulo"*.
+O motor externo foi aposentado a 20/08 e a placa corre `48000Hz/blk48`.
 
 Dizia ainda **"Estado atual: v0.172.0"** (o fonte estava em v0.301.0, 129
 versoes a frente) e **"os pots e botoes ainda nao foram soldados"** — no
@@ -7375,10 +7374,10 @@ enquanto a tabela por baixo era gerada: **metade do documento actualizava-se
 sozinha e a outra metade nao**, e era a metade parada que o leitor lia
 primeiro.
 
-**`Max/`** guardava 1,8 MB de `.maxpat` do RNBO aposentado, intocados desde
+**`Max/`** guardava 1,8 MB de `.maxpat` aposentados, intocados desde
 15–23/08, referidos por nenhum documento. Removidos da arvore, com o caminho
-de volta escrito no `FEATURES.md` e **provado antes de apagar**
-(`git show 8271e97:Max/rnbo_delay.maxpat` devolve os 104 335 bytes).
+de volta **provado antes de apagar**: `git show 8271e97:Max/` lista os quatro,
+e o do delay devolve os 104 335 bytes.
 
 **Dez documentos vivos estavam fora do mapa do README** — o `PINOS.md` entre
 eles, que e a fonte de pinos e se confere a cada `bts`.

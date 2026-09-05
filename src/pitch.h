@@ -30,7 +30,7 @@
 //   ratio 2.000 = oitava acima      ratio 0.500 = oitava abaixo
 //   ratio 1.498 = quinta acima      ratio 1.003 = +5 cents
 //
-// C++ puro: sem hal, sem RNBO. Buffer vem de fora — `hal::AllocBig()` e
+// C++ puro: sem hal, sem motor externo. Buffer vem de fora — `hal::AllocBig()` e
 // o unico portao da RAM grande, e a regra vale aqui como vale pros
 // modulos.
 // ============================================================

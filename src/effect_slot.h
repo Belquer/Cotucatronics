@@ -28,7 +28,7 @@
 // raiz-de-Hann ser a janela certa pro granular — mesma pergunta, mesmo
 // regime, mesma resposta.
 //
-// C++ puro: sem hal, sem RNBO. O relogio vem de fora porque
+// C++ puro: sem hal, sem motor externo. O relogio vem de fora porque
 // `hal::NowTicks()` mora no HAL e este arquivo nao pode inclui-lo.
 // ============================================================
 
