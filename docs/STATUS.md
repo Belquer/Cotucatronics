@@ -4,51 +4,31 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em **2026-09-06 (a caixa fica de 3 mm, e a pasta fica limpa)** ·
-> leva: **a caixa é acrílico transparente de 3,0 mm**, gerada por parâmetro em
-> `caixa/cotuca_caixa_corte.py` **v0.4.1**. Ficheiro pronto para a Ponoko:
-> `cotuca_caixa_corte_acrilico_3p0.svg` — 19 peças, **375,0 × 299,5** numa P2,
-> margem 9,0 mm, ≈ 6,07 m de corte. Interior **194 × 114**, útil **49 à frente
-> e 74 atrás**.
+> Atualizado em **2026-09-06 (a caixa está pronta para a Ponoko)** · leva:
+> **`caixa/cotuca_caixa_corte_acrilico_3p0.svg`, 20 peças, pronto a encomendar.**
+> Acrílico transparente 3,0 mm, kerf 0,2, chapa P2, ocupa 377,1 × 326,0 com
+> 6,9 mm de margem, ≈ 6,84 m de corte (≈ $40 a $5,87/m, mais envio).
 >
-> **As duas PCB cabem e são imunes à espessura.** `kicad/pcb_contorno.py`
-> **v0.6.0** importa o gerador da caixa e centra a placa na chapa de fundo; os
-> furos caem sempre em (15,5 · 128,5) × (3,5 · 96,5) da placa e os eixos em
-> 105/140/175 × 92 da face, confirmado a `T=3` e `T=6`.
-> cérebro 180 × 100 na chapa de 193 × 113, folga 6,50 · painel 176 × 36, folga
-> mínima 7,00. **Geometria 0 e paridade 0 nas duas. Por rotear: 139 e 47.**
+> A vigésima peça é o **REFORÇO da tampa** — faixa de 193 × 50 colada por
+> baixo, só na faixa dos arcade: 6 mm onde o pé pisa, 3 mm onde os eixos
+> atravessam. Furos ø30 concêntricos, verificado. **O protótipo em madeira
+> tinha 6 mm e os botões apertaram lá** — foi essa medição, num objecto que
+> existiu, que fechou a questão.
 >
-> ⚠️ **Defeito apanhado na limpeza:** o gerador tinha `T` por omissão a 6,0 e o
-> `pcb_contorno.py` importa-o sem argumentos — os portões conferiram as placas
-> contra uma caixa de 6 mm durante todo o trabalho, e disseram ✓. Omissão
-> errada não rebenta: responde com confiança sobre outro objecto. Cicatriz
-> **15cg**. Consequência real: espaçador do cérebro é **M3 × 10**, não × 8.
+> Arcade à distância máxima: **x = 30 · 100 · 170**, 70 entre eixos, 40 entre
+> bordos. Se um pé largo ainda apertar dois, a resposta é um ressalto colado,
+> não mais espaço — não há mais espaço numa face de 200.
 >
-> **`caixa/` limpa.** Morreram as 6 páginas de fabricação, os dois geradores
-> delas e o corte em nogueira: desenhavam ou eram *outra* caixa, e fonte
-> vencida ao lado da certa mede-se igualmente bem — foi assim que as placas
-> foram dimensionadas contra a caixa errada duas vezes. Restam quatro
-> ficheiros. As regras de percurso de cabo foram resgatadas para o
-> `CAIXA-ACRILICO-MONTAGEM.md` §6b antes de a página morrer.
+> ⚠️ **A PLACA NÃO ESTÁ PRONTA, e é independente da caixa.** Os três arcade
+> descem 40 mm e passam por cima do cérebro, com **7,5 mm** de altura livre no
+> pior caso. **Seis peças não cabem** — `RV1` (10), `C13` (11) e os headers
+> `J4 J5 J10 J15` (20 com a ficha e o fio). É colocação, não redesenho.
+> Orientação decidida por medição: `FRENTE_CEREBRO = "y_min"`, porque a outra
+> punha a Daisy (17) e o `C1` (25) debaixo de botões. `pcb_contorno.py` **v0.7.0**
+> tem o portão que mede isto — nenhum DRC o vê. Cicatriz **15ci**.
 >
-> Skill nova **`/caixa`**, que fixa o percurso caixa ↔ electrónica de ponta a
-> ponta.
->
-> **CUSTO, medido em duas facturas:** a Ponoko cobra **≈ $5,87 por metro de
-> corte** e mais nada — `Setup $0.00`, sem linha de material, **sem preço de
-> chapa**. Prevê-se de uma factura para a outra com $0,02 de erro por corte e
-> $3,52 por área. Decomposto: rectângulos lisos $23,89 · dentes e furos $11,74
-> · **os 12 calços $4,11** · **o encaixe apertado $0,00**. E o **envio é 39% do
-> subtotal** — várias caixas num pacote poupa mais que qualquer coisa feita ao
-> ficheiro. Cicatriz **15ch**.
->
-> A encomenda #1263434 era o ficheiro da **nogueira 6,4 mandado cortar em
-> acrílico de 3,0** — o desencontro de juntas de 15cf. Substituída com crédito
-> integral; custou $0,00.
->
-> ⚠️ **A bloquear os gerbers:** as duas placas estão **por rotear**; os 4 furos
-> de fixação estão livres mas **ainda não existem como furos** (falta símbolo →
-> esquema → PCB); e a **revisão de terra** não correu.
+> Fila: mover as 6 peças · furos de fixação (símbolo → esquema → PCB) · rotear
+> 139 e 47 · `revisao-terra` · gerbers.
 
 > Atualizado em **2026-09-05 (KiCad para a JLCPCB)** · leva: **o painel nasceu**
 > (`kicad/cotuca_painel/`, ERC 0) e o contrato entre as duas placas passou a ser

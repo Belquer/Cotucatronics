@@ -105,10 +105,10 @@ nervura. Em 3 mm isso flete a olho e, com o tempo, raja **a partir dos furos**.
 Com o reforço são 6 mm onde o pé pisa e 3 mm onde os pots e o encoder passam —
 que é a razão de a tampa ser de 3 (o PTV09 tem ~7 mm de rosca).
 
-⚠️ **Se o furo do reforço for ø30**, o arcade passa a montar num painel de
-**6 mm**. Confirma a rosca do botão antes de cortar. Se não chegar, regera com
-`--reforco-furo <ø da porca + 2>`: aí o botão aperta nos 3 mm da tampa e a
-porca gira dentro do rasgo do reforço.
+✅ **O furo do reforço é ø30, e o arcade monta num painel de 6 mm.** Não é
+dedução: o **protótipo em madeira tinha 6 mm** e os botões — os de LED e o dos
+búzios — apertaram lá. Um objecto que existiu vale mais que qualquer ficha, e
+foi essa medição que fechou a questão.
 
 ## 4c · Se o pé apertar dois botões ao mesmo tempo
 

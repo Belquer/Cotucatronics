@@ -11,11 +11,19 @@ que é por onde se abre — e é nele que o carrier e o amp montam.
 | `cotuca_caixa_corte.py` | **A FONTE.** Gera o corte a partir de `--t` e `--kerf`. Tem `if __name__ == "__main__"`, por isso o `kicad/pcb_contorno.py` **importa-o** para dimensionar as placas |
 | `cotuca_caixa_corte_acrilico_3p0.svg` · `.dxf` | o que vai para a Ponoko. O nome leva a espessura, de propósito |
 
-**20 peças**, desde 06/09: a vigésima é o **REFORÇO da tampa** — uma faixa de
-193 × 50 colada por baixo, só onde os arcade estão. Um pé são ~300 N a meio de
-um vão, e 3 mm de acrílico raja **a partir dos furos de ø30**. Fica 6 mm
-efectivos onde o pé pisa e 3 mm onde os pots atravessam — que é a razão de a
-tampa ser de 3 (o PTV09 tem ~7 mm de rosca). Custa **+$4,52**.
+**20 peças.** A vigésima é o **REFORÇO da tampa** — faixa de 193 × 50 colada por
+baixo, só onde os arcade estão. Um pé são ~300 N a meio de um vão, e 3 mm de
+acrílico raja **a partir dos furos de ø30**. Fica 6 mm efectivos onde o pé pisa
+e 3 mm onde os pots atravessam — que é a razão de a tampa ser de 3 (o PTV09 tem
+~7 mm de rosca). Custa **+$4,52**.
+
+✅ Os furos do reforço são **ø30 e concêntricos** com os da tampa, confirmado
+por medição no ficheiro gerado. O arcade monta num painel de 6 mm — provado
+pelo **protótipo em madeira, que tinha 6 mm** e onde os botões apertaram.
+
+Os três arcade estão à **distância máxima que a face permite**: x = 30 · 100 ·
+170, **70 mm entre eixos e 40 entre bordos**. Se ainda assim um pé largo
+apertar dois, o que resolve é um ressalto — ver o documento de montagem, §4c.
 | `CAIXA-ACRILICO-MONTAGEM.md` | materiais, solvente, calços, ordem de montagem, percursos de cabo |
 
 ```bash
@@ -44,8 +52,8 @@ Três portões próprios, todos a **recusar antes de escrever**:
 3. **margem à borda** — 3 mm. ⚠️ **Regra nossa**: a Ponoko diz «não uses a
    aresta crua da chapa» e não publica número.
 
-Estado actual: **19 peças, 375,0 × 299,5 numa P2, margem 9,0 mm, ≈ 6,07 m de
-corte.**
+Estado actual: **20 peças, ocupa 377,1 × 326,0 numa P2, margem 6,9 mm,
+≈ 6,84 m de corte.**
 
 ## Custo — medido, não suposto
 
