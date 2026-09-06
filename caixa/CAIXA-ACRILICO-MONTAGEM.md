@@ -110,6 +110,25 @@ que é a razão de a tampa ser de 3 (o PTV09 tem ~7 mm de rosca).
 `--reforco-furo <ø da porca + 2>`: aí o botão aperta nos 3 mm da tampa e a
 porca gira dentro do rasgo do reforço.
 
+## 4c · Se o pé apertar dois botões ao mesmo tempo
+
+Os três arcade estão à **distância máxima que a face permite**: eixos em
+x = 30 · 100 · 170, **70 mm entre eixos e 40 entre bordos**. Não dá para
+afastar mais — três furos de ø30 numa face de 200 com 12 mm de material até à
+parede é o limite geométrico.
+
+⚠️ **E 40 mm pode não chegar.** A parte da frente de um pé calçado anda pelos
+70–90 mm de largura: cabe em cima de dois bordos ao mesmo tempo. Se acontecer
+na bancada, o que resolve **não é mais espaço — é um ressalto**:
+
+- duas tiras de acrílico de 3 mm, ~10 × 45, coladas **de topo** (a 10 mm de
+  altura) na tampa, a meio caminho entre os botões — x ≈ 65 e 135;
+- ou, mais discreto, as mesmas tiras deitadas: 3 mm de degrau já muda para onde
+  o pé escorrega, e não estorva a vista.
+
+Fica por decidir **depois de pisar**, que é a única forma de saber. As tiras
+cortam-se a qualquer momento numa sobra de chapa.
+
 ## 5 · A tampa, por último
 
 Só depois de a §2·6 ter confirmado que todas as peças entram nos furos:

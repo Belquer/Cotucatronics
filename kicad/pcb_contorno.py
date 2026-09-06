@@ -464,6 +464,33 @@ def confere_furos(t, alvo):
     return L
 
 
+# --- altura dos componentes, por familia de footprint ------------------------
+# ⚠️ Listar 15 refs debaixo de um botao nao e informacao: 12 delas sao 0805 de
+# 0,7 mm e nao incomodam ninguem. O que interessa e a MAIS ALTA. Alturas em mm
+# acima da placa, do lado dos componentes.
+#
+# ⚠️ CONECTOR NAO SE MEDE VAZIO. Um 1x6 vertical tem 8,5 mm de plastico e pino,
+# mas o que ocupa o espaco e ele COM a ficha enfiada e o fio a sair — 20 mm e
+# conservador. Medir a peca nua e medir o estado em que ela nunca esta.
+ALTURAS = [
+    (r"PinHeader.*Vertical",        20.0, "header + ficha + fio"),
+    (r"JST_XH",                     20.0, "JST + ficha + fio"),
+    (r"CP_Radial_D(\d+)",           11.0, "electrolitico radial"),
+    (r"Potentiometer_.*3296",       10.0, "trimmer Bourns 3296"),
+    (r"Electrosmith_Daisy",         17.0, "Daisy em soquete"),
+    (r"TerminalBlock",              12.0, "terminal de parafuso"),
+    (r"_THT|Radial|Disc",            8.0, "THT generico"),
+    (r"SOT-23|SOD|D_SM|_0805_|_1206_|_1210_|SOIC", 2.5, "SMD"),
+]
+
+
+def altura_de(fp):
+    for padrao, h, _ in ALTURAS:
+        if re.search(padrao, fp):
+            return h
+    return None          # desconhecido nao e zero
+
+
 def confere_arcade(t, alvo, frente_em):
     """Os botoes arcade descem da tampa. A placa passa por baixo deles?
 
@@ -507,7 +534,7 @@ def confere_arcade(t, alvo, frente_em):
          "     discos o30 sobre a placa: y %.1f · x %s"
          % (ay, " ".join("%.0f" % v for v in ax))]
     ox, oy = alvo["origem"]
-    bate = set()
+    bate = []
     for m in re.finditer(r'\n\t\(footprint "', t):
         j = m.start() + 1
         d = 0
@@ -520,6 +547,8 @@ def confere_arcade(t, alvo, frente_em):
                     bl = t[j:k + 1]
                     break
         ref = re.search(r'\(property "Reference" "([^"]+)"', bl).group(1)
+        fp = re.search(r'\(footprint "([^"]+)"', bl)
+        fp = fp.group(1) if fp else ""
         at = re.search(r'\(at (' + NUM + r') (' + NUM + r')', bl)
         kx, ky = float(at.group(1)), float(at.group(2))
         # do KiCad para a placa, sabendo que aresta olha para a FRENTE da caixa
@@ -528,12 +557,17 @@ def confere_arcade(t, alvo, frente_em):
         else:
             bx, by = (ox + alvo["w"]) - kx, (oy + alvo["h"]) - ky
         if any(math.hypot(bx - a, by - ay) <= 15 + 3 for a in ax):
-            bate.add(ref)
+            bate.append((ref, fp, altura_de(fp)))
     if bate:
-        L.append("     ⚠️ %d peca(s) debaixo dos arcade: %s"
-                 % (len(bate), " ".join(sorted(bate))))
-        L.append("     ⚠️ nenhuma delas pode passar de %.1f mm de altura." % folga)
-        L.append("     ⚠️ conhecidas altas: U2 (Daisy em soquete ~17) e C1 (2200uF, 25).")
+        maus = sorted((h, r, f) for r, f, h in bate if h is None or h > folga)
+        ok = len(bate) - len(maus)
+        L.append("     %d peca(s) sob os discos · %d cabem nos %.1f mm"
+                 % (len(bate), ok, folga))
+        for h, r, f in maus:
+            L.append("     ⚠️ %-5s %-5s %s" % (r, ("%.0f" % h) if h else "?",
+                                               f.split(":")[-1][:44]))
+        if not maus:
+            L.append("     nenhuma passa dos %.1f mm — cabe" % folga)
     else:
         L.append("     nenhuma peca debaixo dos arcade")
     return L

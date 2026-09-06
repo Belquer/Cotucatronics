@@ -19,7 +19,7 @@ USO:  cotuca_caixa_corte.py [--t 3.0] [--kerf 0.2]
 """
 import math, os, sys, subprocess
 
-VERSAO = "0.5.0"
+VERSAO = "0.6.0"
 
 # --------------- parâmetros ---------------
 def _arg(nome, omissao):
@@ -210,8 +210,20 @@ def dedupe(P):
 def to_top(x_out, y_out):
     """cotas do desenho (bordas exteriores da tampa: x 0..200, y 0..122.6) → corpo da tampa"""
     return (x_out - T, y_out - T * SLOPE / RUN)
-TOP_HOLES = [("c", *to_top(40, 35), 30), ("c", *to_top(100, 35), 30), ("c", *to_top(160, 35), 30),   # freeze A · BÚZIOS (branco) · freeze B
-             ("c", *to_top(105, 92), 7), ("c", *to_top(140, 92), 7), ("c", *to_top(175, 92), 7)]
+# ⚠️ ESPAÇAMENTO DOS ARCADE: derivado, não escrito. Estavam a 40/100/160 — 60 mm
+# entre eixos, 30 de vão entre bordos — e um pé largo aperta dois de uma vez.
+# Afastam-se o máximo que a face permite, deixando `ARCADE_MARGEM` de material
+# entre o bordo do furo e a parede. Com 3 botões numa face de 200 isto é o
+# limite geométrico; se não chegar, o que resolve não é espaço, é um ressalto
+# entre eles (ver CAIXA-ACRILICO-MONTAGEM.md).
+ARCADE_D = 30.0
+ARCADE_MARGEM = 12.0        # material entre o bordo do furo e a parede
+_ax0 = T + ARCADE_MARGEM + ARCADE_D / 2
+ARCADE_X = [_ax0, W / 2, W - _ax0]
+ARCADE_VAO = ARCADE_X[1] - ARCADE_X[0] - ARCADE_D          # entre bordos
+
+TOP_HOLES = [("c", *to_top(x, 35), ARCADE_D) for x in ARCADE_X]      # freeze A · BÚZIOS · freeze B
+TOP_HOLES += [("c", *to_top(x, 92), 7) for x in (105, 140, 175)]     # encoder · pot L · pot R
 TOP_HOLES += [("c", *to_top(x, y), 2.5) for x in (17.25, 72.75) for y in (75.25, 108.75)]
 TOP_RECTS = [("r", *to_top(45, 92), 55, 27.5)]      # janela do OLED (omitir se a tampa for fumada)
 
@@ -241,7 +253,7 @@ def part_reforco():
 
 
 REFORCO_HOLES = [("c", x - T - 0.5, 35 - T * SLOPE / RUN - (REFORCO_Y[0] - T * SLOPE / RUN),
-                  REFORCO_FURO) for x in (40, 100, 160)]
+                  REFORCO_FURO) for x in ARCADE_X]
 
 PARTS = [
     ("TAMPA",   part_top(),        TOP_HOLES,  TOP_RECTS),
@@ -488,3 +500,5 @@ if __name__ == "__main__":
     print(f"margem à borda da chapa: {margem:.1f} mm{aviso}")
     print(f"corte total ≈ {cut/1000:.2f} m · área das peças {area/1e4:.1f} dm² · tampa {SLOPE:.1f} mm · ângulo {ANG:.1f}°")
     print(f"frente {HF} / trás {HB} · interior sob a tampa: frente {HF-2*T:.0f}, trás {HB-2*T:.0f}")
+    print(f"arcade em x = {' · '.join('%g' % x for x in ARCADE_X)} · "
+          f"{ARCADE_X[1]-ARCADE_X[0]:.0f} mm entre eixos, {ARCADE_VAO:.0f} entre bordos")
