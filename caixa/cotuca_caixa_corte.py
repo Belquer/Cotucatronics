@@ -36,7 +36,12 @@ def _arg(nome, omissao):
     return omissao
 
 
-T = _arg("t", 6.0)          # espessura
+# ⚠️ A OMISSAO E A CAIXA QUE ESTA A SER FEITA, e nao a ultima que se desenhou.
+# Este modulo e IMPORTADO pelo kicad/pcb_contorno.py, que nao passa argumentos —
+# com a omissao a 6.0 a placa foi conferida contra uma caixa de 6 mm enquanto a
+# encomenda era de 3. O portao dizia "espacador minimo 15" quando o certo era 9.
+# Omissao errada nao rebenta: responde com confianca sobre outro objecto.
+T = _arg("t", 3.0)          # espessura — acrilico transparente, encomendado
 K = _arg("kerf", 0.2)       # kerf
 W, D = 200.0, 120.0            # exterior: largura, profundidade
 HF, HB = 55.0, 80.0            # altura exterior frente / trás

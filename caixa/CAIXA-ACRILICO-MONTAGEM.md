@@ -1,5 +1,5 @@
 # Caixa em acrílico — materiais e montagem
-### Cotucatronics · 06/09/2026 · acrílico cast 6 mm, Ponoko
+### Cotucatronics · 06/09/2026 · acrílico transparente **3,0 mm**, Ponoko
 > Vale para a caixa que já está a ser cortada (calços cegos, rosca no acrílico) e
 > para as seguintes (calços com porca cativa — ficheiro `cotuca_caixa_corte.svg`
 > regenerado hoje). A diferença está na §4.
@@ -19,7 +19,7 @@
 | **parafuso M3 × 10, cabeça cilíndrica** | 6 | fundo → calços |
 | **porca M3** | 6 | só nas caixas com calço de sexágono (série) |
 | broca **ø2,5** + macho **M3** | | só na primeira caixa (calços cegos) |
-| **espaçador M3 × 8 F-F** + 8× parafuso M3 × 6 | 4 + 8 | carrier no fundo |
+| **espaçador M3 × 10 F-F** + 8× parafuso M3 × 6 | 4 + 8 | carrier no fundo. ⚠️ **10 e não 8**: a placa passa por cima de seis calços de 2 × T = **6 mm**, e o `pcb_contorno.py` pede 9 de mínimo |
 | espaçadores para o módulo do amp | 4 | altura conforme o módulo |
 | pé de borracha **ø15 adesivo** | 4 | fundo, a 12 mm dos cantos |
 | lixa 400 e 600 (à água) | | só se quiseres as arestas polidas; o laser já deixa liso |
@@ -65,7 +65,7 @@ acetona para limpar (opaca a superfície).
 ## 4 · Calços — a primeira caixa e as seguintes
 
 **Onde:** por dentro, nos 4 cantos e a meio da frente e de trás. Face de baixo
-a **6 mm da borda inferior das paredes** — usa o próprio fundo como calibre:
+a **T mm da borda inferior das paredes** (3, nesta caixa) — usa o próprio fundo como calibre:
 encosta-o por dentro, rente à borda, cola os calços em cima dele, tira o fundo
 antes de secar.
 
@@ -105,12 +105,29 @@ placa a painel.
    M2.5). Cabos: JST nos arcade, o de 7 vias no OLED.
 2. **Nas laterais e trás:** jacks (porca), DPDT (porca), decoy PD (2 parafusos
    ou fita dupla forte). Fios ao carrier com header.
-3. **No fundo:** carrier nos 4 espaçadores M3 × 8; módulo do amp nos dele;
+3. **No fundo:** carrier nos 4 espaçadores M3 × 10; módulo do amp nos dele;
    os dois ligam ao resto por terminal de parafuso e IDC.
 4. Liga o IDC do painel, os jacks, os DPDT, a ponte. **Folga de ~80 mm** em
    todos os cabos que vão do fundo à casca — é o que permite abrir sem
    desligar.
 5. Fundo para cima, 6 parafusos M3 × 10. Pés adesivos.
+
+### 6b · Percursos de cabo
+
+Vinham do desenho da página 4, que descrevia uma caixa que nunca foi feita — as
+cotas dela morreram, estas regras não, porque falam de **relações** e não de
+milímetros.
+
+- **Piezos** entram pela esquerda e vão direitos ao pré-amp: **< 60 mm**. É o
+  troço de maior impedância do instrumento inteiro.
+- **Exciters** saem do amp pela direita, e **nunca cruzam o pré-amp**.
+- **IDC do painel** (26 vias) corre pela parede de **trás**, longe da esquerda.
+- **Linha para a mesa**: do DPDT (parede de trás) ao amp e aos jacks de trás.
+- **Malha do cabo do piezo**: ligada **só do lado da placa**. Ligada nas duas
+  pontas fecha uma espira e ela canta.
+
+E a folga: **~80 mm** em todos os cabos que vão do fundo à casca — é o que
+permite abrir a caixa sem desligar nada.
 
 ## 7 · Trocar ou reparar
 

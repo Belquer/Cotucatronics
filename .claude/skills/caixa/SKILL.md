@@ -36,9 +36,15 @@ autoridade não é discutível:
 > está a ser feita **agora**. Um artefacto real da geração anterior mede-se tão
 > bem como o certo.
 
-⚠️ E **confirmar o material com o dB**, não com o nome do ficheiro. O
-`cotuca_caixa_corte_nogueira_6p4.svg` é real, foi para a Ponoko, e não é esta
-caixa: a encomenda foi acrílico de 3,00.
+⚠️ E **confirmar o material com o dB**, não com o nome do ficheiro. O corte em
+nogueira de 6,4 era real, foi para a Ponoko, e não era esta caixa — a encomenda
+foi acrílico de 3,00.
+
+⚠️ **E depois APAGAR as fontes vencidas**, não arquivá-las ao lado da actual.
+Foi o que se fez a 06/09: morreram as 6 páginas, os dois geradores delas e os
+ficheiros da nogueira. O histórico do git guarda-os; a pasta não deve. Uma
+fonte vencida ao lado da certa mede-se igualmente bem, e a única coisa que as
+distingue é uma verificação que ninguém faz antes de confiar.
 
 ⚠️ **Ausência verificada tem prazo.** «Procurei o gerador e não existe» era
 verdade às 9h e mentira às 9h20 — o dB estava a escrevê-lo. Num repositório com
@@ -165,6 +171,31 @@ livres à frente» justificava duas decisões de colocação; a caixa passou a t
 tem autoridade, ensinava o motivo morto.
 
 ---
+
+### 4b. O valor por omissão de um parâmetro de fabrico
+
+Quando um gerador é **importado** por outra ferramenta, o seu valor por omissão
+deixa de ser conveniência de linha de comandos e passa a ser **a configuração
+de produção do importador**.
+
+O `pcb_contorno.py` importa o gerador da caixa sem passar argumentos. Com o `T`
+por omissão a 6,0 e a caixa encomendada de 3,0, os portões conferiram as placas
+contra a caixa errada durante todo o trabalho — e disseram ✓.
+
+> **A omissão é o objecto actual, nunca o último que se desenhou.** Um portão
+> que mede o objecto errado é pior que nenhum: os dois deixam passar o defeito,
+> mas só um o faz com um visto ao lado.
+
+→ Ao rever, para cada valor por omissão: **quem o consome sem o passar?**
+
+### 4c. Apagar a fonte vencida — e só ela
+
+Fonte vencida guardada «como registo» ao lado da actual mede-se igualmente bem.
+O histórico do git é o arquivo; a pasta é o presente.
+
+Mas **`diff` antes de apagar**: o ficheiro com ar de cópia esquecida pode ser a
+versão nova. E **ler antes de apagar**: o que tinha valor e não era cota (as
+regras de percurso de cabo) mudou de casa antes de a página morrer.
 
 ## 5. Ordem de trabalho, e onde o dB entra
 

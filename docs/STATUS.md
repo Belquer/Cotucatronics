@@ -4,35 +4,39 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> Atualizado em **2026-09-06 (as placas contra a caixa, e a caixa a mudar)** ·
-> leva: **as duas PCB nasceram, cabem, e deixaram de depender da caixa.**
-> `kicad/pcb_contorno.py` **v0.6.0** **importa** o `caixa/cotuca_caixa_corte.py`
-> — sem parsing entre a cota e o uso — e a placa **centra-se na chapa de fundo**,
-> o que a torna imune à espessura.
+> Atualizado em **2026-09-06 (a caixa fica de 3 mm, e a pasta fica limpa)** ·
+> leva: **a caixa é acrílico transparente de 3,0 mm**, gerada por parâmetro em
+> `caixa/cotuca_caixa_corte.py` **v0.4.1**. Ficheiro pronto para a Ponoko:
+> `cotuca_caixa_corte_acrilico_3p0.svg` — 19 peças, **375,0 × 299,5** numa P2,
+> margem 9,0 mm, ≈ 6,07 m de corte. Interior **194 × 114**, útil **49 à frente
+> e 74 atrás**.
 >
-> **cérebro** 180 × 100 na chapa de fundo, folga 3,50 em volta, 57 footprints,
-> **geometria 0**, paridade 0, **139 ligações por rotear**.
-> **painel** 176 × 36, folga mínima 4,00, 20 footprints, **geometria 0**,
-> paridade 0, **47 por rotear**. Eixos em (111 · 146 · 181), y 38.
+> **As duas PCB cabem e são imunes à espessura.** `kicad/pcb_contorno.py`
+> **v0.6.0** importa o gerador da caixa e centra a placa na chapa de fundo; os
+> furos caem sempre em (15,5 · 128,5) × (3,5 · 96,5) da placa e os eixos em
+> 105/140/175 × 92 da face, confirmado a `T=3` e `T=6`.
+> cérebro 180 × 100 na chapa de 193 × 113, folga 6,50 · painel 176 × 36, folga
+> mínima 7,00. **Geometria 0 e paridade 0 nas duas. Por rotear: 139 e 47.**
 >
-> ⚠️ **A espessura mudou quatro vezes hoje** — 6 nos desenhos, 6,4 na nogueira,
-> 6,0 no gerador, e **3,00 no que foi encomendado**. Confirmado por medição a
-> `T=3` e `T=6`: os furos de fixação caem sempre em **(15,5 · 128,5) ×
-> (3,5 · 96,5)** da placa e os eixos sempre em **105/140/175 × 92** da face. O
-> `pcb_contorno.py` **recusa-se a escrever** se o invariante deixar de valer.
+> ⚠️ **Defeito apanhado na limpeza:** o gerador tinha `T` por omissão a 6,0 e o
+> `pcb_contorno.py` importa-o sem argumentos — os portões conferiram as placas
+> contra uma caixa de 6 mm durante todo o trabalho, e disseram ✓. Omissão
+> errada não rebenta: responde com confiança sobre outro objecto. Cicatriz
+> **15cg**. Consequência real: espaçador do cérebro é **M3 × 10**, não × 8.
 >
-> ⚠️ **ALARME DE FABRICO:** as juntas a dedo têm profundidade = espessura. O
-> gerador está em `T = 6.0` e o material encomendado é de **3,0** — folga de
-> 3 mm em cada junta e linguetas salientes. **Pôr `T = 3.0` e regerar antes de
-> cortar.** Está em `caixa/README.md`.
+> **`caixa/` limpa.** Morreram as 6 páginas de fabricação, os dois geradores
+> delas e o corte em nogueira: desenhavam ou eram *outra* caixa, e fonte
+> vencida ao lado da certa mede-se igualmente bem — foi assim que as placas
+> foram dimensionadas contra a caixa errada duas vezes. Restam quatro
+> ficheiros. As regras de percurso de cabo foram resgatadas para o
+> `CAIXA-ACRILICO-MONTAGEM.md` §6b antes de a página morrer.
 >
-> Fechou-se a única pergunta que bloqueava o layout: **não existe berço de
-> powerbank** — tinha uma página inteira de desenho e nunca foi cortado.
+> Skill nova **`/caixa`**, que fixa o percurso caixa ↔ electrónica de ponta a
+> ponta.
 >
-> ⚠️ **Aberto e a bloquear os Gerbers:** as duas placas estão **por rotear**.
-> Os 4 furos de fixação estão livres (o `J14` saiu de cima de um) mas **ainda
-> não existem como furos** — falta a cadeia símbolo → esquema → PCB. E a
-> **revisão de terra** não correu.
+> ⚠️ **A bloquear os gerbers:** as duas placas estão **por rotear**; os 4 furos
+> de fixação estão livres mas **ainda não existem como furos** (falta símbolo →
+> esquema → PCB); e a **revisão de terra** não correu.
 
 > Atualizado em **2026-09-05 (KiCad para a JLCPCB)** · leva: **o painel nasceu**
 > (`kicad/cotuca_painel/`, ERC 0) e o contrato entre as duas placas passou a ser

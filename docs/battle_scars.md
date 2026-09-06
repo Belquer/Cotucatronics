@@ -7861,6 +7861,12 @@ cortar a caixa em **acrílico**, e a de nogueira é *outra caixa*.
 Quatro fontes, quatro espessuras, e as três primeiras davam números plausíveis.
 Cada vez que corrigi, corrigi para outra caixa errada.
 
+⚠️ **As três primeiras foram apagadas a 06/09** — `caixa/medidas/`, os dois
+`gen_caixa*.py` e os ficheiros da nogueira. Estão no histórico
+(`git show 94066fd:caixa/medidas/caixa-fabricacao.svg`). Não se guarda um
+artefacto real de uma geração anterior ao lado do actual: é indistinguível do
+certo até se medir, e medir é precisamente o que ninguém faz antes de confiar.
+
 > **«O ficheiro que foi para a fábrica» não chega.** Tem de ser o ficheiro da
 > peça que está a ser feita **agora**. Um artefacto real da geração anterior
 > mede-se tão bem como o certo, e dá números plausíveis e errados.
@@ -7963,3 +7969,58 @@ estava desactualizado era o desenho, outra vez.
 
 > **A divergência anunciada sem medir tem 50% de hipótese de acusar a peça
 > certa** — e o custo de acusar a errada é mandar mexer no que estava bem.
+
+---
+
+## 15cg — A omissão errada não rebenta: responde com confiança sobre outro objecto (06/09)
+
+A limpar a pasta `caixa/`, encontrei isto no gerador da caixa:
+
+```python
+T = _arg("t", 6.0)          # espessura
+```
+
+O `kicad/pcb_contorno.py` **importa** este módulo e não passa argumentos. Logo,
+durante todo o trabalho de dimensionar as placas, o portão estava a conferi-las
+contra uma caixa de **6 mm** enquanto a encomendada é de **3**. Dizia
+«espaçador mínimo 15» quando o certo era 9, e «folga 3,50» quando é 6,50.
+
+> **Um valor por omissão errado não dá erro — dá resposta.** E dá-a com o mesmo
+> ar de certeza que a certa. Um portão que mede o objecto errado é pior que
+> nenhum: os dois deixam passar o defeito, mas só um o faz com um ✓ ao lado.
+
+O conserto foi de uma linha — a omissão passa a `3.0`, a caixa que está a ser
+feita — mas a regra é maior:
+
+> **A omissão de um parâmetro de fabrico é o objecto actual, nunca o último que
+> se desenhou.** E quando um módulo é importado por outro, o valor por omissão
+> deixa de ser conveniência de linha de comandos e passa a ser **a
+> configuração de produção do importador**.
+
+Corolário de revisão, irmão do «grep cada constante pelo seu nome» de
+[15cf](#15cf): **para cada valor por omissão, perguntar quem o consome sem o
+passar.** Se houver um importador, a omissão é a configuração dele.
+
+### E o resto da limpeza, que é a mesma lição noutra escala
+
+Morreram nesta arrumação as 6 páginas de fabricação, os dois geradores delas, e
+o corte em nogueira de 6,4 com toda a sua documentação. As páginas desenhavam
+uma caixa que **nunca foi cortada**; a nogueira era **real e outra**.
+
+Tinha-as mantido «como registo». Estava errado:
+
+> **Arquivar uma fonte vencida ao lado da actual é o mesmo que não a apagar.**
+> Ela mede-se igualmente bem, e a única coisa que a distingue da certa é uma
+> verificação que ninguém faz antes de confiar. Foi exactamente assim que as
+> duas PCB foram dimensionadas contra a caixa errada, **duas vezes seguidas**.
+
+O histórico do git é o arquivo. A pasta é o presente.
+
+⚠️ **Mas apagar sem `diff` é a outra metade do erro,** e quase a cometi na
+mesma sessão: havia um `caixa-fabricacao-p2-tampa.svg` solto na raiz, com ar de
+cópia esquecida. Era a versão **nova**, a única com os três arcade. E antes de
+apagar, o que tinha valor e não era cota — as regras de percurso de cabo — foi
+resgatado para o `CAIXA-ACRILICO-MONTAGEM.md`.
+
+> **Apaga-se a fonte vencida; não se apaga o que só ela dizia.** Ler antes de
+> apagar, e mover o que sobrevive.

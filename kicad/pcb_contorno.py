@@ -9,9 +9,9 @@ tampa. Escrever isso a mao no editor e transcrever numeros de um desenho para
 outro — que e exactamente a familia de erro que este projecto ja pagou.
 
 ⚠️ A FONTE E O GERADOR DA CAIXA, NAO OS DESENHOS.
-`caixa/medidas/*.svg` desenham uma caixa que NAO foi construida (frente de 40,
-dois arcade, um berco de powerbank). O `..._nogueira_6p4.svg` e uma caixa real
-mas OUTRA — nogueira de 6,4. A que esta a ser cortada e a do
+Houve tres outras fontes plausiveis para esta caixa — desenhos de uma que nunca
+foi cortada, e o corte em nogueira de 6,4, que e real mas e OUTRA caixa. Todas
+apagadas a 06/09 (estao no historico). A que esta a ser cortada e a do
 `caixa/cotuca_caixa_corte.py`: acrilico cast de 6,0, frente 55, tras 80, TRES
 arcade e nenhum berco. Este ficheiro IMPORTA esse gerador.
 
@@ -43,11 +43,10 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 # nao ha sitio onde as duas divirjam.
 #
 # Historico, porque explica os portoes que estao mais abaixo:
-#   · a placa foi dimensionada contra `caixa/medidas/*.svg`, DESENHOS de uma
-#     caixa que nao foi construida (paredes de 6 mm mas frente de 40, dois
-#     arcade, um berco de powerbank que nunca foi cortado);
-#   · depois contra `cotuca_caixa_corte_nogueira_6p4.svg`, que e uma caixa
-#     REAL mas OUTRA — nogueira de 6,4, e o dB mandou cortar em acrilico;
+#   · a placa foi dimensionada contra DESENHOS de uma caixa que nao foi
+#     construida (paredes de 6 mm mas frente de 40, dois arcade, um berco de
+#     powerbank que nunca foi cortado);
+#   · depois contra o corte em nogueira de 6,4 — uma caixa REAL mas OUTRA;
 #   · agora contra o gerador do acrilico, que e o que esta a ser cortado.
 # Tres fontes plausiveis para a mesma caixa. A que vale e a que virou objecto.
 sys.path.insert(0, os.path.join(AQUI, os.pardir, "caixa"))

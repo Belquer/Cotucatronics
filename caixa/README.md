@@ -2,110 +2,78 @@
 
 Os dois artefactos deste projecto são a placa e a caixa. Vivem no mesmo nível.
 
-**O portão é o `tools/nesting.py`, não o `svg_colisoes`.** Num desenho, dois
-textos sobrepostos são ilegíveis; num ficheiro de corte, duas **peças**
-sobrepostas são uma peça perdida e uma chapa gasta, e uma peça fora da chapa é
-um pedido recusado. São perguntas diferentes e nenhuma substitui a outra.
-
-```bash
-python3 tools/nesting.py caixa/cotuca_caixa_corte_nogueira_6p4.svg --pecas=19
-```
-
-Verifica três coisas: tudo dentro da chapa (Ponoko P2, 384 × 384), nenhuma peça
-sobre outra, e **o número de peças** — porque uma peça que não foi emitida não
-colide com nada, e um ficheiro com 18 passa exactamente como um com 19.
+**Caixa cunha, 200 × 120, frente 55 e trás 80, em acrílico transparente de
+3,0 mm.** Casca soldada (tampa + 4 paredes, juntas a dedo); **fundo removível**,
+que é por onde se abre — e é nele que o carrier e o amp montam.
 
 | ficheiro | o que é |
 |---|---|
-| `gen_caixa.py` · `gen_caixa_paginas.py` | **a fonte** das páginas de fabricação. Correm o `svg_colisoes` antes de escrever |
-| `medidas/` | as 6 páginas cotadas, geradas. Vigiadas pelo `tools/desenhos.py` |
-| `cotuca_caixa_corte_nogueira_6p4.svg` · `.dxf` · `_previa.png` | o corte v1 em **nogueira 6,4 mm**, kerf 0,15. Foi para a Ponoko — é real, mas é **outra caixa** |
-| `cotuca_caixa_corte.py` | **A FONTE.** Gerador do corte em **acrílico cast 6,0**, kerf 0,2 — a caixa que está a ser feita. Tem `if __name__ == "__main__"`, por isso **importa-se** sem correr nada |
-| `CAIXA-ACRILICO-MONTAGEM.md` | materiais e montagem em acrílico (Weld-On 4 e 16, calços com porca cativa) |
-| `CAIXA-V1-NOGUEIRA.md` | como encomendar, colar e acabar |
-| `ponoko_nogueira/` | as 19 peças em **8 ficheiros separados**, reserva para o caso de o encaixe único ser recusado no upload ou de se querer cortar só uma peça de substituição |
-
-## O gerador do acrílico existe — o da nogueira não
-
-O `cotuca_caixa_corte.py` (06/09) gera o corte em acrílico a partir de
-parâmetros — `T`, `K`, `W`, `D`, `HF`, `HB` — e traz portão de nesting próprio.
-**É a fonte, e o `kicad/pcb_contorno.py` importa-o.**
-
-Os ficheiros da **nogueira** continuam sem gerador e são mantidos à mão. Ficam
-como estão: são o registo de uma caixa que foi encomendada, não a caixa a fazer.
-
-⚠️ **Defeito no gerador:** escreve `/home/claude/corte_preview.svg`, um caminho
-absoluto de outra máquina. Rebenta em macOS ao chegar lá. As duas linhas úteis
-(`cotuca_caixa_corte.svg` e `.dxf`) saem antes e depois dela.
-
-## Gerar o corte
+| `cotuca_caixa_corte.py` | **A FONTE.** Gera o corte a partir de `--t` e `--kerf`. Tem `if __name__ == "__main__"`, por isso o `kicad/pcb_contorno.py` **importa-o** para dimensionar as placas |
+| `cotuca_caixa_corte_acrilico_3p0.svg` · `.dxf` | o que vai para a Ponoko. O nome leva a espessura, de propósito |
+| `CAIXA-ACRILICO-MONTAGEM.md` | materiais, solvente, calços, ordem de montagem, percursos de cabo |
 
 ```bash
 python3 caixa/cotuca_caixa_corte.py --t 3.0 --kerf 0.2
 python3 tools/nesting.py caixa/cotuca_caixa_corte_acrilico_3p0.svg --pecas=19
 ```
 
-**O ficheiro para a Ponoko é o `cotuca_caixa_corte_acrilico_3p0.svg`** — chapa
-P2 (384 × 384), 19 peças, ocupa **375,0 × 299,5** com 9,0 mm de margem à borda,
-≈ 6,07 m de corte. O `_previa.svg` é o mesmo com traço grosso, só para olhar.
+O `_previa.svg` sai no mesmo comando, com traço grosso, só para olhar — não
+entra no repositório, regenera-se.
 
-⚠️ **A chapa não pode encolher para P1 (181 × 181): a tampa tem 200 mm de
-largura.** Nenhuma disposição a faz caber — encolher a chapa exige encolher a
-caixa. Mas o encaixe apertado (1123 cm² contra os 1364 das coordenadas à mão)
-**paga-se à mesma**: a Ponoko cobra o fabrico por **tempo de máquina**, e o
-exemplo que eles publicam mostra quatro peças espalhadas a custar $14,77 de
-fabrico contra $4,53 encaixadas, com o material igual nos dois casos. Viagem do
-laser é tempo.
+## O que o gerador garante, e o que não
 
-E a gordura seguinte são os **12 calços — 0,70 m, ou 12% dos 6 metros de corte,
-para doze quadrados de 12 mm**. Peça pequena tem perímetro enorme por unidade
-de área.
+Três portões próprios, todos a **recusar antes de escrever**:
 
-⚠️ **O que NÃO está confirmado:** o afastamento mínimo à borda da chapa (os
-3 mm que o gerador exige são nossos, não deles), o preço do acrílico
-transparente, e se o site novo — que dá cotação por peça — ainda cobra a chapa
-inteira. A tabela de estados está na skill `/caixa`, §6. **Uma peça pequena
-carregada no site deles responde às três de uma vez.**
+1. **nesting** — tudo dentro da chapa, nada sobreposto. O `tools/nesting.py`
+   confirma por fora, e conta as peças: uma peça que não foi emitida não colide
+   com nada, e um ficheiro com 18 passa como um com 19.
+2. **espelho** — peça rodada que na verdade foi espelhada corta na perfeição e
+   monta ao contrário. Confere-se a área com sinal.
+3. **margem à borda** — 3 mm. ⚠️ **Regra nossa**: a Ponoko diz «não uses a
+   aresta crua da chapa» e não publica número.
 
-⚠️ **A profundidade do dente é a espessura.** Trocar de material é sempre
-**regerar**, nunca só mudar a linha do pedido: um ficheiro cortado a 6 e
-executado em 3 dá 3 mm de folga em cada junta e 3 mm de lingueta saliente — a
-caixa não fecha em esquadro e o solvente não tem o que colar. O nome do
-ficheiro leva a espessura por causa disso.
+Estado actual: **19 peças, 375,0 × 299,5 numa P2, margem 9,0 mm, ≈ 6,07 m de
+corte.**
 
-⚠️ **Uma coisa que nenhum portão mede:** a tampa vence 188 mm em **3 mm** de
-acrílico e leva o **pé** do músico nos arcade. A nervura ajuda; 3 não é 6.
-Cortar UMA, montar, e pisar antes da série.
+## Custo
 
-## Quatro caixas plausíveis, e só uma vai ser feita
+A Ponoko cobra o **fabrico por tempo de máquina**, e o exemplo que eles próprios
+publicam mostra quatro peças espalhadas a custar $14,77 contra $4,53
+encaixadas, com o material igual. **Apertar o encaixe paga-se.**
 
-| | `medidas/*.svg` | nogueira 6,4 | gerador a 6,0 | **acrílico 3,0 (o encomendado)** |
-|---|---|---|---|---|
-| foi cortado? | **não, nunca** | sim | não | **é o que foi encomendado** |
-| espessura | 6 (tampa 8, ou 9) | 6,4 | 6,0 | **3,0** |
-| frente · trás | 40 · 70 | 55,08 · 80,07 | 55 · 80 | **55 · 80** |
-| interior | 188 × 108 | 187,2 × 107,2 | 188 × 108 | **194 × 114** |
-| altura útil frente · trás | 28 · 58 | — | 43 · 68 | **49 · 74** |
-| chapa de fundo | não existe | 186,2 × 106,2 | 187 × 107 | **193 × 113** |
-| arcade ø30 | 2 | 3 | 3 | **3** (freeze A · búzios · freeze B) |
-| calços | 6 blocos de 12×12×**25** | → 12,8 | → 12,0 | **→ 6,0** |
-| berço do powerbank | uma página inteira (p6) | **não existe** | não existe | **não existe** |
+⚠️ **Mas a chapa não encolhe.** A tampa tem 200 mm e a P1 tem 181: nenhuma
+disposição a faz caber. Encolher a chapa exige encolher a **caixa**.
 
-**A placa não depende de nenhuma destas colunas.** Está centrada na chapa de
-fundo, e daí sai um invariante confirmado a correr o gerador nas duas
-espessuras: os furos de fixação caem sempre em **(15,5 · 128,5) × (3,5 · 96,5)**
-do canto da placa, e os eixos dos knobs sempre em **105/140/175 × 92** da face.
+A gordura seguinte são os **12 calços — 0,70 m, 12% do corte, para doze
+quadrados de 12 mm**. Peça pequena tem perímetro enorme por unidade de área.
 
-Duas consequências que não são cosméticas:
+Não confirmado, e escrito como tal: o afastamento mínimo à borda, o preço do
+acrílico transparente, e se o site novo — que dá cotação por peça — ainda cobra
+a chapa inteira. **Uma peça pequena carregada no site deles responde às três.**
+Tabela de estados na skill `/caixa`, §6.
 
-1. **Quem abre esta caixa é o fundo, não a tampa.** A casca é soldada (tampa +
-   4 paredes) e os seis parafusos M3 sobem do fundo para os calços. O carrier e
-   o amp montam no fundo e saem com ele. A electrónica serve-se por baixo.
-2. **Os calços têm 12,0 mm** e a placa passa por cima de seis — o espaçador
-   M3 × 8 do `CAIXA-ACRILICO-MONTAGEM.md` **não serve para o cérebro**; mínimo
-   15 mm. Cabe: 43 mm úteis à frente.
+## ⚠️ O que foi apagado a 06/09, e porquê
 
-**As `medidas/` descrevem a primeira coluna — uma caixa que não existe.** Pela
-regra do projecto, ou o `gen_caixa*.py` passa a gerar-se do
-`cotuca_caixa_corte.py`, ou as páginas vão abaixo. Enquanto não for uma coisa
-nem outra, quem as ler está a ler uma caixa que nunca foi feita.
+Morreram: as 6 páginas de fabricação (`medidas/`), os dois geradores delas
+(`gen_caixa*.py`), e o corte em nogueira de 6,4 com o seu `.dxf`, `.png`,
+`CAIXA-V1-NOGUEIRA.md` e `ponoko_nogueira/`.
+
+As páginas desenhavam uma caixa que **nunca foi cortada**: paredes de 6 e tampa
+de 8, frente de 40, dois arcade em vez de três, e um berço de powerbank que não
+existe. O corte em nogueira era **real** — foi para a Ponoko — mas é **outra
+caixa**.
+
+> **Uma fonte vencida ao lado da certa mede-se igualmente bem.** A única coisa
+> que as distingue é uma verificação que ninguém faz antes de confiar. Foi
+> exactamente assim que as duas PCB foram dimensionadas contra a caixa errada,
+> duas vezes seguidas — cicatriz **15cf**.
+
+Está tudo no histórico:
+
+```bash
+git show 94066fd:caixa/medidas/caixa-fabricacao.svg > /tmp/velho.svg
+```
+
+O que tinha valor e não era cota — as regras de percurso de cabo — foi
+**resgatado** para o `CAIXA-ACRILICO-MONTAGEM.md`, §6b, antes de a página
+morrer.

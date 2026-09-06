@@ -36,3 +36,8 @@ docs/operacao/esquematicos/revB/render/*.png
 *.lck
 *-backups/
 fp-info-cache
+
+# saidas regeraveis do gerador da caixa (o .svg/.dxf de corte ficam: sao o
+# registo do que foi para a fabrica; a previa e so para olhar)
+caixa/*_previa.svg
+__pycache__/

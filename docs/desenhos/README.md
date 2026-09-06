@@ -42,22 +42,16 @@ não têm vida própria.**
 Seis páginas do desenho de fabricação da caixa, por dois geradores que
 correm daqui:
 
-```bash
-python3 caixa/gen_caixa_paginas.py
-```
+
 
 ⚠️ **As cotas marcadas "confirmar" mudam depois de medir as peças — e mudam
 no `.py`, nunca no SVG.** Um SVG editado à mão diverge do gerador na primeira
 regeneração, e aí ninguém sabe qual manda.
 
-**A página 1** (`caixa-fabricacao.svg`) tem gerador próprio, o `gen_caixa.py`
-— chegou a 05/09 e fechou o único buraco que esta pasta tinha. **Agora todos
-os desenhos daqui têm fonte**, e todos estão sob o `tools/desenhos.py`.
-
-```bash
-python3 docs/desenhos/caixa/gen_caixa.py           # página 1
-python3 caixa/gen_caixa_paginas.py   # páginas 2 a 6
-```
+⚠️ **As 6 páginas de fabricação da caixa foram apagadas a 06/09.** Desenhavam
+uma caixa que nunca foi cortada. O artefacto da caixa é agora o
+`caixa/cotuca_caixa_corte.py`, que gera o ficheiro de corte a partir de
+`--t`/`--kerf` e traz portões próprios — não passa por este vigia.
 
 Ao contrário dos esquemáticos, estas **passam o `svg_colisoes`** — são
 `<text>` a sério — e o próprio gerador corre o portão a cada página, com

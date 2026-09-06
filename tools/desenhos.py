@@ -26,15 +26,13 @@ PARES = [
     ("docs/desenhos/esquematicos/cotuca_conector.svg", "kicad/cotuca_cerebro/cotuca_conector.kicad_sch"),
     ("docs/desenhos/esquematicos/cotuca_painel.svg",   "kicad/cotuca_painel/cotuca_painel.kicad_sch"),
     # a caixa: pagina 1 tem gerador proprio desde 05/09; as p2..p6 outro
-    ("caixa/medidas/caixa-fabricacao.svg",             "caixa/gen_caixa.py"),
-    ("caixa/medidas/caixa-fabricacao-p2-tampa.svg",    "caixa/gen_caixa_paginas.py"),
-    ("caixa/medidas/caixa-fabricacao-p3-fundo.svg",    "caixa/gen_caixa_paginas.py"),
-    ("caixa/medidas/caixa-fabricacao-p4-interior.svg", "caixa/gen_caixa_paginas.py"),
-    ("caixa/medidas/caixa-fabricacao-p5-juntas.svg",   "caixa/gen_caixa_paginas.py"),
-    ("caixa/medidas/caixa-fabricacao-p6-berco.svg",    "caixa/gen_caixa_paginas.py"),
 ]
 # ⚠️ Ate 05/09 a pagina 1 nao estava aqui, por nao ter gerador no repo. Ganhou
 # um (`gen_caixa.py`) e entrou. Agora TODOS os desenhos desta pasta tem fonte.
+# ⚠️ 06/09: as 6 paginas da caixa sairam desta tabela porque foram APAGADAS —
+# desenhavam uma caixa que nunca foi cortada (paredes de 6, frente de 40, dois
+# arcade, um berco que nao existe). A fonte da caixa e agora o
+# `caixa/cotuca_caixa_corte.py`, que tem portoes proprios. Ver cicatriz 15cf.
 
 
 def gerar(fonte, destino):
