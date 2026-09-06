@@ -342,9 +342,27 @@ material (Clear Acrylic 3,00 mm):
 
 $/m: **5,878** e **5,875** — diferem **0,1%**. $/cm²: diferem 11%.
 
-> **≈ $5,87 por metro de corte, `Setup $0.00`, e nenhuma linha de material
-> separada.** Não há preço de chapa: a P1/P2/P3 não entra na conta. O tamanho
-> da chapa só importa por caber, não por custar.
+### ⚠️ E depois chegou um terceiro ponto, que desmentiu a precisão
+
+| encomenda | corte | preço | $/m |
+|---|---|---|---|
+| #1263434 | 6,39 m | $37,56 | 5,880 |
+| #1263497 | 6,07 m | $35,66 | 5,874 |
+| **r2, 06/09** | **6,84 m** | **$38,23** | **5,589** |
+
+O modelo ajustado nos dois primeiros previa **$40,19**; a factura diz **$38,23**.
+Erro de **$1,96 — 5%**.
+
+> **Dois pontos ajustam sempre uma recta, com erro zero.** «Prevê-se com $0,02
+> de erro» não era um resultado: era aritmética. Com o terceiro ponto, o melhor
+> modelo de uma variável erra **$1,23 (3%)** no pior caso — e vários modelos de
+> duas variáveis (corte+área, corte+peças, área+peças) ajustam os três, o que
+> com três pontos e dois parâmetros é garantido e não prova nada.
+
+**O que fica de pé:** `Setup $0.00`, nenhuma linha de material separada,
+**nenhum preço de chapa** — a P1/P2/P3 não entra na conta, só importa por
+caber. E **o comprimento de corte é o melhor previsor único, a ±3%.** Chega
+para decidir entre desenhos; não chega para prometer cêntimos.
 
 ### O que isto apaga do que eu tinha escrito aqui
 

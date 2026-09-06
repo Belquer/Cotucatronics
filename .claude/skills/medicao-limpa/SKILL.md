@@ -109,6 +109,19 @@ outro lado da comparação já aconteceu:
 > $3,52, a outra $0,02. A partir daí cada troço tem preço, e a atribuição
 > deixa de ser opinião.
 
+### E o irmão: dois pontos ajustam sempre uma recta
+
+Depois de decompor o preço da Ponoko em `$/m de corte`, escrevi que *«prevê-se
+com $0,02 de erro»*. Não era um resultado — era **aritmética**: com dois
+pontos e uma recta, o erro é zero por construção, seja qual for a grandeza que
+se escolha. O terceiro ponto (uma factura nova) errou **5%**, e vários modelos
+de duas variáveis passaram a ajustar os três — o que, com três pontos e dois
+parâmetros, também é garantido e não prova nada.
+
+> **Um modelo só se testa em pontos que não o ajustaram.** Contar quantos
+> pontos e quantos parâmetros, e dizer os dois, faz parte de declarar o número
+> (§3). «Ajusta perfeitamente» com n pontos e n parâmetros é uma frase vazia.
+
 ⚠️ **Cuidado especial com números que chegam de fora** — uma factura, um
 relatório, uma frase do dB. Vêm com ar de facto e sem histórico, e é
 precisamente por não terem a forma de um benchmark que a regra do A/B não se

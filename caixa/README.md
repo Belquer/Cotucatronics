@@ -49,7 +49,14 @@ encomendada e a outra não, indistinguíveis na pasta. Não volta a acontecer.
 | revisão | o que é | encomenda | onde está |
 |---|---|---|---|
 | r1 | 19 peças · arcade a 40/100/160 · sem reforço | **#1263497**, $35,66 | `git show cbc6fbd:caixa/cotuca_caixa_corte_acrilico_3p0.svg` |
-| **r2** | 20 peças · arcade a 30/100/170 · **reforço da tampa** | — | na pasta |
+| **r2** | 20 peças · arcade a 30/100/170 · **reforço da tampa** | **06/09, $38,23** — entrega 15/09 | na pasta |
+
+⚠️ **A encomenda da r2 foi feita com o ficheiro sob o nome ANTIGO**
+(`cotuca_caixa_corte_acrilico_3p0.svg`), porque foi enviado antes de a regra de
+nomes existir. **A geometria é a da r2** — a Ponoko mede **374,10 × 323,00**, que
+é exactamente o bbox da r2 (a r1 media 372,00 × 296,55). Fica escrito aqui
+porque o nome na factura já não existe no repositório, e sem isto ninguém liga
+a caixa que chegar ao desenho que a fez.
 
 A r1 nasceu antes desta regra e chamava-se `..._corte_acrilico_3p0.svg` — o
 mesmo nome que a r2 tinha até agora. É o caso que criou a regra.
