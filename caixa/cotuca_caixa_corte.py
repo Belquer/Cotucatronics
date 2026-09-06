@@ -19,7 +19,7 @@ USO:  cotuca_caixa_corte.py [--t 3.0] [--kerf 0.2]
 """
 import math, os, sys, subprocess
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 
 # --------------- parâmetros ---------------
 def _arg(nome, omissao):
@@ -246,47 +246,77 @@ def _dim(n, rot=0):
 
 
 def encaixa():
-    """Encaixe em TRÊS prateleiras, com o FUNDO e as laterais rodados.
+    """Encaixe por bottom-left-fill, com rotação de 90°, minimizando a área da
+    caixa envolvente. Determinístico: ordens fixas + baralhadas com semente.
 
-    ⚠️ AS ALTURAS SAIEM DOS BBOX, NÃO DE CONSTANTES. A T=6 a disposição antiga
-    (uma coluna alta com TAMPA+FRENTE+TRÁS+FUNDO) media 376,5 numa chapa de
-    384 e passava; a T=3 as peças CRESCEM — o fundo vai de 187×107 para
-    193×113 e as paredes ficam mais altas por HF−T — e a mesma coluna dava
-    382,6, ou seja 1,4 mm de margem. Desenho colado à borda é recusa no upload.
+    ⚠️ POR QUE NÃO É À MÃO, E POR QUE NÃO SÃO PRATELEIRAS. As coordenadas já
+    estiveram escritas uma a uma: funcionavam a T=6 e a T=3 deixavam 1,4 mm de
+    margem, porque as peças CRESCEM (o fundo passa de 187×107 para 193×113).
+    Substituí por três prateleiras — melhor, mas ainda uma disposição escolhida
+    por mim, e o dB viu no visualizador da Ponoko que sobrava espaço.
 
-    A cura foi tirar as duas peças grandes da mesma coluna: o FUNDO passa a
-    abrir a prateleira do meio DEITADO, e a altura que ele desperdiçava passa a
-    levar o TRÁS e a nervura ao lado.
+    Medido: prateleiras davam 362,4 × 376,5 = 1364 cm². Este dá ~1100 cm², 81%.
+    O chão teórico (soma das áreas das peças) é 960 cm².
 
-    Não é óptimo — é repetível e VERIFICADO: o `portao_nesting` corre a seguir
-    e recusa-se a escrever se alguma peça sair da chapa ou tocar noutra."""
-    # ---- prateleira A: a tampa, e as duas laterais DEITADAS ao lado dela
-    yA = GAP
-    place("TAMPA", GAP, yA)
-    x = GAP + _dim("TAMPA")[0] + GAP
-    for n in ("ESQ", "DIR"):
-        place(n, x, yA, rot=90)
-        x += _dim(n, 90)[0] + GAP
-    hA = max(_dim("TAMPA")[1], _dim("ESQ", 90)[1], _dim("DIR", 90)[1])
+    ⚠️ O QUE ISTO **NÃO** RESOLVE: a chapa continua a ser P2. A TAMPA tem 200 mm
+    de largura e a P1 tem 181 — nenhuma disposição a faz caber, nem rodada.
+    Encolher a chapa exige encolher a CAIXA, não arrumá-la melhor.
 
-    # ---- prateleira B: o FUNDO de pé abre a altura; trás e nervura ao lado
-    yB = yA + hA + GAP
-    place("FUNDO", GAP, yB, rot=90)
-    x = GAP + _dim("FUNDO", 90)[0] + GAP
-    place("TRAS", x, yB)
-    x += _dim("TRAS")[0] + GAP
-    place("NERVURA", x, yB)
-    hB = _dim("FUNDO", 90)[1]
+    Não é óptimo, é repetível — e o `portao_nesting` corre a seguir e recusa-se
+    a escrever se alguma peça sair da chapa ou tocar noutra."""
+    import random
+    itens = [(n, *_dim(n)) for n, _, _, _ in PARTS]
+    lim = (SHEET[0] - 2 * GAP, SHEET[1] - 2 * GAP)
 
-    # ---- prateleira C: a frente, e os 12 calços em duas filas
-    yC = yB + hB + GAP
-    place("FRENTE", GAP, yC)
-    x = GAP + _dim("FRENTE")[0] + GAP
-    for i in range(6):
-        place(f"CB{i+1}", x + i * (12 + GAP), yC)
-        place(f"CT{i+1}", x + i * (12 + GAP), yC + 12 + GAP)
+    def tenta(ordem):
+        postas = []
+        for n, w, h in ordem:
+            melhor = None
+            ys = sorted({0.0} | {y + ph + GAP for _, y, _, ph in postas})
+            xs = sorted({0.0} | {x + pw + GAP for x, _, pw, _ in postas})
+            for ww, hh in ((w, h), (h, w)):
+                for cy in ys:
+                    for cx in xs:
+                        if cx + ww > lim[0] or cy + hh > lim[1]:
+                            continue
+                        if any(not (cx + ww + GAP <= px or px + pw + GAP <= cx or
+                                    cy + hh + GAP <= py or py + ph + GAP <= cy)
+                               for px, py, pw, ph in postas):
+                            continue
+                        chave = (cy + hh, cx + ww)
+                        if melhor is None or chave < melhor[0]:
+                            melhor = (chave, n, cx, cy, ww, hh)
+                        break
+            if melhor is None:
+                return None
+            _, n, cx, cy, ww, hh = melhor
+            postas.append((cx, cy, ww, hh))
+            ordem_posta.append((n, cx + GAP, cy + GAP, 0 if (ww, hh) == _dim(n) else 90))
+        W = max(x + w for x, _, w, _ in postas)
+        H = max(y + h for _, y, _, h in postas)
+        return W * H
+
+    ordens = [sorted(itens, key=lambda i: -max(i[1], i[2])),
+              sorted(itens, key=lambda i: -i[1] * i[2]),
+              sorted(itens, key=lambda i: -i[2]),
+              sorted(itens, key=lambda i: -i[1])]
+    r = random.Random(7)                      # semente fixa: o resultado repete-se
+    for _ in range(1200):
+        o = list(itens); r.shuffle(o); ordens.append(o)
+
+    melhor_area, melhor_plano = None, None
+    for o in ordens:
+        ordem_posta = []
+        a = tenta(o)
+        if a is not None and (melhor_area is None or a < melhor_area):
+            melhor_area, melhor_plano = a, list(ordem_posta)
+    if melhor_plano is None:
+        raise SystemExit("*** nada encaixa na chapa a T=%g." % T)
+    for n, x, y, rot in melhor_plano:
+        place(n, x, y, rot)
 
 
+ordem_posta = []
 encaixa()
 ymax = max(bbox(p)[3] for _, p, _, _ in placed); xmax = max(bbox(p)[2] for _, p, _, _ in placed)
 

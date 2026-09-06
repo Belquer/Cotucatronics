@@ -46,8 +46,14 @@ python3 tools/nesting.py caixa/cotuca_caixa_corte_acrilico_3p0.svg --pecas=19
 ```
 
 **O ficheiro para a Ponoko é o `cotuca_caixa_corte_acrilico_3p0.svg`** — chapa
-P2 (384 × 384), 19 peças, 4,5 mm de margem à borda, ≈ 6,07 m de corte. O
-`_previa.svg` é o mesmo com traço grosso, só para olhar.
+P2 (384 × 384), 19 peças, ocupa **375,0 × 299,5** com 9,0 mm de margem à borda,
+≈ 6,07 m de corte. O `_previa.svg` é o mesmo com traço grosso, só para olhar.
+
+⚠️ **A chapa não pode encolher para P1 (181 × 181): a tampa tem 200 mm de
+largura.** O encaixe apertado (1123 cm² contra os 1364 das coordenadas à mão)
+tira risco de recusa e desperdício, mas não muda de chapa. Encolher a chapa
+exige encolher a caixa. E se o custo for por tempo de laser, a gordura são os
+**12 calços — 12% dos 6 metros de corte para doze quadrados de 12 mm**.
 
 ⚠️ **A profundidade do dente é a espessura.** Trocar de material é sempre
 **regerar**, nunca só mudar a linha do pedido: um ficheiro cortado a 6 e

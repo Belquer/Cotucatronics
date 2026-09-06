@@ -193,6 +193,65 @@ antes de mandar mexer.**
 
 ---
 
+## 6. CUSTO: o que o encaixe muda, e o que não muda
+
+O dB olhou para o visualizador da Ponoko e viu espaço a sobrar. Tinha razão — e
+a resposta tem duas metades que é preciso não confundir.
+
+### Metade que se arruma: a área ocupada
+
+O encaixe estava escrito à mão. Substituído por **bottom-left-fill com rotação
+de 90° e semente fixa**, dentro do próprio gerador:
+
+| | caixa envolvente | área |
+|---|---|---|
+| coordenadas à mão (prateleiras) | 362,4 × 376,5 | 1364 cm² |
+| **bottom-left-fill** | **375,0 × 299,5** | **1123 cm² — 82%** |
+| chão teórico (soma das peças) | — | 960 cm² |
+
+E a margem à borda passou de 4,5 para 9,0 mm, que é risco de recusa a menos.
+
+> **Encaixe escrito à mão é cota escrita à mão.** Estava certo a T=6, deixava
+> 1,4 mm a T=3, e desperdiçava 18% em qualquer das duas. Um encaixador com
+> semente fixa é repetível *e* reencaixa sozinho quando a espessura muda.
+
+### Metade que NÃO se arruma arrumando
+
+⚠️ **A chapa continua a ser a P2.** A TAMPA tem **200 mm** de largura e a P1
+tem 181 — nenhuma disposição a faz caber, nem rodada, nem com margem zero.
+
+> **Antes de optimizar o encaixe para poupar dinheiro, perguntar se a chapa
+> pode sequer encolher.** A resposta é uma comparação de dois números: a peça
+> mais larga contra a chapa mais pequena. Se não passar, o encaixe é higiene e
+> risco, não é preço.
+
+**Encolher a chapa exige encolher a CAIXA** — 200 → ≤ 181 de largura, ou a
+tampa parte-se em duas. Isso é decisão do dB sobre o instrumento, nunca do
+encaixador.
+
+### Onde o dinheiro está mesmo, medido
+
+Corte total **6,07 m**. Repartido:
+
+| | metros | % |
+|---|---|---|
+| se as peças fossem rectângulos lisos | 4,07 | 67% |
+| **dentes, furos e rasgos** | **2,00** | **33%** |
+| os 12 calços (peças minúsculas) | 0,70 | 12% |
+
+⚠️ **12% do corte são doze quadrados de 12 mm.** Peça pequena tem perímetro
+enorme por unidade de área — se o custo for por tempo de laser, é aí que está a
+gordura, não no espaço vazio da chapa.
+
+E confirmar sempre se a **gravação** ficou ligada no upload: são minutos de
+laser por rótulos que não fazem falta, porque as peças distinguem-se pela forma.
+
+⚠️ **O modelo de preço da Ponoko não se supõe** — material por chapa escolhida
+ou por área usada? corte por comprimento ou por tempo? — porque as duas
+hipóteses dão conselhos opostos: se é por chapa, apertar o encaixe não poupa um
+cêntimo. **Confirmar na página de preços deles antes de prometer poupança ao
+dB.** Facto de fabrico sem fonte citada é hipótese, e diz-se como hipótese.
+
 ## Procedência
 
 Nasceu a 06/09/2026 da cicatriz **15cf** (`docs/battle_scars.md`): as duas PCB
