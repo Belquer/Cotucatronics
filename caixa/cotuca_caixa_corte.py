@@ -73,8 +73,11 @@ REFORCO = _arg("reforco", 1.0) != 0.0
 #          rasgo. So se a porca couber em 42.
 # Duas medicoes no botao que esta em cima da mesa decidem. Ate la, recusa.
 REFORCO_FURO = _arg("reforco-furo", 0.0)
-if REFORCO and not REFORCO_FURO:
-    raise SystemExit(
+# ⚠️ A recusa vive no __main__, NAO aqui. Este modulo e importado pelo
+# `kicad/pcb_contorno.py`, que so quer as cotas da caixa e nao tem opiniao sobre
+# o furo do reforco. Recusar no topo fazia a importacao rebentar — o portao
+# certo no sitio errado para de ser portao e passa a ser avaria.
+FALTA_REFORCO_FURO = (
         "*** --reforco-furo e obrigatorio. Mede no arcade que ja compraste:\n"
         "      · comprimento da ROSCA (o painel que ela aperta)\n"
         "      · diametro exterior da PORCA\n"
@@ -255,7 +258,8 @@ def hexagono(cx, cy, af):
     return [(cx + r*math.cos(math.radians(60*k+30)), cy + r*math.sin(math.radians(60*k+30))) for k in range(6)]
 for i in range(6): PARTS.append((f"CB{i+1}", [(0,0),(12,0),(12,12),(0,12)], [], [("hex", 6, 6, 5.7)]))
 for i in range(6): PARTS.append((f"CT{i+1}", [(0,0),(12,0),(12,12),(0,12)], [], []))
-if REFORCO: PARTS.append(("REFORCO", part_reforco(), REFORCO_HOLES, []))
+# so entra na chapa quando o furo estiver decidido
+if REFORCO and REFORCO_FURO: PARTS.append(("REFORCO", part_reforco(), REFORCO_HOLES, []))
 
 # --------------- nesting numa chapa 384 × 384 (Ponoko P2) ---------------
 SHEET = (384.0, 384.0); GAP = 3.0
@@ -457,6 +461,8 @@ def svg_preview():
 
 if __name__ == "__main__":
     print(f"cotuca_caixa_corte.py v{VERSAO} — T = {T} mm, kerf = {K} mm")
+    if REFORCO and not REFORCO_FURO:
+        raise SystemExit(FALTA_REFORCO_FURO)
     # ⚠️ ao lado do próprio script. As versões anteriores escreviam
     # `/mnt/user-data/outputs/` e `/home/claude/`, caminhos de outra máquina —
     # a segunda rebentava a meio, DEPOIS de o SVG já ter saído, o que é o pior

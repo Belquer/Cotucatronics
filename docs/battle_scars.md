@@ -8092,3 +8092,56 @@ de $58,09 — custou $0,00.
 
 > **O aviso valeu o que valeu porque chegou antes da produção, não porque
 > estava certo.** Facto de fabrico dito depois da chapa cortada é história.
+
+---
+
+## 15ci — O DRC vê a placa em duas dimensões; o botão desce na terceira (06/09)
+
+O dB mediu o arcade que já comprou: **40 mm de profundidade**. Com isso a coluna
+de ar na linha dos botões fecha-se:
+
+```
+face de baixo da tampa      56,1 mm acima da chapa de fundo
+menos o reforço (3)         53,1
+ponta do botão (−40)        13,1
+face de cima da placa       11,6   (espaçador 10 + PCB 1,6)
+FOLGA                        1,5 mm   ← sobre a placa NUA
+```
+
+**1,5 mm.** E os três discos de ø30 caem sobre a placa em `y 24,3 · x 30, 90,
+150` do canto dela — com **15 peças** debaixo deles numa orientação e **8** na
+outra, incluindo a Daisy e o `C1`, que é um electrolítico de **25 mm**.
+
+> **Nenhum DRC vê isto.** Para o KiCad a coluna de ar acima do cobre é infinita:
+> ele não sabe que existe uma tampa, e muito menos que ela tem um botão de
+> 40 mm pendurado. A altura não é uma regra que se afrouxou — é uma dimensão
+> que a ferramenta não tem.
+
+Três verificações verdes — `GEOMETRIA 0`, `paridade 0`, `ERC 0` — e a placa não
+entra na caixa. Cada uma respondia à sua pergunta com honestidade; nenhuma
+respondia a esta.
+
+> **Portão verde não é «está bem»: é «está bem NAQUILO que este portão mede».**
+> A pergunta que fica por fazer é a que não tem ferramenta — e é por isso que
+> precisa de ser feita à mão, e escrita.
+
+O que ficou: `pcb_contorno.py` **v0.7.0** projecta os discos dos arcade sobre a
+placa e lista o que lhes fica por baixo. É a caixa a impor volume à placa, na
+mesma família do `confere_furos` (parafuso debaixo de um conector) e do
+`confere_caixa` (placa maior que a chapa) — **a caixa manda em três dimensões,
+não em duas.**
+
+⚠️ E fica em aberto o que só o dB decide, agora com dentes: **que aresta da
+placa olha para a parede da frente**. Escolher mal não é feio, é 15 peças
+esmagadas em vez de 8.
+
+### O portão certo no sítio errado deixa de ser portão
+
+De caminho, cometi e consertei outra: pus a recusa do `--reforco-furo` no topo
+do gerador da caixa. Como o `pcb_contorno.py` **importa** esse módulo — e não
+tem opinião nenhuma sobre o furo do reforço — a recusa passou a rebentar a
+importação.
+
+> Um portão colocado num sítio por onde passa quem não é o seu destinatário
+> deixa de ser portão e passa a ser avaria. Recusa-se no `__main__`, que é
+> quem escreve a chapa.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.6.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.7.0 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.6.0"
+VERSAO = "0.7.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -101,6 +101,11 @@ def _chapa_fundo():
 
 TAMPA = _furos_tampa()
 FUNDO = _chapa_fundo()
+# ⚠️ POR DECIDIR: que aresta da placa do cerebro olha para a parede da FRENTE.
+# Nao e estetica — decide que pecas ficam debaixo dos botoes arcade, que descem
+# 40 mm da tampa. As duas hipoteses dao listas diferentes e nenhuma e vazia.
+FRENTE_CEREBRO = "y_min"      # "y_min" = a aresta y=20 do KiCad | "y_max" = a y=120
+
 CALCO = 12.0     # os calcos sao quadrados de 12 x 12
 CALCO_H = FUNDO["altura"]
 
@@ -450,6 +455,72 @@ def confere_furos(t, alvo):
     return L
 
 
+def confere_arcade(t, alvo, frente_em):
+    """Os botoes arcade descem da tampa. A placa passa por baixo deles?
+
+    ⚠️ ISTO NAO E CLEARANCE DE PCB, E VOLUME. Nenhum DRC do KiCad ve um botao
+    que vem de fora da placa — para o DRC a coluna de ar acima do cobre e
+    infinita. A caixa e que a limita, e a conta faz-se aqui ou nao se faz.
+
+    Medido a 06/09 com o botao na mao (40 mm de profundidade): sobra 1,5 mm
+    entre a ponta do botao e a placa NUA. Qualquer componente debaixo de um
+    disco de o30 e colisao."""
+    import math
+    ang = math.radians(CAIXA.ANG)
+    BOTAO = 40.0                     # profundidade do arcade, medida pelo dB
+    ESPACADOR = CALCO_H + 4.0        # o que o `confere_caixa` obriga, arredondado
+    PCB = 1.6
+    y_face = 35.0                    # os tres arcade, na face da tampa
+    horiz = y_face * math.cos(ang)
+    sob = CAIXA.HF + (CAIXA.HB - CAIXA.HF) * horiz / CAIXA.RUN - CAIXA.T
+    livre = sob - CAIXA.T                        # acima da face de cima do fundo
+    ponta = livre - CAIXA.T - BOTAO              # o reforco da tampa rouba T
+    topo = ESPACADOR + PCB
+    folga = ponta - topo
+
+    fx = [h[1] + CAIXA.T for h in CAIXA.TOP_HOLES if h[3] == 30]   # corpo -> face
+    if not fx:
+        return ["     (a tampa nao tem arcade de o30 — nada a conferir)"]
+    ax = [x - CAIXA.T - 0.5 - alvo["x0"] for x in sorted(fx)]
+    ay = horiz - CAIXA.T - 0.5 - alvo["y0"]
+
+    L = ["     ARCADE: ponta a %.1f mm do fundo, placa a %.1f -> folga %.1f mm"
+         % (ponta, topo, folga),
+         "     discos o30 sobre a placa: y %.1f · x %s"
+         % (ay, " ".join("%.0f" % v for v in ax))]
+    ox, oy = alvo["origem"]
+    bate = set()
+    for m in re.finditer(r'\n\t\(footprint "', t):
+        j = m.start() + 1
+        d = 0
+        for k in range(j, len(t)):
+            if t[k] == "(":
+                d += 1
+            elif t[k] == ")":
+                d -= 1
+                if d == 0:
+                    bl = t[j:k + 1]
+                    break
+        ref = re.search(r'\(property "Reference" "([^"]+)"', bl).group(1)
+        at = re.search(r'\(at (' + NUM + r') (' + NUM + r')', bl)
+        kx, ky = float(at.group(1)), float(at.group(2))
+        # do KiCad para a placa, sabendo que aresta olha para a FRENTE da caixa
+        if frente_em == "y_min":
+            bx, by = kx - ox, ky - oy
+        else:
+            bx, by = (ox + alvo["w"]) - kx, (oy + alvo["h"]) - ky
+        if any(math.hypot(bx - a, by - ay) <= 15 + 3 for a in ax):
+            bate.add(ref)
+    if bate:
+        L.append("     ⚠️ %d peca(s) debaixo dos arcade: %s"
+                 % (len(bate), " ".join(sorted(bate))))
+        L.append("     ⚠️ com %.1f mm de folga sobre a placa NUA, isto e colisao."
+                 % folga)
+    else:
+        L.append("     nenhuma peca debaixo dos arcade")
+    return L
+
+
 def move(t, ref, xy, ang=None):
     """Poe o footprint `ref` em xy (e roda, se `ang`). Falha alto se faltar."""
     for m in re.finditer(r'\n\t\(footprint ', t):
@@ -501,6 +572,8 @@ def main():
         print("     %d pecas colocadas por zona" % n, file=sys.stderr)
     if alvo["assenta"] == "fundo":
         relato += confere_furos(t, alvo)
+        # ⚠️ FRENTE_CEREBRO ainda nao esta decidido — ver a constante.
+        relato += confere_arcade(t, alvo, FRENTE_CEREBRO)
     io.open(p, "w", encoding="utf-8").write(t)
     print("  %s: contorno %g x %g mm em (%g, %g)"
           % (nome, alvo["w"], alvo["h"], alvo["origem"][0], alvo["origem"][1]),
