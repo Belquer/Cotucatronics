@@ -9,7 +9,7 @@ tampa. Escrever isso a mao no editor e transcrever numeros de um desenho para
 outro — que e exactamente a familia de erro que este projecto ja pagou.
 
 ⚠️ A FONTE E O GERADOR DA CAIXA, NAO OS DESENHOS.
-`caixa/paginas/*.svg` desenham uma caixa que NAO foi construida (frente de 40,
+`caixa/medidas/*.svg` desenham uma caixa que NAO foi construida (frente de 40,
 dois arcade, um berco de powerbank). O `..._nogueira_6p4.svg` e uma caixa real
 mas OUTRA — nogueira de 6,4. A que esta a ser cortada e a do
 `caixa/cotuca_caixa_corte.py`: acrilico cast de 6,0, frente 55, tras 80, TRES
@@ -43,7 +43,7 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 # nao ha sitio onde as duas divirjam.
 #
 # Historico, porque explica os portoes que estao mais abaixo:
-#   · a placa foi dimensionada contra `caixa/paginas/*.svg`, DESENHOS de uma
+#   · a placa foi dimensionada contra `caixa/medidas/*.svg`, DESENHOS de uma
 #     caixa que nao foi construida (paredes de 6 mm mas frente de 40, dois
 #     arcade, um berco de powerbank que nunca foi cortado);
 #   · depois contra `cotuca_caixa_corte_nogueira_6p4.svg`, que e uma caixa

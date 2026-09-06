@@ -43,7 +43,7 @@ Seis páginas do desenho de fabricação da caixa, por dois geradores que
 correm daqui:
 
 ```bash
-python3 docs/desenhos/caixa/gen_caixa_paginas.py
+python3 caixa/gen_caixa_paginas.py
 ```
 
 ⚠️ **As cotas marcadas "confirmar" mudam depois de medir as peças — e mudam
@@ -56,7 +56,7 @@ os desenhos daqui têm fonte**, e todos estão sob o `tools/desenhos.py`.
 
 ```bash
 python3 docs/desenhos/caixa/gen_caixa.py           # página 1
-python3 docs/desenhos/caixa/gen_caixa_paginas.py   # páginas 2 a 6
+python3 caixa/gen_caixa_paginas.py   # páginas 2 a 6
 ```
 
 Ao contrário dos esquemáticos, estas **passam o `svg_colisoes`** — são

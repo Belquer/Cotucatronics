@@ -17,14 +17,18 @@
 <text class="warn" x="28" y="61" text-anchor="start">⚠ Diâmetros marcados 'confirmar' dependem da peça em mão — furar só depois de medir.</text>
 <rect class="box" x="110" y="98.38" width="520.0" height="321.62"/>
 <text class="hd" x="110" y="90.38" text-anchor="start">TOPO (tampa, 9 mm) — 200 × 123,7 no plano · y medido ao longo da inclinação, a partir da FRENTE</text>
-<circle class="h" cx="240.0" cy="329.0" r="39.0"/>
-<path class="hc" d="M197.0 329.0 L283.0 329.0 M240.0 286.0 L240.0 372.0"/>
-<text class="t" x="240.0" y="383.0" text-anchor="middle">freeze A ø30</text>
-<text class="ts" x="240.0" y="393.0" text-anchor="middle">(50, 35)</text>
-<circle class="h" cx="500.0" cy="329.0" r="39.0"/>
-<path class="hc" d="M457.0 329.0 L543.0 329.0 M500.0 286.0 L500.0 372.0"/>
-<text class="t" x="500.0" y="383.0" text-anchor="middle">freeze B ø30</text>
-<text class="ts" x="500.0" y="393.0" text-anchor="middle">(150, 35)</text>
+<circle class="h" cx="214.0" cy="329.0" r="39.0"/>
+<path class="hc" d="M171.0 329.0 L257.0 329.0 M214.0 286.0 L214.0 372.0"/>
+<text class="t" x="214.0" y="383.0" text-anchor="middle">freeze A ø30</text>
+<text class="ts" x="214.0" y="393.0" text-anchor="middle">(40, 35)</text>
+<circle class="h" cx="370.0" cy="329.0" r="39.0"/>
+<path class="hc" d="M327.0 329.0 L413.0 329.0 M370.0 286.0 L370.0 372.0"/>
+<text class="t" x="370.0" y="383.0" text-anchor="middle">buzios ø30</text>
+<text class="ts" x="370.0" y="393.0" text-anchor="middle">(100, 35)</text>
+<circle class="h" cx="526.0" cy="329.0" r="39.0"/>
+<path class="hc" d="M483.0 329.0 L569.0 329.0 M526.0 286.0 L526.0 372.0"/>
+<text class="t" x="526.0" y="383.0" text-anchor="middle">freeze B ø30</text>
+<text class="ts" x="526.0" y="393.0" text-anchor="middle">(160, 35)</text>
 <rect class="h" x="155.5" y="145.05" width="143.0" height="71.5"/>
 <text class="t" x="227.0" y="227.55" text-anchor="middle">janela OLED 55×27.5</text>
 <text class="ts" x="227.0" y="237.55" text-anchor="middle">centro (45, 92)</text>

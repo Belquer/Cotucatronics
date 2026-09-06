@@ -50,8 +50,23 @@ class Page:
         self.o.append(f'<rect class="box" x="{ox}" y="{oy-mm(h)}" width="{mm(w)}" height="{mm(h)}"/>')
         self.text(ox, oy-mm(h)-8, title, "hd")
     def hole(self, ox, oy, x, y, d, label, note="", lab_dy=15):
+        """⚠️ Furo GRANDE leva a etiqueta DENTRO. Com dois arcade de ø30 havia
+        espaco por baixo deles; com tres, a 60 mm de eixo a eixo, as etiquetas
+        de um invadem o circulo do vizinho — foi o que o `svg_colisoes` acusou
+        assim que a fonte passou a desenhar os tres. Dentro do circulo ha 30 mm
+        de vao e nao ha vizinho nenhum."""
         cx, cy = ox+mm(x), oy-mm(y); r = mm(d/2)
         self.o.append(f'<circle class="h" cx="{cx}" cy="{cy}" r="{r}"/>')
+        if r >= 20:
+            # cruzeta partida, para nao passar por cima do texto de dentro
+            self.o.append(f'<path class="hc" d="M{cx-r-4} {cy} L{cx-r+6} {cy} '
+                          f'M{cx+r-6} {cy} L{cx+r+4} {cy} '
+                          f'M{cx} {cy-r-4} L{cx} {cy-r+6} '
+                          f'M{cx} {cy+r-6} L{cx} {cy+r+4}"/>')
+            self.text(cx, cy-4, f"{label} ø{d}", "t", "middle")
+            self.text(cx, cy+12, f"({x}, {y})", "ts", "middle")
+            if note: self.text(cx, cy+r+lab_dy, note, "warn", "middle")
+            return
         self.o.append(f'<path class="hc" d="M{cx-r-4} {cy} L{cx+r+4} {cy} M{cx} {cy-r-4} L{cx} {cy+r+4}"/>')
         self.text(cx, cy+r+lab_dy, f"{label} ø{d}", "t", "middle")
         self.text(cx, cy+r+lab_dy+10, f"({x}, {y})", "ts", "middle")
@@ -90,14 +105,17 @@ class Page:
         print(r.stdout.strip())
         return r.returncode == 0
 
-OUT = str(AQUI / "paginas") + "/"
+OUT = str(AQUI / "medidas") + "/"
 
 # ======================= PAGINA 2: TAMPA =======================
 p = Page(1100, 700, "Página 2 — TAMPA (acrílico cast 8 mm) · 200 × 123,7 no plano",
          "Datum = canto inferior-esquerdo da tampa vista de cima (frente em baixo). y ao longo da inclinação. Tampa removível: assenta nas paredes e aparafusa a blocos internos.")
 ox, oy = 150, 400
 p.face(ox, oy, 200, 123.7, "vista de cima")
-p.hole(ox, oy, 50, 35, 30, "freeze A"); p.hole(ox, oy, 150, 35, 30, "freeze B")
+# ⚠️ TRES, e nao dois. O corte tem tres o30 em x = 40, 100 e 160 — o do
+# meio e o BUZIOS. O desenho tinha dois em 50/150 desde antes disso.
+p.hole(ox, oy, 40, 35, 30, "freeze A"); p.hole(ox, oy, 100, 35, 30, "buzios")
+p.hole(ox, oy, 160, 35, 30, "freeze B")
 p.rect(ox, oy, 45, 92, 55, 27.5, "janela OLED", "só se a tampa for opaca; em fumado dispensa-se")
 for (x, y) in [(17.25, 75.25), (72.75, 75.25), (17.25, 108.75), (72.75, 108.75)]:
     cx, cy = ox+mm(x), oy-mm(y)

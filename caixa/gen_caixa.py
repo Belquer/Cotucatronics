@@ -96,8 +96,10 @@ text(28, 61, "⚠ Diâmetros marcados 'confirmar' dependem da peça em mão — 
 # ================= TOPO (200 x 123.7 no plano, inclinado) =================
 ox, oy = 110, 420
 face(ox, oy, 200, 123.7, "TOPO (tampa, 9 mm) — 200 × 123,7 no plano · y medido ao longo da inclinação, a partir da FRENTE")
-hole(ox, oy, 50, 35, 30, "freeze A")
-hole(ox, oy, 150, 35, 30, "freeze B")
+# ⚠️ TRES, e nao dois — o do meio e o BUZIOS. Ver o ficheiro de corte.
+hole(ox, oy, 40, 35, 30, "freeze A")
+hole(ox, oy, 100, 35, 30, "buzios")
+hole(ox, oy, 160, 35, 30, "freeze B")
 rect_cut(ox, oy, 45, 92, 55, 27.5, "janela OLED", "+4 furos ø2,5 do módulo — confirmar")
 hole(ox, oy, 105, 92, 7, "encoder", "ø7 ou 9 — confirmar EC11")
 hole(ox, oy, 140, 92, 7, "pot L", "confirmar")
@@ -178,7 +180,7 @@ text(60, 1192, "Tampa aparafusada por dentro em 6 pontos, com inserto roscado �
 text(60, 1210, "Ordem: 1) medir todas as peças marcadas 'confirmar'  2) atualizar este desenho", "warn")
 text(60, 1222, "3) cortar UMA caixa e montar  4) só depois a série.", "warn")
 out.append('</svg>')
-FN = str(AQUI / "paginas" / "caixa-fabricacao.svg")
+FN = str(AQUI / "medidas" / "caixa-fabricacao.svg")
 open(FN, "w").write("\n".join(out))
 
 # ⚠️ O PORTAO CORRE AQUI, E PODE DIZER NAO. Gerador que so escreve deixa a

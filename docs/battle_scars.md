@@ -7846,14 +7846,14 @@ símbolo que não encontra, e uma verificação **depois de escrever** de que to
 ## 15cf — Três fontes plausíveis para a mesma caixa, e eu escolhi duas erradas (06/09)
 
 O contorno das duas placas e a posição dos três eixos que saem pela tampa vinham
-de `caixa/paginas/*.svg` — **desenhos**. Fui corrigi-los contra
+de `caixa/medidas/*.svg` — **desenhos**. Fui corrigi-los contra
 `caixa/cotuca_caixa_corte_nogueira_6p4.svg` — **um ficheiro que foi mesmo para
 a fábrica**. Estava certo no método e errado no objecto: o dB tinha mandado
 cortar a caixa em **acrílico**, e a de nogueira é *outra caixa*.
 
 | fonte | é real? | é **esta** caixa? |
 |---|---|---|
-| `paginas/*.svg` | não — nunca foi cortado | não |
+| `medidas/*.svg` | não — nunca foi cortado | não |
 | `..._nogueira_6p4.svg` | **sim**, foi para a Ponoko | não — nogueira de **6,4** |
 | `cotuca_caixa_corte.py` | sim, é gerador | não — está em **6,0** |
 | **o que o dB encomendou** | — | **acrílico transparente de 3,00** |

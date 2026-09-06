@@ -19,14 +19,18 @@
 <text class="ts" x="28" y="48" text-anchor="start">Datum = canto inferior-esquerdo da tampa vista de cima (frente em baixo). y ao longo da inclinação. Tampa removível: assenta nas paredes e aparafusa a blocos internos.</text>
 <rect class="box" x="150" y="78.38" width="520.0" height="321.62"/>
 <text class="hd" x="150" y="70.38" text-anchor="start">vista de cima</text>
-<circle class="h" cx="280.0" cy="309.0" r="39.0"/>
-<path class="hc" d="M237.0 309.0 L323.0 309.0 M280.0 266.0 L280.0 352.0"/>
-<text class="t" x="280.0" y="363.0" text-anchor="middle">freeze A ø30</text>
-<text class="ts" x="280.0" y="373.0" text-anchor="middle">(50, 35)</text>
-<circle class="h" cx="540.0" cy="309.0" r="39.0"/>
-<path class="hc" d="M497.0 309.0 L583.0 309.0 M540.0 266.0 L540.0 352.0"/>
-<text class="t" x="540.0" y="363.0" text-anchor="middle">freeze B ø30</text>
-<text class="ts" x="540.0" y="373.0" text-anchor="middle">(150, 35)</text>
+<circle class="h" cx="254.0" cy="309.0" r="39.0"/>
+<path class="hc" d="M211.0 309.0 L221.0 309.0 M287.0 309.0 L297.0 309.0 M254.0 266.0 L254.0 276.0 M254.0 342.0 L254.0 352.0"/>
+<text class="t" x="254.0" y="305.0" text-anchor="middle">freeze A ø30</text>
+<text class="ts" x="254.0" y="321.0" text-anchor="middle">(40, 35)</text>
+<circle class="h" cx="410.0" cy="309.0" r="39.0"/>
+<path class="hc" d="M367.0 309.0 L377.0 309.0 M443.0 309.0 L453.0 309.0 M410.0 266.0 L410.0 276.0 M410.0 342.0 L410.0 352.0"/>
+<text class="t" x="410.0" y="305.0" text-anchor="middle">buzios ø30</text>
+<text class="ts" x="410.0" y="321.0" text-anchor="middle">(100, 35)</text>
+<circle class="h" cx="566.0" cy="309.0" r="39.0"/>
+<path class="hc" d="M523.0 309.0 L533.0 309.0 M599.0 309.0 L609.0 309.0 M566.0 266.0 L566.0 276.0 M566.0 342.0 L566.0 352.0"/>
+<text class="t" x="566.0" y="305.0" text-anchor="middle">freeze B ø30</text>
+<text class="ts" x="566.0" y="321.0" text-anchor="middle">(160, 35)</text>
 <rect class="h" x="195.5" y="125.05000000000001" width="143.0" height="71.5"/>
 <text class="t" x="267.0" y="211.55" text-anchor="middle">janela OLED 55×27.5</text>
 <text class="ts" x="267.0" y="221.55" text-anchor="middle">centro (45, 92)</text>

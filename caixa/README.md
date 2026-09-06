@@ -18,7 +18,7 @@ colide com nada, e um ficheiro com 18 passa exactamente como um com 19.
 | ficheiro | o que é |
 |---|---|
 | `gen_caixa.py` · `gen_caixa_paginas.py` | **a fonte** das páginas de fabricação. Correm o `svg_colisoes` antes de escrever |
-| `paginas/` | as 6 páginas cotadas, geradas. Vigiadas pelo `tools/desenhos.py` |
+| `medidas/` | as 6 páginas cotadas, geradas. Vigiadas pelo `tools/desenhos.py` |
 | `cotuca_caixa_corte_nogueira_6p4.svg` · `.dxf` · `_previa.png` | o corte v1 em **nogueira 6,4 mm**, kerf 0,15. Foi para a Ponoko — é real, mas é **outra caixa** |
 | `cotuca_caixa_corte.py` | **A FONTE.** Gerador do corte em **acrílico cast 6,0**, kerf 0,2 — a caixa que está a ser feita. Tem `if __name__ == "__main__"`, por isso **importa-se** sem correr nada |
 | `CAIXA-ACRILICO-MONTAGEM.md` | materiais e montagem em acrílico (Weld-On 4 e 16, calços com porca cativa) |
@@ -61,7 +61,7 @@ Cortar UMA, montar, e pisar antes da série.
 
 ## Quatro caixas plausíveis, e só uma vai ser feita
 
-| | `paginas/*.svg` | nogueira 6,4 | gerador a 6,0 | **acrílico 3,0 (o encomendado)** |
+| | `medidas/*.svg` | nogueira 6,4 | gerador a 6,0 | **acrílico 3,0 (o encomendado)** |
 |---|---|---|---|---|
 | foi cortado? | **não, nunca** | sim | não | **é o que foi encomendado** |
 | espessura | 6 (tampa 8, ou 9) | 6,4 | 6,0 | **3,0** |
@@ -87,7 +87,7 @@ Duas consequências que não são cosméticas:
    M3 × 8 do `CAIXA-ACRILICO-MONTAGEM.md` **não serve para o cérebro**; mínimo
    15 mm. Cabe: 43 mm úteis à frente.
 
-**As `paginas/` descrevem a primeira coluna — uma caixa que não existe.** Pela
+**As `medidas/` descrevem a primeira coluna — uma caixa que não existe.** Pela
 regra do projecto, ou o `gen_caixa*.py` passa a gerar-se do
 `cotuca_caixa_corte.py`, ou as páginas vão abaixo. Enquanto não for uma coisa
 nem outra, quem as ler está a ler uma caixa que nunca foi feita.
