@@ -50,10 +50,22 @@ P2 (384 × 384), 19 peças, ocupa **375,0 × 299,5** com 9,0 mm de margem à bor
 ≈ 6,07 m de corte. O `_previa.svg` é o mesmo com traço grosso, só para olhar.
 
 ⚠️ **A chapa não pode encolher para P1 (181 × 181): a tampa tem 200 mm de
-largura.** O encaixe apertado (1123 cm² contra os 1364 das coordenadas à mão)
-tira risco de recusa e desperdício, mas não muda de chapa. Encolher a chapa
-exige encolher a caixa. E se o custo for por tempo de laser, a gordura são os
-**12 calços — 12% dos 6 metros de corte para doze quadrados de 12 mm**.
+largura.** Nenhuma disposição a faz caber — encolher a chapa exige encolher a
+caixa. Mas o encaixe apertado (1123 cm² contra os 1364 das coordenadas à mão)
+**paga-se à mesma**: a Ponoko cobra o fabrico por **tempo de máquina**, e o
+exemplo que eles publicam mostra quatro peças espalhadas a custar $14,77 de
+fabrico contra $4,53 encaixadas, com o material igual nos dois casos. Viagem do
+laser é tempo.
+
+E a gordura seguinte são os **12 calços — 0,70 m, ou 12% dos 6 metros de corte,
+para doze quadrados de 12 mm**. Peça pequena tem perímetro enorme por unidade
+de área.
+
+⚠️ **O que NÃO está confirmado:** o afastamento mínimo à borda da chapa (os
+3 mm que o gerador exige são nossos, não deles), o preço do acrílico
+transparente, e se o site novo — que dá cotação por peça — ainda cobra a chapa
+inteira. A tabela de estados está na skill `/caixa`, §6. **Uma peça pequena
+carregada no site deles responde às três de uma vez.**
 
 ⚠️ **A profundidade do dente é a espessura.** Trocar de material é sempre
 **regerar**, nunca só mudar a linha do pedido: um ficheiro cortado a 6 e

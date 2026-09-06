@@ -19,7 +19,7 @@ USO:  cotuca_caixa_corte.py [--t 3.0] [--kerf 0.2]
 """
 import math, os, sys, subprocess
 
-VERSAO = "0.4.0"
+VERSAO = "0.4.1"
 
 # --------------- parâmetros ---------------
 def _arg(nome, omissao):
@@ -408,7 +408,12 @@ if __name__ == "__main__":
     print(f"escrito: cotuca_caixa_corte_{tag}.svg · _previa.svg · .dxf")
     print(f"chapa {SHEET[0]:.0f}×{SHEET[1]:.0f} · usado {xmax:.1f}×{ymax:.1f} · {len(placed)} peças")
     margem = min(SHEET[0] - xmax, SHEET[1] - ymax)
-    aviso = "  ⚠️ APERTADO — a Ponoko recusa desenho colado à borda" if margem < 3 else ""
+    # ⚠️ Os 3 mm são MEUS, não da Ponoko. Eles dizem "não uses a aresta crua da
+    # chapa para a tua peça" e não publicam número nenhum para o afastamento à
+    # borda (help.ponoko.com/en/articles/2688726). Os números que publicam são
+    # entre PEÇAS: 1 mm no guia de encaixe, 2 mm nos materiais impressos.
+    # Facto de fabrico sem fonte citada é hipótese, e diz-se como hipótese.
+    aviso = "  ⚠️ apertado (regra nossa de 3 mm; a Ponoko não publica número)" if margem < 3 else ""
     print(f"margem à borda da chapa: {margem:.1f} mm{aviso}")
     print(f"corte total ≈ {cut/1000:.2f} m · área das peças {area/1e4:.1f} dm² · tampa {SLOPE:.1f} mm · ângulo {ANG:.1f}°")
     print(f"frente {HF} / trás {HB} · interior sob a tampa: frente {HF-2*T:.0f}, trás {HB-2*T:.0f}")

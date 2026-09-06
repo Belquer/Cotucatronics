@@ -215,6 +215,16 @@ E a margem à borda passou de 4,5 para 9,0 mm, que é risco de recusa a menos.
 > 1,4 mm a T=3, e desperdiçava 18% em qualquer das duas. Um encaixador com
 > semente fixa é repetível *e* reencaixa sozinho quando a espessura muda.
 
+**E o aperto paga-se duas vezes.** A Ponoko cobra o **fabrico por TEMPO de
+máquina**, e o exemplo aritmético que eles próprios publicam mostra o encaixe a
+mexer nesse número: quatro peças iguais espalhadas custam **$14,77** de fabrico
+e as mesmas quatro encaixadas custam **$4,53**, com o custo de material
+inalterado nos dois casos. O laser passa o tempo a viajar entre peças distantes,
+e viagem é tempo.
+→ *«Your goal [is] to produce the best product possible using the least amount
+of laser machine time»* — [help.ponoko.com/…/2688740](https://help.ponoko.com/en/articles/2688740-how-do-i-design-for-lowest-price)
+e [Top 10 Tips To Reduce Laser Cutting Costs](https://www.ponoko.com/blog/how-to-make/how-to-reduce-laser-cutting-costs/).
+
 ### Metade que NÃO se arruma arrumando
 
 ⚠️ **A chapa continua a ser a P2.** A TAMPA tem **200 mm** de largura e a P1
@@ -246,11 +256,39 @@ gordura, não no espaço vazio da chapa.
 E confirmar sempre se a **gravação** ficou ligada no upload: são minutos de
 laser por rótulos que não fazem falta, porque as peças distinguem-se pela forma.
 
-⚠️ **O modelo de preço da Ponoko não se supõe** — material por chapa escolhida
-ou por área usada? corte por comprimento ou por tempo? — porque as duas
-hipóteses dão conselhos opostos: se é por chapa, apertar o encaixe não poupa um
-cêntimo. **Confirmar na página de preços deles antes de prometer poupança ao
-dB.** Facto de fabrico sem fonte citada é hipótese, e diz-se como hipótese.
+### O que está confirmado, o que não está
+
+| | estado |
+|---|---|
+| P1 **181 × 181** · P2 **384 × 384** · P3 **790 × 384** | confirmado na fonte |
+| material cobrado por **chapa inteira**, ocupada ou não | confirmado — no modelo antigo |
+| fabrico cobrado por **tempo de máquina** | confirmado |
+| encaixe apertado **baixa o fabrico** ($14,77 → $4,53 no exemplo deles) | confirmado |
+| gravação: é tempo, e *linha* vs *área* inverte-se conforme a geometria | confirmado |
+| **afastamento mínimo à borda da chapa** | **não publicado** |
+| **preço do acrílico transparente por chapa** | **não publicado** — só «from $0.09» |
+| se o site novo ainda cobra chapa inteira, ou rateia por peça | **não confirmado** |
+
+⚠️ **A Ponoko mudou de modelo.** O site actual dá cotação instantânea **por
+peça** («from $50 for just 1 … 93% off for 10,000») e diz que os templates
+antigos já não são precisos. A aritmética publicada no blogue é anterior a essa
+mudança.
+
+> **A coisa de maior valor é carregar UMA peça pequena e ler a cotação.** Isso
+> responde de uma vez ao modelo de preço, ao afastamento à borda (a ferramenta
+> recusa geometria fora de limites) e ao preço do acrílico — no motor que
+> existe hoje, e não em documentação que é anterior à mudança dele.
+
+⚠️ **Dois números que aparecem em pesquisa e NÃO são o que parecem:** os «$12»
+do exemplo do blogue são *brushed gold on black acrylic*, e coincidem por acaso
+com a sobretaxa de impressão de uma P2 — nenhum dos dois é acrílico
+transparente. E «2 cêntimos por polegada de corte» não se confirma em página
+nenhuma deles.
+
+⚠️ **Os 3 mm de margem à borda que o gerador exige são NOSSOS.** A Ponoko diz
+«não uses a aresta crua da chapa para a tua peça» e não publica número. Os
+números que publicam são entre **peças** (1 mm no encaixe, 2 mm nos impressos).
+Facto de fabrico sem fonte citada é hipótese, e diz-se como hipótese.
 
 ## Procedência
 
