@@ -37,15 +37,21 @@ corte.**
 
 ## Custo
 
-A Ponoko cobra o **fabrico por tempo de máquina**, e o exemplo que eles próprios
-publicam mostra quatro peças espalhadas a custar $14,77 contra $4,53
-encaixadas, com o material igual. **Apertar o encaixe paga-se.**
+**Medido na cotação real: apertar o encaixe de 1364 para 1123 cm² poupou
+$1,90.** Faz-se à mesma — é automático e tira risco de recusa — mas **não é
+onde se projecta para poupar**: o encaixe move a viagem do laser, não o corte,
+e o corte são os mesmos 6,07 m antes e depois.
 
-⚠️ **Mas a chapa não encolhe.** A tampa tem 200 mm e a P1 tem 181: nenhuma
-disposição a faz caber. Encolher a chapa exige encolher a **caixa**.
+Onde se projecta, por ordem de efeito:
 
-A gordura seguinte são os **12 calços — 0,70 m, 12% do corte, para doze
-quadrados de 12 mm**. Peça pequena tem perímetro enorme por unidade de área.
+1. **O tamanho da chapa**, que se decide antes de desenhar. A tampa tem 200 mm
+   e a P1 tem 181 — uma caixa ≤ 181 na maior dimensão cai um degrau inteiro.
+   É decisão de **instrumento**, e nenhum encaixador a atravessa.
+2. **Corte e número de peças.** Dos 6,07 m, 2,00 são dentes/furos/rasgos e
+   **0,70 — 12% — são os doze calços de 12 mm**. O custo segue o perímetro, não
+   a área: peça pequena é cara por milímetro quadrado.
+3. **Menos dentes e mais largos**, pelo `n_target` do `cells()`.
+4. **Gravação desligada** no upload.
 
 Não confirmado, e escrito como tal: o afastamento mínimo à borda, o preço do
 acrílico transparente, e se o site novo — que dá cotação por peça — ainda cobra

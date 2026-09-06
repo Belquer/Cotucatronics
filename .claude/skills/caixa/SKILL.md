@@ -246,15 +246,58 @@ E a margem à borda passou de 4,5 para 9,0 mm, que é risco de recusa a menos.
 > 1,4 mm a T=3, e desperdiçava 18% em qualquer das duas. Um encaixador com
 > semente fixa é repetível *e* reencaixa sozinho quando a espessura muda.
 
-**E o aperto paga-se duas vezes.** A Ponoko cobra o **fabrico por TEMPO de
-máquina**, e o exemplo aritmético que eles próprios publicam mostra o encaixe a
-mexer nesse número: quatro peças iguais espalhadas custam **$14,77** de fabrico
-e as mesmas quatro encaixadas custam **$4,53**, com o custo de material
-inalterado nos dois casos. O laser passa o tempo a viajar entre peças distantes,
-e viagem é tempo.
-→ *«Your goal [is] to produce the best product possible using the least amount
-of laser machine time»* — [help.ponoko.com/…/2688740](https://help.ponoko.com/en/articles/2688740-how-do-i-design-for-lowest-price)
-e [Top 10 Tips To Reduce Laser Cutting Costs](https://www.ponoko.com/blog/how-to-make/how-to-reduce-laser-cutting-costs/).
+### O que o aperto rendeu, medido na cotação real
+
+**$1,90.** Reduzir de 1364 para 1123 cm² — 18% de área — poupou um dólar e
+noventa na cotação da Ponoko, lida pelo dB no site.
+
+⚠️ **Isto corrige uma expectativa que eu tinha tirado do blogue deles.** O
+exemplo publicado mostra o fabrico de quatro peças a cair de $14,77 para $4,53
+só por encaixar, e eu esperava algo dessa ordem. **Não generaliza**: aquelas
+eram quatro peças *pequenas e iguais*, onde o tempo é dominado pela **viagem**
+do laser entre elas. Uma caixa são 19 peças **grandes**, e aí o tempo é
+dominado pelo **corte**, que tem exactamente o mesmo comprimento antes e depois
+de encaixar — 6,07 m nos dois casos.
+
+> **O encaixe move a viagem, não o corte.** Vale a pena quando as peças são
+> pequenas e muitas; numa caixa de peças grandes vale $1,90 e sossego no
+> upload. Faz-se à mesma — é automático e tira risco de recusa — mas **não é
+> onde se projecta para poupar.**
+
+### Onde se projecta para poupar, então
+
+Por ordem de efeito, com os números desta caixa:
+
+**1. O tamanho da chapa.** É o único degrau grande, e decide-se **antes de
+desenhar seja o que for**: a peça maior contra a chapa mais pequena.
+
+| | P1 181 × 181 | P2 384 × 384 | P3 790 × 384 |
+|---|---|---|---|
+
+A tampa tem **200 mm**. Se a caixa fosse ≤ 181 na maior dimensão, caía numa P1
+— e isso é uma decisão de **instrumento**, não de encaixe. Uma caixa de 200 e
+uma de 180 custam degraus diferentes, e nenhum encaixador atravessa esse
+degrau.
+
+**2. Comprimento de corte e número de peças.** Medido nesta caixa, dos 6,07 m:
+
+| | metros | % |
+|---|---|---|
+| se as peças fossem rectângulos lisos | 4,07 | 67% |
+| dentes, furos e rasgos | 2,00 | 33% |
+| **os 12 calços** (doze quadrados de 12 mm) | **0,70** | **12%** |
+
+⚠️ **12% do corte são doze quadrados de 12 mm.** Peça pequena tem perímetro
+enorme por unidade de área — o custo segue o perímetro, não a área. Reduzir a
+12 calços para 6 (material do dobro da espessura), ou substituí-los por
+esquadros comprados, tira mais que qualquer encaixe.
+
+**3. Dentes.** Menos dentes e mais largos cortam menos que muitos e estreitos,
+para a mesma junta. O `cells(L, n_target, ...)` do gerador tem esse `n_target`
+como parâmetro — é onde se mexe.
+
+**4. Gravação.** É tempo como o corte. Confirmar que ficou **desligada** no
+upload: as peças distinguem-se pela forma, os rótulos não fazem falta.
 
 ### Metade que NÃO se arruma arrumando
 
@@ -294,7 +337,7 @@ laser por rótulos que não fazem falta, porque as peças distinguem-se pela for
 | P1 **181 × 181** · P2 **384 × 384** · P3 **790 × 384** | confirmado na fonte |
 | material cobrado por **chapa inteira**, ocupada ou não | confirmado — no modelo antigo |
 | fabrico cobrado por **tempo de máquina** | confirmado |
-| encaixe apertado **baixa o fabrico** ($14,77 → $4,53 no exemplo deles) | confirmado |
+| encaixe apertado baixa o fabrico | confirmado — mas **$1,90 nesta caixa**, medido na cotação, não a ordem de grandeza do exemplo deles |
 | gravação: é tempo, e *linha* vs *área* inverte-se conforme a geometria | confirmado |
 | **afastamento mínimo à borda da chapa** | **não publicado** |
 | **preço do acrílico transparente por chapa** | **não publicado** — só «from $0.09» |
