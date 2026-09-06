@@ -27,15 +27,25 @@ VERSAO = "0.7.0"
 # chapa (refiz o encaixe tres vezes sem mexer numa cota), e o mesmo gerador emite
 # chapas diferentes conforme os parametros.
 #
-# E o nome do ficheiro leva os dois, mais o DIGEST do proprio desenho:
-#     cotuca_caixa_r2_acrilico_3p0_a1b2c3d4.svg
+# E o nome leva os dois, a DATA da revisao, e o DIGEST do proprio desenho:
+#     cotuca_caixa_20260906_r3_acrilico_3p0_a1b2c3d4.svg
+#
+# ⚠️ A DATA NAO E ORNAMENTO: e a unica parte do nome que diz O QUE VEM DEPOIS.
+# Um digest identifica e NAO ORDENA — `55cf3955` e `037a9c30` nao dizem qual e
+# mais recente, e eu tinha-o posto a fazer um trabalho que ele nao sabe fazer.
+# O `REV` ordena mas bumpa-se a mao, que e precisamente o que o digest existe
+# para nao depender. A data vem primeiro no nome para o `ls` sair cronologico.
+#
+# ⚠️ E a data e da REVISAO, nao da corrida: gerar duas vezes tem de dar o mesmo
+# ficheiro. Um nome que muda a cada corrida diz "mudou" quando nada mudou, e ai
+# ninguem confia nele.
 #
 # ⚠️ O DIGEST E O QUE NAO SE ESQUECE. O `REV` bumpa-se a mao e a mao esquece —
 # foi assim que a caixa com reforco e a caixa sem reforco ficaram com o MESMO
 # nome, uma ja encomendada e a outra nao, indistinguiveis na pasta e no upload.
 # Com o digest no nome, geometria diferente E ficheiro diferente, por construcao:
 # nao ha como sobrepor sem dar por isso.
-REV = 3
+REV, REV_DATA = 3, "2026-09-06"
 # r1 (06/09) 19 pecas · arcade a 40/100/160 · sem reforco. ENCOMENDA #1263497.
 # r2 (06/09) 20 pecas · arcade a 30/100/170 (70 entre eixos) · REFORCO da tampa
 #            193x50 com furos o30, confirmado pelo prototipo de madeira de 6 mm.
@@ -535,15 +545,31 @@ if __name__ == "__main__":
     # sítio para rebentar: parece falha total e não é.
     OUT = os.path.dirname(os.path.abspath(__file__)) + os.sep
     tag = f"acrilico_{T:.1f}".replace(".", "p")   # 3.0 -> "3p0", nunca "3"
+    data = REV_DATA.replace("-", "")
     erros = portao_nesting()
     if erros:
         print("PORTÃO RECUSOU:"); [print("  !!", e) for e in erros]; sys.exit(1)
     print(f"portão nesting: {len(placed)} peças, disjuntas, dentro da chapa, furos dentro das peças — 0 erros")
-    import hashlib
+    import hashlib, json
     corpo = svg()
     # ⚠️ o digest e do DESENHO, e o nome nao entra no desenho — logo e estavel.
     dig = hashlib.sha256(corpo.encode()).hexdigest()[:8]
-    raiz = f"cotuca_caixa_r{REV}_{tag}_{dig}"
+    raiz = f"cotuca_caixa_{data}_r{REV}_{tag}_{dig}"
+    # ⚠️ A GUARDA QUE FECHA O LAÇO: se a geometria mudou e o REV nao, ninguem
+    # dava por isso — era como as duas caixas com o mesmo nome, outra vez.
+    reg = os.path.join(OUT, "revisoes.json")
+    hist = json.load(open(reg, encoding="utf-8")) if os.path.exists(reg) else {}
+    chave = f"r{REV}·{tag}"
+    if chave in hist and hist[chave]["digest"] != dig:
+        raise SystemExit(
+            "*** a geometria mudou e o REV nao.\n"
+            "    r%d/%s ja saiu com digest %s e agora da %s.\n"
+            "    Sobe o REV e a REV_DATA, ou desfaz a mudanca. Duas geometrias\n"
+            "    com a mesma revisao e o defeito que o digest existe para\n"
+            "    apanhar — e apanhou." % (REV, tag, hist[chave]["digest"], dig))
+    hist[chave] = {"digest": dig, "data": REV_DATA, "ficheiro": raiz + ".svg",
+                   "pecas": len(placed), "corte_m": round(cut / 1000, 2)}
+    json.dump(hist, open(reg, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
     open(OUT + raiz + ".svg", "w").write(corpo)
     open(OUT + raiz + "_previa.svg", "w").write(svg_preview())
     open(OUT + raiz + ".dxf", "w").write(dxf())

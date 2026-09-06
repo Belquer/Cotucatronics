@@ -97,21 +97,41 @@ outra não, e na pasta eram indistinguíveis.
 > encaixe três vezes sem mexer numa cota), e o mesmo gerador emite chapas
 > diferentes conforme os parâmetros.
 
-O nome carrega os três:
+O nome carrega **quatro** coisas, e cada uma responde a uma pergunta diferente:
 
 ```
-cotuca_caixa_r2_acrilico_3p0_55cf3955.svg
-             │        │   │   └── digest do desenho
-             │        │   └────── espessura
-             │        └────────── material
-             └─────────────────── revisão do artefacto
+cotuca_caixa_20260906_r3_acrilico_3p0_037a9c30.svg
+             │        │       │   │   └── QUAL É — digest do desenho
+             │        │       │   └────── espessura
+             │        │       └────────── material
+             │        └────────────────── QUAL FOI A INTENÇÃO — revisão
+             └─────────────────────────── QUAL VEM DEPOIS — data da revisão
 ```
 
-⚠️ **O digest é o que não se esquece.** A revisão bumpa-se à mão, e a mão
-esquece — foi exactamente assim que os dois ficheiros ficaram com o mesmo nome.
-Com o digest no nome, **geometria diferente é ficheiro diferente por
-construção**: não há como sobrepor sem dar por isso, e não há como encomendar o
-errado sem que o nome o diga.
+⚠️ **Um digest identifica e NÃO ORDENA.** `55cf3955` e `037a9c30` não dizem qual
+é mais recente — pu-lo a fazer um trabalho que ele não sabe fazer, e foi o dB a
+perguntar «o que vem depois, 955 ou c30?». A data vem **primeiro** no nome para
+o `ls` sair cronológico.
+
+⚠️ **E a data é da REVISÃO, não da corrida.** Gerar duas vezes tem de dar o
+mesmo ficheiro; um nome que muda a cada corrida diz «mudou» quando nada mudou, e
+aí ninguém confia nele.
+
+⚠️ **O digest é o que não se esquece.** A revisão e a data bumpam-se à mão, e a
+mão esquece — foi assim que dois ficheiros ficaram com o mesmo nome. Com o
+digest no nome, **geometria diferente é ficheiro diferente por construção**.
+
+E há uma guarda que fecha o laço: o gerador guarda `revisão → digest` num
+registo e **recusa-se a escrever** se a mesma revisão der um digest diferente do
+que já saiu:
+
+```
+*** a geometria mudou e o REV nao.
+    r3/acrilico_3p0 ja saiu com digest 037a9c30 e agora da 2e2533b3.
+```
+
+> Sem isso, o esquecimento produzia duas geometrias com a mesma revisão — que é
+> exactamente o defeito que o digest existe para apanhar.
 
 E é reprodutível: a mesma entrada dá o mesmo digest, sempre. Um digest que
 mudasse a cada corrida seria pior que nenhum — dizia «mudou» quando nada mudou.

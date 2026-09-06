@@ -9,7 +9,7 @@ que é por onde se abre — e é nele que o carrier e o amp montam.
 | ficheiro | o que é |
 |---|---|
 | `cotuca_caixa_corte.py` | **A FONTE.** Gera o corte a partir de `--t` e `--kerf`. Tem `if __name__ == "__main__"`, por isso o `kicad/pcb_contorno.py` **importa-o** para dimensionar as placas |
-| `cotuca_caixa_r2_acrilico_3p0_55cf3955.svg` · `.dxf` | o que vai para a Ponoko |
+| `cotuca_caixa_20260906_r3_acrilico_3p0_037a9c30.svg` · `.dxf` | o que vai para a Ponoko |
 
 **20 peças.** A vigésima é o **REFORÇO da tampa** — faixa de 193 × 50 colada por
 baixo, só onde os arcade estão. Um pé são ~300 N a meio de um vão, e 3 mm de
@@ -28,18 +28,24 @@ apertar dois, o que resolve é um ressalto — ver o documento de montagem, §4c
 
 ```bash
 python3 caixa/cotuca_caixa_corte.py --reforco-furo 30
-python3 tools/nesting.py caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg --pecas=20
+python3 tools/nesting.py caixa/cotuca_caixa_20260906_r3_acrilico_3p0_037a9c30.svg --pecas=20
 ```
 
 ## O nome é a identidade
 
 ```
-cotuca_caixa_r2_acrilico_3p0_55cf3955.svg
-             │        │   │   └── digest do desenho
-             │        │   └────── espessura
-             │        └────────── material
-             └─────────────────── revisão do artefacto
+cotuca_caixa_20260906_r3_acrilico_3p0_037a9c30.svg
+             │        │       │   │   └── QUAL É — digest do desenho
+             │        │       │   └────── espessura
+             │        │       └────────── material
+             │        └────────────────── intenção — revisão
+             └─────────────────────────── QUAL VEM DEPOIS — data da revisão
 ```
+
+⚠️ **Um digest identifica e não ordena.** A data vem primeiro para o `ls` sair
+cronológico, e é da **revisão**, não da corrida — gerar duas vezes dá o mesmo
+ficheiro. O `revisoes.json` guarda `revisão → digest` e o gerador **recusa-se a
+escrever** se a mesma revisão der geometria diferente.
 
 ⚠️ **A revisão bumba-se à mão e a mão esquece; o digest não.** Geometria
 diferente é ficheiro diferente **por construção** — a caixa com reforço e a
@@ -49,7 +55,8 @@ encomendada e a outra não, indistinguíveis na pasta. Não volta a acontecer.
 | revisão | o que é | encomenda | onde está |
 |---|---|---|---|
 | r1 | 19 peças · arcade a 40/100/160 · sem reforço | **#1263497**, $35,66 | `git show cbc6fbd:caixa/cotuca_caixa_corte_acrilico_3p0.svg` |
-| **r2** | 20 peças · arcade a 30/100/170 · **reforço da tampa** | **06/09, $38,23** — entrega 15/09 | na pasta |
+| r2 | 20 peças · arcade a 30/100/170 · reforço da tampa | 06/09, $38,23 — entrega 15/09 | `git show 6a86006:` |
+| **r3** | + **aberturas de USB** na parede de trás, pedidas pela placa | — | na pasta |
 
 ⚠️ **A encomenda da r2 foi feita com o ficheiro sob o nome ANTIGO**
 (`cotuca_caixa_corte_acrilico_3p0.svg`), porque foi enviado antes de a regra de
