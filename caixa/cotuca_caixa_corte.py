@@ -45,13 +45,19 @@ VERSAO = "0.7.0"
 # nome, uma ja encomendada e a outra nao, indistinguiveis na pasta e no upload.
 # Com o digest no nome, geometria diferente E ficheiro diferente, por construcao:
 # nao ha como sobrepor sem dar por isso.
-REV, REV_DATA = 3, "2026-09-06"
+REV, REV_DATA = 5, "2026-09-06"
 # r1 (06/09) 19 pecas · arcade a 40/100/160 · sem reforco. ENCOMENDA #1263497.
 # r2 (06/09) 20 pecas · arcade a 30/100/170 (70 entre eixos) · REFORCO da tampa
 #            193x50 com furos o30, confirmado pelo prototipo de madeira de 6 mm.
 # r3 (06/09) + ABERTURAS na parede de tras, pedidas pela placa em
 #            caixa/aberturas.json, para reprogramar os modulos montados. A r2 nao
 #            tinha nenhuma livre: o unico recorte de USB e o do decoy PD.
+#            NAO ENCOMENDADA — so tinha a abertura da Daisy.
+# r4 (06/09) DUAS aberturas: Daisy e ESP32-C3, que passou a soquete. A do ESP32
+#            mudou de x=164 para x=75 quando o modulo achou lugar livre a
+#            esquerda em vez da direita. NAO ENCOMENDADA.
+# r5 (06/09) as duas aberturas JUNTAM-SE numa: ficavam a 2,6 mm uma da outra, e
+#            uma tira de 2,6 em acrilico de 3 parte ao montar.
 
 # --------------- parâmetros ---------------
 def _arg(nome, omissao):
@@ -293,6 +299,34 @@ if os.path.exists(_ped):
                 raise SystemExit("*** a abertura pedida para %s bate no furo de "
                                  "o%g em x=%.1f." % (a["ref"], _d, _x + T))
         ABERTURAS_PEDIDAS.append(a)
+    # ⚠️ JUNTAR AS QUE FICAM PERTO. Os dois USB calharam a 20,6 mm de eixo a eixo,
+    # com 18 de largura cada — sobrava uma TIRA DE 2,6 mm de acrilico de 3 entre
+    # elas, que parte ao montar e nao se ve num portao de geometria: para o
+    # nesting duas aberturas separadas estao perfeitas. O que falha nao e a
+    # forma, e o material que sobra entre formas.
+    PONTE_MIN = 6.0        # acrilico de 3 nao aguenta menos que isto entre furos
+    ABERTURAS_PEDIDAS.sort(key=lambda a: a["x"])
+    juntas, i = [], 0
+    while i < len(ABERTURAS_PEDIDAS):
+        a = dict(ABERTURAS_PEDIDAS[i])
+        while i + 1 < len(ABERTURAS_PEDIDAS):
+            b = ABERTURAS_PEDIDAS[i + 1]
+            vao = (b["x"] - b["w"] / 2) - (a["x"] + a["w"] / 2)
+            if vao >= PONTE_MIN or abs(b["z"] - a["z"]) > max(a["h"], b["h"]):
+                break
+            e, d = a["x"] - a["w"] / 2, b["x"] + b["w"] / 2
+            z0 = min(a["z"] - a["h"] / 2, b["z"] - b["h"] / 2)
+            z1 = max(a["z"] + a["h"] / 2, b["z"] + b["h"] / 2)
+            a = dict(ref=a["ref"] + "+" + b["ref"], x=(e + d) / 2, z=(z0 + z1) / 2,
+                     w=round(d - e, 2), h=round(z1 - z0, 2),
+                     recuo=max(a["recuo"], b["recuo"]),
+                     porque="%s e %s: juntas, sobrava tira de %.1f mm"
+                            % (a["ref"], b["ref"], vao))
+            i += 1
+        juntas.append(a)
+        i += 1
+    ABERTURAS_PEDIDAS = juntas
+    for a in ABERTURAS_PEDIDAS:
         BACK_RECTS.append(("r", *to_back(a["x"], a["z"]), a["w"], a["h"]))
 LEFT_HOLES = [("c", 35 - T, 22, 9.5), ("c", 85 - T, 22, 9.5)]          # x da frente (corpo), z do chão
 RIGHT_RECTS = [("r", BODY_D - (35 - T), 24, 24, 12), ("r", BODY_D - (85 - T), 24, 24, 12)]   # espelhado

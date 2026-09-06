@@ -78,7 +78,7 @@ def main():
                      '\t\t(drill %g)\n\t\t(layers "*.Cu" "*.Mask")\n\t\t(uuid "%s")\n\t)'
                      % (nome, forma, x, y, PAD, PAD, FURO, u()))
             L.append('\t(fp_text user "%s"\n\t\t(at %g %g 0)\n\t\t(layer "F.SilkS")\n'
-                     '\t\t(uuid "%s")\n\t\t(effects (font (size 0.7 0.7) (thickness 0.1)))\n\t)'
+                     '\t\t(uuid "%s")\n\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))\n\t)'
                      % (SILK[nome], x + (2.2 if x < 0 else -2.2), y, u()))
     # contorno do modulo (F.Fab), serigrafia e courtyard
     for camada, larg, esp in (("F.Fab", 0.1, 0.1), ("F.SilkS", 0.12, 0.12)):

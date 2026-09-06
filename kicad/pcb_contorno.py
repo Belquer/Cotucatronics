@@ -236,8 +236,10 @@ ZONAS_CEREBRO = [
     # ⚠️ conectores VERTICAIS: o 1x6 tem 14,4 mm e o 1x5 tem 11,9. Num passo de
     # 9 mm colidem uns nos outros — foi o que deu 43 das 52 violacoes de
     # geometria da primeira passagem.
+    # ⚠️ J10 saiu: era o header de 5 vias da ponte por fio, e o ESP32 passou a
+    # soquete (U3), que e peca UNICA por ser grande de mais para a grelha.
     ("soquete", 118, 34, 32, 16.0, 19.0,
-     ["J10", "J11", "J15", "J16", "R50", "R51", "NT1", "J12", "J13"]),
+     ["J11", "J15", "J16", "R50", "R51", "NT1", "J12", "J13"]),
     ("energia", 152, 34, 44, 14.0, 13.0,
      ["F1", "D1", "D2", "C2", "C4", "R8", "R9", "J3", "J4", "J2", "C3"]),
 ]
@@ -265,7 +267,20 @@ UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 25.0, 90),
                   # ⚠️ os WIMA de filme tem 13 mm de altura e ~18 de corpo: nao
                   # cabem na grelha. Vao para a faixa livre entre o pre-amp
                   # (acaba em x=69,5) e a Daisy (comeca em x=97).
-                  "C14": (86.0, 38.0, 0), "C24": (86.0, 66.0, 0)}
+                  "C14": (86.0, 38.0, 0), "C24": (86.0, 66.0, 0),
+                  # ⚠️ U3 RODADO 180 pela mesma razao que a Daisy: o USB-C esta
+                  # em -y do footprint e sem rodar apontava para a FRENTE, que e
+                  # a face da marca e nao leva furos. Rodado aponta para tras,
+                  # onde a parede leva a abertura que esta placa pede.
+                  # ⚠️ Posicao achada por VARRIMENTO com caixas de pads e margem
+                  # generosa (3,5 mm nos corpos grandes, 2,5 no resto). O primeiro
+                  # varrimento usou so pads com 1 mm e deu (174, 94) — que bate no
+                  # C1, um electrolitico de o16 cujo CORPO e muito maior que os
+                  # pads. Duas iteracoes de DRC depois, a licao e a mesma de
+                  # sempre: medir a coisa certa custa menos que medir depressa.
+                  # Das 480 posicoes livres, a mais atras — o USB fica a 12 mm
+                  # da parede em vez dos 30 da tentativa anterior.
+                  "U3": (85.0, 106.0, 180)}
 
 
 def grelha(t, zonas, unicos):
@@ -595,6 +610,9 @@ def colide(x, y, ang, pads, centros, raio):
 ACESSO_USB = {
     # ref: (pinos que marcam a ponta onde esta o USB, altura do conector)
     "U2": ((1, 40), 1.5),
+    # ⚠️ pinos por NOME, como tudo o que toca neste modulo. IO5 e 5V sao os dois
+    # extremos da ponta do USB-C.
+    "U3": (("IO5", "5V"), 3.2),
 }
 # tamanho da abertura na parede: tem de passar a FICHA e o dedo que a leva la,
 # nao so o conector. Uma ficha USB-C tem ~12 x 6,5 de corpo e ~20 de pega.
@@ -635,8 +653,9 @@ def confere_acesso(t, alvo):
         fx, fy, rot = float(a.group(1)), float(a.group(2)), float(a.group(3) or 0)
         ang = math.radians(rot)
         pos = {}
-        for pm in re.finditer(r'\(pad "(\d+)" [\s\S]*?\(at (' + NUM + r') (' + NUM + r')', bl):
-            n = int(pm.group(1))
+        for pm in re.finditer(r'\(pad "([^"]+)" [\s\S]*?\(at (' + NUM + r') (' + NUM + r')', bl):
+            n = pm.group(1)
+            n = int(n) if n.isdigit() else n
             if n in pinos:
                 px, py = float(pm.group(2)), float(pm.group(3))
                 pos[n] = (fx + px * math.cos(ang) + py * math.sin(ang),
@@ -785,9 +804,28 @@ def evita_arcade(t, alvo, zonas):
             outro = ocupa.get(j)
             ocupa[i], ocupa[j] = outro, ocupa[i]
             trocas.append((refs[i], lugares[i], lugares[j], outro or "(vago)"))
+        # ⚠️ O TROCADOR VERIFICA-SE A SI PROPRIO. Com 8 refs e tres pecas altas
+        # a disputarem dois lugares fora dos discos, ele poe duas no mesmo sitio
+        # e nao se queixa — o DRC apanhava depois, com 46 violacoes e 11 furos
+        # sobrepostos. Um arrumador que produz sobreposicao tem de o dizer ele,
+        # e nao deixar o portao seguinte adivinhar de quem foi a culpa.
+        postos = [r for r in ocupa.values() if r]
+        if len(postos) != len(set(postos)):
+            import collections
+            rep = [r for r, n in collections.Counter(postos).items() if n > 1]
+            raise SystemExit(
+                "*** a zona '%s' ficou com %s em mais de um lugar. O trocador "
+                "nao tinha lugares livres que chegassem: %d pecas altas sob os "
+                "discos e %d lugares fora deles." % (nome, rep, len(maus), len(bons) + len(maus)))
+        vistos = {}
         for i, ref in ocupa.items():
             if ref:
-                t = move(t, ref, (float(lugares[i][0]), float(lugares[i][1])))
+                xy = (float(lugares[i][0]), float(lugares[i][1]))
+                if xy in vistos:
+                    raise SystemExit("*** %s e %s no mesmo ponto %s da zona '%s'"
+                                     % (vistos[xy], ref, xy, nome))
+                vistos[xy] = ref
+                t = move(t, ref, xy)
     return t, trocas
 
 
