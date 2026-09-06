@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""svg_colisoes v0.4.0 — verificador de sobreposicao para SVGs entregues.
+"""svg_colisoes v0.5.0 — verificador de sobreposicao para SVGs entregues.
 
 ⚠️ ESTE E O PASSO 1 DA SKILL `design-review`, e vem ANTES do olho.
    Zero colisoes e o portao, e ele sabe dizer NAO — e sabe dizer
@@ -37,7 +37,7 @@ Uso: python3 svg_colisoes.py ficheiro.svg [--contentor 0.6] [--largura 0.55]
 """
 import re, sys, math, xml.etree.ElementTree as ET
 
-VERSAO = "0.4.0"
+VERSAO = "0.5.0"
 
 W_CHAR = 0.55
 
@@ -94,6 +94,24 @@ def num(v, base=None, omissao=0.0):
 
 def inter(a, b, pad=0.0):
     return not (a[2] + pad < b[0] or b[2] + pad < a[0] or a[3] + pad < b[1] or b[3] + pad < a[1])
+
+def quanto(a, b):
+    """QUAO fundo entram uma na outra, no eixo mais raso — em unidades da folha.
+
+    ⚠️ NASCEU DE UM CASO REAL (06/09). A ferramenta dizia "ha colisao" e nao
+    dizia QUANTO, e eu reportei ao dB como defeito serio um par `V-`/`4` que
+    se sobrepunha 42 MICROMETROS — dentro do erro do proprio modelo, que
+    supoe ascendente de 0,75 do corpo e a fonte de tracos do KiCad nao tem
+    exactamente essa metrica.
+
+    Um veredito binario obriga quem le a ir calcular a mao para saber se
+    mexe no desenho. 42 um le-se como ruido do modelo; 2 mm salta a vista.
+    Medir nao baixa a regua do portao — ele continua a acusar. Dá contexto
+    a quem decide."""
+    ox = min(a[2], b[2]) - max(a[0], b[0])
+    oy = min(a[3], b[3]) - max(a[1], b[1])
+    d = min(ox, oy)                       # o eixo mais raso e o que decide
+    return f"{d*1000:.0f} um" if abs(d) < 0.2 else f"{d:.2f}"
 
 def main():
     if len(sys.argv) < 2: print(__doc__); sys.exit(2)
@@ -202,7 +220,8 @@ def main():
     probs = []
     for i, a in enumerate(texts):
         for b in texts[i+1:]:
-            if inter(a[:4], b[:4]): probs.append(("texto×texto", a[4][:40], b[4][:40]))
+            if inter(a[:4], b[:4]):
+                probs.append(("texto×texto", a[4][:40], b[4][:40], quanto(a[:4], b[:4])))
     for a in texts:
         for s in shapes:
             if s[4] == "contentor":
@@ -210,12 +229,12 @@ def main():
                 inside = a[0] >= s[0] and a[2] <= s[2] and a[1] >= s[1] and a[3] <= s[3]
                 outside = not inter(a[:4], s[:4])
                 if inside or outside: continue
-                probs.append(("texto×borda", a[4][:40], f"{s[4]} {int(s[0])},{int(s[1])}"))
+                probs.append(("texto×borda", a[4][:40], f"{s[4]} {int(s[0])},{int(s[1])}", quanto(a[:4], s[:4])))
             else:
                 # rect/circle: rotulo DENTRO da forma e legitimo (etiqueta); so acusa se cruzar a borda
                 inside = a[0] >= s[0] and a[2] <= s[2] and a[1] >= s[1] and a[3] <= s[3]
                 if inter(a[:4], s[:4]) and not inside:
-                    probs.append(("texto×borda", a[4][:40], f"{s[4]} {int(s[0])},{int(s[1])}"))
+                    probs.append(("texto×borda", a[4][:40], f"{s[4]} {int(s[0])},{int(s[1])}", quanto(a[:4], s[:4])))
 
     for a in texts:
         for (p1, p2) in segs:

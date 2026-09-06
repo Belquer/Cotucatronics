@@ -72,6 +72,29 @@ O que ele testa:
 comportamento certo para um portão: *falso positivo custa mover um rótulo;
 falso negativo custa uma entrega errada.*
 
+### Cada acusação diz QUANTO, e isso muda o que se faz com ela
+
+A partir da v0.5.0 cada linha traz a profundidade da sobreposição no eixo mais
+raso, em unidades da folha:
+
+```
+!! texto×texto  V- 4              42 um     <- ruído do modelo
+!! texto×borda  V- rect 54,252    1.65      <- a sério, vai-se olhar
+```
+
+⚠️ **Nasceu de eu ter reportado mal.** O portão acusou um par `V-`/`4` e eu
+disse ao dB que era colisão a sério. Fui medir: **42 micrómetros** — dentro do
+erro do próprio modelo, que supõe ascendente de 0,75 do corpo, e a fonte de
+traços do KiCad não tem essa métrica. O símbolo estava correcto e simétrico;
+não havia nada para endireitar.
+
+> **Veredito binário obriga quem lê a ir calcular à mão.** Medir não baixa a
+> régua — o portão continua a acusar — dá contexto a quem decide. Abaixo de
+> ~0,1 da unidade da folha, suspeitar do modelo antes de suspeitar do desenho.
+
+E o contrário também vale: na mesma folha havia **cinco** acusações de 0,9 a
+1,65 que eu não tinha distinguido do ruído. Quantificar separou-as.
+
 **A linha de resultado vai no relatório**, sempre: `N textos, M segmentos, 0
 colisões`. **Sem essa linha, a revisão não aconteceu.**
 
