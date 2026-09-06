@@ -3,10 +3,17 @@
 
 POR QUE EXISTE, e nao e para substituir o olho.
 
-O `svg_colisoes.py` e o portao de saida de todo SVG, mas nos exports do
-`kicad-cli` ele devolve sempre codigo 3 — NAO VERIFICAVEL — porque o KiCad
-escreve as letras como *paths*, e nao ha um unico `<text>` para medir. Ou
-seja: precisamente nos desenhos que a fabrica vai ler, o portao esta cego.
+⚠️ CORRIGIDO A 06/09. Este cabecalho dizia que o `svg_colisoes.py` devolve
+sempre codigo 3 nos exports do `kicad-cli` "porque nao ha um unico <text>
+para medir". E FALSO, e foi medido: ha 222 no preamp — invisiveis
+(`opacity="0"`) mas com `textLength`, que e a largura que o proprio KiCad
+calculou. O que ele nao lia eram os GLIFOS como segmentos e os textos em
+duplicado; corrigido no svg_colisoes v0.4.0, que ganhou `--esquematico`.
+
+A razao para ESTE existir e outra, e continua de pe: ele le o FONTE, com as
+coordenadas em milimetros antes de virarem curvas. E o par do outro, nao o
+substituto — ver a skill `design-review`, que mede o que cada um ve e o que
+cada um NAO ve.
 
 Este le o FONTE em vez do render. As coordenadas e os tamanhos de letra estao
 todos la, em milimetros, antes de virarem curvas.

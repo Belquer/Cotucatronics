@@ -1,7 +1,13 @@
 # Lista de CCs para configurar o Loopy
 
-> **Gerada de `src/manifest.h` — firmware v0.156.0.** Se o mapa mudar,
-> regerar antes de confiar.
+> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
+> gerador o escreve — foi feito à mão a partir do `manifest.h` **firmware v0.156.0**, e o
+> manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
+> como espelho do actual.
+>
+> Rótulo sem gerador apodrece com autoridade: ninguém o mantém à mão *porque
+> é gerado*, e nada o regenera *porque não há gerador*. Ou se lhe escreve um,
+> ou se lhe tira o rótulo — isto é a segunda.
 
 ## A regra: seis canais, e ESCUTA = MANDA + 3
 

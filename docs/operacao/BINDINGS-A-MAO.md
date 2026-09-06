@@ -1,6 +1,10 @@
 # Bindings à mão — Control Settings
 
-> **Gerado de `CCS-POR-PAGINA.md`.** Plano B do mapeamento: em Control
+> ⚠️ **NÃO É GERADO.** Foi feito à mão a partir do `CCS-POR-PAGINA.md`, que
+> por sua vez também não é gerado — **derivado de um derivado**, e a
+> distância à fonte multiplica-se. Vale o mesmo aviso que está lá.
+>
+> Feito de `CCS-POR-PAGINA.md`. Plano B do mapeamento: em Control
 > Settings → perfil → **Add New Binding**, escolhe a ação e escreve o
 > gatilho no campo **Trigger**.
 

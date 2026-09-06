@@ -1,6 +1,6 @@
 # Loopy Pro — secção nova, com MIDI learn
 
-**Gerado por `gerar_secao_loopy.py v0.3.0` a partir do `manifest.h`.** Não editar à mão — correr o gerador.
+**Gerado por `gerar_secao_loopy.py v0.3.0` a partir do `manifest.h`, manifest v1.13.0.** Não editar à mão — correr o gerador.
 
 ⚠️ **Isto é a ORDEM DE APRENDIZAGEM, não o layout.** O Loopy endereça widgets por índice de array dentro da cena, e esse índice só existe depois de alguém os criar. Cria os widgets na ordem abaixo e faz `learn` um a um — assim o mapa fica igual ao documento.
 
@@ -228,6 +228,15 @@
 | **16** | ch1 (compartilhado) | `microfonia4_hz_r` | Fader | 60 – 8000 | 0 |
 | **17** | ch1 (compartilhado) | `microfonia4_db_l` | Fader | 0 – 24 | 0 |
 | **18** | ch1 (compartilhado) | `microfonia4_db_r` | Fader | 0 – 24 | 0 |
+| **19** | ch1 (compartilhado) | `micro_auto` | Fader | 0 – 1 | 1 |
+| **21** | ch1 (compartilhado) | `micro_dom` | Fader | 0 – 1 | 0.5 |
+| **22** | ch1 (compartilhado) | `comp_on` | Botao (toggle) | 0 – 1 | 0 |
+| **23** | ch1 (compartilhado) | `comp_thresh` | Fader | 0.001 – 1 | 0.05 |
+| **24** | ch1 (compartilhado) | `comp_razao` | Fader | 1 – 20 | 0.3 |
+| **25** | ch1 (compartilhado) | `comp_makeup` | Fader | 1 – 8 | 0 |
+| **107** | ch1 (compartilhado) | `sim_laco` | Fader | 0 – 1 | 0 |
+| **108** | ch1 (compartilhado) | `sim_hz` | Fader | 60 – 8000 | 0 |
+| **109** | ch1 (compartilhado) | `sim_fb` | Fader | 0 – 2 | 0 |
 
 ## Página de PRESETS
 
@@ -251,4 +260,4 @@ São **botões de valor fixo**, não faders: cada botão manda o CC 121 com o se
 
 ---
 
-**113 vínculos** nesta folha.
+**122 vínculos** nesta folha.

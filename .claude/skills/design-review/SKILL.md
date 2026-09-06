@@ -117,12 +117,28 @@ pré-amp, que três revisões de olho não tinham visto.
 | `tools/colisoes_sch.py` | o **fonte** `.kicad_sch` | coordenadas exactas em mm, antes de virarem curvas |
 | `tools/svg_colisoes.py --esquematico` | o **render** exportado | o que está realmente desenhado na folha |
 
-**Correr os dois, e a discordância é informação.** Medido a 05/09 no pré-amp:
-o do fonte diz **117 textos, 0 colisões**; o do render diz **194 textos, 7** —
-entre elas um `V-` por cima do pino `4`. **Não confirmei o mecanismo** da
-diferença; sei que leem populações diferentes e que só um deles viu aquele
-par. Enquanto isso não estiver medido, um `0` de qualquer um dos dois **não
-autoriza dispensar o outro**.
+**Correr os dois, e a discordância é informação.** No pré-amp o do fonte diz
+**117 textos, 0 colisões**; o do render diz **194, 7** — entre elas um `V-`
+por cima do pino `4`.
+
+**O mecanismo está medido (06/09), e o cego é o do fonte.** Ele salta a secção
+`lib_symbols` de propósito — está na docstring dele: *"tudo que imprime
+letras, **fora do lib_symbols**"*. Lê `label`, `global_label`,
+`hierarchical_label` e as propriedades `Reference`/`Value`. Logo **não vê
+nomes nem números de pino**, que é onde os símbolos guardam as letras. E não
+vê o **bloco de título e a moldura** — `Date:`, `Rev:`, `File:`, `Id: 1/1`,
+as coordenadas de borda — porque o KiCad desenha isso do *worksheet* e não do
+`.kicad_sch`: 27 dos textos do render não existem no ficheiro.
+
+Foi exactamente por isso que só o render viu o `V- 4`: `V-` é **nome de
+pino** e `4` é **número de pino**, e `(number "4")` aparece **1 vez dentro do
+`lib_symbols` e 0 fora**. Os dois lados da colisão vivem na secção que o
+outro salta.
+
+> **Nenhum dos dois substitui o outro, e agora sabe-se porquê:** o do fonte
+> tem as coordenadas exactas mas não vê o que o símbolo desenha; o do render
+> vê tudo o que está na folha mas mede sobre o desenho. Um `0` de qualquer um
+> **não autoriza dispensar o outro**.
 
 > Dois verificadores que respondem à mesma pergunta e discordam: o correcto
 > não é escolher o que agrada, é registar a discordância e ir medir porquê.

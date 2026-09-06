@@ -1,6 +1,13 @@
 # CCs por página — Loopy Pro
 
-> **Gerado de `src/manifest.h` (v0.85.0, firmware v0.178.0).** Regerar se o mapa mudar.
+> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
+> gerador o escreve — foi feito à mão a partir do `manifest.h` **v0.85.0 · firmware v0.178.0**, e o
+> manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
+> como espelho do actual.
+>
+> Rótulo sem gerador apodrece com autoridade: ninguém o mantém à mão *porque
+> é gerado*, e nada o regenera *porque não há gerador*. Ou se lhe escreve um,
+> ou se lhe tira o rótulo — isto é a segunda.
 
 ## A regra
 

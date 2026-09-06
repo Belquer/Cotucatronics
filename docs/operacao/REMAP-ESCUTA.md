@@ -1,6 +1,13 @@
 # Remapeamento MIRADO na sessão de escuta
 
-> **Gerado de `src/manifest.h` + `docs/PAUTA-ESCUTA.md` (v0.171.0).**
+> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
+> gerador o escreve — foi feito à mão a partir do `manifest.h` **v0.171.0, mais juízo humano do `PAUTA-ESCUTA.md`**, e o
+> manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
+> como espelho do actual.
+>
+> Rótulo sem gerador apodrece com autoridade: ninguém o mantém à mão *porque
+> é gerado*, e nada o regenera *porque não há gerador*. Ou se lhe escreve um,
+> ou se lhe tira o rótulo — isto é a segunda.
 
 Os learns do Loopy foram apagados. **Remapear os 86 antes de escutar é
 trabalho que a sessão não precisa** — a pauta usa uma fração.

@@ -20,6 +20,12 @@ VERSAO = "0.3.0"
 AQUI = pathlib.Path(__file__).resolve().parent
 SRC = (AQUI / ".." / ".." / "src" / "manifest.h").resolve()
 
+# A versao da FONTE, para o carimbo. Sem ela o ficheiro diz quem o escreveu
+# mas nao DE QUE ESTADO, e ninguem sabe se esta atrasado.
+import re as _re
+_m = _re.search(r'manifest\.h[^\n]*?v(\d+\.\d+\.\d+)', SRC.read_text(errors="replace"))
+VER_MANIF = _m.group(1) if _m else "?"
+
 CANAIS = {"kCanalCompart": ("ch1", "compartilhado"),
           "kCanalEntradaA": ("ch2", "cadeia A"),
           "kCanalEntradaB": ("ch3", "cadeia B")}
@@ -117,8 +123,12 @@ def main():
     A = out.append
     A("# Loopy Pro — secção nova, com MIDI learn")
     A("")
-    A("**Gerado por `gerar_secao_loopy.py v%s` a partir do `manifest.h`.**"
-      " Não editar à mão — correr o gerador." % VERSAO)
+    # ⚠️ O carimbo nomeia a FONTE, nao so o gerador. A versao do gerador diz
+    # QUEM escreveu; a do manifest diz DE QUE ESTADO — e e essa que permite
+    # saber se o ficheiro esta atrasado. Ver `derivados.py`.
+    A(f"**Gerado por `gerar_secao_loopy.py v{VERSAO}` a partir do "
+      f"`manifest.h`, manifest v{VER_MANIF}.** "
+      f"Não editar à mão — correr o gerador.")
     A("")
     A("⚠️ **Isto é a ORDEM DE APRENDIZAGEM, não o layout.** O Loopy endereça"
       " widgets por índice de array dentro da cena, e esse índice só existe"
