@@ -22821,28 +22821,28 @@
 		(end 197 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "eba3ab8b-3761-49ba-9cc0-8e510883a966")
+		(uuid "6513d0ae-42d8-4886-bea2-30cf24081a9b")
 	)
 	(gr_line
 		(start 200 23)
 		(end 200 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "e028c890-e8df-4b60-9d3f-669416c2f424")
+		(uuid "9410720f-db2a-43e0-a793-0f150a3d3681")
 	)
 	(gr_line
 		(start 197 120)
 		(end 23 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "b0e316df-6e2c-4c75-ab45-93a3b59c3c17")
+		(uuid "e3a60122-dc4b-4347-a74d-65438d70eca8")
 	)
 	(gr_line
 		(start 20 117)
 		(end 20 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "64cc72ea-47a2-44e4-845b-ce07403c5e48")
+		(uuid "e637e51e-2d49-48de-aa7b-97dff95b1471")
 	)
 	(gr_arc
 		(start 197 20)
@@ -22850,7 +22850,7 @@
 		(end 200 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "a4d41231-bfb5-4348-86f4-63cb611da941")
+		(uuid "971eb062-f740-43b8-acf6-0039568d80cf")
 	)
 	(gr_arc
 		(start 200 117)
@@ -22858,7 +22858,7 @@
 		(end 197 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "f799a427-468b-422a-9fba-e3f727e7093f")
+		(uuid "bb18ecc5-db76-4a45-9f71-3bcd6cbd66a8")
 	)
 	(gr_arc
 		(start 23 120)
@@ -22866,7 +22866,7 @@
 		(end 20 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "9e9206a2-344d-49f5-8efe-e4927cc4a5b0")
+		(uuid "a0260b7c-fd39-413b-87e3-6c6ea325aaf4")
 	)
 	(gr_arc
 		(start 20 23)
@@ -22874,25 +22874,25 @@
 		(end 23 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "2d26f6e8-4d74-41b7-89cd-bba20c0d7ded")
+		(uuid "3737437f-7208-4cff-bba7-845177f2948f")
 	)
 	(gr_text "COTUCATRONICS"
-		(at 110 75)
+		(at 140 27.5)
 		(layer "B.SilkS")
-		(uuid "12d1826c-7c72-4f0f-b569-a1efdaa5c9a5")
+		(uuid "bedd76d1-9141-4437-9029-25442a8803d6")
 		(effects
 			(font
-				(size 6 6)
-				(thickness 1)
+				(size 5 5)
+				(thickness 0.8)
 				(bold yes)
 			)
 			(justify mirror)
 		)
 	)
 	(gr_text "cerebro rev B"
-		(at 110 86)
+		(at 82 27)
 		(layer "B.SilkS")
-		(uuid "2bd47ebb-ca28-40c0-8813-9600f567cb7f")
+		(uuid "e9672a1e-3903-4bc5-9a37-409520fb50b8")
 		(effects
 			(font
 				(size 2.2 2.2)

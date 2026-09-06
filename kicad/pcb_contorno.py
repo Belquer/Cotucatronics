@@ -342,12 +342,22 @@ def u():
 #     o lado que se ve por baixo do instrumento e o de tras;
 #   · e atras nao ha nada com que colidir, hoje nem depois.
 # Texto em camada de tras leva `mirror`, senao le-se ao contrario no cobre.
+# ⚠️ `mirror` E O CERTO para a face de tras: e assim que o texto se le quando se
+# olha para as COSTAS da placa, que e o que se ve pelo fundo transparente da
+# caixa. No editor, visto de frente, aparece invertido — e essa e a aparencia
+# correcta, nao um defeito.
 MARCA_LADO = "B.SilkS"
+# ⚠️ COORDENADAS ABSOLUTAS, e no sitio que foi MEDIDO. A primeira versao punha a
+# marca a meio da placa por fraccao — e "meio" atras sao os 130 pads passantes,
+# que dao `silk_over_copper` e serigrafia por cima de solda. Atras nao ha
+# serigrafia de pecas, mas ha PADS: o vazio de uma camada nao e o vazio da face.
+# A faixa livre foi procurada por varrimento contra todos os pads passantes:
+# 123 x 8 mm a partir de (73, 23).
 MARCA = {
-    "cerebro": [(0.5, 0.55, "COTUCATRONICS", 6.0, 1.0),
-                (0.5, 0.66, "cerebro rev B", 2.2, 0.35)],
-    "painel":  [(0.5, 0.45, "COTUCATRONICS", 4.0, 0.7),
-                (0.5, 0.70, "painel rev A", 1.8, 0.3)],
+    "cerebro": [(140.0, 27.5, "COTUCATRONICS", 5.0, 0.8),
+                (82.0, 27.0, "cerebro rev B", 2.2, 0.35)],
+    "painel":  [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
+                (60.0, 26.0, "painel rev A", 1.6, 0.25)],
 }
 
 
@@ -356,10 +366,7 @@ def marca(t, nome, alvo):
     t = re.sub(r'\n\t\(gr_text "COTUCATRONICS"[\s\S]*?\n\t\)', '', t)
     t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [AB]"[\s\S]*?\n\t\)', '', t)
     L = []
-    ox, oy = alvo["origem"]
-    for fx, fy, txt, h, esp in MARCA.get(nome, []):
-        x = ox + fx * alvo["w"]
-        y = oy + fy * alvo["h"]
+    for x, y, txt, h, esp in MARCA.get(nome, []):
         L.append('\t(gr_text "%s"\n\t\t(at %g %g)\n\t\t(layer "%s")\n'
                  '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n\t\t\t\t'
                  '(size %g %g)\n\t\t\t\t(thickness %g)\n\t\t\t\t(bold yes)\n'

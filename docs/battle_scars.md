@@ -8239,3 +8239,58 @@ da mesa**, a pergunta certa não é qual delas vale — é *«que medição as s
 A que propus foi continuidade entre a carcaça do USB e os pinos, porque um
 apito não se interpreta. Chegou primeiro a informação de que faltava a face, e
 essa resolveu as três de uma vez.
+
+---
+
+## 15cl — O vazio de uma camada não é o vazio da face (06/09)
+
+Pus a marca do instrumento na serigrafia de **trás**, a meio da placa, com o
+raciocínio: *«atrás não há serigrafia nenhuma, logo está vazio»*. A camada
+estava vazia. A **face** não: tem **130 pads passantes**, e a marca ficou por
+cima deles — 13 `silk_over_copper`, serigrafia por cima de sítios que levam
+solda.
+
+> **Uma camada vazia não é espaço livre.** O que ocupa uma face são todas as
+> camadas que aparecem nela — e num PCB os pads passantes atravessam. Perguntar
+> «há alguma coisa nesta camada?» responde a outra pergunta.
+
+O conserto não foi mover a olho: foi **varrer** a face contra todos os pads
+passantes e encontrar a maior faixa livre — 123 × 8 mm a partir de (73, 23). A
+marca foi para lá, e o `silk_over_copper` foi de 13 a **zero**.
+
+### E a metade que NÃO era defeito
+
+O dB também reportou a marca **espelhada**. Não é: `(justify mirror)` é o que o
+KiCad escreve para texto de face de trás, e é assim que ele se lê **quando se
+olha para as costas da placa** — que é o que se vê pelo fundo transparente da
+caixa. No editor, visto de frente, aparece invertido, e essa é a aparência
+correcta.
+
+> **Duas queixas juntas não são um defeito com duas caras.** Uma era real e a
+> outra era o comportamento certo a parecer errado — e tratá-las como uma só
+> teria «consertado» a que estava boa.
+
+---
+
+## 15cm — Ferramenta aberta não vê biblioteca nova (06/09)
+
+Criei `kicad/cotuca.pretty` e as `fp-lib-table` às 11:28. O dB tinha o KiCad
+aberto desde antes. Fez F8, e o resultado foi meio: o `J10` **saiu** (já não
+está no esquema) e o `U3` **não entrou**, porque `cotuca:` não existe para
+aquela sessão. A placa ficou com uma peça a menos e nenhuma a mais.
+
+> **Um editor lê as tabelas de bibliotecas uma vez, ao carregar o projecto.**
+> «Existe no disco» não é «existe para o processo que está a correr».
+
+É a mesma família de [15cf](#15cf) — *ausência verificada tem prazo de
+validade* — virada do avesso: ali a coisa apareceu depois de eu procurar, aqui
+apareceu depois de **ele** procurar.
+
+⚠️ **Regra:** quando eu criar uma biblioteca, uma `fp-lib-table` ou uma
+`sym-lib-table`, o pedido ao dB não é «faz F8» — é **«fecha o KiCad por
+completo, reabre, e só então F8»**. Dizer só a segunda metade produz
+exactamente o sintoma acima, e o sintoma parece perda de trabalho.
+
+E o que salvou: o ficheiro no disco tinha data **anterior** à mudança, o que
+provou em dois segundos que nada se tinha perdido. **Antes de diagnosticar um
+ficheiro, ver a hora dele.**
