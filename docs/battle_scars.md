@@ -8193,3 +8193,49 @@ como um recorte inexistente.
 ⚠️ **Custo real:** zero nesta caixa, porque o fundo sai com seis parafusos e
 leva tudo com ele — era assim que ela já estava desenhada. Mas passa a ser
 requisito escrito da r3, e não uma coisa que se lembra na hora.
+
+---
+
+## 15ck — Um diagrama de pinagem sem a face declarada é meio facto (06/09)
+
+Três leituras contraditórias da mesma peça, em duas horas:
+
+| fonte | 5V fica |
+|---|---|
+| pesquisa (fotos do fabricante + dois footprints) | **direita** |
+| eu, a ler o diagrama «PIN Definitions» do vendedor | esquerda |
+| o dB, com o módulo na mão | **direita** |
+
+Passei o tempo a suspeitar da **peça** — a pesquisa avisara que estas placas
+variam entre fabricantes, e eu tinha uma explicação pronta que encaixava. Não
+era isso. O diagrama do vendedor **mostra o lado de baixo do módulo e não o diz
+em lado nenhum**. Lido como vista de cima dá o espelho, e o espelho põe o 5V
+onde estava o GND.
+
+> **Vista de cima e vista de baixo de uma pinagem são a mesma imagem
+> espelhada.** Nada dentro da imagem denuncia qual é. Um diagrama de pinagem
+> que não declara a face não é um facto ambíguo — é **meio facto**, e a metade
+> que falta é a que inverte o resultado.
+
+⚠️ **E ter uma explicação plausível à mão atrasou a descoberta.** «As variantes
+divergem» era verdade, estava documentada, e cobria os sintomas na perfeição.
+Uma hipótese que explica tudo e que já se acreditava antes dos dados é o sítio
+mais confortável para se estar errado.
+
+### O que ficou, e não é «ter cuidado»
+
+O footprint (`kicad/gera_footprints.py`) **declara a face no cabeçalho, em
+maiúsculas**, e os pads levam os **nomes da serigrafia** — `5V`, `GND`, `IO21` —
+em vez de números. Quem montar compara o silk do módulo com o nome do pad e não
+tem nada que interpretar. Se um dia chegar uma remessa espelhada, vê-se **ao
+pousar o módulo**, não ao ligar a alimentação.
+
+> **Quando uma convenção pode ser lida ao contrário, não se escolhe a certa: põe-se
+> o nome do que se vê em cima do que se solda.** O pad chamado `5V` só bate no
+> silk `5V`, e isso não depende de ninguém ter percebido de que lado era a foto.
+
+Nota de método: quando três fontes discordam sobre uma peça que **está em cima
+da mesa**, a pergunta certa não é qual delas vale — é *«que medição as separa?»*
+A que propus foi continuidade entre a carcaça do USB e os pinos, porque um
+apito não se interpreta. Chegou primeiro a informação de que faltava a face, e
+essa resolveu as três de uma vez.
