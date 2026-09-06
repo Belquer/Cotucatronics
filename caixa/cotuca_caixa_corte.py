@@ -10,12 +10,34 @@ Estrutura (decidida 05/09):
 Tudo em acrílico CAST 6 mm. Kerf 0,2 compensado nos dedos.
 
 Saída: SVG 1:1 (mm) com cores Ponoko (azul = corte, vermelho = gravação) e DXF.
+O nome do ficheiro leva a ESPESSURA — `..._acrilico_3p0.svg`. Não é arrumação:
+esta caixa já teve quatro espessuras plausíveis (6 nos desenhos, 6,4 na
+nogueira cortada, 6,0 aqui, 3,0 no material encomendado) e um ficheiro de corte
+sem espessura no nome mede-se tão bem como o certo. Ver cicatriz 15cf.
+
+USO:  cotuca_caixa_corte.py [--t 3.0] [--kerf 0.2]
 """
-import math, sys, subprocess
+import math, os, sys, subprocess
+
+VERSAO = "0.3.0"
 
 # --------------- parâmetros ---------------
-T = 6.0          # espessura
-K = 0.2          # kerf
+def _arg(nome, omissao):
+    """Lê `--nome V` ou `--nome=V` do argv. Ignora tudo o resto — este módulo é
+    IMPORTADO pelo `kicad/pcb_contorno.py`, que tem argv seu."""
+    for i, a in enumerate(sys.argv[1:]):
+        if a == "--" + nome and i + 2 < len(sys.argv) + 1:
+            try:
+                return float(sys.argv[i + 2])
+            except (IndexError, ValueError):
+                raise SystemExit("*** --%s precisa de um número" % nome)
+        if a.startswith("--" + nome + "="):
+            return float(a.split("=", 1)[1])
+    return omissao
+
+
+T = _arg("t", 6.0)          # espessura
+K = _arg("kerf", 0.2)       # kerf
 W, D = 200.0, 120.0            # exterior: largura, profundidade
 HF, HB = 55.0, 80.0            # altura exterior frente / trás
 RUN = D                        # projeção da tampa
@@ -142,7 +164,15 @@ BACK_HOLES = [("c", *to_back(75, 38), 9.5), ("c", *to_back(105, 38), 9.5), ("c",
 BACK_RECTS = [("r", *to_back(34, 38), 12, 6)] + [("r", *to_back(112 + i*14, 66), 3, 8) for i in range(6)]
 LEFT_HOLES = [("c", 35 - T, 22, 9.5), ("c", 85 - T, 22, 9.5)]          # x da frente (corpo), z do chão
 RIGHT_RECTS = [("r", BODY_D - (35 - T), 24, 24, 12), ("r", BODY_D - (85 - T), 24, 24, 12)]   # espelhado
-BOT_HOLES = [("c", x, y, 3.4) for x, y in [(6, 6), (181, 6), (6, 101), (181, 101), (93.5, 6), (93.5, 101)]]   # parafusos → calços
+# ⚠️ DERIVADO DA CHAPA, e não escrito. Estas seis cotas estavam fixas em
+# (6·93,5·181) × (6·101), que é a chapa de T=6 (187 × 107) com os furos a 6 mm
+# de cada borda — centrados sob um calço de 12×12 encostado à parede. A T=3 a
+# chapa passa a 193 × 113 e as mesmas cotas punham os calços da direita e de
+# trás a 12 mm da borda: deixavam de tocar na parede a que são colados, e os
+# parafusos do fundo subiam para o ar. Cicatriz 15cf, outra vez: cota escrita
+# à mão ao lado de coisa calculada.
+_BW, _BD = BODY_W - 1, BODY_D - 1                       # a chapa de fundo
+BOT_HOLES = [("c", x, y, 3.4) for x in (6, _BW / 2, _BW - 6) for y in (6, _BD - 6)]
 BOT_HOLES += [("c", x - T - 0.5, y - T - 0.5, 3.2) for x, y in [(25.5, 13.5), (138.5, 13.5), (25.5, 106.5), (138.5, 106.5)]]
 BOT_RECTS = [("r", 169 - T - 0.5, 50 + i*8 - T - 0.5, 36, 3) for i in range(5)]
 
@@ -167,23 +197,97 @@ SHEET = (384.0, 384.0); GAP = 3.0
 def bbox(pts):
     xs = [p[0] for p in pts]; ys = [p[1] for p in pts]; return min(xs), min(ys), max(xs), max(ys)
 placed = []
-col_a = [("TAMPA", 0), ("FRENTE", 0), ("TRAS", 0), ("FUNDO", 0)]
-col_b = [("ESQ", 0), ("DIR", 0)]
 by = {n: (n, p, h, r) for n, p, h, r in PARTS}
-def place(name, x, y):
-    n, p, h, r = by[name]; x0, y0, x1, y1 = bbox(p)
+
+
+def _area(pts):
+    """Área com SINAL. O sinal diz a orientação do contorno."""
+    return sum(pts[i][0] * pts[i-1][1] - pts[i-1][0] * pts[i][1]
+               for i in range(len(pts))) / 2
+
+
+def _rot90(pts):
+    """(x, y) -> (-y, x): roda 90° CCW. O `place` reencosta pelo bbox.
+
+    ⚠️ TEM DE SER ROTAÇÃO, NUNCA ESPELHO. Uma peça espelhada corta na
+    perfeição e monta ao contrário — os dedos ficam do lado errado da junta, e
+    isso só se descobre com as peças na mão e a chapa paga. A matriz [(0,-1),
+    (1,0)] tem determinante +1, logo preserva a orientação; o assert abaixo
+    confirma-o na peça concreta em vez de confiar na álgebra."""
+    out = [(-y, x) for x, y in pts]
+    a0, a1 = _area(pts), _area(out)
+    if a0 * a1 <= 0 or abs(abs(a1) - abs(a0)) > 1e-6:
+        raise SystemExit("*** _rot90 espelhou ou deformou a peça: área %+.3f "
+                         "-> %+.3f. Peça espelhada corta bem e monta ao "
+                         "contrário." % (a0, a1))
+    return out
+
+
+def place(name, x, y, rot=0):
+    """Encosta a peça com o canto inferior-esquerdo do bbox em (x, y)."""
+    n, p, h, r = by[name]
+    if rot == 90:
+        p = _rot90(p)
+        # furos: mesma rotação. Rectângulos trocam largura por altura.
+        h = [(tp, -b, a, *rest) for tp, a, b, *rest in h]
+        r = [(tp, -b, a, rest[1], rest[0]) if tp == "r" else (tp, -b, a, *rest)
+             for tp, a, b, *rest in r]
+    x0, y0, x1, y1 = bbox(p)
     dx, dy = x - x0, y - y0
-    placed.append((n, [(a+dx, b+dy) for a, b in p], [(t, a+dx, b+dy, *rest) for t, a, b, *rest in h], [(t, a+dx, b+dy, *rest) for t, a, b, *rest in r]))
-    return y + (y1 - y0) + GAP
-y = GAP
-for n, _ in col_a: y = place(n, GAP, y)
-ya = y
-xB = GAP + (bbox(by["TAMPA"][1])[2] - bbox(by["TAMPA"][1])[0]) + GAP + 6
-y = GAP
-for n, _ in col_b: y = place(n, xB, y)
-for i in range(6): place(f"CB{i+1}", xB + i * (12 + GAP), y)
-for i in range(6): place(f"CT{i+1}", xB + i * (12 + GAP), y + 12 + GAP)
-place("NERVURA", xB + 120 + GAP + 2, GAP)
+    placed.append((n, [(a + dx, b + dy) for a, b in p],
+                   [(tp, a + dx, b + dy, *rest) for tp, a, b, *rest in h],
+                   [(tp, a + dx, b + dy, *rest) for tp, a, b, *rest in r]))
+
+
+def _dim(n, rot=0):
+    x0, y0, x1, y1 = bbox(by[n][1])
+    w, h = x1 - x0, y1 - y0
+    return (h, w) if rot == 90 else (w, h)
+
+
+def encaixa():
+    """Encaixe em TRÊS prateleiras, com o FUNDO e as laterais rodados.
+
+    ⚠️ AS ALTURAS SAIEM DOS BBOX, NÃO DE CONSTANTES. A T=6 a disposição antiga
+    (uma coluna alta com TAMPA+FRENTE+TRÁS+FUNDO) media 376,5 numa chapa de
+    384 e passava; a T=3 as peças CRESCEM — o fundo vai de 187×107 para
+    193×113 e as paredes ficam mais altas por HF−T — e a mesma coluna dava
+    382,6, ou seja 1,4 mm de margem. Desenho colado à borda é recusa no upload.
+
+    A cura foi tirar as duas peças grandes da mesma coluna: o FUNDO passa a
+    abrir a prateleira do meio DEITADO, e a altura que ele desperdiçava passa a
+    levar o TRÁS e a nervura ao lado.
+
+    Não é óptimo — é repetível e VERIFICADO: o `portao_nesting` corre a seguir
+    e recusa-se a escrever se alguma peça sair da chapa ou tocar noutra."""
+    # ---- prateleira A: a tampa, e as duas laterais DEITADAS ao lado dela
+    yA = GAP
+    place("TAMPA", GAP, yA)
+    x = GAP + _dim("TAMPA")[0] + GAP
+    for n in ("ESQ", "DIR"):
+        place(n, x, yA, rot=90)
+        x += _dim(n, 90)[0] + GAP
+    hA = max(_dim("TAMPA")[1], _dim("ESQ", 90)[1], _dim("DIR", 90)[1])
+
+    # ---- prateleira B: o FUNDO de pé abre a altura; trás e nervura ao lado
+    yB = yA + hA + GAP
+    place("FUNDO", GAP, yB, rot=90)
+    x = GAP + _dim("FUNDO", 90)[0] + GAP
+    place("TRAS", x, yB)
+    x += _dim("TRAS")[0] + GAP
+    place("NERVURA", x, yB)
+    hB = _dim("FUNDO", 90)[1]
+
+    # ---- prateleira C: a frente, e os 12 calços em duas filas
+    yC = yB + hB + GAP
+    place("FRENTE", GAP, yC)
+    x = GAP + _dim("FRENTE")[0] + GAP
+    for i in range(6):
+        place(f"CB{i+1}", x + i * (12 + GAP), yC)
+        place(f"CT{i+1}", x + i * (12 + GAP), yC + 12 + GAP)
+
+
+encaixa()
 ymax = max(bbox(p)[3] for _, p, _, _ in placed); xmax = max(bbox(p)[2] for _, p, _, _ in placed)
 
 # --------------- PORTÃO: nesting ---------------
@@ -257,14 +361,24 @@ def svg_preview():
     return svg().replace('stroke-width="0.01"', 'stroke-width="0.35"').replace('font-size="4"', 'font-size="5"')
 
 if __name__ == "__main__":
-    OUT = "/mnt/user-data/outputs/"
+    print(f"cotuca_caixa_corte.py v{VERSAO} — T = {T} mm, kerf = {K} mm")
+    # ⚠️ ao lado do próprio script. As versões anteriores escreviam
+    # `/mnt/user-data/outputs/` e `/home/claude/`, caminhos de outra máquina —
+    # a segunda rebentava a meio, DEPOIS de o SVG já ter saído, o que é o pior
+    # sítio para rebentar: parece falha total e não é.
+    OUT = os.path.dirname(os.path.abspath(__file__)) + os.sep
+    tag = f"acrilico_{T:.1f}".replace(".", "p")   # 3.0 -> "3p0", nunca "3"
     erros = portao_nesting()
     if erros:
         print("PORTÃO RECUSOU:"); [print("  !!", e) for e in erros]; sys.exit(1)
     print(f"portão nesting: {len(placed)} peças, disjuntas, dentro da chapa, furos dentro das peças — 0 erros")
-    open(OUT + "cotuca_caixa_corte.svg", "w").write(svg())
-    open("/home/claude/corte_preview.svg", "w").write(svg_preview())
-    open(OUT + "cotuca_caixa_corte.dxf", "w").write(dxf())
-    print(f"chapa {SHEET[0]:.0f}×{SHEET[1]:.0f} · usado {xmax:.0f}×{ymax:.0f} · {len(placed)} peças")
+    open(OUT + f"cotuca_caixa_corte_{tag}.svg", "w").write(svg())
+    open(OUT + f"cotuca_caixa_corte_{tag}_previa.svg", "w").write(svg_preview())
+    open(OUT + f"cotuca_caixa_corte_{tag}.dxf", "w").write(dxf())
+    print(f"escrito: cotuca_caixa_corte_{tag}.svg · _previa.svg · .dxf")
+    print(f"chapa {SHEET[0]:.0f}×{SHEET[1]:.0f} · usado {xmax:.1f}×{ymax:.1f} · {len(placed)} peças")
+    margem = min(SHEET[0] - xmax, SHEET[1] - ymax)
+    aviso = "  ⚠️ APERTADO — a Ponoko recusa desenho colado à borda" if margem < 3 else ""
+    print(f"margem à borda da chapa: {margem:.1f} mm{aviso}")
     print(f"corte total ≈ {cut/1000:.2f} m · área das peças {area/1e4:.1f} dm² · tampa {SLOPE:.1f} mm · ângulo {ANG:.1f}°")
     print(f"frente {HF} / trás {HB} · interior sob a tampa: frente {HF-2*T:.0f}, trás {HB-2*T:.0f}")

@@ -38,28 +38,26 @@ como estão: são o registo de uma caixa que foi encomendada, não a caixa a faz
 absoluto de outra máquina. Rebenta em macOS ao chegar lá. As duas linhas úteis
 (`cotuca_caixa_corte.svg` e `.dxf`) saem antes e depois dela.
 
-## ⚠️ ALARME: o material encomendado não é o do ficheiro
+## Gerar o corte
 
-O dB encomendou **acrílico transparente de 3,00 mm** (Ponoko, corte a laser).
-O `cotuca_caixa_corte.py` está em **`T = 6.0`**, e o único SVG de corte neste
-repositório é o da nogueira, em **6,4**.
+```bash
+python3 caixa/cotuca_caixa_corte.py --t 3.0 --kerf 0.2
+python3 tools/nesting.py caixa/cotuca_caixa_corte_acrilico_3p0.svg --pecas=19
+```
 
-**As juntas a dedo têm profundidade = espessura.** Cortadas para 6 (ou 6,4) e
-executadas em 3 mm:
+**O ficheiro para a Ponoko é o `cotuca_caixa_corte_acrilico_3p0.svg`** — chapa
+P2 (384 × 384), 19 peças, 4,5 mm de margem à borda, ≈ 6,07 m de corte. O
+`_previa.svg` é o mesmo com traço grosso, só para olhar.
 
-- cada rasgo fica **3 mm mais largo** que a lingueta que o vai ocupar — folga
-  em todas as juntas, não aperto;
-- cada lingueta fica **3 mm saliente** da face exterior;
-- a caixa **não fecha em esquadro** e o solvente não tem o que colar.
+⚠️ **A profundidade do dente é a espessura.** Trocar de material é sempre
+**regerar**, nunca só mudar a linha do pedido: um ficheiro cortado a 6 e
+executado em 3 dá 3 mm de folga em cada junta e 3 mm de lingueta saliente — a
+caixa não fecha em esquadro e o solvente não tem o que colar. O nome do
+ficheiro leva a espessura por causa disso.
 
-⚠️ **Antes de cortar: pôr `T = 3.0` no gerador e regerar.** Ele recalcula
-dedos, rasgos, chapa de fundo e calços sozinho — é um parâmetro, é para isso
-que existe. Se a encomenda já foi cortada, o que chega serve para conferir
-furos e ergonomia, não para montar.
-
-E uma consequência que não é de geometria: a tampa vão de 188 mm em **3 mm**
-de acrílico leva o **pé** do músico nos arcade. A nervura ajuda; 3 mm não é
-6. Vale medir com o pé antes da série.
+⚠️ **Uma coisa que nenhum portão mede:** a tampa vence 188 mm em **3 mm** de
+acrílico e leva o **pé** do músico nos arcade. A nervura ajuda; 3 não é 6.
+Cortar UMA, montar, e pisar antes da série.
 
 ## Quatro caixas plausíveis, e só uma vai ser feita
 
