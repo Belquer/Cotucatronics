@@ -656,8 +656,8 @@
     "subpart_id_separator": 0,
     "top_level_sheets": [
       {
-        "filename": "cotuca_cerebro.kicad_sch",
-        "name": "",
+        "filename": "cotuca_painel.kicad_sch",
+        "name": "cotuca_painel",
         "uuid": "2ad2d1f2-b370-4f4e-9e84-b07766bec7e4"
       }
     ],

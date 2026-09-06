@@ -605,6 +605,69 @@ abrir o ficheiro, que é exactamente quem não tem como saber que está errada.
 
 ---
 
+## 10. A CAIXA MANDA — mas só a caixa que foi CORTADA
+
+O contorno de uma placa e a posição dos furos mecânicos vêm da caixa. A
+armadilha é **de qual caixa**.
+
+| artefacto | o que é | vale? |
+|---|---|---|
+| desenho cotado | a intenção | **não**, se houver gerador ou corte |
+| ficheiro de corte de uma geração anterior | um objecto real — **outro** | **não** |
+| **gerador da peça que está a ser feita** | a fonte | **sim** |
+| a peça em mão | o objecto, com kerf e tolerância reais | manda em tudo |
+
+> **«O ficheiro que foi para a fábrica» não chega — tem de ser o da peça que
+> está a ser feita AGORA.** Um artefacto real da geração anterior mede-se tão
+> bem como o certo e dá números plausíveis e errados.
+
+No Cotucatronics havia **quatro** fontes para a mesma caixa, com quatro
+espessuras (6 nos desenhos, 6,4 na nogueira cortada, 6,0 no gerador, **3,0 no
+material encomendado**), e a placa tinha sido dimensionada contra a primeira.
+
+**O que fazer, e não é actualizar as cotas à mão:**
+
+1. **Importar o gerador**, se ele tiver `if __name__ == "__main__"` — é mais
+   forte que medir o SVG que ele emite, porque não há parsing entre a cota e o
+   uso, logo não há sítio onde as duas divirjam. Só se não houver gerador é que
+   se mede o SVG, e aí com guarda de contagem (§2c).
+1b. **Melhor que seguir a cota: construir de modo a que ela não entre na conta.**
+   Centrar a placa na chapa que a segura fez os furos de fixação caírem sempre
+   no mesmo sítio *relativo à placa*, para qualquer espessura — confirmado a
+   correr o gerador a `T=3` e `T=6`. Quando um número externo não pára de
+   mudar, o conserto não é segui-lo.
+2. **Portão antes de escrever**: a placa cabe? algum furo de fixação ficou
+   debaixo de um componente? Um furo tapado não é um furo apertado — é um
+   parafuso que não entra com a caixa fechada e a solda feita.
+3. **Nenhuma cota escrita à mão sobrevive** ao lado da leitura. Ver a regra
+   abaixo, que é a razão pela qual a divergência durou.
+
+### 10a. Constante que ninguém lê não pode estar errada em voz alta
+
+`INTERIOR = (188.0, 108.0)` esteve declarada e **nunca foi consultada por
+nenhuma linha**. Para um número dar erro, alguém tem de o ler.
+
+> Uma cota ao lado de coisa medida envelhece como uma lista ao lado de coisa
+> gerada (§ da lista embutida). **A cura não é actualizar — é derivar e
+> recusar.**
+
+Corolário para revisão: ao ler um gerador, `grep` cada constante declarada
+pelo seu próprio nome. **Zero usos é achado**, mesmo que o valor esteja certo
+hoje.
+
+### 10b. Comentário com premissa revogada re-ensina o erro
+
+Quando a caixa cresceu, «a caixa só tem 28 mm livres à frente» — o motivo
+escrito para duas decisões de colocação (são 43) — passou a ser falso, e as decisões
+continuaram certas por *outro* motivo. Comentário com autoridade que afirma
+premissa revogada tem a gravidade do código: o próximo leitor decide com ele.
+
+### 10c. Divergência anunciada sem medir acusa a peça errada metade das vezes
+
+A caixa tinha três arcade e o desenho dois; ia anunciar que o **esquema**
+estava desactualizado. O esquema já tinha três. Quem estava errado era o
+desenho — outra vez. **Medir antes de anunciar de que lado está a falta.**
+
 ## Procedência
 
 Esta skill absorveu em 01/09 a antiga `esquematico`, que deixou de existir por

@@ -7840,3 +7840,126 @@ O que ficou: `USADOS` preenchido por `simbolo()`, `lib_embutida()` a recusar um
 símbolo que não encontra, e uma verificação **depois de escrever** de que todo
 `lib_id` tem entrada no `lib_symbols`. E a BOM do instrumento passou a ser
 **gerada das folhas** (`tools/bom_completa.py`).
+
+---
+
+## 15cf — Três fontes plausíveis para a mesma caixa, e eu escolhi duas erradas (06/09)
+
+O contorno das duas placas e a posição dos três eixos que saem pela tampa vinham
+de `caixa/paginas/*.svg` — **desenhos**. Fui corrigi-los contra
+`caixa/cotuca_caixa_corte_nogueira_6p4.svg` — **um ficheiro que foi mesmo para
+a fábrica**. Estava certo no método e errado no objecto: o dB tinha mandado
+cortar a caixa em **acrílico**, e a de nogueira é *outra caixa*.
+
+| fonte | é real? | é **esta** caixa? |
+|---|---|---|
+| `paginas/*.svg` | não — nunca foi cortado | não |
+| `..._nogueira_6p4.svg` | **sim**, foi para a Ponoko | não — nogueira de **6,4** |
+| `cotuca_caixa_corte.py` | sim, é gerador | não — está em **6,0** |
+| **o que o dB encomendou** | — | **acrílico transparente de 3,00** |
+
+Quatro fontes, quatro espessuras, e as três primeiras davam números plausíveis.
+Cada vez que corrigi, corrigi para outra caixa errada.
+
+> **«O ficheiro que foi para a fábrica» não chega.** Tem de ser o ficheiro da
+> peça que está a ser feita **agora**. Um artefacto real da geração anterior
+> mede-se tão bem como o certo, e dá números plausíveis e errados.
+
+O que a segunda fonte me fez escrever, e que estava errado: interior
+**187,2 × 107,2** (é **188 × 108** — o valor que lá estava desde o início e que
+eu «corrigi»), chapa de fundo 186,2 × 106,2 (é **187 × 107**), calços de 12,8
+(são **12,0**), e uma correcção de **0,137 mm** nos eixos dos knobs que não
+existia — nasceu de eu medir a distância do furo à *aresta cortada* da tampa,
+quando o datum é a **face**; os dedos da junta fazem as duas não coincidirem.
+
+**E o gerador apareceu a meio.** Procurei-o por nome e por conteúdo, não o
+encontrei, e escrevi no `caixa/README.md` que ele não existia — o que era
+verdade quando procurei. Vinte minutos depois estava no disco, escrito pelo dB
+na mesma sessão.
+
+> **Ausência verificada tem prazo de validade.** Num repositório que outra
+> pessoa está a mexer ao mesmo tempo, «procurei e não existe» é uma medição com
+> hora, não uma propriedade. Antes de agir sobre uma ausência — sobretudo para
+> justificar manter cota à mão — **voltar a procurar**.
+
+### O conserto que sobrevive à próxima mudança de espessura
+
+Corrigir a cota à mão a cada volta é perder — foram quatro em duas horas. O que
+fecha isto é **não haver cota**: a placa **centra-se na chapa de fundo**, e daí
+sai um invariante que se demonstra em duas linhas de álgebra e se confirma
+correndo o gerador noutra espessura:
+
+```
+furo_x  = 25,5 − T − 0,5            (o gerador desconta a parede)
+x0      = ((200 − 2T − 1) − 180)/2  (placa centrada na chapa)
+furo_x − x0 = 15,5                  para QUALQUER T
+```
+
+Medido, não deduzido — corri o gerador a `T = 3,0` e a `T = 6,0`:
+
+| | T = 6,0 | T = 3,0 |
+|---|---|---|
+| interior | 188 × 108 | 194 × 114 |
+| chapa de fundo | 187 × 107 | 193 × 113 |
+| calço | 12,0 mm | 6,0 mm |
+| **furos, relativos à placa** | **(15,5 · 128,5) × (3,5 · 96,5)** | **idênticos** |
+| **eixos dos knobs na face** | **105/140/175 × 92** | **idênticos** |
+
+> **Quando um número externo não pára de mudar, o conserto não é segui-lo — é
+> construir a peça de modo a que ele deixe de entrar na conta.** A placa passou
+> a ser imune ao material da caixa, e o `pcb_contorno.py` **recusa-se a escrever**
+> se o invariante deixar de valer.
+
+### O resto do que ficou
+
+`kicad/pcb_contorno.py` **v0.5.0** deixou de transcrever cotas e passou a
+**importar o gerador da caixa**. O `cotuca_caixa_corte.py` tem
+`if __name__ == "__main__"`, por isso importa-se sem correr nada — e importar é
+mais forte que medir um SVG: **não há parsing entre a cota e o uso, logo não há
+sítio onde as duas divirjam.**
+
+Mais dois portões que se recusam a escrever:
+- a placa **cabe** na caixa? (cérebro 180 × 100 na chapa de 187 × 107, folga
+  3,50 em volta; painel 176 × 36, folga mínima 4,00)
+- algum dos **4 furos de fixação** do fundo ficou debaixo de um componente? O
+  `J14` estava por cima de um e saiu de x=30 para x=40. Um furo tapado não é um
+  furo apertado — é um parafuso que não entra com a caixa fechada e a solda
+  feita.
+
+### A raiz, que é a mesma de sempre
+
+`INTERIOR = (188.0, 108.0)` estava declarada e **nunca era lida** por linha
+nenhuma. Por acaso estava certa. Isso é pior, não melhor: uma cota que ninguém
+consulta não pode estar errada em voz alta, e por isso também não pode estar
+certa **de forma verificável** — a que lá estava era indistinguível de sorte.
+
+> Mesma família do `USADOS` escrito à mão de [15ce](#15ce), noutra roupa: ali
+> uma lista ao lado de coisa gerada, aqui uma cota ao lado de coisa medida.
+> **A cura não é actualizar. É derivar e recusar.**
+
+Corolário de revisão: ao ler um gerador, `grep` cada constante declarada pelo
+seu próprio nome. **Zero usos é achado**, mesmo com o valor certo.
+
+### O que a importação descobriu, e nenhum desenho dizia
+
+- Os calços são **12 peças** — 6 `CB` com sexágono para porca M3 cativa e 6
+  `CT` que a tapam — logo **12,0 mm** de altura, e a placa passa por cima de
+  seis. **Espaçador de 8 mm não serve; mínimo 15.**
+- **Quem abre esta caixa é o fundo**, não a tampa: a casca é soldada e os seis
+  parafusos sobem do fundo para os calços. A electrónica serve-se por baixo.
+- Altura útil **43 mm à frente e 68 atrás**, contra os 28/58 dos desenhos. Isso
+  **revogou a premissa escrita** para a Daisy estar rodada e o `C1` ficar atrás
+  — as duas decisões continuam certas, por outro motivo (é na parede de trás
+  que estão os recortes), e o comentário foi corrigido. Comentário com
+  autoridade que afirma premissa revogada re-ensina o erro.
+- **Não existe berço de powerbank.** Tinha uma página inteira de desenho e
+  nunca foi cortado — e era a única pergunta que estava a bloquear o layout.
+
+### E o contra-exemplo, que é metade da lição
+
+Ia anunciar que o esquema tinha dois arcade e a caixa três. Fui ver primeiro: o
+esquema já tinha **três** (`J3` freeze A, `J4` freeze B, `J5` búzios). Quem
+estava desactualizado era o desenho, outra vez.
+
+> **A divergência anunciada sem medir tem 50% de hipótese de acusar a peça
+> certa** — e o custo de acusar a errada é mandar mexer no que estava bem.

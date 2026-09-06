@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_painel v0.9.0 — o projecto do PAINEL (tampa da caixa).
+"""gera_painel v0.10.0 — o projecto do PAINEL (tampa da caixa).
 
 Segunda placa. A primeira e `cotuca_cerebro`, e o CONTRATO entre as duas e o
 IDC 2x13: **o mesmo nome de rede dos dois lados, via a via**.
@@ -18,7 +18,7 @@ atravessa este cabo.
 """
 import io, sys, uuid
 
-VERSAO = "0.9.0"
+VERSAO = "0.10.0"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -117,6 +117,15 @@ FOOTPRINT = {
     # KiCad, e ja era a peca do PINOS.md. LCSC C370970 (EC11E15244G1), com
     # push, 30 detentes/15 pulsos, eixo de 20 mm — US$1,70 @5, 1125 em stock.
     "SW1": "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm",
+    # Pot: `PTV09A-1020S-B103` — estilo **1** (rear mount COM bucim), eixo de
+    # 20 mm, estriado 18 dentes (`S`), 10 k linear (`B103`). Decidido pelo dB a
+    # 05/09, e compra-se na Mouser/DigiKey: **a falta de stock na LCSC nao conta
+    # para THT**, porque a JLC so monta o SMD e quem compra o resto e o dB.
+    # O footprint do KiCad chama-se literalmente `PTV09A-1`: peca e desenho
+    # sao do mesmo estilo, e a duvida que eu tinha levantado (se o `-4` partilha
+    # o desenho do `-1`) deixa de existir — nao vamos usar o `-4`.
+    "RV1": "Potentiometer_THT:Potentiometer_Bourns_PTV09A-1_Single_Vertical",
+    "RV2": "Potentiometer_THT:Potentiometer_Bourns_PTV09A-1_Single_Vertical",
     # POR CONFIRMAR, e nao por medir:
     #  SW1  o PEC11R da BOM NAO tem footprint no KiCad e NAO e o Alps EC11E:
     #       a ficha da Bourns poe os pinos do encoder a 5,0 mm e o Alps a 2,5.
