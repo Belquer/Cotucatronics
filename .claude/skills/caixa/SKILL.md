@@ -224,145 +224,78 @@ antes de mandar mexer.**
 
 ---
 
-## 6. CUSTO: o que o encaixe muda, e o que não muda
+## 6. CUSTO: medido em duas facturas reais
 
-O dB olhou para o visualizador da Ponoko e viu espaço a sobrar. Tinha razão — e
-a resposta tem duas metades que é preciso não confundir.
+**O preço segue o COMPRIMENTO DE CORTE. Só.** Duas encomendas da Ponoko, mesmo
+material (Clear Acrylic 3,00 mm):
 
-### Metade que se arruma: a área ocupada
+| encomenda | caixa envolvente | área | corte | preço |
+|---|---|---|---|---|
+| #1263434 | 346,0 × 372,6 | 1289 cm² | 6,39 m | **$37,56** |
+| #1263497 | 372,0 × 296,5 | 1103 cm² | 6,07 m | **$35,66** |
 
-O encaixe estava escrito à mão. Substituído por **bottom-left-fill com rotação
-de 90° e semente fixa**, dentro do próprio gerador:
-
-| | caixa envolvente | área |
-|---|---|---|
-| coordenadas à mão (prateleiras) | 362,4 × 376,5 | 1364 cm² |
-| **bottom-left-fill** | **375,0 × 299,5** | **1123 cm² — 82%** |
-| chão teórico (soma das peças) | — | 960 cm² |
-
-E a margem à borda passou de 4,5 para 9,0 mm, que é risco de recusa a menos.
-
-> **Encaixe escrito à mão é cota escrita à mão.** Estava certo a T=6, deixava
-> 1,4 mm a T=3, e desperdiçava 18% em qualquer das duas. Um encaixador com
-> semente fixa é repetível *e* reencaixa sozinho quando a espessura muda.
-
-### O que o aperto rendeu, medido na cotação real
-
-**$1,90.** Reduzir de 1364 para 1123 cm² — 18% de área — poupou um dólar e
-noventa na cotação da Ponoko, lida pelo dB no site.
-
-⚠️ **Isto corrige uma expectativa que eu tinha tirado do blogue deles.** O
-exemplo publicado mostra o fabrico de quatro peças a cair de $14,77 para $4,53
-só por encaixar, e eu esperava algo dessa ordem. **Não generaliza**: aquelas
-eram quatro peças *pequenas e iguais*, onde o tempo é dominado pela **viagem**
-do laser entre elas. Uma caixa são 19 peças **grandes**, e aí o tempo é
-dominado pelo **corte**, que tem exactamente o mesmo comprimento antes e depois
-de encaixar — 6,07 m nos dois casos.
-
-> **O encaixe move a viagem, não o corte.** Vale a pena quando as peças são
-> pequenas e muitas; numa caixa de peças grandes vale $1,90 e sossego no
-> upload. Faz-se à mesma — é automático e tira risco de recusa — mas **não é
-> onde se projecta para poupar.**
-
-### Onde se projecta para poupar, então
-
-Por ordem de efeito, com os números desta caixa:
-
-**1. O tamanho da chapa.** É o único degrau grande, e decide-se **antes de
-desenhar seja o que for**: a peça maior contra a chapa mais pequena.
-
-| | P1 181 × 181 | P2 384 × 384 | P3 790 × 384 |
-|---|---|---|---|
-
-A tampa tem **200 mm**. Se a caixa fosse ≤ 181 na maior dimensão, caía numa P1
-— e isso é uma decisão de **instrumento**, não de encaixe. Uma caixa de 200 e
-uma de 180 custam degraus diferentes, e nenhum encaixador atravessa esse
-degrau.
-
-**2. Comprimento de corte e número de peças.** Medido nesta caixa, dos 6,07 m:
-
-| | metros | % |
-|---|---|---|
-| se as peças fossem rectângulos lisos | 4,07 | 67% |
-| dentes, furos e rasgos | 2,00 | 33% |
-| **os 12 calços** (doze quadrados de 12 mm) | **0,70** | **12%** |
-
-⚠️ **12% do corte são doze quadrados de 12 mm.** Peça pequena tem perímetro
-enorme por unidade de área — o custo segue o perímetro, não a área. Reduzir a
-12 calços para 6 (material do dobro da espessura), ou substituí-los por
-esquadros comprados, tira mais que qualquer encaixe.
-
-**3. Dentes.** Menos dentes e mais largos cortam menos que muitos e estreitos,
-para a mesma junta. O `cells(L, n_target, ...)` do gerador tem esse `n_target`
-como parâmetro — é onde se mexe.
-
-**4. Gravação.** É tempo como o corte. Confirmar que ficou **desligada** no
-upload: as peças distinguem-se pela forma, os rótulos não fazem falta.
-
-### Metade que NÃO se arruma arrumando
-
-⚠️ **A chapa continua a ser a P2.** A TAMPA tem **200 mm** de largura e a P1
-tem 181 — nenhuma disposição a faz caber, nem rodada, nem com margem zero.
-
-> **Antes de optimizar o encaixe para poupar dinheiro, perguntar se a chapa
-> pode sequer encolher.** A resposta é uma comparação de dois números: a peça
-> mais larga contra a chapa mais pequena. Se não passar, o encaixe é higiene e
-> risco, não é preço.
-
-**Encolher a chapa exige encolher a CAIXA** — 200 → ≤ 181 de largura, ou a
-tampa parte-se em duas. Isso é decisão do dB sobre o instrumento, nunca do
-encaixador.
-
-### Onde o dinheiro está mesmo, medido
-
-Corte total **6,07 m**. Repartido:
-
-| | metros | % |
-|---|---|---|
-| se as peças fossem rectângulos lisos | 4,07 | 67% |
-| **dentes, furos e rasgos** | **2,00** | **33%** |
-| os 12 calços (peças minúsculas) | 0,70 | 12% |
-
-⚠️ **12% do corte são doze quadrados de 12 mm.** Peça pequena tem perímetro
-enorme por unidade de área — se o custo for por tempo de laser, é aí que está a
-gordura, não no espaço vazio da chapa.
-
-E confirmar sempre se a **gravação** ficou ligada no upload: são minutos de
-laser por rótulos que não fazem falta, porque as peças distinguem-se pela forma.
-
-### O que está confirmado, o que não está
-
-| | estado |
+| previsão a partir da primeira | erro |
 |---|---|
-| P1 **181 × 181** · P2 **384 × 384** · P3 **790 × 384** | confirmado na fonte |
-| material cobrado por **chapa inteira**, ocupada ou não | confirmado — no modelo antigo |
-| fabrico cobrado por **tempo de máquina** | confirmado |
-| encaixe apertado baixa o fabrico | confirmado — mas **$1,90 nesta caixa**, medido na cotação, não a ordem de grandeza do exemplo deles |
-| gravação: é tempo, e *linha* vs *área* inverte-se conforme a geometria | confirmado |
-| **afastamento mínimo à borda da chapa** | **não publicado** |
-| **preço do acrílico transparente por chapa** | **não publicado** — só «from $0.09» |
-| se o site novo ainda cobra chapa inteira, ou rateia por peça | **não confirmado** |
+| por **área** | **−$3,52** |
+| por **comprimento de corte** | **−$0,02** |
 
-⚠️ **A Ponoko mudou de modelo.** O site actual dá cotação instantânea **por
-peça** («from $50 for just 1 … 93% off for 10,000») e diz que os templates
-antigos já não são precisos. A aritmética publicada no blogue é anterior a essa
-mudança.
+$/m: **5,878** e **5,875** — diferem **0,1%**. $/cm²: diferem 11%.
 
-> **A coisa de maior valor é carregar UMA peça pequena e ler a cotação.** Isso
-> responde de uma vez ao modelo de preço, ao afastamento à borda (a ferramenta
-> recusa geometria fora de limites) e ao preço do acrílico — no motor que
-> existe hoje, e não em documentação que é anterior à mudança dele.
+> **≈ $5,87 por metro de corte, `Setup $0.00`, e nenhuma linha de material
+> separada.** Não há preço de chapa: a P1/P2/P3 não entra na conta. O tamanho
+> da chapa só importa por caber, não por custar.
 
-⚠️ **Dois números que aparecem em pesquisa e NÃO são o que parecem:** os «$12»
-do exemplo do blogue são *brushed gold on black acrylic*, e coincidem por acaso
-com a sobretaxa de impressão de uma P2 — nenhum dos dois é acrílico
-transparente. E «2 cêntimos por polegada de corte» não se confirma em página
-nenhuma deles.
+### O que isto apaga do que eu tinha escrito aqui
 
-⚠️ **Os 3 mm de margem à borda que o gerador exige são NOSSOS.** A Ponoko diz
-«não uses a aresta crua da chapa para a tua peça» e não publica número. Os
-números que publicam são entre **peças** (1 mm no encaixe, 2 mm nos impressos).
-Facto de fabrico sem fonte citada é hipótese, e diz-se como hipótese.
+⚠️ **O encaixe apertado poupou $0,00.** Encaixar move as peças, e o corte é uma
+propriedade das **peças** — os mesmos 6,07 m antes e depois. O $1,90 entre as
+duas facturas veio inteiro de **regerar a 3,0 mm em vez de 6,4**, que muda a
+geometria dos dentes e encurta o corte de 6,39 para 6,07 m.
+
+⚠️ **E o «degrau da chapa» que eu punha como lever nº 1 não existe.** Não há
+cobrança de chapa. Uma caixa mais pequena é mais barata porque tem menos
+perímetro, não porque cai numa P1.
+
+Faz-se o encaixe à mesma — é automático e tira risco de recusa no upload — mas
+**não é poupança e não se vende como tal.**
+
+### Onde o dinheiro está, a $5,87/m
+
+| | metros | custo |
+|---|---|---|
+| se as peças fossem rectângulos lisos | 4,07 | **$23,89** |
+| dentes, furos e rasgos | 2,00 | **$11,74** |
+| — destes, **os 12 calços** | 0,70 | **$4,11** |
+| o encaixe apertado | 0,00 | **$0,00** |
+
+**Projectar para poupar, por ordem de efeito:**
+
+1. **Menos peças, e menos peças pequenas.** O custo segue o **perímetro**, e
+   peça pequena é caríssima por milímetro quadrado: doze quadrados de 12 mm
+   custam $4,11. Seis calços de material do dobro, ou esquadros comprados,
+   tiram mais que tudo o resto junto.
+2. **Menos dentes e mais largos**, para a mesma junta — é o `n_target` do
+   `cells()`, um parâmetro que já existe.
+3. **Caixa mais pequena**: menos perímetro, linearmente. Sem degraus.
+4. **Gravação desligada** no upload — é tempo como o corte.
+5. **Furos e rasgos**: cada ø30 são 94 mm de corte ($0,55). Os cinco rasgos de
+   ventilação do fundo, 390 mm ($2,29). Valem o que valem — mas conta-se.
+
+### O envio, que é o maior de todos
+
+**$22,43 de envio sobre $35,66 de peça — 39% do subtotal.** Para a série, o
+envio de uma caixa e o de várias no mesmo pacote não são muito diferentes:
+**duplicar a encomenda não duplica o custo por caixa.** É a única alavanca que
+vale mais que todas as de cima somadas, e não se mexe no desenho para a puxar.
+
+### O que continua por confirmar
+
+- **Afastamento mínimo à borda da chapa.** A Ponoko não publica número; os 3 mm
+  que o gerador exige são **nossos**. As duas encomendas passaram, o que só
+  prova que 3 mm chega.
+- Se o $/m muda com a **espessura** ou o **material** — as duas facturas são do
+  mesmo, logo não dizem nada sobre isso. Cortar 6 mm é mais lento que 3.
+- São **dois pontos**. O comprimento explica-os a 0,1%; um terceiro confirmava.
 
 ## Procedência
 

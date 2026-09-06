@@ -83,6 +83,37 @@ de bug de ordem é "uma coisa com dois empregos, e um teste que muda os dois
 de uma vez". Se a variável serve a dois propósitos, o voo mede dois efeitos
 somados e não separa nenhum.
 
+## 4b. ATRIBUIR um delta exige que só uma coisa tenha mudado
+
+A `full-audit` diz isto como R2 — *«delta entre builds NÃO é atribuível»* — e a
+palavra **builds** faz a regra parecer estreita. Não é.
+
+> **A regra do A/B não é sobre builds: é sobre deltas.** Duas medições que
+> diferem em mais de uma coisa não atribuem nada a nenhuma delas — seja o que
+> for que se meça: tempo de CPU, ruído de fundo, minutos de laser, **dólares**.
+
+Caso (06/09): entre duas facturas da Ponoko o preço caiu $1,90. Atribuí-o ao
+encaixe — a única das mudanças em que estava a pensar. Tinham mudado **duas**:
+o encaixe *e* a espessura do material, que muda a geometria dos dentes. Medido
+depois: o preço segue o **comprimento de corte** ($5,87/m, previsão a $0,02) e
+o encaixe não muda o comprimento. **O encaixe poupou $0,00.** O $1,90 era todo
+da espessura. E eu já tinha escrito uma regra de projecto em cima da
+atribuição errada.
+
+**O que fazer quando não dá para isolar** — e muitas vezes não dá, porque o
+outro lado da comparação já aconteceu:
+
+> **A atribuição não se adivinha, decompõe-se.** Procura-se a grandeza a que o
+> resultado é proporcional, e testa-se com as medições que existem. Duas
+> facturas chegaram para separar «por área» de «por metro de corte»: uma erra
+> $3,52, a outra $0,02. A partir daí cada troço tem preço, e a atribuição
+> deixa de ser opinião.
+
+⚠️ **Cuidado especial com números que chegam de fora** — uma factura, um
+relatório, uma frase do dB. Vêm com ar de facto e sem histórico, e é
+precisamente por não terem a forma de um benchmark que a regra do A/B não se
+reconhece a tempo.
+
 ## 5. Caixa-preta: armar por comando, no início do voo
 
 - `bb arm` **explicitamente**, no começo — nunca no meio de um fluxo.

@@ -8024,3 +8024,71 @@ resgatado para o `CAIXA-ACRILICO-MONTAGEM.md`.
 
 > **Apaga-se a fonte vencida; não se apaga o que só ela dizia.** Ler antes de
 > apagar, e mover o que sobrevive.
+
+---
+
+## 15ch — Atribuí um delta a uma de duas coisas que mudaram, e é a minha própria regra R2 (06/09)
+
+O dB leu a cotação da Ponoko e disse: *«a otimização economizou $1.90 então não
+muito»*. Aceitei o número, construí uma regra de projecto em cima dele —
+*«o encaixe move a viagem do laser, não o corte; numa caixa de peças grandes
+vale $1,90»* — e escrevi-a na skill e no README.
+
+Estava errado, e o erro não era o número: era **atribuí-lo**.
+
+Entre as duas encomendas mudaram **duas** coisas: o ficheiro passou de
+`nogueira_6p4` (dentes para 6,4 mm) para `acrilico_3p0` (dentes para 3,0), *e* o
+encaixe foi refeito. Quando as facturas chegaram, dava para medir:
+
+| encomenda | área | corte | preço | $/m |
+|---|---|---|---|---|
+| #1263434 | 1289 cm² | 6,39 m | $37,56 | **5,878** |
+| #1263497 | 1103 cm² | 6,07 m | $35,66 | **5,875** |
+
+**O preço segue o comprimento de corte, e só.** Prevê-se de uma factura para a
+outra com **$0,02** de erro; por área erra **$3,52**. `Setup $0.00`, sem linha
+de material — **não há preço de chapa**.
+
+E o corte é uma propriedade das **peças**, não da arrumação: os mesmos 6,07 m
+antes e depois de encaixar.
+
+> **O encaixe poupou $0,00.** O $1,90 veio inteiro da mudança de espessura, que
+> muda a geometria dos dentes. Eu tinha atribuído o delta à única das duas
+> mudanças em que estava a pensar.
+
+Isto é literalmente a **R2** da skill `full-audit`, que eu próprio escrevi:
+
+> *«Todo número declara origem: medido ou deduzido. **Delta entre builds NÃO é
+> atribuível** (cicatriz 12d). Custo se mede por A/B no mesmo binário.»*
+
+A regra estava escrita, era minha, e não a apliquei — porque desta vez o número
+não veio de um build, veio de uma factura, e não reconheci a forma.
+
+> **A regra do A/B não é sobre builds: é sobre deltas.** Duas medições que
+> diferem em mais de uma coisa não atribuem nada a nenhuma delas, seja o que
+> for que se esteja a medir — tempo de CPU, ruído, ou dólares.
+
+E o corolário que dá o método: **a atribuição não se adivinha, decompõe-se.** O
+preço decompôs-se assim que houve uma grandeza por metro — e aí cada troço de
+corte ganhou preço: os 12 calços custam **$4,11**, os dentes e furos **$11,74**,
+o piso de rectângulos lisos **$23,89**.
+
+### Duas coisas que a decomposição matou de caminho
+
+- **O «degrau da chapa» não existe.** Eu tinha posto «caber numa P1» como a
+  alavanca nº 1 de custo. Não há cobrança de chapa: uma caixa mais pequena é
+  mais barata por ter menos perímetro, linearmente, sem degraus.
+- **O maior custo não está no desenho.** O envio são **$22,43 sobre $35,66 de
+  peça — 39% do subtotal**. Várias caixas no mesmo pacote poupam mais que
+  qualquer coisa que se faça ao ficheiro.
+
+### E a encomenda que se salvou
+
+A #1263434 foi o ficheiro da **nogueira de 6,4** mandado cortar em **acrílico de
+3,00**. É exactamente o desencontro que estava escrito em [15cf](#15cf): junta a
+dedo tem profundidade igual à espessura, logo 3 mm de folga em cada junta e
+3 mm de lingueta saliente. Foi substituída pela #1263497 com crédito integral
+de $58,09 — custou $0,00.
+
+> **O aviso valeu o que valeu porque chegou antes da produção, não porque
+> estava certo.** Facto de fabrico dito depois da chapa cortada é história.

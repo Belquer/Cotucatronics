@@ -34,6 +34,18 @@ aqui*. Leia os dois antes de tocar em código.
 > Skill nova **`/caixa`**, que fixa o percurso caixa ↔ electrónica de ponta a
 > ponta.
 >
+> **CUSTO, medido em duas facturas:** a Ponoko cobra **≈ $5,87 por metro de
+> corte** e mais nada — `Setup $0.00`, sem linha de material, **sem preço de
+> chapa**. Prevê-se de uma factura para a outra com $0,02 de erro por corte e
+> $3,52 por área. Decomposto: rectângulos lisos $23,89 · dentes e furos $11,74
+> · **os 12 calços $4,11** · **o encaixe apertado $0,00**. E o **envio é 39% do
+> subtotal** — várias caixas num pacote poupa mais que qualquer coisa feita ao
+> ficheiro. Cicatriz **15ch**.
+>
+> A encomenda #1263434 era o ficheiro da **nogueira 6,4 mandado cortar em
+> acrílico de 3,0** — o desencontro de juntas de 15cf. Substituída com crédito
+> integral; custou $0,00.
+>
 > ⚠️ **A bloquear os gerbers:** as duas placas estão **por rotear**; os 4 furos
 > de fixação estão livres mas **ainda não existem como furos** (falta símbolo →
 > esquema → PCB); e a **revisão de terra** não correu.

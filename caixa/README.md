@@ -35,28 +35,31 @@ Três portões próprios, todos a **recusar antes de escrever**:
 Estado actual: **19 peças, 375,0 × 299,5 numa P2, margem 9,0 mm, ≈ 6,07 m de
 corte.**
 
-## Custo
+## Custo — medido, não suposto
 
-**Medido na cotação real: apertar o encaixe de 1364 para 1123 cm² poupou
-$1,90.** Faz-se à mesma — é automático e tira risco de recusa — mas **não é
-onde se projecta para poupar**: o encaixe move a viagem do laser, não o corte,
-e o corte são os mesmos 6,07 m antes e depois.
+**O preço da Ponoko segue o comprimento de corte: ≈ $5,87/m.** Duas facturas
+reais, mesmo material, prevêem-se uma à outra com **$0,02** de erro por corte e
+**$3,52** por área. `Setup $0.00`, sem linha de material — **não há preço de
+chapa**; a P1/P2/P3 só importa por caber.
 
-Onde se projecta, por ordem de efeito:
+| | metros | custo |
+|---|---|---|
+| rectângulos lisos (o chão) | 4,07 | $23,89 |
+| dentes, furos e rasgos | 2,00 | $11,74 |
+| — destes, os **12 calços** | 0,70 | **$4,11** |
+| **o encaixe apertado** | **0,00** | **$0,00** |
 
-1. **O tamanho da chapa**, que se decide antes de desenhar. A tampa tem 200 mm
-   e a P1 tem 181 — uma caixa ≤ 181 na maior dimensão cai um degrau inteiro.
-   É decisão de **instrumento**, e nenhum encaixador a atravessa.
-2. **Corte e número de peças.** Dos 6,07 m, 2,00 são dentes/furos/rasgos e
-   **0,70 — 12% — são os doze calços de 12 mm**. O custo segue o perímetro, não
-   a área: peça pequena é cara por milímetro quadrado.
-3. **Menos dentes e mais largos**, pelo `n_target` do `cells()`.
-4. **Gravação desligada** no upload.
+⚠️ **O encaixe não poupa nada.** O corte é propriedade das peças, não da
+arrumação — os mesmos 6,07 m antes e depois. Faz-se à mesma, por causa do
+upload. O $1,90 entre as duas encomendas veio de **regerar a 3,0 em vez de
+6,4**, que encurtou o corte de 6,39 para 6,07 m.
 
-Não confirmado, e escrito como tal: o afastamento mínimo à borda, o preço do
-acrílico transparente, e se o site novo — que dá cotação por peça — ainda cobra
-a chapa inteira. **Uma peça pequena carregada no site deles responde às três.**
-Tabela de estados na skill `/caixa`, §6.
+Projectar para poupar: **menos peças e menos peças pequenas** (o custo segue o
+perímetro), dentes mais largos pelo `n_target` do `cells()`, caixa mais pequena
+— e sobretudo **o envio, $22,43 sobre $35,66, que é 39% do subtotal**: várias
+caixas num pacote é a maior alavanca de todas, e não se mexe no desenho.
+
+Detalhe e o que falta confirmar: skill `/caixa`, §6.
 
 ## ⚠️ O que foi apagado a 06/09, e porquê
 
