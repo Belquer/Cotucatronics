@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""derivados v1.0.0 — "gerado" deixa de ser rotulo e passa a ser afirmavel.
+"""derivados v1.1.0 — "gerado" deixa de ser rotulo e passa a ser afirmavel.
 
 O PROBLEMA QUE RESOLVE (05/09). O `manifest.h` ja era a fonte unica, e mesmo
 assim o mapa de CC dava numeros diferentes em documentos diferentes. A causa
@@ -25,7 +25,7 @@ O QUE ISTO VERIFICA
 USO:  derivados.py
 """
 import re, pathlib, sys
-print("derivados v1.0.0")
+print("derivados v1.1.0")
 RAIZ = pathlib.Path(__file__).resolve().parents[2]
 
 def ler(p):
@@ -41,9 +41,20 @@ VER_FW = m.group(1) if m else "?"
 print("  fonte unica: src/manifest.h v%s (firmware v%s)\n" % (VER_MANIF, VER_FW))
 
 # ---- quem os geradores REALMENTE escrevem --------------------------------
+# ⚠️ VARRER A ARVORE INTEIRA, NAO UMA PASTA COM UM PREFIXO. Ate 06/09 isto
+# olhava so para `docs/operacao/gerar_*.py` e por isso acusou o COTUCA_BOM.md
+# de "nenhum gerador o escreve" — quando o `tools/bom_completa.py` o escreve,
+# noutra pasta e com outro nome. Verificador cujo ALCANCE e mais estreito do
+# que a sua AFIRMACAO acusa inocentes, e e a mesma classe que ele persegue.
 escritos = set()
-for g in sorted((RAIZ / "docs/operacao").glob("gerar_*.py")):
-    for mm in re.finditer(r'"([A-Za-z0-9_.-]+\.(?:md|html))"', ler(g)):
+import subprocess
+try:
+    pys = subprocess.run(["git", "ls-files", "*.py"], cwd=str(RAIZ),
+                         capture_output=True, text=True, timeout=20).stdout.split()
+except Exception:
+    pys = []
+for g in pys:
+    for mm in re.finditer(r'"([A-Za-z0-9_.-]+\.(?:md|html))"', ler(RAIZ / g)):
         escritos.add(mm.group(1))
 
 # ---- quem SE DIZ derivado ------------------------------------------------
@@ -73,6 +84,12 @@ for p in sorted((RAIZ / "docs").rglob("*.md")):
         print("  🔴 ORFAO   %-34s diz-se gerado e NENHUM gerador o escreve" % rel)
         if vers: print("             versao(oes) que declara: %s · fonte hoje: %s" % (", ".join(vers), VER_MANIF))
         achados += 1
+    # ⚠️ NEM TODO DERIVADO VEM DO MANIFEST. O COTUCA_BOM.md sai do KiCad e
+    # carimba `commit <sha>`, que e a identidade certa para ele. Comparar
+    # contra a versao do manifest era eu a assumir uma fonte unica que nao
+    # vale para tudo — e a acusar um carimbo correcto de estar atrasado.
+    elif re.search(r'commit `?[0-9a-f]{7,}', cab):
+        print("  ✅ %-38s carimbado por commit (nao deriva do manifest)" % rel)
     elif VER_MANIF not in vers and vers:
         print("  🟡 ATRASADO %-33s declara %s · fonte hoje v%s" % (rel, ", ".join("v"+v for v in vers), VER_MANIF))
         achados += 1

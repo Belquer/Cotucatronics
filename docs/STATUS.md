@@ -1,4 +1,5 @@
 # STATUS — Cotucatronics
+<!-- doc-check: ignore svg_colisoes (ferramenta em tools/, fora do alcance do check_docs) -->
 
 **Onde estamos.** O par deste documento é
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando

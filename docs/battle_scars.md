@@ -1,4 +1,12 @@
 # Battle Scars — Cotucatronics
+<!-- doc-check: ignore lib_id (campo do formato .kicad_sch, nao param) -->
+<!-- doc-check: ignore lib_symbols (seccao do formato .kicad_sch, nao param) -->
+<!-- doc-check: ignore nogueira_6p4 (perfil de dentes da caixa (6,4 mm), nome de configuracao) -->
+<!-- doc-check: ignore acrilico_3p0 (idem, para acrilico de 3,0 mm) -->
+<!-- doc-check: ignore confere_furos (portao em tools/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore confere_caixa (idem) -->
+<!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
+<!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
 <!-- doc-check: ignore route_l_a  (nome ANTERIOR da matriz, renomeado em 02/09 para `route_a_l` — entrada primeiro, saida depois. A mencao aqui e o REGISTO do que se aprendeu com o nome velho; apaga-lo apagava o que explica a cicatriz.) -->
 <!-- doc-check: ignore route_l_b (idem) -->
 <!-- doc-check: ignore route_r_a (idem) -->

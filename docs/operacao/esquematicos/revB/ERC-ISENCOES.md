@@ -11,6 +11,7 @@
 <!-- doc-check: ignore confere_colisoes (funcao de revB/grade.py, fora do varrimento) -->
 
 # ERC rev B — registo de isenções
+<!-- doc-check: ignore no_connect (codigo de violacao do ERC do KiCad) -->
 
 **Corrido em 01/09 com `kicad-cli` 10.0.5.** Relatórios em `erc_energia.rpt` e
 `erc_preamp.rpt`, ao lado deste ficheiro.

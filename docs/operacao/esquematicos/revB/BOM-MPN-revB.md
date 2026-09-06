@@ -1,4 +1,5 @@
 # BOM por MPN — Cotucatronics rev B
+<!-- doc-check: ignore power_pin_not_driven (codigo de violacao do ERC do KiCad) -->
 ### 05/09/2026 · dois projetos KiCad · JLCPCB monta o SMD · dB compra e solda o resto
 
 > ⚠️ **Nomes actualizados a 05/09 para os do esquema.** O KiCad trata uma
