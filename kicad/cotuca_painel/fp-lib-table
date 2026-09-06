@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "cotuca")(type "KiCad")(uri "${KIPRJMOD}/../cotuca.pretty")(options "")(descr "Footprints do Cotucatronics que nao existem em biblioteca nenhuma"))
+)

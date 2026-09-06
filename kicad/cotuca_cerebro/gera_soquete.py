@@ -24,7 +24,7 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, sys, uuid
 
-VERSAO = "0.12.0"
+VERSAO = "0.13.0"
 G = 1.27
 def u(): return str(uuid.uuid4())
 def g(v): return round(round(v / G) * G, 4)
@@ -69,7 +69,9 @@ FOOTPRINT = {
     "NT1": "NetTie:NetTie-2_SMD_Pad2.0mm",        # ⚠️ FORA da BOM: nao e peca
     "R50": "Resistor_SMD:R_0805_2012Metric",
     "R51": "Resistor_SMD:R_0805_2012Metric",
-    "J10": "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical",
+    # ⚠️ footprint do projecto, nao de biblioteca instalada: este modulo nao
+    # tem footprint oficial em lado nenhum. Ver kicad/gera_footprints.py.
+    "U3": "cotuca:ESP32C3_SUPERMINI_SOQUETE",
     "J11": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
     "J12": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
     "J13": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
@@ -138,6 +140,13 @@ def _instancia(ref, unidade=1):
             '\t\t\t\t(path "/%s/%s"\n\t\t\t\t\t(reference "%s")\n'
             '\t\t\t\t\t(unit %d)\n\t\t\t\t)\n\t\t\t)\n\t\t)\n'
             % (raiz, minha, ref, unidade))
+
+def nao_liga(x, y):
+    """`no_connect` num pino. ⚠️ Nao e "nao usado": e uma PROMESSA de que nada
+    se liga ali, e o ERC passa a recusar quem tente."""
+    L.append('\t(no_connect\n\t\t(at %s %s)\n\t\t(uuid "%s")\n\t)\n'
+             % (g(x), g(y), u()))
+
 
 def fio(x1, y1, x2, y2):
     L.append(f'\t(wire\n\t\t(pts\n\t\t\t(xy {g(x1)} {g(y1)}) (xy {g(x2)} {g(y2)})\n\t\t)\n'
@@ -302,22 +311,50 @@ texto("a doc da libDaisy manda liga-los fora, e 20<->40 mediu ABERTO.", NTX - 30
 texto("Os pinos 20 e 40 estao na DIAGONAL do modulo — o net-tie fica", NTX - 30, NTY + 11.43)
 texto("encostado ao 20, dentro da ilha, com UM condutor ate ao 40.", NTX - 30, NTY + 15.24)
 
-# ------------------------------------------------------- ponte ESP32 (5 pinos)
+# --------------------------------------------- ponte ESP32-C3, EM SOQUETE 2x8
+# ⚠️ Era um header de 5 vias com o modulo ligado por fio. Passou a soquete a
+# pedido do dB. Duas consequencias que nao sao obvias:
+#   · a terra deixa de ir "junto com os fios" — vai pelo plano, que e melhor. A
+#     nota antiga dizia o contrario e foi apagada (premissa revogada).
+#   · os pinos que NAO se usam passam a existir como pads, e o ERC quer saber
+#     deles: levam `no_connect`.
+# ⚠️ IO8 e o LED azul de bordo e IO9 e o BOOT — nenhum serve para o status.
+# Fica IO3, que a ficha da como livre de strapping, flash, USB e JTAG.
 EX, EY = 300.0, 60.0
-simbolo("CONN5_L", "J10", "ponte ESP32-C3", EX, EY, campos=campos("J10", "ponte ESP32-C3"))
+simbolo("ESP32C3", "U3", "ESP32-C3 SuperMini", EX, EY,
+        campos=campos("U3", "ESP32-C3 SuperMini"))
 # ⚠️ `y` DO SIMBOLO CRESCE PARA CIMA; o da folha, para BAIXO. Logo
 # `abs_y = simbolo_y - offset`, com MENOS. Somar espelha o conector: o +5V
 # do pino 1 ia parar ao pino 5, e o unico sinal era um `pin_not_connected`
 # num extremo — os do meio calham bater por simetria.
-for (_n, px, py), (rot, obs) in zip(
-        pinos_de("CONN5_L"),
-        [("+5V",""), ("GND",""), ("MIDI_TX","-> RX da ponte"),
-         ("MIDI_RX","<- TX da ponte"), ("PONTE_STATUS","")]):
+# ⚠️ O MAPA E POR NOME DE PINO, e nao por ordem. O footprint e o simbolo usam os
+# NOMES DA SERIGRAFIA do modulo (`5V`, `IO21`), porque esta placa apareceu com
+# tres pinagens contraditorias em duas horas — cicatriz 15ck. Indexar por ordem
+# reintroduzia exactamente a traducao que os nomes existem para eliminar.
+PONTE = {"5V": ("+5V", ""), "GND": ("GND", ""),
+         "IO20": ("MIDI_TX", "IO20 = RX da ponte"),
+         "IO21": ("MIDI_RX", "IO21 = TX da ponte"),
+         "IO3": ("PONTE_STATUS", "")}
+_vistos = set()
+for _n, px, py in pinos_de("ESP32C3"):
     x, y = EX + px, EY - py
-    fio(x, y, x - 10.16, y); rotulo(rot, x - 10.16, y, 180, "right")
-    if obs: texto(obs, EX + 3.81, y, 1.0)
-texto("PONTE ESP32 — TX/RX CRUZADOS. E a terra de sinal vai JUNTO", EX - 40, EY - 15.24, 1.6)
-texto("com os fios: sem ela, a placa viva injecta pelos diodos da morta.", EX - 40, EY - 11.43)
+    esq = px < 0
+    if _n in PONTE:
+        rot, obs = PONTE[_n]
+        dx = -10.16 if esq else 10.16
+        fio(x, y, x + dx, y)
+        rotulo(rot, x + dx, y, 180 if esq else 0, "right" if esq else "left")
+        if obs: texto(obs, EX + (-30 if esq else 20), y, 1.0)
+        _vistos.add(_n)
+    else:
+        nao_liga(x, y)
+if _vistos != set(PONTE):
+    raise SystemExit("*** o mapa da ponte cita pinos que o simbolo nao tem: %s"
+                     % (set(PONTE) - _vistos))
+texto("PONTE ESP32-C3 EM SOQUETE — TX/RX CRUZADOS: o TX da Daisy vai ao RX", EX - 40, EY - 18.0, 1.6)
+texto("do modulo. A terra vai pelo PLANO, nao por fio: o soquete tratou disso.", EX - 40, EY - 14.2)
+texto("IO8 e o LED de bordo, IO9 e o BOOT — nao usar. Antena no lado", EX - 40, EY + 14.2, 1.6)
+texto("OPOSTO ao USB: manter cobre longe dela no layout.", EX - 40, EY + 18.0)
 
 # --------------------------------------------------- modulo do amp (4 pinos)
 AX, AY = 300.0, 110.0

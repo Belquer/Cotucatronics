@@ -162,6 +162,39 @@ def led():
     return _cab("LED", "D", "LED", 5.08, -5.08) + corpo + "".join(p) + '\t\t)'
 
 
+def esp32c3():
+    """ESP32-C3 SuperMini em soquete, 2x8.
+
+    ⚠️ OS NUMEROS DE PINO SAO OS NOMES DA SERIGRAFIA — "5V", "GND", "IO21" — e
+    nao 1..16. O KiCad exige que o numero do pino bata no nome do pad, e o
+    footprint (`kicad/gera_footprints.py`) usa os mesmos nomes de proposito:
+    esta placa ja apareceu com tres pinagens contraditorias em duas horas
+    (cicatriz 15ck) e a defesa e nao haver traducao entre o silk e o cobre.
+
+    ⚠️ VISTA DE CIMA, USB-C para cima. A coluna da ESQUERDA no simbolo e a
+    esquerda do modulo visto de cima. O diagrama do vendedor mostra o lado de
+    BAIXO e nao o diz — foi o que gerou as tres leituras."""
+    ESQ = ["IO5", "IO6", "IO7", "IO8", "IO9", "IO10", "IO20", "IO21"]
+    DIR = ["5V", "GND", "3V3", "IO4", "IO3", "IO2", "IO1", "IO0"]
+    ROTULO = {"IO20": "IO20/RX", "IO21": "IO21/TX",
+              "IO8": "IO8 (LED)", "IO9": "IO9 (BOOT)"}
+    h = 8 * 2.54
+    corpo = ('\t\t\t(symbol "ESP32C3_0_1"\n'
+             '\t\t\t\t(rectangle\n\t\t\t\t\t(start -10.16 %s)\n\t\t\t\t\t(end 10.16 %s)\n'
+             % (num(h / 2 + 1.27), num(-h / 2 - 1.27)) +
+             '\t\t\t\t\t(stroke (width 0.254) (type default))\n'
+             '\t\t\t\t\t(fill (type background))\n\t\t\t\t)\n\t\t\t)\n')
+    p = ['\t\t\t(symbol "ESP32C3_1_1"\n']
+    for i, (e, d) in enumerate(zip(ESQ, DIR)):
+        y = h / 2 - 1.27 - i * 2.54
+        p.append(_pino(e, ROTULO.get(e, e), -15.24, y, 0))
+        tipo = "power_in" if d in ("5V", "GND", "3V3") else "passive"
+        p.append(_pino(d, ROTULO.get(d, d), 15.24, y, 180, tipo=tipo))
+    p.append('\t\t\t)\n')
+    return (_cab("ESP32C3", "U", "ESP32-C3 SuperMini", h / 2 + 3.81, -h / 2 - 3.81)
+            + corpo + "".join(p) + '\t\t)')
+
+
 def opa1642():
     """OPA1642 — dual SOIC-8, TRES UNIDADES numa so referencia.
 
@@ -240,5 +273,5 @@ def conn3_r():
 if __name__ == "__main__":
     print("gera_simbolos v%s" % VERSAO, file=sys.stderr)
     for s in (nettie2(), dpdt(), conn3_r(), conn(3), conn(4), conn(5), conn(6), conn(7), idc26(),
-              pot3(), ec11(), mosfet_n(), led(), opa1642()):
+              pot3(), ec11(), mosfet_n(), led(), opa1642(), esp32c3()):
         print(s)
