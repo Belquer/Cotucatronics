@@ -101,9 +101,18 @@ def _chapa_fundo():
 
 TAMPA = _furos_tampa()
 FUNDO = _chapa_fundo()
-# ⚠️ POR DECIDIR: que aresta da placa do cerebro olha para a parede da FRENTE.
-# Nao e estetica — decide que pecas ficam debaixo dos botoes arcade, que descem
-# 40 mm da tampa. As duas hipoteses dao listas diferentes e nenhuma e vazia.
+# DECIDIDO por medicao, 06/09: a aresta y=20 do KiCad olha para a FRENTE.
+#
+# Nao e estetica. Os tres arcade descem da tampa e passam por cima da placa, e a
+# altura livre por baixo deles e de 7,5 mm no pior caso. As duas orientacoes
+# nao empatam:
+#   y_min -> 15 pecas debaixo dos discos, TODAS pequenas: resistencias, diodos,
+#            ceramicos, um trimmer, e tres conectores (J3 J10 J15) que sao os
+#            unicos a conferir contra os 7,5;
+#   y_max ->  8 pecas, mas duas delas sao a DAISY em soquete (~17 mm) e o C1
+#            (2200 uF, 25 mm). Nenhuma das duas cabe, com cabeca de botao
+#            nenhuma.
+# Menos pecas nao e melhor: o que conta e a mais ALTA de cada lista.
 FRENTE_CEREBRO = "y_min"      # "y_min" = a aresta y=20 do KiCad | "y_max" = a y=120
 
 CALCO = 12.0     # os calcos sao quadrados de 12 x 12
@@ -467,7 +476,14 @@ def confere_arcade(t, alvo, frente_em):
     disco de o30 e colisao."""
     import math
     ang = math.radians(CAIXA.ANG)
-    BOTAO = 40.0                     # profundidade do arcade, medida pelo dB
+    # ⚠️ 40 mm sao o botao APERTADO, de ponta a ponta — inclui a cabeca que fica
+    # ACIMA do painel. O que rouba altura ao interior e so a parte de BAIXO:
+    #   abaixo = 40 - painel - cabeca
+    # A cabeca de um arcade de 30 anda pelos 8-10 mm, mas NAO foi medida. Fica o
+    # pior caso, cabeca = 0, que e o unico valor que nao mente para o lado
+    # perigoso. Medir a saliencia abaixo do painel encolhe isto e so melhora.
+    PAINEL = 2 * CAIXA.T             # tampa + reforco, onde o arcade monta
+    BOTAO = 40.0 - PAINEL            # pior caso: toda a folga vai para baixo
     ESPACADOR = CALCO_H + 4.0        # o que o `confere_caixa` obriga, arredondado
     PCB = 1.6
     y_face = 35.0                    # os tres arcade, na face da tampa
@@ -484,7 +500,9 @@ def confere_arcade(t, alvo, frente_em):
     ax = [x - CAIXA.T - 0.5 - alvo["x0"] for x in sorted(fx)]
     ay = horiz - CAIXA.T - 0.5 - alvo["y0"]
 
-    L = ["     ARCADE: ponta a %.1f mm do fundo, placa a %.1f -> folga %.1f mm"
+    L = ["     ARCADE: painel %g mm · botao 40 apertado -> %.0f abaixo (pior caso)"
+         % (PAINEL, BOTAO),
+         "     ponta a %.1f do fundo, placa a %.1f -> ALTURA LIVRE %.1f mm"
          % (ponta, topo, folga),
          "     discos o30 sobre a placa: y %.1f · x %s"
          % (ay, " ".join("%.0f" % v for v in ax))]
@@ -514,8 +532,8 @@ def confere_arcade(t, alvo, frente_em):
     if bate:
         L.append("     ⚠️ %d peca(s) debaixo dos arcade: %s"
                  % (len(bate), " ".join(sorted(bate))))
-        L.append("     ⚠️ com %.1f mm de folga sobre a placa NUA, isto e colisao."
-                 % folga)
+        L.append("     ⚠️ nenhuma delas pode passar de %.1f mm de altura." % folga)
+        L.append("     ⚠️ conhecidas altas: U2 (Daisy em soquete ~17) e C1 (2200uF, 25).")
     else:
         L.append("     nenhuma peca debaixo dos arcade")
     return L
