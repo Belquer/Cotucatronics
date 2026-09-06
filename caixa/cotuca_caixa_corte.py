@@ -35,10 +35,13 @@ VERSAO = "0.7.0"
 # nome, uma ja encomendada e a outra nao, indistinguiveis na pasta e no upload.
 # Com o digest no nome, geometria diferente E ficheiro diferente, por construcao:
 # nao ha como sobrepor sem dar por isso.
-REV = 2
+REV = 3
 # r1 (06/09) 19 pecas · arcade a 40/100/160 · sem reforco. ENCOMENDA #1263497.
 # r2 (06/09) 20 pecas · arcade a 30/100/170 (70 entre eixos) · REFORCO da tampa
 #            193x50 com furos o30, confirmado pelo prototipo de madeira de 6 mm.
+# r3 (06/09) + ABERTURAS na parede de tras, pedidas pela placa em
+#            caixa/aberturas.json, para reprogramar os modulos montados. A r2 nao
+#            tinha nenhuma livre: o unico recorte de USB e o do decoy PD.
 
 # --------------- parâmetros ---------------
 def _arg(nome, omissao):
@@ -249,6 +252,38 @@ TOP_RECTS = [("r", *to_top(45, 92), 55, 27.5)]      # janela do OLED (omitir se 
 def to_back(x_out, z_out): return (x_out - T, z_out)           # painel de trás: x exterior 0..200 → corpo; z desde o chão
 BACK_HOLES = [("c", *to_back(75, 38), 9.5), ("c", *to_back(105, 38), 9.5), ("c", *to_back(155, 38), 6), ("c", *to_back(180, 38), 6)]
 BACK_RECTS = [("r", *to_back(34, 38), 12, 6)] + [("r", *to_back(112 + i*14, 66), 3, 8) for i in range(6)]
+
+# --- aberturas PEDIDAS PELA PLACA -------------------------------------------
+# ⚠️ A DEPENDENCIA INVERTE-SE AQUI. A caixa impoe a placa o contorno, os furos e
+# o volume; a placa impoe a caixa as ABERTURAS, porque so ela sabe onde os
+# conectores calharam. Escrever aqui "USB da Daisy em x=95,6" era transcrever de
+# um ficheiro para o outro, que e a familia de erro que este projecto ja pagou
+# tres vezes (15cf). O `kicad/pcb_contorno.py` escreve o pedido; isto le-o.
+#
+# ⚠️ SAO DUAS PASSAGENS, e nao ha volta a dar: a placa so sabe onde estao os
+# conectores depois de colocada contra a caixa, e a caixa so sabe onde furar
+# depois disso. Correr `pcb_contorno` -> correr este -> correr `pcb_contorno`
+# outra vez, e conferir que o portao de acesso passa a verde. Se as cotas da
+# caixa nao mudarem entre passagens, converge a segunda.
+_ped = os.path.join(os.path.dirname(os.path.abspath(__file__)), "aberturas.json")
+ABERTURAS_PEDIDAS = []
+if os.path.exists(_ped):
+    import json
+    _j = json.load(open(_ped, encoding="utf-8"))
+    for a in _j.get("aberturas", []):
+        # colisao com o que a parede ja tem?
+        for _t, _x, _z, _w, _h in BACK_RECTS:
+            if abs((_x + T) - a["x"]) < (_w + a["w"]) / 2 and abs(_z - a["z"]) < (_h + a["h"]) / 2:
+                raise SystemExit("*** a abertura pedida para %s (x=%.1f z=%.1f) "
+                                 "sobrepoe um recorte que a parede ja tem. Duas "
+                                 "coisas nao passam pelo mesmo buraco."
+                                 % (a["ref"], a["x"], a["z"]))
+        for _t, _x, _z, _d in BACK_HOLES:
+            if abs((_x + T) - a["x"]) < _d / 2 + a["w"] / 2 and abs(_z - a["z"]) < _d / 2 + a["h"] / 2:
+                raise SystemExit("*** a abertura pedida para %s bate no furo de "
+                                 "o%g em x=%.1f." % (a["ref"], _d, _x + T))
+        ABERTURAS_PEDIDAS.append(a)
+        BACK_RECTS.append(("r", *to_back(a["x"], a["z"]), a["w"], a["h"]))
 LEFT_HOLES = [("c", 35 - T, 22, 9.5), ("c", 85 - T, 22, 9.5)]          # x da frente (corpo), z do chão
 RIGHT_RECTS = [("r", BODY_D - (35 - T), 24, 24, 12), ("r", BODY_D - (85 - T), 24, 24, 12)]   # espelhado
 # ⚠️ DERIVADO DA CHAPA, e não escrito. Estas seis cotas estavam fixas em
@@ -529,3 +564,10 @@ if __name__ == "__main__":
     print(f"frente {HF} / trás {HB} · interior sob a tampa: frente {HF-2*T:.0f}, trás {HB-2*T:.0f}")
     print(f"arcade em x = {' · '.join('%g' % x for x in ARCADE_X)} · "
           f"{ARCADE_X[1]-ARCADE_X[0]:.0f} mm entre eixos, {ARCADE_VAO:.0f} entre bordos")
+    if ABERTURAS_PEDIDAS:
+        print(f"aberturas pedidas pela placa: {len(ABERTURAS_PEDIDAS)}")
+        for a in ABERTURAS_PEDIDAS:
+            print(f"  {a['ref']}: {a['w']:g}x{a['h']:g} em x={a['x']:g} z={a['z']:g}"
+                  f"  ({a['porque']}; modulo a {a['recuo']:g} mm da parede)")
+    else:
+        print("⚠️ sem caixa/aberturas.json — corre o kicad/pcb_contorno.py primeiro")

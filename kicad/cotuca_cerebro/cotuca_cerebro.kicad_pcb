@@ -22821,28 +22821,28 @@
 		(end 197 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "9267b8f6-d8dc-4527-86d6-1a5bbb44347e")
+		(uuid "eba3ab8b-3761-49ba-9cc0-8e510883a966")
 	)
 	(gr_line
 		(start 200 23)
 		(end 200 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "4254df45-36e8-47ad-b06d-0c05b75aaf11")
+		(uuid "e028c890-e8df-4b60-9d3f-669416c2f424")
 	)
 	(gr_line
 		(start 197 120)
 		(end 23 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "387df3ce-382d-47cc-a45c-a98397bd1f5a")
+		(uuid "b0e316df-6e2c-4c75-ab45-93a3b59c3c17")
 	)
 	(gr_line
 		(start 20 117)
 		(end 20 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "44e99969-461d-44cf-ae8c-412daf8f160d")
+		(uuid "64cc72ea-47a2-44e4-845b-ce07403c5e48")
 	)
 	(gr_arc
 		(start 197 20)
@@ -22850,7 +22850,7 @@
 		(end 200 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "697ff78f-d11d-409d-b570-d9a211bfa748")
+		(uuid "a4d41231-bfb5-4348-86f4-63cb611da941")
 	)
 	(gr_arc
 		(start 200 117)
@@ -22858,7 +22858,7 @@
 		(end 197 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "8c66aa9c-bdd8-4dc6-8e76-e6d9444dc965")
+		(uuid "f799a427-468b-422a-9fba-e3f727e7093f")
 	)
 	(gr_arc
 		(start 23 120)
@@ -22866,7 +22866,7 @@
 		(end 20 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "f59e876b-1bbd-47d6-8be0-6aa0cb922be9")
+		(uuid "9e9206a2-344d-49f5-8efe-e4927cc4a5b0")
 	)
 	(gr_arc
 		(start 20 23)
@@ -22874,12 +22874,12 @@
 		(end 23 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "b62e715c-2200-43c3-b9b0-03a90d2ce1f7")
+		(uuid "2d26f6e8-4d74-41b7-89cd-bba20c0d7ded")
 	)
 	(gr_text "COTUCATRONICS"
 		(at 110 75)
 		(layer "B.SilkS")
-		(uuid "1052be3c-b0ef-41dc-816d-3eac64999771")
+		(uuid "12d1826c-7c72-4f0f-b569-a1efdaa5c9a5")
 		(effects
 			(font
 				(size 6 6)
@@ -22892,7 +22892,7 @@
 	(gr_text "cerebro rev B"
 		(at 110 86)
 		(layer "B.SilkS")
-		(uuid "cf198e56-f335-46fb-a3ec-fe94ccf7aeca")
+		(uuid "2bd47ebb-ca28-40c0-8813-9600f567cb7f")
 		(effects
 			(font
 				(size 2.2 2.2)

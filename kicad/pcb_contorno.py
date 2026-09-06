@@ -586,16 +586,26 @@ def colide(x, y, ang, pads, centros, raio):
 # terceira coisa que a caixa impoe a placa e nenhuma ferramenta ve — depois do
 # contorno (planta) e da coluna de ar (volume), o ACESSO.
 ACESSO_USB = {
-    # ref: (pinos que marcam a ponta onde esta o USB, folga do conector em mm)
+    # ref: (pinos que marcam a ponta onde esta o USB, altura do conector)
     "U2": ((1, 40), 1.5),
 }
+# tamanho da abertura na parede: tem de passar a FICHA e o dedo que a leva la,
+# nao so o conector. Uma ficha USB-C tem ~12 x 6,5 de corpo e ~20 de pega.
+ABERTURA = (18.0, 12.0)
+PEDIDO = os.path.join(AQUI, os.pardir, "caixa", "aberturas.json")
 
 
 def confere_acesso(t, alvo):
     """Cada USB que precisa de ser alcancado de fora bate num recorte?"""
     import math
+    pedidos = []
+    # ⚠️ TODOS os recortes largos, e nao so os de 12x6. O filtro estava preso ao
+    # tamanho do recorte do decoy — e no dia em que a caixa ganhou uma abertura
+    # de 18x12 pedida por esta mesma funcao, ela nao a viu e continuou a dizer
+    # que nao havia acesso. Portao que so reconhece a forma que ja conhecia
+    # nao e portao, e o modo de falha dele e dizer NAO quando devia dizer SIM.
     recortes = [(r[1] + CAIXA.T, r[2], r[3], r[4])
-                for r in CAIXA.BACK_RECTS if r[3] == 12 and r[4] == 6]
+                for r in CAIXA.BACK_RECTS if r[3] >= 10]
     L = ["     ACESSO USB: %d recorte(s) na parede de tras" % len(recortes)]
     ox, oy = alvo["origem"]
     for ref, (pinos, alt) in ACESSO_USB.items():
@@ -639,6 +649,9 @@ def confere_acesso(t, alvo):
         recuo = CAIXA.BODY_D - iy
         L.append("     %s: USB na face x=%.1f · z=%.1f · a %.1f mm da parede de tras"
                  % (ref, face_x, z, recuo))
+        pedidos.append(dict(ref=ref, x=round(face_x, 2), z=round(z, 2),
+                            w=ABERTURA[0], h=ABERTURA[1], recuo=round(recuo, 1),
+                            porque="USB-C de %s, para reprogramar montado" % ref))
         bate = [r for r in recortes
                 if abs(r[0] - face_x) <= r[2] / 2 and abs(r[1] - z) <= r[3] / 2]
         if bate:
@@ -651,6 +664,17 @@ def confere_acesso(t, alvo):
                          "e do decoy (entrada de energia)."
                          % (abs(perto[0] - face_x), abs(perto[1] - z)))
             L.append("     ⚠️ com a caixa fechada, so tirando o fundo (6 parafusos).")
+    # ⚠️ A DEPENDENCIA INVERTE-SE AQUI, e so aqui. A caixa impoe a placa o
+    # contorno, os furos e o volume; a placa impoe a caixa as ABERTURAS, porque
+    # so ela sabe onde os conectores calharam. Escrever as aberturas a mao na
+    # parede era transcrever de um ficheiro para o outro — a familia de erro que
+    # este projecto ja pagou tres vezes. Sai um pedido; a caixa le-o.
+    import json
+    io.open(PEDIDO, "w", encoding="utf-8").write(json.dumps(
+        {"gerado_por": "pcb_contorno v%s" % VERSAO,
+         "parede": "tras",
+         "aberturas": pedidos}, indent=2, ensure_ascii=False) + "\n")
+    L.append("     escrito caixa/aberturas.json com %d pedido(s)" % len(pedidos))
     return L
 
 

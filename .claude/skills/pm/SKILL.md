@@ -67,12 +67,30 @@ uma cicatriz de um sirva o outro.
 
 ## 4. Quando os dois se cruzam
 
-⚠️ **A caixa impõe volume à placa, e a placa não impõe nada à caixa.** A
-dependência é de sentido único, e isso decide a ordem: **fecha-se a caixa
-primeiro**, e a placa desenha-se contra ela.
+⚠️ **A dependência NÃO é de sentido único** — escrevi-o assim e estava errado,
+no mesmo dia. É de sentidos opostos em coisas diferentes:
 
-O inverso — mudar a caixa depois de a placa estar routeada — custa refazer
-trajectos, porque as posições mecânicas mudam e as pistas seguem-nas.
+| | quem manda |
+|---|---|
+| contorno, furos de fixação, eixos que atravessam | **caixa → placa** |
+| **volume** (o que desce da tampa por cima da placa) | **caixa → placa** |
+| **aberturas na parede** (USB, acesso) | **placa → caixa** |
+
+Só a placa sabe onde os conectores calharam, e a parede tem de os seguir. Logo
+**são duas passagens, e não há volta a dar**: coloca-se a placa contra a
+envolvente da caixa, a placa **emite** as aberturas de que precisa, a caixa
+consome-as, e corre-se a placa outra vez para confirmar que o portão de acesso
+passa a verde. Se as cotas da caixa não mudarem entre passagens, converge à
+segunda.
+
+No Cotucatronics isso é literal: `pcb_contorno.py` escreve
+`caixa/aberturas.json` e `cotuca_caixa_corte.py` lê-o. Escrever «USB da Daisy em
+x=95,6» na parede à mão era transcrever de um ficheiro para o outro — a família
+de erro que este projecto já pagou três vezes.
+
+O que continua verdade: **mudar a caixa depois de a placa estar routeada** custa
+refazer trajectos, porque as posições mecânicas mudam e as pistas seguem-nas.
+Por isso as duas passagens fazem-se **antes** de rotear, nunca depois.
 
 **O que a caixa fixa e a placa tem de obedecer:** contorno · furos de fixação ·
 eixos que saem por ela · **e a coluna de ar** (o que desce da tampa por cima da
