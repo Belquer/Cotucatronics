@@ -19,7 +19,26 @@ USO:  cotuca_caixa_corte.py [--t 3.0] [--kerf 0.2]
 """
 import math, os, sys, subprocess
 
-VERSAO = "0.6.0"
+VERSAO = "0.7.0"
+
+# --- identidade do ARTEFACTO, que nao e a versao do gerador ------------------
+# ⚠️ DUAS COISAS DIFERENTES PRECISAM DE DOIS NUMEROS. `VERSAO` diz o que mudou
+# no CODIGO; `REV` diz o que mudou na CAIXA. Um gerador novo pode emitir a mesma
+# chapa (refiz o encaixe tres vezes sem mexer numa cota), e o mesmo gerador emite
+# chapas diferentes conforme os parametros.
+#
+# E o nome do ficheiro leva os dois, mais o DIGEST do proprio desenho:
+#     cotuca_caixa_r2_acrilico_3p0_a1b2c3d4.svg
+#
+# ⚠️ O DIGEST E O QUE NAO SE ESQUECE. O `REV` bumpa-se a mao e a mao esquece —
+# foi assim que a caixa com reforco e a caixa sem reforco ficaram com o MESMO
+# nome, uma ja encomendada e a outra nao, indistinguiveis na pasta e no upload.
+# Com o digest no nome, geometria diferente E ficheiro diferente, por construcao:
+# nao ha como sobrepor sem dar por isso.
+REV = 2
+# r1 (06/09) 19 pecas · arcade a 40/100/160 · sem reforco. ENCOMENDA #1263497.
+# r2 (06/09) 20 pecas · arcade a 30/100/170 (70 entre eixos) · REFORCO da tampa
+#            193x50 com furos o30, confirmado pelo prototipo de madeira de 6 mm.
 
 # --------------- parâmetros ---------------
 def _arg(nome, omissao):
@@ -485,10 +504,18 @@ if __name__ == "__main__":
     if erros:
         print("PORTÃO RECUSOU:"); [print("  !!", e) for e in erros]; sys.exit(1)
     print(f"portão nesting: {len(placed)} peças, disjuntas, dentro da chapa, furos dentro das peças — 0 erros")
-    open(OUT + f"cotuca_caixa_corte_{tag}.svg", "w").write(svg())
-    open(OUT + f"cotuca_caixa_corte_{tag}_previa.svg", "w").write(svg_preview())
-    open(OUT + f"cotuca_caixa_corte_{tag}.dxf", "w").write(dxf())
-    print(f"escrito: cotuca_caixa_corte_{tag}.svg · _previa.svg · .dxf")
+    import hashlib
+    corpo = svg()
+    # ⚠️ o digest e do DESENHO, e o nome nao entra no desenho — logo e estavel.
+    dig = hashlib.sha256(corpo.encode()).hexdigest()[:8]
+    raiz = f"cotuca_caixa_r{REV}_{tag}_{dig}"
+    open(OUT + raiz + ".svg", "w").write(corpo)
+    open(OUT + raiz + "_previa.svg", "w").write(svg_preview())
+    open(OUT + raiz + ".dxf", "w").write(dxf())
+    print(f"escrito: {raiz}.svg · _previa.svg · .dxf")
+    print(f"identidade: rev {REV} · digest {dig}")
+    print("  ⚠️ o digest E a identidade. Geometria diferente -> ficheiro "
+          "diferente, por construcao. Encomenda-se pelo nome inteiro.")
     print(f"chapa {SHEET[0]:.0f}×{SHEET[1]:.0f} · usado {xmax:.1f}×{ymax:.1f} · {len(placed)} peças")
     margem = min(SHEET[0] - xmax, SHEET[1] - ymax)
     # ⚠️ Os 3 mm são MEUS, não da Ponoko. Eles dizem "não uses a aresta crua da

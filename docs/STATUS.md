@@ -5,7 +5,9 @@
 aqui*. Leia os dois antes de tocar em código.
 
 > Atualizado em **2026-09-06 (a caixa está pronta para a Ponoko)** · leva:
-> **`caixa/cotuca_caixa_corte_acrilico_3p0.svg`, 20 peças, pronto a encomendar.**
+> **`caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg`, 20 peças, pronto a
+> encomendar.** O nome leva revisão e **digest do desenho** — a r1 (19 peças,
+> sem reforço) foi a encomenda #1263497 e chamava-se igual à r2 antes disto.
 > Acrílico transparente 3,0 mm, kerf 0,2, chapa P2, ocupa 377,1 × 326,0 com
 > 6,9 mm de margem, ≈ 6,84 m de corte (≈ $40 a $5,87/m, mais envio).
 >

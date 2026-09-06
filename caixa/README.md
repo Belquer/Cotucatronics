@@ -9,7 +9,7 @@ que é por onde se abre — e é nele que o carrier e o amp montam.
 | ficheiro | o que é |
 |---|---|
 | `cotuca_caixa_corte.py` | **A FONTE.** Gera o corte a partir de `--t` e `--kerf`. Tem `if __name__ == "__main__"`, por isso o `kicad/pcb_contorno.py` **importa-o** para dimensionar as placas |
-| `cotuca_caixa_corte_acrilico_3p0.svg` · `.dxf` | o que vai para a Ponoko. O nome leva a espessura, de propósito |
+| `cotuca_caixa_r2_acrilico_3p0_55cf3955.svg` · `.dxf` | o que vai para a Ponoko |
 
 **20 peças.** A vigésima é o **REFORÇO da tampa** — faixa de 193 × 50 colada por
 baixo, só onde os arcade estão. Um pé são ~300 N a meio de um vão, e 3 mm de
@@ -28,8 +28,31 @@ apertar dois, o que resolve é um ressalto — ver o documento de montagem, §4c
 
 ```bash
 python3 caixa/cotuca_caixa_corte.py --reforco-furo 30
-python3 tools/nesting.py caixa/cotuca_caixa_corte_acrilico_3p0.svg --pecas=20
+python3 tools/nesting.py caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg --pecas=20
 ```
+
+## O nome é a identidade
+
+```
+cotuca_caixa_r2_acrilico_3p0_55cf3955.svg
+             │        │   │   └── digest do desenho
+             │        │   └────── espessura
+             │        └────────── material
+             └─────────────────── revisão do artefacto
+```
+
+⚠️ **A revisão bumba-se à mão e a mão esquece; o digest não.** Geometria
+diferente é ficheiro diferente **por construção** — a caixa com reforço e a
+caixa sem reforço chegaram a partilhar o nome `..._acrilico_3p0.svg`, uma já
+encomendada e a outra não, indistinguíveis na pasta. Não volta a acontecer.
+
+| revisão | o que é | encomenda | onde está |
+|---|---|---|---|
+| r1 | 19 peças · arcade a 40/100/160 · sem reforço | **#1263497**, $35,66 | `git show cbc6fbd:caixa/cotuca_caixa_corte_acrilico_3p0.svg` |
+| **r2** | 20 peças · arcade a 30/100/170 · **reforço da tampa** | — | na pasta |
+
+A r1 nasceu antes desta regra e chamava-se `..._corte_acrilico_3p0.svg` — o
+mesmo nome que a r2 tinha até agora. É o caso que criou a regra.
 
 ⚠️ **`--reforco-furo` é obrigatório e não tem omissão.** O reforço da tampa
 engrossa o painel na faixa dos arcade, e o diâmetro do furo decide se o botão

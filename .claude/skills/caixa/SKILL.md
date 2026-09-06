@@ -58,7 +58,7 @@ duas mãos, voltar a procurar antes de agir sobre uma ausência.
 python3 caixa/cotuca_caixa_corte.py --t 3.0 --kerf 0.2
 ```
 
-Escreve `cotuca_caixa_corte_acrilico_3p0.svg`, `_previa.svg` e `.dxf` ao lado
+Escreve `cotuca_caixa_r<REV>_acrilico_3p0_<digest>.svg`, `_previa.svg` e `.dxf` ao lado
 do script. **O nome leva a espessura** — um ficheiro de corte sem espessura no
 nome mede-se tão bem como o certo, e foi exactamente assim que se perdeu meio
 dia.
@@ -80,6 +80,56 @@ material é sempre regerar**, nunca só mudar a linha do pedido.
 
 ---
 
+## 1b. O NOME DO FICHEIRO É A IDENTIDADE DO ARTEFACTO
+
+Um ficheiro de fabrico não é código: **depois de encomendado, existe como
+objecto**, e o nome é a única coisa que liga a chapa que chegou ao desenho que
+a gerou. Se dois desenhos diferentes partilham um nome, essa ligação parte-se —
+e parte-se em silêncio.
+
+Aconteceu aqui: a caixa **com** reforço e a caixa **sem** reforço saíram as
+duas como `cotuca_caixa_corte_acrilico_3p0.svg`. Uma estava encomendada, a
+outra não, e na pasta eram indistinguíveis.
+
+> **Duas coisas diferentes precisam de dois números.** A **versão do gerador**
+> diz o que mudou no código; a **revisão do artefacto** diz o que mudou na
+> peça. Não são o mesmo: um gerador novo pode emitir a mesma chapa (refiz o
+> encaixe três vezes sem mexer numa cota), e o mesmo gerador emite chapas
+> diferentes conforme os parâmetros.
+
+O nome carrega os três:
+
+```
+cotuca_caixa_r2_acrilico_3p0_55cf3955.svg
+             │        │   │   └── digest do desenho
+             │        │   └────── espessura
+             │        └────────── material
+             └─────────────────── revisão do artefacto
+```
+
+⚠️ **O digest é o que não se esquece.** A revisão bumpa-se à mão, e a mão
+esquece — foi exactamente assim que os dois ficheiros ficaram com o mesmo nome.
+Com o digest no nome, **geometria diferente é ficheiro diferente por
+construção**: não há como sobrepor sem dar por isso, e não há como encomendar o
+errado sem que o nome o diga.
+
+E é reprodutível: a mesma entrada dá o mesmo digest, sempre. Um digest que
+mudasse a cada corrida seria pior que nenhum — dizia «mudou» quando nada mudou.
+
+**O que fica no repositório:** o ficheiro encomendado e o registo de qual foi.
+Um artefacto de fabrico não é um build descartável: é o que vai ser preciso
+para perceber a peça que chegou dentro de um mês.
+
+| revisão | o que é | encomenda |
+|---|---|---|
+| r1 | 19 peças · arcade a 40/100/160 · sem reforço | **#1263497** |
+| r2 | 20 peças · arcade a 30/100/170 · reforço da tampa | — |
+
+> Generaliza para lá da caixa: **qualquer artefacto que saia do repositório para
+> o mundo físico** — gerbers, CPL, ficheiro de corte, STL — leva revisão e
+> digest no nome. O que vive só no disco pode chamar-se o que quiser; o que
+> alguém vai fabricar, não.
+
 ## 2. Os cinco portões — nenhum é opcional
 
 Cada um recusa **antes** de se gastar chapa ou placa. Um portão que avisa e
@@ -94,7 +144,7 @@ deixa passar não é portão.
 | 5 | **furo livre** | `confere_furos` no `pcb_contorno.py` | parafuso de fixação debaixo de um componente |
 
 ```bash
-python3 tools/nesting.py caixa/cotuca_caixa_corte_acrilico_3p0.svg --pecas=19
+python3 tools/nesting.py caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg --pecas=29
 ```
 
 ⚠️ **O `--pecas` não é decoração.** Uma peça que não foi emitida não colide com
