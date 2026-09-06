@@ -19,7 +19,7 @@ USO:  cotuca_caixa_corte.py [--t 3.0] [--kerf 0.2]
 """
 import math, os, sys, subprocess
 
-VERSAO = "0.4.1"
+VERSAO = "0.5.0"
 
 # --------------- parâmetros ---------------
 def _arg(nome, omissao):
@@ -43,6 +43,54 @@ def _arg(nome, omissao):
 # Omissao errada nao rebenta: responde com confianca sobre outro objecto.
 T = _arg("t", 3.0)          # espessura — acrilico transparente, encomendado
 K = _arg("kerf", 0.2)       # kerf
+
+# ⚠️ REFORCO DA TAMPA. Um pe sao ~300 N a meio do vao entre a parede da frente e
+# a nervura. Em 3 mm de acrilico isso flete a olho e, com o tempo, raja A PARTIR
+# DOS FUROS DE o30, que sao o ponto de concentracao de tensao. Cortar uma e
+# pisar diz se parte no primeiro dia; nao diz se parte a centesima.
+#
+# A resposta e uma segunda chapa colada por BAIXO da tampa, so na faixa dos
+# arcade: 6 mm efectivos onde o pe pisa, 3 mm onde os pots e o encoder
+# atravessam — que e a razao pela qual a tampa e de 3 (o PTV09 tem ~7 mm de
+# rosca e nao ha porca com 6 de tampa mais a placa por baixo).
+#
+# ⚠️ E O FURO DO REFORCO NAO E o30 POR OMISSAO. Se ele repetisse o o30, o botao
+# passaria a montar num painel de 6 mm — e os arcade JA ESTAO COMPRADOS, com um
+# comprimento de rosca que ninguem mediu. Repetir o o30 e a armadilha do bucim
+# dos pots ao contrario. Por omissao o furo e de passagem: o botao monta nos
+# 3 mm da tampa e a porca gira dentro do rasgo do reforco.
+#   --reforco-furo 30  -> painel de 6 mm no botao. SO depois de medir a rosca.
+#   --reforco-furo 42  -> passagem (omissao). Precisa de caber a PORCA.
+#   --reforco 0        -> sem reforco.
+REFORCO = _arg("reforco", 1.0) != 0.0
+# ⚠️ SEM OMISSAO, DE PROPOSITO. A cicatriz 15cg acabou de custar horas por um
+# valor por omissao que respondia com confianca sobre outro objecto. Aqui as
+# duas hipoteses dao caixas diferentes e uma delas nao monta:
+#   o30 -> o botao passa a montar num painel de 6 mm. So se a ROSCA do arcade
+#          o permitir — e os arcade ja estao comprados, com uma rosca que
+#          ninguem mediu (a mesma familia do bucim dos pots, ao contrario).
+#   o42 -> passagem: o botao monta nos 3 mm da tampa e a PORCA gira dentro do
+#          rasgo. So se a porca couber em 42.
+# Duas medicoes no botao que esta em cima da mesa decidem. Ate la, recusa.
+REFORCO_FURO = _arg("reforco-furo", 0.0)
+if REFORCO and not REFORCO_FURO:
+    raise SystemExit(
+        "*** --reforco-furo e obrigatorio. Mede no arcade que ja compraste:\n"
+        "      · comprimento da ROSCA (o painel que ela aperta)\n"
+        "      · diametro exterior da PORCA\n"
+        "    rosca >= 6 mm            -> --reforco-furo 30   (painel de 6, o forte)\n"
+        "    rosca < 6, porca <= 42   -> --reforco-furo 42   (passagem)\n"
+        "    porca > 42               -> --reforco-furo <o da porca + 2>\n"
+        "    sem reforco              -> --reforco 0\n"
+        "  Adivinhar aqui e uma chapa cortada que nao monta.")
+REFORCO_LIGA = 8.0          # material minimo entre o furo e a borda da faixa
+_r_y = 35.0                 # os arcade estao todos a y=35 da face
+# ⚠️ A FAIXA SEGUE O FURO, e nao um numero escrito. Com o o42 de passagem numa
+# faixa de 50 (10..60, que foi a proposta) sobram 4 mm entre o furo e a borda —
+# e o ligamento fino e exactamente onde a fissura comeca, que e o defeito que o
+# reforco existe para evitar. A faixa cresce ate ter `REFORCO_LIGA` de cada lado.
+_meia = max(25.0, REFORCO_FURO / 2 + REFORCO_LIGA)
+REFORCO_Y = (_r_y - _meia, _r_y + _meia)
 W, D = 200.0, 120.0            # exterior: largura, profundidade
 HF, HB = 55.0, 80.0            # altura exterior frente / trás
 RUN = D                        # projeção da tampa
@@ -181,6 +229,17 @@ BOT_HOLES = [("c", x, y, 3.4) for x in (6, _BW / 2, _BW - 6) for y in (6, _BD - 
 BOT_HOLES += [("c", x - T - 0.5, y - T - 0.5, 3.2) for x, y in [(25.5, 13.5), (138.5, 13.5), (25.5, 106.5), (138.5, 106.5)]]
 BOT_RECTS = [("r", 169 - T - 0.5, 50 + i*8 - T - 0.5, 36, 3) for i in range(5)]
 
+def part_reforco():
+    """Faixa de reforco, colada por baixo da tampa. Largura = corpo da tampa
+    menos folga, para encostar nas duas paredes e transferir carga para elas."""
+    y0, y1 = [v - T * SLOPE / RUN for v in REFORCO_Y]   # face -> corpo
+    w = BODY_W - 1.0                                     # 0,5 de folga por lado
+    return [(0, 0), (w, 0), (w, y1 - y0), (0, y1 - y0)]
+
+
+REFORCO_HOLES = [("c", x - T - 0.5, 35 - T * SLOPE / RUN - (REFORCO_Y[0] - T * SLOPE / RUN),
+                  REFORCO_FURO) for x in (40, 100, 160)]
+
 PARTS = [
     ("TAMPA",   part_top(),        TOP_HOLES,  TOP_RECTS),
     ("FRENTE",  part_front(),      [],         []),
@@ -196,6 +255,7 @@ def hexagono(cx, cy, af):
     return [(cx + r*math.cos(math.radians(60*k+30)), cy + r*math.sin(math.radians(60*k+30))) for k in range(6)]
 for i in range(6): PARTS.append((f"CB{i+1}", [(0,0),(12,0),(12,12),(0,12)], [], [("hex", 6, 6, 5.7)]))
 for i in range(6): PARTS.append((f"CT{i+1}", [(0,0),(12,0),(12,12),(0,12)], [], []))
+if REFORCO: PARTS.append(("REFORCO", part_reforco(), REFORCO_HOLES, []))
 
 # --------------- nesting numa chapa 384 × 384 (Ponoko P2) ---------------
 SHEET = (384.0, 384.0); GAP = 3.0

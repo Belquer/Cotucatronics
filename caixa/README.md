@@ -10,12 +10,24 @@ que é por onde se abre — e é nele que o carrier e o amp montam.
 |---|---|
 | `cotuca_caixa_corte.py` | **A FONTE.** Gera o corte a partir de `--t` e `--kerf`. Tem `if __name__ == "__main__"`, por isso o `kicad/pcb_contorno.py` **importa-o** para dimensionar as placas |
 | `cotuca_caixa_corte_acrilico_3p0.svg` · `.dxf` | o que vai para a Ponoko. O nome leva a espessura, de propósito |
+
+**20 peças**, desde 06/09: a vigésima é o **REFORÇO da tampa** — uma faixa de
+193 × 50 colada por baixo, só onde os arcade estão. Um pé são ~300 N a meio de
+um vão, e 3 mm de acrílico raja **a partir dos furos de ø30**. Fica 6 mm
+efectivos onde o pé pisa e 3 mm onde os pots atravessam — que é a razão de a
+tampa ser de 3 (o PTV09 tem ~7 mm de rosca). Custa **+$4,52**.
 | `CAIXA-ACRILICO-MONTAGEM.md` | materiais, solvente, calços, ordem de montagem, percursos de cabo |
 
 ```bash
-python3 caixa/cotuca_caixa_corte.py --t 3.0 --kerf 0.2
-python3 tools/nesting.py caixa/cotuca_caixa_corte_acrilico_3p0.svg --pecas=19
+python3 caixa/cotuca_caixa_corte.py --reforco-furo 30
+python3 tools/nesting.py caixa/cotuca_caixa_corte_acrilico_3p0.svg --pecas=20
 ```
+
+⚠️ **`--reforco-furo` é obrigatório e não tem omissão.** O reforço da tampa
+engrossa o painel na faixa dos arcade, e o diâmetro do furo decide se o botão
+monta em 6 mm ou em 3. **Mede no arcade que já está comprado**: comprimento da
+rosca e diâmetro exterior da porca. O gerador recusa-se a correr sem a escolha
+e diz o que pedir.
 
 O `_previa.svg` sai no mesmo comando, com traço grosso, só para olhar — não
 entra no repositório, regenera-se.

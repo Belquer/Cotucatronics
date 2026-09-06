@@ -83,6 +83,33 @@ Antes de colar o CT, **mete a porca M3 no sexágono**. Ela fica cativa: o CT
 tapa por cima, o fundo tapa por baixo, e o sexágono não a deixa rodar. O
 parafuso enrosca em aço para sempre. Sem furo, sem macho, sem calor.
 
+## 4b · Reforço da tampa — antes de montar seja o que for nela
+
+A peça `REFORCO`, 193 × 50, cola-se **por baixo da tampa**, centrada, com o
+bordo da frente a **10 mm** da borda dianteira do corpo, de modo que os três
+furos de ø30 fiquem concêntricos com os da tampa.
+
+- **Weld-On 4 de face a face**, com agulha, pela aresta — capilaridade. Peso
+  distribuído (tábua + livro), 30 min. Só depois de curar é que se monta o que
+  quer que seja nos ø30.
+- Confere a concentricidade **a seco**, com um botão enfiado nos dois furos,
+  antes de pôr solvente. Depois de pegar não se corrige.
+- ⚠️ Aresta de acrílico cortada a laser fica com **tensão residual**, e há
+  indicação de que solvente sobre aresta tensionada acelera o *crazing*
+  (aquelas fissuras finas). **Não está confirmado em fonte** — se te
+  preocupar, recozer as duas peças antes de colar (80 °C, 1 h por mm, arrefecer
+  devagar) é o procedimento normal e não estraga nada.
+
+**Porquê:** um pé são ~300 N a meio do vão entre a parede da frente e a
+nervura. Em 3 mm isso flete a olho e, com o tempo, raja **a partir dos furos**.
+Com o reforço são 6 mm onde o pé pisa e 3 mm onde os pots e o encoder passam —
+que é a razão de a tampa ser de 3 (o PTV09 tem ~7 mm de rosca).
+
+⚠️ **Se o furo do reforço for ø30**, o arcade passa a montar num painel de
+**6 mm**. Confirma a rosca do botão antes de cortar. Se não chegar, regera com
+`--reforco-furo <ø da porca + 2>`: aí o botão aperta nos 3 mm da tampa e a
+porca gira dentro do rasgo do reforço.
+
 ## 5 · A tampa, por último
 
 Só depois de a §2·6 ter confirmado que todas as peças entram nos furos:

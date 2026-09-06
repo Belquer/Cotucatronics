@@ -197,6 +197,57 @@ Mas **`diff` antes de apagar**: o ficheiro com ar de cópia esquecida pode ser a
 versão nova. E **ler antes de apagar**: o que tinha valor e não era cota (as
 regras de percurso de cabo) mudou de casa antes de a página morrer.
 
+## 4d. Espessura fina: o pé, o furo, e o reforço local
+
+Um pé são **~300 N** a meio do vão entre a parede da frente e a nervura. Em
+3 mm de acrílico isso flete a olho e, com o tempo, **raja a partir dos furos de
+ø30** — o furo é o ponto de concentração de tensão, e o acrílico é sensível a
+entalhe.
+
+> **Cortar uma e pisar diz se parte no primeiro dia. Não diz se parte à
+> centésima.** Para uma peça replicada em série, o teste destrutivo de uma
+> unidade não é evidência sobre a série.
+
+A resposta que não obriga a engrossar tudo: **reforço local**. Uma segunda
+chapa da mesma espessura, colada por baixo, **só na faixa dos furos que levam
+carga** — 6 mm efectivos onde o pé pisa, 3 mm onde os eixos atravessam.
+
+A espessura fina não foi escolha estética: um **PTV09 tem ~7 mm de rosca**, e
+6 mm de tampa mais a placa por baixo não deixam porca. O reforço local respeita
+essa razão em vez de a anular.
+
+⚠️ **Mas engrossar o painel muda a montagem de tudo o que o atravessa nessa
+faixa.** É a armadilha do bucim ao contrário: com furo igual ao do botão, o
+arcade passa a montar em 6 mm — e os arcade **já estão comprados**, com um
+comprimento de rosca que ninguém mediu. Por isso o diâmetro do furo do reforço
+**não tem valor por omissão**: o gerador recusa-se a correr sem ele, e diz que
+medições pede.
+
+| furo do reforço | o botão monta em | precisa de |
+|---|---|---|
+| = ø do botão | **6 mm** — o forte | rosca ≥ 6 mm |
+| = ø da porca + folga | 3 mm, porca no rasgo | porca a caber |
+
+E a faixa **segue o furo**: cresce até deixar um ligamento mínimo (8 mm) entre
+o furo e a borda. Um ligamento fino é exactamente onde a fissura começa — é o
+defeito que o reforço existe para evitar, reintroduzido pela geometria dele.
+
+⚠️ **Por confirmar:** aresta de acrílico cortada a laser fica com tensão
+residual, e solvente sobre aresta tensionada é conhecido por acelerar o
+*crazing*. Se for assim, o recozimento antes de colar deixa de ser opcional.
+**Não confirmei em fonte** — é hipótese, e diz-se como hipótese.
+
+## 4e. Material transparente: o interior passa a ser a cara
+
+Uma consequência que não é de geometria e que se decide **cedo**, não no fim:
+com a casca transparente, chicotes, folgas de serviço e o cabo do IDC ficam à
+vista. **Ou se arrumam com intenção — percursos, prendedores, cor de fio — ou
+o objecto de arte mostra a bancada.**
+
+O `CAIXA-ACRILICO-MONTAGEM.md` §6b já fixa os percursos por razão eléctrica.
+Com transparente, esses percursos passam a ter também de se ver bem, e as duas
+exigências nem sempre coincidem.
+
 ## 5. Ordem de trabalho, e onde o dB entra
 
 ```
