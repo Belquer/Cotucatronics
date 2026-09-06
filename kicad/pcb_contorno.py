@@ -210,11 +210,28 @@ FPLIB = "/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints"
 #   └──────────────────────────────────────────────────┘
 ZONAS_CEREBRO = [
     # (nome, x0, y0, largura, passo_x, passo_y, [refs])
-    ("pre-amp A", 26, 34, 58, 14.5, 9.0,
+    # ⚠️ 6 colunas e passo de 12, e nao 4 e 9. Duas razoes que se somam:
+    #   · o disco do arcade da esquerda tapa as colunas de x=26 a 55, e o do
+    #     meio comeca em x=95 — as unicas colunas seguras sao x=69,5 e 84. Com
+    #     4 colunas so havia UMA, e as tres pecas altas do canal empilhavam-se
+    #     la a 9 mm, com os courtyards por cima uns dos outros;
+    #   · a 12 mm de passo os WIMA de filme (13 mm de altura, ~18 de corpo)
+    #     deixam de ser excepcao e entram na grelha como tudo o resto. Eram os
+    #     unicos `UNICOS` que la estavam por nao caberem, e uma excepcao que
+    #     desaparece e melhor que uma excepcao bem comentada.
+    # ⚠️ PASSO DE 11, e nao de 9. O disco do arcade da esquerda tapa as colunas
+    # x=26..55; a unica coluna segura de cada canal e x=69,5, e as tres pecas
+    # THT do canal (J, electrolitico, trimmer) acabam empilhadas la. A 9 mm os
+    # courtyards sobrepunham-se — tirar uma peca de debaixo de um botao e po-la
+    # em cima de outra e mudar de defeito, nao resolver.
+    # ⚠️ E a largura fica em 58 (4 colunas). Alarga-la para 6 punha as zonas em
+    # cima da Daisy, que desceu para y=60 por causa do mesmo arcade: um conserto
+    # que cria nove violacoes onde havia uma nao e conserto.
+    ("pre-amp A", 26, 34, 58, 14.5, 11.0,
      ["J5", "D11", "R11", "R12", "R13", "C11", "R10", "R14", "C12", "C13", "RV1"]),
-    ("pre-amp B", 26, 58, 58, 14.5, 9.0,
+    ("pre-amp B", 26, 62, 58, 14.5, 11.0,
      ["J6", "D21", "R21", "R22", "R23", "C21", "R20", "R24", "C22", "C23", "RV2"]),
-    ("pre-amp comum", 26, 82, 58, 14.5, 9.0,
+    ("pre-amp comum", 26, 90, 58, 14.5, 11.0,
      ["U1", "C7", "C8", "C9", "R5", "R6", "R7", "C5", "C6"]),
     # ⚠️ conectores VERTICAIS: o 1x6 tem 14,4 mm e o 1x5 tem 11,9. Num passo de
     # 9 mm colidem uns nos outros — foi o que deu 43 das 52 violacoes de
@@ -237,12 +254,18 @@ ZONAS_CEREBRO = [
 # ⚠️ J14 a x=40 e nao a x=30: o furo o3,2 do fundo (o que segura a placa) cai
 # em KiCad (35,50 · 23,50), e a 30 o IDC ficava POR CIMA dele. Nao ha parafuso
 # por baixo de um conector — e a `confere_furos` recusa antes de escrever.
-UNICOS_CEREBRO = {"U2": (113.24, 88.26, 180), "J14": (40.0, 25.0, 90),
+# ⚠️ U2 desceu 20,8 mm (era y=88,26). O topo do modulo estava a y=39,2 e o disco
+# do arcade do meio chega a y=59,3 — a Daisy no soquete tem 17 mm e a altura
+# livre por baixo de um botao e 7,5. Nao e aperto, e o modulo esmagado. Desceu
+# o suficiente para o topo ficar em y=60; sobram 10 mm ate a aresta de baixo.
+# O `evita_arcade` nao lhe toca porque as pecas UNICAS sao colocadas a mao —
+# e foi por isso que ela escapou a primeira passagem e so o portao a apanhou.
+UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 25.0, 90),
                   "C1": (178.0, 108.0, 0), "J1": (156.0, 108.0, 0),
-                  # ⚠️ os WIMA de filme tem 13 mm de altura de corpo e nao
-                  # cabem num passo de 9 mm — batiam na fila de baixo. Vao para
-                  # a faixa livre entre o pre-amp e a Daisy.
-                  "C14": (88.0, 40.0, 0), "C24": (88.0, 64.0, 0)}
+                  # ⚠️ os WIMA de filme tem 13 mm de altura e ~18 de corpo: nao
+                  # cabem na grelha. Vao para a faixa livre entre o pre-amp
+                  # (acaba em x=69,5) e a Daisy (comeca em x=97).
+                  "C14": (86.0, 38.0, 0), "C24": (86.0, 66.0, 0)}
 
 
 def grelha(t, zonas, unicos):
@@ -306,6 +329,33 @@ def fp_de(t, ref):
 
 def u():
     return str(uuid.uuid4())
+
+
+# --- marca na serigrafia ----------------------------------------------------
+# ⚠️ A COR NAO VIVE NO FICHEIRO. Serigrafia e uma camada; preto ou branco e uma
+# opcao do pedido na JLCPCB, nao um atributo do `.kicad_pcb`. O que se faz aqui
+# e po-la na camada certa; a cor escolhe-se no carrinho.
+MARCA = {
+    "cerebro": [(30.0, 114.0, "COTUCATRONICS", 2.5, 0.4),
+                (30.0, 118.0, "cerebro rev B", 1.2, 0.2)],
+    "painel":  [(28.0, 52.5, "COTUCATRONICS", 1.8, 0.3),
+                (28.0, 55.0, "painel rev A", 1.0, 0.15)],
+}
+
+
+def marca(t, nome):
+    """Escreve a marca em F.SilkS. Substitui a que houver, para nao duplicar."""
+    t = re.sub(r'\n\t\(gr_text "COTUCATRONICS"[\s\S]*?\n\t\)', '', t)
+    t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [AB]"[\s\S]*?\n\t\)', '', t)
+    L = []
+    for x, y, txt, h, esp in MARCA.get(nome, []):
+        L.append('\t(gr_text "%s"\n\t\t(at %g %g)\n\t\t(layer "F.SilkS")\n'
+                 '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n\t\t\t\t'
+                 '(size %g %g)\n\t\t\t\t(thickness %g)\n\t\t\t\t(bold yes)\n'
+                 '\t\t\t)\n\t\t\t(justify left bottom)\n\t\t)\n\t)\n'
+                 % (txt, x, y, u(), h, h, esp))
+    i = t.rstrip().rfind(')')
+    return t[:i] + "".join(L) + t[i:]
 
 
 def contorno(t, alvo, r=3.0):
@@ -491,6 +541,149 @@ def altura_de(fp):
     return None          # desconhecido nao e zero
 
 
+def pads_de(bl):
+    """Pads do footprint: (dx, dy, r) no referencial dele."""
+    out = []
+    for pm in re.finditer(r'\(pad [\s\S]*?\(at (' + NUM + r') (' + NUM + r')(?: ' + NUM
+                          + r')?\)[\s\S]*?\(size (' + NUM + r') (' + NUM + r')\)', bl):
+        px, py, sw, sh = map(float, pm.groups())
+        out.append((px, py, max(sw, sh) / 2))
+    return out
+
+
+def colide(x, y, ang, pads, centros, raio):
+    """A peca posta em (x, y) com rotacao `ang` toca algum disco?
+
+    ⚠️ TESTE EXACTO, com os pads rodados. Um raio unico a volta da origem e
+    conservador ao ponto de tornar a zona do soquete insoluvel: um header 1x6
+    tem a origem no pino 1 e 13,5 mm de corpo, e o teste grosseiro assume que
+    esses 13,5 apontam sempre para o disco. Apontam para onde a rotacao mandar,
+    e isso sabe-se."""
+    import math
+    a = math.radians(ang or 0.0)
+    for px, py, pr in pads:
+        rx = x + px * math.cos(a) + py * math.sin(a)
+        ry = y - px * math.sin(a) + py * math.cos(a)
+        if any(math.hypot(rx - cx, ry - cy) <= raio + pr for cx, cy in centros):
+            return True
+    return False
+
+
+def discos_arcade(alvo):
+    """Centros e raio dos discos dos arcade, em coordenadas do KiCad."""
+    import math
+    ang = math.radians(CAIXA.ANG)
+    horiz = 35.0 * math.cos(ang)
+    ox, oy = alvo["origem"]
+    fx = sorted(h[1] + CAIXA.T for h in CAIXA.TOP_HOLES if h[3] == 30)
+    by = horiz - CAIXA.T - 0.5 - alvo["y0"]
+    r = max(h[3] for h in CAIXA.TOP_HOLES if h[3] == 30) / 2 + 3.0
+    if FRENTE_CEREBRO == "y_min":
+        return [(ox + (x - CAIXA.T - 0.5 - alvo["x0"]), oy + by) for x in fx], r
+    return [(ox + alvo["w"] - (x - CAIXA.T - 0.5 - alvo["x0"]),
+             oy + alvo["h"] - by) for x in fx], r
+
+
+def evita_arcade(t, alvo, zonas):
+    """Troca as pecas ALTAS que caem sob um arcade por pecas baixas da MESMA
+    zona, ou por um lugar vago dela.
+
+    ⚠️ TROCAR, e nao empurrar. A grelha das zonas e o que mantem o analogico
+    junto e longe do digital — mexer numa peca para fora da sua zona desfaz a
+    razao pela qual as zonas existem. Trocar duas pecas dentro da zona nao
+    desfaz nada: a zona ja e uma grelha arbitraria por dentro.
+
+    ⚠️ E E AUTOMATICO de proposito. Os arcade ja mudaram de sitio uma vez
+    (60 -> 70 mm entre eixos) e voltarao a mudar se o pe do dB pedir. Uma lista
+    de trocas escrita a mao envelhecia na primeira delas — a familia de erro da
+    cicatriz 15ce."""
+    import math
+    centros, raio = discos_arcade(alvo)
+    livre = folga_arcade(alvo)
+
+    corpos = {}
+
+    def corpo(ref):
+        if ref not in corpos:
+            for m in re.finditer(r'\n\t\(footprint ', t):
+                j = m.start() + 1
+                d = 0
+                for k in range(j, len(t)):
+                    if t[k] == "(":
+                        d += 1
+                    elif t[k] == ")":
+                        d -= 1
+                        if d == 0:
+                            bl = t[j:k + 1]
+                            break
+                r = re.search(r'\(property "Reference" "([^"]+)"', bl)
+                if r and r.group(1) == ref:
+                    ra = re.search(r'\(at ' + NUM + r' ' + NUM + r' (' + NUM + r')\)', bl)
+                    corpos[ref] = (pads_de(bl), float(ra.group(1)) if ra else 0.0)
+                    break
+            else:
+                corpos[ref] = ([], 0.0)
+        return corpos[ref]
+
+    def sob(x, y, ref=None):
+        if ref is None:
+            return any(math.hypot(x - cx, y - cy) <= 15.0 for cx, cy in centros)
+        pads, rot = corpo(ref)
+        return colide(x, y, rot, pads, centros, 15.0 + 1.0)
+
+    trocas = []
+    for nome, x0, y0, larg, px, py, refs in zonas:
+        cols = max(1, int(larg // px))
+        # todos os lugares da zona, ocupados e vagos
+        n = len(refs)
+        lugares = [(x0 + (i % cols) * px, y0 + (i // cols) * py)
+                   for i in range(((n + cols - 1) // cols) * cols)]
+        ocupa = {i: refs[i] for i in range(n)}
+        altura = {r: (altura_de(fp_de(t, r)) or 99.0) for r in refs}
+        maus = [i for i in range(n)
+                if sob(*lugares[i], ref=refs[i]) and altura[refs[i]] > livre]
+        bons = [i for i in range(len(lugares))
+                if (i >= n or altura[refs[i]] <= livre)]
+        bons = [j for j in bons
+                if all(not sob(*lugares[j], ref=refs[i]) for i in maus)]
+        # ⚠️ o lugar escolhido e o MAIS AFASTADO das outras pecas altas, e nao o
+        # primeiro livre. Duas THT no mesmo passo de 9 mm sobrepoem courtyards —
+        # tirar uma peca de debaixo de um botao e po-la em cima de outra peca
+        # nao e resolver, e mudar de defeito. O DRC apanha, mas so depois.
+        altos = [k for k in range(n) if altura[refs[k]] > 5.0]
+        for i in maus:
+            if not bons:
+                raise SystemExit(
+                    "*** %s nao cabe sob um arcade e a zona '%s' nao tem lugar "
+                    "livre fora dos discos. Isto ja nao e colocacao — e a placa "
+                    "a nao caber por baixo dos botoes." % (refs[i], nome))
+
+            def longe(j):
+                lx, ly = lugares[j]
+                d = [math.hypot(lx - lugares[k][0], ly - lugares[k][1])
+                     for k in altos if k != i and k < len(lugares)]
+                return min(d) if d else 999.0
+
+            bons.sort(key=longe, reverse=True)
+            j = bons.pop(0)
+            outro = ocupa.get(j)
+            ocupa[i], ocupa[j] = outro, ocupa[i]
+            trocas.append((refs[i], lugares[i], lugares[j], outro or "(vago)"))
+        for i, ref in ocupa.items():
+            if ref:
+                t = move(t, ref, (float(lugares[i][0]), float(lugares[i][1])))
+    return t, trocas
+
+
+def folga_arcade(alvo):
+    """Altura livre por baixo dos arcade, acima da face de cima da placa."""
+    import math
+    ang = math.radians(CAIXA.ANG)
+    horiz = 35.0 * math.cos(ang)
+    sob = CAIXA.HF + (CAIXA.HB - CAIXA.HF) * horiz / CAIXA.RUN - CAIXA.T
+    return (sob - CAIXA.T) - CAIXA.T - (40.0 - 2 * CAIXA.T) - (CALCO_H + 4.0 + 1.6)
+
+
 def confere_arcade(t, alvo, frente_em):
     """Os botoes arcade descem da tampa. A placa passa por baixo deles?
 
@@ -556,7 +749,9 @@ def confere_arcade(t, alvo, frente_em):
             bx, by = kx - ox, ky - oy
         else:
             bx, by = (ox + alvo["w"]) - kx, (oy + alvo["h"]) - ky
-        if any(math.hypot(bx - a, by - ay) <= 15 + 3 for a in ax):
+        ra = re.search(r'\(at ' + NUM + r' ' + NUM + r' (' + NUM + r')\)', bl)
+        rot = float(ra.group(1)) if ra else 0.0
+        if colide(bx, by, rot, pads_de(bl), [(a, ay) for a in ax], 15.0):
             bate.append((ref, fp, altura_de(fp)))
     if bate:
         maus = sorted((h, r, f) for r, f, h in bate if h is None or h > folga)
@@ -610,6 +805,7 @@ def main():
     t = io.open(p, encoding="utf-8").read()
     relato = confere_caixa(nome, alvo)
     t = contorno(t, alvo)
+    t = marca(t, nome)
     postos = []
     for ref, furo in FIXOS.get(nome, {}).items():
         alvo_xy = da_tampa(nome, alvo, TAMPA[furo])
@@ -622,6 +818,10 @@ def main():
     if nome == "cerebro":
         t, n = grelha(t, ZONAS_CEREBRO, UNICOS_CEREBRO)
         print("     %d pecas colocadas por zona" % n, file=sys.stderr)
+        t, trocas = evita_arcade(t, alvo, ZONAS_CEREBRO)
+        for ref, de, para, outro in trocas:
+            print("     arcade: %-4s sai de (%g,%g) para (%g,%g), troca com %s"
+                  % (ref, de[0], de[1], para[0], para[1], outro), file=sys.stderr)
     if alvo["assenta"] == "fundo":
         relato += confere_furos(t, alvo)
         # ⚠️ FRENTE_CEREBRO ainda nao esta decidido — ver a constante.

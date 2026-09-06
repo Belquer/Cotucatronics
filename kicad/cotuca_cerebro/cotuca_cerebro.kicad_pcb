@@ -90,7 +90,7 @@
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "05aa1eb0-c09d-4996-a72a-62e2e0be03a5")
-		(at 180 60)
+		(at 180 73)
 		(descr "Through hole straight pin header, 1x02, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x02 2.54mm single row")
 		(property "Reference" "J4"
@@ -328,7 +328,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "126b58fb-9874-4ba5-b87c-e53c999fb692")
-		(at 26 67)
+		(at 26 73)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R23"
@@ -642,7 +642,7 @@
 	(footprint "Capacitor_THT:CP_Radial_D10.0mm_P5.00mm"
 		(layer "F.Cu")
 		(uuid "175ad9a5-13d8-49cc-930d-6463c449606a")
-		(at 26 100)
+		(at 26 112)
 		(descr "CP, Radial series, Radial, pin pitch=5.00mm, diameter=10mm, height=16mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 5.00mm diameter 10mm height 16mm Electrolytic Capacitor")
 		(property "Reference" "C6"
@@ -2733,7 +2733,7 @@
 	(footprint "Package_TO_SOT_SMD:SOT-23"
 		(layer "F.Cu")
 		(uuid "1770df4b-4338-40da-b130-c663e2a37bf2")
-		(at 40.5 58)
+		(at 40.5 62)
 		(descr "SOT, 3 Pin (JEDEC TO-236 Var AB https://www.jedec.org/document_search?search_api_views_fulltext=TO-236)")
 		(tags "SOT TO_SOT_SMD")
 		(property "Reference" "D21"
@@ -3111,7 +3111,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "1d1f90ab-95c1-40a8-9771-a384ddb9a0d8")
-		(at 69.5 82)
+		(at 69.5 90)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C9"
@@ -3268,7 +3268,7 @@
 	(footprint "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 		(layer "F.Cu")
 		(uuid "316ea8c6-5e78-40fd-b143-c2e53af30074")
-		(at 40.5 76)
+		(at 40.5 84)
 		(descr "CP, Radial series, Radial, pin pitch=2.50mm, diameter=6.3mm, height=7mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 2.50mm diameter 6.3mm height 7mm Electrolytic Capacitor")
 		(property "Reference" "C23"
@@ -4799,7 +4799,7 @@
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "31842c99-8cb6-465e-a906-cc2820863b2b")
-		(at 118 53)
+		(at 134 72)
 		(descr "Through hole straight pin header, 1x06, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x06 2.54mm single row")
 		(property "Reference" "J15"
@@ -5083,7 +5083,7 @@
 	(footprint "Module:Electrosmith_Daisy_Seed"
 		(layer "F.Cu")
 		(uuid "33c93a3b-5cfb-4fe4-807c-9aece841de6f")
-		(at 113.24 88.26 180)
+		(at 113.24 109.06 180)
 		(descr "Embedded platform for audio applications. 96kHz / 24-bit audio hardware. 64MB of SDRAM for up to 10 minute long audio. ARM Cortex-M7 MCU, running at 480MHz. 31 total GPIO pins with configurable functionality. 12-bit Digital to Analog Converters (x2). SD card interfaces. PWM outputs. Serial Protocols for connecting external sensors and devices (SPI, UART, I2S, I2C). Dedicated VIN pin for power. Micro USB port, and additional USB pins for full OTG-support as host and device. https://static1.squarespace.com/static/58d03fdc1b10e3bf442567b8/t/6227e6236f02fb68d1577146/1646781988478/Daisy_Seed_datasheet_v1.0.3.pdf")
 		(tags "Electrosmith Daisy Seed Microcontroller Module ARM Cortex-M7 Audio Codec")
 		(property "Reference" "U2"
@@ -6218,7 +6218,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "3877d1e5-e241-4252-9dfa-eff4eea8d6ed")
-		(at 134 72)
+		(at 118 53)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R51"
@@ -6375,7 +6375,7 @@
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "3968f10b-0e1d-4e1b-bb9f-9dd75cbe0d94")
-		(at 26 34)
+		(at 69.5 34)
 		(descr "Through hole straight pin header, 1x03, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x03 2.54mm single row")
 		(property "Reference" "J5"
@@ -6626,7 +6626,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "3a399816-3428-4826-856c-1d99300ee636")
-		(at 69.5 58)
+		(at 69.5 62)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R22"
@@ -6783,7 +6783,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "3d91eeae-5409-44d5-b594-9e2e37668929")
-		(at 55 67)
+		(at 55 73)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R20"
@@ -6940,7 +6940,7 @@
 	(footprint "Capacitor_SMD:C_1206_3216Metric"
 		(layer "F.Cu")
 		(uuid "3e81443f-a8e6-4775-9254-1f58977052cb")
-		(at 26 76)
+		(at 26 84)
 		(descr "Capacitor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "capacitor")
 		(property "Reference" "C22"
@@ -7097,7 +7097,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "4284951c-11ed-476f-8248-c8b87913c6a0")
-		(at 69.5 34)
+		(at 26 34)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R12"
@@ -10195,7 +10195,7 @@
 	(footprint "Potentiometer_THT:Potentiometer_Bourns_3296W_Vertical"
 		(layer "F.Cu")
 		(uuid "5309ef27-3fd7-4740-9d9a-1ff704befa0c")
-		(at 55 52)
+		(at 69.5 56)
 		(descr "Potentiometer, vertical, Bourns 3296W, https://www.bourns.com/pdfs/3296.pdf")
 		(tags "Potentiometer vertical Bourns 3296W")
 		(property "Reference" "RV1"
@@ -11070,7 +11070,7 @@
 	(footprint "Capacitor_SMD:C_1206_3216Metric"
 		(layer "F.Cu")
 		(uuid "5c008923-68c7-439f-9f83-06bfb12a0473")
-		(at 26 52)
+		(at 26 56)
 		(descr "Capacitor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "capacitor")
 		(property "Reference" "C12"
@@ -11227,7 +11227,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "5e6a7360-441c-4c82-b6e4-c8083587f3f4")
-		(at 118 72)
+		(at 118 34)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R50"
@@ -11384,7 +11384,7 @@
 	(footprint "Package_SO:SOIC-8_3.9x4.9mm_P1.27mm"
 		(layer "F.Cu")
 		(uuid "5fe11485-4ecb-4df1-bd76-204c6ee30b06")
-		(at 26 82)
+		(at 26 90)
 		(descr "SOIC, 8 Pin (JEDEC MS-012AA, https://www.analog.com/media/en/package-pcb-resources/package/pkg_pdf/soic_narrow-r/r_8.pdf)")
 		(tags "SOIC SO")
 		(property "Reference" "U1"
@@ -12134,7 +12134,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "674a0eb5-a7dd-4b30-aceb-1f39310feb24")
-		(at 69.5 43)
+		(at 40.5 56)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R14"
@@ -12291,7 +12291,7 @@
 	(footprint "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 		(layer "F.Cu")
 		(uuid "6bb80f6f-7a59-4774-85f9-87639cdb0532")
-		(at 69.5 91)
+		(at 69.5 101)
 		(descr "CP, Radial series, Radial, pin pitch=2.50mm, diameter=6.3mm, height=7mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 2.50mm diameter 6.3mm height 7mm Electrolytic Capacitor")
 		(property "Reference" "C5"
@@ -13822,7 +13822,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "6d1e978d-4c46-449f-91ae-5d63959fe600")
-		(at 40.5 67)
+		(at 40.5 73)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C21"
@@ -13979,7 +13979,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "744438db-d882-45a5-8578-533bd5557d33")
-		(at 55 43)
+		(at 55 45)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R10"
@@ -14136,7 +14136,7 @@
 	(footprint "Resistor_SMD:R_1206_3216Metric"
 		(layer "F.Cu")
 		(uuid "78c2180b-8aa8-4b1e-85a4-85afa3b977a6")
-		(at 55 91)
+		(at 55 101)
 		(descr "Resistor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R7"
@@ -14293,7 +14293,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "7a5aa9ee-2cb1-4e12-ad2c-f21a0b4e7b23")
-		(at 69.5 67)
+		(at 69.5 73)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R24"
@@ -14698,7 +14698,7 @@
 	(footprint "Capacitor_THT:C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2"
 		(layer "F.Cu")
 		(uuid "8397bd84-3dde-412f-966d-d4867f1b43ee")
-		(at 88 40)
+		(at 86 38)
 		(descr "C, Rect series, Radial, pin pitch=5.00mm, length*width=7.2*11mm^2, Capacitor, http://www.wima.com/EN/WIMA_FKS_2.pdf")
 		(tags "C Rect series Radial pin pitch 5.00mm length 7.2mm width 11mm Capacitor")
 		(property "Reference" "C14"
@@ -15161,7 +15161,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "a18af636-1394-40c4-a5e7-bfa7976ec747")
-		(at 26 43)
+		(at 26 45)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R13"
@@ -15595,7 +15595,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "a6d8559b-8004-417a-9d09-66496a666774")
-		(at 40.5 82)
+		(at 40.5 90)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C7"
@@ -17283,7 +17283,7 @@
 	(footprint "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm"
 		(layer "F.Cu")
 		(uuid "a95a64e6-a862-4568-aded-40748bd3ba62")
-		(at 40.5 52)
+		(at 69.5 45)
 		(descr "CP, Radial series, Radial, pin pitch=2.50mm, diameter=6.3mm, height=7mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 2.50mm diameter 6.3mm height 7mm Electrolytic Capacitor")
 		(property "Reference" "C13"
@@ -18814,7 +18814,7 @@
 	(footprint "Capacitor_SMD:C_1206_3216Metric"
 		(layer "F.Cu")
 		(uuid "ab9e0bb5-8eb5-4874-bf2f-0ec01799fbb5")
-		(at 55 82)
+		(at 55 90)
 		(descr "Capacitor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "capacitor")
 		(property "Reference" "C8"
@@ -19228,7 +19228,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "baea34d6-50c8-4383-8770-2635de481274")
-		(at 26 91)
+		(at 26 101)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R5"
@@ -19542,7 +19542,7 @@
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "c39b8b4f-c473-4fb1-bbba-58ced28413d2")
-		(at 118 34)
+		(at 118 72)
 		(descr "Through hole straight pin header, 1x05, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x05 2.54mm single row")
 		(property "Reference" "J10"
@@ -19972,7 +19972,7 @@
 	(footprint "Capacitor_SMD:C_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "cc806a9b-6ec6-448f-a05d-6be3bee39c74")
-		(at 40.5 43)
+		(at 40.5 45)
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C11"
@@ -20129,7 +20129,7 @@
 	(footprint "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical"
 		(layer "F.Cu")
 		(uuid "d01a3f00-b502-4526-879e-1eb9983a4da1")
-		(at 26 58)
+		(at 26 62)
 		(descr "Through hole straight pin header, 1x03, 2.54mm pitch, single row")
 		(tags "Through hole pin header THT 1x03 2.54mm single row")
 		(property "Reference" "J6"
@@ -20380,7 +20380,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "d2ec8715-2b02-49d7-9aa5-7754dabc1dea")
-		(at 40.5 91)
+		(at 40.5 101)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R6"
@@ -20537,7 +20537,7 @@
 	(footprint "Resistor_SMD:R_0805_2012Metric"
 		(layer "F.Cu")
 		(uuid "d9a7df32-eb75-4462-b399-c199c9cac2cb")
-		(at 55 58)
+		(at 55 62)
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R21"
@@ -20694,7 +20694,7 @@
 	(footprint "Potentiometer_THT:Potentiometer_Bourns_3296W_Vertical"
 		(layer "F.Cu")
 		(uuid "da34d2e3-485c-4fde-839d-8591933b0248")
-		(at 55 76)
+		(at 55 84)
 		(descr "Potentiometer, vertical, Bourns 3296W, https://www.bourns.com/pdfs/3296.pdf")
 		(tags "Potentiometer vertical Bourns 3296W")
 		(property "Reference" "RV2"
@@ -22129,7 +22129,7 @@
 	(footprint "Capacitor_THT:C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2"
 		(layer "F.Cu")
 		(uuid "f680b0f3-9da1-4ff7-a9bc-06172828e16f")
-		(at 88 64)
+		(at 86 66)
 		(descr "C, Rect series, Radial, pin pitch=5.00mm, length*width=7.2*11mm^2, Capacitor, http://www.wima.com/EN/WIMA_FKS_2.pdf")
 		(tags "C Rect series Radial pin pitch 5.00mm length 7.2mm width 11mm Capacitor")
 		(property "Reference" "C24"
@@ -22821,28 +22821,28 @@
 		(end 197 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "5a52ffb2-06ae-495c-adac-10f779821b96")
+		(uuid "922829c9-33cf-4a38-8728-6a845ac55aa0")
 	)
 	(gr_line
 		(start 200 23)
 		(end 200 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "d8231014-ebf8-49c4-8fad-82043485a434")
+		(uuid "68a10f95-7b1e-4a83-9e75-3c9b947074d8")
 	)
 	(gr_line
 		(start 197 120)
 		(end 23 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "3ff7b2b2-1766-423f-862c-b159f8f81101")
+		(uuid "cd93fdea-ddea-4230-8ba6-e068abdee6cf")
 	)
 	(gr_line
 		(start 20 117)
 		(end 20 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "526bb4b2-5137-49eb-b0ce-c78eb42c81d6")
+		(uuid "54675d34-5c13-45c0-b581-9c9e1dd5f34b")
 	)
 	(gr_arc
 		(start 197 20)
@@ -22850,7 +22850,7 @@
 		(end 200 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "805b0468-db73-4c9e-93bd-9f7c80c3f120")
+		(uuid "4a5f151e-7ff4-447f-bca4-b02c6e61f625")
 	)
 	(gr_arc
 		(start 200 117)
@@ -22858,7 +22858,7 @@
 		(end 197 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "89baba0a-f424-4613-85a0-eef69c4fc3de")
+		(uuid "a103bc84-8c61-4cdf-ad03-d9a79bdeb5d5")
 	)
 	(gr_arc
 		(start 23 120)
@@ -22866,7 +22866,7 @@
 		(end 20 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "cfa76f76-416c-409a-828e-7d62ee30c18d")
+		(uuid "5eb38705-dae2-4a9d-9b3a-a633d28558c6")
 	)
 	(gr_arc
 		(start 20 23)
@@ -22874,6 +22874,32 @@
 		(end 23 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "61f7a08a-b37f-4ca7-b75e-f2b8dc807d94")
+		(uuid "05b96a4a-cbb0-417b-9d3b-03dad65d1842")
+	)
+	(gr_text "COTUCATRONICS"
+		(at 30 114)
+		(layer "F.SilkS")
+		(uuid "79b514de-43ae-4202-8405-87579e86b0ee")
+		(effects
+			(font
+				(size 2.5 2.5)
+				(thickness 0.4)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "cerebro rev B"
+		(at 30 118)
+		(layer "F.SilkS")
+		(uuid "2c43773a-6962-4d12-b851-5f44d930d9c3")
+		(effects
+			(font
+				(size 1.2 1.2)
+				(thickness 0.2)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
 	)
 )

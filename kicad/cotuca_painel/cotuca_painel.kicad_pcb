@@ -5521,28 +5521,28 @@
 		(end 193 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "bb2ace55-c379-4d49-83ba-cfa44d43fb88")
+		(uuid "5f48b008-063c-4a5d-b268-ab7e26972afd")
 	)
 	(gr_line
 		(start 196 23)
 		(end 196 53)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "163db54c-f88b-4812-8bb1-e38bf0a2b3b6")
+		(uuid "958f282a-ffda-4a99-bf92-a18a0aeda505")
 	)
 	(gr_line
 		(start 193 56)
 		(end 23 56)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "495e7f97-3762-4b18-a3e3-dbd3dbcb3b54")
+		(uuid "1075cd7d-4db3-4399-bf18-804ac7eac1e7")
 	)
 	(gr_line
 		(start 20 53)
 		(end 20 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "22771a94-84f6-4887-8ef5-18346d163aca")
+		(uuid "05aa3087-1f2d-46ca-9837-f0aef6e1fa20")
 	)
 	(gr_arc
 		(start 193 20)
@@ -5550,7 +5550,7 @@
 		(end 196 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "539e32b7-da6a-459f-9701-1d505fa1130b")
+		(uuid "ecd893e4-6c8b-4e78-8fc3-37fbe4380965")
 	)
 	(gr_arc
 		(start 196 53)
@@ -5558,7 +5558,7 @@
 		(end 193 56)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "71b662da-1bc4-414c-851b-ab0b673c78e1")
+		(uuid "56da19c9-478c-4438-9e5e-a934a92c35dd")
 	)
 	(gr_arc
 		(start 23 56)
@@ -5566,7 +5566,7 @@
 		(end 20 53)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "a1da244b-2efe-4a43-899d-713f0c09593c")
+		(uuid "d399945d-9166-407d-8275-f119a1121f4f")
 	)
 	(gr_arc
 		(start 20 23)
@@ -5574,6 +5574,32 @@
 		(end 23 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "3c7735fc-5e71-4364-b981-e3f92a54b4cd")
+		(uuid "83d42382-d025-4ddf-b980-43052f0305c1")
+	)
+	(gr_text "COTUCATRONICS"
+		(at 28 52.5)
+		(layer "F.SilkS")
+		(uuid "637b5e79-5077-4793-862a-3c5a9604c5f2")
+		(effects
+			(font
+				(size 1.8 1.8)
+				(thickness 0.3)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
+	)
+	(gr_text "painel rev A"
+		(at 28 55)
+		(layer "F.SilkS")
+		(uuid "7dcc8007-4fd1-4359-a15e-f1f0dd52d090")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+				(bold yes)
+			)
+			(justify left bottom)
+		)
 	)
 )
