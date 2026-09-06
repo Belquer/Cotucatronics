@@ -8145,3 +8145,51 @@ importação.
 > Um portão colocado num sítio por onde passa quem não é o seu destinatário
 > deixa de ser portão e passa a ser avaria. Recusa-se no `__main__`, que é
 > quem escreve a chapa.
+
+---
+
+## 15cj — Planta, volume, e a terceira que ninguém mede: o ACESSO (06/09)
+
+O dB perguntou como reprograma a Daisy e o ESP32 com o instrumento montado.
+Medido:
+
+```
+U2: USB-C na face x = 95,6 · z = 16,1 · a 17,9 mm da parede de trás
+recorte que a caixa tem: x = 34,0 · z = 38,0 · 12 × 6
+→ 61,6 mm de erro em x, 21,9 em z, e o módulo nem chega à parede
+```
+
+E o recorte que existe **não está livre**: é o do *decoy* PD, a entrada de
+energia. **A caixa como foi encomendada tem zero aberturas de USB
+disponíveis.**
+
+> A caixa impõe três coisas à placa, e vão-se descobrindo por esta ordem, cada
+> uma mais tarde que a anterior:
+> 1. **planta** — o contorno e os furos. Vê-se num desenho.
+> 2. **volume** — o que desce da tampa por cima da placa. Não se vê em desenho
+>    nenhum, e nenhum DRC o mede ([15ci](#15ci)).
+> 3. **acesso** — o gesto de enfiar um cabo, apertar uma porca, chegar a um
+>    parafuso. **Não é uma ligação nem um sólido: é uma pessoa a fazer uma
+>    coisa**, e por isso não tem representação em ficheiro nenhum.
+
+O acesso foi o único dos três que descobri **depois de a caixa estar
+encomendada**. Não por ser mais difícil de medir — a conta acima são seis
+linhas — mas por não estar em lista nenhuma. As duas primeiras tinham portão
+porque alguém as tinha pago antes.
+
+> **A pergunta que falta fazer é a que não tem ferramenta.** E a forma de a
+> fazer não é lembrar: é escrever a lista de gestos que o objecto montado tem
+> de permitir, ao lado da lista de ligações que ele tem de fazer.
+
+Para este instrumento, os gestos são: **reprogramar** (dois módulos),
+**alimentar**, **ligar os jacks**, **trocar o powerbank**, **abrir para
+manutenção**. Três estavam previstos; o primeiro não.
+
+O que ficou: `confere_acesso` no `pcb_contorno.py`, que projecta o USB de cada
+módulo declarado em `ACESSO_USB` na parede de trás e diz se bate num recorte —
+e diz também **de quem é** o recorte, porque um recorte ocupado é tão inútil
+como um recorte inexistente.
+
+⚠️ **Custo real:** zero nesta caixa, porque o fundo sai com seis parafusos e
+leva tudo com ele — era assim que ela já estava desenhada. Mas passa a ser
+requisito escrito da r3, e não uma coisa que se lembra na hora.

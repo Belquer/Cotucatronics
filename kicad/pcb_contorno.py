@@ -335,25 +335,36 @@ def u():
 # ⚠️ A COR NAO VIVE NO FICHEIRO. Serigrafia e uma camada; preto ou branco e uma
 # opcao do pedido na JLCPCB, nao um atributo do `.kicad_pcb`. O que se faz aqui
 # e po-la na camada certa; a cor escolhe-se no carrinho.
+# ⚠️ VAI NA SERIGRAFIA DE TRAS. Tres razoes, e nenhuma e estetica:
+#   · a frente esta cheia — a primeira tentativa poe-la em cima do C6 e deu
+#     SESSENTA E QUATRO sobreposicoes de uma vez;
+#   · a caixa e de acrilico TRANSPARENTE e a placa assenta na chapa de fundo:
+#     o lado que se ve por baixo do instrumento e o de tras;
+#   · e atras nao ha nada com que colidir, hoje nem depois.
+# Texto em camada de tras leva `mirror`, senao le-se ao contrario no cobre.
+MARCA_LADO = "B.SilkS"
 MARCA = {
-    "cerebro": [(30.0, 114.0, "COTUCATRONICS", 2.5, 0.4),
-                (30.0, 118.0, "cerebro rev B", 1.2, 0.2)],
-    "painel":  [(28.0, 52.5, "COTUCATRONICS", 1.8, 0.3),
-                (28.0, 55.0, "painel rev A", 1.0, 0.15)],
+    "cerebro": [(0.5, 0.55, "COTUCATRONICS", 6.0, 1.0),
+                (0.5, 0.66, "cerebro rev B", 2.2, 0.35)],
+    "painel":  [(0.5, 0.45, "COTUCATRONICS", 4.0, 0.7),
+                (0.5, 0.70, "painel rev A", 1.8, 0.3)],
 }
 
 
-def marca(t, nome):
+def marca(t, nome, alvo):
     """Escreve a marca em F.SilkS. Substitui a que houver, para nao duplicar."""
     t = re.sub(r'\n\t\(gr_text "COTUCATRONICS"[\s\S]*?\n\t\)', '', t)
     t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [AB]"[\s\S]*?\n\t\)', '', t)
     L = []
-    for x, y, txt, h, esp in MARCA.get(nome, []):
-        L.append('\t(gr_text "%s"\n\t\t(at %g %g)\n\t\t(layer "F.SilkS")\n'
+    ox, oy = alvo["origem"]
+    for fx, fy, txt, h, esp in MARCA.get(nome, []):
+        x = ox + fx * alvo["w"]
+        y = oy + fy * alvo["h"]
+        L.append('\t(gr_text "%s"\n\t\t(at %g %g)\n\t\t(layer "%s")\n'
                  '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n\t\t\t\t'
                  '(size %g %g)\n\t\t\t\t(thickness %g)\n\t\t\t\t(bold yes)\n'
-                 '\t\t\t)\n\t\t\t(justify left bottom)\n\t\t)\n\t)\n'
-                 % (txt, x, y, u(), h, h, esp))
+                 '\t\t\t)\n\t\t\t(justify mirror)\n\t\t)\n\t)\n'
+                 % (txt, round(x, 3), round(y, 3), MARCA_LADO, u(), h, h, esp))
     i = t.rstrip().rfind(')')
     return t[:i] + "".join(L) + t[i:]
 
@@ -567,6 +578,80 @@ def colide(x, y, ang, pads, centros, raio):
         if any(math.hypot(rx - cx, ry - cy) <= raio + pr for cx, cy in centros):
             return True
     return False
+
+
+# --- modulos que precisam do USB acessivel ----------------------------------
+# ⚠️ Isto nao e uma ligacao: e um GESTO. Nenhum ERC, DRC ou netlist sabe que
+# alguem tem de enfiar um cabo naquele conector com a caixa fechada. E a
+# terceira coisa que a caixa impoe a placa e nenhuma ferramenta ve — depois do
+# contorno (planta) e da coluna de ar (volume), o ACESSO.
+ACESSO_USB = {
+    # ref: (pinos que marcam a ponta onde esta o USB, folga do conector em mm)
+    "U2": ((1, 40), 1.5),
+}
+
+
+def confere_acesso(t, alvo):
+    """Cada USB que precisa de ser alcancado de fora bate num recorte?"""
+    import math
+    recortes = [(r[1] + CAIXA.T, r[2], r[3], r[4])
+                for r in CAIXA.BACK_RECTS if r[3] == 12 and r[4] == 6]
+    L = ["     ACESSO USB: %d recorte(s) na parede de tras" % len(recortes)]
+    ox, oy = alvo["origem"]
+    for ref, (pinos, alt) in ACESSO_USB.items():
+        for m in re.finditer(r'\n\t\(footprint ', t):
+            j = m.start() + 1
+            d = 0
+            for k in range(j, len(t)):
+                if t[k] == "(":
+                    d += 1
+                elif t[k] == ")":
+                    d -= 1
+                    if d == 0:
+                        bl = t[j:k + 1]
+                        break
+            if re.search(r'\(property "Reference" "%s"' % ref, bl):
+                break
+        else:
+            continue
+        a = re.search(r'\(at (' + NUM + r') (' + NUM + r')(?: (' + NUM + r'))?\)', bl)
+        fx, fy, rot = float(a.group(1)), float(a.group(2)), float(a.group(3) or 0)
+        ang = math.radians(rot)
+        pos = {}
+        for pm in re.finditer(r'\(pad "(\d+)" [\s\S]*?\(at (' + NUM + r') (' + NUM + r')', bl):
+            n = int(pm.group(1))
+            if n in pinos:
+                px, py = float(pm.group(2)), float(pm.group(3))
+                pos[n] = (fx + px * math.cos(ang) + py * math.sin(ang),
+                          fy - px * math.sin(ang) + py * math.cos(ang))
+        if len(pos) != 2:
+            continue
+        ux = sum(p[0] for p in pos.values()) / 2
+        uy = sum(p[1] for p in pos.values()) / 2
+        # KiCad -> placa -> fundo -> interior -> face
+        bx, by = ux - ox, uy - oy
+        if FRENTE_CEREBRO != "y_min":
+            bx, by = alvo["w"] - bx, alvo["h"] - by
+        ix = bx + alvo["x0"] + 0.5
+        iy = by + alvo["y0"] + 0.5
+        face_x = ix + CAIXA.T
+        z = CAIXA.T + (CALCO_H + 4.0) + 1.6 + alt      # altura do conector
+        recuo = CAIXA.BODY_D - iy
+        L.append("     %s: USB na face x=%.1f · z=%.1f · a %.1f mm da parede de tras"
+                 % (ref, face_x, z, recuo))
+        bate = [r for r in recortes
+                if abs(r[0] - face_x) <= r[2] / 2 and abs(r[1] - z) <= r[3] / 2]
+        if bate:
+            L.append("     %s: alinha com o recorte em x=%.1f ✓" % (ref, bate[0][0]))
+        else:
+            perto = min(recortes, key=lambda r: abs(r[0] - face_x)) if recortes else None
+            L.append("     ⚠️ %s NAO alcanca recorte nenhum." % ref)
+            if perto:
+                L.append("     ⚠️ o mais proximo esta a %.1f mm em x e %.1f em z, e "
+                         "e do decoy (entrada de energia)."
+                         % (abs(perto[0] - face_x), abs(perto[1] - z)))
+            L.append("     ⚠️ com a caixa fechada, so tirando o fundo (6 parafusos).")
+    return L
 
 
 def discos_arcade(alvo):
@@ -805,7 +890,7 @@ def main():
     t = io.open(p, encoding="utf-8").read()
     relato = confere_caixa(nome, alvo)
     t = contorno(t, alvo)
-    t = marca(t, nome)
+    t = marca(t, nome, alvo)
     postos = []
     for ref, furo in FIXOS.get(nome, {}).items():
         alvo_xy = da_tampa(nome, alvo, TAMPA[furo])
@@ -826,6 +911,7 @@ def main():
         relato += confere_furos(t, alvo)
         # ⚠️ FRENTE_CEREBRO ainda nao esta decidido — ver a constante.
         relato += confere_arcade(t, alvo, FRENTE_CEREBRO)
+        relato += confere_acesso(t, alvo)
     io.open(p, "w", encoding="utf-8").write(t)
     print("  %s: contorno %g x %g mm em (%g, %g)"
           % (nome, alvo["w"], alvo["h"], alvo["origem"][0], alvo["origem"][1]),
