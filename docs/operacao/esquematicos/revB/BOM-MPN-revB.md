@@ -324,3 +324,56 @@ para o USB da Daisy e continua a não ter: grava-se com a caixa aberta.
 `daisy.nyc3.cdn.digitaloceanspaces.com/products/seed3/`. Uma gralha corrigida
 de caminho: o pino 17 chamava-se `AUDIO_INR` (falta de espaço no CSV do rev4)
 e passou a `AUDIO_IN_R`.
+
+---
+
+## 11 · 05/09 — o `OPA1642` está confirmado na JLC, e o `OPA1656` foi avaliado e recusado
+
+### 11.1 O bloqueio caiu
+
+**`OPA1642AIDR` = LCSC `C67640` = JLCPCB `C67640`, tier EXTENDED**, disponível
+para montagem SMT (*Economic* e *Standard*). Estava marcado nesta BOM como
+*"confirmar stock — trava tudo"*. **Está confirmado.** Custa o *setup* único de
+Extended, que era o previsto.
+
+LCSC: US$ 1,0145 a 5–10 un., 980 em stock (medido 05/09).
+
+### 11.2 O `OPA1656` foi considerado, e fica de fora
+
+Veio à conversa porque **o KiCad tem símbolo dele e não tem do `OPA1642`** — o
+`OPA1656ID` herda do `LM2904`, e é dual SOIC-8 com o mesmo footprint.
+
+| | OPA1642 | OPA1656 |
+|---|---|---|
+| ruído de tensão | 5,1 nV/√Hz | **2,9 nV/√Hz** (10 kHz) |
+| ruído de corrente | — | 6 fA/√Hz (1 kHz) |
+| GBW | ~11 MHz | **53 MHz** |
+| saída | — | rail-to-rail |
+| LCSC | US$ 1,01 · 980 | **US$ 0,86** (`IDR`, bobina) · **5 245** |
+
+No papel é melhor amplificador e mais barato. **Fica de fora por três razões:**
+
+1. **O pré-amp está montado e MEDIDO com o `OPA1642`.** A recuperação de 35–39
+   dB de chão de ruído de 05/09 foi feita nesse circuito. Trocar põe na placa
+   fabricada um amplificador que a bancada nunca ouviu — e a regra da casa é
+   *se não soa, não fica*.
+2. **53 MHz num nó de 4M7 é variável nova.** A entrada do piezo é altíssima
+   impedância. Cinco vezes mais rápido nesse nó é mais captação de RF e mais
+   risco de pico com a capacidade de entrada — e pediria provavelmente os
+   **22 pF C0G do `C11`/`C21` populados**, que hoje são **DNP**. Deixa de ser
+   troca de peça e passa a ser alteração de circuito por medir.
+3. **Num piezo domina o ruído de CORRENTE**, não o de tensão, e ambos são
+   FET-input. O ganho dos 2,9 contra 5,1 nV é menor aqui do que numa fonte de
+   baixa impedância.
+
+**Se um dia se quiser experimentar:** o símbolo do KiCad existe, o footprint é
+o mesmo SOIC-8, e é uma linha desta BOM mais uma sessão de escuta. Não é
+redesenho. Fica escrito para não se voltar a decidir isto do zero.
+
+### 11.3 Uma verificação de graça que veio daqui
+
+Como o `OPA1656ID` do KiCad herda do **`LM2904`** — o mesmo símbolo base de que
+se tirou a pinagem para o nosso `OPA1642` feito à mão — os dois foram
+comparados pino a pino: **unidade e tipo batem nos 8**. O símbolo caseiro está
+validado contra um mantido pela biblioteca oficial, que era a confirmação que
+faltava depois de se ter apanhado os pinos 1 e 3 trocados no símbolo antigo.
