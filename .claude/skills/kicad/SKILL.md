@@ -769,6 +769,13 @@ O que se mede, sempre, e nunca só o primeiro:
 | `via_dangling` | via que não liga a nada dos dois lados |
 | geometria (`clearance`, `short`) | o que qualquer fábrica recusa |
 
+⚠️ **E esta tabela é a versão fraca da regra.** Uma lista de sintomas protege
+contra o que já aconteceu; contra o que ainda não aconteceu não protege nada —
+e o sintoma seguinte apareceu duas horas depois (§12a). A forma forte é comparar
+o **perfil** de ligações por fazer, rede a rede, antes e depois, com uma única
+regra de aceitação: **nenhuma rede pode piorar**. Usa a tabela para ler um
+relatório; usa o invariante para deixar uma ferramenta escrever cobre.
+
 ⚠️ **E o nome da rede NÃO está na linha do achado.** O cabeçalho do
 `unconnected_items` diz só `Missing connection between items`; a rede vem nas
 **duas linhas de item seguintes**. Um extractor que casa o cabeçalho devolve
@@ -874,6 +881,204 @@ regular com janela fixa passa a alcançar campos que antes não alcançava, e a
 mesma placa dá dois números diferentes em duas medições. Foi o que me
 aconteceu, e a placa não tinha mudado. **Medição por regex em formato que a
 ferramenta reescreve não é medição.**
+
+
+## 12. ROTEAR POR SCRIPT: o que se aprende quando se deixa a maquina tentar
+
+### 12.0 Uma camada de sinal e um grafo planar, e as ligacoes nao sao
+
+Um roteador limitado a uma camada para sempre — e nao por falta de esperteza.
+Dois sinais que precisem de se cruzar nao tem por onde. Medido: a versao de uma
+camada so fechou 24 de 71 e ficou ali. Com a segunda camada e vias, a mesma
+placa foi de **122 para 23**.
+
+A saida e a da industria ha quarenta anos: salta-se para o outro lado com duas
+vias, anda-se um bocado, volta-se. **E a via tem de ser CARA no custo da
+busca** (aqui, 30 celulas), senao a busca salta por tudo e por nada, e cada
+salto abre uma fenda no plano.
+
+### 12a. O estrago no plano tem DUAS formas, e eu so procurava uma
+
+A obvia: `Zone [X] <-> Zone [X]` — o plano partido em ilhas.
+
+A outra, que me escapou e custou uma ronda inteira: **um pad cortado do plano**.
+A pista em B.Cu passa entre o pad e o cobre, o pad fica orfao, e isso aparece
+como uma ligacao por fazer normalissima na rede GND. O plano continua inteiro.
+A terra e que nao. Medido: um roteamento baixou o total de 47 para 20 **e levou
+o `GND` de 0 para 5**.
+
+> **Por isso nao se conta uma forma de estrago. Conta-se o PERFIL.** Quantas
+> ligacoes faltam em cada rede, antes e depois, e a regra de aceitacao e uma
+> so: **nenhuma rede pode piorar**. Nao ha lista de sintomas a manter
+> actualizada, e nao ha sintoma novo que passe por nao estar na lista.
+
+Uma lista de sintomas conhecidos protege contra o que ja aconteceu. Um
+invariante protege contra o que ainda nao aconteceu.
+
+### 12b. A isencao vale para o defeito que se viu, nunca para o nome dele
+
+A placa chega com defeitos que nao sao da ferramenta, e ela tem de os subtrair
+ou passa a vida a culpar-se por estrago alheio e a retirar as suas pistas
+todas. Mas **a assinatura da isencao e o par (tipo, rede), nao a rede**.
+
+Isentei `AGND` inteira por causa de uma via solta na linha de base — e com isso
+deixei passar uma folga de 0,193 mm numa pista de AGND, que e outro defeito na
+mesma rede.
+
+### 12c. A retraccao por bisseccao, e porque nao se retira em bloco
+
+Quando alguma rede piora, a resposta preguicosa e tirar todas as pistas que
+passaram pela outra camada. A maioria e inofensiva — o cobre flui a volta — e
+tira-las e deitar fora trabalho bom por causa de trabalho mau.
+
+Procura-se **qual**: comeca-se por tirar todas e confirmar que zera (se nao
+zerar, o estrago ja la estava e nao ha nada a retirar), e depois devolvem-se uma
+a uma, ficando as que couberem. Na pratica isolou 2 travessias culpadas em 33 —
+e as outras 31 ficaram.
+
+### 12d. APERTAR A FOLGA PIOROU O RESULTADO
+
+Contra-intuitivo o bastante para ficar escrito. Medido, sempre de raiz e ate
+convergir:
+
+| folga | malha | ligacoes por fazer |
+|---|---|---|
+| **0,35 mm** | **0,25 mm** | **23** ← fica esta |
+| 0,26 mm | 0,25 mm | 34 |
+| 0,26 mm | 0,20 mm | 44 |
+
+A razao e a ganancia: com mais espaco disponivel o roteador enfia mais pistas
+cedo, e essas pistas fecham corredores de que as ligacoes seguintes
+precisavam — e mais delas acabam retiradas por estragarem o plano.
+**Um roteador guloso melhora quando se lhe aperta o apetite, nao a folga.**
+
+E a malha mais fina nao acha mais caminhos: acha os mesmos mais devagar, e bate
+no tecto de nos antes de chegar ao fim.
+
+> ⚠️ Da primeira vez mudei as duas de uma so vez, e a medicao nao soube dizer
+> qual delas tinha feito o estrago. **Uma variavel de cada vez, mesmo quando
+> parece obvio que andam juntas.**
+
+### 12e. Mexer numa peca mata o cobre que lhe tocava
+
+Mudei uma peca de sitio numa placa ja roteada. As pistas que iam ter com ela
+ficaram a apontar para onde ela ja nao estava, e o DRC seguinte devolveu
+**curtos-circuitos** na linha de base — que a ferramenta, correctamente, tratou
+como "nao e meu" e nao contou.
+
+> **Quando a colocacao muda, o cobre que lhe tocava e lixo.** Nao se remenda:
+> apaga-se tudo e roteia-se de raiz. Numa cadeia automatizada isso custa dois
+> minutos, e e por isso que a cadeia se paga.
+
+### 12f. A ordem dos passos, e o defeito que passa em todos os testes
+
+A costura das vias corria **antes** da colocacao das pecas: cosia os pads onde
+eles ainda nao estavam. Nunca deu erro, porque a placa ja chegava colocada e a
+segunda corrida e idempotente — os numeros batiam sempre.
+
+**So se ve no dia em que alguma coisa muda de sitio.** Mudei a ponte de terra e
+a costura continuou a falar da posicao antiga.
+
+> Um defeito de ordem que so aparece quando algo muda e um defeito que passa em
+> **todos** os testes menos no dia em que interessa. A defesa nao e mais um
+> teste: e a ordem estar certa, e o passo que depende de posicoes vir depois de
+> as posicoes serem escritas.
+
+### 12g. Ninguem em dois sitios ao mesmo tempo
+
+Uma referencia colocada por uma grelha **e** por uma tabela de posicoes
+explicitas fica com a explicita — ate ao passo seguinte recalcular a grelha e a
+devolver ao sitio antigo, em silencio. Mudei a ponte, o ficheiro continuou a
+mostra-la onde estava, e **nenhum passo se queixou**.
+
+> **Uma colocacao que se desfaz sem dizer nada e pior que uma que falha.** Isto
+> nao se resolve com cuidado: resolve-se com um portao que recusa arrancar se
+> alguma referencia aparecer nas duas listas.
+
+### 12h. A ferramenta que recusa encontra o que ninguem foi procurar
+
+A costura recusou-se a descer uma via para um plano que ali nao existia, e
+disse de quem era o pad. O pad era do **net-tie que e a unica ponte entre a
+terra analogica e a digital** — e estava a 57 mm da ilha que devia unir.
+
+A topologia ate estava certa (continuava a ser uma ponte so), mas toda a
+corrente de retorno analogica voltava por uma pista fina em vez de por cobre
+largo, e **uma ponte com impedancia e meia ponte**. A ponte passou para a
+fronteira da ilha, com um pad de cada lado: plano a plano.
+
+> Ninguem tinha ido procurar isto. Apareceu porque uma ferramenta pequena se
+> recusou a fazer uma coisa sem sentido **e explicou porque**. Uma ferramenta
+> que falha em silencio, ou que faz o que lhe pedem sem perguntar, nao teria
+> encontrado nada.
+
+### 12j. Não há ordem de ataque vencedora — há vencedora nesta placa
+
+Um roteador guloso dá resultados diferentes conforme quem entra primeiro.
+Medido, de raiz e até convergir:
+
+| ordem | cérebro | painel |
+|---|---|---|
+| mais curta primeiro | **19** | 13 |
+| a do DRC | 23 | **10** |
+| mais longa primeiro | 29 | 11 |
+
+Cada placa tem a sua vencedora, e não há forma de a adivinhar olhando. Por isso
+a ferramenta **corre as três em cópias e fica com a melhor, medindo** — em vez
+de me deixar escolher uma e defendê-la.
+
+> Automação não é só correr os passos sozinha. É **tirar decisões de cima de
+> alguém** — e uma decisão que se resolve medindo três vezes não devia estar à
+> espera de opinião.
+
+⚠️ E compara-se pelas **duas** medidas, ligações e geometria. A ordem que fecha
+mais ligações pode ser a que estraga mais cobre, e escolher pela primeira sem
+olhar à segunda é escolher o pior resultado com confiança.
+
+### 12k. Um de cada vez sobre os mesmos ficheiros
+
+Duas escritas concorrentes sobre um `.kicad_pcb` **não dão excepção nem ficheiro
+corrompido**. Dão um número: 34 violações de geometria numa placa onde nenhuma
+das duas corridas, sozinha, produzia mais do que zero.
+
+> **Uma medição contaminada tem o mesmo aspecto de uma boa.** Não traz marca e
+> entra num relatório com a mesma cara que as outras.
+
+A defesa é um **ferrolho** que recusa arrancar se outra corrida já estiver a
+escrever as mesmas placas, e diz o pid da que está. Dez linhas.
+
+⚠️ E lançar um segundo trabalho sobre os mesmos ficheiros **é uma escrita, não
+uma leitura** — mesmo quando quem o lança não está a tocar em nada, porque o
+processo que ficou a correr está.
+
+### 12i. O portao antes da fabrica
+
+Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,
+descobre-se quando a caixa chega. Por isso o ultimo passo nao e "exportar
+gerbers" — e um portao que mede e **recusa**, e so depois exporta.
+
+O que se mede, e porque cada um esta na lista:
+
+| medida | porque |
+|---|---|
+| geometria | a fabrica recusa — ou pior, nao recusa, e entrega uma placa em curto |
+| ligacoes por fazer, **por rede** | uma placa incompleta nao e incompleta: nao funciona |
+| `Zone [X] <-> Zone [X]` | plano de terra em pedacos, invisivel no meio das ligacoes |
+| `starved_thermal` | pad agarrado a uma ilha estreita: solda mal, conduz pior |
+
+E o pacote sai **carimbado com data gerada, commit e aviso de arvore suja**: um
+pacote que nao diz de que estado do repositorio saiu nao se reproduz, e o que
+nao se reproduz nao se corrige.
+
+⚠️ **Um pacote incompleto tem de ser impossivel de confundir com um bom.** A
+saida forcada existe — ha razoes legitimas para querer ver os gerbers de uma
+placa por acabar — mas escreve `INCOMPLETA` no nome do ficheiro.
+
+⚠️ **E o portao diz o que NAO pode ver.** Prova que o cobre corresponde a
+netlist, nao que a netlist esta certa. E a **rotacao da montagem** nao se
+verifica por script nenhum: o angulo que o KiCad escreve no CPL e o do
+footprint, e a fabrica espera o da biblioteca dela — para muitos
+encapsulamentos os dois nao batem, e confirma-se peca a peca na
+pre-visualizacao, antes de pagar. O ficheiro sai; a promessa nao.
 
 
 ## Procedência

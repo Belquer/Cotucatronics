@@ -8469,3 +8469,119 @@ Medido no fim, com as zonas cheias:
 cerebro   71 -> 47 por ligar · planos em pedacos 0
 painel    32 -> 14 por ligar · planos em pedacos 0
 ```
+
+## 15cq — o estrago tinha duas formas e eu só procurava uma
+
+*07/09.* Ensinei o roteador a usar as duas camadas, e pus-lhe um guarda: depois
+de escrever, medir se algum plano se tinha partido, e retirar as travessias
+culpadas. O guarda procurava `Zone [X] <-> Zone [X]` — o plano em ilhas — que
+era a forma do estrago da véspera (15co).
+
+Correu, disse **planos em pedaços 0**, e gravou. O total de ligações por fazer
+caiu de 47 para 20. E o `GND` subiu de 0 para 5.
+
+A pista em B.Cu não tinha partido a zona: tinha passado **entre um pad e o
+cobre**, deixando o pad órfão. O plano continuava inteiro. A terra é que não. E
+o sintoma aparecia como uma ligação por fazer normalíssima, no meio das outras.
+
+> **Uma lista de sintomas conhecidos protege contra o que já aconteceu; um
+> invariante protege contra o que ainda não aconteceu.** Troquei a lista por
+> um invariante: mede-se quantas ligações faltam em cada rede antes e depois, e
+> a regra de aceitação passa a ser uma só — **nenhuma rede pode piorar**. Não há
+> sintoma novo que passe por não estar na lista, porque não há lista.
+
+E uma segunda, da mesma sessão e da mesma família: **isentar pelo nome em vez
+de pelo defeito.** A placa chegou com uma via solta em `AGND`, que não era
+minha, e eu isentei `AGND` inteira — deixando passar uma folga de 0,193 mm
+noutra pista da mesma rede. A assinatura de uma isenção é o par (tipo, rede).
+
+## 15cr — o defeito de ordem que passa em todos os testes
+
+*07/09.* A costura das vias corria **antes** da colocação das peças: lia a
+posição de cada pad para saber onde pôr a via, e lia-a antes de as peças serem
+movidas. Nunca deu erro. A placa já chegava colocada, a segunda corrida é
+idempotente, e os números batiam sempre.
+
+Só apareceu no dia em que mudei uma peça de sítio. A ferramenta continuou a
+falar da posição antiga, e nada se queixou.
+
+E ao lado dele, um irmão: a peça que eu queria mover estava numa **grelha** e
+também na tabela de **posições explícitas**. A tabela ganhava — até ao passo
+seguinte recalcular a grelha e a devolver ao sítio antigo, em silêncio. Editei,
+o ficheiro não mudou, e nenhum passo o disse.
+
+> **Um defeito de ordem que só aparece quando algo muda passa em todos os testes
+> menos no dia em que interessa.** E uma colocação que se desfaz sem dizer nada
+> é pior que uma que falha. Nem um nem outro se resolve com cuidado: resolvem-se
+> com a ordem certa, e com um portão que recusa arrancar se uma referência
+> aparecer nas duas listas.
+
+## 15cs — a ferramenta que recusa encontrou o que ninguém foi procurar
+
+*07/09.* Pus a costura a recusar-se a descer uma via para um plano que não
+passasse por baixo do pad — e a **dizer de quem era o pad**. Achei que estava a
+tapar um caso de borda.
+
+O pad era do `NT1`: o net-tie que é a **única ponte entre a terra analógica e a
+digital**. Estava a 57 mm da ilha que devia unir, no meio do plano digital.
+
+A topologia até estava certa — continuava a ser uma ponte só, que é a regra
+inteira do assunto. Mas toda a corrente de retorno analógica voltava por uma
+pista de 0,25 mm em vez de por cobre largo, e **uma ponte com impedância é meia
+ponte**. A ponte passou para a fronteira da ilha, com um pad de cada lado.
+
+> Ninguém tinha ido procurar isto, e nenhuma revisão o tinha visto. Apareceu
+> porque uma ferramenta pequena se recusou a fazer uma coisa sem sentido **e
+> explicou porquê**. Uma ferramenta que falha em silêncio, ou que faz o que lhe
+> pedem sem perguntar, não teria encontrado nada.
+
+## 15ct — apertar a folga piorou o resultado, e eu mudei duas coisas de uma vez
+
+*07/09.* O roteador usava 0,35 mm de folga com a regra da placa em 0,20 — quase
+o dobro. Pareceu-me óbvio que apertar abriria caminhos. Apertei a folga **e**
+refinei a malha, na mesma corrida.
+
+O resultado piorou de 23 ligações por fazer para 44, e a medição não sabia
+dizer qual das duas mudanças tinha feito o estrago. Separadas:
+
+```
+folga 0,35 · malha 0,25  ->  23     <- fica esta
+folga 0,26 · malha 0,25  ->  34
+folga 0,26 · malha 0,20  ->  44
+```
+
+As duas eram más, por razões diferentes. A malha fina não acha mais caminhos:
+acha os mesmos mais devagar, e bate no tecto de nós antes de chegar ao fim. E a
+folga apertada alimenta a ganância — com mais espaço o roteador enfia mais
+pistas cedo, e essas pistas fecham corredores de que as ligações seguintes
+precisavam.
+
+> **Um roteador guloso melhora quando se lhe aperta o apetite, não a folga.** E
+> uma variável de cada vez, mesmo quando parece óbvio que andam juntas — porque
+> quando andam juntas e o resultado piora, não se aprende nada.
+
+## 15cu — duas escritas concorrentes não dão erro, dão um número
+
+*07/09.* Deixei uma comparação de ordens de roteamento a correr em segundo
+plano e, sem esperar por ela, lancei a cadeia completa. As duas escreviam os
+**mesmos** `.kicad_pcb`, durante meia hora, por cima uma da outra.
+
+Não houve excepção, nem ficheiro corrompido, nem aviso. Houve um resultado:
+**34 violações de geometria** numa placa onde nenhuma das duas corridas, sozinha,
+produzia mais do que zero. Se eu não tivesse reparado que era impossível, tinha
+esse número na mão como facto.
+
+> **Uma medição contaminada tem exactamente o mesmo aspecto de uma boa.** Não
+> traz marca, não traz aviso, e entra num relatório com a mesma cara que as
+> outras. É a família da 15co — o número que melhora enquanto a coisa piora —
+> mas por uma via nova: não é o instrumento que mede mal, é o objecto que muda
+> por baixo do instrumento.
+
+A defesa não é lembrar-me de esperar. É um **ferrolho**: a ferramenta recusa
+arrancar se outra já estiver a escrever as mesmas placas, e diz o pid da que
+está. Custou dez linhas.
+
+E há um corolário sobre trabalho em segundo plano: **lançar um segundo trabalho
+sobre os mesmos ficheiros é uma escrita, não uma leitura.** Tratei-o como se
+fosse inofensivo porque eu não estava a tocar em nada — mas o processo que eu
+tinha deixado a correr estava.

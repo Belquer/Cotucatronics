@@ -1,60 +1,98 @@
 #!/usr/bin/env python3
-"""roteia — as pistas FACEIS, e so essas.
+"""roteia — as duas camadas, com via, e a prova de que nao partiu o plano.
 
-⚠️⚠️ SO ESCREVE EM F.Cu, E EXIGE QUE F.Cu NAO TENHA ZONA DE COBRE. ⚠️⚠️
+⚠️ EXIGE QUE F.Cu NAO TENHA ZONA DE COBRE, e recusa-se a correr se tiver.
 
-Este roteador nao ve zonas, e nao aprendeu a ver: o defeito foi resolvido a
-montante, no desenho. Enquanto houve plano em F.Cu, cada pista que o
-atravessava CORTAVA-O — o cobre recua dos dois lados e o plano fica em pedacos.
-Medido no cerebro rev B: `AGND` passou de 1 ligacao por fazer para 8, com o DRC
-a dizer GEOMETRIA 0 o tempo todo, porque do ponto de vista dele nada estava
-errado. Cicatriz 15co.
+O ARRANJO QUE ESTE ROTEADOR PRESSUPOE (e que o `pcb_contorno.costura()` cria):
 
-⚠️ E A LICAO NAO E "ENSINA O ROTEADOR A VER ZONAS". E que cobre nas DUAS
-camadas nao deixa camada nenhuma para sinal, e um dois-lados so tem duas. O
-arranjo certo e plano solido em B.Cu, sinal em F.Cu, e uma via em cada pad de
-terra a descer ao plano (`costura()` no pcb_contorno). Ai a pergunta "como e
-que o roteador evita cortar o plano" deixa de existir — nao ha plano no
-caminho dele. Meia sessao de roteador esperto, ou vinte linhas de desenho
-certo. Cicatriz 15cp.
+    B.Cu   plano solido de terra, inteiro, e o sinal que precisar de passar
+    F.Cu   sinal, e nenhuma zona
+           + uma via em cada pad SMD de terra a descer ao plano
 
-Guarda de uso: recusa-se a correr se encontrar `(zone` em F.Cu.
+POR QUE DUAS CAMADAS E NAO UMA.
 
-⚠️ NAO E UM AUTOROTEADOR. Nao procura caminho: prova tres percursos triviais —
-a direito, em L pelo horizontal, em L pelo vertical — e se nenhum estiver livre
-DEIXA A LIGACAO PARA A PESSOA. Um roteador que insiste faz caminhos que ninguem
-quereria e que depois ninguem percebe.
+A versao anterior so escrevia em F.Cu, e parou em 47 ligacoes por fazer num
+total de 71. Nao foi falta de esperteza da busca: numa camada so, um sinal que
+precise de atravessar outro nao tem por onde. **Uma camada de sinal e um grafo
+planar, e as ligacoes de uma placa nao sao um grafo planar.** A saida e a
+mesma da industria ha quarenta anos — salta-se para o outro lado com duas
+vias, anda-se um bocado, e volta-se.
 
-⚠️ VERIFICA-SE COM AS ZONAS CHEIAS. Sem isso o DRC compara as pistas novas com
-um preenchimento VELHO e devolve dezenas de `clearance` contra zonas que nao
-sao defeito nenhum:
+⚠️⚠️ E SALTAR PARA B.Cu ABRE UMA FENDA NO PLANO. O cobre recua dos dois lados
+da pista, e o plano fica com um rasgo. Um rasgo curto e inofensivo; um rasgo
+que separe o plano em duas ilhas destroi a terra da placa, e o DRC nao chama a
+isso um erro de geometria — chama-lhe `Zone [GND] <-> Zone [GND]`, escondido
+no meio das ligacoes por fazer. Foi assim que uma tentativa anterior baixou o
+total de 71 para 52 **enquanto partia a ilha de AGND em oito pedacos**, com o
+DRC a dizer geometria zero o tempo todo (15co).
 
-    kicad-cli pcb drc --refill-zones ...
+Por isso a via e CARA no custo da busca — ela prefere dar a volta em F.Cu a
+saltar — e por isso existe a retraccao por bisseccao no fim: escreve-se tudo,
+mede-se, e se algum plano se partiu procura-se **qual** das travessias o
+partiu, devolvendo essas a lista da pessoa. O plano inteiro vale mais que
+qualquer ligacao automatica.
 
-Escrevi num commit que o `kicad-cli` nao sabia encher zonas, e o `--help` que
-corri a seguir desmentiu-me. A opcao esta la desde sempre.
+⚠️ A FERRAMENTA CONFERE O PROPRIO TRABALHO, e nao entrega o que nao consegue
+provar. Entregar cobre que o DRC acusa e pior que nao entregar nada.
 
-⚠️ E TUDO O QUE ESCREVE E VERIFICAVEL PELO DRC. A regra e: se o numero de
-ligacoes por ligar nao descer exactamente pelo numero de pistas que eu disse ter
-feito, alguma coisa esta errada e nao se acredita no resto.
+⚠️ E PREFERE A LINHA RECTA. O custo penaliza cada mudanca de direccao, senao a
+busca devolve escadas de mil degraus, electricamente validas e humanamente
+ilegiveis — e uma placa que ninguem le nao se depura.
 
-O que evita: pad de outra rede, pista de outra rede, e o furo de qualquer peca.
-O que NAO evita: zonas (o cobre de GND esta por baixo e as pistas passam-lhe por
-cima noutra camada ou com folga — o DRC diz se nao).
+⚠️ VERIFICA-SE COM AS ZONAS CHEIAS (`--refill-zones`). Sem isso o DRC compara
+as pistas novas com o enchimento ANTERIOR e devolve dezenas de `clearance`
+fantasma. E antes de dizeres que o `kicad-cli` nao faz X, corre o `--help`:
+escrevi num commit que ele nao sabia encher zonas, e a flag chamava-se
+exactamente aquilo.
 
-USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
+USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME] [--so-uma-face]
 """
-import io, json, math, os, re, subprocess, sys
+import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "0.5.0"
+VERSAO = "1.4.1"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
-FOLGA = 0.35            # entre a pista e o que nao e dela
+# ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
+# tambem nao ha razao para ser MUITO mais larga. Estive em 0,35 mm com a regra
+# da placa em 0,20 — quase o dobro — e paguei isso em caminhos que nao existiam.
+# 0,26 deixa 30% de margem sobre a regra, que chega para o erro de discretizacao
+# da grelha, e abriu caminhos que a 0,35 estavam fechados.
+# ⚠️ APERTAR A FOLGA PIOROU O RESULTADO, e isso e contra-intuitivo o bastante
+# para ficar escrito. Medido, sempre de raiz e com duas passadas:
+#
+#     FOLGA 0,35 · PASSO 0,25  ->  23 ligacoes por fazer   <- fica esta
+#     FOLGA 0,26 · PASSO 0,20  ->  44
+#     FOLGA 0,26 · PASSO 0,25  ->  34
+#
+# A razao e a ganancia: com mais espaco disponivel o roteador enfia mais pistas
+# cedo, e essas pistas fecham corredores de que as ligacoes seguintes
+# precisavam — e mais delas acabam retiradas por estragarem o plano. Um
+# roteador guloso melhora quando lhe apertamos o apetite, nao a folga.
+#
+# ⚠️ E a malha mais fina nao acha mais caminhos: acha os mesmos mais devagar, e
+# bate no tecto de nos antes de chegar ao fim.
+#
+# ⚠️ Da primeira vez mudei as duas de uma so vez e a medicao nao soube dizer
+# qual delas tinha feito o estrago. Uma variavel de cada vez, mesmo quando
+# parece obvio que andam juntas.
+FOLGA = 0.35            # entre a pista e o que nao e dela (regra da placa: 0,20)
+PASSO = 0.25            # mm por celula
+VIRAGEM = 3.0           # o que custa dobrar, em celulas
+CUSTO_VIA = 30.0        # ⚠️ em celulas. Alto de proposito: a via abre fenda no
+                        # plano, portanto so se salta quando nao ha volta a dar.
+VIA_R = 0.3             # raio do anel da via
+CAMADAS = ("F.Cu", "B.Cu")
 LARGURA = {"+15V": 1.0, "Net-(F1-Pad1)": 1.0, "V_TRILHO_A2": 1.0,
            "V+PRE": 0.5, "VBIAS": 0.5, "+5V": 0.5, "+5V_PONTE": 0.5, "+3V3A": 0.5}
 
 
+# --- leitura da placa -------------------------------------------------------
+
 def pads_da_placa(t):
+    """(x, y, raio, rede, camadas) — e `camadas` importa: um pad SMD so existe
+    de um lado, e uma pista do outro lado passa-lhe por baixo sem lhe tocar.
+    Tratar todos os pads como obstaculo nas duas camadas custa metade dos
+    caminhos por nada."""
     out = []
     for m in re.finditer(r"\n\t\(footprint ", t):
         j = m.start() + 1
@@ -70,27 +108,43 @@ def pads_da_placa(t):
         a = re.search(r"\(at (" + NUM + r") (" + NUM + r")(?: (" + NUM + r"))?\)", bl)
         fx, fy = float(a.group(1)), float(a.group(2))
         ang = math.radians(float(a.group(3) or 0))
-        for pm in re.finditer(r'\(pad "[^"]*" \w+[\s\S]*?\(at (' + NUM + r") (" + NUM
+        for pm in re.finditer(r'\(pad "[^"]*" (\w+)[\s\S]*?\(at (' + NUM + r") (" + NUM
                               + r")(?: " + NUM + r")?\)[\s\S]*?\(size (" + NUM + r") ("
                               + NUM + r")\)([\s\S]{0,300}?)\(uuid", bl):
-            px, py, sw, sh, resto = pm.groups()
+            tipo, px, py, sw, sh, resto = pm.groups()
             px, py, sw, sh = float(px), float(py), float(sw), float(sh)
             n = re.search(r'\(net "([^"]+)"\)', resto)
+            lay = re.search(r'\(layers ([^)]*)\)', resto)
+            txt = lay.group(1) if lay else ""
+            if tipo == "thru_hole" or "*.Cu" in txt:
+                cams = (0, 1)
+            elif "B.Cu" in txt:
+                cams = (1,)
+            else:
+                cams = (0,)
             out.append((fx + px * math.cos(ang) + py * math.sin(ang),
                         fy - px * math.sin(ang) + py * math.cos(ang),
-                        max(sw, sh) / 2, n.group(1) if n else None))
+                        max(sw, sh) / 2, n.group(1) if n else None, cams))
     return out
 
 
-def cruzam(a, b, c, d):
-    """Dois segmentos cruzam-se? ⚠️ Comparar EXTREMOS nao chega: duas pistas
-    podem cruzar-se a meio sem que nenhuma ponta esteja perto da outra. Foi o
-    que fiz na primeira versao e deu dez cruzamentos que o DRC apanhou."""
-    def o(p, q, r):
-        v = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
-        return 0 if abs(v) < 1e-9 else (1 if v > 0 else 2)
-    o1, o2, o3, o4 = o(a, b, c), o(a, b, d), o(c, d, a), o(c, d, b)
-    return o1 != o2 and o3 != o4
+def pistas_da_placa(t):
+    """(x1, y1, x2, y2, rede, camada)."""
+    out = []
+    for m in re.finditer(r"\(segment\s*\(start (" + NUM + r") (" + NUM
+                         + r")\)\s*\(end (" + NUM + r") (" + NUM
+                         + r")\)[\s\S]{0,200}?\(layer \"([^\"]+)\"\)[\s\S]{0,200}?"
+                         r"\(net \"([^\"]+)\"\)", t):
+        x1, y1, x2, y2 = (float(v) for v in m.groups()[:4])
+        out.append((x1, y1, x2, y2, m.group(6), CAMADAS.index(m.group(5))
+                    if m.group(5) in CAMADAS else 0))
+    return out
+
+
+def vias_da_placa(t):
+    return [(float(m.group(1)), float(m.group(2)), m.group(3))
+            for m in re.finditer(r"\(via\s*\(at (" + NUM + r") (" + NUM
+                                 + r")\)[\s\S]{0,220}?\(net \"([^\"]+)\"\)", t)]
 
 
 def dist_ponto_seg(px, py, x1, y1, x2, y2):
@@ -101,104 +155,8 @@ def dist_ponto_seg(px, py, x1, y1, x2, y2):
     return math.hypot(px - (x1 + tt * dx), py - (y1 + tt * dy))
 
 
-# --- A*: contornar, que e o que falta as triviais ---------------------------
-#
-# ⚠️ ISTO NAO E DESVIO AUTOMATICO. O `shove` do KiCad EMPURRA o que ja la esta;
-# isto so CONTORNA. Confirmado a correr o `--help` e a listar o modulo `pcbnew`:
-# nao ha PNS nem Shove expostos em lado nenhum fora da janela.
-#
-# ⚠️ E PREFERE A LINHA RECTA. O custo penaliza cada mudanca de direccao, senao o
-# A* devolve escadas de mil degraus que sao electricamente validas e humanamente
-# ilegiveis — e uma placa que ninguem consegue ler nao se depura.
-PASSO = 0.25            # mm por celula
-VIRAGEM = 3.0           # o que custa dobrar, em celulas
-
-
-def astar(A, B, rede, larg, obst, limites):
-    import heapq
-    x0, y0, x1, y1 = limites
-    nx = int((x1 - x0) / PASSO) + 1
-    ny = int((y1 - y0) / PASSO) + 1
-
-    def cel(p):
-        return (int(round((p[0] - x0) / PASSO)), int(round((p[1] - y0) / PASSO)))
-
-    def pos(c):
-        return (x0 + c[0] * PASSO, y0 + c[1] * PASSO)
-
-    ini, fim = cel(A), cel(B)
-    # ⚠️ MEIA DIAGONAL DE MARGEM A MAIS. O A* so testa CENTROS de celula, e o
-    # segmento entre duas passa mais perto de um obstaculo do que qualquer das
-    # pontas — ate meia diagonal. Sem isto saem folgas de 0,02 mm que o DRC
-    # apanha e que ninguem consegue explicar olhando para o caminho.
-    m = larg / 2 + FOLGA + PASSO * 0.71
-
-    livre_cache = {}
-
-    def ok(c):
-        if c in livre_cache:
-            return livre_cache[c]
-        if not (0 <= c[0] < nx and 0 <= c[1] < ny):
-            livre_cache[c] = False
-            return False
-        px, py = pos(c)
-        v = True
-        for ox, oy, orr, on in obst.perto(px, py):
-            if on == rede:
-                continue
-            if math.hypot(px - ox, py - oy) < orr + m:
-                v = False
-                break
-        livre_cache[c] = v
-        return v
-
-    DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
-    h = lambda c: (abs(c[0] - fim[0]) + abs(c[1] - fim[1])) * PASSO
-    fila = [(h(ini), 0.0, ini, None)]
-    veio, custo = {}, {ini: 0.0}
-    limite = 0
-    while fila:
-        limite += 1
-        if limite > 90000:          # ⚠️ teto: sem ele uma ligacao impossivel come tudo
-            return None
-        _, g, c, d = heapq.heappop(fila)
-        if c == fim:
-            cam, cur = [c], c
-            while cur in veio:
-                cur = veio[cur][0]
-                cam.append(cur)
-            cam.reverse()
-            pts, ant = [pos(cam[0])], None
-            for i in range(1, len(cam)):
-                dd = (cam[i][0] - cam[i - 1][0], cam[i][1] - cam[i - 1][1])
-                if ant and dd != ant:
-                    pts.append(pos(cam[i - 1]))
-                ant = dd
-            pts.append(pos(cam[-1]))
-            return pts
-        for dd in DIRS:
-            n = (c[0] + dd[0], c[1] + dd[1])
-            if n != fim and not ok(n):
-                continue
-            passo = PASSO * (1.414 if dd[0] and dd[1] else 1.0)
-            ng = g + passo + (VIRAGEM * PASSO if d and dd != d else 0.0)
-            if ng < custo.get(n, 1e9):
-                custo[n] = ng
-                veio[n] = (c, dd)
-                heapq.heappush(fila, (ng + h(n), ng, n, dd))
-    return None
-
-
-def amostra(lista, A, B, rede, passo=0.4):
-    """Poe um segmento na lista de obstaculos, como uma fila de circulos."""
-    n = max(2, int(math.hypot(B[0] - A[0], B[1] - A[1]) / passo))
-    for i in range(n + 1):
-        lista.append((A[0] + (B[0] - A[0]) * i / n,
-                      A[1] + (B[1] - A[1]) * i / n, 0.18, rede))
-
-
 class Grelha:
-    """Indice espacial dos obstaculos, para o A* nao varrer a lista toda."""
+    """Indice espacial dos obstaculos, para a busca nao varrer a lista toda."""
 
     def __init__(self, itens, celula=4.0):
         self.c = celula
@@ -213,191 +171,402 @@ class Grelha:
         return self.d.get((int(x / self.c), int(y / self.c)), ())
 
 
+# --- a busca, em tres dimensoes ---------------------------------------------
+
+def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
+    """A* sobre (x, y, camada). `camA`/`camB` sao as camadas em que cada ponta
+    e alcancavel: um pad passante vale nas duas, um SMD so na sua.
+
+    ⚠️ MEIA DIAGONAL DE MARGEM A MAIS. A busca so testa CENTROS de celula, e o
+    segmento entre duas passa mais perto de um obstaculo do que qualquer das
+    pontas — ate meia diagonal. Sem isto saem folgas de 0,02 mm que o DRC
+    apanha e que ninguem consegue explicar olhando para o caminho."""
+    import heapq
+    x0, y0, x1, y1 = limites
+    nx = int((x1 - x0) / PASSO) + 1
+    ny = int((y1 - y0) / PASSO) + 1
+    m = larg / 2 + FOLGA + PASSO * 0.71
+    mv = VIA_R + FOLGA + PASSO * 0.71
+
+    def pos(c):
+        return (x0 + c[0] * PASSO, y0 + c[1] * PASSO)
+
+    def cel(p):
+        return (int(round((p[0] - x0) / PASSO)), int(round((p[1] - y0) / PASSO)))
+
+    cache = {}
+
+    def ok(c, L, marg=None):
+        chave = (c, L, marg is not None)
+        if chave in cache:
+            return cache[chave]
+        if not (0 <= c[0] < nx and 0 <= c[1] < ny):
+            cache[chave] = False
+            return False
+        px, py = pos(c)
+        mm = marg if marg is not None else m
+        v = True
+        for ox, oy, orr, on in gs[L].perto(px, py):
+            if on == rede:
+                continue
+            if math.hypot(px - ox, py - oy) < orr + mm:
+                v = False
+                break
+        cache[chave] = v
+        return v
+
+    def cabe_via(c):
+        return ok(c, 0, mv) and ok(c, 1, mv)
+
+    ini = [(cel(A), L) for L in camA]
+    fins = {(cel(B), L) for L in camB}
+    fimxy = cel(B)
+    DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+
+    def h(e):
+        return (abs(e[0][0] - fimxy[0]) + abs(e[0][1] - fimxy[1])) * PASSO
+
+    fila, veio, custo = [], {}, {}
+    for e in ini:
+        custo[e] = 0.0
+        heapq.heappush(fila, (h(e), 0.0, e, None))
+    limite = 0
+    while fila:
+        limite += 1
+        # ⚠️ TECTO. Sem ele uma ligacao impossivel come tudo. Subi-o de 300k
+        # para 900k a pensar que fecharia mais ligacoes, e medi: fechou
+        # EXACTAMENTE as mesmas, tres vezes mais devagar. Uma busca que nao
+        # acha em 300 mil nos nao acha em 900 mil — nao lhe falta paciencia,
+        # falta-lhe caminho. Voltou a 300k.
+        if limite > 300000:
+            return None
+        _, g, e, d = heapq.heappop(fila)
+        if e in fins:
+            cam, cur = [e], e
+            while cur in veio:
+                cur = veio[cur][0]
+                cam.append(cur)
+            cam.reverse()
+            # cantos: guarda so onde a direccao muda ou a camada muda
+            pts, ant = [(pos(cam[0][0]), cam[0][1])], None
+            for i in range(1, len(cam)):
+                mudou_cam = cam[i][1] != cam[i - 1][1]
+                dd = (cam[i][0][0] - cam[i - 1][0][0], cam[i][0][1] - cam[i - 1][0][1])
+                if mudou_cam:
+                    pts.append((pos(cam[i - 1][0]), cam[i - 1][1]))
+                    pts.append((pos(cam[i][0]), cam[i][1]))
+                    ant = None
+                    continue
+                if ant and dd != ant:
+                    pts.append((pos(cam[i - 1][0]), cam[i - 1][1]))
+                ant = dd
+            pts.append((pos(cam[-1][0]), cam[-1][1]))
+            # limpa pontos repetidos seguidos
+            lim = [pts[0]]
+            for q in pts[1:]:
+                if q != lim[-1]:
+                    lim.append(q)
+            return lim
+        (cx, cy), L = e
+        for dd in DIRS:
+            n = ((cx + dd[0], cy + dd[1]), L)
+            if n not in fins and not ok(n[0], L):
+                continue
+            passo = PASSO * (1.414 if dd[0] and dd[1] else 1.0)
+            ng = g + passo + (VIRAGEM * PASSO if d and dd != d else 0.0)
+            if ng < custo.get(n, 1e9):
+                custo[n] = ng
+                veio[n] = (e, dd)
+                heapq.heappush(fila, (ng + h(n), ng, n, dd))
+        if not so_uma_face:
+            n = ((cx, cy), 1 - L)
+            if (n in fins or ok(n[0], 1 - L)) and cabe_via((cx, cy)):
+                ng = g + CUSTO_VIA * PASSO
+                if ng < custo.get(n, 1e9):
+                    custo[n] = ng
+                    veio[n] = (e, None)
+                    heapq.heappush(fila, (ng + h(n), ng, n, None))
+    return None
+
+
+def amostra(lista, A, B, rede, passo=0.4, r=0.18):
+    n = max(2, int(math.hypot(B[0] - A[0], B[1] - A[1]) / passo))
+    for i in range(n + 1):
+        lista.append((A[0] + (B[0] - A[0]) * i / n,
+                      A[1] + (B[1] - A[1]) * i / n, r, rede))
+
+
+# --- o que o DRC diz --------------------------------------------------------
+
+def estado(caminho):
+    """(redes cujas pistas violam, ligacoes por fazer POR REDE).
+
+    ⚠️ O ESTRAGO NO PLANO NAO E UM ERRO DE GEOMETRIA, e tem DUAS formas.
+    A obvia e `Zone [X] <-> Zone [X]`: o plano partido em ilhas. A outra, que
+    me escapou, e um **pad cortado do plano** — a pista em B.Cu passa entre o
+    pad e o cobre, o pad fica orfao, e isso aparece como uma ligacao por fazer
+    normalissima na rede GND. O plano continua inteiro. A terra e que nao.
+
+    Medido: um roteamento baixou o total de 47 para 20 e ao mesmo tempo levou
+    o `GND` de 0 para 5. O total melhorou 27; a placa perdeu cinco ligacoes de
+    terra, que sao as que menos se podem perder.
+
+    ⚠️ POR ISSO NAO SE CONTA UMA FORMA DE ESTRAGO. Conta-se o PERFIL: quantas
+    ligacoes faltam em cada rede. E a regra de aceitacao e uma so —
+    **nenhuma rede pode piorar**. Nao ha lista de sintomas a manter
+    actualizada, e nao ha sintoma novo que passe por nao estar na lista."""
+    subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--severity-error",
+                    "--severity-warning", "--format", "json", "-o", "/tmp/_v.json",
+                    caminho], capture_output=True)
+    d = json.load(open("/tmp/_v.json"))
+    # ⚠️ A ASSINATURA E (TIPO, REDE), E NAO A REDE. Subtrair a rede inteira da
+    # linha de base e demasiado grosseiro: a base tinha uma via solta em AGND, e
+    # com isso deixei passar uma folga de 0,193 mm numa pista de AGND, que e
+    # outro defeito na mesma rede. Uma isencao vale para o defeito que se viu,
+    # nunca para tudo o que partilhe o nome com ele.
+    import collections
+    maus = collections.Counter()
+    for x in d.get("violations", []):
+        if x["type"] not in ("clearance", "tracks_crossing", "shorting_items",
+                             "copper_edge_clearance", "track_dangling",
+                             "via_dangling", "copper_sliver",
+                             "holes_co_located", "hole_clearance"):
+            continue
+        for i in x.get("items", []):
+            m = re.search(r"(?:Track|Via) \[([^\]]+)\]", i.get("description", ""))
+            if m:
+                maus[(x["type"], m.group(1))] += 1
+    import collections
+    perfil = collections.Counter()
+    for x in d.get("unconnected_items", []):
+        redes = set()
+        for i in x.get("items", []):
+            m = re.search(r"\[([^\]]+)\]", i.get("description", ""))
+            if m:
+                redes.add(m.group(1))
+        for r in redes:
+            perfil[r] += 1
+    return maus, perfil
+
+
+def piorou(antes, depois):
+    """Chaves que ficaram PIORES. A regra de aceitacao, e a unica."""
+    return {k for k in set(antes) | set(depois) if depois[k] > antes[k]}
+
+
+def redes(chaves):
+    return sorted({k[1] if isinstance(k, tuple) else k for k in chaves})
+
+
+def texto_com(segs, vias, base):
+    L = ""
+    for (x1, y1), (x2, y2), w, rede, cam in segs:
+        L += ('\t(segment\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(width %g)\n'
+              '\t\t(layer "%s")\n\t\t(net "%s")\n\t\t(uuid "%s")\n\t)\n'
+              % (x1, y1, x2, y2, w, CAMADAS[cam], rede, uuid.uuid4()))
+    for x, y, rede in vias:
+        L += ('\t(via\n\t\t(at %g %g)\n\t\t(size 0.6)\n\t\t(drill 0.3)\n'
+              '\t\t(layers "F.Cu" "B.Cu")\n\t\t(net "%s")\n\t\t(uuid "%s")\n\t)\n'
+              % (x, y, rede, uuid.uuid4()))
+    i = base.rstrip().rfind(")")
+    return base[:i] + L + base[i:]
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
         return 2
     p = sys.argv[1]
-    # guarda: F.Cu com zona = a placa nao serve para este roteador (15cp)
-    _t = io.open(p, encoding="utf-8").read() if False else open(p, encoding="utf-8").read()
-    for _z in re.finditer(r'\(zone[\s\S]{0,400}?\(layers? ("[^"]+"[^)]*)\)', _t):
-        if "F.Cu" in _z.group(1):
-            sys.exit("RECUSO: ha zona de cobre em F.Cu nesta placa.\n"
-                     "        Este roteador corta planos (15co). Ponha o plano so\n"
-                     "        em B.Cu e costure os pads SMD com vias antes de correr.")
     escreve = "--escreve" in sys.argv
-    so = None
-    if "--rede" in sys.argv:
-        so = sys.argv[sys.argv.index("--rede") + 1]
+    so_uma = "--so-uma-face" in sys.argv
+    so = sys.argv[sys.argv.index("--rede") + 1] if "--rede" in sys.argv else None
+    t = io.open(p, encoding="utf-8").read()
+
+    for z in re.finditer(r'\(zone[\s\S]{0,400}?\(layers? ("[^"]+"[^)]*)\)', t):
+        if "F.Cu" in z.group(1):
+            sys.exit("RECUSO: ha zona de cobre em F.Cu nesta placa.\n"
+                     "        Ponha o plano so em B.Cu e costure os pads SMD com\n"
+                     "        vias (pcb_contorno.costura) antes de correr. Ver 15cp.")
+
     print("roteia v%s — %s%s" % (VERSAO, os.path.basename(p),
                                  "" if escreve else "  (ensaio)"), file=sys.stderr)
-    t = io.open(p, encoding="utf-8").read()
-    t_placa = t
     pads = pads_da_placa(t)
+    pistas = pistas_da_placa(t)
+    vias0 = vias_da_placa(t)
 
-    r = subprocess.run([KICAD, "pcb", "drc", "--format", "json", "-o", "/tmp/_r.json", p],
-                       capture_output=True, text=True)
+    subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--format", "json",
+                    "-o", "/tmp/_r.json", p], capture_output=True)
     d = json.load(open("/tmp/_r.json"))
     faltam = []
     for x in d.get("unconnected_items", []):
-        pts = []
+        pts, ds = [], []
         for i in x.get("items", []):
-            pos = i.get("pos") or {}
-            nm = re.search(r"\[([^\]]+)\]", i.get("description", ""))
-            if "x" in pos:
-                pts.append((pos["x"], pos["y"], nm.group(1) if nm else None))
-        if len(pts) == 2 and pts[0][2]:
+            po = i.get("pos") or {}
+            ds.append(i.get("description", ""))
+            nm = re.search(r"\[([^\]]+)\]", ds[-1])
+            if "x" in po:
+                pts.append((po["x"], po["y"], nm.group(1) if nm else None))
+        if len(pts) == 2 and pts[0][2] and not any("Zone [" in s for s in ds):
             faltam.append((pts[0][2], (pts[0][0], pts[0][1]), (pts[1][0], pts[1][1])))
     print("  %d ligacoes por rotear" % len(faltam), file=sys.stderr)
 
-    pistas = [tuple(map(float, m.groups()[:4])) + (m.group(5),)
-              for m in re.finditer(r"\(segment\s*\(start (" + NUM + r") (" + NUM
-                                   + r")\)\s*\(end (" + NUM + r") (" + NUM
-                                   + r")\)[\s\S]*?\(net \"([^\"]+)\"\)", t)]
-
-    def livre(x1, y1, x2, y2, rede, larg):
-        m = larg / 2 + FOLGA
-        for px, py, pr, pn in pads:
-            if pn == rede:
+    # camadas alcancaveis em cada ponta: pelo pad mais proximo
+    def camadas_em(q, rede):
+        melhor, dm = None, 1e9
+        for px, py, pr, pn, cams in pads:
+            if pn != rede:
                 continue
-            if dist_ponto_seg(px, py, x1, y1, x2, y2) < pr + m:
-                return False
-        for a, b, c, e, n in pistas:
-            if n == rede:
-                continue
-            if cruzam((x1, y1), (x2, y2), (a, b), (c, e)):
-                return False
-            for qx, qy in ((a, b), (c, e)):
-                if dist_ponto_seg(qx, qy, x1, y1, x2, y2) < m + 0.2:
-                    return False
-            for qx, qy in ((x1, y1), (x2, y2)):
-                if dist_ponto_seg(qx, qy, a, b, c, e) < m + 0.2:
-                    return False
-        return True
+            dd = math.hypot(px - q[0], py - q[1])
+            if dd < dm:
+                melhor, dm = cams, dd
+        return melhor if (melhor and dm < 0.6) else (0, 1)
 
-    # obstaculos: pads e pistas, como circulos
-    obst = [(px, py, pr, pn) for px, py, pr, pn in pads]
-    for a, b, c, e, n in pistas:
-        passos = max(2, int(math.hypot(c - a, e - b) / 0.5))
-        for i in range(passos + 1):
-            obst.append((a + (c - a) * i / passos, b + (e - b) * i / passos, 0.15, n))
-    # ⚠️ os limites sao o CONTORNO, e nao a extensao das pecas. Com a segunda,
-    # o A* saia da placa e deu 10 `copper_edge_clearance`.
+    obst = [[], []]
+    for px, py, pr, pn, cams in pads:
+        for L in cams:
+            obst[L].append((px, py, pr, pn))
+    for x1, y1, x2, y2, n, L in pistas:
+        amostra(obst[L], (x1, y1), (x2, y2), n, r=0.15)
+    for x, y, n in vias0:
+        obst[0].append((x, y, VIA_R, n))
+        obst[1].append((x, y, VIA_R, n))
+
     bordo = [tuple(map(float, m.groups())) for m in
              re.finditer(r'\(gr_line\s*\(start (' + NUM + r') (' + NUM + r')\)\s*\(end ('
-                         + NUM + r') (' + NUM + r')\)[\s\S]{0,120}?Edge\.Cuts', t_placa)]
-    if bordo:
-        bx = [v for b in bordo for v in (b[0], b[2])]
-        by = [v for b in bordo for v in (b[1], b[3])]
-        limites = (min(bx) + 0.6, min(by) + 0.6, max(bx) - 0.6, max(by) - 0.6)
-    else:
-        xs = [o[0] for o in obst]; ys = [o[1] for o in obst]
-        limites = (min(xs) - 1, min(ys) - 1, max(xs) + 1, max(ys) + 1)
+                         + NUM + r') (' + NUM + r')\)[\s\S]{0,120}?Edge\.Cuts', t)]
+    bx = [v for b in bordo for v in (b[0], b[2])]
+    by = [v for b in bordo for v in (b[1], b[3])]
+    limites = (min(bx) + 0.6, min(by) + 0.6, max(bx) - 0.6, max(by) - 0.6)
 
-    feitas, novas, curvas = [], [], 0
+    # ⚠️ A ORDEM MUDA O RESULTADO, num roteador guloso. Quem entra primeiro
+    # escolhe o corredor; quem entra depois fica com o que sobrar. Escolhida por
+    # medicao — ver o quadro no cabecalho.
+    ordem = "longa"
+    if "--ordem" in sys.argv:
+        ordem = sys.argv[sys.argv.index("--ordem") + 1]
+    if ordem == "longa":
+        faltam.sort(key=lambda f: -math.hypot(f[2][0] - f[1][0], f[2][1] - f[1][1]))
+    elif ordem == "curta":
+        faltam.sort(key=lambda f: math.hypot(f[2][0] - f[1][0], f[2][1] - f[1][1]))
+
+    novas, novas_vias, feitas, saltos = [], [], [], 0
     for rede, A, B in faltam:
         if so and rede != so:
             continue
         larg = LARGURA.get(rede, 0.25)
-        for caminho in ([A, B],
-                        [A, (B[0], A[1]), B],
-                        [A, (A[0], B[1]), B]):
-            ok = all(livre(caminho[i][0], caminho[i][1], caminho[i + 1][0],
-                           caminho[i + 1][1], rede, larg)
-                     for i in range(len(caminho) - 1))
-            if ok:
-                for i in range(len(caminho) - 1):
-                    novas.append((caminho[i], caminho[i + 1], larg, rede))
-                    pistas.append((caminho[i][0], caminho[i][1],
-                                   caminho[i + 1][0], caminho[i + 1][1], rede))
-                    # ⚠️ TAMBEM nos obstaculos. Sem isto o A* seguinte nao ve as
-                    # pistas que os percursos triviais deixaram, e atravessa-as:
-                    # 81 cruzamentos, e nenhum era culpa do metodo.
-                    amostra(obst, caminho[i], caminho[i + 1], rede)
-                feitas.append((rede, A, B, len(caminho) - 1))
-                break
-        else:
-            # ⚠️ so agora o A*, e nao antes: se a recta serve, a recta e melhor
-            # que qualquer caminho que uma busca invente.
-            g = Grelha(obst)
-            cam = astar(A, B, rede, larg, g, limites)
-            if cam and len(cam) >= 2:
-                for i in range(len(cam) - 1):
-                    novas.append((cam[i], cam[i + 1], larg, rede))
-                    pistas.append((cam[i][0], cam[i][1], cam[i + 1][0], cam[i + 1][1], rede))
-                    amostra(obst, cam[i], cam[i + 1], rede)
-                feitas.append((rede, A, B, len(cam) - 1))
-                curvas += 1
-    print("  %d roteadas (%d por contorno) · %d ficam para a pessoa"
-          % (len(feitas), curvas,
+        gs = [Grelha(obst[0]), Grelha(obst[1])]
+        cam = astar(A, B, camadas_em(A, rede), camadas_em(B, rede),
+                    rede, larg, gs, limites, so_uma)
+        if not cam or len(cam) < 2:
+            continue
+        usou_b = False
+        for i in range(len(cam) - 1):
+            (p1, L1), (p2, L2) = cam[i], cam[i + 1]
+            if L1 != L2:
+                # ⚠️ SEM REPETIR. Duas travessias no mesmo ponto dao dois furos
+                # coincidentes, e a fabrica broca duas vezes o mesmo sitio:
+                # `holes_co_located`. Uma via por ponto, e chega.
+                q = (round(p1[0], 3), round(p1[1], 3))
+                if any(abs(v[0] - q[0]) < 0.05 and abs(v[1] - q[1]) < 0.05
+                       for v in novas_vias) or \
+                   any(abs(v[0] - q[0]) < 0.05 and abs(v[1] - q[1]) < 0.05
+                       for v in vias0):
+                    saltos += 1
+                    continue
+                novas_vias.append((q[0], q[1], rede))
+                obst[0].append((p1[0], p1[1], VIA_R, rede))
+                obst[1].append((p1[0], p1[1], VIA_R, rede))
+                saltos += 1
+                continue
+            if p1 == p2:
+                continue
+            novas.append((p1, p2, larg, rede, L1))
+            amostra(obst[L1], p1, p2, rede, r=0.15)
+            if L1 == 1:
+                usou_b = True
+        feitas.append((rede, usou_b))
+
+    print("  %d roteadas · %d salto(s) de camada · %d ficam para a pessoa"
+          % (len(feitas), saltos,
              len([f for f in faltam if not so or f[0] == so]) - len(feitas)),
           file=sys.stderr)
-    por_rede = {}
-    for rede, _, _, n in feitas:
-        por_rede[rede] = por_rede.get(rede, 0) + 1
-    for k in sorted(por_rede):
-        print("     %-16s %d" % (k, por_rede[k]), file=sys.stderr)
-    def escrever(segs, texto):
-        import uuid
-        L = ""
-        for (x1, y1), (x2, y2), w, rede in segs:
-            L += ('\t(segment\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(width %g)\n'
-                  '\t\t(layer "F.Cu")\n\t\t(net "%s")\n\t\t(uuid "%s")\n\t)\n'
-                  % (x1, y1, x2, y2, w, rede, uuid.uuid4()))
-        i = texto.rstrip().rfind(")")
-        return texto[:i] + L + texto[i:]
 
-    def viola(caminho):
-        """Redes cujas pistas o DRC acusa. ⚠️ Com as zonas cheias, senao compara
-        com um preenchimento velho e acusa tudo."""
-        subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--severity-error",
-                        "--severity-warning", "--format", "json", "-o", "/tmp/_v.json",
-                        caminho], capture_output=True)
-        d = json.load(open("/tmp/_v.json"))
-        mas = set()
-        for x in d.get("violations", []):
-            if x["type"] not in ("clearance", "tracks_crossing", "shorting_items",
-                                 "copper_edge_clearance", "track_dangling"):
-                continue
-            for i in x.get("items", []):
-                m = re.search(r"Track \[([^\]]+)\]", i.get("description", ""))
-                if m:
-                    mas.add(m.group(1))
-        return mas
-
-    if escreve and novas:
-        # ⚠️ A FERRAMENTA CONFERE O PROPRIO TRABALHO. Escreve, corre o DRC, e as
-        # redes cujas pistas violarem alguma coisa sao RETIRADAS — voltam para a
-        # lista da pessoa. Duas pistas ficaram a 0,13 mm de um pad por uma razao
-        # que eu nao consegui isolar em tempo util; a resposta certa nao e
-        # persegui-la ate tarde, e a ferramenta nao entregar o que nao consegue
-        # provar. Entregar cobre que o DRC acusa e pior que nao entregar nada.
-        io.open(p, "w", encoding="utf-8").write(escrever(novas, t))
-        maus = viola(p)
-        if maus:
-            antes = len(novas)
-            novas = [s for s in novas if s[3] not in maus]
-            feitas = [f for f in feitas if f[0] not in maus]
-            io.open(p, "w", encoding="utf-8").write(escrever(novas, t))
-            print("  ⚠️ %d segmento(s) retirados: as redes %s violavam o DRC e "
-                  "voltam para a lista." % (antes - len(novas), " ".join(sorted(maus))),
-                  file=sys.stderr)
-            resta = viola(p)
-            if resta:
-                io.open(p, "w", encoding="utf-8").write(t)
-                raise SystemExit("*** ainda viola depois de retirar (%s). Nao gravo "
-                                 "nada." % " ".join(sorted(resta)))
-        import uuid
-        L = ""
-        for (x1, y1), (x2, y2), w, rede in novas:
-            L += ('\t(segment\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(width %g)\n'
-                  '\t\t(layer "F.Cu")\n\t\t(net "%s")\n\t\t(uuid "%s")\n\t)\n'
-                  % (x1, y1, x2, y2, w, rede, uuid.uuid4()))
-        i = t.rstrip().rfind(")")
-        io.open(p, "w", encoding="utf-8").write(t[:i] + L + t[i:])
-        print("  gravado: %d segmentos" % len(novas), file=sys.stderr)
-    elif not escreve:
+    if not escreve:
         print("  ensaio: nada gravado.", file=sys.stderr)
+        return 0
+    if not novas:
+        print("  nada a gravar.", file=sys.stderr)
+        return 0
+
+    # ⚠️ LINHA DE BASE PRIMEIRO. A placa ja pode chegar com defeitos que nao sao
+    # meus — havia um `via_dangling` em AGND vindo da costura — e sem os
+    # subtrair a ferramenta culpa-se pelo estrago alheio, retira as suas pistas
+    # todas e nao entrega nada. O que se mede e o DELTA, nunca o absoluto.
+    maus0, perfil0 = estado(p)
+    if maus0:
+        print("  linha de base ja com defeito: %s (nao e meu, e nao o conto)"
+              % " ".join("%s/%s" % k for k in sorted(maus0)), file=sys.stderr)
+
+    io.open(p, "w", encoding="utf-8").write(texto_com(novas, novas_vias, t))
+    maus, perfil = estado(p)
+    maus = piorou(maus0, maus)
+    pior = piorou(perfil0, perfil)
+    if maus:
+        antes = len(novas)
+        rm = set(redes(maus))
+        novas = [s for s in novas if s[3] not in rm]
+        novas_vias = [v for v in novas_vias if v[2] not in rm]
+        feitas = [f for f in feitas if f[0] not in rm]
+        io.open(p, "w", encoding="utf-8").write(texto_com(novas, novas_vias, t))
+        print("  ⚠️ %d segmento(s) retirados: %s violavam o DRC."
+              % (antes - len(novas), " ".join(redes(maus))), file=sys.stderr)
+        maus, perfil = estado(p)
+        maus = piorou(maus0, maus)
+        pior = piorou(perfil0, perfil)
+
+    if pior:
+        # ⚠️ BISSECCAO, e nao "tira todas as que passaram por B.Cu". A maioria
+        # das travessias e inofensiva: o cobre flui a volta. So se procura a
+        # que corta. Comeca-se por tirar TODAS e confirmar que zera — se nem
+        # assim zerar, o plano ja estava partido antes de eu chegar, e nao ha
+        # nada a retirar.
+        print("  ⚠️ %s piorou. A procurar a travessia culpada."
+              % " ".join(redes(pior)), file=sys.stderr)
+        cands = sorted({r for r, ub in feitas if ub})
+
+        def com(exclui):
+            io.open(p, "w", encoding="utf-8").write(texto_com(
+                [s for s in novas if s[3] not in exclui],
+                [v for v in novas_vias if v[2] not in exclui], t))
+            return piorou(perfil0, estado(p)[1])
+
+        if com(set(cands)):
+            io.open(p, "w", encoding="utf-8").write(texto_com(novas, novas_vias, t))
+            print("     ja estava assim antes destas travessias. Nao retiro nada.",
+                  file=sys.stderr)
+        else:
+            manter = []
+            for c in cands:                 # devolve-as uma a uma; fica o que couber
+                if not com(set(cands) - set(manter) - {c}):
+                    manter.append(c)
+            fora = [c for c in cands if c not in manter]
+            com(set(fora))
+            novas = [s for s in novas if s[3] not in fora]
+            novas_vias = [v for v in novas_vias if v[2] not in fora]
+            feitas = [f for f in feitas if f[0] not in fora]
+            print("     %d rede(s) devolvidas a pessoa: %s"
+                  % (len(fora), " ".join(fora) or "—"), file=sys.stderr)
+
+    maus, perfil = estado(p)
+    maus = piorou(maus0, maus)
+    pior = piorou(perfil0, perfil)
+    if maus or pior:
+        io.open(p, "w", encoding="utf-8").write(t)
+        raise SystemExit("*** ainda viola (%s) ou piora (%s). Nao gravo nada."
+                         % (" ".join(redes(maus)) or "—",
+                            " ".join(redes(pior)) or "—"))
+    print("  gravado: %d segmentos · %d vias · nenhuma rede piorou"
+          % (len(novas), len(novas_vias)), file=sys.stderr)
     return 0
 
 

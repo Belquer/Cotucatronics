@@ -41,3 +41,12 @@ fp-info-cache
 # registo do que foi para a fabrica; a previa e so para olhar)
 caixa/*_previa.svg
 __pycache__/
+
+# pacotes de fabrico: sao gerados por para_fabrica.py, e um pacote guardado
+# no repositorio envelhece em silencio enquanto a placa muda
+fabrica/
+
+# ficheiros de trabalho do faz_placa: ferrolho e copias intermedias
+kicad/.faz_placa.lock
+*.kicad_pcb.limpo
+*.kicad_pcb.melhor

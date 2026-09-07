@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.9.1 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.10.0 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.9.1"
+VERSAO = "0.10.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -248,7 +248,7 @@ ZONAS_CEREBRO = [
     # ⚠️ J10 saiu: era o header de 5 vias da ponte por fio, e o ESP32 passou a
     # soquete (U3), que e peca UNICA por ser grande de mais para a grelha.
     ("soquete", 118, 34, 32, 16.0, 19.0,
-     ["J11", "J15", "J16", "R50", "R51", "NT1", "J12", "J13"]),
+     ["J11", "J15", "J16", "R50", "R51", "J12", "J13"]),
     ("energia", 152, 34, 44, 14.0, 13.0,
      ["F1", "D1", "D2", "C2", "C4", "R8", "R9", "J3", "J4", "J2", "C3"]),
 ]
@@ -271,7 +271,21 @@ ZONAS_CEREBRO = [
 # o suficiente para o topo ficar em y=60; sobram 10 mm ate a aresta de baixo.
 # O `evita_arcade` nao lhe toca porque as pecas UNICAS sao colocadas a mao —
 # e foi por isso que ela escapou a primeira passagem e so o portao a apanhou.
+# ⚠️ A PONTE FICA NA FRONTEIRA DA ILHA, e nao onde calhar. O `NT1` e o UNICO
+# ponto onde AGND encontra GND, e estava em (134, 72) — a 57 mm da ilha, que
+# acaba em x=75. A topologia ate estava certa (continuava a ser uma ponte so),
+# mas toda a corrente de retorno analogica voltava por uma pista de 0,25 mm em
+# vez de por cobre largo, e uma ponte com impedancia e meia ponte.
+#
+# O footprint tem os dois pads a ±2 mm em x. Com o centro em x=75, o pad 1
+# (AGND) cai dentro da ilha e o pad 2 (GND) cai fora, no plano de GND: a ponte
+# passa a ser plano-a-plano, que e o que ela devia ter sido sempre.
+#
+# ⚠️ E foi a COSTURA que denunciou isto, ao recusar-se a descer uma via para um
+# plano que ali nao existia. O defeito nao era a via: era o sitio da ponte. Uma
+# ferramenta que recusa e diz porque, encontra o que ninguem foi procurar.
 UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 25.0, 90),
+                  "NT1": (75.0, 81.0, 0),
                   "C1": (178.0, 108.0, 0), "J1": (156.0, 108.0, 0),
                   # ⚠️ os WIMA de filme tem 13 mm de altura e ~18 de corpo: nao
                   # cabem na grelha. Vao para a faixa livre entre o pre-amp
@@ -307,7 +321,18 @@ UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 25.0, 90),
 
 
 def grelha(t, zonas, unicos):
-    """Arruma cada lista de refs em grelha dentro da sua zona."""
+    """Arruma cada lista de refs em grelha dentro da sua zona.
+
+    ⚠️ NINGUEM EM DOIS SITIOS. Uma ref numa grelha E em `unicos` fica com a
+    posicao de `unicos` — ate o `evita_arcade` correr, que recalcula a grelha e
+    a devolve em silencio ao sitio antigo. Mudei o NT1 para a fronteira da ilha,
+    o ficheiro continuou a mostra-lo onde estava, e nenhum passo se queixou.
+    Uma colocacao que se desfaz sem dizer nada e pior que uma que falha."""
+    duplas = [r for z in zonas for r in z[6] if r in unicos]
+    if duplas:
+        raise SystemExit("*** %s esta numa grelha E em UNICOS. Escolha um: a "
+                         "grelha volta a coloca-lo e a sua posicao explicita "
+                         "perde-se sem aviso." % " ".join(duplas))
     n = 0
     for nome, x0, y0, larg, px, py in [(z[0], z[1], z[2], z[3], z[4], z[5]) for z in zonas]:
         refs = dict((z[0], z[6]) for z in zonas)[nome]
@@ -412,7 +437,18 @@ def costura(t, nome):
     como 9 mm. O coto e a ligacao, e sai na mesma camada do pad.
 
     ⚠️ E o teste de espaco olha pads E PISTAS. A primeira versao so olhou pads,
-    e enfiou duas vias a 0,10 e 0,15 mm de pistas ja roteadas a mao."""
+    e enfiou duas vias a 0,10 e 0,15 mm de pistas ja roteadas a mao.
+
+    ⚠️⚠️ E SO SE COSTURA AO PLANO QUE PASSA POR BAIXO. Uma via desce a camada
+    de baixo a procura do cobre da sua rede; se ali o cobre for de OUTRA rede,
+    a via nao chega a nada e o DRC chama-lhe `via_dangling`. Aconteceu com o
+    NT1 — a ponte entre AGND e GND — que esta em (132, 72), fora da ilha de
+    AGND, que vai de x 22 a 75: uma via para um plano que ali nao existe.
+
+    Isto **nao e um erro da costura, e um sintoma**: um pad de terra analogica
+    fora da ilha da terra analogica e uma pergunta de desenho, nao de fabrico.
+    A costura recusa a via e diz de quem e o pad, para a pergunta chegar a
+    quem a pode responder."""
     import math
     t = re.sub(r'\n\t\(via[\s\S]*?\n\t\)', '', t)
     terras = {"GND", "AGND"}
@@ -456,10 +492,31 @@ def costura(t, nome):
                 return False
         return True
 
-    vias, postas = [], []
+    # onde e que o plano de cada rede realmente esta
+    planos_de = {}
+    for rede_z, camada, forma in ZONAS_COBRE.get(nome, []):
+        if camada != "B.Cu":
+            continue
+        if forma == "ilha":
+            planos_de[rede_z] = ILHA_AGND[nome]
+        else:
+            planos_de[rede_z] = None            # a placa toda
+
+    def ha_plano(rede_p, x, y):
+        if rede_p not in planos_de:
+            return False
+        cx = planos_de[rede_p]
+        if cx is None:
+            return True
+        return cx[0] <= x <= cx[2] and cx[1] <= y <= cx[3]
+
+    vias, postas, orfaos = [], [], []
     for x, y, r, rede, tipo in ocup:
         if rede not in terras or tipo == "thru_hole":
             continue          # o passante ja atravessa: nao precisa de via
+        if not ha_plano(rede, x, y):
+            orfaos.append((rede, x, y))
+            continue
         for dx, dy in ((0, r + 0.9), (0, -(r + 0.9)), (r + 0.9, 0), (-(r + 0.9), 0),
                        (r + 1.3, r + 1.3), (-(r + 1.3), -(r + 1.3))):
             vx, vy = x + dx, y + dy
@@ -480,6 +537,9 @@ def costura(t, nome):
         L += ('\t(segment\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(width 0.4)\n'
               '\t\t(layer "F.Cu")\n\t\t(net "%s")\n\t\t(uuid "%s")\n\t)\n'
               % (round(px, 3), round(py, 3), round(vx, 3), round(vy, 3), rede, u()))
+    for rede_o, x, y in orfaos:
+        print("     ⚠️ pad de %s em (%.1f, %.1f) esta FORA do plano de %s: nao "
+              "costuro. Isto e uma pergunta de desenho." % (rede_o, x, y, rede_o))
     i = t.rstrip().rfind(')')
     return t[:i] + L + t[i:], len(vias)
 
@@ -1132,7 +1192,14 @@ def main():
     t = contorno(t, alvo)
     t = marca(t, nome, alvo)
     t, n_z = planos(t, nome, alvo)
-    t, n_v = costura(t, nome)
+    # ⚠️ A COSTURA VEM DEPOIS DA COLOCACAO, e nao aqui. Ela le a posicao de cada
+    # pad para saber onde por a via; se correr antes de as pecas serem movidas,
+    # cose os pads onde eles AINDA NAO ESTAO e deixa as vias para tras.
+    # Escapou por a placa ja chegar colocada — a segunda corrida e idempotente e
+    # os numeros batem. So se ve numa peca que muda de sitio, e foi assim que
+    # apareceu: mudei o NT1 e a costura continuou a falar do sitio antigo.
+    # ⚠️ Um defeito de ordem que so aparece quando alguma coisa muda e um
+    # defeito que passa em todos os testes menos no dia em que interessa.
     postos = []
     for ref, furo in FIXOS.get(nome, {}).items():
         alvo_xy = da_tampa(nome, alvo, TAMPA[furo])
@@ -1149,6 +1216,7 @@ def main():
         for ref, de, para, outro in trocas:
             print("     arcade: %-4s sai de (%g,%g) para (%g,%g), troca com %s"
                   % (ref, de[0], de[1], para[0], para[1], outro), file=sys.stderr)
+    t, n_v = costura(t, nome)
     if alvo["assenta"] == "fundo":
         relato += confere_furos(t, alvo)
         # ⚠️ FRENTE_CEREBRO ainda nao esta decidido — ver a constante.

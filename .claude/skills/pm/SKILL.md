@@ -97,6 +97,29 @@ eixos que saem por ela · **e a coluna de ar** (o que desce da tampa por cima da
 placa). O último não tem ferramenta que o veja — é o que precisa de portão
 escrito à mão.
 
+## 4b. O que a automação mudou no caminho crítico
+
+Antes, "placa pronta para encomendar" era um marco de duração desconhecida:
+dependia de alguém se sentar a rotear, e a estimativa era uma opinião. Agora é
+**um comando de cerca de meia hora** (`faz_placa.py todas`) que apaga o cobre,
+recoloca, costura, roteia nas três ordens de ataque, escolhe a melhor medindo,
+arruma a serigrafia e passa pelo portão da fábrica.
+
+Isso muda duas coisas no planeamento:
+
+1. **Refazer deixou de ser caro.** Uma mudança de colocação já não custa o
+   roteamento todo outra vez em horas de pessoa — custa meia hora de máquina.
+   Portanto decisões que antes se adiavam por medo do retrabalho (mudar uma
+   peça de sítio, mexer na caixa) passam a poder tomar-se cedo, que é quando
+   valem mais.
+2. **O que sobra é o que a máquina não fecha.** O caminho crítico da placa
+   passou a ser exactamente essa lista — e é uma lista curta e nomeada, não uma
+   nuvem. Estimar passou a ser contar ligações, não adivinhar.
+
+⚠️ **E o portão não é uma formalidade no fim: é o marco.** "Pronto para
+encomendar" tem uma definição executável — geometria zero, planos inteiros,
+zero ligações por fazer — e nenhuma reunião a pode declarar por outra via.
+
 ## 5. Estimar sem inventar
 
 > **Prazo dado por uma fábrica é dado; prazo de trabalho meu é estimativa.**
