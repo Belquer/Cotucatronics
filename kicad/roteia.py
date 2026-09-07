@@ -1,16 +1,24 @@
 #!/usr/bin/env python3
 """roteia — as pistas FACEIS, e so essas.
 
-⚠️⚠️ NAO USAR EM PLACAS COM PLANO DE COBRE NA MESMA CAMADA DAS PISTAS. ⚠️⚠️
+⚠️⚠️ SO ESCREVE EM F.Cu, E EXIGE QUE F.Cu NAO TENHA ZONA DE COBRE. ⚠️⚠️
 
-Este roteador nao ve zonas. Numa placa com plano de terra em F.Cu, cada pista
-que o atravessa CORTA-O — o cobre recua dos dois lados e o plano fica em
-pedacos. Medido no cerebro rev B: `AGND` passou de 1 ligacao por fazer para 8,
-com o DRC a dizer GEOMETRIA 0 o tempo todo, porque do ponto de vista dele nada
-estava errado. Cicatriz 15co.
+Este roteador nao ve zonas, e nao aprendeu a ver: o defeito foi resolvido a
+montante, no desenho. Enquanto houve plano em F.Cu, cada pista que o
+atravessava CORTAVA-O — o cobre recua dos dois lados e o plano fica em pedacos.
+Medido no cerebro rev B: `AGND` passou de 1 ligacao por fazer para 8, com o DRC
+a dizer GEOMETRIA 0 o tempo todo, porque do ponto de vista dele nada estava
+errado. Cicatriz 15co.
 
-Serve para placas de dois lados sem plano, ou para uma camada que nao tenha
-zona. Ate saber ler zonas, mais nada.
+⚠️ E A LICAO NAO E "ENSINA O ROTEADOR A VER ZONAS". E que cobre nas DUAS
+camadas nao deixa camada nenhuma para sinal, e um dois-lados so tem duas. O
+arranjo certo e plano solido em B.Cu, sinal em F.Cu, e uma via em cada pad de
+terra a descer ao plano (`costura()` no pcb_contorno). Ai a pergunta "como e
+que o roteador evita cortar o plano" deixa de existir — nao ha plano no
+caminho dele. Meia sessao de roteador esperto, ou vinte linhas de desenho
+certo. Cicatriz 15cp.
+
+Guarda de uso: recusa-se a correr se encontrar `(zone` em F.Cu.
 
 ⚠️ NAO E UM AUTOROTEADOR. Nao procura caminho: prova tres percursos triviais —
 a direito, em L pelo horizontal, em L pelo vertical — e se nenhum estiver livre
@@ -38,7 +46,7 @@ USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
 """
 import io, json, math, os, re, subprocess, sys
 
-VERSAO = "0.4.0"
+VERSAO = "0.5.0"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 FOLGA = 0.35            # entre a pista e o que nao e dela
@@ -210,6 +218,13 @@ def main():
         print(__doc__)
         return 2
     p = sys.argv[1]
+    # guarda: F.Cu com zona = a placa nao serve para este roteador (15cp)
+    _t = io.open(p, encoding="utf-8").read() if False else open(p, encoding="utf-8").read()
+    for _z in re.finditer(r'\(zone[\s\S]{0,400}?\(layers? ("[^"]+"[^)]*)\)', _t):
+        if "F.Cu" in _z.group(1):
+            sys.exit("RECUSO: ha zona de cobre em F.Cu nesta placa.\n"
+                     "        Este roteador corta planos (15co). Ponha o plano so\n"
+                     "        em B.Cu e costure os pads SMD com vias antes de correr.")
     escreve = "--escreve" in sys.argv
     so = None
     if "--rede" in sys.argv:

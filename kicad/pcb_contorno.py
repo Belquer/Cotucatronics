@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.8.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.9.1 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -12,7 +12,7 @@ outro — que e exactamente a familia de erro que este projecto ja pagou.
 Houve tres outras fontes plausiveis para esta caixa — desenhos de uma que nunca
 foi cortada, e o corte em nogueira de 6,4, que e real mas e OUTRA caixa. Todas
 apagadas a 06/09 (estao no historico). A que esta a ser cortada e a do
-`caixa/cotuca_caixa_corte.py`: acrilico cast de 6,0, frente 55, tras 80, TRES
+`caixa/cotuca_caixa_corte.py`: acrilico de 3,0, frente 55, tras 80, TRES
 arcade e nenhum berco. Este ficheiro IMPORTA esse gerador.
 
 ⚠️ O QUE ELE NAO FAZ: colocar o resto, rotear, e decidir seja o que for de
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.8.0"
+VERSAO = "0.9.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -380,11 +380,108 @@ def u():
 # Um plano de GND desenhado antes da P3 teria criado essa segunda ponte com ar
 # de melhoria: mais cobre, menos impedancia, e um anel a mais.
 ILHA_AGND = {"cerebro": (22.0, 30.0, 75.0, 120.0)}      # x0, y0, x1, y1 no KiCad
+# ⚠️ PLANO SO EM B.Cu, e sinal em F.Cu. A primeira versao punha cobre nas DUAS
+# camadas — e isso nao deixa camada livre para sinal: toda a pista atravessa um
+# plano, e atravessar um plano nao e passar por cima dele, e CORTA-LO. Medido: o
+# roteamento automatico partiu a ilha de AGND em pedacos e o `AGND` por ligar
+# subiu de 1 para 8, com o DRC a dizer geometria zero o tempo todo (15co).
+#
+# Em troca, cada pad de terra em F.Cu precisa de uma VIA para chegar ao plano —
+# e essa e a `costura()` mais abaixo. E o preco normal de um dois-lados, e
+# paga-se uma vez.
 ZONAS_COBRE = {
-    "cerebro": [("GND", "B.Cu", None), ("GND", "F.Cu", None),
-                ("AGND", "B.Cu", "ilha"), ("AGND", "F.Cu", "ilha")],
-    "painel":  [("GND", "B.Cu", None), ("GND", "F.Cu", None)],
+    "cerebro": [("GND", "B.Cu", None), ("AGND", "B.Cu", "ilha")],
+    "painel":  [("GND", "B.Cu", None)],
 }
+
+
+def costura(t, nome):
+    """Uma via por cada pad de terra, para ele chegar ao plano em B.Cu.
+
+    ⚠️ SEM ISTO O PLANO SO EM B.Cu DESLIGA TUDO. Um pad SMD vive em F.Cu e nao
+    ve o cobre da outra camada; a via e o unico caminho. Sao ~47 vias nesta
+    placa, e e o preco normal de um dois-lados com plano.
+
+    ⚠️ E A VIA VAI PARA O LADO, nao em cima do pad. Via no pad suga solda por
+    capilaridade na montagem e deixa a junta pobre — e a JLC monta o lado SMD
+    desta placa.
+
+    ⚠️⚠️ E ENTAO A VIA PRECISA DE UM COTO ATE AO PAD. A primeira versao pos as
+    vias ao lado e nao as ligou a nada: o DRC devolveu `via_dangling` em cada
+    uma. Cobre adjacente nao e cobre ligado — 0,9 mm de vazio isola tao bem
+    como 9 mm. O coto e a ligacao, e sai na mesma camada do pad.
+
+    ⚠️ E o teste de espaco olha pads E PISTAS. A primeira versao so olhou pads,
+    e enfiou duas vias a 0,10 e 0,15 mm de pistas ja roteadas a mao."""
+    import math
+    t = re.sub(r'\n\t\(via[\s\S]*?\n\t\)', '', t)
+    terras = {"GND", "AGND"}
+    ocup = []
+    for m in re.finditer(r'\n\t\(footprint ', t):
+        j = m.start() + 1
+        d = 0
+        for k in range(j, len(t)):
+            if t[k] == "(":
+                d += 1
+            elif t[k] == ")":
+                d -= 1
+                if d == 0:
+                    bl = t[j:k + 1]
+                    break
+        a = re.search(r'\(at (' + NUM + r') (' + NUM + r')(?: (' + NUM + r'))?\)', bl)
+        fx, fy = float(a.group(1)), float(a.group(2))
+        ang = math.radians(float(a.group(3) or 0))
+        for pm in re.finditer(r'\(pad "[^"]*" (\w+)[\s\S]*?\(at (' + NUM + r') ('
+                              + NUM + r')(?: ' + NUM + r')?\)[\s\S]*?\(size (' + NUM
+                              + r') (' + NUM + r')\)([\s\S]{0,400}?)\(uuid', bl):
+            tipo, px, py, sw, sh, resto = pm.groups()
+            px, py, sw, sh = float(px), float(py), float(sw), float(sh)
+            n = re.search(r'\(net "([^"]+)"\)', resto)
+            ocup.append((fx + px * math.cos(ang) + py * math.sin(ang),
+                         fy - px * math.sin(ang) + py * math.cos(ang),
+                         max(sw, sh) / 2, n.group(1) if n else None, tipo))
+    pistas = []
+    for sm in re.finditer(r'\(segment\s*\(start (' + NUM + r') (' + NUM + r')\)\s*'
+                          r'\(end (' + NUM + r') (' + NUM + r')\)\s*\(width (' + NUM
+                          + r')\)\s*\(layer "F\.Cu"\)', t):
+        x1, y1, x2, y2, w = (float(v) for v in sm.groups())
+        pistas.append((x1, y1, x2, y2, w / 2))
+
+    def longe_das_pistas(vx, vy, folga=0.55):
+        for x1, y1, x2, y2, r in pistas:
+            dx, dy = x2 - x1, y2 - y1
+            L2 = dx * dx + dy * dy
+            u = 0.0 if L2 == 0 else max(0.0, min(1.0, ((vx - x1) * dx + (vy - y1) * dy) / L2))
+            if math.hypot(vx - (x1 + u * dx), vy - (y1 + u * dy)) < r + 0.3 + folga:
+                return False
+        return True
+
+    vias, postas = [], []
+    for x, y, r, rede, tipo in ocup:
+        if rede not in terras or tipo == "thru_hole":
+            continue          # o passante ja atravessa: nao precisa de via
+        for dx, dy in ((0, r + 0.9), (0, -(r + 0.9)), (r + 0.9, 0), (-(r + 0.9), 0),
+                       (r + 1.3, r + 1.3), (-(r + 1.3), -(r + 1.3))):
+            vx, vy = x + dx, y + dy
+            if any(math.hypot(vx - a, vy - b) < c + 0.55 for a, b, c, _, _ in ocup):
+                continue
+            if any(math.hypot(vx - a, vy - b) < 1.1 for a, b in postas):
+                continue
+            if not longe_das_pistas(vx, vy):
+                continue
+            vias.append((vx, vy, rede, x, y))
+            postas.append((vx, vy))
+            break
+    L = ""
+    for vx, vy, rede, px, py in vias:
+        L += ('\t(via\n\t\t(at %g %g)\n\t\t(size 0.6)\n\t\t(drill 0.3)\n'
+              '\t\t(layers "F.Cu" "B.Cu")\n\t\t(net "%s")\n\t\t(uuid "%s")\n\t)\n'
+              % (round(vx, 3), round(vy, 3), rede, u()))
+        L += ('\t(segment\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(width 0.4)\n'
+              '\t\t(layer "F.Cu")\n\t\t(net "%s")\n\t\t(uuid "%s")\n\t)\n'
+              % (round(px, 3), round(py, 3), round(vx, 3), round(vy, 3), rede, u()))
+    i = t.rstrip().rfind(')')
+    return t[:i] + L + t[i:], len(vias)
 
 
 def zona(rede, camada, pts, prio=0):
@@ -1035,6 +1132,7 @@ def main():
     t = contorno(t, alvo)
     t = marca(t, nome, alvo)
     t, n_z = planos(t, nome, alvo)
+    t, n_v = costura(t, nome)
     postos = []
     for ref, furo in FIXOS.get(nome, {}).items():
         alvo_xy = da_tampa(nome, alvo, TAMPA[furo])
@@ -1060,7 +1158,7 @@ def main():
     print("  %s: contorno %g x %g mm em (%g, %g)"
           % (nome, alvo["w"], alvo["h"], alvo["origem"][0], alvo["origem"][1]),
           file=sys.stderr)
-    relato.append("     %d zona(s) de cobre" % n_z)
+    relato.append("     %d zona(s) de cobre em B.Cu · %d vias de costura" % (n_z, n_v))
     for l in relato:
         print(l, file=sys.stderr)
     for ref, furo, alvo_xy, eixo, xy in postos:
