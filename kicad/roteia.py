@@ -45,11 +45,13 @@ fantasma. E antes de dizeres que o `kicad-cli` nao faz X, corre o `--help`:
 escrevi num commit que ele nao sabia encher zonas, e a flag chamava-se
 exactamente aquilo.
 
-USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME] [--so-uma-face]
+USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
+      [--so-uma-face] [--folga MM] [--passo MM]
+      [--caixa MM] [--tecto N] [--guarda-plano]
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.5.0"
+VERSAO = "1.9.1"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
@@ -77,7 +79,41 @@ KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # parece obvio que andam juntas.
 FOLGA = 0.35            # entre a pista e o que nao e dela (regra da placa: 0,20)
 PASSO = 0.25            # mm por celula
+
+# ⚠️⚠️ E POR ISSO EXISTE A PASSADA APERTADA, no fim e so sobre o que sobrou.
+#
+# Com a folga larga o roteador NAO CONSEGUE SAIR DE ENTRE OS PINOS DE UM
+# CONECTOR, e isso nao e falta de espaco na placa — e aritmetica. Num header de
+# 2,54 mm com pads de 1,70, o vao entre dois pads vizinhos e 0,840 mm. Medido no
+# J14, o cabo plano de 26 pinos.
+#
+#   corredor preciso = largura/2 + folga + margem-da-grelha, de cada lado
+#   com folga 0,35 e passo 0,25:  0,125 + 0,35 + 0,178 = 0,653  -> 1,306 > 1,27  NAO CABE
+#   com folga 0,20 e passo 0,127: 0,125 + 0,20 + 0,090 = 0,415  -> 0,830 < 1,27  CABE
+#
+# (1,27 e a distancia do centro do corredor ao centro de cada pad.)
+#
+# Foi isto que fechou o cerebro em 22 e o painel em 10: 9 falhas no J14, 8 no
+# J1, 11 na Daisy — todas peças de duas filas, e nenhuma delas com pistas a
+# volta. Um sitio com zero pistas num raio de 8 mm nao esta congestionado: esta
+# fechado por uma regra minha.
+#
+# ⚠️ E APERTA-SE SO NO FIM. Apertar desde o inicio mede-se PIOR (23 -> 34): com
+# mais espaco o roteador ganancioso enfia pistas cedo e fecha corredores de que
+# as ligacoes seguintes precisavam. No fim nao ha esse risco — o que ja foi
+# roteado ja la esta, e a folga apertada so serve para entrar onde a larga nao
+# entrava. O DRC valida na mesma, e a retraccao continua a existir.
+#
+# ⚠️ A margem da grelha e `PASSO * 0.71` — meia diagonal — porque o A* so testa
+# CENTROS de celula. Apertar a malha aperta essa margem: e por isso que a
+# passada apertada tambem muda o passo, e nao so a folga.
 VIRAGEM = 3.0           # o que custa dobrar, em celulas
+# ⚠️ O TECTO CONTROLA O TEMPO E TAMBEM A QUALIDADE, e nao no sentido esperado.
+# Medido de raiz: 300k -> 19 ligacoes por fazer · 500k -> 22, e mais lento. Um
+# tecto maior nao acha mais caminhos: deixa o roteador guloso teimar em ligacoes
+# dificeis, gastar minutos nelas e fechar corredores de que as seguintes
+# precisavam. Quem paga o tecto sao as buscas SEM solucao.
+TECTO = 300000          # nos que uma busca pode gastar antes de desistir
 CUSTO_VIA = 30.0        # ⚠️ em celulas. Alto de proposito: a via abre fenda no
                         # plano, portanto so se salta quando nao ha volta a dar.
 VIA_R = 0.3             # raio do anel da via
@@ -238,7 +274,14 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
         # EXACTAMENTE as mesmas, tres vezes mais devagar. Uma busca que nao
         # acha em 300 mil nos nao acha em 900 mil — nao lhe falta paciencia,
         # falta-lhe caminho. Voltou a 300k.
-        if limite > 300000:
+        # ⚠️ O TECTO E O QUE CONTROLA O TEMPO, e nao a qualidade. Medido: uma
+        # busca que nao acha em 300 mil nos nao acha em 900 mil — fecha
+        # exactamente as mesmas ligacoes, tres vezes mais devagar. E quando se
+        # fecham celulas (a guarda dos pads do plano em B.Cu), o numero de
+        # buscas SEM SOLUCAO cresce, e cada uma delas gasta o tecto inteiro
+        # antes de desistir: a mesma corrida passou de 75 segundos para treze
+        # minutos so por isso. Quem paga o tecto sao as impossiveis.
+        if limite > TECTO:
             return None
         _, g, e, d = heapq.heappop(fila)
         if e in fins:
@@ -380,6 +423,17 @@ def main():
     escreve = "--escreve" in sys.argv
     so_uma = "--so-uma-face" in sys.argv
     so = sys.argv[sys.argv.index("--rede") + 1] if "--rede" in sys.argv else None
+    global FOLGA, PASSO, TECTO
+    if "--tecto" in sys.argv:
+        TECTO = int(sys.argv[sys.argv.index("--tecto") + 1])
+    if "--folga" in sys.argv:
+        FOLGA = float(sys.argv[sys.argv.index("--folga") + 1])
+    if "--passo" in sys.argv:
+        PASSO = float(sys.argv[sys.argv.index("--passo") + 1])
+    caixa = float(sys.argv[sys.argv.index("--caixa") + 1]) if "--caixa" in sys.argv else 0.0
+    if FOLGA < 0.20:
+        sys.exit("RECUSO: folga %.3f abaixo da regra da placa (0,20). O DRC "
+                 "recusaria tudo o que eu escrevesse." % FOLGA)
     t = io.open(p, encoding="utf-8").read()
 
     for z in re.finditer(r'\(zone[\s\S]{0,400}?\(layers? ("[^"]+"[^)]*)\)', t):
@@ -388,8 +442,9 @@ def main():
                      "        Ponha o plano so em B.Cu e costure os pads SMD com\n"
                      "        vias (pcb_contorno.costura) antes de correr. Ver 15cp.")
 
-    print("roteia v%s — %s%s" % (VERSAO, os.path.basename(p),
-                                 "" if escreve else "  (ensaio)"), file=sys.stderr)
+    print("roteia v%s — %s%s  (folga %.2f · passo %.3f)"
+          % (VERSAO, os.path.basename(p), "" if escreve else "  ensaio",
+             FOLGA, PASSO), file=sys.stderr)
     pads = pads_da_placa(t)
     pistas = pistas_da_placa(t)
     vias0 = vias_da_placa(t)
@@ -421,10 +476,38 @@ def main():
                 melhor, dm = cams, dd
         return melhor if (melhor and dm < 0.6) else (0, 1)
 
+    # ⚠️ NA CAMADA DO PLANO, OS PADS DO PLANO AFASTAM MAIS QUEM NAO E DELES.
+    # Aritmetica, medida entre dois pads de um header de 2,54: sobram 0,42 mm de
+    # cada lado do corredor. Para caberem la a pista E o cobre do plano a
+    # contornar o pad, sao precisos
+    #     pista/2 0,125 + folga 0,20 + cobre minimo 0,25 + folga 0,20 = 0,775
+    # Nao cabe. Uma pista em B.Cu entre dois pinos de conector nao divide o
+    # espaco com o plano: expulsa-o, e os pinos de terra do conector ficam
+    # orfaos. Era o que faziam as tres redes que a retraccao devolvia sempre.
+    #
+    # Marcar isto como obstaculo custa alguns caminhos em B.Cu e poupa a
+    # retraccao de os descobrir um a um, a um DRC cada.
+    COBRE_MIN = 0.25
+    redes_de_plano = {z.group(1) for z in
+                      re.finditer(r'\(zone[\s\S]{0,400}?\(net_name "([^"]*)"\)', t)
+                      if z.group(1)}
+    # ⚠️ DESLIGADA POR OMISSAO, por medicao. A guarda parece obviamente certa —
+    # impede de graca um estrago que a retraccao so descobre a um DRC cada — mas
+    # medida de raiz, ate convergir, com duas passadas largas e a apertada:
+    #
+    #     tecto 300k · sem guarda -> 19 por fazer · geometria 0 · 227 s   <- fica
+    #     tecto 300k · com guarda -> 20 por fazer · geometria 0 · 243 s
+    #     tecto 500k · com guarda -> 22 por fazer · geometria 0 · 274 s
+    #
+    # Fecha celulas, e as buscas que passam a nao ter solucao gastam o tecto
+    # inteiro antes de desistir. `--guarda-plano` liga-a para quem quiser.
+    guarda_plano = FOLGA + COBRE_MIN if "--guarda-plano" in sys.argv else 0.0
+
     obst = [[], []]
     for px, py, pr, pn, cams in pads:
         for L in cams:
-            obst[L].append((px, py, pr, pn))
+            extra = guarda_plano if (L == 1 and pn in redes_de_plano) else 0.0
+            obst[L].append((px, py, pr + extra, pn))
     for x1, y1, x2, y2, n, L in pistas:
         amostra(obst[L], (x1, y1), (x2, y2), n, r=0.15)
     for x, y, n in vias0:
@@ -455,8 +538,21 @@ def main():
             continue
         larg = LARGURA.get(rede, 0.25)
         gs = [Grelha(obst[0]), Grelha(obst[1])]
+        # ⚠️ CAIXA A VOLTA DA LIGACAO, quando pedida. Uma malha fina o bastante
+        # para entrar entre pinos de conector (0,085 mm) transforma esta placa
+        # em 2,5 milhoes de celulas por camada, e a busca esgota o tecto antes
+        # de sair do sitio. Mas uma ligacao que sobrou de uma passada larga e
+        # quase sempre CURTA — nao precisa da placa toda para dar a volta.
+        # Restringir a busca a uma caixa em volta das duas pontas troca
+        # generalidade por uma malha que cabe, e e uma troca boa no fim.
+        lim = limites
+        if caixa:
+            lim = (max(limites[0], min(A[0], B[0]) - caixa),
+                   max(limites[1], min(A[1], B[1]) - caixa),
+                   min(limites[2], max(A[0], B[0]) + caixa),
+                   min(limites[3], max(A[1], B[1]) + caixa))
         cam = astar(A, B, camadas_em(A, rede), camadas_em(B, rede),
-                    rede, larg, gs, limites, so_uma)
+                    rede, larg, gs, lim, so_uma)
         if not cam or len(cam) < 2:
             continue
         usou_b = False
@@ -554,7 +650,11 @@ def main():
         # ⚠️ O DRC continua a ser quem decide. O filtro nao absolve ninguem —
         # so escolhe a quem vale a pena perguntar.
         COBRE_MIN = 0.25
-        perto = FOLGA * 2 + COBRE_MIN
+        # ⚠️ a referencia do filtro e a REGRA DA PLACA, nao a folga desta
+        # corrida: numa passada apertada a folga encolhe, o filtro encolhe com
+        # ela e deixa de suspeitar de quem devia. Foi o que fez o filtro
+        # devolver "0 de 3" numa passada em que havia estrago.
+        perto = 0.20 * 2 + COBRE_MIN
         redes_z = {z.group(1) for z in
                    re.finditer(r'\(zone[\s\S]{0,400}?\(net_name "([^"]*)"\)', t)
                    if z.group(1)}
@@ -580,11 +680,25 @@ def main():
             print("     tirar so as suspeitas nao chegou: volto a lista toda.",
                   file=sys.stderr)
             cands = todas
+        # ⚠️ E SE NEM ASSIM, A LISTA E TUDO O QUE ELE ESCREVEU. As travessias
+        # por B.Cu sao as suspeitas obvias, mas nao sao as unicas: uma pista em
+        # F.Cu que passe rente a um pad de terra tambem o pode isolar do seu
+        # coto ate a via. Uma retraccao que nao alcanca tudo o que escreveu nao
+        # e uma retraccao — e desiste de gravar um trabalho que era quase todo
+        # bom por causa de uma pista que nem sequer podia acusar.
         if not cands or com(set(cands)):
-            io.open(p, "w", encoding="utf-8").write(texto_com(novas, novas_vias, t))
-            print("     nem retirando todas as travessias isto zera: o estrago "
-                  "ja la estava. Nao retiro nada.", file=sys.stderr)
-        else:
+            todas_novas = sorted({s[3] for s in novas})
+            if len(todas_novas) > len(cands) and not com(set(todas_novas)):
+                print("     nao eram as travessias: alargo a TODAS as %d redes "
+                      "que escrevi." % len(todas_novas), file=sys.stderr)
+                cands = todas_novas
+            else:
+                io.open(p, "w", encoding="utf-8").write(
+                    texto_com(novas, novas_vias, t))
+                print("     nem retirando tudo o que escrevi isto zera: o "
+                      "estrago ja la estava. Nao retiro nada.", file=sys.stderr)
+                cands = []
+        if cands:
             # ⚠️ VARRIMENTO, e nao bisseccao — medido, e ao contrario do que se
             # espera. Escrevi uma versao que partia ao meio, a pensar em
             # O(culpadas · log n), e ficou PIOR nos dois eixos: mais lenta (com

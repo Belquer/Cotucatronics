@@ -8639,3 +8639,57 @@ E uma terceira, da mesma corrida: a cadeia **ignorava o código de saída** do
 roteador. Ele recusa gravar quando não consegue provar o que fez, e repõe a
 placa — correctamente. Mas uma passada falhada era indistinguível de uma passada
 que não tinha nada a fazer, e a cadeia seguia calada com outro número no fim.
+
+## 15cx — zero pistas à volta não é espaço livre: era uma regra minha
+
+*07/09.* O roteador tinha parado em 22 ligações no cérebro e 10 no painel, e a
+minha explicação era congestionamento — a zona à volta do amp-op, a placa cheia.
+Fui medir em vez de continuar a acreditar nisso, e a medição disse o contrário:
+
+```
+OLED_CLK  em (40.0, 22.5) ·  0 pistas a menos de 8 mm
+OLED_DIN  em (42.5, 22.5) ·  0 pistas a menos de 8 mm
+```
+
+Zero. E as falhas não estavam espalhadas: concentravam-se em `J14` (9), na
+Daisy (11), no `J1` do painel (8) — **todas peças de duas filas de pinos**.
+
+O que as fecha é aritmética, não densidade. Num header de 2,54 mm com pads de
+1,70, o vão entre dois pads vizinhos é **0,840 mm**. O meu roteador exigia
+`largura/2 + folga + margem-da-grelha` de cada lado — 0,125 + 0,35 + 0,178 —
+que dá **0,950**. Não cabe, e não cabia em sítio nenhum do conector: ele não
+conseguia **sair de entre os pinos**.
+
+> **Um sítio sem nada à volta que a ferramenta não alcança não está
+> congestionado: está fechado por uma regra da própria ferramenta.** E a regra
+> era minha e generosa — 0,35 mm de folga quando a placa manda 0,20.
+
+O conserto é uma **passada apertada no fim**, e só no fim: apertar desde o
+início mede-se pior (23 → 34), porque com mais espaço o roteador ganancioso
+enfia pistas cedo e fecha corredores de que as ligações seguintes precisavam.
+No fim não há esse risco — o que já foi roteado já lá está, e a folga apertada
+só serve para entrar onde a larga não entrava.
+
+E um segundo facto, do mesmo cálculo e na direcção contrária: **entre dois
+pinos de conector não cabem a pista e o plano ao mesmo tempo.** São precisos
+0,775 mm e há 0,42. Uma pista em B.Cu ali não divide o espaço com o cobre de
+terra: expulsa-o, e os pinos de terra do conector ficam órfãos. Eram as três
+redes que a retracção me devolvia a cada corrida, uma a um DRC cada — e agora
+são recusadas de graça, na geometria.
+
+## 15cy — a retracção que não alcança tudo o que escreveu
+
+*07/09.* A retracção interrogava só as redes que tinham passado pela camada do
+plano, porque a minha teoria do estrago era essa. Numa passada apertada, o
+estrago veio de outro lado, a lista de suspeitos não o continha, e a ferramenta
+**desistiu de gravar um trabalho quase todo bom** por causa de uma pista que
+nem sequer sabia acusar.
+
+> **Uma ferramenta que se recusa a entregar o que não consegue provar precisa
+> de poder investigar tudo o que fez.** Senão a recusa deixa de ser prudência e
+> passa a ser um ponto cego com boas maneiras.
+
+E o filtro de suspeitos usava a folga da corrida em vez da regra da placa: numa
+passada apertada a folga encolhe, o filtro encolhe com ela, e devolveu
+"0 de 3 suspeitas" numa corrida em que havia estrago. **A referência de um
+filtro é a propriedade física, não o parâmetro do momento.**

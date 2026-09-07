@@ -1078,6 +1078,67 @@ estava no ficheiro.
 > **Resultados idênticos entre condições que deviam diferir não são um
 > resultado: são uma avaria do aparelho.** Foi só isso que apanhou o erro.
 
+### 12n. Zero pistas à volta não é espaço livre
+
+Quando um roteador falha, a explicação fácil é congestionamento. Mede-se antes
+de acreditar nela: as falhas desta placa tinham **zero pistas num raio de 8 mm**
+e concentravam-se todas em peças de duas filas de pinos.
+
+O que as fechava era aritmética:
+
+```
+vão entre dois pads de um header 2,54 com pads 1,70:   0,840 mm
+o roteador exigia largura/2 + folga + margem-da-grelha
+                        0,125 +  0,35 +          0,178 = 0,950 mm
+```
+
+Ele não conseguia **sair de entre os pinos** — de nenhum conector, em nenhuma
+placa.
+
+> **Um sítio sem nada à volta que a ferramenta não alcança não está
+> congestionado: está fechado por uma regra da própria ferramenta.**
+
+⚠️ **E o conserto é uma passada apertada no FIM, nunca desde o início.** Apertar
+desde o início mede-se pior (23 → 34): com mais espaço o roteador ganancioso
+enfia pistas cedo e fecha corredores de que as seguintes precisavam. No fim o
+que já foi roteado já lá está, e a folga apertada só serve para entrar onde a
+larga não entrava.
+
+⚠️ **A malha aperta com a folga**, porque a margem da grelha (`PASSO·0,71`)
+conta no mesmo corredor. E malha fina na placa toda esgota a busca — daí a
+busca da passada apertada ficar presa a uma **caixa** em volta de cada ligação:
+o que sobra de uma passada larga é quase sempre curto.
+
+### 12o. Entre dois pinos de conector não cabem a pista e o plano
+
+O mesmo cálculo, na direcção contrária. Para caberem no corredor a pista **e** o
+cobre do plano a contornar o pad:
+
+```
+pista/2 0,125 + folga 0,20 + cobre mínimo 0,25 + folga 0,20 = 0,775 mm
+disponível de cada lado:                                       0,420 mm
+```
+
+Uma pista na camada do plano, entre dois pinos de conector, **não divide o
+espaço com o cobre de terra: expulsa-o**, e os pinos de terra do conector ficam
+órfãos. Marcar os pads da rede do plano com um raio maior nessa camada custa
+alguns caminhos e poupa a retracção de os descobrir um a um, a um DRC cada.
+
+### 12p. Uma ferramenta que recusa precisa de poder investigar tudo o que fez
+
+A retracção interrogava só as redes que tinham passado pela camada do plano,
+porque a teoria do estrago era essa. Quando o estrago veio de outro lado, a
+lista não o continha, e a ferramenta **desistiu de gravar um trabalho quase todo
+bom** por causa de uma pista que nem sabia acusar.
+
+> Senão a recusa deixa de ser prudência e passa a ser um ponto cego com boas
+> maneiras.
+
+⚠️ E **a referência de um filtro é a propriedade física, não o parâmetro do
+momento.** O filtro de suspeitos usava a folga da corrida; numa passada
+apertada a folga encolhe, o filtro encolhe com ela, e ele devolveu "0 de 3
+suspeitas" numa corrida em que havia estrago.
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,

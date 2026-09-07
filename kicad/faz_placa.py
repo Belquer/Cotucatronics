@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.5.0"
+VERSAO = "0.6.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -159,6 +159,29 @@ def uma(nome, zerar):
     shutil.move(pcb + ".melhor", pcb)
     os.remove(guardado)
     print("  2. escolhida a ordem %s por MEDICAO, nao por opiniao" % melhor[2])
+
+    # ⚠️ E SO AGORA A PASSADA APERTADA, sobre o que sobrou. Com a folga larga o
+    # roteador nao consegue SAIR DE ENTRE OS PINOS de um conector: num header
+    # de 2,54 com pads de 1,70 o vao e 0,840 mm e ele precisa de 0,950. Isso
+    # explicava 9 falhas no J14, 8 no J1 e 11 na Daisy — todas peças de duas
+    # filas, e nenhuma delas com pistas a volta. Um sitio com zero pistas num
+    # raio de 8 mm nao esta congestionado: esta fechado por uma regra minha.
+    #
+    # ⚠️ APERTAR DESDE O INICIO MEDE-SE PIOR (23 -> 34): com mais espaco o
+    # roteador ganancioso enfia pistas cedo e fecha corredores de que as
+    # ligacoes seguintes precisavam. No fim nao ha esse risco.
+    #
+    # ⚠️ E a malha tem de apertar com a folga, porque a margem da grelha
+    # (PASSO·0,71) conta no mesmo corredor. Malha fina na placa toda esgota a
+    # busca, logo a busca fica presa a uma CAIXA em volta de cada ligacao — o
+    # que sobra de uma passada larga e quase sempre curto.
+    r = py("roteia.py", pcb, "--escreve", "--folga", "0.22",
+           "--passo", "0.0847", "--caixa", "25")
+    f, g = por_fazer(pcb)
+    if r.returncode:
+        print("  2b. apertada recusou gravar (a placa fica como estava)")
+    else:
+        print("  2b. apertada (folga 0,22) -> %d por fazer · geometria %d" % (f, g))
 
     r = py("arruma_silk.py", pcb, "--escreve")
     for l in r.stderr.splitlines()[-2:]:
