@@ -8302,3 +8302,66 @@ exactamente o sintoma acima, e o sintoma parece perda de trabalho.
 E o que salvou: o ficheiro no disco tinha data **anterior** à mudança, o que
 provou em dois segundos que nada se tinha perdido. **Antes de diagnosticar um
 ficheiro, ver a hora dele.**
+
+
+---
+
+## 15cn — Data e dado gerado, nao escrito (2026-09-06)
+
+Os documentos deste projecto sao datados a mao: cabecalhos de `STATUS.md`,
+cicatrizes, «atualizado em». O dB apontou que isso e a mesma classe da lista
+`usados` escrita ao lado de coisa gerada — **escrita a mao envelhece em
+silencio** — e mandou consertar em tres camadas, com a mecanica primeiro.
+
+> **Data e dado gerado, nao escrito.** Instrucao que manda «confirmar a data»
+> depende de alguem lembrar, e o que depende de lembrar nao e portao.
+
+**A camada que torna as outras possiveis** e um hook `UserPromptSubmit` que
+injecta o relogio no contexto antes de cada prompt. A partir daí nao ha data a
+lembrar — ha data a **ler**. Confirmado na documentacao antes de escrever: o
+evento existe, o stdout dele **entra no contexto**, corre em shell (logo
+`$(...)` funciona), e `.claude/settings.json` na raiz e o ficheiro versionado
+certo.
+
+### E a medicao desmentiu a premissa
+
+O plano dizia para correr o verificador **antes** de o fixar e listar o que ja
+estava errado — «e o dado de quanto isto custou». Corri. A primeira versao
+devolveu **86 divergencias em 544 datas**, e eu quase as reportei como o custo.
+
+Partidas por tipo, eram outra coisa:
+
+| | |
+|---|---|
+| **85 ANTIGA** | datas *anteriores* ao commit que as introduziu |
+| **1 FUTURO** | `10/12` em «sacrificaveis 10/12» — uma **fraccao** |
+| **0 FUTURA** | a deriva que o plano temia: **nenhuma vez em 544** |
+
+As 85 «ANTIGA» eram todas legitimas: um documento escrito a 05/09 que regista
+um evento de 23/08 diz correctamente 23/08. **Documento que regista historia
+tem datas para tras — e isso e o caso normal, nao o defeito.**
+
+> **Uma regra que grita no caso normal treina quem a le a ignora-la.** E o
+> numero que ela produz nao e um custo: e o barulho dela propria.
+
+Depois de tirar as duas classes de falso positivo — fraccoes (`n/m` com `m`
+impossivel como mes desliga a leitura de `DD/MM` naquela linha) e a direccao
+«para tras» — o repositorio da **540 datas, zero divergencias**.
+
+### O que isso muda no valor da guarda
+
+Ela **nao esta a corrigir nada** — nao havia o que corrigir. Esta a impedir. E
+essa distincao vale ser dita: o hook e o verificador transformam «acertamos
+porque calhou» em «nao pode falhar», e isso continua a valer o trabalho. Mas
+anunciar 86 defeitos onde ha zero teria sido a terceira vez no mesmo dia que eu
+sobre-afirmo a partir de dados a menos.
+
+### Provada a dizer nao, nas duas direccoes
+
+- **FUTURO**: cabecalho do `STATUS.md` sabotado para `2026-09-20` -> apanhado.
+- **FUTURA**: num repositorio descartavel, linha commitada a 01/09 a dizer
+  `2026-09-04` -> apanhado como «3 dias antes».
+- E a linha de controlo, `2026-08-20` atras do mesmo commit, **nao** dispara.
+
+⚠️ **A data desta cicatriz veio do `date`**, passada por argumento ao script que
+a escreveu. Nao a escrevi a mao — seria a primeira coisa a contradizer.
