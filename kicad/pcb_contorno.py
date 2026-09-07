@@ -165,6 +165,15 @@ COLOCA = {
     "R5":  (76.0, 46.0, 0),     "R6":  (88.0, 46.0, 0),
     # C1/C2 COLADOS ao cursor: 6 mm do pino 2 de cada pot, do lado livre.
     "C1":  (133.0, 38.0, 0),    "C2":  (168.0, 38.0, 0),
+    # ⚠️ o par do +5V vai JUNTO AOS MOSFET, que sao a carga que comuta — nao ao
+    # OLED, que tem os dele. O C5 colado ao IDC, onde o +3V3A entra e de onde
+    # saem 150 mm de fita.
+    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),   "C5":  (26.0, 30.0, 0),
+    # ⚠️ o par do +5V vai JUNTO AOS MOSFET, que sao a carga que comuta — nao
+    # junto ao OLED, que tem os dele. E o C5 colado ao IDC, que e onde o
+    # +3V3A entra e por onde saem 150 mm de fita.
+    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),
+    "C5":  (26.0, 30.0, 0),
  },
 }
 
@@ -280,7 +289,11 @@ UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 25.0, 90),
                   # sempre: medir a coisa certa custa menos que medir depressa.
                   # Das 480 posicoes livres, a mais atras — o USB fica a 12 mm
                   # da parede em vez dos 30 da tentativa anterior.
-                  "U3": (85.0, 106.0, 180)}
+                  "U3": (85.0, 106.0, 180),
+                  # ⚠️ COLADOS ao que desacoplam: o C15 ao pino 39 da Daisy, o
+                  # C16 ao J14. A mais de poucos centimetros ligam-se atraves da
+                  # indutancia que existiam para contornar (P4 da revisao).
+                  "C15": (105.0, 115.0, 0), "C16": (78.0, 30.0, 0)}
 
 
 def grelha(t, zonas, unicos):

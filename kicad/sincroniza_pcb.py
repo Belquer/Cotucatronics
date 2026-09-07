@@ -16,13 +16,29 @@ move nada do que ja la esta, e nao toca em pistas.
 recusa-se a gravar se nao bater. Um sincronizador que erra em silencio e pior
 que um passo manual — o passo manual pelo menos falha a vista.
 
-USO:  sincroniza_pcb.py <projecto>      # cerebro | painel
+⚠️ `--zero` ESVAZIA A PLACA ANTES DE SINCRONIZAR. Tudo o que existir de
+footprints e apagado e reposto a partir da netlist. Existe porque um F8 falhado
+deixa a placa num estado que ninguem consegue auditar — copias a mais, pecas
+que ja nao estao no esquema, posicoes largadas onde o KiCad calhou — e porque
+NESTE projecto isso nao custa nada: a colocacao inteira vive no
+`pcb_contorno.py`, logo repor e correr um comando.
+
+NAO apaga pistas nem zonas. Se a placa ja estiver routeada, `--zero` deixa o
+cobre orfao — usar so antes de rotear.
+
+USO:  sincroniza_pcb.py <projecto> [--zero]
 """
 import io, os, re, subprocess, sys, uuid
 
-VERSAO = "0.2.1"
+VERSAO = "0.3.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+# ⚠️ DUAS RAIZES DE BIBLIOTECA: a do projecto (`cotuca.pretty`, ao lado deste
+# ficheiro) e a instalada com o KiCad. Procurar so na primeira fazia o `--zero`
+# esvaziar a placa e nao a conseguir repor — apaguei as duas placas antes de ter
+# provado o caminho de volta, que e a ordem errada de fazer as coisas.
+RAIZES = [AQUI,
+          "/Applications/KiCad/KiCad.app/Contents/SharedSupport/footprints"]
 NUM = r"-?\d+(?:\.\d+)?"
 PROJ = {"cerebro": "cotuca_cerebro", "painel": "cotuca_painel"}
 
@@ -70,12 +86,13 @@ def le_netlist(sch):
 def do_modulo(fp, ref, val, redes):
     """Le o .kicad_mod e devolve o bloco pronto a entrar no PCB."""
     lib, _, nome = fp.partition(":")
-    caminho = os.path.join(AQUI, lib + ".pretty", nome + ".kicad_mod")
-    if not os.path.exists(caminho):
-        raise SystemExit("*** %s: nao achei %s.\n    Este sincronizador so sabe "
-                         "acrescentar footprints da biblioteca DO PROJECTO; para "
-                         "os das bibliotecas instaladas o F8 continua a ser o "
-                         "caminho." % (ref, caminho))
+    for raiz in RAIZES:
+        caminho = os.path.join(raiz, lib + ".pretty", nome + ".kicad_mod")
+        if os.path.exists(caminho):
+            break
+    else:
+        raise SystemExit("*** %s: nao achei o footprint '%s' em raiz nenhuma:\n"
+                         "    %s" % (ref, fp, "\n    ".join(RAIZES)))
     t = io.open(caminho, encoding="utf-8").read().strip()
     t = re.sub(r'^\(footprint "[^"]+"', '(footprint "%s"' % fp, t, count=1)
     for chave in ("version", "generator", "generator_version"):
@@ -86,6 +103,23 @@ def do_modulo(fp, ref, val, redes):
         r = redes.get((ref, pad))
         return m.group(0) if r is None else m.group(0) + '\n\t\t\t(net "%s")' % r
     t = re.sub(r'\(pad "([^"]+)"[\s\S]*?\(layers [^\)]*\)', rede, t)
+    # ⚠️ O .kicad_mod TRAZ AS SUAS PROPRIAS `Reference` ("REF**") e `Value`. Se
+    # eu so acrescentar as minhas, o bloco fica com DUAS de cada e o KiCad fica
+    # com a ultima — a peca aparece como REF** e nada a encontra pelo nome. Tem
+    # de se tirar as do modulo, nao empilhar por cima.
+    for prop in ("Reference", "Value"):
+        m = re.search(r'\n\t\(property "%s" "[^"]*"' % prop, t)
+        if m:
+            j = m.start() + 1
+            d = 0
+            for k in range(j, len(t)):
+                if t[k] == "(":
+                    d += 1
+                elif t[k] == ")":
+                    d -= 1
+                    if d == 0:
+                        t = t[:j - 1] + t[k + 1:]
+                        break
     props = ""
     for p, v, lay, dy in (("Reference", ref, "F.SilkS", -11.5),
                           ("Value", val, "F.Fab", 11.5)):
@@ -100,10 +134,11 @@ def do_modulo(fp, ref, val, redes):
 
 def main():
     print("sincroniza_pcb v%s" % VERSAO, file=sys.stderr)
-    if len(sys.argv) != 2 or sys.argv[1] not in PROJ:
+    if not (2 <= len(sys.argv) <= 3) or sys.argv[1] not in PROJ:
         print(__doc__)
         raise SystemExit(2)
     d = PROJ[sys.argv[1]]
+    zero = "--zero" in sys.argv
     base = os.path.join(AQUI, d, d)
     comps, redes = le_netlist(base + ".kicad_sch")
     p = base + ".kicad_pcb"
@@ -116,6 +151,20 @@ def main():
     #
     # Isto nao e um acidente do F8: e o que ele tem de fazer quando o UUID nao
     # bate. Quem gera esquemas paga esta conta sempre — ou deixa de usar o F8.
+    if zero:
+        n_fora = 0
+        while True:
+            fps = blocos(t, "footprint")
+            if not fps:
+                break
+            i, j, _ = fps[0]
+            t = t[:i] + t[j:]
+            n_fora += 1
+        print("  --zero: %d footprints apagados; a repor da netlist" % n_fora,
+              file=sys.stderr)
+        if re.search(r'\n\t\((?:segment|via|zone)\b', t):
+            print("  ⚠️ ha pistas ou zonas no ficheiro e as pecas foram apagadas: "
+                  "esse cobre ficou orfao.", file=sys.stderr)
     n_dup = 0
     while True:
         fps = blocos(t, "footprint")
@@ -150,7 +199,7 @@ def main():
     # o que aconteceu — o de-duplicador correu, anunciou 9 remocoes, e o
     # ficheiro ficou igual. Uma saida antecipada tem de olhar para TUDO o que a
     # funcao ja fez, e nao so para a ultima coisa que mediu.
-    if not faltam and not sobram and not n_dup:
+    if not faltam and not sobram and not n_dup and not zero:
         print("  ja estao sincronizados", file=sys.stderr)
         return
     for r in sobram:
