@@ -8365,3 +8365,59 @@ sobre-afirmo a partir de dados a menos.
 
 ⚠️ **A data desta cicatriz veio do `date`**, passada por argumento ao script que
 a escreveu. Nao a escrevi a mao — seria a primeira coisa a contradizer.
+
+
+---
+
+## 15co — A ferramenta que nao ve o plano corta o plano (2026-09-07)
+
+O dB perguntou se eu podia rotear em vez dele. Podia — e o caminho ate ao numero
+final passou por quatro erros meus, cada um apanhado pelo DRC e nenhum por mim.
+
+| tentativa | resultado |
+|---|---|
+| tres percursos triviais | 31 de 102, limpas |
+| + A* | 52 de 71, e **109 violacoes** |
+| obstaculos consertados | 27, e **5 violacoes** |
+| margem de meia diagonal | 27, e **2** |
+| ferramenta a retirar o que viola | 28, e **0** |
+| **aplicado na placa** | **52 por ligar, mas `AGND` de 1 para 8** |
+
+A ultima linha e a que interessa. Geometria a zero, DRC limpo de clearance e de
+cruzamentos — e mesmo assim **pior**. O relatorio dizia-o na primeira linha:
+
+    Zone [AGND] on F.Cu <-> Zone [AGND] on F.Cu
+
+Duas partes da MESMA ilha, sem ligacao entre elas. As pistas atravessaram-na e
+o cobre recuou de cada lado: a ilha ficou em pedacos.
+
+> **Uma pista que atravessa um plano nao passa por cima dele — corta-o.** Numa
+> placa em que a terra e plano e nao pista, um roteador cego a zonas destroi
+> exactamente aquilo que a revisao de terra passou a tarde a proteger.
+
+E o DRC nao me travou porque, do ponto de vista dele, nada estava errado: as
+pistas cumpriam folgas, nao se cruzavam, nao tocavam em pad nenhum. **O defeito
+nao estava no que a ferramenta fez, estava no que ela nao sabia existir.**
+
+### O que salvou
+
+Duas coisas, e nenhuma foi perspicacia:
+
+1. **Copia antes do destrutivo.** `/tmp/backup2.kicad_pcb` foi feita no mesmo
+   comando que aplicou. Reverter custou uma linha.
+2. **Comparar o numero certo.** Se eu tivesse olhado so para «por ligar: 71 ->
+   52» tinha anunciado sucesso. O que denunciou foi olhar **por rede** — e ver o
+   `AGND` a subir enquanto o total descia.
+
+> **Um total que melhora pode esconder uma parte que piora.** A decomposicao nao
+> e refinamento do relatorio: e onde o defeito vive.
+
+### O que fica
+
+O `roteia.py` fica com o que provou funcionar — percursos triviais e A*, com a
+ferramenta a **retirar o que o DRC acusa** em vez de o entregar. Mas fica com um
+aviso em maiusculas no cabecalho: **nao usar em placas com plano na mesma camada
+das pistas**, ate saber ler zonas.
+
+E as 71 do cerebro voltam para o dB, que e onde estavam. Nao se perdeu nada
+excepto o meu tempo, e ficou a saber-se uma coisa que nao se sabia.
