@@ -6,6 +6,15 @@ a direito, em L pelo horizontal, em L pelo vertical — e se nenhum estiver livr
 DEIXA A LIGACAO PARA A PESSOA. Um roteador que insiste faz caminhos que ninguem
 quereria e que depois ninguem percebe.
 
+⚠️ VERIFICA-SE COM AS ZONAS CHEIAS. Sem isso o DRC compara as pistas novas com
+um preenchimento VELHO e devolve dezenas de `clearance` contra zonas que nao
+sao defeito nenhum:
+
+    kicad-cli pcb drc --refill-zones ...
+
+Escrevi num commit que o `kicad-cli` nao sabia encher zonas, e o `--help` que
+corri a seguir desmentiu-me. A opcao esta la desde sempre.
+
 ⚠️ E TUDO O QUE ESCREVE E VERIFICAVEL PELO DRC. A regra e: se o numero de
 ligacoes por ligar nao descer exactamente pelo numero de pistas que eu disse ter
 feito, alguma coisa esta errada e nao se acredita no resto.
@@ -18,7 +27,7 @@ USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
 """
 import io, json, math, os, re, subprocess, sys
 
-VERSAO = "0.2.0"
+VERSAO = "0.2.1"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 FOLGA = 0.35            # entre a pista e o que nao e dela
