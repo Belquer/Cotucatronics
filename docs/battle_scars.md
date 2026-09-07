@@ -8693,3 +8693,29 @@ E o filtro de suspeitos usava a folga da corrida em vez da regra da placa: numa
 passada apertada a folga encolhe, o filtro encolhe com ela, e devolveu
 "0 de 3 suspeitas" numa corrida em que havia estrago. **A referência de um
 filtro é a propriedade física, não o parâmetro do momento.**
+
+## 15cz — um conector de duas filas encostado ao bordo tem metade dos pinos
+
+*07/09.* Os cinco sinais do OLED falhavam nas duas placas, e o diagnóstico dizia
+**zero pistas num raio de 8 mm** à volta deles. Não era congestionamento.
+
+O `J14` estava em y=25, com a fila da frente em y=22,5 e o bordo da placa em
+y=20. Entre os pads e o bordo sobrava um canal de **1,05 mm** — cabe uma pista.
+Treze sinais não cabem numa pista. E sair pelo outro lado obrigava a passar
+**entre** dois pads do conector, onde o vão é 0,840 mm e a pista precisa de
+0,950.
+
+> **Um conector de duas filas precisa de canal de fuga dos dois lados.
+> Encostá-lo a um bordo é dar-lhe metade dos pinos** — e a outra metade fica
+> presa sem que nada no desenho o denuncie.
+
+O conserto foi descer o conector 4 mm, e para isso descer 2 mm o bloco do
+pré-amp que estava logo abaixo. Dois milímetros ali pagaram quatro aqui:
+**18 ligações por fazer contra 21**, sem tocar em mais nada.
+
+⚠️ E a primeira tentativa colidiu: procurei a nova posição medindo distâncias
+entre **pads** e dei 2,49 mm de folga; o DRC devolveu dois `courtyards_overlap`.
+**O que reserva espaço num footprint é o pátio, não o pad** — e o pátio do J14
+chega a y=18,8, que já é fora da placa. É a mesma família do varrimento que pôs
+uma peça em cima de um electrolítico por medir os pads de 1 mm e ignorar o corpo
+de ⌀16.

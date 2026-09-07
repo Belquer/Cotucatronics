@@ -1139,6 +1139,26 @@ momento.** O filtro de suspeitos usava a folga da corrida; numa passada
 apertada a folga encolhe, o filtro encolhe com ela, e ele devolveu "0 de 3
 suspeitas" numa corrida em que havia estrago.
 
+### 12q. Um conector de duas filas precisa de fuga dos dois lados
+
+Quando os sinais de um conector não roteiam e o diagnóstico dá **zero pistas num
+raio de 8 mm**, olha para o bordo da placa. Um header de duas filas encostado a
+um bordo deixa a fila de fora com um canal estreito e a de dentro sem saída —
+porque sair pelo outro lado obriga a passar entre dois pads, e aí só cabe uma
+pista se a folga for a da placa e não a do roteador (§12n).
+
+Medido: canal de 1,05 mm para treze sinais. Descer o conector 4 mm (e o bloco
+de peças logo abaixo 2 mm, para lhe dar lugar) levou-o a 5,05 mm e fechou três
+ligações — **18 por fazer contra 21**, sem tocar em mais nada.
+
+> **Encostar um conector de duas filas a um bordo é dar-lhe metade dos pinos**,
+> e nada no desenho o denuncia.
+
+⚠️ **E a posição nova mede-se com PÁTIOS, não com pads.** A primeira busca deu
+2,49 mm de folga entre pads e o DRC devolveu dois `courtyards_overlap`. O que
+reserva espaço num footprint é o pátio — e o pátio deste conector chegava a
+0,8 mm fora da placa.
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,

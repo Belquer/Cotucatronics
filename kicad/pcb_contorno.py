@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.10.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.12.0 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.10.0"
+VERSAO = "0.12.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -236,11 +236,17 @@ ZONAS_CEREBRO = [
     # ⚠️ E a largura fica em 58 (4 colunas). Alarga-la para 6 punha as zonas em
     # cima da Daisy, que desceu para y=60 por causa do mesmo arcade: um conserto
     # que cria nove violacoes onde havia uma nao e conserto.
-    ("pre-amp A", 26, 34, 58, 14.5, 11.0,
+    # ⚠️ O PRE-AMP DESCEU 2 mm PARA O CONECTOR PODER RESPIRAR. O J14 e um header
+    # de duas filas encostado a frente, e um conector de duas filas precisa de
+    # canal de fuga dos DOIS lados: encostar um a um bordo e dar-lhe metade dos
+    # pinos. Descia-lo 4 mm abre o canal da frente de 1,05 para 5,05 mm, mas a
+    # essa altura o patio dele toca no D11 e no J5, que sao a primeira fila
+    # deste bloco. Dois milimetros aqui pagam quatro ali.
+    ("pre-amp A", 26, 36, 58, 14.5, 11.0,
      ["J5", "D11", "R11", "R12", "R13", "C11", "R10", "R14", "C12", "C13", "RV1"]),
-    ("pre-amp B", 26, 62, 58, 14.5, 11.0,
+    ("pre-amp B", 26, 64, 58, 14.5, 11.0,
      ["J6", "D21", "R21", "R22", "R23", "C21", "R20", "R24", "C22", "C23", "RV2"]),
-    ("pre-amp comum", 26, 90, 58, 14.5, 11.0,
+    ("pre-amp comum", 26, 92, 58, 14.5, 11.0,
      ["U1", "C7", "C8", "C9", "R5", "R6", "R7", "C5", "C6"]),
     # ⚠️ conectores VERTICAIS: o 1x6 tem 14,4 mm e o 1x5 tem 11,9. Num passo de
     # 9 mm colidem uns nos outros — foi o que deu 43 das 52 violacoes de
@@ -284,7 +290,31 @@ ZONAS_CEREBRO = [
 # ⚠️ E foi a COSTURA que denunciou isto, ao recusar-se a descer uma via para um
 # plano que ali nao existia. O defeito nao era a via: era o sitio da ponte. Uma
 # ferramenta que recusa e diz porque, encontra o que ninguem foi procurar.
-UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 25.0, 90),
+# ⚠️ O J14 DESCEU 4 mm, e a razao e roteamento e nao mecanica. Estava em y=25,
+# com a fila da frente em y=22,5 e o bordo da placa em y=20: sobrava um canal de
+# 1,01 mm entre os pads e o bordo. A fila de tras sai para o lado livre, mas a
+# da frente so tinha aquele canal — e treze sinais nao cabem num canal onde
+# cabe uma pista. Sair pelo outro lado obrigava a passar ENTRE dois pads do
+# conector, e o vao de um header de 2,54 com pads de 1,70 e 0,840 mm, quando a
+# pista precisa de 0,950.
+#
+# Era isto que segurava os cinco sinais do OLED em cada placa, e nao
+# congestionamento: o diagnostico deu ZERO pistas num raio de 8 mm.
+#
+# A +4 mm o canal passa a 5,05 mm — cabem cinco pistas onde cabia uma. Continua junto a frente, que e onde o cabo
+# tem de sair para o painel: mover para tras resolveria melhor o cobre e
+# obrigaria o cabo a atravessar a caixa toda.
+#
+# ⚠️ +4 mm PARECIA MELHOR E COLIDE. A primeira busca mediu distancias entre
+# PADS e deu 2,49 mm de folga; o DRC devolveu dois `courtyards_overlap`, com o
+# D11 e o J5. O que reserva espaco num footprint e o PATIO, nao o pad — e o
+# patio do J14 chega a y=18,8, que ja e fora da placa. E a mesma familia do
+# varrimento que pos uma peca em cima de um electrolitico por medir os pads de
+# 1 mm e ignorar o corpo de o16.
+#
+# ⚠️ Um conector de duas filas precisa de canal de fuga nos DOIS lados. Encostar
+# um a um bordo e dar-lhe metade dos pinos.
+UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 29.0, 90),
                   "NT1": (75.0, 81.0, 0),
                   "C1": (178.0, 108.0, 0), "J1": (156.0, 108.0, 0),
                   # ⚠️ os WIMA de filme tem 13 mm de altura e ~18 de corpo: nao
