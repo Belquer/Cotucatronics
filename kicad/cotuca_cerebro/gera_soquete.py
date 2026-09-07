@@ -331,7 +331,16 @@ simbolo("ESP32C3", "U3", "ESP32-C3 SuperMini", EX, EY,
 # NOMES DA SERIGRAFIA do modulo (`5V`, `IO21`), porque esta placa apareceu com
 # tres pinagens contraditorias em duas horas — cicatriz 15ck. Indexar por ordem
 # reintroduzia exactamente a traducao que os nomes existem para eliminar.
-PONTE = {"5V": ("+5V", ""), "GND": ("GND", ""),
+# ⚠️ `+5V_PONTE` E NAO `+5V`. A ponte e alimentada ATRAS de um Schottky (D2,
+# 1N5819) com o seu par local (C3 100u + C4 100n) — para que o USB do modulo,
+# quando se liga para reprogramar, NAO realimente o trilho de 5 V da placa
+# toda. Foi um defeito ja pago na bancada.
+# Ao trocar o J10 (header por fio) pelo U3 (soquete) liguei o modulo ao trilho
+# CRU e deixei o diodo para tras — e ainda por cima no dia em que abrimos um
+# buraco na caixa para chegar a esse USB. O dB apanhou-o a ler o esquema.
+#   Trocar uma peca por outra nao herda o que estava ANTES dela no caminho.
+PONTE = {"5V": ("+5V_PONTE", "atras do D2 — nao realimenta o trilho"),
+         "GND": ("GND", ""),
          "IO20": ("MIDI_TX", "IO20 = RX da ponte"),
          "IO21": ("MIDI_RX", "IO21 = TX da ponte"),
          "IO3": ("PONTE_STATUS", "")}
@@ -485,7 +494,11 @@ for _n in (36, 37):
 # 40 (GND) da Daisy. Simbolo caseiro nao declara `power_out`, entao todo pino
 # `power_in` fica orfao; a resposta e declarar quem alimenta, nao isentar.
 # Estes dois NAO sao pecas: `in_bom no`, fora da BOM e do CPL.
-for k, (rede, FX, FY) in enumerate((("+5V", 60.0, 300.0), ("GND", 90.0, 300.0)), start=3):
+# ⚠️ O terceiro nasceu com o `+5V_PONTE`: quem o alimenta e o catodo de um
+# Schottky, e o ERC nao sabe que um diodo e fonte. Declara-se quem alimenta —
+# nao se isenta o aviso, que era so tapar a pergunta.
+for k, (rede, FX, FY) in enumerate((("+5V", 60.0, 300.0), ("GND", 90.0, 300.0),
+                                    ("+5V_PONTE", 120.0, 300.0)), start=3):
     ref = f"#FLG{k}"
     simbolo("PWR_FLAG", ref, "PWR_FLAG", FX, FY,
             campos=(("Reference", ref, 0, -2.54, 1.27, True, ""),
