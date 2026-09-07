@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.3.0"
+VERSAO = "0.5.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -125,8 +125,30 @@ def uma(nome, zerar):
     melhor = None
     for ordem in ORDENS:
         shutil.copy(guardado, pcb)
-        for _ in range(PASSADAS):
-            py("roteia.py", pcb, "--escreve", "--ordem", ordem)
+        # ⚠️ PARA QUANDO DEIXA DE GANHAR, em vez de correr um numero fixo de
+        # passadas. Medido: a 1a fecha 88 ligacoes, a 2a fecha 9, a 3a fecha
+        # ZERO — e a 3a custa o mesmo tempo que as outras. Um numero fixo de
+        # passadas gasta sempre a ultima a provar que nao havia mais nada.
+        # ⚠️ E OLHA O CODIGO DE SAIDA. O roteador recusa-se a gravar quando nao
+        # consegue provar o que fez, e nesse caso repoe a placa como estava —
+        # correctamente. Mas eu ignorava o codigo de saida, e uma passada
+        # falhada era indistinguivel de uma passada que nao tinha o que fazer:
+        # a cadeia seguia calada e o numero final era outro sem eu saber porque.
+        antes = None
+        for i in range(PASSADAS):
+            r = py("roteia.py", pcb, "--escreve", "--ordem", ordem)
+            if r.returncode:
+                ult = [l for l in (r.stderr or "").splitlines() if l.strip()]
+                print("     ⚠️ passada %d recusou gravar: %s"
+                      % (i + 1, ult[-1] if ult else "sem mensagem"))
+                break
+            m = re.search(r"gravado: (\d+) segmentos", r.stderr or "")
+            n = int(m.group(1)) if m else 0
+            # ⚠️ para quando deixa de ganhar: medido, a 1a passada fecha 88
+            # ligacoes, a 2a fecha 9 e a 3a fecha ZERO — e custa o mesmo tempo
+            if n == 0 and antes is not None:
+                break
+            antes = n
         f, g = por_fazer(pcb)
         marca = ""
         if melhor is None or (g, f) < (melhor[1], melhor[0]):

@@ -49,7 +49,7 @@ USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME] [--so-uma-face]
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.4.1"
+VERSAO = "1.5.0"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
@@ -532,7 +532,7 @@ def main():
         # nada a retirar.
         print("  ⚠️ %s piorou. A procurar a travessia culpada."
               % " ".join(redes(pior)), file=sys.stderr)
-        cands = sorted({r for r, ub in feitas if ub})
+        todas = sorted({r for r, ub in feitas if ub})
 
         def com(exclui):
             io.open(p, "w", encoding="utf-8").write(texto_com(
@@ -540,11 +540,59 @@ def main():
                 [v for v in novas_vias if v[2] not in exclui], t))
             return piorou(perfil0, estado(p)[1])
 
-        if com(set(cands)):
-            io.open(p, "w", encoding="utf-8").write(texto_com(novas, novas_vias, t))
-            print("     ja estava assim antes destas travessias. Nao retiro nada.",
+        # ⚠️ FILTRAR AS CANDIDATAS POR GEOMETRIA ANTES DE GASTAR DRCs NELAS.
+        # Cada teste da retraccao e um DRC completo com enchimento de zonas —
+        # dezenas de segundos numa placa cheia — e eu testava as 33 redes que
+        # tocaram em B.Cu quando so duas ou tres podiam ser culpadas. Uma
+        # passada chegou a levar quinze minutos, quase toda a interrogar redes
+        # inocentes.
+        #
+        # Uma travessia so pode orfanar um pad se passar tao perto dele que o
+        # plano ja nao cabe entre os dois: e preciso caber folga + uma largura
+        # minima de cobre + folga. Isso mede-se aqui, de graca.
+        #
+        # ⚠️ O DRC continua a ser quem decide. O filtro nao absolve ninguem —
+        # so escolhe a quem vale a pena perguntar.
+        COBRE_MIN = 0.25
+        perto = FOLGA * 2 + COBRE_MIN
+        redes_z = {z.group(1) for z in
+                   re.finditer(r'\(zone[\s\S]{0,400}?\(net_name "([^"]*)"\)', t)
+                   if z.group(1)}
+        pads_z = [(px, py, pr) for px, py, pr, pn, cams in pads
+                  if pn in redes_z and 1 in cams]
+        susp = set()
+        for (x1, y1), (x2, y2), _lw, rd, cm in novas:
+            if cm != 1 or rd in susp:
+                continue
+            for px, py, pr in pads_z:
+                if dist_ponto_seg(px, py, x1, y1, x2, y2) < pr + perto:
+                    susp.add(rd)
+                    break
+        cands = sorted(set(todas) & susp)
+        print("     %d de %d travessias passam perto de um pad do plano: so "
+              "essas vale a pena interrogar" % (len(cands), len(todas)),
+              file=sys.stderr)
+
+        # ⚠️ E o atalho tem por onde voltar. Se tirar as suspeitas todas nao
+        # chegar, volta-se a lista completa — um atalho que erra sem recuo e so
+        # um erro mais rapido.
+        if cands and com(set(cands)):
+            print("     tirar so as suspeitas nao chegou: volto a lista toda.",
                   file=sys.stderr)
+            cands = todas
+        if not cands or com(set(cands)):
+            io.open(p, "w", encoding="utf-8").write(texto_com(novas, novas_vias, t))
+            print("     nem retirando todas as travessias isto zera: o estrago "
+                  "ja la estava. Nao retiro nada.", file=sys.stderr)
         else:
+            # ⚠️ VARRIMENTO, e nao bisseccao — medido, e ao contrario do que se
+            # espera. Escrevi uma versao que partia ao meio, a pensar em
+            # O(culpadas · log n), e ficou PIOR nos dois eixos: mais lenta (com
+            # 5 culpadas em 33, descer nas metades que falham custa mais testes
+            # que percorrer a lista) e com pior resultado — 25 ligacoes por
+            # fazer contra 19 — porque o recuo que ela precisa para o caso das
+            # culpadas-em-conjunto retira TODAS as candidatas de uma vez.
+            # A bisseccao paga-se quando ha uma culpada. Aqui ha varias.
             manter = []
             for c in cands:                 # devolve-as uma a uma; fica o que couber
                 if not com(set(cands) - set(manter) - {c}):

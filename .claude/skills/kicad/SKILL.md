@@ -1050,6 +1050,34 @@ escrever as mesmas placas, e diz o pid da que está. Dez linhas.
 uma leitura** — mesmo quando quem o lança não está a tocar em nada, porque o
 processo que ficou a correr está.
 
+### 12l. O algoritmo melhor na notação pode ser pior na máquina
+
+A retracção testa uma rede de cada vez — um DRC por rede. Parece preguiça, e a
+versão que parte ao meio parece a correcção óbvia. Medida, é pior nos dois eixos:
+
+- **mais lenta**: com 5 culpadas em 33, descer nas metades que falham custa mais
+  testes que percorrer a lista. A bissecção paga-se quando há **uma** culpada;
+- **pior resultado**: 25 ligações por fazer contra 19, porque o recuo de que ela
+  precisa para as culpadas-em-conjunto retira **todas** as candidatas de uma vez.
+
+> **"Melhorar" uma parte que ninguém mediu é uma aposta, não um conserto.**
+
+### 12m. O código de saída da ferramenta anterior faz parte da medição
+
+O roteador recusa gravar quando não consegue provar o que fez, e repõe a placa —
+correctamente. Se a cadeia **ignorar o código de saída**, uma passada falhada
+fica indistinguível de uma passada que não tinha nada a fazer, e o número final
+muda sem que nada o explique.
+
+⚠️ E o mesmo vale para o *shell*: em zsh, **um glob sem correspondência aborta a
+linha inteira**. Um `rm -f a b*` encadeado com `&&` a uma edição faz a edição não
+correr, e a mensagem `no matches found` perde-se no meio da saída de outro
+comando. Custou três medições idênticas e duas conclusões sobre código que não
+estava no ficheiro.
+
+> **Resultados idênticos entre condições que deviam diferir não são um
+> resultado: são uma avaria do aparelho.** Foi só isso que apanhou o erro.
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,

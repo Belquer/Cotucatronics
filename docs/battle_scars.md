@@ -8585,3 +8585,57 @@ E há um corolário sobre trabalho em segundo plano: **lançar um segundo trabal
 sobre os mesmos ficheiros é uma escrita, não uma leitura.** Tratei-o como se
 fosse inofensivo porque eu não estava a tocar em nada — mas o processo que eu
 tinha deixado a correr estava.
+
+## 15cv — o glob que abortou a linha, e as três medições que eram a mesma
+
+*07/09.* Escrevi uma alteração ao roteador, encadeada assim:
+
+```
+pkill … && rm -f .lock cotuca_*/*.melhor && python3 - <<'PY' … PY
+```
+
+Não existia nenhum `*.melhor`. Em zsh, **um glob sem correspondência não é um
+aviso: aborta a linha inteira**. O `rm` falhou, o `&&` cortou, e a edição nunca
+correu. A mensagem `no matches found` saiu no meio de trinta linhas de saída de
+outro comando, e eu li-a como ruído.
+
+O que se seguiu foi pior que o erro. Corri três experiências para escolher uma
+margem, obtive **25 · 134 s · 2 devolvidas** nas três, e por um momento
+acreditei nelas. Só as reconheci como impossíveis porque batiam ao segundo:
+três condições diferentes não dão o mesmo tempo de parede.
+
+E entre uma coisa e outra tirei duas conclusões — "o conserto geométrico
+funcionou, 76 s contra quinze minutos" e "mas piorou para 78" — **sobre código
+que não estava no ficheiro.** Ambas foram para o chat como facto.
+
+> **Um comando encadeado com `&&` tem de ser lido do fim para o princípio: o que
+> interessa é o último elo, e é o mais fácil de perder de vista.** Quando o que
+> se está a medir é o efeito de uma edição, a edição confirma-se no ficheiro —
+> não na saída do comando que a devia ter feito.
+
+E o sinal que salva: **resultados idênticos entre condições que deviam diferir
+não são um resultado, são uma avaria do aparelho.**
+
+## 15cw — a bissecção "a sério" era pior nos dois eixos
+
+*07/09.* O comentário dizia bissecção e o código fazia varrimento linear — uma
+rede de cada vez, um DRC por rede. Vi o comentário, achei que estava a corrigir
+uma preguiça antiga, e escrevi a versão que parte ao meio.
+
+Ficou pior nos dois eixos que interessam:
+
+- **mais lenta**: com 5 culpadas em 33, descer recursivamente nas metades que
+  falham custa mais testes que percorrer a lista uma vez. A bissecção paga-se
+  quando há **uma** culpada;
+- **pior resultado**: 25 ligações por fazer contra 19, porque o recuo de que ela
+  precisa para o caso das culpadas-em-conjunto retira **todas** as candidatas de
+  uma vez.
+
+> **Um algoritmo melhor na notação pode ser pior na máquina, e "melhorar" uma
+> parte que ninguém mediu é uma aposta, não um conserto.** O varrimento estava lá
+> por uma razão que eu não tinha procurado antes de o substituir.
+
+E uma terceira, da mesma corrida: a cadeia **ignorava o código de saída** do
+roteador. Ele recusa gravar quando não consegue provar o que fez, e repõe a
+placa — correctamente. Mas uma passada falhada era indistinguível de uma passada
+que não tinha nada a fazer, e a cadeia seguia calada com outro número no fim.
