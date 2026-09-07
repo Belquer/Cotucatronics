@@ -30,7 +30,7 @@ SAI:  0 limpo · 1 divergencias · 2 uso
 """
 import io, os, re, subprocess, sys, datetime
 
-VERSAO = "0.2.0"
+VERSAO = "0.2.1"
 TOLERANCIA = 1          # dias
 ISO = re.compile(r"\b(20\d\d)-(\d\d)-(\d\d)\b")
 BR = re.compile(r"\b(\d\d)/(\d\d)(?:/(20\d\d))?\b")
@@ -43,6 +43,11 @@ def datas_da_linha(linha, ano_ref):
     um `10/12` que passa em qualquer teste de dia e mes — e e uma fraccao. Se a
     linha tiver algum `n/m` com m impossivel como mes, e uma linha de contas e
     nao se le nenhum `DD/MM` nela."""
+    # ⚠️ DATA ENTRE CRASES E UM LITERAL, NAO UMA AFIRMACAO. Esta guarda apanhou
+    # a cicatriz que a documenta, porque ela CITA `2026-09-20` como exemplo de
+    # sabotagem. Quem escreve sobre datas tem de poder escrever datas — e a
+    # marca de codigo e exactamente como se diz "isto e a palavra, nao o facto".
+    linha = re.sub(r"`[^`]*`", "", linha)
     out = []
     racios = re.findall(r"\b\d+/(\d+)\b", linha)
     linha_de_contas = any(int(m) > 12 for m in racios)
