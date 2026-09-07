@@ -51,7 +51,7 @@ USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.9.1"
+VERSAO = "1.10.0"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
@@ -113,6 +113,8 @@ VIRAGEM = 3.0           # o que custa dobrar, em celulas
 # tecto maior nao acha mais caminhos: deixa o roteador guloso teimar em ligacoes
 # dificeis, gastar minutos nelas e fechar corredores de que as seguintes
 # precisavam. Quem paga o tecto sao as buscas SEM solucao.
+FOLGA_FUGA = 0.22       # a folga apertada, so nos primeiros mm a volta do pad
+RAIO_FUGA = 3.0         # ate onde vale a fuga apertada
 TECTO = 300000          # nos que uma busca pode gastar antes de desistir
 CUSTO_VIA = 30.0        # ⚠️ em celulas. Alto de proposito: a via abre fenda no
                         # plano, portanto so se salta quando nao ha volta a dar.
@@ -223,6 +225,22 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
     ny = int((y1 - y0) / PASSO) + 1
     m = larg / 2 + FOLGA + PASSO * 0.71
     mv = VIA_R + FOLGA + PASSO * 0.71
+    # ⚠️ FOLGA APERTADA SO JUNTO AS PONTAS — a fuga do pad.
+    #
+    # Todas as ligacoes que sobravam terminavam num pad de passo fino: os pinos
+    # do U1 (SOIC, 1,27 mm) e os do cabo plano. As pistas chegavam a 5 mm e
+    # paravam. Nao e falta de espaco na placa: e que o PRIMEIRO MILIMETRO a
+    # sair de um pad de passo fino nao cabe na folga generosa que serve para o
+    # resto do percurso.
+    #
+    # Apertar a folga em toda a parte mede-se pior (23 -> 34): o roteador
+    # guloso enfia pistas cedo e fecha corredores. Apertar SO nos primeiros
+    # milimetros a volta das duas pontas nao tem esse efeito — ali nao ha
+    # corredor a fechar, ha um pad de onde e preciso sair.
+    #
+    # ⚠️ E o apertado nunca desce abaixo da regra da placa. O DRC valida o
+    # percurso todo com a mesma regra, e a retraccao continua a existir.
+    mf = larg / 2 + FOLGA_FUGA + PASSO * 0.71
 
     def pos(c):
         return (x0 + c[0] * PASSO, y0 + c[1] * PASSO)
@@ -240,7 +258,13 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
             cache[chave] = False
             return False
         px, py = pos(c)
-        mm = marg if marg is not None else m
+        if marg is not None:
+            mm = marg
+        elif (math.hypot(px - A[0], py - A[1]) < RAIO_FUGA
+              or math.hypot(px - B[0], py - B[1]) < RAIO_FUGA):
+            mm = mf
+        else:
+            mm = m
         v = True
         for ox, oy, orr, on in gs[L].perto(px, py):
             if on == rede:

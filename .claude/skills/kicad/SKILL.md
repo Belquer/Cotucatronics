@@ -1159,6 +1159,25 @@ ligações — **18 por fazer contra 21**, sem tocar em mais nada.
 reserva espaço num footprint é o pátio — e o pátio deste conector chegava a
 0,8 mm fora da placa.
 
+### 12r. A fuga do pad: apertar a folga só junto às pontas
+
+Quando as ligações que sobram **terminam todas num pad de passo fino** — um
+SOIC de 1,27 mm, os pinos de um conector — o problema não é o caminho: é o
+primeiro milímetro. A folga generosa que serve para o resto do percurso não
+cabe entre os pads de onde é preciso sair.
+
+Apertar a folga em toda a parte mede-se pior (23 → 34), porque o roteador
+guloso enfia pistas cedo e fecha corredores. Apertá-la **só nos primeiros ~3 mm
+à volta das duas pontas** não tem esse efeito: ali não há corredor a fechar, há
+um pad de onde é preciso sair. Medido: **18 → 12**.
+
+> **Um parâmetro que é mau em toda a parte pode ser exactamente certo num
+> sítio.** Três experiências a medir a folga alta e baixa, quando a resposta era
+> que ela não devia ser um número global de todo.
+
+⚠️ O apertado nunca desce abaixo da regra da placa, e o DRC valida o percurso
+inteiro com a mesma regra — a retracção continua a existir por trás.
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,

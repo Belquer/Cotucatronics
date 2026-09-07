@@ -8719,3 +8719,28 @@ entre **pads** e dei 2,49 mm de folga; o DRC devolveu dois `courtyards_overlap`.
 chega a y=18,8, que já é fora da placa. É a mesma família do varrimento que pôs
 uma peça em cima de um electrolítico por medir os pads de 1 mm e ignorar o corpo
 de ⌀16.
+
+## 15da — o que faltava não era o caminho, era o primeiro milímetro
+
+*07/09.* Depois de mover o conector, sobravam 18 ligações no cérebro. Fui ver
+onde acabavam, e **todas terminavam num pad de passo fino**: os pinos do `U1`,
+um SOIC de 1,27 mm, e os do cabo plano. As pistas chegavam a cinco milímetros
+do pad e paravam.
+
+Não era falta de espaço na placa. É que **o primeiro milímetro a sair de um pad
+de passo fino não cabe na folga generosa que serve para o resto do percurso** —
+e essa folga era minha, 0,35 mm contra os 0,20 que a placa manda.
+
+Já sabia que apertar a folga em toda a parte mede-se pior (23 → 34): o roteador
+guloso enfia pistas cedo e fecha corredores. A saída era apertá-la **só nos
+primeiros milímetros à volta das duas pontas** — ali não há corredor a fechar,
+há um pad de onde é preciso sair.
+
+```
+cerebro  18 -> 12 por ligar · geometria 0 · planos inteiros
+```
+
+> **Um parâmetro que é mau em toda a parte pode ser exactamente certo num
+> sítio.** Passei três experiências a tratar a folga como um número global,
+> medindo-a alta e baixa, quando a resposta era que ela não devia ser um número
+> global de todo.
