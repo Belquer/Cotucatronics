@@ -668,6 +668,214 @@ A caixa tinha três arcade e o desenho dois; ia anunciar que o **esquema**
 estava desactualizado. O esquema já tinha três. Quem estava errado era o
 desenho — outra vez. **Medir antes de anunciar de que lado está a falta.**
 
+## 11. LAYOUT: o esquema acaba, e começa uma máquina com outras regras
+
+Tudo acima é esquema. A partir daqui é cobre, e o cobre castiga outras coisas.
+Estas regras não são deste instrumento — são de **qualquer** placa de dois
+lados com plano de terra, e é por isso que estão numa skill e não num README.
+
+### 11.0 O F8 casa por UUID, e um gerador troca todos os UUID
+
+`Update PCB from Schematic` **não casa por referência** — casa por UUID. Um
+esquema gerado por script muda todos os UUID a cada geração, portanto o F8 não
+reconhece nada e **acrescenta um segundo exemplar de cada peça ao lado do
+primeiro**. O sintoma não é um erro: é a placa a ficar confusa, com a Daisy
+duas vezes e o resto por descobrir.
+
+> **Se o esquema é gerado, o F8 não serve, e o conserto não é apagar
+> duplicados à mão.** É um sincronizador que casa por **referência**, tira os
+> que sobram, põe os que faltam e escreve as redes nos pads
+> (`sincroniza_pcb.py`). O F8 deixa de ser um passo do processo.
+
+Duas armadilhas dentro do sincronizador, ambas pagas:
+
+- **A biblioteca do sistema também conta.** O primeiro sincronizador só
+  conhecia a `.pretty` do projecto, e esvaziei as duas placas com `--zero`
+  **antes de provar que sabia reconstruir**. Prova o caminho de volta antes de
+  usar o caminho de ida.
+- **O `.kicad_mod` traz o seu próprio `Reference` `REF**`.** Se acrescentares o
+  teu, o KiCad fica com o último e a placa mostra `REF**`. Tira o do módulo.
+
+### 11a. Cobre nas duas camadas não deixa camada nenhuma para sinal
+
+⚠️ **A regra estrutural que substitui meia sessão de trabalho esperto.**
+
+Um dois-lados tem duas camadas. Se puseres plano de terra em F.Cu **e** em
+B.Cu, não sobra camada para sinal — e então toda a pista atravessa um plano.
+**Atravessar um plano não é passar por cima dele. É cortá-lo:** o cobre recua
+dos dois lados da pista e o plano fica em pedaços.
+
+O arranjo certo, e é o normal da indústria:
+
+```
+B.Cu   plano sólido de terra, inteiro
+F.Cu   sinal, e nenhuma zona
+       + uma via em cada pad SMD de terra, a descer ao plano
+```
+
+> **Quando um roteador te parece precisar de ficar mais esperto, desconfia do
+> desenho antes de desconfiar do roteador.** A pergunta era "como ensino o
+> roteador a ver zonas"; a resposta foi "tira o plano do caminho dele". Vinte
+> linhas de geometria contra meia sessão de heurística, e a segunda nunca teria
+> ficado fiável.
+
+Custo: **19 vias no cérebro, 8 no painel.** É o preço normal, e paga-se uma vez.
+
+### 11b. Cobre adjacente não é cobre ligado
+
+Pus as vias **ao lado** dos pads e não as liguei a nada. O DRC devolveu
+`via_dangling` em cada uma das 19. **0,9 mm de vazio isola tão bem como 9 mm.**
+
+Cada via leva um **coto** até ao pad, na camada do pad. E a via vai para o
+lado, nunca em cima do pad: **via no pad suga solda por capilaridade** e deixa
+a junta pobre — e no lado SMD quem solda é a fábrica.
+
+### 11c. Todo teste de espaço olha pads **E** pistas
+
+O primeiro teste de colisão das vias só olhou pads, e enfiou duas vias a 0,10 e
+0,15 mm de pistas que a pessoa já tinha roteado à mão. **O que já lá está é
+obstáculo, tenha vindo de onde vier.**
+
+### 11d. `--refill-zones`, ou o DRC compara com um enchimento velho
+
+```bash
+kicad-cli pcb drc --refill-zones --save-board -o r.rpt placa.kicad_pcb
+```
+
+Sem `--refill-zones` o DRC compara as pistas novas contra o **enchimento
+anterior** das zonas e devolve dezenas de `clearance` fantasma. Vais caçar
+defeitos que não existem.
+
+> **E antes de dizeres que uma ferramenta não faz X, corre `--help`.** Escrevi
+> num commit que o `kicad-cli` não sabia encher zonas. Sabia, e a flag chamava-
+> se exactamente aquilo. Foi a terceira afirmação do género no mesmo dia.
+
+### 11e. MEDIR POR REDE — o total mente por omissão
+
+⚠️ **A regra que apanha a regressão que se disfarça de progresso.**
+
+Um roteamento baixou o total de ligações por fazer de **71 para 52** e ao mesmo
+tempo partiu a ilha de AGND em oito pedaços. O total melhorou. A placa piorou.
+E o DRC dizia geometria zero o tempo todo, porque do ponto de vista dele nada
+estava errado.
+
+O que se mede, sempre, e nunca só o primeiro:
+
+| medida | o que apanha |
+|---|---|
+| por ligar, **por rede** | a regressão escondida atrás de um total melhor |
+| `Zone [X] <-> Zone [X]` | o plano cortado em pedaços |
+| `starved_thermal` | pad agarrado a uma ilha estreita (largura de cobre, não plano cortado) |
+| `via_dangling` | via que não liga a nada dos dois lados |
+| geometria (`clearance`, `short`) | o que qualquer fábrica recusa |
+
+⚠️ **E o nome da rede NÃO está na linha do achado.** O cabeçalho do
+`unconnected_items` diz só `Missing connection between items`; a rede vem nas
+**duas linhas de item seguintes**. Um extractor que casa o cabeçalho devolve
+**zero achados com ar de placa limpa** contra um DRC que diz 47.
+**Verificador que mente é pior que verificador nenhum** — este devolveu-me a
+placa limpa e eu quase segui.
+
+### 11f. O que NENHUM DRC vê
+
+O DRC é 2D e mede cobre. Três coisas ficam de fora, e cada uma já custou:
+
+1. **Volume.** O botão de arcade desce pela terceira dimensão. Uma peça alta
+   debaixo dele passa em todos os testes e não deixa fechar a caixa. Precisa de
+   uma tabela de alturas por padrão de footprint e de um portão próprio.
+2. **Acesso.** O USB-C tem de continuar a ser alcançável com a placa montada,
+   ou a primeira regravação abre a caixa toda. **Planta, volume e acesso são
+   três portões, não um.**
+3. **Camada vazia ≠ face vazia.** Uma camada sem objectos não prova que aquela
+   face está livre; prova que ninguém desenhou lá.
+
+### 11g. Duas coisas que arruínam a serigrafia
+
+- **Referências em cima dos pads.** Um sincronizador que põe cada referência
+  numa posição fixa relativa acerta em cheio nos pads: `silk_over_copper` 39.
+  Arruma-se por script, e **prova-se pelo número que NÃO muda** — ligações por
+  rotear 104 → 104 diz que só se mexeu em serigrafia.
+- **O logótipo no centro da placa.** Foi lá parar por defeito e ficou por cima
+  de 64 de 130 pads. Procura-se a **maior faixa livre** e põe-se lá.
+
+### 11h. A ilha de terra analógica e a ponte única
+
+AGND é uma **ilha** dentro do plano de GND, com prioridade maior para ganhar o
+cobre, e liga-se a GND **num sítio só** — uma ponte, num ponto escolhido. Duas
+pontes fazem uma malha, e a malha é a corrente de retorno digital a passar pelo
+chão do analógico. A ilha tem de existir nas **duas** metades do arranjo: zona
+de AGND em B.Cu, e as vias dos pads de AGND a cair dentro dela.
+
+**O plano fecha ligações de graça:** 23 ligações de terra fecharam-se sem uma
+única pista, só por o cobre estar lá.
+
+### 11i. Um roteador que insiste é pior que um que desiste
+
+O roteador prova percursos triviais — a direito, dois Ls — e contorna por A\*
+se for preciso. **O que não sair fica para a pessoa.** Um roteador que insiste
+faz caminhos que ninguém quereria e que depois ninguém percebe ao rever.
+
+E **verifica-se a si próprio**: corre o DRC com as zonas cheias e **retira as
+redes que forem acusadas**, devolvendo-as à lista. Escrever e depois medir não
+chega — tem de desfazer.
+
+Quatro rondas de defeitos, e as quatro valem para qualquer roteador que
+escrevas:
+
+1. os obstáculos não incluíam as pistas que o próprio roteador tinha acabado de
+   pôr — 81 cruzamentos;
+2. a colisão testava só o centro da célula, e passaram folgas de 0,02 mm;
+3. os limites vinham da extensão das peças, não do contorno da placa — pistas
+   fora da placa;
+4. e mesmo assim duas redes violavam, o que é a razão de existir a retracção.
+
+### 11j. Guardas que se escrevem uma vez e valem para todos os produtos
+
+A automação só compensa se as ferramentas **souberem recusar**. Cada uma
+destas é uma linha de defesa que não depende de eu me lembrar:
+
+- o roteador **recusa correr** se encontrar zona em F.Cu (11a);
+- o gerador de contorno **recusa escrever** se a placa não couber na caixa, ou
+  se um furo de fixação ficar debaixo de uma peça;
+- o gerador da caixa **recusa** um valor de espessura por omissão em campos onde
+  a omissão é perigosa;
+- a lista gerada sai **carimbada com data, commit e aviso de árvore suja**.
+
+> **Quando uma instrução pode matar hardware, a garantia não é a instrução
+> estar certa — é a instrução não poder matar.** O mesmo vale para uma
+> ferramenta: a garantia não é eu lembrar-me da regra, é a ferramenta parar.
+
+### 11k. O caminho até à fábrica
+
+Tudo em `kicad-cli`, sem abrir a interface, portanto tudo repetível por
+produto:
+
+```bash
+K=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
+$K pcb drc --refill-zones --save-board -o drc.rpt placa.kicad_pcb   # o portão
+$K pcb export gerbers -o fab/ placa.kicad_pcb
+$K pcb export drill   -o fab/ placa.kicad_pcb
+$K pcb export pos     -o fab/cpl.csv --format csv --units mm placa.kicad_pcb
+$K sch export bom     -o fab/bom.csv esquema.kicad_sch
+```
+
+⚠️ **O `kicad-cli` não tem subcomando de roteamento**, e o módulo `pcbnew`
+exposto **não traz o PNS** (nem `Shove`, nem `Walkaround`, nem autoroute) —
+confirmado a listar o módulo, não deduzido. **E não há export de DSN**, portanto
+nenhum autoroteador externo é alcançável por aqui. Quem rotear, roteia na
+interface ou escreve o seu.
+
+⚠️ **O `pcbnew` importado do Python do sistema falha no `dlopen`** — pede as
+bibliotecas wx do próprio KiCad. Ou se usa o interpretador do bundle, ou se
+mede pelo relatório do DRC, que é a ferramenta externa que pode dizer não.
+
+⚠️ **E o `--save-board` reformata o ficheiro.** Um medidor por expressão
+regular com janela fixa passa a alcançar campos que antes não alcançava, e a
+mesma placa dá dois números diferentes em duas medições. Foi o que me
+aconteceu, e a placa não tinha mudado. **Medição por regex em formato que a
+ferramenta reescreve não é medição.**
+
+
 ## Procedência
 
 Esta skill absorveu em 01/09 a antiga `esquematico`, que deixou de existir por

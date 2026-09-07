@@ -8421,3 +8421,51 @@ das pistas**, ate saber ler zonas.
 
 E as 71 do cerebro voltam para o dB, que e onde estavam. Nao se perdeu nada
 excepto o meu tempo, e ficou a saber-se uma coisa que nao se sabia.
+
+## 15cp — o roteador não precisava de ficar esperto; o desenho é que estava errado
+
+*07/09.* A cicatriz anterior (15co) terminou com o roteador a cortar os planos e
+com uma pergunta: **como é que se ensina um roteador a ver zonas?** O dB
+escolheu que se tentasse. A resposta certa era que a pergunta estava errada.
+
+O cobre estava nas **duas** camadas — GND e a ilha de AGND em F.Cu *e* em B.Cu.
+Um dois-lados só tem duas camadas. Se ambas são plano, **não sobra camada para
+sinal**, e então toda a pista atravessa um plano. E atravessar um plano é
+cortá-lo.
+
+Nenhuma heurística resolve isso, porque não há caminho bom: o roteador estava a
+ser-lhe pedido que passasse por um sítio onde não cabia nada. O conserto foi o
+arranjo normal de qualquer dois-lados — **plano sólido em B.Cu, sinal em F.Cu,
+e uma via em cada pad SMD de terra a descer ao plano**. A pergunta "como é que
+ele evita cortar o plano" deixou de existir: não há plano no caminho dele.
+
+> **Meia sessão de roteador esperto, ou vinte linhas de desenho certo.** Quando
+> uma ferramenta parece precisar de ficar mais inteligente, vale a pena
+> desconfiar do desenho antes de desconfiar da ferramenta — o esforço é uma
+> ordem de grandeza menor e o resultado é fiável em vez de provável.
+
+Três defeitos meus a caminho, e os três são da mesma família — **afirmar
+ligação onde só havia proximidade**:
+
+- **A via ao lado do pad não está ligada ao pad.** 19 `via_dangling`, e
+  0,9 mm de vazio isola tão bem como 9 mm. Cada via leva um coto.
+- **O teste de espaço da via olhou pads e ignorou pistas.** Duas vias a 0,10 e
+  0,15 mm de pistas que o dB já tinha roteado à mão. O que já lá está é
+  obstáculo, tenha vindo de onde vier.
+- **O extractor do DRC casava a linha do cabeçalho**, onde o nome da rede não
+  está — vem nas duas linhas seguintes. Devolveu-me **zero achados com ar de
+  placa limpa** contra um DRC que dizia 47, e eu quase segui. Virou
+  `le_drc.py`, que lê por rede.
+
+E uma quarta, que é a mais insidiosa: **a mesma placa deu-me dois números
+diferentes em duas medições e eu procurei a causa na placa.** O `--save-board`
+reformata o ficheiro, e o meu medidor por expressão regular com janela fixa
+passou a alcançar campos que antes não alcançava. Medição por regex, num
+formato que a ferramenta reescreve, não é medição.
+
+Medido no fim, com as zonas cheias:
+
+```
+cerebro   71 -> 47 por ligar · planos em pedacos 0
+painel    32 -> 14 por ligar · planos em pedacos 0
+```
