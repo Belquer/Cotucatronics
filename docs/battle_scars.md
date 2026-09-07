@@ -8334,7 +8334,7 @@ Partidas por tipo, eram outra coisa:
 | | |
 |---|---|
 | **85 ANTIGA** | datas *anteriores* ao commit que as introduziu |
-| **1 FUTURO** | `10/12` em «sacrificaveis 10/12» — uma **fraccao** |
+| **1 FUTURO** | `10/12` em `sacrificaveis 10/12` — uma **fraccao** |
 | **0 FUTURA** | a deriva que o plano temia: **nenhuma vez em 544** |
 
 As 85 «ANTIGA» eram todas legitimas: um documento escrito a 05/09 que regista
