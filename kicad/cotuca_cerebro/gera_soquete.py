@@ -67,6 +67,7 @@ def simbolo(lib, ref, val, x, y, ang=0, campos=()):
 FOOTPRINT = {
     "U2":  "Module:Electrosmith_Daisy_Seed",      # o footprint do fabricante
     "NT1": "NetTie:NetTie-2_SMD_Pad2.0mm",        # ⚠️ FORA da BOM: nao e peca
+    "C15": "Capacitor_SMD:C_0805_2012Metric",
     "R50": "Resistor_SMD:R_0805_2012Metric",
     "R51": "Resistor_SMD:R_0805_2012Metric",
     # ⚠️ footprint do projecto, nao de biblioteca instalada: este modulo nao
@@ -339,10 +340,13 @@ simbolo("ESP32C3", "U3", "ESP32-C3 SuperMini", EX, EY,
 # CRU e deixei o diodo para tras — e ainda por cima no dia em que abrimos um
 # buraco na caixa para chegar a esse USB. O dB apanhou-o a ler o esquema.
 #   Trocar uma peca por outra nao herda o que estava ANTES dela no caminho.
-PONTE = {"5V": ("+5V_PONTE", "atras do D2 — nao realimenta o trilho"),
+PONTE = {"5V": ("+5V_PONTE", ""),
          "GND": ("GND", ""),
-         "IO20": ("MIDI_TX", "IO20 = RX da ponte"),
-         "IO21": ("MIDI_RX", "IO21 = TX da ponte"),
+         # ⚠️ sem observacao por pino: a 1,0 de tamanho elas cabiam no desenho
+         # mas nao no espaco — batiam no rotulo e no fio, 4 colisoes. O que
+         # elas diziam esta na nota do bloco, que e onde se le antes de decidir.
+         "IO20": ("MIDI_TX", ""),
+         "IO21": ("MIDI_RX", ""),
          "IO3": ("PONTE_STATUS", "")}
 _vistos = set()
 for _n, px, py in pinos_de("ESP32C3"):
@@ -360,10 +364,12 @@ for _n, px, py in pinos_de("ESP32C3"):
 if _vistos != set(PONTE):
     raise SystemExit("*** o mapa da ponte cita pinos que o simbolo nao tem: %s"
                      % (set(PONTE) - _vistos))
-texto("PONTE ESP32-C3 EM SOQUETE — TX/RX CRUZADOS: o TX da Daisy vai ao RX", EX - 40, EY - 18.0, 1.6)
-texto("do modulo. A terra vai pelo PLANO, nao por fio: o soquete tratou disso.", EX - 40, EY - 14.2)
+texto("PONTE ESP32-C3 EM SOQUETE — TX/RX CRUZADOS: IO20 e o RX do modulo,", EX - 40, EY - 18.0, 1.6)
+texto("IO21 o TX. A terra vai pelo PLANO: o soquete tratou disso.", EX - 40, EY - 14.2)
 texto("IO8 e o LED de bordo, IO9 e o BOOT — nao usar. Antena no lado", EX - 40, EY + 14.2, 1.6)
 texto("OPOSTO ao USB: manter cobre longe dela no layout.", EX - 40, EY + 18.0)
+texto("+5V_PONTE e o +5V ATRAS do D2, com o C3/C4 locais: o USB do modulo,", EX - 40, EY + 21.8, 1.6)
+texto("ligado para reprogramar, nao realimenta o trilho da placa toda.", EX - 40, EY + 25.6)
 
 # --------------------------------------------------- modulo do amp (4 pinos)
 AX, AY = 300.0, 110.0
@@ -487,6 +493,24 @@ for _n in (36, 37):
     L.append('\t(no_connect\n\t\t(at %s %s)\n\t\t(uuid "%s")\n\t)\n' % (g(_x), g(_y), u()))
 
 
+# ------------------------------------- desacoplamento do +5V junto a Daisy
+#
+# ⚠️ O trilho +5V estava SEM UM UNICO CONDENSADOR. A revisao de terra (P4) diz
+# que logica sem par local da "ruido difuso", e o +5V alimenta a Daisy, a fita
+# do painel e o step-down. O 100 uF nao vem aqui: a rajada e o radio, e o radio
+# esta atras do D2 com o seu proprio par (C3/C4). Aqui basta o pequeno, que e
+# quem deixa passar as arestas.
+CDX, CDY = 150.0, 300.0
+simbolo("C_V", "C15", "100n", CDX, CDY, campos=campos("C15", "100n"))
+for (_n, px, py), (rot, ang, just) in zip(pinos_de("C_V"),
+                                          [("+5V", 90, "left"), ("GND", 270, "left")]):
+    x, y = CDX + px, CDY - py
+    dy = -10.16 if py > 0 else 10.16
+    fio(x, y, x, y - dy); rotulo(rot, x, y - dy, ang, just)
+nota(CDX - 30, CDY + 20.0,
+     "100 nF do +5V ao GND, colado ao pino 39 da Daisy. O trilho nao tinha",
+     "nenhum: achado da P4 da revisao de terra, 06/09.")
+
 # ------------------------------------------- os dois PWR_FLAG que faltavam
 #
 # ⚠️ O `ERC-ISENCOES.md` e a BOM diziam QUATRO `PWR_FLAG`; o esquema tinha
@@ -498,7 +522,7 @@ for _n in (36, 37):
 # Schottky, e o ERC nao sabe que um diodo e fonte. Declara-se quem alimenta —
 # nao se isenta o aviso, que era so tapar a pergunta.
 for k, (rede, FX, FY) in enumerate((("+5V", 60.0, 300.0), ("GND", 90.0, 300.0),
-                                    ("+5V_PONTE", 120.0, 300.0)), start=3):
+                                    ("+5V_PONTE", 160.0, 300.0)), start=3):
     ref = f"#FLG{k}"
     simbolo("PWR_FLAG", ref, "PWR_FLAG", FX, FY,
             campos=(("Reference", ref, 0, -2.54, 1.27, True, ""),

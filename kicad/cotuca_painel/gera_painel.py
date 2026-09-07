@@ -101,6 +101,11 @@ FOOTPRINT = {
     "Q1":  "Package_TO_SOT_SMD:SOT-23",
     "Q2":  "Package_TO_SOT_SMD:SOT-23",
     "C1":  "Capacitor_SMD:C_0805_2012Metric",
+    # ⚠️ o C3 e o MESMO EEU-FR1C101 que ja esta na BOM para o C3 do cerebro —
+    # zero linhas novas de MPN, decidido com o dB a 06/09.
+    "C3":  "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm",
+    "C4":  "Capacitor_SMD:C_0805_2012Metric",
+    "C5":  "Capacitor_SMD:C_0805_2012Metric",
     "C2":  "Capacitor_SMD:C_0805_2012Metric",
     "R1":  "Resistor_SMD:R_0805_2012Metric",
     "R2":  "Resistor_SMD:R_0805_2012Metric",
@@ -255,6 +260,18 @@ for ref, sinal, cor, y in (("J3", "BOT_FRZ_A", "fio -> arcade AZUL freeze A", 25
     # x=85 e nao 100: a 100 o rotulo GND do botao encostava no LED_FRZ_A
     # do R1 (8,2 mm² de sobreposicao, medido pelo colisoes_sch a 05/09).
     liga("CONN2_L", ref, 85.0, y, {"1":sinal, "2":"GND"}, cor)
+# ------------------------------ desacoplamento do +5V, JUNTO AOS MOSFET
+#
+# ⚠️ A CARGA NAO E O OLED — ele tem os condensadores dele. O que comuta neste
+# +5V sao os LED dos arcade pelos MOSFET: ~90 mA a ligar e a desligar, por
+# 150 mm de fita. O par vai onde a corrente muda, que e aqui, e nao junto ao
+# conector do OLED. Achado da P4 da revisao de terra, 06/09.
+# 100 uF e nao mais: o +5V e a SAIDA de um step-down, e capacitancia a mais na
+# saida mexe na estabilidade da malha.
+liga("CP_V", "C3", 240.0, 285.0, {"1":"+5V", "2":"GND"}, "100u 16V")
+liga("C_V",  "C4", 265.0, 285.0, {"1":"+5V", "2":"GND"}, "100n")
+liga("C_V",  "C5",  55.0, 150.0, {"1":"+3V3A", "2":"GND"}, "100n COLADO ao IDC")
+
 nota(65.0, 232.4,
      "BOTOES E LEDS SAO CONECTORES, nao pecas da placa: o arcade de 30 mm",
      "prende no painel e chega por fio. Um lado ao GND; o pull-up e interno",

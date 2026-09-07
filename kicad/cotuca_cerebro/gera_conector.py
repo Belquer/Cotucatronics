@@ -72,6 +72,7 @@ def simbolo(lib, ref, val, x, y):
 #
 # A JLC monta so o lado SMD (decidido com o dB a 05/09); o THT solda o dB.
 FOOTPRINT = {
+    "C16": "Capacitor_SMD:C_0805_2012Metric",
     "J14": "Connector_IDC:IDC-Header_2x13_P2.54mm_Vertical",
 }
 
@@ -174,6 +175,21 @@ def nota(x, y, *linhas, tam=1.6, passo=3.81):
 
 JX, JY = 160.0, 110.0
 simbolo("IDC26", "J14", "IDC 2x13 -> painel", JX, JY)
+
+# ------------------------ 100 nF do +3V3A, COLADO ao IDC
+#
+# ⚠️ O +3V3A e a alimentacao dos pots, e sai daqui por 150 mm de fita. A
+# leitura da Daisy e ratiometrica e tolera o que for COMUM ao trilho e a
+# referencia — mas o que entra so pelo lado do cabo entra na leitura. O par
+# vai colado ao conector nas DUAS placas, que e onde o cabo comeca e acaba.
+# Achado da P4 da revisao de terra, 06/09: o trilho nao tinha nenhum.
+CX3, CY3 = JX - 40.0, JY + 60.0
+simbolo("C_V", "C16", "100n", CX3, CY3)
+for (_n, px, py), (rot, ang, just) in zip(pinos_de("C_V"),
+                                          [("+3V3A", 90, "left"), ("GND", 270, "left")]):
+    x, y = CX3 + px, CY3 - py
+    dy = -10.16 if py > 0 else 10.16
+    fio(x, y, x, y - dy); rotulo(rot, x, y - dy, ang, just)
 for num, px, py in pinos_de("IDC26"):
     n = int(num); rot, obs = VIAS[n]
     x, y = JX + px, JY - py          # y do simbolo cresce para CIMA
