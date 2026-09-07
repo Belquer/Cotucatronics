@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.7.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.8.0 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.7.0"
+VERSAO = "0.8.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -289,6 +289,16 @@ UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 25.0, 90),
                   # sempre: medir a coisa certa custa menos que medir depressa.
                   # Das 480 posicoes livres, a mais atras — o USB fica a 12 mm
                   # da parede em vez dos 30 da tentativa anterior.
+                  # ⚠️ ABERTO: o U3 e um RADIO BLE e esta a 10 mm da borda da ilha de AGND.
+                  # Electricamente nao ha problema — a ilha acaba em x=75 e ele
+                  # comeca em 75,75, logo o GND dele nao a fura (era o achado 🔴
+                  # da P3). Mas a P6 diz que rajadas de radio acoplam PELO AR, e
+                  # contra isso o cobre nao defende: o lugar certo dele e a
+                  # metade direita, longe do pre-amp.
+                  # Tentei tres posicoes la e as tres bateram em C1, J4 ou J1 —
+                  # a metade direita esta cheia. Mover o U3 para la exige mexer
+                  # noutra peca, e isso e decisao de layout com o dB no editor,
+                  # nao mais uma tentativa minha as cegas.
                   "U3": (85.0, 106.0, 180),
                   # ⚠️ COLADOS ao que desacoplam: o C15 ao pino 39 da Daisy, o
                   # C16 ao J14. A mais de poucos centimetros ligam-se atraves da
@@ -357,6 +367,57 @@ def fp_de(t, ref):
 
 def u():
     return str(uuid.uuid4())
+
+
+# --- planos de cobre ---------------------------------------------------------
+#
+# ⚠️ DUAS TERRAS, DUAS ILHAS, UMA PONTE. A P3 da revisao de terra e explicita:
+# `AGND` e `GND` juntos em mais de um sitio formam anel, e a fraccao da corrente
+# que escolhe o caminho de dentro passa pela referencia do codec. A ponte e o
+# `NT1` e e a UNICA — por isso o plano de `GND` tem de PARAR onde a ilha comeca,
+# em vez de varrer a placa toda por baixo do pre-amp.
+#
+# Um plano de GND desenhado antes da P3 teria criado essa segunda ponte com ar
+# de melhoria: mais cobre, menos impedancia, e um anel a mais.
+ILHA_AGND = {"cerebro": (22.0, 30.0, 75.0, 120.0)}      # x0, y0, x1, y1 no KiCad
+ZONAS_COBRE = {
+    "cerebro": [("GND", "B.Cu", None), ("GND", "F.Cu", None),
+                ("AGND", "B.Cu", "ilha"), ("AGND", "F.Cu", "ilha")],
+    "painel":  [("GND", "B.Cu", None), ("GND", "F.Cu", None)],
+}
+
+
+def zona(rede, camada, pts, prio=0):
+    v = "".join("\t\t\t\t(xy %g %g)\n" % p for p in pts)
+    return ('\t(zone\n\t\t(net 0)\n\t\t(net_name "%s")\n\t\t(layer "%s")\n'
+            '\t\t(uuid "%s")\n\t\t(hatch edge 0.5)\n\t\t(priority %d)\n'
+            '\t\t(connect_pads\n\t\t\t(clearance 0.5)\n\t\t)\n'
+            '\t\t(min_thickness 0.25)\n\t\t(filled_areas_thickness no)\n'
+            '\t\t(fill\n\t\t\t(thermal_gap 0.5)\n\t\t\t(thermal_bridge_width 0.5)\n\t\t)\n'
+            '\t\t(polygon\n\t\t\t(pts\n%s\t\t\t)\n\t\t)\n\t)\n'
+            % (rede, camada, u(), prio, v))
+
+
+def planos(t, nome, alvo):
+    """Escreve as zonas de cobre. Substitui as que houver."""
+    t = re.sub(r'\n\t\(zone[\s\S]*?\n\t\)(?=\n\t\(|\n\))', '', t)
+    ox, oy = alvo["origem"]
+    w, h = alvo["w"], alvo["h"]
+    m = 0.3                                   # recuo ao contorno
+    todo = [(ox + m, oy + m), (ox + w - m, oy + m),
+            (ox + w - m, oy + h - m), (ox + m, oy + h - m)]
+    L = []
+    for rede, camada, forma in ZONAS_COBRE.get(nome, []):
+        if forma == "ilha":
+            x0, y0, x1, y1 = ILHA_AGND[nome]
+            pts = [(x0, y0), (x1, y0), (x1, y1), (x0, y1)]
+            # ⚠️ prioridade MAIOR: a ilha ganha o espaco ao plano geral, senao
+            # o GND enchia-o primeiro e a ilha ficava sem cobre.
+            L.append(zona(rede, camada, pts, prio=1))
+        else:
+            L.append(zona(rede, camada, todo, prio=0))
+    i = t.rstrip().rfind(')')
+    return t[:i] + "".join(L) + t[i:], len(L)
 
 
 # --- marca na serigrafia ----------------------------------------------------
@@ -973,6 +1034,7 @@ def main():
     relato = confere_caixa(nome, alvo)
     t = contorno(t, alvo)
     t = marca(t, nome, alvo)
+    t, n_z = planos(t, nome, alvo)
     postos = []
     for ref, furo in FIXOS.get(nome, {}).items():
         alvo_xy = da_tampa(nome, alvo, TAMPA[furo])
@@ -998,6 +1060,7 @@ def main():
     print("  %s: contorno %g x %g mm em (%g, %g)"
           % (nome, alvo["w"], alvo["h"], alvo["origem"][0], alvo["origem"][1]),
           file=sys.stderr)
+    relato.append("     %d zona(s) de cobre" % n_z)
     for l in relato:
         print(l, file=sys.stderr)
     for ref, furo, alvo_xy, eixo, xy in postos:

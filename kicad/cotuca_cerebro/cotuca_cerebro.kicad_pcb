@@ -18990,28 +18990,28 @@
 		(end 197 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "a449a505-cd58-4849-b07e-714777a8c43c")
+		(uuid "8bb042f4-e4d2-4c7f-832e-49a94d0a3a90")
 	)
 	(gr_line
 		(start 200 23)
 		(end 200 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "71886097-1666-44cb-baa0-664fbcf5080e")
+		(uuid "8014d6ca-82f4-4980-84ce-68f53e461335")
 	)
 	(gr_line
 		(start 197 120)
 		(end 23 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "38282069-80f7-48f2-8aa8-95c24be93b26")
+		(uuid "de932c9b-33c1-4b05-98c7-8aa3e960341f")
 	)
 	(gr_line
 		(start 20 117)
 		(end 20 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "cc65db7d-e3e1-401f-a05b-7614f81c92b1")
+		(uuid "d5e54852-20cf-4095-bb80-6e5035760119")
 	)
 	(gr_arc
 		(start 197 20)
@@ -19019,7 +19019,7 @@
 		(end 200 23)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "4f7d97d2-8346-4b45-8393-e89ef7565cc9")
+		(uuid "72c1764c-fb26-49ff-a7f2-582ec1ba4bf4")
 	)
 	(gr_arc
 		(start 200 117)
@@ -19027,7 +19027,7 @@
 		(end 197 120)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "6cd095dd-5c77-49ce-a21a-fb12025ab5fc")
+		(uuid "b3eac729-6313-4840-843f-1c00cb1d48e5")
 	)
 	(gr_arc
 		(start 23 120)
@@ -19035,7 +19035,7 @@
 		(end 20 117)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "d627cfe3-ed96-40fc-bae7-018d85cb4b51")
+		(uuid "d823c124-0eec-41d5-8db2-0e0365fd2184")
 	)
 	(gr_arc
 		(start 20 23)
@@ -19043,12 +19043,12 @@
 		(end 23 20)
 		(stroke (width 0.1) (type default))
 		(layer "Edge.Cuts")
-		(uuid "c70a2948-14ad-471f-bbcf-dc682c04fda6")
+		(uuid "89d8ddf4-3533-4a84-b651-5762865e6061")
 	)
 	(gr_text "COTUCATRONICS"
 		(at 140 27.5)
 		(layer "B.SilkS")
-		(uuid "774103e2-970a-45de-91d4-bb0d878597da")
+		(uuid "70425568-0270-4b73-84ec-b6f47ce50cb6")
 		(effects
 			(font
 				(size 5 5)
@@ -19061,7 +19061,7 @@
 	(gr_text "cerebro rev B"
 		(at 82 27)
 		(layer "B.SilkS")
-		(uuid "8ce62cd3-3288-42df-bccb-9acb5fa9a744")
+		(uuid "7bfde0c1-f66c-4883-a360-17bed0e924c2")
 		(effects
 			(font
 				(size 2.2 2.2)
@@ -19069,6 +19069,106 @@
 				(bold yes)
 			)
 			(justify mirror)
+		)
+	)
+	(zone
+		(net 0)
+		(net_name "GND")
+		(layer "B.Cu")
+		(uuid "029a6942-559f-43fa-8612-92db9c595ab4")
+		(hatch edge 0.5)
+		(priority 0)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(filled_areas_thickness no)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 20.3 20.3)
+				(xy 199.7 20.3)
+				(xy 199.7 119.7)
+				(xy 20.3 119.7)
+			)
+		)
+	)
+	(zone
+		(net 0)
+		(net_name "GND")
+		(layer "F.Cu")
+		(uuid "863614b3-8ec1-4481-996c-f3ff553bd1c4")
+		(hatch edge 0.5)
+		(priority 0)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(filled_areas_thickness no)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 20.3 20.3)
+				(xy 199.7 20.3)
+				(xy 199.7 119.7)
+				(xy 20.3 119.7)
+			)
+		)
+	)
+	(zone
+		(net 0)
+		(net_name "AGND")
+		(layer "B.Cu")
+		(uuid "9ffb46db-c16c-4ecf-b9c7-8dabbe28a52c")
+		(hatch edge 0.5)
+		(priority 1)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(filled_areas_thickness no)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 22 30)
+				(xy 75 30)
+				(xy 75 120)
+				(xy 22 120)
+			)
+		)
+	)
+	(zone
+		(net 0)
+		(net_name "AGND")
+		(layer "F.Cu")
+		(uuid "f3fbab72-3c56-4249-9e53-74f776409dc6")
+		(hatch edge 0.5)
+		(priority 1)
+		(connect_pads
+			(clearance 0.5)
+		)
+		(min_thickness 0.25)
+		(filled_areas_thickness no)
+		(fill
+			(thermal_gap 0.5)
+			(thermal_bridge_width 0.5)
+		)
+		(polygon
+			(pts
+				(xy 22 30)
+				(xy 75 30)
+				(xy 75 120)
+				(xy 22 120)
+			)
 		)
 	)
 )
