@@ -1,0 +1,185 @@
+#!/usr/bin/env python3
+"""mpn_nas_folhas — o MPN passa a viver NAS FOLHAS, e nao so numa tabela minha.
+
+POR QUE EXISTE.
+
+Os MPN viviam numa tabela dentro do `tools/bom_completa.py`. Funcionava — e
+escondia que **o esquema nao sabia deles**. Quando entrou uma revisao de fora
+(`kicad-happy`), ela leu as folhas e disse a verdade:
+
+    ERROR SS-001: BOM has <50% MPN coverage (0/36 unique parts).
+                  Board is not pre-fab ready.
+
+Zero. E tem razao: quem manda os ficheiros para uma fabrica que MONTA precisa
+que o MPN esteja no que se exporta, e o que se exporta sai das folhas. E a §12w
+da skill outra vez — *uma regra que vive dentro de uma ferramenta so vale para
+essa ferramenta*, agora aplicada ao numero de peca em vez da largura de pista.
+
+⚠️ E DUAS FOLHAS NAO TEM GERADOR. A `energia` e o `preamp` foram feitas por
+geradores que ja nao existem. A regra da casa e "nunca editar o `.kicad_sch` a
+mao" (§8) e nao ha `.py` onde a cumprir — por isso o conserto nao e editar: e
+esta ferramenta, que **carimba a partir da fonte, e se pode voltar a correr**
+depois de qualquer regeneracao. Um script idempotente nao e uma edicao a mao.
+
+⚠️ A FONTE CONTINUA A SER UMA SO. O `PECAS` do `bom_completa` manda; as folhas
+sao carimbadas a partir dele. Com `--conferir` esta ferramenta diz se alguma
+folha se afastou — porque uma copia sem verificador volta a divergir, e foi
+assim que a `BOM-MPN-revB.md` morreu.
+
+USO:  mpn_nas_folhas.py            carimba
+      mpn_nas_folhas.py --conferir so verifica (sai != 0 se divergir)
+"""
+import io
+import os
+import re
+import sys
+
+VERSAO = "0.1.0"
+AQUI = os.path.dirname(os.path.abspath(__file__))
+RAIZ = os.path.dirname(AQUI)
+sys.path.insert(0, os.path.join(RAIZ, "tools"))
+from bom_completa import PECAS, PECAS_PAINEL, GENERICO          # noqa: E402
+
+FOLHAS = [
+    ("cerebro", "cotuca_cerebro/cotuca_energia.kicad_sch"),
+    ("cerebro", "cotuca_cerebro/cotuca_preamp.kicad_sch"),
+    ("cerebro", "cotuca_cerebro/cotuca_soquete.kicad_sch"),
+    ("cerebro", "cotuca_cerebro/cotuca_conector.kicad_sch"),
+    ("painel",  "cotuca_painel/cotuca_painel.kicad_sch"),
+]
+
+
+def peca(placa, ref, fp):
+    """(MPN, fornecedor). ⚠️ A ordem e a mesma do `bom_completa`: a tabela por
+    REFERENCIA ganha a por footprint. Se as duas discordassem em ordem, a BOM
+    e as folhas diriam pecas diferentes para o mesmo designador."""
+    tab = PECAS_PAINEL if placa == "painel" else PECAS
+    if ref in tab:
+        return tab[ref][0], tab[ref][1]
+    if fp in GENERICO:
+        return GENERICO[fp][0], ""
+    return "", ""
+
+
+def limpa(s):
+    """⚠️ O `**` do markdown nao entra num campo do KiCad. A tabela usa-o para
+    destacar na BOM; a folha leva o texto nu."""
+    return s.replace("**", "").strip()
+
+
+def uma(caminho, placa, conferir):
+    p = os.path.join(AQUI, caminho)
+    t = io.open(p, encoding="utf-8").read()
+
+    # ⚠️ conta os simbolos COLOCADOS, e nao os do `lib_symbols`: os de
+    # biblioteca nao tem designador e carimba-los seria escrever peca numa
+    # definicao em vez de numa instancia.
+    corpo = t
+    m = re.search(r'\n\t\(lib_symbols\b', t)
+    if m:
+        d, i = 0, m.start() + 1
+        for k in range(i, len(t)):
+            if t[k] == "(":
+                d += 1
+            elif t[k] == ")":
+                d -= 1
+                if d == 0:
+                    break
+        corpo = t[:m.start()] + t[k + 1:]
+    esperados = len(re.findall(r'\(property "Reference" "([^#][^"]*)"', corpo))
+
+    postos, faltam, divergem, n = [], [], [], 0
+    saida, i0 = "", 0
+    for m in re.finditer(r'\(property "Reference" "([^"]+)"', t):
+        ref = m.group(1)
+        if ref.startswith("#"):          # PWR_FLAG e afins: nao se compram
+            continue
+        # o bloco do simbolo que contem esta propriedade
+        j = t.rfind("(symbol", 0, m.start())
+        d = 0
+        for k in range(j, len(t)):
+            if t[k] == "(":
+                d += 1
+            elif t[k] == ")":
+                d -= 1
+                if d == 0:
+                    break
+        bl = t[j:k + 1]
+        if '(lib_id' not in bl:
+            continue
+        n += 1
+        fpm = re.search(r'\(property "Footprint" "([^"]*)"', bl)
+        fp = fpm.group(1) if fpm else ""
+        mpn, forn = peca(placa, ref, fp)
+        mpn, forn = limpa(mpn), limpa(forn)
+        ja = re.search(r'\(property "MPN" "([^"]*)"', bl)
+        if not mpn:
+            faltam.append(ref)
+            continue
+        if ja and ja.group(1) == mpn:
+            postos.append(ref)
+            continue
+        if ja:
+            divergem.append((ref, ja.group(1), mpn))
+        if conferir:
+            continue
+        novo = bl
+        campos = ('\t\t(property "MPN" "%s"\n\t\t\t(at 0 0 0)\n\t\t\t(hide yes)\n'
+                  '\t\t\t(show_name no)\n\t\t\t(do_not_autoplace no)\n'
+                  '\t\t\t(effects\n\t\t\t\t(font\n\t\t\t\t\t(size 1.27 1.27)\n'
+                  '\t\t\t\t)\n\t\t\t)\n\t\t)\n' % mpn)
+        if forn:
+            campos += ('\t\t(property "Fornecedor" "%s"\n\t\t\t(at 0 0 0)\n'
+                       '\t\t\t(hide yes)\n\t\t\t(show_name no)\n'
+                       '\t\t\t(do_not_autoplace no)\n\t\t\t(effects\n'
+                       '\t\t\t\t(font\n\t\t\t\t\t(size 1.27 1.27)\n\t\t\t\t)\n'
+                       '\t\t\t)\n\t\t)\n' % forn)
+        if ja:
+            novo = re.sub(r'\t\t\(property "(MPN|Fornecedor)"[\s\S]*?\n\t\t\)\n',
+                          "", novo)
+        dm = re.search(r'\t\t\(property "Datasheet"[\s\S]*?\n\t\t\)\n', novo)
+        if not dm:
+            faltam.append(ref)
+            continue
+        novo = novo[:dm.end()] + campos + novo[dm.end():]
+        saida += t[i0:j] + novo
+        i0 = k + 1
+        postos.append(ref)
+    t2 = saida + t[i0:]
+
+    if n != esperados:
+        raise SystemExit("*** %s: a folha tem %d simbolos com designador e a "
+                         "leitura apanhou %d — LEITURA INCOMPLETA"
+                         % (caminho, esperados, n))
+    if not conferir and i0:
+        io.open(p, "w", encoding="utf-8").write(t2)
+    return n, postos, faltam, divergem
+
+
+def main():
+    conferir = "--conferir" in sys.argv
+    print("mpn_nas_folhas v%s%s" % (VERSAO, "  (so confere)" if conferir else ""))
+    tot, tot_ok, tot_falta, mau = 0, 0, [], 0
+    for placa, caminho in FOLHAS:
+        n, postos, faltam, divergem = uma(caminho, placa, conferir)
+        tot += n
+        tot_ok += len(postos)
+        tot_falta += faltam
+        print("  %-34s %2d simbolo(s) · %2d com MPN · %2d sem"
+              % (os.path.basename(caminho), n, len(postos), len(faltam)))
+        for ref, tinha, devia in divergem:
+            print("     ⚠️ %s: a folha diz %r e a fonte diz %r" % (ref, tinha, devia))
+            mau += 1
+    print("  TOTAL: %d de %d com MPN (%.0f%%)"
+          % (tot_ok, tot, 100.0 * tot_ok / max(tot, 1)))
+    if tot_falta:
+        print("  sem MPN, e cada um e uma decisao por tomar:")
+        print("     %s" % " ".join(sorted(set(tot_falta))))
+    if mau:
+        raise SystemExit("*** %d simbolo(s) divergem da fonte. Corre sem "
+                         "--conferir para os acertar." % mau)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

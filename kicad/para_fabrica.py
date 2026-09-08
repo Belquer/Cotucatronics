@@ -54,7 +54,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
@@ -115,6 +115,22 @@ def uma(nome, incompleta):
     tipos, por_rede, partidos, orfas = mede(pcb)
 
     recusas, avisos = [], []
+
+    # ⚠️ AS FOLHAS TEM DE CONCORDAR COM A FONTE DAS PECAS. O MPN vive no
+    # `PECAS` do bom_completa e e carimbado nas folhas pelo `mpn_nas_folhas`.
+    # Uma copia sem verificador volta a divergir — foi assim que a
+    # `BOM-MPN-revB.md` acabou tres dias a frente do esquema e com tres numeros
+    # de peca errados. Aqui a divergencia trava o pacote.
+    rmpn = subprocess.run([sys.executable,
+                           os.path.join(AQUI, "mpn_nas_folhas.py"), "--conferir"],
+                          capture_output=True, text=True)
+    if rmpn.returncode:
+        recusas.append("as folhas divergem da fonte dos MPN: %s"
+                       % (rmpn.stdout or rmpn.stderr).strip().splitlines()[-1])
+    else:
+        for l in (rmpn.stdout or "").splitlines():
+            if "TOTAL:" in l:
+                print("   MPN            %s" % l.split("TOTAL:")[1].strip())
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:
         recusas.append("geometria: %s" % dict(geo))

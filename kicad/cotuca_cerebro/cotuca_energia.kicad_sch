@@ -2198,6 +2198,17 @@
 				)
 			)
 		)
+		(property "MPN" "header 1x2 2,54"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 145 197.54 0)
 			(show_name no)
@@ -2269,6 +2280,17 @@
 		)
 		(property "Datasheet" ""
 			(at 185 62 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "resistor 0805 1%"
+			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2358,6 +2380,17 @@
 				)
 			)
 		)
+		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 110 203 0)
 			(show_name no)
@@ -2429,6 +2462,28 @@
 		)
 		(property "Datasheet" ""
 			(at 62 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "2920L330/24MR (Littelfuse)"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Fornecedor" "LCSC C720183"
+			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2518,6 +2573,17 @@
 				)
 			)
 		)
+		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 80 106 0)
 			(show_name no)
@@ -2598,6 +2664,28 @@
 				)
 			)
 		)
+		(property "MPN" "EEU-FR1C101 (Panasonic FR)"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Fornecedor" "LCSC"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 88 203 0)
 			(show_name no)
@@ -2669,6 +2757,17 @@
 		)
 		(property "Datasheet" ""
 			(at 115 148 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "header 1x3 2,54"
+			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2761,6 +2860,28 @@
 				)
 			)
 		)
+		(property "MPN" "EEU-FR1V222 (Panasonic FR)"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Fornecedor" "LCSC C407956"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 58 106 0)
 			(show_name no)
@@ -2832,6 +2953,17 @@
 		)
 		(property "Datasheet" ""
 			(at 35 48 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "terminal parafuso 2p 5,08 — 1715721 (Phoenix MKDS 1,5/2-5,08); KF301-5.0 so para bancada"
+			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -2921,6 +3053,28 @@
 				)
 			)
 		)
+		(property "MPN" "SMBJ24A (Littelfuse)"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Fornecedor" "LCSC"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 85 55 0)
 			(show_name no)
@@ -2992,6 +3146,17 @@
 		)
 		(property "Datasheet" ""
 			(at 160 45.46 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "resistor 0805 1%"
+			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3081,6 +3246,17 @@
 				)
 			)
 		)
+		(property "MPN" "terminal parafuso 2p 5,08 — 1715721 (Phoenix MKDS 1,5/2-5,08); KF301-5.0 so para bancada"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 115 100.54 0)
 			(show_name no)
@@ -3152,6 +3328,28 @@
 		)
 		(property "Datasheet" ""
 			(at 62 195 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "SS14 (SMA)"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Fornecedor" "LCSC"
+			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

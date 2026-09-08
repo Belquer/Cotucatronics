@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.6.0 · **2026-09-08** · commit `4dcf6d6`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.6.0 · **2026-09-08** · commit `4e724ff`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e

@@ -9297,3 +9297,42 @@ Nenhum destes passos sozinho fecha a placa. Juntos, e **nesta ordem**, fecham:
 > **Cada um fecha o que o outro não fecha, e a ordem é o que faz da soma uma
 > cadeia em vez de uma pilha.** Três dos cinco passos existem por causa de um
 > defeito que só apareceu depois de o anterior funcionar.
+
+## 15du — o MPN vivia dentro da minha ferramenta, e o esquema não sabia dele
+
+*08/09.* Os números de peça viviam numa tabela dentro do `tools/bom_completa.py`.
+Funcionava, e escondia que **o esquema não sabia deles**. Quando entrou uma
+revisão de fora, ela leu as folhas e disse a verdade:
+
+```
+ERROR SS-001: BOM has <50% MPN coverage (0/36 unique parts).
+              Board is not pre-fab ready.
+```
+
+Zero de 84. E tem razão: quem manda ficheiros para uma fábrica que **monta**
+precisa que o MPN esteja no que se exporta, e o que se exporta sai das folhas.
+
+É a §12w outra vez — *uma regra que vive dentro de uma ferramenta só vale para
+essa ferramenta* — agora aplicada ao número de peça em vez da largura de pista.
+Foi a mesma lição na mesma semana, em dois campos diferentes, e não a reconheci
+até uma ferramenta de fora ma apontar.
+
+⚠️ **E duas folhas não têm gerador.** A `energia` e o `preamp` foram feitas por
+geradores que já não existem. A regra da casa é *nunca editar o `.kicad_sch` à
+mão* (§8) e não havia `.py` onde a cumprir. O conserto não foi editar: foi uma
+ferramenta que **carimba a partir da fonte e se pode voltar a correr** depois de
+qualquer regeneração. Um script idempotente não é uma edição à mão — e resolve
+também as folhas que têm gerador, sem lhes tocar.
+
+⚠️ **E a cópia leva verificador.** A fonte continua a ser uma só; as folhas são
+carimbadas dela; e o portão da fábrica corre `--conferir` antes de embalar. Uma
+cópia sem verificador volta a divergir — foi assim que a `BOM-MPN-revB.md` acabou
+três dias à frente do esquema e com três números de peça errados (15dm).
+
+```
+antes:  0 de 84 com MPN · dois ERROR de fornecimento
+agora: 83 de 84 (99%)   · "50/50 parts have MPNs" e "23/23", ditos por fora
+```
+
+O que sobra é o `NT1`, e está certo que sobre: é um net-tie, é cobre, não se
+compra. **Uma cobertura de 100% que incluísse esse seria uma peça inventada.**
