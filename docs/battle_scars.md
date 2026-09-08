@@ -8919,3 +8919,40 @@ E o mesmo padrão numa segunda peça: a reparação de terra que escrevi punha v
 onde o plano também não chegava — reparação que não repara. Ganhou a regra que
 todas as outras ferramentas desta casa já tinham: **corre o DRC depois de
 escrever e retira o que não consegue provar.**
+
+## 15dh — a segunda opinião apanhou o que eu nunca tinha ido procurar
+
+*08/09.* Trouxe o `kicad-happy` — revisão de KiCad de outra pessoa, MIT, testada
+contra 5800 projectos abertos. Não roteia nem gera: só olha. Correu em 0,2
+segundos e disse três coisas que a nossa cadeia inteira não sabe dizer:
+
+- **zero fiduciais com 35 componentes SMD.** A montagem automática precisa de
+  três por face para alinhar. Nada nosso tem uma linha sobre isto, e é um
+  bloqueio de fabrico para placas montadas.
+- **`J15` e `J16` não têm um único pino de terra.** São headers de patch de
+  áudio — `OUT_L_DAISY`, `LINHA_L`, `EXC_L` de um lado e o direito no outro — e
+  levam sinal para fora da placa sem referência de retorno ao lado. Num
+  instrumento de áudio isso é antena nos dois sentidos.
+- **0 de 69 redes com ponto de teste.**
+
+> **Tudo nesta cadeia é meu: o gerador, o roteador, o portão, e os próprios
+> verificadores.** Isso tem um limite que não se conserta escrevendo mais um
+> verificador meu — um auto-teste tem exactamente os pontos cegos de quem o
+> escreveu, e isso já aconteceu aqui (15dc). O que faltava não era mais rigor:
+> era outra cabeça.
+
+E ele declara o que **não** verificou — a auditoria de ciclo de vida sai marcada
+como "not performed", com a razão — que é a disciplina que esta casa já exige e
+que eu ainda não tinha visto vinda de fora.
+
+⚠️ **Um falso positivo, e bom.** Acusou três redes de cruzarem 5 V com 3,3 V sem
+adaptador de nível: `MIDI_RX`, `MIDI_TX`, `PONTE_STATUS`. Verifiquei no netlist
+antes de o repetir como facto — ligam a Daisy ao ESP32-C3 e **os dois têm E/S a
+3,3 V**. O que ele viu foi o pino `5V` do módulo ESP32 ligado a `+5V_PONTE`, e
+deduziu que o módulo inteiro é de domínio 5 V; esse pino alimenta o regulador de
+bordo dele. A lógica é boa — um módulo com pino de 5 V *parece* mesmo uma peça
+de 5 V.
+
+> **Um achado silenciado sem razão escrita é um achado apagado.** Ficou
+> registado por par `(código, rede)`, com a data e o raciocínio, e nunca por
+> família: `VM-001` continua a valer para qualquer outra rede.

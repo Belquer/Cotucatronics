@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.9.0"
+VERSAO = "0.10.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -257,7 +257,17 @@ def main():
             uma(q, zerar)
         print("\n══ o portao ══")
         r = py("para_fabrica.py", sys.argv[1])
+        # ⚠️ E UMA SEGUNDA OPINIAO QUE NAO FUI EU QUE ESCREVI. Tudo nesta cadeia
+        # e meu — o gerador, o roteador, o portao, e os proprios verificadores —
+        # e isso tem um limite que nao se conserta escrevendo mais um
+        # verificador meu: um auto-teste tem os pontos cegos de quem o escreveu,
+        # e ja aconteceu aqui (15dc). O `kicad-happy` e de outra pessoa e olha
+        # para coisas que nunca me ocorreram.
+        rv = py("revisao_externa.py", sys.argv[1])
     print(r.stdout.rstrip())
+    if rv.stdout.strip():
+        print("\n══ segunda opiniao (kicad-happy) ══")
+        print(rv.stdout.rstrip())
     return r.returncode
 
 
