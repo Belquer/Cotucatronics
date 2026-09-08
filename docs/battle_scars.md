@@ -8777,3 +8777,57 @@ E a lição de método, que é a que se repete há três rondas: *quando cinco
 afinações seguidas rendem uma ou duas cada e oscilam entre corridas, já não se
 está a melhorar nada — está-se a ajustar ruído.* O sinal para parar de afinar e
 mudar de ideia é esse, e eu passei por ele mais do que uma vez.
+
+## 15dc — o auto-teste contava o total e deixava um estrago mascarar o outro
+
+*07/09.* A regra de aceitação do roteador era boa: mede-se quantas ligações
+faltam em **cada rede** antes e depois, e nenhuma pode piorar. Substituiu uma
+lista de sintomas precisamente para não haver sintoma novo que passasse por não
+estar na lista (15cq).
+
+Passou um. Se um pad de `GND` se liga (−1) e ao mesmo tempo o **plano se parte**
+(+1), o total da rede não muda, e a regra vê zero. A placa saiu com a terra em
+pedaços e o auto-teste disse que estava boa — quem a apanhou foi o portão da
+fábrica, que conta as espécies em separado.
+
+```
+antes  GND = 1   (um pad solto)
+depois GND = 1   (o pad ligou-se, o plano partiu-se)
+piorou -> NADA
+```
+
+> **Um invariante protege contra o que ainda não aconteceu, mas só na dimensão
+> em que foi medido.** Contar por rede protege contra a rede errada; não
+> protege contra a espécie errada dentro da mesma rede. A chave passou a ser
+> **(rede, espécie)** — e um plano partido não é "mais uma ligação por fazer"
+> que se compensa com outra qualquer: é uma espécie própria, com contador
+> próprio.
+
+⚠️ **E é literalmente a mesma família da assinatura `(tipo, rede)` das
+violações**, que eu tinha corrigido três horas antes, no mesmo ficheiro, por
+ter isentado uma rede inteira por causa de um defeito só (15cq). **Uma lição
+aprendida num sítio não se aplica sozinha ao sítio do lado** — e eu li o código
+corrigido dezenas de vezes sem ver o gémeo por corrigir ao lado.
+
+Ficou um `roteia.py --auto-teste` que interroga a regra com seis casos, o
+primeiro dos quais é exactamente este. Provei que tem dentes: com a chave
+antiga, falha.
+
+> **Um verificador que não é verificado é uma opinião com ar de medição.**
+
+## 15dd — arrancar para dar passagem pode trocar uma ligação por outra
+
+*07/09.* O arrancar-e-refazer tirava do caminho as pistas que estorvavam e
+devolvia-as à fila. Se a rede arrancada não conseguisse refazer-se, o resultado
+era uma troca — e às vezes um prejuízo, porque a arrancada **estava feita** e a
+outra continuava por fazer.
+
+Era isso, e não a ideia, que fazia a cadeia medir 14 contra 12.
+
+> **Uma operação que desfaz trabalho para tentar mais trabalho precisa da mesma
+> regra que tudo o resto: só vale se o número descer.** Guarda-se o estado antes,
+> e volta-se atrás se não desceu.
+
+Com a guarda mede 12 e não parte planos — igual a não arrancar nesta placa, e só
+pode ajudar noutra. **Uma capacidade que só pode melhorar ou não fazer nada
+pertence ao caminho por omissão**; antes das duas correcções não pertencia.

@@ -1,6 +1,7 @@
 # Lista de roteamento — cerebro
 
-Gerada por `kicad/lista_roteamento.py` v0.3.1 em **2026-09-07**, commit `36a500d`.
+Gerada por `kicad/lista_roteamento.py` v0.3.1 em **2026-09-07**, commit `cc359f6`.  
+⚠️ **Não comitado**: `kicad/cotuca_cerebro/cotuca_cerebro.kicad_pcb`, `kicad/faz_placa.py`, `kicad/roteia.py` — a placa pode não corresponder a este commit.
 
 **11 ligações**, mais **1 pad(s) que perderam o plano** — 12 no total, que é o que o DRC diz. Tudo o resto já está feito e o DRC dá geometria zero com os planos inteiros, o que quer dizer que **o que desenhares tem de continuar a dar isso**.
 
@@ -31,8 +32,8 @@ python3 kicad/para_fabrica.py cerebro
 *largas, e primeiro que as de sinal: ocupam mais espaco*
 
 **`V+PRE`** — 2 ligação(ões) · **0.50 mm**
-- [ ] `pista` (38.9, 65.6) → `U1` (28.5, 90.1) · 26.6 mm
 - [ ] `U1` (28.5, 90.1) → `R5` (25.1, 103.0) · 13.3 mm
+- [ ] `pista` (38.9, 91.3) → `U1` (28.5, 90.1) · 10.5 mm
 
 ## digital
 

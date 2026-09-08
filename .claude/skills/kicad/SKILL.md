@@ -1201,6 +1201,56 @@ da fábrica que o viu. Ficou opcional.
 > **A última linha de defesa não pode ser a mesma ferramenta que fez o
 > trabalho.** Um auto-teste tem exactamente os pontos cegos de quem o escreveu.
 
+### 12t. Um invariante só protege na dimensão em que foi medido
+
+A regra de aceitação — *nenhuma rede pode piorar* — substituiu uma lista de
+sintomas precisamente para não haver sintoma novo que passasse por não estar na
+lista (§12a). Passou um:
+
+```
+antes  GND = 1   (um pad solto)
+depois GND = 1   (o pad ligou-se, e o PLANO PARTIU-SE)
+piorou -> NADA
+```
+
+Contar por rede protege contra a rede errada; **não protege contra a espécie
+errada dentro da mesma rede**. Um plano partido não é "mais uma ligação por
+fazer" que se compensa com outra qualquer. A chave passou a ser
+**(rede, espécie)**.
+
+⚠️ **E é a mesma família da assinatura `(tipo, rede)` das violações** (§12b), que
+eu tinha corrigido horas antes no mesmo ficheiro. **Uma lição aprendida num
+sítio não se aplica sozinha ao sítio do lado** — procura os gémeos por corrigir
+sempre que corrigires um destes.
+
+⚠️ **E o verificador leva um verificador.** `roteia.py --auto-teste` interroga a
+regra com os casos que ela tem de apanhar, começando pelo que ela deixou passar.
+Prova-se que tem dentes correndo-o contra a versão antiga: falha.
+
+> **Um verificador que não é verificado é uma opinião com ar de medição.**
+
+### 12u. Desfazer trabalho para tentar mais trabalho leva a mesma regra
+
+Arrancar o cobre que estorva para deixar passar outra ligação (*rip-up*) é a
+capacidade que falta quando as últimas ligações já não têm caminho livre — e
+nenhuma afinação a substitui, porque nenhuma busca acha um caminho que não há.
+Numa passada isolada: 15 por fazer → 8.
+
+Mas se a rede arrancada não conseguir refazer-se, é uma troca — e às vezes um
+prejuízo, porque a arrancada **estava feita**.
+
+> **Uma operação que desfaz trabalho para tentar mais trabalho precisa da mesma
+> regra que tudo o resto: só vale se o número descer.** Guarda-se o estado
+> antes, e volta-se atrás se não desceu.
+
+⚠️ E limita-se quanto arranca. Se uma ligação precisa de arrancar meia placa,
+não é ela que está mal roteada — é o desenho, e isso é uma pergunta para quem
+desenha, não um problema para o roteador resolver a martelo.
+
+> **Uma capacidade que só pode melhorar ou não fazer nada pertence ao caminho
+> por omissão.** Antes das duas correcções, esta não pertencia — fechava
+> ligações e partia planos.
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,

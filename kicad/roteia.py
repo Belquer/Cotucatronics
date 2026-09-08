@@ -45,14 +45,15 @@ fantasma. E antes de dizeres que o `kicad-cli` nao faz X, corre o `--help`:
 escrevi num commit que ele nao sabia encher zonas, e a flag chamava-se
 exactamente aquilo.
 
-USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
+USO:  roteia.py --auto-teste            # interroga a regra de aceitacao
+      roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
       [--so-uma-face] [--folga MM] [--passo MM]
       [--caixa MM] [--tecto N]
       [--guarda-plano] [--guiado] [--arranca]
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.13.2"
+VERSAO = "1.16.0"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
@@ -489,16 +490,34 @@ def estado(caminho):
             m = re.search(r"(?:Track|Via) \[([^\]]+)\]", i.get("description", ""))
             if m:
                 maus[(x["type"], m.group(1))] += 1
+    # ⚠️⚠️ A CHAVE E (REDE, ESPECIE), E NAO SO A REDE.
+    #
+    # Contar quantas ligacoes faltam em cada rede deixa um estrago mascarar-se
+    # noutro: se um pad de GND se liga (-1) e ao mesmo tempo o PLANO SE PARTE
+    # (+1), o total da rede nao muda, e a regra "nenhuma rede pode piorar" ve
+    # zero. Foi assim que uma corrida entregou a placa com a terra em pedacos e
+    # o auto-teste disse que estava boa — quem a apanhou foi o portao da
+    # fabrica, que conta as especies em separado.
+    #
+    # Um plano partido nao e "mais uma ligacao por fazer" que se compensa com
+    # outra qualquer: e uma especie propria, e tem de ter contador proprio.
+    #
+    # ⚠️ E E A MESMA FAMILIA DA ASSINATURA (TIPO, REDE) DAS VIOLACOES, que ja
+    # tinha corrigido ali e nao tinha corrigido aqui. Uma licao aprendida num
+    # sitio nao se aplica sozinha ao sitio do lado.
     import collections
     perfil = collections.Counter()
     for x in d.get("unconnected_items", []):
+        ds = [i.get("description", "") for i in x.get("items", [])]
+        especie = "zona-partida" if (len(ds) == 2
+                                     and all("Zone [" in s for s in ds)) else "pad"
         redes = set()
-        for i in x.get("items", []):
-            m = re.search(r"\[([^\]]+)\]", i.get("description", ""))
+        for s in ds:
+            m = re.search(r"\[([^\]]+)\]", s)
             if m:
                 redes.add(m.group(1))
         for r in redes:
-            perfil[r] += 1
+            perfil[(r, especie)] += 1
     return maus, perfil
 
 
@@ -508,7 +527,65 @@ def piorou(antes, depois):
 
 
 def redes(chaves):
-    return sorted({k[1] if isinstance(k, tuple) else k for k in chaves})
+    """O nome da rede de cada chave. ⚠️ As chaves das VIOLACOES sao
+    (tipo, rede) e as do PERFIL sao (rede, especie) — a rede esta em pontas
+    diferentes, e trocar isto imprime o tipo do defeito onde devia estar o nome
+    da rede, e depois retira-se a rede errada."""
+    fora = set()
+    for k in chaves:
+        if not isinstance(k, tuple):
+            fora.add(k)
+        elif k[1] in ("zona-partida", "pad"):
+            fora.add(k[0])          # perfil: (rede, especie)
+        else:
+            fora.add(k[1])          # violacoes: (tipo, rede)
+    return sorted(fora)
+
+
+def auto_teste():
+    """A regra de aceitacao interrogada por casos, e nao por confianca.
+
+    ⚠️ EXISTE PORQUE ELA JA FALHOU EM SILENCIO. A versao anterior contava
+    quantas ligacoes faltavam por rede, e com isso um pad que se ligava
+    mascarava um plano que se partia: o total nao mudava e a regra dizia que
+    estava bom. A placa saiu com a terra em pedacos e foi o portao da fabrica
+    que a apanhou.
+
+    Um verificador que nao e verificado e uma opiniao com ar de medicao."""
+    import collections as C
+    casos = [
+        ("plano parte-se enquanto um pad se liga (o buraco de 07/09)",
+         C.Counter({("GND", "pad"): 1}),
+         C.Counter({("GND", "zona-partida"): 1}), True),
+        ("plano parte-se do nada",
+         C.Counter(), C.Counter({("GND", "zona-partida"): 1}), True),
+        ("uma ligacao fecha-se e mais nada muda",
+         C.Counter({("OLED_CLK", "pad"): 1}), C.Counter(), False),
+        ("tudo igual",
+         C.Counter({("GND", "pad"): 2}), C.Counter({("GND", "pad"): 2}), False),
+        ("uma rede piora em pads",
+         C.Counter({("V+PRE", "pad"): 1}), C.Counter({("V+PRE", "pad"): 2}), True),
+        ("troca-se um plano partido por dois pads soltos — pior, e nao no total",
+         C.Counter({("GND", "zona-partida"): 1}),
+         C.Counter({("GND", "pad"): 2}), True),
+    ]
+    maus = 0
+    for nome, a, b, espera in casos:
+        deu = bool(piorou(a, b))
+        ok = deu == espera
+        maus += not ok
+        print("  %s  %s" % ("✓" if ok else "✗ FALHA", nome))
+    print("  redes() lê a rede nas DUAS formas de chave:")
+    for chave, esperado in ((("clearance", "AGND"), "AGND"),
+                            (("GND", "zona-partida"), "GND")):
+        r = redes({chave})
+        ok = r == [esperado]
+        maus += not ok
+        print("    %s %s -> %s" % ("✓" if ok else "✗ FALHA", chave, r))
+    if maus:
+        raise SystemExit("*** %d caso(s) falharam. A regra de aceitacao nao "
+                         "esta a proteger o que diz proteger." % maus)
+    print("  a regra passa em todos os casos.")
 
 
 def texto_com(segs, vias, base):
@@ -529,6 +606,10 @@ def main():
     if len(sys.argv) < 2:
         print(__doc__)
         return 2
+    if sys.argv[1] == "--auto-teste":
+        print("roteia v%s — a interrogar a regra de aceitacao" % VERSAO)
+        auto_teste()
+        return 0
     p = sys.argv[1]
     escreve = "--escreve" in sys.argv
     so_uma = "--so-uma-face" in sys.argv
@@ -736,6 +817,16 @@ def main():
     if arranca:
         por_fazer = [f for f in faltam
                      if f[0] not in {r for r, _ in feitas}]
+        # ⚠️ SO VALE SE O NUMERO DESCER, e guarda-se o estado para poder voltar.
+        # Arrancar a rede X para a Y passar troca uma ligacao por outra se a X
+        # nao conseguir refazer-se — e pode ficar PIOR que antes, porque a X
+        # estava feita e a Y continua por fazer. Sem esta guarda o
+        # arrancar-e-refazer melhora uma passada e piora a placa, que e como
+        # ele mediu 14 contra 12 na cadeia inteira.
+        antes_n = len(por_fazer)
+        guarda_novas = list(novas)
+        guarda_vias = list(novas_vias)
+        guarda_feitas = list(feitas)
         arrancadas = 0
         for ronda in range(RONDAS_ARRANCAR):
             if not por_fazer:
@@ -816,10 +907,17 @@ def main():
                 progrediu = True
             if not progrediu:
                 break
-        if arrancadas:
+        if arrancadas and len(por_fazer) >= antes_n:
+            novas[:] = guarda_novas
+            novas_vias[:] = guarda_vias
+            feitas[:] = guarda_feitas
+            print("  arrancar-e-refazer: tirei %d pista(s) e ficou em %d por "
+                  "fazer contra %d — nao desceu, e volto atras."
+                  % (arrancadas, len(por_fazer), antes_n), file=sys.stderr)
+        elif arrancadas:
             print("  arrancar-e-refazer: %d pista(s) tiradas do caminho, "
-                  "%d ligacao(oes) ainda por fazer" % (arrancadas, len(por_fazer)),
-                  file=sys.stderr)
+                  "%d ligacao(oes) por fazer contra %d"
+                  % (arrancadas, len(por_fazer), antes_n), file=sys.stderr)
 
     print("  (%d achadas pelo corredor grosso)" % guiadas, file=sys.stderr)
     print("  %d roteadas · %d salto(s) de camada · %d ficam para a pessoa"

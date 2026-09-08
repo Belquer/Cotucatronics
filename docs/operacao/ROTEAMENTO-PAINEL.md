@@ -1,6 +1,7 @@
 # Lista de roteamento — painel
 
-Gerada por `kicad/lista_roteamento.py` v0.3.1 em **2026-09-07**, commit `36a500d`.
+Gerada por `kicad/lista_roteamento.py` v0.3.1 em **2026-09-07**, commit `cc359f6`.  
+⚠️ **Não comitado**: `kicad/cotuca_painel/cotuca_painel.kicad_pcb`, `kicad/faz_placa.py`, `kicad/roteia.py` — a placa pode não corresponder a este commit.
 
 **9 ligações**, mais **1 pad(s) que perderam o plano** — 10 no total, que é o que o DRC diz. Tudo o resto já está feito e o DRC dá geometria zero com os planos inteiros, o que quer dizer que **o que desenhares tem de continuar a dar isso**.
 

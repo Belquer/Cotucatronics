@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.7.1"
+VERSAO = "0.8.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -136,7 +136,7 @@ def uma(nome, zerar):
         # a cadeia seguia calada e o numero final era outro sem eu saber porque.
         antes = None
         for i in range(PASSADAS):
-            r = py("roteia.py", pcb, "--escreve", "--ordem", ordem)
+            r = py("roteia.py", pcb, "--escreve", "--ordem", ordem, "--arranca")
             if r.returncode:
                 ult = [l for l in (r.stderr or "").splitlines() if l.strip()]
                 print("     ⚠️ passada %d recusou gravar: %s"
@@ -160,23 +160,28 @@ def uma(nome, zerar):
     os.remove(guardado)
     print("  2. escolhida a ordem %s por MEDICAO, nao por opiniao" % melhor[2])
 
-    # ⚠️ O `--arranca` NAO ENTRA NA CADEIA, e a razao e medicao — nao gosto.
+    # ⚠️ O `--arranca` ESTA NA CADEIA, e nao estava. A historia dele vale a pena:
     #
-    # Arrancar o que estorva, passar, e refazer o que se arrancou e mesmo a
-    # capacidade que falta: numa passada isolada levou 15 ligacoes por fazer
-    # para 8, e e a unica coisa que ataca o problema real (para as ultimas nao
-    # ha caminho livre, e nenhuma busca acha um caminho que nao ha).
+    # Arrancar o que estorva, passar, e refazer o que se arrancou e a unica
+    # coisa que ataca o problema real das ultimas ligacoes — para elas nao ha
+    # caminho livre, e nenhuma busca acha um caminho que nao ha. Numa passada
+    # isolada levou 15 por fazer para 8.
     #
-    # Mas na cadeia inteira mediu 14 contra 12 — porque o que se arranca volta
-    # para a fila e nem sempre encontra a volta que se esperava — e uma corrida
-    # entregou a placa com **um plano de terra partido** que o auto-teste do
-    # roteador nao apanhou. Foi o portao da fabrica que o apanhou, e por isso e
-    # que ele existe: a ultima linha de defesa nao pode ser a mesma ferramenta
-    # que fez o trabalho.
+    # Mas na cadeia media 14 contra 12, e uma corrida entregou a placa com um
+    # PLANO DE TERRA PARTIDO que o auto-teste do roteador nao apanhou. Duas
+    # coisas estavam mal, e nenhuma era a ideia:
     #
-    # Fica em `roteia.py --arranca` ate o auto-teste dele cobrir este caso.
-    # Uma capacidade que fecha ligacoes e parte planos nao esta pronta para
-    # correr sozinha.
+    #  1. o auto-teste contava ligacoes por fazer POR REDE, e um pad que se
+    #     ligava mascarava um plano que se partia — o total nao mudava. Passou
+    #     a contar por (rede, especie), e ha um `roteia.py --auto-teste` que
+    #     interroga a regra com o caso que ela deixou passar.
+    #  2. arrancar a rede X para a Y passar troca uma ligacao por outra se a X
+    #     nao conseguir refazer-se, e pode ficar pior que antes. Agora guarda o
+    #     estado e VOLTA ATRAS se o numero nao descer.
+    #
+    # Com as duas, mede 12 e nao parte planos: igual a nao arrancar nesta
+    # placa, e so pode ajudar noutra. Uma capacidade que so pode melhorar ou
+    # nao fazer nada pertence ao caminho por omissao.
     #
     # ⚠️ E SO AGORA A PASSADA APERTADA, sobre o que sobrou. Com a folga larga o
     # roteador nao consegue SAIR DE ENTRE OS PINOS de um conector: num header
@@ -194,7 +199,7 @@ def uma(nome, zerar):
     # busca, logo a busca fica presa a uma CAIXA em volta de cada ligacao — o
     # que sobra de uma passada larga e quase sempre curto.
     r = py("roteia.py", pcb, "--escreve", "--folga", "0.22",
-           "--passo", "0.0847", "--caixa", "25")
+           "--passo", "0.0847", "--caixa", "25", "--arranca")
     f, g = por_fazer(pcb)
     if r.returncode:
         print("  2b. apertada recusou gravar (a placa fica como estava)")
