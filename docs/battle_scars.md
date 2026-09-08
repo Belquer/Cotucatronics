@@ -9196,3 +9196,44 @@ cadeia `&&` parou no erro, **o commit não correu**, e o `git push` que vinha na
 linha seguinte empurrou o commit anterior e imprimiu "empurrado". Duas vezes no
 mesmo dia a mesma família: um elo partido no meio de uma cadeia, e a última
 linha a dizer que correu tudo bem.
+
+## 15dr — o plano no DSN fazia os dois lados acharem que a terra era do outro
+
+*08/09.* Vinte e cinco ligações de terra por fazer, e nenhuma das minhas
+ferramentas as fechava. O FreeRouting dizia 5 por fazer; o KiCad dizia 15. Passei
+horas a construir reparações — vias, cotos, vizinhos, cascatas — a tratar o
+sintoma.
+
+A causa era uma linha no DSN. O `pcbnew` exporta os planos como
+`(plane GND (polygon ...))`, e o FreeRouting **respeita-os**: considera um pad
+ligado se ele cair dentro do polígono, e não lhe roteia nada. O KiCad só o
+considera ligado se o cobre **enchido** lhe chegar — e à volta de um conector
+cercado por pistas não chega.
+
+Os dois têm razão sobre coisas diferentes, e no meio ficavam vinte e cinco
+ligações que **nenhum dos dois se achava responsável por fazer**.
+
+Tirar a declaração do plano do DSN — deixando o plano no `.kicad_pcb`, onde
+continua a encher — muda tudo:
+
+```
+com plano no DSN:  122 ligações -> 5 por fazer (FreeRouting) · 15 (KiCad)
+sem plano no DSN:  147 ligações -> 0 por fazer (FreeRouting) ·  0 (KiCad)
+```
+
+O número de ligações a rotear **sobe** de 122 para 147, porque a terra passa a
+ser trabalho em vez de pressuposto. E fica toda feita.
+
+> **Quando duas ferramentas discordam sobre um número, a pergunta não é qual
+> delas está certa: é o que cada uma pensa que a outra está a fazer.** Aqui cada
+> uma achava que a terra era responsabilidade da outra, e nenhuma mentiu.
+
+⚠️ **E o plano não desaparece.** Continua no ficheiro e enche por baixo; o que
+muda é deixar de ser o *mecanismo* de ligação e passar a ser reforço. Cobre a
+mais numa rede de terra não faz mal — o que fazia mal era contar com ele e
+ninguém verificar se chegou.
+
+E uma nota sobre o método: eu tinha ido procurar ferramentas de fora para
+resolver isto. A busca não deu a resposta — deu-me o **enquadramento** para
+voltar aos meus próprios dados e ver que o problema não era de roteamento. As
+25 caíram para 3.

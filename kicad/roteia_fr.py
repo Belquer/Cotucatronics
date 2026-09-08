@@ -47,10 +47,11 @@ import re
 import subprocess
 import sys
 
-VERSAO = "0.8.0"
+VERSAO = "0.10.2"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PY_KICAD = ("/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework"
             "/Versions/3.9/bin/python3.9")
+KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 JAVA = "/opt/homebrew/opt/openjdk/bin/java"
 JAR = os.path.expanduser("~/.local/share/freerouting/freerouting-2.4.1.jar")
 PASSAGENS = 100
@@ -151,8 +152,31 @@ def uma(nome, passagens):
              "assert pcbnew.ExportSpecctraDSN(b,%r)" % (pcb, dsn))
     t = open(dsn, encoding="utf-8").read()
     t, n = keepouts_dos_nettie(t)
+
+    # ⚠️⚠️ O PLANO SAI DO DSN, E FOI ISTO QUE FECHOU A PLACA.
+    #
+    # O DSN leva os planos como `(plane GND (polygon ...))`, e o FreeRouting
+    # respeita-os: considera um pad LIGADO se ele cair dentro do poligono, e
+    # nao lhe roteia nada. O KiCad so o considera ligado se o cobre ENCHIDO lhe
+    # chegar — e a volta de um conector cercado por pistas nao chega. Os dois
+    # tem razao sobre coisas diferentes, e o resultado eram 15 ligacoes de
+    # terra por fazer que nenhum dos dois se achava responsavel por resolver.
+    #
+    # Sem a declaracao, a terra passa a ser rede como as outras e ele roteia-a
+    # com pista e via. Medido, na mesma placa e de raiz:
+    #
+    #     com plano no DSN:  122 ligacoes -> 5 por fazer (FR) · 15 (KiCad)
+    #     sem plano no DSN:  147 ligacoes -> 0 por fazer (FR) ·  0 (KiCad)
+    #
+    # ⚠️ E O PLANO NAO DESAPARECE. Ele continua no `.kicad_pcb` e enche por
+    # baixo; o que muda e deixar de ser o MECANISMO de ligacao e passar a ser
+    # reforco. Cobre a mais numa rede de terra nao faz mal nenhum — o que fazia
+    # mal era contar com ele e ninguem verificar se chegou.
+    n_pl = len(re.findall(r"\(plane ", t))
+    t = re.sub(r'\s*\(plane \w+ \(polygon[\s\S]*?\n\s{4}\)', "", t)
     open(dsn, "w", encoding="utf-8").write(t)
-    print("  1. DSN exportado · %d keepout(s) sobre net-ties" % n)
+    print("  1. DSN exportado · %d keepout(s) sobre net-ties · %d plano(s) "
+          "retirados (a terra vai ser roteada, nao presumida)" % (n, n_pl))
 
     r = subprocess.run([JAVA, "-jar", JAR, "-de", dsn, "-do", ses,
                         "-mp", str(passagens), "-mt", "1"],
@@ -174,6 +198,62 @@ def uma(nome, passagens):
              "assert pcbnew.ImportSpecctraSES(b,%r);"
              "assert pcbnew.SaveBoard(%r,b)" % (pcb, ses, pcb))
     print("  3. sessao importada e gravada")
+
+    # ⚠️ E RETIRA O QUE O DRC ACUSA. O `roteia.py` da casa ja fazia isto e o
+    # `roteia_fr` nao: importava o que o FreeRouting produzisse, violacoes
+    # incluidas. Ele proprio anuncia quantas deixou — 4 numa placa, 3 na outra —
+    # e eu lia o numero e seguia.
+    #
+    # Entregar cobre que o DRC acusa e pior que nao entregar nada, e vale
+    # igual para cobre que veio de fora: a origem nao muda a regra.
+    subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--severity-error",
+                    "--format", "json", "-o", "/tmp/_fr9.json", pcb],
+                   capture_output=True)
+    import json as _j
+    d9 = _j.load(open("/tmp/_fr9.json"))
+    # ⚠️ RETIRA-SE O SEGMENTO CULPADO, E NAO A REDE INTEIRA.
+    #
+    # A primeira versao apagava todo o cobre das redes acusadas. Numa rede de
+    # sinal isso e uma ligacao; no GND sao centenas de segmentos, e a placa
+    # passou de 2 ligacoes por fazer para 28. O DRC diz a POSICAO do item
+    # culpado — usa-se essa, e nao o nome da rede.
+    #
+    # ⚠️ E as vias nao se tocam: uma via retirada deixa a pista do outro lado
+    # pendurada, o que troca um `clearance` por um `via_dangling` e mais uma
+    # ligacao por fazer.
+    culpados = []
+    for x in d9.get("violations", []):
+        if x["type"] not in ("clearance", "shorting_items", "tracks_crossing",
+                             "copper_edge_clearance", "track_width"):
+            continue
+        for i in x.get("items", []):
+            po = i.get("pos") or {}
+            if "Track [" in i.get("description", "") and "x" in po:
+                culpados.append((round(po["x"], 4), round(po["y"], 4)))
+    if culpados:
+        tt = open(pcb, encoding="utf-8").read()
+        fora = 0
+        for cx, cy in set(culpados):
+            # o `pos` do DRC e o MEIO do segmento
+            def meio(m):
+                return (round((float(m.group(1)) + float(m.group(3))) / 2, 4),
+                        round((float(m.group(2)) + float(m.group(4))) / 2, 4))
+            novo, n2 = "", 0
+            i0 = 0
+            for m in re.finditer(r'\n\t\(segment\s*\(start (-?[\d.]+) (-?[\d.]+)\)'
+                                 r'\s*\(end (-?[\d.]+) (-?[\d.]+)\)[\s\S]*?\n\t\)', tt):
+                mx, my = meio(m)
+                if abs(mx - cx) < 0.02 and abs(my - cy) < 0.02:
+                    novo += tt[i0:m.start()]
+                    i0 = m.end()
+                    n2 += 1
+            if n2:
+                tt = novo + tt[i0:]
+                fora += n2
+        if fora:
+            open(pcb, "w", encoding="utf-8").write(tt)
+            print("  3b. %d segmento(s) retirados: o DRC acusou-os, e voltam "
+                  "para a lista" % fora)
     n = repara_terra(nome, pcb)
     if n:
         print("  4. %d pad(s) de terra ligados ao plano por via + coto" % n)
