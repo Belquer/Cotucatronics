@@ -641,7 +641,7 @@
 		(tags "test point SMD pad")
 		(property "Reference" "TP2"
 			(at 1.6 1.6 0)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "e6e8ddad-1390-4f1f-b7f9-502ea4c3f2c4")
 			(effects
 				(font
@@ -1625,7 +1625,7 @@
 		(tags "test point SMD pad")
 		(property "Reference" "TP1"
 			(at 0 -2.6 0)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "abdc25fd-a6a9-4a9d-bc0b-7634b5b0f5e9")
 			(effects
 				(font
@@ -1723,7 +1723,7 @@
 		(tags "test point SMD pad")
 		(property "Reference" "TP3"
 			(at 0 2.6 0)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "1631d025-6a82-480f-816a-d6bffc49318d")
 			(effects
 				(font
@@ -5895,7 +5895,7 @@
 		(tags "test point SMD pad")
 		(property "Reference" "TP4"
 			(at -1.6 1.6 0)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "ff82f293-28db-4555-a878-97a88a164e0d")
 			(effects
 				(font
@@ -7283,7 +7283,7 @@
 		(tags "test point SMD pad")
 		(property "Reference" "TP5"
 			(at 1.6 1.6 0)
-			(layer "F.SilkS")
+			(layer "F.Fab")
 			(uuid "a8acff01-14b6-4dac-ab21-9375305536fc")
 			(effects
 				(font
@@ -7602,6 +7602,61 @@
 		)
 		(layer "Edge.Cuts")
 		(uuid "dbe8ea8d-c069-4b06-b051-9d9e92ac1d22")
+	)
+	(gr_text "+5V"
+		(at 90 34.7 90)
+		(layer "F.SilkS")
+		(uuid "5e290e57-7ce3-59fa-ac36-2aafd2d78d6f")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(gr_text "+3V3A"
+		(at 96 34.7 90)
+		(layer "F.SilkS")
+		(uuid "5e290e57-ca09-57de-8b10-1a6aa924ab12")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(gr_text "GND"
+		(at 102 21.9 90)
+		(layer "F.SilkS")
+		(uuid "5e290e57-3702-54b9-a736-9717ab3921ad")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(gr_text "POT_L"
+		(at 108 34.7 90)
+		(layer "F.SilkS")
+		(uuid "5e290e57-bf42-50e2-9c7e-e7323a525745")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
+	)
+	(gr_text "POT_R"
+		(at 114 34.7 90)
+		(layer "F.SilkS")
+		(uuid "5e290e57-e35b-5fba-bc37-649bd537abec")
+		(effects
+			(font
+				(size 0.8 0.8)
+				(thickness 0.12)
+			)
+		)
 	)
 	(gr_text "painel rev A"
 		(at 60 26 0)

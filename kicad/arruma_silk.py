@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arruma_silk v0.19.0 — arruma os textos das DUAS camadas.
+"""arruma_silk v0.20.0 — arruma os textos das DUAS camadas.
 
 ⚠️ SERIGRAFIA SO. Nao toca em cobre, em pistas, em zonas nem em posicoes de
 peca: mexe apenas no `(at ...)` do campo `Reference` de cada footprint, que e
@@ -25,7 +25,7 @@ import io, math, os, re, subprocess, sys
 
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 
-VERSAO = "0.19.0"
+VERSAO = "0.20.0"
 NUM = r"-?\d+(?:\.\d+)?"
 # ⚠️⚠️ UM DESIGNADOR E UM RECTANGULO LARGO E BAIXO, NAO UM CIRCULO.
 #
@@ -158,6 +158,26 @@ def main():
     # contornos: o painel foi de 51 para 68 colisoes.
     contornos = {"F.SilkS": [], "F.Fab": []}
     silk = contornos["F.SilkS"]
+    # ⚠️⚠️ OS TEXTOS DE PLACA TAMBEM SAO OBSTACULOS.
+    #
+    # O `gr_text` — `COTUCATRONICS`, `cerebro rev B`, e agora os rotulos de rede
+    # dos pontos de teste — sai na MESMA tinta branca que os designadores. Esta
+    # ferramenta so conhecia os campos dos footprints, logo era livre de mudar
+    # uma referencia para cima do titulo da placa ou de um rotulo de rede, e
+    # nenhuma guarda dela daria por isso.
+    #
+    # ⚠️ Descobriu-se ao inverter a ordem do fluxo: rotular primeiro e arrumar
+    # depois so faz sentido se o arrumador VIR os rotulos. Sem isto, a segunda
+    # ferramenta desfazia o trabalho da primeira em silencio.
+    textos_placa = []
+    for _m in re.finditer(r'\(gr_text "([^"]*)"\s*\n\s*\(at (' + NUM + r') ('
+                          + NUM + r')(?: (' + NUM + r'))?\)[\s\S]{0,200}?'
+                          r'\(layer "([^"]+)"', t):
+        if "SilkS" in _m.group(5):
+            _rot = abs(float(_m.group(4) or 0)) in (90.0, 270.0)
+            _w, _h = caixa_txt(_m.group(1), 1.0)
+            textos_placa.append((float(_m.group(2)), float(_m.group(3)),
+                                 _h if _rot else _w, _w if _rot else _h))
     pistas = [tuple(map(float, m.groups())) for m in
               re.finditer(r"\(segment\s*\(start (" + NUM + r") (" + NUM
                           + r")\)\s*\(end (" + NUM + r") (" + NUM + r")\)", t)]
@@ -315,6 +335,9 @@ def main():
         for _r, (tx, ty, thw, thh) in postos.items():
             if _r == quem:
                 continue      # ⚠️ uma referencia nao colide consigo propria
+            if abs(tx - x) < thw + caixa[0] and abs(ty - y) < thh + caixa[1]:
+                return False
+        for tx, ty, thw, thh in textos_placa:
             if abs(tx - x) < thw + caixa[0] and abs(ty - y) < thh + caixa[1]:
                 return False
         # ⚠️ SEM `ignora` AQUI. Nos pads ignoram-se os da propria peca, porque a

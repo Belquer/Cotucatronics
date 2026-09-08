@@ -9967,3 +9967,58 @@ painel   ✓ Value     (F.Fab)         texto×texto 10->3  · total  51->37
 só olhava o segundo — e foi assim que a Fab do painel subiu de 51 para 68 sem
 nada gritar, porque o texto×texto tinha descido. **Um critério só é um portão
 para o que ele mede.**
+
+## 15el — os nomes das redes couberam no painel e não no cérebro, e o número diz porquê
+
+Os pontos de teste diziam `TP1`…`TP11` na placa impressa e mais nada: os nomes
+das redes viviam no campo `Value`, que está na **F.Fab** e não se imprime. Quem
+chega à bancada com o osciloscópio numa mão vê `TP7` e não sabe se é `+3V3A` ou
+`AGND`.
+
+**No painel resolveu-se:** cinco rótulos, todos colocados, portão limpo
+(`texto×texto 0→0`). **No cérebro não:** onze pontos a **4 mm** de passo, contra
+os **6 mm** do painel, numa faixa já ocupada.
+
+⚠️ **E a primeira coisa a perceber foi que a pergunta estava errada.** Eu tentava
+encaixar **22 textos** — onze referências e onze rótulos — numa faixa de
+40 × 14 mm. A margem não resolve aritmética.
+
+> A pergunta não é *«como é que cabem»*, é *«quais é que servem»*. Na bancada,
+> `TP7` impresso não diz nada: não se compra, não se solda, e para o cruzar com
+> a documentação já é preciso ter a documentação na mão — altura em que se lê lá
+> a rede. `+3V3A` diz tudo, sozinho.
+
+A referência passou para a F.Fab: continua visível no editor, deixa de gastar
+tinta e espaço na peça. **Não se apaga** — apagá-la perderia o cruzamento com a
+netlist e com o CPL.
+
+Mesmo assim, no cérebro os onze espalham-se por quatro alturas diferentes em vez
+de formarem uma linha. **Uma fila meio rotulada é pior que uma fila anónima**,
+porque parece que os rótulos que faltam pertencem a outra coisa.
+
+⚠️ **E o nome sai do `(net ...)` do pad, nunca do campo `Value`.** O `Value` é
+uma afirmação sobre a rede; o `(net ...)` é a rede. Se o ponto for movido para
+outro sítio do cobre, o `Value` continua a dizer o que dizia — e a serigrafia
+passaria a mentir, impressa, em tinta, na peça física. Lendo o pad, o rótulo ou
+está certo ou não existe.
+
+## 15em — quatro verificações minhas aprovaram pelo motivo errado, no mesmo dia
+
+Ao afinar isto, os meus próprios testes falharam quatro vezes, e nenhuma foi
+por o código estar errado:
+
+| o que fiz | porque aprovou em falso |
+|---|---|
+| `grep -q "gravado"` | **`"Nada gravado"` contém `"gravado"`** |
+| `case "$out" in *gravado*)` | o mesmo, outra sintaxe |
+| `set -- $cfg` num `for` | o **zsh não separa palavras** sem aspas — os dois valores entraram como um e corromperam o ficheiro |
+| busca por prosa na skill | `"preenchimento"` onde o ficheiro diz `"enchimento"` |
+
+> **Três das quatro eram a mesma coisa: procurar uma palavra em vez de ancorar
+> na estrutura.** A negação contém a afirmação (`nada gravado` ⊃ `gravado`), e um
+> teste que casa a subcadeia dá o veredicto ao contrário. O anexo é
+> `grep -q "^ *gravado ·"` — o início da linha, não a palavra solta.
+
+⚠️ **E o que me travou nas quatro foi o resultado ser absurdo, não uma guarda.**
+Um `git status` a mostrar a placa por modificar quando eu tinha acabado de ler
+«aceite». **A sorte não é método.**
