@@ -233,6 +233,47 @@ tinham `/mnt/user-data/outputs/` e `/home/claude/*.svg` gravados — rebentavam
 com `FileNotFoundError` na primeira tentativa noutro computador. Caminhos
 relativos ao próprio ficheiro (`pathlib.Path(__file__).parent`), sempre.
 
+## 8b. GERADO NÃO CHEGA: TEM DE SER REPRODUZÍVEL
+
+A §8 diz que o gerador é a fonte porque o gerado é «reproduzível, diffável e
+corrigível na fonte». **Um gerador que mina um `uuid4()` por elemento a cada
+corrida não é nenhuma das três.**
+
+Acrescentar um comentário ao gerador e regenerar produzia **229 inserções e 229
+remoções, com ZERO linhas não-`uuid`**. A folha saía electricamente idêntica e
+o diff era ruído puro.
+
+> **O que se perde não é elegância, é a REVISÃO.** Uma mudança real de duas
+> linhas desaparece dentro do churn, e um diff que ninguém consegue ler não é
+> revisto. Revisão que não acontece e revisão que aprova tudo são a mesma coisa.
+
+**A chave é semântica, não um contador:** `uuid5(NS, "sym:R13")`,
+`"fio:x1,y1-x2,y2"`, `"rot:GND:x,y,ang"`. Um contador também seria determinista
+— e inserir um elemento a meio renumerava tudo o que vem depois, devolvendo o
+diff ilegível exactamente quando mais interessa.
+
+⚠️ **Namespace próprio por folha.** Com um partilhado, o `C1` de uma folha e o
+`C1` de outra dão o **mesmo** `uuid` — e `uuid` repetido entre folhas do mesmo
+projecto é defeito a sério, não ruído.
+
+⚠️ **A troca abre uma porta que o aleatório mantinha fechada: a COLISÃO.** Dois
+fios exactamente sobrepostos, dois textos no mesmo ponto — pedem a mesma chave,
+e o KiCad não se queixa: junta-os, ou perde um. Sem uma guarda que grite, isto
+troca **um ruído visível por um defeito silencioso**, que é o pior negócio que
+há.
+
+⚠️ **E a raiz fixa-se no valor que o ficheiro JÁ TEM**, não numa constante nova
+— assim passar a determinista não mexe nela uma única vez. (Ver §6c: a
+identidade da raiz sai do `.kicad_pro` e nunca pode ser minada.)
+
+**Aceitação: gerar duas vezes e comparar byte a byte.** E contra o commit
+anterior, a mudança tem de ser só de `uuid` — churn de uma vez, e nunca mais.
+
+⚠️ **Isto costuma destapar um segundo defeito:** uma linha que **copia** o corpo
+de um emissor em vez de o chamar. Quando o emissor mudou de forma, só o
+original acompanhou. **Cópia de emissor sobrevive em silêncio às mudanças do
+original**, e só aparece quando o original muda.
+
 ## 9. O laço de saída, e ele inclui o ERC
 
 A `design-review` diz: *editou → renderizou → olhou de novo*. Aqui vale o mesmo
@@ -325,6 +366,25 @@ o relatório disse "26 renomeadas" e eu aceitei o número sem o comparar com 27.
 
 > **Varre por contagem de parêntesis, não por indentação.** E quando um
 > relatório diz "N feitos", compara N com o que era esperado.
+
+⚠️ **E o contador de parêntesis salta as CADEIAS.** Um esquema com notas como
+`100R serie (~30 mA)` ou `(!)` dessincroniza a profundidade no primeiro parêntesis
+que está dentro de aspas, e daí para a frente **todos** os blocos saem errados.
+Aqui isso devolveu **zero** símbolos DNP num ficheiro com oito. Um contador que
+não conhece aspas não está a contar a estrutura — está a contar caracteres que se
+parecem com ela.
+
+⚠️ **E a netlist do KiCad é INDENTADA.** `(net`, `(code` e `(name` vêm cada um na
+sua linha. Uma regex como `\(net\s+\(code[^)]*\)\s*\(name "([^"]*)"\)` nunca casa,
+o `finditer` apanha **um** bloco gigante, e todos os nós do ficheiro ficam
+atribuídos ao nome da primeira rede — o que se lê como *«os 40 pinos do módulo
+estão em curto»*.
+
+> **O que apanhou os dois foi o resultado ser ABSURDO, não uma guarda.** 40 pinos
+> numa rede é um módulo em curto; 0 DNP num ficheiro onde o `grep` já mostrara 8 é
+> aritmética. Se as mesmas regexes tivessem devolvido *39* e *7*, os dois números
+> tinham passado. **A sorte não é método** — a guarda da §2c é: quantos blocos há,
+> quantos é que a leitura apanhou, e gritar se diferirem.
 
 ## 5b. O SINAL DO `y` VIVE NUM SÍTIO SÓ
 

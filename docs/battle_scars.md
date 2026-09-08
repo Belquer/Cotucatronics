@@ -9619,3 +9619,94 @@ ficheiro com oito.** Contei parêntesis para delimitar o bloco — que é o que 
 tem notas como `100R serie (~30 mA)` e `(!)`. A profundidade dessincroniza e
 todos os blocos saem errados, em silêncio. Contar parêntesis está certo;
 contá-los sem saltar as cadeias não.
+
+## 15ec — os 40 pinos da Daisy na mesma rede, e os 8 símbolos DNP que eram zero
+
+Numa só investigação, dois leitores meus mentiram — e as duas mentiras eram
+**ancorar em aparência em vez de estrutura**.
+
+**O primeiro disse que a placa estava em curto.** Fui ver a que pino da Daisy
+chegava o botão dos búzios e o meu leitor de netlist devolveu isto:
+
+```
+1  +3V3A      2  +3V3A      3  +3V3A   …   40 +3V3A
+```
+
+Os quarenta pinos do módulo na mesma rede. A regex era
+`\(net\s+\(code[^)]*\)\s*\(name "([^"]*)"\)` — e o KiCad escreve a netlist
+**indentada**, com `(net`, `(code` e `(name` cada um na sua linha e tabulações
+entre eles. O padrão nunca casou, o `re.finditer` apanhou **um** bloco gigante,
+e todos os nós do ficheiro ficaram atribuídos ao nome da primeira rede.
+
+**O segundo disse que não havia DNP nenhum.** A caçar o desacordo entre CPL e
+BOM, o meu varredor de símbolos devolveu **0** num ficheiro com **8**. Contei
+parêntesis para delimitar o bloco — que é o que a §2d manda — mas contei também
+os que estão **dentro de cadeias**. Este esquema tem `100R serie (~30 mA)` e
+`(!)`; a profundidade dessincroniza no primeiro e daí para a frente todos os
+blocos saem errados.
+
+> **A §2d está certa e incompleta.** «Varre por contagem de parêntesis, não por
+> indentação» — e acrescenta-se: **saltando as cadeias**. Um contador de
+> parêntesis que não conhece aspas não está a contar a estrutura, está a contar
+> caracteres que se parecem com a estrutura.
+
+⚠️ **O que me salvou não foi guarda nenhuma. Foi o resultado ser absurdo.** 40
+pinos numa rede é um módulo em curto; 0 DNP quando o `grep` já tinha mostrado 8
+é aritmética. Parei porque a resposta era impossível — e é sorte, não método:
+se a mesma regex tivesse devolvido *39* pinos numa rede, ou *7* símbolos DNP,
+eu tinha acreditado nos dois.
+
+> **A 2c pede que todo leitor conte o que leu. Estes dois não contavam, e por
+> isso não reprovaram — aprovaram.** A guarda barata era a mesma de sempre:
+> quantos blocos existem no ficheiro, quantos é que a leitura apanhou, e gritar
+> se diferirem. Escrevi-a no `dnp_para_pcb.py` à segunda tentativa, depois de
+> a primeira ter falhado calada.
+
+E o custo real não foi o tempo: foi eu ter **dito ao dB** que os 40 pinos
+estavam na mesma rede antes de perceber que era meu. Um leitor partido não
+produz só um número errado — produz uma afirmação sobre o trabalho de outra
+pessoa.
+
+
+## 15ed — 229 linhas de diferença, e zero delas eram alguma coisa
+
+Acrescentei um comentário ao `gera_painel.py`, regenerei, e o `.kicad_sch` veio
+com **229 inserções e 460 remoções**. Anunciei «a folha não muda (era só
+comentário)» na mesma frase em que o `git diff --stat` dizia o contrário.
+
+Metade era esperada — regenerar apaga os carimbos de MPN, e volta a
+carimbar-se. A outra metade não: depois de recarimbar ficaram **229 inserções e
+229 remoções, com ZERO linhas não-`uuid`**. O gerador minava um `uuid4()` novo
+por elemento a cada corrida.
+
+> **Um esquemático gerado devia ser reproduzível, diffável e corrigível na
+> fonte — é a §8, e é metade da razão de gerar por script.** Um que muda 229
+> linhas por corrida é diffável no papel e ilegível na prática. E o que se
+> perde não é elegância: é a **revisão**. Uma mudança real de duas linhas
+> desaparece dentro do churn, e um diff que ninguém consegue ler não é revisto.
+> Revisão que não acontece e revisão que aprova tudo são a mesma coisa.
+
+**A chave é semântica, não um contador.** `uuid5(namespace, "sym:R13")`,
+`"fio:x1,y1-x2,y2"`, `"rot:GND:x,y,ang"`. Um contador também seria
+determinista — e inserir um elemento a meio renumerava tudo o que vem depois,
+devolvendo o diff ilegível exactamente quando mais interessa.
+
+⚠️ **E cada folha leva namespace próprio.** Com um partilhado, o `C1` desta
+folha e o `C1` da outra dariam o mesmo `uuid` — e `uuid` repetido entre folhas
+do mesmo projecto é defeito a sério, não ruído.
+
+⚠️ **A troca abre uma porta que o `uuid4()` mantinha fechada: a colisão.** Com
+aleatórios ela era impossível; com chaves, dois fios exactamente sobrepostos ou
+dois textos no mesmo ponto pedem o mesmo `uuid`, e o KiCad não se queixa —
+junta-os, ou perde um. Sem a guarda que grita, isto trocava **um ruído visível
+por um defeito silencioso**, que é o pior negócio que há.
+
+**Aceitação:** gerar duas vezes e comparar byte a byte. As duas folhas ficaram
+idênticas, e contra o commit anterior a mudança foi 230/230 e 229/229 com zero
+linhas não-`uuid` — churn de uma vez só, e nunca mais.
+
+⚠️ **E apareceu um terceiro defeito escondido pelo primeiro:** uma linha
+copiava o corpo do emissor `nao_liga()` em vez de o chamar. Quando o `uuid`
+passou a ter chave, só o original a recebeu — a cópia ficou para trás. **Cópia
+de emissor sobrevive em silêncio às mudanças do original**, e só se vê quando o
+original muda de forma.

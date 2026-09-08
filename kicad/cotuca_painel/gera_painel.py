@@ -39,7 +39,7 @@ import io, re, sys, uuid
 # do ADC (8 e 10), o par de retorno dos LED (13 e 14, que valeram 6 dB de
 # chao) e os retornos dos pots (23 e 26).
 
-VERSAO = "0.12.1"
+VERSAO = "0.13.0"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -54,7 +54,46 @@ VERSAO = "0.12.1"
 # (`2ad2d1f2...`) — dois projectos, uma identidade.
 RAIZ = "de128d62-4042-4c6e-a783-d968ae52c1c6"
 G = 1.27
-def u(): return str(uuid.uuid4())
+# ⚠️⚠️ UUID DETERMINISTICO. NAO VOLTAR A `uuid4()`.
+#
+# Este gerador minava um uuid novo a cada corrida. Regenerar sem mudar NADA
+# produzia 229 linhas de diferenca — e ZERO delas eram nao-uuid. A folha saia
+# electricamente identica e o diff era ruido puro.
+#
+# ⚠️ Isso derrota metade da razao de gerar por script. A §8 desta casa diz que
+# um esquematico gerado e "reproduzivel, diffavel e corrigivel na fonte"; um
+# que muda 229 linhas por corrida e diffavel no papel e ilegivel na pratica —
+# e uma mudanca real de duas linhas passa despercebida no meio do churn. Um
+# diff que ninguem consegue ler nao e revisto, e revisao que nao acontece e a
+# mesma coisa que revisao que aprova tudo.
+#
+# A chave e SEMANTICA — a referencia do simbolo, as coordenadas do fio, o nome
+# e a posicao do rotulo — e nao um contador. Um contador tambem seria
+# determinista, mas inserir um elemento a meio renumerava tudo o que vem
+# depois, e o diff voltava a ser ilegivel exactamente quando mais interessa.
+#
+# ⚠️ NAMESPACE PROPRIO DESTA FOLHA. Com um namespace partilhado, um `C1` nesta
+# folha e um `C1` noutra dariam o MESMO uuid — e uuid repetido entre folhas do
+# mesmo projecto e defeito a serio, nao ruido.
+NS = uuid.uuid5(uuid.NAMESPACE_DNS, "gera-painel.cotucatronics")
+_CHAVES = set()
+
+
+def u(chave):
+    """uuid estavel para `chave`. Duas chamadas com a mesma chave GRITAM.
+
+    ⚠️ A guarda nao e zelo: com `uuid4()` a colisao era impossivel, e ao trocar
+    para chaves passa a ser possivel emitir dois elementos com o mesmo uuid —
+    dois fios exactamente sobrepostos, dois textos no mesmo ponto. O KiCad nao
+    se queixa; junta-os ou perde um. Sem esta guarda, a troca introduzia um
+    defeito silencioso para consertar um ruido visivel."""
+    if chave in _CHAVES:
+        raise SystemExit("*** dois elementos pedem o mesmo uuid: %r\n"
+                         "    Ou ha um elemento duplicado, ou a chave nao "
+                         "distingue o que devia." % (chave,))
+    _CHAVES.add(chave)
+    return str(uuid.uuid5(NS, chave))
+
 def g(v): return round(round(v / G) * G, 4)
 L = []
 USADOS = set()   # preenchido por simbolo(); NUNCA escrito a mao
@@ -101,7 +140,7 @@ def simbolo(lib, ref, val, x, y, ry=-7.62, vy=7.62):
              # ESQUEMA, e por aqui saiam cinco linhas de compra para cobre.
              f'\t\t(in_bom {"no" if re.match(r"^TP[0-9]+$", ref) else "yes"})\n'
              f'\t\t(on_board yes)\n'
-             f'\t\t(in_pos_files yes)\n\t\t(dnp no)\n\t\t(uuid "{u()}")\n{ps}{_instancia(ref)}\t)\n')
+             f'\t\t(in_pos_files yes)\n\t\t(dnp no)\n\t\t(uuid "{u("sym:" + ref)}")\n{ps}{_instancia(ref)}\t)\n')
 
 
 # ------------------------------------------------------------- FOOTPRINTS
@@ -185,16 +224,16 @@ def _instancia(ref, unidade=1):
 
 def fio(x1, y1, x2, y2):
     L.append(f'\t(wire\n\t\t(pts\n\t\t\t(xy {g(x1)} {g(y1)}) (xy {g(x2)} {g(y2)})\n\t\t)\n'
-             f'\t\t(stroke (width 0) (type default))\n\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(stroke (width 0) (type default))\n\t\t(uuid "{u(f"fio:{g(x1)},{g(y1)}-{g(x2)},{g(y2)}")}")\n\t)\n')
 
 def rot(nome, x, y, ang, just):
     L.append(f'\t(global_label "{nome}"\n\t\t(shape bidirectional)\n\t\t(at {g(x)} {g(y)} {ang})\n'
              f'\t\t(fields_autoplaced yes)\n\t\t(effects (font (size 1.27 1.27)) (justify {just}))\n'
-             f'\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(uuid "{u(f"rot:{nome}:{g(x)},{g(y)},{ang}")}")\n\t)\n')
 
 def texto(s, x, y, tam=1.27):
     L.append(f'\t(text "{s}"\n\t\t(exclude_from_sim no)\n\t\t(at {g(x)} {g(y)} 0)\n'
-             f'\t\t(effects (font (size {tam} {tam})) (justify left))\n\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(effects (font (size {tam} {tam})) (justify left))\n\t\t(uuid "{u(f"txt:{g(x)},{g(y)}:{s}")}")\n\t)\n')
 
 def nota(x, y, *linhas, tam=1.6, passo=3.81):
     """Uma nota de varias linhas. O SINAL DO Y VIVE SO AQUI.

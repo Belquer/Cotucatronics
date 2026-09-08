@@ -24,9 +24,57 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, re, sys, uuid
 
-VERSAO = "0.16.0"
+VERSAO = "0.17.0"
 G = 1.27
-def u(): return str(uuid.uuid4())
+# ⚠️⚠️ UUID DETERMINISTICO. NAO VOLTAR A `uuid4()`.
+#
+# Este gerador minava um uuid novo a cada corrida. Regenerar sem mudar NADA
+# produzia 229 linhas de diferenca — e ZERO delas eram nao-uuid. A folha saia
+# electricamente identica e o diff era ruido puro.
+#
+# ⚠️ Isso derrota metade da razao de gerar por script. A §8 desta casa diz que
+# um esquematico gerado e "reproduzivel, diffavel e corrigivel na fonte"; um
+# que muda 229 linhas por corrida e diffavel no papel e ilegivel na pratica, e
+# uma mudanca real de duas linhas passa despercebida no meio do churn. Um diff
+# que ninguem consegue ler nao e revisto, e revisao que nao acontece e o mesmo
+# que revisao que aprova tudo.
+#
+# A chave e SEMANTICA — a referencia do simbolo, as coordenadas do fio, o nome
+# e a posicao do rotulo — e nao um contador. Um contador tambem seria
+# determinista, mas inserir um elemento a meio renumerava tudo o que vem
+# depois, e o diff voltava a ser ilegivel exactamente quando mais interessa.
+#
+# ⚠️ NAMESPACE PROPRIO DESTA FOLHA. Com um namespace partilhado, um `C1` aqui e
+# um `C1` noutra folha dariam o MESMO uuid — e uuid repetido entre folhas do
+# mesmo projecto e defeito a serio, nao ruido.
+NS = uuid.uuid5(uuid.NAMESPACE_DNS, "gera-soquete.cotucatronics")
+_CHAVES = set()
+
+
+def u(chave):
+    """uuid estavel para `chave`. Duas chamadas com a mesma chave GRITAM.
+
+    ⚠️ A guarda nao e zelo. Com `uuid4()` a colisao era impossivel; ao passar a
+    chaves torna-se possivel emitir dois elementos com o mesmo uuid — dois fios
+    exactamente sobrepostos, dois textos no mesmo ponto. O KiCad nao se queixa:
+    junta-os, ou perde um. Sem esta guarda, a troca introduzia um defeito
+    silencioso para consertar um ruido visivel."""
+    if chave in _CHAVES:
+        raise SystemExit("*** dois elementos pedem o mesmo uuid: %r\n"
+                         "    Ou ha um elemento duplicado, ou a chave nao "
+                         "distingue o que devia." % (chave,))
+    _CHAVES.add(chave)
+    return str(uuid.uuid5(NS, chave))
+
+
+# ⚠️ FIXO NO VALOR QUE O FICHEIRO JA TINHA, e nao uma constante nova. Este uuid
+# nao e referenciado em lado nenhum — nem na raiz, nem no `.kicad_pro`, e
+# confirmou-se — logo podia ser qualquer um; escolher o actual faz com que
+# passar a determinista nao o mexa uma unica vez. (O painel ja fazia isto: ver
+# `RAIZ` la, que ALEM disto esta no `.kicad_pro` e por isso nunca poderia
+# mudar.)
+RAIZ_SCH = "33745cb2-2228-4ec8-91fd-1fcb5f7ffc72"
+
 def g(v): return round(round(v / G) * G, 4)
 
 L = []
@@ -50,7 +98,7 @@ def simbolo(lib, ref, val, x, y, ang=0, campos=()):
 \t\t(on_board yes)
 \t\t(in_pos_files {_bom(ref)})
 \t\t(dnp no)
-\t\t(uuid "{u()}")
+\t\t(uuid "{u("sym:" + ref)}")
 {ps}{_instancia(ref)}\t)
 ''')
 
@@ -159,12 +207,12 @@ def nao_liga(x, y):
     """`no_connect` num pino. ⚠️ Nao e "nao usado": e uma PROMESSA de que nada
     se liga ali, e o ERC passa a recusar quem tente."""
     L.append('\t(no_connect\n\t\t(at %s %s)\n\t\t(uuid "%s")\n\t)\n'
-             % (g(x), g(y), u()))
+             % (g(x), g(y), u("nc:%s,%s" % (g(x), g(y)))))
 
 
 def fio(x1, y1, x2, y2):
     L.append(f'\t(wire\n\t\t(pts\n\t\t\t(xy {g(x1)} {g(y1)}) (xy {g(x2)} {g(y2)})\n\t\t)\n'
-             f'\t\t(stroke (width 0) (type default))\n\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(stroke (width 0) (type default))\n\t\t(uuid "{u(f"fio:{g(x1)},{g(y1)}-{g(x2)},{g(y2)}")}")\n\t)\n')
 
 def rotulo(nome, x, y, ang=0, just="left"):
     L.append(f'''\t(global_label "{nome}"
@@ -172,13 +220,13 @@ def rotulo(nome, x, y, ang=0, just="left"):
 \t\t(at {g(x)} {g(y)} {ang})
 \t\t(fields_autoplaced yes)
 \t\t(effects (font (size 1.27 1.27)) (justify {just}))
-\t\t(uuid "{u()}")
+\t\t(uuid "{u(f"rot:{nome}:{g(x)},{g(y)},{ang}")}")
 \t)
 ''')
 
 def texto(s, x, y, tam=1.27):
     L.append(f'\t(text "{s}"\n\t\t(exclude_from_sim no)\n\t\t(at {g(x)} {g(y)} 0)\n'
-             f'\t\t(effects (font (size {tam} {tam})) (justify left))\n\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(effects (font (size {tam} {tam})) (justify left))\n\t\t(uuid "{u(f"txt:{g(x)},{g(y)}:{s}")}")\n\t)\n')
 
 def nota(x, y, *linhas, tam=1.6, passo=3.81):
     """Uma nota de varias linhas. O SINAL DO Y VIVE SO AQUI.
@@ -195,7 +243,7 @@ def nota(x, y, *linhas, tam=1.6, passo=3.81):
 
 
 def juncao(x, y):
-    L.append(f'\t(junction\n\t\t(at {g(x)} {g(y)})\n\t\t(diameter 0)\n\t\t(color 0 0 0 0)\n\t\t(uuid "{u()}")\n\t)\n')
+    L.append(f'\t(junction\n\t\t(at {g(x)} {g(y)})\n\t\t(diameter 0)\n\t\t(color 0 0 0 0)\n\t\t(uuid "{u(f"jun:{g(x)},{g(y)}")}")\n\t)\n')
 
 def pinos_de(nome):
     """[(numero, dx, dy)] lidos da BIBLIOTECA, nunca da memoria.
@@ -564,7 +612,11 @@ def _confere_lib(caminho):
 # FUTURO.md, e prometer "nada se liga aqui" seria mentir sobre eles.
 for _n in (36, 37):
     _x, _y = pin_xy(_n)
-    L.append('\t(no_connect\n\t\t(at %s %s)\n\t\t(uuid "%s")\n\t)\n' % (g(_x), g(_y), u()))
+    # ⚠️ pelo EMISSOR, nao por copia dele. Esta linha repetia o corpo do
+    # `nao_liga()` — e uma copia de emissor sobrevive a mudancas do
+    # original em silencio: quando o `uuid` passou a ter chave, so o
+    # original a recebeu e esta ficou com a versao antiga.
+    nao_liga(_x, _y)
 
 
 # ------------------------------------- desacoplamento do +5V junto a Daisy
@@ -634,7 +686,7 @@ CAB = f'''(kicad_sch
 \t(version 20260306)
 \t(generator "cotucatronics")
 \t(generator_version "10.0")
-\t(uuid "{u()}")
+\t(uuid "{RAIZ_SCH}")
 \t(paper "A2")
 \t(title_block
 \t\t(title "SOQUETE + PONTE + DPDT + SAIDAS — carrier rev B")
