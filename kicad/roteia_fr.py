@@ -47,7 +47,7 @@ import re
 import subprocess
 import sys
 
-VERSAO = "0.4.0"
+VERSAO = "0.8.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PY_KICAD = ("/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework"
             "/Versions/3.9/bin/python3.9")
@@ -208,6 +208,23 @@ def repara_terra(nome, pcb):
                         dist_ponto_seg, KICAD)
     import uuid as _uuid
 
+    def partidos(caminho):
+        """Quantos planos estao em pedacos. ⚠️ `Zone [X] <-> Zone [X]` na MESMA
+        rede, que e o plano cortado — e nao aparece como erro de geometria."""
+        subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--format", "json",
+                        "-o", "/tmp/_rp3.json", caminho], capture_output=True)
+        dd = json.load(open("/tmp/_rp3.json"))
+        n = 0
+        for x in dd.get("unconnected_items", []):
+            ds = [i.get("description", "") for i in x.get("items", [])]
+            if len(ds) == 2 and all("Zone [" in s for s in ds):
+                a1 = re.search(r"\[([^\]]+)\]", ds[0])
+                b1 = re.search(r"\[([^\]]+)\]", ds[1])
+                if a1 and b1 and a1.group(1) == b1.group(1):
+                    n += 1
+        return n
+
+    part0 = partidos(pcb)
     subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--format", "json",
                     "-o", "/tmp/_rep.json", pcb], capture_output=True)
     d = json.load(open("/tmp/_rep.json"))
@@ -221,6 +238,7 @@ def repara_terra(nome, pcb):
             if m and m.group(1) in redes_z and "pad" in s.lower() and "x" in po:
                 alvos.append((m.group(1), po["x"], po["y"]))
     alvos = sorted(set(alvos))
+    orfaos_xy = {(round(x, 3), round(y, 3)) for _r, x, y in alvos}
     if not alvos:
         return 0
 
@@ -242,6 +260,21 @@ def repara_terra(nome, pcb):
     by = [v for b in bordo for v in (b[1], b[3])]
     lim = (min(bx) + 0.8, min(by) + 0.8, max(bx) - 0.8, max(by) - 0.8) if bordo else None
 
+    def cruza(x1, y1, x2, y2, rede_c):
+        """⚠️ Distancia nao chega: duas pistas podem cruzar-se a MEIO sem que
+        nenhuma ponta esteja perto da outra. O coto de reparacao cruzou uma
+        pista do painel e deu `tracks_crossing`."""
+        def o(ax, ay, bx, by, cx, cy):
+            v = (by - ay) * (cx - bx) - (bx - ax) * (cy - by)
+            return 0 if abs(v) < 1e-9 else (1 if v > 0 else 2)
+        for a1, b1, a2, b2, n, _L in pistas:
+            if n == rede_c:
+                continue
+            if (o(x1, y1, x2, y2, a1, b1) != o(x1, y1, x2, y2, a2, b2)
+                    and o(a1, b1, a2, b2, x1, y1) != o(a1, b1, a2, b2, x2, y2)):
+                return True
+        return False
+
     def livre(x, y, r):
         if lim and not (lim[0] <= x <= lim[2] and lim[1] <= y <= lim[3]):
             return False
@@ -256,23 +289,62 @@ def repara_terra(nome, pcb):
                 return False
         return True
 
-    novos, feitos = "", 0
+    novos, feitos, postos = "", 0, []
     for rede, px, py in alvos:
         posto = None
         for raio in [v / 10.0 for v in range(12, 60, 2)]:
             for k in range(16):
                 ang = k * math.pi / 8
                 x, y = px + raio * math.cos(ang), py + raio * math.sin(ang)
-                if livre(x, y, VIA_R) and all(
-                        livre(px + (x - px) * f, py + (y - py) * f, 0.15)
-                        for f in (0.45, 0.7, 0.9)):
+                if (livre(x, y, VIA_R)
+                        and all(livre(px + (x - px) * f, py + (y - py) * f, 0.15)
+                                for f in (0.45, 0.7, 0.9))
+                        and not cruza(px, py, x, y, rede)):
                     posto = (round(x, 3), round(y, 3))
                     break
             if posto:
                 break
         if not posto:
-            print("     ⚠️ %s em (%.1f, %.1f): sem sitio para a via. Fica para "
-                  "a pessoa." % (rede, px, py))
+            # ⚠️ SEGUNDA ESTRATEGIA: LIGAR AO PAD VIZINHO DA MESMA REDE.
+            #
+            # A via precisa de 0,6 mm de cobre livre, e a volta de um conector
+            # apertado esse espaco nao existe — foi o que devolveu "sem sitio"
+            # para metade dos pinos de terra do J14 e do J1, e com eles ficava
+            # solta a PONTE DE TERRA e a alimentacao do ESP32.
+            #
+            # Mas um conector tem varios pinos de terra, e nem todos estao
+            # cercados. Um coto ate ao vizinho que ja chega ao plano resolve
+            # sem cobre aberto: a pista corre ENTRE os pads, que e onde o passo
+            # de 2,54 deixa folga, e nao precisa de sitio para uma via.
+            #
+            # ⚠️ E o vizinho tem de estar LIGADO. Amarrar dois orfaos um ao
+            # outro da uma ilha de dois em vez de um, e o DRC conta na mesma:
+            # dois orfaos nao fazem um ligado.
+            viz = None
+            for qx, qy, qr, qn, qc in pads:
+                if qn != rede or (abs(qx - px) < 0.01 and abs(qy - py) < 0.01):
+                    continue
+                if (round(qx, 3), round(qy, 3)) in orfaos_xy:
+                    continue
+                d = math.hypot(qx - px, qy - py)
+                if d >= 8.0 or (viz and d >= viz[2]):
+                    continue
+                if cruza(px, py, qx, qy, rede):
+                    continue
+                if all(livre(px + (qx - px) * f, py + (qy - py) * f, 0.15)
+                       for f in (0.3, 0.5, 0.7)):
+                    viz = (qx, qy, d)
+            if viz:
+                novos += ('\t(segment\n\t\t(start %g %g)\n\t\t(end %g %g)\n'
+                          '\t\t(width 0.4)\n\t\t(layer "F.Cu")\n\t\t(net "%s")\n'
+                          '\t\t(uuid "%s")\n\t)\n'
+                          % (round(px, 3), round(py, 3), round(viz[0], 3),
+                             round(viz[1], 3), rede, _uuid.uuid4()))
+                pistas.append((px, py, viz[0], viz[1], rede, 0))
+                feitos += 1
+                continue
+            print("     ⚠️ %s em (%.1f, %.1f): sem sitio para a via nem vizinho "
+                  "ligado. Fica para a pessoa." % (rede, px, py))
             continue
         vx, vy = posto
         novos += ('\t(via\n\t\t(at %g %g)\n\t\t(size 0.6)\n\t\t(drill 0.3)\n'
@@ -283,6 +355,7 @@ def repara_terra(nome, pcb):
                   % (round(px, 3), round(py, 3), vx, vy, rede, _uuid.uuid4()))
         vias.append((vx, vy, rede))
         pistas.append((px, py, vx, vy, rede, 0))
+        postos.append((vx, vy, rede))
         feitos += 1
     if not novos:
         return 0
@@ -306,6 +379,50 @@ def repara_terra(nome, pcb):
             po = i2.get("pos") or {}
             if "x" in po:
                 soltas.add((round(po["x"], 3), round(po["y"], 3)))
+    # ⚠️⚠️ E CONFERE SE PARTIU UM PLANO. O coto de reparacao e cobre como
+    # qualquer outro: passa entre o pad e a zona, e pode cortar exactamente o
+    # plano que ele veio ligar. Conferi so `via_dangling` e entreguei uma placa
+    # com a terra em TRES pedacos — o portao da fabrica apanhou-a.
+    #
+    # E a mesma licao da 15dc, num tanque novo: uma ferramenta que escreve
+    # cobre tem de medir as DUAS especies de estrago, e nao a que me ocorreu.
+    # Uma licao aprendida num sitio nao se aplica sozinha ao sitio do lado.
+    if partidos(pcb) > part0:
+        # ⚠️ RETIRA-SE A CULPADA, E NAO A REPARACAO TODA. A primeira versao
+        # tirava as dez de uma vez e deitava fora oito ligacoes boas por causa
+        # de duas mas — que e o mesmo erro que o roteador ja tinha aprendido a
+        # nao fazer (§12c). Devolvem-se uma a uma e fica o que couber.
+        com_tudo = open(pcb, encoding="utf-8").read()
+
+        def escreve(sem):
+            tt = com_tudo
+            for vx, vy, _r in sem:
+                tt = re.sub(r'\n\t\(via\n\t\t\(at %g %g\)[\s\S]*?\n\t\)'
+                            % (vx, vy), "", tt)
+                tt = re.sub(r'\n\t\(segment\n\t\t\(start (-?[\d.]+) (-?[\d.]+)\)\n'
+                            r'\t\t\(end %g %g\)[\s\S]*?\n\t\)' % (vx, vy), "", tt)
+            open(pcb, "w", encoding="utf-8").write(tt)
+            return partidos(pcb)
+
+        manter = []
+        for c in postos:
+            if escreve([x for x in postos if x not in manter and x is not c]) <= part0:
+                manter.append(c)
+        fora = [c for c in postos if c not in manter]
+        escreve(fora)
+        if partidos(pcb) > part0:
+            escreve(postos)
+            print("     ⚠️ a reparacao partia o plano e nem retirando tudo "
+                  "zerava: retirada inteira.", file=sys.stderr)
+            return 0
+        print("     ⚠️ %d reparacao(oes) partiam o plano e foram retiradas; %d "
+              "ficam." % (len(fora), len(manter)), file=sys.stderr)
+        feitos = len(manter)
+        # ⚠️ E NAO SE SAI AQUI. A limpeza das vias soltas vem a seguir, e sair
+        # antes dela deixava passar um `via_dangling` sempre que o plano se
+        # partia — dois consertos em fila em que o primeiro engolia o segundo.
+        t = open(pcb, encoding="utf-8").read()
+
     if soltas:
         tt = open(pcb, encoding="utf-8").read()
         fora = 0
