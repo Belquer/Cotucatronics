@@ -187,6 +187,44 @@ def vias_da_placa(t):
                                  + r")\)[\s\S]{0,220}?\(net \"([^\"]+)\"\)", t)]
 
 
+def redes_com_plano(t):
+    """As redes que tem zona de cobre nesta placa.
+
+    ⚠️⚠️ E O CAMPO CHAMA-SE `net`, NAO `net_name`. Escrevi tres filtros a
+    procurar `(net_name "X")` dentro de `(zone ...)`, e o KiCad 10 escreve
+    `(net "X")`. Os tres devolviam SEMPRE conjunto vazio — e um filtro vazio nao
+    da erro: da a resposta mais tranquilizadora que existe.
+
+    Li dezenas de vezes a linha "0 de 34 travessias passam perto de um pad do
+    plano" e li-a como um achado. Nao era: era isto. E a guarda dos pads do
+    plano em B.Cu, que medi e declarei inutil, nunca chegou a fazer nada —
+    portanto o que eu medi foi duas vezes a mesma coisa.
+
+    ⚠️ POR ISSO ESTA FUNCAO GRITA. Se a placa tem `(zone` e ela nao achar rede
+    nenhuma, o silencio deixa de ser uma opcao."""
+    redes = set()
+    for m in re.finditer(r'\(zone\b', t):
+        j = m.start()
+        d = 0
+        for k in range(j, len(t)):
+            if t[k] == "(":
+                d += 1
+            elif t[k] == ")":
+                d -= 1
+                if d == 0:
+                    break
+        cab = t[j:min(k, j + 400)]
+        n = re.search(r'\(net_name "([^"]*)"\)', cab) or \
+            re.search(r'\(net "([^"]+)"\)', cab)
+        if n and n.group(1) and not n.group(1).isdigit():
+            redes.add(n.group(1))
+    if "(zone" in t and not redes:
+        raise SystemExit("*** a placa tem zonas e eu nao achei a rede de "
+                         "nenhuma. O filtro esta partido, e um filtro partido "
+                         "devolve vazio sem se queixar.")
+    return redes
+
+
 def cruzam(a, b, c, d):
     """Dois segmentos cruzam-se? ⚠️ Comparar EXTREMOS nao chega: duas pistas
     podem cruzar-se a meio sem que nenhuma ponta esteja perto da outra. Foi o
@@ -692,9 +730,7 @@ def main():
     # Marcar isto como obstaculo custa alguns caminhos em B.Cu e poupa a
     # retraccao de os descobrir um a um, a um DRC cada.
     COBRE_MIN = 0.25
-    redes_de_plano = {z.group(1) for z in
-                      re.finditer(r'\(zone[\s\S]{0,400}?\(net_name "([^"]*)"\)', t)
-                      if z.group(1)}
+    redes_de_plano = redes_com_plano(t)
     # ⚠️ DESLIGADA POR OMISSAO, por medicao. A guarda parece obviamente certa —
     # impede de graca um estrago que a retraccao so descobre a um DRC cada — mas
     # medida de raiz, ate convergir, com duas passadas largas e a apertada:
@@ -993,9 +1029,7 @@ def main():
         # ela e deixa de suspeitar de quem devia. Foi o que fez o filtro
         # devolver "0 de 3" numa passada em que havia estrago.
         perto = 0.20 * 2 + COBRE_MIN
-        redes_z = {z.group(1) for z in
-                   re.finditer(r'\(zone[\s\S]{0,400}?\(net_name "([^"]*)"\)', t)
-                   if z.group(1)}
+        redes_z = redes_com_plano(t)
         pads_z = [(px, py, pr) for px, py, pr, pn, cams in pads
                   if pn in redes_z and 1 in cams]
         susp = set()

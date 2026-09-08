@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.8.0"
+VERSAO = "0.9.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -51,6 +51,11 @@ KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # buscas que vao falhar. Continua alcancavel com `roteia.py --ordem longa` se
 # alguma placa a quiser; o que sai e o PADRAO, nao a opcao.
 ORDENS = ("drc", "curta")
+FREEROUTING = all(os.path.exists(f) for f in (
+    "/opt/homebrew/opt/openjdk/bin/java",
+    os.path.expanduser("~/.local/share/freerouting/freerouting-2.4.1.jar"),
+    "/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework"
+    "/Versions/3.9/bin/python3.9"))
 PASSADAS = 3
 
 
@@ -119,6 +124,34 @@ def uma(nome, zerar):
     for l in r.stderr.splitlines():
         if "costura" in l or "FORA" in l:
             print("  1.%s" % l)
+
+    # ⚠️⚠️ O FREEROUTING PRIMEIRO, E O MEU ROTEADOR COMO RECUO.
+    #
+    # Escrevi um roteador de raiz e afinei-o uma sessao inteira porque tinha
+    # concluido que nenhum autoroteador externo era alcancavel — o `pcbnew` nao
+    # exporta DSN, dizia eu. Exporta (15de). Na mesma placa, de raiz:
+    #
+    #     o meu       103 -> 12 por ligar · ~9 min as duas placas
+    #     FreeRouting 122 ->  8 por ligar · 35 SEGUNDOS as duas
+    #
+    # E as que sobram ao FreeRouting sao todas ligacoes ao PLANO, nao sinal:
+    # ele fecha todos os sinais. Faz rip-up e shove a serio.
+    #
+    # ⚠️ O MEU FICA, e nao por orgulho: ele corre sem Java e sem o jar de 61 MB,
+    # e a cadeia tem de continuar a andar numa maquina onde isso nao esteja.
+    if FREEROUTING:
+        r = py("roteia_fr.py", nome)
+        print("\n".join("  " + l for l in r.stdout.strip().splitlines()
+                        if l.strip() and "portao" not in l))
+        if r.returncode:
+            print("  ⚠️ FreeRouting falhou; sigo com o roteador da casa.")
+        else:
+            f, g = por_fazer(pcb)
+            print("  2. FreeRouting -> %d por fazer · geometria %d" % (f, g))
+            r2 = py("arruma_silk.py", pcb, "--escreve")
+            for l in r2.stderr.splitlines()[-1:]:
+                print("  3.%s" % l)
+            return (f, g, "freerouting")
 
     guardado = pcb + ".limpo"
     shutil.copy(pcb, guardado)

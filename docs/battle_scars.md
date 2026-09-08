@@ -8870,3 +8870,52 @@ correr o `--help`". Corri o `--help` do `kicad-cli` e ele de facto não exporta
 DSN — isso continua verdade. **Mas o `pcbnew` é outra ferramenta, e a essa não
 apliquei a regra.** É a mesma falha da 15dc: uma lição aprendida num sítio não
 se aplica sozinha ao sítio do lado.
+
+## 15df — o filtro que devolvia vazio e eu li como um achado
+
+*07/09.* Ao consertar outra coisa, descobri que três filtros meus procuravam
+`(net_name "X")` dentro de um bloco `(zone ...)`. O KiCad 10 escreve
+`(net "GND")`. Os três devolviam **sempre** conjunto vazio.
+
+Um filtro vazio não dá erro. Dá a resposta mais tranquilizadora que existe.
+
+Li dezenas de vezes a linha
+
+```
+0 de 34 travessias passam perto de um pad do plano: so essas vale a pena interrogar
+```
+
+e li-a como um resultado — *que sorte, nenhuma delas é suspeita*. Era o regex.
+E a "guarda dos pads do plano em B.Cu", que eu medi cuidadosamente, comparei
+com e sem, e concluí que não compensava, **nunca chegou a fazer nada**: as duas
+colunas da minha tabela eram a mesma coisa medida duas vezes.
+
+> **Uma medição comparativa entre duas condições que na verdade são a mesma
+> condição não é ruído: é uma tabela inteira de mentiras com ar de rigor.** Já
+> me tinha acontecido hoje com o glob abortado (15cv), e o sinal que salvou
+> nessa foi os tempos baterem ao segundo. Aqui não havia sinal nenhum, porque a
+> diferença que eu esperava era pequena e o resultado parecia plausível.
+
+A defesa que ficou: a função que lê as redes com plano **grita** se a placa tem
+`(zone` e ela não achar rede nenhuma. Um filtro que pode devolver vazio por
+avaria tem de saber distinguir "não há" de "não achei".
+
+## 15dg — uma peça necessária com uma ferramenta é um estorvo com outra
+
+*07/09.* A costura — uma via por cada pad SMD de terra, para ele chegar ao plano
+em B.Cu — era necessária e provou-se: sem ela o `via_dangling` explodia.
+
+Com o FreeRouting a rotear, passou a ser um estorvo. Ele sabe ligar um pad ao
+plano sozinho, e as minhas vias ocupam sítio: medido, com elas o cérebro sai com
+o **plano de terra partido** e mais ligações por fazer; sem elas, o plano fica
+inteiro.
+
+> **A costura não estava errada — estava a resolver um problema que o roteador
+> novo já não tem.** Quando se troca uma peça central, as que foram postas para
+> compensar as fraquezas da antiga têm de ser reavaliadas uma a uma, e não
+> herdadas por serem "o que já lá estava".
+
+E o mesmo padrão numa segunda peça: a reparação de terra que escrevi punha vias
+onde o plano também não chegava — reparação que não repara. Ganhou a regra que
+todas as outras ferramentas desta casa já tinham: **corre o DRC depois de
+escrever e retira o que não consegue provar.**

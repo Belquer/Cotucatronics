@@ -1271,6 +1271,62 @@ desenha, não um problema para o roteador resolver a martelo.
 > por omissão.** Antes das duas correcções, esta não pertencia — fechava
 > ligações e partia planos.
 
+### 12v. O FreeRouting é alcançável, e é melhor
+
+O `pcbnew` expõe `ExportSpecctraDSN` e `ImportSpecctraSES`. Na mesma placa, de
+raiz:
+
+| | por ligar | tempo |
+|---|---|---|
+| roteador escrito à mão | 12 | ~9 min (duas placas) |
+| **FreeRouting** | **8** | **35 s** |
+
+E as que sobram ao FreeRouting são **todas ligações ao plano**, não sinal: ele
+fecha todos os sinais. Faz *rip-up* e *shove* a sério.
+
+```python
+import pcbnew                      # com o Python do BUNDLE do KiCad
+b = pcbnew.LoadBoard("placa.kicad_pcb")
+pcbnew.ExportSpecctraDSN(b, "p.dsn")
+# java -jar freerouting.jar -de p.dsn -do p.ses -mp 100 -mt 1
+pcbnew.ImportSpecctraSES(b, "p.ses"); pcbnew.SaveBoard("placa.kicad_pcb", b)
+```
+
+⚠️ **Quatro coisas que ele não sabe, e que quem o chama tem de tratar:**
+
+1. **Net-ties.** A ponte entre duas terras aparece-lhe como cobre "sem rede" e
+   ele roteia por cima: curto-circuito. Põe-se um *keepout* sobre ela no DSN.
+2. **`-mt 1`.** A própria ferramenta avisa que a optimização multi-tarefa está
+   partida e gera violações de folga. Um aviso de uma ferramenta sobre si mesma
+   não se ignora por pressa.
+3. **As larguras vêm das classes de rede da placa**, não de uma tabela dentro do
+   teu script (§12w).
+4. **Ele conta um pad como ligado se cai dentro do polígono do plano**; o KiCad
+   só o conta se o cobre *enchido* lhe chegar. À volta de um conector apertado o
+   cobre é apagado no enchimento e os dois discordam. Quem manda é o KiCad.
+
+⚠️ E telefona para casa a cada arranque (`api.freerouting.app`), sem opção
+documentada para desligar.
+
+⚠️ **E a costura passa a atrapalhar.** As vias que se punham para os pads SMD
+chegarem ao plano deixam de ser necessárias — ele fá-lo sozinho — e ocupam
+sítio: com elas o plano sai partido. Quando se troca o roteador, reavaliam-se
+todas as peças que existiam para compensar as fraquezas do antigo.
+
+### 12w. Uma regra que vive dentro de uma ferramenta só vale para essa ferramenta
+
+As larguras dos trilhos de potência viviam numa tabela dentro do meu roteador.
+Funcionou enquanto o roteador era meu — e escondia que **o DRC não sabia delas**.
+Quando entrou um roteador de fora, ele desenhou o trilho de entrada com largura
+de sinal, porque não tinha como saber.
+
+> O sítio de uma regra de desenho são as **classes de rede** da placa: qualquer
+> roteador as lê, e o DRC passa a exigi-las em vez de as ignorar.
+
+⚠️ E atribuem-se por **padrão de nome**, não por lista: uma rede acrescentada
+depois entra na classe certa sozinha, em vez de ficar esquecida na largura por
+omissão.
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,
