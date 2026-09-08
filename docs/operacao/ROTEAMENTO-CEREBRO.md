@@ -1,6 +1,6 @@
 # Lista de roteamento — cerebro
 
-Gerada por `kicad/lista_roteamento.py` v0.2.0 em **2026-09-07**, commit `0c6573f`.  
+Gerada por `kicad/lista_roteamento.py` v0.2.0 em **2026-09-07**, commit `89ca595`.  
 ⚠️ **A árvore estava suja**: a placa pode não corresponder a este commit.
 
 **11 ligações**, mais **1 pad(s) que perderam o plano** — 12 no total, que é o que o DRC diz. Tudo o resto já está feito e o DRC dá geometria zero com os planos inteiros, o que quer dizer que **o que desenhares tem de continuar a dar isso**.
