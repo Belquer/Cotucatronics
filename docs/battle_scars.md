@@ -10056,3 +10056,26 @@ errado.
 Onze linhas comparadas uma a uma com a rede real do cobre: se um ponto for
 movido amanhã, a legenda passa a divergir e o teste diz qual. Um documento
 impresso em tinta na peça física não se corrige — só se reimprime a placa.
+
+## 15eo — escrevi a secção sobre buscas que falham e a conferência dela falhou assim
+
+Ao verificar que os aprendizados desta sessão tinham entrado na `/kicad`, corri
+uma conferência por temas. Ela disse que **«portão por passo vs por fluxo» não
+estava lá** — e estava, como **§11g-decies**, com o tema no próprio título.
+
+A busca era `"precisa do seguinte" in texto`. O título diz `PRECISA DO
+SEGUINTE`, em maiúsculas.
+
+> **Escrevi a §2e — «a negação contém a afirmação», ancora na estrutura e não na
+> palavra — e a conferência da §2e falhou por procurar uma palavra com a caixa
+> errada.** Não é ironia: é a medida de quão fácil é a armadilha. Saber a regra
+> não a evita; **aplicá-la ao próprio verificador** é que evita.
+
+⚠️ **E foi a segunda vez na mesma sessão.** Da primeira, a mesma conferência deu
+dois falsos negativos por `"preenchimento"` contra `"enchimento"` e por um hífen
+contra um travessão. Corrigi-a nessa altura para ancorar em títulos — e agora
+falhou por caixa, dentro dos títulos.
+
+> **Cada conserto de um verificador fecha o caso que o motivou e deixa a porta
+> ao lado aberta.** A forma que resiste é comparar identificadores, não texto:
+> a secção `11g-decies` existe ou não existe.

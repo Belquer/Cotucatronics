@@ -286,6 +286,41 @@ O achado é duplicar o **corpo**. A pergunta é «este sítio reconstrói o que 
 está **por envelhecer**. Reportar só quando já divergiu é reportar o incêndio,
 não a instalação eléctrica — e a divergência, quando chega, não dá erro.
 
+## O TESTE QUE LÊ A RECUSA COMO APROVAÇÃO
+
+Num só dia, quatro verificações minhas deram o veredicto **ao contrário** — e
+nenhuma por o código auditado estar errado:
+
+| o teste | porque aprovou em falso |
+|---|---|
+| `grep -q "gravado"` | a recusa diz **`"Nada gravado"`**, que contém `"gravado"` |
+| `case "$out" in *gravado*)` | o mesmo, outra sintaxe |
+| `set -- $cfg` num `for` | o **zsh não separa palavras** sem aspas — dois valores entraram como um |
+| busca por prosa num documento | `"preenchimento"` onde o ficheiro diz `"enchimento"` |
+
+> **A mensagem de falha quase sempre contém a palavra de sucesso**, porque é
+> escrita para gente ler: *«nada gravado»*, *«no changes committed»*, *«0 tests
+> failed»*, *«failed to build»*. Um teste que casa a **subcadeia** lê a recusa
+> como aprovação.
+
+⚠️ **É o pior modo de falhar que há**, e vale a pena dizer porquê: a ferramenta
+estava certa, a mensagem estava certa, e só quem a consultou é que percebeu o
+contrário. Não há nada partido para encontrar depois — só uma conclusão errada
+já espalhada por quem a leu.
+
+**O que se ancora, por ordem de preferência:**
+
+1. **o código de saída** — e o do comando certo: `cmd | tail` devolve o do
+   `tail`, não o do `cmd`;
+2. **o início da linha** (`^ *gravado ·`), não a palavra solta;
+3. **a estrutura** (a secção existe? o bloco existe?), nunca a prosa — que muda
+   quando alguém reescreve uma frase e não mexe em nada.
+
+⚠️ **E a mesma armadilha do outro lado:** procurar por prosa para provar que uma
+lição foi absorvida deu **dois falsos negativos** numa conferência de dez, por
+uma palavra e um travessão. **Um verificador de documentação ancora em títulos,
+não em frases.**
+
 ## FERRAMENTA NÃO CORRIDA NÃO EXISTE
 
 A classe 14 foi escrita, revista e dada por boa. Depois **corri-a**, e ela

@@ -407,6 +407,39 @@ estão em curto»*.
 > tinham passado. **A sorte não é método** — a guarda da §2c é: quantos blocos há,
 > quantos é que a leitura apanhou, e gritar se diferirem.
 
+## 2e. A NEGAÇÃO CONTÉM A AFIRMAÇÃO
+
+Num só dia, quatro verificações minhas deram o veredicto **ao contrário**, e
+nenhuma por o código estar errado:
+
+| o teste | porque aprovou em falso |
+|---|---|
+| `grep -q "gravado"` | a recusa diz **`"Nada gravado"`**, que contém `"gravado"` |
+| `case "$out" in *gravado*)` | o mesmo, outra sintaxe |
+| `set -- $cfg` num `for` | o **zsh não separa palavras** sem aspas: dois valores entraram como um e corromperam o ficheiro |
+| busca por prosa numa skill | `"preenchimento"` onde o ficheiro diz `"enchimento"` |
+
+> **A mensagem de falha quase sempre contém a palavra de sucesso**, porque é
+> escrita para ser lida por gente: *«nada gravado»*, *«no changes committed»*,
+> *«failed to build»*. Um teste que casa a subcadeia lê a recusa como
+> aprovação — e é o pior modo de falhar que há, porque a ferramenta estava
+> certa e quem a consultou é que percebeu o contrário.
+
+**Ancorar na estrutura, não na palavra:**
+
+```bash
+grep -q "^ *gravado ·"        # o início da linha, não a palavra solta
+[ "$(cmd; echo $?)" = 0 ]     # melhor ainda: o código de saída
+```
+
+⚠️ **E o código de saída é o que se lê quando existe.** `cmd | tail` devolve o
+estado do `tail`; `$?` depois de um cano não é o do comando que interessa. Isto
+já me fez anunciar «saída 0» de uma ferramenta que tinha saído com 1.
+
+⚠️ **E o que me travou nas quatro foi o resultado ser absurdo, não uma guarda** —
+um `git status` a mostrar a placa por modificar depois de eu ter lido «aceite».
+**A sorte não é método.**
+
 ## 5b. O SINAL DO `y` VIVE NUM SÍTIO SÓ
 
 Na **folha** o `y` cresce para BAIXO. No **símbolo** cresce para CIMA. Escrever
@@ -1319,6 +1352,46 @@ entre centenas. Foi por isso que o que não cabia espalhado coube inteiro —
 ⚠️ **E o bloco vai PERTO do que descreve.** Uma legenda a 90 mm obriga a
 procurá-la, e quem está com a ponta de prova numa mão não procura: desiste, e
 mede o pino errado.
+
+### 11g-nonies. O QUE UMA FERRAMENTA NÃO VÊ, ELA ATROPELA
+
+O `arruma_silk` conhecia os campos dos **footprints** e mais nada. Os `gr_text`
+da placa — `COTUCATRONICS`, `cerebro rev B`, e depois a legenda dos pontos de
+teste — eram invisíveis para ele: era livre de mudar uma referência para cima do
+título da placa, e **nenhuma guarda dele daria por isso**. Um `grep -c gr_text`
+no ficheiro devolvia **zero**.
+
+> **Antes de acreditar num arrumador, pergunta o que ele lê.** Ele obedece à
+> lista de obstáculos que tem, e essa lista é uma afirmação sobre o mundo que
+> alguém escreveu uma vez — não é o mundo.
+
+Descobriu-se ao inverter a ordem do fluxo: rotular primeiro e arrumar depois só
+faz sentido se o arrumador **vir** os rótulos. Sem isso, a segunda ferramenta
+desfaz o trabalho da primeira em silêncio.
+
+### 11g-decies. UM PORTÃO POR PASSO NÃO APROVA UM PASSO QUE PRECISA DO SEGUINTE
+
+A ordem certa parecia clara: os rótulos escolhem o lugar primeiro (o que se lê
+na bancada é a **rede**, não o `TP7`), e o arrumador afasta as referências
+depois. Está certo — e **não funciona** com um portão por ferramenta:
+
+```
+estado intermédio: os rótulos em cima das referências
+portão do rotulador: texto×texto 0 -> 12 → RECUSADO
+```
+
+O portão não sabia que o passo seguinte arrumava aquilo. Estava a julgar um
+estado que nunca ia existir.
+
+> **Ou o portão é do FLUXO, ou cada passo se basta.** As duas saídas são
+> legítimas e a escolha é de custo: um portão de fluxo obriga a refazer a
+> orquestração; «cada passo basta-se» custa um resultado pior — aqui, os
+> rótulos a contornar referências em vez de as mandar embora.
+
+⚠️ **E há uma terceira, que é a que resolveu:** perguntar se o estado intermédio
+tem de existir. Não tinha — a referência do ponto de teste podia **mudar de
+camada** em vez de ser deslocada, e aí não havia competição nenhuma pelo espaço.
+*O conflito entre dois passos costuma ser a pergunta errada a montante.*
 
 ### 11g-ter. A fronteira com a `/design-review`, no lado da placa
 
