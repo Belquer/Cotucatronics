@@ -18,7 +18,28 @@ atravessa este cabo.
 """
 import io, re, sys, uuid
 
-VERSAO = "0.12.0"
+# ⚠️ SAO DOIS MOSFET PARA TRES BOTOES, E ESTA CERTO.
+#
+# Ha tres arcades no painel — dois AZUIS de freeze (A e B) e um BRANCO dos
+# buzios — e so `Q1`/`Q2`. Quem conta os MOSFET e sabe dos tres botoes conclui
+# que falta um terceiro, e ja concluiu: custou uma volta inteira a investigar
+# uma via de IDC que nao e precisa.
+#
+# O BUZIOS NAO TEM LED. E um botao normal: entrada e mais nada. Sabe-se que
+# esta ligado pelo DISPLAY, nao por luz no botao. Logo:
+#
+#   J3 J4  arcade AZUL freeze A/B   -> interruptor · LED em J6/J7 por Q1/Q2
+#   J5     arcade BRANCO buzios     -> interruptor · SEM LED
+#
+# O caminho do botao esta completo dos dois lados e ha muito: painel `J5` ->
+# IDC via 19 -> Daisy pino 33. Nada falta.
+#
+# ⚠️ E nao se "arranja" uma via de IDC para lhe por um LED: as oito terras que
+# restam guardam todas coisa medida — o relogio do OLED (1 e 3), a referencia
+# do ADC (8 e 10), o par de retorno dos LED (13 e 14, que valeram 6 dB de
+# chao) e os retornos dos pots (23 e 26).
+
+VERSAO = "0.12.1"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #

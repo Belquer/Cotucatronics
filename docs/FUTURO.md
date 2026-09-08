@@ -100,7 +100,7 @@ nunca zerar. Eram as duas fases abertas no chicote.
 | ideia | pinos | nota |
 |---|---|---|
 | **LED RGB** em vez dos dois monocromáticos | +2 (ou 1 com WS2812) | ⚠️ um LED consome miliamperes e **já é audível** quando a massa está mal feita — foi assim que se apanhou acoplamento em 31/08. Um RGB comuta mais |
-| **Terceiro botão arcade** | +1 | o IDC 2×13 está **cheio**: as 26 vias esgotaram-se com o botão branco dos búzios. Um quarto sinal exige 2×15, ou sacrificar terra — e três das nove guardam coisas medidas |
+| **Quarto botão arcade** | +1 | ⚠️ o terceiro **já existe**: o branco dos búzios, em `J5` → IDC 19 → Daisy 33. Ele não tem LED, e é por isso que há dois MOSFET para três botões — sabe-se que está ligado pelo **display**. O IDC 2×13 está cheio: um quarto sinal exige 2×15, ou sacrificar terra — e as **oito** que restam guardam todas coisa medida (relógio do OLED 1/3, referência do ADC 8/10, retorno dos LED 13/14 que valeram 6 dB, retornos dos pots 23/26) |
 | **Entrada de expressão / pedal** | +1 ADC | gasta `D20` ou `D21`, os únicos livres com ADC |
 | **Segundo par de exciters** | — | não é pino, é potência e é caixa. O amp actual tem dois canais |
 
