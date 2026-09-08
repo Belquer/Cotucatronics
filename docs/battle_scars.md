@@ -9164,3 +9164,35 @@ uma vez.** É barato e quase nunca se faz. É a face oposta da 15cv — lá,
 *resultados idênticos entre condições que deviam diferir* denunciaram um comando
 que não correu; aqui, **resultados diferentes entre condições que deviam ser
 idênticas** denunciaram um verificador em que eu confiava.
+
+## 15dq — a mensagem descrevia o trabalho e o commit levava um ficheiro
+
+*08/09.* O commit `0436b62` chama-se *"J15 e J16 ganham terra"*, tem vinte linhas
+de mensagem a descrever três ferramentas novas, e contém **um ficheiro**:
+`caixa/aberturas.json`.
+
+A causa é de uma linha. O `git add` tinha `kicad/gera_simbolos.py` na lista, e
+esse ficheiro vive em `kicad/cotuca_cerebro/`. **O git recusa a lista inteira
+quando um caminho não existe** — não adiciona os outros — e eu tinha posto
+`2>/dev/null` no fim da linha. O erro existiu e ninguém o leu.
+
+Três ferramentas andaram três commits a correr da minha árvore de trabalho, sem
+versão: o portão de sobreposição de pads, a comparação de footprint do
+sincronizador, e o comparador de netlist — que nunca esteve no git de todo. Se o
+repositório fosse clonado noutra máquina, a cadeia partia-se **e a mensagem do
+commit diria que estava tudo lá.**
+
+> **Uma mensagem de commit é uma afirmação sobre o que foi gravado, e nada a
+> verifica.** É o único documento desta casa que não tem verificador — e é o que
+> toda a gente lê primeiro para saber o que aconteceu.
+
+⚠️ **Nunca calar o stderr de um `git add`.** E conferir com `git status` depois,
+ou com `git show --stat` a seguir ao commit: dez segundos que provam que o que
+está escrito é o que está lá.
+
+E na mesma sessão, o mesmo mecanismo outra vez: encadeei `git add && git status
+--cached && git commit` — a opção `--cached` não existe no `git status`, a
+cadeia `&&` parou no erro, **o commit não correu**, e o `git push` que vinha na
+linha seguinte empurrou o commit anterior e imprimiu "empurrado". Duas vezes no
+mesmo dia a mesma família: um elo partido no meio de uma cadeia, e a última
+linha a dizer que correu tudo bem.
