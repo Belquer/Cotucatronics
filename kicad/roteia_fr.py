@@ -40,14 +40,17 @@ TRES COISAS QUE O FREEROUTING NAO SABE, E QUE ESTA FERRAMENTA TRATA:
    cada arranque. Nao ha opcao documentada para desligar; a chamada falha nesta
    maquina, mas fica dito.
 
-USO:  roteia_fr.py <cerebro|painel|todas> [--passagens N]
+USO:  roteia_fr.py <cerebro|painel|todas> [--passagens N] [--continuar]
+
+`--continuar` NAO apaga o cobre: roteia so o que falta, sobre o que ja la
+esta. Serve para a segunda passada, depois de a retraccao devolver redes.
 """
 import os
 import re
 import subprocess
 import sys
 
-VERSAO = "0.10.2"
+VERSAO = "0.13.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PY_KICAD = ("/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework"
             "/Versions/3.9/bin/python3.9")
@@ -58,11 +61,34 @@ PASSAGENS = 100
 FOLGA_KEEPOUT = 2000        # um em volta do net-tie, em unidades do DSN (um)
 
 
-def kicad_py(codigo):
-    r = subprocess.run([PY_KICAD, "-c", codigo], capture_output=True, text=True)
-    if r.returncode:
-        raise SystemExit("*** o Python do KiCad falhou:\n%s" % r.stderr)
-    return r.stdout.strip()
+def kicad_py(codigo, produz=None, tentativas=3):
+    """⚠️ NAO SE CONFIA NO VALOR DE RETORNO DO `pcbnew`, CONFIRMA-SE O FICHEIRO.
+
+    O `ExportSpecctraDSN` e o `ImportSpecctraSES` devolvem falso de vez em
+    quando — sai um `assert "traits" failed in Get(): create wxApp before
+    calling this` no stderr, que e o wx a queixar-se de nao haver aplicacao
+    grafica. Eu tinha um `assert` nu em cima do retorno, e a cadeia caia para o
+    roteador da casa DUAS corridas em cinco, sem eu saber porque: a mensagem
+    ia para o stderr e quem chamava deitava-o fora.
+
+    E intermitente, portanto tenta-se outra vez. E o criterio de sucesso passa
+    a ser **o ficheiro existir e ter tamanho**, que e o que interessa a jusante
+    — nao o booleano que a biblioteca devolveu."""
+    ultimo = ""
+    for n in range(tentativas):
+        if produz and os.path.exists(produz):
+            os.remove(produz)
+        r = subprocess.run([PY_KICAD, "-c", codigo], capture_output=True, text=True)
+        ultimo = r.stderr
+        if produz is None:
+            if not r.returncode:
+                return r.stdout.strip()
+        elif os.path.exists(produz) and os.path.getsize(produz) > 0:
+            if n:
+                print("     (o pcbnew falhou %d vez(es) e a %da correu)" % (n, n + 1))
+            return r.stdout.strip()
+    raise SystemExit("*** o Python do KiCad falhou %d vezes seguidas:\n%s"
+                     % (tentativas, ultimo))
 
 
 def redes_com_plano(t):
@@ -122,7 +148,7 @@ def keepouts_dos_nettie(dsn):
     return dsn, n
 
 
-def uma(nome, passagens):
+def uma(nome, passagens, continuar=False):
     pcb = os.path.join(AQUI, "cotuca_%s" % nome, "cotuca_%s.kicad_pcb" % nome)
     dsn, ses = "/tmp/fr_%s.dsn" % nome, "/tmp/fr_%s.ses" % nome
     print("\n══ %s ══" % nome)
@@ -141,7 +167,7 @@ def uma(nome, passagens):
     tt = open(pcb, encoding="utf-8").read()
     n_s = len(re.findall(r"\n\t\(segment", tt))
     n_v = len(re.findall(r"\n\t\(via", tt))
-    if n_s or n_v:
+    if (n_s or n_v) and not continuar:
         tt = re.sub(r"\n\t\(segment[\s\S]*?\n\t\)", "", tt)
         tt = re.sub(r"\n\t\(via[\s\S]*?\n\t\)", "", tt)
         open(pcb, "w", encoding="utf-8").write(tt)
@@ -149,7 +175,7 @@ def uma(nome, passagens):
               % (n_s, n_v))
 
     kicad_py("import pcbnew;b=pcbnew.LoadBoard(%r);"
-             "assert pcbnew.ExportSpecctraDSN(b,%r)" % (pcb, dsn))
+             "pcbnew.ExportSpecctraDSN(b,%r)" % (pcb, dsn), produz=dsn)
     t = open(dsn, encoding="utf-8").read()
     t, n = keepouts_dos_nettie(t)
 
@@ -194,9 +220,13 @@ def uma(nome, passagens):
         raise SystemExit("*** o FreeRouting nao produziu sessao:\n%s"
                          % saida[-2000:])
 
+    # ⚠️ grava para um ficheiro proprio e so depois substitui: se a importacao
+    # falhar a meio, a placa boa nao fica meio escrita.
+    tmp = pcb + ".novo"
     kicad_py("import pcbnew;b=pcbnew.LoadBoard(%r);"
-             "assert pcbnew.ImportSpecctraSES(b,%r);"
-             "assert pcbnew.SaveBoard(%r,b)" % (pcb, ses, pcb))
+             "pcbnew.ImportSpecctraSES(b,%r);pcbnew.SaveBoard(%r,b)"
+             % (pcb, ses, tmp), produz=tmp)
+    os.replace(tmp, pcb)
     print("  3. sessao importada e gravada")
 
     # ⚠️ E RETIRA O QUE O DRC ACUSA. O `roteia.py` da casa ja fazia isto e o
@@ -233,30 +263,82 @@ def uma(nome, passagens):
     if culpados:
         tt = open(pcb, encoding="utf-8").read()
         fora = 0
-        for cx, cy in set(culpados):
-            # o `pos` do DRC e o MEIO do segmento
-            def meio(m):
-                return (round((float(m.group(1)) + float(m.group(3))) / 2, 4),
-                        round((float(m.group(2)) + float(m.group(4))) / 2, 4))
-            novo, n2 = "", 0
-            i0 = 0
-            for m in re.finditer(r'\n\t\(segment\s*\(start (-?[\d.]+) (-?[\d.]+)\)'
-                                 r'\s*\(end (-?[\d.]+) (-?[\d.]+)\)[\s\S]*?\n\t\)', tt):
-                mx, my = meio(m)
-                if abs(mx - cx) < 0.02 and abs(my - cy) < 0.02:
-                    novo += tt[i0:m.start()]
-                    i0 = m.end()
-                    n2 += 1
-            if n2:
-                tt = novo + tt[i0:]
-                fora += n2
+        # ⚠️ O `pos` DO DRC E UMA PONTA DO SEGMENTO, E NAO O MEIO. Casei pelo
+        # meio e a retraccao nunca disparou — dizia zero retirados sobre uma
+        # placa com tres cruzamentos. Medido: o DRC deu (118,0 · 100,0) para um
+        # segmento de (118,0 · 100,0) a (118,0 · 89,025). Um casamento que erra
+        # o campo nao acusa nada, e o silencio dele le-se como "esta tudo bem".
+        novo, i0, marcados = "", 0, set()
+        for m in re.finditer(r'\n\t\(segment\s*\(start (-?[\d.]+) (-?[\d.]+)\)'
+                             r'\s*\(end (-?[\d.]+) (-?[\d.]+)\)[\s\S]*?\n\t\)', tt):
+            pa = (round(float(m.group(1)), 4), round(float(m.group(2)), 4))
+            pb = (round(float(m.group(3)), 4), round(float(m.group(4)), 4))
+            if any(abs(pa[0] - c[0]) < 0.02 and abs(pa[1] - c[1]) < 0.02
+                   or abs(pb[0] - c[0]) < 0.02 and abs(pb[1] - c[1]) < 0.02
+                   for c in set(culpados)):
+                novo += tt[i0:m.start()]
+                i0 = m.end()
+                fora += 1
+        tt = novo + tt[i0:]
         if fora:
             open(pcb, "w", encoding="utf-8").write(tt)
             print("  3b. %d segmento(s) retirados: o DRC acusou-os, e voltam "
                   "para a lista" % fora)
+    limpa_pendurados(pcb)
     n = repara_terra(nome, pcb)
     if n:
         print("  4. %d pad(s) de terra ligados ao plano por via + coto" % n)
+
+
+def limpa_pendurados(pcb, voltas=4):
+    """Tira as pistas e vias que ficaram agarradas a nada.
+
+    ⚠️ RETIRAR UM SEGMENTO DEIXA ORFAO O QUE ESTAVA AGARRADO A ELE. A retraccao
+    tira a pista que o DRC acusou e a via que ela alimentava fica pendurada, ou
+    o troco seguinte fica a apontar para o vazio: troca-se um `clearance` por um
+    `via_dangling`, e o portao recusa na mesma.
+
+    ⚠️ E E EM VOLTAS, porque tirar um pendurado pode pendurar o do lado. Para
+    quando uma volta nao tira nada."""
+    import json as _j
+    total = 0
+    for _ in range(voltas):
+        subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--severity-error",
+                        "--severity-warning", "--format", "json",
+                        "-o", "/tmp/_pend.json", pcb], capture_output=True)
+        d = _j.load(open("/tmp/_pend.json"))
+        alvos = []
+        for x in d.get("violations", []):
+            if x["type"] not in ("via_dangling", "track_dangling"):
+                continue
+            for i in x.get("items", []):
+                po = i.get("pos") or {}
+                if "x" in po:
+                    alvos.append((x["type"], round(po["x"], 4), round(po["y"], 4)))
+        if not alvos:
+            break
+        tt = open(pcb, encoding="utf-8").read()
+        fora, novo, i0 = 0, "", 0
+        padrao = (r'\n\t\(via\s*\(at (-?[\d.]+) (-?[\d.]+)\)[\s\S]*?\n\t\)'
+                  r'|\n\t\(segment\s*\(start (-?[\d.]+) (-?[\d.]+)\)'
+                  r'\s*\(end (-?[\d.]+) (-?[\d.]+)\)[\s\S]*?\n\t\)')
+        for m in re.finditer(padrao, tt):
+            g = m.groups()
+            pontos = ([(g[0], g[1])] if g[0] else [(g[2], g[3]), (g[4], g[5])])
+            pontos = [(round(float(a), 4), round(float(b), 4)) for a, b in pontos]
+            if any(abs(px - ax) < 0.02 and abs(py - ay) < 0.02
+                   for _t, ax, ay in alvos for px, py in pontos):
+                novo += tt[i0:m.start()]
+                i0 = m.end()
+                fora += 1
+        if not fora:
+            break
+        open(pcb, "w", encoding="utf-8").write(novo + tt[i0:])
+        total += fora
+    if total:
+        print("  3c. %d pendurado(s) retirados (o que ficou agarrado a nada "
+              "depois da retraccao)" % total)
+    return total
 
 
 def repara_terra(nome, pcb):
@@ -531,8 +613,9 @@ def main():
     print("roteia_fr v%s" % VERSAO)
     p = (int(sys.argv[sys.argv.index("--passagens") + 1])
          if "--passagens" in sys.argv else PASSAGENS)
+    cont = "--continuar" in sys.argv
     for q in (["cerebro", "painel"] if sys.argv[1] == "todas" else [sys.argv[1]]):
-        uma(q, p)
+        uma(q, p, cont)
     print("\n⚠️ O portao ainda nao correu. `para_fabrica.py` e quem diz se ficou bom.")
     return 0
 

@@ -9237,3 +9237,63 @@ E uma nota sobre o método: eu tinha ido procurar ferramentas de fora para
 resolver isto. A busca não deu a resposta — deu-me o **enquadramento** para
 voltar aos meus próprios dados e ver que o problema não era de roteamento. As
 25 caíram para 3.
+
+## 15ds — a cadeia caía duas em cinco corridas, e a razão estava escrita e a ser deitada fora
+
+*08/09.* A cadeia dizia `⚠️ FreeRouting falhou; sigo com o roteador da casa` e
+seguia. Duas corridas em cinco. Eu não sabia porquê — e a razão estava escrita,
+no `stderr` que quem chamava **deitava ao lixo**.
+
+Ligado o relato, apareceu numa corrida:
+
+```
+*** o Python do KiCad falhou:
+./src/common/stdpbase.cpp(59): assert ""traits"" failed in Get():
+    create wxApp before calling this
+AssertionError
+```
+
+O `pcbnew` devolve **falso de vez em quando** nas chamadas de export/import — é
+o wxWidgets a queixar-se de não haver aplicação gráfica — e eu tinha um `assert`
+nu em cima do valor de retorno.
+
+Dois consertos, e o segundo é o que importa:
+
+1. **Tentar outra vez**, porque é intermitente.
+2. **O critério de sucesso passa a ser o ficheiro existir e ter tamanho**, e não
+   o booleano que a biblioteca devolveu. É o que interessa a jusante.
+
+> **Um `assert` sobre o valor de retorno de uma biblioteca pergunta o que ela
+> acha que fez. Olhar para o ficheiro pergunta o que ficou feito.** As duas
+> respostas divergiram duas vezes em cinco, e eu só soube quando parei de calar
+> o stderr de quem falhava.
+
+⚠️ E a gravação passou a ser para um ficheiro próprio, substituído no fim: se a
+importação falhar a meio, a placa boa não fica meio escrita.
+
+## 15dt — 100% autónomo, e nenhum passo sozinho lá chegava
+
+*08/09.* Um comando, de placa limpa a pacote que o portão aceita:
+
+```
+cérebro   147 ligações -> 0 por fazer · geometria 0
+painel     53 ligações -> 0 por fazer · geometria 0
+PRONTO para a JLCPCB.
+```
+
+Nenhum destes passos sozinho fecha a placa. Juntos, e **nesta ordem**, fecham:
+
+1. **FreeRouting de raiz, com o plano FORA do DSN** (15dr) — a terra passa de
+   pressuposto a trabalho.
+2. **Retrair o que o DRC acusa**, pela posição do item e não pelo nome da rede —
+   no `GND` isso seriam centenas de segmentos.
+3. **Limpar os pendurados**, porque tirar um segmento deixa órfão o que estava
+   agarrado a ele, e troca-se um `clearance` por um `via_dangling`.
+4. **FreeRouting a continuar**, enquanto render.
+5. **O roteador da casa a acabar** — e não é redundância: o que sobra ao
+   FreeRouting termina em pads de passo fino, e a fuga apertada só junto às
+   pontas (§12r) é exactamente o que essas precisam.
+
+> **Cada um fecha o que o outro não fecha, e a ordem é o que faz da soma uma
+> cadeia em vez de uma pilha.** Três dos cinco passos existem por causa de um
+> defeito que só apareceu depois de o anterior funcionar.

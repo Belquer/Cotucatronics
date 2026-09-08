@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.10.0"
+VERSAO = "0.12.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -57,6 +57,7 @@ FREEROUTING = all(os.path.exists(f) for f in (
     "/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework"
     "/Versions/3.9/bin/python3.9"))
 PASSADAS = 3
+PASSADAS_FR = 4   # quantas vezes o FreeRouting continua antes de desistir
 
 
 class Ferrolho:
@@ -140,18 +141,71 @@ def uma(nome, zerar):
     # ⚠️ O MEU FICA, e nao por orgulho: ele corre sem Java e sem o jar de 61 MB,
     # e a cadeia tem de continuar a andar numa maquina onde isso nao esteja.
     if FREEROUTING:
+        # ⚠️ A SEQUENCIA INTEIRA, e a ordem e o que a faz funcionar.
+        #
+        # Nenhum destes passos sozinho fecha a placa; juntos e nesta ordem,
+        # fecham. Medido, de raiz:
+        #
+        #   1 FreeRouting de raiz, com o plano FORA do DSN   147 -> 3 por fazer
+        #   2 retrair o que o DRC acusa, e limpar pendurados
+        #   3 FreeRouting a CONTINUAR, ate parar de render    -> 2, geometria 0
+        #   4 o roteador da casa a acabar as ultimas          -> 0, geometria 0
+        #
+        # ⚠️ O passo 4 nao e redundancia. As que sobram ao FreeRouting terminam
+        # em pads de passo fino, e o roteador da casa tem a fuga apertada so
+        # junto as pontas (§12r) — que e exactamente o que elas precisam. Cada
+        # um fecha o que o outro nao fecha.
         r = py("roteia_fr.py", nome)
         print("\n".join("  " + l for l in r.stdout.strip().splitlines()
                         if l.strip() and "portao" not in l))
         if r.returncode:
-            print("  ⚠️ FreeRouting falhou; sigo com o roteador da casa.")
+            # ⚠️ E DIZ PORQUE FALHOU. A primeira versao escrevia so "falhou" e
+            # deitava fora o stderr — que era onde estava o traceback. Passei
+            # duas corridas a nao saber que erro era, quando ele estava escrito
+            # e a ser deitado ao lixo por mim.
+            print("  ⚠️ FreeRouting falhou (codigo %d); sigo com o roteador da "
+                  "casa. O que ele disse:" % r.returncode)
+            for l in (r.stderr or "").strip().splitlines()[-8:]:
+                print("       %s" % l)
         else:
             f, g = por_fazer(pcb)
+            antes = None
+            for _ in range(PASSADAS_FR):
+                if f == 0 and g == 0:
+                    break
+                rc = py("roteia_fr.py", nome, "--continuar")
+                for l in rc.stdout.splitlines():
+                    if "3b." in l or "3c." in l or "FreeRouting:" in l:
+                        print("    %s" % l.strip())
+                f2, g2 = por_fazer(pcb)
+                # ⚠️ so vale se descer: uma passada que nao rende e uma passada
+                # que so gastou tempo, e a seguinte nao rende mais.
+                if (g2, f2) >= (g, f) and antes is not None:
+                    break
+                antes, f, g = f, f2, g2
             print("  2. FreeRouting -> %d por fazer · geometria %d" % (f, g))
+            # ⚠️ E O ACABAMENTO TAMBEM REPETE ENQUANTO RENDER. Uma passada
+            # fecha as que consegue e muda o cobre; a seguinte tem outro tabuleiro
+            # e fecha mais. Parar na primeira era deixar ligacoes em cima da
+            # mesa por eu nao ter voltado a perguntar.
+            for _ in range(3):
+                if not f and not g:
+                    break
+                rf = py("roteia.py", pcb, "--escreve", "--arranca")
+                for l in rf.stderr.splitlines():
+                    if "roteadas" in l or "gravado" in l or "retirados" in l:
+                        print("    %s" % l.strip())
+                py("roteia_fr.py", nome, "--continuar")
+                f2, g2 = por_fazer(pcb)
+                if (g2, f2) >= (g, f):
+                    break
+                f, g = f2, g2
+            print("  2c. o acabamento fechou -> %d por fazer · geometria %d"
+                  % (f, g))
             r2 = py("arruma_silk.py", pcb, "--escreve")
             for l in r2.stderr.splitlines()[-1:]:
                 print("  3.%s" % l)
-            return (f, g, "freerouting")
+            return (f, g, "freerouting+casa")
 
     guardado = pcb + ".limpo"
     shutil.copy(pcb, guardado)
