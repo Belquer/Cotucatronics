@@ -22,9 +22,9 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
  · Ligacao por ROTULOS GLOBAIS e nao por fios longos: a folha da energia e a
    do pre-amp ja usam isso, e o netlist da raiz prova que atravessa.
 """
-import io, sys, uuid
+import io, re, sys, uuid
 
-VERSAO = "0.15.0"
+VERSAO = "0.16.0"
 G = 1.27
 def u(): return str(uuid.uuid4())
 def g(v): return round(round(v / G) * G, 4)
@@ -95,7 +95,18 @@ NAO_E_PECA = {"NT1", "#FLG3", "#FLG4"}
 
 
 def _bom(ref):
-    return "no" if ref in NAO_E_PECA else "yes"
+    """⚠️ UM PONTO DE TESTE NAO E UMA PECA, e a BOM sai do ESQUEMA.
+
+    O footprint do TP ja traz `exclude_from_bom`, mas isso e do lado da PLACA:
+    a BOM e exportada do esquema, onde o simbolo dizia `in_bom yes`. Resultado
+    — onze linhas de compra para cobre, na lista que vai para a fabrica. So se
+    viu ao comparar o CPL com a BOM, porque nenhum dos dois exportadores se
+    queixa e nenhum sabe do outro.
+
+    ⚠️ E e CRITERIO, nao lista: um `TP12` acrescentado amanha fica de fora
+    sozinho. Uma lista fixa protege os nomes que ja la estao — que sao
+    exactamente os que nao precisam de protecao."""
+    return "no" if (ref in NAO_E_PECA or re.match(r"^TP\d+$", ref)) else "yes"
 
 def _instancia(ref, unidade=1):
     """O bloco `(instances)` de um simbolo. NAO E OPCIONAL.

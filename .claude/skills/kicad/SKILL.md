@@ -613,6 +613,81 @@ A ferramenta de fora continua a valer — foi ela que mostrou o defeito nos meus
 MPN. O que muda é onde mora o conserto: **na casa, com o comentário a dizer
 qual versão do plugin falhou e porquê.**
 
+## 7j. O MPN É PARA HUMANOS; O CÓDIGO DO DISTRIBUIDOR É O QUE A MÁQUINA LÊ
+
+A fábrica **não monta uma linha sem o código dela**, tenha MPN ou não. Logo as
+referências sem MPN dividem-se em duas coisas que não se tratam igual:
+
+| | o vazio | porquê |
+|---|---|---|
+| THT e módulos | **certo** | compram-se e soldam-se à mão |
+| passivos SMD | **defeito** | a máquina monta-os, e cada um precisa de código |
+
+Um resistor 0805 genérico não tem MPN e **tem** de ter código — porque para ter
+código é preciso escolher uma peça concreta, e as peças «Basic» da fábrica são
+peças concretas.
+
+⚠️ **SMD lê-se do ATRIBUTO do footprint (`attr smd`), não do nome da
+biblioteca.** Deduzir de `R_0805` acerta quase sempre e falha exactamente nos
+casos raros que interessam.
+
+### A busca do distribuidor mente com confiança
+
+`4.7MΩ 0805` devolve um **LED** em primeiro lugar. `0Ω 0805` devolve 1 kΩ.
+`100Ω 1206` devolve 3,3 kΩ. A ordenação é por semelhança de texto e o valor não
+domina.
+
+> **A ordem de uma busca não é uma resposta.** As **descrições** é que são
+> dados: pede-se muitos, analisa-se cada uma — valor, encapsulamento, classe,
+> tolerância, e o dieléctrico quando a troca se **ouve** — e a ordem só desempata
+> entre os que já passaram.
+
+⚠️ **Compara valores com tolerância relativa, nunca `==`.** `22e-12` e
+`22 * 1e-12` diferem no último bit, e a saída — «0 de 35 passam» — lê-se como
+«o catálogo não tem isto». Um falso negativo com cara de facto do catálogo é
+pior que um erro: ninguém volta a procurar o que já foi dado por inexistente.
+
+### A referência é única DENTRO de uma placa
+
+Um dicionário `ref → código` construído sobre duas placas **atropela-se**: cada
+uma tem o seu `C1`, o seu `R5`. Aqui o `C1` do cérebro — electrolítico THT de
+2200 µF — levou o código de um 100 n 0805.
+
+> **Chave é `(placa, referência)`.** E põe-se uma **segunda guarda
+> independente**: o encapsulamento gravado tem de aparecer no footprint que a
+> BOM declara. Se a chave se partir outra vez, é o encapsulamento que grita —
+> `CP_Radial_D16.0mm` não contém `C_0805`.
+
+## 7k. O CPL E A BOM SÃO DUAS FONTES, E NADA OS OBRIGA A CONCORDAR
+
+O CPL sai da **placa**. A BOM sai do **esquema**. E cada marca vive de um lado
+só:
+
+| marca | vive em | quem lhe obedece |
+|---|---|---|
+| `(dnp yes)` | símbolo do **esquema** | a BOM |
+| `exclude_from_bom` | footprint da **placa** | o CPL |
+
+`pcb export pos --exclude-dnp` lê o atributo do **footprint**. Se o DNP só
+existe nos símbolos, a opção está escrita e **não faz nada** — e o CPL manda
+colocar peças que a BOM não compra. No sentido inverso, pontos de teste com
+`exclude_from_bom` no footprint saem na BOM como linhas de compra para cobre.
+
+> **Nenhum dos dois exportadores está errado**: cada um obedece à fonte dele.
+> Nenhum dá erro. **Só a comparação os vê.**
+
+**Três peças, e as três são precisas:** levar o DNP para a placa (com a API do
+`pcbnew`, que serializa o que ESTA versão lê — a marca já mudou de forma entre
+versões, e escrever o token à mão falha calado na próxima); tirar os pontos de
+teste da BOM **na fonte, por critério `^TP\d+$` e não por lista** (lista fixa
+protege exactamente os nomes que já lá estão); e **o portão a comparar os
+designadores dos dois ficheiros**, porque os outros dois podem falhar.
+
+⚠️ **Ao varrer blocos, contar parêntesis é certo — mas salta as cadeias.** Um
+esquema com notas como `100R serie (~30 mA)` ou `(!)` dessincroniza a
+profundidade e devolve blocos todos errados, em silêncio: aqui, zero símbolos
+DNP num ficheiro com oito.
+
 ## 9b. O PORTÃO DE COLISÕES DOS ESQUEMÁTICOS
 
 O `tools/svg_colisoes.py` devolvia **código 3 — NÃO VERIFICÁVEL** em todo

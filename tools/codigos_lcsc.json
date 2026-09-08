@@ -1,0 +1,360 @@
+{
+  "arvore_suja": true,
+  "commit": "1ce1d20",
+  "data": "2026-09-08",
+  "gerado_por": "tools/codigos_lcsc.py v0.2.0",
+  "linhas": {
+    "cerebro/0R/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17477",
+      "como": "busca verificada: 3 de 97 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 0Ω 125mW 150V Thick Film Resistor ±1% ±800ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R10",
+        "R20"
+      ],
+      "valor": "0R"
+    },
+    "cerebro/100R 1/4W/R_1206_3216Metric": {
+      "basic": true,
+      "codigo": "C17901",
+      "como": "busca verificada: 2 de 50 candidatos passaram",
+      "encaps": "R_1206_3216Metric",
+      "mpn": "",
+      "nota": "1/4 W = 250 mW, e o 1206 da-os",
+      "prova": "-55℃~+155℃ 100Ω 200V 250mW Thick Film Resistor ±1% ±100ppm/℃ 1206 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R7"
+      ],
+      "valor": "100R 1/4W"
+    },
+    "cerebro/100R/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17408",
+      "como": "busca verificada: 2 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 100Ω 125mW 150V Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R14",
+        "R24"
+      ],
+      "valor": "100R"
+    },
+    "cerebro/100k/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C149504",
+      "como": "busca verificada: 15 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 100kΩ 125mW 150V Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R5",
+        "R6",
+        "R8"
+      ],
+      "valor": "100k"
+    },
+    "cerebro/100n/C_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C49678",
+      "como": "busca verificada: 44 de 50 candidatos passaram",
+      "encaps": "C_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "100nF 50V X7R ±10% 0805 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+      "refs": [
+        "C15",
+        "C16",
+        "C2",
+        "C4",
+        "C7",
+        "C9"
+      ],
+      "valor": "100n"
+    },
+    "cerebro/10k — L/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17414",
+      "como": "busca verificada: 10 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 10kΩ 125mW 150V Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R50"
+      ],
+      "valor": "10k — L"
+    },
+    "cerebro/10k — R/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17414",
+      "como": "busca verificada: 10 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 10kΩ 125mW 150V Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R51"
+      ],
+      "valor": "10k — R"
+    },
+    "cerebro/10u/C_1206_3216Metric": {
+      "basic": true,
+      "codigo": "C13585",
+      "como": "busca verificada: 8 de 50 candidatos passaram",
+      "encaps": "C_1206_3216Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "10uF 50V X5R ±10% 1206 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+      "refs": [
+        "C8"
+      ],
+      "valor": "10u"
+    },
+    "cerebro/1N5819/D_SMA": {
+      "basic": true,
+      "codigo": "C2480",
+      "como": "casamento exacto do MPN",
+      "encaps": "D_SMA",
+      "mpn": "SS14",
+      "prova": "-55℃~+150℃ 1A 25A 300uA@40V 40V 550mV@1A Independent SMA(DO-214AC) Schottky Diodes ROHS",
+      "refs": [
+        "D2"
+      ],
+      "valor": "1N5819"
+    },
+    "cerebro/1k/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17513",
+      "como": "busca verificada: 7 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 125mW 150V 1kΩ Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R12",
+        "R22"
+      ],
+      "valor": "1k"
+    },
+    "cerebro/22k/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17560",
+      "como": "busca verificada: 17 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 125mW 150V 22kΩ Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R9"
+      ],
+      "valor": "22k"
+    },
+    "cerebro/22n C0G/C_1206_3216Metric": {
+      "basic": false,
+      "codigo": "C3862155",
+      "como": "busca verificada: 14 de 15 candidatos passaram",
+      "encaps": "C_1206_3216Metric",
+      "mpn": "",
+      "nota": "⚠️ C0G no caminho de sinal do pre-amplificador — um X7R aqui MUDA O SOM. Se a JLC nao tiver C0G em 1206, e decisao do dB, nao substituicao minha.",
+      "prova": "22nF 250V C0G ±5% 1206 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+      "refs": [
+        "C12",
+        "C22"
+      ],
+      "valor": "22n C0G"
+    },
+    "cerebro/22p C0G/C_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C1804",
+      "como": "busca verificada: 33 de 35 candidatos passaram",
+      "encaps": "C_0805_2012Metric",
+      "mpn": "",
+      "nota": "C0G obrigatorio",
+      "prova": "22pF 50V C0G ±5% 0805 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+      "refs": [
+        "C11",
+        "C21"
+      ],
+      "valor": "22p C0G"
+    },
+    "cerebro/4M7/R_0805_2012Metric": {
+      "basic": false,
+      "codigo": "C17674",
+      "como": "busca verificada: 5 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 125mW 150V 4.7MΩ Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R11",
+        "R21"
+      ],
+      "valor": "4M7"
+    },
+    "cerebro/4k7/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17673",
+      "como": "busca verificada: 5 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 125mW 150V 4.7kΩ Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R13",
+        "R23"
+      ],
+      "valor": "4k7"
+    },
+    "cerebro/BAV99/SOT-23": {
+      "basic": true,
+      "codigo": "C2500",
+      "como": "casamento exacto do MPN",
+      "encaps": "SOT-23",
+      "mpn": "BAV99,215",
+      "prova": "1 Pair Series Connection 1.25V@150mA 100V 215mA 250mW 4A 4ns 500nA@80V SOT-23 Switching Diodes ROHS",
+      "refs": [
+        "D11",
+        "D21"
+      ],
+      "valor": "BAV99"
+    },
+    "cerebro/OPA1642/SOIC-8_3.9x4.9mm_P1.27mm": {
+      "basic": false,
+      "codigo": "C67640",
+      "como": "casamento exacto do MPN",
+      "encaps": "SOIC-8_3.9x4.9mm_P1.27mm",
+      "mpn": "OPA1642AIDR",
+      "prova": "-18V~-2.25V、2.25V~18V -40℃~+85℃ 0.00005% 1.8mA 2 Pairs Differential Inputs 2-Channel SOIC-8 Audio Amplifiers ROHS",
+      "refs": [
+        "U1"
+      ],
+      "valor": "OPA1642"
+    },
+    "cerebro/PTC 3A/Fuse_2920_7451Metric": {
+      "basic": false,
+      "codigo": "C720183",
+      "como": "casamento exacto do MPN",
+      "encaps": "Fuse_2920_7451Metric",
+      "mpn": "2920L330/24MR",
+      "prova": "-40℃~+85℃ 15mΩ 24V 2W 3.3A 40A 5.5A 55mΩ 5s 2920 Resettable Fuses ROHS",
+      "refs": [
+        "F1"
+      ],
+      "valor": "PTC 3A"
+    },
+    "cerebro/SMBJ24A/D_SMB": {
+      "basic": false,
+      "codigo": "C19077578",
+      "como": "casamento exacto do MPN",
+      "encaps": "D_SMB",
+      "mpn": "SMBJ24A",
+      "prova": "-55℃~+150℃ 15.42A@10/1000us 24V 29.5V 38.9V 5uA 600W@10/1000us IEC 61000-4-2 TVS Unidirectional DO-214AA(SMB) ESD and Surge Protection (TVS/ESD) ROHS",
+      "refs": [
+        "D1"
+      ],
+      "valor": "SMBJ24A"
+    },
+    "painel/100R gate/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17408",
+      "como": "busca verificada: 2 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 100Ω 125mW 150V Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R1",
+        "R2"
+      ],
+      "valor": "100R gate"
+    },
+    "painel/100R serie (~30 mA)/R_1210_3225Metric": {
+      "basic": false,
+      "codigo": "C2933799",
+      "como": "busca verificada: 1 de 50 candidatos passaram",
+      "encaps": "R_1210_3225Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 100Ω 200V 500mW Thick Film Resistor ±1% ±100ppm/℃ 1210 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R5",
+        "R6"
+      ],
+      "valor": "100R serie (~30 mA)"
+    },
+    "painel/100n COLADO ao IDC/C_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C49678",
+      "como": "busca verificada: 44 de 50 candidatos passaram",
+      "encaps": "C_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "100nF 50V X7R ±10% 0805 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+      "refs": [
+        "C5"
+      ],
+      "valor": "100n COLADO ao IDC"
+    },
+    "painel/100n COLADO ao cursor/C_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C49678",
+      "como": "busca verificada: 44 de 50 candidatos passaram",
+      "encaps": "C_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "100nF 50V X7R ±10% 0805 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+      "refs": [
+        "C1",
+        "C2"
+      ],
+      "valor": "100n COLADO ao cursor"
+    },
+    "painel/100n/C_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C49678",
+      "como": "busca verificada: 44 de 50 candidatos passaram",
+      "encaps": "C_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "100nF 50V X7R ±10% 0805 Multilayer Ceramic Capacitors MLCC - SMD/SMT ROHS",
+      "refs": [
+        "C4"
+      ],
+      "valor": "100n"
+    },
+    "painel/10k pull-down/R_0805_2012Metric": {
+      "basic": true,
+      "codigo": "C17414",
+      "como": "busca verificada: 10 de 50 candidatos passaram",
+      "encaps": "R_0805_2012Metric",
+      "mpn": "",
+      "nota": "",
+      "prova": "-55℃~+155℃ 10kΩ 125mW 150V Thick Film Resistor ±1% ±100ppm/℃ 0805 Chip Resistor - Surface Mount ROHS",
+      "refs": [
+        "R3",
+        "R4"
+      ],
+      "valor": "10k pull-down"
+    },
+    "painel/AO3400A/SOT-23": {
+      "basic": true,
+      "codigo": "C20917",
+      "como": "casamento exacto do MPN",
+      "encaps": "SOT-23",
+      "mpn": "AO3400A",
+      "prova": "-55℃~+150℃ 1 N-channel 1.45V 1.4W 30V 48mΩ@2.5V 5.7A 50pF 630pF 75pF 7nC@10V N-Channel SOT-23 MOSFETs ROHS",
+      "refs": [
+        "Q1",
+        "Q2"
+      ],
+      "valor": "AO3400A"
+    }
+  }
+}

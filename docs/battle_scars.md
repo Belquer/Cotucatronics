@@ -9511,3 +9511,111 @@ por
 ⚠️ **A regra que fica: modo que sabe menos não grava.** Se uma ferramenta tem
 um modo offline e um modo com rede, o offline **lê**. Escrever com menos
 informação do que a que já está no ficheiro é apagar, com outro nome.
+
+## 15dz — a busca devolveu um LED onde ia um resistor de 4,7 MΩ
+
+Fui buscar o código LCSC dos passivos e a API respondeu a `4.7MΩ 0805` com
+**C84256 — 615 nm, 195 mcd, 25 mA**. Um LED, em primeiro lugar, com a mesma
+confiança com que devolve a peça certa. `0Ω 0805` devolveu 1 kΩ e 10 kΩ.
+`100Ω 1206` devolveu 1 kΩ e 3,3 kΩ.
+
+A ordenação é por semelhança de texto e o valor não domina. **Pegar no primeiro
+resultado punha um LED no ficheiro de montagem**, e nada a jusante o veria: o
+CPL tem coordenadas, o BOM tem um código, e ambos estariam bem formados.
+
+> **A ordem de uma busca não é uma resposta.** O que é dado nesta API são as
+> **descrições** — e o `100Ω 1210` certo estava na lista, só não em primeiro.
+
+Então não se usa a ordem: pedem-se cinquenta e analisa-se cada descrição —
+valor, encapsulamento e classe têm de bater, e o dieléctrico também quando a
+troca se ouve. A ordem passa a servir só para desempatar entre os que já
+passaram.
+
+⚠️ **E o filtro rejeitou os certos por vírgula flutuante.** Comparei `22e-12`
+com `22 * 1e-12` por `==`. Diferem no último bit. A saída foi **«0 de 35
+passam»** — que se lê exactamente como *«o catálogo não tem isto»*.
+
+> **Um falso negativo com cara de facto do catálogo é pior que um erro:**
+> ninguém volta a procurar o que já foi dado por inexistente. Tolerância
+> relativa, sempre, e nunca `==` entre um literal e uma conta.
+
+E quando o filtro passou a olhar para a tolerância — a casa especifica
+resistores a 1 % — mudou três escolhas que já tinha dado por boas: o `4M7` e o
+`100R 1210` estavam em ±5 %, porque eu ordenava por stock e o ±5 % tinha mais.
+
+
+## 15ea — o `C1` de uma placa levou o código do `C1` da outra
+
+A coluna LCSC entrou na BOM e o portão deu verde. A linha do `C1` do cérebro —
+um electrolítico **THT de 2200 µF, 16 mm** — dizia:
+
+```
+"C1","2200u/35V","Capacitor_THT:CP_Radial_D16.0mm_P7.50mm","1","C49678"
+```
+
+`C49678` é um **100 nF 0805**. E `R5,R6,R8` (100 k 0805) levaram o código do
+`100 Ω 1210` do painel.
+
+Indexei por **referência sozinha**. As duas placas têm cada uma o seu `C1`, o
+seu `R5`, o seu `R6` — e uma sobrescreveu a outra ao construir o dicionário.
+
+> **Referência é única DENTRO de uma placa, nunca no projecto.** Foi a mesma
+> lição da §6b, vista do outro lado: lá era escolher a dezena sem olhar às
+> outras folhas; aqui foi juntar duas placas num só espaço de nomes.
+
+**E o portão deu verde**, porque só contava se a coluna estava preenchida —
+irmã directa da 15dw, um campo cheio a passar por um campo certo. A montagem
+teria soldado um cerâmico de 0805 onde vai um electrolítico de 16 mm.
+
+O conserto tem **duas** guardas, e a segunda é independente da primeira: a
+chave passou a `(placa, referência)`, **e** o encapsulamento gravado tem de
+aparecer no footprint que a BOM declara. Se a chave voltar a partir-se, o
+encapsulamento apanha-o — `CP_Radial_D16.0mm` não contém `C_0805`.
+
+
+## 15eb — o CPL mandava colocar oito peças que a BOM não comprava
+
+Comparei, pela primeira vez, os designadores do CPL com os da BOM. Não batiam,
+nos dois sentidos:
+
+```
+no CPL e não na BOM:  C11 C13 C21 C23 R13 R23 RV1 RV2   ← DNP
+na BOM e não no CPL:  TP1 … TP11                        ← pontos de teste
+```
+
+**São dois ficheiros de duas fontes.** O CPL sai da **placa**; a BOM sai do
+**esquema**. Cada marca vive de um lado só:
+
+| marca | vive em | quem lhe obedece |
+|---|---|---|
+| `(dnp yes)` | símbolo do **esquema** | a BOM |
+| `exclude_from_bom` | footprint da **placa** | o CPL |
+
+O `pcb export pos --exclude-dnp` lê o atributo do **footprint** — e a placa
+tinha **zero** footprints com DNP, enquanto o esquema tinha oito símbolos. O
+`--exclude-dnp` estava lá, escrito, a não fazer nada.
+
+> **Nenhum dos dois exportadores está errado.** Cada um obedece correctamente à
+> fonte dele. Nada no KiCad os obriga a concordar, e nada dá erro. **Só a
+> comparação os vê** — e ela não existia.
+
+Conserto em três peças, e as três são precisas:
+
+1. `dnp_para_pcb.py` leva o DNP do esquema para a placa, com o `pcbnew` a
+   serializar (a marca já mudou de forma entre versões do formato; escrever
+   `(dnp yes)` à mão acerta até à próxima actualização e depois falha calado).
+2. os geradores param de pôr `in_bom yes` nos pontos de teste — **por critério
+   `^TP\d+$` e não por lista**, que uma lista fixa protege exactamente os nomes
+   que já lá estão.
+3. o portão compara CPL com BOM e recusa se discordarem — **porque os dois
+   primeiros podem falhar**, e um carimbo em que se confia sem comparar é outra
+   vez a 15dw.
+
+Depois: CPL 50 = BOM 50 no cérebro, 23 = 23 no painel.
+
+⚠️ **E ao caçar isto, o meu varredor de blocos devolveu zero símbolos DNP num
+ficheiro com oito.** Contei parêntesis para delimitar o bloco — que é o que a
+§2d manda — mas contei também os que estão **dentro de cadeias**: este esquema
+tem notas como `100R serie (~30 mA)` e `(!)`. A profundidade dessincroniza e
+todos os blocos saem errados, em silêncio. Contar parêntesis está certo;
+contá-los sem saltar as cadeias não.

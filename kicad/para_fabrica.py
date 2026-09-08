@@ -54,7 +54,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.4.0"
+VERSAO = "0.7.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
@@ -104,6 +104,148 @@ def carimbo():
     sujo = bool(g("git", "status", "--porcelain"))
     return (datetime.date.today().isoformat(), g("git", "rev-parse", "--short", "HEAD"),
             sujo)
+
+
+# ⚠️ MEDIDO, nao contado de cabeca. O dB disse "AO3400A x3" e a placa tem DOIS
+# (Q1 e Q2) — as cinco ocorrencias no `.kicad_sch` sao valor, propriedade e
+# instancia do mesmo par. Sao SETE pecas com polaridade, nao nove, e a lista que
+# se leva a pre-visualizacao tem de ser a da placa e nao a da memoria.
+POLARIZADAS = {
+    "cerebro": [
+        ("U1", "OPA1642AIDR", "SOIC-8", "pino 1 — o ponto no canto"),
+        ("D11", "BAV99,215", "SOT-23", "a JLC roda SOT-23 180 graus com frequencia"),
+        ("D21", "BAV99,215", "SOT-23", "idem"),
+        ("D1", "SMBJ24A", "SMB", "catodo — a barra"),
+        ("D2", "SS14", "SMA", "catodo. (!) o Value diz `1N5819` e o MPN diz "
+                              "`SS14`: e a mesma peca em SMA, mas o desenho e a "
+                              "compra chamam-lhe nomes diferentes"),
+    ],
+    "painel": [
+        ("Q1", "AO3400A", "SOT-23", "a JLC roda SOT-23 180 graus com frequencia"),
+        ("Q2", "AO3400A", "SOT-23", "idem"),
+    ],
+}
+
+
+def cpl_bate_bom(dest, nome):
+    """O CPL e a BOM tem de concordar sobre QUEM e montado.
+
+    ⚠️ Sao dois ficheiros escritos por dois exportadores a partir de duas
+    fontes: o CPL sai da PLACA, a BOM sai do ESQUEMA. Nada no KiCad os obriga a
+    concordar, e cada um obedece a marcas que vivem do seu lado.
+
+    ⚠️ Foi assim que oito pecas DNP — C11 C13 C21 C23 R13 R23 RV1 RV2 — sairam
+    no CPL sem linha na BOM: o `(dnp yes)` esta nos simbolos do esquema e o
+    `--exclude-dnp` do `pcb export pos` le o atributo do FOOTPRINT, que nao o
+    tinha. A maquina recebia ordem para colocar oito pecas que ninguem comprou.
+
+    ⚠️ E ao contrario: os pontos de teste sairam na BOM sem estar no CPL. O
+    footprint traz `exclude_from_bom`, mas a BOM vem do esquema, onde os
+    simbolos nao tinham a marca — uma linha de compra para uma coisa que e
+    cobre e nao se compra.
+
+    Nenhum dos dois da erro em lado nenhum. So a COMPARACAO os ve."""
+    def desig(caminho, primeira_coluna_e_lista):
+        if not os.path.exists(caminho):
+            return None
+        linhas = open(caminho, encoding="utf-8").read().splitlines()
+        fora = set()
+        for ln in linhas[1:]:
+            if not ln.strip():
+                continue
+            campo = ln.split('","')[0] if primeira_coluna_e_lista else ln.split(",")[0]
+            fora |= set(re.findall(r"[A-Z]+\d+", campo))
+        return fora
+    cpl = desig(os.path.join(dest, "cpl_%s.csv" % nome), False)
+    bom = desig(os.path.join(dest, "bom_%s.csv" % nome), True)
+    if cpl is None or bom is None:
+        return None
+    # ⚠️ guarda de leitura (§2c): zero designadores nao e "concordam", e um
+    # leitor partido — e um leitor partido APROVA tudo.
+    if not cpl or not bom:
+        return ("leitura do CPL/BOM devolveu %d e %d designadores — nada a "
+                "jusante e confiavel" % (len(cpl), len(bom)))
+    so_cpl, so_bom = sorted(cpl - bom), sorted(bom - cpl)
+    mal = []
+    if so_cpl:
+        mal.append("no CPL e nao na BOM (a maquina coloca, ninguem comprou): %s"
+                   % " ".join(so_cpl))
+    if so_bom:
+        mal.append("na BOM e nao no CPL (comprado, ninguem coloca): %s"
+                   % " ".join(so_bom))
+    return " · ".join(mal) if mal else None
+
+
+def mete_lcsc(caminho, placa):
+    """Poe a coluna LCSC na BOM exportada. Devolve motivo de recusa, ou None.
+
+    ⚠️⚠️ A CHAVE E (PLACA, REFERENCIA). NUNCA A REFERENCIA SOZINHA.
+
+    A v0.5.0 indexou so pela referencia e as duas placas ATROPELARAM-SE: o
+    `C1` do cerebro e um electrolitico THT de 2200 uF e o `C1` do painel e um
+    100 n 0805, e a BOM do cerebro saiu com `C49678` — o 100 n — na linha do
+    2200 uF. `R5`/`R6` levaram o codigo do 100 R 1210 do painel estando o
+    cerebro a pedir 100 k 0805.
+
+    ⚠️ E o portao DEU VERDE. Nada nele comparava a peca escolhida com a peca
+    desenhada; so contava se a coluna estava preenchida — a mesma familia da
+    15dw, um campo cheio a passar por um campo certo. A montagem teria soldado
+    um condensador ceramico de 0805 onde vai um electrolitico de 16 mm.
+
+    Por isso ha AQUI DOIS testes, e o segundo e independente do primeiro:
+    a chave inclui a placa, E o encapsulamento gravado tem de aparecer no
+    footprint que a BOM declara. Se a chave voltar a partir-se, o
+    encapsulamento apanha-o — `CP_Radial_D16.0mm` nao contem `C_0805`."""
+    fonte = os.path.join(os.path.dirname(AQUI), "tools", "codigos_lcsc.json")
+    if not os.path.exists(fonte):
+        return "nao ha tools/codigos_lcsc.json — corre tools/codigos_lcsc.py"
+    with open(fonte, encoding="utf-8") as f:
+        d = json.load(f)
+    por_ref = {}
+    for rot, e in d.get("linhas", {}).items():
+        if rot.split("/", 1)[0] != placa:
+            continue
+        for r in e.get("refs", []):
+            por_ref[r] = (e.get("codigo", ""), e.get("encaps", ""))
+    with open(caminho, encoding="utf-8") as f:
+        linhas = f.read().splitlines()
+    if len(linhas) < 2:
+        return "a BOM exportada saiu com %d linha(s)" % len(linhas)
+    saida, sem = [linhas[0].rstrip() + ',"LCSC"'], []
+    for ln in linhas[1:]:
+        if not ln.strip():
+            continue
+        desig = re.findall(r"[A-Z]+\d+", ln.split(",")[0])
+        # ⚠️ so as linhas SMD precisam de codigo: as THT o dB compra e solda, e
+        # exigir codigo a um borne de parafuso travava o pacote por nada.
+        cods = {por_ref[r] for r in desig if r in por_ref}
+        if not cods:
+            saida.append(ln.rstrip() + ',""')
+            continue
+        if len(cods) > 1:
+            return ("a linha %s junta designadores com codigos diferentes (%s) "
+                    "— a BOM agrupa por valor+footprint, logo isto diz que a "
+                    "fonte discorda de si propria"
+                    % (desig[:3], sorted(cods)))
+        cod, encaps = cods.pop()
+        # ⚠️ SEGUNDA GUARDA, independente da chave: o encapsulamento que a
+        # fonte gravou tem de aparecer no footprint que a BOM declara. E o que
+        # apanha uma troca entre placas mesmo que a chave volte a partir-se.
+        campos = [c.strip('"') for c in ln.split('","')]
+        fp = campos[2] if len(campos) > 2 else ""
+        if encaps and encaps not in fp:
+            return ("%s: a fonte diz encapsulamento %r e a BOM declara %r — "
+                    "a peca escolhida NAO e a peca desenhada"
+                    % (",".join(desig[:3]), encaps, fp))
+        if not cod:
+            sem.extend(r for r in desig if r in por_ref)
+        saida.append(ln.rstrip() + ',"%s"' % cod)
+    if sem:
+        return ("sem codigo LCSC, e a JLC nao monta a linha: %s"
+                % " ".join(sorted(set(sem))))
+    with open(caminho, "w", encoding="utf-8") as f:
+        f.write("\n".join(saida) + "\n")
+    return None
 
 
 def uma(nome, incompleta):
@@ -205,6 +347,23 @@ def uma(nome, incompleta):
               "--labels", "Designator,Comment,Footprint,Qty",
               "--group-by", "Value,Footprint", "--exclude-dnp", sch)
 
+    # ⚠️ O CODIGO LCSC ENTRA NA BOM, e sem ele a linha nao se monta.
+    # O MPN e para humanos; o `Cxxxxx` e o que a maquina le, e a JLC nao monta
+    # uma linha sem ele — tenha MPN ou nao. Ate a v0.4.0 este ficheiro escrevia
+    # no LEIA-ME "o BOM nao tem codigos LCSC, preenche-os a mao": um passo
+    # manual dentro de um processo que existe para nao ter passos manuais, e o
+    # sitio exacto onde se erra a peca por cansaco.
+    bomf = os.path.join(dest, "bom_%s.csv" % nome)
+    if os.path.exists(bomf):
+        erro = mete_lcsc(bomf, nome)
+        if erro:
+            print("   ⚠️ BOM sem codigos: %s" % erro)
+            return False
+    desacordo = cpl_bate_bom(dest, nome)
+    if desacordo:
+        print("   ⚠️ CPL e BOM discordam: %s" % desacordo)
+        return False
+
     zipe = dest + "_gerbers.zip"
     with zipfile.ZipFile(zipe, "w", zipfile.ZIP_DEFLATED) as z:
         for a in sorted(os.listdir(dest)):
@@ -222,8 +381,11 @@ def uma(nome, incompleta):
                    else "todas as ligacoes feitas"))
         f.write("\n⚠️ A rotacao no CPL e a do KiCad, nao a da biblioteca da JLC.\n"
                 "   Confirmar peca a peca na pre-visualizacao antes de pagar.\n")
-        f.write("⚠️ O BOM nao tem codigos LCSC: o esquema nao os guarda.\n"
-                "   Para montagem, preenche-los a partir de docs/COTUCA_BOM.md.\n")
+        f.write("   As pecas com polaridade, que sao as unicas que importam:\n")
+        for r_, mpn_, enc_, oq_ in POLARIZADAS.get(nome, []):
+            f.write("     %-4s %-12s %-8s %s\n" % (r_, mpn_, enc_, oq_))
+        f.write("   Os 0805/1206/1210 nao tem polaridade — nao gastar tempo neles.\n")
+        f.write("\nO BOM leva a coluna LCSC preenchida (tools/codigos_lcsc.py).\n")
 
     print("\n   pacote: %s" % os.path.relpath(zipe, os.path.join(AQUI, os.pardir)))
     print("     %d ficheiros no zip · CPL e BOM ao lado, fora dele" % n)

@@ -16,9 +16,9 @@ o ERC nao apanha uma grafia trocada: so a comparacao apanha.
 chega pelo IDC. A separacao AGND/GND vive no cerebro, no net-tie, e nao
 atravessa este cabo.
 """
-import io, sys, uuid
+import io, re, sys, uuid
 
-VERSAO = "0.11.0"
+VERSAO = "0.12.0"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -74,7 +74,12 @@ def simbolo(lib, ref, val, x, y, ry=-7.62, vy=7.62):
                                ("Footprint", _fp(ref), 0, 1.27, True), ("Datasheet", "", 0, 1.27, True),
                                ("Description", "", 0, 1.27, True)))
     L.append(f'\t(symbol\n\t\t(lib_id "cotuca:{lib}")\n\t\t(at {x} {y} 0)\n\t\t(unit 1)\n'
-             f'\t\t(body_style 1)\n\t\t(exclude_from_sim no)\n\t\t(in_bom yes)\n\t\t(on_board yes)\n'
+             f'\t\t(body_style 1)\n\t\t(exclude_from_sim no)\n'
+             # ⚠️ um ponto de teste NAO e uma peca. Ver `gera_soquete._bom`:
+             # o footprint ja traz `exclude_from_bom`, mas a BOM sai do
+             # ESQUEMA, e por aqui saiam cinco linhas de compra para cobre.
+             f'\t\t(in_bom {"no" if re.match(r"^TP[0-9]+$", ref) else "yes"})\n'
+             f'\t\t(on_board yes)\n'
              f'\t\t(in_pos_files yes)\n\t\t(dnp no)\n\t\t(uuid "{u()}")\n{ps}{_instancia(ref)}\t)\n')
 
 
