@@ -9804,3 +9804,73 @@ comparar e errado para citar.
 **O que fica:** a cópia de teste vive na pasta do projecto **e com o nome que
 casa com o `.kicad_pro`** — ou então mede-se o antes e o depois exactamente no
 mesmo sítio, e só se lê a diferença, nunca o valor.
+
+## 15eh — 23 referências a 11,5 mm da peça, e nenhum verificador se importava
+
+O dB mandou um render da placa: *"os textos ainda estão bem desarranjados"*. E
+estavam — mas de uma maneira que **nenhuma das minhas medições via**. O portão
+dizia `texto×texto: 0`; o DRC dizia `silk_overlap 6`; e as referências estavam
+espalhadas pela borda, a apontar para as peças erradas.
+
+**A causa estava a montante e era uma constante.** O `sincroniza_pcb` criava
+toda peça nova com a referência a `-11.5` mm — igual para um condensador de
+11 mm e para um ponto de teste de 1,5 mm. **23 das 70** peças do cérebro.
+
+E o `arruma_silk` não lhes tocava, porque só mexia no que **colidia** — e a
+11,5 mm de distância não se colide com nada.
+
+> **Duas ferramentas, cada uma correcta no seu critério, e o defeito no meio.**
+> Uma punha o texto longe; a outra só arrumava o que colidia. Nenhuma tinha por
+> missão *«o designador aponta para a peça dele»*, e por isso essa pergunta
+> nunca foi feita.
+
+**Medido: 8 referências estavam mais perto de OUTRA peça do que da sua.** `C9` a
+5,5 mm do `R24` e a 11,5 mm do seu próprio condensador. Quem solda à mão lê o
+designador mais próximo.
+
+⚠️ **E a §11g-ter da skill já tinha previsto isto, por escrito:** *"uma
+referência tecnicamente livre pode estar encostada à peça errada, e nenhum DRC
+tem opinião sobre isso."* Estava diagnosticado e não estava instrumentado —
+**que é o estado em que um defeito vive mais tempo: toda a gente sabe, ninguém
+conta.**
+
+## 15ei — não colidir é uma restrição; apontar para a peça é um objectivo
+
+O conserto não foi acrescentar mais um obstáculo. Foi mudar a **natureza** do
+problema.
+
+> Uma **restrição** satisfaz-se com o primeiro candidato que passa. Um
+> **objectivo** obriga a ver todos e a escolher. Enquanto "não colidir" era a
+> única regra, o primeiro candidato *"para fora da placa"* ganhava sempre — e
+> ganhava com razão, porque **o óptimo de uma restrição sem objectivo é sempre
+> o vazio**: quanto mais longe, menos obstáculos.
+
+Quatro coisas, e as quatro foram precisas:
+
+1. **Objectivo** — entre os candidatos livres, ganha o **mais perto da própria
+   peça**, não o primeiro de uma ordem fixa.
+2. **Critério do dono** — a peça mais próxima do texto tem de ser a **dona**
+   dele. É isto que torna a correcção verificável em vez de estética.
+3. **Tecto** — sem ele o objectivo ainda premeia fugir.
+4. **O texto é um RECTÂNGULO.** `RAIO_TXT = 1,6` modelava um disco: grande de
+   mais em cima (recusa posições boas) e pequeno de mais aos lados (aceita
+   posições sobre um pad). Um `C24` a 1 mm ocupa ~2,8 × 1,4 mm.
+
+⚠️ **E o recuo tem TRÊS degraus, pela escala do estrago.** Não havendo sítio
+limpo: primeiro procura-se mais longe **mantendo o cobre livre**; só no fim se
+aceita cobre por cima. Largar tudo de uma vez comprava 6 `silk_over_copper` que
+não eram precisos — e o cobre é o que **apaga** o texto, porque a fábrica
+recorta a serigrafia sobre a abertura de máscara. **Meio designador é pior que
+nenhum: parece um.**
+
+**A troca, dita com números** — 8 → **0** referências a identificar a peça
+errada, 75 movidas para junto das suas; pagou-se `silk_overlap` +2 no cérebro e
++2 no painel, e `silk_over_copper` +2 no painel. Texto a tocar num traço lê-se;
+texto a apontar para a peça errada mente.
+
+⚠️ **E entrou no `para_fabrica`, que é a única forma de não voltar.** O
+`refs_apontam.py` responde a uma pergunta que nenhum DRC faz — *de que peça é
+este texto?* — e o portão recusa o pacote. Provado nos dois sentidos: com o
+defeito conhecido injectado (`R9` a −11,5 mm → apanhado), e com um defeito
+desconhecido (renomear o token que ele lê → **grita «leitura incompleta»** em
+vez de aprovar zero peças).

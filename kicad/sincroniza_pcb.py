@@ -120,9 +120,25 @@ def do_modulo(fp, ref, val, redes):
                     if d == 0:
                         t = t[:j - 1] + t[k + 1:]
                         break
+    # ⚠️⚠️ O OFFSET SAI DO TAMANHO DA PECA, NAO DE UMA CONSTANTE.
+    #
+    # Ate a v0.4.1 isto era `-11.5` para toda a gente: igual para um
+    # condensador de 11 mm e para um ponto de teste de 1,5 mm. Eram 23 das 70
+    # pecas do cerebro com a referencia a 11,5 mm do corpo — e a 11,5 mm nao se
+    # colide com nada, entao o `arruma_silk`, que so mexia no que COLIDIA,
+    # deixava-as todas. Ficavam limpas, longe, e a apontar para a vizinha: 8
+    # identificavam a peca errada.
+    #
+    # ⚠️ Duas ferramentas, cada uma correcta no seu criterio, e o defeito no
+    # meio: uma punha o texto longe, a outra so arrumava o que colidia. Nenhuma
+    # tinha por missao "o designador aponta para a peca dele" — e por isso essa
+    # pergunta passou a ter portao proprio (`refs_apontam.py`).
+    _ys = [float(m) for m in re.findall(r'\(at -?[\d.]+ (-?[\d.]+)', t)]
+    _alto = max((abs(y) for y in _ys), default=1.0)
+    _dy = round(min(max(_alto + 1.2, 1.6), 4.0), 2)
     props = ""
-    for p, v, lay, dy in (("Reference", ref, "F.SilkS", -11.5),
-                          ("Value", val, "F.Fab", 11.5)):
+    for p, v, lay, dy in (("Reference", ref, "F.SilkS", -_dy),
+                          ("Value", val, "F.Fab", _dy)):
         props += ('\t\t(property "%s" "%s"\n\t\t\t(at 0 %g 0)\n\t\t\t(layer "%s")\n'
                   '\t\t\t(uuid "%s")\n\t\t\t(effects (font (size 1 1) (thickness 0.15)))\n'
                   '\t\t)\n' % (p, v, dy, lay, uuid.uuid4()))

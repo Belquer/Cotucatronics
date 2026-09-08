@@ -1199,6 +1199,48 @@ R21 visitado depois   → já não há sítio → "fica onde estava" → dentro 
 colocadores, arrumadores de texto. **Um verificador que só olha para o que já
 processou aprova o que ainda não viu.**
 
+### 11g-sexies. NÃO COLIDIR É RESTRIÇÃO; APONTAR PARA A PEÇA É OBJECTIVO
+
+⚠️ **A §11g-ter previu este defeito por escrito e ele esteve lá na mesma**, em 8
+referências, porque nada o media. *Diagnosticado e por instrumentar é o estado
+em que um defeito vive mais tempo: toda a gente sabe, ninguém conta.*
+
+**A causa estava a montante e era uma constante.** O sincronizador criava toda
+peça nova com a referência a `-11,5 mm` — igual para um condensador de 11 mm e
+para um ponto de teste de 1,5 mm, 23 das 70. E o arrumador não lhes tocava,
+porque só mexia no que **colidia**, e a 11,5 mm não se colide com nada.
+
+> **Duas ferramentas, cada uma correcta no seu critério, e o defeito no meio.**
+> Nenhuma tinha por missão *«o designador aponta para a peça dele»*.
+
+> **O óptimo de uma restrição sem objectivo é sempre o vazio:** quanto mais
+> longe, menos obstáculos. Enquanto "não colidir" foi a única regra, o candidato
+> *"para fora da placa"* ganhou sempre — e ganhou com razão.
+
+**As quatro peças do conserto:**
+
+| | |
+|---|---|
+| **objectivo** | entre os livres ganha o **mais perto da própria peça**, não o primeiro de uma ordem fixa |
+| **critério do dono** | a peça mais próxima do texto tem de ser a **dona** — é o que torna isto verificável e não estético |
+| **tecto** | sem ele o objectivo ainda premeia fugir |
+| **o texto é um RECTÂNGULO** | um raio isotrópico é grande de mais em cima (recusa posições boas) e pequeno de mais aos lados (aceita posições sobre um pad) |
+
+⚠️ **E o recuo tem TRÊS degraus, pela escala do estrago:** sem sítio limpo,
+procura-se **mais longe mantendo o cobre livre**, e só no fim se aceita cobre.
+Largar tudo de uma vez compra `silk_over_copper` que não é preciso — e o cobre
+é o que **apaga** o texto, porque a fábrica recorta a serigrafia sobre a
+abertura de máscara. **Meio designador é pior que nenhum: parece um.**
+
+**A troca diz-se com números:** 8 → 0 a identificar a peça errada, 75 movidas;
+pagou-se `silk_overlap` +2 e +2, e `silk_over_copper` +2 numa placa. *Texto a
+tocar num traço lê-se; texto a apontar para a peça errada mente.*
+
+⚠️ **E entra no portão de fábrica, que é a única forma de não voltar.** Um
+`refs_apontam` que compara a distância à própria peça com a distância à mais
+próxima. Provado nos dois sentidos — defeito conhecido injectado, e o token que
+ele lê renomeado, para que a guarda grite em vez de aprovar zero peças (§2c).
+
 ### 11g-ter. A fronteira com a `/design-review`, no lado da placa
 
 A `/design-review` é o portão **visual**; o DRC é o **numérico**. Na serigrafia

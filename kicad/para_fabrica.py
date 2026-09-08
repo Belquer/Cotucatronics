@@ -54,7 +54,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.7.0"
+VERSAO = "0.8.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
@@ -288,6 +288,25 @@ def uma(nome, incompleta):
     if rfi.returncode and "nao falam da peca" in (rfi.stdout + rfi.stderr):
         recusas.append("ha ficha(s) tecnicas que nao falam da peca — ver "
                        "docs/datasheets/README.md")
+
+    # ⚠️⚠️ E CADA REFERENCIA TEM DE APONTAR PARA A PROPRIA PECA.
+    #
+    # Nenhum DRC responde a isto: uma referencia a 11,5 mm da sua peca e a 5 mm
+    # da vizinha nao colide com nada, nao esta sobre cobre e nao sai da placa —
+    # e identifica a peca errada. Quem solda a mao le o designador mais proximo.
+    #
+    # ⚠️ Isto so entra aqui porque um portao e a UNICA forma de nao voltar. A
+    # §11g-ter da skill ja tinha previsto o defeito por escrito, e ele esteve la
+    # na mesma, em 8 referencias, porque nada o media. Diagnosticado e por
+    # instrumentar e o estado em que um defeito vive mais tempo.
+    rap = subprocess.run([sys.executable, os.path.join(AQUI, "refs_apontam.py"),
+                          pcb], capture_output=True, text=True)
+    for l in (rap.stdout or "").splitlines():
+        if "pecas ·" in l:
+            print("   designadores  %s" % l.split("·", 1)[1].strip())
+    if rap.returncode:
+        recusas.append("referencia(s) a identificar a peca errada: %s"
+                       % " ".join(re.findall(r"⚠️ (\S+)", rap.stdout)))
 
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:

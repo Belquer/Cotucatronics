@@ -640,7 +640,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP2"
-			(at 0 2.6 0)
+			(at 1.6 1.6 0)
 			(layer "F.SilkS")
 			(uuid "e6e8ddad-1390-4f1f-b7f9-502ea4c3f2c4")
 			(effects
@@ -1332,7 +1332,7 @@
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C2"
-			(at 0 -11.5 0)
+			(at 0 2.6 0)
 			(layer "F.SilkS")
 			(uuid "5604f939-1127-4272-8ac1-b61c3d68fcf3")
 			(effects
@@ -2112,7 +2112,7 @@
 		(descr "JST XH series connector, B2B-XH-A (http://www.jst-mfg.com/product/pdf/eng/eXH.pdf)")
 		(tags "connector JST XH vertical")
 		(property "Reference" "J4"
-			(at 0 4.8 0)
+			(at -3.6 0 0)
 			(layer "F.SilkS")
 			(uuid "46529dbe-7ced-4a75-8a81-7e3188c1f0a6")
 			(effects
@@ -2385,7 +2385,7 @@
 		(descr "SOT, 3 Pin (JEDEC TO-236 Var AB https://www.jedec.org/document_search?search_api_views_fulltext=TO-236)")
 		(tags "SOT TO_SOT_SMD")
 		(property "Reference" "Q2"
-			(at 2.6 -2.6 0)
+			(at 2.6 0 0)
 			(layer "F.SilkS")
 			(uuid "cdadad9b-68d8-412d-9c71-5a3852a21f86")
 			(effects
@@ -2751,7 +2751,7 @@
 		(descr "SOT, 3 Pin (JEDEC TO-236 Var AB https://www.jedec.org/document_search?search_api_views_fulltext=TO-236)")
 		(tags "SOT TO_SOT_SMD")
 		(property "Reference" "Q1"
-			(at 2.6 -2.6 0)
+			(at -2.6 0 0)
 			(layer "F.SilkS")
 			(uuid "57013d0a-1f2c-4ccf-ba6f-c80ad33e66f3")
 			(effects
@@ -3117,7 +3117,7 @@
 		(descr "Potentiometer, vertical, Bourns PTV09A-1 Single, http://www.bourns.com/docs/Product-Datasheets/ptv09.pdf")
 		(tags "Potentiometer vertical Bourns PTV09A-1 Single")
 		(property "Reference" "RV2"
-			(at 0 -11.5 0)
+			(at -1.6 1.6 0)
 			(layer "F.SilkS")
 			(uuid "dbfad380-5e8f-4863-9d40-46e691ead6c8")
 			(effects
@@ -3371,7 +3371,7 @@
 		(descr "JST XH series connector, B2B-XH-A (http://www.jst-mfg.com/product/pdf/eng/eXH.pdf)")
 		(tags "connector JST XH vertical")
 		(property "Reference" "J5"
-			(at 0 -1.6 0)
+			(at -2.6 0 0)
 			(layer "F.SilkS")
 			(uuid "0b9b5697-7853-4f2e-a817-ee417a94981d")
 			(effects
@@ -3936,7 +3936,7 @@
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R1"
-			(at -2.6 2.6 0)
+			(at -1.6 1.6 0)
 			(layer "F.SilkS")
 			(uuid "f0766949-0f7c-4dd5-ac19-fe11c8cd895f")
 			(effects
@@ -4082,7 +4082,7 @@
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C5"
-			(at -3.6 0 0)
+			(at -1.6 -1.6 0)
 			(layer "F.SilkS")
 			(uuid "011a4c74-2c07-4223-9899-ce62ae1930ce")
 			(effects
@@ -4228,7 +4228,7 @@
 		(descr "Capacitor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf, https://docs.google.com/spreadsheets/d/1BsfQQcO9C6DZCsRaXUlFlo91Tg2WpOkGARC1WS5S8t0/edit?usp=sharing)")
 		(tags "capacitor")
 		(property "Reference" "C4"
-			(at 0 1.6 0)
+			(at 6 0 0)
 			(layer "F.SilkS")
 			(uuid "685626bd-7e14-4366-bac5-4c1fc1eaf59e")
 			(effects
@@ -5894,7 +5894,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP4"
-			(at -2.6 2.6 0)
+			(at -1.6 1.6 0)
 			(layer "F.SilkS")
 			(uuid "ff82f293-28db-4555-a878-97a88a164e0d")
 			(effects
@@ -5992,7 +5992,7 @@
 		(descr "JST XH series connector, B2B-XH-A (http://www.jst-mfg.com/product/pdf/eng/eXH.pdf)")
 		(tags "connector JST XH vertical")
 		(property "Reference" "J3"
-			(at 0 4.8 0)
+			(at -3.6 0 0)
 			(layer "F.SilkS")
 			(uuid "292bf74b-6d2c-4095-996a-af4148ba2cad")
 			(effects
@@ -6265,7 +6265,7 @@
 		(descr "Alps rotary encoder, EC11E... with switch, vertical shaft, http://www.alps.com/prod/info/E/HTML/Encoder/Incremental/EC11/EC11E15204A3.html")
 		(tags "rotary encoder")
 		(property "Reference" "SW1"
-			(at 3.6 0 0)
+			(at -2.6 0 0)
 			(layer "F.SilkS")
 			(uuid "b1701094-ca07-4d61-9669-ad0270cde9c6")
 			(effects
@@ -6663,7 +6663,7 @@
 		(descr "Potentiometer, vertical, Bourns PTV09A-1 Single, http://www.bourns.com/docs/Product-Datasheets/ptv09.pdf")
 		(tags "Potentiometer vertical Bourns PTV09A-1 Single")
 		(property "Reference" "RV1"
-			(at 0 -11.5 0)
+			(at -1.6 1.6 0)
 			(layer "F.SilkS")
 			(uuid "ad49b43c-cf6b-4e9d-9862-92f8fd15a93e")
 			(effects
@@ -6917,7 +6917,7 @@
 		(descr "Molex PicoBlade Connector System, 53047-0710, 7 Pins per row (http://www.molex.com/pdm_docs/sd/530470610_sd.pdf)")
 		(tags "connector Molex PicoBlade vertical")
 		(property "Reference" "J2"
-			(at 0 -11.5 0)
+			(at 1.6 0 0)
 			(layer "F.SilkS")
 			(uuid "ceb33a19-f3f0-4b9f-af67-18ad7c8f44ce")
 			(effects
@@ -7282,7 +7282,7 @@
 		(descr "SMD pad as test Point, diameter 1.5mm")
 		(tags "test point SMD pad")
 		(property "Reference" "TP5"
-			(at -2.6 0 0)
+			(at 1.6 1.6 0)
 			(layer "F.SilkS")
 			(uuid "a8acff01-14b6-4dac-ab21-9375305536fc")
 			(effects
@@ -7380,7 +7380,7 @@
 		(descr "Resistor SMD 0805 (2012 Metric), square (rectangular) end terminal, IPC-7351 nominal, (Body size source: IPC-SM-782 page 72, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf)")
 		(tags "resistor")
 		(property "Reference" "R4"
-			(at 0 2.6 0)
+			(at 0 1.6 0)
 			(layer "F.SilkS")
 			(uuid "8402a8ef-21a0-44fe-ac49-1dda01cf9aeb")
 			(effects

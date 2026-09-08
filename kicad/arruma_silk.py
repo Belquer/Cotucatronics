@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arruma_silk v0.7.0 — tira os campos de referencia de cima dos pads.
+"""arruma_silk v0.12.0 — tira os campos de referencia de cima dos pads.
 
 ⚠️ SERIGRAFIA SO. Nao toca em cobre, em pistas, em zonas nem em posicoes de
 peca: mexe apenas no `(at ...)` do campo `Reference` de cada footprint, que e
@@ -23,10 +23,40 @@ USO:  arruma_silk.py <ficheiro.kicad_pcb> [--escreve]
 """
 import io, math, os, re, sys
 
-VERSAO = "0.7.0"
+VERSAO = "0.12.0"
 NUM = r"-?\d+(?:\.\d+)?"
-RAIO_TXT = 1.6          # meia-altura tipica de um campo de referencia
+# ⚠️⚠️ UM DESIGNADOR E UM RECTANGULO LARGO E BAIXO, NAO UM CIRCULO.
+#
+# `RAIO_TXT = 1.6` modelava o texto como um disco: 1,6 mm em todas as
+# direccoes. Um `C24` a 1 mm de altura ocupa ~2,8 x 1,4 mm — o dobro na
+# horizontal e metade na vertical. O disco e simultaneamente GRANDE de mais em
+# cima (recusa posicoes boas) e PEQUENO de mais aos lados (aceita posicoes que
+# caem sobre um pad).
+#
+# Media-se pelo resultado: com o disco, arrumar as referencias comprava 3
+# `silk_over_copper` por placa que nao eram precisos. O DRC ve a caixa real do
+# texto; o modelo tinha de a ver tambem.
+#
+# ⚠️ 0,7 em por caractere e a largura de traço do KiCad, e e CONSERVADORA de
+# proposito — acusa antes do toque. Falso positivo custa mover um rotulo; falso
+# negativo custa um designador recortado pela mascara.
+def caixa_txt(texto, tam=1.0):
+    """(meia-largura, meia-altura) de um campo de referencia."""
+    return (max(len(texto), 1) * tam * 0.35 + 0.15, tam * 0.7)
+
+
+RAIO_TXT = 1.6          # so para as pistas, que sao finas e isotropicas
 PASSOS = [1.6, 2.6, 3.6, 4.8]
+# ⚠️ TECTO da distancia a propria peca. Sem ele, "livre" recompensa fugir para o
+# vazio: quanto mais longe, menos obstaculos — e o optimo de uma restricao sem
+# objectivo e sempre a borda da placa.
+TECTO_REF = 6.0
+# ⚠️ o recuo pode ir MAIS LONGE antes de aceitar cobre por cima. O tecto normal
+# e uma preferencia estetica; o criterio do dono e que garante a correccao, e
+# ele continua a valer a 9 mm. Entre "limpo a 8 mm da sua peca, e ainda a mais
+# proxima dela" e "recortado pela mascara a 3 mm", o legivel ganha.
+TECTO_RECUO = 9.0
+PASSOS_LONGE = [6.0, 7.2, 8.4]   # so o recuo os alcanca (ver TECTO_REF)
 
 
 def blocos(t):
@@ -191,7 +221,17 @@ def main():
     else:
         LIM = None
 
-    def livre(x, y, ignora, quem=None):
+    def livre(x, y, ignora, quem=None, so_cobre=False, caixa=(1.6, 1.6)):
+        """`so_cobre` larga a serigrafia e os vizinhos, e guarda o COBRE.
+
+        ⚠️ O recuo nao pode largar tudo de uma vez, porque os obstaculos nao
+        custam o mesmo. Tocar num traco de serigrafia da duas linhas brancas
+        cruzadas — le-se. Tocar num pad faz a fabrica RECORTAR o texto sobre a
+        abertura de mascara: o que fica e meio designador, e meio designador e
+        pior que nenhum, porque parece um.
+
+        A v0.9.0 largava as duas juntas e comprou 6 `silk_over_copper` que nao
+        precisava de comprar."""
         if LIM and not (LIM[0] <= x <= LIM[2] and LIM[1] <= y <= LIM[3]):
             return False
         # ⚠️ A ISENCAO DOS PROPRIOS PADS CAIU, e a medicao e que decidiu.
@@ -204,8 +244,9 @@ def main():
         #
         # Sem a isencao, quem nao tiver sitio fica onde esta e diz — que ja era
         # o comportamento previsto, e e melhor que ser empurrado para pior.
+        hw, hh = caixa
         for px, py, pr in pads:
-            if abs(px - x) < pr + RAIO_TXT and abs(py - y) < pr + RAIO_TXT:
+            if abs(px - x) < pr + hw and abs(py - y) < pr + hh:
                 return False
         # ⚠️ E AS PISTAS TAMBEM, que e a mesma regra do §11c: todo teste de
         # espaco olha pads E pistas. Depois de rotear, o cobre esta em todo o
@@ -216,6 +257,8 @@ def main():
             u = 0.0 if L2 == 0 else max(0.0, min(1.0, ((x - a1) * dx + (y - b1) * dy) / L2))
             if math.hypot(x - (a1 + u * dx), y - (b1 + u * dy)) < RAIO_TXT * 0.8:
                 return False
+        if so_cobre:
+            return True
         for _r, (tx, ty) in postos.items():
             if _r == quem:
                 continue      # ⚠️ uma referencia nao colide consigo propria
@@ -230,7 +273,8 @@ def main():
             dx, dy = a2 - a1, b2 - b1
             L2 = dx * dx + dy * dy
             u = 0.0 if L2 == 0 else max(0.0, min(1.0, ((x - a1) * dx + (y - b1) * dy) / L2))
-            if math.hypot(x - (a1 + u * dx), y - (b1 + u * dy)) < RAIO_TXT * 0.7:
+            qx, qy = a1 + u * dx, b1 + u * dy
+            if abs(qx - x) < caixa[0] and abs(qy - y) < caixa[1]:
                 return False
         return True
 
@@ -252,6 +296,9 @@ def main():
     # estar livre, por causa de uma mudanca da propria ferramenta.
     #
     # Com todas as posicoes conhecidas a partida, a ordem deixa de importar.
+    # ⚠️ centro de CADA peca, para saber de quem e o texto mais proximo
+    centros = [(_r, _fx, _fy) for _i, _j, _bl, _r, _fx, _fy, _a, _m in pecas]
+
     postos = {}
     for _i, _j, _bl, _ref, _fx, _fy, _ang, _meus in pecas:
         _m = re.search(r'\(property "Reference" "[^"]+"\s*\n\s*\(at (' + NUM
@@ -259,7 +306,7 @@ def main():
         if _m:
             postos[_ref] = abs_do_campo(_fx, _fy, _ang,
                                         float(_m.group(1)), float(_m.group(2)))
-    movidos, presos = [], []
+    movidos, presos, apertados = [], [], []
     novo = t
     # ⚠️ de tras para a frente: cada substituicao muda os indices dos blocos
     # seguintes, e mexer do fim para o inicio nao os invalida.
@@ -285,31 +332,103 @@ def main():
         #
         # Os pads ja usavam esta transformacao (ver acima); so o campo e que
         # nao. Duas contas para a mesma mudanca de espaco, e so uma foi feita.
+        cx_txt = caixa_txt(ref, 1.0)
         rx, ry = abs_do_campo(fx, fy, ang, dx, dy)
-        if livre(rx, ry, set(meus), ref):
+
+        # ⚠️⚠️ NAO CHEGA NAO COLIDIR: A REFERENCIA TEM DE APONTAR PARA A PECA.
+        #
+        # Ate a v0.7.0 isto so mexia no que COLIDIA. Uma referencia a 11,5 mm da
+        # propria peca nao colide com nada — e fica la, livre e inutil, a
+        # apontar para a vizinha. Na placa medida, 14 das 70 estavam mais perto
+        # de OUTRA peca do que da sua, e a ferramenta dava tudo por arrumado.
+        #
+        # A §11g-ter ja tinha previsto exactamente isto: "uma referencia
+        # tecnicamente livre pode estar encostada a peca errada, e nenhum DRC
+        # tem opiniao sobre isso". Estava escrito e nao estava implementado.
+        #
+        # ⚠️ O que muda e a NATUREZA do problema: nao colidir e uma RESTRICAO,
+        # ficar perto da propria peca e um OBJECTIVO. Uma restricao satisfaz-se
+        # com o primeiro candidato que passa; um objectivo obriga a ver todos e
+        # a escolher. Foi por tratar isto como restricao que o primeiro
+        # candidato "para fora da placa" ganhava sempre.
+        cands = [(dx, dy, rx, ry)]
+        for d in PASSOS + PASSOS_LONGE:
+            for ex, ey in ((0, d), (0, -d), (d, 0), (-d, 0),
+                           (d, d), (d, -d), (-d, d), (-d, -d)):
+                cands.append((None, None, fx + ex, fy + ey))
+
+        melhor = None
+        for cdx, cdy, X, Y in cands:
+            if not livre(X, Y, set(meus), ref, caixa=cx_txt):
+                continue
+            dist = math.hypot(X - fx, Y - fy)
+            if dist > TECTO_REF:
+                continue
+            # ⚠️ E O CRITERIO DECISIVO: a peca mais proxima do texto tem de ser
+            # a DONA dele. Uma referencia a 3 mm da sua peca mas a 2 mm da
+            # vizinha identifica a peca errada — e isso nao e um aviso
+            # estetico, e uma instrucao errada para quem solda a mao.
+            dono = min(((math.hypot(X - ox, Y - oy), oref)
+                        for oref, ox, oy in centros), key=lambda z: z[0])[1]
+            if dono != ref:
+                continue
+            if melhor is None or dist < melhor[0]:
+                melhor = (dist, cdx, cdy, X, Y)
+
+        if melhor is None:
+            # ⚠️⚠️ RECUO GRADUADO, e a ordem das preferencias e uma DECISAO.
+            #
+            # Nao havendo sitio limpo, o que fazer? A v0.8.0 deixava ficar onde
+            # estava — e onde estava eram os `-11,5 mm` que o `sincroniza_pcb`
+            # poe em toda peca nova: limpo, longe, e a apontar para a vizinha.
+            #
+            # Uma referencia encostada a peca CERTA mas a tocar num traco
+            # LE-SE. Uma referencia limpa a 11,5 mm identifica outra peca, e
+            # isso nao e feiura — e uma instrucao errada para quem solda a mao.
+            # Entre as duas, escolhe-se a legivel.
+            #
+            # Por isso a segunda volta larga a exigencia de estar livre e
+            # mantem as duas que importam: o tecto e o dono. E diz-se quantas
+            # sairam assim, que e o preco a ser pago com os olhos abertos.
+            perto = None
+            # ⚠️ TRES degraus, e a ordem e a escala do estrago:
+            #    1) limpo de cobre, perto        2) limpo de cobre, mais longe
+            #    3) qualquer coisa — ultimo recurso, e conta-se
+            for etapa, tecto in ((True, TECTO_REF), (True, TECTO_RECUO),
+                                 (False, TECTO_RECUO)):
+                for cdx, cdy, X, Y in cands:
+                    dist = math.hypot(X - fx, Y - fy)
+                    if dist > tecto:
+                        continue
+                    if etapa and not livre(X, Y, set(meus), ref, so_cobre=True,
+                                       caixa=cx_txt):
+                        continue
+                    dono = min(((math.hypot(X - ox, Y - oy), oref)
+                                for oref, ox, oy in centros), key=lambda z: z[0])[1]
+                    if dono != ref:
+                        continue
+                    if perto is None or dist < perto[0]:
+                        perto = (dist, cdx, cdy, X, Y)
+                if perto is not None:
+                    break
+            if perto is None:
+                presos.append(ref)      # fica onde estava; ja esta em `postos`
+                continue
+            melhor = perto
+            apertados.append(ref)
+        _, cdx, cdy, X, Y = melhor
+        if cdx is not None:             # o melhor e onde ja estava
+            postos[ref] = (X, Y)
             continue
-        fora_y = 1 if fy >= cy else -1
-        fora_x = 1 if fx >= cx else -1
-        cand = []
-        for d in PASSOS:
-            cand += [(0, d * fora_y), (0, -d * fora_y),
-                     (d * fora_x, 0), (-d * fora_x, 0),
-                     (d * fora_x, d * fora_y), (-d * fora_x, -d * fora_y)]
-        for ndx, ndy in cand:
-            if livre(fx + ndx, fy + ndy, set(meus), ref):
-                # ⚠️ E A VOLTA TAMBEM: os candidatos sao deltas no espaco da
-                # PLACA, e o campo grava-se no espaco da PECA. Escrever o delta
-                # cru fazia o KiCad roda-lo outra vez ao desenhar — a peca
-                # acabava com o texto num terceiro sitio, nem onde estava nem
-                # onde a ferramenta o pos. O mesmo erro, na direccao contraria.
-                pdx, pdy = campo_do_abs(ang, ndx, ndy)
-                a, b = m.span(1)[0], m.span(2)[1]
-                novo = novo[:i + a] + ("%s %s" % (num(pdx), num(pdy))) + novo[i + b:]
-                postos[ref] = (fx + ndx, fy + ndy)
-                movidos.append((ref, (dx, dy), (float(num(pdx)), float(num(pdy)))))
-                break
-        else:
-            presos.append(ref)   # fica onde estava; ja esta em `postos`
+        # ⚠️ E A VOLTA TAMBEM: os candidatos sao deltas no espaco da PLACA, e o
+        # campo grava-se no espaco da PECA. Escrever o delta cru fazia o KiCad
+        # roda-lo outra vez ao desenhar — a peca acabava com o texto num
+        # terceiro sitio, nem onde estava nem onde a ferramenta o pos.
+        pdx, pdy = campo_do_abs(ang, X - fx, Y - fy)
+        a_, b_ = m.span(1)[0], m.span(2)[1]
+        novo = novo[:i + a_] + ("%s %s" % (num(pdx), num(pdy))) + novo[i + b_:]
+        postos[ref] = (X, Y)
+        movidos.append((ref, (dx, dy), (float(num(pdx)), float(num(pdy)))))
 
     # ⚠️ AUTO-TESTE: a ferramenta nao termina tendo CRIADO uma sobreposicao.
     # Foi assim que o par R21/RV1 apareceu sem ninguem dar por ele — o relatorio
@@ -331,6 +450,11 @@ def main():
           % (len(pecas), len(movidos), len(presos)), file=sys.stderr)
     for ref, de, para in sorted(movidos):
         print("     %-5s (%+g,%+g) -> (%+g,%+g)" % (ref, de[0], de[1], para[0], para[1]),
+              file=sys.stderr)
+    if apertados:
+        print("  %d aproximada(s) da propria peca ACEITANDO sobreposicao: %s\n"
+              "     (legivel encostado a peca certa > limpo a apontar para a "
+              "errada)" % (len(apertados), " ".join(sorted(apertados))),
               file=sys.stderr)
     if presos:
         print("  ⚠️ sem sitio: %s — ficam onde estavam." % " ".join(sorted(presos)),
