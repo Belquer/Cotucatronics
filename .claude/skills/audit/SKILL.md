@@ -116,6 +116,15 @@ produzido por `gerar_ccmap.py` a partir do `manifest.h`, e traz aviso de
 > gerada à mão é trabalho que a próxima geração desfaz; corrigir a de mão
 > quando existe uma gerada é manter viva a que mente.
 
+⚠️ **E ao apontar a de mão para a fonte, confirma que a fonte não aponta de
+volta.** O `ROTEIRO-KICAD` §5 listava as 26 vias do IDC e passou a dizer «vê o
+gerador» — mas o cabeçalho do gerador dizia «a pinagem sai do §5». Ficavam os
+dois a apontar um para o outro, e nenhum era a fonte.
+
+> **Documento explica; gerador afirma.** No §5 ficou só o que **não** se deduz
+> da tabela — porque é que as terras estão onde estão, e os 6 dB medidos com o
+> painel aceso. Isso não vive no gerador e morreria com a tabela.
+
 Como descobrir: `grep -rl '<nome do doc>' --include='*.py' --include='*.sh'`.
 
 ### 8. Contradição intra-ficheiro
@@ -277,6 +286,23 @@ O achado é duplicar o **corpo**. A pergunta é «este sítio reconstrói o que 
 está **por envelhecer**. Reportar só quando já divergiu é reportar o incêndio,
 não a instalação eléctrica — e a divergência, quando chega, não dá erro.
 
+## FERRAMENTA NÃO CORRIDA NÃO EXISTE
+
+A classe 14 foi escrita, revista e dada por boa. Depois **corri-a**, e ela
+devolvia oito acertos por ficheiro, metade deles **leitores** da forma em vez
+de emissores dela — a classe 10 a acontecer dentro da passada que eu tinha
+acabado de escrever para apanhar defeitos. O discriminador que a torna
+utilizável (ancorar na acumulação, não na forma) só apareceu na primeira
+corrida real.
+
+> **Ferramenta consertada e não corrida não está consertada; ferramenta nova e
+> não corrida não existe.** Uma passada por estrear não é uma passada fraca —
+> é uma promessa, e as promessas não apanham defeitos.
+
+E corre-se **sobre a árvore inteira**, não sobre o caso que a motivou: foi ao
+correr sobre todos os `gera_*.py` — e não sobre o ficheiro onde o defeito
+nasceu — que a classe 14 encontrou o terceiro gerador.
+
 ## A REGRA DO PORQUÊ — quando o nome sai e quando o registo sai
 
 Ao apagar um nome de toda a árvore, cada ocorrência é uma de duas coisas:
@@ -316,6 +342,17 @@ git ls-files -z | xargs -0 grep -lI -i '<termo>'    # tem de dar VAZIO
 
 O último não é `grep -rni` numa lista de pastas escrita à mão — é a árvore
 inteira pelo git. Foi a lista à mão que deixou o `check_repo.sh` de fora.
+
+> **Quando a afirmação é sobre um CONJUNTO, a verificação conta o conjunto —
+> nunca a amostra.** Converti dois geradores, relatei «os dois geradores», e
+> havia um terceiro a minar `uuid4` na folha ao lado: contei os que tinha
+> olhado, não os que existem. `grep -c uuid4 gera_*.py` custa um segundo e não
+> depende de memória nenhuma.
+>
+> A forma da armadilha é sempre a mesma — uma lista escrita à mão a fazer de
+> universo. A lista de pastas, os dois geradores, os ficheiros que me lembro de
+> ter aberto. **O universo pergunta-se ao `git`, ao `glob`, ao gerador; não à
+> memória de quem audita.**
 
 Relatar: ficheiros tocados, contadores **antes → depois**, achados que não
 foram consertados (e porquê), e as perdas de registo, uma a uma.
