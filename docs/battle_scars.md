@@ -9874,3 +9874,59 @@ este texto?* — e o portão recusa o pacote. Provado nos dois sentidos: com o
 defeito conhecido injectado (`R9` a −11,5 mm → apanhado), e com um defeito
 desconhecido (renomear o token que ele lê → **grita «leitura incompleta»** em
 vez de aprovar zero peças).
+
+## 15ej — a minha guarda mediu com régua própria e aprovou o que o portão reprova
+
+O dB mandou o render outra vez. Fui medir a camada que ele estava a olhar — a do
+editor, com tudo — e ela é outra coisa:
+
+```
+F.Silkscreen (imprime)      6 colisões · texto×texto  0
+F.Fab        (não imprime) 114 colisões · texto×texto 29
+```
+
+**Eu media a camada que sai da fábrica; ele olhava a camada em que trabalha.**
+As duas contam, por razões diferentes, e nenhuma é a outra. Dos 336 textos da
+placa, **210 estão na F.Fab** — é daí que vêm os pares (`C14` duas vezes: a
+referência na serigrafia e o `${REFERENCE}` na Fab).
+
+Fui arrumar a Fab com a mesma ferramenta. Medido, deu:
+
+| | antes | depois | |
+|---|---|---|---|
+| cérebro Fab | 114 · 29 | 105 · 16 | ↓ |
+| painel Fab | 51 · 10 | 68 · 13 | ↑ |
+| **painel SILK** | **6 · 0** | **7 · 1** | ↑ **e é impressa** |
+
+⚠️ **Duas de quatro pioraram, e uma na camada que se fabrica.** Não se troca uma
+regressão no que sai da fábrica por uma melhoria no que se lê. Revertido.
+
+⚠️ **E o auto-teste não apanhou nada disto**, que é o achado que fica. Ele usa o
+meu modelo de caixa; o `svg_colisoes` usa o dele — 0,55 em por caractere. Dois
+modelos do mesmo texto, e **o meu é o mais permissivo**.
+
+> **Uma guarda que mede com régua própria não guarda contra o critério de quem
+> julga.** Ela aprovou honestamente, segundo a régua dela, um arranjo que o
+> portão reprova. Não foi um bug: foram duas réguas, e a que decide não era a
+> que media.
+
+**O conserto é a «prova externa» desta casa, virada para dentro:** antes de
+gravar, a ferramenta exporta a serigrafia, corre o `svg_colisoes` no antes e no
+depois, e **recusa se o número subir**. Na primeira corrida a seguir:
+
+```
+cerebro  gravado · abre ✓ · texto×texto 0 -> 0
+painel   *** o portao piora: texto×texto 0 -> 1. Nada gravado.
+```
+
+⚠️ **E entrou também a guarda que faltava e que quase custou a placa:** a
+segunda passagem escrevia com deslocamentos calculados sobre o texto original,
+já modificado pela primeira — comeu o espaço de um `(at 0 1.65 0)` e deixou
+`(at0 1.65 0)`. **O KiCad recusou o painel inteiro, e eu só dei por isso porque
+o comando seguinte falhou.** Agora grava-se numa cópia, confirma-se que o KiCad
+a abre, e só então se escreve por cima do original.
+
+> O ficheiro já avisava — *"cada substituição muda os índices dos blocos
+> seguintes"* — e a regra estava aplicada DENTRO de uma passagem e não ENTRE
+> passagens. **Acrescentar a segunda quebrou uma invariante que estava escrita e
+> que eu li como sendo sobre outra coisa.**

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arruma_silk v0.12.0 — tira os campos de referencia de cima dos pads.
+"""arruma_silk v0.17.0 — arruma os textos das DUAS camadas.
 
 ⚠️ SERIGRAFIA SO. Nao toca em cobre, em pistas, em zonas nem em posicoes de
 peca: mexe apenas no `(at ...)` do campo `Reference` de cada footprint, que e
@@ -21,9 +21,11 @@ a olhar.
 USO:  arruma_silk.py <ficheiro.kicad_pcb> [--escreve]
       sem --escreve, so diz o que faria.
 """
-import io, math, os, re, sys
+import io, math, os, re, subprocess, sys
 
-VERSAO = "0.12.0"
+KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+
+VERSAO = "0.17.0"
 NUM = r"-?\d+(?:\.\d+)?"
 # ⚠️⚠️ UM DESIGNADOR E UM RECTANGULO LARGO E BAIXO, NAO UM CIRCULO.
 #
@@ -221,7 +223,8 @@ def main():
     else:
         LIM = None
 
-    def livre(x, y, ignora, quem=None, so_cobre=False, caixa=(1.6, 1.6)):
+    def livre(x, y, ignora, quem=None, so_cobre=False, caixa=(1.6, 1.6),
+              so_texto=False):
         """`so_cobre` larga a serigrafia e os vizinhos, e guarda o COBRE.
 
         ⚠️ O recuo nao pode largar tudo de uma vez, porque os obstaculos nao
@@ -234,6 +237,18 @@ def main():
         precisava de comprar."""
         if LIM and not (LIM[0] <= x <= LIM[2] and LIM[1] <= y <= LIM[3]):
             return False
+        if so_texto:
+            # ⚠️ A F.Fab NAO E IMPRESSA. Passar por cima de um pad ou de uma
+            # pista ali nao custa nada — o que custa e texto por cima de texto,
+            # porque essa camada e a que se LE no editor enquanto se trabalha.
+            # Aplicar-lhe as regras da serigrafia seria recusar posicoes boas
+            # por um defeito que nao existe naquela camada.
+            for _r, (tx, ty, thw, thh) in postos.items():
+                if _r == quem:
+                    continue
+                if abs(tx - x) < thw + caixa[0] and abs(ty - y) < thh + caixa[1]:
+                    return False
+            return True
         # ⚠️ A ISENCAO DOS PROPRIOS PADS CAIU, e a medicao e que decidiu.
         #
         # Ela existia porque a referencia por cima do proprio pad e o caso
@@ -259,10 +274,10 @@ def main():
                 return False
         if so_cobre:
             return True
-        for _r, (tx, ty) in postos.items():
+        for _r, (tx, ty, thw, thh) in postos.items():
             if _r == quem:
                 continue      # ⚠️ uma referencia nao colide consigo propria
-            if abs(tx - x) < 3.0 and abs(ty - y) < 2.0:
+            if abs(tx - x) < thw + caixa[0] and abs(ty - y) < thh + caixa[1]:
                 return False
         # ⚠️ SEM `ignora` AQUI. Nos pads ignoram-se os da propria peca, porque a
         # referencia por cima do seu proprio pad e o caso normal de um SMD
@@ -299,169 +314,286 @@ def main():
     # ⚠️ centro de CADA peca, para saber de quem e o texto mais proximo
     centros = [(_r, _fx, _fy) for _i, _j, _bl, _r, _fx, _fy, _a, _m in pecas]
 
-    postos = {}
-    for _i, _j, _bl, _ref, _fx, _fy, _ang, _meus in pecas:
-        _m = re.search(r'\(property "Reference" "[^"]+"\s*\n\s*\(at (' + NUM
-                       + r") (" + NUM + r")( " + NUM + r")?\)", _bl)
-        if _m:
-            postos[_ref] = abs_do_campo(_fx, _fy, _ang,
-                                        float(_m.group(1)), float(_m.group(2)))
-    movidos, presos, apertados = [], [], []
+    # ⚠️⚠️ DUAS PASSAGENS, UMA POR CAMADA — e as regras nao sao as mesmas.
+    #
+    # A `Reference` vive na F.SilkS e E IMPRESSA: obstaculos sao pads, pistas,
+    # serigrafia e vizinhos. A `Value` vive na F.Fab, que NAO e impressa: ali o
+    # unico defeito e texto por cima de texto, porque aquela camada existe para
+    # se LER no editor enquanto se trabalha.
+    #
+    # ⚠️ Foi por so olhar a serigrafia que a placa parecia arrumada e o dB
+    # continuava a ver desordem: a vista do editor mostra as duas, e a F.Fab
+    # tinha 114 colisoes contra 6 da serigrafia. **Eu media a camada que sai da
+    # fabrica; ele olhava a camada em que trabalha.** As duas contam, por
+    # razoes diferentes, e nenhuma das duas e a outra.
     novo = t
+    relatorio = []
+    # ⚠️⚠️ A PASSAGEM DA F.Fab ESTA DESLIGADA POR OMISSAO, E ISSO E UM RESULTADO.
+    #
+    # A ideia era boa: a F.Fab nao e impressa, mas e a camada que se LE no
+    # editor, e tinha 114 colisoes contra 6 da serigrafia. Implementada e
+    # medida, deu isto:
+    #
+    #     cerebro  Fab  114 -> 105   texto×texto 29 -> 16   melhorou
+    #     painel   Fab   51 ->  68   texto×texto 10 -> 13   PIOROU
+    #     painel   SILK   6 ->   7   texto×texto  0 ->  1   PIOROU, e e impressa
+    #
+    # ⚠️ Duas de quatro pioraram, e uma delas na camada que sai da fabrica. Nao
+    # se troca uma regressao no que se fabrica por uma melhoria no que se le.
+    #
+    # ⚠️ E o auto-teste NAO a apanhou, o que e o achado mais util daqui: ele usa
+    # o meu modelo de caixa e o portao usa o do `svg_colisoes` (0,55 em por
+    # caractere). Dois modelos do mesmo texto, e o meu e o mais permissivo — por
+    # isso a minha guarda aprovou o que o portao reprovou. **Uma guarda que mede
+    # com regua propria nao guarda contra o criterio de quem julga.**
+    #
+    # Fica com `--fab` para se continuar a trabalhar nela, e fora do caminho
+    # ate as quatro linhas descerem.
+    passagens = [("Reference", "F.SilkS", False)]
+    if "--fab" in sys.argv:
+        passagens.append(("Value", "F.Fab", True))
+    for PROP, CAMADA, SO_TXT in passagens:
+        # ⚠️⚠️ OS DESLOCAMENTOS SAO RECALCULADOS SOBRE O TEXTO JA MODIFICADO.
+        #
+        # O laco escreve por posicao absoluta — `novo[:i+a] + ... + novo[i+b:]`
+        # — e a primeira passagem MUDA O COMPRIMENTO do texto. A segunda, a
+        # correr com os `i` da leitura original, escrevia deslocada: no painel
+        # comeu o espaco de um `(at 0 1.65 0)` e deixou `(at0 1.65 0)`, e o
+        # KiCad recusou a placa inteira.
+        #
+        # ⚠️ O ficheiro ja avisava disto tres linhas abaixo — "cada substituicao
+        # muda os indices dos blocos seguintes" — e a regra estava aplicada
+        # DENTRO de uma passagem (por isso se anda de tras para a frente) e nao
+        # ENTRE passagens. Acrescentar a segunda passagem quebrou uma invariante
+        # que estava escrita e que eu li como sendo sobre outra coisa.
+        pecas = []
+        for _i, _j, _bl in blocos(novo):
+            _a = re.search(r"\(at (" + NUM + r") (" + NUM + r")(?: (" + NUM + r"))?\)", _bl)
+            _r = re.search(r'\(property "Reference" "([^"]+)"', _bl)
+            if not _a or not _r:
+                continue
+            pecas.append((_i, _j, _bl, _r.group(1), float(_a.group(1)),
+                          float(_a.group(2)),
+                          math.radians(float(_a.group(3) or 0)), []))
+        postos = {}
+        for _i, _j, _bl, _ref, _fx, _fy, _ang, _meus in pecas:
+            _m = re.search(r'\(property "%s" "([^"]*)"\s*\n\s*\(at (' % PROP + NUM
+                           + r") (" + NUM + r")( " + NUM + r")?\)", _bl)
+            if _m:
+                _x, _y = abs_do_campo(_fx, _fy, _ang,
+                                      float(_m.group(2)), float(_m.group(3)))
+                # ⚠️ a CAIXA vai junto: um `V_TRILHO_A2` ocupa ~8 mm e um `R9`
+                # ocupa ~1 mm. Guardar so o ponto obriga o teste a inventar um
+                # tamanho — e ele inventou uma caixa fixa de 3x2, que aprovava
+                # dois valores longos a 4 mm um do outro.
+                postos[_ref] = (_x, _y) + caixa_txt(_m.group(1))
+        movidos, presos, apertados = [], [], []
     # ⚠️ de tras para a frente: cada substituicao muda os indices dos blocos
     # seguintes, e mexer do fim para o inicio nao os invalida.
-    for i, j, bl, ref, fx, fy, ang, meus in sorted(pecas, key=lambda z: -z[0]):
-        m = re.search(r'\(property "Reference" "[^"]+"\s*\n\s*\(at (' + NUM + r") ("
-                      + NUM + r")( " + NUM + r")?\)", bl)
-        if not m:
-            continue
-        dx, dy = float(m.group(1)), float(m.group(2))
-        # ⚠️⚠️ O `(at ...)` DO CAMPO E RELATIVO AO FOOTPRINT, E RODA COM ELE.
-        #
-        # Ate a v0.4.0 isto fazia `fx + dx, fy + dy` — somava um offset do
-        # espaco da PECA a uma coordenada do espaco da PLACA. Nas pecas a 0°
-        # dava certo por acidente, e nas rodadas punha o texto num sitio que
-        # nao existe: o `U2` (Daisy, 180°) foi avaliado em y=112,66 quando esta
-        # em y=105,46 — **7,2 mm de distancia, do outro lado da peca**.
-        #
-        # ⚠️ E o modo de falhar e o pior que ha: la nao havia nada, logo a
-        # ferramenta disse LIVRE e deu a referencia por arrumada. O DRC do
-        # KiCad, esse, viu `silk_over_copper` entre o campo do U2 e o pad 2.
-        # Uma ferramenta que mede no sitio errado nao reprova nada — aprova
-        # tudo, e com ar de quem verificou.
-        #
-        # Os pads ja usavam esta transformacao (ver acima); so o campo e que
-        # nao. Duas contas para a mesma mudanca de espaco, e so uma foi feita.
-        cx_txt = caixa_txt(ref, 1.0)
-        rx, ry = abs_do_campo(fx, fy, ang, dx, dy)
-
-        # ⚠️⚠️ NAO CHEGA NAO COLIDIR: A REFERENCIA TEM DE APONTAR PARA A PECA.
-        #
-        # Ate a v0.7.0 isto so mexia no que COLIDIA. Uma referencia a 11,5 mm da
-        # propria peca nao colide com nada — e fica la, livre e inutil, a
-        # apontar para a vizinha. Na placa medida, 14 das 70 estavam mais perto
-        # de OUTRA peca do que da sua, e a ferramenta dava tudo por arrumado.
-        #
-        # A §11g-ter ja tinha previsto exactamente isto: "uma referencia
-        # tecnicamente livre pode estar encostada a peca errada, e nenhum DRC
-        # tem opiniao sobre isso". Estava escrito e nao estava implementado.
-        #
-        # ⚠️ O que muda e a NATUREZA do problema: nao colidir e uma RESTRICAO,
-        # ficar perto da propria peca e um OBJECTIVO. Uma restricao satisfaz-se
-        # com o primeiro candidato que passa; um objectivo obriga a ver todos e
-        # a escolher. Foi por tratar isto como restricao que o primeiro
-        # candidato "para fora da placa" ganhava sempre.
-        cands = [(dx, dy, rx, ry)]
-        for d in PASSOS + PASSOS_LONGE:
-            for ex, ey in ((0, d), (0, -d), (d, 0), (-d, 0),
-                           (d, d), (d, -d), (-d, d), (-d, -d)):
-                cands.append((None, None, fx + ex, fy + ey))
-
-        melhor = None
-        for cdx, cdy, X, Y in cands:
-            if not livre(X, Y, set(meus), ref, caixa=cx_txt):
+        for i, j, bl, ref, fx, fy, ang, meus in sorted(pecas, key=lambda z: -z[0]):
+            m = re.search(r'\(property "%s" "([^"]*)"\s*\n\s*\(at (' % PROP + NUM
+                          + r") (" + NUM + r")( " + NUM + r")?\)", bl)
+            if not m:
                 continue
-            dist = math.hypot(X - fx, Y - fy)
-            if dist > TECTO_REF:
-                continue
-            # ⚠️ E O CRITERIO DECISIVO: a peca mais proxima do texto tem de ser
-            # a DONA dele. Uma referencia a 3 mm da sua peca mas a 2 mm da
-            # vizinha identifica a peca errada — e isso nao e um aviso
-            # estetico, e uma instrucao errada para quem solda a mao.
-            dono = min(((math.hypot(X - ox, Y - oy), oref)
-                        for oref, ox, oy in centros), key=lambda z: z[0])[1]
-            if dono != ref:
-                continue
-            if melhor is None or dist < melhor[0]:
-                melhor = (dist, cdx, cdy, X, Y)
-
-        if melhor is None:
-            # ⚠️⚠️ RECUO GRADUADO, e a ordem das preferencias e uma DECISAO.
+            dx, dy = float(m.group(2)), float(m.group(3))
+            # ⚠️⚠️ O `(at ...)` DO CAMPO E RELATIVO AO FOOTPRINT, E RODA COM ELE.
             #
-            # Nao havendo sitio limpo, o que fazer? A v0.8.0 deixava ficar onde
-            # estava — e onde estava eram os `-11,5 mm` que o `sincroniza_pcb`
-            # poe em toda peca nova: limpo, longe, e a apontar para a vizinha.
+            # Ate a v0.4.0 isto fazia `fx + dx, fy + dy` — somava um offset do
+            # espaco da PECA a uma coordenada do espaco da PLACA. Nas pecas a 0°
+            # dava certo por acidente, e nas rodadas punha o texto num sitio que
+            # nao existe: o `U2` (Daisy, 180°) foi avaliado em y=112,66 quando esta
+            # em y=105,46 — **7,2 mm de distancia, do outro lado da peca**.
             #
-            # Uma referencia encostada a peca CERTA mas a tocar num traco
-            # LE-SE. Uma referencia limpa a 11,5 mm identifica outra peca, e
-            # isso nao e feiura — e uma instrucao errada para quem solda a mao.
-            # Entre as duas, escolhe-se a legivel.
+            # ⚠️ E o modo de falhar e o pior que ha: la nao havia nada, logo a
+            # ferramenta disse LIVRE e deu a referencia por arrumada. O DRC do
+            # KiCad, esse, viu `silk_over_copper` entre o campo do U2 e o pad 2.
+            # Uma ferramenta que mede no sitio errado nao reprova nada — aprova
+            # tudo, e com ar de quem verificou.
             #
-            # Por isso a segunda volta larga a exigencia de estar livre e
-            # mantem as duas que importam: o tecto e o dono. E diz-se quantas
-            # sairam assim, que e o preco a ser pago com os olhos abertos.
-            perto = None
-            # ⚠️ TRES degraus, e a ordem e a escala do estrago:
-            #    1) limpo de cobre, perto        2) limpo de cobre, mais longe
-            #    3) qualquer coisa — ultimo recurso, e conta-se
-            for etapa, tecto in ((True, TECTO_REF), (True, TECTO_RECUO),
-                                 (False, TECTO_RECUO)):
-                for cdx, cdy, X, Y in cands:
-                    dist = math.hypot(X - fx, Y - fy)
-                    if dist > tecto:
-                        continue
-                    if etapa and not livre(X, Y, set(meus), ref, so_cobre=True,
-                                       caixa=cx_txt):
-                        continue
-                    dono = min(((math.hypot(X - ox, Y - oy), oref)
-                                for oref, ox, oy in centros), key=lambda z: z[0])[1]
-                    if dono != ref:
-                        continue
-                    if perto is None or dist < perto[0]:
-                        perto = (dist, cdx, cdy, X, Y)
-                if perto is not None:
-                    break
-            if perto is None:
-                presos.append(ref)      # fica onde estava; ja esta em `postos`
+            # Os pads ja usavam esta transformacao (ver acima); so o campo e que
+            # nao. Duas contas para a mesma mudanca de espaco, e so uma foi feita.
+            # ⚠️ a caixa e do TEXTO que se move: `R9` na serigrafia, `2u2 filme`
+            # na Fab. Usar sempre a referencia subestima os valores longos, que sao
+            # exactamente os que colidem.
+            cx_txt = caixa_txt(m.group(1) or ref, 1.0)
+            rx, ry = abs_do_campo(fx, fy, ang, dx, dy)
+
+            # ⚠️⚠️ NAO CHEGA NAO COLIDIR: A REFERENCIA TEM DE APONTAR PARA A PECA.
+            #
+            # Ate a v0.7.0 isto so mexia no que COLIDIA. Uma referencia a 11,5 mm da
+            # propria peca nao colide com nada — e fica la, livre e inutil, a
+            # apontar para a vizinha. Na placa medida, 14 das 70 estavam mais perto
+            # de OUTRA peca do que da sua, e a ferramenta dava tudo por arrumado.
+            #
+            # A §11g-ter ja tinha previsto exactamente isto: "uma referencia
+            # tecnicamente livre pode estar encostada a peca errada, e nenhum DRC
+            # tem opiniao sobre isso". Estava escrito e nao estava implementado.
+            #
+            # ⚠️ O que muda e a NATUREZA do problema: nao colidir e uma RESTRICAO,
+            # ficar perto da propria peca e um OBJECTIVO. Uma restricao satisfaz-se
+            # com o primeiro candidato que passa; um objectivo obriga a ver todos e
+            # a escolher. Foi por tratar isto como restricao que o primeiro
+            # candidato "para fora da placa" ganhava sempre.
+            cands = [(dx, dy, rx, ry)]
+            for d in PASSOS + PASSOS_LONGE:
+                for ex, ey in ((0, d), (0, -d), (d, 0), (-d, 0),
+                               (d, d), (d, -d), (-d, d), (-d, -d)):
+                    cands.append((None, None, fx + ex, fy + ey))
+
+            melhor = None
+            for cdx, cdy, X, Y in cands:
+                if not livre(X, Y, set(meus), ref, caixa=cx_txt, so_texto=SO_TXT):
+                    continue
+                dist = math.hypot(X - fx, Y - fy)
+                if dist > TECTO_REF:
+                    continue
+                # ⚠️ E O CRITERIO DECISIVO: a peca mais proxima do texto tem de ser
+                # a DONA dele. Uma referencia a 3 mm da sua peca mas a 2 mm da
+                # vizinha identifica a peca errada — e isso nao e um aviso
+                # estetico, e uma instrucao errada para quem solda a mao.
+                dono = min(((math.hypot(X - ox, Y - oy), oref)
+                            for oref, ox, oy in centros), key=lambda z: z[0])[1]
+                if dono != ref:
+                    continue
+                if melhor is None or dist < melhor[0]:
+                    melhor = (dist, cdx, cdy, X, Y)
+
+            if melhor is None:
+                # ⚠️⚠️ RECUO GRADUADO, e a ordem das preferencias e uma DECISAO.
+                #
+                # Nao havendo sitio limpo, o que fazer? A v0.8.0 deixava ficar onde
+                # estava — e onde estava eram os `-11,5 mm` que o `sincroniza_pcb`
+                # poe em toda peca nova: limpo, longe, e a apontar para a vizinha.
+                #
+                # Uma referencia encostada a peca CERTA mas a tocar num traco
+                # LE-SE. Uma referencia limpa a 11,5 mm identifica outra peca, e
+                # isso nao e feiura — e uma instrucao errada para quem solda a mao.
+                # Entre as duas, escolhe-se a legivel.
+                #
+                # Por isso a segunda volta larga a exigencia de estar livre e
+                # mantem as duas que importam: o tecto e o dono. E diz-se quantas
+                # sairam assim, que e o preco a ser pago com os olhos abertos.
+                perto = None
+                # ⚠️ TRES degraus, e a ordem e a escala do estrago:
+                #    1) limpo de cobre, perto        2) limpo de cobre, mais longe
+                #    3) qualquer coisa — ultimo recurso, e conta-se
+                for etapa, tecto in ((True, TECTO_REF), (True, TECTO_RECUO),
+                                     (False, TECTO_RECUO)):
+                    for cdx, cdy, X, Y in cands:
+                        dist = math.hypot(X - fx, Y - fy)
+                        if dist > tecto:
+                            continue
+                        if etapa and not livre(X, Y, set(meus), ref, so_cobre=True,
+                                               caixa=cx_txt, so_texto=SO_TXT):
+                            continue
+                        dono = min(((math.hypot(X - ox, Y - oy), oref)
+                                    for oref, ox, oy in centros), key=lambda z: z[0])[1]
+                        if dono != ref:
+                            continue
+                        if perto is None or dist < perto[0]:
+                            perto = (dist, cdx, cdy, X, Y)
+                    if perto is not None:
+                        break
+                if perto is None:
+                    presos.append(ref)      # fica onde estava; ja esta em `postos`
+                    continue
+                melhor = perto
+                apertados.append(ref)
+            _, cdx, cdy, X, Y = melhor
+            if cdx is not None:             # o melhor e onde ja estava
+                postos[ref] = (X, Y) + cx_txt
                 continue
-            melhor = perto
-            apertados.append(ref)
-        _, cdx, cdy, X, Y = melhor
-        if cdx is not None:             # o melhor e onde ja estava
-            postos[ref] = (X, Y)
-            continue
-        # ⚠️ E A VOLTA TAMBEM: os candidatos sao deltas no espaco da PLACA, e o
-        # campo grava-se no espaco da PECA. Escrever o delta cru fazia o KiCad
-        # roda-lo outra vez ao desenhar — a peca acabava com o texto num
-        # terceiro sitio, nem onde estava nem onde a ferramenta o pos.
-        pdx, pdy = campo_do_abs(ang, X - fx, Y - fy)
-        a_, b_ = m.span(1)[0], m.span(2)[1]
-        novo = novo[:i + a_] + ("%s %s" % (num(pdx), num(pdy))) + novo[i + b_:]
-        postos[ref] = (X, Y)
-        movidos.append((ref, (dx, dy), (float(num(pdx)), float(num(pdy)))))
+            # ⚠️ E A VOLTA TAMBEM: os candidatos sao deltas no espaco da PLACA, e o
+            # campo grava-se no espaco da PECA. Escrever o delta cru fazia o KiCad
+            # roda-lo outra vez ao desenhar — a peca acabava com o texto num
+            # terceiro sitio, nem onde estava nem onde a ferramenta o pos.
+            pdx, pdy = campo_do_abs(ang, X - fx, Y - fy)
+            a_, b_ = m.span(2)[0], m.span(3)[1]
+            novo = novo[:i + a_] + ("%s %s" % (num(pdx), num(pdy))) + novo[i + b_:]
+            postos[ref] = (X, Y) + cx_txt
+            movidos.append((ref, (dx, dy), (float(num(pdx)), float(num(pdy)))))
+        # ⚠️ AUTO-TESTE, POR CAMADA: a ferramenta nao termina tendo CRIADO uma
+        # sobreposicao. Foi assim que o par R21/RV1 apareceu sem ninguem dar por
+        # ele — o relatorio dizia "5 movidas, 6 sem sitio", que soa a trabalho
+        # feito.
+        maus = []
+        _it = sorted(postos.items())
+        for _a in range(len(_it)):
+            for _b in range(_a + 1, len(_it)):
+                (r1, (x1, y1, w1, h1)), (r2, (x2, y2, w2, h2)) = _it[_a], _it[_b]
+                if abs(x1 - x2) < w1 + w2 and abs(y1 - y2) < h1 + h2:
+                    maus.append("%s~%s" % (r1, r2))
+        if maus:
+            print("*** %s/%s: ficaram textos sobrepostos: %s\n"
+                  "    Nada gravado — mover texto nao pode criar o defeito que "
+                  "vem arrumar." % (PROP, CAMADA, " ".join(maus)), file=sys.stderr)
+            return 1
+        relatorio.append((PROP, CAMADA, list(movidos), list(presos), list(apertados)))
 
-    # ⚠️ AUTO-TESTE: a ferramenta nao termina tendo CRIADO uma sobreposicao.
-    # Foi assim que o par R21/RV1 apareceu sem ninguem dar por ele — o relatorio
-    # dizia "5 movidas, 6 sem sitio", que soa a trabalho feito.
-    maus = []
-    _it = sorted(postos.items())
-    for _a in range(len(_it)):
-        for _b in range(_a + 1, len(_it)):
-            (r1, (x1, y1)), (r2, (x2, y2)) = _it[_a], _it[_b]
-            if abs(x1 - x2) < 3.0 and abs(y1 - y2) < 2.0:
-                maus.append("%s~%s" % (r1, r2))
-    if maus:
-        print("*** ficaram referencias sobrepostas: %s\n"
-              "    Nada gravado — mover texto nao pode criar o defeito que vem "
-              "arrumar." % " ".join(maus), file=sys.stderr)
-        return 1
-
-    print("  %d pecas · %d referencias movidas · %d sem sitio livre"
-          % (len(pecas), len(movidos), len(presos)), file=sys.stderr)
-    for ref, de, para in sorted(movidos):
-        print("     %-5s (%+g,%+g) -> (%+g,%+g)" % (ref, de[0], de[1], para[0], para[1]),
-              file=sys.stderr)
-    if apertados:
-        print("  %d aproximada(s) da propria peca ACEITANDO sobreposicao: %s\n"
-              "     (legivel encostado a peca certa > limpo a apontar para a "
-              "errada)" % (len(apertados), " ".join(sorted(apertados))),
-              file=sys.stderr)
-    if presos:
-        print("  ⚠️ sem sitio: %s — ficam onde estavam." % " ".join(sorted(presos)),
-              file=sys.stderr)
+    for PROP, CAMADA, movidos, presos, apertados in relatorio:
+        print("  %-9s (%s): %d movida(s) · %d sem sitio"
+              % (PROP, CAMADA, len(movidos), len(presos)), file=sys.stderr)
+        for ref, de, para in sorted(movidos):
+            print("     %-5s (%+g,%+g) -> (%+g,%+g)"
+                  % (ref, de[0], de[1], para[0], para[1]), file=sys.stderr)
+        if apertados:
+            print("     %d aproximada(s) da propria peca ACEITANDO sobreposicao: "
+                  "%s" % (len(apertados), " ".join(sorted(apertados))),
+                  file=sys.stderr)
+        if presos:
+            print("     ⚠️ sem sitio: %s — ficam onde estavam."
+                  % " ".join(sorted(presos)), file=sys.stderr)
     if escreve:
+        # ⚠️⚠️ A PLACA TEM DE CONTINUAR A ABRIR, E ISSO CONFERE-SE ANTES DE
+        # GRAVAR. Uma passagem com deslocamentos desactualizados comeu o espaco
+        # de um `(at 0 1.65 0)` e deixou `(at0 1.65 0)`: o KiCad recusou a placa
+        # inteira, e eu so dei por isso porque o comando SEGUINTE falhou. Uma
+        # ferramenta que escreve num ficheiro que outra tem de ler nao pode
+        # entregar sem que alguem tenha conseguido ler.
+        import tempfile as _tf
+        _d = _tf.mkdtemp()
+        _c = os.path.join(_d, os.path.basename(p))
+        io.open(_c, "w", encoding="utf-8").write(novo)
+        _r = subprocess.run([KICAD, "pcb", "drc", "-o", os.path.join(_d, "x.rpt"), _c],
+                            capture_output=True, text=True)
+        if "Failed to load" in (_r.stdout + _r.stderr):
+            print("*** o resultado NAO ABRE no KiCad — nada gravado.\n    %s"
+                  % (_r.stdout + _r.stderr).strip().splitlines()[-1][:160],
+                  file=sys.stderr)
+            return 1
+
+        # ⚠️⚠️ E QUEM JULGA E O PORTAO, NAO A MINHA REGUA.
+        #
+        # O auto-teste interno usa o meu modelo de caixa; o `svg_colisoes` usa o
+        # dele (0,55 em por caractere). Dois modelos do mesmo texto, e o meu e o
+        # mais permissivo — por isso a minha guarda aprovou um arranjo que fez o
+        # portao subir de `texto×texto 0` para `1` no painel. **Uma guarda que
+        # mede com regua propria nao guarda contra o criterio de quem julga.**
+        #
+        # Entao mede-se ANTES e DEPOIS com a ferramenta de fora, e se o numero
+        # que importa subir, nao se grava. E a §"prova externa" desta casa
+        # aplicada a uma ferramenta minha em vez de a um desenho.
+        def _txt_txt(caminho):
+            _s = os.path.join(_d, os.path.basename(caminho) + ".svg")
+            subprocess.run([KICAD, "pcb", "export", "svg", "-o", _s,
+                            "--layers", "F.Silkscreen", "--page-size-mode", "2",
+                            "--exclude-drawing-sheet", caminho],
+                           capture_output=True, text=True)
+            _v = subprocess.run(
+                [sys.executable,
+                 os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                              "tools", "svg_colisoes.py"), _s],
+                capture_output=True, text=True)
+            return _v.stdout.count("texto×texto")
+        _antes, _depois = _txt_txt(p), _txt_txt(_c)
+        if _depois > _antes:
+            print("*** o portao piora: texto×texto %d -> %d. Nada gravado.\n"
+                  "    Mover texto nao pode piorar o criterio de quem julga."
+                  % (_antes, _depois), file=sys.stderr)
+            return 1
         io.open(p, "w", encoding="utf-8").write(novo)
-        print("  gravado.", file=sys.stderr)
+        print("  gravado · abre ✓ · texto×texto %d -> %d" % (_antes, _depois),
+              file=sys.stderr)
     else:
         print("  ensaio: nada gravado. Junta --escreve para aplicar.", file=sys.stderr)
     return 0

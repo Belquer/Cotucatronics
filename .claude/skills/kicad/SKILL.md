@@ -1241,6 +1241,34 @@ tocar num traço lê-se; texto a apontar para a peça errada mente.*
 próxima. Provado nos dois sentidos — defeito conhecido injectado, e o token que
 ele lê renomeado, para que a guarda grite em vez de aprovar zero peças (§2c).
 
+### 11g-septies. A GUARDA DE UMA FERRAMENTA MEDE COM A RÉGUA DE QUEM JULGA
+
+O `arruma_silk` tem auto-teste próprio e ele **aprovou** um arranjo que fez o
+portão subir de `texto×texto 0` para `1`. Não foi um bug: o auto-teste usa o
+modelo de caixa da ferramenta e o `svg_colisoes` usa o dele (0,55 em por
+caractere). Dois modelos do mesmo texto, e o da ferramenta é o mais permissivo.
+
+> **Uma guarda que mede com régua própria não guarda contra o critério de quem
+> julga.** Ela aprova honestamente, segundo a régua dela, o que o portão
+> reprova.
+
+**O conserto é a prova externa virada para dentro:** antes de gravar, a
+ferramenta corre o **portão** sobre o antes e o depois, e recusa se o número
+subir. É a mesma disciplina que se aplica a um desenho, aplicada a uma
+ferramenta própria.
+
+⚠️ **E confirma-se que o resultado ABRE, antes de substituir o original.** Uma
+escrita com deslocamentos desactualizados comeu o espaço de um `(at 0 1.65 0)`
+e deixou `(at0 1.65 0)`: o KiCad recusou a placa inteira e só o comando
+*seguinte* o revelou. Grava-se numa cópia, carrega-se, e só então se escreve.
+
+⚠️ **A F.Fab conta, mas não conta o mesmo.** Ela não é impressa — 210 dos 336
+textos vivem lá — e é a camada que se lê no editor. Arrumá-la é legítimo, mas
+com regras próprias: ali só texto×texto é defeito. Tentado e medido, melhorou
+uma placa e piorou a outra **incluindo a serigrafia dela**, e ficou opt-in
+(`--fab`). *Não se troca uma regressão no que se fabrica por uma melhoria no que
+se lê.*
+
 ### 11g-ter. A fronteira com a `/design-review`, no lado da placa
 
 A `/design-review` é o portão **visual**; o DRC é o **numérico**. Na serigrafia
