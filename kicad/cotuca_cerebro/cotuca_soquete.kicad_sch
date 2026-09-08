@@ -2137,28 +2137,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "Daisy Seed3 (Electrosmith)"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "Electrosmith"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 190.5 129.54 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -2691,28 +2669,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "ESP32-C3 SuperMini — contado em FORA"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "AliExpress"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 299.72 59.69 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -2908,17 +2864,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "header 1x4 2,54"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 299.72 110.49 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3025,17 +2970,6 @@
 			(at 299.72 175.26 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "header 1x8 2,54"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 299.72 175.26 0)
@@ -3199,17 +3133,6 @@
 			(at 299.72 234.95 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "header 1x8 2,54"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 299.72 234.95 0)
@@ -4095,17 +4018,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 119.38 284.48 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -4178,17 +4090,6 @@
 			(at 119.38 299.72 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 119.38 299.72 0)
@@ -4274,17 +4175,6 @@
 			(at 384.81 175.26 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "header 1x3 2,54"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 384.81 175.26 0)
@@ -4372,17 +4262,6 @@
 			(at 384.81 234.95 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "header 1x3 2,54"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 384.81 234.95 0)
@@ -4484,17 +4363,6 @@
 			(at 149.86 299.72 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 149.86 299.72 0)

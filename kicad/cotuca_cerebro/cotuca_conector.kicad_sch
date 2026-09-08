@@ -719,7 +719,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "IDC 2x13 macho blindado (3M N2526-6002RB ou gen.)"
+		(property "MPN" "N2526-6002RB"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -785,17 +785,6 @@
 			(at 119.38 170.18 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 119.38 170.18 0)

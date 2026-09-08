@@ -53,3 +53,11 @@ kicad/.faz_placa.lock
 
 # cache de analise do kicad-happy
 kicad/analysis/
+
+# ⚠️ Resto do `sync_datasheets_lcsc.py` do kicad-happy. Ele grava um manifesto
+# com o resultado das tentativas DELE, e a corrida que falhou nas 19 deixou lá
+# `"status": "failed"` para pecas que estao em disco e conferidas OK. Nada o
+# regenera — o `tools/fichas.py` nao lhe toca —, logo era um documento no repo
+# a afirmar o contrario do que e verdade, para sempre. O indice vivo e o
+# `docs/datasheets/README.md`, gerado.
+docs/datasheets/manifest.json

@@ -3484,17 +3484,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 150 160 0)
 			(show_name no)
@@ -3566,17 +3555,6 @@
 		)
 		(property "Datasheet" ""
 			(at 30 70.08 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "header 1x3 2,54"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -3669,17 +3647,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 204.47 30.21 0)
 			(show_name no)
@@ -3760,7 +3727,7 @@
 				)
 			)
 		)
-		(property "MPN" "C1206C223J5GACTU (Kemet C0G)"
+		(property "MPN" "C1206C223J5GACTU"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -3862,17 +3829,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 232 69 0)
 			(show_name no)
@@ -3944,17 +3900,6 @@
 		)
 		(property "Datasheet" ""
 			(at 205 37 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4044,17 +3989,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 300 275 0)
 			(show_name no)
@@ -4135,7 +4069,7 @@
 				)
 			)
 		)
-		(property "MPN" "UES1H220MEM (Nichicon UES)"
+		(property "MPN" "UES1H220MEM"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -4237,17 +4171,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 1206 1/4 W"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 175 243 0)
 			(show_name no)
@@ -4319,17 +4242,6 @@
 		)
 		(property "Datasheet" ""
 			(at 300 245 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4419,17 +4331,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 85 77 0)
 			(show_name no)
@@ -4510,7 +4411,7 @@
 				)
 			)
 		)
-		(property "MPN" "UES1H220MEM (Nichicon UES)"
+		(property "MPN" "UES1H220MEM"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -4689,17 +4590,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 85 182 0)
 			(show_name no)
@@ -4771,17 +4661,6 @@
 		)
 		(property "Datasheet" ""
 			(at 30 175.08 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "header 1x3 2,54"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -4874,17 +4753,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 204.47 135.62 0)
 			(show_name no)
@@ -4956,17 +4824,6 @@
 		)
 		(property "Datasheet" ""
 			(at 150 55 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5056,7 +4913,7 @@
 				)
 			)
 		)
-		(property "MPN" "OPA1642AIDR (TI)"
+		(property "MPN" "OPA1642AIDR"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -5176,7 +5033,7 @@
 				)
 			)
 		)
-		(property "MPN" "OPA1642AIDR (TI)"
+		(property "MPN" "OPA1642AIDR"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -5287,17 +5144,6 @@
 		)
 		(property "Datasheet" ""
 			(at 90 258 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "condensador 1206 — ver o valor p/ dielectrico"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -5464,7 +5310,7 @@
 				)
 			)
 		)
-		(property "MPN" "MKS2C042201K00KSSD (WIMA)"
+		(property "MPN" "MKS2C042201K00KSSD"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -5566,7 +5412,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAV99,215 (Nexperia)"
+		(property "MPN" "BAV99,215"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -5671,17 +5517,6 @@
 				)
 			)
 		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 115 258 0)
 			(show_name no)
@@ -5762,7 +5597,7 @@
 				)
 			)
 		)
-		(property "MPN" "EEU-FR1E470 (Panasonic FR)"
+		(property "MPN" "EEU-FR1E470"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -5864,7 +5699,7 @@
 				)
 			)
 		)
-		(property "MPN" "C1206C223J5GACTU (Kemet C0G)"
+		(property "MPN" "C1206C223J5GACTU"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -5966,7 +5801,7 @@
 				)
 			)
 		)
-		(property "MPN" "OPA1642AIDR (TI)"
+		(property "MPN" "OPA1642AIDR"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -6086,7 +5921,7 @@
 				)
 			)
 		)
-		(property "MPN" "MKS2C042201K00KSSD (WIMA)"
+		(property "MPN" "MKS2C042201K00KSSD"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -6188,17 +6023,6 @@
 				)
 			)
 		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 232 251 0)
 			(show_name no)
@@ -6279,7 +6103,7 @@
 				)
 			)
 		)
-		(property "MPN" "EEU-FR1E471 (Panasonic FR)"
+		(property "MPN" "EEU-FR1E471"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -6381,7 +6205,7 @@
 				)
 			)
 		)
-		(property "MPN" "3296W-1-104LF (Bourns)"
+		(property "MPN" "3296W-1-104LF"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -6483,17 +6307,6 @@
 				)
 			)
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 232 174 0)
 			(show_name no)
@@ -6565,17 +6378,6 @@
 		)
 		(property "Datasheet" ""
 			(at 58 170 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6665,7 +6467,7 @@
 				)
 			)
 		)
-		(property "MPN" "BAV99,215 (Nexperia)"
+		(property "MPN" "BAV99,215"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -6770,17 +6572,6 @@
 				)
 			)
 		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 205 142 0)
 			(show_name no)
@@ -6852,17 +6643,6 @@
 		)
 		(property "Datasheet" ""
 			(at 58 65 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)
@@ -6952,7 +6732,7 @@
 				)
 			)
 		)
-		(property "MPN" "3296W-1-104LF (Bourns)"
+		(property "MPN" "3296W-1-104LF"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)

@@ -54,7 +54,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
@@ -131,6 +131,22 @@ def uma(nome, incompleta):
         for l in (rmpn.stdout or "").splitlines():
             if "TOTAL:" in l:
                 print("   MPN            %s" % l.split("TOTAL:")[1].strip())
+    # ⚠️ E AS FICHAS TEM DE FALAR DA PECA. Uma ficha em disco com o nome certo
+    # e o conteudo de outra peca e pior que ficha nenhuma: ela FECHA a duvida.
+    # O `--confere` nao vai a rede — le o que ja esta em `docs/datasheets/` e
+    # so grita no que la esta a mentir. Peca sem ficha nao trava o pacote (a
+    # LCSC nao cataloga oito destas, e isso e facto do catalogo, nao defeito).
+    rfi = subprocess.run(
+        [sys.executable, os.path.join(os.path.dirname(AQUI), "tools", "fichas.py"),
+         "--confere"], capture_output=True, text=True)
+    for l in (rfi.stdout or "").splitlines():
+        if l.strip().startswith(("FAMILIA", "OK", "NO CATALOGO", "SEM FICHA")) \
+                or " · " in l and l.startswith("  "):
+            print("   fichas         %s" % l.strip())
+    if rfi.returncode and "nao falam da peca" in (rfi.stdout + rfi.stderr):
+        recusas.append("ha ficha(s) tecnicas que nao falam da peca — ver "
+                       "docs/datasheets/README.md")
+
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:
         recusas.append("geometria: %s" % dict(geo))

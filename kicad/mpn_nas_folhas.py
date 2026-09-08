@@ -34,11 +34,11 @@ import os
 import re
 import sys
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, os.path.join(RAIZ, "tools"))
-from bom_completa import PECAS, PECAS_PAINEL, GENERICO          # noqa: E402
+from bom_completa import MPN, MPN_PAINEL, MPN_POR_FP, PECAS, PECAS_PAINEL  # noqa: E402,F401
 
 FOLHAS = [
     ("cerebro", "cotuca_cerebro/cotuca_energia.kicad_sch"),
@@ -50,14 +50,22 @@ FOLHAS = [
 
 
 def peca(placa, ref, fp):
-    """(MPN, fornecedor). ⚠️ A ordem e a mesma do `bom_completa`: a tabela por
-    REFERENCIA ganha a por footprint. Se as duas discordassem em ordem, a BOM
-    e as folhas diriam pecas diferentes para o mesmo designador."""
-    tab = PECAS_PAINEL if placa == "painel" else PECAS
+    """(MPN, fornecedor) — e o MPN e o NUMERO DE PECA, nao a descricao.
+
+    ⚠️ A primeira versao lia a coluna de descricao do `bom_completa`, que
+    mistura numero com prosa. As folhas ficaram com `MPN = "header 1x4 2,54"` e
+    a revisao de fora disse "50/50 parts have MPNs", porque so verifica que o
+    campo nao esta vazio. So se viu quando uma ferramenta tentou USAR o campo:
+    o descarregador de fichas foi procurar "header 1x4 2,54" na LCSC.
+
+    ⚠️ E O VAZIO E UMA RESPOSTA. Um resistor 0805 de 1% nao tem MPN. Deixar o
+    campo vazio e honesto; enche-lo com a descricao e uma cobertura falsa."""
+    tab = MPN_PAINEL if placa == "painel" else MPN
+    forn = (PECAS_PAINEL if placa == "painel" else PECAS).get(ref, ("", ""))[1]
     if ref in tab:
-        return tab[ref][0], tab[ref][1]
-    if fp in GENERICO:
-        return GENERICO[fp][0], ""
+        return tab[ref], forn
+    if fp in MPN_POR_FP:
+        return MPN_POR_FP[fp], forn
     return "", ""
 
 
@@ -126,6 +134,13 @@ def uma(caminho, placa, conferir):
         ja = re.search(r'\(property "MPN" "([^"]*)"', bl)
         if not mpn:
             faltam.append(ref)
+            # ⚠️ e se a folha tinha um MPN que a fonte ja nao tem, TIRA-SE. Um
+            # campo que sobrevive a fonte que o justificava e uma afirmacao sem
+            # dono — e foi isso que a primeira versao deixou lá.
+            if ja and not conferir:
+                saida += t[i0:j] + re.sub(
+                    r'\t\t\(property "(MPN|Fornecedor)"[\s\S]*?\n\t\t\)\n', "", bl)
+                i0 = k + 1
             continue
         if ja and ja.group(1) == mpn:
             postos.append(ref)
@@ -179,8 +194,15 @@ def main():
         print("  %-34s %2d simbolo(s) · %2d com MPN · %2d sem"
               % (os.path.basename(caminho), n, len(postos), len(faltam)))
         for ref, tinha, devia in divergem:
-            print("     ⚠️ %s: a folha diz %r e a fonte diz %r" % (ref, tinha, devia))
-            mau += 1
+            print("     %s %s: a folha dizia %r · a fonte diz %r"
+                  % ("⚠️" if conferir else "acertado", ref, tinha, devia))
+            # ⚠️ divergencia so e FALTA quando nao se conserta. A v0.3.0 contava
+            # como falta o que ela propria tinha acabado de carimbar, e saia com
+            # erro a mandar "corre sem --conferir" — que era o que estava a
+            # fazer. Um relatorio que reprova o proprio conserto ensina a
+            # ignorar o relatorio.
+            if conferir:
+                mau += 1
     print("  TOTAL: %d de %d com MPN (%.0f%%)"
           % (tot_ok, tot, 100.0 * tot_ok / max(tot, 1)))
     if tot_falta:

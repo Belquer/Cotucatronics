@@ -521,6 +521,98 @@ fábrica um resistor com o nome que o KiCad ia renumerar.**
 ⚠️ `Net-(U1A-+)` numa netlist com um símbolo multi-unidade **não é resto do
 nome antigo**: é o KiCad a escrever "U1, unidade A". É sinal de que funciona.
 
+## 7g. O CAMPO QUE NINGUÉM CONSOME NÃO ESTÁ VERIFICADO
+
+Carimbei `MPN` em 83 dos 84 símbolos. A revisão de fora disse **«50/50 parts
+have MPNs»**. Escrevi 99 % no README. As três coisas eram verdade, e o campo
+tinha `MPN = "header 1x4 2,54"` lá dentro — carimbei a **coluna de descrição**
+da BOM.
+
+> **Um verificador de preenchimento mede preenchimento.** Ele nunca prometeu
+> outra coisa. E a contagem sobe **exactamente** quando o lixo entra.
+
+**Só apareceu quando alguma coisa tentou USAR o valor** — o descarregador de
+fichas foi buscar `header 1x4 2,54` à LCSC. ERC, netlist, contagem e revisão
+externa passaram todos, porque nenhum consumia o campo.
+
+> **Antes de acreditar num campo novo, escreve o consumidor dele.** A primeira
+> ferramenta que o leia a sério é o primeiro teste que ele faz. Sem consumidor,
+> o campo não está verificado — está por estrear.
+
+⚠️ **E o vazio é uma resposta.** Um resistor 0805 de 1 % não tem MPN: tem valor
+e encapsulamento. Enchê-lo para a coluna ficar cheia derruba a única
+propriedade útil da coluna. Quando o MPN passou a campo próprio e os genéricos
+ficaram vazios, a cobertura caiu de **99 % para 43 %** no mesmo desenho.
+
+> **Métrica que sobe quando se enche e desce quando se limpa está a medir o
+> enchimento.** O denominador é fácil; o numerador é que é trabalho.
+
+## 7h. A FICHA CONFERE-SE POR DENTRO, E COM FERRAMENTA DE FORA
+
+Um PDF chamado `OPA1642AIDR.pdf` pode ter qualquer coisa. Os distribuidores
+apontam fichas de família, redireccionam para páginas de erro, e servem HTML
+com extensão `.pdf`. **O nome do ficheiro não é prova de nada.**
+
+Cada ficha passa pelo `pdftotext` — que eu não escrevi e que pode dizer que não
+— e o número tem de aparecer no texto. **Cinco degraus, e são precisos os
+cinco:**
+
+| degrau | significa |
+|---|---|
+| **OK** | o MPN completo está no texto |
+| **FAMÍLIA** | ficha da série certa; o sufixo monta-se na tabela de encomenda — **exige citação** |
+| **NO CATÁLOGO** | sem ficha própria, mas o número está num catálogo de série que já cá está |
+| **SUSPEITA** | o ficheiro não fala da peça — **trava o portão** |
+| **SEM FICHA** | não se publica; e a linha diz **qual fabricante e qual documento** |
+
+⚠️ **FAMÍLIA não é SUSPEITA e não é OK.** A Bourns publica uma ficha para toda
+a série 3296; chamar-lhe suspeita é acusar o documento bom, passá-la a OK é dar
+o sufixo por provado sem o ler. É degrau próprio, e obriga a citação a existir.
+
+⚠️ **Buscar o texto não prova o papel certo.** A ficha do `BAV99,215` tem um
+`215` — e são **215 mA** de corrente, não o código de embalagem. A tabela de
+encomenda só lista `BAV99`, e o documento diz `Packing information removed.`.
+Por isso a citação guarda **duas** coisas: o que a ficha prova **e o que ela
+não prova**. A segunda é a que se perde.
+
+⚠️ **E o achatamento tira só pontuação.** Os catálogos escrevem `EEUFR1C101`
+sem hífens e `B2B-XH-A(LF)(SN)` com o código colado — treze «não existe» que
+eram treze diferenças de pontuação. Mas nunca prefixos, nunca letras:
+`EEUFR1E471B` é outra peça. Prova-se com a lista toda — *N MPN dão N formas
+distintas, zero choques* — e a prova entra no comentário.
+
+⚠️ **Lê o documento INTEIRO.** `pdftotext -l 6` deu suspeita ao `OPA1642AIDR`
+numa ficha onde o MPN aparece três vezes: a tabela de encomenda da TI vive no
+fim. **Reprovação falsa é o caminho mais curto para se desligar o
+verificador.**
+
+⚠️ **Modo que sabe menos NÃO GRAVA.** O `--confere` não vai à rede, logo não
+sabe se o distribuidor tem a peça — só que o ficheiro não está cá. Deixá-lo
+escrever o índice fez cada passagem pelo portão trocar *«a LCSC não tem esta
+peça · Phoenix Contact, artigo 1715721»* por *«não está em disco»*. Um
+verificador a degradar em silêncio o documento que verifica. A prova do
+conserto é o **md5 igual antes e depois**.
+
+## 7i. CONSERTO NA CACHE DE UM PLUGIN NÃO É CONSERTO
+
+O descarregador do `kicad-happy` 2.2.1 falhou nas 19 peças, e a causa não era a
+minha lista: **a API do `jlcsearch` deixou de servir o campo `datasheet`.** Ela
+encontra a peça — casamento exacto no MPN, com stock e preço — e devolve o
+campo vazio. O plugin trata «achei mas sem URL» como fim de linha e nunca chega
+ao segundo caminho que ele próprio tem (`wmsc.lcsc.com` pelo código LCSC).
+
+Editar `~/.claude/plugins/cache/.../2.2.1/` resolvia em dois minutos. Não se
+faz:
+
+> **É cópia de trabalho de outra pessoa, e a próxima actualização apaga a
+> edição sem avisar.** Conserto que vive num sítio que outro processo reescreve
+> não é conserto — é uma armadilha para quem vier depois ver a versão 2.2.2
+> partida outra vez, com a memória de que «isto já estava resolvido».
+
+A ferramenta de fora continua a valer — foi ela que mostrou o defeito nos meus
+MPN. O que muda é onde mora o conserto: **na casa, com o comentário a dizer
+qual versão do plugin falhou e porquê.**
+
 ## 9b. O PORTÃO DE COLISÕES DOS ESQUEMÁTICOS
 
 O `tools/svg_colisoes.py` devolvia **código 3 — NÃO VERIFICÁVEL** em todo

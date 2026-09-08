@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 
-VERSAO = "0.6.0"
+VERSAO = "0.8.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAIDA = os.path.join(RAIZ, "docs", "COTUCA_BOM.md")
 
@@ -131,6 +131,78 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
         ("terminal parafuso 2p 5,08 — **1715721** (Phoenix MKDS 1,5/2-5,08); "
          "KF301-5.0 so para bancada", 0.95, "medido"),
     "Module:Electrosmith_Daisy_Seed": ("(soquete: 2 tiras femea 1x20 2,54)", 2.00, "estimado"),
+}
+
+# ⚠️⚠️ O MPN E UM CAMPO PROPRIO, E NAO A DESCRICAO.
+#
+# A coluna de cima mistura numero de peca com prosa — "SS14 (SMA)", "IDC 2x13
+# macho blindado (3M N2526-6002RB ou gen.)", "terminal parafuso 2p 5,08 —
+# 1715721 (Phoenix ...); KF301-5.0 so para bancada". Serve para LER numa
+# tabela; nao serve para uma maquina procurar a peca.
+#
+# Carimbei essa coluna no campo `MPN` das folhas e a revisao de fora disse
+# "50/50 parts have MPNs" — porque so verifica que o campo NAO ESTA VAZIO. Os
+# 99% eram descricoes a passar por numeros de peca, e so se viu quando uma
+# ferramenta tentou USAR o campo: o descarregador de fichas foi procurar
+# "header 1x4 2,54" na LCSC.
+#
+# ⚠️ E O VAZIO E UMA RESPOSTA. Um resistor 0805 de 1% nao tem MPN: tem valor e
+# encapsulamento, e escolhe-se na altura. Inventar um numero para ele encher a
+# coluna e pior que a coluna vazia — a §7f desta casa: um MPN plausivel e errado
+# custa uma encomenda inteira e parece certo ate a caixa chegar.
+MPN = {
+    "U1":  "OPA1642AIDR",      "D11": "BAV99,215",   "D21": "BAV99,215",
+    "D1":  "SMBJ24A",          "D2":  "SS14",        "F1":  "2920L330/24MR",
+    "C1":  "EEU-FR1V222",      "C3":  "EEU-FR1C101", "C5":  "EEU-FR1E470",
+    "C6":  "EEU-FR1E471",      "C13": "UES1H220MEM", "C23": "UES1H220MEM",
+    "C14": "MKS2C042201K00KSSD", "C24": "MKS2C042201K00KSSD",
+    "C12": "C1206C223J5GACTU", "C22": "C1206C223J5GACTU",
+    "RV1": "3296W-1-104LF",    "RV2": "3296W-1-104LF",
+    "J14": "N2526-6002RB",
+    # ⚠️ vazios de proposito, e cada um com a razao:
+    # U2/U3 sao MODULOS comprados montados — o numero e do vendedor, nao do
+    # fabricante, e muda com o lote. Vivem na seccao FORA, com nome e loja.
+}
+MPN_PAINEL = {
+    "Q1":  "AO3400A",          "Q2":  "AO3400A",
+    "SW1": "EC11E15244G1",
+    "RV1": "PTV09A-4020S-B103", "RV2": "PTV09A-4020S-B103",
+    "J1":  "N3793-6002RB",     "J2":  "53047-0710",
+    "C3":  "EEU-FR1C101",
+    **{f"J{i}": "B2B-XH-A" for i in (3, 4, 5, 6, 7)},
+}
+# ⚠️ §7f: TODO SUFIXO ENTRA COM A LINHA DA FICHA QUE O JUSTIFICA.
+#
+# Nao e cerimonia. A ficha do BAV99 tem um `215` no meio — e sao 215 mA de
+# corrente de diodo duplo carregado, NAO o codigo de embalagem `,215`. Quem
+# conferisse o sufixo por busca de texto dava-o por provado com um numero que
+# fala de outra coisa. A confirmacao errada e pior que nenhuma: fecha a duvida.
+#
+# Formato: MPN -> (o que a ficha PROVA, o que ela NAO prova).
+SUFIXO = {
+    "3296W-1-104LF": (
+        "W = pacote de ajuste lateral (tabela de dimensoes, 'W series'); "
+        "104 = 100 k (tabela de codigos: 104 -> 100000)",
+        # ⚠️ eu ia escrever 'LF = lead-free'. A legenda da propria ficha diz o
+        # contrario: 'Blank: Lead-free product compliant with RoHS' e
+        # 'LF: High-end product'. O vazio ja e sem chumbo; o LF e outra coisa.
+        "LF NAO e sem-chumbo — a legenda diz 'LF: High-end product'"),
+    "BAV99,215": (
+        "BAV99 = diodo duplo SOT23 (tabela 3, Ordering information)",
+        # ⚠️ e este nao se resolve descarregando outra vez: a ficha diz, com
+        # todas as letras, 'Packing information removed.'
+        ",215 e codigo de embalagem e NAO esta nesta ficha ('Packing "
+        "information removed.') — pedir o documento de embalagem da Nexperia"),
+    "OPA1642AIDR": ("A = grau; ID = SOIC-8; R = fita e carretel — os tres na "
+                    "tabela de encomenda no fim da ficha", ""),
+}
+
+# por FOOTPRINT, quando a peca e a mesma em qualquer referencia
+MPN_POR_FP = {
+    "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal":
+        "1715721",
+    "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical": "B2B-XH-A",
+    "Connector_Molex:Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical": "53047-0710",
 }
 
 # O que NAO esta em folha nenhuma: modulos, peca de painel, cablagem, caixa.

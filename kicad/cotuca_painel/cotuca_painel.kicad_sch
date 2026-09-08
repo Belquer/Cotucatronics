@@ -1912,7 +1912,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "IDC 2x13 femea (3M N3793-6002RB ou gen.)"
+		(property "MPN" "N3793-6002RB"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -2361,7 +2361,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "53047-0710 (Molex PicoBlade 1x7)"
+		(property "MPN" "53047-0710"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -2550,7 +2550,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "EC11E15244G1 (Alps Alpine)"
+		(property "MPN" "EC11E15244G1"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -2699,7 +2699,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "PTV09A-4020S-B103 (Bourns)"
+		(property "MPN" "PTV09A-4020S-B103"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -2808,17 +2808,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 240.03 187.96 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -2892,7 +2881,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "PTV09A-4020S-B103 (Bourns)"
+		(property "MPN" "PTV09A-4020S-B103"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -3001,17 +2990,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 240.03 227.33 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3109,7 +3087,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "JST XH 1x2 (B2B-XH-A)"
+		(property "MPN" "B2B-XH-A"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -3193,7 +3171,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "JST XH 1x2 (B2B-XH-A)"
+		(property "MPN" "B2B-XH-A"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -3277,7 +3255,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "JST XH 1x2 (B2B-XH-A)"
+		(property "MPN" "B2B-XH-A"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -3361,7 +3339,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "EEU-FR1C101 (Panasonic FR)"
+		(property "MPN" "EEU-FR1C101"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -3456,17 +3434,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 265.43 284.48 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3539,17 +3506,6 @@
 			(at 54.61 149.86 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "condensador 0805 — ver o valor p/ dielectrico"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 54.61 149.86 0)
@@ -3642,17 +3598,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 144.78 250.19 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3725,17 +3670,6 @@
 			(at 160.02 266.7 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 160.02 266.7 0)
@@ -3810,7 +3744,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "AO3400A (Alpha & Omega)"
+		(property "MPN" "AO3400A"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -3919,7 +3853,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "JST XH 1x2 (B2B-XH-A)"
+		(property "MPN" "B2B-XH-A"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -4003,17 +3937,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "resistor 1210 1/2 W"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 200.66 224.79 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -4086,17 +4009,6 @@
 			(at 144.78 312.42 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 144.78 312.42 0)
@@ -4171,17 +4083,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "resistor 0805 1%"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 160.02 328.93 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -4255,7 +4156,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "AO3400A (Alpha & Omega)"
+		(property "MPN" "AO3400A"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -4364,7 +4265,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "JST XH 1x2 (B2B-XH-A)"
+		(property "MPN" "B2B-XH-A"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -4447,17 +4348,6 @@
 			(at 200.66 287.02 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "resistor 1210 1/2 W"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 200.66 287.02 0)

@@ -9380,3 +9380,134 @@ instrumento que se depura à mão.
 `exclude_from_bom`, e não há nada para encomendar. Contá-lo como «sem MPN» fazia
 a cobertura cair de 99% para 80% sem faltar uma peça — *uma métrica que piora
 quando o desenho melhora está a medir a coisa errada.*
+
+## 15dw — os 99 % de MPN eram descrições, e o verificador de fora concordava
+
+`mpn_nas_folhas` v0.2.0 carimbou o campo `MPN` de 83 dos 84 símbolos, o
+`kicad-happy` respondeu **«50/50 parts have MPNs»**, e eu escrevi 99 % no
+README. As três coisas eram verdade. E o campo tinha isto lá dentro:
+
+```
+MPN = "header 1x4 2,54"
+MPN = "terminal parafuso 2p 5,08 — 1715721 (Phoenix MKDS 1,5/2-5,08); KF301-5.0 so para bancada"
+MPN = "ESP32-C3 SuperMini — contado em FORA"
+```
+
+Carimbei a **coluna de descrição** da BOM. A revisão de fora não mentiu: ela
+verifica que o campo **não está vazio**, e não estava.
+
+> **Um verificador de preenchimento mede preenchimento.** Ele nunca prometeu
+> outra coisa; fui eu que li «50/50 parts have MPNs» como *«os 50 MPN estão
+> certos»*. Um campo cheio de lixo passa em qualquer contagem de campos cheios,
+> e a contagem sobe **exactamente** quando o lixo entra.
+
+**E só se viu quando alguma coisa tentou USAR o campo.** O descarregador de
+fichas foi buscar `header 1x4 2,54` à LCSC. Nenhuma das verificações anteriores
+— ERC, netlist, contagem, revisão externa — podia apanhar isto, porque nenhuma
+consumia o valor. Ficou três dias a passar.
+
+> **Campo que ninguém consome não está verificado, está por estrear.** A
+> primeira ferramenta que o leia a sério é o primeiro teste que ele faz.
+
+**O conserto, e o que ele custou:** o MPN passou a campo próprio
+(`MPN`/`MPN_PAINEL`/`MPN_POR_FP` em `bom_completa`), separado da descrição, **e
+vazio onde a peça é genuinamente genérica**. A cobertura caiu de 99 % para
+**43 %**. É o mesmo desenho, com o mesmo grau de prontidão, e o número honesto é
+menos de metade do número bonito.
+
+> **Métrica que sobe quando se enche e desce quando se limpa está a medir o
+> enchimento.** Um resistor 0805 de 1 % não tem MPN — tem valor e
+> encapsulamento, e escolhe-se na altura. Inventar-lhe um número para a coluna
+> ficar cheia é a §7f a acontecer em câmara lenta.
+
+⚠️ **É o gémeo exacto da 15dv**, e não reparei que estava a repeti-la. Lá, a
+cobertura de `0/69` não se consertava pondo 69; aqui, a de `0/84` não se
+consertava pondo 84. Duas vezes a mesma forma: *o denominador é fácil, o
+numerador é que é trabalho*.
+
+
+## 15dx — a ficha do BAV99 tem um «215», e são 215 mA
+
+A §7f manda justificar cada carácter do sufixo com a linha da ficha. Fui
+fazê-lo para o `BAV99,215` e o `215` estava lá, no texto, uma vez. Ia dá-lo por
+provado.
+
+```
+6. Ordering information
+Table 3. Ordering information   →   BAV99 · SOT23     ← sem sufixo nenhum
+...
+single diode loaded  -  215  mA   ← É ISTO. É corrente.
+double diode loaded
+```
+
+O `,215` é o código de embalagem da Nexperia. O `215` que aparece na ficha é a
+corrente com díodo duplo carregado. **Duas ocorrências do mesmo dígito, e a que
+eu ia usar como prova falava de outra coisa.**
+
+E a ficha diz, mais abaixo, com todas as letras: **`Packing information
+removed.`** — o sufixo não pode ser justificado por este documento, **por
+decisão do fabricante**. Não é falta de procurar; é o documento errado para a
+pergunta, e nenhuma releitura o conserta.
+
+> **Confirmação errada é pior que nenhuma: ela fecha a dúvida.** Um sufixo «por
+> conferir» ainda me faz abrir a ficha. Um sufixo «conferido» com um número que
+> fala de corrente nunca mais é olhado.
+
+⚠️ **Corolário para toda busca de texto como prova:** encontrar a cadeia não é
+encontrá-la *no papel certo*. `SUFIXO` passou a guardar **duas** coisas — o que
+a ficha prova e **o que ela não prova** — porque a segunda é a que se perde.
+
+E no mesmo par de fichas apanhei uma suposição minha: ia escrever *«LF =
+lead-free»* no `3296W-1-104LF`. A legenda da Bourns diz o contrário —
+`Blank: Lead-free product compliant with RoHS` e **`LF: High-end product`**. O
+vazio já é sem chumbo. A peça estava certa e a minha razão para ela estava
+errada, que é o estado mais difícil de apanhar.
+
+
+## 15dy — o verificador lia meio documento, e depois estragava o que verificava
+
+Três defeitos do `fichas.py` numa tarde, e os três da mesma família: a
+ferramenta que confere também age, e ninguém estava a conferi-la.
+
+**Um — lia seis páginas.** `pdftotext -l 6` deu **SUSPEITA** ao
+`OPA1642AIDR` numa ficha onde o MPN aparece **três vezes**: a tabela de
+encomenda da TI vive no fim. O documento era o certo e o veredicto foi
+«não fala da peça».
+
+> **Reprovação falsa é o caminho mais curto para se desligar o verificador.**
+> Um verificador que grita no documento bom ensina, em duas ou três vezes, a
+> passar-lhe por cima — e a partir daí o grito verdadeiro também não é ouvido.
+
+**Dois — exigia o hífen.** Treze peças saíram como «a LCSC não tem esta peça».
+A LCSC **tem-nas todas**; escreve `EEUFR1C101` sem hífens, `530470710` sem o
+traço, `B2B-XH-A(LF)(SN)` com o código de embalagem colado. Treze «não existe»
+que eram treze diferenças de pontuação. O achatamento que resolve isto tira
+**só** pontuação e o grupo entre parênteses — nunca prefixos, nunca letras — e
+provou-se sobre a lista inteira: **21 MPN dão 21 formas achatadas distintas,
+zero choques**. `EEUFR1E471B` continua diferente de `EEUFR1E471`, que é outra
+peça.
+
+**Três, e é o pior — reescrevia o índice.** O modo `--confere` não vai à rede,
+logo não sabe se a LCSC tem a peça: só sabe que o ficheiro não está cá. E
+gravava na mesma. Como esse modo corre **dentro do `para_fabrica`**, cada
+passagem pelo portão substituía
+
+```
+| 1715721 | — | SEM FICHA | a LCSC nao tem esta peca · Phoenix Contact — MKDS 1,5/2-5,08, artigo 1715721 |
+```
+
+por
+
+```
+| 1715721 | — | FALTA | nao esta em disco |
+```
+
+> **Um verificador a degradar, em silêncio, o documento que verifica.** Quem
+> lesse o índice depois de um portão via menos do que quem o leu antes, e nada
+> apontava para a causa. O conserto é uma linha (`if not so_confere:`) e a
+> prova é o md5 igual antes e depois — mas encontrá-lo custou reparar que a
+> linha da Phoenix tinha emagrecido.
+
+⚠️ **A regra que fica: modo que sabe menos não grava.** Se uma ferramenta tem
+um modo offline e um modo com rede, o offline **lê**. Escrever com menos
+informação do que a que já está no ficheiro é apagar, com outro nome.
