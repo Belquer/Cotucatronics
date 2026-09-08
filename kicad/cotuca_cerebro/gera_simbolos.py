@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_simbolos v0.8.0 — os simbolos que faltavam para a folha do soquete.
+"""gera_simbolos v0.9.0 — os simbolos que faltavam para a folha do soquete.
 
 Emite, para juntar a `cotuca.kicad_sym`:
   NETTIE2   a ponte AGND<->GND. Duas redes no ERC, uma ligacao de cobre.
@@ -14,7 +14,7 @@ capacidade de detectar uma segunda ponte. Ver MAPA-DE-TERRA.md §2.
 """
 import sys
 
-VERSAO = "0.8.0"
+VERSAO = "0.9.0"
 
 
 def num(v):
@@ -272,6 +272,6 @@ def conn3_r():
 
 if __name__ == "__main__":
     print("gera_simbolos v%s" % VERSAO, file=sys.stderr)
-    for s in (nettie2(), dpdt(), conn3_r(), conn(3), conn(4), conn(5), conn(6), conn(7), conn(8), idc26(),
+    for s in (nettie2(), dpdt(), conn3_r(), conn(1), conn(3), conn(4), conn(5), conn(6), conn(7), conn(8), idc26(),
               pot3(), ec11(), mosfet_n(), led(), opa1642(), esp32c3()):
         print(s)

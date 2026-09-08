@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.13.1 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.14.0 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.13.1"
+VERSAO = "0.14.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -155,6 +155,9 @@ COLOCA = {
     # altura — na vertical saia 13 mm por baixo do contorno.
     # O IDC ocupa 32 mm da aresta de cima: x 26..58. Tudo o resto vive a
     # direita dele ou nas duas filas de baixo.
+    # ⚠️ os TP no vao entre o J2 (acaba a ~80) e o RV1 (comeca a ~132), na
+    # maior faixa livre do painel: 163,8 mm em y=27,5.
+    **{f"TP{i + 1}": (90.0 + 6.0 * i, 27.5, 0) for i in range(5)},
     "J1":  (26.0, 24.0, 90),
     "J2":  (68.0, 24.0, 0),
     "J3":  (26.0, 34.0, 0),     "J4":  (38.0, 34.0, 0),   "J5":  (50.0, 34.0, 0),
@@ -319,7 +322,16 @@ ZONAS_CEREBRO = [
 #
 # ⚠️ Um conector de duas filas precisa de canal de fuga nos DOIS lados. Encostar
 # um a um bordo e dar-lhe metade dos pinos.
+# ⚠️ OS PONTOS DE TESTE VAO NUMA FILA, e a fila foi ACHADA e nao escolhida a
+# olho: a maior faixa livre do cerebro tem 107,8 mm em y=50,5, medida com todos
+# os pads e 2,6 mm de folga. Passo de 4 mm, que e o que uma ponta de prova
+# precisa para nao tocar na vizinha.
+#
+# ⚠️ E NAO VAO PARA y<40. Ai ficam debaixo dos discos de arcade, onde nem se
+# alcancam com a caixa aberta nem cabem no que sobra de altura. Um ponto de
+# teste inalcancavel e um furo que ninguem sabe para que serve.
 UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 29.0, 90),
+                  **{f"TP{i + 1}": (88.0 + 4.0 * i, 50.5, 0) for i in range(11)},
                   "NT1": (75.0, 81.0, 0),
                   "C1": (178.0, 108.0, 0), "J1": (156.0, 108.0, 0),
                   # ⚠️ os WIMA de filme tem 13 mm de altura e ~18 de corpo: nao

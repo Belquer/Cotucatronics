@@ -9336,3 +9336,47 @@ agora: 83 de 84 (99%)   · "50/50 parts have MPNs" e "23/23", ditos por fora
 
 O que sobra é o `NT1`, e está certo que sobre: é um net-tie, é cobre, não se
 compra. **Uma cobertura de 100% que incluísse esse seria uma peça inventada.**
+
+## 15dv — a cobertura de 0/69 não se conserta pondo 69
+
+*08/09.* A revisão de fora dizia `Test point coverage: 0/69 nets (0%)`. A
+resposta preguiçosa é pôr um ponto de teste em cada rede — numa placa de
+180×100, com a caixa fechada por cima, e com a métrica a subir a cada furo
+inútil.
+
+O critério não é a cobertura. É **o que se mede quando ela não funciona**, e
+isso é uma lista curta que se escreve a pensar na bancada: há tensão, há
+referência, há sinal. Onze no cérebro, cinco no painel, cada um com a razão
+escrita ao lado — *um ponto de teste sem razão é um furo que ninguém sabe para
+que serve*.
+
+⚠️ **E o `AGND` tem o seu.** Sem um ponto em cada terra não se pode medir a
+ponte: a diferença entre elas com o instrumento a tocar é o único número que diz
+se o `NT1` está a fazer o que devia.
+
+⚠️ **E não vão para `y < 40`**: aí ficam debaixo dos discos de arcade, onde nem
+se alcançam com a caixa aberta nem cabem no que sobra de altura. A fila foi
+**achada e não escolhida a olho** — a maior faixa livre do cérebro tem 107,8 mm
+em y=50,5, medida com todos os pads e 2,6 mm de folga.
+
+**E depois a métrica continuou a acusar: `6/69`.** Fui ler a regra dela em vez de
+adivinhar:
+
+```python
+is_pg = n in ("GND","VSS","VDD","VCC") or n.startswith(("+","GND"))
+```
+
+Exclui alimentação e terra do numerador **e** do denominador. Dos meus onze, seis
+caem na definição dela de «sinal» — e o número bate exactamente. **Não estava
+errada nem eu estava: estávamos a contar coisas diferentes**, e o limiar de 95%
+dela é para placas que passam por sonda voadora numa linha, não para um
+instrumento que se depura à mão.
+
+> **Uma métrica que não conheces é uma opinião com número.** Ler as quinze linhas
+> da regra custou um comando e transformou «ela discorda de mim» em «ela mede
+> outra coisa, e eu sei qual».
+
+⚠️ E um ponto de teste **não leva MPN**: é cobre, o footprint traz
+`exclude_from_bom`, e não há nada para encomendar. Contá-lo como «sem MPN» fazia
+a cobertura cair de 99% para 80% sem faltar uma peça — *uma métrica que piora
+quando o desenho melhora está a medir a coisa errada.*

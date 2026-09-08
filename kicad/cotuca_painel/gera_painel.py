@@ -18,7 +18,7 @@ atravessa este cabo.
 """
 import io, sys, uuid
 
-VERSAO = "0.10.0"
+VERSAO = "0.11.0"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -88,6 +88,9 @@ def simbolo(lib, ref, val, x, y, ry=-7.62, vy=7.62):
 #
 # A JLC monta so o lado SMD (decidido com o dB a 05/09); o THT solda o dB.
 FOOTPRINT = {
+    # ⚠️ `TestPoint_Pad_D1.5mm` traz `exclude_from_pos_files exclude_from_bom`:
+    # e cobre, nao e peca. Nao entra no CPL nem na lista de compras.
+    **{f"TP{i}": "TestPoint:TestPoint_Pad_D1.5mm" for i in range(1, 6)},
     "J1":  "Connector_IDC:IDC-Header_2x13_P2.54mm_Vertical",
     # JST XH e nao header 2,54: e o que a BOM-MPN escolheu (B2B-XH-A), e um
     # conector com trava nao se solta com a tampa a fechar sobre os fios.
@@ -364,6 +367,30 @@ def lib_embutida(usados=None):
         out.append("\t\t" + b.replace('(symbol "%s"' % nome, '(symbol "cotuca:%s"' % nome, 1)
                    .replace("\n  ", "\n\t\t"))
     return "\t(lib_symbols\n" + "\n".join(out) + "\n\t)\n"
+
+# ------------------------ pontos de teste
+#
+# ⚠️ CINCO, E NAO VINTE E UM. A revisao de fora conta "0 de 21" e a resposta
+# preguicosa e por 21. O criterio nao e a cobertura: e o que se mede quando o
+# painel nao responde — ha tensao, ha referencia, o pot le.
+#
+# ⚠️ E O PAINEL TEM UMA TERRA SO. A separacao AGND/GND vive no cerebro, no
+# net-tie (esta na legenda desta folha), portanto aqui um ponto de GND chega.
+TESTE = [
+    ("+5V",    "o que chega pelo cabo plano"),
+    ("+3V3A",  "alimentacao dos pots"),
+    ("GND",    "referencia da sonda"),
+    ("POT_L",  "cursor do pot L — roda-se e ve-se variar"),
+    ("POT_R",  "cursor do pot R"),
+]
+for _i, (_rede, _porque) in enumerate(TESTE):
+    _ref = f"TP{_i + 1}"
+    _x, _y = 300.0, 40.0 + _i * 12.0
+    liga("CONN1_L", _ref, _x, _y, {"1": _rede}, val=_rede)
+    texto(_porque, _x + 6.35, _y + 1.27, 1.0)
+texto("PONTOS DE TESTE — o que se mede quando o painel nao responde",
+      300.0 - 24.0, 40.0 - 12.7, 1.6)
+
 
 CAB = f'''(kicad_sch
 \t(version 20260306)

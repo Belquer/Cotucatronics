@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.6.0 · **2026-09-08** · commit `4e724ff`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.6.0 · **2026-09-08** · commit `a06cf8f`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e
@@ -80,6 +80,17 @@
 | `J16` | fio -> DPDT tipo 2, canal R | header 1x8 2,54 | — | `PinHeader_1x08_P2.54mm_Vertical` | 0.1000 | estimado |
 | `RV1` **(DNP)** | trim 100k | 3296W-1-104LF (Bourns) | LCSC C48084 | `Potentiometer_Bourns_3296W_Vertical` | — | medido |
 | `RV2` **(DNP)** | trim 100k | 3296W-1-104LF (Bourns) | LCSC C48084 | `Potentiometer_Bourns_3296W_Vertical` | — | medido |
+| `TP1` | V_TRILHO_A2 | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP2` | +15V | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP3` | V+PRE | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP4` | VBIAS | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP5` | +5V | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP6` | +5V_PONTE | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP7` | +3V3A | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP8` | GND | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP9` | AGND | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP10` | LINHA_L | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP11` | LINHA_R | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
 | `U2` | Daisy Seed3 | Daisy **Seed3** (Electrosmith) | Electrosmith | `Electrosmith_Daisy_Seed` | 29.9900 | medido |
 | `U3` | ESP32-C3 SuperMini | ESP32-C3 SuperMini — **contado em FORA** | AliExpress | `ESP32C3_SUPERMINI_SOQUETE` | 0.0000 | ja contado |
 
@@ -115,6 +126,11 @@
 | `RV1` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
 | `RV2` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
 | `SW1` | EC11 — o unico encoder | EC11E15244G1 (Alps Alpine) | LCSC C370970 | `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | 1.7000 | medido |
+| `TP1` | +5V | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP2` | +3V3A | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP3` | GND | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP4` | POT_L | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
+| `TP5` | POT_R | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
 
 ## 5 · Fora das placas — modulos, painel, cablagem, caixa
 
@@ -146,7 +162,7 @@ Extended, caixa, parafusos, knobs, nem transporte. E a soma mistura precos
 
 Os DNP nao contam para o total: o footprint fica na placa, a peca nao se compra.
 
-Todas as pecas do total tem preco declarado.
+⚠️ **16 peca(s) entram no total a ZERO** por nao terem preco decidido: `TP1`, `TP1`, `TP10`, `TP11`, `TP2`, `TP2`, `TP3`, `TP3`, `TP4`, `TP4`, `TP5`, `TP5`, `TP6`, `TP7`, `TP8`, `TP9`. A soma ACIMA e um PISO, e nao um total — uma peca sem preco custa zero na aritmetica e nao custa zero na encomenda.
 
 
 ## 7 · Valores que o esquema e o MPN nao dizem igual

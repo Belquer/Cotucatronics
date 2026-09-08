@@ -34,7 +34,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, os.path.join(RAIZ, "tools"))
@@ -86,14 +86,17 @@ def uma(caminho, placa, conferir):
                 if d == 0:
                     break
         corpo = t[:m.start()] + t[k + 1:]
-    esperados = len(re.findall(r'\(property "Reference" "([^#][^"]*)"', corpo))
+    # ⚠️ A GUARDA CONTA O MESMO UNIVERSO QUE O LEITOR (§2c): se ela contasse os
+    # pontos de teste e o leitor os saltasse de proposito, dava alarme falso —
+    # e guarda que da alarme falso e guarda que se desliga.
+    esperados = len(re.findall(r'\(property "Reference" "(?!#)(?!TP\d)[^"]*"', corpo))
 
     postos, faltam, divergem, n = [], [], [], 0
     saida, i0 = "", 0
     for m in re.finditer(r'\(property "Reference" "([^"]+)"', t):
         ref = m.group(1)
-        if ref.startswith("#"):          # PWR_FLAG e afins: nao se compram
-            continue
+        if ref.startswith("#") or re.match(r"TP\d+$", ref):
+            continue                     # PWR_FLAG e pontos de teste: cobre
         # o bloco do simbolo que contem esta propriedade
         j = t.rfind("(symbol", 0, m.start())
         d = 0
@@ -110,6 +113,14 @@ def uma(caminho, placa, conferir):
         n += 1
         fpm = re.search(r'\(property "Footprint" "([^"]*)"', bl)
         fp = fpm.group(1) if fpm else ""
+        # ⚠️ UM PONTO DE TESTE NAO TEM MPN, e nao e uma falta. E cobre: o
+        # footprint traz `exclude_from_bom`, nao entra no CPL nem na lista de
+        # compras, e nao ha nada para encomendar. Conta-lo como "sem MPN" fazia
+        # a cobertura cair de 99% para 80% sem nenhuma peca a faltar — e uma
+        # metrica que piora quando o desenho melhora esta a medir a coisa
+        # errada.
+        if fp.startswith("TestPoint:"):
+            continue
         mpn, forn = peca(placa, ref, fp)
         mpn, forn = limpa(mpn), limpa(forn)
         ja = re.search(r'\(property "MPN" "([^"]*)"', bl)

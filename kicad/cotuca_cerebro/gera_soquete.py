@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_soquete v0.14.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
+"""gera_soquete v0.15.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
 
 Desenhada por SCRIPT e nao a mao (skill `kicad` §5): reproduzivel, diffavel,
 e corrigivel na fonte. Toda a geometria cai na grade de 1,27 mm.
@@ -24,7 +24,7 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, sys, uuid
 
-VERSAO = "0.14.0"
+VERSAO = "0.15.0"
 G = 1.27
 def u(): return str(uuid.uuid4())
 def g(v): return round(round(v / G) * G, 4)
@@ -78,6 +78,7 @@ FOOTPRINT = {
     "J13": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
     # ⚠️ 1x08 e nao 1x06: os pinos 7 e 8 sao TERRA. Ver o bloco do DPDT.
     "J15": "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical",
+    **{f"TP{i}": "TestPoint:TestPoint_Pad_D1.5mm" for i in range(1, 12)},
     "J16": "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical",
 }
 
@@ -436,6 +437,49 @@ for n, (canal, (SX, SY)) in enumerate((("L", (300.0, 175.0)),
     texto(f"canal {canal} — exciter OU linha, comuns amarrados. 1,4=comum "
           f"2,5=linha 3,6=exciter 7,8=GND (referencia do cabo)",
           SX - 30, SY - 19.05, 1.27)
+
+# ------------------------ pontos de teste
+#
+# ⚠️ NAO SE POE UM EM CADA REDE. A revisao de fora conta "0 de 69" e a resposta
+# preguicosa e por 69 — numa placa de 180x100, com a caixa fechada por cima. O
+# criterio nao e a cobertura: e **o que se mede quando ela nao funciona**, e
+# isso e uma lista curta que se escreve a pensar na bancada e nao no relatorio.
+#
+# A ordem e a da depuracao real: primeiro se ha tensao, depois se ha referencia,
+# depois se ha sinal. Cada um leva a razao escrita, porque um ponto de teste sem
+# razao e um furo que ninguem sabe para que serve.
+#
+# ⚠️ E O `AGND` TEM O SEU. Sem um ponto em cada terra nao se pode medir a ponte:
+# a diferenca entre elas com o instrumento a tocar e o unico numero que diz se o
+# NT1 esta a fazer o que devia.
+#
+# ⚠️ Footprint `TestPoint_Pad_D1.5mm`, que traz `exclude_from_pos_files
+# exclude_from_bom`: e cobre, nao e peca. Nao entra no CPL nem na lista de
+# compras, e a fabrica nao tenta montar nada la.
+TESTE = [
+    ("V_TRILHO_A2", "trilho bruto, antes de tudo"),
+    ("+15V",        "depois do fusivel e do TVS"),
+    ("V+PRE",       "alimentacao do pre-amp, depois do R7"),
+    ("VBIAS",       "meia tensao do divisor — se estiver fora, o audio ceifa"),
+    ("+5V",         "saida do step-down"),
+    ("+5V_PONTE",   "depois do Schottky, o que a ESP32 ve mesmo"),
+    ("+3V3A",       "alimentacao dos pots"),
+    ("GND",         "referencia da sonda"),
+    ("AGND",        "a outra terra — a diferenca para GND mede a ponte"),
+    ("LINHA_L",     "saida de audio L, antes do jack"),
+    ("LINHA_R",     "saida de audio R"),
+]
+for i, (rede, porque) in enumerate(TESTE):
+    ref = f"TP{i + 1}"
+    TX, TY = 365.0, 30.0 + i * 11.0
+    simbolo("CONN1_L", ref, rede, TX, TY, campos=campos(ref, rede))
+    for _num, px, py in pinos_de("CONN1_L"):
+        x, y = TX + px, TY - py
+        fio(x, y, x - 10.16, y)
+        rotulo(rede, x - 10.16, y, 180, "right")
+    texto(porque, TX + 6.35, TY + 1.27, 1.0)
+texto("PONTOS DE TESTE — o que se mede quando nao funciona",
+      365.0 - 24.0, 30.0 - 12.7, 1.6)
 
 # ------------------------ 10 k de cada entrada do amp ao GND do modulo
 #
