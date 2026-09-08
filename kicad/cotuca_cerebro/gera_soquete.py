@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_soquete v0.13.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
+"""gera_soquete v0.14.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
 
 Desenhada por SCRIPT e nao a mao (skill `kicad` §5): reproduzivel, diffavel,
 e corrigivel na fonte. Toda a geometria cai na grade de 1,27 mm.
@@ -24,7 +24,7 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, sys, uuid
 
-VERSAO = "0.13.0"
+VERSAO = "0.14.0"
 G = 1.27
 def u(): return str(uuid.uuid4())
 def g(v): return round(round(v / G) * G, 4)
@@ -76,8 +76,9 @@ FOOTPRINT = {
     "J11": "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical",
     "J12": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
     "J13": "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical",
-    "J15": "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical",
-    "J16": "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical",
+    # ⚠️ 1x08 e nao 1x06: os pinos 7 e 8 sao TERRA. Ver o bloco do DPDT.
+    "J15": "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical",
+    "J16": "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical",
 }
 
 
@@ -398,7 +399,7 @@ texto("MODULO DO AMP — 15 V e as duas linhas.", AX - 40, AY - 11.43, 1.6)
 for n, (canal, (SX, SY)) in enumerate((("L", (300.0, 175.0)),
                                        ("R", (300.0, 235.0))), start=15):
     ref = f"J{n}"
-    simbolo("CONN6_L", ref, f"fio -> DPDT tipo 2, canal {canal}", SX, SY,
+    simbolo("CONN8_L", ref, f"fio -> DPDT tipo 2, canal {canal}", SX, SY,
             campos=campos(ref, f"fio -> DPDT tipo 2, canal {canal}"))
     # a ordem das vias e a dos pinos da chave: 1 e 4 comuns, 2/5 exciter,
     # 3/6 linha. Mantida para o cabo poder ser crimpado pino a pino.
@@ -406,17 +407,35 @@ for n, (canal, (SX, SY)) in enumerate((("L", (300.0, 175.0)),
     # fio em SY+7,62 encontrava o pino cujo y no SIMBOLO era -7,62 (na folha o
     # y cresce para baixo), e a leitura do codigo dava a troca. Quem apanhou
     # foi a comparacao de netlist, nao o olho.
+    # ⚠️ 7 e 8 SAO TERRA, e os seis primeiros nao se mexem.
+    #
+    # O `kicad-happy` — revisao de outra pessoa — acusou este conector de nao
+    # ter um unico pino de terra em seis. A minha primeira leitura foi que o
+    # sinal saia sem referencia de retorno; ao ler ESTE bloco vi que e mais
+    # subtil: o sinal sai no pino 1 e VOLTA pelo 2 ou pelo 3 conforme a chave,
+    # portanto o retorno ja esta num condutor do mesmo cabo e a malha ja e
+    # pequena. O que faltava nao era o retorno — era a REFERENCIA: um cabo de
+    # audio de 150 mm ate uma chave de painel, sem terra nenhuma ao lado,
+    # apanha modo comum e nao tem por onde o escoar.
+    #
+    # ⚠️ E os pinos 1..6 ficam onde estavam DE PROPOSITO. O cabo e crimpado
+    # pino a pino contra os terminais da chave; renumerar o meio para
+    # intercalar terra daria um arranjo melhor no papel e um cabo que ja nao
+    # corresponde ao que esta montado. A terra entra no fim, onde nao desloca
+    # nada.
     mapa = {"1": f"OUT_{canal}_DAISY", "4": f"OUT_{canal}_DAISY",
             "2": f"LINHA_{canal}",     "5": f"LINHA_{canal}",
-            "3": f"EXC_{canal}",       "6": f"EXC_{canal}"}
-    for num, px, py in pinos_de("CONN6_L"):
+            "3": f"EXC_{canal}",       "6": f"EXC_{canal}",
+            "7": "GND",                "8": "GND"}
+    for num, px, py in pinos_de("CONN8_L"):
         x, y = SX + px, SY - py
         esq = px < 0
         dx = -10.16 if esq else 10.16
         fio(x, y, x + dx, y)
         rotulo(mapa[num], x + dx, y, 180 if esq else 0, "right" if esq else "left")
     texto(f"canal {canal} — exciter OU linha, comuns amarrados. 1,4=comum "
-          f"2,5=linha 3,6=exciter", SX - 30, SY - 16.51, 1.27)
+          f"2,5=linha 3,6=exciter 7,8=GND (referencia do cabo)",
+          SX - 30, SY - 19.05, 1.27)
 
 # ------------------------ 10 k de cada entrada do amp ao GND do modulo
 #

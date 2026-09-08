@@ -15,9 +15,20 @@ DUAS linhas de item que se seguem. Um extractor que casa a linha do cabecalho
 devolve zero achados com ar de placa limpa — e foi o que me devolveu, contra
 um DRC que dizia 47. Verificador que mente e pior que verificador nenhum.
 
-⚠️ E `Zone [X] <-> Zone [X]` E CATEGORIA A PARTE. E o plano em pedacos, e nao
-se confunde com `starved_thermal`, que e um pad agarrado a uma ilha estreita —
-esse e defeito de largura de cobre, nao de plano cortado.
+⚠️⚠️ E `Zone [X] <-> Zone [X]` NAO E UMA MEDICAO ESTAVEL. Medido a 08/09: cinco
+corridas do DRC sobre COPIAS IDENTICAS do mesmo ficheiro, com as zonas cheias
+uma vez e gravadas, deram 3, 0, 0, 3, 0 planos partidos. O total de ligacoes por
+fazer foi 15 nas cinco, e o perfil por rede foi AGND=4 GND=8 nas cinco.
+
+Ou seja: os FACTOS sao estaveis e o ROTULO nao. O mesmo item por ligar sai umas
+vezes descrito como "zona contra zona" e outras como pad contra qualquer coisa.
+Construi o veredicto do portao em cima desse rotulo, e reportei "planos
+inteiros ✓" dezenas de vezes sobre uma moeda ao ar.
+
+> **O criterio que manda e o PERFIL POR REDE, que e estavel.** Um plano que se
+> parta a serio faz subir as ligacoes por fazer da sua rede, e isso o perfil
+> apanha. O contador de `Zone <-> Zone` fica como indicacao — util para
+> perceber ONDE olhar, nunca para decidir.
 
 USO:  le_drc.py <relatorio.rpt> [--todos]
 """
@@ -25,7 +36,7 @@ import re
 import sys
 import collections
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 
 
 def le(caminho):
@@ -74,8 +85,7 @@ def main():
                 if len(a["itens"]) == 2
                 and all("Zone [" in i for i in a["itens"])
                 and rede_de(a["itens"][0]) == rede_de(a["itens"][1])]
-    print("  PLANO EM PEDACOS: %d %s" % (len(partidas),
-          "⚠️ o cobre foi cortado" if partidas else "✓"))
+    print("  plano em pedacos (INDICATIVO, medicao instavel): %d" % len(partidas))
     for a in partidas:
         print("     %s <-> %s" % (a["itens"][0], a["itens"][1]))
 

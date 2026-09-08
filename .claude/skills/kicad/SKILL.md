@@ -805,6 +805,60 @@ O DRC é 2D e mede cobre. Três coisas ficam de fora, e cada uma já custou:
 - **O logótipo no centro da placa.** Foi lá parar por defeito e ficou por cima
   de 64 de 130 pads. Procura-se a **maior faixa livre** e põe-se lá.
 
+### 11g-bis. SERIGRAFIA: cada obstáculo que se acrescenta empurra o texto para o próximo
+
+⚠️ **A regra que o utilizador pediu, e que custou quatro medições para ficar
+certa.**
+
+Uma ferramenta que afasta as referências dos **pads** e mais nada não arruma a
+serigrafia: muda o defeito de sítio. Medido no cérebro, passo a passo:
+
+| obstáculos que o teste conhecia | `silk_overlap` | `silk_over_copper` | `silk_edge_clearance` |
+|---|---|---|---|
+| só pads | 18 | 6 | 1 |
+| + serigrafia | **5** | **12** ⬆ | 1 |
+| + pistas, sem isentar os próprios pads | 5 | **1** | 1 |
+| + contorno da placa | 6 | 1 | **0** |
+
+Cada linha conserta uma coluna e estraga a seguinte, porque o texto **foge para
+o sítio que ainda não está a ser verificado**. Só para quando os quatro estão na
+lista: **pads, pistas, serigrafia e contorno**.
+
+> **Um verificador incompleto não deixa o defeito onde estava — empurra-o para
+> onde ele não é visto.** É pior que não ter verificador, porque a contagem que
+> ele mostra melhora.
+
+⚠️ **E a isenção dos próprios pads tem de cair.** Ela existe porque a referência
+por cima do próprio pad é o caso normal de um SMD pequeno — mas assim que a
+serigrafia entra nos obstáculos, as referências fogem do contorno e vão parar
+exactamente aí. Sem a isenção, quem não tiver sítio **fica onde está e diz**, que
+é melhor que ser empurrado para pior.
+
+⚠️⚠️ **E AQUI A REGRA INVERTE-SE EM RELAÇÃO AO ESQUEMA.** No esquemático, a
+referência dentro do corpo do próprio símbolo é onde ela mora (§9b) e comparar
+uma contra a outra dá alarme falso. Na placa é **defeito**: as duas coisas saem
+na mesma tinta branca, e o texto deixa de se ler. A mesma frase — *"a referência
+está por cima do seu próprio corpo"* — é normal num sítio e defeito no outro.
+
+**A prova de que a ferramenta não estragou nada é o número que NÃO muda:**
+pistas, vias, pads e peças idênticos antes e depois. Serigrafia só mexe em
+serigrafia.
+
+### 11g-ter. A fronteira com a `/design-review`, no lado da placa
+
+A `/design-review` é o portão **visual**; o DRC é o **numérico**. Na serigrafia
+de uma placa nenhum dos dois chega sozinho:
+
+| pergunta | quem responde |
+|---|---|
+| há texto por cima de texto, de cobre, ou fora da placa? | `kicad-cli pcb drc` — conta |
+| o texto **lê-se**, e aponta para a peça certa? | `/design-review` — olha o render |
+| a referência está do lado por onde se solda? | só o olho |
+
+⚠️ **Contagem zero não autoriza saltar o olho** — autoriza olhar sabendo onde.
+Uma referência tecnicamente livre pode estar encostada à peça errada, e nenhum
+DRC tem opinião sobre isso.
+
 ### 11h. A ilha de terra analógica e a ponte única
 
 AGND é uma **ilha** dentro do plano de GND, com prioridade maior para ganhar o
@@ -1326,6 +1380,43 @@ de sinal, porque não tinha como saber.
 ⚠️ E atribuem-se por **padrão de nome**, não por lista: uma rede acrescentada
 depois entra na classe certa sozinha, em vez de ficar esquecida na largura por
 omissão.
+
+### 12x. `Zone [X] <-> Zone [X]` NÃO é uma medição estável
+
+⚠️⚠️ **O achado mais desconfortável desta série, porque invalida verdicts que
+eu já tinha dado.**
+
+Cinco corridas do `kicad-cli pcb drc` sobre **cópias idênticas do mesmo
+ficheiro**, com as zonas cheias uma vez e gravadas:
+
+```
+planos partidos:   3 · 0 · 0 · 3 · 0
+ligações por fazer: 15 · 15 · 15 · 15 · 15
+perfil por rede:   AGND=4 GND=8   nas cinco
+```
+
+Os **factos** são estáveis; o **rótulo** não. O mesmo item por fazer sai umas
+vezes descrito como *zona contra zona* e outras como pad contra outra coisa.
+
+Eu tinha construído o veredicto do portão em cima desse rótulo, e reportei
+«planos inteiros ✓» dezenas de vezes sobre uma moeda ao ar. Pior: a retracção do
+roteador tomava decisões com ele — o que explica parte da variação entre
+corridas que eu andei a atribuir à ganância do roteador (§12d, §12j).
+
+> **O critério que manda é o PERFIL POR REDE**, que é estável e que a §12a já
+> ensinava. Um plano que se parta a sério faz subir as ligações por fazer da sua
+> rede, e o perfil apanha isso. O contador de `Zone <-> Zone` fica como
+> **indicação** — serve para saber onde olhar, nunca para decidir.
+
+⚠️ **E um portão não recusa por ruído**, porque um portão que recusa por ruído
+ensina quem o lê a ignorá-lo.
+
+**Como se descobre isto:** correndo a mesma medição sobre o mesmo ficheiro mais
+do que uma vez. É barato, quase nunca se faz, e foi o que separou o facto do
+rótulo aqui. A mesma disciplina apanhou o glob abortado (§12m) — *resultados
+idênticos entre condições que deviam diferir são uma avaria do aparelho*; esta é
+a face oposta: **resultados diferentes entre condições que deviam ser idênticas
+são outra.**
 
 ### 12i. O portao antes da fabrica
 

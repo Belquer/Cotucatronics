@@ -9103,3 +9103,64 @@ peça de série orça-se a 100+, não a um. Medido a 08/09: £0,904 a 100+ contr
 > **Uma hesitação minha custou uma pergunta ao dB — e valeu, porque foi ao ir
 > executar sem hesitar que o erro apareceu.** O que estava errado não era ter
 > dúvida sobre a escolha: era ter dúvida sobre a coisa errada.
+
+## 15do — cada obstáculo que se acrescenta empurra o texto para o próximo
+
+*08/09.* O `arruma_silk` afastava as referências dos **pads** e mais nada. O
+resultado não era serigrafia arrumada: era o defeito noutro sítio. Medido no
+cérebro, um obstáculo de cada vez:
+
+| o teste conhecia | `silk_overlap` | `silk_over_copper` | `silk_edge_clearance` |
+|---|---|---|---|
+| só pads | 18 | 6 | 1 |
+| + serigrafia | **5** | **12** ⬆ | 1 |
+| + pistas, sem isentar os próprios pads | 5 | **1** | 1 |
+| + contorno da placa | 6 | 1 | **0** |
+
+Cada linha consertava uma coluna e estragava a seguinte, porque **o texto foge
+para o sítio que ainda não está a ser verificado**. Só parou quando os quatro
+entraram: pads, pistas, serigrafia e contorno.
+
+> **Um verificador incompleto não deixa o defeito onde estava — empurra-o para
+> onde ele não é visto.** É pior que não ter verificador nenhum, porque a
+> contagem que ele mostra melhora.
+
+E a inversão que vale a pena guardar: no **esquema** a referência dentro do
+corpo do próprio símbolo é onde ela mora (§9b) e compará-las dá alarme falso; na
+**placa** é defeito, porque as duas saem na mesma tinta branca. A mesma frase é
+normal num sítio e defeito no outro.
+
+Cérebro **25 → 7** defeitos de serigrafia, painel **11 → 6**, com o cobre
+provado idêntico: pistas, vias, pads e peças iguais antes e depois.
+
+## 15dp — a medição em que assentei o portão dá números diferentes sobre o mesmo ficheiro
+
+*08/09.* Cinco corridas do `kicad-cli pcb drc` sobre **cópias idênticas do mesmo
+ficheiro**, com as zonas cheias uma vez e gravadas:
+
+```
+planos partidos:    3 · 0 · 0 · 3 · 0
+ligações por fazer: 15 · 15 · 15 · 15 · 15
+perfil por rede:    AGND=4 GND=8   nas cinco
+```
+
+Os factos são estáveis. O **rótulo** não: o mesmo item por fazer sai umas vezes
+descrito como *zona contra zona* e outras como pad contra outra coisa.
+
+E foi nesse rótulo que eu construí o veredicto do portão. Disse **«planos
+inteiros ✓»** dezenas de vezes nesta sessão sobre uma moeda ao ar. Pior: a
+retracção do roteador tomava decisões com ele — o que explica parte da variação
+entre corridas que andei a atribuir à ganância do roteador, e sobre a qual
+escrevi tabelas comparativas com ar de rigor.
+
+> **O critério que manda é o perfil por rede**, que é estável e que a §12a já
+> ensinava. Um plano que se parta a sério faz subir as ligações por fazer da sua
+> rede. O contador de `Zone <-> Zone` passou a **indicação** — serve para saber
+> onde olhar, nunca para decidir. E um portão não recusa por ruído, porque um
+> portão que recusa por ruído ensina quem o lê a ignorá-lo.
+
+Como se descobre: **correndo a mesma medição sobre o mesmo ficheiro mais do que
+uma vez.** É barato e quase nunca se faz. É a face oposta da 15cv — lá,
+*resultados idênticos entre condições que deviam diferir* denunciaram um comando
+que não correu; aqui, **resultados diferentes entre condições que deviam ser
+idênticas** denunciaram um verificador em que eu confiava.

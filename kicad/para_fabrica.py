@@ -20,8 +20,12 @@ O QUE E MEDIDO, e porque cada um esta na lista:
   ligacoes         uma placa com ligacoes por fazer nao e uma placa incompleta:
                    e uma placa que nao funciona. Conta-se POR REDE, porque o
                    total esconde regressoes (15co).
-  planos           `Zone [X] <-> Zone [X]` — o plano de terra em pedacos. Nao e
-                   erro de geometria e passa despercebido no meio das ligacoes.
+  planos           ⚠️ NAO se decide por `Zone [X] <-> Zone [X]`: essa medicao
+                   e INSTAVEL. Cinco corridas sobre copias identicas do mesmo
+                   ficheiro deram 3, 0, 0, 3, 0 — e o perfil por rede deu o
+                   mesmo nas cinco. O rotulo varia; os factos nao.
+                   Um plano partido a serio faz subir as ligacoes por fazer da
+                   sua rede, e e o perfil que decide.
   ilhas orfas      `starved_thermal`: um pad agarrado a uma ilha estreita de
                    cobre. Solda mal e conduz pior.
 
@@ -50,7 +54,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
@@ -110,24 +114,31 @@ def uma(nome, incompleta):
     print("\n══ %s ══" % nome)
     tipos, por_rede, partidos, orfas = mede(pcb)
 
-    recusas = []
+    recusas, avisos = [], []
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:
         recusas.append("geometria: %s" % dict(geo))
+    # ⚠️ O PORTAO NAO RECUSA POR ISTO. Ver o cabecalho: a medicao nao e
+    # reproduzivel, e um portao que recusa por ruido ensina a ignora-lo.
     if partidos:
-        recusas.append("plano de terra em %d pedaco(s)" % partidos)
+        avisos.append("plano de terra: %d indicacao(oes) de pedacos — "
+                      "INSTAVEL, confirma no editor antes de agir" % partidos)
     faltam = sum(por_rede.values()) - partidos
     if faltam and not incompleta:
         recusas.append("%d ligacao(oes) por fazer" % faltam)
 
     print("   geometria      %s" % ("%d achado(s): %s" % (sum(geo.values()), dict(geo))
                                     if geo else "0 ✓"))
-    print("   planos         %s" % ("%d em pedacos ⚠️" % partidos if partidos else "inteiros ✓"))
+    print("   planos         %s" % ("%d indicacao(oes) — medicao instavel, "
+                                       "ver o perfil por rede" % partidos
+                                       if partidos else "sem indicacao"))
     print("   ilhas orfas    %s" % ("%d (starved_thermal)" % orfas if orfas else "0 ✓"))
     print("   ligacoes       %s" % ("%d por fazer:" % faltam if faltam else "todas feitas ✓"))
     for r, n in sorted(por_rede.items(), key=lambda x: (-x[1], x[0])):
         print("                    %-20s %d" % (r, n))
 
+    for a2 in avisos:
+        print("   ⚠️ %s" % a2)
     if recusas:
         print("\n   RECUSO produzir o pacote:")
         for r in recusas:

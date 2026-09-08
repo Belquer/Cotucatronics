@@ -2,7 +2,7 @@
 	(version 20260306)
 	(generator "cotucatronics")
 	(generator_version "10.0")
-	(uuid "59351a46-1b8d-49ff-956a-facffc5a1097")
+	(uuid "5b005084-1860-4ece-82fc-027d8bd6eda3")
 	(paper "A2")
 	(title_block
 		(title "SOQUETE + PONTE + DPDT + SAIDAS — carrier rev B")
@@ -297,193 +297,131 @@
 		)
 		(embedded_fonts no)
 	)
-		(symbol "cotuca:CONN6_L"
-		(pin_names
-			(offset 1.016)
-		)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(in_pos_files yes)
-		(duplicate_pin_numbers_are_jumpers no)
-		(property "Reference" "J"
-			(at 0 11.43 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
+		(symbol "cotuca:CONN8_L"
+				(pin_names
+					(offset 1.016)
 				)
-			)
-		)
-		(property "Value" "conector 6p"
-			(at 0 -11.43 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1 1)
+				(exclude_from_sim no)
+				(in_bom yes)
+				(on_board yes)
+				(in_pos_files yes)
+				(duplicate_pin_numbers_are_jumpers no)
+				(property "Reference" "J"
+					(at 0 13.97 0)
+					(show_name no) (do_not_autoplace no)
+					(effects (font (size 1.27 1.27)))
 				)
-			)
-		)
-		(property "Footprint" ""
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
+				(property "Value" "conector 8p"
+					(at 0 -13.97 0)
+					(show_name no) (do_not_autoplace no)
+					(effects (font (size 1 1)))
 				)
-			)
-		)
-		(property "Datasheet" ""
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
+				(property "Footprint" ""
+					(at 0 0 0)
+					(show_name no) (do_not_autoplace no) (hide yes)
+					(effects (font (size 1.27 1.27)))
 				)
-			)
-		)
-		(property "Description" ""
-			(at 0 0 0)
-			(show_name no)
-			(do_not_autoplace no)
-			(hide yes)
-			(effects
-				(font
-					(size 1.27 1.27)
+				(property "Datasheet" ""
+					(at 0 0 0)
+					(show_name no) (do_not_autoplace no) (hide yes)
+					(effects (font (size 1.27 1.27)))
 				)
-			)
-		)
-		(symbol "CONN6_L_0_1"
-			(rectangle
-				(start -2.54 8.89)
-				(end 2.54 -8.89)
-				(stroke
-					(width 0.254)
-					(type default)
+				(property "Description" ""
+					(at 0 0 0)
+					(show_name no) (do_not_autoplace no) (hide yes)
+					(effects (font (size 1.27 1.27)))
 				)
-				(fill
-					(type background)
-				)
-			)
-		)
-		(symbol "CONN6_L_1_1"
-			(pin passive line
-				(at -7.62 7.62 0)
-				(length 5.08)
-				(name "1"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
+				(symbol "CONN8_L_0_1"
+					(rectangle
+						(start -2.54 11.43)
+						(end 2.54 -11.43)
+						(stroke (width 0.254) (type default))
+						(fill (type background))
 					)
 				)
-				(number "1"
-					(effects
-						(font
-							(size 1.27 1.27)
+				(symbol "CONN8_L_1_1"
+					(pin passive line
+						(at -7.62 10.16 0)
+						(length 5.08)
+						(name "1"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "1"
+							(effects (font (size 1.27 1.27)))
 						)
 					)
-				)
-			)
-			(pin passive line
-				(at -7.62 5.08 0)
-				(length 5.08)
-				(name "2"
-					(effects
-						(font
-							(size 1.27 1.27)
+					(pin passive line
+						(at -7.62 7.62 0)
+						(length 5.08)
+						(name "2"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "2"
+							(effects (font (size 1.27 1.27)))
 						)
 					)
-				)
-				(number "2"
-					(effects
-						(font
-							(size 1.27 1.27)
+					(pin passive line
+						(at -7.62 5.08 0)
+						(length 5.08)
+						(name "3"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "3"
+							(effects (font (size 1.27 1.27)))
 						)
 					)
-				)
-			)
-			(pin passive line
-				(at -7.62 2.54 0)
-				(length 5.08)
-				(name "3"
-					(effects
-						(font
-							(size 1.27 1.27)
+					(pin passive line
+						(at -7.62 2.54 0)
+						(length 5.08)
+						(name "4"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "4"
+							(effects (font (size 1.27 1.27)))
 						)
 					)
-				)
-				(number "3"
-					(effects
-						(font
-							(size 1.27 1.27)
+					(pin passive line
+						(at -7.62 0 0)
+						(length 5.08)
+						(name "5"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "5"
+							(effects (font (size 1.27 1.27)))
+						)
+					)
+					(pin passive line
+						(at -7.62 -2.54 0)
+						(length 5.08)
+						(name "6"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "6"
+							(effects (font (size 1.27 1.27)))
+						)
+					)
+					(pin passive line
+						(at -7.62 -5.08 0)
+						(length 5.08)
+						(name "7"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "7"
+							(effects (font (size 1.27 1.27)))
+						)
+					)
+					(pin passive line
+						(at -7.62 -7.62 0)
+						(length 5.08)
+						(name "8"
+							(effects (font (size 1.27 1.27)))
+						)
+						(number "8"
+							(effects (font (size 1.27 1.27)))
 						)
 					)
 				)
 			)
-			(pin passive line
-				(at -7.62 0 0)
-				(length 5.08)
-				(name "4"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "4"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin passive line
-				(at -7.62 -2.54 0)
-				(length 5.08)
-				(name "5"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "5"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-			(pin passive line
-				(at -7.62 -5.08 0)
-				(length 5.08)
-				(name "6"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-				(number "6"
-					(effects
-						(font
-							(size 1.27 1.27)
-						)
-					)
-				)
-			)
-		)
-		(embedded_fonts no)
-	)
 		(symbol "cotuca:C_V"
 		(pin_numbers
 			(hide yes)
@@ -2123,7 +2061,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "18f9dd2a-0414-4227-b947-55bd8033bb93")
+		(uuid "eea78489-6de8-4a89-93a7-f34348791316")
 		(property "Reference" "U2"
 			(at 190.5 99.06 0)
 			(show_name no) (do_not_autoplace no)
@@ -2163,390 +2101,390 @@
 			(xy 160.02 142.24) (xy 149.86 142.24)
 		)
 		(stroke (width 0) (type default))
-		(uuid "72135f1f-14c2-495b-aeff-aa92693bc5ff")
+		(uuid "38e11e76-18ab-4d69-b3ec-8c7e4ffebb66")
 	)
 	(global_label "AUDIO_IN_L"
 		(shape bidirectional)
 		(at 149.86 142.24 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "6f2c3bfd-8d99-4cf8-8879-8f6017689942")
+		(uuid "b94a947e-c77d-4a54-b606-73b320442276")
 	)
 	(wire
 		(pts
 			(xy 160.02 144.78) (xy 149.86 144.78)
 		)
 		(stroke (width 0) (type default))
-		(uuid "6caaafe7-b4c6-40c6-925f-48b1ecf18e83")
+		(uuid "894e0fe9-ccae-4895-bf98-c7be82268837")
 	)
 	(global_label "AUDIO_IN_R"
 		(shape bidirectional)
 		(at 149.86 144.78 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "ae317d6f-b6fb-4a69-b9da-81ea9ed0c7ea")
+		(uuid "77d33432-e14e-4d3b-a690-c1f97ed9684f")
 	)
 	(wire
 		(pts
 			(xy 160.02 147.32) (xy 149.86 147.32)
 		)
 		(stroke (width 0) (type default))
-		(uuid "d439f37d-5dec-4a19-96b8-0627f0d1ce1e")
+		(uuid "8e7da26c-7955-45c7-b069-7c172d3a3df2")
 	)
 	(global_label "OUT_L_DAISY"
 		(shape bidirectional)
 		(at 149.86 147.32 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "1cab6c82-8cd5-4f8d-8df2-fb0b9d32217e")
+		(uuid "a6905a77-3508-4733-a7c8-6f47d08a8cd6")
 	)
 	(wire
 		(pts
 			(xy 160.02 149.86) (xy 149.86 149.86)
 		)
 		(stroke (width 0) (type default))
-		(uuid "f8270612-dac6-4bc0-ba64-93679d946aa8")
+		(uuid "f0c69299-1197-4937-bb21-2e3af7d1bb90")
 	)
 	(global_label "OUT_R_DAISY"
 		(shape bidirectional)
 		(at 149.86 149.86 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "c69dd07c-82c5-45d0-acc5-fa2d1893fc67")
+		(uuid "9d24ea09-9680-4210-8145-8e9836523091")
 	)
 	(wire
 		(pts
 			(xy 160.02 152.4) (xy 149.86 152.4)
 		)
 		(stroke (width 0) (type default))
-		(uuid "cc9a4f6e-4247-452c-84d0-21e9f3686c26")
+		(uuid "ae1d3429-4f85-49e9-ba01-8d91b5060a37")
 	)
 	(global_label "AGND"
 		(shape bidirectional)
 		(at 149.86 152.4 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "edf372d8-f1cb-4cb8-a879-aed2d79dd7a5")
+		(uuid "2a657206-cef9-4055-b967-4cb5c50013c4")
 	)
 	(wire
 		(pts
 			(xy 220.98 152.4) (xy 231.14 152.4)
 		)
 		(stroke (width 0) (type default))
-		(uuid "6b277b60-04c6-4dd4-a560-5e5c6306884c")
+		(uuid "6594e266-ac18-442d-a301-9ecac551edeb")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 231.14 152.4 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "5ab4053b-8a95-4f9f-8a0e-a01491c98bd0")
+		(uuid "26ad8b96-8c9d-406c-9107-e7f656b5b3b3")
 	)
 	(wire
 		(pts
 			(xy 220.98 149.86) (xy 231.14 149.86)
 		)
 		(stroke (width 0) (type default))
-		(uuid "c157de9e-894d-4039-be40-5bf092bcce52")
+		(uuid "f75b58b8-89f0-40cc-92d5-3a109e48adaa")
 	)
 	(global_label "+5V"
 		(shape bidirectional)
 		(at 231.14 149.86 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "8ef6f183-7bb2-44a4-949d-d0c46e862528")
+		(uuid "aa3677f5-81ce-40cc-9228-ce2bc5fba525")
 	)
 	(wire
 		(pts
 			(xy 220.98 104.14) (xy 231.14 104.14)
 		)
 		(stroke (width 0) (type default))
-		(uuid "064f6008-e27f-4a3c-a93d-5a0f13a3cd65")
+		(uuid "b8c9af66-8c16-419b-aae4-e3c59d5a1f0d")
 	)
 	(global_label "+3V3A"
 		(shape bidirectional)
 		(at 231.14 104.14 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "0e7e4a0f-f6a1-4a99-b119-a82603bf6447")
+		(uuid "1028b271-3383-4da4-82bc-261f3e054333")
 	)
 	(wire
 		(pts
 			(xy 160.02 137.16) (xy 149.86 137.16)
 		)
 		(stroke (width 0) (type default))
-		(uuid "4eff3daa-d0ba-42c9-85b2-cbe3acab6b65")
+		(uuid "58fdca58-3960-473d-b2c8-94def5e1cd66")
 	)
 	(global_label "MIDI_TX"
 		(shape bidirectional)
 		(at 149.86 137.16 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "fa4a5575-5b82-4c43-b210-9b672a9dc15f")
+		(uuid "da5ae000-926b-4b60-88e6-e1fbc4173112")
 	)
 	(wire
 		(pts
 			(xy 160.02 139.7) (xy 149.86 139.7)
 		)
 		(stroke (width 0) (type default))
-		(uuid "1804e758-169f-4e09-821f-db4aaaee8418")
+		(uuid "cb97e682-5df3-4759-a2e4-5621cde52fc0")
 	)
 	(global_label "MIDI_RX"
 		(shape bidirectional)
 		(at 149.86 139.7 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "f1b5615a-127d-492b-acec-e58150a5caa6")
+		(uuid "452ddd3a-a349-45ff-8c40-12656ecce7c2")
 	)
 	(wire
 		(pts
 			(xy 220.98 139.7) (xy 231.14 139.7)
 		)
 		(stroke (width 0) (type default))
-		(uuid "51e4f699-b98a-4575-a846-070ff6783477")
+		(uuid "24cdab11-fa7b-4c6d-9aa6-7b0b86e4866e")
 	)
 	(global_label "PONTE_STATUS"
 		(shape bidirectional)
 		(at 231.14 139.7 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "f1de85b1-82f0-42bb-9881-329e7c008392")
+		(uuid "b91cd5ff-8bc5-4743-ad87-254c366391a9")
 	)
 	(wire
 		(pts
 			(xy 220.98 111.76) (xy 231.14 111.76)
 		)
 		(stroke (width 0) (type default))
-		(uuid "b5b27162-777a-452d-8bc8-dd43e3e0dc6b")
+		(uuid "88b092bd-ac7f-4b07-9868-5ddb44094190")
 	)
 	(global_label "V_TRILHO_A2"
 		(shape bidirectional)
 		(at 231.14 111.76 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "e82c63dd-1462-4aeb-8203-667d6e8b8ac0")
+		(uuid "74bb56e8-6624-4fea-9000-6eff8fd5386e")
 	)
 	(wire
 		(pts
 			(xy 160.02 116.84) (xy 149.86 116.84)
 		)
 		(stroke (width 0) (type default))
-		(uuid "7db0c81e-fea3-4de4-a42e-d58dff466951")
+		(uuid "57de6c09-a764-4c51-a013-27a1ec6f0184")
 	)
 	(global_label "OLED_RST"
 		(shape bidirectional)
 		(at 149.86 116.84 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "390e7801-c073-4926-b0c7-365d725e0f40")
+		(uuid "ba87b49c-391f-430a-b20d-742636e2cd4a")
 	)
 	(wire
 		(pts
 			(xy 160.02 119.38) (xy 149.86 119.38)
 		)
 		(stroke (width 0) (type default))
-		(uuid "ca8446ff-1a99-406a-8430-53d7af9ac44e")
+		(uuid "95f2a4dc-ccb3-4607-abba-d5a4ef6b785a")
 	)
 	(global_label "OLED_DC"
 		(shape bidirectional)
 		(at 149.86 119.38 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "f51cf824-997c-47e6-be5b-14a6be7fb6d6")
+		(uuid "9c9e1c5b-4eb7-4e13-be1d-04e598b2352c")
 	)
 	(wire
 		(pts
 			(xy 160.02 121.92) (xy 149.86 121.92)
 		)
 		(stroke (width 0) (type default))
-		(uuid "834be9a4-8100-4ccf-83fa-1504cd00136b")
+		(uuid "85ab9c8a-6dcf-40fb-9c93-f8e75f5fb06f")
 	)
 	(global_label "OLED_CS"
 		(shape bidirectional)
 		(at 149.86 121.92 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "af38cff3-2ac0-493b-be7c-3c2d8d19b33c")
+		(uuid "70ccb3a9-5eea-4a46-a423-9b2c9806a529")
 	)
 	(wire
 		(pts
 			(xy 160.02 124.46) (xy 149.86 124.46)
 		)
 		(stroke (width 0) (type default))
-		(uuid "aed21766-fcb7-4a17-b54e-0b79b37d5814")
+		(uuid "7c1770e8-db11-4931-b3e3-e6cf35967d78")
 	)
 	(global_label "OLED_CLK"
 		(shape bidirectional)
 		(at 149.86 124.46 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "2c58b164-522a-42aa-a85b-a4c135a5f0b3")
+		(uuid "3c357f5c-e4e8-4f9c-af9e-741c8521ba2d")
 	)
 	(wire
 		(pts
 			(xy 160.02 129.54) (xy 149.86 129.54)
 		)
 		(stroke (width 0) (type default))
-		(uuid "c6b4c809-f85c-4ea8-bfae-7a2d8a18e00c")
+		(uuid "031e4f28-f0bb-4969-9bac-3ebeb876cad1")
 	)
 	(global_label "OLED_DIN"
 		(shape bidirectional)
 		(at 149.86 129.54 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "c0e9d03d-ced6-472b-92eb-b5a39786111d")
+		(uuid "9733ec2f-fc88-45b7-b320-8b6e6c2144e6")
 	)
 	(wire
 		(pts
 			(xy 160.02 104.14) (xy 149.86 104.14)
 		)
 		(stroke (width 0) (type default))
-		(uuid "62550ed0-b879-45fa-84fc-043b531ae7d2")
+		(uuid "c425c8f6-8128-4562-85b1-f0584fbacb54")
 	)
 	(global_label "ENC_A_A"
 		(shape bidirectional)
 		(at 149.86 104.14 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "e9e772cb-d5c4-4490-a22e-6de2f52ef9b8")
+		(uuid "1a1b9756-c8c0-4761-80a2-3e69fe58ca6f")
 	)
 	(wire
 		(pts
 			(xy 160.02 106.68) (xy 149.86 106.68)
 		)
 		(stroke (width 0) (type default))
-		(uuid "2f82aba9-0ec1-4370-8139-686e82deb003")
+		(uuid "4efd414a-72e5-48d3-a66c-1d3216668645")
 	)
 	(global_label "ENC_A_B"
 		(shape bidirectional)
 		(at 149.86 106.68 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "40142c39-9e2e-4057-872b-775c90479067")
+		(uuid "5992b97c-8998-4361-8039-a586af34ea3a")
 	)
 	(wire
 		(pts
 			(xy 160.02 109.22) (xy 149.86 109.22)
 		)
 		(stroke (width 0) (type default))
-		(uuid "930cbc04-c3e5-479e-bdb1-9e4cce3e570f")
+		(uuid "7d74be4a-a2b9-4278-8a5f-f0e4840c28e1")
 	)
 	(global_label "ENC_A_PUSH"
 		(shape bidirectional)
 		(at 149.86 109.22 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "a8dd6e06-b5cf-4eab-acfc-49977db0213c")
+		(uuid "2d3e92ca-aba3-4c0e-8a03-764cc544fc17")
 	)
 	(wire
 		(pts
 			(xy 220.98 106.68) (xy 231.14 106.68)
 		)
 		(stroke (width 0) (type default))
-		(uuid "7b9051b6-60ed-4fd4-a3cc-d1ccc1c354aa")
+		(uuid "a0e73dd0-ccce-4b3d-a11c-d0d9e2b7dee0")
 	)
 	(global_label "POT_L"
 		(shape bidirectional)
 		(at 231.14 106.68 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "c4574416-2500-4c23-8569-98fb50de0e4c")
+		(uuid "fe0e7444-a27c-40de-8251-4ee6f580072d")
 	)
 	(wire
 		(pts
 			(xy 220.98 109.22) (xy 231.14 109.22)
 		)
 		(stroke (width 0) (type default))
-		(uuid "f95f57bb-90d3-4bbe-962b-eca430eb6fac")
+		(uuid "4c9dafca-c728-4465-b356-f245ca0157e1")
 	)
 	(global_label "POT_R"
 		(shape bidirectional)
 		(at 231.14 109.22 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "01f4110f-92a2-47bd-a4d2-5ae55443240b")
+		(uuid "62ee8b28-d815-400b-9c97-16680c7e1592")
 	)
 	(wire
 		(pts
 			(xy 220.98 124.46) (xy 231.14 124.46)
 		)
 		(stroke (width 0) (type default))
-		(uuid "16c3a2ab-cb8f-4bd1-afdc-e5f90552a0d3")
+		(uuid "bf596eaa-948a-438e-b6f7-a8bbcb61ad38")
 	)
 	(global_label "BOT_FRZ_B"
 		(shape bidirectional)
 		(at 231.14 124.46 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "551058d9-1648-4c11-a52f-c9e7956254e5")
+		(uuid "7bbba053-b188-4ce5-9301-dc1caa5e9612")
 	)
 	(wire
 		(pts
 			(xy 220.98 127.0) (xy 231.14 127.0)
 		)
 		(stroke (width 0) (type default))
-		(uuid "6e1bebd9-d53b-4979-9277-e732e68bc21c")
+		(uuid "4749a0b2-cfdb-4b77-a3ec-3644506aa105")
 	)
 	(global_label "LED_FRZ_B"
 		(shape bidirectional)
 		(at 231.14 127.0 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "5dcf42b6-167e-4699-aba9-8d1075514cb5")
+		(uuid "f51f1604-b2cc-4402-82bb-f4a429112e4b")
 	)
 	(wire
 		(pts
 			(xy 220.98 129.54) (xy 231.14 129.54)
 		)
 		(stroke (width 0) (type default))
-		(uuid "77382f05-6569-4be4-82af-2f8f48da9d9c")
+		(uuid "6338b2f7-c085-4e31-9f24-3a437fd1557f")
 	)
 	(global_label "BOT_FRZ_A"
 		(shape bidirectional)
 		(at 231.14 129.54 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "4f5acf7f-1943-407d-b3a5-5b1332e54725")
+		(uuid "4dfae088-bab2-4b75-a05f-78e9c63c7df7")
 	)
 	(wire
 		(pts
 			(xy 220.98 134.62) (xy 231.14 134.62)
 		)
 		(stroke (width 0) (type default))
-		(uuid "7372a188-7e61-4ff5-9fee-76c9853c231c")
+		(uuid "f4691167-e933-43b1-8608-c685f39cbaa8")
 	)
 	(global_label "BOT_BUZIOS"
 		(shape bidirectional)
 		(at 231.14 134.62 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "b19ce7a4-80e4-45b1-822f-dc063ed3f7fb")
+		(uuid "d7d09f0b-1f73-42e0-bdf5-3d2eeb55ed6b")
 	)
 	(wire
 		(pts
 			(xy 220.98 137.16) (xy 231.14 137.16)
 		)
 		(stroke (width 0) (type default))
-		(uuid "e82962e2-41b4-4d8c-b09f-071c7eea3706")
+		(uuid "6ff33e76-909d-4500-b9e9-8a51078ba4f1")
 	)
 	(global_label "LED_FRZ_A"
 		(shape bidirectional)
 		(at 231.14 137.16 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "a4f9451c-b537-4208-adde-3a349318a83f")
+		(uuid "edfa987b-72c5-42e2-a04b-54cf49ae620c")
 	)
 	(text "SOQUETE DA DAISY — o Dnn -> pino sai da folha de dados, nunca de memoria."
 		(exclude_from_sim no)
 		(at 130.81 86.36 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "03c1ff01-b2a7-4dbb-8e11-2a78ba73d756")
+		(uuid "027bb283-d49b-4507-84fa-8ebcb749c45a")
 	)
 	(text "D29 e D30 NAO se usam: sao USB_HS_D-/D+ (pinos 36/37)."
 		(exclude_from_sim no)
 		(at 130.81 90.17 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "2e69e767-307d-4ac6-8c19-a9c6a4de9fa7")
+		(uuid "61a5a150-553a-456e-a4f5-2ad23afe50b1")
 	)
 	(symbol
 		(lib_id "cotuca:NETTIE2")
@@ -2558,7 +2496,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "00bc0cb8-b28d-4149-a5a8-ab37d1eef7c8")
+		(uuid "75e91ebd-e29f-43ce-a76c-420c0725a8f3")
 		(property "Reference" "NT1"
 			(at 90.17 201.93 0)
 			(show_name no) (do_not_autoplace no)
@@ -2598,52 +2536,52 @@
 			(xy 82.55 204.47) (xy 72.39 204.47)
 		)
 		(stroke (width 0) (type default))
-		(uuid "ce2c61a1-83ee-4164-9304-0e9ca6a28f1a")
+		(uuid "3c8c81a9-7418-4c9c-bbc9-dc4c34f690bd")
 	)
 	(global_label "AGND"
 		(shape bidirectional)
 		(at 72.39 204.47 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "e4c87f02-3b09-4481-8df1-5b0a1d0e40f8")
+		(uuid "f4faddc3-7dc4-4659-8086-9304530c8767")
 	)
 	(wire
 		(pts
 			(xy 97.79 204.47) (xy 107.95 204.47)
 		)
 		(stroke (width 0) (type default))
-		(uuid "908fbba0-fb72-4442-9498-f2b38018a89f")
+		(uuid "7d96685a-0dd2-47d8-a8e9-4c5dfa89e400")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 107.95 204.47 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "e327ee3a-bd75-4fe2-97be-b278d9bb7119")
+		(uuid "5d6510ff-4b38-4be4-97e5-26d2706c5933")
 	)
 	(text "A PONTE, e e a unica. A Seed NAO junta AGND e DGND por dentro:"
 		(exclude_from_sim no)
 		(at 59.69 189.23 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "ff7c50a7-da7e-47fc-9287-eebd053930d4")
+		(uuid "462ba9d6-138a-4db4-8397-b10bb13dc582")
 	)
 	(text "a doc da libDaisy manda liga-los fora, e 20<->40 mediu ABERTO."
 		(exclude_from_sim no)
 		(at 59.69 193.04 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "6d77ef0a-3239-4ccf-bd05-8a03681aa973")
+		(uuid "9410ac24-9b5a-4447-a5b4-54f36d965e3c")
 	)
 	(text "Os pinos 20 e 40 estao na DIAGONAL do modulo — o net-tie fica"
 		(exclude_from_sim no)
 		(at 59.69 215.9 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "7d5761f8-8771-44d7-9771-a972c1c8de2f")
+		(uuid "40e82429-cc05-4c16-a22b-dcf36f93298d")
 	)
 	(text "encostado ao 20, dentro da ilha, com UM condutor ate ao 40."
 		(exclude_from_sim no)
 		(at 59.69 219.71 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "f55a633c-7903-4b06-b696-d64549055f81")
+		(uuid "4924c621-32f3-4b12-a8a2-7a09f235d316")
 	)
 	(symbol
 		(lib_id "cotuca:ESP32C3")
@@ -2655,7 +2593,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "32ceef95-d830-425c-bc3d-e8424f325859")
+		(uuid "e3514c03-bbec-459b-a2cf-eeb17adee37e")
 		(property "Reference" "U3"
 			(at 299.72 57.15 0)
 			(show_name no) (do_not_autoplace no)
@@ -2692,153 +2630,153 @@
 	)
 	(no_connect
 		(at 314.96 55.88)
-		(uuid "a6214c05-7e3c-4e07-896b-bab335fb3b75")
+		(uuid "97be6054-8b70-4d63-a3df-847da6824359")
 	)
 	(wire
 		(pts
 			(xy 314.96 50.8) (xy 325.12 50.8)
 		)
 		(stroke (width 0) (type default))
-		(uuid "082f3823-da94-40d1-bb9a-a5f87b46608b")
+		(uuid "6500d1bb-9021-4e75-8f08-ff606fa65daf")
 	)
 	(global_label "+5V_PONTE"
 		(shape bidirectional)
 		(at 325.12 50.8 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "ff7da431-7543-4ea8-b9d5-e00eea6e7916")
+		(uuid "2b457ce8-aff6-42f8-bb12-c9d1abddb1a2")
 	)
 	(wire
 		(pts
 			(xy 314.96 53.34) (xy 325.12 53.34)
 		)
 		(stroke (width 0) (type default))
-		(uuid "f3641857-dfbe-413e-b0c0-c073d1454e88")
+		(uuid "a9f3e797-079d-49bb-a990-6019749b7993")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 325.12 53.34 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "7d912e78-5854-4b3e-aa0c-bc24dac9fafe")
+		(uuid "ea990416-d2cd-4b5d-b499-952e1edefc65")
 	)
 	(no_connect
 		(at 314.96 68.58)
-		(uuid "b8bc17d4-101b-45f6-bcd4-ba3c65b4339a")
+		(uuid "e426b056-6f36-4e52-9f1d-e0ffcfc87f22")
 	)
 	(no_connect
 		(at 314.96 66.04)
-		(uuid "9bb170d7-2696-4d6e-8fac-4c233dceba10")
+		(uuid "aed2f2ff-eb1b-4e2e-a7ee-eff08dbb1913")
 	)
 	(no_connect
 		(at 314.96 63.5)
-		(uuid "6e2eb77f-1c06-4594-8518-63e340f52af2")
+		(uuid "516cd7cf-168f-40e6-8632-0705f7458ad9")
 	)
 	(wire
 		(pts
 			(xy 314.96 60.96) (xy 325.12 60.96)
 		)
 		(stroke (width 0) (type default))
-		(uuid "230849c5-4c74-49c5-8f69-9ecfc86b3b6e")
+		(uuid "67899d13-783a-4a96-b235-2055012599fa")
 	)
 	(global_label "PONTE_STATUS"
 		(shape bidirectional)
 		(at 325.12 60.96 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "69d3ad37-9dae-4670-96cc-95d469c28651")
+		(uuid "d7d354be-c755-47cf-9d08-e5e48d66ec53")
 	)
 	(no_connect
 		(at 314.96 58.42)
-		(uuid "d4419dbf-9b09-4616-a236-0c92f6d769cd")
+		(uuid "2bb28e96-c78a-436d-b449-ba161baa1953")
 	)
 	(no_connect
 		(at 284.48 50.8)
-		(uuid "57edb60b-1aa2-42c1-86ee-a90fdbdb5292")
+		(uuid "73f50263-c259-4342-8db8-1b5841f6d1a7")
 	)
 	(no_connect
 		(at 284.48 53.34)
-		(uuid "5907ab55-0197-4c13-8a92-67a56f72a649")
+		(uuid "97fd370e-3f24-45db-8aca-f1e19cd95f18")
 	)
 	(no_connect
 		(at 284.48 55.88)
-		(uuid "8752fd22-584f-47cf-9ea6-68cc8c746cd4")
+		(uuid "52023ed6-4a71-47d7-876a-932b015d14ef")
 	)
 	(no_connect
 		(at 284.48 58.42)
-		(uuid "bd1a65d7-aada-4a82-9110-1017d9e57a64")
+		(uuid "9b8ea5f8-8196-4baf-ae3f-8fb7efeb8b55")
 	)
 	(no_connect
 		(at 284.48 60.96)
-		(uuid "ae453e62-e6ae-4073-bce7-cc31ceedfd44")
+		(uuid "44e08b2d-9591-49a0-8336-232af589b05a")
 	)
 	(no_connect
 		(at 284.48 63.5)
-		(uuid "bed6438f-54cb-48c9-928a-33919365d0d0")
+		(uuid "677e3147-ef9e-4247-8df1-c5e502f318fd")
 	)
 	(wire
 		(pts
 			(xy 284.48 66.04) (xy 274.32 66.04)
 		)
 		(stroke (width 0) (type default))
-		(uuid "f53568a3-4ebe-4b3b-b5dd-23287c3ac476")
+		(uuid "72017ab7-0cc4-40a5-bc48-862735f22015")
 	)
 	(global_label "MIDI_TX"
 		(shape bidirectional)
 		(at 274.32 66.04 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "a383bcf0-4c1c-4a2e-bff1-a0bfb04b9c40")
+		(uuid "0e8aaa81-9f55-4649-9aa2-390456924eb5")
 	)
 	(wire
 		(pts
 			(xy 284.48 68.58) (xy 274.32 68.58)
 		)
 		(stroke (width 0) (type default))
-		(uuid "14e4baf7-537d-48e5-bc60-9b1d7b76a92e")
+		(uuid "53b47034-3ea4-45f5-9522-54e3ec1f5327")
 	)
 	(global_label "MIDI_RX"
 		(shape bidirectional)
 		(at 274.32 68.58 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "3a79fb24-f7c7-44eb-918d-f2bde835ed5d")
+		(uuid "32e0d453-b5e2-417e-9c38-3ff9a84d3f3e")
 	)
 	(text "PONTE ESP32-C3 EM SOQUETE — TX/RX CRUZADOS: IO20 e o RX do modulo,"
 		(exclude_from_sim no)
 		(at 260.35 41.91 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "9c73ab95-6538-4c72-9845-4b233ff89644")
+		(uuid "5f6bbb66-7918-40e1-b8a3-85d8d6895e9c")
 	)
 	(text "IO21 o TX. A terra vai pelo PLANO: o soquete tratou disso."
 		(exclude_from_sim no)
 		(at 260.35 45.72 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "8d732f52-5b8a-478e-9a75-e0ab848b411d")
+		(uuid "abe82f20-ffbe-407b-8373-f344b5514352")
 	)
 	(text "IO8 e o LED de bordo, IO9 e o BOOT — nao usar. Antena no lado"
 		(exclude_from_sim no)
 		(at 260.35 73.66 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "a6f6cd54-645c-49df-ab2e-fc5425d8d582")
+		(uuid "9f0e6f0f-1769-45f7-8fe6-5988739e224a")
 	)
 	(text "OPOSTO ao USB: manter cobre longe dela no layout."
 		(exclude_from_sim no)
 		(at 260.35 77.47 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "da63e73a-f1b4-4fae-a422-034799d5d60a")
+		(uuid "945bb82f-020b-4c91-a82f-d592935eb665")
 	)
 	(text "+5V_PONTE e o +5V ATRAS do D2, com o C3/C4 locais: o USB do modulo,"
 		(exclude_from_sim no)
 		(at 260.35 81.28 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "0180a565-d4f6-4b44-88f9-1638a4a078de")
+		(uuid "0c93d33e-1602-462b-aab7-a8c6e9578159")
 	)
 	(text "ligado para reprogramar, nao realimenta o trilho da placa toda."
 		(exclude_from_sim no)
 		(at 260.35 85.09 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "8e9a4169-05ea-4d74-9838-8e85ba1b47f3")
+		(uuid "0e75313b-b037-4857-bff3-360fe546d8f4")
 	)
 	(symbol
 		(lib_id "cotuca:CONN4_L")
@@ -2850,7 +2788,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "fe6ba676-56d4-4f47-bf04-d39ffefd448c")
+		(uuid "1dba6daa-39f2-47fb-840a-2fa85bf1af14")
 		(property "Reference" "J11"
 			(at 299.72 107.95 0)
 			(show_name no) (do_not_autoplace no)
@@ -2890,65 +2828,65 @@
 			(xy 292.1 105.41) (xy 281.94 105.41)
 		)
 		(stroke (width 0) (type default))
-		(uuid "93691c2a-0335-4d4e-a24e-050bf5f602c6")
+		(uuid "65401469-2bb6-4498-8416-391e16fa0429")
 	)
 	(global_label "+15V"
 		(shape bidirectional)
 		(at 281.94 105.41 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "6cf5bec2-ce4c-455f-95ff-0610127179a9")
+		(uuid "a56258da-ac8a-4f2a-b297-f3d8093de8a7")
 	)
 	(wire
 		(pts
 			(xy 292.1 107.95) (xy 281.94 107.95)
 		)
 		(stroke (width 0) (type default))
-		(uuid "2d810084-8693-44e4-a9ce-eaf5ecb140ed")
+		(uuid "1d678d6c-ec81-493f-9288-5572eebb519e")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 281.94 107.95 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "126bbdd2-063d-4bf6-8e23-b1146c5055ba")
+		(uuid "440d565f-28a4-4daa-846f-1440fa277e0a")
 	)
 	(wire
 		(pts
 			(xy 292.1 110.49) (xy 281.94 110.49)
 		)
 		(stroke (width 0) (type default))
-		(uuid "53debe4d-dffa-42c6-aa51-aba5e0d6834a")
+		(uuid "1d7d5c16-0a55-4bfa-9e5c-6d576e2d8448")
 	)
 	(global_label "AMP_IN_L"
 		(shape bidirectional)
 		(at 281.94 110.49 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "3b6abbab-e5a2-4acd-b761-062012a186f7")
+		(uuid "6710bf00-4963-4ea8-b97c-77be66f0d366")
 	)
 	(wire
 		(pts
 			(xy 292.1 113.03) (xy 281.94 113.03)
 		)
 		(stroke (width 0) (type default))
-		(uuid "d8997fa5-f2c4-4b54-ba0b-da206f3507bf")
+		(uuid "c6a071ba-1c8f-4d0e-a056-ad5402c3060a")
 	)
 	(global_label "AMP_IN_R"
 		(shape bidirectional)
 		(at 281.94 113.03 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "52f17682-819e-4a83-87ca-12a299b4490e")
+		(uuid "2bb1d304-55a6-469d-9185-b9ab38dcc70e")
 	)
 	(text "MODULO DO AMP — 15 V e as duas linhas."
 		(exclude_from_sim no)
 		(at 260.35 99.06 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "0648314c-5ca5-416f-8a2f-10b443c1708d")
+		(uuid "2defe25d-3306-4d00-a544-f5ec1265b81b")
 	)
 	(symbol
-		(lib_id "cotuca:CONN6_L")
+		(lib_id "cotuca:CONN8_L")
 		(at 299.72 175.26 0)
 		(unit 1)
 		(body_style 1)
@@ -2957,7 +2895,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "3037f379-cb9c-4844-85df-3f5262d20e22")
+		(uuid "5fe78d57-ee33-4fb8-a9c2-eeee98e19691")
 		(property "Reference" "J15"
 			(at 299.72 172.72 0)
 			(show_name no) (do_not_autoplace no)
@@ -2968,7 +2906,7 @@
 			(show_name no) (do_not_autoplace no)
 			(effects (font (size 1.0 1.0)))
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical"
 			(at 299.72 175.26 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
@@ -2994,96 +2932,124 @@
 	)
 	(wire
 		(pts
+			(xy 292.1 165.1) (xy 281.94 165.1)
+		)
+		(stroke (width 0) (type default))
+		(uuid "48bc0ab6-1d10-4bbb-94e9-7b2098d447a1")
+	)
+	(global_label "OUT_L_DAISY"
+		(shape bidirectional)
+		(at 281.94 165.1 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "58976493-24e4-458f-be0b-7fff531bfb4e")
+	)
+	(wire
+		(pts
 			(xy 292.1 167.64) (xy 281.94 167.64)
 		)
 		(stroke (width 0) (type default))
-		(uuid "392ea7bb-8957-4acb-8fff-1e78e3ab45bb")
+		(uuid "b7de806a-32fa-4cab-b92f-566becea4d62")
 	)
-	(global_label "OUT_L_DAISY"
+	(global_label "LINHA_L"
 		(shape bidirectional)
 		(at 281.94 167.64 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "5e51aec3-c339-4558-a41d-d810b14d762e")
+		(uuid "ec4a94b5-7cb1-48c7-ba58-767508d20f35")
 	)
 	(wire
 		(pts
 			(xy 292.1 170.18) (xy 281.94 170.18)
 		)
 		(stroke (width 0) (type default))
-		(uuid "c92469de-10be-4274-a176-9b22a609166d")
+		(uuid "d0f53e6d-9fd8-449b-9e92-1900f6093adc")
 	)
-	(global_label "LINHA_L"
+	(global_label "EXC_L"
 		(shape bidirectional)
 		(at 281.94 170.18 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "73b30786-57c1-45c5-bca0-2c45a30debbb")
+		(uuid "ad518728-0869-4eba-ac1a-c0bf73fee594")
 	)
 	(wire
 		(pts
 			(xy 292.1 172.72) (xy 281.94 172.72)
 		)
 		(stroke (width 0) (type default))
-		(uuid "0a8d11a7-1002-48a5-96b9-f877b3471f56")
+		(uuid "b3836755-df1a-407b-82a1-a359e5dc9e5d")
 	)
-	(global_label "EXC_L"
+	(global_label "OUT_L_DAISY"
 		(shape bidirectional)
 		(at 281.94 172.72 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "8b9da37b-632a-4d12-969a-edffbc8143cf")
+		(uuid "219efee9-a328-47ec-b085-679f9cfc4df0")
 	)
 	(wire
 		(pts
 			(xy 292.1 175.26) (xy 281.94 175.26)
 		)
 		(stroke (width 0) (type default))
-		(uuid "9531ed74-e14a-429d-8c8e-fccd4e7b25ee")
+		(uuid "3e746d03-e0b0-4c49-b2bc-356f2b146ab5")
 	)
-	(global_label "OUT_L_DAISY"
+	(global_label "LINHA_L"
 		(shape bidirectional)
 		(at 281.94 175.26 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "da99dbdf-2305-448d-8da4-db962875bcc0")
+		(uuid "7558e517-5253-4709-80bb-2b54c9eb094c")
 	)
 	(wire
 		(pts
 			(xy 292.1 177.8) (xy 281.94 177.8)
 		)
 		(stroke (width 0) (type default))
-		(uuid "bdebb447-9c37-435e-a1e2-fccf6b78d002")
+		(uuid "0367d610-0f59-4eb6-b63e-b32f5d02efad")
 	)
-	(global_label "LINHA_L"
+	(global_label "EXC_L"
 		(shape bidirectional)
 		(at 281.94 177.8 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "6db8871c-ea7c-4701-85e1-f390a3a1996e")
+		(uuid "ac191264-ae1f-4d31-afa6-cabe18fb5cba")
 	)
 	(wire
 		(pts
 			(xy 292.1 180.34) (xy 281.94 180.34)
 		)
 		(stroke (width 0) (type default))
-		(uuid "196b4e61-2a68-41c4-87ce-ff2be9157174")
+		(uuid "88e411ab-d63a-43ec-8fa6-2fb9e0e06b47")
 	)
-	(global_label "EXC_L"
+	(global_label "GND"
 		(shape bidirectional)
 		(at 281.94 180.34 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "4285d889-f624-4dfe-83ce-c3e65d0af23b")
+		(uuid "8058d41c-ea34-4e2b-bf41-9a6739c7c98f")
 	)
-	(text "canal L — exciter OU linha, comuns amarrados. 1,4=comum 2,5=linha 3,6=exciter"
+	(wire
+		(pts
+			(xy 292.1 182.88) (xy 281.94 182.88)
+		)
+		(stroke (width 0) (type default))
+		(uuid "43081563-4aa9-4cb0-a278-da0cafe3c57e")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 281.94 182.88 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "ed9ee72e-440f-4981-a87f-0d77f29407da")
+	)
+	(text "canal L — exciter OU linha, comuns amarrados. 1,4=comum 2,5=linha 3,6=exciter 7,8=GND (referencia do cabo)"
 		(exclude_from_sim no)
-		(at 270.51 158.75 0)
+		(at 270.51 156.21 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "d888d9a2-0306-4ac2-97c8-69ce1841245a")
+		(uuid "805b683b-6c96-4d10-bd19-4516cc87e660")
 	)
 	(symbol
-		(lib_id "cotuca:CONN6_L")
+		(lib_id "cotuca:CONN8_L")
 		(at 299.72 234.95 0)
 		(unit 1)
 		(body_style 1)
@@ -3092,7 +3058,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "2b3c99df-61f7-40e7-b493-515aa631306e")
+		(uuid "50e170c3-ada8-4c26-b350-6a48270af87e")
 		(property "Reference" "J16"
 			(at 299.72 232.41 0)
 			(show_name no) (do_not_autoplace no)
@@ -3103,7 +3069,7 @@
 			(show_name no) (do_not_autoplace no)
 			(effects (font (size 1.0 1.0)))
 		)
-		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical"
+		(property "Footprint" "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical"
 			(at 299.72 234.95 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
@@ -3129,93 +3095,121 @@
 	)
 	(wire
 		(pts
+			(xy 292.1 224.79) (xy 281.94 224.79)
+		)
+		(stroke (width 0) (type default))
+		(uuid "dd097ca8-92fb-4f30-959c-caca3f73d3c1")
+	)
+	(global_label "OUT_R_DAISY"
+		(shape bidirectional)
+		(at 281.94 224.79 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "d55a5906-b7f6-4c7d-b8ce-a014ed92da69")
+	)
+	(wire
+		(pts
 			(xy 292.1 227.33) (xy 281.94 227.33)
 		)
 		(stroke (width 0) (type default))
-		(uuid "263cea5e-69be-45b8-b1fc-77a1349b7140")
+		(uuid "f430affa-00f7-4096-bdce-131107046dec")
 	)
-	(global_label "OUT_R_DAISY"
+	(global_label "LINHA_R"
 		(shape bidirectional)
 		(at 281.94 227.33 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "c40df006-6246-4e79-9be8-2ab4c2300898")
+		(uuid "4d6bd5f4-5bfa-4fae-8b85-139c95c50b98")
 	)
 	(wire
 		(pts
 			(xy 292.1 229.87) (xy 281.94 229.87)
 		)
 		(stroke (width 0) (type default))
-		(uuid "92e98ba7-fd7a-467a-84ef-429b658f4174")
+		(uuid "21246a92-c763-471b-9b94-b9249ee989e0")
 	)
-	(global_label "LINHA_R"
+	(global_label "EXC_R"
 		(shape bidirectional)
 		(at 281.94 229.87 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "d5878175-0bb0-42d9-9a37-e2cb45dfbfa3")
+		(uuid "dcecb09c-7410-4ec6-9480-68dc82b6dea5")
 	)
 	(wire
 		(pts
 			(xy 292.1 232.41) (xy 281.94 232.41)
 		)
 		(stroke (width 0) (type default))
-		(uuid "5a496bb8-0c40-4b0f-961b-dcd7556b8be8")
+		(uuid "e155a326-e9dd-48c6-b19f-88bd4d36beb1")
 	)
-	(global_label "EXC_R"
+	(global_label "OUT_R_DAISY"
 		(shape bidirectional)
 		(at 281.94 232.41 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "e6e50d4e-de8e-47c5-8e3d-f925cf6302a0")
+		(uuid "ea3b4467-0e14-4784-98c0-6706d0a556bd")
 	)
 	(wire
 		(pts
 			(xy 292.1 234.95) (xy 281.94 234.95)
 		)
 		(stroke (width 0) (type default))
-		(uuid "50396417-644e-4dd4-bb5c-8211036cc19b")
+		(uuid "103f5e82-3303-4424-a15a-9e43cb76d1cd")
 	)
-	(global_label "OUT_R_DAISY"
+	(global_label "LINHA_R"
 		(shape bidirectional)
 		(at 281.94 234.95 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "bad86e78-57d4-4914-88e9-80357c3f4561")
+		(uuid "3850c153-cb22-4190-b53c-3a36ab5d4d1a")
 	)
 	(wire
 		(pts
 			(xy 292.1 237.49) (xy 281.94 237.49)
 		)
 		(stroke (width 0) (type default))
-		(uuid "51f78598-4ec7-49bd-b81c-2f40fec9d712")
+		(uuid "7720a2a1-ff53-4724-902b-c354eed1fd97")
 	)
-	(global_label "LINHA_R"
+	(global_label "EXC_R"
 		(shape bidirectional)
 		(at 281.94 237.49 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "69eb62e9-2018-4c73-bd0f-87d00a3be765")
+		(uuid "1fc0c02c-9512-42a5-bc9f-c779d4a4f387")
 	)
 	(wire
 		(pts
 			(xy 292.1 240.03) (xy 281.94 240.03)
 		)
 		(stroke (width 0) (type default))
-		(uuid "7dc819d3-77e6-4a58-9000-faf42cc7e422")
+		(uuid "db18ecbb-6cdc-47d6-9dff-cf21e9713829")
 	)
-	(global_label "EXC_R"
+	(global_label "GND"
 		(shape bidirectional)
 		(at 281.94 240.03 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "1dcb7de5-3cf4-43b8-8473-767ad23c16f5")
+		(uuid "e3c5f0b7-6b1f-4760-b410-aaaa586f29c6")
 	)
-	(text "canal R — exciter OU linha, comuns amarrados. 1,4=comum 2,5=linha 3,6=exciter"
+	(wire
+		(pts
+			(xy 292.1 242.57) (xy 281.94 242.57)
+		)
+		(stroke (width 0) (type default))
+		(uuid "80a61238-d48f-42d3-bb13-0047dbbde5d4")
+	)
+	(global_label "GND"
+		(shape bidirectional)
+		(at 281.94 242.57 180)
+		(fields_autoplaced yes)
+		(effects (font (size 1.27 1.27)) (justify right))
+		(uuid "3a821b25-ae5e-4f72-bf40-0155dc120897")
+	)
+	(text "canal R — exciter OU linha, comuns amarrados. 1,4=comum 2,5=linha 3,6=exciter 7,8=GND (referencia do cabo)"
 		(exclude_from_sim no)
-		(at 270.51 218.44 0)
+		(at 270.51 215.9 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "9ddfbb6b-d7c5-433a-a501-54b96ba98d6c")
+		(uuid "a005819f-a52b-4f8b-af47-81a1b098c9da")
 	)
 	(symbol
 		(lib_id "cotuca:R_H")
@@ -3227,7 +3221,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "9f476e1a-c239-4db0-92a6-849677663803")
+		(uuid "52993212-de2a-461c-9a2f-5f8b480e794b")
 		(property "Reference" "R50"
 			(at 119.38 281.94 0)
 			(show_name no) (do_not_autoplace no)
@@ -3267,28 +3261,28 @@
 			(xy 113.03 284.48) (xy 102.87 284.48)
 		)
 		(stroke (width 0) (type default))
-		(uuid "1ebefe55-f36d-4ab2-bc20-1ea6a74922dc")
+		(uuid "42e22902-0318-496a-9432-c7c91772273c")
 	)
 	(global_label "AMP_IN_L"
 		(shape bidirectional)
 		(at 102.87 284.48 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "b9c34f18-1ecd-40fa-914b-f25a135ee0a8")
+		(uuid "0e62645e-9141-4dac-9b03-30db2bdb9cbf")
 	)
 	(wire
 		(pts
 			(xy 125.73 284.48) (xy 135.89 284.48)
 		)
 		(stroke (width 0) (type default))
-		(uuid "73253f6b-f0cd-4628-8ee8-81f146a43192")
+		(uuid "5c1420af-65b8-4809-ac3e-6b8b689de658")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 135.89 284.48 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "f0f71e9a-7d81-4d27-991b-92e9a5aa281b")
+		(uuid "1b17355e-be16-4b6e-9581-23d11428b7aa")
 	)
 	(symbol
 		(lib_id "cotuca:R_H")
@@ -3300,7 +3294,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "8aebf91d-281f-4052-a7e5-b37b8396fdcc")
+		(uuid "4df067c7-9548-4f63-a707-36440f9908d5")
 		(property "Reference" "R51"
 			(at 119.38 297.18 0)
 			(show_name no) (do_not_autoplace no)
@@ -3340,40 +3334,40 @@
 			(xy 113.03 299.72) (xy 102.87 299.72)
 		)
 		(stroke (width 0) (type default))
-		(uuid "374c2baa-7087-4f9c-9bf5-031da8a97f50")
+		(uuid "6705aab1-9b30-414c-b69f-f50b0ed50f62")
 	)
 	(global_label "AMP_IN_R"
 		(shape bidirectional)
 		(at 102.87 299.72 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "259c598e-9325-47ed-a919-0bff5960dc28")
+		(uuid "9c2d3723-6c5e-4d61-88e9-db9c8df9f64a")
 	)
 	(wire
 		(pts
 			(xy 125.73 299.72) (xy 135.89 299.72)
 		)
 		(stroke (width 0) (type default))
-		(uuid "00c7ed4f-6ee9-4021-be3d-c20526cba300")
+		(uuid "708ec812-6df6-457e-9470-478635d9e736")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 135.89 299.72 0)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "9d9918de-e750-4c9f-9861-3f6264e54f3e")
+		(uuid "8ee64e5e-d98a-445a-9a4c-cb7de4f5e937")
 	)
 	(text "10 k de cada entrada do amp ao GND do modulo — referencia,"
 		(exclude_from_sim no)
 		(at 90.17 271.78 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "54507360-caae-48ad-a0ce-34c33660a240")
+		(uuid "4a2274ea-9e56-47a0-8b83-f2e37467f60d")
 	)
 	(text "nao forca. Sem eles a entrada flutua quando o DPDT comuta."
 		(exclude_from_sim no)
 		(at 90.17 275.59 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "66b94dce-62b7-4b27-a650-2f90232894c8")
+		(uuid "0a8ff332-d23d-41a6-be7e-c426d85f7b9e")
 	)
 	(symbol
 		(lib_id "cotuca:CONN3_L")
@@ -3385,7 +3379,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "636e5f0c-1041-40ad-9530-c3c30c077e79")
+		(uuid "2e49b1fe-d084-4b2b-8ee6-3e1defd0e29e")
 		(property "Reference" "J12"
 			(at 384.81 172.72 0)
 			(show_name no) (do_not_autoplace no)
@@ -3425,42 +3419,42 @@
 			(xy 382.27 170.18) (xy 372.11 170.18)
 		)
 		(stroke (width 0) (type default))
-		(uuid "ade9bb1e-f25d-4e83-b958-2e8b1b59b40d")
+		(uuid "fffe0d9e-1105-4ddf-a60c-d52f9b89af0a")
 	)
 	(global_label "LINHA_L"
 		(shape bidirectional)
 		(at 372.11 170.18 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "5c347dd0-1857-4d55-b5aa-85f4d42d417e")
+		(uuid "a3022ebb-9d0f-4504-a099-f400c4c75ff1")
 	)
 	(wire
 		(pts
 			(xy 382.27 175.26) (xy 372.11 175.26)
 		)
 		(stroke (width 0) (type default))
-		(uuid "65fe343b-d7e8-4ef8-a75a-b9353a468180")
+		(uuid "bb064fe8-cfb0-4aee-86a8-41d84329ed4a")
 	)
 	(global_label "AGND"
 		(shape bidirectional)
 		(at 372.11 175.26 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "5c4ec7a4-ffc0-4b08-87ff-e9b830cc8c55")
+		(uuid "529d4caa-352b-44ab-8746-2c91d2c33566")
 	)
 	(wire
 		(pts
 			(xy 382.27 180.34) (xy 372.11 180.34)
 		)
 		(stroke (width 0) (type default))
-		(uuid "a90265fd-223c-4f67-942f-f20350e41740")
+		(uuid "b3cbe626-b031-4000-97bf-499ddb4428f9")
 	)
 	(global_label "AGND"
 		(shape bidirectional)
 		(at 372.11 180.34 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "a55f3c0d-acf4-43a7-b3bb-9076592b407a")
+		(uuid "e0a99e00-6a9f-4826-b269-8cf3bddb57a4")
 	)
 	(symbol
 		(lib_id "cotuca:CONN3_L")
@@ -3472,7 +3466,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "8b7fe2fc-ca8d-481a-869f-57401d537c38")
+		(uuid "e8def96b-7bfb-4a8e-836d-5606ff6c9000")
 		(property "Reference" "J13"
 			(at 384.81 232.41 0)
 			(show_name no) (do_not_autoplace no)
@@ -3512,56 +3506,56 @@
 			(xy 382.27 229.87) (xy 372.11 229.87)
 		)
 		(stroke (width 0) (type default))
-		(uuid "937971e9-209a-4bfc-86de-3c74d7a86809")
+		(uuid "ad074d72-d289-4e51-bd9f-d9a677662641")
 	)
 	(global_label "LINHA_R"
 		(shape bidirectional)
 		(at 372.11 229.87 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "291a6750-e5d6-47d4-923d-add4618ed031")
+		(uuid "d7500355-c79c-4a70-83c7-22a5a833eb74")
 	)
 	(wire
 		(pts
 			(xy 382.27 234.95) (xy 372.11 234.95)
 		)
 		(stroke (width 0) (type default))
-		(uuid "c1976bc2-6e28-4ff1-b888-a33b89de3efc")
+		(uuid "934ef7e2-eb2e-45e3-a5e5-2738868d1cfe")
 	)
 	(global_label "AGND"
 		(shape bidirectional)
 		(at 372.11 234.95 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "ed0d9b71-281d-40cc-8dde-7873758a5323")
+		(uuid "74369e80-9a03-4067-92b1-88977aeefcd5")
 	)
 	(wire
 		(pts
 			(xy 382.27 240.03) (xy 372.11 240.03)
 		)
 		(stroke (width 0) (type default))
-		(uuid "8ba239ad-f265-4896-9988-c4bdf72a1e44")
+		(uuid "acdadd92-ebad-4536-a3e2-795c23fe1faf")
 	)
 	(global_label "AGND"
 		(shape bidirectional)
 		(at 372.11 240.03 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "49984d28-bbd1-4469-9f87-8bcb3a28be0a")
+		(uuid "4507bd5a-69c9-4890-abd1-d651486f2b5d")
 	)
 	(text "TRS de linha — sleeve E ring ao AGND, como os jacks de piezo."
 		(exclude_from_sim no)
 		(at 350.52 154.94 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "617f1024-7ee9-45bd-91c8-6fe885e6b3ba")
+		(uuid "e2f0940e-b118-4481-8152-9f82d8a4dd64")
 	)
 	(no_connect
 		(at 220.98 142.24)
-		(uuid "e7a09f0e-a40a-4bc6-8f85-31f91f70c34f")
+		(uuid "f4597be5-24c1-4a76-bd4f-e710adab3177")
 	)
 	(no_connect
 		(at 220.98 144.78)
-		(uuid "d66124d7-739a-470d-8986-c9525223231d")
+		(uuid "f74d4ae4-b1aa-4a08-b7ad-379802412e53")
 	)
 	(symbol
 		(lib_id "cotuca:C_V")
@@ -3573,7 +3567,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "6292d002-7123-49fa-b9b3-b90b21b73e09")
+		(uuid "9439b61c-ab23-431e-a02e-a50cb38af6ec")
 		(property "Reference" "C15"
 			(at 149.86 297.18 0)
 			(show_name no) (do_not_autoplace no)
@@ -3613,40 +3607,40 @@
 			(xy 149.86 295.91) (xy 149.86 306.07)
 		)
 		(stroke (width 0) (type default))
-		(uuid "b797b9e4-b25c-4ecc-9545-db07a3e2a871")
+		(uuid "ee39e8a4-7aa6-4890-83a9-e28183580078")
 	)
 	(global_label "+5V"
 		(shape bidirectional)
 		(at 149.86 306.07 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "ef1b4870-3f51-4443-afe4-fcbea3d0782f")
+		(uuid "3d7fe871-9dfa-48a7-a971-8c8063ef37eb")
 	)
 	(wire
 		(pts
 			(xy 149.86 303.53) (xy 149.86 293.37)
 		)
 		(stroke (width 0) (type default))
-		(uuid "7713190e-3a7a-49c0-9842-898149598ce6")
+		(uuid "4732f9e6-c2b3-49ce-9836-a9c6832897be")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 149.86 293.37 270)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "7382745c-3319-4265-a472-3ab4eba40c66")
+		(uuid "5db52c38-d4bd-443a-8560-fc6ced1138fe")
 	)
 	(text "100 nF do +5V ao GND, colado ao pino 39 da Daisy. O trilho nao tinha"
 		(exclude_from_sim no)
 		(at 119.38 320.04 0)
 		(effects (font (size 1.6 1.6)) (justify left))
-		(uuid "d08e39c5-641d-4c6a-888f-d801fd73444d")
+		(uuid "7d597054-7a8a-4f07-9bf7-8dcae3594d78")
 	)
 	(text "nenhum: achado da P4 da revisao de terra, 06/09."
 		(exclude_from_sim no)
 		(at 119.38 323.85 0)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "3dee8c35-bd92-40d0-ab0e-f91b0e18a622")
+		(uuid "a5d034ad-a417-43d9-ac7d-ea627d996b23")
 	)
 	(symbol
 		(lib_id "cotuca:PWR_FLAG")
@@ -3658,7 +3652,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "04adefad-58df-4c82-afaf-b0d48cd8c132")
+		(uuid "abb1cb72-7dec-440a-9cad-210542f48651")
 		(property "Reference" "#FLG3"
 			(at 59.69 297.18 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3698,14 +3692,14 @@
 			(xy 59.69 299.72) (xy 59.69 294.64)
 		)
 		(stroke (width 0) (type default))
-		(uuid "c0284acf-bead-4310-b8b0-0b2953c8a793")
+		(uuid "58d6beed-d8e0-4683-bf12-bb940d7efd12")
 	)
 	(global_label "+5V"
 		(shape bidirectional)
 		(at 59.69 294.64 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "0527a660-05bb-457f-94e9-962f98938633")
+		(uuid "435dde7e-8dfd-4ede-a9cd-f1971bf5923c")
 	)
 	(symbol
 		(lib_id "cotuca:PWR_FLAG")
@@ -3717,7 +3711,7 @@
 		(on_board yes)
 		(in_pos_files no)
 		(dnp no)
-		(uuid "3d903837-c127-46f6-95d2-93b1163c8843")
+		(uuid "baa0208f-c053-467b-aa27-ba59a799ec93")
 		(property "Reference" "#FLG4"
 			(at 90.17 297.18 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3757,14 +3751,14 @@
 			(xy 90.17 299.72) (xy 90.17 294.64)
 		)
 		(stroke (width 0) (type default))
-		(uuid "b3b11f4e-649a-45b8-a596-2f8b9cfc4e03")
+		(uuid "66213977-25c0-4907-8889-a71a74705cae")
 	)
 	(global_label "GND"
 		(shape bidirectional)
 		(at 90.17 294.64 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "0e262606-4252-49e4-8232-9b1d8328547d")
+		(uuid "1fd28701-5f55-465a-bc20-01cb0c889508")
 	)
 	(symbol
 		(lib_id "cotuca:PWR_FLAG")
@@ -3776,7 +3770,7 @@
 		(on_board yes)
 		(in_pos_files yes)
 		(dnp no)
-		(uuid "83b0ebc0-c7f2-4eee-9871-d6249fe40e49")
+		(uuid "9f8c861a-e7a5-4c5c-b446-35a08ce8e798")
 		(property "Reference" "#FLG5"
 			(at 160.02 297.18 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3816,14 +3810,14 @@
 			(xy 160.02 299.72) (xy 160.02 294.64)
 		)
 		(stroke (width 0) (type default))
-		(uuid "9a50b195-e177-4b17-9b99-5e431600d4bf")
+		(uuid "b82d2347-5886-45d1-938b-f99529d7f871")
 	)
 	(global_label "+5V_PONTE"
 		(shape bidirectional)
 		(at 160.02 294.64 90)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify left))
-		(uuid "d8d61c34-a365-433f-b6ae-1d0f0d88b0d5")
+		(uuid "663d82ff-efa0-4cd2-803e-2eb3ff789666")
 	)
 	(sheet_instances
 		(path "/" (page "4"))

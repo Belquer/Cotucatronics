@@ -175,6 +175,31 @@ razão escrita para ela existir é que está velha.
 O portão elétrico é a skill `kicad`; este é o visual, e nenhum substitui o
 outro.
 
+### ⚠️ E na PLACA a serigrafia tem portão próprio, que vive na `kicad`
+
+Um render de PCB não se revê a olho para caçar texto sobreposto: o `kicad-cli
+pcb drc` **conta** — `silk_overlap`, `silk_over_copper`, `silk_edge_clearance` —
+e o `kicad/arruma_silk.py` arruma. A regra completa está na skill **`kicad`
+§11g-bis**, e não se repete aqui: **duas skills a dizerem quase o mesmo
+derivam, e aí ninguém sabe qual manda.**
+
+O que fica deste lado é a metade que a contagem não responde:
+
+| pergunta | quem |
+|---|---|
+| há texto por cima de texto, de cobre, ou fora da placa? | `kicad` — conta |
+| o texto **lê-se** no tamanho a que vai ser impresso? | esta skill — olha o render |
+| a referência aponta para a peça **certa**? | só o olho |
+
+⚠️ **Contagem zero não autoriza dispensar o olho** — é o mesmo corolário do
+§9b da `kicad`, e aqui vale igual: autoriza olhar sabendo onde.
+
+⚠️ E há uma armadilha própria do PCB: **arrumar a serigrafia empurra o texto
+para o obstáculo que ainda não está a ser verificado.** Medido — afastar dos
+pads levou as sobreposições de 18 para 5 e o texto-sobre-cobre de 6 para 12. Se
+vires uma contagem melhorar e outra piorar na mesma passagem, não é progresso: é
+o defeito a mudar de sítio.
+
 ---
 
 ## 2 · A ordem, fixa
