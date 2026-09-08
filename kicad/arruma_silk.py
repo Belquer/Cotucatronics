@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arruma_silk v0.17.0 — arruma os textos das DUAS camadas.
+"""arruma_silk v0.19.0 — arruma os textos das DUAS camadas.
 
 ⚠️ SERIGRAFIA SO. Nao toca em cobre, em pistas, em zonas nem em posicoes de
 peca: mexe apenas no `(at ...)` do campo `Reference` de cada footprint, que e
@@ -25,7 +25,7 @@ import io, math, os, re, subprocess, sys
 
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 
-VERSAO = "0.17.0"
+VERSAO = "0.19.0"
 NUM = r"-?\d+(?:\.\d+)?"
 # ⚠️⚠️ UM DESIGNADOR E UM RECTANGULO LARGO E BAIXO, NAO UM CIRCULO.
 #
@@ -109,6 +109,26 @@ def campo_do_abs(ang, ex, ey):
             ex * math.sin(ang) + ey * math.cos(ang))
 
 
+def mede_camada(caminho, cam, tmp):
+    """(texto×texto, total) da camada `cam`, pelo PORTAO — nao pela minha regua.
+
+    ⚠️ O auto-teste interno usa o modelo de caixa desta ferramenta; o
+    `svg_colisoes` usa o dele (0,55 em por caractere). O meu e o mais
+    permissivo, e por isso aprovou um arranjo que o portao reprova. Quem julga
+    e quem mede."""
+    s = os.path.join(tmp, "%s_%s.svg" % (os.path.basename(caminho), cam))
+    subprocess.run([KICAD, "pcb", "export", "svg", "-o", s, "--layers", cam,
+                    "--page-size-mode", "2", "--exclude-drawing-sheet", caminho],
+                   capture_output=True, text=True)
+    v = subprocess.run(
+        [sys.executable,
+         os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                      "tools", "svg_colisoes.py"), s],
+        capture_output=True, text=True)
+    n = re.search(r"(\d+) colisoes", v.stdout)
+    return (v.stdout.count("texto×texto"), int(n.group(1)) if n else 0)
+
+
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -131,7 +151,13 @@ def main():
     # porque as duas coisas saem na MESMA tinta branca e o texto deixa de se
     # ler. A mesma frase — "a referencia esta por cima do seu proprio corpo" —
     # e normal num sitio e defeito no outro.
-    silk = []
+    # ⚠️ OS CONTORNOS SEPARAM-SE POR CAMADA. A F.Fab tem os seus proprios
+    # desenhos de peca, e um `Value` posto por cima de um deles conta como
+    # colisao no portao tal como na serigrafia. A v0.15.0 so evitava OUTROS
+    # TEXTOS na Fab, e por isso "arrumar" empurrava os valores para cima dos
+    # contornos: o painel foi de 51 para 68 colisoes.
+    contornos = {"F.SilkS": [], "F.Fab": []}
+    silk = contornos["F.SilkS"]
     pistas = [tuple(map(float, m.groups())) for m in
               re.finditer(r"\(segment\s*\(start (" + NUM + r") (" + NUM
                           + r")\)\s*\(end (" + NUM + r") (" + NUM + r")\)", t)]
@@ -173,7 +199,8 @@ def main():
 
         for sm in re.finditer(r'\(fp_(line|rect)\s*\(start (' + NUM + r') ('
                               + NUM + r')\)\s*\(end (' + NUM + r') (' + NUM
-                              + r')\)[\s\S]{0,200}?\(layer "[FB]\.SilkS', bl):
+                              + r')\)[\s\S]{0,200}?\(layer "([FB]\.(?:SilkS|Fab))', bl):
+            _lay = "F.Fab" if sm.group(6).endswith("Fab") else "F.SilkS"
             x1, y1 = float(sm.group(2)), float(sm.group(3))
             x2, y2 = float(sm.group(4)), float(sm.group(5))
             if sm.group(1) == "rect":
@@ -183,10 +210,11 @@ def main():
                 pares = [((x1, y1), (x2, y2))]
             for (ax, ay), (bx, by) in pares:
                 A, B = _ab(ax, ay), _ab(bx, by)
-                silk.append((A[0], A[1], B[0], B[1]))
+                contornos[_lay].append((A[0], A[1], B[0], B[1]))
         for sm in re.finditer(r'\(fp_circle\s*\(center (' + NUM + r') (' + NUM
                               + r')\)\s*\(end (' + NUM + r') (' + NUM
-                              + r')\)[\s\S]{0,200}?\(layer "[FB]\.SilkS', bl):
+                              + r')\)[\s\S]{0,200}?\(layer "([FB]\.(?:SilkS|Fab))', bl):
+            _lay = "F.Fab" if sm.group(5).endswith("Fab") else "F.SilkS"
             cxx, cyy = float(sm.group(1)), float(sm.group(2))
             r_ = math.hypot(float(sm.group(3)) - cxx, float(sm.group(4)) - cyy)
             # ⚠️ o circulo entra como poligono de 12 lados: a conta de
@@ -196,7 +224,7 @@ def main():
                        cyy + r_ * math.sin(k * math.pi / 6)) for k in range(12)]
             for k in range(12):
                 A, B = pts[k], pts[(k + 1) % 12]
-                silk.append((A[0], A[1], B[0], B[1]))
+                contornos[_lay].append((A[0], A[1], B[0], B[1]))
         pecas.append((i, j, bl, ref, fx, fy, ang, meus))
 
     # ⚠️ o centro da placa serve para decidir "para fora": o texto foge do
@@ -238,6 +266,8 @@ def main():
         if LIM and not (LIM[0] <= x <= LIM[2] and LIM[1] <= y <= LIM[3]):
             return False
         if so_texto:
+            # ⚠️ A F.Fab NAO E IMPRESSA: pads e pistas ali nao custam nada. Mas
+            # os CONTORNOS da propria camada custam, porque e o que se le.
             # ⚠️ A F.Fab NAO E IMPRESSA. Passar por cima de um pad ou de uma
             # pista ali nao custa nada — o que custa e texto por cima de texto,
             # porque essa camada e a que se LE no editor enquanto se trabalha.
@@ -247,6 +277,14 @@ def main():
                 if _r == quem:
                     continue
                 if abs(tx - x) < thw + caixa[0] and abs(ty - y) < thh + caixa[1]:
+                    return False
+            for a1, b1, a2, b2 in contornos["F.Fab"]:
+                dx, dy = a2 - a1, b2 - b1
+                L2 = dx * dx + dy * dy
+                u = 0.0 if L2 == 0 else max(0.0, min(1.0,
+                    ((x - a1) * dx + (y - b1) * dy) / L2))
+                qx, qy = a1 + u * dx, b1 + u * dy
+                if abs(qx - x) < caixa[0] and abs(qy - y) < caixa[1]:
                     return False
             return True
         # ⚠️ A ISENCAO DOS PROPRIOS PADS CAIU, e a medicao e que decidiu.
@@ -352,10 +390,23 @@ def main():
     passagens = [("Reference", "F.SilkS", False)]
     if "--fab" in sys.argv:
         passagens.append(("Value", "F.Fab", True))
+    # ⚠️⚠️ CADA PASSAGEM E JULGADA E ACEITE POR SI.
+    #
+    # A v0.18.0 acumulava as duas e submetia o conjunto ao portao. No painel a
+    # passagem da Fab era optima — 51 para 37 colisoes, texto×texto 10 para 3 —
+    # e foi recusada em bloco porque a passagem da SERIGRAFIA piorava a
+    # serigrafia. Uma boa ficou refem de uma ma por estarem no mesmo pacote.
+    #
+    # Agora cada uma parte do estado ja aceite, e e medida na SUA camada: se
+    # nao piorar, entra; se piorar, cai sozinha e a outra segue.
+    import tempfile as _tf
+    _tmp = _tf.mkdtemp()
+    aceites, recusadas = [], []
     for PROP, CAMADA, SO_TXT in passagens:
+        cand = novo
         # ⚠️⚠️ OS DESLOCAMENTOS SAO RECALCULADOS SOBRE O TEXTO JA MODIFICADO.
         #
-        # O laco escreve por posicao absoluta — `novo[:i+a] + ... + novo[i+b:]`
+        # O laco escreve por posicao absoluta — `cand[:i+a] + ... + cand[i+b:]`
         # — e a primeira passagem MUDA O COMPRIMENTO do texto. A segunda, a
         # correr com os `i` da leitura original, escrevia deslocada: no painel
         # comeu o espaco de um `(at 0 1.65 0)` e deixou `(at0 1.65 0)`, e o
@@ -367,7 +418,7 @@ def main():
         # ENTRE passagens. Acrescentar a segunda passagem quebrou uma invariante
         # que estava escrita e que eu li como sendo sobre outra coisa.
         pecas = []
-        for _i, _j, _bl in blocos(novo):
+        for _i, _j, _bl in blocos(cand):
             _a = re.search(r"\(at (" + NUM + r") (" + NUM + r")(?: (" + NUM + r"))?\)", _bl)
             _r = re.search(r'\(property "Reference" "([^"]+)"', _bl)
             if not _a or not _r:
@@ -509,7 +560,7 @@ def main():
             # terceiro sitio, nem onde estava nem onde a ferramenta o pos.
             pdx, pdy = campo_do_abs(ang, X - fx, Y - fy)
             a_, b_ = m.span(2)[0], m.span(3)[1]
-            novo = novo[:i + a_] + ("%s %s" % (num(pdx), num(pdy))) + novo[i + b_:]
+            cand = cand[:i + a_] + ("%s %s" % (num(pdx), num(pdy))) + cand[i + b_:]
             postos[ref] = (X, Y) + cx_txt
             movidos.append((ref, (dx, dy), (float(num(pdx)), float(num(pdy)))))
         # ⚠️ AUTO-TESTE, POR CAMADA: a ferramenta nao termina tendo CRIADO uma
@@ -528,6 +579,27 @@ def main():
                   "    Nada gravado — mover texto nao pode criar o defeito que "
                   "vem arrumar." % (PROP, CAMADA, " ".join(maus)), file=sys.stderr)
             return 1
+        # ⚠️ o veredicto e do portao, na camada desta passagem
+        _cam = "F.Silkscreen" if CAMADA == "F.SilkS" else "F.Fab"
+        _f = os.path.join(_tmp, "%s_%s.kicad_pcb" % (PROP, os.path.basename(p)))
+        io.open(_f, "w", encoding="utf-8").write(cand)
+        _r = subprocess.run([KICAD, "pcb", "drc", "-o",
+                             os.path.join(_tmp, "x.rpt"), _f],
+                            capture_output=True, text=True)
+        if "Failed to load" in (_r.stdout + _r.stderr):
+            # ⚠️ e ANTES de medir, o resultado tem de ABRIR. Uma escrita com
+            # deslocamentos desactualizados deixou `(at0 1.65 0)` e o KiCad
+            # recusou a placa inteira — e so o comando SEGUINTE o revelou.
+            recusadas.append((PROP, _cam, "nao abre no KiCad"))
+            continue
+        _a = mede_camada(p, _cam, _tmp)
+        _b = mede_camada(_f, _cam, _tmp)
+        _txt = "texto×texto %d->%d · total %d->%d" % (_a[0], _b[0], _a[1], _b[1])
+        if _b[0] > _a[0] or _b[1] > _a[1]:
+            recusadas.append((PROP, _cam, _txt))
+            continue
+        novo = cand
+        aceites.append((PROP, _cam, _txt))
         relatorio.append((PROP, CAMADA, list(movidos), list(presos), list(apertados)))
 
     for PROP, CAMADA, movidos, presos, apertados in relatorio:
@@ -543,57 +615,18 @@ def main():
         if presos:
             print("     ⚠️ sem sitio: %s — ficam onde estavam."
                   % " ".join(sorted(presos)), file=sys.stderr)
+    for PROP, cam, txt in aceites:
+        print("  ✓ %-9s (%s) aceite · %s" % (PROP, cam, txt), file=sys.stderr)
+    for PROP, cam, txt in recusadas:
+        print("  ✗ %-9s (%s) RECUSADA · %s" % (PROP, cam, txt), file=sys.stderr)
+    if not aceites:
+        print("  nada a gravar: nenhuma passagem melhorou.", file=sys.stderr)
+        return 0
     if escreve:
-        # ⚠️⚠️ A PLACA TEM DE CONTINUAR A ABRIR, E ISSO CONFERE-SE ANTES DE
-        # GRAVAR. Uma passagem com deslocamentos desactualizados comeu o espaco
-        # de um `(at 0 1.65 0)` e deixou `(at0 1.65 0)`: o KiCad recusou a placa
-        # inteira, e eu so dei por isso porque o comando SEGUINTE falhou. Uma
-        # ferramenta que escreve num ficheiro que outra tem de ler nao pode
-        # entregar sem que alguem tenha conseguido ler.
-        import tempfile as _tf
-        _d = _tf.mkdtemp()
-        _c = os.path.join(_d, os.path.basename(p))
-        io.open(_c, "w", encoding="utf-8").write(novo)
-        _r = subprocess.run([KICAD, "pcb", "drc", "-o", os.path.join(_d, "x.rpt"), _c],
-                            capture_output=True, text=True)
-        if "Failed to load" in (_r.stdout + _r.stderr):
-            print("*** o resultado NAO ABRE no KiCad — nada gravado.\n    %s"
-                  % (_r.stdout + _r.stderr).strip().splitlines()[-1][:160],
-                  file=sys.stderr)
-            return 1
-
-        # ⚠️⚠️ E QUEM JULGA E O PORTAO, NAO A MINHA REGUA.
-        #
-        # O auto-teste interno usa o meu modelo de caixa; o `svg_colisoes` usa o
-        # dele (0,55 em por caractere). Dois modelos do mesmo texto, e o meu e o
-        # mais permissivo — por isso a minha guarda aprovou um arranjo que fez o
-        # portao subir de `texto×texto 0` para `1` no painel. **Uma guarda que
-        # mede com regua propria nao guarda contra o criterio de quem julga.**
-        #
-        # Entao mede-se ANTES e DEPOIS com a ferramenta de fora, e se o numero
-        # que importa subir, nao se grava. E a §"prova externa" desta casa
-        # aplicada a uma ferramenta minha em vez de a um desenho.
-        def _txt_txt(caminho):
-            _s = os.path.join(_d, os.path.basename(caminho) + ".svg")
-            subprocess.run([KICAD, "pcb", "export", "svg", "-o", _s,
-                            "--layers", "F.Silkscreen", "--page-size-mode", "2",
-                            "--exclude-drawing-sheet", caminho],
-                           capture_output=True, text=True)
-            _v = subprocess.run(
-                [sys.executable,
-                 os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                              "tools", "svg_colisoes.py"), _s],
-                capture_output=True, text=True)
-            return _v.stdout.count("texto×texto")
-        _antes, _depois = _txt_txt(p), _txt_txt(_c)
-        if _depois > _antes:
-            print("*** o portao piora: texto×texto %d -> %d. Nada gravado.\n"
-                  "    Mover texto nao pode piorar o criterio de quem julga."
-                  % (_antes, _depois), file=sys.stderr)
-            return 1
+        # ⚠️ `novo` so contem passagens que o PORTAO aprovou, uma a uma, e cada
+        # uma ja foi carregada pelo KiCad. Nao ha nada por conferir aqui.
         io.open(p, "w", encoding="utf-8").write(novo)
-        print("  gravado · abre ✓ · texto×texto %d -> %d" % (_antes, _depois),
-              file=sys.stderr)
+        print("  gravado.", file=sys.stderr)
     else:
         print("  ensaio: nada gravado. Junta --escreve para aplicar.", file=sys.stderr)
     return 0

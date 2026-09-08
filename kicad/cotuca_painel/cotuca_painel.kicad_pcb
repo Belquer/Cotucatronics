@@ -105,7 +105,7 @@
 			)
 		)
 		(property "Value" "fio -> LED do arcade B (1=A, 2=K)"
-			(at 0 11.5 0)
+			(at 0 8.4 0)
 			(layer "F.Fab")
 			(uuid "be2ff01b-04a0-40f1-a801-85a9109b0257")
 			(effects
@@ -378,7 +378,7 @@
 			)
 		)
 		(property "Value" "fio -> LED do arcade A (1=A, 2=K)"
-			(at 0 11.5 0)
+			(at 0 -3.6 0)
 			(layer "F.Fab")
 			(uuid "d595bd28-5bb9-4316-989e-0f1d1facb8a5")
 			(effects
@@ -651,7 +651,7 @@
 			)
 		)
 		(property "Value" "+3V3A"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "5dbab70d-96eb-49f5-aea1-6e4ebeed344c")
 			(effects
@@ -749,7 +749,7 @@
 			)
 		)
 		(property "Value" "IDC 2x13 femea <- cerebro"
-			(at 0 11.5 0)
+			(at 0 6 0)
 			(layer "F.Fab")
 			(uuid "4ec1859b-c374-4b88-9849-7760fc84c693")
 			(effects
@@ -1343,7 +1343,7 @@
 			)
 		)
 		(property "Value" "100n COLADO ao cursor"
-			(at 0 11.5 0)
+			(at -1.6 -1.6 0)
 			(layer "F.Fab")
 			(uuid "8db5e2fc-2990-482f-bb58-32c2c49fea5f")
 			(effects
@@ -1489,7 +1489,7 @@
 			)
 		)
 		(property "Value" "100R serie (~30 mA)"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "6142a9cc-b89d-45b3-acdc-bc53e0f3359e")
 			(effects
@@ -1635,7 +1635,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 0 11.5 0)
+			(at 2.6 0 0)
 			(layer "F.Fab")
 			(uuid "82dc2402-e8c5-4bdf-b554-b25020727145")
 			(effects
@@ -1733,7 +1733,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 0 11.5 0)
+			(at 2.6 0 0)
 			(layer "F.Fab")
 			(uuid "64af4d57-a350-43ef-806f-fd1fe87b2363")
 			(effects
@@ -1831,7 +1831,7 @@
 			)
 		)
 		(property "Value" "100R gate"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "5153b641-5c3c-40bf-8a8d-880f05a1c842")
 			(effects
@@ -1977,7 +1977,7 @@
 			)
 		)
 		(property "Value" "100n COLADO ao cursor"
-			(at 0 11.5 0)
+			(at -1.6 -1.6 0)
 			(layer "F.Fab")
 			(uuid "6749468b-2c7a-46f6-a040-42c76c20fb1f")
 			(effects
@@ -2123,7 +2123,7 @@
 			)
 		)
 		(property "Value" "fio -> arcade AZUL freeze B"
-			(at 0 11.5 0)
+			(at 6 -6 0)
 			(layer "F.Fab")
 			(uuid "9cc71b6b-6924-48a7-84da-892236285174")
 			(effects
@@ -2396,7 +2396,7 @@
 			)
 		)
 		(property "Value" "AO3400A"
-			(at 0 11.5 0)
+			(at 1.6 0 0)
 			(layer "F.Fab")
 			(uuid "3fd7c01f-d5d9-41d2-9b57-6e4e6693ae16")
 			(effects
@@ -2762,7 +2762,7 @@
 			)
 		)
 		(property "Value" "AO3400A"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "bd19e247-a840-4372-b4b7-f180dc0a7b77")
 			(effects
@@ -3128,7 +3128,7 @@
 			)
 		)
 		(property "Value" "10k lin"
-			(at 0 11.5 0)
+			(at -2.6 0 0)
 			(layer "F.Fab")
 			(uuid "59f7c783-06d1-44d4-8d3d-087a2a8c70bf")
 			(effects
@@ -3382,7 +3382,7 @@
 			)
 		)
 		(property "Value" "fio -> arcade BRANCO buzios"
-			(at 0 11.5 0)
+			(at 0 -3.6 0)
 			(layer "F.Fab")
 			(uuid "ee1b3b99-2823-48f8-82ff-4c7812a82eac")
 			(effects
@@ -3655,7 +3655,7 @@
 			)
 		)
 		(property "Value" "100R serie (~30 mA)"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "07f13d81-13a1-48df-8347-54484e82c6ab")
 			(effects
@@ -3801,7 +3801,7 @@
 			)
 		)
 		(property "Value" "10k pull-down"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "cd487327-b094-44c6-9759-aede9b987bb9")
 			(effects
@@ -3947,7 +3947,7 @@
 			)
 		)
 		(property "Value" "100R gate"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "c44c9eb3-9dd3-4a01-bb05-0a044dc97ebf")
 			(effects
@@ -4093,7 +4093,7 @@
 			)
 		)
 		(property "Value" "100n COLADO ao IDC"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "e9e60417-665f-4a26-8883-7b5970e4a220")
 			(effects
@@ -4239,7 +4239,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "407a503d-08ce-43f1-a83a-1e2d9d97fc5a")
 			(effects
@@ -4385,7 +4385,7 @@
 			)
 		)
 		(property "Value" "100u 16V"
-			(at 0 11.5 0)
+			(at -7.2 0 0)
 			(layer "F.Fab")
 			(uuid "1ce411ac-1f17-4914-a32c-6f1850bb70c1")
 			(effects
@@ -5905,7 +5905,7 @@
 			)
 		)
 		(property "Value" "POT_L"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "20f21bef-ecf9-4b67-9746-a6b1f1009313")
 			(effects
@@ -6003,7 +6003,7 @@
 			)
 		)
 		(property "Value" "fio -> arcade AZUL freeze A"
-			(at 0 11.5 0)
+			(at 0 4.8 0)
 			(layer "F.Fab")
 			(uuid "30a34876-7c26-43f9-85dc-a8b133fb3149")
 			(effects
@@ -6276,7 +6276,7 @@
 			)
 		)
 		(property "Value" "EC11 — o unico encoder"
-			(at 0 11.5 0)
+			(at -7.2 0 0)
 			(layer "F.Fab")
 			(uuid "658b6f82-acb1-40a6-9d42-8a48a3e15c7b")
 			(effects
@@ -6674,7 +6674,7 @@
 			)
 		)
 		(property "Value" "10k lin"
-			(at 0 11.5 0)
+			(at -2.6 0 0)
 			(layer "F.Fab")
 			(uuid "27340342-3da1-4469-801a-53527922c3a7")
 			(effects
@@ -6928,7 +6928,7 @@
 			)
 		)
 		(property "Value" "OLED SSD1309 MX1.25 7p"
-			(at 0 11.5 0)
+			(at 2.6 2.6 0)
 			(layer "F.Fab")
 			(uuid "d9f33e61-0d95-4f56-802c-198ac9af651e")
 			(effects
@@ -7293,7 +7293,7 @@
 			)
 		)
 		(property "Value" "POT_R"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "5e8f5c09-9afb-4b57-8641-03c72331061d")
 			(effects
@@ -7391,7 +7391,7 @@
 			)
 		)
 		(property "Value" "10k pull-down"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "e1c95784-b5da-43b1-8de2-b6116578258f")
 			(effects

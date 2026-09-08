@@ -1263,11 +1263,31 @@ e deixou `(at0 1.65 0)`: o KiCad recusou a placa inteira e só o comando
 *seguinte* o revelou. Grava-se numa cópia, carrega-se, e só então se escreve.
 
 ⚠️ **A F.Fab conta, mas não conta o mesmo.** Ela não é impressa — 210 dos 336
-textos vivem lá — e é a camada que se lê no editor. Arrumá-la é legítimo, mas
-com regras próprias: ali só texto×texto é defeito. Tentado e medido, melhorou
-uma placa e piorou a outra **incluindo a serigrafia dela**, e ficou opt-in
-(`--fab`). *Não se troca uma regressão no que se fabrica por uma melhoria no que
-se lê.*
+textos vivem lá — e é a camada que se lê no editor. Arrumá-la é legítimo, com
+regras próprias: ali pads e pistas não custam nada, **mas os contornos de peça
+da própria Fab custam**. *«Não é impresso» não quer dizer «não tem obstáculos» —
+quer dizer que os obstáculos são outros, e outros não é nenhum.* Sem isso,
+arrumar empurrava os valores para cima dos contornos e o painel subia de 51 para
+68 colisões.
+
+⚠️⚠️ **E CADA PASSAGEM É JULGADA E ACEITE POR SI.** Julgadas em bloco, no painel
+a passagem da Fab era óptima (51→37, texto×texto 10→3) e foi recusada inteira
+porque a da serigrafia, no mesmo pacote, piorava a serigrafia. **Uma boa ficou
+refém de uma má por viajarem juntas.** O portão estava certo a recusar o
+conjunto; o erro era o conjunto existir.
+
+⚠️ **E o `total` conta tanto como o `texto×texto`.** Um portão que só olhasse o
+segundo deixou a Fab do painel subir de 51 para 68 sem gritar, porque o
+texto×texto tinha descido. **Um critério só é um portão para o que ele mede.**
+
+Medido, com o veredicto por passagem na saída:
+
+```
+cerebro  ✓ Reference (F.Silkscreen)  0->0   · total   6->6
+         ✓ Value     (F.Fab)        29->18  · total 114->87
+painel   ✓ Value     (F.Fab)        10->3   · total  51->37
+         ✗ Reference (F.Silkscreen)  0->1   RECUSADA
+```
 
 ### 11g-ter. A fronteira com a `/design-review`, no lado da placa
 

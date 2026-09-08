@@ -105,7 +105,7 @@
 			)
 		)
 		(property "Value" "22n C0G"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "8c07b682-1b1f-48f4-a204-1f7f0dd68a75")
 			(effects
@@ -251,7 +251,7 @@
 			)
 		)
 		(property "Value" "AGND"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "57c2c4e4-bab8-4cde-9809-aa8c991aa189")
 			(effects
@@ -349,7 +349,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "ae9a90bb-1abd-4518-80e0-1507554be5dd")
 			(effects
@@ -495,7 +495,7 @@
 			)
 		)
 		(property "Value" "BAV99"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "c9eadb40-ca8e-4de0-848d-e2001637178c")
 			(effects
@@ -861,7 +861,7 @@
 			)
 		)
 		(property "Value" "4M7"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "5624e1b0-b566-47b0-a9eb-a7ffa8b4dfd2")
 			(effects
@@ -1007,7 +1007,7 @@
 			)
 		)
 		(property "Value" "1k"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "6d9f08a4-11f8-457c-9722-cd9fd27046ca")
 			(effects
@@ -1153,7 +1153,7 @@
 			)
 		)
 		(property "Value" "V+PRE"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "a1b034a4-db49-495a-836f-d5ab68052827")
 			(effects
@@ -1251,7 +1251,7 @@
 			)
 		)
 		(property "Value" "100u"
-			(at 0 11.5 0)
+			(at 1.6 0 0)
 			(layer "F.Fab")
 			(uuid "93662355-c35e-4734-8f33-89dcc752f517")
 			(effects
@@ -2771,7 +2771,7 @@
 			)
 		)
 		(property "Value" "10u"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "38fc7ddc-a536-4f74-9340-df1d16790fe7")
 			(effects
@@ -2917,7 +2917,7 @@
 			)
 		)
 		(property "Value" "100R 1/4W"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "794b3570-dfe8-4ee0-a61a-5da42f7074a1")
 			(effects
@@ -3063,7 +3063,7 @@
 			)
 		)
 		(property "Value" "4k7"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "4d858713-24a9-41bd-b0be-6b9a1126b75d")
 			(effects
@@ -3209,7 +3209,7 @@
 			)
 		)
 		(property "Value" "fio -> TRS linha L"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "ba33d8ec-4f1e-4cc3-965e-e79066be74ba")
 			(effects
@@ -3445,7 +3445,7 @@
 			)
 		)
 		(property "Value" "ao amp TPA3116"
-			(at 0 11.5 0)
+			(at 0 6 0)
 			(layer "F.Fab")
 			(uuid "ddd88f1e-0cf4-4421-98cd-c446c772272c")
 			(effects
@@ -3797,7 +3797,7 @@
 			)
 		)
 		(property "Value" "22p C0G"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "290dec06-bb72-4849-8784-5079b60f6b37")
 			(effects
@@ -3943,7 +3943,7 @@
 			)
 		)
 		(property "Value" "100R"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "ddcc6aea-9a36-4a50-8c5c-e41a3dfe04e0")
 			(effects
@@ -4089,7 +4089,7 @@
 			)
 		)
 		(property "Value" "22k"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "a33e7617-6f53-4012-92de-ae9f9fd72fc4")
 			(effects
@@ -4235,7 +4235,7 @@
 			)
 		)
 		(property "Value" "47u"
-			(at 0 11.5 0)
+			(at 1.6 -1.6 0)
 			(layer "F.Fab")
 			(uuid "00f1950b-f1ce-4a46-be71-b833542db623")
 			(effects
@@ -5755,7 +5755,7 @@
 			)
 		)
 		(property "Value" "OPA1642"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "8d7265bd-7281-4671-8da1-899aed1261de")
 			(effects
@@ -6111,7 +6111,7 @@
 			)
 		)
 		(property "Value" "fio -> TRS linha R"
-			(at 0 11.5 0)
+			(at 8.4 0 0)
 			(layer "F.Fab")
 			(uuid "a83c53f8-dde3-4a23-a571-e1126b5a3548")
 			(effects
@@ -6347,7 +6347,7 @@
 			)
 		)
 		(property "Value" "22u NP"
-			(at 0 11.5 0)
+			(at 1.6 0 0)
 			(layer "F.Fab")
 			(uuid "853837de-4099-4ab8-87a4-03e3276d4dca")
 			(effects
@@ -7867,7 +7867,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "e0c7926a-213f-4e14-a01d-8e452391d828")
 			(effects
@@ -8013,7 +8013,7 @@
 			)
 		)
 		(property "Value" "470u 25V"
-			(at 0 11.5 0)
+			(at 1.6 0 0)
 			(layer "F.Fab")
 			(uuid "9e60f484-a4a9-4b8a-a941-4ff849d14ef4")
 			(effects
@@ -10093,7 +10093,7 @@
 			)
 		)
 		(property "Value" "LINHA_R"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "eb97b89e-550f-4ad3-8739-d6898cb7b1fd")
 			(effects
@@ -10191,7 +10191,7 @@
 			)
 		)
 		(property "Value" "4M7"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "6bbe3a48-a0fa-46bf-b1d2-084c02e536a5")
 			(effects
@@ -10337,7 +10337,7 @@
 			)
 		)
 		(property "Value" "a ponte ESP32"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "c1d35e86-2f90-4ffb-9845-e52b30d6c1d9")
 			(effects
@@ -10564,7 +10564,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "b1a83d76-b471-4a58-8449-1105d6bf21b4")
 			(effects
@@ -10710,7 +10710,7 @@
 			)
 		)
 		(property "Value" "PTC 3A"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "24a845ed-409c-4588-b50f-f51750510d00")
 			(effects
@@ -10856,7 +10856,7 @@
 			)
 		)
 		(property "Value" "+5V"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "6d5e137c-1636-4dae-940c-eda3e800928a")
 			(effects
@@ -10954,7 +10954,7 @@
 			)
 		)
 		(property "Value" "0R"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "647771f6-bcce-4fbc-89b9-b0275e63fab8")
 			(effects
@@ -11100,7 +11100,7 @@
 			)
 		)
 		(property "Value" "fio -> DPDT tipo 2, canal L"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "b11136dd-65ab-43cd-825f-38dd1eecc1bc")
 			(effects
@@ -11381,7 +11381,7 @@
 			)
 		)
 		(property "Value" "BAV99"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "7e5e8a94-830d-41ef-9c90-8c8bd5d6b4af")
 			(effects
@@ -11747,7 +11747,7 @@
 			)
 		)
 		(property "Value" "2u2 filme"
-			(at 0 11.5 0)
+			(at 2.6 0 0)
 			(layer "F.Fab")
 			(uuid "1179f109-620b-4cb5-9ac6-1b53d963feae")
 			(effects
@@ -11915,7 +11915,7 @@
 			)
 		)
 		(property "Value" "entrada decoy PD"
-			(at 0 11.5 0)
+			(at 0 6 0)
 			(layer "F.Fab")
 			(uuid "2f6df7c2-ce0e-4922-a9ce-ab646bfc268c")
 			(effects
@@ -12267,7 +12267,7 @@
 			)
 		)
 		(property "Value" "IDC 2x13 -> painel"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "7669098b-15f5-4594-adde-3902ce8909c0")
 			(effects
@@ -12861,7 +12861,7 @@
 			)
 		)
 		(property "Value" "22u NP"
-			(at 0 11.5 0)
+			(at 1.6 -1.6 0)
 			(layer "F.Fab")
 			(uuid "850c85cf-5f60-4231-8e95-c5ac644508d5")
 			(effects
@@ -14381,7 +14381,7 @@
 			)
 		)
 		(property "Value" "step-down 5V fixo"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "1261be93-d25d-416f-a04d-4fb3c936c330")
 			(effects
@@ -14617,7 +14617,7 @@
 			)
 		)
 		(property "Value" "+5V_PONTE"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "92fe0eca-715d-49e6-9173-83a09055366c")
 			(effects
@@ -14715,7 +14715,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "0222da78-d4fa-4ff2-a25e-0e58e8167254")
 			(effects
@@ -14861,7 +14861,7 @@
 			)
 		)
 		(property "Value" "trim 100k"
-			(at 0 11.5 0)
+			(at -1.6 -1.6 0)
 			(layer "F.Fab")
 			(uuid "69eaa5c7-f558-4a02-8909-d2ff6f947187")
 			(effects
@@ -15068,7 +15068,7 @@
 			)
 		)
 		(property "Value" "fio -> jack piezo J5"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "3fac2e6c-0c4a-4c2b-8588-73182e8dfa00")
 			(effects
@@ -15304,7 +15304,7 @@
 			)
 		)
 		(property "Value" "22p C0G"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "b677dd6a-1405-4e9d-a7ca-a313c3d077b7")
 			(effects
@@ -15450,7 +15450,7 @@
 			)
 		)
 		(property "Value" "V_TRILHO_A2"
-			(at 0 11.5 0)
+			(at 0 -2.6 0)
 			(layer "F.Fab")
 			(uuid "d89f4260-39bc-4158-8fe6-5fcc88265296")
 			(effects
@@ -15548,7 +15548,7 @@
 			)
 		)
 		(property "Value" "22n C0G"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "74dbc0c1-8665-4db8-a038-14a2c2fd0910")
 			(effects
@@ -15694,7 +15694,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "0cac0d1a-efee-40b3-b864-c549f1342336")
 			(effects
@@ -15792,7 +15792,7 @@
 			)
 		)
 		(property "Value" "fio -> jack piezo J6"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "0205cc26-2608-46e0-a5f2-98e92b672898")
 			(effects
@@ -16028,7 +16028,7 @@
 			)
 		)
 		(property "Value" "2200u/35V"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "6a9a18d7-e336-4485-b14b-82a3623a5e7c")
 			(effects
@@ -18958,7 +18958,7 @@
 			)
 		)
 		(property "Value" "2u2 filme"
-			(at 0 11.5 0)
+			(at 2.6 0 0)
 			(layer "F.Fab")
 			(uuid "b9cc93d1-88fa-4667-b370-6b9c57ab1c52")
 			(effects
@@ -19126,7 +19126,7 @@
 			)
 		)
 		(property "Value" "fio -> DPDT tipo 2, canal R"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "66774194-4756-4865-be6e-89fc4d4a9ab1")
 			(effects
@@ -19407,7 +19407,7 @@
 			)
 		)
 		(property "Value" "VBIAS"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "e7d5b626-6ffb-45ca-ba18-cc686c410bb4")
 			(effects
@@ -19505,7 +19505,7 @@
 			)
 		)
 		(property "Value" "1k"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "e35e139d-e35a-4c72-a2c7-173441715c23")
 			(effects
@@ -19651,7 +19651,7 @@
 			)
 		)
 		(property "Value" "SMBJ24A"
-			(at 0 11.5 0)
+			(at 0 3.6 0)
 			(layer "F.Fab")
 			(uuid "7f02ae74-ef0b-4e1b-b835-ca01617e77e4")
 			(effects
@@ -19917,7 +19917,7 @@
 			)
 		)
 		(property "Value" "NetTie-2  AGND<->GND"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "28691aa7-8537-436c-ac4b-4b8eb108b115")
 			(effects
@@ -20002,7 +20002,7 @@
 			)
 		)
 		(property "Value" "LINHA_L"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "c53c9f53-f217-49bc-b9f5-3a5c67ca76d2")
 			(effects
@@ -20100,7 +20100,7 @@
 			)
 		)
 		(property "Value" "100k"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "a7eb6091-3498-4694-ada9-c48eaa4ff785")
 			(effects
@@ -20246,7 +20246,7 @@
 			)
 		)
 		(property "Value" "100R"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "773266f0-e366-4c7c-8ff6-0f6e3a7e2f6a")
 			(effects
@@ -20392,7 +20392,7 @@
 			)
 		)
 		(property "Value" "ESP32-C3 SuperMini"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "ffbfdef5-84cf-4093-a82f-a1a2cd8b50ab")
 			(effects
@@ -20832,7 +20832,7 @@
 			)
 		)
 		(property "Value" "+15V"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "2b6afba5-7681-4f0d-b91b-1eaa0d109cb7")
 			(effects
@@ -20930,7 +20930,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "cb00808f-d924-47cd-83f1-d097ebe63869")
 			(effects
@@ -21076,7 +21076,7 @@
 			)
 		)
 		(property "Value" "trim 100k"
-			(at 0 11.5 0)
+			(at -1.6 -1.6 0)
 			(layer "F.Fab")
 			(uuid "f9f89473-ca30-4b86-a5e9-a5110989ff7e")
 			(effects
@@ -21283,7 +21283,7 @@
 			)
 		)
 		(property "Value" "10k — R"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "ea581cae-95bb-4d1e-9846-30e8699f929e")
 			(effects
@@ -21429,7 +21429,7 @@
 			)
 		)
 		(property "Value" "0R"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "80ca0ea7-37a6-458f-9e26-07b3147f1887")
 			(effects
@@ -21575,7 +21575,7 @@
 			)
 		)
 		(property "Value" "1N5819"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "690f41fe-5c7a-4da4-a475-e781dd5eed86")
 			(effects
@@ -21841,7 +21841,7 @@
 			)
 		)
 		(property "Value" "100k"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "b486fd6a-abf8-40f0-8012-f238286aed96")
 			(effects
@@ -21987,7 +21987,7 @@
 			)
 		)
 		(property "Value" "modulo TPA3116"
-			(at 0 11.5 0)
+			(at 7.2 0 0)
 			(layer "F.Fab")
 			(uuid "8ac45180-2ab8-4a64-9ff4-f8c1bde89572")
 			(effects
@@ -22232,7 +22232,7 @@
 			)
 		)
 		(property "Value" "100k"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "d6611a63-a085-4fa1-ab7c-dfe54733590a")
 			(effects
@@ -22378,7 +22378,7 @@
 			)
 		)
 		(property "Value" "10k — L"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "5d96715b-d852-4d1f-bd03-4b1576038264")
 			(effects
@@ -22524,7 +22524,7 @@
 			)
 		)
 		(property "Value" "100n"
-			(at 0 11.5 0)
+			(at 0 1.6 0)
 			(layer "F.Fab")
 			(uuid "83364f26-89da-4a0a-9035-cad3fa9fcdd1")
 			(effects
@@ -22670,7 +22670,7 @@
 			)
 		)
 		(property "Value" "+3V3A"
-			(at 0 11.5 0)
+			(at 0 2.6 0)
 			(layer "F.Fab")
 			(uuid "6c1b78cf-9c3b-46b3-a9e7-84567c3d8c34")
 			(effects
@@ -22768,7 +22768,7 @@
 			)
 		)
 		(property "Value" "4k7"
-			(at 0 11.5 0)
+			(at 0 -1.6 0)
 			(layer "F.Fab")
 			(uuid "541ef1ce-844e-4bba-b2ce-347442a12953")
 			(effects
@@ -22914,7 +22914,7 @@
 			)
 		)
 		(property "Value" "Daisy Seed3"
-			(at 0 11.5 0)
+			(at 2.6 0 0)
 			(layer "F.Fab")
 			(uuid "e653c82d-fdc0-4348-9e29-d74ba60a2d58")
 			(effects

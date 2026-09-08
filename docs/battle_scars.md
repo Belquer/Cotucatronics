@@ -9930,3 +9930,40 @@ a abre, e só então se escreve por cima do original.
 > seguintes"* — e a regra estava aplicada DENTRO de uma passagem e não ENTRE
 > passagens. **Acrescentar a segunda quebrou uma invariante que estava escrita e
 > que eu li como sendo sobre outra coisa.**
+
+## 15ek — uma boa passagem refém de uma má, por estarem no mesmo pacote
+
+Arrumar a F.Fab pedia duas coisas que eu não tinha visto.
+
+**Uma — a Fab tem contornos próprios.** A primeira versão só evitava *outros
+textos* naquela camada, porque «a Fab não é impressa, pads e pistas não custam
+nada». Verdade — mas a F.Fab tem os **desenhos de peça** dela, e um `Value` posto
+por cima de um deles conta como colisão no portão tal como na serigrafia.
+«Arrumar» empurrava os valores para cima dos contornos: o painel foi de **51
+para 68**.
+
+> **«Não é impresso» não quer dizer «não tem obstáculos».** Quer dizer que os
+> obstáculos são outros — e outros não é nenhum.
+
+**Duas — as passagens eram julgadas em bloco.** No painel a passagem da Fab era
+óptima (51→37, texto×texto 10→3) e foi **recusada inteira**, porque a passagem
+da *serigrafia*, no mesmo pacote, piorava a serigrafia.
+
+> **Uma boa ficou refém de uma má por viajarem juntas.** O portão estava certo a
+> recusar o conjunto; o erro era o conjunto existir. Cada passagem parte do
+> estado já aceite e é medida **na sua camada**: se não piorar, entra; se
+> piorar, cai sozinha e a outra segue.
+
+Resultado, com o veredicto por passagem visível na saída:
+
+```
+cerebro  ✓ Reference (F.Silkscreen)  texto×texto 0->0   · total   6->6
+         ✓ Value     (F.Fab)         texto×texto 29->18 · total 114->87
+painel   ✓ Value     (F.Fab)         texto×texto 10->3  · total  51->37
+         ✗ Reference (F.Silkscreen)  RECUSADA: 0->1     · total   6->7
+```
+
+⚠️ **E o `total` conta tanto como o `texto×texto`.** A versão anterior do portão
+só olhava o segundo — e foi assim que a Fab do painel subiu de 51 para 68 sem
+nada gritar, porque o texto×texto tinha descido. **Um critério só é um portão
+para o que ele mede.**
