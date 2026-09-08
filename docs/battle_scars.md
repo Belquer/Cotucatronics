@@ -9070,3 +9070,36 @@ pelo óbvio:
 > **Uma correcção sem a razão escrita não é uma correcção: é um valor que ficou
 > certo por acaso e que a próxima leitura desfaz.** As três razões passaram para
 > junto das entradas, no gerador, onde quem for trocar o MPN tem de as ler.
+
+## 15dn — a hesitação era minha, e escondia um erro a sério
+
+*08/09.* Deixei a escolha do terminal de parafuso em aberto — *"Phoenix se for
+série, KF301 na bancada"* — e o dB perguntou porquê. Não havia porquê: o
+instrumento replica-se às centenas, e isso já decide. Apresentei como pergunta
+uma coisa que a premissa do projecto respondia.
+
+Mas ao ir escrever o MPN da série, o erro apareceu. A lista à mão dizia
+**`1935161`**, rotulado *"MKDS 1/2-5,08"*. O footprint que a placa desenha
+declara-se a si próprio:
+
+```
+Terminal Block Phoenix MKDS-1,5-2-5.08, 2 pins, pitch 5.08mm,
+size 10.2x9.8mm, drill 1.3mm, pad 2.6mm
+```
+
+**MKDS 1,5** e **MKDS 1** são séries diferentes, com corpos diferentes. O número
+certo para esta peça é **`1715721`** — confirmado no catálogo do fabricante e em
+três distribuidores: 2 vias, 5,08 mm, 17,5 A / 400 V, 1,5 mm².
+
+> **Se eu tivesse feito o que me pediram sem verificar — copiar o número da
+> lista antiga — tinha ido para a encomenda uma peça que podia não entrar nos
+> furos.** É a §7f outra vez: o que falha num MPN é quase sempre a variante, e
+> não a marca; e um número plausível e errado parece certo até a caixa chegar.
+
+E o preço passou a **medido** em vez de estimado, no escalão que interessa: uma
+peça de série orça-se a 100+, não a um. Medido a 08/09: £0,904 a 100+ contra
+£1,13 à unidade.
+
+> **Uma hesitação minha custou uma pergunta ao dB — e valeu, porque foi ao ir
+> executar sem hesitar que o erro apareceu.** O que estava errado não era ter
+> dúvida sobre a escolha: era ter dúvida sobre a coisa errada.

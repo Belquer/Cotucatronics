@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 
-VERSAO = "0.5.0"
+VERSAO = "0.6.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAIDA = os.path.join(RAIZ, "docs", "COTUCA_BOM.md")
 
@@ -112,8 +112,24 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
     "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical": ("header 1x8 2,54", 0.10, "estimado"),
     "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical": ("JST XH 1x2 (B2B-XH-A)", 0.05, "estimado"),
     "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal":
-        ("terminal parafuso 2p 5,08 — **1935161** (Phoenix MKDS 1/2-5.08) "
-         "ou KF301-5.0 generico", 0.60, "estimado"),
+        # ⚠️ O NUMERO E 1715721, E NAO O 1935161 DA LISTA ANTIGA. Esta e a
+        # familia de erro que a §7f desta casa descreve: o que falha num MPN e
+        # quase sempre a variante, nao a marca. O 1935161 vinha rotulado como
+        # "MKDS 1/2-5,08" e o footprint que a placa desenha e o **MKDS 1,5**/2-5,08
+        # — series diferentes, corpos diferentes. Copiar o numero da lista
+        # antiga podia trazer uma peca que nao entra nos furos.
+        #
+        # O footprint declara-se a si proprio: "Terminal Block Phoenix
+        # MKDS-1,5-2-5.08, 2 pins, pitch 5.08mm, size 10.2x9.8mm, drill 1.3mm".
+        # O 1715721 e essa peca: 2 vias, 5,08 mm, 17,5 A / 400 V, 1,5 mm2,
+        # ligacao por parafuso, THT de onda.
+        #
+        # ⚠️ SERIE, e nao bancada. O instrumento replica-se as centenas, e por
+        # isso o preco que conta e o do escalao de 100 e nao o de um. Medido a
+        # 08/09 na Rapid: GBP 0,904 a 100+ com IVA (GBP 1,13 a um). O KF301-5.0
+        # generico serve para montar na bancada e NAO e a peca da serie.
+        ("terminal parafuso 2p 5,08 — **1715721** (Phoenix MKDS 1,5/2-5,08); "
+         "KF301-5.0 so para bancada", 0.95, "medido"),
     "Module:Electrosmith_Daisy_Seed": ("(soquete: 2 tiras femea 1x20 2,54)", 2.00, "estimado"),
 }
 

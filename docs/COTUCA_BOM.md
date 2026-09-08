@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.5.0 · **2026-09-08** · commit `eba3393`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.6.0 · **2026-09-08** · commit `4dcf6d6`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e
@@ -66,8 +66,8 @@
 | `C14` | 2u2 filme | MKS2C042201K00KSSD (WIMA) | TME/Mouser | `C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2` | 0.7000 | estimado |
 | `C23` **(DNP)** | 22u NP | UES1H220MEM (Nichicon UES) | LCSC | `CP_Radial_D6.3mm_P2.50mm` | — | estimado |
 | `C24` | 2u2 filme | MKS2C042201K00KSSD (WIMA) | TME/Mouser | `C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2` | 0.7000 | estimado |
-| `J1` | entrada decoy PD | terminal parafuso 2p 5,08 — **1935161** (Phoenix MKDS 1/2-5.08) ou KF301-5.0 generico | — | `TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal` | 0.6000 | estimado |
-| `J2` | ao amp TPA3116 | terminal parafuso 2p 5,08 — **1935161** (Phoenix MKDS 1/2-5.08) ou KF301-5.0 generico | — | `TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal` | 0.6000 | estimado |
+| `J1` | entrada decoy PD | terminal parafuso 2p 5,08 — **1715721** (Phoenix MKDS 1,5/2-5,08); KF301-5.0 so para bancada | — | `TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal` | 0.9500 | medido |
+| `J2` | ao amp TPA3116 | terminal parafuso 2p 5,08 — **1715721** (Phoenix MKDS 1,5/2-5,08); KF301-5.0 so para bancada | — | `TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal` | 0.9500 | medido |
 | `J3` | step-down 5V fixo | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
 | `J4` | a ponte ESP32 | header 1x2 2,54 | — | `PinHeader_1x02_P2.54mm_Vertical` | 0.0400 | estimado |
 | `J5` | fio -> jack piezo J5 | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
@@ -138,7 +138,7 @@
 
 ## 6 · Ordem de grandeza
 
-**≈ US$ 101.83 por instrumento**, so componentes e modulos.
+**≈ US$ 102.53 por instrumento**, so componentes e modulos.
 
 ⚠️ **NAO inclui**: PCB, montagem da JLC, taxa de *setup* das pecas
 Extended, caixa, parafusos, knobs, nem transporte. E a soma mistura precos
