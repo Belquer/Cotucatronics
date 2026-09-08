@@ -8831,3 +8831,42 @@ Era isso, e não a ideia, que fazia a cadeia medir 14 contra 12.
 Com a guarda mede 12 e não parte planos — igual a não arrancar nesta placa, e só
 pode ajudar noutra. **Uma capacidade que só pode melhorar ou não fazer nada
 pertence ao caminho por omissão**; antes das duas correcções não pertencia.
+
+## 15de — "não há export de DSN": disse-o três vezes e era falso
+
+*07/09.* Escrevi na skill, no README e num commit que o `pcbnew` não expõe
+export de Specctra DSN, e que por isso **nenhum autoroteador externo era
+alcançável**. Com base nisso escrevi um roteador de raiz e passei uma sessão
+inteira a afiná-lo.
+
+É falso. O `pcbnew` expõe `ExportSpecctraDSN` e `ImportSpecctraSES`. O
+FreeRouting — um autoroteador a sério, com *rip-up* e *shove*, coisas que o meu
+faz mal ou não faz — está a um `.dsn` de distância. Testado: exportou 143 KB de
+Specctra válido da placa do cérebro.
+
+A cadeia do erro, e cada elo é meu:
+
+1. tentei `import pcbnew` no Python do sistema e falhou no `dlopen`, a pedir as
+   bibliotecas wx do KiCad. **Facto verdadeiro.**
+2. procurei o interpretador do KiCad com `ls .../bin/ | head` e vi `2to3`,
+   `idle3`, `img2png`… O `python3.9` está mais abaixo na ordem alfabética.
+   **Um `ls | head` não é uma busca**, e eu tratei-o como uma.
+3. concluí que o módulo era inutilizável, e daí que o DSN não existia — sem
+   nunca ter procurado a palavra `Specctra` no módulo, que era um `grep`.
+
+> **O passo que me faltou não foi conhecimento: foi um `dir(pcbnew)`.** E o que
+> o tornou invisível foi ter transformado "não consegui importar" em "não dá
+> para usar" — uma conclusão sobre a ferramenta tirada de um problema meu de
+> ambiente.
+
+⚠️ E foi o dB que a apanhou, ao perguntar se alguém já teria feito isto. A
+primeira resposta da busca era uma skill com `/autoroute` por FreeRouting — a
+coisa que eu tinha declarado impossível. **A pergunta "isto já foi feito?" é uma
+verificação, e não só uma poupança de trabalho:** o que os outros conseguiram
+fazer é a prova mais barata de que a minha impossibilidade era minha.
+
+Já tinha escrito, hoje, a regra "antes de dizer que uma ferramenta não faz X,
+correr o `--help`". Corri o `--help` do `kicad-cli` e ele de facto não exporta
+DSN — isso continua verdade. **Mas o `pcbnew` é outra ferramenta, e a essa não
+apliquei a regra.** É a mesma falha da 15dc: uma lição aprendida num sítio não
+se aplica sozinha ao sítio do lado.

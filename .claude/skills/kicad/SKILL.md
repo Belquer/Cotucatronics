@@ -867,14 +867,34 @@ $K sch export bom     -o fab/bom.csv esquema.kicad_sch
 ```
 
 ⚠️ **O `kicad-cli` não tem subcomando de roteamento**, e o módulo `pcbnew`
-exposto **não traz o PNS** (nem `Shove`, nem `Walkaround`, nem autoroute) —
-confirmado a listar o módulo, não deduzido. **E não há export de DSN**, portanto
-nenhum autoroteador externo é alcançável por aqui. Quem rotear, roteia na
-interface ou escreve o seu.
+**não traz o PNS** (nem `Shove`, nem `Walkaround`, nem autoroute) — confirmado
+a listar o módulo, não deduzido.
 
-⚠️ **O `pcbnew` importado do Python do sistema falha no `dlopen`** — pede as
-bibliotecas wx do próprio KiCad. Ou se usa o interpretador do bundle, ou se
-mede pelo relatório do DRC, que é a ferramenta externa que pode dizer não.
+⚠️⚠️ **MAS HÁ EXPORT DE DSN, E EU DISSE O CONTRÁRIO.** O `pcbnew` expõe
+`ExportSpecctraDSN` e `ImportSpecctraSES`, portanto **o FreeRouting — que é um
+autoroteador a sério, com rip-up e shove — é alcançável**. Escrevi aqui, e no
+README, e num commit, que não era. Ver 15de.
+
+```python
+import pcbnew
+b = pcbnew.LoadBoard("placa.kicad_pcb")
+pcbnew.ExportSpecctraDSN(b, "placa.dsn")     # -> freerouting
+pcbnew.ImportSpecctraSES(b, "placa.ses")     # <- o resultado
+pcbnew.SaveBoard("placa.kicad_pcb", b)
+```
+
+⚠️ **E CORRE-SE COM O PYTHON DO PRÓPRIO KICAD, que existe.** O `pcbnew`
+importado do Python do sistema falha no `dlopen` — pede as bibliotecas wx do
+KiCad — e eu tirei daí a conclusão errada de que o módulo era inutilizável. O
+interpretador está em
+
+```
+/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9/bin/python3.9
+```
+
+e importa `pcbnew` 10.0.5 sem um queixume. Não o achei porque listei o `bin/`
+com `head` e ele está mais abaixo na ordem alfabética, depois dos `img2py` e
+companhia. **Um `ls | head` não é uma busca.**
 
 ⚠️ **E o `--save-board` reformata o ficheiro.** Um medidor por expressão
 regular com janela fixa passa a alcançar campos que antes não alcançava, e a
