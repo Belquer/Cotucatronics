@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.1.0 · **2026-09-05** · commit `94d33fa`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.3.0 · **2026-09-08** · commit `0436b62`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e
@@ -26,6 +26,8 @@
 | `C9` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C11` **(DNP)** | 22p C0G | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | — | estimado |
 | `C12` | 22n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
+| `C15` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
+| `C16` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C21` **(DNP)** | 22p C0G | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | — | estimado |
 | `C22` | 22n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
 | `D1` | SMBJ24A | SMBJ24A (Littelfuse) | LCSC | `D_SMB` | 0.0790 | medido |
@@ -70,16 +72,16 @@
 | `J4` | a ponte ESP32 | header 1x2 2,54 | — | `PinHeader_1x02_P2.54mm_Vertical` | 0.0400 | estimado |
 | `J5` | fio -> jack piezo J5 | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
 | `J6` | fio -> jack piezo J6 | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
-| `J10` | ponte ESP32-C3 | header 1x5 2,54 | — | `PinHeader_1x05_P2.54mm_Vertical` | 0.0700 | estimado |
 | `J11` | modulo TPA3116 | header 1x4 2,54 | — | `PinHeader_1x04_P2.54mm_Vertical` | 0.0600 | estimado |
 | `J12` | fio -> TRS linha L | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
 | `J13` | fio -> TRS linha R | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
 | `J14` | IDC 2x13 -> painel | IDC 2x13 macho blindado (3M N2526-6002RB ou gen.) | LCSC | `IDC-Header_2x13_P2.54mm_Vertical` | 0.4500 | estimado |
-| `J15` | fio -> DPDT tipo 2, canal L | header 1x6 2,54 | — | `PinHeader_1x06_P2.54mm_Vertical` | 0.0800 | estimado |
-| `J16` | fio -> DPDT tipo 2, canal R | header 1x6 2,54 | — | `PinHeader_1x06_P2.54mm_Vertical` | 0.0800 | estimado |
+| `J15` | fio -> DPDT tipo 2, canal L | header 1x8 2,54 | — | `PinHeader_1x08_P2.54mm_Vertical` | 0.1000 | estimado |
+| `J16` | fio -> DPDT tipo 2, canal R | header 1x8 2,54 | — | `PinHeader_1x08_P2.54mm_Vertical` | 0.1000 | estimado |
 | `RV1` **(DNP)** | trim 100k | 3296W-1-104LF (Bourns) | LCSC C48084 | `Potentiometer_Bourns_3296W_Vertical` | — | medido |
 | `RV2` **(DNP)** | trim 100k | 3296W-1-104LF (Bourns) | LCSC C48084 | `Potentiometer_Bourns_3296W_Vertical` | — | medido |
 | `U2` | Daisy Seed3 | Daisy **Seed3** (Electrosmith) | Electrosmith | `Electrosmith_Daisy_Seed` | 29.9900 | medido |
+| `U3` | ESP32-C3 SuperMini | **por decidir** | — | `ESP32C3_SUPERMINI_SOQUETE` | 0.0000 | — |
 
 ## 3 · PAINEL — SMD (JLC monta)
 
@@ -87,6 +89,8 @@
 |---|---|---|---|---|---|---|
 | `C1` | 100n COLADO ao cursor | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C2` | 100n COLADO ao cursor | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
+| `C4` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
+| `C5` | 100n COLADO ao IDC | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `Q1` | AO3400A | AO3400A (Alpha & Omega) | LCSC C20917 | `SOT-23` | 0.0487 | medido |
 | `Q2` | AO3400A | AO3400A (Alpha & Omega) | LCSC C20917 | `SOT-23` | 0.0487 | medido |
 | `R1` | 100R gate | resistor 0805 1% | — | `R_0805_2012Metric` | 0.0050 | estimado |
@@ -100,6 +104,7 @@
 
 | ref | valor | peca / MPN | fornecedor | footprint | US$ | fonte |
 |---|---|---|---|---|---|---|
+| `C3` | 100u 16V | **por decidir** | — | `CP_Radial_D6.3mm_P2.50mm` | 0.0000 | — |
 | `J1` | IDC 2x13 femea <- cerebro | IDC 2x13 femea (3M N3793-6002RB ou gen.) | LCSC | `IDC-Header_2x13_P2.54mm_Vertical` | 0.4500 | estimado |
 | `J2` | OLED SSD1309 MX1.25 7p | 53047-0710 (Molex PicoBlade 1x7) | LCSC | `Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical` | 0.3000 | estimado |
 | `J3` | fio -> arcade AZUL freeze A | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
@@ -107,8 +112,8 @@
 | `J5` | fio -> arcade BRANCO buzios | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
 | `J6` | fio -> LED do arcade A (1=A, 2=K) | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
 | `J7` | fio -> LED do arcade B (1=A, 2=K) | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
-| `RV1` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `—` | 0.6000 | estimado |
-| `RV2` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `—` | 0.6000 | estimado |
+| `RV1` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
+| `RV2` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
 | `SW1` | EC11 — o unico encoder | EC11E15244G1 (Alps Alpine) | LCSC C370970 | `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | 1.7000 | medido |
 
 ## 5 · Fora das placas — modulos, painel, cablagem, caixa
@@ -125,18 +130,21 @@
 | painel | Jack TRS 1/4" NMJ6HCD2 (Neutrik) | Stompboxparts | 4 | 1.75 | medido | isolado do chassis; 2 entradas de piezo + 2 saidas de linha |
 | painel | DPDT ON-ON-ON tipo 2 | ja comprados | 2 | 2.00 | estimado | ⚠️ MEDIR O TIPO COM MULTIMETRO ANTES DE FIAR |
 | cablagem | Cabo IDC 2x13, 26 vias, ~150 mm, crimpado | — | 1 | 2.00 | estimado | testar cada crimpe POR TRACAO |
+| cablagem | Cabo 8 vias ~150 mm ao DPDT, crimpado (J15 e J16) | — | 2 | 1.00 | estimado | 8 e nao 6 desde 08/09: os pinos 7 e 8 sao GND, referencia do cabo. Os dois condutores de terra nao vao a lug nenhum da chave — ou ao corpo dela, se for metalica, ou ficam como dreno junto ao par |
 | cablagem | Cabo USB-C curto 15 cm C-C com dados (PD) | — | 1 | 3.00 | estimado | do powerbank ao decoy |
-| caixa | Caixa (ver docs/desenhos/caixa/) | — | 1 | — | por orcar | paredes 6 mm, tampa 9 mm; furos na tampa para encoder e 2 pots |
+| caixa | Caixa (ver docs/desenhos/caixa/) | — | 1 | — | por orcar | acrilico 3,0 mm, 200x120, frente 55 / tras 80, rev 5; furos na tampa para encoder e 2 pots |
 
 ## 6 · Ordem de grandeza
 
-**≈ US$ 97.39 por instrumento**, so componentes e modulos.
+**≈ US$ 99.38 por instrumento**, so componentes e modulos.
 
 ⚠️ **NAO inclui**: PCB, montagem da JLC, taxa de *setup* das pecas
 Extended, caixa, parafusos, knobs, nem transporte. E a soma mistura precos
 **medidos** com **estimados** — vale como ordem de grandeza, nao como orcamento.
 
 Os DNP nao contam para o total: o footprint fica na placa, a peca nao se compra.
+
+⚠️ **2 peca(s) entram no total a ZERO** por nao terem preco decidido: `C3`, `U3`. A soma ACIMA e um PISO, e nao um total — uma peca sem preco custa zero na aritmetica e nao custa zero na encomenda.
 
 
 ## 7 · Valores que o esquema e o MPN nao dizem igual

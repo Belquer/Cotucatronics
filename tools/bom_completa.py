@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 
-VERSAO = "0.1.0"
+VERSAO = "0.3.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAIDA = os.path.join(RAIZ, "docs", "COTUCA_BOM.md")
 
@@ -81,6 +81,12 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
     "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical": ("header 1x4 2,54", 0.06, "estimado"),
     "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical": ("header 1x5 2,54", 0.07, "estimado"),
     "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical": ("header 1x6 2,54", 0.08, "estimado"),
+    # ⚠️ 1x8 e nao 1x6 no J15/J16 desde 08/09: os pinos 7 e 8 sao GND, para o
+    # cabo ate ao DPDT ter referencia. Ver a folha do soquete.
+    # ⚠️ E O CABO PASSA A OITO CONDUTORES. Isso vive na seccao FORA, porque nao
+    # esta em folha nenhuma — uma alteracao de placa que muda cablagem e duas
+    # linhas de BOM, nao uma.
+    "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical": ("header 1x8 2,54", 0.10, "estimado"),
     "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical": ("JST XH 1x2 (B2B-XH-A)", 0.05, "estimado"),
     "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal":
         ("terminal parafuso 2p 5,08 (MKDS ou KF301)", 0.60, "estimado"),
@@ -109,10 +115,24 @@ FORA = [
      "⚠️ MEDIR O TIPO COM MULTIMETRO ANTES DE FIAR"),
     ("cablagem", "Cabo IDC 2x13, 26 vias, ~150 mm, crimpado", "—", 1, 2.00, "estimado",
      "testar cada crimpe POR TRACAO"),
+    # ⚠️ ESTE CABO NAO ESTAVA NA BOM. Uma peca que nao esta em folha nenhuma e
+    # que ninguem escreveu aqui simplesmente NAO EXISTE na lista de compras, e o
+    # total nem a conta como zero — nao a conta de todo. Apareceu por eu mexer
+    # no conector; sem isso continuava por descobrir.
+    ("cablagem", "Cabo 8 vias ~150 mm ao DPDT, crimpado (J15 e J16)", "—", 2, 1.00,
+     "estimado",
+     "8 e nao 6 desde 08/09: os pinos 7 e 8 sao GND, referencia do cabo. Os dois "
+     "condutores de terra nao vao a lug nenhum da chave — ou ao corpo dela, se "
+     "for metalica, ou ficam como dreno junto ao par"),
     ("cablagem", "Cabo USB-C curto 15 cm C-C com dados (PD)", "—", 1, 3.00, "estimado",
      "do powerbank ao decoy"),
     ("caixa",    "Caixa (ver docs/desenhos/caixa/)", "—", 1, 0.0, "por orcar",
-     "paredes 6 mm, tampa 9 mm; furos na tampa para encoder e 2 pots"),
+     # ⚠️ dizia "paredes 6 mm, tampa 9 mm" — premissa revogada (§10b). A caixa
+     # que esta a ser cortada e a do `caixa/cotuca_caixa_corte.py`: acrilico de
+     # 3,0 mm, rev 5 de 06/09. Comentario com autoridade que afirma premissa
+     # morta re-ensina o erro a quem o le.
+     "acrilico 3,0 mm, 200x120, frente 55 / tras 80, rev 5; furos na tampa "
+     "para encoder e 2 pots"),
 ]
 
 
@@ -195,6 +215,7 @@ def main():
                                            "Diode_SMD", "Fuse:"))
     blocos = {}
     total = 0.0
+    sem_preco = []
     for placa, ref, val, fp, dnp in cs:
         mpn, forn, preco, prov = linha_peca(placa, ref, val, fp, dnp)
         lado = "SMD (JLC monta)" if smd(fp) else "THT (o dB solda)"
@@ -202,8 +223,16 @@ def main():
             (ref, val, mpn, forn, fp.split(":")[-1] or "—", preco, prov, dnp))
         if not dnp:
             total += preco
+            if prov == "—":
+                sem_preco.append(ref)
 
     L = []
+    aviso_sem_preco = (
+        "⚠️ **%d peca(s) entram no total a ZERO** por nao terem preco decidido: "
+        "%s. A soma ACIMA e um PISO, e nao um total — uma peca sem preco "
+        "custa zero na aritmetica e nao custa zero na encomenda."
+        % (len(sem_preco), ", ".join("`%s`" % r for r in sorted(sem_preco)))
+    ) if sem_preco else "Todas as pecas do total tem preco declarado."
     L.append("# COTUCA_BOM — o instrumento inteiro\n")
     L.append("### gerado por `tools/bom_completa.py` v%s · **%s** · commit `%s`%s\n"
              % (VERSAO, hoje, commit,
@@ -257,7 +286,8 @@ Extended, caixa, parafusos, knobs, nem transporte. E a soma mistura precos
 **medidos** com **estimados** — vale como ordem de grandeza, nao como orcamento.
 
 Os DNP nao contam para o total: o footprint fica na placa, a peca nao se compra.
-""")
+
+""" + aviso_sem_preco + "\n")
     L.append("""
 ## %d · Valores que o esquema e o MPN nao dizem igual
 
