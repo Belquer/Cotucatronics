@@ -10022,3 +10022,37 @@ por o código estar errado:
 ⚠️ **E o que me travou nas quatro foi o resultado ser absurdo, não uma guarda.**
 Um `git status` a mostrar a placa por modificar quando eu tinha acabado de ler
 «aceite». **A sorte não é método.**
+
+## 15en — a legenda coube onde os rótulos não cabiam, e custou zero colisões
+
+O que não cabia eram **onze rótulos espalhados**; o que cabe é **um bloco**. São
+a mesma informação e ocupam áreas diferentes: onze textos têm de encontrar onze
+buracos, cada um ao lado do seu ponto, numa faixa apertada — o bloco precisa de
+**um** buraco, e escolhe-o entre 487.
+
+```
+legenda de 12 linhas em (108, 36) · 14 mm da fila
+gravado · abre ✓ · texto×texto 0->0 · total 6->6
+```
+
+**Zero colisões acrescentadas.** Doze linhas novas na serigrafia e o número não
+mexeu.
+
+⚠️ **E a referência FICA na serigrafia, ao contrário do painel.** Lá, `TP7`
+impresso não servia para nada, porque o nome da rede estava ao lado e a
+referência só roubava espaço. Aqui **ela é o que liga o ponto à linha da
+legenda** — sem `TP7` na placa, a legenda não tem a quem se referir.
+
+> **A mesma decisão, invertida, e as duas certas.** O que muda não é o critério
+> — é se a informação está *ao lado* ou *noutro sítio*. Quando está ao lado, o
+> designador é ruído; quando está noutro sítio, é o índice.
+
+⚠️ **E o bloco vai PERTO do que descreve**, não no canto mais vazio — 14 mm da
+fila, e havia posições livres a 90 mm. Uma legenda longe obriga a procurá-la, e
+quem está com a ponta de prova numa mão não procura: desiste, e mede o pino
+errado.
+
+⚠️ **A verificação é contra o `(net ...)` do pad, não contra o que se escreveu.**
+Onze linhas comparadas uma a uma com a rede real do cobre: se um ponto for
+movido amanhã, a legenda passa a divergir e o teste diz qual. Um documento
+impresso em tinta na peça física não se corrige — só se reimprime a placa.

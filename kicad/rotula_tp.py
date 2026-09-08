@@ -3,6 +3,7 @@
 """rotula_tp.py — poe o NOME DA REDE ao lado de cada ponto de teste.
 
     rotula_tp.py <ficheiro.kicad_pcb> [--escreve]
+    rotula_tp.py <ficheiro.kicad_pcb> --legenda [--escreve]
 
 ⚠️⚠️ PORQUE E QUE ISTO E PRECISO
 
@@ -25,7 +26,7 @@ dois textos no mesmo sitio — e dois textos identicos sobrepostos leem-se como
 um borrao e nao como um erro.
 """
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 
 import io
 import math
@@ -180,6 +181,7 @@ def main():
     print("rotula_tp v%s" % VERSAO)
     alvos = [a for a in sys.argv[1:] if not a.startswith("-")]
     escreve = "--escreve" in sys.argv
+    legenda = "--legenda" in sys.argv
     if not alvos:
         raise SystemExit("USO: rotula_tp.py <ficheiro.kicad_pcb> [--escreve]")
 
@@ -240,64 +242,122 @@ def main():
                 melhor, quantos = (rot, dy), n
         rot0, dy0 = melhor
 
-        # ⚠️⚠️ A REFERENCIA DO PONTO DE TESTE SAI DA SERIGRAFIA.
-        #
-        # Sao 22 textos numa faixa de 40 x 14 mm — onze referencias e onze
-        # rotulos, com os pontos a 4 mm de passo. Nao cabem, e a margem nao
-        # resolve aritmetica.
-        #
-        # ⚠️ E a pergunta certa nao e "como e que cabem", e "quais e que servem".
-        # Na bancada, `TP7` impresso nao diz nada: nao se compra, nao se solda,
-        # e para o cruzar com a documentacao ja e preciso ter a documentacao na
-        # mao — altura em que se le la a rede. `+3V3A` diz tudo, sozinho.
-        #
-        # Entao a referencia MUDA DE CAMADA, para a F.Fab: continua a ver-se no
-        # editor e deixa de gastar tinta e espaco na peca fisica. Nao se apaga —
-        # apagar perderia o cruzamento com a netlist e com o CPL.
-        for ref, x, y, rede in tps:
-            t = re.sub(
-                r'(\(property "Reference" "%s"[\s\S]{0,200}?\(layer ")F\.SilkS(")'
-                % ref, r"\1F.Fab\2", t)
-        pads, textos, silk = geometria(t)   # ⚠️ reler: a faixa mudou de dono
-
-        novos, sem = [], []
-        for ref, x, y, rede in sorted(tps, key=lambda z: int(z[0][2:])):
-            posto = None
-            for rot, dy in [(rot0, dy0)] + [d for d in desvios if d != (rot0, dy0)]:
-                cx = caixa(rede, TAM, rot == 90)
-                if livre(x, y + dy, cx, pads, textos, silk, lim):
-                    posto = (x, y + dy, rot, cx)
-                    break
-            if posto is None:
-                sem.append(ref)
+        if legenda:
+            # ⚠️⚠️ QUANDO A FILA E APERTADA DE MAIS, O SITIO E OUTRO.
+            #
+            # No cerebro sao onze pontos a 4 mm de passo numa faixa ja ocupada:
+            # os rotulos individuais colocam-se, mas espalham-se por quatro
+            # alturas em vez de formarem uma linha. **Uma fila meio rotulada e
+            # pior que uma anonima** — parece que os que faltam sao de outra
+            # coisa.
+            #
+            # Entao a informacao vai toda para um sitio so, e a referencia FICA
+            # na serigrafia: aqui ela serve, porque e o que liga o ponto a
+            # linha da legenda. E o inverso do painel, onde `TP7` nao servia
+            # para nada por o nome estar ao lado.
+            #
+            # ⚠️ E o bloco vai PERTO DA FILA, nao no canto mais vazio. Uma
+            # legenda a 15 cm do que descreve obriga a procura-la, e quem esta
+            # com a ponta de prova numa mao nao procura — desiste.
+            linhas = ["PONTOS DE TESTE"] + [
+                "%-5s %s" % (ref, rede)
+                for ref, _x, _y, rede in sorted(tps, key=lambda z: int(z[0][2:]))]
+            lw = max(len(l) for l in linhas) * TAM * 0.35 * MARGEM + 0.3
+            lh = len(linhas) * TAM * 1.55 / 2
+            cxs, cys = (sum(z[1] for z in tps) / len(tps),
+                        sum(z[2] for z in tps) / len(tps))
+            cand = []
+            y = lim[1] + lh + 1.0
+            while y <= lim[3] - lh - 1.0:
+                x = lim[0] + lw + 1.0
+                while x <= lim[2] - lw - 1.0:
+                    if livre(x, y, (lw, lh), pads, textos, silk, lim):
+                        cand.append((math.hypot(x - cxs, y - cys), x, y))
+                    x += 1.0
+                y += 1.0
+            if not cand:
+                print("  %-26s sem espaco para a legenda" % os.path.basename(p))
                 continue
-            px, py, rot, cx = posto
-            textos.append((px, py) + cx)     # passa a ser obstaculo dos seguintes
-            novos.append((ref, rede, px, py, rot))
-
-        # ⚠️⚠️ O `gr_text` ENTRA ANTES DO PARENTESIS FINAL.
-        #
-        # A primeira versao fazia `t += ...`, o que poe o texto DEPOIS do `)`
-        # que fecha o `(kicad_pcb ...)`. O ficheiro deixaria de abrir. So nao
-        # aconteceu porque a corrida foi em ensaio — e "so nao aconteceu porque
-        # nao gravei" nao e uma defesa, e sorte.
-        blocos_novos = ""
-        for ref, rede, px, py, rot in novos:
-            u = _uuid.uuid5(NS, "rotulo:%s" % ref)
-            blocos_novos += (
-                '\t(gr_text "%s"\n\t\t(at %s %s %d)\n\t\t(layer "F.SilkS")\n'
-                '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n'
-                '\t\t\t\t(size %s %s)\n\t\t\t\t(thickness 0.12)\n\t\t\t)\n'
-                '\t\t)\n\t)\n' % (rede, num(px), num(py), rot,
-                                   NS.hex[:8] + str(u)[8:], num(TAM), num(TAM)))
-        if blocos_novos:
+            _d, bx, by = min(cand)
+            y0 = by - lh + TAM * 0.775
+            blocos_novos = ""
+            for k, l in enumerate(linhas):
+                u = _uuid.uuid5(NS, "legenda:%d" % k)
+                blocos_novos += (
+                    '\t(gr_text "%s"\n\t\t(at %s %s 0)\n\t\t(layer "F.SilkS")\n'
+                    '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n'
+                    '\t\t\t\t(size %s %s)\n\t\t\t\t(thickness 0.12)\n\t\t\t)\n'
+                    '\t\t\t(justify left)\n\t\t)\n\t)\n'
+                    % (l, num(bx - lw + 0.2), num(y0 + k * TAM * 1.55),
+                       NS.hex[:8] + str(u)[8:], num(TAM), num(TAM)))
             k = t.rstrip().rindex(")")
             t = t.rstrip()[:k] + blocos_novos + ")\n"
-        print("  %-26s %d rotulo(s)%s" % (os.path.basename(p), len(novos),
-              ("  ⚠️ sem sitio: " + " ".join(sem)) if sem else ""))
-        for ref, rede, px, py, rot in novos:
-            print("     %-5s %-14s em (%.1f, %.1f) %s" % (ref, rede, px, py,
-                  "de pe" if rot else "deitado"))
+            print("  %-26s legenda de %d linhas em (%.0f, %.0f) · %.0f mm da fila"
+                  % (os.path.basename(p), len(linhas), bx, by, _d))
+            novos, sem = [("legenda", "", bx, by, 0)], []
+        else:
+            novos, sem = None, None
+
+        if not legenda:
+            # ⚠️⚠️ A REFERENCIA DO PONTO DE TESTE SAI DA SERIGRAFIA.
+            #
+            # Sao 22 textos numa faixa de 40 x 14 mm — onze referencias e onze
+            # rotulos, com os pontos a 4 mm de passo. Nao cabem, e a margem nao
+            # resolve aritmetica.
+            #
+            # ⚠️ E a pergunta certa nao e "como e que cabem", e "quais e que servem".
+            # Na bancada, `TP7` impresso nao diz nada: nao se compra, nao se solda,
+            # e para o cruzar com a documentacao ja e preciso ter a documentacao na
+            # mao — altura em que se le la a rede. `+3V3A` diz tudo, sozinho.
+            #
+            # Entao a referencia MUDA DE CAMADA, para a F.Fab: continua a ver-se no
+            # editor e deixa de gastar tinta e espaco na peca fisica. Nao se apaga —
+            # apagar perderia o cruzamento com a netlist e com o CPL.
+            for ref, x, y, rede in tps:
+                t = re.sub(
+                    r'(\(property "Reference" "%s"[\s\S]{0,200}?\(layer ")F\.SilkS(")'
+                    % ref, r"\1F.Fab\2", t)
+            pads, textos, silk = geometria(t)   # ⚠️ reler: a faixa mudou de dono
+
+            novos, sem = [], []
+            for ref, x, y, rede in sorted(tps, key=lambda z: int(z[0][2:])):
+                posto = None
+                for rot, dy in [(rot0, dy0)] + [d for d in desvios if d != (rot0, dy0)]:
+                    cx = caixa(rede, TAM, rot == 90)
+                    if livre(x, y + dy, cx, pads, textos, silk, lim):
+                        posto = (x, y + dy, rot, cx)
+                        break
+                if posto is None:
+                    sem.append(ref)
+                    continue
+                px, py, rot, cx = posto
+                textos.append((px, py) + cx)     # passa a ser obstaculo dos seguintes
+                novos.append((ref, rede, px, py, rot))
+
+            # ⚠️⚠️ O `gr_text` ENTRA ANTES DO PARENTESIS FINAL.
+            #
+            # A primeira versao fazia `t += ...`, o que poe o texto DEPOIS do `)`
+            # que fecha o `(kicad_pcb ...)`. O ficheiro deixaria de abrir. So nao
+            # aconteceu porque a corrida foi em ensaio — e "so nao aconteceu porque
+            # nao gravei" nao e uma defesa, e sorte.
+            blocos_novos = ""
+            for ref, rede, px, py, rot in novos:
+                u = _uuid.uuid5(NS, "rotulo:%s" % ref)
+                blocos_novos += (
+                    '\t(gr_text "%s"\n\t\t(at %s %s %d)\n\t\t(layer "F.SilkS")\n'
+                    '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n'
+                    '\t\t\t\t(size %s %s)\n\t\t\t\t(thickness 0.12)\n\t\t\t)\n'
+                    '\t\t)\n\t)\n' % (rede, num(px), num(py), rot,
+                                       NS.hex[:8] + str(u)[8:], num(TAM), num(TAM)))
+            if blocos_novos:
+                k = t.rstrip().rindex(")")
+                t = t.rstrip()[:k] + blocos_novos + ")\n"
+        if not legenda:
+            print("  %-26s %d rotulo(s)%s" % (os.path.basename(p), len(novos),
+                  ("  ⚠️ sem sitio: " + " ".join(sem)) if sem else ""))
+            for ref, rede, px, py, rot in novos:
+                print("     %-5s %-14s em (%.1f, %.1f) %s" % (ref, rede, px, py,
+                      "de pe" if rot else "deitado"))
         if escreve:
             # ⚠️⚠️ ABRE, E NAO PIORA O QUE IMPORTA — antes de tocar no original.
             #

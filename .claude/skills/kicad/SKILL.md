@@ -1289,6 +1289,37 @@ painel   ✓ Value     (F.Fab)        10->3   · total  51->37
          ✗ Reference (F.Silkscreen)  0->1   RECUSADA
 ```
 
+### 11g-octies. O QUE SE IMPRIME AO LADO E O QUE SE IMPRIME NUM BLOCO
+
+Um ponto de teste sem o nome da rede na serigrafia é um ponto anónimo: o nome
+vive no campo `Value`, que está na **F.Fab** e **não se imprime**. Quem chega à
+bancada vê `TP7` e não sabe se é `+3V3A` ou `AGND`.
+
+⚠️ **O nome sai do `(net ...)` do PAD, nunca do `Value`.** O `Value` é uma
+afirmação sobre a rede; o pad **é** a rede. Se o ponto mudar de sítio no cobre,
+o `Value` continua a dizer o que dizia — e a serigrafia passa a mentir,
+impressa, em tinta, na peça. A ler o pad, o rótulo ou está certo ou não existe.
+
+**Duas formas, e a densidade decide qual:**
+
+| | quando | a referência |
+|---|---|---|
+| **rótulo ao lado** de cada ponto | passo largo (6 mm chegou) | **sai** da serigrafia — `TP7` ao lado de `+3V3A` é ruído |
+| **bloco de legenda** | passo apertado (4 mm não chegou) | **fica** — é o que liga o ponto à linha |
+
+> **A mesma decisão, invertida, e as duas certas.** O que muda não é o critério:
+> é se a informação está *ao lado* ou *noutro sítio*. Ao lado, o designador é
+> ruído; noutro sítio, é o índice.
+
+⚠️ **Onze rótulos e um bloco não ocupam a mesma área.** Onze textos têm de achar
+onze buracos, cada um ao lado do seu ponto; o bloco precisa de **um**, e escolhe
+entre centenas. Foi por isso que o que não cabia espalhado coube inteiro —
+**com zero colisões acrescentadas**.
+
+⚠️ **E o bloco vai PERTO do que descreve.** Uma legenda a 90 mm obriga a
+procurá-la, e quem está com a ponta de prova numa mão não procura: desiste, e
+mede o pino errado.
+
 ### 11g-ter. A fronteira com a `/design-review`, no lado da placa
 
 A `/design-review` é o portão **visual**; o DRC é o **numérico**. Na serigrafia
