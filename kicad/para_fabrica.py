@@ -296,7 +296,7 @@ def uma(nome, incompleta):
     # e identifica a peca errada. Quem solda a mao le o designador mais proximo.
     #
     # ⚠️ Isto so entra aqui porque um portao e a UNICA forma de nao voltar. A
-    # §11g-ter da skill ja tinha previsto o defeito por escrito, e ele esteve la
+    # §11g-ter da skill `/kicad_layout` ja tinha previsto o defeito por escrito, e ele esteve la
     # na mesma, em 8 referencias, porque nada o media. Diagnosticado e por
     # instrumentar e o estado em que um defeito vive mais tempo.
     rap = subprocess.run([sys.executable, os.path.join(AQUI, "refs_apontam.py"),

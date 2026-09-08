@@ -109,7 +109,7 @@ python3 tools/svg_colisoes.py /tmp/s.svg
 ```
 
 ⚠️ **Numa placa o mesmo achado tem GRAU diferente**, e a tabela dos graus vive
-na skill `kicad` **§11g-bis** — não aqui, para as duas não derivarem. O resumo
+na skill `kicad_layout` **§11g-bis** — não aqui, para as duas não derivarem. O resumo
 para usar ao ler a saída: `texto × texto` é sempre defeito; `texto × contorno de
 OUTRA peça` é defeito; `texto × contorno da PRÓPRIA peça` é **aviso**, evita-se
 quando há sítio e embarca-se quando não há.
@@ -218,7 +218,7 @@ outro.
 Um render de PCB não se revê a olho para caçar texto sobreposto: o `kicad-cli
 pcb drc` **conta** — `silk_overlap`, `silk_over_copper`, `silk_edge_clearance` —
 e o `kicad/arruma_silk.py` arruma. A regra completa está na skill **`kicad`
-§11g-bis**, e não se repete aqui: **duas skills a dizerem quase o mesmo
+§11g-bis** da `kicad_layout`, e não se repete aqui: **duas skills a dizerem quase o mesmo
 derivam, e aí ninguém sabe qual manda.**
 
 O que fica deste lado é a metade que a contagem não responde:

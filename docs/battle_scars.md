@@ -10079,3 +10079,36 @@ falhou por caixa, dentro dos títulos.
 > **Cada conserto de um verificador fecha o caso que o motivou e deixa a porta
 > ao lado aberta.** A forma que resiste é comparar identificadores, não texto:
 > a secção `11g-decies` existe ou não existe.
+
+## 15ep — a skill de KiCad passou a ser um arquivo, e por isso partiu-se em duas
+
+A `/kicad` chegou a **2022 linhas e 87 títulos**, e **1033 delas — mais de
+metade — eram o capítulo de layout**. Uma skill nesse tamanho deixa de ser lida
+antes de usar; passa a ser consultada depois, quando já custou alguma coisa.
+
+> **Uma skill que não se lê antes de usar não é uma skill — é um arquivo.** E um
+> arquivo não impede defeitos: documenta-os.
+
+Cortada em `kicad` (esquemático, 1033 linhas) e `kicad_layout` (placa, 1072).
+
+⚠️ **A NUMERAÇÃO FOI PRESERVADA.** As secções mantêm §11, §11g-bis, §12r. Havia
+**dezenas** de apontadores — em comentários de código (`arruma_silk` cita a §11c,
+`refs_apontam` a §11g-ter), nas cicatrizes, na `design-review`. Renumerar
+partia-os todos de uma vez, e é a **classe 13** da skill `audit` — a frase
+partida pela renomeação — aplicada a referências cruzadas. O salto de §10 para
+§11 na skill nova não é erro: é a marca de onde ela foi cortada.
+
+⚠️ **E quatro apontadores nomeavam a skill errada depois do corte** — dois na
+`design-review`, um no `refs_apontam.py`, um no `para_fabrica.py`, todos a dizer
+*«a §11g-ter da skill `/kicad`»* para uma secção que já lá não estava. **Mover é
+metade do trabalho; a outra metade é procurar quem apontava.**
+
+**A guarda que tornou o corte seguro:** contar os títulos antes e depois e exigir
+que a soma bata — 87 antes, 40 + 48 = 88 depois (o +1 é o ponteiro novo), e a
+lista dos que sumiram tinha de vir vazia. Sem isso, um corte de mil linhas é um
+acto de fé.
+
+⚠️ **E o ponteiro diz que APONTAR NÃO É CORRER.** A `kicad` passa a exigir a
+`kicad_layout` no fecho de qualquer placa, no topo e não numa nota de rodapé: um
+esquemático provado não diz nada sobre o cobre, e as duas coisas já foram
+confundidas aqui.

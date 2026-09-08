@@ -15,7 +15,7 @@ verificadores: nao colide com nada, nao esta sobre cobre, nao sai da placa. E
 identifica a peca errada. Quem solda a mao le `C9` ao lado do `R24` e solda o
 condensador no sitio do resistor.
 
-⚠️ Isto aconteceu, e a §11g-ter da skill `/kicad` ja o tinha PREVISTO por
+⚠️ Isto aconteceu, e a §11g-ter da skill `/kicad_layout` ja o tinha PREVISTO por
 escrito — *"uma referencia tecnicamente livre pode estar encostada a peca
 errada, e nenhum DRC tem opiniao sobre isso"* — sem que nada o medisse. Estava
 diagnosticado e por instrumentar, que e o estado em que um defeito vive mais
