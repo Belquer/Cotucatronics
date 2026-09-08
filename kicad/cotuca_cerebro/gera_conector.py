@@ -1,7 +1,18 @@
 #!/usr/bin/env python3
-"""gera_conector v0.8.0 — a folha do CONECTOR DO PAINEL (IDC 2x13).
+"""gera_conector v0.10.0 — a folha do CONECTOR DO PAINEL (IDC 2x13).
 
-A pinagem sai do `ROTEIRO-KICAD.md` §5, e e o CONTRATO entre as duas placas:
+⚠️ A PINAGEM E ESTE FICHEIRO. O `VIAS` aqui em baixo E a fonte, e nao uma
+copia do que esta escrito noutro sitio.
+
+Ate 08/09 este cabecalho dizia "a pinagem sai do ROTEIRO-KICAD.md §5" e o §5
+listava as 26 vias a mao. Duas fontes do mesmo facto, e a que nao corre foi a
+que envelheceu: o pino 19 deixou de ser terra a 05/09 e a tabela de la
+continuou a dize-lo, o que levou DUAS vezes a conclusao de que havia uma via
+livre que nao havia. O §5 passou a apontar para ca — e apontar para ca so vale
+enquanto este cabecalho nao apontar de volta, senao ficam os dois a apontar um
+para o outro e nenhum e a fonte.
+
+O contrato e entre as duas placas:
 o mesmo nome de rede dos dois lados, via a via. Este ficheiro e uma das duas
 metades; a outra nasce no projecto do painel.
 
@@ -16,9 +27,38 @@ era este cabo.
 """
 import io, sys, uuid
 
-VERSAO = "0.8.0"
+VERSAO = "0.10.0"
 G = 1.27
-def u(): return str(uuid.uuid4())
+# ⚠️⚠️ UUID DETERMINISTICO. NAO VOLTAR A `uuid4()`. Ver §8b da skill /kicad:
+# um gerador que mina um uuid por elemento a cada corrida faz de cada
+# regeneracao um diff de centenas de linhas com ZERO linhas nao-uuid — e uma
+# mudanca real de duas linhas desaparece la dentro. Diff ilegivel nao e
+# revisto, e revisao que nao acontece e o mesmo que revisao que aprova tudo.
+#
+# ⚠️ Este ficheiro foi o TERCEIRO. Converti o `gera_soquete` e o `gera_painel`,
+# relatei "os dois geradores", e este ficou — porque contei os que tinha
+# olhado, nao os que existem. Encontrou-o a passada nova da skill `audit`
+# (classe 14), a correr sobre todos os `gera_*.py` em vez de sobre a memoria.
+NS = uuid.uuid5(uuid.NAMESPACE_DNS, "gera-conector.cotucatronics")
+_CHAVES = set()
+
+
+def u(chave):
+    """uuid estavel para `chave`. Duas chamadas com a mesma chave GRITAM.
+
+    Com `uuid4()` a colisao era impossivel; com chaves passa a ser possivel, e
+    o KiCad engole-a sem dizer nada. Sem esta guarda trocava-se um ruido
+    visivel por um defeito silencioso."""
+    if chave in _CHAVES:
+        raise SystemExit("*** dois elementos pedem o mesmo uuid: %r" % (chave,))
+    _CHAVES.add(chave)
+    return str(uuid.uuid5(NS, chave))
+
+
+# ⚠️ FIXO NO VALOR QUE O FICHEIRO JA TINHA — confirmado que nao e referenciado
+# em lado nenhum — para que passar a determinista nao o mexa uma unica vez.
+RAIZ_SCH = "98a43dba-f9ec-48a9-9a61-382f286748cc"
+
 def g(v): return round(round(v / G) * G, 4)
 L = []
 USADOS = set()   # preenchido por simbolo(); NUNCA escrito a mao
@@ -59,7 +99,7 @@ def simbolo(lib, ref, val, x, y):
          ("Description", "", 0, 0, 1.27, True)))
     L.append(f'\t(symbol\n\t\t(lib_id "cotuca:{lib}")\n\t\t(at {x} {y} 0)\n\t\t(unit 1)\n'
              f'\t\t(body_style 1)\n\t\t(exclude_from_sim no)\n\t\t(in_bom yes)\n\t\t(on_board yes)\n'
-             f'\t\t(in_pos_files yes)\n\t\t(dnp no)\n\t\t(uuid "{u()}")\n{ps}{_instancia(ref)}\t)\n')
+             f'\t\t(in_pos_files yes)\n\t\t(dnp no)\n\t\t(uuid "{u("sym:" + ref)}")\n{ps}{_instancia(ref)}\t)\n')
 
 
 # ------------------------------------------------------------- FOOTPRINTS
@@ -129,16 +169,16 @@ def _instancia(ref, unidade=1):
 
 def fio(x1, y1, x2, y2):
     L.append(f'\t(wire\n\t\t(pts\n\t\t\t(xy {g(x1)} {g(y1)}) (xy {g(x2)} {g(y2)})\n\t\t)\n'
-             f'\t\t(stroke (width 0) (type default))\n\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(stroke (width 0) (type default))\n\t\t(uuid "{u(f"fio:{g(x1)},{g(y1)}-{g(x2)},{g(y2)}")}")\n\t)\n')
 
 def rotulo(nome, x, y, ang, just):
     L.append(f'\t(global_label "{nome}"\n\t\t(shape bidirectional)\n\t\t(at {g(x)} {g(y)} {ang})\n'
              f'\t\t(fields_autoplaced yes)\n\t\t(effects (font (size 1.27 1.27)) (justify {just}))\n'
-             f'\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(uuid "{u(f"rot:{nome}:{g(x)},{g(y)},{ang}")}")\n\t)\n')
 
 def texto(s, x, y, tam=1.27):
     L.append(f'\t(text "{s}"\n\t\t(exclude_from_sim no)\n\t\t(at {g(x)} {g(y)} 0)\n'
-             f'\t\t(effects (font (size {tam} {tam})) (justify left))\n\t\t(uuid "{u()}")\n\t)\n')
+             f'\t\t(effects (font (size {tam} {tam})) (justify left))\n\t\t(uuid "{u(f"txt:{g(x)},{g(y)}:{s}")}")\n\t)\n')
 
 def pinos_de(nome):
     """offsets lidos da BIBLIOTECA, nunca de cabeca — ver gera_soquete.py."""
@@ -264,7 +304,7 @@ CAB = f'''(kicad_sch
 \t(version 20260306)
 \t(generator "cotucatronics")
 \t(generator_version "10.0")
-\t(uuid "{u()}")
+\t(uuid "{RAIZ_SCH}")
 \t(paper "A3")
 \t(title_block
 \t\t(title "CONECTOR DO PAINEL — IDC 2x13 — carrier rev B")

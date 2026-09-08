@@ -269,6 +269,11 @@ identidade da raiz sai do `.kicad_pro` e nunca pode ser minada.)
 **Aceitação: gerar duas vezes e comparar byte a byte.** E contra o commit
 anterior, a mudança tem de ser só de `uuid` — churn de uma vez, e nunca mais.
 
+⚠️ **E converte-os a TODOS de uma vez.** Converti dois, relatei «os dois
+geradores», e ficou um terceiro — porque contei os que tinha olhado, não os que
+existem. Um `grep -c uuid4 gera_*.py` responde em segundos e não depende de
+memória nenhuma.
+
 ⚠️ **Isto costuma destapar um segundo defeito:** uma linha que **copia** o corpo
 de um emissor em vez de o chamar. Quando o emissor mudou de forma, só o
 original acompanhou. **Cópia de emissor sobrevive em silêncio às mudanças do

@@ -126,25 +126,38 @@ ao GND colado) · 2 botões arcade **azuis** (um lado ao GND) · 2× AO3400A
 
 ## 5 · IDC 2×13 — o contrato
 
-| via | sinal | via | sinal |
-|---|---|---|---|
-| 1 | GND | 14 | GND (retorno LED) |
-| 2 | **OLED CLK** D8 | 15 | gate LED A D27 |
-| 3 | GND | 16 | gate LED B D23 |
-| 4 | OLED DIN D10 | 17 | botão A D24 |
-| 5 | OLED CS D7 | 18 | botão B D22 |
-| 6 | OLED DC D6 | **19** | **botão búzios D26** | 20 | encoder A D0 |
-| 7 | OLED RST D5 | 20 | encoder A D0 |
-| 8 | GND | 21 | encoder B D1 |
-| 9 | 3V3 | 22 | encoder push D2 |
-| 10 | GND | 23 | GND |
-| 11 | 5 V (LED) | 24 | **pot L** D15 |
-| 12 | 5 V (LED) | 25 | **pot R** D16 |
-| 13 | GND (retorno LED) | 26 | GND |
+**A pinagem vive no `kicad/cotuca_cerebro/gera_conector.py`, no dicionário
+`VIAS`** — e é conferida via a via, dos dois lados, por
+`tools/contrato_idc.py`, que lê os **ficheiros** e não os geradores.
 
-Relógio do OLED guardado por terra dos dois lados; pots ensanduichados por
-terra; LEDs em par próprio. Não é estética: o painel aceso mediu 6 dB de chão
-na entrada.
+```bash
+python3 tools/contrato_idc.py
+```
+
+⚠️ **Esta secção listava as 26 vias, e a lista envelheceu.** O pino 19 deixou de
+ser terra a 05/09 e passou a `BOT_BUZIOS`; a tabela daqui continuou a dizer
+nove terras e o 19 livre, e a partir dela concluiu-se **duas vezes** que havia
+uma via disponível que não havia. A edição de 05/09 até deixou a marca à vista
+— a linha do pino 6 tinha *seis* colunas numa tabela de quatro, com o 20
+repetido — e ninguém reparou, porque uma tabela à mão não tem quem a confira.
+
+> É a **classe 7** da skill `audit`: tabela à mão por cima de uma gerada. Duas
+> fontes do mesmo facto, e a que não corre é a que envelhece. Quem quiser ler a
+> pinagem lê o `VIAS`; quem quiser saber se as duas metades batem corre o
+> `contrato_idc.py`.
+
+### O que NÃO está no gerador, e por isso fica escrito aqui
+
+O arranjo das terras não é estética, e é a única coisa desta secção que não se
+deduz da tabela:
+
+- **relógio do OLED guardado por terra dos dois lados** (vias 1 e 3);
+- **pots ensanduichados** por terra (23 e 26);
+- **LED em par próprio** (11/12 alimentação, 13/14 retorno).
+
+Com o painel aceso mediram-se **6 dB de chão na entrada**, e o caminho era este
+cabo. As oito terras que restam guardam todas uma destas três coisas — não há
+terra sobrante, e ceder uma tem custo conhecido.
 
 ---
 

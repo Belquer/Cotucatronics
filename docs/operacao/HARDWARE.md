@@ -441,10 +441,14 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
   > medida. O caminho do búzios está completo desde 05/09: painel `J5` → IDC
   > via **19** → Daisy pino **33**.
 
-  ⚠️ **Diâmetro por confirmar:** aqui diz **30 mm** e os três aparecem juntos,
-  mas o búzios foi descrito como **100 mm** ao ser acrescentado ao ficheiro de
-  corte. Ou são medidas diferentes por botão, ou uma das duas está errada — e o
-  acrílico já foi cortado, por isso a resposta está na peça, não no documento.
+  **Os três são de 30 mm.** Os centros ficam em `x = 40 | 100 | 160` na tampa,
+  e o búzios é o do meio. O «100 mm» que apareceu numa nota era a **posição no
+  eixo**, não o diâmetro — e a peça cortada confirma três furos de 30.
+
+  ⚠️ **O que isto custa no palco, e diz-se:** o botão branco **não acende no
+  escuro**. Sabe-se onde está pela posição entre os dois azuis, não pela luz.
+  Se um dia isso incomodar, falta **uma** via no IDC (não duas — o botão já tem
+  a 19), e a candidata é o **pino 10**, com o custo medido dos 6 dB.
 
 **Burn-in:** contraste baixo + deslocar 1–2 px a cada minutos. A peça pode
 ficar meses ligada numa galeria.

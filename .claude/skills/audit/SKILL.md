@@ -224,6 +224,59 @@ python3 docs/operacao/vizinhos.py --termo=<nome-que-sai>
 Ela não decide — manda ler. Numa remoção de nome, ler essas dez ou vinte
 linhas é o preço de não deixar uma frase sem sentido no meio da árvore.
 
+### 14. Corpo de emissor copiado em vez de chamado
+
+O `gera_soquete.py` tinha uma função `nao_liga(x, y)` que emitia um bloco
+`(no_connect ...)`. E tinha, quinhentas linhas abaixo, **o corpo dela outra
+vez**, escrito à mão:
+
+```python
+L.append('\t(no_connect\n\t\t(at %s %s)\n\t\t(uuid "%s")\n\t)\n'
+         % (g(_x), g(_y), u()))
+```
+
+Enquanto o emissor não mudou, as duas versões produziram output idêntico e
+nada as distinguia. Quando o `uuid` passou a exigir chave, **só o original a
+recebeu** — a cópia ficou com a assinatura antiga e o gerador rebentou. Se a
+mudança tivesse sido silenciosa em vez de partir a assinatura, a cópia teria
+continuado a emitir a versão velha, sem erro nenhum.
+
+> **É a classe 7 em forma de código.** Duas fontes do mesmo comportamento, e a
+> que não é chamada é a que envelhece. A tabela à mão pelo menos parece uma
+> tabela; um corpo de emissor duplicado parece código normal, e é por isso que
+> só se encontra procurando por ele.
+
+**Como procurar** — não por nomes de função, que a cópia justamente não usa,
+mas pelo **output**: toda a família de emissores escreve strings com forma
+reconhecível.
+
+⚠️ **E ancora na ACUMULAÇÃO, não na forma.** Buscar só a forma devolveu oito
+acertos por ficheiro, e metade eram **leitores** — `Lb.find('(symbol "%s"')`,
+`_confere_lib`, `lib_embutida` — que procuram a forma em vez de a produzir.
+Isso é a **classe 10** a acontecer dentro desta passada: ruído a fingir de
+achado. O que emite é o que faz `append`:
+
+```bash
+grep -n "L\.append(" gera_*.py | grep -o "L\.append(f\?'\{1,3\}.\{0,26\}" | sort | uniq -c
+```
+
+Cada forma deve aparecer **uma vez**. Duas ou mais, e só uma dentro de um
+`def`: as outras são cópias. Corrido sobre os três geradores deste projecto dá
+uma linha por forma — a única cópia que existia foi a que originou esta classe.
+
+A mesma busca serve para qualquer gerador, trocando o acumulador: SQL montado à
+mão ao lado de um construtor, cabeçalhos HTTP, mensagens de log com formato
+fixo.
+
+⚠️ **E o discriminador que evita o ruído:** duplicar a *chamada* é normal e
+esperado — um `nao_liga()` invocado em vinte sítios é o desenho a funcionar.
+O achado é duplicar o **corpo**. A pergunta é «este sítio reconstrói o que um
+`def` já constrói?», não «esta forma aparece muitas vezes?».
+
+⚠️ **Achado mesmo quando o output é idêntico hoje.** A cópia não está errada:
+está **por envelhecer**. Reportar só quando já divergiu é reportar o incêndio,
+não a instalação eléctrica — e a divergência, quando chega, não dá erro.
+
 ## A REGRA DO PORQUÊ — quando o nome sai e quando o registo sai
 
 Ao apagar um nome de toda a árvore, cada ocorrência é uma de duas coisas:
