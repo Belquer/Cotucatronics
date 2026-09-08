@@ -47,11 +47,12 @@ exactamente aquilo.
 
 USO:  roteia.py <ficheiro.kicad_pcb> [--escreve] [--rede NOME]
       [--so-uma-face] [--folga MM] [--passo MM]
-      [--caixa MM] [--tecto N] [--guarda-plano]
+      [--caixa MM] [--tecto N]
+      [--guarda-plano] [--guiado] [--arranca]
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.10.0"
+VERSAO = "1.13.2"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
@@ -185,6 +186,17 @@ def vias_da_placa(t):
                                  + r")\)[\s\S]{0,220}?\(net \"([^\"]+)\"\)", t)]
 
 
+def cruzam(a, b, c, d):
+    """Dois segmentos cruzam-se? ⚠️ Comparar EXTREMOS nao chega: duas pistas
+    podem cruzar-se a meio sem que nenhuma ponta esteja perto da outra. Foi o
+    que fiz numa primeira versao e deu dez cruzamentos que o DRC apanhou."""
+    def o(p, q, r):
+        v = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1])
+        return 0 if abs(v) < 1e-9 else (1 if v > 0 else 2)
+    o1, o2, o3, o4 = o(a, b, c), o(a, b, d), o(c, d, a), o(c, d, b)
+    return o1 != o2 and o3 != o4
+
+
 def dist_ponto_seg(px, py, x1, y1, x2, y2):
     dx, dy = x2 - x1, y2 - y1
     if dx == dy == 0:
@@ -211,7 +223,8 @@ class Grelha:
 
 # --- a busca, em tres dimensoes ---------------------------------------------
 
-def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
+def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False,
+          passo=None, folga=None, tecto=None):
     """A* sobre (x, y, camada). `camA`/`camB` sao as camadas em que cada ponta
     e alcancavel: um pad passante vale nas duas, um SMD so na sua.
 
@@ -220,11 +233,14 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
     pontas — ate meia diagonal. Sem isto saem folgas de 0,02 mm que o DRC
     apanha e que ninguem consegue explicar olhando para o caminho."""
     import heapq
+    PASSO_L = PASSO if passo is None else passo
+    FOLGA_L = FOLGA if folga is None else folga
+    TECTO_L = TECTO if tecto is None else tecto
     x0, y0, x1, y1 = limites
-    nx = int((x1 - x0) / PASSO) + 1
-    ny = int((y1 - y0) / PASSO) + 1
-    m = larg / 2 + FOLGA + PASSO * 0.71
-    mv = VIA_R + FOLGA + PASSO * 0.71
+    nx = int((x1 - x0) / PASSO_L) + 1
+    ny = int((y1 - y0) / PASSO_L) + 1
+    m = larg / 2 + FOLGA_L + PASSO_L * 0.71
+    mv = VIA_R + FOLGA_L + PASSO_L * 0.71
     # ⚠️ FOLGA APERTADA SO JUNTO AS PONTAS — a fuga do pad.
     #
     # Todas as ligacoes que sobravam terminavam num pad de passo fino: os pinos
@@ -240,13 +256,13 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
     #
     # ⚠️ E o apertado nunca desce abaixo da regra da placa. O DRC valida o
     # percurso todo com a mesma regra, e a retraccao continua a existir.
-    mf = larg / 2 + FOLGA_FUGA + PASSO * 0.71
+    mf = larg / 2 + FOLGA_FUGA + PASSO_L * 0.71
 
     def pos(c):
-        return (x0 + c[0] * PASSO, y0 + c[1] * PASSO)
+        return (x0 + c[0] * PASSO_L, y0 + c[1] * PASSO_L)
 
     def cel(p):
-        return (int(round((p[0] - x0) / PASSO)), int(round((p[1] - y0) / PASSO)))
+        return (int(round((p[0] - x0) / PASSO_L)), int(round((p[1] - y0) / PASSO_L)))
 
     cache = {}
 
@@ -284,7 +300,7 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
     DIRS = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (1, -1), (-1, 1), (-1, -1)]
 
     def h(e):
-        return (abs(e[0][0] - fimxy[0]) + abs(e[0][1] - fimxy[1])) * PASSO
+        return (abs(e[0][0] - fimxy[0]) + abs(e[0][1] - fimxy[1])) * PASSO_L
 
     fila, veio, custo = [], {}, {}
     for e in ini:
@@ -305,7 +321,7 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
         # buscas SEM SOLUCAO cresce, e cada uma delas gasta o tecto inteiro
         # antes de desistir: a mesma corrida passou de 75 segundos para treze
         # minutos so por isso. Quem paga o tecto sao as impossiveis.
-        if limite > TECTO:
+        if limite > TECTO_L:
             return None
         _, g, e, d = heapq.heappop(fila)
         if e in fins:
@@ -339,8 +355,8 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
             n = ((cx + dd[0], cy + dd[1]), L)
             if n not in fins and not ok(n[0], L):
                 continue
-            passo = PASSO * (1.414 if dd[0] and dd[1] else 1.0)
-            ng = g + passo + (VIRAGEM * PASSO if d and dd != d else 0.0)
+            pas = PASSO_L * (1.414 if dd[0] and dd[1] else 1.0)
+            ng = g + pas + (VIRAGEM * PASSO_L if d and dd != d else 0.0)
             if ng < custo.get(n, 1e9):
                 custo[n] = ng
                 veio[n] = (e, dd)
@@ -348,12 +364,82 @@ def astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
         if not so_uma_face:
             n = ((cx, cy), 1 - L)
             if (n in fins or ok(n[0], 1 - L)) and cabe_via((cx, cy)):
-                ng = g + CUSTO_VIA * PASSO
+                ng = g + CUSTO_VIA * PASSO_L
                 if ng < custo.get(n, 1e9):
                     custo[n] = ng
                     veio[n] = (e, None)
                     heapq.heappush(fila, (ng + h(n), ng, n, None))
     return None
+
+
+# ⚠️ O GUIA TEM DE SER PERMISSIVO, senao nao guia nada. A primeira versao
+# corria a busca grossa com a folga a serio (0,35) numa malha de 1 mm, e a
+# margem da grelha soma-se: 0,125 + 0,35 + 0,71 = 1,19 mm de raio proibido em
+# volta de cada obstaculo. Com isso o corredor nao existe em lado nenhum e o
+# guia devolveu ZERO em onze tentativas.
+#
+# Ele nao desenha cobre: so diz por onde. Quem valida e a busca fina, com a
+# folga a serio, e o DRC por tras dela. Um guia optimista faz perder tempo; um
+# guia pessimista nao faz nada.
+PASSO_GROSSO = 0.5      # malha da busca que so procura o CORREDOR
+FOLGA_GROSSA = 0.10     # ⚠️ optimista de proposito: e uma sugestao, nao cobre
+RONDAS_ARRANCAR = 3     # quantas voltas de arrancar-e-refazer
+MAX_ARRANCAR = 3        # ⚠️ acima disto o problema e de desenho, nao de rota
+CAIXA_TROCO = 9.0       # quanto se alarga a caixa de cada troco fino
+
+
+def guiado(A, B, camA, camB, rede, larg, gs, limites, so_uma_face=False):
+    """Busca em dois niveis: acha o CORREDOR numa malha grossa, e so depois
+    desenha cada troco na malha fina.
+
+    POR QUE EXISTE.
+
+    As ligacoes que sobravam eram quase todas travessias longas — 97 mm, 91 mm,
+    de um lado da placa ao outro. Nao falhavam por nao haver caminho: falhavam
+    por o A* esgotar o tecto de nos antes de la chegar. Uma travessia de 97 mm
+    numa malha de 0,25 mm sao quase 400 celulas de percurso, e com penalizacao
+    de curva a busca abre um leque enorme antes de se decidir.
+
+    ⚠️ E SUBIR O TECTO NAO RESOLVE — medido duas vezes: 300k e 900k fecham
+    exactamente as mesmas ligacoes, e 500k fecha MENOS que 300k porque deixa o
+    guloso teimar em ligacoes dificeis e fechar corredores das seguintes. O
+    problema nao e paciencia, e escala.
+
+    Numa malha de 1 mm a mesma placa tem 18 mil celulas em vez de 288 mil, e a
+    travessia sao 100 passos. O corredor acha-se num instante. Depois cada
+    troco entre dois cantos desse corredor e curto, e a malha fina resolve-o
+    numa caixa pequena.
+
+    ⚠️ O GROSSO NAO DESENHA COBRE. Ele so diz por onde. Quem escreve e sempre a
+    busca fina, com a folga a serio, e o DRC valida na mesma — com a retraccao
+    por tras. Um guia errado faz perder tempo, nao faz perder a placa."""
+    cam = astar(A, B, camA, camB, rede, larg, gs, limites, so_uma_face,
+                passo=PASSO_GROSSO, folga=FOLGA_GROSSA, tecto=120000)
+    if not cam or len(cam) < 2:
+        return None
+    # os cantos do corredor sao os pontos de passagem
+    marcos = [cam[0]] + [c for c in cam[1:-1]] + [cam[-1]]
+    if len(marcos) < 3:
+        return None                 # sem cantos, o grosso nao acrescenta nada
+    todo = []
+    for i in range(len(marcos) - 1):
+        (p1, L1), (p2, L2) = marcos[i], marcos[i + 1]
+        if p1 == p2 and L1 != L2:
+            todo.append((p1, L1))
+            continue
+        a = A if i == 0 else p1
+        b = B if i == len(marcos) - 2 else p2
+        ca = camA if i == 0 else (L1,)
+        cb = camB if i == len(marcos) - 2 else (L2,)
+        cx = (max(limites[0], min(a[0], b[0]) - CAIXA_TROCO),
+              max(limites[1], min(a[1], b[1]) - CAIXA_TROCO),
+              min(limites[2], max(a[0], b[0]) + CAIXA_TROCO),
+              min(limites[3], max(a[1], b[1]) + CAIXA_TROCO))
+        troco = astar(a, b, ca, cb, rede, larg, gs, cx, so_uma_face)
+        if not troco:
+            return None             # um troco que falha invalida o corredor
+        todo += troco if not todo else troco[1:]
+    return todo
 
 
 def amostra(lista, A, B, rede, passo=0.4, r=0.18):
@@ -455,6 +541,19 @@ def main():
     if "--passo" in sys.argv:
         PASSO = float(sys.argv[sys.argv.index("--passo") + 1])
     caixa = float(sys.argv[sys.argv.index("--caixa") + 1]) if "--caixa" in sys.argv else 0.0
+    # ⚠️ A BUSCA EM DOIS NIVEIS FICOU OPCIONAL, e a razao e medicao. Parecia
+    # obviamente certa — as ligacoes que sobravam eram travessias de 90 mm que
+    # falhavam por escala, e uma malha grossa acha o corredor num instante.
+    # Acha mesmo. Mas o corredor dela tem resolucao de 1 mm, e as voltas largas
+    # que sugere fecham passagens a quem vem depois:
+    #
+    #     cadeia sem o guia -> 12 ligacoes por fazer
+    #     cadeia com o guia -> 20
+    #
+    # Fica em `--guiado` para quem tiver uma placa onde a escala seja mesmo o
+    # problema. Nesta, o problema era outro (§12r: a fuga do pad).
+    guia = "--guiado" in sys.argv
+    arranca = "--arranca" in sys.argv
     if FOLGA < 0.20:
         sys.exit("RECUSO: folga %.3f abaixo da regra da placa (0,20). O DRC "
                  "recusaria tudo o que eu escrevesse." % FOLGA)
@@ -556,7 +655,7 @@ def main():
     elif ordem == "curta":
         faltam.sort(key=lambda f: math.hypot(f[2][0] - f[1][0], f[2][1] - f[1][1]))
 
-    novas, novas_vias, feitas, saltos = [], [], [], 0
+    novas, novas_vias, feitas, saltos, guiadas = [], [], [], 0, 0
     for rede, A, B in faltam:
         if so and rede != so:
             continue
@@ -577,6 +676,15 @@ def main():
                    min(limites[3], max(A[1], B[1]) + caixa))
         cam = astar(A, B, camadas_em(A, rede), camadas_em(B, rede),
                     rede, larg, gs, lim, so_uma)
+        if (not cam or len(cam) < 2) and not caixa and guia:
+            # ⚠️ SO DEPOIS DE A DIRECTA FALHAR. Se a busca fina acha o caminho
+            # sozinha, o caminho dela e melhor: o corredor do grosso e uma
+            # sugestao com resolucao de 1 mm, e obedecer-lhe quando nao e
+            # preciso da voltas que ninguem quereria.
+            cam = guiado(A, B, camadas_em(A, rede), camadas_em(B, rede),
+                         rede, larg, gs, lim, so_uma)
+            if cam:
+                guiadas += 1
         if not cam or len(cam) < 2:
             continue
         usou_b = False
@@ -606,6 +714,114 @@ def main():
                 usou_b = True
         feitas.append((rede, usou_b))
 
+    # ─────────────────────────────────────────────────────────────────────
+    # ARRANCAR E REFAZER
+    #
+    # ⚠️ E A CAPACIDADE QUE FALTAVA, e nao mais uma afinacao. Tudo o que tentei
+    # antes — malha, folga, tecto, ordem de ataque, corredor grosso — parte do
+    # mesmo pressuposto: que existe caminho livre e falta acha-lo. Para as que
+    # sobram nao existe. O cobre que la esta ocupa o unico sitio por onde elas
+    # podiam passar, e nenhuma busca acha um caminho que nao ha.
+    #
+    # O que um roteador a serio faz e o obvio depois de dito: ARRANCA o que
+    # estorva, passa, e volta a rotear o que arrancou — que agora tem de dar a
+    # volta, e quase sempre pode, porque tinha alternativas e a outra nao.
+    #
+    # ⚠️ E SO NO FIM, com tudo o resto ja feito. A meio seria destruir trabalho
+    # bom para ganhar espaco que o proximo passo voltaria a fechar.
+    #
+    # ⚠️ SO ARRANCA POUCAS. Se uma ligacao precisa de arrancar meia placa, nao
+    # e ela que esta mal colocada — e o desenho, e isso e uma pergunta para
+    # quem desenha, nao um problema para o roteador resolver a martelo.
+    if arranca:
+        por_fazer = [f for f in faltam
+                     if f[0] not in {r for r, _ in feitas}]
+        arrancadas = 0
+        for ronda in range(RONDAS_ARRANCAR):
+            if not por_fazer:
+                break
+            progrediu = False
+            for rede, A, B in list(por_fazer):
+                larg = LARGURA.get(rede, 0.25)
+                # 1. procura ignorando as PISTAS de outras redes (os pads nao)
+                so_pads = [[], []]
+                for px, py, pr, pn, cams in pads:
+                    for L in cams:
+                        so_pads[L].append((px, py, pr, pn))
+                for x, y, n in vias0:
+                    so_pads[0].append((x, y, VIA_R, n))
+                    so_pads[1].append((x, y, VIA_R, n))
+                gsp = [Grelha(so_pads[0]), Grelha(so_pads[1])]
+                livre = astar(A, B, camadas_em(A, rede), camadas_em(B, rede),
+                              rede, larg, gsp, limites, so_uma)
+                if not livre:
+                    continue        # nem sem cobre nenhum ha caminho: nao e disto
+                # 2. quem e que esse caminho atravessa
+                estorvo = set()
+                for i in range(len(livre) - 1):
+                    (p1, L1), (p2, L2) = livre[i], livre[i + 1]
+                    if L1 != L2 or p1 == p2:
+                        continue
+                    for (q1, q2, _w, rd, cm) in novas:
+                        if cm != L1 or rd == rede:
+                            continue
+                        if (cruzam(p1, p2, q1, q2)
+                                or dist_ponto_seg(q1[0], q1[1], p1[0], p1[1],
+                                                  p2[0], p2[1]) < larg / 2 + FOLGA):
+                            estorvo.add(rd)
+                if not estorvo or len(estorvo) > MAX_ARRANCAR:
+                    continue
+                # 3. arranca, poe esta, e devolve as arrancadas a fila
+                guardadas = [s for s in novas if s[3] in estorvo]
+                guardadas_v = [v for v in novas_vias if v[2] in estorvo]
+                novas[:] = [s for s in novas if s[3] not in estorvo]
+                novas_vias[:] = [v for v in novas_vias if v[2] not in estorvo]
+                obst[0][:] = []
+                obst[1][:] = []
+                for px, py, pr, pn, cams in pads:
+                    for L in cams:
+                        obst[L].append((px, py, pr, pn))
+                for x1, y1, x2, y2, n, L in pistas:
+                    amostra(obst[L], (x1, y1), (x2, y2), n, r=0.15)
+                for x, y, n in vias0 + [(a1, b1, r1) for a1, b1, r1 in novas_vias]:
+                    obst[0].append((x, y, VIA_R, n))
+                    obst[1].append((x, y, VIA_R, n))
+                for (q1, q2, _w, rd, cm) in novas:
+                    amostra(obst[cm], q1, q2, rd, r=0.15)
+                gs2 = [Grelha(obst[0]), Grelha(obst[1])]
+                cam2 = astar(A, B, camadas_em(A, rede), camadas_em(B, rede),
+                             rede, larg, gs2, limites, so_uma)
+                if not cam2:
+                    novas.extend(guardadas)
+                    novas_vias.extend(guardadas_v)
+                    continue
+                for i in range(len(cam2) - 1):
+                    (p1, L1), (p2, L2) = cam2[i], cam2[i + 1]
+                    if L1 != L2:
+                        q = (round(p1[0], 3), round(p1[1], 3))
+                        if not any(abs(v[0] - q[0]) < 0.05 and abs(v[1] - q[1]) < 0.05
+                                   for v in novas_vias + vias0):
+                            novas_vias.append((q[0], q[1], rede))
+                        continue
+                    if p1 != p2:
+                        novas.append((p1, p2, larg, rede, L1))
+                feitas.append((rede, any(L == 1 for _p, L in cam2)))
+                por_fazer.remove((rede, A, B))
+                for rd in estorvo:
+                    for f in faltam:
+                        if f[0] == rd and f not in por_fazer:
+                            por_fazer.append(f)
+                    feitas[:] = [f for f in feitas if f[0] != rd]
+                arrancadas += len(estorvo)
+                progrediu = True
+            if not progrediu:
+                break
+        if arrancadas:
+            print("  arrancar-e-refazer: %d pista(s) tiradas do caminho, "
+                  "%d ligacao(oes) ainda por fazer" % (arrancadas, len(por_fazer)),
+                  file=sys.stderr)
+
+    print("  (%d achadas pelo corredor grosso)" % guiadas, file=sys.stderr)
     print("  %d roteadas · %d salto(s) de camada · %d ficam para a pessoa"
           % (len(feitas), saltos,
              len([f for f in faltam if not so or f[0] == so]) - len(feitas)),

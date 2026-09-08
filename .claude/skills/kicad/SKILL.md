@@ -1178,6 +1178,29 @@ um pad de onde é preciso sair. Medido: **18 → 12**.
 ⚠️ O apertado nunca desce abaixo da regra da placa, e o DRC valida o percurso
 inteiro com a mesma regra — a retracção continua a existir por trás.
 
+### 12s. Quando afinar deixa de render, o que falta é uma capacidade
+
+Malha, folga, tecto de nós, ordem de ataque, corredor achado numa malha grossa:
+cinco afinações, nenhuma rendeu mais de duas ligações e três renderam menos.
+Todas partiam do mesmo pressuposto — **que existe caminho livre e falta
+achá-lo**. Para as últimas não existe.
+
+A capacidade que falta chama-se **arrancar e refazer**: tira-se o cobre que
+estorva, passa-se, e volta-se a rotear o que se tirou, que agora dá a volta
+porque tinha alternativas e a outra não. Numa passada isolada: 15 → 8.
+
+> **Quando cinco afinações seguidas rendem uma ou duas cada e oscilam entre
+> corridas, já não se está a melhorar nada — está-se a ajustar ruído.** É o
+> sinal para mudar de ideia, não para afinar melhor.
+
+⚠️ **E uma capacidade certa pode não estar pronta.** Na cadeia inteira o
+arrancar-e-refazer mediu 14 contra 12, e uma corrida entregou a placa com um
+plano de terra partido que o auto-teste do roteador não apanhou — foi o portão
+da fábrica que o viu. Ficou opcional.
+
+> **A última linha de defesa não pode ser a mesma ferramenta que fez o
+> trabalho.** Um auto-teste tem exactamente os pontos cegos de quem o escreveu.
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,

@@ -8744,3 +8744,36 @@ cerebro  18 -> 12 por ligar · geometria 0 · planos inteiros
 > sítio.** Passei três experiências a tratar a folga como um número global,
 > medindo-a alta e baixa, quando a resposta era que ela não devia ser um número
 > global de todo.
+
+## 15db — arrancar e refazer: a capacidade que faltava, e não estava pronta
+
+*07/09.* Depois de o roteador parar em 12 ligações, testei tudo o que era
+afinação — malha, folga, tecto de nós, ordem de ataque, um corredor achado numa
+malha grossa. Nenhuma delas rendeu mais de duas ligações, e três renderam
+menos. Todas partiam do mesmo pressuposto: **que existe caminho livre e falta
+achá-lo.**
+
+Para as últimas não existe. O cobre que já lá está ocupa o único sítio por onde
+elas podiam passar, e nenhuma busca acha um caminho que não há.
+
+O que um roteador a sério faz é o óbvio depois de dito: **arranca o que estorva,
+passa, e volta a rotear o que arrancou** — que agora tem de dar a volta, e quase
+sempre pode, porque tinha alternativas e a outra não. Implementado, numa passada
+isolada levou as ligações por fazer de 15 para 8.
+
+Na cadeia inteira mediu **14 contra 12**. E uma corrida entregou a placa com um
+**plano de terra partido** que o auto-teste do roteador não apanhou — foi o
+portão da fábrica que o viu.
+
+> **A última linha de defesa não pode ser a mesma ferramenta que fez o
+> trabalho.** O roteador verifica-se a si próprio e é bom que o faça, mas o
+> portão existe porque um auto-teste tem exactamente os pontos cegos de quem o
+> escreveu — e este tinha.
+
+Ficou em `--arranca`, fora da cadeia. **Uma capacidade que fecha ligações e
+parte planos não está pronta para correr sozinha**, por mais que seja a certa.
+
+E a lição de método, que é a que se repete há três rondas: *quando cinco
+afinações seguidas rendem uma ou duas cada e oscilam entre corridas, já não se
+está a melhorar nada — está-se a ajustar ruído.* O sinal para parar de afinar e
+mudar de ideia é esse, e eu passei por ele mais do que uma vez.

@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.6.0"
+VERSAO = "0.7.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -160,6 +160,24 @@ def uma(nome, zerar):
     os.remove(guardado)
     print("  2. escolhida a ordem %s por MEDICAO, nao por opiniao" % melhor[2])
 
+    # ⚠️ O `--arranca` NAO ENTRA NA CADEIA, e a razao e medicao — nao gosto.
+    #
+    # Arrancar o que estorva, passar, e refazer o que se arrancou e mesmo a
+    # capacidade que falta: numa passada isolada levou 15 ligacoes por fazer
+    # para 8, e e a unica coisa que ataca o problema real (para as ultimas nao
+    # ha caminho livre, e nenhuma busca acha um caminho que nao ha).
+    #
+    # Mas na cadeia inteira mediu 14 contra 12 — porque o que se arranca volta
+    # para a fila e nem sempre encontra a volta que se esperava — e uma corrida
+    # entregou a placa com **um plano de terra partido** que o auto-teste do
+    # roteador nao apanhou. Foi o portao da fabrica que o apanhou, e por isso e
+    # que ele existe: a ultima linha de defesa nao pode ser a mesma ferramenta
+    # que fez o trabalho.
+    #
+    # Fica em `roteia.py --arranca` ate o auto-teste dele cobrir este caso.
+    # Uma capacidade que fecha ligacoes e parte planos nao esta pronta para
+    # correr sozinha.
+    #
     # ⚠️ E SO AGORA A PASSADA APERTADA, sobre o que sobrou. Com a folga larga o
     # roteador nao consegue SAIR DE ENTRE OS PINOS de um conector: num header
     # de 2,54 com pads de 1,70 o vao e 0,840 mm e ele precisa de 0,950. Isso
