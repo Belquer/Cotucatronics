@@ -30,7 +30,7 @@ USO:  sincroniza_pcb.py <projecto> [--zero]
 """
 import io, os, re, subprocess, sys, uuid
 
-VERSAO = "0.3.1"
+VERSAO = "0.4.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ DUAS RAIZES DE BIBLIOTECA: a do projecto (`cotuca.pretty`, ao lado deste
@@ -190,22 +190,42 @@ def main():
         r = re.search(r'\(property "Reference" "([^"]+)"', bl)
         if r:
             na_placa[r.group(1)] = (i, j, bl)
-    faltam = sorted(set(comps) - set(na_placa))
-    sobram = sorted(set(na_placa) - set(comps))
-    print("  netlist %d · placa %d · faltam %d · sobram %d"
-          % (len(comps), len(na_placa), len(faltam), len(sobram)), file=sys.stderr)
+    # ⚠️⚠️ E O FOOTPRINT TAMBEM CONTA, nao so a referencia estar la.
+    #
+    # Este sincronizador casava por referencia e chamava a isso sincronizado.
+    # Mudei o J15 e o J16 de 1x06 para 1x08 no esquema — dois pinos de terra
+    # novos — e ele disse "ja estao sincronizados" com a placa a ter seis pads.
+    # A netlist pedia J15.7 e J15.8; a placa nao tinha onde os pôr.
+    #
+    # Comparar PRESENCA e chamar-lhe IDENTIDADE e a familia de defeito que este
+    # projecto mais paga: o verificador nao mente, responde a outra pergunta.
+    # Um footprint trocado sai e volta a entrar, como se fosse novo.
+    trocados = sorted(r for r in set(comps) & set(na_placa)
+                      if (re.search(r'\(footprint "([^"]+)"', na_placa[r][2]).group(1)
+                          != comps[r]["fp"]))
+    faltam = sorted(set(comps) - set(na_placa)) + trocados
+    sobram = sorted(set(na_placa) - set(comps)) + trocados
+    print("  netlist %d · placa %d · faltam %d · sobram %d · footprint trocado %d"
+          % (len(comps), len(na_placa), len(faltam) - len(trocados),
+             len(sobram) - len(trocados), len(trocados)), file=sys.stderr)
+    for r in trocados:
+        print("     ~ %s: %s -> %s" % (
+            r, re.search(r'\(footprint "([^"]+)"', na_placa[r][2]).group(1).split(":")[-1],
+            comps[r]["fp"].split(":")[-1]), file=sys.stderr)
     # ⚠️ "faltam 0 e sobram 0" NAO E "nada a fazer": as copias a mais ja foram
     # tiradas acima, e sair aqui deitava fora esse trabalho sem dizer nada. Foi
     # o que aconteceu — o de-duplicador correu, anunciou 9 remocoes, e o
     # ficheiro ficou igual. Uma saida antecipada tem de olhar para TUDO o que a
     # funcao ja fez, e nao so para a ultima coisa que mediu.
-    if not faltam and not sobram and not n_dup and not zero:
+    if not faltam and not sobram and not n_dup and not zero and not trocados:
         print("  ja estao sincronizados", file=sys.stderr)
         return
     for r in sobram:
         i, j, bl = na_placa[r]
         t = t[:i] + t[j:]
-        print("     - %s (sai: nao esta no esquema)" % r, file=sys.stderr)
+        print("     - %s (%s)" % (r, "sai para voltar com o footprint novo"
+                                  if r in trocados else "sai: nao esta no esquema"),
+              file=sys.stderr)
         fps = blocos(t, "footprint")
         na_placa = {}
         for a, b, c in fps:

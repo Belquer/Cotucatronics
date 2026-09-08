@@ -50,3 +50,6 @@ fabrica/
 kicad/.faz_placa.lock
 *.kicad_pcb.limpo
 *.kicad_pcb.melhor
+
+# cache de analise do kicad-happy
+kicad/analysis/

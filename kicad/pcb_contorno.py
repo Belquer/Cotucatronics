@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.12.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.13.1 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.12.0"
+VERSAO = "0.13.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -253,7 +253,12 @@ ZONAS_CEREBRO = [
     # geometria da primeira passagem.
     # ⚠️ J10 saiu: era o header de 5 vias da ponte por fio, e o ESP32 passou a
     # soquete (U3), que e peca UNICA por ser grande de mais para a grelha.
-    ("soquete", 118, 34, 32, 16.0, 19.0,
+    # ⚠️ PASSO 22 E NAO 19: o J15/J16 passaram a 1x08, que tem 20,32 mm de
+    # altura, e uma peca mais alta que o passo da fila encosta na fila
+    # seguinte. Os pads ficaram a 1,22 mm quando precisavam de 1,70 — curto,
+    # nao aperto. O passo de uma grelha e um limite da peca MAIS ALTA que ela
+    # arruma, e nao da que la estava quando se escolheu o numero.
+    ("soquete", 118, 34, 32, 16.0, 22.0,
      ["J11", "J15", "J16", "R50", "R51", "J12", "J13"]),
     ("energia", 152, 34, 44, 14.0, 13.0,
      ["F1", "D1", "D2", "C2", "C4", "R8", "R9", "J3", "J4", "J2", "C3"]),
@@ -448,6 +453,66 @@ ZONAS_COBRE = {
     "cerebro": [("GND", "B.Cu", None), ("AGND", "B.Cu", "ilha")],
     "painel":  [("GND", "B.Cu", None)],
 }
+
+
+def confere_sobreposicao(t):
+    """Nenhum pad de uma peca pode tocar no pad de outra.
+
+    ⚠️ ISTO DEVIA TER SIDO UM PORTAO DESDE O PRIMEIRO DIA. Mudei o J15 e o J16
+    de 1x06 para 1x08 — a peca passou de 15,24 para 20,32 mm de altura, mais
+    que o passo de 19 mm da grelha da zona — e os pads da ultima fila ficaram
+    ENCOSTADOS aos da peca seguinte. Nada se queixou na colocacao. So apareceu
+    depois de rotear, como cinco `shorting_items` no DRC, e com o roteador ja
+    a ter gasto trabalho a contornar um estrago que ninguem lhe tinha dito que
+    existia.
+    ⚠️ E o DRC apanha-o, sim — mas apanha-o TARDE. Um portao que recusa antes
+    de escrever custa um segundo; o mesmo defeito descoberto depois do
+    roteamento custa a corrida toda e faz duvidar do roteador."""
+    import math
+    pads = []
+    for m in re.finditer(r'\n\t\(footprint ', t):
+        j = m.start() + 1
+        d = 0
+        for k in range(j, len(t)):
+            if t[k] == "(":
+                d += 1
+            elif t[k] == ")":
+                d -= 1
+                if d == 0:
+                    bl = t[j:k + 1]
+                    break
+        a = re.search(r'\(at (' + NUM + r') (' + NUM + r')(?: (' + NUM + r'))?\)', bl)
+        fx, fy = float(a.group(1)), float(a.group(2))
+        ang = math.radians(float(a.group(3) or 0))
+        r = re.search(r'\(property "Reference" "([^"]+)"', bl)
+        ref = r.group(1) if r else "?"
+        for pm in re.finditer(r'\(pad "([^"]*)"[\s\S]{0,90}?\(at (' + NUM + r') ('
+                              + NUM + r')(?: ' + NUM + r')?\)\s*\(size (' + NUM
+                              + r') (' + NUM + r')\)', bl):
+            px, py = float(pm.group(2)), float(pm.group(3))
+            raio = max(float(pm.group(4)), float(pm.group(5))) / 2
+            pads.append((fx + px * math.cos(ang) + py * math.sin(ang),
+                         fy - px * math.sin(ang) + py * math.cos(ang),
+                         raio, ref, pm.group(1)))
+    maus = []
+    for i in range(len(pads)):
+        xi, yi, ri, refi, ni = pads[i]
+        for j2 in range(i + 1, len(pads)):
+            xj, yj, rj, refj, nj = pads[j2]
+            if refi == refj:
+                continue
+            d = math.hypot(xi - xj, yi - yj)
+            if d < ri + rj:
+                maus.append((refi, ni, refj, nj, d, ri + rj))
+    if maus:
+        linhas = ["*** %d par(es) de pads de pecas DIFERENTES a tocar-se:" % len(maus)]
+        for refi, ni, refj, nj, d, lim in maus[:10]:
+            linhas.append("      %s.%s e %s.%s a %.2f mm (precisavam de %.2f)"
+                          % (refi, ni, refj, nj, d, lim))
+        linhas.append("    Isto e um curto-circuito no cobre, e nao um aperto.")
+        raise SystemExit("\n".join(linhas))
+    return ["     nenhum pad de pecas diferentes se toca (%d pads conferidos)"
+            % len(pads)]
 
 
 def costura(t, nome):
@@ -1246,6 +1311,7 @@ def main():
         for ref, de, para, outro in trocas:
             print("     arcade: %-4s sai de (%g,%g) para (%g,%g), troca com %s"
                   % (ref, de[0], de[1], para[0], para[1], outro), file=sys.stderr)
+    relato += confere_sobreposicao(t)
     t, n_v = costura(t, nome)
     if alvo["assenta"] == "fundo":
         relato += confere_furos(t, alvo)
