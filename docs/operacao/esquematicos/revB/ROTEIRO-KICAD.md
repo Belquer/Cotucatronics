@@ -33,7 +33,7 @@ stock trava o pedido inteiro.
 | placa | o que leva | onde fica |
 |---|---|---|
 | **cérebro** | Daisy no soquete · pré-amp · ponte ESP32 · filtro/banco de energia · DPDT (fiação) · jacks (fiação) | fundo da caixa |
-| **painel** | OLED · encoder · 2 pots · 2 botões arcade + 2 MOSFET | tampa |
+| **painel** | OLED · encoder · 2 pots · **3** botões arcade (só 2 com LED) + 2 MOSFET | tampa |
 | **fora das placas** | módulo decoy PD · módulo step-down · módulo TPA3116 | decoy e amp atrás/direita; step-down junto ao cérebro |
 
 **Contrato = IDC 2×13.** Pinagem no §5. O mesmo nome de rede nos dois

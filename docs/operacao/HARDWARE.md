@@ -426,9 +426,25 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
   iPad escreve. Excepção no arranque — a primeira leitura **adopta** a
   posição física, porque aí ninguém escreveu ainda e a verdade é o botão.
   Diagnóstico: `knob` na serial.
-- **Botões de arcade 30 mm** com LED (freeze A e B, búzios).
-  LED de 5 V acionado com 3,3 V: **brilho aprovado no ambiente real**; plano B
-  do transistor arquivado sem custo.
+- **Botões de arcade: três, e só DOIS têm o LED ligado.**
+  - `freeze A` e `freeze B` (azuis) — botão **e** LED. O LED de 5 V é acionado
+    com 3,3 V pelos `Q1`/`Q2` do painel: **brilho aprovado no ambiente real**;
+    plano B do transístor arquivado sem custo.
+  - `búzios` (branco) — **botão apenas**. Sabe-se que está ligado pelo
+    **display**, não por luz no botão. Por isso há dois MOSFET para três
+    botões, e isso está certo.
+
+  > ⚠️ Esta linha dizia *«arcade 30 mm com LED (freeze A e B, búzios)»*, e a
+  > leitura natural era que os três acendem. Isso levou **duas vezes** à mesma
+  > conclusão errada — que faltava um `Q3` no painel — e à segunda quase custou
+  > uma via do IDC 2×13, que está cheio e cujas oito terras guardam todas coisa
+  > medida. O caminho do búzios está completo desde 05/09: painel `J5` → IDC
+  > via **19** → Daisy pino **33**.
+
+  ⚠️ **Diâmetro por confirmar:** aqui diz **30 mm** e os três aparecem juntos,
+  mas o búzios foi descrito como **100 mm** ao ser acrescentado ao ficheiro de
+  corte. Ou são medidas diferentes por botão, ou uma das duas está errada — e o
+  acrílico já foi cortado, por isso a resposta está na peça, não no documento.
 
 **Burn-in:** contraste baixo + deslocar 1–2 px a cada minutos. A peça pode
 ficar meses ligada numa galeria.
