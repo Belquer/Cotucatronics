@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 
-VERSAO = "0.3.0"
+VERSAO = "0.5.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAIDA = os.path.join(RAIZ, "docs", "COTUCA_BOM.md")
 
@@ -42,10 +42,20 @@ FOLHAS = [
 PECAS = {
     "U1":  ("OPA1642AIDR (TI)", "LCSC C67640", 1.0145, "medido"),
     "U2":  ("Daisy **Seed3** (Electrosmith)", "Electrosmith", 29.99, "medido"),
+    # ⚠️ ZERO DE PROPOSITO, e nao por falta de decisao. O modulo esta contado na
+    # linha de `modulo` em FORA; conta-lo aqui outra vez inflava o total em
+    # US$4. Um zero sem explicacao e indistinguivel de um esquecimento, e por
+    # isso a proveniencia di-lo em vez de ficar "—".
+    "U3":  ("ESP32-C3 SuperMini — **contado em FORA**", "AliExpress", 0.0,
+            "ja contado"),
     "D11": ("BAV99,215 (Nexperia)", "LCSC", 0.02, "estimado"),
     "D21": ("BAV99,215 (Nexperia)", "LCSC", 0.02, "estimado"),
     "D1":  ("SMBJ24A (Littelfuse)", "LCSC", 0.079, "medido"),
     "D2":  ("SS14 (SMA)", "LCSC", 0.02, "estimado"),
+    # ⚠️ 2920L3**30**/24MR, e nao o /300. A lista a mao pedia `2920L300/24MR`,
+    # que NAO EXISTE: a 24 V o que ha e o 3,3 A. O sufixo de um polyfuse diz a
+    # corrente de hold, e um numero plausivel e inexistente parece certo ate a
+    # encomenda voltar vazia (§7f).
     "F1":  ("2920L330/24MR (Littelfuse)", "LCSC C720183", 0.1804, "medido"),
     "C1":  ("EEU-FR1V222 (Panasonic FR)", "LCSC C407956", 0.7162, "medido"),
     "C3":  ("EEU-FR1C101 (Panasonic FR)", "LCSC", 0.15, "estimado"),
@@ -64,11 +74,24 @@ PECAS = {
 PECAS_PAINEL = {
     "Q1":  ("AO3400A (Alpha & Omega)", "LCSC C20917", 0.0487, "medido"),
     "Q2":  ("AO3400A (Alpha & Omega)", "LCSC C20917", 0.0487, "medido"),
+    # ⚠️ ALPS, e nao o PEC11R da Bourns que a lista a mao pedia. O PEC11R tem
+    # os pinos a 5,0 mm e o footprint do KiCad e do Alps, a 2,5 — a peca certa
+    # no desenho errado nao entra na placa. O encapsulamento e parte da compra
+    # (§7c), e nao um detalhe de layout.
     "SW1": ("EC11E15244G1 (Alps Alpine)", "LCSC C370970", 1.70, "medido"),
+    # ⚠️ SUFIXO **S**, e nao o F. `S` = eixo estriado, `F` = eixo liso. A lista
+    # a mao pedia o `...4020F-B103` e a nota ao lado do mesmo documento pedia
+    # estriado: o MPN contradizia a sua propria nota. O que falha num MPN e
+    # quase sempre o sufixo, e nao a familia.
     "RV1": ("PTV09A-4020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
     "RV2": ("PTV09A-4020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
     "J1":  ("IDC 2x13 femea (3M N3793-6002RB ou gen.)", "LCSC", 0.45, "estimado"),
     "J2":  ("53047-0710 (Molex PicoBlade 1x7)", "LCSC", 0.30, "estimado"),
+    # ⚠️ o C3 do PAINEL e outro C3 que o do cerebro — tabelas separadas, e por
+    # isso este ficava "por decidir" enquanto o do cerebro ja tinha peca. Nao
+    # estava por decidir: o dB decidiu-o quando pediu o par 100u+100n junto aos
+    # MOSFET ("a razao certa nao e o OLED, sao os tres LEDs de arcade").
+    "C3":  ("EEU-FR1C101 (Panasonic FR)", "LCSC", 0.15, "estimado"),
 }
 GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
     "Resistor_SMD:R_0805_2012Metric":  ("resistor 0805 1%", 0.005, "estimado"),
@@ -89,7 +112,8 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
     "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical": ("header 1x8 2,54", 0.10, "estimado"),
     "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical": ("JST XH 1x2 (B2B-XH-A)", 0.05, "estimado"),
     "TerminalBlock_Phoenix:TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal":
-        ("terminal parafuso 2p 5,08 (MKDS ou KF301)", 0.60, "estimado"),
+        ("terminal parafuso 2p 5,08 — **1935161** (Phoenix MKDS 1/2-5.08) "
+         "ou KF301-5.0 generico", 0.60, "estimado"),
     "Module:Electrosmith_Daisy_Seed": ("(soquete: 2 tiras femea 1x20 2,54)", 2.00, "estimado"),
 }
 
@@ -119,6 +143,17 @@ FORA = [
     # que ninguem escreveu aqui simplesmente NAO EXISTE na lista de compras, e o
     # total nem a conta como zero — nao a conta de todo. Apareceu por eu mexer
     # no conector; sem isso continuava por descobrir.
+    # ⚠️ OS SOQUETES NAO ESTAVAM ORCADOS EM LADO NENHUM. O U2 custa US$29,99 e
+    # o U3 tem linha propria, mas as tiras femea onde eles encaixam nao
+    # apareciam: a entrada generica que as tinha nunca era alcancada, porque o
+    # U2 esta na tabela especifica e essa ganha. Uma peca que so existe numa
+    # ramificacao que nunca corre nao esta na lista de compras.
+    ("soquete",  "Tira femea 1x20 2,54 dourada (soquete da Daisy)", "Harwin/LCSC",
+     2, 1.00, "estimado",
+     "M20-7822046 (Harwin) ou equivalente — a substituibilidade vale os US$2"),
+    ("soquete",  "Tira femea 1x8 2,54 (soquete do ESP32-C3)", "generico",
+     2, 0.15, "estimado",
+     "o modulo entra em soquete para poder ser regravado e trocado"),
     ("cablagem", "Cabo 8 vias ~150 mm ao DPDT, crimpado (J15 e J16)", "—", 2, 1.00,
      "estimado",
      "8 e nao 6 desde 08/09: os pinos 7 e 8 sao GND, referencia do cabo. Os dois "

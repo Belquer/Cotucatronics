@@ -8956,3 +8956,117 @@ de 5 V.
 > **Um achado silenciado sem razão escrita é um achado apagado.** Ficou
 > registado por par `(código, rede)`, com a data e o raciocínio, e nunca por
 > família: `VM-001` continua a valer para qualquer outra rede.
+
+## 15di — o sincronizador comparava presença e chamava-lhe identidade
+
+*08/09.* Mudei o `J15` e o `J16` de 1×06 para 1×08 no esquema — dois pinos de
+terra novos — e corri o sincronizador. Ele respondeu:
+
+```
+netlist 59 · placa 59 · faltam 0 · sobram 0
+ja estao sincronizados
+```
+
+A placa continuava com seis pads. A netlist pedia `J15.7` e `J15.8`; não havia
+onde os pôr.
+
+Ele casava por **referência**: se `J15` está no esquema e `J15` está na placa,
+está sincronizado. **Comparar presença e chamar-lhe identidade** — e o
+verificador não mentiu, respondeu a outra pergunta.
+
+> É a mesma família da 15dc e da 15df: uma ferramenta que devolve a resposta
+> tranquilizadora porque nunca chegou a olhar para o que interessa. Passou a
+> comparar o nome do footprint, e um footprint trocado sai e volta a entrar
+> como se fosse novo.
+
+## 15dj — o passo de uma grelha é o limite da peça mais alta que ela vai arrumar
+
+*08/09.* O conector passou de 15,24 para 20,32 mm de altura. A zona que o arruma
+espaça as filas de **19 mm**. Os pads da última fila ficaram **a 1,22 mm** dos da
+peça seguinte, quando precisavam de 1,70 — curto no cobre, não aperto.
+
+E a colocação não se queixou. O defeito só apareceu **depois de rotear**, como
+cinco `shorting_items` no DRC, com o roteador já a ter gasto uma corrida inteira
+a contornar um estrago que ninguém lhe tinha dito que existia.
+
+> **O passo de uma grelha é um limite da peça mais alta que ela vai arrumar, e
+> não da que lá estava quando se escolheu o número.**
+
+Ficou um portão: nenhum pad de uma peça pode tocar no de outra, conferido antes
+de escrever. Calibrado contra este defeito — apanha exactamente os dois pares
+que o DRC tinha apanhado, e recusa num segundo em vez de custar a corrida toda.
+
+⚠️ **O DRC apanha-o, sim, mas tarde.** Um portão que recusa antes de escrever
+custa um segundo; o mesmo defeito descoberto depois do roteamento custa a
+corrida e faz duvidar do roteador.
+
+## 15dk — dois consertos em fila, e o primeiro engolia o segundo
+
+*08/09.* A reparação de terra ganhou uma verificação nova — se partiu um plano,
+retira-se — e eu pu-la **antes** da que já lá estava, a das vias soltas. Com um
+`return` no meio.
+
+Resultado: sempre que o plano se partia, a limpeza das vias soltas nunca corria,
+e saía uma placa com `via_dangling`. Cada conserto estava certo sozinho; a
+ordem é que os punha a competir.
+
+E na mesma passada, dois erros da mesma família dos que já estão escritos aqui:
+
+- a retracção tirava **as dez reparações** por causa de duas más — o mesmo que o
+  roteador já tinha aprendido a não fazer (§12c). Devolvem-se uma a uma.
+- o coto de reparação testava **distância** às outras pistas e não
+  **cruzamento**: duas pistas cruzam-se a meio sem que nenhuma ponta esteja
+  perto da outra. Deu `tracks_crossing`, que é literalmente a §4 desta casa.
+
+> **Uma lição aprendida num sítio não se aplica sozinha ao sítio do lado** — é a
+> terceira vez que isto aparece hoje, e as três vezes fui eu a escrever a
+> ferramenta nova sem ir buscar o que a velha já sabia.
+
+## 15dl — a peça que só existe numa ramificação que nunca corre
+
+*08/09.* Ao migrar os MPNs da lista à mão para o gerador da BOM, encontrei duas
+peças reais que **não estavam orçadas em lado nenhum**: as tiras fêmea onde a
+Daisy e o ESP32 encaixam.
+
+O gerador tem duas tabelas: uma por referência (`PECAS`) e uma por footprint
+(`GENERICO`), e a primeira ganha. O soquete da Daisy tinha preço — mas na
+segunda. Como o `U2` está na primeira, a linha do soquete **nunca era
+alcançada**.
+
+```
+PECAS["U2"]                       -> Daisy Seed3, US$29,99   ← esta ganha
+GENERICO["...Daisy_Seed"]         -> soquete 2 tiras, US$2   ← nunca corre
+```
+
+> **Uma peça que só existe numa ramificação que nunca corre não está na lista de
+> compras.** E o total não a conta como zero — não a conta de todo, que é pior,
+> porque um zero pelo menos aparece.
+
+Da mesma passagem, e da mesma família: o **cabo até aos DPDT** não estava na BOM
+porque não está em folha nenhuma e ninguém o tinha escrito na tabela do que vive
+fora das placas. Apareceu só por eu ter mexido no conector.
+
+E o inverso, também encontrado: o `U3` aparecia a zero por estar contado noutra
+linha — correcto, mas **indistinguível de um esquecimento**. Passou a dizê-lo na
+proveniência, em vez de ficar com um traço.
+
+## 15dm — o MPN corrigido precisa da razão ao lado, ou volta
+
+*08/09.* Pedi para marcar como "por decidir" três MPNs que a skill regista como
+escolhas erradas. Fui migrá-los e **já estavam corrigidos no gerador** há três
+dias: `2920L3**30**/24MR`, o encoder da Alps em vez do Bourns, e o sufixo `S`
+em vez do `F`. Quem guardava os valores errados era a lista à mão.
+
+Mas o gerador tinha os valores certos **sem a razão**. E um MPN certo sem razão
+escrita ao lado é um MPN que a próxima pessoa — ou eu, daqui a um mês — troca
+pelo óbvio:
+
+| o óbvio | porque está errado |
+|---|---|
+| `2920L300/24MR` | não existe; a 24 V o que há é o 3,3 A |
+| `PEC11R-4220F` | pinos a 5,0 mm, e o footprint do KiCad é do Alps a 2,5 |
+| `PTV09A-4020**F**` | `F` é eixo liso; a nota ao lado do mesmo documento pedia estriado |
+
+> **Uma correcção sem a razão escrita não é uma correcção: é um valor que ficou
+> certo por acaso e que a próxima leitura desfaz.** As três razões passaram para
+> junto das entradas, no gerador, onde quem for trocar o MPN tem de as ler.
