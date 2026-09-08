@@ -108,12 +108,20 @@ kicad-cli pcb export svg --output /tmp/s.svg --layers F.Silkscreen \
 python3 tools/svg_colisoes.py /tmp/s.svg
 ```
 
-⚠️ **Numa placa a convenção INVERTE em relação ao esquemático.** Lá, a
-referência dentro do corpo do símbolo é onde ela mora; aqui, `texto × contorno
-da PRÓPRIA peça` é o caso normal — as duas coisas saem na mesma tinta branca e
-lêem-se bem. O que é defeito é **texto × texto** e **texto × contorno de OUTRA
-peça**. Classificar por «são a mesma referência?» separa uma coisa da outra:
-das 9 `silk_overlap` do cérebro, 9 eram a peça sobre si própria.
+⚠️ **Numa placa o mesmo achado tem GRAU diferente**, e a tabela dos graus vive
+na skill `kicad` **§11g-bis** — não aqui, para as duas não derivarem. O resumo
+para usar ao ler a saída: `texto × texto` é sempre defeito; `texto × contorno de
+OUTRA peça` é defeito; `texto × contorno da PRÓPRIA peça` é **aviso**, evita-se
+quando há sítio e embarca-se quando não há.
+
+⚠️ **Eu já escrevi aqui que era "o caso normal" enquanto a `kicad` dizia "na
+placa é defeito"** — duas skills, duas frases afirmativas, nenhuma marcada. Foi
+preciso ir medir para ver que nenhuma das duas estava certa sozinha: faltava o
+grau. **Quando duas skills da casa afirmam coisas opostas, a resposta não é
+escolher — é a distinção que falta às duas.**
+
+Classificar por «são a mesma referência?» separa os casos: das 9 `silk_overlap`
+do cérebro, 9 eram a peça sobre si própria.
 
 ⚠️ **E corre-se o DRC do KiCad ao lado, porque numa placa é ele quem manda.**
 `silk_overlap`, `silk_over_copper`, `silk_edge_clearance`. Os dois responderam

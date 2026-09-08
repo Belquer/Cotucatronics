@@ -59,7 +59,23 @@ Não está no `PATH`. Uma sessão inteira deu-o por ausente porque correu `which
 kicad-cli`, e por isso entregou folhas sem ERC. **Procurar dentro do bundle
 antes de declarar que não há ferramenta.**
 
-Subcomandos: `erc`, `export` (svg, pdf, netlist, bom), `upgrade`.
+Subcomandos: `erc`, `export` (svg, pdf, netlist, bom), `upgrade`, `drc`.
+
+⚠️ **E O PROJECTO ACHA-SE PELO NOME DO FICHEIRO.** Uma cópia chamada
+`_teste_x.kicad_pcb` não tem `.kicad_pro` que lhe corresponda, e o `drc` cai nas
+**regras por omissão** — inventando violações que a placa não tem. Aqui isso
+produziu `track_width 0 → 8` numa mudança que só mexeu em texto de serigrafia, e
+quase o reportei como regressão.
+
+> **Uma comparação antes/depois só vale se os dois lados forem medidos no mesmo
+> contexto.** Medir o "antes" no sítio real e o "depois" numa cópia compara dois
+> ambientes, não duas versões.
+
+⚠️ **E a armadilha tem duas faces.** Corrigido — os dois lados na cópia — a
+comparação passou a ser válida e os números absolutos continuaram errados: o
+`track_width 8 → 8` era verdadeiro *naquele contexto* e falso sobre a placa.
+**Um número certo para comparar e errado para citar.** Ou a cópia leva o nome
+que casa com o `.kicad_pro`, ou só se lê a diferença.
 
 ## 2. Bisectar o "Failed to load schematic"
 
@@ -640,6 +656,22 @@ encomenda só lista `BAV99`, e o documento diz `Packing information removed.`.
 Por isso a citação guarda **duas** coisas: o que a ficha prova **e o que ela
 não prova**. A segunda é a que se perde.
 
+⚠️ **E o outro lado do mesmo erro: o sufixo pode significar o CONTRÁRIO do que
+supões.** Ia escrever *«LF = lead-free»* no `3296W-1-104LF`. A legenda da própria
+Bourns diz `Blank: Lead-free product compliant with RoHS` e **`LF: High-end
+product`** — o vazio é que já é sem chumbo, e o `LF` é outra coisa.
+
+> A peça estava certa e a **razão** dela estava errada, que é o estado mais
+> difícil de apanhar: nada falha, nada acusa, e a próxima pessoa a escolher uma
+> peça daquela família herda a premissa falsa. **Ler a legenda de sufixos custa
+> um minuto e é a diferença entre ter o número certo e saber porquê.**
+
+⚠️ **E há sufixos que a ficha do produto NUNCA justifica**, por decisão do
+fabricante. A do `BAV99` diz, com todas as letras, `Packing information
+removed.` — o `,215` não se prova ali por mais que se releia. Isso não é falha
+de procurar: é o documento errado para a pergunta, e a citação tem de o dizer
+em vez de ficar em branco.
+
 ⚠️ **E o achatamento tira só pontuação.** Os catálogos escrevem `EEUFR1C101`
 sem hífens e `B2B-XH-A(LF)(SN)` com o código colado — treze «não existe» que
 eram treze diferenças de pontuação. Mas nunca prefixos, nunca letras:
@@ -1066,15 +1098,106 @@ serigrafia entra nos obstáculos, as referências fogem do contorno e vão parar
 exactamente aí. Sem a isenção, quem não tiver sítio **fica onde está e diz**, que
 é melhor que ser empurrado para pior.
 
-⚠️⚠️ **E AQUI A REGRA INVERTE-SE EM RELAÇÃO AO ESQUEMA.** No esquemático, a
+⚠️⚠️ **E AQUI A REGRA MUDA DE GRAU EM RELAÇÃO AO ESQUEMA.** No esquemático, a
 referência dentro do corpo do próprio símbolo é onde ela mora (§9b) e comparar
-uma contra a outra dá alarme falso. Na placa é **defeito**: as duas coisas saem
-na mesma tinta branca, e o texto deixa de se ler. A mesma frase — *"a referência
-está por cima do seu próprio corpo"* — é normal num sítio e defeito no outro.
+uma contra a outra dá alarme falso. Na placa **conta**: as duas coisas saem na
+mesma tinta branca e a leitura piora.
+
+⚠️ **Mas o grau importa, e esta secção já disse a coisa errada por não o
+distinguir.** Escrito assim — *"na placa é defeito"* — entrou em contradição
+directa com a `/design-review`, que chamava ao mesmo caso *"o caso normal"*.
+Duas skills, duas frases afirmativas, nenhuma marcada como histórica: a classe 8
+da skill `audit`, entre ficheiros. **A resolução não é escolher a que agrada.**
+
+| caso | grau | quem manda |
+|---|---|---|
+| **texto × texto** | defeito, sempre | trava o portão |
+| referência × contorno de **OUTRA** peça | defeito | conserta-se |
+| referência × contorno da **PRÓPRIA** peça | **aviso** | evita-se quando há sítio; embarca-se quando não há |
+| referência × cobre exposto (`silk_over_copper`) | defeito | a fábrica recorta e o texto some |
+
+É por isso que o `arruma_silk` trata o contorno próprio como obstáculo — para o
+**evitar** — e o `para_fabrica` **não recusa** por ele. As duas coisas são
+coerentes, e nenhuma delas é "é defeito" ou "é normal" sozinha. Foram embarcadas
+seis assim no cérebro e uma no painel, com esta linha a justificá-las.
 
 **A prova de que a ferramenta não estragou nada é o número que NÃO muda:**
 pistas, vias, pads e peças idênticos antes e depois. Serigrafia só mexe em
 serigrafia.
+
+### 11g-quater. Quatro maneiras de medir o texto no sítio errado
+
+O `arruma_silk` tinha **quatro** defeitos ao mesmo tempo, e a família é uma só:
+*a conta certa já existia no ficheiro e não estava aplicada onde devia.* Nenhum
+deles dava erro; os quatro produziam **aprovação**.
+
+**1 — o campo de referência RODA COM A PEÇA.** O `(at ...)` de uma propriedade é
+relativo ao footprint. Fazer `fx + dx, fy + dy` soma um offset do espaço da
+**peça** a uma coordenada do espaço da **placa**: nas peças a 0° acerta por
+acidente, nas rodadas não. O `U2` (180°) foi avaliado **7,2 mm ao lado** de onde
+está — do outro lado do módulo.
+
+```python
+X = fx + dx*cos(a) + dy*sin(a)     # a MESMA que os pads já usavam
+Y = fy - dx*sin(a) + dy*cos(a)
+```
+
+> ⚠️ **E o modo de falhar é o pior que há: no sítio errado não havia nada.** A
+> ferramenta disse *livre* e deu a referência por arrumada. **Quem mede no sítio
+> errado não reprova nada — aprova tudo, e com ar de quem verificou.**
+
+**2 — e a VOLTA leva a inversa.** Os candidatos são deltas no espaço da placa e
+o campo grava-se no espaço da peça. Escrever o delta cru faz o KiCad rodá-lo
+outra vez ao desenhar, e a peça acaba com o texto num **terceiro** sítio. Prova
+barata: `campo_do_abs(abs_do_campo(x)) == x`.
+
+**3 — `cos(π)` não dá −1 e mais nada.** Dá `sin(π) = 1,2e-16`, e o offset sai
+`-4,40873e-16`. É a **§2b** num sítio novo: zero em notação científica, que o
+KiCad aceita e que nenhum leitor com `(-?[\d.]+)` apanha. Todo número que entra
+num ficheiro KiCad passa pelo formatador, **incluindo os que vêm de uma conta de
+rotação**.
+
+**4 — a serigrafia é feita de SEGMENTOS, não de pontos.** Guardar três amostras
+por segmento (início, meio, fim) deixa vãos proporcionais ao comprimento: no
+contorno do `J1`, com 41 mm, os vãos são de 10 mm, e a referência do `C5` ficou
+a **0,11 mm** da linha sem ninguém dar por ela. O teste correcto —
+ponto-a-segmento — já estava no ficheiro, nas pistas. **A §11c manda olhar pads
+e pistas; a serigrafia ficou de fora da regra por não ser cobre.**
+
+⚠️ **E um `fp_rect` NÃO é uma linha.** `(start ...)` e `(end ...)` são cantos
+**opostos**: tratá-lo como um segmento testa a **diagonal** do rectângulo e
+ignora as quatro arestas, que são o obstáculo real.
+
+### 11g-quinquies. O recuo «fica onde estava» pode criar o defeito
+
+Consertados os quatro, a ferramenta moveu cinco referências e anunciou *"5
+movidas, 6 sem sítio"*. O portão disse **texto×texto: 1**, onde antes eram 0. O
+DRC concordou.
+
+A lista de posições ocupadas enchia-se **à medida que o laço andava**: quem
+ainda não tinha sido visitado era invisível. E a ordem do laço é a ordem no
+**ficheiro**, que não tem relação nenhuma com a geometria da placa.
+
+```
+RV1 visitado primeiro → não vê R21 → muda-se para cima dele
+R21 visitado depois   → já não há sítio → "fica onde estava" → dentro do RV1
+```
+
+> **«Fica onde estava» soa a não ter feito nada, e não é.** É reafirmar uma
+> posição que entretanto **deixou de estar livre, por causa de uma mudança da
+> própria ferramenta.** O recuo que existia para ser seguro tornou-se o
+> mecanismo do defeito.
+
+**Duas coisas, e são precisas as duas:**
+
+1. **Todas** as posições entram na lista **antes** do laço começar — e aí a
+   ordem deixa de importar.
+2. **Auto-teste no fim:** se ficarem duas referências sobrepostas, **não grava**
+   e diz. *Mover texto não pode criar o defeito que vem arrumar.*
+
+⚠️ E isto vale para toda ferramenta que arruma por iteração — encaminhadores,
+colocadores, arrumadores de texto. **Um verificador que só olha para o que já
+processou aprova o que ainda não viu.**
 
 ### 11g-ter. A fronteira com a `/design-review`, no lado da placa
 
