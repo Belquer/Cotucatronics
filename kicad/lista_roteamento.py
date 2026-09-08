@@ -29,7 +29,7 @@ import re
 import subprocess
 import sys
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 
@@ -54,12 +54,27 @@ BLOCOS = [
 ]
 
 
-def carimbo():
+def carimbo(nome):
+    """⚠️ O AVISO DE ARVORE SUJA E SOBRE A PLACA, nao sobre o repositorio.
+
+    A primeira versao olhava `git status` inteiro e avisava por causa de um
+    ficheiro da caixa e de um SVG solto — nada que mudasse a placa descrita. Um
+    aviso que dispara por coisas irrelevantes deixa de ser lido, e no dia em que
+    disparar a serio ja ninguem lhe liga."""
     def g(*a):
         return subprocess.run(a, capture_output=True, text=True, cwd=AQUI).stdout.strip()
+    # ⚠️ NAO SE CORTA O PREFIXO POR POSICAO. O `--porcelain` usa duas colunas de
+    # estado mais um espaco, mas um ficheiro so no indice e outro so na arvore
+    # nao ocupam a mesma coluna, e um corte fixo comeu-me a primeira letra de um
+    # caminho — "ocs/operacao/..." em vez de "docs/...". Um caminho com uma
+    # letra a menos nao casa com nada, e o filtro cala-se em vez de avisar.
+    sujos = [l.split(None, 1)[1] for l in g("git", "status", "--porcelain").splitlines()
+             if len(l.split(None, 1)) == 2]
+    meus = [s for s in sujos
+            if s.startswith("kicad/") and ("cotuca_%s" % nome in s
+                                           or s.endswith(".py"))]
     return (datetime.date.today().isoformat(),
-            g("git", "rev-parse", "--short", "HEAD"),
-            bool(g("git", "status", "--porcelain")))
+            g("git", "rev-parse", "--short", "HEAD"), meus)
 
 
 def uma(nome):
@@ -101,12 +116,13 @@ def uma(nome):
         if len(pontas) == 2:
             faltam.append(pontas)
 
-    data, commit, sujo = carimbo()
+    data, commit, sujo = carimbo(nome)
     L = ["# Lista de roteamento — %s" % nome, ""]
     L.append("Gerada por `kicad/lista_roteamento.py` v%s em **%s**, "
              "commit `%s`.%s" % (VERSAO, data, commit,
-                                 "  \n⚠️ **A árvore estava suja**: a placa pode "
-                                 "não corresponder a este commit." if sujo else ""))
+                                 "  \n⚠️ **Não comitado**: `%s` — a placa pode "
+                                 "não corresponder a este commit."
+                                 % "`, `".join(sujo) if sujo else ""))
     L.append("")
     L.append("**%d ligações**, mais **%d pad(s) que perderam o plano** — %d no "
              "total, que é o que o DRC diz. Tudo o resto já está feito e o DRC "
