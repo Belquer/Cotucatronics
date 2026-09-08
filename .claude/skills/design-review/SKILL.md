@@ -98,6 +98,36 @@ E o contrário também vale: na mesma folha havia **cinco** acusações de 0,9 a
 **A linha de resultado vai no relatório**, sempre: `N textos, M segmentos, 0
 colisões`. **Sem essa linha, a revisão não aconteceu.**
 
+### E numa PLACA: `--layers <F|B>.Silkscreen`, e o DRC ao lado
+
+A serigrafia de um `.kicad_pcb` exporta-se por camada e passa pelo mesmo portão:
+
+```bash
+kicad-cli pcb export svg --output /tmp/s.svg --layers F.Silkscreen \
+    --page-size-mode 2 --exclude-drawing-sheet placa.kicad_pcb
+python3 tools/svg_colisoes.py /tmp/s.svg
+```
+
+⚠️ **Numa placa a convenção INVERTE em relação ao esquemático.** Lá, a
+referência dentro do corpo do símbolo é onde ela mora; aqui, `texto × contorno
+da PRÓPRIA peça` é o caso normal — as duas coisas saem na mesma tinta branca e
+lêem-se bem. O que é defeito é **texto × texto** e **texto × contorno de OUTRA
+peça**. Classificar por «são a mesma referência?» separa uma coisa da outra:
+das 9 `silk_overlap` do cérebro, 9 eram a peça sobre si própria.
+
+⚠️ **E corre-se o DRC do KiCad ao lado, porque numa placa é ele quem manda.**
+`silk_overlap`, `silk_over_copper`, `silk_edge_clearance`. Os dois responderam
+diferente — `0 texto×texto` contra `9 silk_overlap` — e foi ir medir a
+discordância que destapou quatro defeitos na ferramenta que arruma a
+serigrafia. **Dois verificadores que discordam são informação; escolher o que
+agrada é deitá-la fora.**
+
+⚠️ **A comparação antes/depois mede-se no MESMO contexto.** O KiCad acha o
+`.kicad_pro` pelo nome do ficheiro: uma cópia chamada `_teste_x.kicad_pcb` cai
+nas regras por omissão e inventa violações que a placa não tem. Ou a cópia vive
+na pasta do projecto com o nome que casa, ou se mede o antes e o depois no
+mesmo sítio — e aí lê-se a **diferença**, nunca o valor absoluto.
+
 ### O que fazer quando a ferramenta não alcança
 
 PNG de plot, PDF, render do KiCad: ela não lê. Aí vale a regra antiga —

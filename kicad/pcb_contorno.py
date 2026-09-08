@@ -708,7 +708,12 @@ MARCA_LADO = "B.SilkS"
 # 123 x 8 mm a partir de (73, 23).
 MARCA = {
     "cerebro": [(140.0, 27.5, "COTUCATRONICS", 5.0, 0.8),
-                (82.0, 27.0, "cerebro rev B", 2.2, 0.35)],
+                # ⚠️ x=87 e nao 82: centrado em 82 o texto (13 caracteres a
+                # 2,2 mm, ~20 mm de largura) comeca em x=72 e encosta ao pad
+                # 26 do J14, em 70,48. O DRC apanha `silk_over_copper`, e o
+                # que se perde e real: a JLC recorta a serigrafia sobre a
+                # abertura de mascara, logo o inicio do texto desaparecia.
+                (87.0, 27.0, "cerebro rev B", 2.2, 0.35)],
     "painel":  [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
                 (60.0, 26.0, "painel rev A", 1.6, 0.25)],
 }

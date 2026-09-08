@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arruma_silk v0.4.0 — tira os campos de referencia de cima dos pads.
+"""arruma_silk v0.7.0 — tira os campos de referencia de cima dos pads.
 
 ⚠️ SERIGRAFIA SO. Nao toca em cobre, em pistas, em zonas nem em posicoes de
 peca: mexe apenas no `(at ...)` do campo `Reference` de cada footprint, que e
@@ -23,7 +23,7 @@ USO:  arruma_silk.py <ficheiro.kicad_pcb> [--escreve]
 """
 import io, math, os, re, sys
 
-VERSAO = "0.4.0"
+VERSAO = "0.7.0"
 NUM = r"-?\d+(?:\.\d+)?"
 RAIO_TXT = 1.6          # meia-altura tipica de um campo de referencia
 PASSOS = [1.6, 2.6, 3.6, 4.8]
@@ -43,6 +43,38 @@ def blocos(t):
                     out.append((j, k + 1, t[j:k + 1]))
                     break
     return out
+
+
+def num(v):
+    r"""⚠️ §2b: TODO numero que entra num ficheiro KiCad passa por aqui.
+
+    A rotacao de 180° produz `cos(pi) = -1` e `sin(pi) = 1.2e-16`, e o offset
+    do `U2` saiu como `-4.40873e-16`. Zero, escrito em notacao cientifica.
+
+    O KiCad aceita-o sem se queixar, e nenhum leitor escrito com `(-?[\d.]+)`
+    — que e como toda a gente escreve — apanha essa linha. Foi assim que os
+    pinos 13 e 14 de um IDC26 sumiram de QUATRO geradores ao mesmo tempo, sem
+    erro, sem aviso, sem ERC; as duas vias que faltavam eram terra.
+
+    0,1 um esta tres ordens de grandeza abaixo de qualquer tolerancia de
+    fabrico, e o `+ 0.0` troca `-0.0` por `0`."""
+    return "%g" % (round(float(v), 4) + 0.0)
+
+
+def abs_do_campo(fx, fy, ang, dx, dy):
+    """Offset do campo (espaco da PECA) -> coordenada absoluta (espaco da PLACA).
+
+    ⚠️ E EXACTAMENTE a transformacao que os pads ja usavam. Ter duas contas
+    para a mesma mudanca de espaco, e so uma delas escrita, foi o defeito:
+    ver o comentario no sitio da chamada."""
+    return (fx + dx * math.cos(ang) + dy * math.sin(ang),
+            fy - dx * math.sin(ang) + dy * math.cos(ang))
+
+
+def campo_do_abs(ang, ex, ey):
+    """A inversa: delta absoluto (PLACA) -> offset a gravar no campo (PECA)."""
+    return (ex * math.cos(ang) - ey * math.sin(ang),
+            ex * math.sin(ang) + ey * math.cos(ang))
 
 
 def main():
@@ -87,20 +119,52 @@ def main():
                          fy - px * math.sin(ang) + py * math.cos(ang),
                          max(sw, sh) / 2))
             meus.append(pads[-1])
-        for sm in re.finditer(r'\(fp_(?:line|rect)\s*\(start (' + NUM + r') ('
+        # ⚠️⚠️ A SERIGRAFIA E FEITA DE SEGMENTOS, NAO DE PONTOS.
+        #
+        # Ate a v0.5.1 isto guardava TRES PONTOS por segmento — inicio, meio e
+        # fim — e o teste comparava distancias a esses pontos. Num contorno de
+        # 41 mm, como o do `J1` do painel, tres amostras deixam vaos de 10 mm
+        # onde o obstaculo e invisivel: a referencia do `C5` ficou a **0,11 mm**
+        # da linha e a ferramenta deu-a por livre. O DRC do KiCad viu-a.
+        #
+        # ⚠️ E o teste certo estava TRES LINHAS ACIMA o tempo todo: as pistas ja
+        # usavam distancia ponto-a-segmento. Mesma ferramenta, dois tipos de
+        # obstaculo, e so um com a conta boa — a §11c desta casa dita para pads
+        # e pistas, e a serigrafia ficou de fora da regra por nao ser cobre.
+        #
+        # ⚠️ E UM `fp_rect` NAO E UMA LINHA. O `(start ...)` e o `(end ...)` sao
+        # cantos OPOSTOS: tratar isso como um segmento testa a DIAGONAL do
+        # rectangulo e ignora as quatro arestas, que sao o obstaculo real.
+        def _ab(px, py):
+            return (fx + px * math.cos(ang) + py * math.sin(ang),
+                    fy - px * math.sin(ang) + py * math.cos(ang))
+
+        for sm in re.finditer(r'\(fp_(line|rect)\s*\(start (' + NUM + r') ('
                               + NUM + r')\)\s*\(end (' + NUM + r') (' + NUM
                               + r')\)[\s\S]{0,200}?\(layer "[FB]\.SilkS', bl):
-            for px, py in ((float(sm.group(1)), float(sm.group(2))),
-                           (float(sm.group(3)), float(sm.group(4))),
-                           ((float(sm.group(1)) + float(sm.group(3))) / 2,
-                            (float(sm.group(2)) + float(sm.group(4))) / 2)):
-                silk.append((fx + px * math.cos(ang) + py * math.sin(ang),
-                             fy - px * math.sin(ang) + py * math.cos(ang)))
+            x1, y1 = float(sm.group(2)), float(sm.group(3))
+            x2, y2 = float(sm.group(4)), float(sm.group(5))
+            if sm.group(1) == "rect":
+                cantos = [(x1, y1), (x2, y1), (x2, y2), (x1, y2)]
+                pares = [(cantos[k], cantos[(k + 1) % 4]) for k in range(4)]
+            else:
+                pares = [((x1, y1), (x2, y2))]
+            for (ax, ay), (bx, by) in pares:
+                A, B = _ab(ax, ay), _ab(bx, by)
+                silk.append((A[0], A[1], B[0], B[1]))
         for sm in re.finditer(r'\(fp_circle\s*\(center (' + NUM + r') (' + NUM
+                              + r')\)\s*\(end (' + NUM + r') (' + NUM
                               + r')\)[\s\S]{0,200}?\(layer "[FB]\.SilkS', bl):
-            px, py = float(sm.group(1)), float(sm.group(2))
-            silk.append((fx + px * math.cos(ang) + py * math.sin(ang),
-                         fy - px * math.sin(ang) + py * math.cos(ang)))
+            cxx, cyy = float(sm.group(1)), float(sm.group(2))
+            r_ = math.hypot(float(sm.group(3)) - cxx, float(sm.group(4)) - cyy)
+            # ⚠️ o circulo entra como poligono de 12 lados: a conta de
+            # ponto-a-segmento ja existe e nao vale a pena um caso especial que
+            # depois ninguem se lembra de manter.
+            pts = [_ab(cxx + r_ * math.cos(k * math.pi / 6),
+                       cyy + r_ * math.sin(k * math.pi / 6)) for k in range(12)]
+            for k in range(12):
+                A, B = pts[k], pts[(k + 1) % 12]
+                silk.append((A[0], A[1], B[0], B[1]))
         pecas.append((i, j, bl, ref, fx, fy, ang, meus))
 
     # ⚠️ o centro da placa serve para decidir "para fora": o texto foge do
@@ -127,7 +191,7 @@ def main():
     else:
         LIM = None
 
-    def livre(x, y, ignora):
+    def livre(x, y, ignora, quem=None):
         if LIM and not (LIM[0] <= x <= LIM[2] and LIM[1] <= y <= LIM[3]):
             return False
         # ⚠️ A ISENCAO DOS PROPRIOS PADS CAIU, e a medicao e que decidiu.
@@ -152,19 +216,50 @@ def main():
             u = 0.0 if L2 == 0 else max(0.0, min(1.0, ((x - a1) * dx + (y - b1) * dy) / L2))
             if math.hypot(x - (a1 + u * dx), y - (b1 + u * dy)) < RAIO_TXT * 0.8:
                 return False
-        for tx, ty in postos:
+        for _r, (tx, ty) in postos.items():
+            if _r == quem:
+                continue      # ⚠️ uma referencia nao colide consigo propria
             if abs(tx - x) < 3.0 and abs(ty - y) < 2.0:
                 return False
         # ⚠️ SEM `ignora` AQUI. Nos pads ignoram-se os da propria peca, porque a
         # referencia por cima do seu proprio pad e o caso normal de um SMD
         # pequeno. Na serigrafia nao ha excepcao: o contorno da propria peca
         # conta como qualquer outro, e era ele o culpado da maioria.
-        for sx, sy in silk:
-            if abs(sx - x) < RAIO_TXT and abs(sy - y) < RAIO_TXT * 0.7:
+        # ⚠️ a MESMA conta das pistas, que e a unica correcta para um segmento.
+        for a1, b1, a2, b2 in silk:
+            dx, dy = a2 - a1, b2 - b1
+            L2 = dx * dx + dy * dy
+            u = 0.0 if L2 == 0 else max(0.0, min(1.0, ((x - a1) * dx + (y - b1) * dy) / L2))
+            if math.hypot(x - (a1 + u * dx), y - (b1 + u * dy)) < RAIO_TXT * 0.7:
                 return False
         return True
 
-    postos, movidos, presos = [], [], []
+    # ⚠️⚠️ TODA REFERENCIA E OBSTACULO DESDE O INICIO, tenha-se movido ou nao.
+    #
+    # Ate a v0.6.0 o `postos` enchia-se A MEDIDA que o laco andava: quem ainda
+    # nao tinha sido visitado era INVISIVEL para quem estava a ser colocado. E
+    # a ordem do laco e a ordem no FICHEIRO, que nao tem relacao nenhuma com a
+    # geometria da placa.
+    #
+    # O resultado medido: o `RV1` foi visitado primeiro, nao viu o `R21`, e
+    # mudou-se para cima dele. Depois o `R21` foi visitado, ja nao tinha sitio
+    # nenhum, e o recuo — "fica onde estava" — devolveu-o para dentro do `RV1`.
+    # A ferramenta anunciou "5 movidas, 6 sem sitio" e tinha CRIADO uma
+    # sobreposicao texto×texto onde nao havia nenhuma.
+    #
+    # ⚠️ E o recuo e que a torna traicoeira: "fica onde estava" soa a nao ter
+    # feito nada, e nao e — e reafirmar uma posicao que entretanto deixou de
+    # estar livre, por causa de uma mudanca da propria ferramenta.
+    #
+    # Com todas as posicoes conhecidas a partida, a ordem deixa de importar.
+    postos = {}
+    for _i, _j, _bl, _ref, _fx, _fy, _ang, _meus in pecas:
+        _m = re.search(r'\(property "Reference" "[^"]+"\s*\n\s*\(at (' + NUM
+                       + r") (" + NUM + r")( " + NUM + r")?\)", _bl)
+        if _m:
+            postos[_ref] = abs_do_campo(_fx, _fy, _ang,
+                                        float(_m.group(1)), float(_m.group(2)))
+    movidos, presos = [], []
     novo = t
     # ⚠️ de tras para a frente: cada substituicao muda os indices dos blocos
     # seguintes, e mexer do fim para o inicio nao os invalida.
@@ -174,8 +269,24 @@ def main():
         if not m:
             continue
         dx, dy = float(m.group(1)), float(m.group(2))
-        if livre(fx + dx, fy + dy, set(meus)):
-            postos.append((fx + dx, fy + dy))
+        # ⚠️⚠️ O `(at ...)` DO CAMPO E RELATIVO AO FOOTPRINT, E RODA COM ELE.
+        #
+        # Ate a v0.4.0 isto fazia `fx + dx, fy + dy` — somava um offset do
+        # espaco da PECA a uma coordenada do espaco da PLACA. Nas pecas a 0°
+        # dava certo por acidente, e nas rodadas punha o texto num sitio que
+        # nao existe: o `U2` (Daisy, 180°) foi avaliado em y=112,66 quando esta
+        # em y=105,46 — **7,2 mm de distancia, do outro lado da peca**.
+        #
+        # ⚠️ E o modo de falhar e o pior que ha: la nao havia nada, logo a
+        # ferramenta disse LIVRE e deu a referencia por arrumada. O DRC do
+        # KiCad, esse, viu `silk_over_copper` entre o campo do U2 e o pad 2.
+        # Uma ferramenta que mede no sitio errado nao reprova nada — aprova
+        # tudo, e com ar de quem verificou.
+        #
+        # Os pads ja usavam esta transformacao (ver acima); so o campo e que
+        # nao. Duas contas para a mesma mudanca de espaco, e so uma foi feita.
+        rx, ry = abs_do_campo(fx, fy, ang, dx, dy)
+        if livre(rx, ry, set(meus), ref):
             continue
         fora_y = 1 if fy >= cy else -1
         fora_x = 1 if fx >= cx else -1
@@ -185,15 +296,36 @@ def main():
                      (d * fora_x, 0), (-d * fora_x, 0),
                      (d * fora_x, d * fora_y), (-d * fora_x, -d * fora_y)]
         for ndx, ndy in cand:
-            if livre(fx + ndx, fy + ndy, set(meus)):
+            if livre(fx + ndx, fy + ndy, set(meus), ref):
+                # ⚠️ E A VOLTA TAMBEM: os candidatos sao deltas no espaco da
+                # PLACA, e o campo grava-se no espaco da PECA. Escrever o delta
+                # cru fazia o KiCad roda-lo outra vez ao desenhar — a peca
+                # acabava com o texto num terceiro sitio, nem onde estava nem
+                # onde a ferramenta o pos. O mesmo erro, na direccao contraria.
+                pdx, pdy = campo_do_abs(ang, ndx, ndy)
                 a, b = m.span(1)[0], m.span(2)[1]
-                novo = novo[:i + a] + ("%g %g" % (ndx, ndy)) + novo[i + b:]
-                postos.append((fx + ndx, fy + ndy))
-                movidos.append((ref, (dx, dy), (ndx, ndy)))
+                novo = novo[:i + a] + ("%s %s" % (num(pdx), num(pdy))) + novo[i + b:]
+                postos[ref] = (fx + ndx, fy + ndy)
+                movidos.append((ref, (dx, dy), (float(num(pdx)), float(num(pdy)))))
                 break
         else:
-            presos.append(ref)
-            postos.append((fx + dx, fy + dy))
+            presos.append(ref)   # fica onde estava; ja esta em `postos`
+
+    # ⚠️ AUTO-TESTE: a ferramenta nao termina tendo CRIADO uma sobreposicao.
+    # Foi assim que o par R21/RV1 apareceu sem ninguem dar por ele — o relatorio
+    # dizia "5 movidas, 6 sem sitio", que soa a trabalho feito.
+    maus = []
+    _it = sorted(postos.items())
+    for _a in range(len(_it)):
+        for _b in range(_a + 1, len(_it)):
+            (r1, (x1, y1)), (r2, (x2, y2)) = _it[_a], _it[_b]
+            if abs(x1 - x2) < 3.0 and abs(y1 - y2) < 2.0:
+                maus.append("%s~%s" % (r1, r2))
+    if maus:
+        print("*** ficaram referencias sobrepostas: %s\n"
+              "    Nada gravado — mover texto nao pode criar o defeito que vem "
+              "arrumar." % " ".join(maus), file=sys.stderr)
+        return 1
 
     print("  %d pecas · %d referencias movidas · %d sem sitio livre"
           % (len(pecas), len(movidos), len(presos)), file=sys.stderr)

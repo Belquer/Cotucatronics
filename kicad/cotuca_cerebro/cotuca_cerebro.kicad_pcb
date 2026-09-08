@@ -3434,7 +3434,7 @@
 		(descr "Terminal Block Phoenix MKDS-1,5-2-5.08, 2 pins, pitch 5.08mm, size 10.2x9.8mm, drill diameter 1.3mm, pad diameter 2.6mm, http://www.farnell.com/datasheets/100425.pdf")
 		(tags "THT Terminal Block Phoenix MKDS-1,5-2-5.08 pitch 5.08mm size 10.2x9.8mm drill 1.3mm pad 2.6mm")
 		(property "Reference" "J2"
-			(at -3.6 -3.6 0)
+			(at -4.8 0 0)
 			(layer "F.SilkS")
 			(uuid "985d0cb6-8b59-46f7-a7b1-2d082b6e9ff6")
 			(effects
@@ -4224,7 +4224,7 @@
 		(descr "CP, Radial series, Radial, pin pitch=2.50mm, diameter=6.3mm, height=7mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 2.50mm diameter 6.3mm height 7mm Electrolytic Capacitor")
 		(property "Reference" "C5"
-			(at -2.6 0 0)
+			(at -2.6 2.6 0)
 			(layer "F.SilkS")
 			(uuid "0ba966da-fba1-4efa-aa84-315695b3ea40")
 			(effects
@@ -8002,7 +8002,7 @@
 		(descr "CP, Radial series, Radial, pin pitch=5.00mm, diameter=10mm, height=16mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 5.00mm diameter 10mm height 16mm Electrolytic Capacitor")
 		(property "Reference" "C6"
-			(at -2.6 0 0)
+			(at -3.6 3.6 0)
 			(layer "F.SilkS")
 			(uuid "8b84e0f9-785a-4902-b314-8db5f3726eaf")
 			(effects
@@ -12256,7 +12256,7 @@
 		(descr "Through hole IDC box header, 2x13, 2.54mm pitch, DIN 41651 / IEC 60603-13, double rows, https://docs.google.com/spreadsheets/d/16SsEcesNF15N3Lb4niX7dcUr-NY5_MFPQhobNuNppn4/edit#gid=0")
 		(tags "Through hole vertical IDC box header THT 2x13 2.54mm double row")
 		(property "Reference" "J14"
-			(at -2.6 0 0)
+			(at 0 -2.6 0)
 			(layer "F.SilkS")
 			(uuid "029bad68-e912-4241-9f2f-88c074e17ad5")
 			(effects
@@ -12850,7 +12850,7 @@
 		(descr "CP, Radial series, Radial, pin pitch=2.50mm, diameter=6.3mm, height=7mm, Electrolytic Capacitor")
 		(tags "CP Radial series Radial pin pitch 2.50mm diameter 6.3mm height 7mm Electrolytic Capacitor")
 		(property "Reference" "C13"
-			(at -2.6 0 0)
+			(at -3.6 0 0)
 			(layer "F.SilkS")
 			(uuid "be755b68-b3b1-4da2-a845-34f9f47ec5b7")
 			(effects
@@ -14850,7 +14850,7 @@
 		(descr "Potentiometer, vertical, Bourns 3296W, https://www.bourns.com/pdfs/3296.pdf")
 		(tags "Potentiometer vertical Bourns 3296W")
 		(property "Reference" "RV1"
-			(at 0 -2.6 0)
+			(at -4.8 -4.8 0)
 			(layer "F.SilkS")
 			(uuid "bbb397c2-7143-419c-a680-f25a681cf5f0")
 			(effects
@@ -20381,7 +20381,7 @@
 		(descr "ESP32-C3 SuperMini em soquete 2x8/15,24. Pads com os NOMES DA SERIGRAFIA do modulo — a pinagem desta placa varia entre fabricantes, e o nome nao se interpreta. USB-C em +x, sai 1 mm.")
 		(tags "ESP32 C3 SuperMini soquete modulo")
 		(property "Reference" "U3"
-			(at 0 -1.6 0)
+			(at 0 1.6 0)
 			(layer "F.SilkS")
 			(uuid "1fe212f8-c5e3-4aff-a0b6-f674e41d2755")
 			(effects
@@ -22903,7 +22903,7 @@
 		(descr "Embedded platform for audio applications. 96kHz / 24-bit audio hardware. 64MB of SDRAM for up to 10 minute long audio. ARM Cortex-M7 MCU, running at 480MHz. 31 total GPIO pins with configurable functionality. 12-bit Digital to Analog Converters (x2). SD card interfaces. PWM outputs. Serial Protocols for connecting external sensors and devices (SPI, UART, I2S, I2C). Dedicated VIN pin for power. Micro USB port, and additional USB pins for full OTG-support as host and device. https://static1.squarespace.com/static/58d03fdc1b10e3bf442567b8/t/6227e6236f02fb68d1577146/1646781988478/Daisy_Seed_datasheet_v1.0.3.pdf")
 		(tags "Electrosmith Daisy Seed Microcontroller Module ARM Cortex-M7 Audio Codec")
 		(property "Reference" "U2"
-			(at 0 3.6 0)
+			(at -2.6 -2.6 0)
 			(layer "F.SilkS")
 			(uuid "2a43ab95-80dd-4d77-9fec-92f89fb756c4")
 			(effects
@@ -23661,7 +23661,7 @@
 		(uuid "fc8152f6-7e8b-497a-83ca-f45213bac448")
 	)
 	(gr_text "cerebro rev B"
-		(at 82 27 0)
+		(at 87 27 0)
 		(layer "B.SilkS")
 		(uuid "362408ea-73f9-4b27-8da2-7075b778a493")
 		(effects

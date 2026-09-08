@@ -9710,3 +9710,97 @@ copiava o corpo do emissor `nao_liga()` em vez de o chamar. Quando o `uuid`
 passou a ter chave, só o original a recebeu — a cópia ficou para trás. **Cópia
 de emissor sobrevive em silêncio às mudanças do original**, e só se vê quando o
 original muda de forma.
+
+## 15ee — o `arruma_silk` media o texto 7,2 mm ao lado de onde ele está
+
+Corri a `design-review` na serigrafia e pus dois verificadores a responder à
+mesma pergunta. Discordaram: o `svg_colisoes` dizia **0 texto×texto** e o DRC
+do KiCad dizia **9 `silk_overlap`**. Fui medir porquê, e a discordância era o
+fio de que estava pendurado o resto.
+
+Os nove eram a referência sobre o contorno da **própria peça** — convenção, não
+defeito. Mas duas linhas não eram, e uma delas destapou **quatro** defeitos no
+`arruma_silk`, todos da mesma família: *a conta certa existia no ficheiro e não
+foi aplicada onde devia*.
+
+**Um — o campo não rodava com a peça.** O `(at ...)` do `Reference` é relativo
+ao footprint. O código fazia `fx + dx, fy + dy`: somava um offset do espaço da
+**peça** a uma coordenada do espaço da **placa**. Nas peças a 0° dava certo por
+acidente; nas rodadas não. O `U2` (Daisy, 180°) foi avaliado em `y=112,66`
+quando está em `y=105,46` — **7,2 mm, do outro lado da peça.**
+
+> **E o modo de falhar é o pior que há: lá não havia nada.** A ferramenta disse
+> *livre* e deu a referência por arrumada. Uma ferramenta que mede no sítio
+> errado não reprova nada — **aprova tudo, e com ar de quem verificou.**
+
+Os pads já usavam a transformação de rotação, três linhas acima. Duas contas
+para a mesma mudança de espaço, e só uma feita.
+
+**Dois — a volta tinha o erro espelhado.** Os candidatos são deltas no espaço
+da placa e o campo grava-se no espaço da peça. Escrever o delta cru fazia o
+KiCad rodá-lo outra vez ao desenhar: a peça acabaria com o texto num
+**terceiro** sítio, nem onde estava nem onde a ferramenta o pôs.
+
+**Três — `cos(π)` e `sin(π)`.** O offset do `U2` saiu `-4,40873e-16`. É a §2b
+outra vez, num sítio novo: zero em notação científica, que o KiCad aceita e que
+nenhum leitor escrito com `(-?[\d.]+)` apanha. Parei antes de gravar.
+
+**Quatro — a serigrafia entrava como PONTOS.** Guardava três amostras por
+segmento (início, meio, fim) e comparava distâncias a esses pontos. No contorno
+do `J1` do painel, com 41 mm, isso deixa vãos de 10 mm: a referência do `C5`
+ficou a **0,11 mm** da linha e passou. E o teste correcto — distância
+ponto-a-segmento — estava três linhas acima, nas pistas. A §11c manda olhar
+pads **e** pistas; a serigrafia ficou de fora da regra por não ser cobre.
+
+⚠️ E um `fp_rect` não é uma linha: `start` e `end` são cantos **opostos**, logo
+o "segmento" testado era a **diagonal** e as quatro arestas eram invisíveis.
+
+## 15ef — o recuo «fica onde estava» criou a colisão que a ferramenta vinha arrumar
+
+Consertados os quatro, a ferramenta moveu cinco referências e anunciou *"5
+movidas, 6 sem sítio"*. O portão da `design-review`, corrido a seguir, disse
+**texto×texto: 1** — onde antes eram **0**. O DRC concordou: `R21` e `RV1` a
+0,7 mm.
+
+O `postos` — a lista de referências já colocadas — **enchia-se à medida que o
+laço andava**. Quem ainda não tinha sido visitado era invisível. E a ordem do
+laço é a ordem no **ficheiro**, que não tem relação nenhuma com a geometria.
+
+```
+RV1 visitado primeiro → não vê R21 → muda-se para cima dele
+R21 visitado depois   → já não há sítio → "fica onde estava" → dentro do RV1
+```
+
+> **«Fica onde estava» soa a não ter feito nada, e não é:** é reafirmar uma
+> posição que entretanto deixou de estar livre, por causa de uma mudança da
+> própria ferramenta. O recuo seguro tornou-se o mecanismo do defeito.
+
+Conserto na raiz: **todas** as posições entram no `postos` antes do laço
+começar, e a ordem deixa de importar. Mais um auto-teste no fim — se ficarem
+duas referências sobrepostas, **não grava** e diz. Mover texto não pode criar o
+defeito que vem arrumar.
+
+## 15eg — medir a cópia noutra pasta mede outras regras
+
+A regra de aceitação desta casa é comparar o perfil **antes → depois**. Fi-lo
+sobre uma cópia da placa no scratchpad, e o perfil acusou `track_width` a subir
+de **0 para 8** e `lib_footprint_issues` de 0 para 1.
+
+O `arruma_silk` só mexe em texto de serigrafia. Não pode mudar larguras de
+pista. O que mudou não foi a placa — foi **onde eu a medi**: o KiCad encontra o
+`.kicad_pro` pelo **nome do ficheiro**, e uma cópia chamada `_teste_x.kicad_pcb`
+não tem projecto nenhum, logo cai nas regras por omissão.
+
+> **Uma comparação antes/depois só vale se os dois lados forem medidos no mesmo
+> contexto.** Medi o "antes" no sítio real e o "depois" numa cópia, e chamei
+> "regressão" à diferença entre dois ambientes.
+
+⚠️ **E a armadilha tem duas faces.** Primeiro quase declarei uma regressão que
+não existia. Depois, ao medir os dois lados na cópia, o `track_width 8 → 8`
+ficava lá — verdadeiro *dentro daquele contexto* e falso sobre a placa. A
+comparação era válida; **os números absolutos não eram.** Um número certo para
+comparar e errado para citar.
+
+**O que fica:** a cópia de teste vive na pasta do projecto **e com o nome que
+casa com o `.kicad_pro`** — ou então mede-se o antes e o depois exactamente no
+mesmo sítio, e só se lê a diferença, nunca o valor.
