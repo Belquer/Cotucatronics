@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.16.1"
+VERSAO = "0.18.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -158,12 +158,40 @@ COLOCA = {
     # ⚠️ os TP no vao entre o J2 (acaba a ~80) e o RV1 (comeca a ~132), na
     # maior faixa livre do painel: 163,8 mm em y=27,5.
     **{f"TP{i + 1}": (90.0 + 6.0 * i, 27.5, 0) for i in range(5)},
-    "J1":  (26.0, 24.0, 90),
-    "J2":  (68.0, 24.0, 0),
-    "J3":  (26.0, 34.0, 0),     "J4":  (38.0, 34.0, 0),   "J5":  (50.0, 34.0, 0),
+    # ⚠️⚠️ O J1 DESCEU 2,75 E ANDOU 0,5 PARA A DIREITA, e a razao e o CORPO.
+    #
+    # O courtyard do IDC 2x13 femea tem 9,89 mm de altura e esta centrado na
+    # linha media das duas filas de pads — ou seja, o plastico sai 4,95 mm
+    # para cada lado dos pinos. Com o J1 em y=24 isso punha o corpo em
+    # y=17,79, **2,83 mm fora do contorno** (o bordo de cima e 20,00): o
+    # conector nao entrava na placa. E o bordo ESQUERDO dele estava a 0,41.
+    #
+    # O DRC nao disse nada e nao estava a mentir: **o KiCad nao confere
+    # courtyard contra `Edge.Cuts`**, nao ha regra dessas por omissao. Quem
+    # respondeu foi o `dentro_do_contorno.py`, e quem perguntou foi uma
+    # imagem da placa. E o pad nao servia de medida — os 26 estavam todos
+    # dentro; o que saia era o corpo.
+    #
+    # A descida obrigou a cascata abaixo, com 0,5 entre courtyards:
+    #   C5  30,00 -> 31,95   (colado ao IDC, vai com ele)
+    #   J3/J4/J5  34,0 -> 36,3   (movem-se os TRES: fila desalinhada le-se
+    #                             como acidente por quem monta tres iguais)
+    #   R1/R2     40,0 -> 41,7
+    # Sobra 0,60 mm ate ao bordo de baixo, no C3. Nao ha mais.
+    # ⚠️ E O CANTO E ARREDONDADO. Com o J1 em x=26,5 o topo do courtyard
+    # ficava a 20,535 (bordo 20,00, folga 0,535 — passa) e MESMO ASSIM saia
+    # da placa: o canto superior esquerdo tem raio 3, e o vertice
+    # (20,905 · 20,535) cai fora do arco. Uma caixa envolvente teria dito
+    # que estava bom; e por isso que o `dentro_do_contorno` mede vertice a
+    # vertice contra o POLIGONO e nao contra um rectangulo.
+    # x=29,4 poe o courtyard a comecar em 23,805, ja fora do arco (que so
+    # existe ate x=23). O J2 anda 0,5 para dar folga de 1,03 entre os dois.
+    "J1":  (29.4, 26.75, 90),
+    "J2":  (68.5, 24.0, 0),
+    "J3":  (26.0, 36.3, 0),     "J4":  (38.0, 36.3, 0),   "J5":  (50.0, 36.3, 0),
     "J6":  (26.0, 46.0, 0),     "J7":  (38.0, 46.0, 0),
     "Q1":  (52.0, 46.0, 0),     "Q2":  (64.0, 46.0, 0),
-    "R1":  (52.0, 40.0, 0),     "R2":  (64.0, 40.0, 0),
+    "R1":  (52.0, 41.7, 0),     "R2":  (64.0, 41.7, 0),
     "R3":  (76.0, 40.0, 0),     "R4":  (88.0, 40.0, 0),
     "R5":  (76.0, 46.0, 0),     "R6":  (88.0, 46.0, 0),
     # C1/C2 COLADOS ao cursor: 6 mm do pino 2 de cada pot, do lado livre.
@@ -171,12 +199,10 @@ COLOCA = {
     # ⚠️ o par do +5V vai JUNTO AOS MOSFET, que sao a carga que comuta — nao ao
     # OLED, que tem os dele. O C5 colado ao IDC, onde o +3V3A entra e de onde
     # saem 150 mm de fita.
-    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),   "C5":  (26.0, 30.0, 0),
-    # ⚠️ o par do +5V vai JUNTO AOS MOSFET, que sao a carga que comuta — nao
-    # junto ao OLED, que tem os dele. E o C5 colado ao IDC, que e onde o
-    # +3V3A entra e por onde saem 150 mm de fita.
-    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),
-    "C5":  (26.0, 30.0, 0),
+    # ⚠️ estas tres linhas estavam DUAS VEZES no dicionario, com o mesmo
+    # comentario reescrito. Valores iguais, logo ninguem reparou — e no dia em
+    # que so a primeira fosse actualizada, a segunda calava-a sem um erro.
+    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),   "C5":  (26.0, 31.95, 0),
  },
 }
 

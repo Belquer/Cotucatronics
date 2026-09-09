@@ -1912,28 +1912,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "N3793-6002RB"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "LCSC"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 90.17 119.38 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -2361,28 +2339,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "53047-0710"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "LCSC"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 209.55 59.69 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -2404,12 +2360,12 @@
 		(stroke (width 0) (type default))
 		(uuid "947706d4-0c76-585d-9c87-93e1f817756d")
 	)
-	(global_label "GND"
+	(global_label "OLED_RST"
 		(shape bidirectional)
 		(at 191.77 50.8 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "773d056e-c6ff-5736-88e7-8b2e079706d0")
+		(uuid "480f977b-18cd-55c1-80e7-5faafae9f669")
 	)
 	(wire
 		(pts
@@ -2418,12 +2374,12 @@
 		(stroke (width 0) (type default))
 		(uuid "979ea29a-4185-56c3-b2cd-19613e9fbba1")
 	)
-	(global_label "+5V"
+	(global_label "OLED_DC"
 		(shape bidirectional)
 		(at 191.77 53.34 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "d0d1782f-8483-5810-a03c-63932df8fba3")
+		(uuid "342e6e90-1386-5881-83a6-effd4d9ad473")
 	)
 	(wire
 		(pts
@@ -2432,12 +2388,12 @@
 		(stroke (width 0) (type default))
 		(uuid "f4f38b41-aed3-5bcb-a0e4-916e8968cd68")
 	)
-	(global_label "OLED_CLK"
+	(global_label "OLED_CS"
 		(shape bidirectional)
 		(at 191.77 55.88 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "ed960933-4a64-5a7f-b57c-5b74577fa14b")
+		(uuid "28ee2aba-b49f-54e8-b21c-65711ed3b0aa")
 	)
 	(wire
 		(pts
@@ -2446,12 +2402,12 @@
 		(stroke (width 0) (type default))
 		(uuid "9d5900af-6770-5640-8569-895b9df75a04")
 	)
-	(global_label "OLED_DIN"
+	(global_label "OLED_CLK"
 		(shape bidirectional)
 		(at 191.77 58.42 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "d9292b71-4ee8-5b36-b44d-4837336871cf")
+		(uuid "0fe831a7-6dff-5184-8095-006e19da44e1")
 	)
 	(wire
 		(pts
@@ -2460,12 +2416,12 @@
 		(stroke (width 0) (type default))
 		(uuid "1f96070b-c5d5-5449-bb69-23b1ff45216d")
 	)
-	(global_label "OLED_CS"
+	(global_label "OLED_DIN"
 		(shape bidirectional)
 		(at 191.77 60.96 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "72595329-9df3-5e2c-a746-e25db0e9f241")
+		(uuid "b2c50f5c-d9bf-5405-b168-a54f9e6a1bf7")
 	)
 	(wire
 		(pts
@@ -2474,12 +2430,12 @@
 		(stroke (width 0) (type default))
 		(uuid "dde7273c-73be-5c6c-bb2d-b4daf22cc79a")
 	)
-	(global_label "OLED_DC"
+	(global_label "GND"
 		(shape bidirectional)
 		(at 191.77 63.5 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "c74686f9-6810-5f12-ac0f-af75ee4566c6")
+		(uuid "0e712657-269d-5a24-a185-ca09187ed891")
 	)
 	(wire
 		(pts
@@ -2488,12 +2444,12 @@
 		(stroke (width 0) (type default))
 		(uuid "b301034b-8626-58e5-8841-ba0e77435138")
 	)
-	(global_label "OLED_RST"
+	(global_label "+5V"
 		(shape bidirectional)
 		(at 191.77 66.04 180)
 		(fields_autoplaced yes)
 		(effects (font (size 1.27 1.27)) (justify right))
-		(uuid "83e01d53-4253-53e4-88bd-ab845d415f82")
+		(uuid "a039276c-5de6-5538-b3d3-d75082df1b98")
 	)
 	(text "OLED a 5 V, e nao a 3V3 — decidido a 05/09. O modulo Waveshare aceita"
 		(exclude_from_sim no)
@@ -2549,28 +2505,6 @@
 			(at 209.55 119.38 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "EC11E15244G1"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "LCSC C370970"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 209.55 119.38 0)
@@ -2698,28 +2632,6 @@
 			(at 209.55 175.26 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "PTV09A-1020S-B103"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "distribuidor"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 209.55 175.26 0)
@@ -2880,28 +2792,6 @@
 			(at 209.55 214.63 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "PTV09A-1020S-B103"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "distribuidor"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 209.55 214.63 0)
@@ -3087,17 +2977,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "B2B-XH-A"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 85.09 250.19 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3170,17 +3049,6 @@
 			(at 85.09 270.51 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "B2B-XH-A"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 85.09 270.51 0)
@@ -3255,17 +3123,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "B2B-XH-A"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 85.09 289.56 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3338,28 +3195,6 @@
 			(at 240.03 284.48 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "EEU-FR1C101"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "LCSC"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 240.03 284.48 0)
@@ -3744,28 +3579,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "AO3400A"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "LCSC C20917"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 175.26 250.19 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -3852,17 +3665,6 @@
 			(at 175.26 224.79 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "B2B-XH-A"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 175.26 224.79 0)
@@ -4156,28 +3958,6 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "AO3400A"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
-		(property "Fornecedor" "LCSC C20917"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
-		)
 		(property "Description" ""
 			(at 175.26 312.42 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -4264,17 +4044,6 @@
 			(at 175.26 287.02 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
-		)
-		(property "MPN" "B2B-XH-A"
-			(at 0 0 0)
-			(hide yes)
-			(show_name no)
-			(do_not_autoplace no)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-			)
 		)
 		(property "Description" ""
 			(at 175.26 287.02 0)

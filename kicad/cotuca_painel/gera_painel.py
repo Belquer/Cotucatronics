@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_painel v0.13.0 — o projecto do PAINEL (tampa da caixa).
+"""gera_painel v0.14.0 — o projecto do PAINEL (tampa da caixa).
 
 Segunda placa. A primeira e `cotuca_cerebro`, e o CONTRATO entre as duas e o
 IDC 2x13: **o mesmo nome de rede dos dois lados, via a via**.
@@ -16,7 +16,7 @@ o ERC nao apanha uma grafia trocada: so a comparacao apanha.
 chega pelo IDC. A separacao AGND/GND vive no cerebro, no net-tie, e nao
 atravessa este cabo.
 """
-import io, re, sys, uuid
+import io, os, re, sys, uuid
 
 # ⚠️ SAO DOIS MOSFET PARA TRES BOTOES, E ESTA CERTO.
 #
@@ -39,7 +39,7 @@ import io, re, sys, uuid
 # do ADC (8 e 10), o par de retorno dos LED (13 e 14, que valeram 6 dB de
 # chao) e os retornos dos pots (23 e 26).
 
-VERSAO = "0.13.0"
+VERSAO = "0.16.0"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -97,7 +97,12 @@ def u(chave):
 def g(v): return round(round(v / G) * G, 4)
 L = []
 USADOS = set()   # preenchido por simbolo(); NUNCA escrito a mao
-LIB = "../cotuca_cerebro/cotuca.kicad_sym"
+# ⚠️ RELATIVO AO PROPRIO FICHEIRO, nao ao cwd. Era `"../cotuca_cerebro/..."`
+# cru, e por isso este gerador so corria de dentro da pasta dele: de
+# qualquer outro sitio rebentava com FileNotFoundError. Skill /kicad §8.
+AQUI = os.path.dirname(os.path.abspath(__file__))
+LIB = os.path.join(AQUI, "..", "cotuca_cerebro", "cotuca.kicad_sym")
+SAIDA = os.path.join(AQUI, "cotuca_painel.kicad_sch")
 
 def pinos_de(nome):
     import re as _re
@@ -250,10 +255,40 @@ def nota(x, y, *linhas, tam=1.6, passo=3.81):
 
 
 def liga(lib, ref, x, y, mapa, val="", ry=-7.62, vy=7.62, comp=10.16):
-    """Coloca e liga cada pino a um rotulo global. `mapa` = {numero: rotulo}."""
+    """Coloca e liga cada pino a um rotulo global. `mapa` = {numero: rotulo}.
+
+    ⚠️⚠️ A GUARDA DOS DOIS LADOS, e ela existe por causa do encoder.
+
+    Ate 08/09 isto dizia `if n not in mapa: continue` e mais nada. Um pino do
+    simbolo que faltasse no mapa ficava por ligar; uma chave do mapa que nao
+    correspondesse a pino nenhum era deitada fora. Nos DOIS casos, em silencio,
+    e o gerador anunciava "219 blocos" como se estivesse tudo feito.
+
+    Foi assim que o `SW1` saiu com os cinco pinos no ar: o simbolo passou a ter
+    pinos `A C B S1 S2` e este ficheiro continuou a dizer `"1".."5"`. Cinco
+    chaves que nao batiam com nada, cinco pinos sem fio, zero avisos.
+
+    Agora: todo pino do simbolo TEM de estar no mapa, e toda chave do mapa TEM
+    de ser um pino. Um pino de proposito no ar declara-se com `None`."""
+    pinos = list(pinos_de(lib))
+    nomes = {n for n, _, _ in pinos}
+    if not pinos:
+        raise SystemExit("*** %s: o simbolo `%s` nao deu pino nenhum — leitura "
+                         "incompleta, nada a jusante e confiavel." % (ref, lib))
+    faltam = sorted(nomes - set(mapa))
+    sobram = sorted(set(mapa) - nomes)
+    if faltam or sobram:
+        raise SystemExit(
+            "*** %s (%s): o mapa e os pinos do simbolo nao batem.\n"
+            "    pinos do simbolo sem entrada no mapa: %s\n"
+            "    entradas do mapa que nao sao pinos:   %s\n"
+            "    (o simbolo tem: %s)\n"
+            "    Um pino que fique no ar de proposito escreve-se `None`."
+            % (ref, lib, faltam or "nenhum", sobram or "nenhum",
+               ", ".join(sorted(nomes))))
     simbolo(lib, ref, val, x, y, ry, vy)
-    for n, px, py in pinos_de(lib):
-        if n not in mapa: continue
+    for n, px, py in pinos:
+        if mapa[n] is None: continue
         ax, ay = g(x) + px, g(y) - py
         esq = px < 0
         dx = -comp if esq else comp
@@ -275,9 +310,29 @@ nota(55.0, 84.4,
      "a outra. O ERC nao apanha uma grafia trocada: rotulo global sozinho e legal.")
 
 # ------------------------------------------------------------------ OLED
+# ⚠️⚠️ A ORDEM E DO MODULO, NAO NOSSA — e ate 08/09 nao era.
+#
+# FONTE: pagina do produto Waveshare "2.42inch OLED Display Module, 128x64,
+# SPI/I2C, White", seccao "Control Interface", tabela e serigrafia do modulo:
+#
+#     1 RST · 2 DC · 3 CS · 4 CLK · 5 DIN · 6 GND · 7 VCC (3,3 ou 5 V)
+#
+# O que estava aqui era `1 GND · 2 +5V · 3 CLK · 4 DIN · 5 CS · 6 DC · 7 RST`,
+# escrito sem ficha porque o modulo nao estava em mao. Com um cabo PicoBlade
+# DIRECTO (1-1, que e o que qualquer pessoa compra) isso punha **os nossos
+# +5 V no pino DC do modulo** e o nosso RST no VCC dele. Com um cabo invertido
+# punha os +5 V no GND — curto do trilho. **Nenhuma das duas orientacoes de
+# cabo funcionava**, e CLK/DIN ficavam trocados nas duas.
+#
+# ⚠️ E nada disto aparecia em lado nenhum: o ERC, o DRC, o `funcao_dos_pads`
+# e as 26 vias do IDC ficam todos limpos com um conector de 7 pinos ligado
+# pela ordem errada. E um contrato com uma peca de OUTRA pessoa, e o unico
+# arbitro e a ficha dela.
+#
+# Os 5 V ficam (decisao de 05/09, e a ficha confirma "3.3V / 5V input").
 liga("CONN7_L", "J2", 210.0, 60.0,
-     {"1":"GND", "2":"+5V", "3":"OLED_CLK", "4":"OLED_DIN",
-      "5":"OLED_CS", "6":"OLED_DC", "7":"OLED_RST"}, "OLED SSD1309 MX1.25 7p")
+     {"1":"OLED_RST", "2":"OLED_DC", "3":"OLED_CS", "4":"OLED_CLK",
+      "5":"OLED_DIN", "6":"GND", "7":"+5V"}, "OLED SSD1309 MX1.25 7p")
 nota(175.0, 36.2,
      "OLED a 5 V, e nao a 3V3 — decidido a 05/09. O modulo Waveshare aceita",
      "3,3 ou 5 V (tem tradutor de nivel a bordo), e tira-lo do trilho de 3V3",
@@ -286,7 +341,13 @@ nota(175.0, 36.2,
 
 # --------------------------------------------------------------- encoder
 liga("EC11", "SW1", 210.0, 120.0,
-     {"1":"ENC_A_A", "2":"GND", "3":"ENC_A_B", "4":"ENC_A_PUSH", "5":"GND"},
+     # ⚠️ POR NOME DE PINO, nao por "1".."5". O conserto C4 (08/09) renumerou
+     # o EC11 para os nomes dos pads do footprint — A C B S1 S2 — porque um
+     # simbolo com pinos 1..5 casado com um footprint cujos pads tem funcao
+     # fixa da netlist certa e funcao errada. O simbolo mudou e ESTE mapa nao,
+     # e como o `liga()` saltava o que nao reconhecia, os CINCO pinos ficaram
+     # no ar sem uma linha de aviso. Ver a guarda no `liga()`.
+     {"A":"ENC_A_A", "C":"GND", "B":"ENC_A_B", "S1":"ENC_A_PUSH", "S2":"GND"},
      "EC11 — o unico encoder")
 nota(175.0, 99.2,
      "ENCODER — comum (C) e um pino do push ao GND. E o UNICO desde 05/09:",
@@ -361,7 +422,15 @@ for i, (canal, sinal, y) in enumerate((("A", "LED_FRZ_A", 250.0), ("B", "LED_FRZ
     # acima, que e onde ela e lida antes de alguem decidir omitir o resistor.
     liga("R_V", f"R{i+3}", QX - 15.24, y + 16.51, {"1":f"GATE_{canal}", "2":"GND"},
          "10k pull-down")
-    liga("MOSFET_N", f"Q{i+1}", QX, y, {"1":f"GATE_{canal}", "2":f"LED_K_{canal}", "3":"GND"},
+    # ⚠️ 2 E A FONTE E 3 E O DRENO. FICHA: AO3400A, SOT-23 vista de cima —
+    # 1 G · 2 S · 3 D. Ate 08/09 este mapa dizia `2: LED_K, 3: GND`, porque
+    # foi escrito quando o simbolo `MOSFET_N` tinha o dreno no 2. O conserto
+    # C2 trocou os NUMEROS no simbolo e este mapa nao soube.
+    # ⚠️ E a guarda de chaves do `liga()` NAO podia apanhar isto: as chaves
+    # continuam a ser 1, 2, 3 e continuam todas a existir. O que mudou foi o
+    # SIGNIFICADO de cada numero, e significado so o `funcao_dos_pads` ve.
+    # Trocados, o diodo de corpo do MOSFET acende o LED sempre.
+    liga("MOSFET_N", f"Q{i+1}", QX, y, {"1":f"GATE_{canal}", "2":"GND", "3":f"LED_K_{canal}"},
          "AO3400A")
     # tambem CONECTOR: o LED vive DENTRO do botao de painel. Pino 1 = anodo,
     # pino 2 = catodo — a polaridade tem de ir ao silk, que um header nao diz.
@@ -472,9 +541,9 @@ CAB = f'''(kicad_sch
 \t\t(comment 1 "Pull-down de 10k no gate dos MOSFET: obrigatorio, nao opcional.")
 \t)
 {lib_embutida()}'''
-io.open("cotuca_painel.kicad_sch", "w", encoding="utf-8").write(
+io.open(SAIDA, "w", encoding="utf-8").write(
     CAB + "".join(L) + '\t(sheet_instances\n\t\t(path "/" (page "1"))\n\t)\n\t(embedded_fonts no)\n)\n')
 print("gera_painel v%s -> cotuca_painel.kicad_sch: %d blocos"
       % (VERSAO, len(L)), file=sys.stderr)
-print("  lib_symbols coerente: " + str(_confere_lib("cotuca_painel.kicad_sch")) + " simbolos",
+print("  lib_symbols coerente: " + str(_confere_lib(SAIDA)) + " simbolos",
       file=sys.stderr)

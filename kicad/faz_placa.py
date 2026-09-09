@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.15.0"
+VERSAO = "0.16.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -119,6 +119,26 @@ def uma(nome, zerar):
     if zerar:
         s, v = zera(pcb)
         print("  0. cobre apagado: %d pistas, %d vias" % (s, v))
+    # ⚠️⚠️ O ESQUEMA ENTRA AQUI, E ATE 08/09 NAO ENTRAVA EM LADO NENHUM.
+    #
+    # O `sincroniza_pcb.py` existe desde sempre para fazer o que o F8 do
+    # KiCad faz — pecas e redes do esquema para a placa — e a skill
+    # /kicad_layout diz que "o F8 deixa de ser um passo do processo".
+    # Mas **nenhum ficheiro do repositorio o chamava**. A cadeia inteira
+    # ia do esquema ao Gerber sem nunca ler o esquema; quem corresse
+    # `faz_placa` depois de mexer numa folha obtinha a placa VELHA,
+    # roteada na perfeicao, com zero avisos.
+    #
+    # Apanhado ao consertar a ordem dos pinos do OLED: o esquema ficou
+    # certo, o ERC deu 0, a placa continuou com os +5 V no pino errado.
+    #
+    # Vai ANTES do `pcb_contorno` porque quem coloca e o contorno: uma
+    # peca que o sincronismo acrescente tem de existir para ser colocada.
+    rsync = py("sincroniza_pcb.py", nome)
+    print("\n".join("  " + l for l in rsync.stdout.strip().splitlines() if l.strip()))
+    if rsync.returncode:
+        raise SystemExit("*** sincroniza_pcb falhou:\n"
+                         + (rsync.stderr or rsync.stdout))
     r = py("pcb_contorno.py", nome)
     if r.returncode:
         raise SystemExit("*** pcb_contorno falhou:\n" + (r.stderr or r.stdout))

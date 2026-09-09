@@ -32,7 +32,7 @@ renomeacao e diz exactamente o que interessa: quem esta ligado a quem.
 Nomes literais so para redes que sao decisao humana e nao mudam: `GND`, `+5V`.
 """
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 
 import io
 import os
@@ -50,6 +50,23 @@ FICHA = {
                        "ficha AO3400A, SOT-23 top view"),
     ("painel", "Q2"): ("AO3400A", {"1": "G", "2": "S", "3": "D"},
                        "ficha AO3400A, SOT-23 top view"),
+    # ⚠️⚠️ UM CONECTOR TAMBEM TEM FICHA, e a ficha e da peca do OUTRO lado.
+    #
+    # O J2 e um PicoBlade de 7 vias: sete pads iguais, sem polaridade, sem
+    # nada no cobre que diga o que cada um faz. A funcao dele nao esta na
+    # nossa placa — esta no MODULO que la se liga, e um cabo directo (1-1, o
+    # que qualquer pessoa compra) faz de cada posicao um contrato.
+    #
+    # FONTE: pagina do produto Waveshare "2.42inch OLED Display Module,
+    # 128x64, SPI/I2C, White", seccao "Control Interface" (tabela + serigrafia
+    # do modulo). Ate 08/09 a nossa ordem era `GND +5V CLK DIN CS DC RST`,
+    # escrita sem ficha: punha os nossos +5 V no pino DC do modulo com cabo
+    # directo, e no GND dele com cabo invertido. ERC, DRC, netlist e as 26
+    # vias do IDC ficavam TODOS limpos.
+    ("painel", "J2"): ("Waveshare 2.42in OLED SSD1309",
+                       {"1": "RST", "2": "DC", "3": "CS", "4": "CLK",
+                        "5": "DIN", "6": "GND", "7": "VCC"},
+                       "ficha Waveshare 2.42in OLED, Control Interface"),
     ("cerebro", "D1"): ("SMBJ24A", {"1": "K", "2": "A"},
                         "D_SMB: pad 1 e o catodo (faixa do silk)"),
     ("cerebro", "D2"): ("SS14", {"1": "K", "2": "A"},
@@ -97,6 +114,14 @@ CONTRATO = {
  "painel": [
     # ⚠️ C2 — o MOSFET e interruptor de lado BAIXO: fonte na terra, dreno no
     # catodo do LED. Trocados, o diodo de corpo acende o LED sempre.
+    # o contrato do OLED: cada posicao contra a ficha do modulo (ver FICHA)
+    ("=", "J2.1", "OLED_RST", "posicao 1 do modulo e RST"),
+    ("=", "J2.2", "OLED_DC",  "posicao 2 do modulo e DC"),
+    ("=", "J2.3", "OLED_CS",  "posicao 3 do modulo e CS"),
+    ("=", "J2.4", "OLED_CLK", "posicao 4 do modulo e CLK"),
+    ("=", "J2.5", "OLED_DIN", "posicao 5 do modulo e DIN"),
+    ("=", "J2.6", "GND",      "posicao 6 do modulo e GND"),
+    ("=", "J2.7", "+5V",      "posicao 7 do modulo e VCC (3,3 ou 5 V)"),
     ("=", "Q1.2", "GND", "fonte do AO3400A na terra"),
     ("=", "Q1.3", "LED_K_A", "dreno do AO3400A no catodo do LED"),
     ("=", "Q1.1", "GATE_A", "porta"),

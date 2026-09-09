@@ -66,3 +66,6 @@ kicad/analysis/
 # a afirmar o contrario do que e verdade, para sempre. O indice vivo e o
 # `docs/datasheets/README.md`, gerado.
 docs/datasheets/manifest.json
+# ambiente da rev C: o venv do `kipy` reinstala-se com uma linha, e traz
+# milhares de ficheiros binarios que nao sao deste projecto.
+kicad/_v2/venv/
