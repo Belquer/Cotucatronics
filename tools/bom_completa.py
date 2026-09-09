@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bom_completa v0.1.0 — a BOM do instrumento inteiro, gerada dos esquemas.
+"""bom_completa v0.8.0 — a BOM do instrumento inteiro, gerada dos esquemas.
 
 POR QUE E GERADA, e nao escrita a mao.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_simbolos v0.9.0 — os simbolos que faltavam para a folha do soquete.
+"""gera_simbolos v0.12.0 — os simbolos que faltavam para a folha do soquete.
 
 Emite, para juntar a `cotuca.kicad_sym`:
   NETTIE2   a ponte AGND<->GND. Duas redes no ERC, uma ligacao de cobre.

@@ -53,7 +53,7 @@ USO:  roteia.py --auto-teste            # interroga a regra de aceitacao
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.17.0"
+VERSAO = "1.18.0"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
@@ -80,7 +80,31 @@ KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # qual delas tinha feito o estrago. Uma variavel de cada vez, mesmo quando
 # parece obvio que andam juntas.
 FOLGA = 0.35            # entre a pista e o que nao e dela (regra da placa: 0,20)
-PASSO = 0.25            # mm por celula
+
+# ⚠️⚠️ O PASSO TEM DE DIVIDIR 1,27 — e isto custou tres redes e meia sessao.
+#
+# A saida de um pad da fila DE TRAS de um header de 2,54 passa entre dois pads
+# da fila da frente, e o unico sitio onde cabe e o MEIO exacto do vao: com pads
+# de 1,70 e folga de 0,22, o centro da pista tem 1,270 - 0,85 - 0,125 - 0,22 =
+# **0,075 mm** de tolerancia, para cada lado. E o meio do vao esta a 1,27 do
+# centro do pad.
+#
+# Uma malha de 0,25 nao tem no nenhum a 1,27 de um pad: 1,27/0,25 = 5,08. O
+# no mais proximo cai a 0,02..0,12 do centro, e mais de metade das vezes fora
+# da tolerancia. **O roteador nunca conseguiu, em placa nenhuma, tirar um sinal
+# da fila de tras de um IDC** — e nao se queixou: devolveu "fica para a pessoa",
+# que e exactamente o que devolve quando a placa esta mesmo cheia. Um numero
+# certo a esconder uma causa errada.
+#
+# Medido a 08/09 no painel, as tres redes que nem o FreeRouting fechava:
+#
+#     passo 0,25    (1,27/5,08)   0 de 3       <- o que estava ca
+#     passo 0,125   (1,27/10,16)  0 de 3       <- errar por 0,002 basta
+#     passo 0,127   (1,27/10)     0 de 3       <- divide, mas so 10 nos
+#     passo 0,0635  (1,27/20)     2 de 3, e 3 de 3 em placa vazia
+#
+# O preco e a busca: 16x as celulas de 0,25. Paga-se, e o TECTO sobe com ela.
+PASSO = 0.0635          # mm por celula — 1,27/20. Ver o bloco acima antes de mexer.
 
 # ⚠️⚠️ E POR ISSO EXISTE A PASSADA APERTADA, no fim e so sobre o que sobrou.
 #
@@ -117,7 +141,8 @@ VIRAGEM = 3.0           # o que custa dobrar, em celulas
 # precisavam. Quem paga o tecto sao as buscas SEM solucao.
 FOLGA_FUGA = 0.22       # a folga apertada, so nos primeiros mm a volta do pad
 RAIO_FUGA = 3.0         # ate onde vale a fuga apertada
-TECTO = 300000          # nos que uma busca pode gastar antes de desistir
+TECTO = 3000000         # nos que uma busca pode gastar antes de desistir
+                        # (subiu com o PASSO: malha 16x mais fina, mesmo alcance)
 CUSTO_VIA = 30.0        # ⚠️ em celulas. Alto de proposito: a via abre fenda no
                         # plano, portanto so se salta quando nao ha volta a dar.
 VIA_R = 0.3             # raio do anel da via
@@ -673,6 +698,15 @@ def main():
     # problema. Nesta, o problema era outro (§12r: a fuga do pad).
     guia = "--guiado" in sys.argv
     arranca = "--arranca" in sys.argv
+    # ⚠️ A GUARDA DO PASSO. Ver o bloco do PASSO no topo: uma malha que nao
+    # divide 1,27 nao consegue sair da fila de tras de um header de 2,54, e
+    # falha dizendo "fica para a pessoa" — indistinguivel de placa cheia.
+    if abs(round(1.27 / PASSO) - 1.27 / PASSO) > 1e-6:
+        sys.exit("RECUSO: passo %.4f nao divide 1,27 (da %.3f nos por meio-passo\n"
+                 "        de header). Sem no no meio do vao entre pads, a fuga da\n"
+                 "        fila de tras de um IDC e impossivel e eu nao saberia\n"
+                 "        dizer-te porque. Usa 1,27/N: 0,127 · 0,0635 · 0,0254."
+                 % (PASSO, 1.27 / PASSO))
     if FOLGA < 0.20:
         sys.exit("RECUSO: folga %.3f abaixo da regra da placa (0,20). O DRC "
                  "recusaria tudo o que eu escrevesse." % FOLGA)

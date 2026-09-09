@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_soquete v0.15.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
+"""gera_soquete v0.18.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
 
 Desenhada por SCRIPT e nao a mao (skill `kicad` §5): reproduzivel, diffavel,
 e corrigivel na fonte. Toda a geometria cai na grade de 1,27 mm.

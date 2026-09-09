@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""versoes_readme v1.1.0 — confere o mapa de ficheiros do README contra os
+"""versoes_readme v1.1.1 — confere o mapa de ficheiros do README contra os
 ficheiros. O `CLAUDE.md` exige que o mapa traga a versao ACTUAL de cada um;
 nada cobrava isso, e 15 de 58 tinham derivado.
 
@@ -7,7 +7,7 @@ USO:  versoes_readme.py           relatorio
       versoes_readme.py --write   corrige o README (so as que divergem)
 """
 import re, sys, pathlib
-print("versoes_readme v1.0.0")
+print("versoes_readme v1.1.1")
 RAIZ = pathlib.Path(__file__).resolve().parents[2]
 RD = RAIZ / "README.md"
 rd = RD.read_text(encoding="utf-8")

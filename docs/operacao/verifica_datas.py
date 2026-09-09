@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""verifica_datas v0.1.0 — data e dado gerado, nao escrito.
+"""verifica_datas v0.2.1 — data e dado gerado, nao escrito.
 
 Toda data que aparece num documento e uma AFIRMACAO sobre quando algo
 aconteceu, e a unica testemunha independente disso e o `git`. Este verificador

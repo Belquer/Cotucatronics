@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.13.1"
+VERSAO = "0.15.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -171,7 +171,17 @@ def uma(nome, zerar):
         # em pads de passo fino, e o roteador da casa tem a fuga apertada so
         # junto as pontas (§12r) — que e exactamente o que elas precisam. Cada
         # um fecha o que o outro nao fecha.
-        r = py("roteia_fr.py", nome)
+        # ⚠️ SE NAO ZERAMOS, A PRIMEIRA PASSADA TEM DE CONTINUAR.
+        #
+        # `--sem-zerar` prometia guardar o cobre que la estava e depois
+        # chamava o FreeRouting de raiz, que apaga tudo. A promessa e a
+        # accao diziam o contrario uma da outra, e quem semeasse uma ligacao
+        # dificil a mao via-a desaparecer sem uma linha a dizer porque.
+        #
+        # E semear e o unico modo de fechar as ligacoes que so cabem no
+        # corredor que as outras ocupam primeiro: rotea-se ELA na placa
+        # vazia, e o resto que se arranje a volta (o `OLED_CLK` do painel).
+        r = py("roteia_fr.py", nome, *([] if zerar else ["--continuar"]))
         print("\n".join("  " + l for l in r.stdout.strip().splitlines()
                         if l.strip() and "portao" not in l))
         if r.returncode:
@@ -301,8 +311,11 @@ def uma(nome, zerar):
     # (PASSO·0,71) conta no mesmo corredor. Malha fina na placa toda esgota a
     # busca, logo a busca fica presa a uma CAIXA em volta de cada ligacao — o
     # que sobra de uma passada larga e quase sempre curto.
+    # ⚠️ 0,0635 e nao 0,0847: o passo TEM de dividir 1,27 (roteia v1.18.0).
+    # O 0,0847 dava 14,994 nos por meio-passo de header — nao divide, e por
+    # isso nenhuma fuga da fila de tras de um IDC saiu daqui, nunca.
     r = py("roteia.py", pcb, "--escreve", "--folga", "0.22",
-           "--passo", "0.0847", "--caixa", "25", "--arranca")
+           "--passo", "0.0635", "--caixa", "25", "--arranca")
     f, g = por_fazer(pcb)
     if r.returncode:
         print("  2b. apertada recusou gravar (a placa fica como estava)")

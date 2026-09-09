@@ -36,6 +36,11 @@ docs/operacao/esquematicos/revB/render/*.png
 *.lck
 *-backups/
 fp-info-cache
+# projecto fantasma: abrir um .kicad_pcb no pcbnew avulso faz o KiCad
+# escrever <ficheiro>.kicad_pcb.kicad_pro ao lado. Nenhuma ferramenta
+# daqui o cria (medido 08/09: nem `pcb drc`, nem LoadBoard/SaveBoard) e
+# o KiCad nunca o le de volta — so procura <raiz>.kicad_pro. E lixo.
+*.kicad_pcb.kicad_pro
 
 # saidas regeraveis do gerador da caixa (o .svg/.dxf de corte ficam: sao o
 # registo do que foi para a fabrica; a previa e so para olhar)
