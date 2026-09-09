@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_painel v0.14.0 — o projecto do PAINEL (tampa da caixa).
+"""gera_painel v0.16.0 — o projecto do PAINEL (tampa da caixa).
 
 Segunda placa. A primeira e `cotuca_cerebro`, e o CONTRATO entre as duas e o
 IDC 2x13: **o mesmo nome de rede dos dois lados, via a via**.
