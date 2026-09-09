@@ -211,7 +211,7 @@ FONTE_EXTERNA = {
     "MKS2C042201K00KSSD": "WIMA — serie MKS 2, 220 nF 63 V, passo 5 mm",
     "N2526-6002RB": "3M — serie 2526, IDC 2x13 macho blindado",
     "N3793-6002RB": "3M — serie 3793, IDC 2x13 femea",
-    "PTV09A-4020S-B103": ("Bourns PTV09A — ⚠️ e nesta que o sufixo importa: "
+    "PTV09A-1020S-B103": ("Bourns PTV09A — ⚠️ e nesta que o sufixo importa: "
                           "`S` e eixo estriado e `F` e liso, e ja se escolheu o "
                           "errado uma vez. Conferir a legenda de sufixos."),
     "UES1H220MEM": "Nichicon — serie UES (bipolar audio), 22 uF 50 V",

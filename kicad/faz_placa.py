@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.12.0"
+VERSAO = "0.13.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -122,6 +122,22 @@ def uma(nome, zerar):
     r = py("pcb_contorno.py", nome)
     if r.returncode:
         raise SystemExit("*** pcb_contorno falhou:\n" + (r.stderr or r.stdout))
+
+    # ⚠️ OS FUROS ENTRAM DEPOIS DA COLOCACAO E ANTES DO ROTEAMENTO.
+    #
+    # Depois, porque as posicoes so se conferem contra as pecas ja colocadas —
+    # e o `confere_furos` recusa se alguma tapar um furo, que e o caso em que
+    # o parafuso nao entra com a caixa fechada e a solda feita.
+    #
+    # ⚠️ E ANTES de rotear, porque cada furo leva um keepout de o7 e o roteador
+    # tem de o ver como obstaculo. Pos-los depois obrigava a arrancar o cobre
+    # que passasse por la — e arrancar cobre e sempre mais caro que nao o por.
+    # ⚠️ `rf` e nao `r`: a variavel `r` ainda pertence ao `pcb_contorno`, e a
+    # linha seguinte le o `r.stderr` dele. Reutilizar o nome dava `None` ali e
+    # matava a corrida do painel — variavel com dois empregos, familia C.
+    rfur = py("poe_furos.py", "--escreve") if nome == "cerebro" else None
+    if rfur is not None and rfur.returncode:
+        raise SystemExit("*** poe_furos falhou:\n" + (rfur.stderr or rfur.stdout))
     for l in r.stderr.splitlines():
         if "costura" in l or "FORA" in l:
             print("  1.%s" % l)

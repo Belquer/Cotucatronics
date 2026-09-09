@@ -266,6 +266,31 @@ aqui*. Leia os dois antes de tocar em código.
 
 ---
 
+
+## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li
+
+O `sincroniza_pcb` escrevia a rede nos pads **só ao acrescentar um footprint
+novo**. Para as peças já na placa, nada refrescava nada: a placa guardava as
+redes do dia em que a peça entrou.
+
+Seis defeitos foram consertados no esquema, o comando correu, disse **«já estão
+sincronizados»**, e a placa ficou com as vinte e duas falhas — o `EXC_R` ainda
+lá estava.
+
+> **O relatório dele não mentia.** Ele compara *footprints* — quais existem,
+> referência, valor — e sobre isso estava tudo certo. Um verificador responde à
+> pergunta que lhe fizeram, e a pergunta era outra.
+
+⚠️ **Isto muda como se lê o histórico:** **nenhuma alteração de esquema alguma
+vez chegou a uma placa já roteada por esta via.** Não deu na vista porque, até
+hoje, cada mudança vinha com peças novas — e aí o caminho que escreve redes
+corria. Qualquer «sincronizado» anterior a esta data significa *as peças
+batem*, e não *a placa está igual ao esquema*.
+
+Consertado em `sincroniza_pcb` **v0.5.0** (`refresca_redes`), que põe em cada
+pad a rede da netlist **e apaga a que a netlist já não tem**.
+
+
 ## Rotina de operação: os dois destinos, sempre juntos
 
 **Toda nova versão de `STATUS.md` ou `battle_scars.md` vai para os DOIS

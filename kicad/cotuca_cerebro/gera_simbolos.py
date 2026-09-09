@@ -14,7 +14,7 @@ capacidade de detectar uma segunda ponte. Ver MAPA-DE-TERRA.md §2.
 """
 import sys
 
-VERSAO = "0.9.0"
+VERSAO = "0.12.0"
 
 
 def num(v):
@@ -130,9 +130,22 @@ def ec11():
              '\t\t\t\t\t(stroke (width 0.254) (type default))\n'
              '\t\t\t\t\t(fill (type background))\n\t\t\t\t)\n\t\t\t)\n')
     p = ['\t\t\t(symbol "EC11_1_1"\n']
-    for n, nome, y in ((1, "A", 5.08), (2, "C", 2.54), (3, "B", 0.0)):
+    # ⚠️⚠️ OS NUMEROS SAO AS LETRAS DO FOOTPRINT — conserto do C4.
+    #
+    # O `RotaryEncoder_Alps_EC11E-Switch` tem pads chamados **A, B, C, S1, S2**
+    # (mais dois `MP` mecanicos). Numerar o simbolo `1..5` faz uma netlist
+    # perfeitamente coerente — cada pino tem a sua rede — que **nao encontra
+    # pad nenhum**: na placa os cinco pads ficavam com `net = None`.
+    #
+    # O `ENC_A_A/B/PUSH` chegava pelo IDC (vias 20-22) e parava ali. O encoder,
+    # que e a unica entrada de menus do instrumento, nao fazia nada.
+    #
+    # ⚠️ E o "0 por rotear" nao apanhou: sem rede no pad nao ha ligacao por
+    # fazer, logo o contador de pendentes fica em zero. **Um verificador que
+    # conta o que falta ligar nao ve o que nunca foi pedido para ligar.**
+    for n, nome, y in (("A", "A", 5.08), ("C", "C", 2.54), ("B", "B", 0.0)):
         p.append(_pino(n, nome, -11.43, y, 0))
-    for n, nome, y in ((4, "PUSH1", -2.54), (5, "PUSH2", -5.08)):
+    for n, nome, y in (("S1", "PUSH1", -2.54), ("S2", "PUSH2", -5.08)):
         p.append(_pino(n, nome, -11.43, y, 0))
     p.append('\t\t\t)\n')
     return _cab("EC11", "SW", "EC11 encoder", 10.16, -10.16) + corpo + "".join(p) + '\t\t)'
@@ -145,9 +158,25 @@ def mosfet_n():
              '\t\t\t\t(rectangle\n\t\t\t\t\t(start -2.54 3.81)\n\t\t\t\t\t(end 2.54 -3.81)\n'
              '\t\t\t\t\t(stroke (width 0.254) (type default))\n'
              '\t\t\t\t\t(fill (type none))\n\t\t\t\t)\n\t\t\t)\n')
+    # ⚠️⚠️ 2 = S e 3 = D, e isto e o conserto do C2 — o INVERSO do C1.
+    #
+    # A ficha do AO3400A (SOT-23, top view) diz **1 G · 2 S · 3 D**. Este
+    # simbolo dizia 1 G · 2 D · 3 S: o DESENHO estava certo (dreno em cima,
+    # fonte em baixo, que e o interruptor de lado baixo) e os NUMEROS e que
+    # mapeavam mal para o encapsulamento.
+    #
+    # Por isso aqui renumera-se e nao se move nada — ao contrario do C1, onde
+    # os numeros estavam certos e a posicao errada. **A mesma frase "os pinos
+    # estao trocados" quer dizer coisas opostas nos dois casos**, e so a ficha
+    # decide qual.
+    #
+    # O que custava: com 2=D e 3=S, o `LED_K` ficava na fonte e o `GND` no
+    # dreno. O diodo de corpo (fonte->dreno) passa a ligar o catodo do LED ao
+    # GND de forma permanente: **os dois LEDs acendem sempre**, o gate nao
+    # manda em nada, e o freeze perde a luz de estado.
     p = ['\t\t\t(symbol "MOSFET_N_1_1"\n',
-         _pino(1, "G", -7.62, 0, 0), _pino(2, "D", 0, 8.89, 270),
-         _pino(3, "S", 0, -8.89, 90), '\t\t\t)\n']
+         _pino(1, "G", -7.62, 0, 0), _pino(3, "D", 0, 8.89, 270),
+         _pino(2, "S", 0, -8.89, 90), '\t\t\t)\n']
     return _cab("MOSFET_N", "Q", "AO3400A", 11.43, -11.43) + corpo + "".join(p) + '\t\t)'
 
 
@@ -232,13 +261,35 @@ def opa1642():
     ret = ('\t\t\t\t(rectangle\n\t\t\t\t\t(start -5.08 -5.08)\n\t\t\t\t\t(end 5.08 5.08)\n'
            '\t\t\t\t\t(stroke (width 0.254) (type default))\n'
            '\t\t\t\t\t(fill (type none))\n\t\t\t\t)\n')
+    # ⚠️⚠️ O `+` VAI EM BAIXO E O `-` EM CIMA, e isto e o conserto do C1.
+    #
+    # Ate 08/09 era ao contrario, e o comentario acima dizia que os fios "ja
+    # encostam nesses pontos, e mover o pino partiria ligacoes que estao
+    # certas". Nao estavam. Medido na folha, na unidade A:
+    #
+    #     (171.45, 71.12)  fio HORIZONTAL da esquerda   <- o SINAL de entrada
+    #     (171.45, 66.04)  fio VERTICAL de cima         <- a REALIMENTACAO
+    #
+    # Com o `-` em baixo, o sinal entrava pela inversora e a realimentacao pela
+    # nao-inversora: **realimentacao POSITIVA**, o OPA1642 trava numa das
+    # alimentacoes e nao passa som. Nos dois canais.
+    #
+    # ⚠️ E o conserto e a POSICAO, nao o numero. O pino 2 do chip real e o -IN
+    # e continua a ser o 2 — o que muda e onde ele e desenhado, para que o fio
+    # que ja la esta encoste no pino certo. Renumerar consertava o desenho e
+    # partia o encapsulamento.
+    #
+    # ⚠️ E a verificacao que apanhou isto NAO foi a netlist: ela contou
+    # ligacoes e deu-as por iguais. Foi a tabela pad -> rede -> funcao esperada
+    # pela ficha (`funcao_dos_pads.py`), que e a unica que pergunta pelo
+    # SIGNIFICADO em vez de pela ligacao.
     u1 = ('\t\t\t(symbol "OPA1642_1_1"\n' + tri
-          + _pino(3, "+", -10.16, 2.54, 0, "input", 2.54)
-          + _pino(2, "-", -10.16, -2.54, 0, "input", 2.54)
+          + _pino(3, "+", -10.16, -2.54, 0, "input", 2.54)
+          + _pino(2, "-", -10.16, 2.54, 0, "input", 2.54)
           + _pino(1, "", 10.16, 0, 180, "output", 2.54) + '\t\t\t)\n')
     u2 = ('\t\t\t(symbol "OPA1642_2_1"\n' + tri
-          + _pino(5, "+", -10.16, 2.54, 0, "input", 2.54)
-          + _pino(6, "-", -10.16, -2.54, 0, "input", 2.54)
+          + _pino(5, "+", -10.16, -2.54, 0, "input", 2.54)
+          + _pino(6, "-", -10.16, 2.54, 0, "input", 2.54)
           + _pino(7, "", 10.16, 0, 180, "output", 2.54) + '\t\t\t)\n')
     u3 = ('\t\t\t(symbol "OPA1642_3_1"\n' + ret
           + _pino(4, "V-", 0, -7.62, 90, "power_in", 2.54)

@@ -83,8 +83,8 @@ PECAS_PAINEL = {
     # a mao pedia o `...4020F-B103` e a nota ao lado do mesmo documento pedia
     # estriado: o MPN contradizia a sua propria nota. O que falha num MPN e
     # quase sempre o sufixo, e nao a familia.
-    "RV1": ("PTV09A-4020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
-    "RV2": ("PTV09A-4020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
+    "RV1": ("PTV09A-1020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
+    "RV2": ("PTV09A-1020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
     "J1":  ("IDC 2x13 femea (3M N3793-6002RB ou gen.)", "LCSC", 0.45, "estimado"),
     "J2":  ("53047-0710 (Molex PicoBlade 1x7)", "LCSC", 0.30, "estimado"),
     # ⚠️ o C3 do PAINEL e outro C3 que o do cerebro — tabelas separadas, e por
@@ -166,7 +166,14 @@ MPN = {
 MPN_PAINEL = {
     "Q1":  "AO3400A",          "Q2":  "AO3400A",
     "SW1": "EC11E15244G1",
-    "RV1": "PTV09A-4020S-B103", "RV2": "PTV09A-4020S-B103",
+    # ⚠️ `-1` E NAO `-4`: o `-4` e REAR MOUNT, sem bucim, eixo deitado.
+    # O footprint e o `PTV09A-1` (vertical, com bucim) e o eixo tem de subir
+    # pela tampa. Comprado com `-4`, a peca chega, solda, e o botao nao existe
+    # — porque o eixo aponta para dentro da caixa.
+    # ⚠️ E o sufixo `S` (eixo estriado) ja tinha sido corrigido uma vez, de `F`
+    # (liso). Duas correccoes no mesmo MPN, em sitios diferentes do sufixo, e a
+    # §7f a repetir-se: familia certa, peca errada, e nada acusa.
+    "RV1": "PTV09A-1020S-B103", "RV2": "PTV09A-1020S-B103",
     "J1":  "N3793-6002RB",     "J2":  "53047-0710",
     "C3":  "EEU-FR1C101",
     **{f"J{i}": "B2B-XH-A" for i in (3, 4, 5, 6, 7)},

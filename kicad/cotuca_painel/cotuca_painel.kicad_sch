@@ -754,7 +754,7 @@
 						)
 					)
 				)
-				(number "1"
+				(number "A"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -772,7 +772,7 @@
 						)
 					)
 				)
-				(number "2"
+				(number "C"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -790,7 +790,7 @@
 						)
 					)
 				)
-				(number "3"
+				(number "B"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -808,7 +808,7 @@
 						)
 					)
 				)
-				(number "4"
+				(number "S1"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -826,7 +826,7 @@
 						)
 					)
 				)
-				(number "5"
+				(number "S2"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -1488,7 +1488,7 @@
 						)
 					)
 				)
-				(number "2"
+				(number "3"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -1506,7 +1506,7 @@
 						)
 					)
 				)
-				(number "3"
+				(number "2"
 					(effects
 						(font
 							(size 1.27 1.27)
@@ -2699,7 +2699,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "PTV09A-4020S-B103"
+		(property "MPN" "PTV09A-1020S-B103"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -2881,7 +2881,7 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
-		(property "MPN" "PTV09A-4020S-B103"
+		(property "MPN" "PTV09A-1020S-B103"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)

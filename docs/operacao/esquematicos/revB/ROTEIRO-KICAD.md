@@ -1,4 +1,9 @@
 # Cotucatronics — roteiro KiCad → fábrica
+
+> ⚠️⚠️ **A PLACA É DE 2 CAMADAS, e este documento dizia 4.** Medido a 08/09 nos ficheiros: só `F.Cu` e `B.Cu`, com as zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, e o `NT1` como ponte única — e isso **está verificado e certo**. O que estava errado era o texto.
+>
+> Sem plano interior, o retorno do amp é a zona de `B.Cu`: aceitável para 3 A com a largura que tem, e dito para não ser descoberto na bancada. **A encomenda na JLC tem de dizer 2 camadas** — é mais barato, e pedir 4 para uma placa desenhada a 2 paga um plano que ninguém usa.
+
 ### 04/09/2026 · pré-amp aprovado em bancada, caixa formato pedal fechada
 
 ---
@@ -21,7 +26,7 @@ da LCSC ou se se quiser o soquete da Daisy montado por eles.
 | entrega EUA (DHL) | +5–8 dias | igual |
 | quando escolher | **este projeto** | BOM fora da LCSC, ou série com QC reforçado |
 
-**Prática:** 4 camadas (L2 terra sólido), montagem SMT só na face de cima,
+**Prática:** **2 camadas** (terra em `B.Cu`), montagem SMT só na face de cima,
 THT à mão. **5 protótipos**, nunca quantidade. Pedir a data de **entrega**, não
 a de fabrico. Confirmar o stock do **OPA1642** antes de submeter — peça sem
 stock trava o pedido inteiro.
@@ -173,4 +178,4 @@ Footprints de **step-down, decoy, jacks, DPDT, EC11**: só com a peça na mão. 
 4. Projeto do painel → ERC 0
 5. Tabela via-a-via gerada dos dois projetos e conferida uma contra a outra
 6. Footprints, depois de medir as peças
-7. Layout 4 camadas → DRC → render para veto → revisão de terra → Gerbers + BOM + CPL → 5 protos
+7. Layout **2 camadas** → DRC → render para veto → revisão de terra → Gerbers + BOM + CPL → 5 protos

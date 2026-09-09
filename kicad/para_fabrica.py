@@ -54,7 +54,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.8.0"
+VERSAO = "0.9.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
@@ -110,6 +110,31 @@ def carimbo():
 # (Q1 e Q2) — as cinco ocorrencias no `.kicad_sch` sao valor, propriedade e
 # instancia do mesmo par. Sao SETE pecas com polaridade, nao nove, e a lista que
 # se leva a pre-visualizacao tem de ser a da placa e nao a da memoria.
+# ⚠️ PERGUNTAS QUE O PACOTE LEVA CONSIGO, porque nao se respondem por script.
+#
+# Um pacote de fabrico que sai sem as suas duvidas escritas obriga quem o
+# recebe a lembrar-se delas. Estas seguem no LEIA-ME, ao lado dos ficheiros.
+ABERTAS = {
+    "painel": [
+        "(!) ORDEM DO J2 (OLED) POR CONFIRMAR COM O MODULO EM MAO.\n"
+        "    A placa tem: 1 GND · 2 +5V · 3 CLK · 4 DIN · 5 CS · 6 DC · 7 RST\n"
+        "    O Waveshare 2,42\" SPI tem, no conector: VCC · GND · DIN · CLK ·\n"
+        "    CS · DC · RST.\n"
+        "    Com um cabo 1:1, VCC e GND TROCAM — o OLED morre ao ligar — e o\n"
+        "    DIN/CLK tambem. Ou se reordena o J2 (o cabo de fabrica passa a\n"
+        "    servir), ou se crimpa um cabo cruzado. Confirmar no modulo antes\n"
+        "    de decidir; nao ha como um script ver o conector de outra pessoa.",
+    ],
+    "cerebro": [
+        "(!) A PLACA E DE 2 CAMADAS. Encomendar 2, e nao 4: so ha F.Cu e B.Cu,\n"
+        "    com GND (prio 0) e AGND (prio 1) ambas em B.Cu e o NT1 como ponte\n"
+        "    unica. Pedir 4 paga um plano interior que este desenho nao usa.",
+        "(!) OS POTS SAO THT E NAO PASSAM PELA JLC: PTV09A-1020S-B103, do\n"
+        "    distribuidor. O `-1` e vertical com bucim; o `-4` e rear mount e o\n"
+        "    eixo nao sobe pela tampa.",
+    ],
+}
+
 POLARIZADAS = {
     "cerebro": [
         ("U1", "OPA1642AIDR", "SOIC-8", "pino 1 — o ponto no canto"),
@@ -405,6 +430,8 @@ def uma(nome, incompleta):
             f.write("     %-4s %-12s %-8s %s\n" % (r_, mpn_, enc_, oq_))
         f.write("   Os 0805/1206/1210 nao tem polaridade — nao gastar tempo neles.\n")
         f.write("\nO BOM leva a coluna LCSC preenchida (tools/codigos_lcsc.py).\n")
+        for l in ABERTAS.get(nome, []):
+            f.write("\n" + l + "\n")
 
     print("\n   pacote: %s" % os.path.relpath(zipe, os.path.join(AQUI, os.pardir)))
     print("     %d ficheiros no zip · CPL e BOM ao lado, fora dele" % n)

@@ -1,4 +1,9 @@
 # Cotucatronics — Carrier rev B · brief de projeto
+
+> ⚠️⚠️ **A PLACA É DE 2 CAMADAS, e este documento dizia 4.** Medido a 08/09 nos ficheiros: só `F.Cu` e `B.Cu`, com as zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, e o `NT1` como ponte única — e isso **está verificado e certo**. O que estava errado era o texto.
+>
+> Sem plano interior, o retorno do amp é a zona de `B.Cu`: aceitável para 3 A com a largura que tem, e dito para não ser descoberto na bancada. **A encomenda na JLC tem de dizer 2 camadas** — é mais barato, e pedir 4 para uma placa desenhada a 2 paga um plano que ninguém usa.
+
 ### Alvo: KiCad → JLCPCB (fab + SMT) · **duas placas** · atualizado 01/09
 > Substitui `carrier_board_revA_brief.md`, que ficou de 20/08 e traz cinco
 > decisões vencidas. A rev A **nunca foi fabricada**; isto não é respin, é a
@@ -230,7 +235,7 @@ Não acusar sem medir — mas está na lista.
 
 1. BOM contra o catálogo LCSC/JLC, estoque conferido → aprovação do dB
 2. Esquemático KiCad por bloco, **ERC limpo antes do seguinte**
-3. PCB 4 camadas, L2 terra sólido → DRC headless → **render para veto do dB**
+3. PCB **2 camadas**, terra em `B.Cu` → DRC headless → **render para veto do dB**
 4. ⚠️ **Revisão de terra (skill `revisao-terra`) antes de energizar**
 5. Gerbers + CPL + BOM → **5 protótipos**, nunca quantidade
 6. Rev C só depois de a rev B tocar

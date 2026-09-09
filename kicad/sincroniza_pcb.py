@@ -30,7 +30,7 @@ USO:  sincroniza_pcb.py <projecto> [--zero]
 """
 import io, os, re, subprocess, sys, uuid
 
-VERSAO = "0.4.1"
+VERSAO = "0.5.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ DUAS RAIZES DE BIBLIOTECA: a do projecto (`cotuca.pretty`, ao lado deste
@@ -148,6 +148,95 @@ def do_modulo(fp, ref, val, redes):
     return "\t" + t.replace("\n", "\n\t") + "\n"
 
 
+def refresca_redes(t, redes):
+    """Poe em CADA pad de CADA footprint ja na placa a rede que o netlist diz.
+
+    ⚠️⚠️ ISTO FALTAVA, E ERA O ELO QUE IMPEDIA QUALQUER CONSERTO DE CHEGAR AO
+    COBRE.
+
+    O `do_modulo` escreve a rede nos pads — mas so corre para footprints que
+    estao a ser ACRESCENTADOS. Para os que ja la estavam, nada refrescava nada:
+    a placa guardava as redes do dia em que a peca entrou.
+
+    Medido a 08/09: seis defeitos foram consertados no esquema — as entradas do
+    OPA1642, os MOSFET, o Schottky, o encoder, e o `EXC_R` que passou a
+    `AMP_IN_R` — o sincronizador correu, disse **"ja estao sincronizados"**, e a
+    placa continuou com as vinte e duas falhas. O `EXC_R` ainda la estava.
+
+    ⚠️ E o relatorio dele nao mentia: ele compara FOOTPRINTS (quais existem,
+    referencia, valor) e sobre isso estava tudo certo. **Um verificador
+    responde a pergunta que lhe fizeram, e a pergunta era outra.** "Ja estao
+    sincronizados" queria dizer "as pecas batem", e eu li "a placa esta igual ao
+    esquema".
+
+    ⚠️ Um pad que perde a rede no esquema perde-a aqui tambem — apagar e tao
+    parte da sincronizacao como escrever. Uma rede que sobrevive a fonte que a
+    justificava e uma ligacao sem dono.
+    """
+    mudou, tirados, i, saida = 0, 0, 0, ""
+    while True:
+        j = t.find('\n\t(footprint "', i)
+        if j < 0:
+            break
+        k, d, ins = j + 1, 0, False
+        while k < len(t):
+            c = t[k]
+            if c == '"':
+                ins = not ins
+            elif not ins:
+                if c == "(":
+                    d += 1
+                elif c == ")":
+                    d -= 1
+                    if d == 0:
+                        break
+            k += 1
+        bl = t[j:k + 1]
+        rm = re.search(r'\(property "Reference" "([^"]+)"', bl)
+        if rm:
+            ref = rm.group(1)
+            novo, pi = "", 0
+            while True:
+                pj = bl.find('\t\t(pad "', pi)
+                if pj < 0:
+                    break
+                pk, pd, pins = pj + 2, 0, False
+                while pk < len(bl):
+                    c = bl[pk]
+                    if c == '"':
+                        pins = not pins
+                    elif not pins:
+                        if c == "(":
+                            pd += 1
+                        elif c == ")":
+                            pd -= 1
+                            if pd == 0:
+                                break
+                    pk += 1
+                seg = bl[pj:pk + 1]
+                num = re.search(r'\(pad "([^"]*)"', seg).group(1)
+                quer = redes.get((ref, num))
+                tem = re.search(r'\n\s*\(net (?:\d+ )?"([^"]*)"\)', seg)
+                if quer is None and tem:
+                    seg = seg[:tem.start()] + seg[tem.end():]
+                    tirados += 1
+                elif quer is not None and not tem:
+                    m2 = re.search(r'\(layers [^)]*\)', seg)
+                    if m2:
+                        seg = (seg[:m2.end()] + '\n\t\t\t(net "%s")' % quer
+                               + seg[m2.end():])
+                        mudou += 1
+                elif quer is not None and tem and tem.group(1) != quer:
+                    seg = seg[:tem.start(1)] + quer + seg[tem.end(1):]
+                    mudou += 1
+                novo += bl[pi:pj] + seg
+                pi = pk + 1
+            bl = novo + bl[pi:]
+        saida += t[i:j] + bl
+        i = k + 1
+    return saida + t[i:], mudou, tirados
+
+
 def main():
     print("sincroniza_pcb v%s" % VERSAO, file=sys.stderr)
     if not (2 <= len(sys.argv) <= 3) or sys.argv[1] not in PROJ:
@@ -233,7 +322,22 @@ def main():
     # o que aconteceu — o de-duplicador correu, anunciou 9 remocoes, e o
     # ficheiro ficou igual. Uma saida antecipada tem de olhar para TUDO o que a
     # funcao ja fez, e nao so para a ultima coisa que mediu.
-    if not faltam and not sobram and not n_dup and not zero and not trocados:
+    # ⚠️⚠️ AS REDES REFRESCAM-SE SEMPRE, e ANTES da saida antecipada.
+    #
+    # O comentario acima ja dizia que uma saida antecipada tem de olhar para
+    # TUDO o que a funcao ja fez. Isto acrescenta mais uma coisa a essa lista —
+    # e e a mais importante, porque e a unica que muda LIGACOES.
+    #
+    # Sem isto, seis consertos no esquema nao chegaram ao cobre e o comando
+    # anunciou "ja estao sincronizados", com toda a razao do ponto de vista
+    # dele: as PECAS batiam. As redes e que nao.
+    t, n_redes, n_tirados = refresca_redes(t, redes)
+    if n_redes or n_tirados:
+        print("  redes: %d pad(s) actualizados · %d sem rede no esquema"
+              % (n_redes, n_tirados), file=sys.stderr)
+
+    if not faltam and not sobram and not n_dup and not zero and not trocados \
+            and not n_redes and not n_tirados:
         print("  ja estao sincronizados", file=sys.stderr)
         return
     for r in sobram:

@@ -53,7 +53,7 @@ USO:  roteia.py --auto-teste            # interroga a regra de aceitacao
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.16.0"
+VERSAO = "1.17.0"
 NUM = r"-?\d+(?:\.\d+)?"
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
@@ -678,8 +678,18 @@ def main():
                  "recusaria tudo o que eu escrevesse." % FOLGA)
     t = io.open(p, encoding="utf-8").read()
 
-    for z in re.finditer(r'\(zone[\s\S]{0,400}?\(layers? ("[^"]+"[^)]*)\)', t):
-        if "F.Cu" in z.group(1):
+    # ⚠️ UM KEEPOUT NAO E UM PLANO, e a guarda tinha de aprender a diferenca.
+    #
+    # A regra da 15cp e "sem cobre ENCHIDO em F.Cu, senao nao ha camada de
+    # sinal". Um keepout nao enche nada — EXCLUI. Os quatro furos M3 levam um
+    # circulo de exclusao em ambas as camadas, e essa guarda recusava a placa
+    # inteira por causa deles: a proibicao certa aplicada ao objecto errado.
+    #
+    # Distingue-se pelo que o bloco DIZ: um keepout traz `(keepout ...)`.
+    for z in re.finditer(r'\(zone([\s\S]{0,900}?)\(layers? ("[^"]+"[^)]*)\)', t):
+        if "(keepout" in z.group(1) or "(keepout" in t[z.end():z.end() + 700]:
+            continue
+        if "F.Cu" in z.group(2):
             sys.exit("RECUSO: ha zona de cobre em F.Cu nesta placa.\n"
                      "        Ponha o plano so em B.Cu e costure os pads SMD com\n"
                      "        vias (pcb_contorno.costura) antes de correr. Ver 15cp.")

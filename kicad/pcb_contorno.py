@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.14.0"
+VERSAO = "0.16.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -276,7 +276,14 @@ ZONAS_CEREBRO = [
 # Rodada, aponta para TRAS, onde a parede ja leva o recorte de 12 x 6 do USB.
 # A origem desloca-se para o canto oposto (+15,24 · +48,26) para o modulo
 # ocupar o MESMO rectangulo: rodar sem compensar a origem tira-o da placa.
-# ⚠️ J14 a x=40 e nao a x=30: o furo o3,2 do fundo (o que segura a placa) cai
+# ⚠️⚠️ J14 a x=45, e a x=40 NAO CHEGAVA. O `confere_furos` que aprovou o x=40
+# comparava a distancia do furo aos PADS, e um IDC 2x13 tem pads a 2,54 e um
+# corpo de 41,7 mm: o furo `H1` em (35,5 · 23,5) ficava DENTRO do courtyard
+# (34,4..76,1), com o parafuso debaixo do conector, e a medicao dizia
+# "livre, vizinho a +4,54". Duas medidas erradas ao mesmo tempo — o objecto
+# (pads em vez de corpo) e a forma (ponto em vez de circulo de 3,5).
+# Com x=45 o courtyard comeca em 39,4 e o furo fica a 3,9 do corpo.
+# ⚠️ Historico: a nota antiga dizia que o furo o3,2 do fundo cai
 # em KiCad (35,50 · 23,50), e a 30 o IDC ficava POR CIMA dele. Nao ha parafuso
 # por baixo de um conector — e a `confere_furos` recusa antes de escrever.
 # ⚠️ U2 desceu 20,8 mm (era y=88,26). O topo do modulo estava a y=39,2 e o disco
@@ -330,7 +337,7 @@ ZONAS_CEREBRO = [
 # ⚠️ E NAO VAO PARA y<40. Ai ficam debaixo dos discos de arcade, onde nem se
 # alcancam com a caixa aberta nem cabem no que sobra de altura. Um ponto de
 # teste inalcancavel e um furo que ninguem sabe para que serve.
-UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 29.0, 90),
+UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (45.0, 29.0, 90),
                   **{f"TP{i + 1}": (88.0 + 4.0 * i, 50.5, 0) for i in range(11)},
                   "NT1": (75.0, 81.0, 0),
                   "C1": (178.0, 108.0, 0), "J1": (156.0, 108.0, 0),
@@ -367,7 +374,17 @@ UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (40.0, 29.0, 90),
                   "C15": (105.0, 115.0, 0), "C16": (78.0, 30.0, 0)}
 
 
-def grelha(t, zonas, unicos):
+def furos_kicad(alvo):
+    """(x, y) dos furos o3,2 em coordenadas KiCad. Derivado da caixa."""
+    if alvo.get("x0") is None:
+        alvo["x0"] = round((FUNDO["w"] - alvo["w"]) / 2, 3)
+        alvo["y0"] = round((FUNDO["h"] - alvo["h"]) / 2, 3)
+    ox, oy = alvo["origem"]
+    return [(ox + (ex - alvo["x0"]), oy + (alvo["h"] - (ey - alvo["y0"])))
+            for ex, ey in FUNDO["espacadores"]]
+
+
+def grelha(t, zonas, unicos, furos=()):
     """Arruma cada lista de refs em grelha dentro da sua zona.
 
     ⚠️ NINGUEM EM DOIS SITIOS. Uma ref numa grelha E em `unicos` fica com a
@@ -384,10 +401,32 @@ def grelha(t, zonas, unicos):
     for nome, x0, y0, larg, px, py in [(z[0], z[1], z[2], z[3], z[4], z[5]) for z in zonas]:
         refs = dict((z[0], z[6]) for z in zonas)[nome]
         cols = max(1, int(larg // px))
-        for i, ref in enumerate(refs):
-            x = x0 + (i % cols) * px
-            y = y0 + (i // cols) * py
+        # ⚠️⚠️ A GRELHA SALTA OS LUGARES QUE CAEM SOBRE UM FURO.
+        #
+        # Ate a v0.15.0 a grelha nao sabia dos furos: enchia os lugares por
+        # ordem e o `confere_furos` reprovava no FIM. O `C6` caia a 2,58 mm do
+        # furo `H2` e a corrida inteira morria ali, sem alternativa — porque
+        # quem falha no fim nao tem por onde tentar outra vez.
+        #
+        # ⚠️ Uma restricao conhecida A PRIORI nao pertence ao verificador final:
+        # pertence a colocacao. O verificador fica para o que ela nao pode
+        # prever — e ai a recusa e informacao, nao um beco.
+        #
+        # O lugar e testado pela CAIXA do passo, e nao pelo centro: uma peca
+        # ocupa a celula toda, e comparar centros aprova a peca cujo corpo
+        # entra no furo pela borda.
+        i = 0
+        for ref in refs:
+            while True:
+                x = x0 + (i % cols) * px
+                y = y0 + (i // cols) * py
+                if not any(abs(hx - x) < px / 2 + RAIO_FURO
+                           and abs(hy - y) < py / 2 + RAIO_FURO
+                           for hx, hy in furos):
+                    break
+                i += 1
             t = move(t, ref, (float(x), float(y)))
+            i += 1
             n += 1
     for ref, (x, y, ang) in unicos.items():
         t = move(t, ref, (x, y), ang)
@@ -845,45 +884,99 @@ def confere_caixa(nome, alvo):
     return L
 
 
+RAIO_FURO = 3.5      # M3 com anilha o6,5 / 2 + folga
+
+
+def _courtyards(t):
+    """[(ref, [(x,y), ...])] — o contorno de montagem de cada peca, em
+    coordenadas da placa.
+
+    ⚠️ `F.CrtYd` E NAO OS PADS. O courtyard e o corpo COM a folga de montagem
+    ja incluida — e para isso que a biblioteca o desenha. Comparar com pads
+    mede a coisa errada: um IDC 2x13 tem pads a 2,54 e um corpo de 42 mm, e foi
+    assim que o furo `H1` deu "livre" com o parafuso debaixo do conector.
+    """
+    import math
+    out = []
+    i = 0
+    while True:
+        j = t.find('\n\t(footprint "', i)
+        if j < 0:
+            return out
+        k, d, ins = j + 1, 0, False
+        while k < len(t):
+            c = t[k]
+            if c == '"':
+                ins = not ins
+            elif not ins:
+                if c == "(":
+                    d += 1
+                elif c == ")":
+                    d -= 1
+                    if d == 0:
+                        break
+            k += 1
+        bl = t[j:k + 1]
+        i = k + 1
+        rm = re.search(r'\(property "Reference" "([^"]+)"', bl)
+        am = re.search(r'\n\t\t\(at (' + NUM + r') (' + NUM + r')(?: (' + NUM + r'))?\)', bl)
+        if not rm or not am:
+            continue
+        fx, fy = float(am.group(1)), float(am.group(2))
+        ang = math.radians(float(am.group(3) or 0))
+        pts = []
+        for cm in re.finditer(r'\((?:fp_line|fp_rect|fp_poly|fp_circle)'
+                              r'[\s\S]{0,600}?\(layer "F\.CrtYd"\)', bl):
+            for c2 in re.finditer(r'\((?:xy|start|end|center) (' + NUM + r') ('
+                                  + NUM + r')\)', cm.group(0)):
+                px, py = float(c2.group(1)), float(c2.group(2))
+                pts.append((fx + px * math.cos(ang) + py * math.sin(ang),
+                            fy - px * math.sin(ang) + py * math.cos(ang)))
+        if pts:
+            out.append((rm.group(1), pts))
+
+
 def confere_furos(t, alvo):
     """Os 4 furos o3,2 da chapa de fundo caem em zona livre da placa?
 
     ⚠️ Sao eles que a seguram. Um furo debaixo de um conector nao e um furo
     apertado: e um parafuso que nao entra depois da placa montada — e isso
-    descobre-se com a caixa fechada e a solda feita."""
+    descobre-se com a caixa fechada e a solda feita.
+
+    ⚠️⚠️ E O FURO NAO E UM PONTO: E UM CIRCULO DE 3,5 mm.
+    Um M3 com anilha o6,5 pede cobre livre e o corpo do vizinho FORA desse
+    circulo. A v0.14.0 comparava a distancia ao CENTRO e usava PADS: o `H1` deu
+    "livre, vizinho J14 a +4,54" enquanto o centro do furo estava DENTRO do
+    corpo do IDC, cujo courtyard vai de x 34,4 a 76,1. Duas medidas erradas ao
+    mesmo tempo — o objecto (pads em vez de corpo) e a forma (ponto em vez de
+    circulo) — e as duas davam o mesmo veredicto tranquilizador.
+    """
     import math
-    RAIO = 6.5 / 2 + 0.25                      # anilha M3 o6,5 + folga
-    pecas = []
-    for m in re.finditer(r'\n\t\(footprint "', t):
-        j = m.start() + 1
-        d = 0
-        for k in range(j, len(t)):
-            if t[k] == "(":
-                d += 1
-            elif t[k] == ")":
-                d -= 1
-                if d == 0:
-                    bl = t[j:k + 1]
-                    break
-        ref = re.search(r'\(property "Reference" "([^"]+)"', bl).group(1)
-        at = re.search(r'\(at (' + NUM + r') (' + NUM + r')(?: (' + NUM + r'))?\)', bl)
-        fx, fy, a = float(at.group(1)), float(at.group(2)), math.radians(float(at.group(3) or 0))
-        for pm in re.finditer(r'\(pad [\s\S]*?\(at (' + NUM + r') (' + NUM + r')(?: ' + NUM
-                              + r')?\)[\s\S]*?\(size (' + NUM + r') (' + NUM + r')\)', bl):
-            px, py, sw, sh = map(float, pm.groups())
-            pecas.append((fx + px * math.cos(a) + py * math.sin(a),
-                          fy - px * math.sin(a) + py * math.cos(a),
-                          max(sw, sh) / 2, ref))
     ox, oy = alvo["origem"]
+    cys = _courtyards(t)
+    if not cys:
+        raise SystemExit("*** nenhum courtyard lido — LEITURA INCOMPLETA, e um "
+                         "leitor que nao le nada aprova tudo")
     L, mau = [], []
     for ex, ey in FUNDO["espacadores"]:
         kx = ox + (ex - alvo["x0"])
         ky = oy + (alvo["h"] - (ey - alvo["y0"]))
-        d, quem = min((math.hypot(px - kx, py - ky) - r, rf) for px, py, r, rf in pecas)
-        L.append("     furo o3,2 em KiCad (%6.2f,%6.2f)  %-7s  vizinho %s a %+.2f"
-                 % (kx, ky, "livre" if d > RAIO else "OCUPADO", quem, d))
-        if d <= RAIO:
-            mau.append("%s tapa o furo em (%.2f,%.2f)" % (quem, kx, ky))
+        pior, quem = 1e9, "—"
+        for ref, pts in cys:
+            if ref.startswith("H"):
+                continue          # os proprios furos nao se estorvam
+            x0 = min(q[0] for q in pts); x1 = max(q[0] for q in pts)
+            y0 = min(q[1] for q in pts); y1 = max(q[1] for q in pts)
+            dx = max(x0 - kx, kx - x1, 0.0)
+            dy = max(y0 - ky, ky - y1, 0.0)
+            d = math.hypot(dx, dy)
+            if d < pior:
+                pior, quem = d, ref
+        L.append("     furo o3,2 em KiCad (%6.2f,%6.2f)  %-7s  corpo de %s a %+.2f"
+                 % (kx, ky, "livre" if pior >= RAIO_FURO else "OCUPADO", quem, pior))
+        if pior < RAIO_FURO:
+            mau.append("%s a %.2f mm do furo em (%.2f,%.2f), e o M3 pede %.1f"
+                       % (quem, pior, kx, ky, RAIO_FURO))
     if mau:
         raise SystemExit("*** " + "; ".join(mau) + " — os furos sao da caixa, "
                          "quem se move e a peca.")
@@ -1114,8 +1207,25 @@ def evita_arcade(t, alvo, zonas):
         cols = max(1, int(larg // px))
         # todos os lugares da zona, ocupados e vagos
         n = len(refs)
+        # ⚠️⚠️ O MESMO FILTRO DOS FUROS QUE A `grelha` — senao esta funcao
+        # devolve as pecas aos lugares que a outra tinha saltado.
+        #
+        # A docstring da `grelha` ja avisava disto por outras palavras: "ate o
+        # `evita_arcade` correr, que recalcula a grelha e a devolve em silencio
+        # ao sitio antigo". Eu li o aviso, pus o filtro num sitio so, e o `C6`
+        # voltou para cima do furo sem nada se queixar.
+        #
+        # ⚠️ Duas funcoes que constroem a MESMA lista por conta propria e a
+        # classe 14 da skill `audit` — corpo copiado em vez de chamado. A cura
+        # de fundo e uma so fazer o que a outra ja faz; o filtro repetido aqui
+        # e o remendo minimo, e fica dito que e remendo.
+        _fur = furos_kicad(alvo)
         lugares = [(x0 + (i % cols) * px, y0 + (i // cols) * py)
-                   for i in range(((n + cols - 1) // cols) * cols)]
+                   for i in range(((n + cols - 1) // cols) * cols * 2)]
+        lugares = [(lx, ly) for lx, ly in lugares
+                   if not any(abs(hx - lx) < px / 2 + RAIO_FURO
+                              and abs(hy - ly) < py / 2 + RAIO_FURO
+                              for hx, hy in _fur)][:((n + cols - 1) // cols) * cols]
         ocupa = {i: refs[i] for i in range(n)}
         altura = {r: (altura_de(fp_de(t, r)) or 99.0) for r in refs}
         maus = [i for i in range(n)
@@ -1322,7 +1432,7 @@ def main():
     for ref, (x, y, ang) in sorted(COLOCA.get(nome, {}).items()):
         t = move(t, ref, (x, y), ang)
     if nome == "cerebro":
-        t, n = grelha(t, ZONAS_CEREBRO, UNICOS_CEREBRO)
+        t, n = grelha(t, ZONAS_CEREBRO, UNICOS_CEREBRO, furos_kicad(alvo))
         print("     %d pecas colocadas por zona" % n, file=sys.stderr)
         t, trocas = evita_arcade(t, alvo, ZONAS_CEREBRO)
         for ref, de, para, outro in trocas:

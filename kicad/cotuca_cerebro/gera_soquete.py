@@ -24,7 +24,7 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, re, sys, uuid
 
-VERSAO = "0.17.0"
+VERSAO = "0.18.0"
 G = 1.27
 # ⚠️⚠️ UUID DETERMINISTICO. NAO VOLTAR A `uuid4()`.
 #
@@ -483,9 +483,24 @@ for n, (canal, (SX, SY)) in enumerate((("L", (300.0, 175.0)),
     # intercalar terra daria um arranjo melhor no papel e um cabo que ja nao
     # corresponde ao que esta montado. A terra entra no fim, onde nao desloca
     # nada.
+    # ⚠️⚠️ 3/6 SAO `AMP_IN`, E NAO `EXC` — conserto do C5.
+    #
+    # A posicao "exciter" da chave chega aqui, e daqui tem de ir a entrada do
+    # modulo amplificador (`J11.3/4`). Chamando-lhe `EXC_L` ficavam DUAS redes
+    # com dois nomes e **nenhum fio entre elas**: a `EXC_L` com o `J15.3` e o
+    # `J15.6` e mais nada, e a `AMP_IN_L` com o `J11.3` e o 10k de referencia.
+    #
+    # Consequencia: a posicao "amp" da chave nao ia a lado nenhum e a entrada
+    # do modulo ficava so com o 10k ao GND. **Nenhum som nos exciters pela
+    # placa** — e o ERC nao se queixa, porque um rotulo global sozinho e legal
+    # e cada uma das duas redes esta internamente coerente.
+    #
+    # ⚠️ Dois nomes para a mesma coisa nao e um problema de estilo: e uma
+    # ligacao que nao existe e que ninguem ve, porque ambos os lados parecem
+    # completos. Um nome so, e a rede fecha-se sozinha.
     mapa = {"1": f"OUT_{canal}_DAISY", "4": f"OUT_{canal}_DAISY",
             "2": f"LINHA_{canal}",     "5": f"LINHA_{canal}",
-            "3": f"EXC_{canal}",       "6": f"EXC_{canal}",
+            "3": f"AMP_IN_{canal}",    "6": f"AMP_IN_{canal}",
             "7": "GND",                "8": "GND"}
     for num, px, py in pinos_de("CONN8_L"):
         x, y = SX + px, SY - py
