@@ -42,7 +42,7 @@ import shutil
 import subprocess
 import sys
 
-VERSAO = "0.13.1"
+VERSAO = "0.14.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 # ⚠️ A `longa` SAIU DA LISTA, por medicao e nao por gosto: nunca ganhou em placa
@@ -58,6 +58,17 @@ FREEROUTING = all(os.path.exists(f) for f in (
     "/Versions/3.9/bin/python3.9"))
 PASSADAS = 3
 PASSADAS_FR = 4   # quantas vezes o FreeRouting continua antes de desistir
+
+# ⚠️ §3 DO ppc/002: "toda corrida de gera_* e seguida de sincroniza_pcb +
+# funcao_dos_pads + ERC, ou nao aconteceu." Estes sao os geradores de FOLHA que
+# ESCREVEM ficheiro. Os de simbolo (gera_daisy_sym, gera_simbolos) emitem para a
+# biblioteca partilhada e sao manutencao a montante, fora desta cadeia. A lista
+# e EXPLICITA e nao um glob: e o idioma do resto do ficheiro (ORDENS, PLACAS do
+# para_fabrica) e um gerador acrescentado entra por decisao, nao por descoberta.
+GERADORES = {
+    "cerebro": ("gera_soquete.py", "gera_conector.py"),
+    "painel": ("gera_painel.py",),
+}
 
 
 class Ferrolho:
@@ -88,6 +99,56 @@ def py(*a, **kw):
                           capture_output=True, text=True, cwd=AQUI, **kw)
 
 
+def pyd(cwd, *a):
+    """Como `py`, mas noutro directorio — os geradores de folha escrevem em
+    caminhos RELATIVOS (`cotuca_soquete.kicad_sch`), logo correm na pasta da
+    placa."""
+    return subprocess.run([sys.executable] + [str(x) for x in a],
+                          capture_output=True, text=True, cwd=cwd)
+
+
+def regenera(nome):
+    """§3 do ppc/002: regenera as folhas e SO ENTAO as da por feitas —
+    sincroniza_pcb -> funcao_dos_pads -> ERC, "ou nao aconteceu".
+
+    ⚠️ A TRINCA CORRE UMA VEZ POR PLACA, depois de TODOS os geradores dela, e
+    nao a seguir a cada gerador: o netlist e HIERARQUICO e o `sincroniza_pcb`
+    exporta a folha inteira pelo `kicad-cli`. Sincronizar a meio de uma
+    regeneracao le um estado incoerente (falta uma folha). "Cada corrida de
+    gera_*" e, na pratica, cada regeneracao da placa.
+
+    ⚠️ ABORTA A CADEIA se qualquer passo falhar — nao ha placa que se rotee a
+    partir de uma folha por sincronizar ou por verificar. E os passos que
+    precisam do `kicad-cli` (o netlist do sincronizador e o ERC) FALHAM ALTO
+    numa maquina sem KiCad, em vez de serem saltados em silencio: um binario em
+    falta tem de parar a cadeia, nao passar por ela.
+    """
+    subdir = os.path.join(AQUI, "cotuca_%s" % nome)
+    print("  ⟳ regenera (§3): geradores → sincroniza_pcb → funcao_dos_pads → ERC")
+    for g in GERADORES[nome]:
+        r = pyd(subdir, os.path.join(subdir, g))
+        if r.returncode:
+            raise SystemExit("*** %s falhou:\n%s" % (g, r.stderr or r.stdout))
+    r = py("sincroniza_pcb.py", nome)
+    if r.returncode:
+        raise SystemExit("*** sincroniza_pcb falhou:\n" + (r.stderr or r.stdout))
+    r = py("funcao_dos_pads.py")
+    if r.returncode:
+        # ⚠️ A verificacao que apanha os criticos de FUNCAO (simbolo generico ×
+        # footprint polarizado) — nem ERC nem DRC a veem. Se ela falha, a folha
+        # foi regenerada com um defeito de significado e o cobre nao se toca.
+        raise SystemExit("*** funcao_dos_pads falhou — o pad certo nao leva a "
+                         "rede certa:\n" + (r.stdout or r.stderr))
+    sch = os.path.join(subdir, "cotuca_%s.kicad_sch" % nome)
+    r = subprocess.run([KICAD, "sch", "erc", "--exit-code-violations",
+                        "-o", "/tmp/_erc_%s.rpt" % nome, sch],
+                       capture_output=True, text=True)
+    if r.returncode:
+        raise SystemExit("*** ERC acusou violacoes (ou falta o kicad-cli): %s\n"
+                         "    relatorio em /tmp/_erc_%s.rpt"
+                         % ((r.stderr or r.stdout).strip(), nome))
+
+
 def zera(pcb):
     t = open(pcb, encoding="utf-8").read()
     n = len(re.findall(r"\n\t\(segment", t)), len(re.findall(r"\n\t\(via", t))
@@ -116,6 +177,11 @@ def por_fazer(pcb):
 def uma(nome, zerar):
     pcb = os.path.join(AQUI, "cotuca_%s" % nome, "cotuca_%s.kicad_pcb" % nome)
     print("\n══ %s ══" % nome)
+    # ⚠️ §3: a regeneracao das folhas + sincroniza + funcao_dos_pads + ERC vem
+    # ANTES de tocar no cobre. Sincronizar substitui o F8 (que casa por UUID e
+    # duplica pecas num esquema gerado); funcao_dos_pads + ERC provam a folha
+    # antes de se rotear a partir dela.
+    regenera(nome)
     if zerar:
         s, v = zera(pcb)
         print("  0. cobre apagado: %d pistas, %d vias" % (s, v))

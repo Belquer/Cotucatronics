@@ -54,7 +54,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.9.0"
+VERSAO = "0.10.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
@@ -332,6 +332,24 @@ def uma(nome, incompleta):
     if rap.returncode:
         recusas.append("referencia(s) a identificar a peca errada: %s"
                        % " ".join(re.findall(r"⚠️ (\S+)", rap.stdout)))
+
+    # ⚠️⚠️ E O PAD CERTO TEM DE LEVAR A REDE CERTA (funcao_dos_pads).
+    #
+    # A skill `kicad` §7 recomenda-o como passada do portao, e por um motivo
+    # medido: e a UNICA verificacao que apanha os criticos de FUNCAO — simbolo
+    # generico (pinos 1,2,3) casado com footprint polarizado (SOIC-8, SOT-23,
+    # D_SMA, EC11). A netlist fica LIGADA e a funcao fica ERRADA, e nem ERC, nem
+    # DRC, nem "0 por rotear" veem, porque os tres verificam LIGACAO e este
+    # verifica SIGNIFICADO. Apanhou 5 dos 6 criticos da varredura de 08/09.
+    # (Confere as duas placas de uma vez, pela ficha por referencia.)
+    rfp = subprocess.run([sys.executable, os.path.join(AQUI, "funcao_dos_pads.py")],
+                         capture_output=True, text=True)
+    for l in (rfp.stdout or "").splitlines():
+        if "regra(s)" in l:
+            print("   funcao pads   %s" % l.strip())
+    if rfp.returncode:
+        recusas.append("funcao dos pads: %s"
+                       % (rfp.stdout or rfp.stderr).strip().splitlines()[-1])
 
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:
