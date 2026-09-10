@@ -54,9 +54,13 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.10.0"
+VERSAO = "0.11.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
-KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+# ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
+# hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
+# que o portao corra no host de quem tem o KiCad noutro sitio, sem editar a fonte.
+KICAD = os.environ.get("KICAD_CLI",
+                       "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli")
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
 
 # ⚠️ AS CAMADAS SAO EXPLICITAS. A omissao exporta o que o projecto tiver
