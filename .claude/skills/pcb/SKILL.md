@@ -5,9 +5,10 @@ description: Pipeline de ponta a ponta de um prompt até gerbers prontos para a 
 
 # pcb — do prompt aos gerbers, com portão em cada estágio
 
-> **9 estágios:** 0 pré-voo · 1 avaliação+diagrama · 2 fontes · 3 colocação vs
-> caixa · 4 vias+pistas · 5 terra · 6 rótulos · 7 revisão tripla · 8 gerbers ·
-> 9 retrospetiva. Cada um passa com um número que pode dizer **não**.
+> **9 estágios (1–9) mais a etapa 0 de pré-voo** (modelo do `ifa10000`):
+> 0 pré-voo · 1 avaliação+diagrama · 2 fontes · 3 colocação vs caixa · 4
+> vias+pistas · 5 terra · 6 rótulos · 7 revisão tripla · 8 gerbers · 9
+> retrospetiva. Cada um passa com um número que pode dizer **não**.
 
 Esta skill é a **orquestradora**. Não desenha esquemas, não roteia, não corta
 caixas: **delega** a quem já sabe e cobra o portão de cada etapa. O corpo
@@ -62,7 +63,7 @@ cada estágio, e recusa avançar com um estágio reprovado.**
 
 ---
 
-## Os 9 estágios
+## Os 9 estágios (+ a etapa 0)
 
 Para cada um: **objetivo · o que faz · delega a · PORTÃO · artefacto**. O detalhe
 mora nas referências (`references/`) — aqui fica só o suficiente para conduzir.
@@ -124,7 +125,8 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
   recorte certo — antes do cobre.
 - **O que faz:** contorno tirado do modelo da caixa; furos de fixação;
   conectores/botões/display batem nos recortes do painel (`aberturas.json`);
-  nenhum parafuso debaixo de um componente; zonas de altura respeitadas.
+  nenhum parafuso debaixo de um componente; zonas de altura respeitadas;
+  cablagem/conectores com folga para o cabo e alcançáveis com a placa montada.
 - **Delega a:** `caixa` (os 5 portões, e é a autoridade sobre a geometria caixa↔
   placa), `kicad/pcb_contorno.py` (importa o gerador da caixa, escreve
   `aberturas.json`), `poe_furos.py` (furos M3 derivados do contorno).
@@ -146,7 +148,9 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 - **Delega a:** `kicad_layout` (OBRIGATÓRIA no fecho), `classes_de_rede.py` (as
   larguras vivem nas classes, o DRC e o router lêem-nas), `roteia.py`/
   `roteia_fr.py`, `pcb_contorno.costura()`.
-- **PORTÃO:** larguras nas classes de rede (o DRC obriga); vias ≥ JLC (furo
+- **PORTÃO:** **só se encosta cobre depois de o portão do estágio 3 fechar** —
+  a colocação aprovada é a porta de entrada, «só então» as vias, nunca antes;
+  larguras nas classes de rede (o DRC obriga); vias ≥ JLC (furo
   ≥0,2 mm, anel ≥0,13 mm, ⌀ ≥0,45 mm); **por (rede, espécie) o não-roteado = 0**,
   e o invariante é *nenhuma rede pode piorar* (o total esconde uma rede que
   regride; `Zone<->Zone` é só indicação). DRC com `--refill-zones`.
@@ -208,7 +212,8 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
   **interrompe** (não se salta "pra ver se passa"); **a última linha de defesa
   não é a ferramenta que fez o trabalho**; **livro-razão de achados** para que
   nada caia em silêncio; um achado que reaparece vira **portão novo no mesmo
-  commit** (não uma nota).
+  commit** (não uma nota); **⟨dB⟩** o veto dos renders de placa na lente C
+  (`design-review` passa pelo olho — exit 3 não-verificável não é aprovado).
 - **Artefacto:** a ficha das 3 lentes × 3 passagens preenchida com números, e o
   livro-razão de achados (severidade, onde, regra pelo nome, conserto).
 

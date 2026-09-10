@@ -35,7 +35,7 @@ Formato do manifesto (uma linha por linha do BOM agrupado):
 CSV com cabecalho, ou JSON (lista de objectos com essas chaves).
 """
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 
 import csv
 import io
@@ -114,11 +114,20 @@ def carrega(caminho):
     with io.open(caminho, encoding="utf-8") as f:
         dados = f.read()
     if caminho.lower().endswith(".json"):
-        obj = json.loads(dados)
+        try:
+            obj = json.loads(dados)
+        except ValueError as e:
+            raise SystemExit("*** JSON invalido em %s: %s" % (caminho, e))
         if not isinstance(obj, list):
             raise SystemExit("*** JSON tem de ser uma lista de objectos")
+        if not all(isinstance(r, dict) for r in obj):
+            raise SystemExit("*** JSON tem de ser uma lista de OBJECTOS "
+                             "(uma linha do BOM por objecto)")
         return [dict(r) for r in obj]
-    return list(csv.DictReader(io.StringIO(dados)))
+    try:
+        return list(csv.DictReader(io.StringIO(dados)))
+    except csv.Error as e:
+        raise SystemExit("*** CSV invalido em %s: %s" % (caminho, e))
 
 
 def confere(rows, quieto=False):

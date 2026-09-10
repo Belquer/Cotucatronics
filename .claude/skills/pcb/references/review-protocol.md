@@ -123,9 +123,10 @@ Preenche-se com **números**. `[x] ok` não é resultado.
 
 O conjunto A+B+C corre **três vezes**, porque a primeira passagem muda a placa
 (conserta achados) e a placa mudada é um artefacto novo por rever — **qualquer
-edição invalida a inspecção anterior** (`design-review`). As três passagens
-param quando uma passagem inteira sai **sem achados novos** — a estabilidade é
-o critério, não a contagem cega de três.
+edição invalida a inspecção anterior** (`design-review`). O conjunto corre
+**no mínimo três vezes** e **não pára antes de uma passagem inteira sair sem
+achados novos** — se a terceira ainda achar, continua. Os três são o piso; a
+estabilidade (uma passagem limpa) é o critério de paragem.
 
 Delega a: `kicad`, `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, e
 `kicad/revisao_externa.py` (kicad-happy, MIT, testado em ~5800 projectos) como
