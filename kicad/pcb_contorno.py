@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.16.2"
+VERSAO = "0.17.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -153,30 +153,39 @@ COLOCA = {
  "painel": {
     # J1 ROTADO 90°: o IDC 2x13 e 32 mm de comprido e a placa so tem 36 de
     # altura — na vertical saia 13 mm por baixo do contorno.
-    # O IDC ocupa 32 mm da aresta de cima: x 26..58. Tudo o resto vive a
+    # O IDC ocupa 32 mm da aresta de cima. Tudo o resto vive a
     # direita dele ou nas duas filas de baixo.
+    # ⚠️ rev C — J1 DESCEU 5,5 mm (y=24 -> 29,5), afastado da aresta de cima.
+    # Encostado ao bordo o patio saia 2,2 mm FORA da placa e uma das duas fugas
+    # do conector estava morta (§12q: encostar um conector de duas filas a um
+    # bordo e dar-lhe metade dos pinos). A +5,5 mm o patio abre 3,3 mm ate a
+    # aresta e as DUAS fugas ficam vivas (supply 13->26), e o C5 (+3V3A) ganha
+    # casa limpa por baixo em vez de ficar a 0,5 mm de virar o "C16" do painel.
+    # Fix de floorplan aprovado pelo dB. Arrasta J3/J4/J5 e R1/R2 para baixo.
     # ⚠️ os TP no vao entre o J2 (acaba a ~80) e o RV1 (comeca a ~132), na
     # maior faixa livre do painel: 163,8 mm em y=27,5.
     **{f"TP{i + 1}": (90.0 + 6.0 * i, 27.5, 0) for i in range(5)},
-    "J1":  (26.0, 24.0, 90),
+    "J1":  (26.0, 29.5, 90),
     "J2":  (68.0, 24.0, 0),
-    "J3":  (26.0, 34.0, 0),     "J4":  (38.0, 34.0, 0),   "J5":  (50.0, 34.0, 0),
+    # rev C — J3/J4/J5 desceram (y=34 -> 36,5) e J4/J5 abriram em x (38->40,
+    # 50->53) para libertar o corredor de fuga por baixo do J1 e dar sitio ao C5.
+    "J3":  (26.0, 36.5, 0),     "J4":  (40.0, 36.5, 0),   "J5":  (53.0, 36.5, 0),
     "J6":  (26.0, 46.0, 0),     "J7":  (38.0, 46.0, 0),
     "Q1":  (52.0, 46.0, 0),     "Q2":  (64.0, 46.0, 0),
-    "R1":  (52.0, 40.0, 0),     "R2":  (64.0, 40.0, 0),
+    # rev C — R1/R2 (gate 100R) desceram para y=42,3, encaixados entre a fila
+    # dos JST (que desceu) e os MOSFET, sem colidir patio nenhum.
+    "R1":  (52.0, 42.3, 0),     "R2":  (64.0, 42.3, 0),
     "R3":  (76.0, 40.0, 0),     "R4":  (88.0, 40.0, 0),
     "R5":  (76.0, 46.0, 0),     "R6":  (88.0, 46.0, 0),
     # C1/C2 COLADOS ao cursor: 6 mm do pino 2 de cada pot, do lado livre.
     "C1":  (133.0, 38.0, 0),    "C2":  (168.0, 38.0, 0),
     # ⚠️ o par do +5V vai JUNTO AOS MOSFET, que sao a carga que comuta — nao ao
-    # OLED, que tem os dele. O C5 colado ao IDC, onde o +3V3A entra e de onde
-    # saem 150 mm de fita.
-    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),   "C5":  (26.0, 30.0, 0),
-    # ⚠️ o par do +5V vai JUNTO AOS MOSFET, que sao a carga que comuta — nao
-    # junto ao OLED, que tem os dele. E o C5 colado ao IDC, que e onde o
-    # +3V3A entra e por onde saem 150 mm de fita.
-    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),
-    "C5":  (26.0, 30.0, 0),
+    # OLED, que tem os dele. rev C — o C5 (+3V3A) desceu para (34,5 · 34,5),
+    # DEBAIXO do pino 9 (+3V3A) do J1, com uma via de 1 mm ao plano de GND
+    # (laco curto, P4 da revisao de terra) em vez de encostado ao patio do IDC,
+    # onde estava a 0,5 mm de virar o "C16" do painel. O +3V3A entra pelo J1 e
+    # sai por 150 mm de fita, e e ai que o 100 n filtra.
+    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),   "C5":  (34.5, 34.5, 0),
  },
 }
 
