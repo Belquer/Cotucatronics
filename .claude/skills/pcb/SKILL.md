@@ -74,6 +74,9 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
   estes ficheiros, antes de acreditar em qualquer número.
 - **O que faz:** confirma que o KiCad instalado é o certo, que os ficheiros
   **ABREM**, e que os scripts estão presentes.
+- **Se a ferramenta faltar ou for velha demais, a pipeline NÃO está bloqueada:**
+  arranca uma via `scripts/bootstrap_kicad.sh` (AppImage do GitHub — ver
+  `references/fab-automation.md` §0) e **volta a correr o portão de versão** abaixo.
 - **Delega a:** `medicao-limpa` (é a etapa 0 do método — canal provado, ambiente
   zerado, regime declarado).
 - **PORTÃO:** ⚠️ **A versão MAIOR do KiCad tem de ser igual ao token

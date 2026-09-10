@@ -19,6 +19,60 @@ IPC-2221 (`resources.altium.com/p/ipc-2221-calculator-pcb-trace-current-and-heat
 
 ---
 
+## 0. KiCad ausente no ambiente? Bootstrap por AppImage
+
+⚠️ **Antes de tudo isto tens de ter um `kicad-cli` cuja versão MAIOR bata com o
+token `(version …)` dos ficheiros** (portão do estágio 0). Se o ambiente não
+tiver KiCad — ou só tiver um velho demais — a pipeline **não está bloqueada**:
+há um plano-B provado.
+
+**Cadeia de recurso (o que falhou vs. o que passou, sessão 2026-09-10):**
+
+| Fonte | Resultado |
+|---|---|
+| `apt` | só KiCad **7** — velho demais para ficheiros v10 |
+| conda-forge | **não tem** pacote `kicad` |
+| PPA oficial do KiCad | **bloqueado** pelo proxy de egresso (403) |
+| `downloads.kicad.org` / `kicad.org` / sourceforge | **bloqueados** (403) |
+| **AppImage numa release do GitHub** | ✅ **passa** o proxy (`/releases/download/…`) |
+
+O proxy deixa passar as URLs `github.com/<owner>/<repo>/releases/download/<tag>/<asset>`
+(redirecionam para `objects.githubusercontent.com`, alcançável). As páginas web
+do GitHub e a `api.github.com` continuam gated — usa a URL de download direta.
+
+**Comando (embrulhado em `scripts/bootstrap_kicad.sh`):**
+```bash
+KCLI=$(.claude/skills/pcb/scripts/bootstrap_kicad.sh 10)   # 10 = MAIOR requerido
+"$KCLI" version                                            # -> 10.0.6
+```
+O script é **idempotente** (reutiliza download/árvore extraída), **verifica** o
+download (HTTP-ok + tamanho mínimo, e sha256 se lhe passares `KICAD_APPIMAGE_SHA256`)
+e **nunca prossegue em silêncio** sobre um download parcial. URL e versão são
+parametrizáveis (`KICAD_APPIMAGE_URL`, arg/`KICAD_MAJOR`).
+
+**Asset provado:** `pkgforge-dev/KiCad-AppImage`, `KiCad-10.0.6-1-anylinux-x86_64.AppImage`
+(~487 MB), extraído com `--appimage-extract` (**sem FUSE**). Provado: `kicad-cli
+version` → 10.0.6, e faz o **parse de um board `(version 20260206)`** (o DRC correu).
+
+**Notas de execução:**
+- `squashfs-root/bin/kicad-cli` é um lançador **`sharun`**: corre-o pelo **caminho
+  real** que o script imprime — **SEM `LD_LIBRARY_PATH`** (ele resolve as libs
+  empacotadas pelo próprio argv0).
+- Aviso **benigno** em cada corrida, ignora-o:
+  `Error: schema file '.../kicad/schemas/api.v1.schema.json' not found` — é o
+  schema da IPC-API, nada tem a ver com o parse do board; o DRC/ERC funcionam.
+- Exit code 5 num `pcb drc --exit-code-violations` = **encontrou violações**
+  (sucesso do gate), não falha de parse.
+
+> ⚠️ **CAVEAT — é um build da COMUNIDADE, não o oficial do KiCad.** É o plano-B.
+> Quando o oficial (apt/PPA/`downloads.kicad.org`) estiver alcançável e der a
+> versão MAIOR certa, **prefere-o sempre**. Depois do bootstrap, **volta a correr
+> o portão de versão do estágio 0** (MAIOR do `kicad-cli` == token dos ficheiros).
+
+Detalhe e parâmetros: **`scripts/bootstrap_kicad.sh`** (cabeçalho comentado).
+
+---
+
 ## 1. `kicad-cli` — cheat-sheet (tudo headless)
 
 ### ERC (esquema) — portão de build
