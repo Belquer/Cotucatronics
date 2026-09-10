@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""arruma_silk v0.20.0 — arruma os textos das DUAS camadas.
+"""arruma_silk v0.21.0 — arruma os textos das DUAS camadas.
 
 ⚠️ SERIGRAFIA SO. Nao toca em cobre, em pistas, em zonas nem em posicoes de
 peca: mexe apenas no `(at ...)` do campo `Reference` de cada footprint, que e
@@ -23,9 +23,14 @@ USO:  arruma_silk.py <ficheiro.kicad_pcb> [--escreve]
 """
 import io, math, os, re, subprocess, sys
 
-KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+# ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
+# hardcoded rebenta noutro computador (skill kicad §8), e o auto-teste desta
+# ferramenta corre o kicad-cli (svg + drc) — sem o env, o portao proprio nem
+# arranca. Igual ao para_fabrica.py e ao roteia.py.
+KICAD = os.environ.get("KICAD_CLI",
+                       "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli")
 
-VERSAO = "0.20.0"
+VERSAO = "0.21.0"
 NUM = r"-?\d+(?:\.\d+)?"
 # ⚠️⚠️ UM DESIGNADOR E UM RECTANGULO LARGO E BAIXO, NAO UM CIRCULO.
 #
