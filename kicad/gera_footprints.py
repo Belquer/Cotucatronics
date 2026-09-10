@@ -31,7 +31,7 @@ USO:  gera_footprints.py
 """
 import io, os, sys, uuid
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 LIB = os.path.join(AQUI, "cotuca.pretty")
 
@@ -49,8 +49,22 @@ SILK  = {"IO21": "21", "IO20": "20", "IO10": "10", "IO9": "9", "IO8": "8",
          "IO2": "2", "IO3": "3", "IO4": "4", "3V3": "3.3", "GND": "G", "5V": "5V"}
 
 
-def u():
-    return str(uuid.uuid4())
+# ⚠️ UUID DETERMINISTICO por chave semantica (skill kicad §8b). Antes minava
+# `uuid4()` por elemento, e regenerar produzia dezenas de linhas de diff que
+# eram SO uuid — a mudanca real (aqui, o angulo 180) afogava-se no ruido, e
+# gerar duas vezes nunca dava byte-a-byte igual. A chave e o papel do elemento
+# (`pad:5V`, `silk:GND`), nao um contador. NAO voltar a `uuid4()`.
+NS = uuid.uuid5(uuid.NAMESPACE_DNS, "gera-footprints.cotucatronics")
+_CHAVES = set()
+
+
+def u(chave):
+    if chave in _CHAVES:
+        raise SystemExit("*** dois elementos pedem o mesmo uuid: %r — ou ha "
+                         "duplicado, ou a chave nao distingue o que devia."
+                         % (chave,))
+    _CHAVES.add(chave)
+    return str(uuid.uuid5(NS, chave))
 
 
 def main():
@@ -58,6 +72,13 @@ def main():
     if len(ESQ) != 8 or len(DIR) != 8:
         raise SystemExit("*** 2x8 e 16 pinos; tens %d+%d" % (len(ESQ), len(DIR)))
     y0 = -PASSO * (len(ESQ) - 1) / 2
+    # ⚠️ ORIENTACAO DO TEXTO E DOS PADS = 180°. O U3 esta colocado a 180° na
+    # placa do cerebro (o USB-C aponta para +y no cobre). ppc/002 §2: para um
+    # simbolo `cotuca:`, o FOOTPRINT manda, e a biblioteca embutida alinha-se
+    # ao EXEMPLAR DA PLACA. Com 0° a definicao da lib difere da de U3 (pads e
+    # textos a 0° contra 180°) e o DRC acusa `lib_footprint_mismatch` em U3 —
+    # medido: 0° -> 1 mismatch, 180° -> 0. A serigrafia le-se a direito na
+    # placa porque a peca esta a 180°; a lib guarda a forma como U3 a usa.
     L = ['(footprint "ESP32C3_SUPERMINI_SOQUETE"',
          '\t(version 20240108)', '\t(generator "gera_footprints")',
          '\t(layer "F.Cu")',
@@ -67,38 +88,38 @@ def main():
          '\t(tags "ESP32 C3 SuperMini soquete modulo")',
          '\t(attr through_hole)']
     for prop, val, y in (("Reference", "U*", -H / 2 - 1.5), ("Value", "ESP32C3_SUPERMINI", H / 2 + 1.5)):
-        L.append('\t(property "%s" "%s"\n\t\t(at 0 %g 0)\n\t\t(layer "%s")\n'
+        L.append('\t(property "%s" "%s"\n\t\t(at 0 %g 180)\n\t\t(layer "%s")\n'
                  '\t\t(uuid "%s")\n\t\t(effects (font (size 1 1) (thickness 0.15)))\n\t)'
-                 % (prop, val, y, "F.SilkS" if prop == "Reference" else "F.Fab", u()))
+                 % (prop, val, y, "F.SilkS" if prop == "Reference" else "F.Fab", u("prop:" + prop)))
     for coluna, x in ((ESQ, -FILAS / 2), (DIR, FILAS / 2)):
         for i, nome in enumerate(coluna):
             y = y0 + i * PASSO
             forma = "rect" if nome == "5V" else "circle"
-            L.append('\t(pad "%s" thru_hole %s\n\t\t(at %g %g)\n\t\t(size %g %g)\n'
+            L.append('\t(pad "%s" thru_hole %s\n\t\t(at %g %g 180)\n\t\t(size %g %g)\n'
                      '\t\t(drill %g)\n\t\t(layers "*.Cu" "*.Mask")\n\t\t(uuid "%s")\n\t)'
-                     % (nome, forma, x, y, PAD, PAD, FURO, u()))
-            L.append('\t(fp_text user "%s"\n\t\t(at %g %g 0)\n\t\t(layer "F.SilkS")\n'
+                     % (nome, forma, x, y, PAD, PAD, FURO, u("pad:" + nome)))
+            L.append('\t(fp_text user "%s"\n\t\t(at %g %g 180)\n\t\t(layer "F.SilkS")\n'
                      '\t\t(uuid "%s")\n\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))\n\t)'
-                     % (SILK[nome], x + (2.2 if x < 0 else -2.2), y, u()))
+                     % (SILK[nome], x + (2.2 if x < 0 else -2.2), y, u("silk:" + nome)))
     # contorno do modulo (F.Fab), serigrafia e courtyard
     for camada, larg, esp in (("F.Fab", 0.1, 0.1), ("F.SilkS", 0.12, 0.12)):
         L.append('\t(fp_rect\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(stroke (width %g) '
                  '(type default))\n\t\t(fill no)\n\t\t(layer "%s")\n\t\t(uuid "%s")\n\t)'
-                 % (-W / 2, -H / 2, W / 2, H / 2, larg, camada, u()))
+                 % (-W / 2, -H / 2, W / 2, H / 2, larg, camada, u("rect:contorno:" + camada)))
     L.append('\t(fp_rect\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(stroke (width 0.05) '
              '(type default))\n\t\t(fill no)\n\t\t(layer "F.CrtYd")\n\t\t(uuid "%s")\n\t)'
-             % (-W / 2 - 0.25, -H / 2 - USB_SAI - 0.25, W / 2 + 0.25, H / 2 + 0.25, u()))
+             % (-W / 2 - 0.25, -H / 2 - USB_SAI - 0.25, W / 2 + 0.25, H / 2 + 0.25, u("rect:crtyd")))
     # o USB-C, para se ver de que lado esta
     L.append('\t(fp_rect\n\t\t(start %g %g)\n\t\t(end %g %g)\n\t\t(stroke (width 0.12) '
              '(type default))\n\t\t(fill no)\n\t\t(layer "F.SilkS")\n\t\t(uuid "%s")\n\t)'
-             % (-4.5, -H / 2 - USB_SAI, 4.5, -H / 2, u()))
-    L.append('\t(fp_text user "USB-C"\n\t\t(at 0 %g 0)\n\t\t(layer "F.SilkS")\n'
+             % (-4.5, -H / 2 - USB_SAI, 4.5, -H / 2, u("rect:usbc")))
+    L.append('\t(fp_text user "USB-C"\n\t\t(at 0 %g 180)\n\t\t(layer "F.SilkS")\n'
              '\t\t(uuid "%s")\n\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))\n\t)'
-             % (-H / 2 + 2.0, u()))
+             % (-H / 2 + 2.0, u("txt:usbc")))
     # ⚠️ a antena ceramica fica no extremo OPOSTO ao USB e quer cobre longe
-    L.append('\t(fp_text user "ANTENA - sem cobre"\n\t\t(at 0 %g 0)\n\t\t(layer "F.Fab")\n'
+    L.append('\t(fp_text user "ANTENA - sem cobre"\n\t\t(at 0 %g 180)\n\t\t(layer "F.Fab")\n'
              '\t\t(uuid "%s")\n\t\t(effects (font (size 0.8 0.8) (thickness 0.12)))\n\t)'
-             % (H / 2 - 2.0, u()))
+             % (H / 2 - 2.0, u("txt:antena")))
     L.append(')')
     os.makedirs(LIB, exist_ok=True)
     p = os.path.join(LIB, "ESP32C3_SUPERMINI_SOQUETE.kicad_mod")

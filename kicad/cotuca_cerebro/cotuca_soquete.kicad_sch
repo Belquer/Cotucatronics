@@ -4326,12 +4326,56 @@
 		(uuid "3005e152-1f2c-5728-a4d7-44d8b6843eb8")
 	)
 	(no_connect
+		(at 160.02 111.76)
+		(uuid "4e5b2eca-5677-5a09-b729-400c91775876")
+	)
+	(no_connect
+		(at 160.02 114.3)
+		(uuid "d78144cc-df90-5f95-80ef-67619778d6df")
+	)
+	(no_connect
+		(at 160.02 127.0)
+		(uuid "0f36404e-f6e7-53af-8e1a-a4a6b6a84aab")
+	)
+	(no_connect
+		(at 160.02 132.08)
+		(uuid "d29c2798-331c-5e07-9f51-15b57e26f7b1")
+	)
+	(no_connect
+		(at 160.02 134.62)
+		(uuid "0f2cecad-c401-50c4-952f-a6fa267c6db1")
+	)
+	(no_connect
+		(at 220.98 114.3)
+		(uuid "30226c89-e23b-5e9f-8288-440a85af3c6b")
+	)
+	(no_connect
+		(at 220.98 116.84)
+		(uuid "abbc8f9f-e63e-5a2b-8a5b-dc13152242b5")
+	)
+	(no_connect
+		(at 220.98 119.38)
+		(uuid "b47b294f-ff45-59b3-81ff-360d89f6cdb1")
+	)
+	(no_connect
+		(at 220.98 121.92)
+		(uuid "cbea9088-5a1c-5ab2-ac6c-529b4c87d172")
+	)
+	(no_connect
+		(at 220.98 132.08)
+		(uuid "5fb3bb74-5606-5edc-b778-db87393d8787")
+	)
+	(no_connect
 		(at 220.98 142.24)
 		(uuid "78eb7fc0-eb47-5cd2-9c66-d8056ed6d9d6")
 	)
 	(no_connect
 		(at 220.98 144.78)
 		(uuid "de5b1716-f116-559e-a68e-2fd97966c70f")
+	)
+	(no_connect
+		(at 220.98 147.32)
+		(uuid "c7a0c0d1-8192-5e3c-99dd-2bda316d743e")
 	)
 	(symbol
 		(lib_id "cotuca:C_V")
