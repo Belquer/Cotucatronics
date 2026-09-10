@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.17.0"
+VERSAO = "0.18.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -377,10 +377,19 @@ UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (45.0, 29.0, 90),
                   # noutra peca, e isso e decisao de layout com o dB no editor,
                   # nao mais uma tentativa minha as cegas.
                   "U3": (85.0, 106.0, 180),
-                  # ⚠️ COLADOS ao que desacoplam: o C15 ao pino 39 da Daisy, o
-                  # C16 ao J14. A mais de poucos centimetros ligam-se atraves da
-                  # indutancia que existiam para contornar (P4 da revisao).
-                  "C15": (105.0, 115.0, 0), "C16": (78.0, 30.0, 0)}
+                  # ⚠️ COLADO ao que desacopla: o C15 ao pino 39 da Daisy. A mais
+                  # de poucos centimetros liga-se atraves da indutancia que
+                  # existia para contornar (P4 da revisao).
+                  "C15": (105.0, 115.0, 0),
+                  # ⚠️ C16 EM B.Cu, em (113,47). O patio do J14 (conector do
+                  # pre-amp) estende-se ate x=81 e engolia o C16 em (78,30):
+                  # courtyards_overlap. O J14 nao pode recuar — o pre-amp bloqueia
+                  # a folga para dentro — por isso quem sai e o C16, que vira para
+                  # B.Cu no meio-direito, com um lacinho curto de GND ao plano.
+                  # Caminho (b) aprovado pelo dB: aceita o lacinho de retorno.
+                  # ⚠️ O 4o elemento da tupla e a CAMADA; ver move()/grelha() —
+                  # o gerador declara o lado e RECUSA se a placa nao o respeitar.
+                  "C16": (113.0, 47.0, 0, "B.Cu")}
 
 
 def furos_kicad(alvo):
@@ -437,8 +446,10 @@ def grelha(t, zonas, unicos, furos=()):
             t = move(t, ref, (float(x), float(y)))
             i += 1
             n += 1
-    for ref, (x, y, ang) in unicos.items():
-        t = move(t, ref, (x, y), ang)
+    for ref, spec in unicos.items():
+        x, y, ang = spec[0], spec[1], spec[2]
+        camada = spec[3] if len(spec) > 3 else None
+        t = move(t, ref, (x, y), ang, camada)
         n += 1
     return t, n
 
@@ -1384,8 +1395,20 @@ def confere_arcade(t, alvo, frente_em):
     return L
 
 
-def move(t, ref, xy, ang=None):
-    """Poe o footprint `ref` em xy (e roda, se `ang`). Falha alto se faltar."""
+def move(t, ref, xy, ang=None, camada=None):
+    """Poe o footprint `ref` em xy (e roda, se `ang`). Falha alto se faltar.
+
+    ⚠️ `camada` DECLARA de que lado a peca tem de estar (ex.: "B.Cu"). Virar uma
+    peca de lado NAO e uma reescrita do `(at ...)`: mexe em dezenas de tokens —
+    cada `(layer "F.x")`->`(layer "B.x")`, cada `(at x y a)` espelhado em y e
+    +180 graus, um `(justify mirror)` por texto, cada `(start/end)` em y. Uma
+    reescrita parcial disso PASSA no `(at)` e falha em silencio no resto, e
+    "conserto parcial que parece completo e pior que nenhum" (edicao-segura).
+    Por isso a virada e uma operacao de COBRE/COLOCACAO gravada na placa (como o
+    roteamento), e o gerador aqui DECLARA a camada e RECUSA se a placa nao a
+    respeitar — o mesmo padrao de "a ferramenta recusa" do resto do gerador
+    (§11j da kicad_layout). Assim a declaracao e verificada a cada geracao sem
+    poder corromper a peca as cegas."""
     for m in re.finditer(r'\n\t\(footprint ', t):
         j = m.start() + 1
         d = 0
@@ -1400,6 +1423,15 @@ def move(t, ref, xy, ang=None):
         bl = t[j:fim]
         r = re.search(r'\(property "Reference" "([^"]+)"', bl)
         if r and r.group(1) == ref:
+            if camada is not None:
+                lc = re.search(r'\(layer "([^"]+)"\)', bl)
+                atual = lc.group(1) if lc else "?"
+                if atual != camada:
+                    raise SystemExit(
+                        "*** %s: a placa tem-no em %s, o gerador declara %s. "
+                        "Virar de lado e operacao de cobre na placa (como o "
+                        "roteamento), nao uma reescrita cega do texto — vira o %s "
+                        "no editor/pcbnew e volta a correr." % (ref, atual, camada, ref))
             alvo_at = '%g %g' % xy + ('' if ang in (None, 0) else ' %g' % ang)
             novo, n = re.subn(r'(\(at )(-?[\d.]+) (-?[\d.]+)( -?[\d.]+)?',
                               lambda m: m.group(1) + alvo_at, bl, count=1)
