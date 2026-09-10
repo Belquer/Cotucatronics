@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 """portao_humano.py — gerador do questionário do Portão Humano ⟨dB⟩ (/pcb)
 
-    portao_humano.py --cpl <cpl.csv> --bom <bom.csv> [--placa nome] [--out VISTORIA.md]
+    portao_humano.py --cpl <cpl.csv> --bom <bom.csv> [--placa nome]
+                     [--pacote <placa>_<data>_<commit>] [--branch <branch-do-PR>]
+                     [--out VISTORIA.md]
     portao_humano.py --sabota        prova que assinala as peças de risco conhecidas
 
 ⚠️⚠️ O QUE ESTA FERRAMENTA EXISTE PARA APANHAR
@@ -19,6 +21,11 @@ e encaminha para um conserto — nunca para o pagamento. Ver
 READ-ONLY: lê o CPL e o BOM; NUNCA os altera. O único ficheiro que escreve é o
 próprio questionário (stdout, ou --out VISTORIA.md).
 
+O questionário ABRE SEMPRE com o **Item 0 — Carregar o pacote**: qual `.zip`
+carimbado carregar na JLCONE, como o buscar ao PR (o pacote vive no GitHub, não
+na máquina do humano), e a prova de proveniência pelo `LEIA-ME.txt` (commit +
+árvore limpa). Só depois entram os itens de inspeção.
+
 O motor deriva os itens da placa — não são escritos à mão:
   · peças polarizadas (díodos, electrolíticos, tântalo, LEDs, ICs pino-1),
   · pacotes com risco de rotação 180° (SOT-23, SOIC/SOP, SON/QFN, SMA/SMB/SOD,
@@ -33,7 +40,7 @@ cada classe conhecida (SOT-23, SMB/SMA cátodo, SOIC pino-1, OLED, IDC) apareça
 questionário — uma guarda que nunca assinalou nada é promessa, não verificação.
 """
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 
 import argparse
 import csv
@@ -175,6 +182,77 @@ def _onde(p, extra=""):
             "em X=%s, Y=%s (rotação CPL = %s°, lado %s)"
             % (p["ref"], _num(p["x"]), _num(p["y"]), _num(p["rot"]), p["side"]))
     return base + (" — " + extra if extra else "")
+
+
+def _parse_pacote(nome):
+    """<board>_<date>_<commit> -> (board, date, commit) ou None.
+
+    board pode ter '_' (rsplit apanha data+commit pelo fim); a data é AAAA-MM-DD
+    e o commit é hex curto."""
+    m = re.match(r"^(.+)_(\d{4}-\d{2}-\d{2})_([0-9a-fA-F]+)$", (nome or "").strip())
+    if m:
+        return m.group(1), m.group(2), m.group(3)
+    return None
+
+
+def item_pacote(pacote, repo, branch):
+    """Item 0 — o passo obrigatório ANTES da inspeção: buscar o pacote carimbado
+    (que vive no PR, não necessariamente na máquina) e carregá-lo na JLCONE, com
+    a verificação de proveniência pelo LEIA-ME. Auto-preenchido do nome do pacote.
+    """
+    parsed = _parse_pacote(pacote)
+    if parsed:
+        board, _date, commit = parsed
+    else:  # fallback: sem pacote reconhecível, ainda nomeia o padrão do .zip
+        pacote = pacote or "<placa>_<data>_<commit>"
+        board, commit = "<placa>", "<commit>"
+    zipname = "%s_gerbers.zip" % pacote
+    zippath = "export/%s/%s" % (pacote, zipname)
+    branch_txt = ("`%s`" % branch) if branch else "a branch do PR"
+    branch_cmd = branch or "<branch>"
+    reponame = repo.split("/")[-1] if repo else "Cotucatronics"
+
+    onde = ("O pacote está **committado no repo** em `export/%s/` na branch do PR "
+            "(%s, repo `%s` no GitHub) — está no **GitHub, não necessariamente na "
+            "tua máquina**. ⚠️ O terminal que vês na pipeline corre no **sandbox na "
+            "nuvem** e **não consegue pôr ficheiros na tua máquina** — a recuperação é "
+            "um comando que **TU corres localmente**. Depois carregas no site da "
+            "**JLCPCB/JLCONE** (*Add Gerber*). Antes de QUALQUER item de inspeção, a "
+            "placa tem de estar carregada." % (pacote, branch_txt, repo))
+
+    ver = ("**Gerber a carregar:** `%s` — é ESTE `.zip` que entra na JLCONE, não o "
+           "`.kicad_pcb` nem gerbers soltos.\n"
+           "  · **Como buscar (terminal no teu Mac — o preferido):** "
+           "`cd %s && git fetch origin && git checkout %s && git pull origin %s && "
+           "open export/%s/` — se ainda não o clonaste: "
+           "`git clone -b %s git@github.com:%s.git`.\n"
+           "  · **Fallback (GitHub no browser):** navega %s até `export/%s/`, abre a "
+           "página do `%s` e clica **Download raw file** (repo privado → tens de estar "
+           "autenticado como o dono); leva também o `cpl_%s.csv` + `bom_%s.csv`. Ou "
+           "**Code → Download ZIP** da branch e tira a pasta `export/`.\n"
+           "  · **Montagem SMT:** quando a JLC pedir, junta `cpl_%s.csv` (posições) + "
+           "`bom_%s.csv` (BOM), da MESMA pasta.\n"
+           "  · **Camadas:** 2.\n"
+           "  · Depois, arrasta o `%s` para a JLCONE (*Add Gerber*)."
+           % (zippath, reponame, branch_cmd, branch_cmd, pacote, branch_cmd, repo,
+              branch_txt, pacote, zipname, board, board, board, board, zipname))
+
+    confirmar = ("**Proveniência** — PASS: carregaste o `%s` (buscado a %s no GitHub) "
+                 "e o `LEIA-ME.txt` da MESMA pasta carimba o commit `%s` e árvore "
+                 "limpa — é ESSA a revisão que estás a encomendar. FAIL: não encontras "
+                 "o pacote na tua máquina (está só no PR — vai buscá-lo ao GitHub), ou "
+                 "carregaste outro zip, ou o `LEIA-ME.txt` carimba outro commit / "
+                 "árvore suja → PÁRA e vai buscar o pacote certo do PR, NÃO encomendas "
+                 "(guarda contra encomendar um pacote velho ou trocado)."
+                 % (zipname, branch_txt, commit))
+
+    return {
+        "num": 0,
+        "item": "Carregar o pacote — buscar ao PR e carregar na JLCONE",
+        "onde": onde,
+        "ver": ver,
+        "confirmar": confirmar,
+    }
 
 
 def item_placa(placa, camadas, dims, qty):
@@ -323,9 +401,15 @@ def item_conector(p):
     }
 
 
-def constroi(pecas, bom, placa, camadas, dims, qty):
+def constroi(pecas, bom, placa, camadas, dims, qty,
+             pacote=None, repo="Belquer/Cotucatronics", branch=""):
     """Devolve lista de (titulo_categoria, [itens])."""
     cats = []
+
+    # 0. Carregar o pacote — SEMPRE o primeiro item do questionário: qual ficheiro
+    #    carregar (o .zip carimbado), como o buscar ao PR, e a prova de proveniência.
+    cats.append(("0. Carregar o pacote (antes de tudo)",
+                 [item_pacote(pacote, repo, branch)]))
 
     # 1. Nível-placa
     cats.append(("1. Nível-placa", item_placa(placa, camadas, dims, qty)))
@@ -440,7 +524,8 @@ def render(cats, placa, fonte_cpl, fonte_bom):
              "limpo de ponta a ponta é a precondição para o humano autorizar o "
              "pagamento (o pagamento é sempre acção do humano).")
     L.append("")
-    n = 0
+    n = 0        # numeração dos itens de inspeção (1..N); o Item 0 é o pré-passo
+    total = 0    # total de itens renderizados (inclui o Item 0)
     for titulo, itens in cats:
         L.append("## %s" % titulo)
         L.append("")
@@ -449,16 +534,22 @@ def render(cats, placa, fonte_cpl, fonte_bom):
             L.append("")
             continue
         for it in itens:
-            n += 1
-            L.append("### Item %d — %s" % (n, it["item"]))
+            total += 1
+            if it.get("num") is not None:   # item com número fixo (ex.: Item 0)
+                disp = it["num"]
+            else:
+                n += 1
+                disp = n
+            L.append("### Item %d — %s" % (disp, it["item"]))
             L.append("- **ONDE OLHAR:** %s" % it["onde"])
             L.append("- **O QUE DEVES VER:** %s" % it["ver"])
             L.append("- **COMO CONFIRMAR:** %s" % it["confirmar"])
             L.append("- %s" % RESPOSTA)
             L.append("")
     L.append("---")
-    L.append("_%d itens. Enquanto houver um ❌ ou um campo em branco, o portão "
-             "está FECHADO e o pagamento não é autorizado._" % n)
+    L.append("_%d itens (o Item 0 é o carregamento do pacote, antes da inspeção). "
+             "Enquanto houver um ❌ ou um campo em branco, o portão está FECHADO e o "
+             "pagamento não é autorizado._" % total)
     L.append("")
     return "\n".join(L)
 
@@ -508,11 +599,19 @@ def sabota():
     cpl_rows, bom_rows = _placa_sintetica()
     pecas = carrega_cpl(cpl_rows)
     bom = carrega_bom(bom_rows)
-    cats = constroi(pecas, bom, "SINTETICA", "2 camadas", "conforme", "5")
+    cats = constroi(pecas, bom, "SINTETICA", "2 camadas", "conforme", "5",
+                    pacote="sintetica_2026-09-10_deadbee",
+                    branch="claude/exemplo")
     texto = render(cats, "SINTETICA", "cpl", "bom")
 
     # cada classe conhecida TEM de aparecer no questionário
     checks = {
+        "Item 0 abre com o carregamento do pacote": (
+            "Item 0" in texto and "Carregar o pacote" in texto),
+        "Item 0 nomeia o .zip do pacote": (
+            "sintetica_2026-09-10_deadbee_gerbers.zip" in texto and ".zip" in texto),
+        "Item 0 diz como buscar ao PR (terminal + fallback)": (
+            "git pull" in texto and "Download raw file" in texto),
         "SOT-23 180° (D11 díodo)": ("D11" in texto and "180" in texto),
         "SOT-23 180° (Q1 transístor)": ("Q1" in texto and "180" in texto),
         "SMB cátodo (D1)": ("D1" in texto and "CÁTODO" in texto.upper()),
@@ -546,6 +645,13 @@ def main(argv):
     ap.add_argument("--camadas", default="", help="ex.: '2 camadas'")
     ap.add_argument("--dims", default="", help="dimensões/contorno (texto)")
     ap.add_argument("--qty", default="", help="quantidade esperada")
+    ap.add_argument("--pacote", default="",
+                    help="nome da pasta do pacote (<placa>_<data>_<commit>) para o "
+                         "Item 0; se omitido, deriva-se da pasta do --out")
+    ap.add_argument("--repo", default="Belquer/Cotucatronics",
+                    help="owner/repo no GitHub (para o Item 0)")
+    ap.add_argument("--branch", default="",
+                    help="branch do PR onde o pacote está committado (para o Item 0)")
     ap.add_argument("--out", default="", help="escrever para ficheiro (default: stdout)")
     ap.add_argument("--sabota", action="store_true", help="auto-teste: prova que sabe assinalar")
     args = ap.parse_args(argv)
@@ -559,9 +665,15 @@ def main(argv):
         if not os.path.exists(c):
             raise SystemExit("*** não há %s" % c)
 
+    # o Item 0 nomeia o pacote: usa --pacote, ou deriva-o do nome da pasta do --out
+    pacote = args.pacote
+    if not pacote and args.out:
+        pacote = os.path.basename(os.path.dirname(os.path.abspath(args.out)))
+
     pecas = carrega_cpl(_ler_csv(args.cpl))
     bom = carrega_bom(_ler_csv(args.bom))
-    cats = constroi(pecas, bom, args.placa, args.camadas, args.dims, args.qty)
+    cats = constroi(pecas, bom, args.placa, args.camadas, args.dims, args.qty,
+                    pacote=pacote, repo=args.repo, branch=args.branch)
     texto = render(cats, args.placa, args.cpl, args.bom)
 
     if args.out:

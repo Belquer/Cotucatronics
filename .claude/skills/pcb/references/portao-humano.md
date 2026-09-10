@@ -81,8 +81,31 @@ Toda a ambiguidade que este portão remove vem de uma âncora em falta. As regra
 ## 4. As categorias
 
 O questionário é **auto-derivado da placa** (do CPL + BOM) e cobre **sempre**
-estas sete categorias, por esta ordem:
+estas categorias, por esta ordem — e **abre SEMPRE pelo Item 0** (carregar o
+pacote) antes de qualquer item de inspeção:
 
+0. **Carregar o pacote certo (antes de tudo)** — qual ficheiro carregar na
+   JLCPCB/JLCONE e **como**, antes da inspeção começar. O questionário não pode
+   assumir que a placa já está carregada — este é o primeiro item de todo o
+   questionário:
+   - **Gerber a carregar:** o `.zip` carimbado exacto,
+     `export/<placa>_<data>_<commit>/<placa>_<data>_<commit>_gerbers.zip` — é este
+     que entra na JLCONE (*Add Gerber*), não o `.kicad_pcb` nem gerbers soltos.
+   - **Como o buscar:** o pacote está **committado no repo, na branch do PR** — vive
+     no **GitHub, não necessariamente na máquina do humano**. ⚠️ O terminal da
+     pipeline corre no **sandbox na nuvem** e **não põe ficheiros na máquina do
+     humano**: a recuperação é um comando que **o humano corre localmente**. O
+     caminho preferido é o terminal (`git fetch` / `git checkout <branch>` /
+     `git pull` e abrir a pasta `export/…`, ou `git clone -b <branch> …`); o
+     **fallback** é o GitHub no browser (página do `.zip` → **Download raw file**,
+     ou **Code → Download ZIP** da branch).
+   - **Proveniência:** abrir o `LEIA-ME.txt` do pacote e confirmar que carimba o
+     **commit** certo e **árvore limpa** — é ESSA a revisão que se encomenda (guarda
+     contra encomendar um pacote velho ou trocado). A proveniência lê-se no
+     `LEIA-ME.txt`, não no CPL.
+   - **Montagem SMT:** quando a JLC pedir, juntar `cpl_<placa>.csv` (posições) +
+     `bom_<placa>.csv` (BOM), da MESMA pasta.
+   - **Camadas:** 2.
 1. **Nível-placa** — nº de camadas, dimensões, contorno vs caixa, quantidade a
    encomendar. (⚠️ pedir 4 camadas num desenho de 2 paga um plano interior a mais.)
 2. **Peças polarizadas** — díodos, electrolíticos, tântalo, LEDs, ICs de pino-1:
@@ -104,13 +127,20 @@ estas sete categorias, por esta ordem:
 
 `scripts/portao_humano.py` (read-only, determinístico) constrói o questionário a
 partir do **CPL + BOM** da placa (opcionalmente o `.kicad_pcb` para coordenadas),
-no formato de quatro campos, cobrindo as sete categorias:
+no formato de quatro campos, cobrindo as categorias **0 a 7** — abrindo sempre
+pelo **Item 0** (carregar o pacote):
 
 ```bash
 python3 scripts/portao_humano.py --cpl <cpl.csv> --bom <bom.csv> \
-        --placa "<nome>" --camadas "2 camadas" --out VISTORIA.md
+        --placa "<nome>" --camadas "2 camadas" \
+        --pacote "<placa>_<data>_<commit>" --branch "<branch-do-PR>" \
+        --out export/<placa>_<data>_<commit>/VISTORIA.md
 python3 scripts/portao_humano.py --sabota      # prova que assinala o risco conhecido
 ```
+
+O `--pacote` (ou, se omitido, o nome da pasta do `--out`) dá ao **Item 0** o
+caminho exacto do `.zip` a carregar; o `--branch` diz de que branch do PR o
+buscar. O `--sabota` também exige que o **Item 0** apareça e nomeie um `.zip`.
 
 Auto-lista as peças polarizadas (por heurística de valor/footprint + BOM), os
 pacotes com risco de rotação (por nome de footprint: SOT-23/SOIC/SOP/QFN/SON/
@@ -133,6 +163,8 @@ O mesmo método serve os três portões ⟨dB⟩ da pipeline:
 - **Estágio 3/7 — veto de render / dry-fit:** a categoria 6 (mecânica) é o veto
   do dry-fit de UMA caixa antes da série.
 - **Estágio 8 — inspeção pré-pagamento na JLC:** o questionário completo, item a
-  item, no pré-visualizador 3D. **Só o passe limpo autoriza o pagamento.**
+  item, no pré-visualizador 3D — **a abrir pelo Item 0 (carregar o pacote
+  carimbado + proveniência)**, porque a inspeção não pode assumir a placa já
+  carregada. **Só o passe limpo autoriza o pagamento.**
 
 Sem o ⟨dB⟩ em ✅, o estágio fica em `INCOMPLETA` — nunca se confunde com feito.

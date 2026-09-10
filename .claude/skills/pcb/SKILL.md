@@ -312,7 +312,9 @@ recusa um DRC sujo.
   `para_fabrica` nem corre); DRC = 0 com regras JLC activas; zonas re-preenchidas
   **no ficheiro** (fill velho embarca calado); BOM = CPL = placa; LCSC em toda linha
   SMT; **⟨dB⟩ correr o questionário do portão humano (ver
-  `references/portao-humano.md`), item a item, e só o passe limpo autoriza o
+  `references/portao-humano.md`), item a item — o questionário abre com o
+  carregamento do pacote (Item 0: qual `.zip` carimbado carregar na JLCONE, como
+  o buscar ao PR, e a proveniência pelo LEIA-ME) — e só o passe limpo autoriza o
   pagamento** — a rotação peça-a-peça no pré-visualizador da JLC não é scriptável
   (a rotação é a do footprint, a JLC espera a da biblioteca dela); carimbo de
   procedência (data/commit/árvore-suja) +
