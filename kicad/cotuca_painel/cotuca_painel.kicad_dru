@@ -17,6 +17,13 @@
 # silk->furo. O DRC-default SUB-CONTA a serigrafia. Estas regras poem o nosso
 # portao a medir o que a fabrica mede, para o passo na JLCONE ser um CARIMBO.
 #
+# ⚠️⚠️ MAS NAO CHEGARAM (licao de 2026-09-10, 2o round): o `kicad-cli pcb drc`
+# NAO disparou as regras `silk_clearance`/`physical_hole_clearance` abaixo (deram
+# 0 achados sobre uma placa cheia de silk rente a pad), e o vermelho da JLC nasce
+# do `--subtract-soldermask` na EXPORTACAO, que so se ve no gerber. A medicao que
+# MANDA agora e a do GERBER exportado — `kicad/mede_serigrafia.py`, corrida pelo
+# `para_fabrica` depois de exportar. Estas regras ficam como cinto-e-suspensorios.
+#
 # Numeros conferidos contra a tabela de capacidades em
 # `.claude/skills/pcb/references/fab-automation.md` (§ "Capacidades JLCPCB").
 

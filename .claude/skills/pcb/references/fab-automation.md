@@ -205,6 +205,55 @@ resolvida na fonte (`normaliza_silk`). *Expansão negativa de máscara 2* e *slo
 curto 2* — inerentes aos footprints THT/slot usados; imprimíveis, aceitáveis
 enquanto o desenho não mudar. Só se age numa laranja se for barata **e** real.
 
+### 2a-bis. O 2º round — o portão do DRC continuou a mentir (lição de 2026-09-10)
+
+⚠️ **As regras `.kicad_dru` acima NÃO foram suficientes.** Duas passagens deram o
+painel por "limpo" e a JLCONE continuou a mostrar **silk→pad 18 vermelhos + 32
+laranja, silk→furo 11 vermelhos + 4 laranja, largura 50 laranja**. Reproduzindo os
+números **no gerber exportado** (a única verdade — é o que a JLC ingere), a causa
+foi outra e mais funda:
+
+1. **O `kicad-cli pcb drc` não dispara as regras `silk_clearance` do `.kicad_dru`.**
+   Sobre uma placa cheia de serigrafia rente a pad, o DRC reportou **0**
+   `silk_over_copper` e **0** da regra custom. O portão media com uma régua que
+   não mede. *Contagem 0 de um verificador que não dispara é o pior "limpo".*
+2. **O vermelho da JLC nasce do nosso próprio `--subtract-soldermask`.** Esse
+   flag apara a serigrafia **rente** à abertura de máscara (0 de folga) — e a
+   borda coincidente conta como silk-sobre-pad na JLC. Só se vê **no gerber**,
+   nunca na placa nem no DRC.
+3. **A "largura 50 laranja" era TEXTO E GRÁFICO a EXACTAMENTE 0,15 mm.** O bump de
+   contornos a 0,15 (round 1) não a mexeu: 0,15 é o *mínimo*, e a JLC marca a
+   laranja quem fica **no** mínimo. O alvo tem de ficar **acima** — usámos 0,18 mm.
+   E o `text_thickness` do DRC também não apanha texto que já está a 0,15.
+
+**A correcção, medida a cada passo contra o gerber:**
+- **Fonte** (`kicad/serigrafia_dfm.py`): sobe todo traço (texto **e** gráfico) a
+  0,18 mm; recorta cada gráfico de serigrafia — **incluindo discos CHEIOS** (o
+  corpo do C3 electrolítico era um `fp_circle` *filled* por cima dos dois pads, e
+  recortar só o contorno não tira o enchimento) — a 0,15 mm de folga de pad e
+  furo; reposiciona o texto de marca (`COTUCATRONICS` caíra por cima da fila de
+  test-points/vias) e afasta o designador que fica junto de um pad, medindo o
+  **glifo no gerber** (a forma de texto do pcbnew **não bate** com a plotada).
+- **Portão** (`kicad/mede_serigrafia.py`, chamado por `para_fabrica` v0.14.0 depois
+  de exportar): mede o **gerber** — silk→pad (contra a máscara), silk→furo (contra
+  o `.drl`, incl. slots e vias) e **largura de cada traço** (a abertura dos D01,
+  texto e gráfico). Recusa se gerbonara/shapely faltarem — um portão que não
+  consegue medir **não passa**.
+
+> **A lição-mãe: não há embarque "cosmético" para serigrafia.** O rótulo
+> "auto-clip / order-safe" para silk→pad já foi ERRADO em todas as vezes. Um
+> "cosmético" é uma **medição** (princípio da certificação de risco): ou o gerber
+> mostra 0 vermelhos, ou não está limpo. Reds de serigrafia vão a **zero, medidos
+> no gerber** — a única excepção seria apagar um marcador de pino/polaridade/cátodo
+> exigido, e aí PÁRA-SE e mostra-se esse item, não se passa em bloco.
+
+> **E a lição do traço:** endurecer os *defaults* do `.kicad_pro` não toca no texto
+> que já existe. O portão tinha de **medir a largura do traço no artefacto**, não
+> confiar num default. A largura vive no gerber; o custo é lê-la.
+
+*(O cérebro precisa do mesmo passo v2 — a serigrafia dele ainda não foi medida no
+gerber com este portão.)*
+
 ---
 
 ## 3. Largura de pista & dimensionamento de via (IPC-2221)

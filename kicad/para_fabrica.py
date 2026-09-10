@@ -55,7 +55,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.13.0"
+VERSAO = "0.14.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -79,16 +79,27 @@ GEOMETRIA = ("clearance", "shorting_items", "tracks_crossing", "track_dangling",
              "track_width", "copper_sliver", "malformed_courtyard",
              "invalid_outline", "unresolved_variable")
 
-# ⚠️⚠️ SERIGRAFIA: PARIDADE COM O DFM DA JLC (licao de 2026-09-10).
+# ⚠️⚠️ SERIGRAFIA: PARIDADE COM O DFM DA JLC (licao de 2026-09-10, DOIS rounds).
 #
-# A JLCONE marcou o painel com DEZENAS de vermelhos de serigrafia que este portao
-# NAO viu: silk->pad 25, silk->furo 31. A causa: o KiCad, por omissao, mede a
-# serigrafia sobre cobre com `min_silk_clearance = 0` — so o SOBREPOSTO, nunca a
-# FOLGA de 0,15 mm que a JLC exige — e nao tinha regra de silk->furo. O
-# DRC-default SUB-CONTA a serigrafia. A folga entra agora pelas regras do
-# `.kicad_dru` ao lado da placa (`silk_clearance` texto->pad, `physical_hole_
-# clearance` texto->furo, `text_thickness`, `text_height`); ESTE portao passa a
-# RECUSAR quando o DRC as reporta.
+# 1o round: a JLCONE marcou o painel com DEZENAS de vermelhos de serigrafia que
+# este portao NAO viu: silk->pad 25, silk->furo 31. Poem-se regras `.kicad_dru`
+# (`silk_clearance` texto->pad, `physical_hole_clearance` texto->furo,
+# `text_thickness`, `text_height`) para o DRC as reportar.
+#
+# ⚠️ 2o round: NAO CHEGOU. Duas passagens deram "limpo" e a JLCONE continuou com
+# 18 vermelhos silk->pad, 11 silk->furo, 50 laranja de largura. Porque:
+#   (a) o `kicad-cli pcb drc` NAO disparou as regras `silk_clearance` do .kicad_dru
+#       (deram 0 — o DRC continua a sub-contar);
+#   (b) o vermelho da JLC nasce do proprio `--subtract-soldermask`, que apara a
+#       serigrafia RENTE ao pad (0 folga = borda que a JLC conta como vermelho),
+#       e isso so se ve NO GERBER, nao na placa;
+#   (c) a largura "50 laranja" era TEXTO E GRAFICO a EXACTAMENTE 0,15 mm — no
+#       minimo, que a JLC marca a laranja; o bump de contornos a 0,15 nao a limpou.
+# A correccao real e NA FONTE (`serigrafia_dfm.py`: sobe largura a 0,18, recorta
+# graficos — incl. discos cheios — a 0,15 de pad/furo, reposiciona texto) e a
+# medicao real e NO GERBER (`mede_serigrafia.py`, chamado abaixo depois de exportar).
+# As regras `.kicad_dru` ficam como cinto-e-suspensorios; o portao do GERBER e o
+# que MANDA agora.
 #
 # ⚠️ So TEXTO de serigrafia. Um CONTORNO de footprint sobre um pad (caso (b) da
 # skill `kicad_layout` §11g-ter) e recortado pela JLC sem estrago — recusar por
@@ -454,6 +465,34 @@ def uma(nome, incompleta):
           "--drill-origin", "absolute", "--excellon-units", "mm",
           "--excellon-zeros-format", "decimal", "--generate-map",
           "--map-format", "gerberx2", pcb)
+
+    # ⚠️⚠️ SERIGRAFIA MEDIDA NO GERBER — o portao que faltava (licao de 2026-09-10,
+    # 2o round). O DRC do KiCad SUB-CONTA a serigrafia: mediu silk->pad com folga 0
+    # e as regras `silk_clearance` do `.kicad_dru` nem dispararam pelo `kicad-cli
+    # pcb drc`. Duas passagens deram "limpo" e a JLCONE mostrou dezenas de vermelhos.
+    # A verdade esta no GERBER exportado (ja com `--subtract-soldermask`, que apara a
+    # serigrafia RENTE ao pad = a borda que a JLC conta como vermelho). `mede_
+    # serigrafia.py` mede-o: silk->pad, silk->furo E largura de traco (texto E
+    # grafico). ⚠️ Precisa de gerbonara+shapely; se faltarem, RECUSA (um portao que
+    # nao consegue medir nao passa em silencio — a licao inteira e essa).
+    # ⚠️ `mede_serigrafia` precisa de gerbonara+shapely, que vivem no python de
+    # SISTEMA, nao no bundle do KiCad (que corre este portao pelo pcbnew dos outros
+    # verificadores). SILK_SYS_PY aponta para esse python; default = o proprio.
+    silk_py = os.environ.get("SILK_SYS_PY", sys.executable)
+    rsk = subprocess.run([silk_py,
+                          os.path.join(AQUI, "mede_serigrafia.py"), dest],
+                         capture_output=True, text=True)
+    for l in (rsk.stdout or "").splitlines():
+        if "silk->pad" in l or "GERBER limpa" in l:
+            print("   serigrafia(gbr)%s" % l.rstrip()[3:] if l.startswith("   ") else "   serigrafia(gbr) %s" % l.strip())
+    if rsk.returncode:
+        print("\n   RECUSO produzir o pacote:")
+        print("     · serigrafia no GERBER: %s"
+              % ((rsk.stdout or rsk.stderr).strip().splitlines() or ["ver mede_serigrafia"])[-1])
+        if rsk.returncode == 3:
+            print("     · (instala: pip install gerbonara shapely)")
+        return False
+
     corre("pcb", "export", "pos", "-o", os.path.join(dest, "cpl_%s.csv" % nome),
           "--format", "csv", "--units", "mm", "--side", "both", "--exclude-dnp", pcb)
     if os.path.exists(sch):
