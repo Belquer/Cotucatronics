@@ -24090,7 +24090,7 @@
 		(layer "Edge.Cuts")
 		(uuid "c73bc1a6-ae4d-4e5a-b17b-81757827a81d")
 	)
-	(gr_text "cerebro rev B"
+	(gr_text "cerebro rev C"
 		(at 87 27 0)
 		(layer "B.SilkS")
 		(uuid "44e7d945-644c-4258-92c1-6d2085d47a8d")
