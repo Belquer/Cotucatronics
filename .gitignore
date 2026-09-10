@@ -69,3 +69,6 @@ kicad/analysis/
 # a afirmar o contrario do que e verdade, para sempre. O indice vivo e o
 # `docs/datasheets/README.md`, gerado.
 docs/datasheets/manifest.json
+
+# scratch temporario do serigrafia_dfm.py
+kicad/_silk_*

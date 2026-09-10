@@ -302,6 +302,15 @@ def main():
     print("  4. texto junto de pad/furo:")
     ok = fix_text(b)
     b.Save(path)
+    # ⚠️ limpa os proprios ficheiros temporarios — se ficarem em kicad/, o
+    # `carimbo()` do para_fabrica ve a arvore SUJA e o pacote deixa de ser limpo.
+    import shutil
+    shutil.rmtree(os.path.join(AQUI, "_silk_tg"), ignore_errors=True)
+    for f in ("_silk_v.json", "_silk_geom.json", "_silk_clips.json"):
+        try:
+            os.remove(os.path.join(AQUI, f))
+        except OSError:
+            pass
     print("  gravado %s" % path)
     return 0 if ok else 1
 
