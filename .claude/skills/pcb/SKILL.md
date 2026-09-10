@@ -45,6 +45,13 @@ A pipeline pára e espera aprovação antes de gastar dinheiro:
 - **⟨dB⟩ Estágio 3/7** — o VETO dos renders de placa, e a montagem a seco de UMA
   caixa antes da série.
 
+**Os três ⟨dB⟩ correm o mesmo método — o questionário do portão humano**
+(`references/portao-humano.md`): um item de cada vez, quatro campos por item
+(ONDE OLHAR · O QUE DEVES VER · COMO CONFIRMAR · RESPOSTA), e **só o passe limpo
+autoriza o passo seguinte** — no Estágio 8, o pagamento. Qualquer ❌ ou
+ambiguidade pára e encaminha para um conserto, nunca para pagar. "Confirmar
+rotações" não é portão; o questionário é.
+
 Sem o ⟨dB⟩, o estágio fica em `INCOMPLETA` — nunca se confunde com feito.
 
 ## Fronteira — quem responde o quê
@@ -100,7 +107,9 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
   antes do olho).
 - **PORTÃO:** a spec declara os seis itens do `kicad`; o diagrama passa
   `design-review` (exit 0/1/3, 3=não-verificável não é aprovado); **⟨dB⟩** um
-  sign-off marcado **antes** de gastar em peças.
+  sign-off marcado **antes** de gastar em peças — corrido como o questionário do
+  portão humano (`references/portao-humano.md`), nas categorias de nível-placa e
+  de contratos de pinagem.
 - **Artefacto:** spec + diagrama commitados, com o resultado do `svg_colisoes` e
   o ⟨dB⟩ registados.
 
@@ -249,7 +258,9 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
   não é a ferramenta que fez o trabalho**; **livro-razão de achados** para que
   nada caia em silêncio; um achado que reaparece vira **portão novo no mesmo
   commit** (não uma nota); **⟨dB⟩** o veto dos renders de placa na lente C
-  (`design-review` passa pelo olho — exit 3 não-verificável não é aprovado).
+  (`design-review` passa pelo olho — exit 3 não-verificável não é aprovado),
+  corrido como a categoria de mecânica do questionário do portão humano
+  (`references/portao-humano.md`).
 - **Artefacto:** a ficha das 3 lentes × 3 passagens preenchida com números, e o
   livro-razão de achados (severidade, onde, regra pelo nome, conserto).
 
@@ -300,16 +311,20 @@ recusa um DRC sujo.
 - **PORTÃO:** **registo de risco em GO** (portão de certificação acima — sem GO,
   `para_fabrica` nem corre); DRC = 0 com regras JLC activas; zonas re-preenchidas
   **no ficheiro** (fill velho embarca calado); BOM = CPL = placa; LCSC em toda linha
-  SMT; **⟨dB⟩ rotação confirmada peça-a-peça no pré-visualizador da JLC antes de
-  pagar** (não scriptável); carimbo de procedência (data/commit/árvore-suja) +
+  SMT; **⟨dB⟩ correr o questionário do portão humano (ver
+  `references/portao-humano.md`), item a item, e só o passe limpo autoriza o
+  pagamento** — a rotação peça-a-peça no pré-visualizador da JLC não é scriptável
+  (a rotação é a do footprint, a JLC espera a da biblioteca dela); carimbo de
+  procedência (data/commit/árvore-suja) +
   guarda `INCOMPLETA`; **e o pacote carimbado COMMITADO em
   `export/<placa>_<data>_<commit>/`.** A entrega dos gerbers é PARTE do portão,
   não um depois: um pacote que só existe em `fabrica/` (gitignored) some com o
   container e nunca chega ao PR — o estágio 8 **não fecha** até o `export/` estar
   no git.
 - **Artefacto:** o pacote carimbado sob `export/<placa>_<data>_<commit>/`
-  (zip de gerbers + CPL + BOM + LEIA-ME), **commitado e recuperável do PR**, e o
-  registo do ⟨dB⟩ da rotação.
+  (zip de gerbers + CPL + BOM + LEIA-ME + `VISTORIA.md`, o questionário do portão
+  humano gerado para a placa), **commitado e recuperável do PR**, e o registo do
+  ⟨dB⟩ da rotação (o `VISTORIA.md` preenchido, todo em ✅).
 
 ### Estágio 9 — Retrospetiva / melhoria do método
 
@@ -343,11 +358,17 @@ recusa um DRC sujo.
 - `references/congestao.md` — o método do Estágio 3.5: as cinco métricas de
   densidade e as fórmulas, as duas recusas duras, o portão GO/REVER-COLOCAÇÃO, e
   as âncoras J14/C16 e J1/C5.
+- `references/portao-humano.md` — o método dos portões ⟨dB⟩: os quatro campos por
+  item, a regra "um item de cada vez, sem avanço em ambiguidade", os princípios
+  anti-miscomunicação, e as 7 categorias que o questionário cobre sempre.
 - `scripts/manifesto_fontes.py` — o portão STOP do estágio 2 (`--sabota` prova
   que sabe dizer não).
 - `scripts/congestao.py` — o portão do estágio 3.5: orçamento de canais de escape
   + grelha de densidade de pinos, read-only, sai ≠0 em vermelho (`--sabota` prova
   que sabe dizer não).
+- `scripts/portao_humano.py` — o gerador do questionário dos portões ⟨dB⟩ (CPL +
+  BOM → checklist de 4 campos, read-only, determinístico; escreve o `VISTORIA.md`
+  do pacote; `--sabota` prova que assinala as peças de risco conhecidas).
 
 ## Skills que esta orquestra
 
