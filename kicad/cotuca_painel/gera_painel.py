@@ -39,7 +39,7 @@ import io, re, sys, uuid
 # do ADC (8 e 10), o par de retorno dos LED (13 e 14, que valeram 6 dB de
 # chao) e os retornos dos pots (23 e 26).
 
-VERSAO = "0.13.0"
+VERSAO = "0.13.1"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -464,9 +464,9 @@ CAB = f'''(kicad_sch
 \t(uuid "{RAIZ}")
 \t(paper "A2")
 \t(title_block
-\t\t(title "PAINEL — tampa da caixa — rev B")
+\t\t(title "PAINEL — tampa da caixa — rev C")
 \t\t(date "2026-09-05")
-\t\t(rev "B")
+\t\t(rev "C")
 \t\t(comment 3 "Contrato com o cerebro: IDC 2x13, mesmo nome de rede via a via.")
 \t\t(comment 2 "UM terra so. A separacao AGND/GND vive no cerebro, no net-tie.")
 \t\t(comment 1 "Pull-down de 10k no gate dos MOSFET: obrigatorio, nao opcional.")

@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.16.1"
+VERSAO = "0.16.2"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -754,14 +754,14 @@ MARCA = {
                 # abertura de mascara, logo o inicio do texto desaparecia.
                 (87.0, 27.0, "cerebro rev B", 2.2, 0.35)],
     "painel":  [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
-                (60.0, 26.0, "painel rev A", 1.6, 0.25)],
+                (60.0, 26.0, "painel rev C", 1.6, 0.25)],
 }
 
 
 def marca(t, nome, alvo):
     """Escreve a marca em F.SilkS. Substitui a que houver, para nao duplicar."""
     t = re.sub(r'\n\t\(gr_text "COTUCATRONICS"[\s\S]*?\n\t\)', '', t)
-    t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [AB]"[\s\S]*?\n\t\)', '', t)
+    t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [ABC]"[\s\S]*?\n\t\)', '', t)
     L = []
     for x, y, txt, h, esp in MARCA.get(nome, []):
         L.append('\t(gr_text "%s"\n\t\t(at %g %g)\n\t\t(layer "%s")\n'

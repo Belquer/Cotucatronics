@@ -53,9 +53,13 @@ USO:  roteia.py --auto-teste            # interroga a regra de aceitacao
 """
 import io, json, math, os, re, subprocess, sys, uuid
 
-VERSAO = "1.17.0"
+VERSAO = "1.18.0"
 NUM = r"-?\d+(?:\.\d+)?"
-KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+# ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
+# hardcoded rebenta noutro computador (skill kicad §8). Assim a mesma ferramenta
+# corre no host de quem tem o KiCad noutro sitio, sem editar a fonte.
+KICAD = os.environ.get("KICAD_CLI",
+                       "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli")
 # ⚠️ A FOLGA DO ROTEADOR NAO PODE SER MAIS APERTADA QUE A REGRA DA PLACA, mas
 # tambem nao ha razao para ser MUITO mais larga. Estive em 0,35 mm com a regra
 # da placa em 0,20 — quase o dobro — e paguei isso em caminhos que nao existiam.

@@ -5,9 +5,9 @@
 	(uuid "de128d62-4042-4c6e-a783-d968ae52c1c6")
 	(paper "A2")
 	(title_block
-		(title "PAINEL — tampa da caixa — rev B")
+		(title "PAINEL — tampa da caixa — rev C")
 		(date "2026-09-05")
-		(rev "B")
+		(rev "C")
 		(comment 3 "Contrato com o cerebro: IDC 2x13, mesmo nome de rede via a via.")
 		(comment 2 "UM terra so. A separacao AGND/GND vive no cerebro, no net-tie.")
 		(comment 1 "Pull-down de 10k no gate dos MOSFET: obrigatorio, nao opcional.")
