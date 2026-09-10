@@ -5,10 +5,11 @@ description: Pipeline de ponta a ponta de um prompt até gerbers prontos para a 
 
 # pcb — do prompt aos gerbers, com portão em cada estágio
 
-> **9 estágios (1–9) mais a etapa 0 de pré-voo** (modelo do `ifa10000`):
-> 0 pré-voo · 1 avaliação+diagrama · 2 fontes · 3 colocação vs caixa · 4
-> vias+pistas · 5 terra · 6 rótulos · 7 revisão tripla · 8 gerbers · 9
-> retrospetiva. Cada um passa com um número que pode dizer **não**.
+> **9 estágios (1–9) mais a etapa 0 de pré-voo e o portão 3.5** (modelo do
+> `ifa10000`): 0 pré-voo · 1 avaliação+diagrama · 2 fontes · 3 colocação vs
+> caixa · **3.5 previsão de congestão** · 4 vias+pistas · 5 terra · 6 rótulos ·
+> 7 revisão tripla · 8 gerbers · 9 retrospetiva. Cada um passa com um número que
+> pode dizer **não**.
 
 Esta skill é a **orquestradora**. Não desenha esquemas, não roteia, não corta
 caixas: **delega** a quem já sabe e cobra o portão de cada etapa. O corpo
@@ -141,6 +142,37 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 - **Artefacto:** `.kicad_pcb` com contorno+furos, `aberturas.json`, e o handshake
   contorno↔aberturas confirmado.
 
+### Estágio 3.5 — Previsão de congestão (pré-layout, entre 3 e 4)
+
+- **Objetivo:** prever o estrangulamento **ANTES de tocar no cobre**. Congestão
+  descoberta a rotear é falha de **arquitetura** tarde demais — o router não a
+  resolve, só a revela quando já custa refazer a colocação.
+- **O que faz:** mede a colocação (footprints+netlist, zero pistas) por densidade
+  e diz se cada região tem oferta para a procura que a colocação lhe impõe. As
+  métricas: **orçamento de canais de escape por conector** (procura = redes
+  não-plano distintas · oferta = broadsides com ≥3 mm abertos × colunas);
+  densidade de pinos por célula; densidade de cruzamento do ratsnest; procura vs
+  oferta de cobre por região; fragmentação de plano na colocação. Fórmulas, método
+  completo e as duas regras em **`references/congestao.md`**.
+- **Delega a:** `kicad_layout` (mede por rede, autoridade sobre cobre e planos),
+  `caixa` (a geometria que fixou a colocação). Ferramenta:
+  **`scripts/congestao.py`** (orçamento de escape + grelha de densidade; sai ≠0 em
+  qualquer vermelho; `--sabota` prova que sabe dizer não).
+- **PORTÃO — GO / REVER-COLOCAÇÃO:** uma região vermelha **não avança para o 4**;
+  volta ao **Estágio 3** (recolocar), ou ao **1/2** se o que estrangula é o
+  **pinout do conector** (fila/ordem de pinos que nenhuma recolocação salva) —
+  **nunca** para o 4 com vermelho em aberto. **Duas recusas duras** (provadas nesta
+  sessão): **(a) recusar conector de ≥2 filas onde procura > oferta** de canais de
+  escape; **(b) recusar courtyard que sobrepõe outro courtyard, a borda da placa,
+  ou o corpo de outro componente** — medido por corpo, não por courtyard nominal.
+- **Artefacto:** **mapa de congestão no registo de risco** (uma região por linha,
+  procura/oferta medidas), ligado ao Portão de Certificação de Risco (saída do 7).
+  Âncoras: **J14/C16** (cérebro) — nudge de J14 bloqueado fisicamente pelo pré-amp,
+  a congestão apanhada tarde demais que virou o MUST-FIX C16↔J14; **J1/C5**
+  (painel) — a **mesma** classe de falha, latente, desfeita pelo nudge real de
+  5,5 mm que abriu o segundo broadside e deu casa a C5. É a forma **pré-layout** do
+  **IFÁ10000**: certifica a colocação contra medida, não contra opinião.
+
 ### Estágio 4 — Vias + largura de pista (só DEPOIS da colocação)
 
 - **Objetivo:** cada rede com cobre que aguenta a sua corrente, vias que a
@@ -151,8 +183,9 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 - **Delega a:** `kicad_layout` (OBRIGATÓRIA no fecho), `classes_de_rede.py` (as
   larguras vivem nas classes, o DRC e o router lêem-nas), `roteia.py`/
   `roteia_fr.py`, `pcb_contorno.costura()`.
-- **PORTÃO:** **só se encosta cobre depois de o portão do estágio 3 fechar** —
-  a colocação aprovada é a porta de entrada, «só então» as vias, nunca antes;
+- **PORTÃO:** **só se encosta cobre depois de os portões dos estágios 3 e 3.5
+  fecharem** — a colocação aprovada (e sem vermelho de congestão) é a porta de
+  entrada, «só então» as vias, nunca antes;
   larguras nas classes de rede (o DRC obriga); vias ≥ JLC (furo
   ≥0,2 mm, anel ≥0,13 mm, ⌀ ≥0,45 mm); **por (rede, espécie) o não-roteado = 0**,
   e o invariante é *nenhuma rede pode piorar* (o total esconde uma rede que
@@ -297,7 +330,13 @@ recusa um DRC sujo.
 - `references/review-protocol.md` — a revisão tripla: 3 lentes A/B/C, 3
   passagens, revisores independentes/adversariais, o livro-razão, e o **registo
   de risco** (a saída de certificação: SAFE-EMBARK/MUST-FIX/decisão-dB, GO/NO-GO).
+- `references/congestao.md` — o método do Estágio 3.5: as cinco métricas de
+  densidade e as fórmulas, as duas recusas duras, o portão GO/REVER-COLOCAÇÃO, e
+  as âncoras J14/C16 e J1/C5.
 - `scripts/manifesto_fontes.py` — o portão STOP do estágio 2 (`--sabota` prova
+  que sabe dizer não).
+- `scripts/congestao.py` — o portão do estágio 3.5: orçamento de canais de escape
+  + grelha de densidade de pinos, read-only, sai ≠0 em vermelho (`--sabota` prova
   que sabe dizer não).
 
 ## Skills que esta orquestra
