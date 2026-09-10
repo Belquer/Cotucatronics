@@ -220,6 +220,37 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 - **Artefacto:** a ficha das 3 lentes × 3 passagens preenchida com números, e o
   livro-razão de achados (severidade, onde, regra pelo nome, conserto).
 
+### Portão de Certificação de Risco — saída do 7, entrada do 8
+
+Entre a revisão tripla e os gerbers há um portão que não é mais uma lente: é a
+**certificação**. `para_fabrica` (estágio 8) **só corre quando o registo de risco
+está GO.** Um aviso embarcado ou um waiver **é uma MEDIÇÃO, não uma opinião** — a
+mesma disciplina que o `ifa10000` exige para efeitos, aqui instanciada para
+placas (o **IFÁ10000 é o protocolo de certificação canónico do projeto**; isto é
+a sua forma para hardware).
+
+- **Certifica contra o sinal, não contra o ruído.** Limpa os artefactos de
+  ambiente antes de julgar — um DRC a gritar *"library not configured"* vem de um
+  `fp-lib-table` em falta, não da placa; resolve isso primeiro e só então lê o
+  **resíduo real**. **Um aviso que ainda não explicaste não é automaticamente
+  ruído.**
+- **Todo item embarcado leva um veredito MEDIDO,** uma linha cada no **REGISTO DE
+  RISCO**: `id · item · lente/etapa · severidade · evidência MEDIDA · veredito
+  {SAFE-EMBARK (com prova) | MUST-FIX | decisão-dB} · ação`.
+- **GO/NO-GO:** GO só com **zero MUST-FIX em aberto**; SAFE-EMBARK exige
+  **evidência medida** (waiver sem número é MUST-FIX por omissão); item
+  `decisão-dB` sobe ao portão humano ⟨dB⟩.
+- **Âncora (porque isto existe):** o caso **C16↔J14** — um waiver "razoável" de
+  sobreposição de courtyard era, ao medir corpo-contra-corpo, uma colisão real
+  (o 0805 sentava-se dentro do shroud de um box-header DIN-41651 de assento
+  rente). A opinião dizia *waive*; a medição dizia **MUST-FIX**. Esse fosso é o
+  ponto todo.
+
+O formato completo do registo, o método *"certifica contra o sinal"* e o caso
+C16↔J14 vivem em **`references/review-protocol.md`** — o registo de risco é a
+**saída de certificação** da revisão tripla. `para_fabrica` recusa NO-GO como
+recusa um DRC sujo.
+
 ### Estágio 8 — Gerbers para a JLCPCB
 
 - **Objetivo:** um pacote de fabricação que a JLC aceita, e que diz de que estado
@@ -229,8 +260,9 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 - **Delega a:** `para_fabrica.py` (o portão de fabrica). Ver
   **`references/fab-automation.md`** para o cheat-sheet do `kicad-cli` e o
   conteúdo do zip.
-- **PORTÃO:** DRC = 0 com regras JLC activas; zonas re-preenchidas **no
-  ficheiro** (fill velho embarca calado); BOM = CPL = placa; LCSC em toda linha
+- **PORTÃO:** **registo de risco em GO** (portão de certificação acima — sem GO,
+  `para_fabrica` nem corre); DRC = 0 com regras JLC activas; zonas re-preenchidas
+  **no ficheiro** (fill velho embarca calado); BOM = CPL = placa; LCSC em toda linha
   SMT; **⟨dB⟩ rotação confirmada peça-a-peça no pré-visualizador da JLC antes de
   pagar** (não scriptável); carimbo de procedência (data/commit/árvore-suja) +
   guarda `INCOMPLETA`.
@@ -263,7 +295,8 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 - `references/quality-standards.md` — o catálogo de modos de falha (20 linhas) e
   os números duros (silk, costura, desacoplamento, courtyard/borda).
 - `references/review-protocol.md` — a revisão tripla: 3 lentes A/B/C, 3
-  passagens, revisores independentes/adversariais, o livro-razão.
+  passagens, revisores independentes/adversariais, o livro-razão, e o **registo
+  de risco** (a saída de certificação: SAFE-EMBARK/MUST-FIX/decisão-dB, GO/NO-GO).
 - `scripts/manifesto_fontes.py` — o portão STOP do estágio 2 (`--sabota` prova
   que sabe dizer não).
 

@@ -132,3 +132,63 @@ Delega a: `kicad`, `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, e
 `kicad/revisao_externa.py` (kicad-happy, MIT, testado em ~5800 projectos) como
 **segunda opinião externa** — a ferramenta de terceiros que pode dizer não sobre
 o que a nossa aprovou.
+
+---
+
+## Certificação de risco — a saída da revisão tripla
+
+O livro-razão lista o que se **achou**; a certificação decide o que **EMBARCA**.
+É o portão de saída do estágio 7 para o 8: `para_fabrica` só corre com o registo
+em **GO**. Modelado no `ifa10000` — o protocolo de certificação canónico do
+projeto — de onde vem a frase que governa tudo aqui:
+
+> **Um waiver é uma MEDIÇÃO, não uma opinião.**
+
+Esta secção é a instância desse protocolo para placas.
+
+### Certifica contra o sinal, não contra o ruído
+
+Antes de dar veredito a qualquer item, **limpa os artefactos de ambiente**. Um
+DRC a devolver dezenas de *"library not configured"* vem de um `fp-lib-table` em
+falta — é ambiente, não placa; resolve-o, volta a correr, e só então lê o
+**resíduo real**. É a etapa 0 (`medicao-limpa`) aplicada à revisão: certifica-se
+contra **sinal limpo**.
+
+> **Corolário: um aviso que ainda não explicaste NÃO é automaticamente ruído.**
+> "Ruído" é um veredito medido — não a suposição preguiçosa de quem quer fechar.
+
+### O REGISTO DE RISCO — uma linha por item embarcado
+
+Todo aviso embarcado e todo waiver entra no registo, **um por linha**:
+
+| campo | conteúdo |
+|---|---|
+| **id** | identificador estável do item |
+| **item** | o aviso/waiver, em uma frase |
+| **lente/etapa** | onde apareceu (A/B/C, ou o estágio) |
+| **severidade** | 🔴/🟠/🟡/⚪ |
+| **evidência MEDIDA** | o número/medição que sustenta o veredito — nunca "parece bem" |
+| **veredito** | `SAFE-EMBARK` (com prova) · `MUST-FIX` · `decisão-dB` |
+| **ação** | o conserto, ou o encaminhamento ao ⟨dB⟩ |
+
+**GO/NO-GO:**
+
+- **GO** exige **zero MUST-FIX em aberto**.
+- **SAFE-EMBARK** só vale com **evidência medida** — waiver sem número é
+  **MUST-FIX por omissão**.
+- **decisão-dB** sobe ao portão humano ⟨dB⟩; não se auto-aprova.
+
+### Âncora — o caso C16↔J14 (porque este registo existe)
+
+Um courtyard-overlap entre o **C16** (0805) e o **J14** (box-header DIN-41651)
+parecia um **waiver razoável** — courtyards são folga nominal, sobrepõem-se sem
+drama. A opinião dizia *waive*. Ao medir **corpo-contra-corpo** em vez de
+courtyard, o 0805 estava **fisicamente dentro** do shroud do header de assento
+rente: colisão real, não folga. A medição inverteu a opinião — **MUST-FIX**, não
+SAFE-EMBARK.
+
+> O fosso entre o que a opinião concede e o que a medição prova **é a razão
+> inteira deste registo.**
+
+E é por isso que courtyards e colocações novas se medem por **corpo**, não por
+courtyard nominal (lente B).
