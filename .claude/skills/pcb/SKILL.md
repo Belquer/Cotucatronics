@@ -32,6 +32,19 @@ com tempo perdido:
 - **Resultado negativo é achado** (`revisao-terra` R6). O que passou fica
   escrito, ou a próxima revisão refaz o trabalho.
 
+## Ferramenta — a fonte-da-verdade
+
+**Decisão ⟨dB⟩ (ferramenta):** o **KiCad é a fonte-da-verdade** do desenho —
+formato aberto, versionado em git, automatizável por agentes, independente de
+fornecedor (coerente com o ethos do projeto: fronteira HAL, Konnect isolado). O
+**EasyEDA Pro / JLCONE é o front-end final de DFM + encomenda**, nunca a fonte.
+Por isso o nosso portão dá **paridade com o DFM da JLC** (regras de
+silk→pad/→furo/largura no `.kicad_dru` + `para_fabrica`) para o passo no JLCONE
+ser um **carimbo**, não caça-surpresas. Não migrar o pipeline para o EasyEDA Pro
+(perderia a automação por agentes e o versionamento, e criaria lock-in na JLC);
+para placas existentes, no máximo importar os gerbers no EZEDA só para DFM/order
+finais.
+
 ## Decisões que precisam do dB
 
 Alguns portões **não são scriptáveis** — são humanos, e marcam-se com **⟨dB⟩**.

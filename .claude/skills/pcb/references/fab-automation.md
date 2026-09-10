@@ -133,22 +133,77 @@ kicad-cli sch export bom --output bom.csv \
 Põe `<projecto>.kicad_dru` ao lado da placa (o KiCad carrega-o; o `kicad-cli pcb
 drc` honra-o). Regras orientadas à JLCPCB (2 camadas standard):
 
+⚠️⚠️ **COMENTÁRIO `#` SÓ EM LINHA PRÓPRIA — NUNCA no fim de uma linha de `(rule`.**
+Um `#` inline (ex.: `... )))   # 5 mil`) faz o parser de DRU do KiCad **descartar
+em silêncio** essa regra e as seguintes: medido a 2026-09-10, um `# 5 mil` colado
+a um rule levou o silk→pad de 4 para 2 achados **sem um único erro**. Comentário em
+linha inteira (mesmo com acentos) é seguro; colado ao código, não.
+
 ```
 (version 1)
-(rule "min_trace_width"   (constraint track_width   (min 0.127mm)))   # 5 mil
-(rule "min_clearance"     (constraint clearance     (min 0.127mm)))   # 5 mil
-(rule "min_annular"       (constraint annular_width (min 0.13mm)))
-(rule "min_via_hole"      (constraint hole_size     (min 0.2mm)))
-(rule "min_via_diameter"  (constraint via_diameter  (min 0.45mm)))
-(rule "hole_to_hole"      (constraint hole_to_hole  (min 0.5mm)))
-(rule "edge_clearance"    (constraint edge_clearance(min 0.3mm)))
-(rule "silk_over_pad"
-  (constraint silk_clearance (min 0.15mm)) (layer outer)
-  (condition "A.Type == 'Text' && B.Type == 'Pad'"))
+# minimos absolutos JLC 2 camadas (5 mil pista/folga)
+(rule "min_trace_width"   (constraint track_width    (min 0.127mm)))
+(rule "min_clearance"     (constraint clearance      (min 0.127mm)))
+(rule "min_annular"       (constraint annular_width  (min 0.13mm)))
+(rule "min_via_hole"      (constraint hole_size      (min 0.2mm)))
+(rule "min_via_diameter"  (constraint via_diameter   (min 0.45mm)))
+(rule "hole_to_hole"      (constraint hole_to_hole   (min 0.5mm)))
+(rule "edge_clearance"    (constraint edge_clearance (min 0.3mm)))
+# silk TEXTO -> pad e -> furo (folga 0,15 mm). A condicao e BIDIRECCIONAL: o KiCad
+# nao garante qual item e A e qual e B, e a versao so-`A.Type=='Text'` DEIXA PASSAR
+# metade dos casos (media-se — o Q1/Q2 do painel escaparam assim).
+(rule "silk_text_to_pad"
+  (condition "(A.Type == 'Text' && A.Layer == '?.Silkscreen' && B.Type == 'Pad') || (B.Type == 'Text' && B.Layer == '?.Silkscreen' && A.Type == 'Pad')")
+  (constraint silk_clearance (min 0.15mm)))
+# silk -> furo: sai como `hole_clearance` no relatorio
+(rule "silk_text_to_hole"
+  (condition "(A.Type == 'Text' && A.Layer == '?.Silkscreen' && B.Type == 'Pad') || (B.Type == 'Text' && B.Layer == '?.Silkscreen' && A.Type == 'Pad')")
+  (constraint physical_hole_clearance (min 0.15mm)))
+(rule "silk_text_thickness" (layer "?.Silkscreen") (condition "A.Type == 'Text'")
+  (constraint text_thickness (min 0.15mm)))
+(rule "silk_text_height"    (layer "?.Silkscreen") (condition "A.Type == 'Text'")
+  (constraint text_height (min 1.0mm)))
 ```
 4 camadas: relaxa o cobre interno a 3,5 mil (`(layer inner)` + `0.0889mm`). O
 ruleset testado da comunidade (darkxst gist) cobre 2/4 camadas, silk-over-copper,
-silk-off-board, edge, hole-to-hole, castellated — copia e apara.
+silk-off-board, edge, hole-to-hole, castellated — copia e apara. O ruleset
+completo desta casa vive em `kicad/cotuca_painel/cotuca_painel.kicad_dru`.
+
+### 2a. Paridade com o DFM da JLC — a serigrafia (lição de 2026-09-10)
+
+⚠️ **O nosso portão tem de MEDIR O QUE A FÁBRICA MEDE.** O DFM da JLCONE reprovou
+os gerbers do painel com serigrafia a VERMELHO que a nossa pipeline sub-contou:
+**silk→pad 25 vermelhos + 35 laranja, silk→furo 31 vermelhos + 9 laranja, largura
+de traço 50 laranja**. O nosso DRC via só ~2-3 `silk_over_copper`.
+
+A causa, medida, foi tripla — e cada peça é uma regra que faltava:
+
+1. **O DRC-default do KiCad mede a serigrafia sobre cobre com `min_silk_clearance
+   = 0`**: só acusa o SOBREPOSTO, nunca a **folga** de 0,15 mm que a JLC exige.
+   Um `Q1`/`Q2` a 0,04 mm de um pad é vermelho na JLC e invisível para nós. →
+   regra `silk_text_to_pad` (`silk_clearance` 0,15 mm), condição **bidireccional**.
+2. **Não havia regra de silk→FURO.** A JLC mede a serigrafia contra o furo, não só
+   contra o cobre. → regra `silk_text_to_hole` (`physical_hole_clearance` 0,15 mm,
+   sai como `hole_clearance`).
+3. **Largura de traço da serigrafia < 0,15 mm.** Os contornos de biblioteca do
+   KiCad nascem a 0,12 mm, e **NENHUMA regra de DRC do KiCad mede a largura de um
+   GRÁFICO de serigrafia** (o `text_thickness` só vê texto). → a fonte:
+   `kicad/normaliza_silk.py` sobe-os a 0,15 mm (Estágio 6, `--check` é portão).
+
+E o portão passou a **recusar** por isto: `para_fabrica.py` (v0.13.0) gate no
+`silk_over_copper` **filtrado a texto** (o contorno de footprint sobre um pad é o
+caso (b) da `kicad_layout` §11g-ter — a JLC recorta-o, não se recusa) + no
+`text_thickness`/`text_height`; o silk→furo já cai na GEOMETRIA (`hole_clearance`).
+
+> **A lição: o DRC-default SUB-CONTA a serigrafia contra a JLC.** Contagem baixa
+> de `silk_over_copper` não é placa limpa — é um verificador a medir com folga 0.
+> O passo na JLCONE tem de ser um **carimbo**, não caça-surpresas.
+
+**As laranja (avisos), por classe:** *anel 76* — abaixo do preferido, **acima** do
+mín. 0,13 mm (as nossas regras não recusam; aceitável). *Largura de traço 50* —
+resolvida na fonte (`normaliza_silk`). *Expansão negativa de máscara 2* e *slot
+curto 2* — inerentes aos footprints THT/slot usados; imprimíveis, aceitáveis
+enquanto o desenho não mudar. Só se age numa laranja se for barata **e** real.
 
 ---
 

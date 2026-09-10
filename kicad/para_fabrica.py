@@ -55,7 +55,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.12.0"
+VERSAO = "0.13.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -79,9 +79,37 @@ GEOMETRIA = ("clearance", "shorting_items", "tracks_crossing", "track_dangling",
              "track_width", "copper_sliver", "malformed_courtyard",
              "invalid_outline", "unresolved_variable")
 
+# ⚠️⚠️ SERIGRAFIA: PARIDADE COM O DFM DA JLC (licao de 2026-09-10).
+#
+# A JLCONE marcou o painel com DEZENAS de vermelhos de serigrafia que este portao
+# NAO viu: silk->pad 25, silk->furo 31. A causa: o KiCad, por omissao, mede a
+# serigrafia sobre cobre com `min_silk_clearance = 0` — so o SOBREPOSTO, nunca a
+# FOLGA de 0,15 mm que a JLC exige — e nao tinha regra de silk->furo. O
+# DRC-default SUB-CONTA a serigrafia. A folga entra agora pelas regras do
+# `.kicad_dru` ao lado da placa (`silk_clearance` texto->pad, `physical_hole_
+# clearance` texto->furo, `text_thickness`, `text_height`); ESTE portao passa a
+# RECUSAR quando o DRC as reporta.
+#
+# ⚠️ So TEXTO de serigrafia. Um CONTORNO de footprint sobre um pad (caso (b) da
+# skill `kicad_layout` §11g-ter) e recortado pela JLC sem estrago — recusar por
+# ele travava placas boas. O `silk_over_copper` e portanto FILTRADO a itens onde
+# entra um texto; o `hole_clearance` (silk->furo) ja cai na GEOMETRIA acima.
+# ⚠️ A largura de um GRAFICO de serigrafia (fp_line) nao tem regra de DRC no
+# KiCad; sobe-se na FONTE com `normaliza_silk.py` (Estagio 6), fora deste portao.
+SILK_TEXTO = ("text_thickness", "text_height")   # sempre texto, sempre defeito
+
+
+def _silk_de_texto(v):
+    """True se a violacao envolve um TEXTO de serigrafia (Reference/Value/gr_text)."""
+    for it in v.get("items", []):
+        d = it.get("description", "")
+        if d.startswith(("Reference field", "Value field", "PCB text", "Text '")):
+            return True
+    return False
+
 
 def mede(pcb):
-    """(por tipo, por rede, planos partidos, ilhas orfas)."""
+    """(por tipo, por rede, planos partidos, ilhas orfas, violacoes)."""
     r = subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--save-board",
                         "--severity-error", "--severity-warning",
                         "--format", "json", "-o", "/tmp/_f.json", pcb],
@@ -100,7 +128,7 @@ def mede(pcb):
             partidos += 1
         for n in redes:
             por_rede[n] += 1
-    return tipos, por_rede, partidos, orfas
+    return tipos, por_rede, partidos, orfas, d.get("violations", [])
 
 
 def carimbo():
@@ -288,7 +316,7 @@ def uma(nome, incompleta):
     if not os.path.exists(pcb):
         raise SystemExit("*** nao existe %s" % pcb)
     print("\n══ %s ══" % nome)
-    tipos, por_rede, partidos, orfas = mede(pcb)
+    tipos, por_rede, partidos, orfas, viols = mede(pcb)
 
     recusas, avisos = [], []
 
@@ -363,6 +391,19 @@ def uma(nome, incompleta):
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:
         recusas.append("geometria: %s" % dict(geo))
+
+    # ⚠️⚠️ SERIGRAFIA (paridade JLC): texto sobre pad, e texto fino/baixo.
+    # O silk->furo cai na GEOMETRIA (sai como `hole_clearance`). Aqui trata-se do
+    # silk->pad (`silk_over_copper`, FILTRADO a texto) e do texto abaixo do minimo.
+    silk_pad = [v for v in viols
+                if v.get("type") == "silk_over_copper" and _silk_de_texto(v)]
+    silk_txt = {k: v for k, v in tipos.items() if k in SILK_TEXTO}
+    if silk_pad:
+        recusas.append("serigrafia: %d texto(s) sobre pad (<0,15 mm, JLC recorta "
+                       "e o texto some)" % len(silk_pad))
+    if silk_txt:
+        recusas.append("serigrafia: texto abaixo do minimo JLC %s "
+                       "(traco >=0,15 mm / altura >=1 mm)" % dict(silk_txt))
     # ⚠️ O PORTAO NAO RECUSA POR ISTO. Ver o cabecalho: a medicao nao e
     # reproduzivel, e um portao que recusa por ruido ensina a ignora-lo.
     if partidos:
@@ -374,6 +415,9 @@ def uma(nome, incompleta):
 
     print("   geometria      %s" % ("%d achado(s): %s" % (sum(geo.values()), dict(geo))
                                     if geo else "0 ✓"))
+    _silk_n = len(silk_pad) + sum(silk_txt.values())
+    print("   serigrafia     %s (JLC: silk->pad/furo/traco/altura via .kicad_dru)"
+          % ("%d texto(s) em falta" % _silk_n if _silk_n else "0 ✓"))
     print("   planos         %s" % ("%d indicacao(oes) — medicao instavel, "
                                        "ver o perfil por rede" % partidos
                                        if partidos else "sem indicacao"))
