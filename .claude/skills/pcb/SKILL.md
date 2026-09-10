@@ -289,7 +289,11 @@ recusa um DRC sujo.
 - **Objetivo:** um pacote de fabricação que a JLC aceita, e que diz de que estado
   do repo veio.
 - **O que faz:** `para_fabrica.py` mede, recusa se mau, exporta gerbers/drill/
-  pos/bom, carimba data/commit/dirty, escreve `INCOMPLETA` se forçado.
+  pos/bom, carimba data/commit/dirty, escreve `INCOMPLETA` se forçado, e —
+  na passagem — copia o pacote enxuto (zip + CPL + BOM + LEIA-ME) para
+  `export/<placa>_<data>_<commit>/`, a pasta de topo RASTREADA, imprimindo esse
+  caminho durável como última linha. O `fabrica/` é scratch gitignored; o
+  `export/` é o que sai do portão e chega ao repo/PR.
 - **Delega a:** `para_fabrica.py` (o portão de fabrica). Ver
   **`references/fab-automation.md`** para o cheat-sheet do `kicad-cli` e o
   conteúdo do zip.
@@ -298,8 +302,14 @@ recusa um DRC sujo.
   **no ficheiro** (fill velho embarca calado); BOM = CPL = placa; LCSC em toda linha
   SMT; **⟨dB⟩ rotação confirmada peça-a-peça no pré-visualizador da JLC antes de
   pagar** (não scriptável); carimbo de procedência (data/commit/árvore-suja) +
-  guarda `INCOMPLETA`.
-- **Artefacto:** `fabrica/*.zip` carimbado, e o registo do ⟨dB⟩ da rotação.
+  guarda `INCOMPLETA`; **e o pacote carimbado COMMITADO em
+  `export/<placa>_<data>_<commit>/`.** A entrega dos gerbers é PARTE do portão,
+  não um depois: um pacote que só existe em `fabrica/` (gitignored) some com o
+  container e nunca chega ao PR — o estágio 8 **não fecha** até o `export/` estar
+  no git.
+- **Artefacto:** o pacote carimbado sob `export/<placa>_<data>_<commit>/`
+  (zip de gerbers + CPL + BOM + LEIA-ME), **commitado e recuperável do PR**, e o
+  registo do ⟨dB⟩ da rotação.
 
 ### Estágio 9 — Retrospetiva / melhoria do método
 

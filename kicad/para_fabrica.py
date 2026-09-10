@@ -50,11 +50,12 @@ import datetime
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.11.0"
+VERSAO = "0.12.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -62,6 +63,10 @@ AQUI = os.path.dirname(os.path.abspath(__file__))
 KICAD = os.environ.get("KICAD_CLI",
                        "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli")
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
+# ⚠️ fabrica/ e GITIGNORED: e scratch, some com o container e nunca chega ao
+# PR. O pacote ENTREGUE e copiado para export/, a pasta de topo RASTREADA — e o
+# unico output do portao que sai daqui e chega ao repositorio (ver .gitignore).
+EXPORT = os.path.join(AQUI, os.pardir, "export")
 
 # ⚠️ AS CAMADAS SAO EXPLICITAS. A omissao exporta o que o projecto tiver
 # guardado, e o que o projecto tem guardado ninguem sabe de cor.
@@ -460,6 +465,25 @@ def uma(nome, incompleta):
     print("     commit %s%s" % (commit, "  ⚠️ ARVORE SUJA" if sujo else ""))
     if faltam:
         print("     ⚠️ INCOMPLETA: %d ligacoes por fazer" % faltam)
+
+    # ⚠️ ATE AQUI o pacote so existe em fabrica/, que e GITIGNORED — some com o
+    # container e nunca chega ao repositorio nem ao PR, e era preciso um humano
+    # decidir como o tirar de la. O portao nao pode terminar num artefacto que
+    # ninguem consegue descarregar. Por isso o pacote enxuto (zip de gerbers +
+    # CPL + BOM + LEIA-ME) e copiado AUTOMATICAMENTE para export/, a pasta de
+    # topo RASTREADA (ver .gitignore), e e ESSE o caminho duravel que se anuncia
+    # por ultimo — o estagio 8 so fecha quando ele esta commitado.
+    rel = os.path.join(EXPORT, "%s%s_%s_%s" % (tag, nome, data, commit))
+    os.makedirs(rel, exist_ok=True)
+    for a in os.listdir(rel):
+        os.remove(os.path.join(rel, a))
+    shutil.copy2(zipe, os.path.join(rel, os.path.basename(zipe)))
+    for a in ("cpl_%s.csv" % nome, "bom_%s.csv" % nome, "LEIA-ME.txt"):
+        p = os.path.join(dest, a)
+        if os.path.exists(p):
+            shutil.copy2(p, os.path.join(rel, a))
+    print("   entregue (rastreado — commita este caminho): %s"
+          % os.path.relpath(rel, os.path.join(AQUI, os.pardir)))
     return True
 
 

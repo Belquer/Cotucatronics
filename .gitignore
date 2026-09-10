@@ -42,9 +42,17 @@ fp-info-cache
 caixa/*_previa.svg
 __pycache__/
 
-# pacotes de fabrico: sao gerados por para_fabrica.py, e um pacote guardado
-# no repositorio envelhece em silencio enquanto a placa muda
+# pacotes de fabrico TRANSITORIOS: o para_fabrica.py escreve aqui a cada
+# corrida, e um pacote guardado no repositorio envelhece em silencio enquanto a
+# placa muda. fabrica/ e scratch — some com o container e nunca chega ao PR.
 fabrica/
+
+# ENTREGA versionada: os pacotes RELEASED vivem em export/ (pasta de topo,
+# rastreada). E o unico output que sai do portao e chega ao repo/PR — o
+# para_fabrica.py copia para ca automaticamente na passagem. export/ nao esta
+# ignorado; so os .zip de gerbers precisam de escapar ao `*.zip` global acima,
+# dai a negacao explicita (comentario em linha propria — ver aviso do .history/).
+!export/**/*.zip
 
 # ficheiros de trabalho do faz_placa: ferrolho e copias intermedias
 kicad/.faz_placa.lock

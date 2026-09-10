@@ -228,6 +228,20 @@ Zip do bare board: `*_F_Cu.gbr` (top) · `*_B_Cu` (bottom) · `*_F/B_Mask` ·
 O `para_fabrica.py` carimba **data/commit/árvore-suja** e escreve `INCOMPLETA` no
 nome se forçado — um pacote incompleto nunca se confunde com um bom.
 
+### Onde o pacote fica — `export/` é a entrega, `fabrica/` é scratch
+O `para_fabrica.py` escreve a cada corrida em **`fabrica/`**, que é
+**gitignored** de propósito (um pacote versionado envelhece em silêncio enquanto
+a placa muda). Mas um pacote que só existe em `fabrica/` **some com o container e
+nunca chega ao repo/PR** — era preciso um humano decidir como o tirar de lá. Por
+isso, na passagem, o portão copia **automaticamente** o pacote enxuto — o **zip
+de gerbers + `cpl_*.csv` + `bom_*.csv` + `LEIA-ME.txt`** — para
+**`export/<placa>_<data>_<commit>/`**, a pasta de topo **rastreada**, e imprime
+esse caminho durável como última linha. O `.gitignore` mantém `fabrica/` fora e
+só abre exceção aos `.zip` sob `export/` (`!export/**/*.zip`, contra o `*.zip`
+global). **A entrega dos gerbers só está feita quando esse `export/…` está
+commitado** — é parte do portão do estágio 8, não um afterthought; qualquer um
+descarrega o pacote carimbado direto do PR.
+
 ---
 
 ## Capacidades de fabrico JLCPCB (PCB standard)
