@@ -85,7 +85,7 @@ oficial. Usar com parcimónia.
 ### Checklist de equivalente SEGURO (fallback do nível 1)
 
 Quando o MPN exacto não é peça montável, busca no dataset uma peça na biblioteca
-(Basic → Preferred → Extended) que bata em **todos** estes antes de substituir:
+(Basic → Preferred Extended → Extended) que bata em **todos** estes antes de substituir:
 
 1. **Footprint/pacote** idêntico (0402, SOT-23-3, SOIC-8). Pacote diferente =
    footprint diferente = não é drop-in.
@@ -203,7 +203,7 @@ Q0. Já há um C-number válido e em stock nesta linha (stock>0 E na biblioteca)
 
 NÍVEL 1: equivalente na biblioteca (mais barato, mais fiável).
     busca por categoria+pacote+valor → filtra stock>0 E na biblioteca →
-    ranking Basic>Preferred>Extended → confirma o checklist de equivalência §2.
+    ranking Basic>Preferred Extended>Extended → confirma o checklist de equivalência §2.
     match seguro → atribui C-number + tier + params + MPN original → PASSA.
     sem equivalente seguro → NÍVEL 2.
 
@@ -234,7 +234,7 @@ NÍVEL 3: construir do datasheet.
 CSV/JSON commitado ao lado do projecto, uma linha por linha do BOM:
 
 ```
-designator, intended_MPN, resolved_LCSC, tier(Basic/Preferred/Extended/NA),
+designator, intended_MPN, resolved_LCSC, tier(Basic/Preferred Extended/Extended/NA),
 assembly_stock, source(existing|equivalent|imported|built|customer_supplied),
 footprint_source(kicad_std|easyeda2kicad|JLC2KiCadLib|snapeda|hand),
 verified(yes/no + método), datasheet_ref, notes

@@ -16,7 +16,7 @@ recusa-se a dar por feito o abastecimento se alguma linha nao estiver num dos
 tres estados legais:
 
   (A) C-number da LCSC valido, na biblioteca de MONTAGEM da JLC (stock > 0) e
-      com tier registado (Basic/Preferred/Extended);
+      com tier registado (Basic/Preferred Extended/Extended);
   (B) footprint importado/a-mao **verificado** (§4 do parts-sourcing) cujo
       C-number esta confirmado na biblioteca da JLC;
   (C) linha marcada explicitamente como fornecida-pelo-cliente, com footprint
@@ -35,7 +35,7 @@ Formato do manifesto (uma linha por linha do BOM agrupado):
 CSV com cabecalho, ou JSON (lista de objectos com essas chaves).
 """
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 
 import csv
 import io
@@ -48,7 +48,18 @@ import sys
 # ESTADOS LEGAIS
 
 C_NUMBER = re.compile(r"^C\d+$")
-TIERS = {"basic", "preferred", "preferred extended", "extended"}
+# Terminologia canonica dos tiers de montagem da JLCPCB. Sao TRES:
+#   Basic · Preferred Extended · Extended
+# NAO existe um tier "Preferred" isolado — "Preferred" e um marcador POR CIMA do
+# Extended (evita a taxa de feeder por tipo no Economic PCBA), logo "Preferred
+# Extended". Aceitamos "preferred" nu como alias historico e normalizamo-lo para
+# a forma canonica; qualquer outra string e recusada (nao se falha aberto).
+TIER_CANON = {
+    "Basic": {"basic"},
+    "Preferred Extended": {"preferred extended", "preferred"},
+    "Extended": {"extended"},
+}
+TIER_ALIAS = {a: canon for canon, aliases in TIER_CANON.items() for a in aliases}
 # footprint de biblioteca padrao dispensa a verificacao §4; importado/a-mao nao.
 FP_PADRAO = {"", "kicad_std", "kicad", "std", "existing", "biblioteca"}
 CLIENTE = {"customer_supplied", "customer-supplied", "cliente", "consignado"}
@@ -70,6 +81,16 @@ def stock_int(v):
     return int(m.group()) if m else 0
 
 
+def normaliza_tier(v):
+    """Alias aceite (case-insensitive) → rotulo canonico.
+
+    Devolve (canonico, True) para um tier conhecido; (None, False) para uma
+    string desconhecida — que o chamador tem de recusar, nunca deixar passar.
+    """
+    canon = TIER_ALIAS.get((v or "").strip().lower())
+    return canon, canon is not None
+
+
 def rotulo(row):
     return (row.get("designator") or row.get("intended_MPN") or "?").strip()
 
@@ -77,7 +98,9 @@ def rotulo(row):
 def classifica(row):
     """(ok, via, motivo) — via em {A,B,C} quando ok, senao motivo do bloqueio."""
     lcsc = (row.get("resolved_LCSC") or "").strip()
-    tier = (row.get("tier") or "").strip().lower()
+    tier_canon, tier_ok = normaliza_tier(row.get("tier"))
+    if tier_ok:
+        row["tier"] = tier_canon        # regista o alias ja na forma canonica
     stock = stock_int(row.get("assembly_stock"))
     source = (row.get("source") or "").strip().lower()
     fpsrc = (row.get("footprint_source") or "").strip().lower()
@@ -95,8 +118,9 @@ def classifica(row):
         faltas.append("resolved_LCSC ausente ou mal formado (espera C#####)")
     if stock <= 0:
         faltas.append("assembly_stock <= 0 (fora da biblioteca de montagem)")
-    if tier not in TIERS:
-        faltas.append("tier nao e Basic/Preferred/Extended")
+    if not tier_ok:
+        faltas.append("tier '%s' desconhecido — espera Basic/Preferred Extended/"
+                      "Extended" % (row.get("tier") or "").strip())
     # (B) — footprint importado ou a-mao tem de estar verificado (§4).
     if fpsrc not in FP_PADRAO and not ver:
         faltas.append("footprint importado/a-mao sem verified=yes (§4)")
@@ -104,7 +128,7 @@ def classifica(row):
         return False, None, "; ".join(faltas)
 
     via = "B" if fpsrc not in FP_PADRAO else "A"
-    return True, via, "LCSC %s · %s · stock %d" % (lcsc, tier, stock)
+    return True, via, "LCSC %s · %s · stock %d" % (lcsc, tier_canon, stock)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -208,9 +232,19 @@ def sabota():
     rows = [dict(r) for r in _BOM]
     rows[0]["assembly_stock"] = "0"          # tira a R1/R2 da biblioteca
     pontual = confere(rows, quieto=True)
-    ok = (limpo == 0) and (sujo >= 3) and (base == 0) and (pontual == 1)
-    print("     bom=%d  mau=%d  base=%d  pontual=%d  %s"
-          % (limpo, sujo, base, pontual,
+    # normalizacao: alias "preferred" nu passa E fica gravado como canonico.
+    alias = [dict(r) for r in _BOM]
+    alias[1]["tier"] = "preferred"
+    norm = confere(alias, quieto=True)
+    norm_ok = (norm == 0 and alias[1]["tier"] == "Preferred Extended")
+    # falha fechada: tier desconhecido tem de bloquear, nao passar.
+    bad = [dict(r) for r in _BOM]
+    bad[1]["tier"] = "Ultra"
+    rej = confere(bad, quieto=True)
+    ok = ((limpo == 0) and (sujo >= 3) and (base == 0) and (pontual == 1)
+          and norm_ok and (rej == 1))
+    print("     bom=%d  mau=%d  base=%d  pontual=%d  norm_ok=%s  tier_mau=%d  %s"
+          % (limpo, sujo, base, pontual, norm_ok, rej,
              "✓ sabe dizer nao" if ok else "*** NAO REPROVOU"))
     return 0 if ok else 1
 
