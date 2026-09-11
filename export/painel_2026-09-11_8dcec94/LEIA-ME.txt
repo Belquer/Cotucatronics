@@ -1,6 +1,6 @@
 pacote de fabrico — cotuca painel
-gerado por para_fabrica v0.14.0 em 2026-09-10
-commit 83f2f82
+gerado por para_fabrica v0.15.0 em 2026-09-11
+commit 8dcec94
 
 geometria 0 · planos inteiros · todas as ligacoes feitas
 

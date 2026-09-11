@@ -1,4 +1,4 @@
-# Questionário do Portão Humano ⟨dB⟩ — cotuca painel (rev C)
+# Questionário do Portão Humano ⟨dB⟩ — painel
 
 > Gerado por `portao_humano.py` v0.2.0 a partir de `cpl_painel.csv` + `bom_painel.csv`. Método: `references/portao-humano.md`.
 >
@@ -7,14 +7,14 @@
 ## 0. Carregar o pacote (antes de tudo)
 
 ### Item 0 — Carregar o pacote — buscar ao PR e carregar na JLCONE
-- **ONDE OLHAR:** O pacote está **committado no repo** em `export/painel_2026-09-10_83f2f82/` na branch do PR (`claude/slack-session-sm2ldz`, repo `Belquer/Cotucatronics` no GitHub) — está no **GitHub, não necessariamente na tua máquina**. ⚠️ O terminal que vês na pipeline corre no **sandbox na nuvem** e **não consegue pôr ficheiros na tua máquina** — a recuperação é um comando que **TU corres localmente**. Depois carregas no site da **JLCPCB/JLCONE** (*Add Gerber*). Antes de QUALQUER item de inspeção, a placa tem de estar carregada.
-- **O QUE DEVES VER:** **Gerber a carregar:** `export/painel_2026-09-10_83f2f82/painel_2026-09-10_83f2f82_gerbers.zip` — é ESTE `.zip` que entra na JLCONE, não o `.kicad_pcb` nem gerbers soltos.
-  · **Como buscar (terminal no teu Mac — o preferido):** `cd Cotucatronics && git fetch origin && git checkout claude/slack-session-sm2ldz && git pull origin claude/slack-session-sm2ldz && open export/painel_2026-09-10_83f2f82/` — se ainda não o clonaste: `git clone -b claude/slack-session-sm2ldz git@github.com:Belquer/Cotucatronics.git`.
-  · **Fallback (GitHub no browser):** navega `claude/slack-session-sm2ldz` até `export/painel_2026-09-10_83f2f82/`, abre a página do `painel_2026-09-10_83f2f82_gerbers.zip` e clica **Download raw file** (repo privado → tens de estar autenticado como o dono); leva também o `cpl_painel.csv` + `bom_painel.csv`. Ou **Code → Download ZIP** da branch e tira a pasta `export/`.
+- **ONDE OLHAR:** O pacote está **committado no repo** em `export/painel_2026-09-11_8dcec94/` na branch do PR (`claude/slack-session-sm2ldz`, repo `Belquer/Cotucatronics` no GitHub) — está no **GitHub, não necessariamente na tua máquina**. ⚠️ O terminal que vês na pipeline corre no **sandbox na nuvem** e **não consegue pôr ficheiros na tua máquina** — a recuperação é um comando que **TU corres localmente**. Depois carregas no site da **JLCPCB/JLCONE** (*Add Gerber*). Antes de QUALQUER item de inspeção, a placa tem de estar carregada.
+- **O QUE DEVES VER:** **Gerber a carregar:** `export/painel_2026-09-11_8dcec94/painel_2026-09-11_8dcec94_gerbers.zip` — é ESTE `.zip` que entra na JLCONE, não o `.kicad_pcb` nem gerbers soltos.
+  · **Como buscar (terminal no teu Mac — o preferido):** `cd Cotucatronics && git fetch origin && git checkout claude/slack-session-sm2ldz && git pull origin claude/slack-session-sm2ldz && open export/painel_2026-09-11_8dcec94/` — se ainda não o clonaste: `git clone -b claude/slack-session-sm2ldz git@github.com:Belquer/Cotucatronics.git`.
+  · **Fallback (GitHub no browser):** navega `claude/slack-session-sm2ldz` até `export/painel_2026-09-11_8dcec94/`, abre a página do `painel_2026-09-11_8dcec94_gerbers.zip` e clica **Download raw file** (repo privado → tens de estar autenticado como o dono); leva também o `cpl_painel.csv` + `bom_painel.csv`. Ou **Code → Download ZIP** da branch e tira a pasta `export/`.
   · **Montagem SMT:** quando a JLC pedir, junta `cpl_painel.csv` (posições) + `bom_painel.csv` (BOM), da MESMA pasta.
   · **Camadas:** 2.
-  · Depois, arrasta o `painel_2026-09-10_83f2f82_gerbers.zip` para a JLCONE (*Add Gerber*).
-- **COMO CONFIRMAR:** **Proveniência** — PASS: carregaste o `painel_2026-09-10_83f2f82_gerbers.zip` (buscado a `claude/slack-session-sm2ldz` no GitHub) e o `LEIA-ME.txt` da MESMA pasta carimba o commit `83f2f82` e árvore limpa — é ESSA a revisão que estás a encomendar. FAIL: não encontras o pacote na tua máquina (está só no PR — vai buscá-lo ao GitHub), ou carregaste outro zip, ou o `LEIA-ME.txt` carimba outro commit / árvore suja → PÁRA e vai buscar o pacote certo do PR, NÃO encomendas (guarda contra encomendar um pacote velho ou trocado).
+  · Depois, arrasta o `painel_2026-09-11_8dcec94_gerbers.zip` para a JLCONE (*Add Gerber*).
+- **COMO CONFIRMAR:** **Proveniência** — PASS: carregaste o `painel_2026-09-11_8dcec94_gerbers.zip` (buscado a `claude/slack-session-sm2ldz` no GitHub) e o `LEIA-ME.txt` da MESMA pasta carimba o commit `8dcec94` e árvore limpa — é ESSA a revisão que estás a encomendar. FAIL: não encontras o pacote na tua máquina (está só no PR — vai buscá-lo ao GitHub), ou carregaste outro zip, ou o `LEIA-ME.txt` carimba outro commit / árvore suja → PÁRA e vai buscar o pacote certo do PR, NÃO encomendas (guarda contra encomendar um pacote velho ou trocado).
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
 
 ## 1. Nível-placa
