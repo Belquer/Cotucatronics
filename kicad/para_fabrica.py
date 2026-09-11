@@ -55,7 +55,12 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.17.0"
+# CHANGELOG
+#   0.18.0 — preserva o CPL rico como `cpl_rico_<board>.csv` ao lado do CPL da
+#            JLC, em vez de o reescrever no lugar e perder Val/Package. A jusante
+#            (VISTORIA, kit_montagem) passa a ler valor/footprint da posicao.
+#   0.17.0 — serigrafia medida no gerber; CPL reescrito para o esquema da JLC.
+VERSAO = "0.18.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -610,8 +615,17 @@ def uma(nome, incompleta):
 
     corre("pcb", "export", "pos", "-o", os.path.join(dest, "cpl_%s.csv" % nome),
           "--format", "csv", "--units", "mm", "--side", "both", "--exclude-dnp", pcb)
-    # ⚠️ o pos nativo do KiCad NAO e uploadavel na JLCONE — reescreve para o
-    # esquema Designator,Mid X,Mid Y,Layer,Rotation + Top/Bottom (ver cpl_para_jlc).
+    # ⚠️ O pos nativo do KiCad e RICO — `Ref,Val,Package,PosX,PosY,Rot,Side` — mas
+    # NAO e uploadavel na JLCONE. Ate a v0.17.0 este passo reescrevia o ficheiro NO
+    # LUGAR para o esquema da JLC e o Val/Package MORRIA com ele: a jusante
+    # (a VISTORIA, o kit de montagem) deixava de poder ler valor/footprint da
+    # POSICAO, que so o CPL rico traz. Agora PRESERVA-SE a copia rica ANTES de
+    # reescrever, como companheiro `cpl_rico_<board>.csv` no MESMO pacote — e so
+    # depois se reescreve `cpl_<board>.csv` no esquema Designator,Mid X,Mid Y,Layer,
+    # Rotation + Top/Bottom (ver cpl_para_jlc). O ficheiro de upload da JLC nao muda
+    # de nome nem de formato; ganha-se um companheiro, nao se perde o unico exemplar.
+    shutil.copy2(os.path.join(dest, "cpl_%s.csv" % nome),
+                 os.path.join(dest, "cpl_rico_%s.csv" % nome))
     cpl_para_jlc(os.path.join(dest, "cpl_%s.csv" % nome))
     if os.path.exists(sch):
         corre("sch", "export", "bom", "-o", os.path.join(dest, "bom_%s.csv" % nome),
@@ -679,7 +693,8 @@ def uma(nome, incompleta):
     for a in os.listdir(rel):
         os.remove(os.path.join(rel, a))
     shutil.copy2(zipe, os.path.join(rel, os.path.basename(zipe)))
-    for a in ("cpl_%s.csv" % nome, "bom_%s.csv" % nome, "LEIA-ME.txt"):
+    for a in ("cpl_%s.csv" % nome, "cpl_rico_%s.csv" % nome,
+              "bom_%s.csv" % nome, "LEIA-ME.txt"):
         p = os.path.join(dest, a)
         if os.path.exists(p):
             shutil.copy2(p, os.path.join(rel, a))
