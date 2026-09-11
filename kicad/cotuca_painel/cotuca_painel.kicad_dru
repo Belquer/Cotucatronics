@@ -28,6 +28,14 @@
 # `.claude/skills/pcb/references/fab-automation.md` (§ "Capacidades JLCPCB").
 
 # ---- cobre: minimos absolutos JLC 2 camadas (5 mil pista/folga; acima e livre) ----
+# ⚠️ ANEL: gatilha-se no MINIMO ABSOLUTO 0,13 mm, NAO no preferido 0,15. Medido a
+# 2026-09-11, todas as 96 features furadas do painel tem anel >= 0,15 mm (min
+# exacto 0,15: as 33 vias 0,6/0,3 = a via-padrao da JLC). A JLCONE marca ~75
+# LARANJA de anel — a contar top+base por feature no limite preferido de 0,15. Sao
+# AVISOS (>= min, imprimivel), nao defeitos. Gatilhar aqui a 0,15 reprovaria a
+# via-padrao da JLC (ruido). E subir o pad da via para limpar a laranja foi TESTADO
+# e e pior: 17 vias caem de 0,20 para ~0,15 mm de folga a cobre alheio. Aceita-se
+# com o numero. Ver fab-automation.md §2a.
 (rule "JLC_min_trace_width"   (constraint track_width    (min 0.127mm)))
 (rule "JLC_min_clearance"     (constraint clearance      (min 0.127mm)))
 (rule "JLC_min_annular"       (constraint annular_width  (min 0.13mm)))

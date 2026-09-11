@@ -55,7 +55,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.14.0"
+VERSAO = "0.15.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -398,6 +398,24 @@ def uma(nome, incompleta):
     if rfp.returncode:
         recusas.append("funcao dos pads: %s"
                        % (rfp.stdout or rfp.stderr).strip().splitlines()[-1])
+
+    # ⚠️⚠️ E AS VIAS TEM DE ESTAR TAPADAS (vias_tented).
+    #
+    # A JLCONE marca a classe "solder mask opening exposing trace" (14 laranja no
+    # painel, medido a 2026-09-11). Medida no gerber, a classe e BENIGNA so porque
+    # as 34 vias estao tapadas: 0 abertura de mascara sobre via, e a laranja nasce
+    # da expansao de casa da JLC no pescoco pad/pista (cosmetica). Destapar uma via
+    # e uma escolha legitima que NENHUM DRC recusa — e passa a classe de laranja
+    # inerente a VERMELHO real (cobre exposto a oxidar). Esta guarda preserva o
+    # invariante que a torna benigna. Ver `vias_tented.py` e fab-automation.md §2a.
+    rvt = subprocess.run([sys.executable, os.path.join(AQUI, "vias_tented.py"), pcb],
+                         capture_output=True, text=True)
+    for l in (rvt.stdout or "").splitlines():
+        if "aberta(s)" in l:
+            print("   vias tapadas  %s" % l.split("·", 1)[-1].strip())
+    if rvt.returncode:
+        recusas.append("via(s) destapada(s) — mascara aberta sobre cobre: %s"
+                       % (rvt.stdout or rvt.stderr).strip().splitlines()[-1])
 
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:

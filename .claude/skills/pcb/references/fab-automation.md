@@ -205,6 +205,32 @@ resolvida na fonte (`normaliza_silk`). *Expansão negativa de máscara 2* e *slo
 curto 2* — inerentes aos footprints THT/slot usados; imprimíveis, aceitáveis
 enquanto o desenho não mudar. Só se age numa laranja se for barata **e** real.
 
+### 2a-ter. As laranja MEDIDAS, uma a uma (lição de 2026-09-11)
+
+⚠️ **A regra do dB: nada de descarte "cosmético" — cada laranja mede-se no
+gerber/furo real e o veredicto traz o número.** Com a serigrafia já a 0 vermelho
+na JLCONE, sobraram só laranja. Medidas no artefacto (não supostas), com o
+`pcbnew` (features) + gerbonara/shapely (gerber), reproduzindo o mecanismo de cada
+classe. Veredicto de cada uma: **manufacturável como está, ACEITE com o número** —
+nenhuma tinha conserto real **e** barato que não piorasse outra coisa:
+
+| classe JLCONE | medido no painel | mecanismo | veredicto |
+|---|---|---|---|
+| **anel ~75** | min **0,15 mm** nas 96 features furadas (0 < 0,13; 0 < 0,15); 33 vias 0,6/0,3 = a **via-padrão da JLC** | JLC conta top+base por feature no limite preferido 0,15 | **ACEITE**. ≥ 0,13 mín. Subir o pad testado: 17 vias caem de 0,20→~0,15 mm de folga a cobre alheio — troca **pior**. |
+| **mask opening exposing trace 14** | **34/34 vias tapadas** (0 abertura sobre via); expansão de máscara dos pads = **0,0 mm**; webs de máscara todos ≥ 0,15 mm; cobre de pista exposto no nosso gerber = **0** (só 0,05 mm² de ruído de facetagem) | a JLC aplica a **expansão de casa dela** aos nossos pads de 0 expansão e expõe o pescoço pad/pista | **ACEITE**. O nosso gerber entrega 0 exposição real; as vias já estão tapadas — não há o que tapar. O pescoço fica no filete de solda. |
+| **expansão negativa de máscara 2** + **slot curto 2** | ambas do **único** footprint do encoder EC11 (`SW1`), os 2 slots de fixação mecânica (furo 2,8×1,5 mm PTH) | inerente ao footprint mecânico do EC11 | **ACEITE**. Slots de montagem — a JLC fabrica montagens EC11 de rotina. |
+| **silk to pad 1** | folga mín. silk→pad = **0,1924 mm** (junto de C3), o rótulo que o `fix_text` pousa no seu alvo ~0,19 | ≥ 0,15 mín (imprime bem), abaixo do preferido JLC ~0,2 | **ACEITE**. Empurrá-lo acima de 0,2 é mudar o REGIME de silk da placa toda (risco de regressão, §11g-quinquies) — não é um "nudge" trivial. |
+
+⚠️ **O que se ganhou como PORTÃO, e o que não vale a pena gatilhar:**
+- **Não** se gatilha anel a 0,15 (preferido): reprovaria a via-padrão da JLC — ruído.
+  O `.kicad_dru` gatilha no mínimo absoluto 0,13, que é o piso real.
+- **Sim** se gatilha a **tapagem das vias** (`kicad/vias_tented.py`, no
+  `para_fabrica` v0.15.0): a classe "mask opening exposing trace" só é benigna
+  *enquanto* as vias estiverem tapadas. Destapá-las é uma escolha que **nenhum
+  DRC recusa** e que torna a laranja em vermelho real. A guarda lê a tapagem no
+  texto (`(tenting ...)` do setup + override por via), sem pcbnew, e prova-se nos
+  dois sentidos (`--auto-teste`: default destapado e override `none` são apanhados).
+
 ### 2a-bis. O 2º round — o portão do DRC continuou a mentir (lição de 2026-09-10)
 
 ⚠️ **As regras `.kicad_dru` acima NÃO foram suficientes.** Duas passagens deram o
