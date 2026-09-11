@@ -1,0 +1,7 @@
+# carrinho LCSC — cotuca painel — codigos exactos da BOM de montagem (bom_painel.csv)
+"LCSC Part #","Value","Footprint","Qty","Qty+spares"
+"C17408","100R gate","Resistor_SMD:R_0805_2012Metric","2","4"
+"C17414","10k pull-down","Resistor_SMD:R_0805_2012Metric","2","4"
+"C20917","AO3400A","Package_TO_SOT_SMD:SOT-23","2","4"
+"C2933799","100R serie (~30 mA)","Resistor_SMD:R_1210_3225Metric","2","4"
+"C49678","100n","Capacitor_SMD:C_0805_2012Metric","4","6"
