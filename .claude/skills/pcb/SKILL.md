@@ -313,14 +313,27 @@ recusa um DRC sujo.
 - **Objetivo:** um pacote de fabricação que a JLC aceita, e que diz de que estado
   do repo veio.
 - **O que faz:** `para_fabrica.py` mede, recusa se mau, exporta gerbers/drill/
-  pos/bom, carimba data/commit/dirty, escreve `INCOMPLETA` se forçado, e —
-  na passagem — copia o pacote enxuto (zip + CPL + BOM + LEIA-ME) para
-  `export/<placa>_<data>_<commit>/`, a pasta de topo RASTREADA, imprimindo esse
-  caminho durável como última linha. O `fabrica/` é scratch gitignored; o
-  `export/` é o que sai do portão e chega ao repo/PR.
-- **Delega a:** `para_fabrica.py` (o portão de fabrica). Ver
-  **`references/fab-automation.md`** para o cheat-sheet do `kicad-cli` e o
-  conteúdo do zip.
+  pos/bom (BOM **agrupada por LCSC** — uma peça física por linha, v0.17.0; e um
+  **`cpl_rico_*`** companheiro do CPL da JLC, para a VISTORIA e o kit não perderem
+  a geometria rica, v0.18.0), carimba data/commit/dirty, escreve `INCOMPLETA` se
+  forçado, e — na passagem — copia o pacote enxuto (zip + CPL + `cpl_rico` + BOM +
+  LEIA-ME + `VISTORIA.md` + `kit/`) para `export/<placa>_<data>_<commit>/`, a pasta
+  de topo RASTREADA, imprimindo esse caminho durável como última linha. O
+  `fabrica/` é scratch gitignored; o `export/` é o que sai do portão e chega ao
+  repo/PR.
+- **A via de casa (chapa quente) é a segunda saída, com portão de custo.** Quando a
+  cotação de montagem da JLC a baixa quantidade é dominada pelo **custo fixo**
+  (setup + stencil + markup de peças + engenharia) — regra: se **montagem >> (PCB
+  nua + peças)** para a quantidade — encaminha-se para montar em casa: encomendar
+  **PCB nua + stencil (Assembly OFF)**, comprar peças pelo carrinho LCSC do `kit/`,
+  refluir o SMD do topo na chapa e soldar à mão o bottom + THT. O
+  **`kicad/kit_montagem.py`** (v1.0.0) emite esse `kit/` (MAPA_COLOCACAO,
+  COMPRA_LCSC, LEIA-ME-KIT) como saída-padrão deste estágio. Fluxo e portão de
+  custo completos em **`references/montagem-casa.md`**.
+- **Delega a:** `para_fabrica.py` (o portão de fabrica) e `kit_montagem.py` (o kit
+  de montagem em casa). Ver **`references/fab-automation.md`** para o cheat-sheet
+  do `kicad-cli`, o conteúdo do zip, a BOM-por-LCSC, o CPL rico e o kit; e
+  **`references/montagem-casa.md`** para a via da chapa quente.
 - **PORTÃO:** **registo de risco em GO** (portão de certificação acima — sem GO,
   `para_fabrica` nem corre); DRC = 0 com regras JLC activas; zonas re-preenchidas
   **no ficheiro** (fill velho embarca calado); BOM = CPL = placa; LCSC em toda linha
@@ -329,17 +342,23 @@ recusa um DRC sujo.
   carregamento do pacote (Item 0: qual `.zip` carimbado carregar na JLCONE, como
   o buscar ao PR, e a proveniência pelo LEIA-ME) — e só o passe limpo autoriza o
   pagamento** — a rotação peça-a-peça no pré-visualizador da JLC não é scriptável
-  (a rotação é a do footprint, a JLC espera a da biblioteca dela); carimbo de
-  procedência (data/commit/árvore-suja) +
+  (a rotação é a do footprint, a JLC espera a da biblioteca dela; a render do
+  NOSSO board é a fonte-de-verdade, e a rede de segurança é **Confirm Parts
+  Placement = YES** — ver `references/portao-humano.md §3`). No mesmo portão corre
+  o **checklist de settings do pedido JLCONE** (2 camadas · **Via Tented**, crítico
+  · ENIG · Confirm Parts Placement=YES · remark das peças bottom-side/hand-solder ·
+  peças do fundo na lista **Bottom** do matching — `portao-humano.md §4a`); carimbo
+  de procedência (data/commit/árvore-suja) +
   guarda `INCOMPLETA`; **e o pacote carimbado COMMITADO em
   `export/<placa>_<data>_<commit>/`.** A entrega dos gerbers é PARTE do portão,
   não um depois: um pacote que só existe em `fabrica/` (gitignored) some com o
   container e nunca chega ao PR — o estágio 8 **não fecha** até o `export/` estar
   no git.
 - **Artefacto:** o pacote carimbado sob `export/<placa>_<data>_<commit>/`
-  (zip de gerbers + CPL + BOM + LEIA-ME + `VISTORIA.md`, o questionário do portão
-  humano gerado para a placa), **commitado e recuperável do PR**, e o registo do
-  ⟨dB⟩ da rotação (o `VISTORIA.md` preenchido, todo em ✅).
+  (zip de gerbers + CPL + `cpl_rico` + BOM-por-LCSC + LEIA-ME + `VISTORIA.md`, o
+  questionário do portão humano gerado para a placa, + a pasta `kit/` de montagem
+  em casa), **commitado e recuperável do PR**, e o registo do ⟨dB⟩ da rotação (o
+  `VISTORIA.md` preenchido, todo em ✅).
 
 ### Estágio 9 — Retrospetiva / melhoria do método
 
@@ -364,7 +383,12 @@ recusa um DRC sujo.
   as ferramentas (jlcparts, easyeda2kicad, JLC2KiCadLib), URLs e comandos.
 - `references/fab-automation.md` — cheat-sheet do `kicad-cli`, tabela de
   capacidades JLC, tabela IPC-2221 de largura/via, regras `.kicad_dru`,
-  freerouting.
+  freerouting; e a saída do portão: BOM **agrupada por LCSC**, o **CPL rico**
+  companheiro, e o **kit de montagem** (`kit_montagem.py`).
+- `references/montagem-casa.md` — a via de casa (chapa quente): o **portão de
+  custo** (montagem >> nua+peças → casa), o fluxo passo-a-passo (nua+stencil,
+  pasta Sn63/Pb37, refluxo do topo, bottom+THT à mão, lupa nas SOIC/SOT), e o
+  bónus de tornar o risco de rotação da biblioteca da JLC moot.
 - `references/quality-standards.md` — o catálogo de modos de falha (20 linhas) e
   os números duros (silk, costura, desacoplamento, courtyard/borda).
 - `references/review-protocol.md` — a revisão tripla: 3 lentes A/B/C, 3
@@ -383,7 +407,11 @@ recusa um DRC sujo.
   que sabe dizer não).
 - `scripts/portao_humano.py` — o gerador do questionário dos portões ⟨dB⟩ (CPL +
   BOM → checklist de 4 campos, read-only, determinístico; escreve o `VISTORIA.md`
-  do pacote; `--sabota` prova que assinala as peças de risco conhecidas).
+  do pacote; `--sabota` prova que assinala as peças de risco conhecidas). Lê o
+  `cpl_rico_*.csv` (a geometria rica que o CPL da JLC descarta).
+- `kicad/kit_montagem.py` — o kit de montagem em casa (v1.0.0): pasta do pacote →
+  `kit/` (MAPA_COLOCACAO.md agrupado por valor com TOP/BOTTOM e bottom+THT
+  sinalizados · COMPRA_LCSC.csv carrinho LCSC com Qty+spares · LEIA-ME-KIT.txt).
 
 ## Skills que esta orquestra
 
@@ -398,3 +426,16 @@ substitui.
 Corrida de placa nova que revele um buraco na pipeline **ganha estágio, portão
 ou lente** — proposta, nunca em silêncio. A pipeline que não se actualiza
 fabrica a placa de ontem.
+
+## Histórico
+
+- **v1.1.0 (2026-09-11)** — Estágio 8 aprende a corrida real do cérebro/painel
+  (stamp `6ebbda5`): a **via de montagem em casa** (chapa quente) com portão de
+  custo (`references/montagem-casa.md`, nova), o **kit de montagem** como saída-
+  padrão (`kit_montagem.py` v1.0.0), a **BOM agrupada por LCSC** (para_fabrica
+  v0.17.0) e o **CPL rico** companheiro (v0.18.0) em `fab-automation.md`, e no
+  portão humano a **vistoria de rotação no preview 3D da JLC** (a render do nosso
+  board é a fonte-de-verdade; Confirm Parts Placement = YES é a rede) + o
+  **checklist de settings do pedido JLCONE** (Via Tented, ENIG, Bottom Designator)
+  em `portao-humano.md`.
+- **v1.0.0** — a pipeline de 9 estágios + etapa 0 + portão 3.5, orquestradora.

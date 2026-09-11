@@ -77,6 +77,19 @@ Toda a ambiguidade que este portão remove vem de uma âncora em falta. As regra
 - **Polaridade e orientação são perguntas distintas.** A banda/cátodo (a peça
   conduz ao contrário) e o pino-1/rotação (o pinout todo troca) verificam-se cada
   uma no seu item, com o seu FAIL.
+- **A render do NOSSO board é a fonte-de-verdade; o preview 3D da JLC não prova a
+  rotação da biblioteca dela** (lição de 2026-09-11). O pré-visualizador 3D da
+  JLCONE desenha o **modelo 3D da peça na biblioteca DELES** por cima do nosso
+  footprint — e uma "inversão" que ali aparece é, muitas vezes, **artefacto do
+  modelo 3D** (o modelo roda vs. o nosso footprint), **não** um defeito da placa.
+  Não se conclui do preview sozinho: **confirma-se** comparando a **banda de cátodo**
+  ou o **canto do pino-1** do preview da JLC contra a **render do nosso próprio
+  board** (gerar crops por peça se preciso). E há uma **rede de segurança** que não
+  depende de acertar o olho: pedir **Confirm Parts Placement = YES** — a JLC manda
+  a folha de colocação para tu aprovares antes de montar. Só as **polarizadas /
+  pino-1** são críticas aqui (díodos SMA/SMB com a banda de cátodo à esquerda,
+  SOT-23 com a perna única, SOIC com o triângulo do pino-1 no canto top-left); os
+  **passivos são simétricos** e não gastam olho.
 
 ## 4. As categorias
 
@@ -122,6 +135,26 @@ pacote) antes de qualquer item de inspeção:
    painel (dry-fit vs render da caixa).
 7. **Confirmação final antes de pagar** — o passe limpo de tudo acima, a
    precondição do pagamento.
+
+### 4a. Checklist de settings do pedido JLCONE (parte do portão, antes de pagar)
+
+A vistoria de rotação não é a única coisa que se confere na JLCONE — os **settings
+do pedido** são portão a par das peças (lição de 2026-09-11). Antes de pagar,
+confirmar, um a um:
+
+- **Camadas: 2.** (⚠️ pedir 4 num desenho de 2 paga um plano interior a mais.)
+- **Via Tented — CRÍTICO.** As nossas laranjas "mask-exposing-trace" (§DFM) só são
+  benignas **com a via coberta**. Se a via ficar destapada, deixam de ser benignas.
+  Confirmar **Via Tented** ligado.
+- **Acabamento: ENIG.**
+- **Assembly → Confirm Parts Placement = YES.** A rede de segurança da rotação (§3):
+  a JLC manda a folha de colocação para aprovares antes de montar.
+- **Remark das peças bottom-side / hand-solder** — sinalizar as peças do fundo ou a
+  soldar à mão (ex.: `C16` no cérebro) na nota do pedido.
+- **Top vs Bottom Designator no matching de peças.** No casamento de peças, a JLCONE
+  separa **listas Top e Bottom**. Conferir que as peças do fundo (ex.: `C16`)
+  aparecem na lista **Bottom** — e não sumiram por a lista Top ser a única que
+  olhaste.
 
 ## 5. O gerador
 

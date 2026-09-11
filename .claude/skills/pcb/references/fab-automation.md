@@ -127,6 +127,16 @@ que a fábrica ACEITA**, não o que a ferramenta emite por omissão.
 Rotações frequentemente precisam de correção por footprint (dor conhecida — ver
 `parts-sourcing.md` §5).
 
+⚠️ **O CPL da JLC descarta a geometria rica — por isso guarda-se um companheiro**
+(lição de 2026-09-11, `para_fabrica` **v0.18.0**). O remapeamento `cpl_para_jlc`
+deita fora `Val` e `Package` e capitaliza o lado — é o que a JLC ACEITA, mas é
+também a **única cópia** de `Ref,Val,Package,PosX,PosY,Rot,Side` da placa, e as
+ferramentas a jusante (a **VISTORIA** do `portao_humano.py`, o **kit** de
+`kit_montagem.py`) precisam dela. Por isso, além do `cpl_<placa>.csv` (formato
+JLC), o pipeline grava o **`cpl_rico_<placa>.csv`** (o cabeçalho nativo completo)
+na mesma pasta. Regra: **o CPL da JLC nunca é a única cópia da geometria rica** —
+o `cpl_rico_*` é o que a VISTORIA e o kit lêem, o `cpl_*` é o que se carrega.
+
 ### BOM (nativo, 7+/9)
 ```bash
 kicad-cli sch export bom --output bom.csv \
@@ -137,6 +147,18 @@ kicad-cli sch export bom --output bom.csv \
 ⚠️ A coluna do código LCSC tem de se chamar **`LCSC Part #`** — é essa a chave em
 que a JLC lê o código no upload de BOM; `LCSC` sozinho não é reconhecido. O
 `para_fabrica` v0.16.0 grava a coluna com esse cabeçalho (`mete_lcsc`).
+
+⚠️ **A BOM de montagem agrupa por número LCSC, não por comentário** (lição de
+2026-09-11, `para_fabrica` **v0.17.0**). A JLCONE casa cada linha da BOM a **uma
+peça física**; duas linhas com o mesmo C-number (porque o `Value` anotado diferia
+— `10k — L` vs `10k pull-down`) fazem-na avisar **"Multiple lines matched to the
+same part"** e obrigam a fundir à mão. A saída do portão evita isso: a BOM de
+montagem tem **UMA linha por número LCSC** — designadores unidos numa só célula,
+`Qty` somada. Regra: **agrupar por `LCSC Part #`, nunca por `Comment`/`Value`
+anotado** (o mesmo C-number com dois comentários é a mesma peça; comentários
+iguais com C-numbers diferentes são peças diferentes). O `--group-by` nativo por
+`Value,Footprint,LCSC` do `kicad-cli` não chega — a re-agregação por LCSC é do
+`para_fabrica`.
 
 ---
 
@@ -371,6 +393,12 @@ Zip do bare board: `*_F_Cu.gbr` (top) · `*_B_Cu` (bottom) · `*_F/B_Mask` ·
 `*_F/B_Silkscreen` · `*_F/B_Paste` (só com stencil) · `Edge_Cuts` (**obrigatório**)
 · `*.DRL (+ -NPTH.DRL)`. Montagem: `BOM.csv` + `CPL.csv`.
 
+Junto do zip, o pacote enxuto leva ainda: `cpl_<placa>.csv` (formato JLC) +
+**`cpl_rico_<placa>.csv`** (geometria rica para as ferramentas a jusante, §1 CPL) +
+`bom_<placa>.csv` (agrupada por LCSC, §1 BOM) + `LEIA-ME.txt` + `VISTORIA.md` (o
+questionário do portão humano) + a pasta **`kit/`** (o kit de montagem em casa,
+abaixo).
+
 ### Checklist DFM antes do upload
 - [ ] ERC limpo (`--exit-code-violations`).
 - [ ] DRC limpo incl. `--schematic-parity`.
@@ -393,13 +421,34 @@ O `para_fabrica.py` escreve a cada corrida em **`fabrica/`**, que é
 a placa muda). Mas um pacote que só existe em `fabrica/` **some com o container e
 nunca chega ao repo/PR** — era preciso um humano decidir como o tirar de lá. Por
 isso, na passagem, o portão copia **automaticamente** o pacote enxuto — o **zip
-de gerbers + `cpl_*.csv` + `bom_*.csv` + `LEIA-ME.txt`** — para
+de gerbers + `cpl_*.csv` + `cpl_rico_*.csv` + `bom_*.csv` + `LEIA-ME.txt` +
+`VISTORIA.md` + `kit/`** — para
 **`export/<placa>_<data>_<commit>/`**, a pasta de topo **rastreada**, e imprime
 esse caminho durável como última linha. O `.gitignore` mantém `fabrica/` fora e
 só abre exceção aos `.zip` sob `export/` (`!export/**/*.zip`, contra o `*.zip`
 global). **A entrega dos gerbers só está feita quando esse `export/…` está
 commitado** — é parte do portão do estágio 8, não um afterthought; qualquer um
 descarrega o pacote carimbado direto do PR.
+
+### 5a. O kit de montagem em casa — `kicad/kit_montagem.py` (v1.0.0)
+
+Saída-padrão do Estágio 8 **ao lado** do pacote de fábrica: dá-lhe a pasta de um
+pacote e emite a subpasta **`kit/`**, o que precisas para montar a placa **em casa,
+na chapa quente** (ver `montagem-casa.md` para o fluxo e o portão de custo). Lê o
+`cpl_rico_*.csv` (geometria) + o `bom_*.csv` (agrupado por LCSC) e escreve:
+
+- **`MAPA_COLOCACAO.md`** — o mapa de colocação, **agrupado por valor** (todos os de
+  um valor de uma vez), com **TOP e BOTTOM separados**, e as peças de **bottom** e
+  as **THT** sinalizadas (o bottom solda-se à mão porque cairia na chapa; a THT vai
+  por último). Dá posição e rotação — **não** decide o sentido do pino-1/cátodo,
+  que é a `VISTORIA.md` + a render 3D que decidem.
+- **`COMPRA_LCSC.csv`** — o carrinho da LCSC, uma linha por peça física, com `Qty` e
+  **`Qty+spares`** (peças de chapa perdem-se/queimam-se — leva sobresselentes).
+- **`LEIA-ME-KIT.txt`** — a ordem de montagem em prosa.
+
+O kit torna o **risco de rotação da biblioteca da JLC moot** na via de casa: quem
+coloca (tu) usa a render do nosso próprio board como mapa, então a rotação da
+biblioteca da JLC nem entra (ver `montagem-casa.md §2`).
 
 ---
 
