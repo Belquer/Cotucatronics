@@ -1,6 +1,6 @@
 pacote de fabrico — cotuca cerebro
-gerado por para_fabrica v0.11.0 em 2026-09-10
-commit e058d6b
+gerado por para_fabrica v0.15.0 em 2026-09-11
+commit 1b1931f
 
 geometria 0 · planos inteiros · todas as ligacoes feitas
 
