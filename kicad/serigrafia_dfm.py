@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
-"""serigrafia_dfm v0.1.0 — poe a serigrafia da placa em conformidade com o DFM da JLC.
+"""serigrafia_dfm v0.2.0 — poe a serigrafia da placa em conformidade com o DFM da JLC.
+
+v0.2.0 (2026-09-11, cerebro): `widen` e `fix_text` tratam texto de footprint da
+classe PCB_TEXT tal como FP_TEXT. O painel so tinha texto de Reference/Value
+(via fp.Reference()/Value()); o cerebro traz 17 rotulos de serigrafia PCB_TEXT
+nos modulos (Daisy U2 / ESP32 U3) e conectores. Antes, `widen` chamava
+`it.GetShape()` num PCB_TEXT (que nao o tem) e rebentava; `clip_graphics` (linha
+190) ja excluia ambas as classes — a incoerencia era so no `widen`/`fix_text`.
+
 
 POR QUE EXISTE (licao de 2026-09-10, o segundo round).
 
@@ -72,7 +80,7 @@ def widen(b):
         for it in fp.GraphicalItems():
             if it.GetLayer() not in SILK:
                 continue
-            if it.GetClass() == 'FP_TEXT':
+            if it.GetClass() in ('FP_TEXT', 'PCB_TEXT'):
                 bt(it)
             elif not (it.GetShape() == P.SHAPE_T_POLY and _filled(it)) and 0 < it.GetWidth() < LARG:
                 it.SetWidth(LARG); n += 1
@@ -252,7 +260,7 @@ def fix_text(b):
                 if fld.GetLayer() in SILK and fld.IsVisible():
                     out.append(fld)
             for it in fp.GraphicalItems():
-                if it.GetLayer() in SILK and it.GetClass() == 'FP_TEXT' and it.IsVisible():
+                if it.GetLayer() in SILK and it.GetClass() in ('FP_TEXT', 'PCB_TEXT') and it.IsVisible():
                     out.append(it)
         for it in b.GetDrawings():
             if it.GetLayer() in SILK and it.GetClass() == 'PCB_TEXT':

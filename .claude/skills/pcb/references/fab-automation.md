@@ -277,8 +277,25 @@ foi outra e mais funda:
 > que já existe. O portão tinha de **medir a largura do traço no artefacto**, não
 > confiar num default. A largura vive no gerber; o custo é lê-la.
 
-*(O cérebro precisa do mesmo passo v2 — a serigrafia dele ainda não foi medida no
-gerber com este portão.)*
+*(2026-09-11 — o cérebro foi levado pelo mesmo passo v2, medido no gerber. Antes:
+silk→pad 23 vermelhos (F) + 2 (B), traço mín 0,12 mm. Depois de `serigrafia_dfm`:
+silk→pad/→furo 0 vermelho nos dois lados, traço todo ≥ 0,18 mm — e cada marcador
+de polaridade/pino-1/cátodo (D1 SMB, D2 SMA, D11/D21 SOT-23, U1 SOIC-8, «+» de
+C1/C3/C5/C6) renderizado e verificado a sobreviver e a ler-se. Uma correcção na
+ferramenta: `serigrafia_dfm` v0.2.0 passou a tratar texto de footprint da classe
+`PCB_TEXT` como FP_TEXT (o painel só tinha Reference/Value; o cérebro traz 17
+rótulos de pino do módulo ESP32-C3 em U3 a 0,8 mm) — antes o `widen` rebentava no
+`GetShape()` de um texto. As laranjas do cérebro, medidas no artefacto: anel mín
+0,15 mm em 217 features furadas plateadas (0 < 0,13; 0 < 0,15; H1–H4 são NPTH, sem
+anel — excluídas), 72 vias 0,6/0,3 = a via-padrão da JLC; 0 slots (o cérebro não
+tem o EC11 do painel — a classe slot/negative-mask não se aplica: mediu-se, não se
+supôs); expansão de máscara 0,0 mm e 72 vias TODAS tapadas (0 abertas); silk→pad
+no limite = 0,163 mm (F) / 0,195 mm (B), ≥ 0,15 mín. Todas ACEITES com o número.
+⚠️ NÃO se pôs `cotuca_cerebro.kicad_dru`: a regra `text_height ≥ 1,0 mm` do DRU do
+painel dispararia nos 17 rótulos de 0,8 mm de U3 (que `para_fabrica` trata como
+recusa dura) — são uma laranja legítima (a JLC imprime 0,8 mm; subi-los a 1,0 no
+passo de 2,54 mm do soquete arriscava novos silk→pad vermelhos). O portão de silk
+que MANDA é a medição do gerber, e essa passa. Ver relatório 002 §6a.)*
 
 ---
 
