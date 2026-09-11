@@ -55,7 +55,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.16.0"
+VERSAO = "0.17.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -218,19 +218,22 @@ def cpl_bate_bom(dest, nome):
     cobre e nao se compra.
 
     Nenhum dos dois da erro em lado nenhum. So a COMPARACAO os ve."""
-    def desig(caminho, primeira_coluna_e_lista):
+    import csv as _csv
+    def desig(caminho):
+        # ⚠️ Le a coluna `Designator` PELO NOME, nao pela posicao. A BOM saiu no
+        # esquema canonico da JLC (Comment,Designator,...) e o Designator ja nao
+        # e a 1a coluna; um leitor posicional apanharia o Comment e a comparacao
+        # partia-se em silencio (a familia 15dw: um leitor partido aprova tudo).
         if not os.path.exists(caminho):
             return None
-        linhas = open(caminho, encoding="utf-8").read().splitlines()
+        with open(caminho, encoding="utf-8-sig", newline="") as f:
+            rows = list(_csv.DictReader(f))
         fora = set()
-        for ln in linhas[1:]:
-            if not ln.strip():
-                continue
-            campo = ln.split('","')[0] if primeira_coluna_e_lista else ln.split(",")[0]
-            fora |= set(re.findall(r"[A-Z]+\d+", campo))
+        for r in rows:
+            fora |= set(re.findall(r"[A-Z]+\d+", r.get("Designator", "") or ""))
         return fora
-    cpl = desig(os.path.join(dest, "cpl_%s.csv" % nome), False)
-    bom = desig(os.path.join(dest, "bom_%s.csv" % nome), True)
+    cpl = desig(os.path.join(dest, "cpl_%s.csv" % nome))
+    bom = desig(os.path.join(dest, "bom_%s.csv" % nome))
     if cpl is None or bom is None:
         return None
     # ⚠️ guarda de leitura (§2c): zero designadores nao e "concordam", e um
@@ -268,7 +271,27 @@ def mete_lcsc(caminho, placa):
     Por isso ha AQUI DOIS testes, e o segundo e independente do primeiro:
     a chave inclui a placa, E o encapsulamento gravado tem de aparecer no
     footprint que a BOM declara. Se a chave voltar a partir-se, o
-    encapsulamento apanha-o — `CP_Radial_D16.0mm` nao contem `C_0805`."""
+    encapsulamento apanha-o — `CP_Radial_D16.0mm` nao contem `C_0805`.
+
+    ⚠️⚠️ E A LINHA DA BOM E POR PECA, NAO POR COMENTARIO (licao de 2026-09-11).
+
+    O `kicad-cli sch export bom --group-by Value,Footprint` parte uma peca em
+    varias linhas quando o Value traz anotacoes humanas: o painel tinha `100n`,
+    `100n COLADO ao cursor` e `100n COLADO ao IDC` — TRES linhas, TODAS com o
+    mesmo LCSC `C49678` — e o cerebro tinha `10k — L` e `10k — R`, DUAS linhas
+    com o mesmo `C17414`. A JLCONE recusa isto com "Multiple lines in the BOM
+    have been matched to the same part": para a montagem, uma peca e UMA linha.
+
+    Por isso a BOM de montagem reagrupa PELO LCSC — a identidade real da peca
+    montada. Um numero LCSC identifica um so componente fisico; duas linhas com
+    o mesmo LCSC sao a mesma peca e fundem-se, com todos os designadores juntos
+    e Qty = contagem. O comentario (Value) e anotacao humana e NAO parte uma
+    linha de montagem; da linha fundida sai um Value representativo (o mais
+    curto). As pecas SEM LCSC (THT/DNP/nao-catalogadas) ficam como estao, uma
+    linha por (Value,Footprint) que o KiCad ja deu — a JLC nao as monta.
+
+    Cabecalho canonico da JLC: `Comment,Designator,Footprint,Qty,LCSC Part #`."""
+    import csv as _csv
     fonte = os.path.join(os.path.dirname(AQUI), "tools", "codigos_lcsc.json")
     if not os.path.exists(fonte):
         return "nao ha tools/codigos_lcsc.json — corre tools/codigos_lcsc.py"
@@ -280,46 +303,79 @@ def mete_lcsc(caminho, placa):
             continue
         for r in e.get("refs", []):
             por_ref[r] = (e.get("codigo", ""), e.get("encaps", ""))
-    with open(caminho, encoding="utf-8") as f:
-        linhas = f.read().splitlines()
-    if len(linhas) < 2:
-        return "a BOM exportada saiu com %d linha(s)" % len(linhas)
-    # ⚠️ o cabecalho da coluna e `LCSC Part #` — e a chave em que a JLC lê o
-    # codigo LCSC no upload de BOM; `LCSC` sozinho nao e reconhecido.
-    saida, sem = [linhas[0].rstrip() + ',"LCSC Part #"'], []
-    for ln in linhas[1:]:
-        if not ln.strip():
-            continue
-        desig = re.findall(r"[A-Z]+\d+", ln.split(",")[0])
+
+    with open(caminho, encoding="utf-8-sig", newline="") as f:
+        rows = list(_csv.DictReader(f))
+    if not rows:
+        return "a BOM exportada saiu sem linhas"
+
+    def natkey(ref):
+        m = re.match(r"([A-Za-z]+)(\d+)", ref)
+        return (m.group(1), int(m.group(2))) if m else (ref, 1 << 30)
+
+    # 1a passagem: cada linha do KiCad -> (comment, footprint, lcsc, designadores).
+    regs, sem = [], []
+    for r in rows:
+        comment = (r.get("Comment") or r.get("Value") or "").strip()
+        fp = (r.get("Footprint") or "").strip()
+        desig = re.findall(r"[A-Z]+\d+", r.get("Designator") or "")
         # ⚠️ so as linhas SMD precisam de codigo: as THT o dB compra e solda, e
         # exigir codigo a um borne de parafuso travava o pacote por nada.
-        cods = {por_ref[r] for r in desig if r in por_ref}
-        if not cods:
-            saida.append(ln.rstrip() + ',""')
-            continue
+        cods = {por_ref[x] for x in desig if x in por_ref}
         if len(cods) > 1:
             return ("a linha %s junta designadores com codigos diferentes (%s) "
                     "— a BOM agrupa por valor+footprint, logo isto diz que a "
                     "fonte discorda de si propria"
                     % (desig[:3], sorted(cods)))
-        cod, encaps = cods.pop()
-        # ⚠️ SEGUNDA GUARDA, independente da chave: o encapsulamento que a
-        # fonte gravou tem de aparecer no footprint que a BOM declara. E o que
-        # apanha uma troca entre placas mesmo que a chave volte a partir-se.
-        campos = [c.strip('"') for c in ln.split('","')]
-        fp = campos[2] if len(campos) > 2 else ""
-        if encaps and encaps not in fp:
-            return ("%s: a fonte diz encapsulamento %r e a BOM declara %r — "
-                    "a peca escolhida NAO e a peca desenhada"
-                    % (",".join(desig[:3]), encaps, fp))
-        if not cod:
-            sem.extend(r for r in desig if r in por_ref)
-        saida.append(ln.rstrip() + ',"%s"' % cod)
+        cod = ""
+        if cods:
+            cod, encaps = cods.pop()
+            # ⚠️ SEGUNDA GUARDA, independente da chave: o encapsulamento que a
+            # fonte gravou tem de aparecer no footprint que a BOM declara. E o
+            # que apanha uma troca entre placas mesmo que a chave se parta.
+            if encaps and encaps not in fp:
+                return ("%s: a fonte diz encapsulamento %r e a BOM declara %r — "
+                        "a peca escolhida NAO e a peca desenhada"
+                        % (",".join(desig[:3]), encaps, fp))
+            if not cod:
+                sem.extend(x for x in desig if x in por_ref)
+        regs.append((comment, fp, cod, desig))
     if sem:
         return ("sem codigo LCSC, e a JLC nao monta a linha: %s"
                 % " ".join(sorted(set(sem))))
-    with open(caminho, "w", encoding="utf-8") as f:
-        f.write("\n".join(saida) + "\n")
+
+    # 2a passagem: FUNDE por LCSC (uma peca montada = uma linha). As linhas sem
+    # LCSC passam intactas (chave unica por si so, nunca se fundem entre elas).
+    grupos, ordem = {}, []
+    for comment, fp, cod, desig in regs:
+        chave = cod if cod else ("__sem__", tuple(desig), fp)
+        if chave not in grupos:
+            grupos[chave] = {"comments": [], "fps": set(), "desig": set(), "cod": cod}
+            ordem.append(chave)
+        g = grupos[chave]
+        g["comments"].append(comment)
+        g["fps"].add(fp)
+        g["desig"].update(desig)
+
+    # ⚠️ Comment representativo da linha fundida: o Value mais curto (o de base,
+    # sem as anotacoes que separavam as linhas), desempate alfabetico.
+    linhas_saida = []
+    for chave in ordem:
+        g = grupos[chave]
+        desig = sorted(g["desig"], key=natkey)
+        comment = sorted(g["comments"], key=lambda c: (len(c), c))[0]
+        fp = sorted(g["fps"])[0]
+        linhas_saida.append((desig, comment, fp, str(len(desig)), g["cod"]))
+    linhas_saida.sort(key=lambda t: natkey(t[0][0]))
+
+    with open(caminho, "w", encoding="utf-8", newline="") as f:
+        w = _csv.writer(f, quoting=_csv.QUOTE_ALL)
+        # ⚠️ o cabecalho e o esquema canonico da JLC; a coluna do codigo e
+        # `LCSC Part #` — a chave em que a JLC lê o LCSC no upload de BOM;
+        # `LCSC` sozinho nao e reconhecido.
+        w.writerow(["Comment", "Designator", "Footprint", "Qty", "LCSC Part #"])
+        for desig, comment, fp, qty, cod in linhas_saida:
+            w.writerow([comment, ",".join(desig), fp, qty, cod])
     return None
 
 
