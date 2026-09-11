@@ -137,7 +137,7 @@ def carrega_bom(rows):
     for r in rows:
         desig = (r.get("Designator") or r.get("Ref") or "").strip()
         fp = (r.get("Footprint") or "").strip()
-        lcsc = (r.get("LCSC") or "").strip()
+        lcsc = (r.get("LCSC Part #") or r.get("LCSC") or "").strip()
         qty = (r.get("Qty") or "").strip()
         for d in [d.strip() for d in desig.split(",") if d.strip()]:
             by_ref[d] = {"footprint": fp, "lcsc": lcsc, "qty": qty}

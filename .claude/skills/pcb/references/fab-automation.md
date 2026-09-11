@@ -113,8 +113,17 @@ kicad-cli pcb export drill --output gerbers/ --format excellon \
 kicad-cli pcb export pos --output cpl.csv --format csv --units mm \
   --side both --smd-only --exclude-dnp board.kicad_pcb
 ```
-JLC quer colunas `Designator, Mid X, Mid Y, Layer, Rotation`; o KiCad emite
-`Ref, PosX, PosY, Side, Rot` e `front`/`back` — remapear para `Top`/`Bottom`.
+⚠️⚠️ **O POS NATIVO DO KiCad NÃO É UPLOADÁVEL NA JLCONE** (medido no upload real,
+2026-09-11): a JLCONE recusou o CPL do painel com **"Failed processing the CPL
+file"**. Causa: o `kicad-cli` emite o cabeçalho nativo `Ref,Val,Package,PosX,PosY,
+Rot,Side` com o lado em minúsculas (`top`/`bottom`), e o parser de SMT da JLC não
+o reconhece. A JLC exige **exactamente** `Designator,Mid X,Mid Y,Layer,Rotation`,
+com `Layer` **capitalizado** (`Top`/`Bottom`). O `para_fabrica` **v0.16.0** faz o
+remapeamento na exportação (`cpl_para_jlc`: Ref→Designator, PosX→Mid X, PosY→Mid Y,
+Side→Layer com Top/Bottom, Rot→Rotation; Val/Package descartados; mm sem sufixo,
+zeros finais aparados; UTF-8 sem BOM) e o CPL committado é **directamente
+carregável**. É a mesma lição da paridade de DFM: a **SAÍDA do portão tem de ser o
+que a fábrica ACEITA**, não o que a ferramenta emite por omissão.
 Rotações frequentemente precisam de correção por footprint (dor conhecida — ver
 `parts-sourcing.md` §5).
 
@@ -125,6 +134,9 @@ kicad-cli sch export bom --output bom.csv \
   --labels 'Comment,Designator,Footprint,LCSC Part #' \
   --group-by 'Value,Footprint,LCSC' --exclude-dnp board.kicad_sch
 ```
+⚠️ A coluna do código LCSC tem de se chamar **`LCSC Part #`** — é essa a chave em
+que a JLC lê o código no upload de BOM; `LCSC` sozinho não é reconhecido. O
+`para_fabrica` v0.16.0 grava a coluna com esse cabeçalho (`mete_lcsc`).
 
 ---
 

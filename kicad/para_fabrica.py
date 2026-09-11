@@ -55,7 +55,7 @@ import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.15.0"
+VERSAO = "0.16.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -284,7 +284,9 @@ def mete_lcsc(caminho, placa):
         linhas = f.read().splitlines()
     if len(linhas) < 2:
         return "a BOM exportada saiu com %d linha(s)" % len(linhas)
-    saida, sem = [linhas[0].rstrip() + ',"LCSC"'], []
+    # ⚠️ o cabecalho da coluna e `LCSC Part #` — e a chave em que a JLC lê o
+    # codigo LCSC no upload de BOM; `LCSC` sozinho nao e reconhecido.
+    saida, sem = [linhas[0].rstrip() + ',"LCSC Part #"'], []
     for ln in linhas[1:]:
         if not ln.strip():
             continue
@@ -319,6 +321,45 @@ def mete_lcsc(caminho, placa):
     with open(caminho, "w", encoding="utf-8") as f:
         f.write("\n".join(saida) + "\n")
     return None
+
+
+def cpl_para_jlc(caminho):
+    """Reescreve o CPL no ESQUEMA que a JLCPCB exige no upload de montagem SMT.
+
+    ⚠️ O `kicad-cli pcb export pos --format csv` emite o formato NATIVO do KiCad
+    — cabecalho `Ref,Val,Package,PosX,PosY,Rot,Side` e lado em minusculas
+    (`top`/`bottom`). O parser de SMT da JLCONE NAO o reconhece e recusa o
+    ficheiro com "Failed processing the CPL file" (medido no upload real do
+    painel, 2026-09-11). A JLC exige exactamente `Designator,Mid X,Mid Y,Layer,
+    Rotation`, com `Layer` capitalizado (`Top`/`Bottom`). Esta e a mesma licao da
+    paridade de DFM: a SAIDA do portao tem de ser o que a fabrica ACEITA, nao o
+    que a ferramenta emite por omissao.
+
+    Mapa: Ref->Designator, PosX->Mid X, PosY->Mid Y, Side->Layer, Rot->Rotation.
+    Val e Package sao descartados (a JLC le a peca do BOM, nao do CPL).
+    Coordenadas em mm, sem sufixo; zeros finais aparados. UTF-8 sem BOM."""
+    import csv as _csv
+    with open(caminho, encoding="utf-8-sig", newline="") as f:
+        rows = list(_csv.DictReader(f))
+    lay = {"top": "Top", "bottom": "Bottom"}
+
+    def trim(v):
+        v = (v or "").strip()
+        if "." in v:
+            v = v.rstrip("0").rstrip(".")
+        return v or "0"
+    out = ["Designator,Mid X,Mid Y,Layer,Rotation"]
+    for r in rows:
+        ref = (r.get("Ref") or r.get("Designator") or "").strip()
+        if not ref:
+            continue
+        x = trim(r.get("PosX") or r.get("Mid X") or "")
+        y = trim(r.get("PosY") or r.get("Mid Y") or "")
+        side = (r.get("Side") or r.get("Layer") or "").strip().lower()
+        rot = trim(r.get("Rot") or r.get("Rotation") or "")
+        out.append("%s,%s,%s,%s,%s" % (ref, x, y, lay.get(side, side.capitalize() or "Top"), rot))
+    with open(caminho, "w", encoding="utf-8", newline="") as f:
+        f.write("\n".join(out) + "\n")
 
 
 def uma(nome, incompleta):
@@ -513,6 +554,9 @@ def uma(nome, incompleta):
 
     corre("pcb", "export", "pos", "-o", os.path.join(dest, "cpl_%s.csv" % nome),
           "--format", "csv", "--units", "mm", "--side", "both", "--exclude-dnp", pcb)
+    # ⚠️ o pos nativo do KiCad NAO e uploadavel na JLCONE — reescreve para o
+    # esquema Designator,Mid X,Mid Y,Layer,Rotation + Top/Bottom (ver cpl_para_jlc).
+    cpl_para_jlc(os.path.join(dest, "cpl_%s.csv" % nome))
     if os.path.exists(sch):
         corre("sch", "export", "bom", "-o", os.path.join(dest, "bom_%s.csv" % nome),
               "--fields", "Reference,Value,Footprint,QUANTITY",
