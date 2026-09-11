@@ -1,0 +1,25 @@
+pacote de fabrico — cotuca cerebro
+gerado por para_fabrica v0.17.0 em 2026-09-11
+commit a3acd3b
+
+geometria 0 · planos inteiros · todas as ligacoes feitas
+
+⚠️ A rotacao no CPL e a do KiCad, nao a da biblioteca da JLC.
+   Confirmar peca a peca na pre-visualizacao antes de pagar.
+   As pecas com polaridade, que sao as unicas que importam:
+     U1   OPA1642AIDR  SOIC-8   pino 1 — o ponto no canto
+     D11  BAV99,215    SOT-23   a JLC roda SOT-23 180 graus com frequencia
+     D21  BAV99,215    SOT-23   idem
+     D1   SMBJ24A      SMB      catodo — a barra
+     D2   SS14         SMA      catodo. (!) o Value diz `1N5819` e o MPN diz `SS14`: e a mesma peca em SMA, mas o desenho e a compra chamam-lhe nomes diferentes
+   Os 0805/1206/1210 nao tem polaridade — nao gastar tempo neles.
+
+O BOM leva a coluna LCSC preenchida (tools/codigos_lcsc.py).
+
+(!) A PLACA E DE 2 CAMADAS. Encomendar 2, e nao 4: so ha F.Cu e B.Cu,
+    com GND (prio 0) e AGND (prio 1) ambas em B.Cu e o NT1 como ponte
+    unica. Pedir 4 paga um plano interior que este desenho nao usa.
+
+(!) OS POTS SAO THT E NAO PASSAM PELA JLC: PTV09A-1020S-B103, do
+    distribuidor. O `-1` e vertical com bucim; o `-4` e rear mount e o
+    eixo nao sobe pela tampa.
