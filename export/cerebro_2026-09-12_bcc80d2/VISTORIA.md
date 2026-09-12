@@ -1,4 +1,4 @@
-# Questionário do Portão Humano ⟨dB⟩ — cotuca cerebro
+# Questionário do Portão Humano ⟨dB⟩ — cerebro
 
 > Gerado por `portao_humano.py` v0.2.0 a partir de `cpl_rico_cerebro.csv` + `bom_cerebro.csv`. Método: `references/portao-humano.md`.
 >
@@ -7,21 +7,21 @@
 ## 0. Carregar o pacote (antes de tudo)
 
 ### Item 0 — Carregar o pacote — buscar ao PR e carregar na JLCONE
-- **ONDE OLHAR:** O pacote está **committado no repo** em `export/cerebro_2026-09-11_6ebbda5/` na branch do PR (`claude/slack-session-sm2ldz`, repo `Belquer/Cotucatronics` no GitHub) — está no **GitHub, não necessariamente na tua máquina**. ⚠️ O terminal que vês na pipeline corre no **sandbox na nuvem** e **não consegue pôr ficheiros na tua máquina** — a recuperação é um comando que **TU corres localmente**. Depois carregas no site da **JLCPCB/JLCONE** (*Add Gerber*). Antes de QUALQUER item de inspeção, a placa tem de estar carregada.
-- **O QUE DEVES VER:** **Gerber a carregar:** `export/cerebro_2026-09-11_6ebbda5/cerebro_2026-09-11_6ebbda5_gerbers.zip` — é ESTE `.zip` que entra na JLCONE, não o `.kicad_pcb` nem gerbers soltos.
-  · **Como buscar (terminal no teu Mac — o preferido):** `cd Cotucatronics && git fetch origin && git checkout claude/slack-session-sm2ldz && git pull origin claude/slack-session-sm2ldz && open export/cerebro_2026-09-11_6ebbda5/` — se ainda não o clonaste: `git clone -b claude/slack-session-sm2ldz git@github.com:Belquer/Cotucatronics.git`.
-  · **Fallback (GitHub no browser):** navega `claude/slack-session-sm2ldz` até `export/cerebro_2026-09-11_6ebbda5/`, abre a página do `cerebro_2026-09-11_6ebbda5_gerbers.zip` e clica **Download raw file** (repo privado → tens de estar autenticado como o dono); leva também o `cpl_cerebro.csv` + `bom_cerebro.csv`. Ou **Code → Download ZIP** da branch e tira a pasta `export/`.
+- **ONDE OLHAR:** O pacote está **committado no repo** em `export/cerebro_2026-09-12_bcc80d2/` na branch do PR (`claude/slack-session-sm2ldz`, repo `Belquer/Cotucatronics` no GitHub) — está no **GitHub, não necessariamente na tua máquina**. ⚠️ O terminal que vês na pipeline corre no **sandbox na nuvem** e **não consegue pôr ficheiros na tua máquina** — a recuperação é um comando que **TU corres localmente**. Depois carregas no site da **JLCPCB/JLCONE** (*Add Gerber*). Antes de QUALQUER item de inspeção, a placa tem de estar carregada.
+- **O QUE DEVES VER:** **Gerber a carregar:** `export/cerebro_2026-09-12_bcc80d2/cerebro_2026-09-12_bcc80d2_gerbers.zip` — é ESTE `.zip` que entra na JLCONE, não o `.kicad_pcb` nem gerbers soltos.
+  · **Como buscar (terminal no teu Mac — o preferido):** `cd Cotucatronics && git fetch origin && git checkout claude/slack-session-sm2ldz && git pull origin claude/slack-session-sm2ldz && open export/cerebro_2026-09-12_bcc80d2/` — se ainda não o clonaste: `git clone -b claude/slack-session-sm2ldz git@github.com:Belquer/Cotucatronics.git`.
+  · **Fallback (GitHub no browser):** navega `claude/slack-session-sm2ldz` até `export/cerebro_2026-09-12_bcc80d2/`, abre a página do `cerebro_2026-09-12_bcc80d2_gerbers.zip` e clica **Download raw file** (repo privado → tens de estar autenticado como o dono); leva também o `cpl_cerebro.csv` + `bom_cerebro.csv`. Ou **Code → Download ZIP** da branch e tira a pasta `export/`.
   · **Montagem SMT:** quando a JLC pedir, junta `cpl_cerebro.csv` (posições) + `bom_cerebro.csv` (BOM), da MESMA pasta.
   · **Camadas:** 2.
-  · Depois, arrasta o `cerebro_2026-09-11_6ebbda5_gerbers.zip` para a JLCONE (*Add Gerber*).
-- **COMO CONFIRMAR:** **Proveniência** — PASS: carregaste o `cerebro_2026-09-11_6ebbda5_gerbers.zip` (buscado a `claude/slack-session-sm2ldz` no GitHub) e o `LEIA-ME.txt` da MESMA pasta carimba o commit `6ebbda5` e árvore limpa — é ESSA a revisão que estás a encomendar. FAIL: não encontras o pacote na tua máquina (está só no PR — vai buscá-lo ao GitHub), ou carregaste outro zip, ou o `LEIA-ME.txt` carimba outro commit / árvore suja → PÁRA e vai buscar o pacote certo do PR, NÃO encomendas (guarda contra encomendar um pacote velho ou trocado).
+  · Depois, arrasta o `cerebro_2026-09-12_bcc80d2_gerbers.zip` para a JLCONE (*Add Gerber*).
+- **COMO CONFIRMAR:** **Proveniência** — PASS: carregaste o `cerebro_2026-09-12_bcc80d2_gerbers.zip` (buscado a `claude/slack-session-sm2ldz` no GitHub) e o `LEIA-ME.txt` da MESMA pasta carimba o commit `bcc80d2` e árvore limpa — é ESSA a revisão que estás a encomendar. FAIL: não encontras o pacote na tua máquina (está só no PR — vai buscá-lo ao GitHub), ou carregaste outro zip, ou o `LEIA-ME.txt` carimba outro commit / árvore suja → PÁRA e vai buscar o pacote certo do PR, NÃO encomendas (guarda contra encomendar um pacote velho ou trocado).
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
 
 ## 1. Nível-placa
 
 ### Item 1 — Nível-placa — número de camadas
 - **ONDE OLHAR:** O gerber (ou o LEIA-ME do pacote) e o formulário da JLC.
-- **O QUE DEVES VER:** A placa é de **2 camadas**. O formulário da JLC tem de dizer o MESMO número de camadas.
+- **O QUE DEVES VER:** A placa é de **N camadas (confirmar)**. O formulário da JLC tem de dizer o MESMO número de camadas.
 - **COMO CONFIRMAR:** PASS: nº de camadas no formulário = nº real do desenho. FAIL: pedir 4 quando o desenho só usa F.Cu+B.Cu paga um plano interior a mais → corrigir o formulário, não pagar.
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
 
