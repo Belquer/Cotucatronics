@@ -118,3 +118,52 @@ A pergunta que o Estágio 8 faz antes de deixar pagar: **«esta rev já foi
 fabricada? Se sim, este gerber tem de trazer a rev seguinte; se não, mantém-se a
 rev em aberto e o que distingue este pacote é o stamp.»** Se a resposta não bater
 com o silk, o estágio não fecha.
+
+## Versionar TUDO — todo artefato gerado carrega carimbo (2026-09-12)
+
+As três camadas acima cobrem a **placa**, o **pacote** e o **script**. Faltava a
+generalização: **todo artefato que sai do repo para ser consumido lá fora**
+— não só os pacotes de fábrica — tem de **declarar a própria versão**, para que
+ninguém consuma uma cópia velha sem perceber.
+
+> **Raiz do problema (2026-09-12):** o carrinho do Mouser do dB ficou com um MPN
+> **de um export superado**, enquanto o repo já tinha o novo. Nenhum dos dois lados
+> dizia "sou a versão X" de forma comparável — e um artefato que não se versiona
+> não deixa detetar que envelheceu. Um export que não se carimba é um pacote que
+> mente sobre si mesmo, exactamente como o silk que discorda do gerber.
+
+**A regra, em três partes:**
+
+1. **Carimbo no próprio artefato.** Todo ficheiro gerado carrega, no início e num
+   lugar válido para o seu formato, um carimbo:
+
+   ```
+   carimbo: <arquivo> v<N> · <YYYY-MM-DD> · placas: painel rev C · cerebro rev C
+   ```
+
+   - **CSV** → primeira linha como comentário `#`.
+   - **Markdown** → comentário HTML `<!-- ... -->` no topo (ou um bloco visível).
+   - **xlsx/xls** → uma **célula dedicada** (`carimbo` numa aba própria e/ou uma
+     célula fora das colunas que a ferramenta importa — nunca na coluna A dos dados,
+     senão vira uma "peça" fantasma na importação).
+   - **Pacote de fábrica** → já o faz pelo `LEIA-ME.txt` (gerador + data + commit).
+
+   O `v<N>` começa em `v1` e **sobe a cada novo corte** que muda o conteúdo
+   consumível (um MPN trocado, uma qty recalculada). Não é o SHA deste commit
+   (auto-referência impossível) — a **procedência** fina vem do MANIFEST + git.
+
+2. **O MANIFEST é a fonte única de "o mais novo".** `export/MANIFEST.md` lista
+   **todo** deliverable corrente com o seu carimbo. É onde se responde "estou com
+   a versão de agora?": compara-se o carimbo do artefato em mão contra o MANIFEST;
+   se não bater, `git pull`.
+
+3. **Protocolo de entrega/consumo.** Quando **eu entrego** um ficheiro, **declaro o
+   carimbo** ("este é o `COMPRA_MOUSER.csv` v2, 2026-09-12"). Quando **o humano vai
+   consumir** (subir ao Mouser, mandar à fábrica, montar), **confere o carimbo**
+   contra o MANIFEST **antes** de agir. As duas metades existem porque a saída de
+   uma ferramenta não prova que o insumo estava actual — o carimbo, sim.
+
+É a mesma verdade das três camadas, alargada: **congelamento-no-lançamento** diz
+que a rev da placa só sobe no fabrico; **Versionar TUDO** diz que *qualquer*
+artefato consumível se carimba e se confere contra o MANIFEST antes de virar
+compra, upload ou solda.

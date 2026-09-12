@@ -1,3 +1,4 @@
+# carimbo: BOM_CONSOLIDADO.csv v2 · 2026-09-12 · placas: painel rev C · cerebro rev C
 Item,Valor,Footprint,LCSC,MPN_Mouser,Qty_cerebro,Qty_painel,Qty_total,Qty_com_folga,Designadores
 01 R 100R 0805 1%,100R,R_0805_2012Metric,C17408,RC0805FR-07100RL,2,2,4,6,"cerebro: R14,R24 | painel: R1,R2"
 02 R 10k 0805 1%,10k,R_0805_2012Metric,C17414,RC0805FR-0710KL,2,2,4,6,"cerebro: R50,R51 | painel: R3,R4"

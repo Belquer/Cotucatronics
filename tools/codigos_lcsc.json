@@ -1,4 +1,5 @@
 {
+  "aviso_mpn": "⚠️ regenerar online (ver export/MANIFEST.md). MPNs superados pelo sourcing Mouser rev C: PTC 2920L330/24MR->MF-LSMF300/24X-2, AO3400A->SI2302CDS-T1-GE3. O trio mpn/codigo/prova tem de ficar coerente — trocar so a string mente sobre o codigo LCSC e a prova; exige lookup LCSC online. Fonte-da-verdade dos MPNs finais: export/MOUSER_ALTERNATES.md + export/BOM_CONSOLIDADO.csv.",
   "arvore_suja": true,
   "commit": "1ce1d20",
   "data": "2026-09-08",

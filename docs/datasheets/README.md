@@ -1,6 +1,14 @@
 # Fichas tecnicas
 Gerado por `tools/fichas.py` v0.9.0 em **2026-09-08** · commit `18729f1` · **ARVORE SUJA**
 
+> ⚠️ **REGENERAR ONLINE (ver `export/MANIFEST.md`).** Esta tabela lista MPNs
+> **superados** pelo sourcing Mouser rev C: PTC `2920L330/24MR`→`MF-LSMF300/24X-2`,
+> MOSFET `AO3400A`→`SI2302CDS-T1-GE3`, filme `MKS2C042201K00KSSD`→`MKS2C042201M00KN00`,
+> IDC 3M `N2526-6002RB`/`N3793-6002RB`→Würth `61202621621`. **Não** é substituição de
+> string segura: cada MPN carrega uma ficha PDF que descreve a peça antiga; casar a
+> ficha ao MPN novo exige **download online**. Até lá, a fonte-da-verdade dos MPNs
+> finais é `export/MOUSER_ALTERNATES.md` (as 7 verificadas) + `export/BOM_CONSOLIDADO.csv`.
+
 So entram pecas com MPN real. Resistores por encapsulamento, headers
 lisos e modulos comprados montados nao tem MPN, e por isso nao tem
 linha aqui — ver `tools/bom_completa.py`.

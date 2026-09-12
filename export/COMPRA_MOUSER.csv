@@ -1,3 +1,4 @@
+# carimbo: COMPRA_MOUSER.csv v2 · 2026-09-12 · placas: painel rev C · cerebro rev C
 # COMPRA_MOUSER — cotuca cerebro + painel (rev C, 06db1c7) — BOM para IMPORTAR no Mouser BOM Tool
 # Colunas: Mfr Part #, Quantity, Description  (LCSC nao serve no Mouser — cada linha ja e um MPN real)
 # Qty = soma das DUAS placas + folga (+2 ate 5 pcs; +20% acima). 100n/0805 (C49678) somado nas duas placas.

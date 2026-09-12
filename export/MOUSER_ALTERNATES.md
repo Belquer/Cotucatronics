@@ -1,3 +1,4 @@
+<!-- carimbo: MOUSER_ALTERNATES.md v2 · 2026-09-12 · placas: painel rev C · cerebro rev C -->
 # Mouser — substituições e alternativas (rev C)
 
 Mouser está bloqueado por egress deste ambiente. Para cada peça-problema listo o

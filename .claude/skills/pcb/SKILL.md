@@ -477,6 +477,20 @@ fabrica a placa de ontem.
 
 ## Histórico
 
+- **v1.5.0 (2026-09-12)** — **Versionar TUDO.** `references/versionamento.md` ganha a
+  secção «Versionar TUDO»: as três camadas (placa/pacote/script) generalizam-se para
+  **todo artefato gerado que sai do repo** — cada um carrega um **carimbo**
+  (`carimbo: <arquivo> v<N> · <data> · placas: …`) no seu formato (CSV `#`, MD
+  comentário HTML, xlsx/xls célula dedicada, pacote no `LEIA-ME.txt`), e o novo
+  `export/MANIFEST.md` é a **fonte única de "o mais novo"** com o protocolo
+  entrega/consumo (declaro o carimbo ao entregar; o humano confere contra o MANIFEST
+  antes de subir/comprar/soldar). Nasce da raiz real: um carrinho Mouser ficou com
+  MPN de um **export superado** enquanto o repo já tinha o novo. Os 4 artefatos de
+  compra (`COMPRA_MOUSER.csv`, `BOM_CONSOLIDADO.csv`, `MOUSER_ALTERNATES.md`,
+  `COMPRA_MOUSER_template.xlsx`/`.xls`) foram carimbados **v2** (corte dos 7 MPNs
+  verificados). `docs/datasheets/README.md` e `tools/codigos_lcsc.json` ficam
+  marcados no MANIFEST como **⚠️ regenerar online** (MPNs superados; casar ficha/prova
+  ao MPN novo pede rede, não substituição cega).
 - **v1.4.0 (2026-09-12)** — três aprendizagens da corrida de sourcing pelo Mouser.
   **(1) Estágio 2 ganha o §7 de `parts-sourcing.md`: sourcing com Claude-on-Chrome**
   — o sandbox não alcança o Mouser (403 de egress; o `WebSearch` prova catálogo,

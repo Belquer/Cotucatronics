@@ -305,3 +305,17 @@ dos encoders**. Verdade para ele, falso para a placa.
 Neste caso o verificador acusou, e isso foi sorte da forma do erro: ele
 comparava duas direcções. Uma isenção que só suprimisse o falso positivo teria
 ficado calada para sempre.
+
+## Versionar TUDO — todo artefato gerado carrega carimbo
+
+Não é só o fonte que se versiona (§4). **Todo artefato gerado que sai do repo para
+ser consumido lá fora** — BOM, export, template, pacote — carrega um **carimbo** no
+início e num lugar válido para o seu formato (`carimbo: <arquivo> v<N> · <data> ·
+placas: …`; CSV como comentário `#`, Markdown em comentário HTML, xlsx/xls numa
+célula dedicada, pacote no `LEIA-ME.txt`), e o **`export/MANIFEST.md` é a fonte
+única de "o mais novo"**: antes de subir/consumir um artefato, confere-se o carimbo
+dele contra o MANIFEST e, se não bater, `git pull`. Nasce de um engano real
+(2026-09-12): um carrinho Mouser com um MPN de um **export superado** enquanto o
+repo já tinha o novo — um artefato que não se versiona não deixa detetar que
+envelheceu. O detalhe do método vive na skill `pcb`
+(`references/versionamento.md`, secção «Versionar TUDO»).
