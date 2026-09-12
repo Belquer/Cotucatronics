@@ -1,0 +1,40 @@
+Item,Valor,Footprint,LCSC,MPN_Mouser,Qty_cerebro,Qty_painel,Qty_total,Qty_com_folga,Designadores
+01 R 100R 0805 1%,100R,R_0805_2012Metric,C17408,RC0805FR-07100RL,2,2,4,6,"cerebro: R14,R24 | painel: R1,R2"
+02 R 10k 0805 1%,10k,R_0805_2012Metric,C17414,RC0805FR-0710KL,2,2,4,6,"cerebro: R50,R51 | painel: R3,R4"
+03 R 100k 0805 1%,100k,R_0805_2012Metric,C149504,RC0805FR-07100KL,3,0,3,5,"cerebro: R5,R6,R8"
+04 R 22k 0805 1%,22k,R_0805_2012Metric,C17560,RC0805FR-0722KL,1,0,1,3,cerebro: R9
+05 R 0R jumper 0805,0R,R_0805_2012Metric,C17477,RC0805JR-070RL,2,0,2,4,"cerebro: R10,R20"
+06 R 4M7 0805 1%,4M7,R_0805_2012Metric,C17674,RC0805FR-074M7L,2,0,2,4,"cerebro: R11,R21"
+07 R 1k 0805 1%,1k,R_0805_2012Metric,C17513,RC0805FR-071KL,2,0,2,4,"cerebro: R12,R22"
+08 R 100R 1206 1/4W 1%,100R 1/4W,R_1206_3216Metric,C17901,RC1206FR-07100RL,1,0,1,3,cerebro: R7
+09 R 100R 1210 1/2W 1%,100R serie,R_1210_3225Metric,C2933799,RC1210FR-07100RL,0,2,2,4,"painel: R5,R6"
+10 C 100nF 0805 50V X7R,100n,C_0805_2012Metric,C49678,CL21B104KBCNNNC,6,4,10,12,"cerebro: C2,C4,C7,C9,C15,C16 | painel: C1,C2,C4,C5"
+11 C 10uF 1206 50V X5R,10u,C_1206_3216Metric,C13585,CL31A106KBHNNNE,1,0,1,3,cerebro: C8
+12 C 22nF 1206 50V C0G,22n C0G,C_1206_3216Metric,C3862155,C1206C223J5GACTU,2,0,2,4,"cerebro: C12,C22"
+13 TVS SMB 24V unidir,SMBJ24A,D_SMB,C19077578,SMBJ24A,1,0,1,3,cerebro: D1
+14 Diodo Schottky SMA 40V 1A,SS14,D_SMA,C2480,SS14-13-F,1,0,1,3,cerebro: D2
+15 Diodo duplo SOT-23,BAV99,SOT-23,C2500,BAV99-7-F,2,0,2,4,"cerebro: D11,D21"
+16 MOSFET N-ch SOT-23 30V,AO3400A,SOT-23,C20917,AO3400A,0,2,2,4,"painel: Q1,Q2"
+17 Amp op audio JFET SOIC-8,OPA1642,SOIC-8_3.9x4.9mm_P1.27mm,C67640,OPA1642AID,1,0,1,3,cerebro: U1
+18 PTC resetavel 2920 3.3A/24V,"PTC 3,3A",Fuse_2920_7451Metric,C720183,2920L330/24MR,1,0,1,3,cerebro: F1
+19 Cap elec radial 2200uF 35V,2200u/35V,CP_Radial_D16.0mm_P7.50mm,,ECA-1VM222,1,0,1,3,cerebro: C1
+20 Cap elec radial 470uF 25V,470u 25V,CP_Radial_D10.0mm_P5.00mm,,ECA-1EM471,1,0,1,3,cerebro: C6
+21 Cap elec radial 100uF 25V,100u,CP_Radial_D6.3mm_P2.50mm,,ECA-1EM101,1,1,2,4,cerebro: C3 | painel: C3
+22 Cap elec radial 47uF 50V,47u,CP_Radial_D6.3mm_P2.50mm,,ECA-1HM470,1,0,1,3,cerebro: C5
+23 Cap filme box 2.2uF 50V,2u2 filme,C_Rect_L7.2mm_W11.0mm_P5.00mm_MKS2,,MKS2C042201F00KSSD,2,0,2,4,"cerebro: C14,C24"
+24 Bloco terminal Phoenix MKDS 2P 5.08mm,terminal 2P 5.08,"TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02",,1715721,2,0,2,4,"cerebro: J1,J2"
+25 Conector JST XH 2P vertical,JST XH 2P,JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical,,B2B-XH-A(LF)(SN),0,5,5,7,"painel: J3,J4,J5,J6,J7"
+26 Box header IDC 2x13 2.54mm,IDC 2x13,IDC-Header_2x13_P2.54mm_Vertical,,N2513-6002RB,1,1,2,4,cerebro: J14 | painel: J1
+27 Header 1x02 2.54mm (de barra 1x40),header 1x02,PinHeader_1x02_P2.54mm_Vertical,,PRPC040SAAN-RC,1,0,1,3,cerebro: J4
+28 Header 1x03 2.54mm (de barra 1x40),header 1x03,PinHeader_1x03_P2.54mm_Vertical,,PRPC040SAAN-RC,5,0,5,7,"cerebro: J3,J5,J6,J12,J13"
+29 Header 1x04 2.54mm (de barra 1x40),header 1x04,PinHeader_1x04_P2.54mm_Vertical,,PRPC040SAAN-RC,1,0,1,3,cerebro: J11
+30 Header 1x07 2.54mm (de barra 1x40),header 1x07 OLED,PinHeader_1x07_P2.54mm_Vertical,,PRPC040SAAN-RC,0,1,1,3,painel: J2
+31 Header 1x08 2.54mm (de barra 1x40),header 1x08,PinHeader_1x08_P2.54mm_Vertical,,PRPC040SAAN-RC,2,0,2,4,"cerebro: J15,J16"
+32 Potenciometro Bourns PTV09A 10k lin,10k lin,Potentiometer_Bourns_PTV09A-1_Vertical,,PTV09A-4020F-B103,0,2,2,4,"painel: RV1,RV2"
+33 Encoder Alps EC11 c/ chave,EC11,RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm,,EC11E15244C0,0,1,1,3,painel: SW1
+34 Daisy Seed rev3 (modulo DSP),Daisy Seed3,Module:Electrosmith_Daisy_Seed,,NAO E MOUSER - comprar Electrosmith (electro-smith.com),1,0,1,1,cerebro: U2
+35 ESP32-C3 SuperMini (WiFi/BT),ESP32-C3,cotuca:ESP32C3_SUPERMINI_SOQUETE,,NAO E MOUSER - AliExpress/Amazon,1,0,1,1,cerebro: U3
+36 Modulo amplificador TPA3116,TPA3116,modulo plug-in,,NAO E MOUSER - AliExpress/Amazon; liga em J11(1x4)+J2,1,0,1,1,cerebro: J11+J2
+37 Modulo step-down 5V fixo,buck 5V,modulo plug-in,,NAO E MOUSER - AliExpress/Amazon (MP1584/LM2596 fixo); liga em J3,1,0,1,1,cerebro: J3
+38 Placa decoy USB-PD,decoy PD,modulo plug-in,,NAO E MOUSER - AliExpress/Amazon; liga em J1,1,0,1,1,cerebro: J1
+39 Cabo de fita 26 vias 1.27mm + 2x soquete IDC 2x13 femea,cabo 26v,3M 3365/26 + 89126-0101HA,,NAO E MOUSER - interconexao cerebro<->painel (J14<->J1),1,0,1,1,cerebro: J14 | painel: J1
