@@ -354,15 +354,18 @@ recusa um DRC sujo.
   não um depois: um pacote que só existe em `fabrica/` (gitignored) some com o
   container e nunca chega ao PR — o estágio 8 **não fecha** até o `export/` estar
   no git.
-- **⚠️ Afirmação de versão (as três camadas — ver `references/versionamento.md`).**
-  Emitir um pacote **afirma que o rev da placa no silk bate com a CLASSE da
-  mudança**: se este gerber/drill difere do último pacote da mesma placa, o silk
-  **tem** de trazer rev superior (`rev <LETRA><N>`, POR PLACA); se só mudou
-  tooling/doc/BOM-agrupamento (o artefacto fabricado não muda), a rev **não**
-  sobe. **Silk é gerber** — mover/acrescentar serigrafia sobe a rev mesmo com o
-  cobre idêntico. O portão humano confere, pela proveniência do LEIA-ME, que a
-  rev carimbada e a rev impressa são a mesma e que subiu se o gerber subiu; e a
-  linha **rev → o que mudou → commit** entra em `docs/relatorio/002.md`.
+- **⚠️ Afirmação de versão — CONGELAMENTO-NO-LANÇAMENTO (ver
+  `references/versionamento.md`).** Emitir um pacote **afirma que o rev do silk
+  bate com o ESTADO DE FABRICO da placa**, e a rev sobe **por lançamento, não por
+  commit**: enquanto uma placa **não foi fabricada/pedida**, o gerber pode iterar
+  N vezes e a rev **FICA** (`rev C`, sem número) — as iterações distinguem-se pelo
+  **stamp de commit** do pacote. A rev só sobe quando um board é **efectivamente
+  fabricado/pedido**: aí congela, e a **próxima** mudança de gerber abre o rev
+  seguinte. **Silk é gerber**, mas mover/escalar serigrafia numa placa ainda não
+  fabricada gera **pacote novo (stamp novo), mesma rev** — não sobe a rev. O
+  portão humano confere, pela proveniência do LEIA-ME, que a rev carimbada e a
+  impressa são a mesma; e a linha **rev → o que mudou → commit** entra em
+  `docs/relatorio/002.md`.
 - **Artefacto:** o pacote carimbado sob `export/<placa>_<data>_<commit>/`
   (zip de gerbers + CPL + `cpl_rico` + BOM-por-LCSC + LEIA-ME + `VISTORIA.md`, o
   questionário do portão humano gerado para a placa, + a pasta `kit/` de montagem
@@ -443,6 +446,16 @@ fabrica a placa de ontem.
 
 ## Histórico
 
+- **v1.3.0 (2026-09-12)** — o versionamento passa a **CONGELAMENTO-NO-LANÇAMENTO**
+  (`references/versionamento.md` reescrita, e a afirmação de versão do Estágio 8):
+  a rev sobe **por lançamento, não por commit** — enquanto uma placa não é
+  fabricada/pedida, o gerber itera e a rev **fica** (`rev C`, sem número),
+  distinguida pelo **stamp de commit**; a letra só sobe quando um board é
+  efectivamente fabricado, e aí a próxima mudança abre o rev seguinte. **Silk é
+  gerber**, mas mexer serigrafia numa placa não fabricada gera pacote novo, mesma
+  rev. Instância: cérebro e painel ambos em **`rev C`** (silk sem número) —
+  reposicionamento+escala da marca do cérebro e reordenação do J2 do painel são
+  iterações de `rev C` distinguidas pelo stamp.
 - **v1.2.0 (2026-09-12)** — o **método de versionamento** entra na skill
   (`references/versionamento.md`, nova): as três camadas (rev da placa no silk
   `rev <LETRA><N>` POR PLACA · stamp do pacote = short SHA em `export/` · semver

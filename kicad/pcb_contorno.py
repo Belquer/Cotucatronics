@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.21.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.22.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+
+v0.22.0 (2026-09-12): a marca do cerebro (COTUCATRONICS + rev + buzios) MOVEU-SE
+em bloco para a banda aberta que o utilizador apontou — a DIREITA do U2, ABAIXO da
+fila de pontos de teste e do J12, a ESQUERDA do bloco J2/C3. Essa banda mede so
+32,8 x 9,5 mm (medido em pcbnew) e o banner a tamanho cheio tem 45 mm; nao cabia.
+O grupo foi ESCALADO uniformemente por 0,72 (layout relativo preservado) e centrado
+na banda: COTUCATRONICS (127.2,68.8) size 1.872, rev (127.2,72.256) size 1.152,
+buzios (144.48,69.664) ra 3.6 rb 2.16. Folga minima medida 0,67 mm (patio do U2 a
+esquerda, patio do J2 a direita). So serigrafia — cobre byte-identico.
+Congelamento-no-lancamento: enquanto a placa nao e fabricada, a rev NAO sobe — o
+silk fica `cerebro rev C` (sem numero) e as iteracoes distinguem-se pelo commit.
 
 v0.21.0 (2026-09-12): a marca do cerebro (COTUCATRONICS + rev + buzios) MOVEU-SE
 em bloco (translacao rigida +38,+65 mm, layout relativo preservado) da banda de
 topo para a area ABERTA do centro-direita inferior — a faixa livre acima do J1,
-a direita do U2 e abaixo do bloco J2/J3/C3/J16. Centros novos: COTUCATRONICS
-(138,89.4), `cerebro rev C2` (138,94.2), buzios (162,90.6). Subiu para
-`cerebro rev C2` (silk e gerber -> a rev sobe). So serigrafia — cobre identico.
+a direita do U2 e abaixo do bloco J2/J3/C3/J16. Centros: COTUCATRONICS
+(138,89.4), `cerebro rev C2` (138,94.2), buzios (162,90.6). So serigrafia.
 
 v0.20.0 (2026-09-12): a marca passou a ser POR PLACA (camada + mirror), o cerebro
 foi para F.SilkS sem mirror (monta com os componentes para cima -> topo visivel
@@ -779,19 +789,21 @@ def planos(t, nome, alvo):
 #
 # ⚠️ COORDENADAS ABSOLUTAS, e no sitio que foi MEDIDO contra pads/pecas/serigrafia
 # da FACE onde a marca vai (o vazio de uma camada nao e o vazio da face). No
-# cerebro (rev C2) a faixa livre e a banda ABERTA do centro-direita inferior: a
-# direita do U2 (acaba em x=115), abaixo do bloco J2/J3/C3/J16 e ACIMA do J1 (topo
-# y=102) — bbox da marca (122,87)-(167,96), folgas medidas por varrimento em
-# pcbnew: pad 3,18 · furo 3,53 · patio 2,22 (J16) · serigrafia 2,06 · bordo 24,4 mm.
-# A banda de topo original (rev C1, entre J14 e J15) nao cabia um bloco de 45 mm de
-# largura sem apertar; o dB apontou esta area aberta e a marca migrou para ca.
+# cerebro a marca vive na banda que o dB apontou: a DIREITA do U2 (patio acaba em
+# x=115,03), ABAIXO da fila de pontos de teste e do J12, a ESQUERDA do bloco J2/C3
+# (patio comeca em x=148,91). O maior rectangulo livre ali mede so 32,8 x 9,5 mm
+# (medido em pcbnew) e o banner a tamanho cheio tem 45 mm — NAO CABIA. Escalou-se o
+# grupo por 0,72 (rigido) e centrou-se: bbox da marca (115,7 , 67,2)-(148,2 , 73,3),
+# folga minima 0,67 mm (patio U2 esq., patio J2 dir.; TP e J12 a >3,6 mm). Sem 0,72
+# a versao a tamanho cheio punha COTUCATRONICS + rev sobre os pads MIDI/AUDIO do U2
+# (4 silk_over_copper). A escolha do sitio e do dB; a escala e o que o faz caber.
 MARCA = {
     "cerebro": {"layer": "F.SilkS", "mirror": False,
                 # buzios (concha) — a MESMA marca do splash (`src/splash.h`,
                 # super-elipse n=3,2 com labio/boca dentada): (cx, cy, ra, rb).
-                "buzios": (162.0, 90.6, 5.0, 3.0),
-                "textos": [(138.0, 89.4, "COTUCATRONICS", 2.6, 0.42),
-                           (138.0, 94.2, "cerebro rev C2", 1.6, 0.3)]},
+                "buzios": (144.48, 69.664, 3.6, 2.16),
+                "textos": [(127.2, 68.8, "COTUCATRONICS", 1.872, 0.302),
+                           (127.2, 72.256, "cerebro rev C", 1.152, 0.216)]},
     "painel":  {"layer": "B.SilkS", "mirror": True, "buzios": None,
                 "textos": [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
                            (60.0, 26.0, "painel rev C", 1.6, 0.25)]},

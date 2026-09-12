@@ -8320,7 +8320,7 @@
 			)
 		)
 	)
-	(gr_text "painel rev C1"
+	(gr_text "painel rev C"
 		(at 58.052953 23.585186 0)
 		(layer "B.SilkS")
 		(uuid "a6351002-83fd-4cea-88d5-2ada0e17a019")

@@ -1,8 +1,15 @@
-# versionamento — três camadas, uma regra de ouro
+# versionamento — três camadas, uma regra de ouro (congelamento-no-lançamento)
 
 > **O que muda o artefacto fabricado tem de aparecer na placa.** Um pacote que sai
 > com o silk a dizer uma revisão e o gerber a dizer outra é um pacote que mente
 > sobre si mesmo — e é a fábrica, ou o dB com a placa na mão, quem paga a mentira.
+>
+> **⚠️ CONGELAMENTO-NO-LANÇAMENTO (2026-09-12).** A rev NÃO sobe a cada commit que
+> mexe no gerber. Sobe **por LANÇAMENTO**: enquanto uma placa não é **fabricada /
+> pedida**, ela fica no **mesmo rev**, e as iterações pré-fabricação **partilham
+> esse rev** — distinguem-se pelo **stamp de commit** do pacote, não por um número
+> novo. O número/letra só sobe quando um board é **efectivamente FABRICADO/PEDIDO**;
+> aí esse rev fica congelado e a **próxima** mudança de gerber abre o rev seguinte.
 
 Este projecto versiona em **três camadas independentes**, cada uma a responder
 uma pergunta diferente. Confundi-las é o erro: subir o semver de um script não é
@@ -12,19 +19,25 @@ subir a revisão da placa, e carimbar um commit não é dizer que o cobre mudou.
 
 ### 1. Rev da placa, no silk — `rev <LETRA><N>`, POR PLACA
 
-Vive na serigrafia da própria placa (`gr_text "cerebro rev C1"`,
+Vive na serigrafia da própria placa (`gr_text "cerebro rev C"`,
 `gr_text "painel rev C"`), escrita pelo gerador (`kicad/pcb_contorno.py`,
 função `marca`). É a identidade do **artefacto físico**.
 
-- **Letra** = **geração fabricada**. Sobe quando um spin físico foi pedido e
-  começa o design que o vai substituir — a letra nova nasce com a decisão de
-  mandar cortar a anterior, não quando a nova chega.
-- **Número** = **iteração de design dentro da geração**. Incrementa a **CADA**
-  mudança que altera o **gerber/drill**. Sem número = a **1ª** da letra (`rev C`
-  ≡ `rev C1` implícito; o `C1` explícito marca a segunda mexida em cobre/silk da
-  geração C).
-- É **POR PLACA**. O cérebro e o painel evoluem independentes: o painel pode ir a
-  `rev C1` enquanto o cérebro fica em `rev C` — cada um carrega a sua verdade.
+- **Letra** = **geração**. É o rev "em aberto" enquanto a placa não foi
+  fabricada. Todas as iterações pré-fabricação (correcções, reposicionamentos,
+  mudanças de silk ou de cobre) **ficam nesta mesma letra** — o silk diz
+  `rev C`, sem número, e o que as separa é o **stamp de commit** do pacote.
+- **Quando sobe** = **só no lançamento**. Assim que uma placa `rev C` é
+  **fabricada/pedida**, esse rev fica **congelado** (o artefacto físico que
+  existe no mundo é `rev C`); a **próxima** mudança que altere o gerber/drill
+  abre o rev **seguinte** (`rev D`). O bump é a decisão de fabricar, não um
+  commit qualquer.
+- **Número** = opcional, e só faz sentido para distinguir **spins fabricados**
+  dentro de uma geração; enquanto não há fabrico, não se usa número (`rev C`, não
+  `rev C1`). O importante é: **não há um número novo por commit.**
+- É **POR PLACA**. O cérebro e o painel evoluem independentes: um pode já ter
+  sido fabricado e estar congelado enquanto o outro continua em aberto — cada um
+  carrega a sua verdade.
 
 ### 2. Stamp do pacote — short SHA do commit, em `export/`
 
@@ -45,25 +58,36 @@ sobe a rev da placa; só sobe se a saída do gerador **mudar o gerber**.
 
 ## A regra de ouro
 
-> **Se o gerber/drill muda, o rev da placa sobe.**
-> **Mudança só de tooling/doc/BOM-agrupamento — que não toca o artefacto
-> fabricado — NÃO sobe o rev da placa.**
+> **A rev de um artefacto FABRICADO tem de ser rastreável — mas por LANÇAMENTO,
+> não por commit.**
+> **Enquanto a placa não foi fabricada/pedida, o gerber pode mudar N vezes e a rev
+> FICA** (as iterações distinguem-se pelo stamp de commit do pacote).
+> **A rev só sobe quando um board é efectivamente fabricado/pedido: aí congela, e a
+> mudança seguinte de gerber abre o rev a seguir.**
+
+O que continua a valer: um pacote nunca pode dizer no silk uma coisa e no gerber
+outra. O que MUDOU: "gerber mudou" já **não** obriga a subir o número — obriga só
+a um **stamp de commit** novo, dentro do mesmo rev, até haver um fabrico.
 
 Casos, para não ficar por fé:
 
-| mudança | gerber/drill muda? | rev da placa | stamp | semver script |
-|---|---|---|---|---|
-| reordenar pinos de um conector, mover cobre | **sim** | **sobe** | novo | — |
-| mover a marca de B.SilkS → F.SilkS, novo símbolo | **sim** (silk é gerber) | **sobe** | novo | do gerador, se mudou |
-| agrupar a BOM por LCSC, escrever CPL rico | não | **fica** | novo (é outro commit) | sobe |
-| corrigir um comentário/doc, um teste, uma skill | não | **fica** | (não gera pacote) | sobe |
-| re-preencher zonas sem alterar geometria | não | **fica** | novo se re-empacotar | — |
+| mudança | gerber/drill muda? | placa já foi fabricada nesta rev? | rev da placa | stamp | semver script |
+|---|---|---|---|---|---|
+| corrigir cobre/silk numa placa **ainda não fabricada** | sim | não | **fica** (mesma letra) | **novo** | do gerador, se mudou |
+| mover/escalar a marca numa placa ainda não fabricada | **sim** (silk é gerber) | não | **fica** | **novo** | do gerador, se mudou |
+| primeira mudança de gerber **depois** de a placa ter sido fabricada | sim | sim (congelada) | **sobe** (letra a seguir) | novo | — |
+| agrupar a BOM por LCSC, escrever CPL rico | não | — | **fica** | novo (é outro commit) | sobe |
+| corrigir um comentário/doc, um teste, uma skill | não | — | **fica** | (não gera pacote) | sobe |
+| re-preencher zonas sem alterar geometria | não | — | **fica** | novo se re-empacotar | — |
 
-⚠️ **Silk É gerber.** Mover, acrescentar ou apagar serigrafia muda o ficheiro
-`.GTO`/`.GBO` que a fábrica imprime — logo sobe a rev, mesmo que o cobre não se
-mexa. A rev C1 do cérebro (marca para o topo + búzios) subiu **por causa do
-silk**, com o cobre provado idêntico (fingerprint de cobre/rede igual, 0
-alterações) — é exactamente o caso "gerber muda, rev sobe" sem tocar em cobre.
+⚠️ **Silk É gerber** — mover/acrescentar/apagar serigrafia muda o `.GTO`/`.GBO`
+que a fábrica imprime. Mas sob congelamento-no-lançamento isso **não** sobe a rev
+enquanto a placa não foi fabricada: gera um **pacote novo (stamp novo), mesma
+rev**. Exemplo: o cérebro e o painel ficaram ambos em **`rev C`** ao longo de
+várias iterações pré-fabricação (reordenação do J2 do painel, reposicionamento +
+escala da marca do cérebro) — cada uma com o seu stamp de commit, todas `rev C`,
+porque nenhuma placa foi ainda mandada cortar. O cobre foi provado idêntico
+(fingerprint de cobre/rede igual, 0 alterações) nas iterações que só mexeram silk.
 
 ## Onde vive o histórico
 
@@ -74,18 +98,23 @@ placa; o silk diz *qual* rev, o 002 diz *porquê* e *de onde*.
 
 ## Parte do Estágio 8 / do portão
 
-Emitir um pacote **afirma** que o rev do silk bate com a **classe da mudança**:
+Emitir um pacote **afirma** que o rev do silk bate com o **estado de fabrico** da
+placa:
 
-- Se este pacote mudou o gerber/drill face ao pacote anterior da mesma placa, o
-  silk **tem** de trazer uma rev **superior** — senão o pacote está a dizer que
-  nada mudou quando mudou. `para_fabrica` não corre sem o registo de risco em GO,
-  e o portão humano (`portao-humano.md`) abre com a proveniência pelo LEIA-ME: é
-  aí que se confere, item a item, que a rev carimbada no pacote e a rev impressa
-  no silk são a mesma, e que ela subiu se o gerber subiu.
-- Se nada no gerber mudou (só tooling/doc), **não** se sobe a rev nem se finge um
-  pacote novo por vaidade — reempacota-se com stamp novo se for preciso, mas a
-  rev da placa fica.
+- Enquanto a placa **não foi fabricada**, iterar o gerber é normal e **não** sobe
+  a rev: emite-se um **pacote novo (stamp novo), mesma rev**. O que rastreia a
+  iteração é o stamp de commit, não um número. `para_fabrica` não corre sem o
+  registo de risco em GO, e o portão humano (`portao-humano.md`) abre com a
+  proveniência pelo LEIA-ME: confere-se, item a item, que a rev carimbada no
+  pacote e a rev impressa no silk são a **mesma** — e que essa é a rev **em
+  aberto** da placa.
+- **No momento de fabricar/pedir**, a rev em aberto congela: é essa a rev do
+  artefacto físico que vai existir. A **próxima** mudança de gerber, depois disso,
+  **tem** de subir a rev — senão um pacote novo estaria a reutilizar a rev de uma
+  placa que já está cortada, e dois artefactos físicos diferentes partilhariam a
+  mesma identidade.
 
-A pergunta que o Estágio 8 faz antes de deixar pagar: **«o silk desta placa diz a
-verdade sobre o que este gerber tem de diferente do último?»** Se não disser, o
-estágio não fecha.
+A pergunta que o Estágio 8 faz antes de deixar pagar: **«esta rev já foi
+fabricada? Se sim, este gerber tem de trazer a rev seguinte; se não, mantém-se a
+rev em aberto e o que distingue este pacote é o stamp.»** Se a resposta não bater
+com o silk, o estágio não fecha.
