@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Montagem do CASCO — caixa acrílico 3.0mm cast</title>
+<style>
+  :root{
+    --ink:#111;        /* preto sobre branco */
+    --line:#111;
+    --muted:#333;
+    --band:#000;
+    --box:#f2f2f2;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#fff;color:var(--ink);}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:11.5pt;
+    line-height:1.4;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+  .page{
+    max-width:180mm;
+    margin:0 auto;
+    padding:12mm 10mm;
+  }
+  h1{font-size:19pt;margin:0 0 2pt;line-height:1.15;}
+  .scope{font-size:11.5pt;color:var(--muted);margin:0 0 10pt;}
+  h2{
+    font-size:13pt;margin:16pt 0 6pt;
+    border-bottom:2px solid var(--line);padding-bottom:2pt;
+  }
+  h2 .n{
+    display:inline-block;min-width:1.4em;
+  }
+  p{margin:5pt 0;}
+  ul,ol{margin:5pt 0;padding-left:0;}
+  ul{list-style:none;}
+  ul li{margin:3pt 0;padding-left:1.5em;text-indent:-1.5em;}
+  ol{padding-left:1.4em;}
+  ol li{margin:5pt 0;padding-left:3pt;}
+  .chk::before{content:"\2610";font-size:13pt;margin-right:6pt;}
+  .banner{
+    border:3px solid var(--band);
+    background:var(--band);color:#fff;
+    font-weight:700;font-size:13pt;
+    padding:8pt 10pt;margin:8pt 0 4pt;
+    text-align:center;letter-spacing:.2px;
+  }
+  .wo{
+    font-weight:700;white-space:nowrap;
+    border:1.5px solid var(--ink);border-radius:3px;
+    padding:0 4pt;font-size:10pt;
+  }
+  table{
+    width:100%;border-collapse:collapse;margin:6pt 0;
+    font-size:10.5pt;
+  }
+  th,td{
+    border:1px solid var(--line);
+    padding:4pt 6pt;text-align:left;vertical-align:top;
+  }
+  th{background:var(--box);font-weight:700;}
+  .box{
+    border:2px solid var(--ink);
+    padding:8pt 10pt;margin:8pt 0;
+    background:var(--box);
+  }
+  .box h3{margin:0 0 4pt;font-size:12pt;}
+  .cols{display:flex;gap:14pt;flex-wrap:wrap;}
+  .cols>div{flex:1 1 46%;min-width:200px;}
+  .step-wo{font-weight:700;}
+  .note{font-size:10pt;color:var(--muted);}
+  .foot{
+    margin-top:14pt;border-top:2px solid var(--line);
+    padding-top:6pt;font-size:11pt;font-weight:700;text-align:center;
+  }
+  .kv{font-variant-numeric:tabular-nums;}
+  @page{size:A4;margin:12mm;}
+  @media print{
+    body{font-size:10.5pt;}
+    .page{max-width:none;margin:0;padding:0;}
+    h1{font-size:17pt;}
+    h2{font-size:12pt;break-after:avoid;}
+    h2, h3{page-break-after:avoid;break-after:avoid;}
+    ol,ul,table,.box,.banner{page-break-inside:avoid;break-inside:avoid;}
+    ol li,ul li,tr{page-break-inside:avoid;break-inside:avoid;}
+    .pb{page-break-before:always;break-before:page;}
+    .no-print{display:none;}
+    a{color:#000;text-decoration:none;}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <h1>Montagem do CASCO</h1>
+  <p class="scope">Caixa acrílico <strong>3,0&nbsp;mm cast</strong>, kerf 0,2&nbsp;mm compensado &middot; cunha 200&times;120, frente&nbsp;55 / trás&nbsp;80, tampa a <strong>11,8&deg;</strong> &middot; Cotucatronics</p>
+
+  <div class="banner">NÃO colar o FUNDO — é a porta de serviço parafusada.</div>
+  <p class="note">O casco são as 5 faces soldadas (tampa + 4 paredes) + reforço + nervura + calços. O FUNDO entra depois, por baixo, com 6 parafusos M3&times;10 em porcas cativas. O que custa dinheiro sai; o que fica soldado é acrílico.</p>
+
+  <h2><span class="n">1.</span> Materiais &amp; ferramentas</h2>
+  <div class="cols">
+    <div>
+      <ul>
+        <li class="chk">Peças de acrílico 3,0&nbsp;mm (com a película de proteção ainda colada)</li>
+        <li class="chk"><span class="wo">Weld-On&nbsp;4</span> — solvente fino (juntas a 90&deg; e colagens face-a-face)</li>
+        <li class="chk"><span class="wo">Weld-On&nbsp;16</span> — gel (só juntas tampa&harr;frente / tampa&harr;trás, a 11,8&deg;)</li>
+        <li class="chk">Frasco aplicador com <strong>agulha</strong> (sem ele não há capilaridade)</li>
+        <li class="chk">Esquadro pequeno</li>
+      </ul>
+    </div>
+    <div>
+      <ul>
+        <li class="chk">Lixa fina 400 / 600 (à água)</li>
+        <li class="chk">Luvas de <strong>nitrilo</strong> (cloreto de metileno; látex não serve)</li>
+        <li class="chk">Ventilação — bancada arejada / extração</li>
+        <li class="chk">Fita de pintor forte ou 4 grampos de mola</li>
+        <li class="chk">Pano de microfibra + álcool isopropílico (<strong>nunca acetona</strong>)</li>
+      </ul>
+    </div>
+  </div>
+  <p class="note"><strong>Não usar:</strong> super-cola (racha o acrílico em teia branca), epóxi, cola quente, acetona para limpar.</p>
+
+  <h2><span class="n">2.</span> Pré-cola (a seco)</h2>
+  <ul>
+    <li class="chk"><strong>Manter a película de proteção</strong> em todas as peças — o vapor do solvente esbranquiça a superfície onde toca. <span class="note">(só sai no fim, depois das 24&nbsp;h de cura)</span></li>
+    <li class="chk"><strong>Rebarbar</strong> as arestas dos dedos com lixa 400, uma passagem, só onde a junta prender.</li>
+    <li class="chk"><strong>Montar o casco a seco:</strong> frente + esquerda + direita + trás. Dedos entram à mão com atrito leve.</li>
+    <li class="chk">Pousar a <strong>tampa</strong> a seco; os dedos da frente/trás entram enviesados (11,8&deg;). Se prender, lixar os cantos dos dedos da <em>frente/trás</em> — <strong>nunca a tampa</strong>.</li>
+    <li class="chk"><strong>Conferir cotas:</strong> exterior 200&times;120, frente 55, trás 80; diagonais do fundo aberto iguais = esquadro.</li>
+    <li class="chk">Encaixar o <strong>fundo</strong> por baixo (folga ~0,5&nbsp;mm) e tirá-lo.</li>
+    <li class="chk"><strong>Dry-fit dos controlos nos furos da tampa</strong>: 3&times; arcade ø30, encoder + 2 pots ø7, OLED (janela + 4&times; M2.5). Um furo 0,5&nbsp;mm fora corrige-se agora com lixa, não depois de colada.</li>
+  </ul>
+
+  <h2><span class="n">3.</span> Sequência de colagem</h2>
+  <ol start="5">
+    <li>
+      <span class="step-wo">Reforço sob a tampa — <span class="wo">Weld-On&nbsp;4</span></span> (face-a-face, capilar).<br>
+      Faixa 193&times;50 colada por baixo da tampa, centrada, bordo da frente a <strong>10&nbsp;mm</strong> da borda dianteira do corpo, com os 3 furos ø30 concêntricos com os da tampa. Confere a seco com um botão enfiado nos dois furos <em>antes</em> do solvente. Agulha pela aresta, peso distribuído (tábua + livro), 30&nbsp;min.
+      <div class="note">Junto: a <strong>nervura</strong> (tira 12&times;176) cola-se também sob a tampa com <span class="wo">Weld-On&nbsp;4</span>, ao longo dos 200&nbsp;mm, a y&nbsp;&asymp;&nbsp;62&nbsp;mm da frente (entre a fila dos arcade e a dos knobs). Peso, 30&nbsp;min.</div>
+    </li>
+    <li>
+      <span class="step-wo">4 paredes nos cantos verticais — <span class="wo">Weld-On&nbsp;4</span></span> (90&deg;).<br>
+      Montar frente + esquerda + direita + trás, fita em volta, esquadro nas diagonais. Ponta da agulha ao longo de cada junta, <strong>por dentro</strong> — entra por capilaridade. Uma passagem lenta por junta; 30&nbsp;s sem mexer por canto (4 cantos ≈ 2&nbsp;min).
+    </li>
+    <li>
+      <span class="step-wo">Tampa às paredes — <span class="wo">Weld-On&nbsp;16</span> na frente/trás (11,8&deg;) + <span class="wo">Weld-On&nbsp;4</span> nas laterais (90&deg;)</span>.<br>
+      Só depois de a §2 confirmar que tudo entra nos furos. Gel nas ranhuras da frente e de trás; solvente nas ranhuras das laterais. Pousar, alinhar os dedos, peso distribuído. Limpar o excesso de gel com pano seco enquanto está fresco.
+    </li>
+    <li>
+      <span class="step-wo">Cura.</span> 1&nbsp;hora antes de tocar; <strong>24&nbsp;h antes de carregar</strong>. Só então tirar as películas.
+    </li>
+  </ol>
+
+  <h2><span class="n">4.</span> Juntas &rarr; adesivo</h2>
+  <table>
+    <thead>
+      <tr><th>Junta</th><th>Ângulo</th><th>Adesivo</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>4 cantos verticais (parede &harr; parede)</td><td class="kv">90&deg;</td><td>Weld-On&nbsp;4</td></tr>
+      <tr><td>Tampa &harr; frente</td><td class="kv">11,8&deg;</td><td>Weld-On&nbsp;16</td></tr>
+      <tr><td>Tampa &harr; trás</td><td class="kv">11,8&deg;</td><td>Weld-On&nbsp;16</td></tr>
+      <tr><td>Tampa &harr; laterais</td><td class="kv">90&deg;</td><td>Weld-On&nbsp;4</td></tr>
+      <tr><td>Reforço &harr; tampa (laminado)</td><td class="kv">face</td><td>Weld-On&nbsp;4</td></tr>
+      <tr><td>Nervura &harr; tampa</td><td class="kv">face</td><td>Weld-On&nbsp;4</td></tr>
+      <tr><td>Calços CB/CT (às paredes)</td><td class="kv">face</td><td>Weld-On&nbsp;4</td></tr>
+    </tbody>
+  </table>
+
+  <div class="box">
+    <h3>NÃO faças agora</h3>
+    <ul>
+      <li class="chk"><strong>NÃO colar o FUNDO</strong> — é a porta de serviço, entra por baixo com 6 parafusos M3&times;10 em porcas M3 cativas (sexágono 5,7&nbsp;mm A/F).</li>
+      <li class="chk"><strong>NÃO montar placas nem controlos</strong> ainda — carrier, amp e painel entram só quando a placa chegar.</li>
+    </ul>
+  </div>
+
+  <h2><span class="n">5.</span> Segurança</h2>
+  <ul>
+    <li class="chk">Weld-On 4/16 têm <strong>cloreto de metileno</strong>: usar sempre com <strong>ventilação</strong>.</li>
+    <li class="chk">Luvas de <strong>nitrilo</strong> (látex não protege deste solvente).</li>
+    <li class="chk">Proteção de <strong>olhos</strong>; evitar respirar o vapor; frasco fechado quando não em uso.</li>
+  </ul>
+
+  <h2><span class="n">6.</span> Depois (quando a placa chegar)</h2>
+  <ol>
+    <li><strong>Bench test</strong> da placa antes de fechar seja o que for.</li>
+    <li><strong>Parafusar no fundo:</strong> carrier nos 4 espaçadores M3&times;10 F-F; módulo do amp nos espaçadores dele.</li>
+    <li><strong>Conectar os cabos</strong> (tudo com conector, nada soldado de placa a painel), com <strong>~80&nbsp;mm de folga</strong> em cada cabo que vai do fundo à casca — é o que permite abrir sem desligar.</li>
+    <li><strong>Fechar</strong> o fundo com os 6 parafusos M3&times;10; pés adesivos.</li>
+  </ol>
+
+  <div class="foot">o que custa dinheiro sai; o que fica soldado é acrílico.</div>
+
+</div>
+</body>
+</html>
