@@ -1,0 +1,47 @@
+# COMPRA_MOUSER — cotuca cerebro + painel (rev C, 06db1c7) — BOM para IMPORTAR no Mouser BOM Tool
+# Colunas: Mfr Part #, Quantity, Description  (LCSC nao serve no Mouser — cada linha ja e um MPN real)
+# Qty = soma das DUAS placas + folga (+2 ate 5 pcs; +20% acima). 100n/0805 (C49678) somado nas duas placas.
+# "confirmar estoque" = MPN correto mas nao consegui confirmar estoque ao vivo (limite de egress).
+# "equiv" = substituicao de peca equivalente (mesmo valor/pacote/tensao/tolerancia) — troque a vontade.
+# MODULOS (Daisy, ESP32-C3, TPA3116, step-down, decoy PD) NAO sao Mouser — ver bloco "NAO E MOUSER" no fim.
+Mfr Part #,Quantity,Description
+RC0805FR-07100RL,6,"R 100R 0805 1% 1/8W thick film (Yageo). Cerebro R14,R24 + Painel R1,R2. equiv qualquer 100R 0805 1%."
+RC0805FR-0710KL,6,"R 10k 0805 1% 1/8W thick film (Yageo). Cerebro R50,R51 + Painel R3,R4. equiv qualquer 10k 0805 1%."
+RC0805FR-07100KL,5,"R 100k 0805 1% 1/8W thick film (Yageo). Cerebro R5,R6,R8. equiv qualquer 100k 0805 1%."
+RC0805FR-0722KL,3,"R 22k 0805 1% 1/8W thick film (Yageo). Cerebro R9. equiv qualquer 22k 0805 1%."
+RC0805JR-070RL,4,"R 0R (jumper) 0805 (Yageo). Cerebro R10,R20. equiv qualquer 0 ohm 0805."
+RC0805FR-074M7L,4,"R 4M7 0805 1% 1/8W thick film (Yageo). Cerebro R11,R21. equiv qualquer 4.7M 0805 1%."
+RC0805FR-071KL,4,"R 1k 0805 1% 1/8W thick film (Yageo). Cerebro R12,R22. equiv qualquer 1k 0805 1%."
+RC1206FR-07100RL,3,"R 100R 1206 1% 1/4W thick film (Yageo). Cerebro R7 (100R 1/4W). equiv qualquer 100R 1206 1%."
+RC1210FR-07100RL,4,"R 100R 1210 1% 1/2W thick film (Yageo). Painel R5,R6 (serie ~30mA p/ LED arcade). equiv qualquer 100R 1210."
+CL21B104KBCNNNC,12,"C 100nF 0805 50V X7R (Samsung) = LCSC C49678. Cerebro C2,C4,C7,C9,C15,C16 (6) + Painel C1,C2,C4,C5 (4) = 10, +20%. equiv Yageo CC0805KRX7R9BB104."
+CL31A106KBHNNNE,3,"C 10uF 1206 50V X5R (Samsung) = LCSC C13585 (confirmado). Cerebro C8."
+C1206C223J5GACTU,4,"C 22nF 1206 50V C0G/NP0 (Kemet) = equiv de LCSC C3862155. Cerebro C12,C22. C0G obrigatorio. confirmar estoque."
+SMBJ24A,3,"TVS unidirecional SMB 24V standoff (Littelfuse) = LCSC C19077578. Cerebro D1 (protecao entrada)."
+SS14-13-F,3,"Diodo Schottky SMA 40V 1A (Diodes Inc) = SS14, equiv de LCSC C2480. Cerebro D2."
+BAV99-7-F,4,"Diodo duplo comutacao SOT-23 (Diodes Inc) = BAV99 = LCSC C2500. Cerebro D11,D21."
+AO3400A,4,"MOSFET N-ch SOT-23 30V logic-level (Alpha & Omega) = LCSC C20917. Painel Q1,Q2. equiv Diodes DMN3404L-7 se sem estoque. confirmar estoque."
+OPA1642AID,3,"Amp. op. audio JFET duplo SOIC-8 (Texas Instruments) = OPA1642 = LCSC C67640. Cerebro U1. Mouser vende TI direto."
+2920L330/24MR,3,"PTC resetavel 2920 hold 3.3A / 24V (Littelfuse) = LCSC C720183 (confirmado, em estoque Mouser). Cerebro F1."
+ECA-1VM222,3,"Cap eletrolitico radial 2200uF 35V D16 P7.5mm (Panasonic). THT Cerebro C1. equiv Nichicon/Rubycon 2200uF 35V mesmo corpo."
+ECA-1EM471,3,"Cap eletrolitico radial 470uF 25V D10 P5mm (Panasonic). THT Cerebro C6."
+ECA-1EM101,4,"Cap eletrolitico radial 100uF 25V D6.3 P2.5mm (Panasonic). THT Cerebro C3 (100u) + Painel C3 (100u 16V) — 25V cobre os dois."
+ECA-1HM470,3,"Cap eletrolitico radial 47uF 50V D6.3 P2.5mm (Panasonic). THT Cerebro C5."
+MKS2C042201F00KSSD,4,"Cap filme box 2.2uF 50V P5mm (WIMA MKS2). THT Cerebro C14,C24 (2u2 filme). equiv Kemet R82 2.2uF 63V P5mm. confirmar estoque."
+1715721,4,"Bloco de terminais Phoenix MKDS 1,5/2-5,08 2 vias 5.08mm horizontal (Phoenix Contact). Cerebro J1 (decoy PD) + J2 (amp TPA3116). equiv qualquer terminal 2P passo 5.08mm."
+B2B-XH-A(LF)(SN),7,"Conector JST XH 2 vias vertical THT, header de placa (JST). Painel J3,J4,J5,J6,J7 (arcade/LED). Precisa tb housing XHP-2 + terminais SXH-001T-P0.6 no lado do fio."
+N2513-6002RB,4,"Header caixa (box header) blindado 2x13 26 pinos 2.54mm vertical (3M) = 'IDC 2x13'. Cerebro J14 + Painel J1. Ver nota do cabo de fita abaixo."
+PRPC040SAAN-RC,4,"Barra de pinos macho 1x40 2.54mm destacavel (Sullins). Cortar p/ TODOS os headers 1 fila 2.54mm: Cerebro J3(1x3),J4(1x2),J5(1x3),J6(1x3),J11(1x4),J12(1x3),J13(1x3),J15(1x8),J16(1x8) + Painel J2 (1x7 OLED). ~44 pinos; 4 barras = folga."
+PTV09A-4020F-B103,4,"Potenciometro Bourns PTV09A 10k linear 9mm, pinos PC vertical (Bourns). Painel RV1,RV2. confirmar variante de eixo (F=6mm flatted)."
+EC11E15244C0,3,"Encoder rotativo incremental Alps EC11E c/ chave, vertical, eixo 20mm (Alps Alpine). Painel SW1. Confirmar detentes/comprimento de eixo (familia EC11E15244xx)."
+# ------------------------------------------------------------------
+# NAO E MOUSER — modulos plug-in / wire-to-board. Comprar a parte:
+# Daisy Seed (rev3),1,"Cerebro U2 — modulo DSP. Comprar: Electrosmith (electro-smith.com)."
+# ESP32-C3 SuperMini,1,"Cerebro U3 — modulo WiFi/BT. Comprar: AliExpress / Amazon."
+# Modulo amplificador TPA3116,1,"Liga em Cerebro J11 (1x4) + terminal J2. Placa TPA3116 2.1/2.0. Comprar: AliExpress / Amazon."
+# Modulo step-down 5V fixo,1,"Liga em Cerebro J3 (1x3). Buck 5V (MP1584/LM2596 fixo). Comprar: AliExpress / Amazon."
+# Placa decoy USB-PD,1,"Liga em Cerebro J1 (entrada decoy PD). Placa trigger USB-PD. Comprar: AliExpress / Amazon."
+# ------------------------------------------------------------------
+# INTERCONEXAO (nao e peca de placa, mas precisa p/ ligar cerebro<->painel):
+# cabo de fita 26 vias 1.27mm (3M 3365/26) + 2x soquete IDC femea 2x13 (3M 89126-0101HA) crimpados nas pontas.
+# JST XH: p/ cada J3..J7 do painel, 1x housing XHP-2 + 2x terminal SXH-001T-P0.6 no lado do fio.
