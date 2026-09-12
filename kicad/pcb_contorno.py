@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.20.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.21.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+
+v0.21.0 (2026-09-12): a marca do cerebro (COTUCATRONICS + rev + buzios) MOVEU-SE
+em bloco (translacao rigida +38,+65 mm, layout relativo preservado) da banda de
+topo para a area ABERTA do centro-direita inferior — a faixa livre acima do J1,
+a direita do U2 e abaixo do bloco J2/J3/C3/J16. Centros novos: COTUCATRONICS
+(138,89.4), `cerebro rev C2` (138,94.2), buzios (162,90.6). Subiu para
+`cerebro rev C2` (silk e gerber -> a rev sobe). So serigrafia — cobre identico.
 
 v0.20.0 (2026-09-12): a marca passou a ser POR PLACA (camada + mirror), o cerebro
 foi para F.SilkS sem mirror (monta com os componentes para cima -> topo visivel
@@ -38,7 +45,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.20.0"
+VERSAO = "0.21.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -772,16 +779,19 @@ def planos(t, nome, alvo):
 #
 # ⚠️ COORDENADAS ABSOLUTAS, e no sitio que foi MEDIDO contra pads/pecas/serigrafia
 # da FACE onde a marca vai (o vazio de uma camada nao e o vazio da face). No
-# cerebro a faixa livre e a banda de topo entre o J14 (acaba em x=81) e o J15
-# (comeca em x=132), por cima do C14/U2 e da fila de test-points (y~49): folga
-# >=0,25 mm a todo o cobre e >=1,5 mm ao bordo, medida por varrimento.
+# cerebro (rev C2) a faixa livre e a banda ABERTA do centro-direita inferior: a
+# direita do U2 (acaba em x=115), abaixo do bloco J2/J3/C3/J16 e ACIMA do J1 (topo
+# y=102) — bbox da marca (122,87)-(167,96), folgas medidas por varrimento em
+# pcbnew: pad 3,18 · furo 3,53 · patio 2,22 (J16) · serigrafia 2,06 · bordo 24,4 mm.
+# A banda de topo original (rev C1, entre J14 e J15) nao cabia um bloco de 45 mm de
+# largura sem apertar; o dB apontou esta area aberta e a marca migrou para ca.
 MARCA = {
     "cerebro": {"layer": "F.SilkS", "mirror": False,
                 # buzios (concha) — a MESMA marca do splash (`src/splash.h`,
                 # super-elipse n=3,2 com labio/boca dentada): (cx, cy, ra, rb).
-                "buzios": (124.0, 25.6, 5.0, 3.0),
-                "textos": [(100.0, 24.4, "COTUCATRONICS", 2.6, 0.42),
-                           (100.0, 29.2, "cerebro rev C1", 1.6, 0.3)]},
+                "buzios": (162.0, 90.6, 5.0, 3.0),
+                "textos": [(138.0, 89.4, "COTUCATRONICS", 2.6, 0.42),
+                           (138.0, 94.2, "cerebro rev C2", 1.6, 0.3)]},
     "painel":  {"layer": "B.SilkS", "mirror": True, "buzios": None,
                 "textos": [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
                            (60.0, 26.0, "painel rev C", 1.6, 0.25)]},
