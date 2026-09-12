@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.6.0 · **2026-09-08** · commit `a06cf8f`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.9.0 · **2026-09-12** · commit `10a1745`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e
@@ -22,7 +22,7 @@
 | `C2` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C4` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C7` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
-| `C8` | 10u | condensador 1206 — ver o valor p/ dielectrico | — | `C_1206_3216Metric` | 0.0200 | estimado |
+| `C8` | 10u | CL31B106KAHNNWE (Samsung, X7R) | Mouser 187-CL31B106KAHNNWE | `C_1206_3216Metric` | 0.0500 | estimado |
 | `C9` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C11` **(DNP)** | 22p C0G | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | — | estimado |
 | `C12` | 22n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
@@ -31,10 +31,10 @@
 | `C21` **(DNP)** | 22p C0G | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | — | estimado |
 | `C22` | 22n C0G | C1206C223J5GACTU (Kemet C0G) | LCSC | `C_1206_3216Metric` | 0.0165 | medido |
 | `D1` | SMBJ24A | SMBJ24A (Littelfuse) | LCSC | `D_SMB` | 0.0790 | medido |
-| `D2` | 1N5819 | SS14 (SMA) | LCSC | `D_SMA` | 0.0200 | estimado |
+| `D2` | SS14 | SS14 (onsemi, SMA/DO-214AC) | Mouser 512-SS14 | `D_SMA` | 0.0200 | estimado |
 | `D11` | BAV99 | BAV99,215 (Nexperia) | LCSC | `SOT-23` | 0.0200 | estimado |
 | `D21` | BAV99 | BAV99,215 (Nexperia) | LCSC | `SOT-23` | 0.0200 | estimado |
-| `F1` | PTC 3A | 2920L330/24MR (Littelfuse) | LCSC C720183 | `Fuse_2920_7451Metric` | 0.1804 | medido |
+| `F1` | PTC 3,3A | MF-LSMF300/24X-2 (Bourns) | Mouser 652-MF-LSMF300/24X-2 | `Fuse_2920_7451Metric` | 0.1800 | estimado |
 | `R5` | 100k | resistor 0805 1% | — | `R_0805_2012Metric` | 0.0050 | estimado |
 | `R6` | 100k | resistor 0805 1% | — | `R_0805_2012Metric` | 0.0050 | estimado |
 | `R7` | 100R 1/4W | resistor 1206 1/4 W | — | `R_1206_3216Metric` | 0.0100 | estimado |
@@ -63,9 +63,9 @@
 | `C5` | 47u | EEU-FR1E470 (Panasonic FR) | LCSC | `CP_Radial_D6.3mm_P2.50mm` | 0.1500 | estimado |
 | `C6` | 470u 25V | EEU-FR1E471 (Panasonic FR) | LCSC | `CP_Radial_D10.0mm_P5.00mm` | 0.2000 | estimado |
 | `C13` **(DNP)** | 22u NP | UES1H220MEM (Nichicon UES) | LCSC | `CP_Radial_D6.3mm_P2.50mm` | — | estimado |
-| `C14` | 2u2 filme | MKS2C042201K00KSSD (WIMA) | TME/Mouser | `C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2` | 0.7000 | estimado |
+| `C14` | 2u2 filme | MKS2C042201M00KN00 (WIMA MKS2) | Mouser 505-MKS2C042201M00KN | `C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2` | 0.7000 | estimado |
 | `C23` **(DNP)** | 22u NP | UES1H220MEM (Nichicon UES) | LCSC | `CP_Radial_D6.3mm_P2.50mm` | — | estimado |
-| `C24` | 2u2 filme | MKS2C042201K00KSSD (WIMA) | TME/Mouser | `C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2` | 0.7000 | estimado |
+| `C24` | 2u2 filme | MKS2C042201M00KN00 (WIMA MKS2) | Mouser 505-MKS2C042201M00KN | `C_Rect_L7.2mm_W11.0mm_P5.00mm_FKS2_FKP2_MKS2_MKP2` | 0.7000 | estimado |
 | `J1` | entrada decoy PD | terminal parafuso 2p 5,08 — **1715721** (Phoenix MKDS 1,5/2-5,08); KF301-5.0 so para bancada | — | `TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal` | 0.9500 | medido |
 | `J2` | ao amp TPA3116 | terminal parafuso 2p 5,08 — **1715721** (Phoenix MKDS 1,5/2-5,08); KF301-5.0 so para bancada | — | `TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal` | 0.9500 | medido |
 | `J3` | step-down 5V fixo | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
@@ -75,22 +75,11 @@
 | `J11` | modulo TPA3116 | header 1x4 2,54 | — | `PinHeader_1x04_P2.54mm_Vertical` | 0.0600 | estimado |
 | `J12` | fio -> TRS linha L | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
 | `J13` | fio -> TRS linha R | header 1x3 2,54 | — | `PinHeader_1x03_P2.54mm_Vertical` | 0.0500 | estimado |
-| `J14` | IDC 2x13 -> painel | IDC 2x13 macho blindado (3M N2526-6002RB ou gen.) | LCSC | `IDC-Header_2x13_P2.54mm_Vertical` | 0.4500 | estimado |
+| `J14` | IDC 2x13 -> painel | 61202621621 (Wurth WR-BHD, box header 2x13 blindado) | Mouser 710-61202621621 | `IDC-Header_2x13_P2.54mm_Vertical` | 0.4500 | estimado |
 | `J15` | fio -> DPDT tipo 2, canal L | header 1x8 2,54 | — | `PinHeader_1x08_P2.54mm_Vertical` | 0.1000 | estimado |
 | `J16` | fio -> DPDT tipo 2, canal R | header 1x8 2,54 | — | `PinHeader_1x08_P2.54mm_Vertical` | 0.1000 | estimado |
 | `RV1` **(DNP)** | trim 100k | 3296W-1-104LF (Bourns) | LCSC C48084 | `Potentiometer_Bourns_3296W_Vertical` | — | medido |
 | `RV2` **(DNP)** | trim 100k | 3296W-1-104LF (Bourns) | LCSC C48084 | `Potentiometer_Bourns_3296W_Vertical` | — | medido |
-| `TP1` | V_TRILHO_A2 | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP2` | +15V | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP3` | V+PRE | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP4` | VBIAS | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP5` | +5V | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP6` | +5V_PONTE | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP7` | +3V3A | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP8` | GND | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP9` | AGND | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP10` | LINHA_L | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP11` | LINHA_R | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
 | `U2` | Daisy Seed3 | Daisy **Seed3** (Electrosmith) | Electrosmith | `Electrosmith_Daisy_Seed` | 29.9900 | medido |
 | `U3` | ESP32-C3 SuperMini | ESP32-C3 SuperMini — **contado em FORA** | AliExpress | `ESP32C3_SUPERMINI_SOQUETE` | 0.0000 | ja contado |
 
@@ -102,8 +91,8 @@
 | `C2` | 100n COLADO ao cursor | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C4` | 100n | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
 | `C5` | 100n COLADO ao IDC | condensador 0805 — ver o valor p/ dielectrico | — | `C_0805_2012Metric` | 0.0050 | estimado |
-| `Q1` | AO3400A | AO3400A (Alpha & Omega) | LCSC C20917 | `SOT-23` | 0.0487 | medido |
-| `Q2` | AO3400A | AO3400A (Alpha & Omega) | LCSC C20917 | `SOT-23` | 0.0487 | medido |
+| `Q1` | AO3400A | SI2302CDS-T1-GE3 (Vishay) | Mouser 781-SI2302CDS-T1-GE3 | `SOT-23` | 0.0500 | estimado |
+| `Q2` | AO3400A | SI2302CDS-T1-GE3 (Vishay) | Mouser 781-SI2302CDS-T1-GE3 | `SOT-23` | 0.0500 | estimado |
 | `R1` | 100R gate | resistor 0805 1% | — | `R_0805_2012Metric` | 0.0050 | estimado |
 | `R2` | 100R gate | resistor 0805 1% | — | `R_0805_2012Metric` | 0.0050 | estimado |
 | `R3` | 10k pull-down | resistor 0805 1% | — | `R_0805_2012Metric` | 0.0050 | estimado |
@@ -116,21 +105,16 @@
 | ref | valor | peca / MPN | fornecedor | footprint | US$ | fonte |
 |---|---|---|---|---|---|---|
 | `C3` | 100u 16V | EEU-FR1C101 (Panasonic FR) | LCSC | `CP_Radial_D6.3mm_P2.50mm` | 0.1500 | estimado |
-| `J1` | IDC 2x13 femea <- cerebro | IDC 2x13 femea (3M N3793-6002RB ou gen.) | LCSC | `IDC-Header_2x13_P2.54mm_Vertical` | 0.4500 | estimado |
-| `J2` | OLED SSD1309 MX1.25 7p | 53047-0710 (Molex PicoBlade 1x7) | LCSC | `Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical` | 0.3000 | estimado |
+| `J1` | IDC 2x13 femea <- cerebro | 61202621621 (Wurth WR-BHD, box header 2x13 blindado) | Mouser 710-61202621621 | `IDC-Header_2x13_P2.54mm_Vertical` | 0.4500 | estimado |
+| `J2` | OLED SSD1309 2,54mm 7p | 53047-0710 (Molex PicoBlade 1x7) | LCSC | `PinHeader_1x07_P2.54mm_Vertical` | 0.3000 | estimado |
 | `J3` | fio -> arcade AZUL freeze A | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
 | `J4` | fio -> arcade AZUL freeze B | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
 | `J5` | fio -> arcade BRANCO buzios | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
 | `J6` | fio -> LED do arcade A (1=A, 2=K) | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
 | `J7` | fio -> LED do arcade B (1=A, 2=K) | JST XH 1x2 (B2B-XH-A) | — | `JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical` | 0.0500 | estimado |
-| `RV1` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
-| `RV2` | 10k lin | PTV09A-4020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
+| `RV1` | 10k lin | PTV09A-1020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
+| `RV2` | 10k lin | PTV09A-1020S-B103 (Bourns) | distribuidor | `Potentiometer_Bourns_PTV09A-1_Single_Vertical` | 0.6000 | estimado |
 | `SW1` | EC11 — o unico encoder | EC11E15244G1 (Alps Alpine) | LCSC C370970 | `RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm` | 1.7000 | medido |
-| `TP1` | +5V | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP2` | +3V3A | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP3` | GND | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP4` | POT_L | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
-| `TP5` | POT_R | **por decidir** | — | `TestPoint_Pad_D1.5mm` | 0.0000 | — |
 
 ## 5 · Fora das placas — modulos, painel, cablagem, caixa
 
@@ -154,7 +138,7 @@
 
 ## 6 · Ordem de grandeza
 
-**≈ US$ 102.53 por instrumento**, so componentes e modulos.
+**≈ US$ 102.56 por instrumento**, so componentes e modulos.
 
 ⚠️ **NAO inclui**: PCB, montagem da JLC, taxa de *setup* das pecas
 Extended, caixa, parafusos, knobs, nem transporte. E a soma mistura precos
@@ -162,7 +146,7 @@ Extended, caixa, parafusos, knobs, nem transporte. E a soma mistura precos
 
 Os DNP nao contam para o total: o footprint fica na placa, a peca nao se compra.
 
-⚠️ **16 peca(s) entram no total a ZERO** por nao terem preco decidido: `TP1`, `TP1`, `TP10`, `TP11`, `TP2`, `TP2`, `TP3`, `TP3`, `TP4`, `TP4`, `TP5`, `TP5`, `TP6`, `TP7`, `TP8`, `TP9`. A soma ACIMA e um PISO, e nao um total — uma peca sem preco custa zero na aritmetica e nao custa zero na encomenda.
+Todas as pecas do total tem preco declarado.
 
 
 ## 7 · Valores que o esquema e o MPN nao dizem igual

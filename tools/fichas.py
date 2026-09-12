@@ -27,9 +27,10 @@ outra vez.
 
 ⚠️⚠️ CASAMENTO EXACTO, E SO EXACTO
 
-Uma busca por texto devolve primos. `SS14` traz `SS14**0**`; `AO3400A` traz
-`AO3400`; uma ficha da familia certa e do sufixo errado le-se igual a uma
-ficha certa — e a §7f desta casa ja custou tres pecas nisso (o eixo liso em
+Uma busca por texto devolve primos. `SS14` traz `SS14**0**`; `SI2302CDS-T1-GE3`
+traz o `SI2302` cru e o `SI2302DS`; uma ficha da familia certa e do sufixo
+errado le-se igual a uma ficha certa — e a §7f desta casa ja custou tres pecas
+nisso (o eixo liso em
 vez de estriado, os 5,0 mm em vez de 2,5, o 3 A que nao existe a 24 V). Aqui
 so entra `mfr == MPN`. Sem primeiro-resultado, sem parecido.
 
@@ -42,7 +43,7 @@ escrevi e que pode dizer que nao — e o MPN tem de aparecer no texto. O que nao
 passa fica marcado `POR CONFERIR`, nunca apagado em silencio nem dado por bom.
 """
 
-VERSAO = "0.9.0"
+VERSAO = "0.10.0"
 
 import io
 import json
@@ -208,9 +209,9 @@ FONTE_EXTERNA = {
                    "peca (C17454015) e aponta para molex.com, que nao respondeu "
                    "(0 bytes em 120 s, HTTP/2 e 1.1). RETENTAVEL."),
     "C1206C223J5GACTU": "Kemet — serie C0G/NP0 1206, 22 nF 50 V",
-    "MKS2C042201K00KSSD": "WIMA — serie MKS 2, 220 nF 63 V, passo 5 mm",
-    "N2526-6002RB": "3M — serie 2526, IDC 2x13 macho blindado",
-    "N3793-6002RB": "3M — serie 3793, IDC 2x13 femea",
+    "MKS2C042201M00KN00": "WIMA MKS 2 — 2,2 uF 63 V PET, passo 5 mm (PCM5); Mouser 505-MKS2C042201M00KN",
+    "61202621621": "Wurth Elektronik WR-BHD — box header 2x13 26p 2,54 mm THT vertical macho; Mouser 710-61202621621",
+    "61304011121": "Wurth Elektronik WR-PHD — barra 1x40 2,54 mm THT vertical macho (corta p/ todos os headers 1 fila); Mouser 710-61304011121",
     "PTV09A-1020S-B103": ("Bourns PTV09A — ⚠️ e nesta que o sufixo importa: "
                           "`S` e eixo estriado e `F` e liso, e ja se escolheu o "
                           "errado uma vez. Conferir a legenda de sufixos."),

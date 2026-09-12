@@ -253,6 +253,113 @@ python3 .claude/skills/pcb/scripts/manifesto_fontes.py --sabota   # prova que sa
 
 ---
 
+## 7. Sourcing com Claude-on-Chrome — o navegador do humano é a fonte-da-verdade
+
+Toda a §2 acima assume acesso programático ao stock. Nesta sessão isso partiu-se,
+e a lição é dura o suficiente para virar método próprio.
+
+### Causa-raiz
+
+O **sandbox do agente não alcança a Mouser nem a Octopart** — `mouser.com` e
+`octopart.com` respondem **403** por política de egress (curl e WebFetch batem na
+parede). O **`WebSearch` funciona**, mas só prova uma coisa: quando devolve uma
+página `mouser.com/ProductDetail/...`, o Mouser **CATALOGA** aquela peça. **Nunca
+diz o stock.** Catálogo é presença; stock é disponibilidade — e são coisas
+diferentes.
+
+### Regra de ouro
+
+> **O navegador do humano (Claude-on-Chrome) é a fonte-da-verdade de
+> disponibilidade.** O sandbox propõe; o navegador confirma. **NUNCA declarar "em
+> estoque" a partir do sandbox** — o mais longe que o sandbox chega é "o Mouser
+> cataloga esta peça". **Catálogo ≠ estoque.** Uma linha de BOM só está *sourced*
+> quando o humano leu o verde de estoque na própria tela.
+
+### "Disponível" tem definição — e ela exclui o backorder
+
+MATCH no catálogo **não** é disponibilidade. O filtro tem de ser explícito, senão
+deixa passar peça que existe e não embarca:
+
+- **Definição de "disponível":** há estoque **"Ships Now" ≥ a quantidade
+  necessária**.
+- **Tratar como INDISPONÍVEL (rejeitar e escolher alternativa):** **No Match**;
+  **0 "Ships Now"**; **qualquer "Backordered"**; e **long lead time** (o Mouser
+  marca *"Long lead time reported on this product"* / lead de várias semanas).
+- ⚠️ **Um MPN pode dar MATCH e mesmo assim estar backordered — isso NÃO conta como
+  sourced.** O filtro ingénuo "No Match?" deixa o backorder escapar, porque o
+  backorder *dá match*. Por isso o backorder tem de ser rejeitado **por nome**,
+  não por ausência.
+
+**Âncora (o que custou esta sessão):** o Samsung `CL31A106KBHNNNE` (10 µF **50 V**)
+deu **match** no Mouser e estava **3 Backordered / long lead** — passou reto pelo
+filtro "no match" e teria fechado o pedido num item que não embarca. Foi trocado
+pelo `CL31B106KAHNNWE` (10 µF **25 V**, ~10 k em estoque, *Ships Now*). O objetivo
+declarado do método é **não repetir o ping-pong de MPN indisponível**.
+
+### Preferir fabricantes que a Mouser carrega
+
+A escolha do MPN candidato já resolve metade do problema. **Preferir** marcas que
+o Mouser certamente lista:
+
+> Yageo · KEMET · Murata · TDK · Samsung · Vishay · onsemi · Nexperia · Diodes ·
+> TE · Amphenol · Würth · Bourns · Littelfuse · Panasonic.
+
+**Evitar** códigos/marcas que a Mouser costuma **não** listar — foi o que gerou os
+*"No Match"* desta sessão: **AOS** (`AO3400A`), **código-exato WIMA**
+(`MKS2C042201...`), **3M/Sullins específicos** (`N2513`, `PRPC...`). O AO3400A é
+óptimo no papel e simplesmente não é catálogo Mouser; fica como *valor de esquema
+e âncora de equivalência*, e o que se compra é o equivalente catalogado (ex.: o
+`SI2302CDS-T1-GE3` da Vishay).
+
+### Fluxo em 3 passos
+
+1. **Pipeline gera o BOM consolidado** (`export/BOM_CONSOLIDADO.csv`) com **MPNs
+   candidatos** das marcas acima — uma linha por peça física, spec + footprint +
+   qty. É trabalho de sandbox, e pára em "candidato", nunca em "confirmado".
+2. **Hand-off pro Claude-on-Chrome** — o humano abre o navegador com o Claude e
+   corre o prompt-template abaixo, peça a peça, filtrando por estoque real.
+3. **Travar os confirmados** no `export/COMPRA_MOUSER.csv` + no template
+   (`.xlsx`/`.xls`), preenchendo **Mfr Part# E Mouser#** (match exato, os dois
+   campos) só para as peças que voltaram com *Ships Now* ≥ qty. O que voltou
+   backordered/long-lead volta ao passo 1 por uma alternativa.
+
+### O que o Chrome devolve
+
+**Por peça, o estoque `Ships Now` E o lead time** — não "existe no catálogo". A
+coluna de retorno passa a ser:
+
+```
+Peça | Mfr Part# | Mouser# | Ships Now (qty) | lead
+```
+
+### Prompt-template pronto pro Chrome (bloco copiável)
+
+```
+Estás no mouser.com com sessão do humano. Para CADA peça da lista abaixo:
+  1. Busca pela spec + footprint + quantidade indicados.
+  2. Aplica o filtro "In Stock".
+  3. Devolve uma linha na tabela:  Peça | Mfr Part# | Mouser# | Ships Now (qty) | lead
+
+Regras (duras):
+  - NÃO escolhas nada com 0 em estoque, backordered, ou long lead time —
+    só peças com "Ships Now" >= qty.
+  - NÃO mudes o footprint da peça (o encapsulamento é o critério crítico).
+  - Se a peça pedida não tiver "Ships Now" >= qty, escolhe a alternativa
+    listada que tenha, e diz qual escolheste.
+  - Reporta SEMPRE Ships Now (qty) E o lead time, por peça.
+
+Lista:
+  <Peça> — <valor/spec> — <footprint> — qty <N> — candidato <MPN>; alt <MPN2, MPN3>
+  ...
+```
+
+O objetivo, dito outra vez: **não repetir o ping-pong de MPN indisponível.** O
+sandbox propõe candidatos catalogados; o navegador do humano fecha com estoque
+real; e nenhuma linha de BOM se dá por *sourced* sem o "Ships Now ≥ qty" lido na
+tela.
+
+---
+
 ## Ferramentas — referência rápida
 
 | Etapa | Ferramenta | Comando / URL |

@@ -134,6 +134,14 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
   (`easyeda2kicad`/`JLC2KiCadLib`) → (3) construir do datasheet (IPC-7351
   Nominal). Ver **`references/parts-sourcing.md`** para a árvore, o checklist de
   equivalência, e a tabela de ferramentas.
+- **Quando a via é o Mouser (montagem em casa / peça fora da JLC):** o sandbox
+  **não alcança o Mouser** (403 de egress) — o `WebSearch` prova catálogo, nunca
+  estoque. **O navegador do humano (Claude-on-Chrome) é a fonte-da-verdade de
+  disponibilidade:** "disponível" = **Ships Now ≥ qty**, e **backordered/long
+  lead time contam como INDISPONÍVEL** (dão MATCH e não embarcam — o backorder
+  escapa ao filtro "no match"). NUNCA declarar "em estoque" a partir do sandbox —
+  catálogo ≠ estoque. O fluxo em 3 passos, o prompt-template copiável e o filtro
+  completo estão em **`references/parts-sourcing.md §7`**.
 - **Delega a:** `codigos_lcsc.py` (acha o C-number por valor/pacote),
   `fichas.py` (datasheet verificado por dentro), `bom_completa.py` (o BOM
   gerado), e o novo **`scripts/manifesto_fontes.py`** (o portão STOP).
@@ -236,10 +244,21 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 
 - **Objetivo:** serigrafia que se lê e que aponta para a peça certa.
 - **O que faz:** `silk_over_copper = 0`, silk fora de pads/máscara, refs a
-  apontar para a **própria** peça, marcas de pino-1/polaridade.
+  apontar para a **própria** peça, marcas de pino-1/polaridade; e a colocação de
+  **grafismos** (logo/nome/símbolo) por **coordenada de grid**, não por arrasto.
+- **Grafismos por GRID (substitui "arrastar no viewer"):** grafismo decorativo
+  coloca-se por **coordenada lida num render com grid de 0,5 mm** (majors de 5 mm
+  rotulados, eixos no frame do KiCad, zonas no-go sombreadas, retângulos livres
+  cotados em mm), não por olho/pixel. ⚠️ **Arrastar no visualizador de gerber
+  ENGANA** — o viewer **não recorta** silk sobre pad, a fábrica recorta, e o texto
+  chega **quebrado**. Método (bbox do grafismo declarada ANTES · 1 aprovação
+  lendo o grid · 1 edição só-silk → 1 regen · transfer que **rejeita silk sobre
+  pad/furo**, gerber-truth) e o helper `kicad/grid_grafismo.py` em
+  **`references/grafismos-grid.md`**.
 - **Delega a:** `arruma_silk.py` (move refs, auto-porta-se — não escreve se as
   colisões sobem), `refs_apontam.py` (distância à própria peça vs à vizinha),
   `rotula_tp.py` (nome do TP vem do `(net)` do pad, nunca do `Value`),
+  `grid_grafismo.py` (o mapa de grid para colocar grafismos por coordenada),
   `design-review` (legibilidade com o olho).
 - **PORTÃO:** silk sobre cobre = 0; texto×texto = 0; stroke ≥0,15 mm, altura
   ≥1 mm; `refs_apontam.py` sai ≠0 se um designador está mais perto da peça
@@ -392,7 +411,9 @@ recusa um DRC sujo.
 ## Referências (divulgação progressiva)
 
 - `references/parts-sourcing.md` — a árvore de 3 níveis, o esquema do manifesto,
-  as ferramentas (jlcparts, easyeda2kicad, JLC2KiCadLib), URLs e comandos.
+  as ferramentas (jlcparts, easyeda2kicad, JLC2KiCadLib), URLs e comandos; e o
+  **§7 sourcing com Claude-on-Chrome** (o navegador do humano é a fonte-da-verdade
+  de estoque: *Ships Now* ≥ qty, backorder/long-lead = indisponível).
 - `references/fab-automation.md` — cheat-sheet do `kicad-cli`, tabela de
   capacidades JLC, tabela IPC-2221 de largura/via, regras `.kicad_dru`,
   freerouting; e a saída do portão: BOM **agrupada por LCSC**, o **CPL rico**
@@ -417,6 +438,11 @@ recusa um DRC sujo.
   semver dos scripts) e a **regra de ouro** (gerber/drill muda → rev sobe;
   tooling/doc/BOM-agrupamento → não sobe). O histórico de revisões vive em
   `docs/relatorio/002.md`.
+- `references/grafismos-grid.md` — o método do Estágio 6 para **grafismos por
+  GRID**: a causa-raiz (arrasto por olho gera loop e colisão com pad; o viewer de
+  gerber engana porque não recorta silk sobre pad), os 6 passos (bbox declarada
+  antes · aprovar lendo o grid · 1 edição só-silk → 1 regen · transfer
+  gerber-truth), e a spec do helper `kicad/grid_grafismo.py`.
 - `scripts/manifesto_fontes.py` — o portão STOP do estágio 2 (`--sabota` prova
   que sabe dizer não).
 - `scripts/congestao.py` — o portão do estágio 3.5: orçamento de canais de escape
@@ -429,6 +455,11 @@ recusa um DRC sujo.
 - `kicad/kit_montagem.py` — o kit de montagem em casa (v1.0.0): pasta do pacote →
   `kit/` (MAPA_COLOCACAO.md agrupado por valor com TOP/BOTTOM e bottom+THT
   sinalizados · COMPRA_LCSC.csv carrinho LCSC com Qty+spares · LEIA-ME-KIT.txt).
+- `kicad/grid_grafismo.py` — o mapa do Estágio 6 para colocar grafismos por
+  coordenada (v0.1.0, funcional): render da face de topo com grid de 0,5 mm +
+  majors de 5 mm rotulados + eixos no frame do KiCad + zonas no-go sombreadas
+  (pads+furos+courtyards+margem) + os maiores retângulos livres cotados em mm.
+  Emite SVG sem dependências; exige o `pcbnew` do KiCad 10.
 
 ## Skills que esta orquestra
 
@@ -446,6 +477,23 @@ fabrica a placa de ontem.
 
 ## Histórico
 
+- **v1.4.0 (2026-09-12)** — três aprendizagens da corrida de sourcing pelo Mouser.
+  **(1) Estágio 2 ganha o §7 de `parts-sourcing.md`: sourcing com Claude-on-Chrome**
+  — o sandbox não alcança o Mouser (403 de egress; o `WebSearch` prova catálogo,
+  nunca estoque), então o **navegador do humano é a fonte-da-verdade** de
+  disponibilidade: "disponível" = **Ships Now ≥ qty**, e **backordered/long-lead
+  contam como INDISPONÍVEL** (dão MATCH e não embarcam — âncora: o Samsung
+  `CL31A106KBHNNNE` deu match mas estava backordered, trocado pelo
+  `CL31B106KAHNNWE` em estoque). Prompt-template copiável + fluxo em 3 passos.
+  **(2) Estágio 6 ganha `references/grafismos-grid.md` (nova) e o helper
+  `kicad/grid_grafismo.py` (v0.1.0, funcional):** grafismo coloca-se por
+  **coordenada de grid**, não por arrasto — o viewer de gerber engana porque não
+  recorta silk sobre pad (a fábrica recorta → texto quebrado). **(3) Reconciliação
+  de MPN:** `tools/bom_completa.py` (v0.9.0) e `tools/fichas.py` (v0.10.0)
+  passam a carregar os 7 MPNs finais verificados no Mouser (F1 `MF-LSMF300/24X-2`,
+  C14/C24 `MKS2C042201M00KN00`, C8 `CL31B106KAHNNWE`, D2 `SS14` onsemi, Q1/Q2
+  `SI2302CDS-T1-GE3`, IDC 2x13 `61202621621`, barra de headers `61304011121`);
+  `mpn_nas_folhas.py` re-carimbou as folhas a partir da fonte.
 - **v1.3.0 (2026-09-12)** — o versionamento passa a **CONGELAMENTO-NO-LANÇAMENTO**
   (`references/versionamento.md` reescrita, e a afirmação de versão do Estágio 8):
   a rev sobe **por lançamento, não por commit** — enquanto uma placa não é

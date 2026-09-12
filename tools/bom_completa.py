@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 
-VERSAO = "0.8.0"
+VERSAO = "0.9.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAIDA = os.path.join(RAIZ, "docs", "COTUCA_BOM.md")
 
@@ -51,29 +51,43 @@ PECAS = {
     "D11": ("BAV99,215 (Nexperia)", "LCSC", 0.02, "estimado"),
     "D21": ("BAV99,215 (Nexperia)", "LCSC", 0.02, "estimado"),
     "D1":  ("SMBJ24A (Littelfuse)", "LCSC", 0.079, "medido"),
-    "D2":  ("SS14 (SMA)", "LCSC", 0.02, "estimado"),
-    # ⚠️ 2920L3**30**/24MR, e nao o /300. A lista a mao pedia `2920L300/24MR`,
-    # que NAO EXISTE: a 24 V o que ha e o 3,3 A. O sufixo de um polyfuse diz a
-    # corrente de hold, e um numero plausivel e inexistente parece certo ate a
-    # encomenda voltar vazia (§7f).
-    "F1":  ("2920L330/24MR (Littelfuse)", "LCSC C720183", 0.1804, "medido"),
+    "D2":  ("SS14 (onsemi, SMA/DO-214AC)", "Mouser 512-SS14", 0.02, "estimado"),
+    # ⚠️ MF-LSMF300/24X-2 (Bourns MF-LSMF): hold 3 A / trip 5,2 A / 24 V, land
+    # 2920/7450 metrico = mesma pegada 2920 do footprint Fuse_2920_7451Metric.
+    # VERIFICADO em estoque no Mouser (via navegador, 12/09) — 652-MF-LSMF300/24X-2.
+    # O Littelfuse 2920L.../24MR (3,3 A) fica de backup em
+    # export/MOUSER_ALTERNATES.md. A §7f continua a valer: o sufixo de um
+    # polyfuse diz a corrente de hold, e um numero plausivel e inexistente parece
+    # certo ate a encomenda voltar vazia.
+    "F1":  ("MF-LSMF300/24X-2 (Bourns)", "Mouser 652-MF-LSMF300/24X-2", 0.18, "estimado"),
     "C1":  ("EEU-FR1V222 (Panasonic FR)", "LCSC C407956", 0.7162, "medido"),
     "C3":  ("EEU-FR1C101 (Panasonic FR)", "LCSC", 0.15, "estimado"),
     "C5":  ("EEU-FR1E470 (Panasonic FR)", "LCSC", 0.15, "estimado"),
     "C6":  ("EEU-FR1E471 (Panasonic FR)", "LCSC", 0.20, "estimado"),
+    # ⚠️ CL31B106KAHNNWE (Samsung, 10 uF 25 V X7R 1206): VERIFICADO em estoque no
+    # Mouser (via navegador, 12/09) — 187-CL31B106KAHNNWE. Substitui o
+    # CL31A106KBHNNNE (50 V X5R), que dava MATCH mas estava backordered/long-lead
+    # — e backordered ESCAPA do filtro "no match", por isso trocou-se por um com
+    # estoque "Ships Now". 25 V cobre o no. Alternativas em MOUSER_ALTERNATES.md.
+    "C8":  ("CL31B106KAHNNWE (Samsung, X7R)", "Mouser 187-CL31B106KAHNNWE", 0.05, "estimado"),
     "C13": ("UES1H220MEM (Nichicon UES)", "LCSC", 0.30, "estimado"),
     "C23": ("UES1H220MEM (Nichicon UES)", "LCSC", 0.30, "estimado"),
-    "C14": ("MKS2C042201K00KSSD (WIMA)", "TME/Mouser", 0.70, "estimado"),
-    "C24": ("MKS2C042201K00KSSD (WIMA)", "TME/Mouser", 0.70, "estimado"),
+    "C14": ("MKS2C042201M00KN00 (WIMA MKS2)", "Mouser 505-MKS2C042201M00KN", 0.70, "estimado"),
+    "C24": ("MKS2C042201M00KN00 (WIMA MKS2)", "Mouser 505-MKS2C042201M00KN", 0.70, "estimado"),
     "C12": ("C1206C223J5GACTU (Kemet C0G)", "LCSC", 0.0165, "medido"),
     "C22": ("C1206C223J5GACTU (Kemet C0G)", "LCSC", 0.0165, "medido"),
     "RV1": ("3296W-1-104LF (Bourns)", "LCSC C48084", 0.4458, "medido"),
     "RV2": ("3296W-1-104LF (Bourns)", "LCSC C48084", 0.4458, "medido"),
-    "J14": ("IDC 2x13 macho blindado (3M N2526-6002RB ou gen.)", "LCSC", 0.45, "estimado"),
+    "J14": ("61202621621 (Wurth WR-BHD, box header 2x13 blindado)", "Mouser 710-61202621621", 0.45, "estimado"),
 }
 PECAS_PAINEL = {
-    "Q1":  ("AO3400A (Alpha & Omega)", "LCSC C20917", 0.0487, "medido"),
-    "Q2":  ("AO3400A (Alpha & Omega)", "LCSC C20917", 0.0487, "medido"),
+    # ⚠️ SI2302CDS-T1-GE3 (Vishay, N-ch SOT-23 logic-level 20 V): VERIFICADO em
+    # estoque no Mouser (via navegador, 12/09) — 781-SI2302CDS-T1-GE3. 20 V chega:
+    # Q1/Q2 sao drivers low-side de LED, Vds <= 5 V. O Mouser NAO cataloga a AOS,
+    # e por isso o AO3400A dava "No Match" — fica so como VALOR de esquema e
+    # ancora de equivalencia (mesmo SOT-23, 1 G 2 S 3 D). Alt em MOUSER_ALTERNATES.
+    "Q1":  ("SI2302CDS-T1-GE3 (Vishay)", "Mouser 781-SI2302CDS-T1-GE3", 0.05, "estimado"),
+    "Q2":  ("SI2302CDS-T1-GE3 (Vishay)", "Mouser 781-SI2302CDS-T1-GE3", 0.05, "estimado"),
     # ⚠️ ALPS, e nao o PEC11R da Bourns que a lista a mao pedia. O PEC11R tem
     # os pinos a 5,0 mm e o footprint do KiCad e do Alps, a 2,5 — a peca certa
     # no desenho errado nao entra na placa. O encapsulamento e parte da compra
@@ -85,7 +99,7 @@ PECAS_PAINEL = {
     # quase sempre o sufixo, e nao a familia.
     "RV1": ("PTV09A-1020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
     "RV2": ("PTV09A-1020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
-    "J1":  ("IDC 2x13 femea (3M N3793-6002RB ou gen.)", "LCSC", 0.45, "estimado"),
+    "J1":  ("61202621621 (Wurth WR-BHD, box header 2x13 blindado)", "Mouser 710-61202621621", 0.45, "estimado"),
     "J2":  ("53047-0710 (Molex PicoBlade 1x7)", "LCSC", 0.30, "estimado"),
     # ⚠️ o C3 do PAINEL e outro C3 que o do cerebro — tabelas separadas, e por
     # isso este ficava "por decidir" enquanto o do cerebro ja tinha peca. Nao
@@ -135,9 +149,10 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
 
 # ⚠️⚠️ O MPN E UM CAMPO PROPRIO, E NAO A DESCRICAO.
 #
-# A coluna de cima mistura numero de peca com prosa — "SS14 (SMA)", "IDC 2x13
-# macho blindado (3M N2526-6002RB ou gen.)", "terminal parafuso 2p 5,08 —
-# 1715721 (Phoenix ...); KF301-5.0 so para bancada". Serve para LER numa
+# A coluna de cima mistura numero de peca com prosa — "SS14 (onsemi, SMA/DO-
+# 214AC)", "61202621621 (Wurth WR-BHD, box header 2x13 blindado)", "terminal
+# parafuso 2p 5,08 — 1715721 (Phoenix ...); KF301-5.0 so para bancada". Serve
+# para LER numa
 # tabela; nao serve para uma maquina procurar a peca.
 #
 # Carimbei essa coluna no campo `MPN` das folhas e a revisao de fora disse
@@ -152,19 +167,20 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
 # custa uma encomenda inteira e parece certo ate a caixa chegar.
 MPN = {
     "U1":  "OPA1642AIDR",      "D11": "BAV99,215",   "D21": "BAV99,215",
-    "D1":  "SMBJ24A",          "D2":  "SS14",        "F1":  "2920L330/24MR",
+    "D1":  "SMBJ24A",          "D2":  "SS14",        "F1":  "MF-LSMF300/24X-2",
     "C1":  "EEU-FR1V222",      "C3":  "EEU-FR1C101", "C5":  "EEU-FR1E470",
-    "C6":  "EEU-FR1E471",      "C13": "UES1H220MEM", "C23": "UES1H220MEM",
-    "C14": "MKS2C042201K00KSSD", "C24": "MKS2C042201K00KSSD",
+    "C6":  "EEU-FR1E471",      "C8":  "CL31B106KAHNNWE",
+    "C13": "UES1H220MEM",      "C23": "UES1H220MEM",
+    "C14": "MKS2C042201M00KN00", "C24": "MKS2C042201M00KN00",
     "C12": "C1206C223J5GACTU", "C22": "C1206C223J5GACTU",
     "RV1": "3296W-1-104LF",    "RV2": "3296W-1-104LF",
-    "J14": "N2526-6002RB",
+    "J14": "61202621621",
     # ⚠️ vazios de proposito, e cada um com a razao:
     # U2/U3 sao MODULOS comprados montados — o numero e do vendedor, nao do
     # fabricante, e muda com o lote. Vivem na seccao FORA, com nome e loja.
 }
 MPN_PAINEL = {
-    "Q1":  "AO3400A",          "Q2":  "AO3400A",
+    "Q1":  "SI2302CDS-T1-GE3", "Q2":  "SI2302CDS-T1-GE3",
     "SW1": "EC11E15244G1",
     # ⚠️ `-1` E NAO `-4`: o `-4` e REAR MOUNT, sem bucim, eixo deitado.
     # O footprint e o `PTV09A-1` (vertical, com bucim) e o eixo tem de subir
@@ -174,7 +190,7 @@ MPN_PAINEL = {
     # (liso). Duas correccoes no mesmo MPN, em sitios diferentes do sufixo, e a
     # §7f a repetir-se: familia certa, peca errada, e nada acusa.
     "RV1": "PTV09A-1020S-B103", "RV2": "PTV09A-1020S-B103",
-    "J1":  "N3793-6002RB",     "J2":  "53047-0710",
+    "J1":  "61202621621",      "J2":  "53047-0710",
     "C3":  "EEU-FR1C101",
     **{f"J{i}": "B2B-XH-A" for i in (3, 4, 5, 6, 7)},
 }
@@ -210,6 +226,17 @@ MPN_POR_FP = {
         "1715721",
     "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical": "B2B-XH-A",
     "Connector_Molex:Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical": "53047-0710",
+    # ⚠️ TODOS os headers 1 fila 2,54 saem cortados da MESMA barra Wurth WR-PHD
+    # 1x40 (61304011121), VERIFICADA em estoque no Mouser (via navegador, 12/09)
+    # — 710-61304011121. Aqui o vazio DEIXOU de ser resposta: a barra e uma peca
+    # sourced, e o numero e o mesmo de 1x2 a 1x8. (O J2 do painel fica de fora —
+    # e Molex PicoBlade por referencia, acima.)
+    "Connector_PinHeader_2.54mm:PinHeader_1x02_P2.54mm_Vertical": "61304011121",
+    "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical": "61304011121",
+    "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical": "61304011121",
+    "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical": "61304011121",
+    "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical": "61304011121",
+    "Connector_PinHeader_2.54mm:PinHeader_1x08_P2.54mm_Vertical": "61304011121",
 }
 
 # O que NAO esta em folha nenhuma: modulos, peca de painel, cablagem, caixa.

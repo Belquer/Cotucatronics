@@ -2864,6 +2864,17 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
+		(property "MPN" "61304011121"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 299.72 110.49 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -2970,6 +2981,17 @@
 			(at 299.72 175.26 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
+		)
+		(property "MPN" "61304011121"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
 		)
 		(property "Description" ""
 			(at 299.72 175.26 0)
@@ -3133,6 +3155,17 @@
 			(at 299.72 234.95 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
+		)
+		(property "MPN" "61304011121"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
 		)
 		(property "Description" ""
 			(at 299.72 234.95 0)
@@ -4176,6 +4209,17 @@
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
 		)
+		(property "MPN" "61304011121"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 384.81 175.26 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
@@ -4262,6 +4306,17 @@
 			(at 384.81 234.95 0)
 			(hide yes) (show_name no) (do_not_autoplace no)
 			(effects (font (size 1.27 1.27)))
+		)
+		(property "MPN" "61304011121"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
 		)
 		(property "Description" ""
 			(at 384.81 234.95 0)
