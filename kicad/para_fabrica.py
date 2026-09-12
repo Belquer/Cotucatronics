@@ -60,7 +60,7 @@ import zipfile
 #            JLC, em vez de o reescrever no lugar e perder Val/Package. A jusante
 #            (VISTORIA, kit_montagem) passa a ler valor/footprint da posicao.
 #   0.17.0 — serigrafia medida no gerber; CPL reescrito para o esquema da JLC.
-VERSAO = "0.18.0"
+VERSAO = "0.19.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -169,14 +169,12 @@ def carimbo():
 # recebe a lembrar-se delas. Estas seguem no LEIA-ME, ao lado dos ficheiros.
 ABERTAS = {
     "painel": [
-        "(!) ORDEM DO J2 (OLED) POR CONFIRMAR COM O MODULO EM MAO.\n"
-        "    A placa tem: 1 GND · 2 +5V · 3 CLK · 4 DIN · 5 CS · 6 DC · 7 RST\n"
-        "    O Waveshare 2,42\" SPI tem, no conector: VCC · GND · DIN · CLK ·\n"
-        "    CS · DC · RST.\n"
-        "    Com um cabo 1:1, VCC e GND TROCAM — o OLED morre ao ligar — e o\n"
-        "    DIN/CLK tambem. Ou se reordena o J2 (o cabo de fabrica passa a\n"
-        "    servir), ou se crimpa um cabo cruzado. Confirmar no modulo antes\n"
-        "    de decidir; nao ha como um script ver o conector de outra pessoa.",
+        "J2 corrigido: VCC·GND·DIN·CLK·CS·DC·RST — cabo/jumpers 1:1 com o\n"
+        "    modulo SSD1309. A placa tem, pino a pino: 1 +5V(VCC) · 2 GND ·\n"
+        "    3 DIN · 4 CLK · 5 CS · 6 DC · 7 RST, a MESMA ordem do conector do\n"
+        "    modulo Waveshare — logo um cabo/jumpers 1:1 liga direito, sem cruzar.\n"
+        "    J2 e agora um header 1x07 a 2,54 mm (THT): recebe pinos macho-macho\n"
+        "    e dupont femea. Rotulos por pino na serigrafia (F.Silk).",
     ],
     "cerebro": [
         "(!) A PLACA E DE 2 CAMADAS. Encomendar 2, e nao 4: so ha F.Cu e B.Cu,\n"

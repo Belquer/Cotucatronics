@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.14.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.19.0 — contorno e colocacao MECANICA de um .kicad_pcb.
 
 POR QUE EXISTE.
 
@@ -32,7 +32,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.18.0"
+VERSAO = "0.19.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -166,7 +166,11 @@ COLOCA = {
     # maior faixa livre do painel: 163,8 mm em y=27,5.
     **{f"TP{i + 1}": (90.0 + 6.0 * i, 27.5, 0) for i in range(5)},
     "J1":  (26.0, 29.5, 90),
-    "J2":  (68.0, 24.0, 0),
+    # rev C1 — J2 rodado 0->90: o header 1x07 a 2,54 mm nasce com os pinos ao
+    # longo de +Y; a 90 correm em +X (pino1=+5V em x=68, pino7=RST em x=83,24),
+    # afastando-se do J1 e do bordo de cima. A 2,54 mm o conector so cabe na
+    # horizontal (a placa tem 36 mm de altura). Ver gera_painel FOOTPRINT_MAP.
+    "J2":  (68.0, 24.0, 90),
     # rev C — J3/J4/J5 desceram (y=34 -> 36,5) e J4/J5 abriram em x (38->40,
     # 50->53) para libertar o corredor de fuga por baixo do J1 e dar sitio ao C5.
     "J3":  (26.0, 36.5, 0),     "J4":  (40.0, 36.5, 0),   "J5":  (53.0, 36.5, 0),
