@@ -118,12 +118,12 @@ _Coloca-se por lote (todos os de um valor de uma vez), depois refluxo._
 - **Colocar:**
     - `J1` @ (26, -29.5) Top  rot 90°
 
-### OLED SSD1309 MX1.25 7p · THT — soldar a mao, por ultimo
-- **Footprint:** Connector_Molex:Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical
+### OLED SSD1309 2,54mm 7p · THT — soldar a mao, por ultimo
+- **Footprint:** Connector_PinHeader_2.54mm:PinHeader_1x07_P2.54mm_Vertical
 - **LCSC:** — (sem LCSC)
 - **Qty:** 1
 - **Colocar:**
-    - `J2` @ (68, -24) Top  rot 0°
+    - `J2` @ (68, -24) Top  rot 90°
 
 ## BOTTOM — soldar a mao (NAO vai na chapa)
 

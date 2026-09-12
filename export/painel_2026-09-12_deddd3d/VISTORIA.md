@@ -7,14 +7,14 @@
 ## 0. Carregar o pacote (antes de tudo)
 
 ### Item 0 — Carregar o pacote — buscar ao PR e carregar na JLCONE
-- **ONDE OLHAR:** O pacote está **committado no repo** em `export/painel_2026-09-11_6ebbda5/` na branch do PR (`claude/slack-session-sm2ldz`, repo `Belquer/Cotucatronics` no GitHub) — está no **GitHub, não necessariamente na tua máquina**. ⚠️ O terminal que vês na pipeline corre no **sandbox na nuvem** e **não consegue pôr ficheiros na tua máquina** — a recuperação é um comando que **TU corres localmente**. Depois carregas no site da **JLCPCB/JLCONE** (*Add Gerber*). Antes de QUALQUER item de inspeção, a placa tem de estar carregada.
-- **O QUE DEVES VER:** **Gerber a carregar:** `export/painel_2026-09-11_6ebbda5/painel_2026-09-11_6ebbda5_gerbers.zip` — é ESTE `.zip` que entra na JLCONE, não o `.kicad_pcb` nem gerbers soltos.
-  · **Como buscar (terminal no teu Mac — o preferido):** `cd Cotucatronics && git fetch origin && git checkout claude/slack-session-sm2ldz && git pull origin claude/slack-session-sm2ldz && open export/painel_2026-09-11_6ebbda5/` — se ainda não o clonaste: `git clone -b claude/slack-session-sm2ldz git@github.com:Belquer/Cotucatronics.git`.
-  · **Fallback (GitHub no browser):** navega `claude/slack-session-sm2ldz` até `export/painel_2026-09-11_6ebbda5/`, abre a página do `painel_2026-09-11_6ebbda5_gerbers.zip` e clica **Download raw file** (repo privado → tens de estar autenticado como o dono); leva também o `cpl_painel.csv` + `bom_painel.csv`. Ou **Code → Download ZIP** da branch e tira a pasta `export/`.
+- **ONDE OLHAR:** O pacote está **committado no repo** em `export/painel_2026-09-12_deddd3d/` na branch do PR (`claude/slack-session-sm2ldz`, repo `Belquer/Cotucatronics` no GitHub) — está no **GitHub, não necessariamente na tua máquina**. ⚠️ O terminal que vês na pipeline corre no **sandbox na nuvem** e **não consegue pôr ficheiros na tua máquina** — a recuperação é um comando que **TU corres localmente**. Depois carregas no site da **JLCPCB/JLCONE** (*Add Gerber*). Antes de QUALQUER item de inspeção, a placa tem de estar carregada.
+- **O QUE DEVES VER:** **Gerber a carregar:** `export/painel_2026-09-12_deddd3d/painel_2026-09-12_deddd3d_gerbers.zip` — é ESTE `.zip` que entra na JLCONE, não o `.kicad_pcb` nem gerbers soltos.
+  · **Como buscar (terminal no teu Mac — o preferido):** `cd Cotucatronics && git fetch origin && git checkout claude/slack-session-sm2ldz && git pull origin claude/slack-session-sm2ldz && open export/painel_2026-09-12_deddd3d/` — se ainda não o clonaste: `git clone -b claude/slack-session-sm2ldz git@github.com:Belquer/Cotucatronics.git`.
+  · **Fallback (GitHub no browser):** navega `claude/slack-session-sm2ldz` até `export/painel_2026-09-12_deddd3d/`, abre a página do `painel_2026-09-12_deddd3d_gerbers.zip` e clica **Download raw file** (repo privado → tens de estar autenticado como o dono); leva também o `cpl_painel.csv` + `bom_painel.csv`. Ou **Code → Download ZIP** da branch e tira a pasta `export/`.
   · **Montagem SMT:** quando a JLC pedir, junta `cpl_painel.csv` (posições) + `bom_painel.csv` (BOM), da MESMA pasta.
   · **Camadas:** 2.
-  · Depois, arrasta o `painel_2026-09-11_6ebbda5_gerbers.zip` para a JLCONE (*Add Gerber*).
-- **COMO CONFIRMAR:** **Proveniência** — PASS: carregaste o `painel_2026-09-11_6ebbda5_gerbers.zip` (buscado a `claude/slack-session-sm2ldz` no GitHub) e o `LEIA-ME.txt` da MESMA pasta carimba o commit `6ebbda5` e árvore limpa — é ESSA a revisão que estás a encomendar. FAIL: não encontras o pacote na tua máquina (está só no PR — vai buscá-lo ao GitHub), ou carregaste outro zip, ou o `LEIA-ME.txt` carimba outro commit / árvore suja → PÁRA e vai buscar o pacote certo do PR, NÃO encomendas (guarda contra encomendar um pacote velho ou trocado).
+  · Depois, arrasta o `painel_2026-09-12_deddd3d_gerbers.zip` para a JLCONE (*Add Gerber*).
+- **COMO CONFIRMAR:** **Proveniência** — PASS: carregaste o `painel_2026-09-12_deddd3d_gerbers.zip` (buscado a `claude/slack-session-sm2ldz` no GitHub) e o `LEIA-ME.txt` da MESMA pasta carimba o commit `deddd3d` e árvore limpa — é ESSA a revisão que estás a encomendar. FAIL: não encontras o pacote na tua máquina (está só no PR — vai buscá-lo ao GitHub), ou carregaste outro zip, ou o `LEIA-ME.txt` carimba outro commit / árvore suja → PÁRA e vai buscar o pacote certo do PR, NÃO encomendas (guarda contra encomendar um pacote velho ou trocado).
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
 
 ## 1. Nível-placa
@@ -67,8 +67,8 @@
 - **COMO CONFIRMAR:** PASS: 26/26 pino-a-pino, pino-1 alinhado. FAIL: fila invertida ou pino-1 no lado errado → corrigir o footprint/orientação, NÃO pagar.
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
 
-### Item 8 — J2 — OLED SSD1309 MX1.25 7p (Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical)
-- **ONDE OLHAR:** JLC 3D preview — rodar para vista de TOPO; ampliar sobre J2 em X=68, Y=-24 (rotação CPL = 0°, lado top) — confirmar contrato de pinagem vs o outro lado
+### Item 8 — J2 — OLED SSD1309 2,54mm 7p (PinHeader_1x07_P2.54mm_Vertical)
+- **ONDE OLHAR:** JLC 3D preview — rodar para vista de TOPO; ampliar sobre J2 em X=68, Y=-24 (rotação CPL = 90°, lado top) — confirmar contrato de pinagem vs o outro lado
 - **O QUE DEVES VER:** O contrato de pinagem placa↔módulo, pino a pino. ⚠️ Perigo clássico do OLED SPI: com um cabo 1:1 o **VCC e o GND trocam** (o módulo morre ao ligar) e o **DIN/CLK também trocam**. Confirmar a ordem de J2 contra o conector do módulo REAL em mão (ex.: Waveshare 2,42": VCC·GND·DIN·CLK·CS·DC·RST).
 - **COMO CONFIRMAR:** PASS: cada pino do J bate no pino homólogo do módulo (ou o cabo cruzado corrige). FAIL: VCC/GND ou DIN/CLK trocados → reordenar o J ou crimpar cabo cruzado ANTES de pagar.
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
@@ -113,7 +113,7 @@
 
 ### Item 15 — BOM — THT enviados à parte (não vão pela JLC)
 - **ONDE OLHAR:** A lista de peças THT do desenho.
-- **O QUE DEVES VER:** As peças THT são montadas por ti, à parte: C3 (100u 16V), J1 (IDC 2x13 femea <- cerebro), J2 (OLED SSD1309 MX1.25 7p), J3 (fio -> arcade AZUL freeze A), J4 (fio -> arcade AZUL freeze B), J5 (fio -> arcade BRANCO buzios), J6 (fio -> LED do arcade A (1=A, 2=K)), J7 (fio -> LED do arcade B (1=A, 2=K)), RV1 (10k lin), RV2 (10k lin), SW1 (EC11 — o unico encoder).
+- **O QUE DEVES VER:** As peças THT são montadas por ti, à parte: C3 (100u 16V), J1 (IDC 2x13 femea <- cerebro), J2 (OLED SSD1309 2,54mm 7p), J3 (fio -> arcade AZUL freeze A), J4 (fio -> arcade AZUL freeze B), J5 (fio -> arcade BRANCO buzios), J6 (fio -> LED do arcade A (1=A, 2=K)), J7 (fio -> LED do arcade B (1=A, 2=K)), RV1 (10k lin), RV2 (10k lin), SW1 (EC11 — o unico encoder).
 - **COMO CONFIRMAR:** PASS: THT marcadas como 'cliente fornece / à parte'. FAIL: THT metida na montagem SMT → corrigir o BOM/CPL.
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
 
@@ -127,7 +127,7 @@
 
 ### Item 17 — Mecânica — conectores/botões/display alcançam os recortes
 - **ONDE OLHAR:** O render da caixa e/ou o dry-fit de UMA caixa antes da série.
-- **O QUE DEVES VER:** Cada peça que atravessa o painel alcança o recorte certo: J1 (IDC 2x13 femea <- cerebro); J2 (OLED SSD1309 MX1.25 7p); J3 (fio -> arcade AZUL freeze A); J4 (fio -> arcade AZUL freeze B); J5 (fio -> arcade BRANCO buzios); J6 (fio -> LED do arcade A (1=A, 2=K)); J7 (fio -> LED do arcade B (1=A, 2=K)); RV1 (10k lin); RV2 (10k lin); SW1 (EC11 — o unico encoder). Folga do cabo e alcance com a placa montada.
+- **O QUE DEVES VER:** Cada peça que atravessa o painel alcança o recorte certo: J1 (IDC 2x13 femea <- cerebro); J2 (OLED SSD1309 2,54mm 7p); J3 (fio -> arcade AZUL freeze A); J4 (fio -> arcade AZUL freeze B); J5 (fio -> arcade BRANCO buzios); J6 (fio -> LED do arcade A (1=A, 2=K)); J7 (fio -> LED do arcade B (1=A, 2=K)); RV1 (10k lin); RV2 (10k lin); SW1 (EC11 — o unico encoder). Folga do cabo e alcance com a placa montada.
 - **COMO CONFIRMAR:** PASS: dry-fit/render mostra cada uma no seu recorte. FAIL: encoder/pot/display/botão não alcança ou colide → voltar ao Estágio 3, NÃO pagar.
 - **RESPOSTA:**  ☐ ✅ conforme   ☐ ❌ + o que vês: ________________________________
 

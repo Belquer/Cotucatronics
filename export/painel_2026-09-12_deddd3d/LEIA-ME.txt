@@ -1,0 +1,21 @@
+pacote de fabrico — cotuca painel
+gerado por para_fabrica v0.19.0 em 2026-09-12
+commit deddd3d
+
+geometria 0 · planos inteiros · todas as ligacoes feitas
+
+⚠️ A rotacao no CPL e a do KiCad, nao a da biblioteca da JLC.
+   Confirmar peca a peca na pre-visualizacao antes de pagar.
+   As pecas com polaridade, que sao as unicas que importam:
+     Q1   AO3400A      SOT-23   a JLC roda SOT-23 180 graus com frequencia
+     Q2   AO3400A      SOT-23   idem
+   Os 0805/1206/1210 nao tem polaridade — nao gastar tempo neles.
+
+O BOM leva a coluna LCSC preenchida (tools/codigos_lcsc.py).
+
+J2 corrigido: VCC·GND·DIN·CLK·CS·DC·RST — cabo/jumpers 1:1 com o
+    modulo SSD1309. A placa tem, pino a pino: 1 +5V(VCC) · 2 GND ·
+    3 DIN · 4 CLK · 5 CS · 6 DC · 7 RST, a MESMA ordem do conector do
+    modulo Waveshare — logo um cabo/jumpers 1:1 liga direito, sem cruzar.
+    J2 e agora um header 1x07 a 2,54 mm (THT): recebe pinos macho-macho
+    e dupont femea. Rotulos por pino na serigrafia (F.Silk).
