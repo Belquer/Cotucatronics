@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.19.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.20.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+
+v0.20.0 (2026-09-12): a marca passou a ser POR PLACA (camada + mirror), o cerebro
+foi para F.SilkS sem mirror (monta com os componentes para cima -> topo visivel
+pela tampa de acrilico), subiu para `cerebro rev C1` e ganhou o simbolo de buzios
+(`buzios_silk`, a mesma `Concha` do `src/splash.h`). So serigrafia — o cobre nao
+muda. O painel fica como estava (B.SilkS, mirror, rev C).
 
 POR QUE EXISTE.
 
@@ -32,7 +38,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.19.0"
+VERSAO = "0.20.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -751,48 +757,128 @@ def planos(t, nome, alvo):
 # ⚠️ A COR NAO VIVE NO FICHEIRO. Serigrafia e uma camada; preto ou branco e uma
 # opcao do pedido na JLCPCB, nao um atributo do `.kicad_pcb`. O que se faz aqui
 # e po-la na camada certa; a cor escolhe-se no carrinho.
-# ⚠️ VAI NA SERIGRAFIA DE TRAS. Tres razoes, e nenhuma e estetica:
-#   · a frente esta cheia — a primeira tentativa poe-la em cima do C6 e deu
-#     SESSENTA E QUATRO sobreposicoes de uma vez;
-#   · a caixa e de acrilico TRANSPARENTE e a placa assenta na chapa de fundo:
-#     o lado que se ve por baixo do instrumento e o de tras;
-#   · e atras nao ha nada com que colidir, hoje nem depois.
+#
+# ⚠️ A FACE DA MARCA E POR PLACA, e depende de COMO cada uma monta na caixa:
+#   · CEREBRO — monta com o lado dos componentes PARA CIMA. A tampa e de acrilico
+#     TRANSPARENTE, logo a F.Silkscreen (topo) e a face que se VE pela tampa. A
+#     marca do cerebro vive em F.SilkS SEM `mirror` — le-se direita de cima. (Ate
+#     a rev C vivia em B.SilkS espelhada; passou para o topo na rev C1, 2026-09-12,
+#     com o simbolo de buzios, sem tocar no cobre — so serigrafia.)
+#   · PAINEL — a placa assenta na chapa de fundo e o que se ve por baixo do
+#     instrumento e o lado de TRAS: a marca fica em B.SilkS COM `mirror` (le-se
+#     direita quando se olha pelas costas / pelo fundo transparente). No editor,
+#     visto de frente, aparece invertida — e a aparencia correcta, nao um defeito.
 # Texto em camada de tras leva `mirror`, senao le-se ao contrario no cobre.
-# ⚠️ `mirror` E O CERTO para a face de tras: e assim que o texto se le quando se
-# olha para as COSTAS da placa, que e o que se ve pelo fundo transparente da
-# caixa. No editor, visto de frente, aparece invertido — e essa e a aparencia
-# correcta, nao um defeito.
-MARCA_LADO = "B.SilkS"
-# ⚠️ COORDENADAS ABSOLUTAS, e no sitio que foi MEDIDO. A primeira versao punha a
-# marca a meio da placa por fraccao — e "meio" atras sao os 130 pads passantes,
-# que dao `silk_over_copper` e serigrafia por cima de solda. Atras nao ha
-# serigrafia de pecas, mas ha PADS: o vazio de uma camada nao e o vazio da face.
-# A faixa livre foi procurada por varrimento contra todos os pads passantes:
-# 123 x 8 mm a partir de (73, 23).
+#
+# ⚠️ COORDENADAS ABSOLUTAS, e no sitio que foi MEDIDO contra pads/pecas/serigrafia
+# da FACE onde a marca vai (o vazio de uma camada nao e o vazio da face). No
+# cerebro a faixa livre e a banda de topo entre o J14 (acaba em x=81) e o J15
+# (comeca em x=132), por cima do C14/U2 e da fila de test-points (y~49): folga
+# >=0,25 mm a todo o cobre e >=1,5 mm ao bordo, medida por varrimento.
 MARCA = {
-    "cerebro": [(140.0, 27.5, "COTUCATRONICS", 5.0, 0.8),
-                # ⚠️ x=87 e nao 82: centrado em 82 o texto (13 caracteres a
-                # 2,2 mm, ~20 mm de largura) comeca em x=72 e encosta ao pad
-                # 26 do J14, em 70,48. O DRC apanha `silk_over_copper`, e o
-                # que se perde e real: a JLC recorta a serigrafia sobre a
-                # abertura de mascara, logo o inicio do texto desaparecia.
-                (87.0, 27.0, "cerebro rev B", 2.2, 0.35)],
-    "painel":  [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
-                (60.0, 26.0, "painel rev C", 1.6, 0.25)],
+    "cerebro": {"layer": "F.SilkS", "mirror": False,
+                # buzios (concha) — a MESMA marca do splash (`src/splash.h`,
+                # super-elipse n=3,2 com labio/boca dentada): (cx, cy, ra, rb).
+                "buzios": (124.0, 25.6, 5.0, 3.0),
+                "textos": [(100.0, 24.4, "COTUCATRONICS", 2.6, 0.42),
+                           (100.0, 29.2, "cerebro rev C1", 1.6, 0.3)]},
+    "painel":  {"layer": "B.SilkS", "mirror": True, "buzios": None,
+                "textos": [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
+                           (60.0, 26.0, "painel rev C", 1.6, 0.25)]},
 }
 
 
+def _super_elipse(cx, cy, ra, rb, n=3.2, passos=96):
+    """Contorno de super-elipse (|x/ra|^n + |y/rb|^n = 1). n=3,2 le rectangulo
+    arredondado — o casco do buzio, igual ao `SuperElipse` do `src/splash.h`."""
+    import math
+    pts = []
+    for i in range(passos + 1):
+        th = 2 * math.pi * i / passos
+        c, s = math.cos(th), math.sin(th)
+        x = ra * (abs(c) ** (2.0 / n)) * (1 if c >= 0 else -1)
+        y = rb * (abs(s) ** (2.0 / n)) * (1 if s >= 0 else -1)
+        pts.append((cx + x, cy + y))
+    return pts
+
+
+def _boca_e_dentes(cx, cy, ra, rb):
+    """Labio/boca do buzio e os dentes emparelhados, do envelope assimetrico
+    h(t)=lb*sin(pi*t^1,5) do `src/splash.h` — ponta fina de um lado, bojo do
+    outro. Devolve (contorno_da_boca, [segmentos_de_dente])."""
+    import math
+    la, lb = 0.80 * ra, 0.60 * rb
+    el = max(0.18, 0.06 * rb)
+    top, bot = [], []
+    N = 60
+    for i in range(N + 1):
+        t = i / N
+        x = -la + t * 2 * la
+        ha = lb * math.sin(math.pi * (t ** 1.5)) - el
+        if ha < 0:
+            ha = 0
+        top.append((cx + x, cy - ha))
+        bot.append((cx + x, cy + ha))
+    boca = top + bot[::-1]
+    dentes = []
+    passo = max(0.55, 0.11 * ra)
+    x = -la
+    while x <= la:
+        t = (x + la) / (2 * la)
+        ha = lb * math.sin(math.pi * (t ** 1.5)) - el
+        if ha > 0.35:
+            d = ha * 0.5
+            dentes.append(((cx + x, cy - ha), (cx + x, cy - ha + d)))
+            dentes.append(((cx + x, cy + ha - d), (cx + x, cy + ha)))
+        x += passo
+    return boca, dentes
+
+
+def buzios_silk(cx, cy, ra, rb, camada="F.SilkS", w=0.2):
+    """O simbolo de buzios em serigrafia: casco (super-elipse), boca e dentes —
+    a mesma `Concha` da marca do firmware, vectorizada para a placa. Traco de
+    0,2 mm (>= 0,15 do minimo de serigrafia)."""
+    def poly(pts):
+        xy = " ".join("(xy %.4f %.4f)" % (x, y) for x, y in pts)
+        return ('\t(gr_poly\n\t\t(pts\n\t\t\t%s\n\t\t)\n\t\t(stroke\n\t\t\t'
+                '(width %g)\n\t\t\t(type default)\n\t\t)\n\t\t(fill no)\n\t\t'
+                '(layer "%s")\n\t\t(uuid "%s")\n\t)\n' % (xy, w, camada, u()))
+    def linha(p0, p1):
+        return ('\t(gr_line\n\t\t(start %.4f %.4f)\n\t\t(end %.4f %.4f)\n\t\t'
+                '(stroke\n\t\t\t(width %g)\n\t\t\t(type default)\n\t\t)\n\t\t'
+                '(layer "%s")\n\t\t(uuid "%s")\n\t)\n'
+                % (p0[0], p0[1], p1[0], p1[1], w, camada, u()))
+    casco = _super_elipse(cx, cy, ra, rb)
+    boca, dentes = _boca_e_dentes(cx, cy, ra, rb)
+    out = poly(casco) + poly(boca)
+    for a, b in dentes:
+        out += linha(a, b)
+    return out
+
+
 def marca(t, nome, alvo):
-    """Escreve a marca em F.SilkS. Substitui a que houver, para nao duplicar."""
+    """Escreve a marca na face VISIVEL pela tampa de cada placa. Substitui a que
+    houver, para nao duplicar (texto em qualquer camada + os buzios anteriores,
+    que sao as unicas gr_poly/gr_line de nivel-placa em F.SilkS deste gerador)."""
+    cfg = MARCA.get(nome)
+    if not cfg:
+        return t
     t = re.sub(r'\n\t\(gr_text "COTUCATRONICS"[\s\S]*?\n\t\)', '', t)
-    t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [ABC]"[\s\S]*?\n\t\)', '', t)
+    t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [A-C][0-9]?"[\s\S]*?\n\t\)',
+               '', t)
+    t = re.sub(r'\n\t\(gr_(?:line|arc|poly)[\s\S]*?\(layer "F\.SilkS"\)'
+               r'[\s\S]*?\n\t\)', '', t)
+    just = "\t\t\t(justify mirror)\n" if cfg["mirror"] else ""
     L = []
-    for x, y, txt, h, esp in MARCA.get(nome, []):
+    for x, y, txt, h, esp in cfg["textos"]:
         L.append('\t(gr_text "%s"\n\t\t(at %g %g)\n\t\t(layer "%s")\n'
                  '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n\t\t\t\t'
                  '(size %g %g)\n\t\t\t\t(thickness %g)\n\t\t\t\t(bold yes)\n'
-                 '\t\t\t)\n\t\t\t(justify mirror)\n\t\t)\n\t)\n'
-                 % (txt, round(x, 3), round(y, 3), MARCA_LADO, u(), h, h, esp))
+                 '\t\t\t)\n%s\t\t)\n\t)\n'
+                 % (txt, round(x, 3), round(y, 3), cfg["layer"], u(),
+                    h, h, esp, just))
+    if cfg.get("buzios"):
+        L.append(buzios_silk(*cfg["buzios"], camada=cfg["layer"]))
     i = t.rstrip().rfind(')')
     return t[:i] + "".join(L) + t[i:]
 

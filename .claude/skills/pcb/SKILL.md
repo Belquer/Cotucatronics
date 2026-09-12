@@ -354,6 +354,15 @@ recusa um DRC sujo.
   não um depois: um pacote que só existe em `fabrica/` (gitignored) some com o
   container e nunca chega ao PR — o estágio 8 **não fecha** até o `export/` estar
   no git.
+- **⚠️ Afirmação de versão (as três camadas — ver `references/versionamento.md`).**
+  Emitir um pacote **afirma que o rev da placa no silk bate com a CLASSE da
+  mudança**: se este gerber/drill difere do último pacote da mesma placa, o silk
+  **tem** de trazer rev superior (`rev <LETRA><N>`, POR PLACA); se só mudou
+  tooling/doc/BOM-agrupamento (o artefacto fabricado não muda), a rev **não**
+  sobe. **Silk é gerber** — mover/acrescentar serigrafia sobe a rev mesmo com o
+  cobre idêntico. O portão humano confere, pela proveniência do LEIA-ME, que a
+  rev carimbada e a rev impressa são a mesma e que subiu se o gerber subiu; e a
+  linha **rev → o que mudou → commit** entra em `docs/relatorio/002.md`.
 - **Artefacto:** o pacote carimbado sob `export/<placa>_<data>_<commit>/`
   (zip de gerbers + CPL + `cpl_rico` + BOM-por-LCSC + LEIA-ME + `VISTORIA.md`, o
   questionário do portão humano gerado para a placa, + a pasta `kit/` de montagem
@@ -400,6 +409,11 @@ recusa um DRC sujo.
 - `references/portao-humano.md` — o método dos portões ⟨dB⟩: os quatro campos por
   item, a regra "um item de cada vez, sem avanço em ambiguidade", os princípios
   anti-miscomunicação, e as 7 categorias que o questionário cobre sempre.
+- `references/versionamento.md` — as **três camadas** de versão (rev da placa no
+  silk `rev <LETRA><N>` POR PLACA · stamp do pacote = short SHA em `export/` ·
+  semver dos scripts) e a **regra de ouro** (gerber/drill muda → rev sobe;
+  tooling/doc/BOM-agrupamento → não sobe). O histórico de revisões vive em
+  `docs/relatorio/002.md`.
 - `scripts/manifesto_fontes.py` — o portão STOP do estágio 2 (`--sabota` prova
   que sabe dizer não).
 - `scripts/congestao.py` — o portão do estágio 3.5: orçamento de canais de escape
@@ -429,6 +443,14 @@ fabrica a placa de ontem.
 
 ## Histórico
 
+- **v1.2.0 (2026-09-12)** — o **método de versionamento** entra na skill
+  (`references/versionamento.md`, nova): as três camadas (rev da placa no silk
+  `rev <LETRA><N>` POR PLACA · stamp do pacote = short SHA em `export/` · semver
+  dos scripts) e a regra de ouro (gerber/drill muda → rev sobe; tooling/doc não
+  sobe; **silk é gerber**). O Estágio 8 ganha a **afirmação de versão** no
+  portão, e o histórico de revisões passa a viver em `docs/relatorio/002.md`.
+  Instância: cérebro **rev C1** (marca para F.Silk do topo + búzios, cobre
+  provado idêntico).
 - **v1.1.0 (2026-09-11)** — Estágio 8 aprende a corrida real do cérebro/painel
   (stamp `6ebbda5`): a **via de montagem em casa** (chapa quente) com portão de
   custo (`references/montagem-casa.md`, nova), o **kit de montagem** como saída-
