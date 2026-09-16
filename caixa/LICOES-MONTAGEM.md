@@ -1,6 +1,10 @@
 # Lições de montagem — a caixa de acrílico, montada à mão
 
-### Cotucatronics · 16/09/2026 · acrílico transparente **3,0 mm** · gravado da bancada
+### Cotucatronics · 16/09/2026 · rev. b · acrílico transparente **3,0 mm** · gravado da bancada
+
+> **rev. b (16/09/2026):** lição #1 — furo do pino de indexação do pot
+> **totalmente locado na peça** (**ø3,2 mm · 7,5 mm centro-a-centro · à esquerda
+> do eixo na vista de cima**), substituindo a incerteza anterior do datasheet.
 
 > Isto não é o manual de montagem (esse é o `CAIXA-ACRILICO-MONTAGEM.md`). Isto
 > é o que a **peça em mão** ensinou depois de cortada e montada — cinco coisas
@@ -33,19 +37,38 @@ x=175, todos a y=92). **Não faz o furo do pino anti-rotação** (*locating pin*
 *anti-rotation pin*; o furo que o recebe é o *locating hole*). Sem esse furo o
 corpo do pot não tem onde encaixar o pino e não assenta.
 
-**A distância está POR CONFIRMAR na peça.** Há duas fontes que não batem:
-- o datasheet do **PTV09A** dá **~4,4 mm** de centro-a-centro entre o eixo e o
-  pino (≈ 0,9 mm da borda do ø7);
-- mas a medição na bancada deu **4,7 mm a partir da BORDA** do furo central ⇒
-  **~8,2 mm de centro-a-centro**, que **diverge do datasheet**.
+**Distância MEDIDA (locada): 7,5mm centro-a-centro.** Medido direto na peça
+pelo dB, do eixo-centro ao pino-centro. **A peça em mão manda — supersede o
+datasheet.**
 
-Regra (§0 da skill `caixa`, e vale aqui inteira): **a peça em mão manda.** Antes
-de gerar, mede-se na peça real, do eixo-centro ao pino-centro, e é essa a cota.
-O PTV09A tem **DOIS pinos opostos** — confirmar na peça se o painel precisa de
-**1 ou 2** furos de indexação.
+**Esclarecimento importante a registrar** (evita confusão futura): este
+**7,5mm é a trava anti-rotação do lado do PAINEL** — o *tab* que entra na
+**TAMPA** da caixa. É uma feature **DISTINTA** dos **~4,4mm dos postes do lado
+da PCB** (os que entram no painel, no footprint KiCad
+`Potentiometer_Bourns_PTV09A-1`). São **dois conjuntos de features diferentes**
+— sem conflito entre a caixa e a placa. O furo da **TAMPA** usa **7,5mm c-c**.
 
-**Correção escolhida:** adicionar furo(s) **ø~3 mm** no *locating hole*, à cota
-medida na peça.
+**Posição angular do furo (agora conhecida):** furo do pino a **7,5mm c-c, à
+esquerda do eixo na vista de cima do painel** (**−X, mesmo Y** do centro do
+eixo). Olhando o painel de cima, o furo do pino anti-rotação fica à **ESQUERDA**
+do furo do eixo.
+
+> ⚠️ **Cuidado para a implementação no gerador:** «esquerda na vista de cima»
+> tem de ser mapeado pelo transform de coordenadas da tampa (`to_top()` /
+> qualquer *mirror* da TAMPA em `cotuca_caixa_corte.py`) — **confirmar o SINAL
+> contra o transform antes de gerar**, para não sair espelhado. É a família de
+> bug de eixo/*mirror* que a própria skill avisa. **A peça em mão + a vista de
+> cima mandam.**
+
+Regra (§0 da skill `caixa`, e vale aqui inteira): **a peça em mão manda.** O
+**PTV09A tem trava** — confirmar na peça se o painel precisa de **1 ou 2** furos
+de indexação.
+
+**Correção escolhida:** adicionar furo(s) no *locating hole* à cota medida
+(**7,5mm c-c**), diâmetro **ø3,2mm** (medido pelo dB, confirmado na peça).
+
+> **Spec completa da lição #1 (locate hole do pot):** **ø3,2mm · 7,5mm
+> centro-a-centro · à esquerda do eixo na vista de cima do painel (−X, mesmo Y)**.
 
 **Precisa re-corte?** **Sim.**
 
@@ -171,7 +194,7 @@ usuário está tomada:
 
 | # | correção | re-corte? | ferragem | obra |
 |---|---|---|---|---|
-| 1 | furo(s) ø~3 do pino de indexação do pot (cota **medida na peça**) | **Sim** | nenhuma | pequena |
+| 1 | furo(s) **ø3,2** do pino de indexação do pot (**7,5mm c-c**, à esquerda do eixo em vista de cima, medido na peça) | **Sim** | nenhuma | pequena |
 | 2 | OLED por dentro, em 4 standoffs M2.5 | Não (furos existem)* | 4 standoffs M2.5 + parafusos | pequena |
 | 3 | cabos entram (resolve-se com o nº 2) | Não | — | nula (segue nº 2) |
 | 4 | reforço + nervura **aparafusados** (ø3,4 na tampa + bolso de porca) | **Sim** | ~9 M3 + 9 porcas | média |

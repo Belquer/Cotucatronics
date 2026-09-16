@@ -338,13 +338,18 @@ Ler esse doc **antes de abrir a próxima caixa rev**.
 `cotuca_caixa_corte.py:264` faz só o **ø7 central** de cada pot (encoder x=105,
 pots x=140/175, y=92) — falta o furo do **pino anti-rotação** (*locating hole*),
 sem o qual o pot não assenta rente. Ao montar o pot na guia da caixa, **este
-furo entra na lista** (ø~3 mm), a par do ø7.
+furo entra na lista** (**ø3,2 mm**, medido na peça), a par do ø7.
 
-⚠️ **E a distância eixo→pino mede-se na PEÇA, não na ficha** (§0: a peça em mão
-manda). O datasheet do PTV09A dá ~4,4 mm centro-a-centro; a bancada mediu 4,7 mm
-**a partir da borda** do ø7 (~8,2 mm centro-a-centro) — **diverge do datasheet**.
-Mede-se eixo-centro→pino-centro na peça real antes de gerar, e confirma-se na
-peça se são **1 ou 2** furos (o PTV09A tem dois pinos opostos).
+⚠️ **A distância eixo→pino está LOCADA: 7,5 mm centro-a-centro** — medido direto
+na peça pelo dB (§0: **a peça em mão manda**, supersede o datasheet). Este
+7,5 mm é a **trava anti-rotação do lado do PAINEL** (o *tab* que entra na TAMPA
+da caixa), uma feature **distinta** dos ~4,4 mm dos postes do lado da PCB (que
+entram no painel, footprint `Potentiometer_Bourns_PTV09A-1`) — dois conjuntos de
+features diferentes, sem conflito entre caixa e placa. Confirma-se na peça se são
+**1 ou 2** furos (o PTV09A tem trava). **Posição:** furo do pino **à esquerda do
+eixo na vista de cima do painel** (**−X, mesmo Y**) — mapear «esquerda em vista
+de cima» pelo transform da tampa (`to_top()`/*mirror*) e **confirmar o sinal
+antes de gerar**, para não sair espelhado. Ver `caixa/LICOES-MONTAGEM.md`, lição #1.
 
 ## 5. Ordem de trabalho, e onde o dB entra
 
@@ -473,6 +478,16 @@ as duas correcções seguintes foram para caixas reais mas erradas. Ver também
 
 ## Histórico
 
+- **v1.1.1 (2026-09-16)** — §4f: furo do pino de indexação do pot **totalmente
+  locado — ø3,2 mm · 7,5 mm centro-a-centro · à esquerda do eixo na vista de cima
+  (−X, mesmo Y)**, tudo medido na peça pelo dB (supersede o datasheet),
+  substituindo a incerteza datasheet ~4,4 mm ≠ 4,7 mm-da-borda ~8,2 mm.
+  Esclarece que o 7,5 mm é a **trava anti-rotação do lado do PAINEL** (tab na
+  TAMPA) — feature distinta dos ~4,4 mm dos postes do lado da PCB (footprint
+  `Potentiometer_Bourns_PTV09A-1`), sem conflito caixa↔placa. Posição angular
+  agora conhecida: furo do pino **à esquerda do eixo na vista de cima** (−X,
+  mesmo Y) — mapear pelo transform da tampa e confirmar o sinal antes de gerar.
+  «A peça em mão manda».
 - **v1.1.0 (2026-09-16)** — nova secção **4f. Lições de montagem (campo) + rumo
   parafusado**: declara a diretriz **«TUDO PARAFUSADO — cola só se absolutamente
   necessário»** como governante da próxima caixa rev, aponta para
