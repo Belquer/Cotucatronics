@@ -304,6 +304,10 @@ revisão `J1 x ≥ 26,1`.
 (confirmado pelo dB, 17/09). **Enviada a 17/09**: 5 de cada, dos pacotes
 `06db1c7` — as mesmas placas medidas acima. DHL Express, tracking `7099774990`.
 
+⚠️ **Na montagem, `Q1`/`Q2` do painel:** o mapa do kit diz `AO3400A`; solda-se o
+**`SI2302CDS-T1-GE3`** que veio da Mouser (marcação **N2**). Mesma pinagem, 1 G ·
+2 S · 3 D, conferida na ficha Vishay doc. 68645 (17/09). Ver a nota no MANIFEST.
+
 ---
 
 ## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li

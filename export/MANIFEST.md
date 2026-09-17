@@ -1,4 +1,4 @@
-<!-- carimbo: MANIFEST.md v4 · 2026-09-17 · placas: painel rev C · cerebro rev C -->
+<!-- carimbo: MANIFEST.md v5 · 2026-09-17 · placas: painel rev C · cerebro rev C -->
 # MANIFEST — índice autoritativo de `export/`
 
 > **Protocolo:** antes de subir/consumir um artefato, confira o **carimbo** dele
@@ -59,6 +59,16 @@ que **é** o mecanismo de versão da placa. Stamp = `para_fabrica v0.19.0 · com
 > correcto pede rede (download da ficha nova / lookup LCSC do part novo), que este
 > ambiente não alcança. **Até lá, a fonte-da-verdade dos MPNs finais é
 > `MOUSER_ALTERNATES.md` (as 7 verificadas) + `BOM_CONSOLIDADO.csv`.**
+
+## ⚠️ Nota para quem monta o painel — `Q1`/`Q2`
+
+O `kit/MAPA_COLOCACAO.md` do pacote `painel_2026-09-12_06db1c7` (e o Value na
+placa, em F.Fab) diz **`AO3400A`**. A peça que veio da Mouser (#40440548) é o
+**`SI2302CDS-T1-GE3`** (Vishay, marcação **N2**). **É essa que se solda nos
+`Q1`/`Q2`.** Mesmo SOT-23 e mesma pinagem — 1 G · 2 S · 3 D, conferida na
+ficha Vishay doc. 68645 (`docs/datasheets/SI2302CDS-T1-GE3.pdf`) a 2026-09-17.
+Só o nome difere; o mapa não foi editado porque é artefato carimbado do
+pacote que foi à fábrica.
 
 ## Status de encomenda (2026-09-12)
 
