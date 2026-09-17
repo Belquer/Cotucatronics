@@ -1041,6 +1041,34 @@ idênticos entre condições que deviam diferir são uma avaria do aparelho*; es
 a face oposta: **resultados diferentes entre condições que deviam ser idênticas
 são outra.**
 
+### 12y. O passo da malha TEM de dividir 1,27
+
+A fuga de um pad da fila de trás de um header de 2,54 passa pelo meio exacto do
+vão entre dois pads da frente — com pads de 1,70 e folga 0,22 a tolerância é
+**0,075 mm**, a 1,27 do centro do pad. Uma malha de 0,25 (1,27/5,08) não tem nó
+lá, e o roteador responde «fica para a pessoa», **igual** a quando a placa está
+cheia. Medido no painel: 0,25 → 0 de 3; 0,125 → 0 (erra por 0,002); 0,0635
+(1,27/20) → 3 de 3 em placa vazia. O `roteia.py` recusa um passo que não divida.
+
+⚠️ **E conserta a malha antes de concluir que não há espaço** — mas não pares
+nela: as três só fecharam na placa real quando a fila de trás ganhou saída (o
+`J1` desceu). Duas causas, a mesma cara. (cicatriz 15eq)
+
+### 12z. Courtyard contra o BORDO: o KiCad não pergunta, e o canto é redondo
+
+O DRC não tem regra de courtyard contra `Edge.Cuts` por omissão: «geometria 0»
+com o `J1` 2,83 mm fora. O pad não serve de medida (os pads estavam dentro; saía
+o plástico). `dentro_do_contorno.py`:
+
+- cada vértice do courtyard **contra o polígono** do bordo, e cada vértice do
+  bordo contra o courtyard — o canto tem raio 3 e um vértice a 0,535 do bordo
+  de cima caía fora do arco;
+- distância pelo `NearestPoint`, **nunca** `SHAPE_LINE_CHAIN.Distance()`, que
+  numa cadeia fechada dá 0 para todo ponto interior (74 de 74 reprovados a
+  `0.000` na primeira versão);
+- footprint sem courtyard é achado; isenção com número na razão;
+- provado subindo o `SW1` 25 mm (8 mm não saía de uma placa de 36). (15er)
+
 ### 12i. O portao antes da fabrica
 
 Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,

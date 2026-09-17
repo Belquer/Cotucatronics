@@ -4,6 +4,9 @@
 <!-- doc-check: ignore nogueira_6p4 (perfil de dentes da caixa (6,4 mm), nome de configuracao) -->
 <!-- doc-check: ignore acrilico_3p0 (idem, para acrilico de 3,0 mm) -->
 <!-- doc-check: ignore confere_furos (portao em tools/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore arruma_silk (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore refs_apontam (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore kicad_layout (nome de skill, nao param) -->
 <!-- doc-check: ignore confere_caixa (idem) -->
 <!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
@@ -10112,3 +10115,140 @@ acto de fé.
 `kicad_layout` no fecho de qualquer placa, no topo e não numa nota de rodapé: um
 esquemático provado não diz nada sobre o cobre, e as duas coisas já foram
 confundidas aqui.
+
+## 15eq — o roteador nunca tirou um sinal da fila de trás de um IDC, e dizia «fica para a pessoa»
+
+Três redes do painel (`OLED_CLK`, `LED_FRZ_B`, `BOT_FRZ_B`) não fechavam nem no
+FreeRouting nem no `roteia.py`. Todas começavam na **fila de trás** do `J1`.
+
+A saída de um pad da fila de trás de um header de 2,54 passa pelo **meio exacto**
+do vão entre dois pads da frente. Pads de 1,70 e folga 0,22 deixam ao centro da
+pista **0,075 mm** de tolerância, e o meio do vão está a 1,27 do pad. A malha
+era `PASSO = 0.25`: 1,27/0,25 = 5,08 — **não há nó nenhum lá**.
+
+| passo | nós por meio-passo | as três |
+|---|---|---|
+| 0,25 | 5,08 | 0 |
+| 0,125 | 10,16 | 0 — errar por 0,002 basta |
+| 0,0635 | 20 | 3 em placa vazia |
+
+> **Um número certo a esconder uma causa errada.** «Fica para a pessoa» é o que
+> o roteador devolve quando a placa está cheia — e devolvia o mesmo quando a
+> malha não tinha onde pôr a pista. As duas causas tinham a mesma cara.
+
+E o `faz_placa` passava `--passo 0.0847` (14,994 nós). Guarda posta no `roteia.py`
+v1.18.0: recusa qualquer passo que não divida 1,27, com a razão.
+
+⚠️ **Mesmo com a malha certa não fecharam na placa cheia** — e na vazia sim.
+Foram as duas coisas: a malha impedia sempre, e a fila de trás não tinha saída
+para cima (0,29 mm a menos entre o pad e o bordo). Fecharam sozinhas quando o
+`J1` desceu (15er). Consertar só a malha teria deixado a segunda causa escondida
+atrás de um «melhorou».
+
+## 15er — o KiCad não confere courtyard contra o bordo, e o meu verificador disso reprovou tudo a 0,000
+
+Uma imagem do painel mostrou o `J1` com o corpo por cima do contorno. O DRC dizia
+**geometria 0** e não mentia: **não há regra de courtyard contra `Edge.Cuts`**
+por omissão. A pergunta nunca tinha sido feita. E os 26 pads estavam todos lá
+dentro — o que saía era o plástico, **2,83 mm**.
+
+O verificador novo (`dentro_do_contorno.py`) errou duas vezes antes de acertar:
+
+1. **v0.1.0 reprovou 74 de 74 no cérebro e 28 de 28 no painel, todos a `0.000`.**
+   `SHAPE_LINE_CHAIN.Distance()` numa cadeia fechada mede a **região**: devolve
+   zero para todo ponto interior. **Zeros idênticos em cima de tudo são leitor
+   partido, não são placa.** O `J1` a `-2,827` era o único número real da lista.
+2. **A sabotagem de 8 mm não disparou** — o `SW1` subido 8 mm continuava dentro
+   de uma placa de 36. Guarda que não reprova sob sabotagem não está provada;
+   passou a 25 mm, que sai de qualquer placa.
+
+⚠️ **E o canto é arredondado.** Com o `J1` descido, o topo do courtyard ficou a
+20,535 contra um bordo a 20,00 — folga 0,535, passa — e **continuava fora**: o
+canto tem raio 3 e o vértice (20,905 · 20,535) caía fora do arco. Uma caixa
+envolvente tinha dado por bom. Mede-se vértice a vértice contra o **polígono**,
+e cada vértice do bordo contra o courtyard, senão um recorte entra entre dois
+vértices sem tocar em nenhum.
+
+Isenções com número na razão, uma a uma: os quatro M3 do cérebro passam 0,06 no
+desenho (courtyard de raio 3,44) e a anilha real sobra 0,25.
+
+## 15es — a cadeia ia do esquema ao Gerber sem nunca ler o esquema
+
+Consertada a ordem dos pinos do OLED no gerador, ERC a zero, `faz_placa` do zero:
+**a placa saiu com os +5 V no pino errado**, roteada na perfeição, zero avisos.
+
+O `sincroniza_pcb.py` existe para fazer o que o F8 do KiCad faz, e a
+`kicad_layout` diz que «o F8 deixa de ser um passo do processo». **Nenhum
+ficheiro do repositório o chamava.** Quem mexesse numa folha e corresse o
+`faz_placa` recebia a placa velha. As vezes em que funcionou foi porque o
+corri à mão e não reparei que era à mão.
+
+> **Uma ferramenta que substitui um passo manual só o substitui se alguém a
+> chamar.** «Existe» e «corre» são afirmações diferentes, e o `grep` pelo
+> chamador custa um segundo.
+
+E a irmã, no mesmo ficheiro: `faz_placa --sem-zerar` prometia guardar o cobre e
+chamava o FreeRouting de raiz, que o apaga. A promessa e a acção diziam o
+contrário uma da outra — e semear à mão uma ligação difícil é o único modo de a
+fechar quando só cabe no corredor que as outras ocupam primeiro.
+
+## 15et — a guarda de chaves apanhou o encoder e não podia apanhar o MOSFET
+
+Regerar a folha do painel devolveu **cinco pinos do encoder no ar**. O conserto
+C4 tinha renumerado o símbolo `EC11` para os nomes dos pads (`A C B S1 S2`), e o
+`gera_painel.py` continuava a dizer `"1".."5"`. O `liga()` fazia
+`if n not in mapa: continue` — **saltava em silêncio nos dois sentidos** — e o
+gerador anunciou «219 blocos».
+
+Guarda posta: todo pino do símbolo tem de estar no mapa, toda chave tem de ser
+pino, pino de propósito no ar escreve-se `None`. Provada renomeando `S1` para `S9`.
+
+⚠️ **E na corrida seguinte o `funcao_dos_pads` apanhou os MOSFET com fonte e
+dreno trocados.** O mapa dizia `2: LED_K, 3: GND`, de quando o símbolo tinha o
+dreno no 2; o C2 trocou o **significado** dos números 2 e 3 sem mudar as chaves.
+A guarda nova não podia ver — as três chaves continuam a existir.
+
+> **Uma guarda de nomes verifica que os nomes batem. Só a ficha verifica o que
+> cada nome quer dizer.** As duas são precisas, e nenhuma faz o trabalho da outra.
+
+## 15eu — a ordem dos pinos do OLED estava errada nas sete posições, e a função de um conector é do outro lado
+
+O `J2` do painel (PicoBlade 7 vias) ligava ao módulo Waveshare 2.42" pela ordem
+`GND +5V CLK DIN CS DC RST`, escrita a 05/09 sem ficha porque o módulo não estava
+em mão. A foto da secção «Control Interface» da página do produto diz
+`1 RST · 2 DC · 3 CS · 4 CLK · 5 DIN · 6 GND · 7 VCC`.
+
+Com cabo directo, os nossos +5 V no pino DC do módulo. Com cabo invertido, os +5 V
+no GND dele. **Nenhuma orientação de cabo salvava.**
+
+⚠️ **E todos os portões estavam verdes:** ERC 0, DRC 0, netlist limpa, IDC 26/26,
+`funcao_dos_pads` 0. Um conector de sete vias tem sete pads iguais e nenhuma
+polaridade. **A função dele não está na nossa placa — está na peça do outro
+lado do cabo**, e só a ficha dessa peça a arbitra. O `funcao_dos_pads` v0.2.0
+ganhou essa categoria, e reproduziu as sete falhas sozinho antes do conserto.
+
+A pergunta do dB que a trouxe era outra («porque tem duas filas?» — não tem: as
+duas filas eram o `J1` ao lado). **Uma foto enviada por uma razão respondeu a
+pergunta que estava pendurada no `LEIA-ME.txt` desde a rev B.**
+
+## 15ev — a API IPC respondia à versão e recusava tudo o resto: o socket era do processo errado
+
+Rev C, primeiro contacto com o `kipy` (kicad-python 0.8.0, KiCad 10.0.5). O
+`KiCad()` sem argumentos devolvia `get_version()` e depois:
+
+    no handler available for request of type kiapi.common.commands.GetOpenDocuments
+
+Não quer dizer «a API está desligada» nem «não suporta». **O socket é por
+processo.** `/tmp/kicad/api.sock` é o **gestor de projecto**, que não tem
+documentos; cada editor abre o seu `api-<PID>.sock`. Ficam órfãos de instâncias
+mortas, que recusam a ligação. E `open -a KiCad ficheiro.kicad_pcb` com o KiCad
+já aberto **não abre o editor de placa** — só traz a app para a frente; o que abre
+é `open -a "/Applications/KiCad/PCB Editor.app" --args <caminho>`. É também ele que
+deixa os `*.kicad_pcb.kicad_pro` fantasma que andaram a aparecer no `git status`.
+
+Custou cinco tentativas até olhar para os **nomes dos ficheiros** em `/tmp/kicad/`.
+`kicad/_v2/liga.py` tenta todos e fica com o que responder **com placa**.
+
+Provado pela API, numa cópia: ler, criar e remover pista, mover 7 footprints
+por coordenadas e confirmar no KiCad, `refill_zones()`, `save()`. **A GUI deixou
+de ser a porta única para a placa.**

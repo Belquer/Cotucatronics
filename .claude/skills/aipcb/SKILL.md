@@ -120,7 +120,7 @@ Cada porta tem **o que exige para abrir**. Nada passa por "está quase".
 |---|---|---|
 | ler ficheiros sem KiCad aberto | `rjwalters/kicad-tools` ou o nosso `kaudit.py` | só para **ler**; delimitar por parêntesis, nunca por contagem de caracteres |
 | esquema | editor KiCad (humano/Cowork) · `kicad-mcp-kipy` para ler · atopile se a Fase 1 disser | biblioteca oficial |
-| placa | `kicad-python` (`kipy`) · Konnect | SWIG `pcbnew` está em manutenção: não se escreve código novo nele |
+| placa | `kicad-python` (`kipy`) · Konnect | SWIG `pcbnew` está em manutenção: não se escreve código novo nele. ⚠️ **O socket é por processo**: `/tmp/kicad/api.sock` é o gestor de projecto e recusa tudo com `no handler … GetOpenDocuments`; o editor de placa é `api-<PID>.sock`. Usar `kicad/_v2/liga.py`. (15ev) |
 | verificação | `kicad-cli sch erc / pcb drc / export netlist` | é o veredicto |
 | roteamento | terra e áudio à mão; Freerouting via Konnect para o resto | nunca "faz_placa do zero" numa placa já colocada |
 | peças | LCSC/JLC via API; ficha lida com `pdftotext` e a **tabela de encomenda** conferida por sufixo | busca difusa responde com confiança ao que não sabe: filtrar por descrição estrita, não por ordem |
@@ -208,6 +208,18 @@ não aconteceu.
   Encoder no ar, conector fora, silk no bordo — dez segundos numa imagem.
 - **Não reconstruir a ferramenta que já existe para evitar aprender a usá-la.**
   Dezassete geradores para não clicar no KiCad.
+- **«Fica para a pessoa» tem a mesma cara quando a placa está cheia e quando a
+  malha não tem nó no vão.** O passo tem de dividir 1,27. (15eq)
+- **Zeros idênticos em cima de tudo são leitor partido, não placa.**
+  `SHAPE_LINE_CHAIN.Distance()` dá 0 dentro de uma cadeia fechada. (15er)
+- **Canto arredondado: a caixa envolvente mente.** Courtyard contra o
+  polígono do bordo, vértice a vértice. (15er)
+- **«Existe» e «corre» são afirmações diferentes.** O `sincroniza_pcb` não
+  tinha chamador: a cadeia nunca lia o esquema. (15es)
+- **Guarda de nomes vê chaves; só a ficha vê significado.** Encoder
+  apanhado por uma, MOSFET só pela outra. (15et)
+- **A função de um conector está na peça do outro lado do cabo.** OLED com
+  as sete posições trocadas e todos os portões verdes. (15eu)
 
 ---
 

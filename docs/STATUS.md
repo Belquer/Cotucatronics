@@ -1,10 +1,21 @@
 # STATUS — Cotucatronics
 <!-- doc-check: ignore svg_colisoes (ferramenta em tools/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore dentro_do_contorno (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore sincroniza_pcb (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore refresca_redes (funcao do sincroniza_pcb, em kicad/) -->
+<!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
+<!-- doc-check: ignore silk_overlap (codigo de violacao do DRC do KiCad) -->
+<!-- doc-check: ignore starved_thermal (codigo de violacao do DRC do KiCad) -->
+<!-- doc-check: ignore lib_footprint_mismatch (codigo de violacao do DRC do KiCad) -->
+<!-- doc-check: ignore courtyards_overlap (codigo de violacao do DRC do KiCad) -->
 
 **Onde estamos.** O par deste documento é
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
+> ⚠️ **17/09: ver «DOIS RAMOS» abaixo antes de pagar a rev C.**
+>
 > Atualizado em **2026-09-06 (a caixa está pronta para a Ponoko)** · leva:
 > **`caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg`, 20 peças, pronto a
 > encomendar.** O nome leva revisão e **digest do desenho** — a r1 (19 peças,
@@ -266,6 +277,39 @@ aqui*. Leia os dois antes de tocar em código.
 
 ---
 
+
+## ⚠️ 17/09/2026 — DOIS RAMOS, DOIS `J2`, e nenhum sabe do outro
+
+**O `main` e o `claude/slack-session-sm2ldz` divergiram no `4c67f94`** e têm
+placas diferentes do painel. Nenhum dos dois é «o certo» sozinho:
+
+| | `main` (`46eae27`) | `claude/slack-session-sm2ldz` (`10a1745`) |
+|---|---|---|
+| rev | B, fecho à mão | **C**, pacotes JLC e BOM Mouser exportados a 12/09 |
+| `J2` do OLED | PicoBlade 1×07, `RST DC CS CLK DIN GND VCC` | header 2,54 7p, `+5V GND DIN CLK CS DC RST` |
+| fonte da ordem | página Waveshare, «Control Interface» (15eu) | **nenhuma citada** |
+| malha do roteador a dividir 1,27 (15eq) | sim | **não** |
+| `dentro_do_contorno` / `J1` dentro do bordo (15er) | sim | **não** |
+| `sincroniza_pcb` na cadeia (15es) | sim | **não** |
+| guarda do `liga()` + MOSFET 2=S 3=D (15et) | sim | **não medido** |
+
+⚠️ **A ordem do ramo rev C é a inversa exacta da do `main`.** Pode estar certa —
+o header de 2,54 dos OLED Waveshare costuma vir `VCC GND DIN CLK CS DC RST`, e
+é outro conector que o PicoBlade — mas **é outra ficha, e ninguém a citou**.
+Antes de pagar a rev C: conferir o `J2` dela contra a serigrafia do header de
+2,54 do módulo em mão, e correr o `funcao_dos_pads` do `main` sobre a placa dela.
+
+**Painel no `main`:** ERC 0 · `funcao_dos_pads` 19 regras, 0 falhas (sabotagem
+reprova) · courtyards 0 · IDC 26/26 · 0 ligações por fazer. Faltam 4
+`silk_over_copper`, 3 `starved_thermal`, 1 `lib_footprint_mismatch`. **Cérebro no
+`main`:** 10 `silk_overlap` + 3 `silk_over_copper` + 1 `courtyards_overlap` que o
+portão não conta (`por_fazer()` exclui a serigrafia de propósito).
+
+**Rev C pela API:** `kipy` 0.8.0 lê, escreve, move, preenche e grava a placa
+(`kicad/_v2/liga.py`, 15ev). Por fazer: a tabela «seis falhas × revisores» — o
+Konnect não está instalado.
+
+---
 
 ## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li
 
