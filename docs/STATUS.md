@@ -300,8 +300,8 @@ reprovar sob sabotagem e o contrato PicoBlade velho a reprovar 6 de 7 · IDC 26/
 esquerdo (regra 0,5; o corpo fica dentro) — isenção com o número, e na próxima
 revisão `J1 x ≥ 26,1`.
 
-⚠️ **Ainda por confirmar, do MANIFEST:** se o pedido JLC cobre cérebro **e**
-painel ou só um.
+**Encomenda JLC `W2026091304545438`: as duas placas, cérebro e painel**
+(confirmado pelo dB, 17/09).
 
 ---
 
