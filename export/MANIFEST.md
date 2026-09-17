@@ -1,4 +1,4 @@
-<!-- carimbo: MANIFEST.md v3 · 2026-09-17 · placas: painel rev C · cerebro rev C -->
+<!-- carimbo: MANIFEST.md v4 · 2026-09-17 · placas: painel rev C · cerebro rev C -->
 # MANIFEST — índice autoritativo de `export/`
 
 > **Protocolo:** antes de subir/consumir um artefato, confira o **carimbo** dele
@@ -67,3 +67,6 @@ que **é** o mecanismo de versão da placa. Stamp = `para_fabrica v0.19.0 · com
 - **JLCPCB (placas nuas):** **PLACED** — Order # **W2026091304545438**, data
   **2026-09-12** (placas nuas). Cobre **as duas placas, cérebro e painel**
   — confirmado pelo dB a 2026-09-17.
+  **ENVIADO** (email JLC, 17/09): 5 × `cerebro_2026-09-12_06db1c7` e
+  5 × `painel_2026-09-12_06db1c7`, DHL Express Priority (DDP), tracking
+  **7099774990**.

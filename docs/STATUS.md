@@ -301,7 +301,8 @@ esquerdo (regra 0,5; o corpo fica dentro) — isenção com o número, e na pró
 revisão `J1 x ≥ 26,1`.
 
 **Encomenda JLC `W2026091304545438`: as duas placas, cérebro e painel**
-(confirmado pelo dB, 17/09).
+(confirmado pelo dB, 17/09). **Enviada a 17/09**: 5 de cada, dos pacotes
+`06db1c7` — as mesmas placas medidas acima. DHL Express, tracking `7099774990`.
 
 ---
 
