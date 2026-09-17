@@ -1,5 +1,28 @@
 #!/usr/bin/env python3
-"""pcb_contorno v0.14.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+"""pcb_contorno v0.22.0 — contorno e colocacao MECANICA de um .kicad_pcb.
+
+v0.22.0 (2026-09-12): a marca do cerebro (COTUCATRONICS + rev + buzios) MOVEU-SE
+em bloco para a banda aberta que o utilizador apontou — a DIREITA do U2, ABAIXO da
+fila de pontos de teste e do J12, a ESQUERDA do bloco J2/C3. Essa banda mede so
+32,8 x 9,5 mm (medido em pcbnew) e o banner a tamanho cheio tem 45 mm; nao cabia.
+O grupo foi ESCALADO uniformemente por 0,72 (layout relativo preservado) e centrado
+na banda: COTUCATRONICS (127.2,68.8) size 1.872, rev (127.2,72.256) size 1.152,
+buzios (144.48,69.664) ra 3.6 rb 2.16. Folga minima medida 0,67 mm (patio do U2 a
+esquerda, patio do J2 a direita). So serigrafia — cobre byte-identico.
+Congelamento-no-lancamento: enquanto a placa nao e fabricada, a rev NAO sobe — o
+silk fica `cerebro rev C` (sem numero) e as iteracoes distinguem-se pelo commit.
+
+v0.21.0 (2026-09-12): a marca do cerebro (COTUCATRONICS + rev + buzios) MOVEU-SE
+em bloco (translacao rigida +38,+65 mm, layout relativo preservado) da banda de
+topo para a area ABERTA do centro-direita inferior — a faixa livre acima do J1,
+a direita do U2 e abaixo do bloco J2/J3/C3/J16. Centros: COTUCATRONICS
+(138,89.4), `cerebro rev C2` (138,94.2), buzios (162,90.6). So serigrafia.
+
+v0.20.0 (2026-09-12): a marca passou a ser POR PLACA (camada + mirror), o cerebro
+foi para F.SilkS sem mirror (monta com os componentes para cima -> topo visivel
+pela tampa de acrilico), subiu para `cerebro rev C1` e ganhou o simbolo de buzios
+(`buzios_silk`, a mesma `Concha` do `src/splash.h`). So serigrafia — o cobre nao
+muda. O painel fica como estava (B.SilkS, mirror, rev C).
 
 POR QUE EXISTE.
 
@@ -32,7 +55,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.18.0"
+VERSAO = "0.22.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -153,56 +176,49 @@ COLOCA = {
  "painel": {
     # J1 ROTADO 90°: o IDC 2x13 e 32 mm de comprido e a placa so tem 36 de
     # altura — na vertical saia 13 mm por baixo do contorno.
-    # O IDC ocupa 32 mm da aresta de cima: x 26..58. Tudo o resto vive a
+    # O IDC ocupa 32 mm da aresta de cima. Tudo o resto vive a
     # direita dele ou nas duas filas de baixo.
+    # ⚠️ rev C — J1 DESCEU 5,5 mm (y=24 -> 29,5), afastado da aresta de cima.
+    # Encostado ao bordo o patio saia 2,2 mm FORA da placa e uma das duas fugas
+    # do conector estava morta (§12q: encostar um conector de duas filas a um
+    # bordo e dar-lhe metade dos pinos). A +5,5 mm o patio abre 3,3 mm ate a
+    # aresta e as DUAS fugas ficam vivas (supply 13->26), e o C5 (+3V3A) ganha
+    # casa limpa por baixo em vez de ficar a 0,5 mm de virar o "C16" do painel.
+    # Fix de floorplan aprovado pelo dB. Arrasta J3/J4/J5 e R1/R2 para baixo.
     # ⚠️ os TP no vao entre o J2 (acaba a ~80) e o RV1 (comeca a ~132), na
     # maior faixa livre do painel: 163,8 mm em y=27,5.
     **{f"TP{i + 1}": (90.0 + 6.0 * i, 27.5, 0) for i in range(5)},
-    # ⚠️⚠️ O J1 DESCEU 2,75 E ANDOU 0,5 PARA A DIREITA, e a razao e o CORPO.
-    #
-    # O courtyard do IDC 2x13 femea tem 9,89 mm de altura e esta centrado na
-    # linha media das duas filas de pads — ou seja, o plastico sai 4,95 mm
-    # para cada lado dos pinos. Com o J1 em y=24 isso punha o corpo em
-    # y=17,79, **2,83 mm fora do contorno** (o bordo de cima e 20,00): o
-    # conector nao entrava na placa. E o bordo ESQUERDO dele estava a 0,41.
-    #
-    # O DRC nao disse nada e nao estava a mentir: **o KiCad nao confere
-    # courtyard contra `Edge.Cuts`**, nao ha regra dessas por omissao. Quem
-    # respondeu foi o `dentro_do_contorno.py`, e quem perguntou foi uma
-    # imagem da placa. E o pad nao servia de medida — os 26 estavam todos
-    # dentro; o que saia era o corpo.
-    #
-    # A descida obrigou a cascata abaixo, com 0,5 entre courtyards:
-    #   C5  30,00 -> 31,95   (colado ao IDC, vai com ele)
-    #   J3/J4/J5  34,0 -> 36,3   (movem-se os TRES: fila desalinhada le-se
-    #                             como acidente por quem monta tres iguais)
-    #   R1/R2     40,0 -> 41,7
-    # Sobra 0,60 mm ate ao bordo de baixo, no C3. Nao ha mais.
-    # ⚠️ E O CANTO E ARREDONDADO. Com o J1 em x=26,5 o topo do courtyard
-    # ficava a 20,535 (bordo 20,00, folga 0,535 — passa) e MESMO ASSIM saia
-    # da placa: o canto superior esquerdo tem raio 3, e o vertice
-    # (20,905 · 20,535) cai fora do arco. Uma caixa envolvente teria dito
-    # que estava bom; e por isso que o `dentro_do_contorno` mede vertice a
-    # vertice contra o POLIGONO e nao contra um rectangulo.
-    # x=29,4 poe o courtyard a comecar em 23,805, ja fora do arco (que so
-    # existe ate x=23). O J2 anda 0,5 para dar folga de 1,03 entre os dois.
-    "J1":  (29.4, 26.75, 90),
-    "J2":  (68.5, 24.0, 0),
-    "J3":  (26.0, 36.3, 0),     "J4":  (38.0, 36.3, 0),   "J5":  (50.0, 36.3, 0),
+    # ⚠️ POSICOES DA REV C, que e a placa ENCOMENDADA (JLC W2026091304545438,
+    # 12/09). No `main` a rev B tinha o J1 em (29,4 · 26,75), por causa do
+    # corpo fora do bordo e do canto de raio 3 (cicatriz 15er); a rev C
+    # resolveu o mesmo problema por outro caminho, e e essa que existe.
+    "J1":  (26.0, 29.5, 90),
+    # rev C1 — J2 rodado 0->90: o header 1x07 a 2,54 mm nasce com os pinos ao
+    # longo de +Y; a 90 correm em +X (pino1=+5V em x=68, pino7=RST em x=83,24),
+    # afastando-se do J1 e do bordo de cima. A 2,54 mm o conector so cabe na
+    # horizontal (a placa tem 36 mm de altura). Ver gera_painel FOOTPRINT_MAP.
+    "J2":  (68.0, 24.0, 90),
+    # rev C — J3/J4/J5 desceram (y=34 -> 36,5) e J4/J5 abriram em x (38->40,
+    # 50->53) para libertar o corredor de fuga por baixo do J1 e dar sitio ao C5.
+    "J3":  (26.0, 36.5, 0),     "J4":  (40.0, 36.5, 0),   "J5":  (53.0, 36.5, 0),
     "J6":  (26.0, 46.0, 0),     "J7":  (38.0, 46.0, 0),
     "Q1":  (52.0, 46.0, 0),     "Q2":  (64.0, 46.0, 0),
-    "R1":  (52.0, 41.7, 0),     "R2":  (64.0, 41.7, 0),
+    # rev C — R1/R2 (gate 100R) desceram para y=42,3, encaixados entre a fila
+    # dos JST (que desceu) e os MOSFET, sem colidir patio nenhum.
+    "R1":  (52.0, 42.3, 0),     "R2":  (64.0, 42.3, 0),
     "R3":  (76.0, 40.0, 0),     "R4":  (88.0, 40.0, 0),
     "R5":  (76.0, 46.0, 0),     "R6":  (88.0, 46.0, 0),
     # C1/C2 COLADOS ao cursor: 6 mm do pino 2 de cada pot, do lado livre.
     "C1":  (133.0, 38.0, 0),    "C2":  (168.0, 38.0, 0),
     # ⚠️ o par do +5V vai JUNTO AOS MOSFET, que sao a carga que comuta — nao ao
-    # OLED, que tem os dele. O C5 colado ao IDC, onde o +3V3A entra e de onde
-    # saem 150 mm de fita.
-    # ⚠️ estas tres linhas estavam DUAS VEZES no dicionario, com o mesmo
-    # comentario reescrito. Valores iguais, logo ninguem reparou — e no dia em
-    # que so a primeira fosse actualizada, a segunda calava-a sem um erro.
-    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),   "C5":  (26.0, 31.95, 0),
+    # ⚠️ C3/C4/C5 estavam DUAS VEZES no dicionario (valores iguais, ninguem
+    # reparou; no dia em que so uma fosse actualizada, a outra calava-a).
+    # OLED, que tem os dele. rev C — o C5 (+3V3A) desceu para (34,5 · 34,5),
+    # DEBAIXO do pino 9 (+3V3A) do J1, com uma via de 1 mm ao plano de GND
+    # (laco curto, P4 da revisao de terra) em vez de encostado ao patio do IDC,
+    # onde estava a 0,5 mm de virar o "C16" do painel. O +3V3A entra pelo J1 e
+    # sai por 150 mm de fita, e e ai que o 100 n filtra.
+    "C3":  (52.0, 52.0, 0),     "C4":  (64.0, 52.0, 0),   "C5":  (34.5, 34.5, 0),
  },
 }
 
@@ -394,10 +410,19 @@ UNICOS_CEREBRO = {"U2": (113.24, 109.06, 180), "J14": (45.0, 29.0, 90),
                   # noutra peca, e isso e decisao de layout com o dB no editor,
                   # nao mais uma tentativa minha as cegas.
                   "U3": (85.0, 106.0, 180),
-                  # ⚠️ COLADOS ao que desacoplam: o C15 ao pino 39 da Daisy, o
-                  # C16 ao J14. A mais de poucos centimetros ligam-se atraves da
-                  # indutancia que existiam para contornar (P4 da revisao).
-                  "C15": (105.0, 115.0, 0), "C16": (78.0, 30.0, 0)}
+                  # ⚠️ COLADO ao que desacopla: o C15 ao pino 39 da Daisy. A mais
+                  # de poucos centimetros liga-se atraves da indutancia que
+                  # existia para contornar (P4 da revisao).
+                  "C15": (105.0, 115.0, 0),
+                  # ⚠️ C16 EM B.Cu, em (113,47). O patio do J14 (conector do
+                  # pre-amp) estende-se ate x=81 e engolia o C16 em (78,30):
+                  # courtyards_overlap. O J14 nao pode recuar — o pre-amp bloqueia
+                  # a folga para dentro — por isso quem sai e o C16, que vira para
+                  # B.Cu no meio-direito, com um lacinho curto de GND ao plano.
+                  # Caminho (b) aprovado pelo dB: aceita o lacinho de retorno.
+                  # ⚠️ O 4o elemento da tupla e a CAMADA; ver move()/grelha() —
+                  # o gerador declara o lado e RECUSA se a placa nao o respeitar.
+                  "C16": (113.0, 47.0, 0, "B.Cu")}
 
 
 def furos_kicad(alvo):
@@ -454,8 +479,10 @@ def grelha(t, zonas, unicos, furos=()):
             t = move(t, ref, (float(x), float(y)))
             i += 1
             n += 1
-    for ref, (x, y, ang) in unicos.items():
-        t = move(t, ref, (x, y), ang)
+    for ref, spec in unicos.items():
+        x, y, ang = spec[0], spec[1], spec[2]
+        camada = spec[3] if len(spec) > 3 else None
+        t = move(t, ref, (x, y), ang, camada)
         n += 1
     return t, n
 
@@ -753,48 +780,133 @@ def planos(t, nome, alvo):
 # ⚠️ A COR NAO VIVE NO FICHEIRO. Serigrafia e uma camada; preto ou branco e uma
 # opcao do pedido na JLCPCB, nao um atributo do `.kicad_pcb`. O que se faz aqui
 # e po-la na camada certa; a cor escolhe-se no carrinho.
-# ⚠️ VAI NA SERIGRAFIA DE TRAS. Tres razoes, e nenhuma e estetica:
-#   · a frente esta cheia — a primeira tentativa poe-la em cima do C6 e deu
-#     SESSENTA E QUATRO sobreposicoes de uma vez;
-#   · a caixa e de acrilico TRANSPARENTE e a placa assenta na chapa de fundo:
-#     o lado que se ve por baixo do instrumento e o de tras;
-#   · e atras nao ha nada com que colidir, hoje nem depois.
+#
+# ⚠️ A FACE DA MARCA E POR PLACA, e depende de COMO cada uma monta na caixa:
+#   · CEREBRO — monta com o lado dos componentes PARA CIMA. A tampa e de acrilico
+#     TRANSPARENTE, logo a F.Silkscreen (topo) e a face que se VE pela tampa. A
+#     marca do cerebro vive em F.SilkS SEM `mirror` — le-se direita de cima. (Ate
+#     a rev C vivia em B.SilkS espelhada; passou para o topo na rev C1, 2026-09-12,
+#     com o simbolo de buzios, sem tocar no cobre — so serigrafia.)
+#   · PAINEL — a placa assenta na chapa de fundo e o que se ve por baixo do
+#     instrumento e o lado de TRAS: a marca fica em B.SilkS COM `mirror` (le-se
+#     direita quando se olha pelas costas / pelo fundo transparente). No editor,
+#     visto de frente, aparece invertida — e a aparencia correcta, nao um defeito.
 # Texto em camada de tras leva `mirror`, senao le-se ao contrario no cobre.
-# ⚠️ `mirror` E O CERTO para a face de tras: e assim que o texto se le quando se
-# olha para as COSTAS da placa, que e o que se ve pelo fundo transparente da
-# caixa. No editor, visto de frente, aparece invertido — e essa e a aparencia
-# correcta, nao um defeito.
-MARCA_LADO = "B.SilkS"
-# ⚠️ COORDENADAS ABSOLUTAS, e no sitio que foi MEDIDO. A primeira versao punha a
-# marca a meio da placa por fraccao — e "meio" atras sao os 130 pads passantes,
-# que dao `silk_over_copper` e serigrafia por cima de solda. Atras nao ha
-# serigrafia de pecas, mas ha PADS: o vazio de uma camada nao e o vazio da face.
-# A faixa livre foi procurada por varrimento contra todos os pads passantes:
-# 123 x 8 mm a partir de (73, 23).
+#
+# ⚠️ COORDENADAS ABSOLUTAS, e no sitio que foi MEDIDO contra pads/pecas/serigrafia
+# da FACE onde a marca vai (o vazio de uma camada nao e o vazio da face). No
+# cerebro a marca vive na banda que o dB apontou: a DIREITA do U2 (patio acaba em
+# x=115,03), ABAIXO da fila de pontos de teste e do J12, a ESQUERDA do bloco J2/C3
+# (patio comeca em x=148,91). O maior rectangulo livre ali mede so 32,8 x 9,5 mm
+# (medido em pcbnew) e o banner a tamanho cheio tem 45 mm — NAO CABIA. Escalou-se o
+# grupo por 0,72 (rigido) e centrou-se: bbox da marca (115,7 , 67,2)-(148,2 , 73,3),
+# folga minima 0,67 mm (patio U2 esq., patio J2 dir.; TP e J12 a >3,6 mm). Sem 0,72
+# a versao a tamanho cheio punha COTUCATRONICS + rev sobre os pads MIDI/AUDIO do U2
+# (4 silk_over_copper). A escolha do sitio e do dB; a escala e o que o faz caber.
 MARCA = {
-    "cerebro": [(140.0, 27.5, "COTUCATRONICS", 5.0, 0.8),
-                # ⚠️ x=87 e nao 82: centrado em 82 o texto (13 caracteres a
-                # 2,2 mm, ~20 mm de largura) comeca em x=72 e encosta ao pad
-                # 26 do J14, em 70,48. O DRC apanha `silk_over_copper`, e o
-                # que se perde e real: a JLC recorta a serigrafia sobre a
-                # abertura de mascara, logo o inicio do texto desaparecia.
-                (87.0, 27.0, "cerebro rev B", 2.2, 0.35)],
-    "painel":  [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
-                (60.0, 26.0, "painel rev A", 1.6, 0.25)],
+    "cerebro": {"layer": "F.SilkS", "mirror": False,
+                # buzios (concha) — a MESMA marca do splash (`src/splash.h`,
+                # super-elipse n=3,2 com labio/boca dentada): (cx, cy, ra, rb).
+                "buzios": (144.48, 69.664, 3.6, 2.16),
+                "textos": [(127.2, 68.8, "COTUCATRONICS", 1.872, 0.302),
+                           (127.2, 72.256, "cerebro rev C", 1.152, 0.216)]},
+    "painel":  {"layer": "B.SilkS", "mirror": True, "buzios": None,
+                "textos": [(108.0, 26.0, "COTUCATRONICS", 3.5, 0.6),
+                           (60.0, 26.0, "painel rev C", 1.6, 0.25)]},
 }
 
 
+def _super_elipse(cx, cy, ra, rb, n=3.2, passos=96):
+    """Contorno de super-elipse (|x/ra|^n + |y/rb|^n = 1). n=3,2 le rectangulo
+    arredondado — o casco do buzio, igual ao `SuperElipse` do `src/splash.h`."""
+    import math
+    pts = []
+    for i in range(passos + 1):
+        th = 2 * math.pi * i / passos
+        c, s = math.cos(th), math.sin(th)
+        x = ra * (abs(c) ** (2.0 / n)) * (1 if c >= 0 else -1)
+        y = rb * (abs(s) ** (2.0 / n)) * (1 if s >= 0 else -1)
+        pts.append((cx + x, cy + y))
+    return pts
+
+
+def _boca_e_dentes(cx, cy, ra, rb):
+    """Labio/boca do buzio e os dentes emparelhados, do envelope assimetrico
+    h(t)=lb*sin(pi*t^1,5) do `src/splash.h` — ponta fina de um lado, bojo do
+    outro. Devolve (contorno_da_boca, [segmentos_de_dente])."""
+    import math
+    la, lb = 0.80 * ra, 0.60 * rb
+    el = max(0.18, 0.06 * rb)
+    top, bot = [], []
+    N = 60
+    for i in range(N + 1):
+        t = i / N
+        x = -la + t * 2 * la
+        ha = lb * math.sin(math.pi * (t ** 1.5)) - el
+        if ha < 0:
+            ha = 0
+        top.append((cx + x, cy - ha))
+        bot.append((cx + x, cy + ha))
+    boca = top + bot[::-1]
+    dentes = []
+    passo = max(0.55, 0.11 * ra)
+    x = -la
+    while x <= la:
+        t = (x + la) / (2 * la)
+        ha = lb * math.sin(math.pi * (t ** 1.5)) - el
+        if ha > 0.35:
+            d = ha * 0.5
+            dentes.append(((cx + x, cy - ha), (cx + x, cy - ha + d)))
+            dentes.append(((cx + x, cy + ha - d), (cx + x, cy + ha)))
+        x += passo
+    return boca, dentes
+
+
+def buzios_silk(cx, cy, ra, rb, camada="F.SilkS", w=0.2):
+    """O simbolo de buzios em serigrafia: casco (super-elipse), boca e dentes —
+    a mesma `Concha` da marca do firmware, vectorizada para a placa. Traco de
+    0,2 mm (>= 0,15 do minimo de serigrafia)."""
+    def poly(pts):
+        xy = " ".join("(xy %.4f %.4f)" % (x, y) for x, y in pts)
+        return ('\t(gr_poly\n\t\t(pts\n\t\t\t%s\n\t\t)\n\t\t(stroke\n\t\t\t'
+                '(width %g)\n\t\t\t(type default)\n\t\t)\n\t\t(fill no)\n\t\t'
+                '(layer "%s")\n\t\t(uuid "%s")\n\t)\n' % (xy, w, camada, u()))
+    def linha(p0, p1):
+        return ('\t(gr_line\n\t\t(start %.4f %.4f)\n\t\t(end %.4f %.4f)\n\t\t'
+                '(stroke\n\t\t\t(width %g)\n\t\t\t(type default)\n\t\t)\n\t\t'
+                '(layer "%s")\n\t\t(uuid "%s")\n\t)\n'
+                % (p0[0], p0[1], p1[0], p1[1], w, camada, u()))
+    casco = _super_elipse(cx, cy, ra, rb)
+    boca, dentes = _boca_e_dentes(cx, cy, ra, rb)
+    out = poly(casco) + poly(boca)
+    for a, b in dentes:
+        out += linha(a, b)
+    return out
+
+
 def marca(t, nome, alvo):
-    """Escreve a marca em F.SilkS. Substitui a que houver, para nao duplicar."""
+    """Escreve a marca na face VISIVEL pela tampa de cada placa. Substitui a que
+    houver, para nao duplicar (texto em qualquer camada + os buzios anteriores,
+    que sao as unicas gr_poly/gr_line de nivel-placa em F.SilkS deste gerador)."""
+    cfg = MARCA.get(nome)
+    if not cfg:
+        return t
     t = re.sub(r'\n\t\(gr_text "COTUCATRONICS"[\s\S]*?\n\t\)', '', t)
-    t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [AB]"[\s\S]*?\n\t\)', '', t)
+    t = re.sub(r'\n\t\(gr_text "(cerebro|painel) rev [A-C][0-9]?"[\s\S]*?\n\t\)',
+               '', t)
+    t = re.sub(r'\n\t\(gr_(?:line|arc|poly)[\s\S]*?\(layer "F\.SilkS"\)'
+               r'[\s\S]*?\n\t\)', '', t)
+    just = "\t\t\t(justify mirror)\n" if cfg["mirror"] else ""
     L = []
-    for x, y, txt, h, esp in MARCA.get(nome, []):
+    for x, y, txt, h, esp in cfg["textos"]:
         L.append('\t(gr_text "%s"\n\t\t(at %g %g)\n\t\t(layer "%s")\n'
                  '\t\t(uuid "%s")\n\t\t(effects\n\t\t\t(font\n\t\t\t\t'
                  '(size %g %g)\n\t\t\t\t(thickness %g)\n\t\t\t\t(bold yes)\n'
-                 '\t\t\t)\n\t\t\t(justify mirror)\n\t\t)\n\t)\n'
-                 % (txt, round(x, 3), round(y, 3), MARCA_LADO, u(), h, h, esp))
+                 '\t\t\t)\n%s\t\t)\n\t)\n'
+                 % (txt, round(x, 3), round(y, 3), cfg["layer"], u(),
+                    h, h, esp, just))
+    if cfg.get("buzios"):
+        L.append(buzios_silk(*cfg["buzios"], camada=cfg["layer"]))
     i = t.rstrip().rfind(')')
     return t[:i] + "".join(L) + t[i:]
 
@@ -1401,8 +1513,20 @@ def confere_arcade(t, alvo, frente_em):
     return L
 
 
-def move(t, ref, xy, ang=None):
-    """Poe o footprint `ref` em xy (e roda, se `ang`). Falha alto se faltar."""
+def move(t, ref, xy, ang=None, camada=None):
+    """Poe o footprint `ref` em xy (e roda, se `ang`). Falha alto se faltar.
+
+    ⚠️ `camada` DECLARA de que lado a peca tem de estar (ex.: "B.Cu"). Virar uma
+    peca de lado NAO e uma reescrita do `(at ...)`: mexe em dezenas de tokens —
+    cada `(layer "F.x")`->`(layer "B.x")`, cada `(at x y a)` espelhado em y e
+    +180 graus, um `(justify mirror)` por texto, cada `(start/end)` em y. Uma
+    reescrita parcial disso PASSA no `(at)` e falha em silencio no resto, e
+    "conserto parcial que parece completo e pior que nenhum" (edicao-segura).
+    Por isso a virada e uma operacao de COBRE/COLOCACAO gravada na placa (como o
+    roteamento), e o gerador aqui DECLARA a camada e RECUSA se a placa nao a
+    respeitar — o mesmo padrao de "a ferramenta recusa" do resto do gerador
+    (§11j da kicad_layout). Assim a declaracao e verificada a cada geracao sem
+    poder corromper a peca as cegas."""
     for m in re.finditer(r'\n\t\(footprint ', t):
         j = m.start() + 1
         d = 0
@@ -1417,6 +1541,15 @@ def move(t, ref, xy, ang=None):
         bl = t[j:fim]
         r = re.search(r'\(property "Reference" "([^"]+)"', bl)
         if r and r.group(1) == ref:
+            if camada is not None:
+                lc = re.search(r'\(layer "([^"]+)"\)', bl)
+                atual = lc.group(1) if lc else "?"
+                if atual != camada:
+                    raise SystemExit(
+                        "*** %s: a placa tem-no em %s, o gerador declara %s. "
+                        "Virar de lado e operacao de cobre na placa (como o "
+                        "roteamento), nao uma reescrita cega do texto — vira o %s "
+                        "no editor/pcbnew e volta a correr." % (ref, atual, camada, ref))
             alvo_at = '%g %g' % xy + ('' if ang in (None, 0) else ' %g' % ang)
             novo, n = re.subn(r'(\(at )(-?[\d.]+) (-?[\d.]+)( -?[\d.]+)?',
                               lambda m: m.group(1) + alvo_at, bl, count=1)

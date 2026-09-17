@@ -50,14 +50,28 @@ import datetime
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import zipfile
 
-VERSAO = "0.9.0"
+# CHANGELOG
+#   0.18.0 — preserva o CPL rico como `cpl_rico_<board>.csv` ao lado do CPL da
+#            JLC, em vez de o reescrever no lugar e perder Val/Package. A jusante
+#            (VISTORIA, kit_montagem) passa a ler valor/footprint da posicao.
+#   0.17.0 — serigrafia medida no gerber; CPL reescrito para o esquema da JLC.
+VERSAO = "0.19.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
-KICAD = "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli"
+# ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
+# hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
+# que o portao corra no host de quem tem o KiCad noutro sitio, sem editar a fonte.
+KICAD = os.environ.get("KICAD_CLI",
+                       "/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli")
 SAIDA = os.path.join(AQUI, os.pardir, "fabrica")
+# ⚠️ fabrica/ e GITIGNORED: e scratch, some com o container e nunca chega ao
+# PR. O pacote ENTREGUE e copiado para export/, a pasta de topo RASTREADA — e o
+# unico output do portao que sai daqui e chega ao repositorio (ver .gitignore).
+EXPORT = os.path.join(AQUI, os.pardir, "export")
 
 # ⚠️ AS CAMADAS SAO EXPLICITAS. A omissao exporta o que o projecto tiver
 # guardado, e o que o projecto tem guardado ninguem sabe de cor.
@@ -70,9 +84,48 @@ GEOMETRIA = ("clearance", "shorting_items", "tracks_crossing", "track_dangling",
              "track_width", "copper_sliver", "malformed_courtyard",
              "invalid_outline", "unresolved_variable")
 
+# ⚠️⚠️ SERIGRAFIA: PARIDADE COM O DFM DA JLC (licao de 2026-09-10, DOIS rounds).
+#
+# 1o round: a JLCONE marcou o painel com DEZENAS de vermelhos de serigrafia que
+# este portao NAO viu: silk->pad 25, silk->furo 31. Poem-se regras `.kicad_dru`
+# (`silk_clearance` texto->pad, `physical_hole_clearance` texto->furo,
+# `text_thickness`, `text_height`) para o DRC as reportar.
+#
+# ⚠️ 2o round: NAO CHEGOU. Duas passagens deram "limpo" e a JLCONE continuou com
+# 18 vermelhos silk->pad, 11 silk->furo, 50 laranja de largura. Porque:
+#   (a) o `kicad-cli pcb drc` NAO disparou as regras `silk_clearance` do .kicad_dru
+#       (deram 0 — o DRC continua a sub-contar);
+#   (b) o vermelho da JLC nasce do proprio `--subtract-soldermask`, que apara a
+#       serigrafia RENTE ao pad (0 folga = borda que a JLC conta como vermelho),
+#       e isso so se ve NO GERBER, nao na placa;
+#   (c) a largura "50 laranja" era TEXTO E GRAFICO a EXACTAMENTE 0,15 mm — no
+#       minimo, que a JLC marca a laranja; o bump de contornos a 0,15 nao a limpou.
+# A correccao real e NA FONTE (`serigrafia_dfm.py`: sobe largura a 0,18, recorta
+# graficos — incl. discos cheios — a 0,15 de pad/furo, reposiciona texto) e a
+# medicao real e NO GERBER (`mede_serigrafia.py`, chamado abaixo depois de exportar).
+# As regras `.kicad_dru` ficam como cinto-e-suspensorios; o portao do GERBER e o
+# que MANDA agora.
+#
+# ⚠️ So TEXTO de serigrafia. Um CONTORNO de footprint sobre um pad (caso (b) da
+# skill `kicad_layout` §11g-ter) e recortado pela JLC sem estrago — recusar por
+# ele travava placas boas. O `silk_over_copper` e portanto FILTRADO a itens onde
+# entra um texto; o `hole_clearance` (silk->furo) ja cai na GEOMETRIA acima.
+# ⚠️ A largura de um GRAFICO de serigrafia (fp_line) nao tem regra de DRC no
+# KiCad; sobe-se na FONTE com `normaliza_silk.py` (Estagio 6), fora deste portao.
+SILK_TEXTO = ("text_thickness", "text_height")   # sempre texto, sempre defeito
+
+
+def _silk_de_texto(v):
+    """True se a violacao envolve um TEXTO de serigrafia (Reference/Value/gr_text)."""
+    for it in v.get("items", []):
+        d = it.get("description", "")
+        if d.startswith(("Reference field", "Value field", "PCB text", "Text '")):
+            return True
+    return False
+
 
 def mede(pcb):
-    """(por tipo, por rede, planos partidos, ilhas orfas)."""
+    """(por tipo, por rede, planos partidos, ilhas orfas, violacoes)."""
     r = subprocess.run([KICAD, "pcb", "drc", "--refill-zones", "--save-board",
                         "--severity-error", "--severity-warning",
                         "--format", "json", "-o", "/tmp/_f.json", pcb],
@@ -91,7 +144,7 @@ def mede(pcb):
             partidos += 1
         for n in redes:
             por_rede[n] += 1
-    return tipos, por_rede, partidos, orfas
+    return tipos, por_rede, partidos, orfas, d.get("violations", [])
 
 
 def carimbo():
@@ -116,14 +169,12 @@ def carimbo():
 # recebe a lembrar-se delas. Estas seguem no LEIA-ME, ao lado dos ficheiros.
 ABERTAS = {
     "painel": [
-        "(!) ORDEM DO J2 (OLED) POR CONFIRMAR COM O MODULO EM MAO.\n"
-        "    A placa tem: 1 GND · 2 +5V · 3 CLK · 4 DIN · 5 CS · 6 DC · 7 RST\n"
-        "    O Waveshare 2,42\" SPI tem, no conector: VCC · GND · DIN · CLK ·\n"
-        "    CS · DC · RST.\n"
-        "    Com um cabo 1:1, VCC e GND TROCAM — o OLED morre ao ligar — e o\n"
-        "    DIN/CLK tambem. Ou se reordena o J2 (o cabo de fabrica passa a\n"
-        "    servir), ou se crimpa um cabo cruzado. Confirmar no modulo antes\n"
-        "    de decidir; nao ha como um script ver o conector de outra pessoa.",
+        "J2 corrigido: VCC·GND·DIN·CLK·CS·DC·RST — cabo/jumpers 1:1 com o\n"
+        "    modulo SSD1309. A placa tem, pino a pino: 1 +5V(VCC) · 2 GND ·\n"
+        "    3 DIN · 4 CLK · 5 CS · 6 DC · 7 RST, a MESMA ordem do conector do\n"
+        "    modulo Waveshare — logo um cabo/jumpers 1:1 liga direito, sem cruzar.\n"
+        "    J2 e agora um header 1x07 a 2,54 mm (THT): recebe pinos macho-macho\n"
+        "    e dupont femea. Rotulos por pino na serigrafia (F.Silk).",
     ],
     "cerebro": [
         "(!) A PLACA E DE 2 CAMADAS. Encomendar 2, e nao 4: so ha F.Cu e B.Cu,\n"
@@ -170,19 +221,22 @@ def cpl_bate_bom(dest, nome):
     cobre e nao se compra.
 
     Nenhum dos dois da erro em lado nenhum. So a COMPARACAO os ve."""
-    def desig(caminho, primeira_coluna_e_lista):
+    import csv as _csv
+    def desig(caminho):
+        # ⚠️ Le a coluna `Designator` PELO NOME, nao pela posicao. A BOM saiu no
+        # esquema canonico da JLC (Comment,Designator,...) e o Designator ja nao
+        # e a 1a coluna; um leitor posicional apanharia o Comment e a comparacao
+        # partia-se em silencio (a familia 15dw: um leitor partido aprova tudo).
         if not os.path.exists(caminho):
             return None
-        linhas = open(caminho, encoding="utf-8").read().splitlines()
+        with open(caminho, encoding="utf-8-sig", newline="") as f:
+            rows = list(_csv.DictReader(f))
         fora = set()
-        for ln in linhas[1:]:
-            if not ln.strip():
-                continue
-            campo = ln.split('","')[0] if primeira_coluna_e_lista else ln.split(",")[0]
-            fora |= set(re.findall(r"[A-Z]+\d+", campo))
+        for r in rows:
+            fora |= set(re.findall(r"[A-Z]+\d+", r.get("Designator", "") or ""))
         return fora
-    cpl = desig(os.path.join(dest, "cpl_%s.csv" % nome), False)
-    bom = desig(os.path.join(dest, "bom_%s.csv" % nome), True)
+    cpl = desig(os.path.join(dest, "cpl_%s.csv" % nome))
+    bom = desig(os.path.join(dest, "bom_%s.csv" % nome))
     if cpl is None or bom is None:
         return None
     # ⚠️ guarda de leitura (§2c): zero designadores nao e "concordam", e um
@@ -220,7 +274,27 @@ def mete_lcsc(caminho, placa):
     Por isso ha AQUI DOIS testes, e o segundo e independente do primeiro:
     a chave inclui a placa, E o encapsulamento gravado tem de aparecer no
     footprint que a BOM declara. Se a chave voltar a partir-se, o
-    encapsulamento apanha-o — `CP_Radial_D16.0mm` nao contem `C_0805`."""
+    encapsulamento apanha-o — `CP_Radial_D16.0mm` nao contem `C_0805`.
+
+    ⚠️⚠️ E A LINHA DA BOM E POR PECA, NAO POR COMENTARIO (licao de 2026-09-11).
+
+    O `kicad-cli sch export bom --group-by Value,Footprint` parte uma peca em
+    varias linhas quando o Value traz anotacoes humanas: o painel tinha `100n`,
+    `100n COLADO ao cursor` e `100n COLADO ao IDC` — TRES linhas, TODAS com o
+    mesmo LCSC `C49678` — e o cerebro tinha `10k — L` e `10k — R`, DUAS linhas
+    com o mesmo `C17414`. A JLCONE recusa isto com "Multiple lines in the BOM
+    have been matched to the same part": para a montagem, uma peca e UMA linha.
+
+    Por isso a BOM de montagem reagrupa PELO LCSC — a identidade real da peca
+    montada. Um numero LCSC identifica um so componente fisico; duas linhas com
+    o mesmo LCSC sao a mesma peca e fundem-se, com todos os designadores juntos
+    e Qty = contagem. O comentario (Value) e anotacao humana e NAO parte uma
+    linha de montagem; da linha fundida sai um Value representativo (o mais
+    curto). As pecas SEM LCSC (THT/DNP/nao-catalogadas) ficam como estao, uma
+    linha por (Value,Footprint) que o KiCad ja deu — a JLC nao as monta.
+
+    Cabecalho canonico da JLC: `Comment,Designator,Footprint,Qty,LCSC Part #`."""
+    import csv as _csv
     fonte = os.path.join(os.path.dirname(AQUI), "tools", "codigos_lcsc.json")
     if not os.path.exists(fonte):
         return "nao ha tools/codigos_lcsc.json — corre tools/codigos_lcsc.py"
@@ -232,45 +306,119 @@ def mete_lcsc(caminho, placa):
             continue
         for r in e.get("refs", []):
             por_ref[r] = (e.get("codigo", ""), e.get("encaps", ""))
-    with open(caminho, encoding="utf-8") as f:
-        linhas = f.read().splitlines()
-    if len(linhas) < 2:
-        return "a BOM exportada saiu com %d linha(s)" % len(linhas)
-    saida, sem = [linhas[0].rstrip() + ',"LCSC"'], []
-    for ln in linhas[1:]:
-        if not ln.strip():
-            continue
-        desig = re.findall(r"[A-Z]+\d+", ln.split(",")[0])
+
+    with open(caminho, encoding="utf-8-sig", newline="") as f:
+        rows = list(_csv.DictReader(f))
+    if not rows:
+        return "a BOM exportada saiu sem linhas"
+
+    def natkey(ref):
+        m = re.match(r"([A-Za-z]+)(\d+)", ref)
+        return (m.group(1), int(m.group(2))) if m else (ref, 1 << 30)
+
+    # 1a passagem: cada linha do KiCad -> (comment, footprint, lcsc, designadores).
+    regs, sem = [], []
+    for r in rows:
+        comment = (r.get("Comment") or r.get("Value") or "").strip()
+        fp = (r.get("Footprint") or "").strip()
+        desig = re.findall(r"[A-Z]+\d+", r.get("Designator") or "")
         # ⚠️ so as linhas SMD precisam de codigo: as THT o dB compra e solda, e
         # exigir codigo a um borne de parafuso travava o pacote por nada.
-        cods = {por_ref[r] for r in desig if r in por_ref}
-        if not cods:
-            saida.append(ln.rstrip() + ',""')
-            continue
+        cods = {por_ref[x] for x in desig if x in por_ref}
         if len(cods) > 1:
             return ("a linha %s junta designadores com codigos diferentes (%s) "
                     "— a BOM agrupa por valor+footprint, logo isto diz que a "
                     "fonte discorda de si propria"
                     % (desig[:3], sorted(cods)))
-        cod, encaps = cods.pop()
-        # ⚠️ SEGUNDA GUARDA, independente da chave: o encapsulamento que a
-        # fonte gravou tem de aparecer no footprint que a BOM declara. E o que
-        # apanha uma troca entre placas mesmo que a chave volte a partir-se.
-        campos = [c.strip('"') for c in ln.split('","')]
-        fp = campos[2] if len(campos) > 2 else ""
-        if encaps and encaps not in fp:
-            return ("%s: a fonte diz encapsulamento %r e a BOM declara %r — "
-                    "a peca escolhida NAO e a peca desenhada"
-                    % (",".join(desig[:3]), encaps, fp))
-        if not cod:
-            sem.extend(r for r in desig if r in por_ref)
-        saida.append(ln.rstrip() + ',"%s"' % cod)
+        cod = ""
+        if cods:
+            cod, encaps = cods.pop()
+            # ⚠️ SEGUNDA GUARDA, independente da chave: o encapsulamento que a
+            # fonte gravou tem de aparecer no footprint que a BOM declara. E o
+            # que apanha uma troca entre placas mesmo que a chave se parta.
+            if encaps and encaps not in fp:
+                return ("%s: a fonte diz encapsulamento %r e a BOM declara %r — "
+                        "a peca escolhida NAO e a peca desenhada"
+                        % (",".join(desig[:3]), encaps, fp))
+            if not cod:
+                sem.extend(x for x in desig if x in por_ref)
+        regs.append((comment, fp, cod, desig))
     if sem:
         return ("sem codigo LCSC, e a JLC nao monta a linha: %s"
                 % " ".join(sorted(set(sem))))
-    with open(caminho, "w", encoding="utf-8") as f:
-        f.write("\n".join(saida) + "\n")
+
+    # 2a passagem: FUNDE por LCSC (uma peca montada = uma linha). As linhas sem
+    # LCSC passam intactas (chave unica por si so, nunca se fundem entre elas).
+    grupos, ordem = {}, []
+    for comment, fp, cod, desig in regs:
+        chave = cod if cod else ("__sem__", tuple(desig), fp)
+        if chave not in grupos:
+            grupos[chave] = {"comments": [], "fps": set(), "desig": set(), "cod": cod}
+            ordem.append(chave)
+        g = grupos[chave]
+        g["comments"].append(comment)
+        g["fps"].add(fp)
+        g["desig"].update(desig)
+
+    # ⚠️ Comment representativo da linha fundida: o Value mais curto (o de base,
+    # sem as anotacoes que separavam as linhas), desempate alfabetico.
+    linhas_saida = []
+    for chave in ordem:
+        g = grupos[chave]
+        desig = sorted(g["desig"], key=natkey)
+        comment = sorted(g["comments"], key=lambda c: (len(c), c))[0]
+        fp = sorted(g["fps"])[0]
+        linhas_saida.append((desig, comment, fp, str(len(desig)), g["cod"]))
+    linhas_saida.sort(key=lambda t: natkey(t[0][0]))
+
+    with open(caminho, "w", encoding="utf-8", newline="") as f:
+        w = _csv.writer(f, quoting=_csv.QUOTE_ALL)
+        # ⚠️ o cabecalho e o esquema canonico da JLC; a coluna do codigo e
+        # `LCSC Part #` — a chave em que a JLC lê o LCSC no upload de BOM;
+        # `LCSC` sozinho nao e reconhecido.
+        w.writerow(["Comment", "Designator", "Footprint", "Qty", "LCSC Part #"])
+        for desig, comment, fp, qty, cod in linhas_saida:
+            w.writerow([comment, ",".join(desig), fp, qty, cod])
     return None
+
+
+def cpl_para_jlc(caminho):
+    """Reescreve o CPL no ESQUEMA que a JLCPCB exige no upload de montagem SMT.
+
+    ⚠️ O `kicad-cli pcb export pos --format csv` emite o formato NATIVO do KiCad
+    — cabecalho `Ref,Val,Package,PosX,PosY,Rot,Side` e lado em minusculas
+    (`top`/`bottom`). O parser de SMT da JLCONE NAO o reconhece e recusa o
+    ficheiro com "Failed processing the CPL file" (medido no upload real do
+    painel, 2026-09-11). A JLC exige exactamente `Designator,Mid X,Mid Y,Layer,
+    Rotation`, com `Layer` capitalizado (`Top`/`Bottom`). Esta e a mesma licao da
+    paridade de DFM: a SAIDA do portao tem de ser o que a fabrica ACEITA, nao o
+    que a ferramenta emite por omissao.
+
+    Mapa: Ref->Designator, PosX->Mid X, PosY->Mid Y, Side->Layer, Rot->Rotation.
+    Val e Package sao descartados (a JLC le a peca do BOM, nao do CPL).
+    Coordenadas em mm, sem sufixo; zeros finais aparados. UTF-8 sem BOM."""
+    import csv as _csv
+    with open(caminho, encoding="utf-8-sig", newline="") as f:
+        rows = list(_csv.DictReader(f))
+    lay = {"top": "Top", "bottom": "Bottom"}
+
+    def trim(v):
+        v = (v or "").strip()
+        if "." in v:
+            v = v.rstrip("0").rstrip(".")
+        return v or "0"
+    out = ["Designator,Mid X,Mid Y,Layer,Rotation"]
+    for r in rows:
+        ref = (r.get("Ref") or r.get("Designator") or "").strip()
+        if not ref:
+            continue
+        x = trim(r.get("PosX") or r.get("Mid X") or "")
+        y = trim(r.get("PosY") or r.get("Mid Y") or "")
+        side = (r.get("Side") or r.get("Layer") or "").strip().lower()
+        rot = trim(r.get("Rot") or r.get("Rotation") or "")
+        out.append("%s,%s,%s,%s,%s" % (ref, x, y, lay.get(side, side.capitalize() or "Top"), rot))
+    with open(caminho, "w", encoding="utf-8", newline="") as f:
+        f.write("\n".join(out) + "\n")
 
 
 def uma(nome, incompleta):
@@ -279,7 +427,7 @@ def uma(nome, incompleta):
     if not os.path.exists(pcb):
         raise SystemExit("*** nao existe %s" % pcb)
     print("\n══ %s ══" % nome)
-    tipos, por_rede, partidos, orfas = mede(pcb)
+    tipos, por_rede, partidos, orfas, viols = mede(pcb)
 
     recusas, avisos = [], []
 
@@ -333,9 +481,58 @@ def uma(nome, incompleta):
         recusas.append("referencia(s) a identificar a peca errada: %s"
                        % " ".join(re.findall(r"⚠️ (\S+)", rap.stdout)))
 
+    # ⚠️⚠️ E O PAD CERTO TEM DE LEVAR A REDE CERTA (funcao_dos_pads).
+    #
+    # A skill `kicad` §7 recomenda-o como passada do portao, e por um motivo
+    # medido: e a UNICA verificacao que apanha os criticos de FUNCAO — simbolo
+    # generico (pinos 1,2,3) casado com footprint polarizado (SOIC-8, SOT-23,
+    # D_SMA, EC11). A netlist fica LIGADA e a funcao fica ERRADA, e nem ERC, nem
+    # DRC, nem "0 por rotear" veem, porque os tres verificam LIGACAO e este
+    # verifica SIGNIFICADO. Apanhou 5 dos 6 criticos da varredura de 08/09.
+    # (Confere as duas placas de uma vez, pela ficha por referencia.)
+    rfp = subprocess.run([sys.executable, os.path.join(AQUI, "funcao_dos_pads.py")],
+                         capture_output=True, text=True)
+    for l in (rfp.stdout or "").splitlines():
+        if "regra(s)" in l:
+            print("   funcao pads   %s" % l.strip())
+    if rfp.returncode:
+        recusas.append("funcao dos pads: %s"
+                       % (rfp.stdout or rfp.stderr).strip().splitlines()[-1])
+
+    # ⚠️⚠️ E AS VIAS TEM DE ESTAR TAPADAS (vias_tented).
+    #
+    # A JLCONE marca a classe "solder mask opening exposing trace" (14 laranja no
+    # painel, medido a 2026-09-11). Medida no gerber, a classe e BENIGNA so porque
+    # as 34 vias estao tapadas: 0 abertura de mascara sobre via, e a laranja nasce
+    # da expansao de casa da JLC no pescoco pad/pista (cosmetica). Destapar uma via
+    # e uma escolha legitima que NENHUM DRC recusa — e passa a classe de laranja
+    # inerente a VERMELHO real (cobre exposto a oxidar). Esta guarda preserva o
+    # invariante que a torna benigna. Ver `vias_tented.py` e fab-automation.md §2a.
+    rvt = subprocess.run([sys.executable, os.path.join(AQUI, "vias_tented.py"), pcb],
+                         capture_output=True, text=True)
+    for l in (rvt.stdout or "").splitlines():
+        if "aberta(s)" in l:
+            print("   vias tapadas  %s" % l.split("·", 1)[-1].strip())
+    if rvt.returncode:
+        recusas.append("via(s) destapada(s) — mascara aberta sobre cobre: %s"
+                       % (rvt.stdout or rvt.stderr).strip().splitlines()[-1])
+
     geo = {k: v for k, v in tipos.items() if k in GEOMETRIA}
     if geo:
         recusas.append("geometria: %s" % dict(geo))
+
+    # ⚠️⚠️ SERIGRAFIA (paridade JLC): texto sobre pad, e texto fino/baixo.
+    # O silk->furo cai na GEOMETRIA (sai como `hole_clearance`). Aqui trata-se do
+    # silk->pad (`silk_over_copper`, FILTRADO a texto) e do texto abaixo do minimo.
+    silk_pad = [v for v in viols
+                if v.get("type") == "silk_over_copper" and _silk_de_texto(v)]
+    silk_txt = {k: v for k, v in tipos.items() if k in SILK_TEXTO}
+    if silk_pad:
+        recusas.append("serigrafia: %d texto(s) sobre pad (<0,15 mm, JLC recorta "
+                       "e o texto some)" % len(silk_pad))
+    if silk_txt:
+        recusas.append("serigrafia: texto abaixo do minimo JLC %s "
+                       "(traco >=0,15 mm / altura >=1 mm)" % dict(silk_txt))
     # ⚠️ O PORTAO NAO RECUSA POR ISTO. Ver o cabecalho: a medicao nao e
     # reproduzivel, e um portao que recusa por ruido ensina a ignora-lo.
     if partidos:
@@ -347,6 +544,9 @@ def uma(nome, incompleta):
 
     print("   geometria      %s" % ("%d achado(s): %s" % (sum(geo.values()), dict(geo))
                                     if geo else "0 ✓"))
+    _silk_n = len(silk_pad) + sum(silk_txt.values())
+    print("   serigrafia     %s (JLC: silk->pad/furo/traco/altura via .kicad_dru)"
+          % ("%d texto(s) em falta" % _silk_n if _silk_n else "0 ✓"))
     print("   planos         %s" % ("%d indicacao(oes) — medicao instavel, "
                                        "ver o perfil por rede" % partidos
                                        if partidos else "sem indicacao"))
@@ -383,8 +583,48 @@ def uma(nome, incompleta):
           "--drill-origin", "absolute", "--excellon-units", "mm",
           "--excellon-zeros-format", "decimal", "--generate-map",
           "--map-format", "gerberx2", pcb)
+
+    # ⚠️⚠️ SERIGRAFIA MEDIDA NO GERBER — o portao que faltava (licao de 2026-09-10,
+    # 2o round). O DRC do KiCad SUB-CONTA a serigrafia: mediu silk->pad com folga 0
+    # e as regras `silk_clearance` do `.kicad_dru` nem dispararam pelo `kicad-cli
+    # pcb drc`. Duas passagens deram "limpo" e a JLCONE mostrou dezenas de vermelhos.
+    # A verdade esta no GERBER exportado (ja com `--subtract-soldermask`, que apara a
+    # serigrafia RENTE ao pad = a borda que a JLC conta como vermelho). `mede_
+    # serigrafia.py` mede-o: silk->pad, silk->furo E largura de traco (texto E
+    # grafico). ⚠️ Precisa de gerbonara+shapely; se faltarem, RECUSA (um portao que
+    # nao consegue medir nao passa em silencio — a licao inteira e essa).
+    # ⚠️ `mede_serigrafia` precisa de gerbonara+shapely, que vivem no python de
+    # SISTEMA, nao no bundle do KiCad (que corre este portao pelo pcbnew dos outros
+    # verificadores). SILK_SYS_PY aponta para esse python; default = o proprio.
+    silk_py = os.environ.get("SILK_SYS_PY", sys.executable)
+    rsk = subprocess.run([silk_py,
+                          os.path.join(AQUI, "mede_serigrafia.py"), dest],
+                         capture_output=True, text=True)
+    for l in (rsk.stdout or "").splitlines():
+        if "silk->pad" in l or "GERBER limpa" in l:
+            print("   serigrafia(gbr)%s" % l.rstrip()[3:] if l.startswith("   ") else "   serigrafia(gbr) %s" % l.strip())
+    if rsk.returncode:
+        print("\n   RECUSO produzir o pacote:")
+        print("     · serigrafia no GERBER: %s"
+              % ((rsk.stdout or rsk.stderr).strip().splitlines() or ["ver mede_serigrafia"])[-1])
+        if rsk.returncode == 3:
+            print("     · (instala: pip install gerbonara shapely)")
+        return False
+
     corre("pcb", "export", "pos", "-o", os.path.join(dest, "cpl_%s.csv" % nome),
           "--format", "csv", "--units", "mm", "--side", "both", "--exclude-dnp", pcb)
+    # ⚠️ O pos nativo do KiCad e RICO — `Ref,Val,Package,PosX,PosY,Rot,Side` — mas
+    # NAO e uploadavel na JLCONE. Ate a v0.17.0 este passo reescrevia o ficheiro NO
+    # LUGAR para o esquema da JLC e o Val/Package MORRIA com ele: a jusante
+    # (a VISTORIA, o kit de montagem) deixava de poder ler valor/footprint da
+    # POSICAO, que so o CPL rico traz. Agora PRESERVA-SE a copia rica ANTES de
+    # reescrever, como companheiro `cpl_rico_<board>.csv` no MESMO pacote — e so
+    # depois se reescreve `cpl_<board>.csv` no esquema Designator,Mid X,Mid Y,Layer,
+    # Rotation + Top/Bottom (ver cpl_para_jlc). O ficheiro de upload da JLC nao muda
+    # de nome nem de formato; ganha-se um companheiro, nao se perde o unico exemplar.
+    shutil.copy2(os.path.join(dest, "cpl_%s.csv" % nome),
+                 os.path.join(dest, "cpl_rico_%s.csv" % nome))
+    cpl_para_jlc(os.path.join(dest, "cpl_%s.csv" % nome))
     if os.path.exists(sch):
         corre("sch", "export", "bom", "-o", os.path.join(dest, "bom_%s.csv" % nome),
               "--fields", "Reference,Value,Footprint,QUANTITY",
@@ -438,6 +678,26 @@ def uma(nome, incompleta):
     print("     commit %s%s" % (commit, "  ⚠️ ARVORE SUJA" if sujo else ""))
     if faltam:
         print("     ⚠️ INCOMPLETA: %d ligacoes por fazer" % faltam)
+
+    # ⚠️ ATE AQUI o pacote so existe em fabrica/, que e GITIGNORED — some com o
+    # container e nunca chega ao repositorio nem ao PR, e era preciso um humano
+    # decidir como o tirar de la. O portao nao pode terminar num artefacto que
+    # ninguem consegue descarregar. Por isso o pacote enxuto (zip de gerbers +
+    # CPL + BOM + LEIA-ME) e copiado AUTOMATICAMENTE para export/, a pasta de
+    # topo RASTREADA (ver .gitignore), e e ESSE o caminho duravel que se anuncia
+    # por ultimo — o estagio 8 so fecha quando ele esta commitado.
+    rel = os.path.join(EXPORT, "%s%s_%s_%s" % (tag, nome, data, commit))
+    os.makedirs(rel, exist_ok=True)
+    for a in os.listdir(rel):
+        os.remove(os.path.join(rel, a))
+    shutil.copy2(zipe, os.path.join(rel, os.path.basename(zipe)))
+    for a in ("cpl_%s.csv" % nome, "cpl_rico_%s.csv" % nome,
+              "bom_%s.csv" % nome, "LEIA-ME.txt"):
+        p = os.path.join(dest, a)
+        if os.path.exists(p):
+            shutil.copy2(p, os.path.join(rel, a))
+    print("   entregue (rastreado — commita este caminho): %s"
+          % os.path.relpath(rel, os.path.join(AQUI, os.pardir)))
     return True
 
 

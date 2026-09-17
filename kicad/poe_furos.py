@@ -22,7 +22,7 @@ normal, e um parafuso M3 com anilha o6,5 encosta a cabeca metalica ao cobre.
 Cada furo leva um circulo de exclusao de 3,5 mm de raio — a anilha mais folga.
 """
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 
 import io
 import math
@@ -122,6 +122,16 @@ def main():
                         '\t\t(layer "F.Cu")\n\t\t(uuid "%s")\n'
                         '\t\t(at %s %s)' % (uu, num(x), num(y)), 1)
         b = b.replace('"REF**"', '"H%d"' % i, 1)
+        # ⚠️ §1 do ppc/002: ESCONDER a referencia de silk dos furos. O furo e
+        # mecanico e o "Hn" na serigrafia so suja a placa por cima do cobre. Sai
+        # da FONTE (aqui), nao a mao no .kicad_pcb — senao a proxima regeneracao
+        # apaga o conserto em silencio (skill `kicad` §8: o gerador e a fonte).
+        # (Contraste com o painel, §2, onde a serigrafia NUNCA se esconde.)
+        # A mesma indentacao do `(layer ...)` mantem o bloco byte-a-byte igual ao
+        # que o KiCad grava.
+        b = re.sub(r'(\(property "Reference" "H%d"[\s\S]*?\n)([ \t]*)'
+                   r'(\(layer "F\.SilkS"\)\n)' % i,
+                   r'\1\2\3\2(hide yes)\n', b, count=1)
         b = b.replace('\n\t(layer "F.Cu")\n', '\n', 1)   # ja posto acima
         novo += "\t" + b.replace("\n", "\n\t").rstrip("\t") + "\n"
         # keepout circular: 12 lados, que a conta de poligono ja existe no KiCad

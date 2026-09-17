@@ -2198,6 +2198,17 @@
 				)
 			)
 		)
+		(property "MPN" "61304011121"
+			(at 0 0 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
 		(property "Description" ""
 			(at 145 197.54 0)
 			(show_name no)
@@ -2438,7 +2449,7 @@
 				)
 			)
 		)
-		(property "MPN" "2920L330/24MR"
+		(property "MPN" "MF-LSMF300/24X-2"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -2449,7 +2460,7 @@
 				)
 			)
 		)
-		(property "Fornecedor" "LCSC C720183"
+		(property "Fornecedor" "Mouser 652-MF-LSMF300/24X-2"
 			(at 0 0 0)
 			(hide yes)
 			(show_name no)
@@ -2713,6 +2724,17 @@
 		)
 		(property "Datasheet" ""
 			(at 115 148 0)
+			(hide yes)
+			(show_name no)
+			(do_not_autoplace no)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "MPN" "61304011121"
+			(at 0 0 0)
 			(hide yes)
 			(show_name no)
 			(do_not_autoplace no)

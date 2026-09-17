@@ -14,8 +14,6 @@
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.
 
-> ⚠️ **17/09: ver «DOIS RAMOS» abaixo antes de pagar a rev C.**
->
 > Atualizado em **2026-09-06 (a caixa está pronta para a Ponoko)** · leva:
 > **`caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg`, 20 peças, pronto a
 > encomendar.** O nome leva revisão e **digest do desenho** — a r1 (19 peças,
@@ -278,36 +276,32 @@ aqui*. Leia os dois antes de tocar em código.
 ---
 
 
-## ⚠️ 17/09/2026 — DOIS RAMOS, DOIS `J2`, e nenhum sabe do outro
+## 17/09/2026 — um ramo só, e o `J2` é o da placa que foi à fábrica
 
-**O `main` e o `claude/slack-session-sm2ldz` divergiram no `4c67f94`** e têm
-placas diferentes do painel. Nenhum dos dois é «o certo» sozinho:
+O ramo `claude/slack-session-sm2ldz` (rev C, pacotes e encomendas de 12/09) foi
+**fundido no `main`**, e os dois ficaram iguais. A placa, as posições e o `J2`
+vêm da rev C; do `main` ficaram as guardas (malha a 1,27, courtyard contra o
+bordo, `sincroniza_pcb` na cadeia, guarda do `liga()`) — nenhuma contradiz a
+placa encomendada.
 
-| | `main` (`46eae27`) | `claude/slack-session-sm2ldz` (`10a1745`) |
-|---|---|---|
-| rev | B, fecho à mão | **C**, pacotes JLC e BOM Mouser exportados a 12/09 |
-| `J2` do OLED | PicoBlade 1×07, `RST DC CS CLK DIN GND VCC` | header 2,54 7p, `+5V GND DIN CLK CS DC RST` |
-| fonte da ordem | página Waveshare, «Control Interface» (15eu) | **nenhuma citada** |
-| malha do roteador a dividir 1,27 (15eq) | sim | **não** |
-| `dentro_do_contorno` / `J1` dentro do bordo (15er) | sim | **não** |
-| `sincroniza_pcb` na cadeia (15es) | sim | **não** |
-| guarda do `liga()` + MOSFET 2=S 3=D (15et) | sim | **não medido** |
+**O `J2` do OLED:** header **macho** 1×07 a 2,54 na placa, onde entram os
+jumpers **fêmea** do cabo que vem com o módulo (MX1.25 do lado dele). Ordem
+`1 VCC · 2 GND · 3 DIN · 4 CLK · 5 CS · 6 DC · 7 RST`, que é a do módulo lida a
+partir do VCC: **com jumpers soltos o contrato é o nome de cada fio**, e os sete
+batem. Fontes: página Waveshare «Control Interface» e o dB, 17/09. O PicoBlade
+`RST…VCC` que o `main` teve de 08/09 a 17/09 não chegou a nenhuma placa
+fabricada (cicatriz 15ew).
 
-⚠️ **A ordem do ramo rev C é a inversa exacta da do `main`.** Pode estar certa —
-o header de 2,54 dos OLED Waveshare costuma vir `VCC GND DIN CLK CS DC RST`, e
-é outro conector que o PicoBlade — mas **é outra ficha, e ninguém a citou**.
-Antes de pagar a rev C: conferir o `J2` dela contra a serigrafia do header de
-2,54 do módulo em mão, e correr o `funcao_dos_pads` do `main` sobre a placa dela.
+**Provado sobre as placas encomendadas** (commit `06db1c7`, JLC
+`W2026091304545438`): gerador fundido reproduz a netlist do painel (24 redes, 0
+diferenças) · `funcao_dos_pads` 0 falhas nas duas, com o contrato do `J2` a
+reprovar sob sabotagem e o contrato PicoBlade velho a reprovar 6 de 7 · IDC 26/26
+· ERC do painel 0 · courtyards: cérebro 0, painel com o `J1` a **0,405** do bordo
+esquerdo (regra 0,5; o corpo fica dentro) — isenção com o número, e na próxima
+revisão `J1 x ≥ 26,1`.
 
-**Painel no `main`:** ERC 0 · `funcao_dos_pads` 19 regras, 0 falhas (sabotagem
-reprova) · courtyards 0 · IDC 26/26 · 0 ligações por fazer. Faltam 4
-`silk_over_copper`, 3 `starved_thermal`, 1 `lib_footprint_mismatch`. **Cérebro no
-`main`:** 10 `silk_overlap` + 3 `silk_over_copper` + 1 `courtyards_overlap` que o
-portão não conta (`por_fazer()` exclui a serigrafia de propósito).
-
-**Rev C pela API:** `kipy` 0.8.0 lê, escreve, move, preenche e grava a placa
-(`kicad/_v2/liga.py`, 15ev). Por fazer: a tabela «seis falhas × revisores» — o
-Konnect não está instalado.
+⚠️ **Ainda por confirmar, do MANIFEST:** se o pedido JLC cobre cérebro **e**
+painel ou só um.
 
 ---
 

@@ -1,0 +1,75 @@
+(version 1)
+
+# Regras de fabrico personalizadas — PARIDADE COM O DFM DA JLC (JLCPCB), processo
+# standard de 2 camadas. O `kicad-cli pcb drc` carrega este ficheiro ao lado da
+# placa (com o .kicad_pro presente); o `para_fabrica.py` corre esse DRC e recusa.
+#
+# ⚠️⚠️ COMENTARIOS SO EM LINHA PROPRIA. Um `#` no FIM de uma linha de `(rule ...)`
+# faz o parser de DRU do KiCad DESCARTAR EM SILENCIO essa regra e as seguintes —
+# medido a 2026-09-10: com `# 5 mil` a seguir a um rule, o silk->pad deixou de ser
+# contado (4 -> 2) sem um unico erro. Comentario em linha inteira (mesmo com
+# acentos) e seguro; comentario colado ao codigo, nao.
+#
+# ⚠️ POR QUE EXISTE: o DFM da JLCONE marcou a serigrafia do painel com DEZENAS de
+# vermelhos que o nosso portao NAO viu — silk->pad 25, silk->furo 31 — porque o
+# KiCad, por omissao, mede a serigrafia sobre cobre com `min_silk_clearance = 0`
+# (so o SOBREPOSTO, nao a FOLGA de 0,15 mm que a JLC exige) e nao tinha regra de
+# silk->furo. O DRC-default SUB-CONTA a serigrafia. Estas regras poem o nosso
+# portao a medir o que a fabrica mede, para o passo na JLCONE ser um CARIMBO.
+#
+# ⚠️⚠️ MAS NAO CHEGARAM (licao de 2026-09-10, 2o round): o `kicad-cli pcb drc`
+# NAO disparou as regras `silk_clearance`/`physical_hole_clearance` abaixo (deram
+# 0 achados sobre uma placa cheia de silk rente a pad), e o vermelho da JLC nasce
+# do `--subtract-soldermask` na EXPORTACAO, que so se ve no gerber. A medicao que
+# MANDA agora e a do GERBER exportado — `kicad/mede_serigrafia.py`, corrida pelo
+# `para_fabrica` depois de exportar. Estas regras ficam como cinto-e-suspensorios.
+#
+# Numeros conferidos contra a tabela de capacidades em
+# `.claude/skills/pcb/references/fab-automation.md` (§ "Capacidades JLCPCB").
+
+# ---- cobre: minimos absolutos JLC 2 camadas (5 mil pista/folga; acima e livre) ----
+# ⚠️ ANEL: gatilha-se no MINIMO ABSOLUTO 0,13 mm, NAO no preferido 0,15. Medido a
+# 2026-09-11, todas as 96 features furadas do painel tem anel >= 0,15 mm (min
+# exacto 0,15: as 33 vias 0,6/0,3 = a via-padrao da JLC). A JLCONE marca ~75
+# LARANJA de anel — a contar top+base por feature no limite preferido de 0,15. Sao
+# AVISOS (>= min, imprimivel), nao defeitos. Gatilhar aqui a 0,15 reprovaria a
+# via-padrao da JLC (ruido). E subir o pad da via para limpar a laranja foi TESTADO
+# e e pior: 17 vias caem de 0,20 para ~0,15 mm de folga a cobre alheio. Aceita-se
+# com o numero. Ver fab-automation.md §2a.
+(rule "JLC_min_trace_width"   (constraint track_width    (min 0.127mm)))
+(rule "JLC_min_clearance"     (constraint clearance      (min 0.127mm)))
+(rule "JLC_min_annular"       (constraint annular_width  (min 0.13mm)))
+(rule "JLC_min_via_hole"      (constraint hole_size      (min 0.2mm)))
+(rule "JLC_min_via_diameter"  (constraint via_diameter   (min 0.45mm)))
+(rule "JLC_hole_to_hole"      (constraint hole_to_hole   (min 0.5mm)))
+(rule "JLC_edge_clearance"    (constraint edge_clearance (min 0.3mm)))
+
+# ---- serigrafia (o buraco que nos mordeu) ----
+# silk -> PAD: folga >= 0,15 mm entre TEXTO de serigrafia e cobre de pad. A
+# condicao e BIDIRECCIONAL de proposito: o KiCad nao garante qual item e A e qual
+# e B no par silk/pad, e a versao so-`A.Type=='Text'` deixava passar o Q1/Q2
+# (media-se, nao se supoe). So TEXTO — o CONTORNO de footprint sobre um pad e o
+# caso (b) da `kicad_layout` §11g-ter que a JLC recorta sozinha; recusar por ele
+# travava placas boas.
+(rule "JLC_silk_text_to_pad"
+  (condition "(A.Type == 'Text' && A.Layer == '?.Silkscreen' && B.Type == 'Pad') || (B.Type == 'Text' && B.Layer == '?.Silkscreen' && A.Type == 'Pad')")
+  (constraint silk_clearance (min 0.15mm)))
+
+# silk -> FURO: a regra que FALTAVA. `physical_hole_clearance` mede contra o FURO
+# (nao contra o cobre) e sai como `hole_clearance` no relatorio — que o
+# `para_fabrica` ja recusa. Apanha texto por cima de um furo mesmo quando ha anel
+# de cobre que o `silk_clearance` deixaria passar.
+(rule "JLC_silk_text_to_hole"
+  (condition "(A.Type == 'Text' && A.Layer == '?.Silkscreen' && B.Type == 'Pad') || (B.Type == 'Text' && B.Layer == '?.Silkscreen' && A.Type == 'Pad')")
+  (constraint physical_hole_clearance (min 0.15mm)))
+
+# traco e altura de TEXTO de serigrafia (a JLC pede >= 0,15 / >= 1,0 mm).
+# ⚠️ A largura de um GRAFICO de serigrafia (fp_line/rect/circle) NAO tem regra de
+# DRC no KiCad — so o texto tem. Os contornos de biblioteca a 0,12 mm sobem-se na
+# FONTE, com `kicad/normaliza_silk.py` (Estagio 6), nao aqui.
+(rule "JLC_silk_text_thickness"
+  (layer "?.Silkscreen") (condition "A.Type == 'Text'")
+  (constraint text_thickness (min 0.15mm)))
+(rule "JLC_silk_text_height"
+  (layer "?.Silkscreen") (condition "A.Type == 'Text'")
+  (constraint text_height (min 1.0mm)))

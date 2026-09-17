@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_painel v0.16.0 — o projecto do PAINEL (tampa da caixa).
+"""gera_painel v0.17.0 — o projecto do PAINEL (tampa da caixa).
 
 Segunda placa. A primeira e `cotuca_cerebro`, e o CONTRATO entre as duas e o
 IDC 2x13: **o mesmo nome de rede dos dois lados, via a via**.
@@ -39,7 +39,7 @@ import io, os, re, sys, uuid
 # do ADC (8 e 10), o par de retorno dos LED (13 e 14, que valeram 6 dB de
 # chao) e os retornos dos pots (23 e 26).
 
-VERSAO = "0.16.0"
+VERSAO = "0.17.0"
 
 # ⚠️ A IDENTIDADE DA RAIZ E FIXA, e nao um uuid novo a cada corrida.
 #
@@ -169,8 +169,12 @@ FOOTPRINT = {
     "J5":  "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
     "J6":  "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
     "J7":  "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical",
-    # OLED: o "MX1.25" do modulo Waveshare e um Molex PicoBlade 53047-0710
-    "J2":  "Connector_Molex:Molex_PicoBlade_53047-0710_1x07_P1.25mm_Vertical",
+    # OLED: header de 1x07 a 2,54 mm — recebe pinos macho-macho e o cabo do
+    # modulo Waveshare SSD1309 por jumpers dupont femea (1:1 com o modulo). Era
+    # um Molex PicoBlade 1,25 mm, incompativel com header/dupont padrao: trocado
+    # a 12/09 depois de provar que o header de 17,78 mm cabe (folga 4,05 mm ao
+    # J1, 2,24 mm ao bordo de cima) e que passa na caixa (frente ~42 mm livres).
+    "J2":  "Connector_PinHeader_2.54mm:PinHeader_1x07_P2.54mm_Vertical",
     "Q1":  "Package_TO_SOT_SMD:SOT-23",
     "Q2":  "Package_TO_SOT_SMD:SOT-23",
     "C1":  "Capacitor_SMD:C_0805_2012Metric",
@@ -310,29 +314,29 @@ nota(55.0, 84.4,
      "a outra. O ERC nao apanha uma grafia trocada: rotulo global sozinho e legal.")
 
 # ------------------------------------------------------------------ OLED
-# ⚠️⚠️ A ORDEM E DO MODULO, NAO NOSSA — e ate 08/09 nao era.
+# ⚠️⚠️ O CONTRATO DO J2 E O NOME DE CADA FIO, NAO A POSICAO.
 #
-# FONTE: pagina do produto Waveshare "2.42inch OLED Display Module, 128x64,
-# SPI/I2C, White", seccao "Control Interface", tabela e serigrafia do modulo:
+# FONTES, as duas precisas:
+#  1. Waveshare "2.42inch OLED Display Module, 128x64, SPI/I2C, White",
+#     seccao "Control Interface": o modulo tem um receptaculo MX1.25 de 7
+#     vias, 1 RST · 2 DC · 3 CS · 4 CLK · 5 DIN · 6 GND · 7 VCC (3,3 ou 5 V).
+#  2. dB, 17/09: o modulo JA VEM com o cabo — MX1.25 do lado dele, JUMPERS
+#     FEMEA soltos do outro. Na placa solda-se um header MACHO de 2,54.
 #
-#     1 RST · 2 DC · 3 CS · 4 CLK · 5 DIN · 6 GND · 7 VCC (3,3 ou 5 V)
+# Com jumpers individuais cada fio leva o seu nome, e a placa so tem de ter
+# o sinal certo por baixo de cada nome serigrafado. Esta ordem e a do modulo
+# lida a partir do VCC (1=VCC ... 7=RST): pino a pino, os nomes batem.
 #
-# O que estava aqui era `1 GND · 2 +5V · 3 CLK · 4 DIN · 5 CS · 6 DC · 7 RST`,
-# escrito sem ficha porque o modulo nao estava em mao. Com um cabo PicoBlade
-# DIRECTO (1-1, que e o que qualquer pessoa compra) isso punha **os nossos
-# +5 V no pino DC do modulo** e o nosso RST no VCC dele. Com um cabo invertido
-# punha os +5 V no GND — curto do trilho. **Nenhuma das duas orientacoes de
-# cabo funcionava**, e CLK/DIN ficavam trocados nas duas.
-#
-# ⚠️ E nada disto aparecia em lado nenhum: o ERC, o DRC, o `funcao_dos_pads`
-# e as 26 vias do IDC ficam todos limpos com um conector de 7 pinos ligado
-# pela ordem errada. E um contrato com uma peca de OUTRA pessoa, e o unico
-# arbitro e a ficha dela.
-#
-# Os 5 V ficam (decisao de 05/09, e a ficha confirma "3.3V / 5V input").
+# ⚠️ HISTORIA, para ninguem "consertar" isto outra vez:
+#  - ate 05/09: `GND +5V CLK DIN CS DC RST` sem ficha — 1<->2 e 3<->4 trocados.
+#  - 08/09, no main: PicoBlade na placa, `RST DC CS CLK DIN GND VCC` (cicatriz
+#    15eu). Certo para um cabo MX1.25-MX1.25 directo — que NAO e o cabo que
+#    existe.
+#  - 12/09, rev C (deddd3d): header 2,54 e esta ordem. E a placa encomendada
+#    (JLC W2026091304545438) e e a que bate com o cabo real. Ver 15ew.
 liga("CONN7_L", "J2", 210.0, 60.0,
-     {"1":"OLED_RST", "2":"OLED_DC", "3":"OLED_CS", "4":"OLED_CLK",
-      "5":"OLED_DIN", "6":"GND", "7":"+5V"}, "OLED SSD1309 MX1.25 7p")
+     {"1":"+5V", "2":"GND", "3":"OLED_DIN", "4":"OLED_CLK",
+      "5":"OLED_CS", "6":"OLED_DC", "7":"OLED_RST"}, "OLED SSD1309 2,54mm 7p")
 nota(175.0, 36.2,
      "OLED a 5 V, e nao a 3V3 — decidido a 05/09. O modulo Waveshare aceita",
      "3,3 ou 5 V (tem tradutor de nivel a bordo), e tira-lo do trilho de 3V3",
@@ -340,6 +344,13 @@ nota(175.0, 36.2,
      "do ADC e pior do que o problema que se resolvia. O painel nao gera nada.")
 
 # --------------------------------------------------------------- encoder
+# ⚠️ AS CHAVES SAO OS NUMEROS DE PINO DO SIMBOLO EC11 (A/B/C/S1/S2), nao 1..5.
+# O simbolo `EC11` de cotuca.kicad_sym numera os pinos A,C,B,S1,S2, e o
+# `pinos_de` casa por NUMERO — chaves 1..5 nao casavam com nada e o SW1 saia
+# com os cinco pinos soltos (ERC: pin_not_connected). A verdade de terra e o
+# footprint do SW1 na placa: A=ENC_A_A, B=ENC_A_B, C=GND, S1=ENC_A_PUSH, S2=GND.
+# Corrigido a 12/09 (deriva pre-existente: a fonte tinha 1..5 e o sch commitado
+# fora gerado de uma versao com as chaves certas).
 liga("EC11", "SW1", 210.0, 120.0,
      # ⚠️ POR NOME DE PINO, nao por "1".."5". O conserto C4 (08/09) renumerou
      # o EC11 para os nomes dos pads do footprint — A C B S1 S2 — porque um
@@ -533,9 +544,9 @@ CAB = f'''(kicad_sch
 \t(uuid "{RAIZ}")
 \t(paper "A2")
 \t(title_block
-\t\t(title "PAINEL — tampa da caixa — rev B")
-\t\t(date "2026-09-05")
-\t\t(rev "B")
+\t\t(title "PAINEL — tampa da caixa — rev C1")
+\t\t(date "2026-09-12")
+\t\t(rev "C1")
 \t\t(comment 3 "Contrato com o cerebro: IDC 2x13, mesmo nome de rede via a via.")
 \t\t(comment 2 "UM terra so. A separacao AGND/GND vive no cerebro, no net-tie.")
 \t\t(comment 1 "Pull-down de 10k no gate dos MOSFET: obrigatorio, nao opcional.")

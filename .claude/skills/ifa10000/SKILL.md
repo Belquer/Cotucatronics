@@ -122,5 +122,13 @@ músico vai relatar é *"está baixo"*, que manda procurar ganho em vez de fiaç
   de CPU; os mesmos em SRAM = +5,6 pp.
 - **Régua errada produz "não funciona" falso.** Cada efeito tem seu material.
 - **Encanamento provado não é feature entregue.** O aceite é do músico.
+- **Um waiver é uma medição, não uma opinião.** Toda limitação ou desvio que se
+  **embarca** numa certificação vai para um **registo de risco** com veredito
+  MEDIDO — `SAFE-EMBARK` (com prova), `MUST-FIX`, ou decisão do ⟨dB⟩ — **nunca
+  afirmado** "parece bem". GO só com zero MUST-FIX em aberto. E certifica-se
+  contra **sinal limpo**: é a etapa 0 (`medicao-limpa`) — limpa o artefacto de
+  ambiente antes de julgar o resíduo, senão certificas ruído. A skill `pcb`
+  instancia isto para placas (o registo de risco como portão de saída da revisão
+  tripla; âncora: o waiver C16↔J14 que a medição virou MUST-FIX).
 - **Documento vivo:** efeito novo que revele buraco no protocolo ganha etapa
   nova. O IFÁ10000 melhora a cada certificação.

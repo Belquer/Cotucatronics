@@ -7,6 +7,7 @@
 <!-- doc-check: ignore arruma_silk (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore refs_apontam (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore kicad_layout (nome de skill, nao param) -->
+<!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore confere_caixa (idem) -->
 <!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
@@ -10252,3 +10253,32 @@ Custou cinco tentativas até olhar para os **nomes dos ficheiros** em `/tmp/kica
 Provado pela API, numa cópia: ler, criar e remover pista, mover 7 footprints
 por coordenadas e confirmar no KiCad, `refill_zones()`, `save()`. **A GUI deixou
 de ser a porta única para a placa.**
+
+## 15ew — dei o alarme de «dois `J2` sem ficha» sem ler o commit que o explicava
+
+No `ud` de 17/09 encontrei o ramo da rev C com o `J2` do OLED em header de 2,54
+e ordem `+5V GND DIN CLK CS DC RST`, a inversa exacta do PicoBlade do `main`.
+Escrevi no `STATUS` e no commit que **«ninguém a citou»** e pus a rev C em
+suspenso antes de pagar.
+
+**O commit que a criou (`deddd3d`) dizia porquê**, com a regra certa: o módulo
+liga por jumpers, e PicoBlade na placa é incompatível com Dupont. E a placa já
+estava **paga e na fábrica** desde 12/09. O dB fechou a questão numa frase: o
+OLED vem com o cabo, MX1.25 do lado dele e jumpers fêmea do outro; na placa
+solda-se header macho.
+
+Duas lições, e a segunda é a que dura:
+
+1. **Antes de chamar «divergência» a uma diferença entre ramos, ler o commit
+   que a introduziu.** `git log -S` custa um segundo; eu tinha medido os
+   ficheiros e não tinha lido a razão escrita ao lado deles.
+2. **A 15eu estava certa para o cabo que eu imaginava.** «A função de um
+   conector está na peça do outro lado» continua verdade — mas o outro lado não
+   é só o módulo, é **o cabo que existe**. Com MX1.25-MX1.25 directo o contrato
+   é a posição; com jumpers soltos é o **nome** de cada fio. O mesmo módulo e a
+   mesma ficha dão ordens diferentes na placa, e ambas certas, conforme o cabo.
+
+O `funcao_dos_pads` v0.3.0 escreve agora o contrato do `J2` por nome de fio, e
+o contrato PicoBlade antigo **reprova 6 de 7** sobre a placa encomendada — que é
+a medida de quanto o `main` estava longe da placa real durante nove dias, sem
+que isso tocasse numa placa fabricada.

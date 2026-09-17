@@ -318,6 +318,39 @@ O `CAIXA-ACRILICO-MONTAGEM.md` §6b já fixa os percursos por razão eléctrica.
 Com transparente, esses percursos passam a ter também de se ver bem, e as duas
 exigências nem sempre coincidem.
 
+## 4f. Lições de montagem (campo) + rumo parafusado
+
+Montar a caixa r2 à mão ensinou cinco coisas que nenhum portão apanha, porque
+só aparecem com a **peça real na bancada**. Estão inteiras — sintoma, causa com
+`file:line`, correção, re-corte, ferragem — em **`caixa/LICOES-MONTAGEM.md`**.
+Ler esse doc **antes de abrir a próxima caixa rev**.
+
+> **Diretriz que governa a próxima versão: TUDO PARAFUSADO — cola só se for
+> absolutamente necessário.** A caixa passa a **100% desmontável e reworkável**.
+> Onde antes o Weld-On era o meio de montagem, passa a haver parafuso + porca
+> cativa (a mesma máquina do `hexagono()` / *feature* `"hex"` dos calços,
+> `cotuca_caixa_corte.py:366-368,521`). O casco escolhido são **postes internos
+> parafusados** nos cantos — clones dos postes do fundo — por pedirem **muito
+> menos reescrita de gerador** que o T-slot (que fica como upgrade estético
+> futuro; as 2 juntas da tampa a 11,8° complicam-no *in-plane*).
+
+⚠️ **O furo do pino de indexação do pot NÃO EXISTE no gerador.** O
+`cotuca_caixa_corte.py:264` faz só o **ø7 central** de cada pot (encoder x=105,
+pots x=140/175, y=92) — falta o furo do **pino anti-rotação** (*locating hole*),
+sem o qual o pot não assenta rente. Ao montar o pot na guia da caixa, **este
+furo entra na lista** (**ø3,2 mm**, medido na peça), a par do ø7.
+
+⚠️ **A distância eixo→pino está LOCADA: 7,5 mm centro-a-centro** — medido direto
+na peça pelo dB (§0: **a peça em mão manda**, supersede o datasheet). Este
+7,5 mm é a **trava anti-rotação do lado do PAINEL** (o *tab* que entra na TAMPA
+da caixa), uma feature **distinta** dos ~4,4 mm dos postes do lado da PCB (que
+entram no painel, footprint `Potentiometer_Bourns_PTV09A-1`) — dois conjuntos de
+features diferentes, sem conflito entre caixa e placa. Confirma-se na peça se são
+**1 ou 2** furos (o PTV09A tem trava). **Posição:** furo do pino **à esquerda do
+eixo na vista de cima do painel** (**−X, mesmo Y**) — mapear «esquerda em vista
+de cima» pelo transform da tampa (`to_top()`/*mirror*) e **confirmar o sinal
+antes de gerar**, para não sair espelhado. Ver `caixa/LICOES-MONTAGEM.md`, lição #1.
+
 ## 5. Ordem de trabalho, e onde o dB entra
 
 ```
@@ -442,3 +475,26 @@ Nasceu a 06/09/2026 da cicatriz **15cf** (`docs/battle_scars.md`): as duas PCB
 tinham sido dimensionadas contra desenhos de uma caixa que nunca foi cortada, e
 as duas correcções seguintes foram para caixas reais mas erradas. Ver também
 `caixa/README.md`, que põe as quatro caixas lado a lado.
+
+## Histórico
+
+- **v1.1.1 (2026-09-16)** — §4f: furo do pino de indexação do pot **totalmente
+  locado — ø3,2 mm · 7,5 mm centro-a-centro · à esquerda do eixo na vista de cima
+  (−X, mesmo Y)**, tudo medido na peça pelo dB (supersede o datasheet),
+  substituindo a incerteza datasheet ~4,4 mm ≠ 4,7 mm-da-borda ~8,2 mm.
+  Esclarece que o 7,5 mm é a **trava anti-rotação do lado do PAINEL** (tab na
+  TAMPA) — feature distinta dos ~4,4 mm dos postes do lado da PCB (footprint
+  `Potentiometer_Bourns_PTV09A-1`), sem conflito caixa↔placa. Posição angular
+  agora conhecida: furo do pino **à esquerda do eixo na vista de cima** (−X,
+  mesmo Y) — mapear pelo transform da tampa e confirmar o sinal antes de gerar.
+  «A peça em mão manda».
+- **v1.1.0 (2026-09-16)** — nova secção **4f. Lições de montagem (campo) + rumo
+  parafusado**: declara a diretriz **«TUDO PARAFUSADO — cola só se absolutamente
+  necessário»** como governante da próxima caixa rev, aponta para
+  `caixa/LICOES-MONTAGEM.md` (as 5 lições da montagem à mão da r2), acrescenta à
+  orientação de montagem de pot o **furo do pino de indexação ausente**
+  (`cotuca_caixa_corte.py:264` só faz o ø7) e reafirma **«a peça em mão manda»**
+  para a distância eixo→pino (datasheet PTV09A ~4,4 mm ≠ 4,7 mm medidos da
+  borda). Casco escolhido = postes internos parafusados (clones dos calços,
+  reusam `hexagono()`/`"hex"`), T-slot como upgrade futuro.
+- **v1.0.0 (2026-09-06)** — versão inicial (ver Procedência).

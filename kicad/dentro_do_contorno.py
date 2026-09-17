@@ -25,7 +25,7 @@ USO:  dentro_do_contorno.py <cerebro|painel> [--folga MM] [--sabota REF]
 import os
 import sys
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 FOLGA = 0.5             # mm entre o courtyard e o bordo da placa
 
 # ⚠️ ISENCOES: com razao escrita, uma a uma, e NUNCA em bloco (skill kicad §7).
@@ -40,6 +40,12 @@ ISENCOES = {
     ("cerebro", "NT1"): "net-tie: nao tem corpo, logo nao tem courtyard. Nada "
                         "de fisico para caber ou nao caber.",
 }
+ISENCOES[("painel", "J1")] = (
+    "rev C ENCOMENDADA (JLC W2026091304545438, 12/09): courtyard do IDC a "
+    "0,405 do bordo esquerdo, contra 0,5 da regra. O corpo fica DENTRO da "
+    "placa (o courtyard ja inclui margem ao plastico); falta margem, nao "
+    "cabe mal. Nao se muda numa placa que ja esta na fabrica — na proxima "
+    "revisao, J1 x >= 26,1.")
 ISENCOES[("cerebro", "H2")] = ISENCOES[("cerebro", "H1")]
 ISENCOES[("cerebro", "H3")] = ISENCOES[("cerebro", "H1")]
 ISENCOES[("cerebro", "H4")] = ISENCOES[("cerebro", "H1")]

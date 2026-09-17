@@ -1,0 +1,7 @@
+KIT DE MONTAGEM — cotuca painel (chapa quente, em casa)
+1. Encomenda a PCB nua + STENCIL na JLC com a MONTAGEM DESLIGADA (assembly OFF).
+2. Compra as pecas na LCSC pelo COMPRA_LCSC.csv (codigos exactos; leva as sobras).
+3. Fixa a placa, poe o stencil e passa pasta Sn63/Pb37 com uma espatula.
+4. Coloca as pecas seguindo o MAPA_COLOCACAO.md — por lote, valor a valor.
+5. Refluxo do TOPO na chapa quente; depois solda a mao o lado BOTTOM e os THT.
+6. Inspeciona com lupa as juntas de SOIC/SOT (pontes, pino levantado, falta de solda).

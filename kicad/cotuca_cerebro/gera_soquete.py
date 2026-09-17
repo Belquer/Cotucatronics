@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gera_soquete v0.18.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
+"""gera_soquete v0.19.0 — a folha SOQUETE + PONTE + DPDT + SAIDAS, rev B.
 
 Desenhada por SCRIPT e nao a mao (skill `kicad` §5): reproduzivel, diffavel,
 e corrigivel na fonte. Toda a geometria cai na grade de 1,27 mm.
@@ -24,7 +24,7 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 """
 import io, re, sys, uuid
 
-VERSAO = "0.18.0"
+VERSAO = "0.19.0"
 G = 1.27
 # ⚠️⚠️ UUID DETERMINISTICO. NAO VOLTAR A `uuid4()`.
 #
@@ -616,21 +616,36 @@ def _confere_lib(caminho):
                          " — o KiCad ve-os SEM PINOS e os fios ficam soltos")
     return len(usa)
 
-# ------------------------------------- D29 e D30 sao o USB: NO-CONNECT
+# ------------------------------------- pinos livres da Daisy: NO-CONNECT
 #
-# ⚠️ Nao sao "pinos livres", sao PROIBIDOS. Sao o USB_HS_D-/D+ (pinos 36 e 37)
-# e usa-los como GPIO mata a enumeracao — cicatriz 15by, em que o PINOS.md os
-# reservava para os DPDT. Ate agora isso vivia so em documento; o `no_connect`
-# poe a regra dentro do ficheiro, e o ERC passa a recusar quem la ligue um fio.
+# ⚠️ TODO pino que esta folha nao liga leva `no_connect`. Duas familias, uma
+# so regra: o estado HONESTO no ERC de um pino sem fio e "nada se liga aqui",
+# e isso e o `no_connect` — nao a ausencia dele. (ppc/002 §3: ERC = 0, e nao
+# se suprime severidade; declara-se a intencao no ficheiro.)
 #
-# Os outros 11 pinos livres NAO levam no-connect: sao reserva declarada no
-# FUTURO.md, e prometer "nada se liga aqui" seria mentir sobre eles.
-for _n in (36, 37):
+#  · D29/D30 (pinos 36/37) sao o USB_HS_D-/D+ e sao PROIBIDOS como GPIO —
+#    cicatriz 15by, em que o PINOS.md os reservava para os DPDT. O
+#    `no_connect` poe a regra dentro do ficheiro e o ERC recusa quem la
+#    ligue um fio.
+#  · os restantes livres (D3/D4/D9/D11/D12/D18/D19/D20/D21/D25 e o 3v3D,
+#    pino 38) sao reserva declarada no FUTURO.md. Enquanto NADA se liga a
+#    eles, o `no_connect` nao mente: descreve o presente. Reactivar um e
+#    tirar-lhe o flag e ligar um fio — o flag declara o hoje, nao fecha o
+#    amanha. (Era esta a duvida da versao anterior, que os deixava soltos e
+#    com isso 11 `pin_not_connected` no ERC; o brief de fecho pede ERC 0.)
+#
+# ⚠️ DERIVADO, nunca a mao: um pino que passe a ter rotulo em LIGA sai do
+# conjunto sozinho, e um pino novo que fique livre entra sozinho — a lista
+# nunca envelhece ao lado do mapa.
+_ligados = {PINO[nome] for nome, rot in LIGA.items() if nome in PINO and rot}
+for _n in range(1, 41):
+    if _n in _ligados:
+        continue
     _x, _y = pin_xy(_n)
-    # ⚠️ pelo EMISSOR, nao por copia dele. Esta linha repetia o corpo do
-    # `nao_liga()` — e uma copia de emissor sobrevive a mudancas do
-    # original em silencio: quando o `uuid` passou a ter chave, so o
-    # original a recebeu e esta ficou com a versao antiga.
+    # ⚠️ pelo EMISSOR, nao por copia dele. Esta linha ja repetiu o corpo do
+    # `nao_liga()` — e uma copia de emissor sobrevive a mudancas do original
+    # em silencio: quando o `uuid` passou a ter chave, so o original a
+    # recebeu e a copia ficou com a versao antiga.
     nao_liga(_x, _y)
 
 
