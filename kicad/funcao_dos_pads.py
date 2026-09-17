@@ -32,7 +32,7 @@ renomeacao e diz exactamente o que interessa: quem esta ligado a quem.
 Nomes literais so para redes que sao decisao humana e nao mudam: `GND`, `+5V`.
 """
 
-VERSAO = "0.3.0"
+VERSAO = "0.3.1"
 
 import io
 import os
@@ -46,10 +46,16 @@ NUM = r"-?\d+(?:\.\d+)?"
 # mesmo SOT-23 e o AO3400A (1G 2S 3D) e o BAV99 (1 anodo comum...), e um mapa
 # por footprint diria a mesma coisa das duas, que e como se erra.
 FICHA = {
-    ("painel", "Q1"): ("AO3400A", {"1": "G", "2": "S", "3": "D"},
-                       "ficha AO3400A, SOT-23 top view"),
-    ("painel", "Q2"): ("AO3400A", {"1": "G", "2": "S", "3": "D"},
-                       "ficha AO3400A, SOT-23 top view"),
+    # ⚠️ A PECA COMPRADA E O SI2302CDS-T1-GE3 (Mouser #40440548, 12/09), nao o
+    # AO3400A com que o painel foi desenhado. Conferido a 17/09 na ficha Vishay
+    # Siliconix doc. 68645 rev. D (docs/datasheets/SI2302CDS-T1-GE3.pdf),
+    # "SOT-23 (TO-236) Top View": 1 G · 2 S · 3 D — a mesma pinagem, logo a
+    # placa encomendada (06db1c7) serve as duas. Porta a 3,3 V da Daisy contra
+    # VGS(th) 0,40..0,85 V; RDS(on) <= 0,075 ohm ja a 2,5 V; VGS max +-8 V.
+    ("painel", "Q1"): ("SI2302CDS-T1-GE3", {"1": "G", "2": "S", "3": "D"},
+                       "ficha Vishay Si2302CDS doc. 68645, SOT-23 top view"),
+    ("painel", "Q2"): ("SI2302CDS-T1-GE3", {"1": "G", "2": "S", "3": "D"},
+                       "ficha Vishay Si2302CDS doc. 68645, SOT-23 top view"),
     # ⚠️⚠️ UM CONECTOR TAMBEM TEM FICHA, e a ficha e da peca do OUTRO lado.
     #
     # O J2 e um header de 7 vias: sete pads iguais, sem polaridade, sem

@@ -43,7 +43,7 @@ escrevi e que pode dizer que nao — e o MPN tem de aparecer no texto. O que nao
 passa fica marcado `POR CONFERIR`, nunca apagado em silencio nem dado por bom.
 """
 
-VERSAO = "0.10.0"
+VERSAO = "0.10.1"
 
 import io
 import json
@@ -205,9 +205,8 @@ def confere(caminho, mpn):
 # rede alheia e volta a tentar-se; nao e ausencia de catalogo.
 FONTE_EXTERNA = {
     "1715721": "Phoenix Contact — MKDS 1,5/2-5,08, ficha do artigo 1715721",
-    "53047-0710": ("Molex — desenho de venda 530470710_sd.pdf. A LCSC tem a "
-                   "peca (C17454015) e aponta para molex.com, que nao respondeu "
-                   "(0 bytes em 120 s, HTTP/2 e 1.1). RETENTAVEL."),
+    # (o 53047-0710 PicoBlade saiu a 17/09: o J2 do painel e header 1x07 da
+    #  barra 61304011121, porque o OLED traz cabo com jumpers femea)
     "C1206C223J5GACTU": "Kemet — serie C0G/NP0 1206, 22 nF 50 V",
     "MKS2C042201M00KN00": "WIMA MKS 2 — 2,2 uF 63 V PET, passo 5 mm (PCM5); Mouser 505-MKS2C042201M00KN",
     "61202621621": "Wurth Elektronik WR-BHD — box header 2x13 26p 2,54 mm THT vertical macho; Mouser 710-61202621621",
