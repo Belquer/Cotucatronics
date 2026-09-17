@@ -1,3 +1,27 @@
+> [!warning] APOSENTADA a 08/09/2026 — nao encomendar por aqui
+>
+> A lista de compras viva e **`COTUCA_BOM.md`**, gerada das folhas KiCad por
+> `tools/bom_completa.py`; a compra da rev C e `export/BOM_CONSOLIDADO.csv`
+> (ver `export/MANIFEST.md`). Esta foi escrita a mao e ja divergia do esquema.
+>
+> **Tudo o que ela tinha de util foi migrado**, e estes MPNs foram CORRIGIDOS
+> — se os leres aqui, estao errados:
+>
+> | aqui diz | o vivo (17/09), e porque |
+> |---|---|
+> | `2920L300/24MR` | **`MF-LSMF300/24X-2`** (Bourns) — o /300 nao existia (o de 24 V era o `2920L330/24MR`), e esse foi por sua vez trocado na compra da rev C por este, verificado em estoque na Mouser a 12/09 |
+> | `PEC11R-4220F-S0024` | **`EC11E15244G1`** (Alps) — o PEC11R tem pinos a 5,0 mm e o footprint e do Alps, a 2,5 |
+> | `PTV09A-4020**F**-B103` | **`PTV09A-1020S-B103`** — `S` e eixo estriado, o `F` e liso, e a nota ao lado desta propria tabela pedia estriado. A troca de `4020` para `1020` esta no gerador sem razao escrita |
+> | `1935161` | **`1715721`** — a MKDS **1** tem 1,5 mm menos de largura que a MKDS **1,5**, que e a do footprint |
+> | `53047-0710` (J_OLED, PicoBlade) | **`61304011121`** cortado a 1x07 — o OLED traz cabo com jumpers femea, e a placa leva header macho de 2,54 (17/09) |
+>
+> E duas coisas que so apareceram ao migrar: **os soquetes da Daisy e do ESP32
+> nao estavam orcados em lado nenhum**, e o **cabo ate aos DPDT nao estava na
+> BOM de todo** — passou a 8 vias a 08/09, com os pinos 7 e 8 em GND.
+>
+> Fica pelo historico: as razoes de escolha aqui escritas continuam a valer, e
+> foi delas que sairam as notas que agora vivem no gerador.
+
 # BOM por MPN — Cotucatronics rev B
 <!-- doc-check: ignore power_pin_not_driven (codigo de violacao do ERC do KiCad) -->
 ### 05/09/2026 · dois projetos KiCad · JLCPCB monta o SMD · dB compra e solda o resto
