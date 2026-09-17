@@ -1,6 +1,15 @@
 # Lições de montagem — a caixa de acrílico, montada à mão
 
-### Cotucatronics · 16/09/2026 · rev. b · acrílico transparente **3,0 mm** · gravado da bancada
+### Cotucatronics · 17/09/2026 · rev. c · acrílico transparente **3,0 mm** · gravado da bancada
+
+> **rev. c (17/09/2026):** lição #1 corrigida — o pot físico em uso é um
+> **pot de corpo 16 mm** (Ø16,90 · bucha **M7×0,75** · **3 terminais Ø1,20 a
+> passo 5,0 mm** · pino anti-rotação a **7,80 mm @ 30°** por datasheet ≈ 7,5 mm
+> medido pelo dB), **NÃO** um PTV09A de 9 mm. Isto **supersede** a premissa
+> anterior do PTV09A. Adicionada a **nota #6** (footprint RV1/RV2 do painel vs
+> pot físico — resolução por **fiação**, caso B; sem problema no painel já
+> fabricado). Cota da tampa mantida (ø3,2 · 7,5–7,8 mm c-c · esquerda/−X na vista
+> de cima).
 
 > **rev. b (16/09/2026):** lição #1 — furo do pino de indexação do pot
 > **totalmente locado na peça** (**ø3,2 mm · 7,5 mm centro-a-centro · à esquerda
@@ -41,12 +50,17 @@ corpo do pot não tem onde encaixar o pino e não assenta.
 pelo dB, do eixo-centro ao pino-centro. **A peça em mão manda — supersede o
 datasheet.**
 
-**Esclarecimento importante a registrar** (evita confusão futura): este
-**7,5mm é a trava anti-rotação do lado do PAINEL** — o *tab* que entra na
-**TAMPA** da caixa. É uma feature **DISTINTA** dos **~4,4mm dos postes do lado
-da PCB** (os que entram no painel, no footprint KiCad
-`Potentiometer_Bourns_PTV09A-1`). São **dois conjuntos de features diferentes**
-— sem conflito entre a caixa e a placa. O furo da **TAMPA** usa **7,5mm c-c**.
+**Esclarecimento importante a registrar** (evita confusão futura): o pot físico
+em uso é um **pot de corpo 16 mm** — Ø16,90 · bucha **M7×0,75** · **3 terminais
+Ø1,20 a passo 5,0 mm** · pino anti-rotação/locate a **7,80 mm de raio @ 30°**
+por datasheet (≈ 7,5 mm medido pelo dB, à esquerda). **Isto supersede a premissa
+anterior do PTV09A**: o PTV09A é um pot de **9 mm** (passo de pino 2,5 mm, postes
+de locate ~4,4 mm) e **não é** a peça física. O **7,5mm é a trava anti-rotação
+do lado do PAINEL** — o *tab*/pino que entra na **TAMPA** da caixa; é a feature
+que a cota da tampa recebe. O furo da **TAMPA** usa **ø3,2mm · 7,5mm c-c**
+(mantido). Sobre o footprint RV1/RV2 do painel (PTV09A) vs o pot 16 mm físico,
+ver a **nota #6** — resolvido por **fiação** (caso B), sem problema no painel já
+fabricado.
 
 **Posição angular do furo (agora conhecida):** furo do pino a **7,5mm c-c, à
 esquerda do eixo na vista de cima do painel** (**−X, mesmo Y** do centro do
@@ -61,8 +75,8 @@ do furo do eixo.
 > cima mandam.**
 
 Regra (§0 da skill `caixa`, e vale aqui inteira): **a peça em mão manda.** O
-**PTV09A tem trava** — confirmar na peça se o painel precisa de **1 ou 2** furos
-de indexação.
+**pot 16 mm tem pino anti-rotação** (7,80 mm @ 30° por datasheet) — confirmar na
+peça se a tampa precisa de **1 ou 2** furos de indexação.
 
 **Correção escolhida:** adicionar furo(s) no *locating hole* à cota medida
 (**7,5mm c-c**), diâmetro **ø3,2mm** (medido pelo dB, confirmado na peça).
@@ -162,6 +176,51 @@ a estar preso por parafuso à estrutura, não pendurado em cola.
 
 ---
 
+## 6 · Footprint RV1/RV2 do painel (PTV09A) vs o pot físico de 16 mm — resolvido por fiação
+
+**O que os arquivos dizem (conferido no PCB e no esquema):** RV1 e RV2 no painel
+usam o footprint `Potentiometer_THT:Potentiometer_Bourns_PTV09A-1_Single_Vertical`
+(pot **9 mm** montado NA PCB). Medido no `cotuca_painel.kicad_pcb`:
+
+- **3 pads passantes** — pad 1 (GND) em (0, 0), pad 2 (POT_L no RV1 / POT_R no
+  RV2) em (0, −2,5), pad 3 (+3V3A) em (0, −5). **Passo centro-a-centro = 2,5 mm**,
+  furo **ø1,0 mm**, pad ø1,8 mm.
+- **2 postes de fixação "MP"** (locate do PTV09A) furo ø2,2 mm em (7, −6,9) e
+  (7, 1,9).
+- **Corpo (F.Fab) ~12 × 9,7 mm; courtyard ~14,4 × 13,7 mm** — dimensão de pot 9 mm.
+- Esquema/BOM do painel declaram MPN **PTV09A-1020S-B103** (Bourns, 9 mm, 10k lin).
+
+**O pot físico** é um **16 mm** com **3 terminais a passo 5,0 mm** — ou seja,
+**2× o passo** do footprint (5,0 vs 2,5 mm) e corpo bem maior. Como peça
+**board-mounted** ele **NÃO caberia** no footprint PTV09A do painel.
+
+**Resolução (caso B, decidido pelo usuário — NÃO é problema de fabricação):** os
+pots são montados na **TAMPA** e ligados por **FIO** às pads RV1/RV2 do painel —
+**não** soldados como pots board-mounted. Com fiação, soldam-se **3 fios nas 3
+pads** de cada RV; o passo do footprint (2,5 mm) **é irrelevante** para fiação, e
+os postes MP ficam sem uso. A função é preservada (POT_L/POT_R/+3V3A/GND chegam
+ao pot). **O painel já fabricado está OK — não há re-fabricação a fazer por causa
+disto.**
+
+**Para a PRÓXIMA revisão do painel (clareza, não urgência):** trocar o footprint
+PTV09A de RV1/RV2 por um **header/conector de 3 pinos de fiação** (ou marcar
+explicitamente como pads de solda-fio), para o desenho ficar honesto — **fiado,
+não board-mounted**.
+
+**Nota de BOM (não alterar o BOM já pedido — só registrar):** o pot real
+comprado é um **16 mm** (M7×0,75, 3T @ 5,0 mm, anti-rot 7,80 @ 30°), à parte; o
+**"PTV09A" no `export/painel_2026-09-12_06db1c7/bom_painel.csv` (linha RV1,RV2)**
+e o MPN `PTV09A-1020S-B103` no esquema são **vestigiais** para a peça física —
+funcionam como a *landing* de fiação. Discrepância registrada; BOM encomendado
+mantido como está.
+
+**Precisa re-corte / re-fabricação?** **Não** (nem caixa nem painel). Só a
+próxima rev do painel ganha o conector de fiação.
+
+**Ferragem:** 3 fios por pot (6 no total) + terminais.
+
+---
+
 ## Diretriz da próxima versão
 
 > **TUDO PARAFUSADO — cola só se for absolutamente necessário.**
@@ -201,6 +260,11 @@ usuário está tomada:
 | 5 | fundo: **postes parafusados à parede E ao fundo** — **o casco, a MAIOR obra** | **Sim** | ~12 M3 + 12 porcas | **maior** |
 
 \* nº 2 só pede re-corte se quiseres um rebaixo para o vidro afinar com a face.
+
+> **Nota #6 (não é correção da caixa):** o pot é montado na tampa e **fiado** às
+> pads RV1/RV2 do painel (caso B). Sem problema no painel já fabricado; a próxima
+> rev do painel troca o footprint PTV09A por um conector de 3 pinos de fiação.
+> Ver secção **6**.
 
 > A obra maior é o **casco (nº 5)**: reescrever a fixação do fundo como postes
 > parafusados nos cantos, clonando a máquina de porca cativa (`hexagono()` /
