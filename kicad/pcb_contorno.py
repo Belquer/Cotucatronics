@@ -55,7 +55,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.22.1"
+VERSAO = "0.23.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -1137,6 +1137,13 @@ def confere_furos(t, alvo):
 # mas o que ocupa o espaco e ele COM a ficha enfiada e o fio a sair — 20 mm e
 # conservador. Medir a peca nua e medir o estado em que ela nunca esta.
 ALTURAS = [
+    # ⚠️ 18/09: as duas primeiras linhas faltavam, e as pecas saiam como "?" —
+    # entre elas o J14 do cerebro, que fica debaixo do arcade da esquerda.
+    # Caixa de pinos IDC: 8,85 mm de corpo, ficha Wurth WR-BHD (612 026 216 21,
+    # catalogo 05-5). A ficha IDC do cabo encaixada ACRESCENTA — por medir.
+    (r"IDC-Header",                  8.85, "caixa de pinos IDC (so a caixa)"),
+    # ponto de teste: e um pad de cobre, sem corpo nenhum.
+    (r"TestPoint_Pad",               0.1, "pad de teste, sem corpo"),
     (r"PinHeader.*Vertical",        20.0, "header + ficha + fio"),
     (r"JST_XH",                     20.0, "JST + ficha + fio"),
     (r"CP_Radial_D(\d+)",           11.0, "electrolitico radial"),
@@ -1479,6 +1486,34 @@ def confere_arcade(t, alvo, frente_em):
          "     discos o30 sobre a placa: y %.1f · x %s"
          % (ay, " ".join("%.0f" % v for v in ax))]
     ox, oy = alvo["origem"]
+    # ⚠️⚠️ O CORPO, E NAO SO OS PADS (18/09). Ate aqui isto testava so os pads
+    # contra o disco — e o J14 do cerebro passava: pads a 16,1 mm do centro do
+    # arcade da esquerda, fora do raio 15 por 0,25. O CORPO da caixa de pinos
+    # (8,85 mm de altura) chega a 11,6. E um botao bate no plastico, nao no pad.
+    # E a mesma familia do `confere_furos` a 08/09 — "contornos, nao pads" — que
+    # ficou consertada la e nao aqui.
+    corpos = {}
+    for ref_c, pts in _courtyards(t):
+        xs = [x for x, _ in pts]; ys = [y for _, y in pts]
+        if frente_em == "y_min":
+            corpos[ref_c] = (min(xs) - ox, min(ys) - oy, max(xs) - ox, max(ys) - oy)
+        else:
+            corpos[ref_c] = ((ox + alvo["w"]) - max(xs), (oy + alvo["h"]) - max(ys),
+                             (ox + alvo["w"]) - min(xs), (oy + alvo["h"]) - min(ys))
+
+    # ⚠️ 15 = o raio do FURO da tampa. O que desce por baixo (corpo roscado e
+    # micro-interruptor) e mais estreito, e esse diametro NUNCA foi medido — a
+    # 06/09 mediu-se a profundidade. Fica o pior caso ate alguem medir o botao;
+    # medir so pode tirar pecas desta lista, nunca por.
+    R_CORPO_ARCADE = 15.0
+
+    def corpo_toca(ref_c):
+        if ref_c not in corpos:
+            return False
+        x0_, y0_, x1_, y1_ = corpos[ref_c]
+        return any(math.hypot(max(x0_ - cx, 0, cx - x1_), max(y0_ - cy, 0, cy - y1_)) <= R_CORPO_ARCADE
+                   for cx, cy in [(a_, ay) for a_ in ax])
+
     bate = []
     for m in re.finditer(r'\n\t\(footprint "', t):
         j = m.start() + 1
@@ -1503,7 +1538,8 @@ def confere_arcade(t, alvo, frente_em):
             bx, by = (ox + alvo["w"]) - kx, (oy + alvo["h"]) - ky
         ra = re.search(r'\(at ' + NUM + r' ' + NUM + r' (' + NUM + r')\)', bl)
         rot = float(ra.group(1)) if ra else 0.0
-        if colide(bx, by, rot, pads_de(bl), [(a, ay) for a in ax], 15.0):
+        if (colide(bx, by, rot, pads_de(bl), [(a, ay) for a in ax], 15.0)
+                or corpo_toca(ref)):
             bate.append((ref, fp, altura_de(fp)))
     if bate:
         maus = sorted((h, r, f) for r, f, h in bate if h is None or h > folga)

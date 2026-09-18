@@ -47,6 +47,7 @@ confundir com um bom.
 """
 import collections
 import datetime
+import io
 import json
 import os
 import re
@@ -60,7 +61,7 @@ import zipfile
 #            JLC, em vez de o reescrever no lugar e perder Val/Package. A jusante
 #            (VISTORIA, kit_montagem) passa a ler valor/footprint da posicao.
 #   0.17.0 — serigrafia medida no gerber; CPL reescrito para o esquema da JLC.
-VERSAO = "0.19.0"
+VERSAO = "0.20.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 # ⚠️ O caminho macOS e o default, mas honra-se KICAD_CLI do ambiente: um caminho
 # hardcoded rebenta noutro computador (skill kicad §8). Igual ao roteia.py, para
@@ -422,6 +423,27 @@ def cpl_para_jlc(caminho):
 
 
 def uma(nome, incompleta):
+    """Corre o portao sobre uma placa. ⚠️ E SE RECUSA, DEVOLVE A PLACA INTACTA.
+
+    O `mede()` corre `kicad-cli pcb drc --refill-zones --save-board` sobre o
+    ficheiro verdadeiro — precisa, porque os gerbers tem de sair com as zonas
+    cheias. Mas quando o portao RECUSA nao ha export, e o ficheiro ficava na
+    mesma reescrito (80 linhas de poligonos a mudar na 6.a casa decimal): a
+    18/09 isso mexeu no painel que ja estava na fabrica, so por se ter corrido o
+    portao para ler. Um portao que recusa nao deixa rasto.
+    """
+    pcb = os.path.join(AQUI, "cotuca_%s" % nome, "cotuca_%s.kicad_pcb" % nome)
+    original = io.open(pcb, "rb").read() if os.path.exists(pcb) else None
+    ok = None
+    try:
+        ok = _uma(nome, incompleta)
+        return ok
+    finally:
+        if ok is False and original is not None:
+            io.open(pcb, "wb").write(original)
+
+
+def _uma(nome, incompleta):
     pcb = os.path.join(AQUI, "cotuca_%s" % nome, "cotuca_%s.kicad_pcb" % nome)
     sch = os.path.join(AQUI, "cotuca_%s" % nome, "cotuca_%s.kicad_sch" % nome)
     if not os.path.exists(pcb):
@@ -498,6 +520,25 @@ def uma(nome, incompleta):
     if rfp.returncode:
         recusas.append("funcao dos pads: %s"
                        % (rfp.stdout or rfp.stderr).strip().splitlines()[-1])
+
+    # ⚠️⚠️ E A PLACA TEM DE SE MONTAR (encaixe — trilha M do IFA10000).
+    #
+    # "De que vale uma placa correta eletricamente se nao podemos monta-la?"
+    # (dB, 18/09). Nesse dia as duas placas rev C ja estavam na fabrica com
+    # todos os portoes daqui verdes — e o painel nao tinha um ponto de fixacao,
+    # o J14 do cerebro ficava debaixo de um arcade, e a fita do IDC tinha metade
+    # do comprimento. Nenhuma recusa acima pergunta nada disso.
+    # Precisa do `pcbnew`, logo corre com o Python do KiCad.
+    kpy = ("/Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework"
+           "/Versions/3.9/bin/python3.9")
+    renc = subprocess.run([kpy, os.path.join(AQUI, "encaixe.py"), nome],
+                          capture_output=True, text=True)
+    for l in (renc.stdout or "").splitlines():
+        if re.match(r"\s+[✓✗] (M\d|CABO)", l):
+            print("   encaixe     %s" % l.strip()[:110])
+    if renc.returncode:
+        recusas.append("nao se monta: %s" % "; ".join(
+            l.strip()[2:60] for l in (renc.stdout or "").splitlines() if "✗" in l))
 
     # ⚠️⚠️ E AS VIAS TEM DE ESTAR TAPADAS (vias_tented).
     #

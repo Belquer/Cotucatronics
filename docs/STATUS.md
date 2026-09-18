@@ -2,6 +2,7 @@
 <!-- doc-check: ignore svg_colisoes (ferramenta em tools/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore dentro_do_contorno (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore sincroniza_pcb (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore para_fabrica (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore refresca_redes (funcao do sincroniza_pcb, em kicad/) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
@@ -331,11 +332,27 @@ directo (pino 1 ↔ pino 1), ~300 mm**: percurso medido ~170 mm pela parede de
 trás (`J1` do painel a 98 mm da frente, `J14` do cérebro a 19) mais os 80 mm de
 folga que a caixa pede para tirar o fundo. O BOM dizia ~150, estimado.
 
-⚠️ **Por medir na montagem a seco (M6): o `J14` pode bater no arcade da
-esquerda.** O corpo dele está a 11,6 mm do centro desse arcade (raio de exclusão
-18); a caixa de pinos tem 8,85 mm de altura (ficha Würth WR-BHD) e a folga por
-baixo dos arcade é 7,5 mm no pior caso — antes da ficha do cabo. Depende do
-diâmetro do corpo do botão abaixo da tampa, que só a peça diz.
+⚠️ **Cérebro rev C reprova em M6 (`encaixe.py`, pelo corpo): três peças dentro
+dos discos dos arcade**, contra o raio do FURO (15) e 7,5 mm de folga: `J14`
+(8,85 mm) a **11,6** do centro do arcade da esquerda, trimpot `RV1` (10 mm) a
+**13,3**, Daisy `U2` (17 mm) a **14,8** do do meio. O corpo do botão por baixo da
+tampa é mais estreito e nunca foi medido — **medir o diâmetro do corpo roscado e
+do micro-interruptor** decide: pode absolver o `U2` e talvez o `RV1`; o `J14` é o
+que mais provavelmente bate. Pela prioridade 2, o que cede é a caixa (mover o
+arcade na tampa), não a placa fabricada.
+
+**Portão novo (18/09): `kicad/encaixe.py`**, só leitura, chamado pelo
+`para_fabrica` — hoje recusa as duas placas: o painel em M2, o cérebro em M6.
+
+**Painel, M6 medido pelo dB (18/09): o header do OLED com os jumpers fêmea direitos
+não cabe entre a placa e o acrílico.** A folga placa↔tampa nunca foi desenhada.
+Saídas para o `J2` (fila única, jumpers soltos — o contrato é o nome de cada
+fio): header soldado **por baixo**, ou **jumpers em L** / header de 90° por cima.
+⚠️ Visto por baixo, a ordem aparece espelhada e a serigrafia não se lê:
+**identificar VCC e GND por continuidade com o `TP1` (+5V) e o `TP3` (GND) antes
+de ligar.** Não repetir o truque no `J1` (IDC 2×13) nem nos JST dos LEDs
+(`J6`/`J7`): espelhar uma ficha com chave troca pinos. A mesma pergunta — cabe
+com a ficha encaixada? — fica por fazer ao `J1` e aos `J3`–`J7`.
 
 ---
 

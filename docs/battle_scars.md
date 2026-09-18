@@ -9,6 +9,8 @@
 <!-- doc-check: ignore kicad_layout (nome de skill, nao param) -->
 <!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore pcb_contorno (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore confere_arcade (funcao do pcb_contorno, em kicad/) -->
+<!-- doc-check: ignore para_fabrica (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore confere_caixa (idem) -->
 <!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
@@ -10325,3 +10327,35 @@ Virou a **trilha M do IFÁ10000**, na `/pcb` (`references/ifa10000-m.md`): M0–
 com M2 «fixação» a reprovar zero pontos antes de haver cobre, e M1 a exigir
 re-certificação quando uma interface muda de tipo. O painel rev C é o primeiro
 registo — reprovado em M2.
+
+## 15ey — «de que vale uma placa correta eletricamente se não podemos montá-la?»
+
+A pergunta é do dB, a 18/09, no fim de um dia em que perguntas simples de
+montagem — *como se prende? que cabo compro? estes pots servem?* — encontraram,
+com as duas placas rev C já na fábrica e todos os portões verdes:
+
+- o painel sem um ponto de fixação (15ex);
+- o encoder sem rosca, e dos pots nenhum com rosca: nem o comprado (`-4`, sem
+  bucim), nem o decidido (`-1`, bucim liso), nem os da gaveta (16 mm, não cabem);
+- a fita do IDC com **150 mm** num percurso que pede **265**;
+- **três corpos debaixo dos arcade no cérebro** — `J14` a 11,6 mm, `RV1` a 13,3,
+  a Daisy a 14,8 — contra um disco de 15 e uma folga de 7,5.
+
+⚠️ **O `confere_arcade` já existia, e aprovava.** Testava os **pads** contra o
+disco do botão: os do `J14` passavam a 16,1 mm, por 0,25. O corpo de plástico
+chegava a 11,6. É a família do `confere_furos` de 08/09 — *contornos, não pads* —
+consertada lá e deixada aqui. Um botão bate no plástico.
+
+⚠️ **E dois verificadores escreviam.** Corri o `pcb_contorno` para ler o
+relatório dos arcade e ele **reescreveu o cérebro fabricado** (3914 linhas,
+reposto do git). Corri o `para_fabrica` para ver a recusa e ele **reencheu as
+zonas do painel fabricado**, mesmo recusando. O primeiro é um gerador com
+relatório; o segundo precisa de gravar quando exporta — agora devolve o ficheiro
+intacto quando recusa, provado.
+
+> **Um verificador que escreve não é verificador.** E um gerador que também
+> relata tem de ter um modo que só lê — ou alguém o corre para ler.
+
+O que ficou: `kicad/encaixe.py` (só lê, `--sabota` em cada verificação) no
+`para_fabrica`; o método de investigação escrito na trilha M; e a montagem com o
+mesmo peso da ligação na filosofia da `/pcb`.

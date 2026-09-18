@@ -32,6 +32,9 @@ com tempo perdido:
   verificador que mede o ponto errado aprova tudo com ar de ter conferido.
 - **Resultado negativo é achado** (`revisao-terra` R6). O que passou fica
   escrito, ou a próxima revisão refaz o trabalho.
+- **Uma placa que não se monta não está pronta** (dB, 18/09: *«de que vale uma
+  placa correta eletricamente se não podemos montá-la?»*). A montagem tem o mesmo
+  peso que a ligação, e o `para_fabrica` recusa as duas.
 - **A caixa cede à placa — por ordem de prioridade, não como lei** (IFÁ10000-M).
   É muito mais fácil ajustar uma embalagem do que uma PCB. Mas a placa traz os
   seus próprios meios de fixação: sem eles não há como a prender, e aí é ela que
@@ -363,6 +366,13 @@ interfaces · **M2 fixação** · M3 furos e recortes derivados · M4 tamanhos e
 contornos · M5 ângulos e orientação · M6 volume Z · M7 acesso e montagem · M8
 tolerâncias · **M9 encaixe a seco ⟨dB⟩** · M10 registo.
 
+- **O executável:** `kicad/encaixe.py` — só lê — mede M2 (fixação), M4
+  (contorno), M6 (volume sob os arcade, **pelo corpo**) e os **cabos** entre placas
+  (percurso 3D + folga de serviço contra o BOM), com `--sabota` a provar cada um.
+  O `para_fabrica` chama-o e recusa «não se monta». O resto é investigação, com
+  o método escrito na referência (ficha do modelo comprado lida no desenho,
+  rosca só se a ficha a mostrar, compra↔BOM↔peça em mão, altura acoplada, cabo
+  pelo percurso real).
 - **Quando corre:** M1–M6 no **estágio 3**, antes do cobre (é aí que mudar a
   placa ainda é barato); a trilha inteira **antes do 8**, com a caixa real.
 - **GO:** todas as etapas passam, cedências da placa todas justificadas e
@@ -525,6 +535,15 @@ fabrica a placa de ontem.
 
 ## Histórico
 
+- **v1.7.0 (2026-09-18)** — **a montagem passa a ser critério de pronto.** A
+  pergunta do dB — *«de que vale uma placa correta eletricamente se não podemos
+  montá-la?»* — vira filosofia do topo e portão: `kicad/encaixe.py` (v0.1.0, só
+  leitura; M2, M4, M6 pelo corpo, cabos; `--sabota`) chamado pelo `para_fabrica`
+  v0.20.0, que agora também devolve a placa intacta quando recusa. A referência
+  `ifa10000-m.md` ganha o **método de investigação** do dia (sete passos). E
+  duas correcções de fonte: o `confere_arcade` passa a testar o **corpo** e não
+  só os pads, e a tabela de alturas ganha a caixa de pinos IDC (8,85, ficha
+  Würth) e os pontos de teste.
 - **v1.6.0 (2026-09-18)** — **Portão de Certificação Mecânica, IFÁ10000-M**
   (`references/ifa10000-m.md`, nova): trilha do IFÁ10000 para o pareamento de
   qualquer placa com qualquer caixa — M0–M10 com critério e âncora, e ficha. A
