@@ -32,6 +32,10 @@ com tempo perdido:
   verificador que mede o ponto errado aprova tudo com ar de ter conferido.
 - **Resultado negativo é achado** (`revisao-terra` R6). O que passou fica
   escrito, ou a próxima revisão refaz o trabalho.
+- **Certo não é preciso** (15ez). Uma revisão de correcção só vê o que está lá
+  para corrigir; o que sobra está correcto. A cada peça, **primeiro «o que liga
+  aqui?»**, só depois «está certo?». Uma migração troca o consumidor e deixa o
+  fornecedor — procurar do outro lado da troca.
 - **Uma placa que não se monta não está pronta** (dB, 18/09: *«de que vale uma
   placa correta eletricamente se não podemos montá-la?»*). A montagem tem o mesmo
   peso que a ligação, e o `para_fabrica` recusa as duas.
@@ -369,6 +373,8 @@ tolerâncias · **M9 encaixe a seco ⟨dB⟩** · M10 registo.
 - **O executável:** `kicad/encaixe.py` — só lê — mede M2 (fixação), M4
   (contorno), M6 (volume sob os arcade, **pelo corpo**) e os **cabos** entre placas
   (percurso 3D + folga de serviço contra o BOM), com `--sabota` a provar cada um.
+  E o **M1**: todo conector declara o que liga; dois caminhos para a mesma
+  peça, ou a tomada de um módulo que já está num soquete, são vestígio.
   O `para_fabrica` chama-o e recusa «não se monta». O resto é investigação, com
   o método escrito na referência (ficha do modelo comprado lida no desenho,
   rosca só se a ficha a mostrar, compra↔BOM↔peça em mão, altura acoplada, cabo
@@ -535,6 +541,15 @@ fabrica a placa de ontem.
 
 ## Histórico
 
+- **v1.8.0 (2026-09-18)** — **certo não é preciso** (15ez). O `J4` do cérebro
+  («a ponte ESP32») era a tomada da ponte por fio; a ponte passou a soquete a
+  06/09 e ele ficou, e três revisões perguntaram se estava certo — a vistoria
+  até pressupunha «o outro lado». Filosofia nova no topo; o `portao_humano`
+  (v0.3.0) abre cada conector por «o que liga aqui?», com auto-teste; o
+  `encaixe.py` (v0.2.0) ganha o **M1** — destinos declarados, e as duas
+  assinaturas de um vestígio (dois caminhos para a mesma peça; tomada só de
+  alimentação de um módulo em soquete) — com sabotagem. E o método ganha o
+  passo 8: escrever o manual de montagem é uma revisão.
 - **v1.7.0 (2026-09-18)** — **a montagem passa a ser critério de pronto.** A
   pergunta do dB — *«de que vale uma placa correta eletricamente se não podemos
   montá-la?»* — vira filosofia do topo e portão: `kicad/encaixe.py` (v0.1.0, só

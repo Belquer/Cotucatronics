@@ -11,6 +11,7 @@
 <!-- doc-check: ignore pcb_contorno (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore confere_arcade (funcao do pcb_contorno, em kicad/) -->
 <!-- doc-check: ignore para_fabrica (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore portao_humano (script da skill pcb, em .claude/skills/pcb/scripts/) -->
 <!-- doc-check: ignore confere_caixa (idem) -->
 <!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
@@ -10359,3 +10360,42 @@ intacto quando recusa, provado.
 O que ficou: `kicad/encaixe.py` (só lê, `--sabota` em cada verificação) no
 `para_fabrica`; o método de investigação escrito na trilha M; e a montagem com o
 mesmo peso da ligação na filosofia da `/pcb`.
+
+## 15ez — três revisões perguntaram se o `J4` estava certo; nenhuma se ele era preciso
+
+O dB, a 18/09, ao ler o manual de montagem: *«por que a ponte ESP32 é com fio e
+não no circuito?»*. Está no circuito — o ESP32 encaixa no soquete `U3` do
+cérebro. O que parecia fio era o **`J4`** («a ponte ESP32», 2 pinos, `+5V_PONTE`
+e GND): a tomada do cabo de alimentação de quando a ponte era um módulo solto.
+
+| data | o quê | o que se viu do `J4` |
+|---|---|---|
+| 01/09 | nasce na folha de energia, tomada da ponte por fio | — |
+| 06/09 | a ponte passa a soquete `U3` (`0750e69`); **no mesmo dia** o conserto do díodo (`34f4ce4`) liga o `U3` à mesma rede `+5V_PONTE` | é o instante exacto em que o `J4` fica duplicado — e ninguém olha para ele: o conserto era do díodo |
+| 08/09 | varredura externa pré-fábrica | confere a ordem do soquete e apanha o `D2` ao contrário (crítico) — **o `J4` nem aparece** |
+| 12/09 | `VISTORIA.md`, item 18 | *«a ordem de pinos de J4 bate no que o cabo/módulo **do outro lado** espera»* — **pressupunha que havia outro lado** |
+| 18/09 | o manual de montagem, gerado por mim | mandou soldá-lo no passo dos headers |
+
+E o BOM dizia *«5 fios ao soquete»* — uma frase com duas épocas dentro.
+
+> **Uma revisão de correcção só vê o que está lá para ser corrigido. O que sobra
+> está correcto.** O `J4` tinha a ordem certa, a rede certa, o footprint certo, e
+> não servia para nada. A pergunta que o apanha é anterior a todas as outras:
+> **o que liga aqui?**
+
+⚠️ **Uma migração troca o consumidor e deixa o fornecedor.** Quando a ponte
+passou do fio para o soquete, mudou o lado dela; a tomada estava noutra folha,
+e ficou. Procurar sempre **do outro lado da troca**.
+
+⚠️ **E quem o apanhou foi escrever para quem monta.** Um manual tem de dizer
+*«liga em ___»* para cada conector — e é essa linha que um verificador de
+correcção nunca pede. Eu gerei o manual e não reparei; o dB leu-o e reparou.
+
+**O que ficou:** o `portao_humano` (v0.3.0) começa cada conector por *«o que
+liga aqui? se não souberes dizer, está a mais»*; o `encaixe.py` (v0.2.0) ganha o
+**M1**, com os destinos declarados e duas regras que são o padrão deste defeito —
+**dois caminhos para a mesma peça**, e **a tomada só de alimentação de um módulo
+que já está num soquete** — com sabotagem nas duas. O `J4` fica declarado como
+vestígio: vazio nesta placa, fora na próxima. A primeira versão do detector
+(«as redes estão contidas noutra peça») acusava todo o conector que leva sinais
+de um módulo para fora da placa — largo demais, e foi medido antes de entrar.

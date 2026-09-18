@@ -27,6 +27,8 @@ alturas e a medida do courtyard vivem no `pcb_contorno` e no
 `dentro_do_contorno`; este chama-os. Duas copias da mesma conta divergem.
 
 O QUE CONFERE, por placa:
+  M1  interface todo conector diz o que liga (DESTINOS); nenhum repete as
+                redes de outro sem razao — e assim que um vestigio se entrega
   M2  fixacao   >= 3 pontos nao colineares: furos de montagem (footprint
                 MountingHole ou furo nao metalizado >= 2,5 mm) + pecas que a
                 ficha prova aparafusarem (FIXACAO, com a fonte)
@@ -45,7 +47,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.1.1"
+VERSAO = "0.2.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, AQUI)
@@ -63,6 +65,39 @@ FIXACAO = {
 # Folga de servico em todo o cabo que vai do fundo a casca: e assim que o fundo
 # sai com o cerebro agarrado. FONTE: caixa/CAIXA-ACRILICO-MONTAGEM.md §6b.
 FOLGA_CABO = 80.0
+
+# M1 — O QUE LIGA AQUI? Todo conector declara a peca ou o cabo do outro lado,
+# e os soquetes declaram o modulo que recebem.
+# ⚠️ Nasceu do J4 do cerebro (18/09): a tomada da ponte ESP32 de quando ela era
+# por fio. A ponte passou a soquete (U3) a 06/09, o J4 ficou, e tres revisoes
+# perguntaram se ele estava CERTO — nenhuma se era PRECISO. Um conector que
+# ninguem sabe dizer o que liga esta a mais; dois que dizem o MESMO destino sao
+# o rasto de uma migracao.
+DESTINOS = {
+    "cerebro": {
+        "J1": "decoy PD (15 V)", "J2": "alimentacao do amplificador",
+        "J3": "step-down 5 V", "J4": "ponte ESP32",
+        "J5": "jack do piezo A", "J6": "jack do piezo B",
+        "J11": "entrada de audio do amplificador",
+        "J12": "jack de linha L", "J13": "jack de linha R",
+        "J14": "cabo IDC para o painel",
+        "J15": "chave DPDT L", "J16": "chave DPDT R",
+        "U2": "Daisy Seed", "U3": "ponte ESP32",
+    },
+    "painel": {
+        "J1": "cabo IDC do cerebro (fita soldada)", "J2": "cabo do OLED",
+        "J3": "botao arcade azul A", "J4": "botao arcade azul B",
+        "J5": "botao arcade branco (buzios)",
+        "J6": "LED do arcade azul A", "J7": "LED do arcade azul B",
+    },
+}
+# Vestigios conhecidos numa placa ja fabricada: ficam VAZIOS, e a proxima rev
+# tira-os. Declarar nao os absolve — so os torna visiveis no relatorio.
+VESTIGIO = {
+    ("cerebro", "J4"): "tomada da ponte ESP32 de quando era por fio (01/09); "
+                       "desde 06/09 a ponte esta no soquete U3, com o mesmo 5V "
+                       "e GND. Fica VAZIO; proxima rev: remover.",
+}
 
 # Cabos entre placas: (nome, (placa, ref), (placa, ref), regex do BOM)
 CABOS = [
@@ -90,6 +125,57 @@ def _alvo(P, nome):
     if alvo["x0"] is None or alvo["y0"] is None:
         alvo = P.centra_no_fundo(alvo)
     return alvo
+
+
+# ------------------------------------------------------------------ M1
+def m1_interfaces(nome, b, sabota=False):
+    """Todo conector tem destino; nenhum destino tem duas interfaces; nenhum
+    conector so de alimentacao repete um soquete de modulo.
+
+    ⚠️ A primeira versao desta regra ("as redes deste conector estao contidas
+    nas de outra peca") dava falso positivo em TODO o conector que leva os
+    sinais de um modulo para fora da placa — o J14 tem as redes da Daisy por
+    definicao. O padrao de um vestigio e mais estreito, e estas duas regras sao
+    ele: dois caminhos para a mesma peca, ou a tomada de um modulo que passou
+    para um soquete."""
+    destinos = dict(DESTINOS.get(nome, {}))
+    vestigios = {k: v for k, v in VESTIGIO.items() if k[0] == nome}
+    if sabota == "destino" and destinos:
+        destinos.pop("J12" if "J12" in destinos else sorted(destinos)[0])
+    if sabota == "vestigio":
+        vestigios = {}
+    redes = {}
+    for f in b.GetFootprints():
+        redes[f.GetReference()] = {p.GetNetname() for p in f.Pads()
+                                   if p.GetNetname() and not p.GetNetname().startswith("unconnected")}
+    energia = lambda n: n.startswith("+") or n in ("GND", "AGND")
+    conectores = sorted(r for r in redes if r.startswith("J") and redes[r])
+    maus, vist = [], []
+    por_destino = {}
+    for r, d in destinos.items():
+        por_destino.setdefault(d.lower(), []).append(r)
+    for j in conectores:
+        suspeito = None
+        if j not in destinos:
+            maus.append("%s: ninguem declarou o que liga aqui" % j)
+            continue
+        irmaos = [r for r in por_destino[destinos[j].lower()] if r != j]
+        if irmaos:
+            suspeito = "%s e %s levam os dois a '%s'" % (j, "/".join(irmaos), destinos[j])
+        elif redes[j] and all(energia(n) for n in redes[j]):
+            socs = [u for u in redes if u.startswith("U") and redes[j] <= redes[u]]
+            if socs:
+                suspeito = "%s so leva alimentacao que ja chega ao soquete %s" % (j, "/".join(socs))
+        if suspeito:
+            if (nome, j) in vestigios:
+                vist.append(j)
+            else:
+                maus.append(suspeito + " — vestigio?")
+    ok = not maus
+    txt = ("%d conector(es), cada um com destino e sem duplicados" % len(conectores)) if ok else "; ".join(maus)
+    if vist:
+        txt += " · vestigio(s) declarado(s), a deixar VAZIO: %s" % ", ".join(vist)
+    return ok, txt, len(maus)
 
 
 # ------------------------------------------------------------------ M2
@@ -232,6 +318,7 @@ def corre(nomes, sabota=None):
     for n in nomes:
         print("  ══ %s" % n)
         for etiqueta, (ok, txt, peso) in (
+                ("M1 interface", m1_interfaces(n, placas[n], {"m1": "destino", "m1v": "vestigio"}.get(sabota))),
                 ("M2 fixacao ", m2_fixacao(n, placas[n], sabota == "m2")),
                 ("M4 contorno", m4_contorno(n)),
                 ("M6 volume  ", m6_volume(P, n, sabota == "m6"))):
@@ -248,7 +335,7 @@ def main():
     if "--sabota" in sys.argv:
         import contextlib
         maus = []
-        for alvo, placa in (("m2", "cerebro"), ("m6", "cerebro"), ("cabo", "cerebro")):
+        for alvo, placa in (("m1", "cerebro"), ("m1v", "cerebro"), ("m2", "cerebro"), ("m6", "cerebro"), ("cabo", "cerebro")):
             with contextlib.redirect_stdout(io.StringIO()):
                 base = corre([placa])
                 sab = corre([placa], sabota=alvo)

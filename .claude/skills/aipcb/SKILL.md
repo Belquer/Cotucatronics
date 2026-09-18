@@ -223,6 +223,9 @@ não aconteceu.
 - **Uma placa tem de ter por onde ser presa; o resto, a caixa cede.** O
   painel rev C saiu da fábrica sem um ponto de fixação. Trilha M do
   IFÁ10000, na `/pcb`. (15ex)
+- **Certo não é preciso.** Três revisões viram o `J4` e perguntaram se estava
+  certo; era a tomada de uma ponte que já estava num soquete. Primeiro «o que
+  liga aqui?». (15ez)
 - **…e do cabo que existe.** Cabo directo: o contrato é a posição. Jumpers
   soltos: é o nome de cada fio. Antes de chamar divergência a outro ramo,
   ler o commit que a criou. (15ew)

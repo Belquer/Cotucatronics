@@ -364,6 +364,10 @@ e o `C3` vão por baixo (os LEDs `J6`/`J7` com **fios soldados**, não JST); **o
 não podem ir na placa** — ficam na tampa, fiados, e os de 16 mm da gaveta servem
 (não é preciso comprar os RK097). Tabela e âncoras em `LICOES-MONTAGEM.md` #9.
 
+**`J4` do cérebro («a ponte ESP32») é vestígio (18/09):** a tomada da ponte de
+quando era por fio; a ponte está no soquete `U3` desde 06/09. **Fica vazio**;
+na próxima revisão, sai. Declarado no `encaixe.py` (M1) — cicatriz 15ez.
+
 ---
 
 ## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li

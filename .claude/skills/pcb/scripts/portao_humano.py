@@ -40,7 +40,7 @@ cada classe conhecida (SOT-23, SMB/SMA cátodo, SOIC pino-1, OLED, IDC) apareça
 questionário — uma guarda que nunca assinalou nada é promessa, não verificação.
 """
 
-VERSAO = "0.2.1"
+VERSAO = "0.3.0"
 
 import argparse
 import csv
@@ -393,9 +393,19 @@ def item_conector(p):
                "espera (pino-1 na serigrafia)." % ref)
         confirmar = ("PASS: pinagem coincide. FAIL: fila/ordem trocada → "
                      "corrigir antes de pagar.")
+    # ⚠️⚠️ PRIMEIRO SE E PRECISO, SO DEPOIS SE ESTA CERTO (18/09).
+    # O item do J4 do cerebro ("a ponte ESP32") perguntava se a ordem de pinos
+    # batia "no que o cabo/modulo do outro lado espera" — e NAO HAVIA outro
+    # lado: era a tomada da ponte por fio, que tinha passado a soquete (U3) a
+    # 06/09. Tres revisoes olharam para ele e todas perguntaram se estava
+    # CERTO. A pergunta que o apanha e anterior: o que liga aqui?
+    ver = ("**Primeiro: o que liga aqui?** Escreve o nome da peca ou do cabo que "
+           "encaixa em %s. Se nao souberes dizer, o conector esta A MAIS — e "
+           "isso e um FAIL, nao um detalhe. So depois: " % ref) + ver
+    confirmar = ("FAIL se ninguem souber dizer o que liga em %s. " % ref) + confirmar
     return {
         "item": "%s — %s (%s)" % (ref, val, pkg),
-        "onde": _onde(p, "confirmar contrato de pinagem vs o outro lado"),
+        "onde": _onde(p, "dizer o que liga aqui, e so depois confirmar a pinagem"),
         "ver": ver,
         "confirmar": confirmar,
     }
@@ -621,6 +631,8 @@ def sabota():
         "electrolítico polaridade (C1)": ("C1" in texto and "electrolítico" in texto),
         "módulo orientação (U2)": ("U2" in texto and "chanfro" in texto),
         "OLED VCC/GND+DIN/CLK (J2)": ("J2" in texto and "VCC" in texto and "DIN/CLK" in texto),
+        "todo conector pergunta o que liga do outro lado": (
+            texto.count("o que liga aqui?") >= 2),
         "IDC 26/26 (J1)": ("J1" in texto and "26" in texto),
         "regra do portão (só ✅ avança)": ("nunca" in texto and "PÁRA" in texto),
         "confirmação final antes de pagar": ("precondição" in texto and "pagamento" in texto),
