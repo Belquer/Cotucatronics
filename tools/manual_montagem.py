@@ -30,7 +30,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.1.2"
+VERSAO = "0.1.4"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -400,9 +400,9 @@ def constroi():
 
     passo("3", "Painel · conectores dos botões J3, J4, J5 (JST) por baixo",
           lista(["Encaixe cada JST **por baixo** e solde por cima.",
-                 "São dos interruptores dos arcade — não têm polaridade, então virar não faz mal **nestes três**."]),
-          fig=mapa(Pn, ["J3", "J4", "J5"], baixo=True,
-                   rotulos={"J3": "J3 azul A", "J4": "J4 azul B", "J5": "J5 branco"}), qtd="×3")
+                 "São dos interruptores dos arcade — não têm polaridade, então virar não faz mal **nestes três**.",
+                 "`J3` = azul A · `J4` = azul B · `J5` = branco (búzios)."]),
+          fig=mapa(Pn, ["J3", "J4", "J5"], baixo=True), qtd="×3")
 
     passo("3", "Painel · LEDs dos arcade: FIOS soldados em J6 e J7 (sem JST)",
           tabela(["pad", "rede", "fio vai para"],
@@ -619,7 +619,7 @@ nav.caps a:focus-visible,nav.caps a:hover{background:var(--tinta);color:var(--pa
 section.cap{padding-top:36px}
 section.cap>h2{font-size:clamp(30px,5vw,44px);margin:0 0 6px;font-weight:700;display:flex;gap:14px;align-items:baseline}
 section.cap>h2 .n{font-size:.62em;border:2px solid var(--tinta);padding:0 8px;line-height:1.25}
-article.passo{display:grid;grid-template-columns:84px 1fr;gap:4px 18px;padding-block:26px;border-top:1px solid var(--linha)}
+article.passo{display:grid;grid-template-columns:84px minmax(0,1fr);gap:4px 18px;padding-block:26px;border-top:1px solid var(--linha)}
 article.passo .num{font-size:64px;line-height:.85;font-weight:700;color:var(--tinta)}
 article.passo.feito .num{color:var(--suave);text-decoration:line-through;text-decoration-thickness:3px}
 article.passo h3{margin:0 0 8px;font:700 22px/1.2 "Barlow Condensed",sans-serif;letter-spacing:.01em;text-wrap:balance}
@@ -661,7 +661,24 @@ label.ok input{width:18px;height:18px;accent-color:var(--azul)}
 label.ok:focus-within{outline:2px solid var(--azul);outline-offset:2px}
 @media (max-width:620px){article.passo{grid-template-columns:1fr}article.passo .num{font-size:48px}}
 @media (prefers-reduced-motion:no-preference){label.ok{transition:background .15s}}
-@media print{nav.caps{position:static}label.ok{display:none}}
+@page{size:A4;margin:12mm 11mm}
+@media print{
+:root,:root[data-theme="dark"],:root:not([data-theme="light"]){--papel:#fff;--tinta:#111;--suave:#555;--linha:#ccc;--fundo2:#f3f4f6;
+--azul:#1452cc;--azul-claro:#dbe6ff;--perigo:#c8102e;--perigo-fundo:#fdecee;--atencao:#8a5a00;--atencao-fundo:#fff4d6;--placa:#eef1ec;--corpo:#8a919b}
+body{font-size:11.5px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.wrap{max-width:none;padding:0}
+nav.caps,label.ok,.progresso{display:none}
+section.cap{padding-top:0;break-before:page}
+section.cap:first-of-type{break-before:auto}
+article.passo{grid-template-columns:52px minmax(0,1fr);padding-block:12px;break-inside:auto}
+figure.fig{max-width:100%}.sc{overflow:hidden}
+article.passo .num{font-size:40px}
+article.passo h3{font-size:17px;break-after:avoid}
+figure.fig,.aviso,.pare,table{break-inside:avoid}
+.sc{overflow:visible}
+svg.mapa{min-width:0}
+a{color:inherit;text-decoration:none}
+}
 """
 
 JS = r"""
