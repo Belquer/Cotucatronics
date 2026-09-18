@@ -316,6 +316,15 @@ Pontos furáveis medidos, em mm do canto superior esquerdo, lado dos componentes
 fora do cobre de outras redes, em acrílico inteiro da tampa. Os primeiros 60 mm
 ficam em balanço. A tampa leva os furos a condizer (a caixa cede à placa).
 
+**Pots do painel (18/09):** a placa tem o layout Bourns PTV09A de montagem
+traseira (3 pinos a 2,5 mm, patas a 8,8 mm entre centros, 7,0 mm da linha dos
+pinos à das patas — conferido na ficha Bourns PTV09). Os pots em casa são de
+16 mm e não cabem; os da Mouser nunca foram comprados. Para os pots **prenderem
+a placa** à tampa têm de ter **bucim roscado** (Bourns estilo `-6`, ou um 9 mm
+genérico com M7): o furo de ø7 da tampa abre-se para passar a rosca, e as três
+cotas acima medem-se na peça antes de soldar. **10 kΩ linear (B10K)** — os 100 kΩ
+do projecto são os trimpots do cérebro.
+
 ---
 
 ## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li

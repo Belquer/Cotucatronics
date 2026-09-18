@@ -1,4 +1,4 @@
-<!-- carimbo: MANIFEST.md v5 · 2026-09-17 · placas: painel rev C · cerebro rev C -->
+<!-- carimbo: MANIFEST.md v6 · 2026-09-18 · placas: painel rev C · cerebro rev C -->
 # MANIFEST — índice autoritativo de `export/`
 
 > **Protocolo:** antes de subir/consumir um artefato, confira o **carimbo** dele
@@ -69,6 +69,16 @@ placa, em F.Fab) diz **`AO3400A`**. A peça que veio da Mouser (#40440548) é o
 ficha Vishay doc. 68645 (`docs/datasheets/SI2302CDS-T1-GE3.pdf`) a 2026-09-17.
 Só o nome difere; o mapa não foi editado porque é artefato carimbado do
 pacote que foi à fábrica.
+
+## ⚠️ Pots `RV1`/`RV2` do painel — NÃO vieram da Mouser
+
+O `COMPRA_MOUSER.csv` v2 lista 4 × `PTV09A-4020F-B103`, mas **os pots não foram
+comprados na Mouser** (dB, 2026-09-18): havia pots em casa, de 16 mm, que não
+cabem na placa (pinos a 5,0 mm; a placa tem o layout Bourns PTV09A de montagem
+traseira, pinos a 2,5 mm). E pela ficha Bourns PTV09 nenhum dos dois códigos do
+repo tem rosca: `-4` é **sem bucim**, `-1` é **bucim liso**; só o estilo `-6` é
+roscado. Para prender a placa pelos pots é preciso um pot de 9 mm com bucim
+roscado — ver `docs/STATUS.md` (18/09). **10 kΩ linear (B10K).**
 
 ## Status de encomenda (2026-09-12)
 
