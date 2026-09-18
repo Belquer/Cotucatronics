@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bom_completa v0.10.1 — a BOM do instrumento inteiro, gerada dos esquemas.
+"""bom_completa v0.10.2 — a BOM do instrumento inteiro, gerada dos esquemas.
 
 POR QUE E GERADA, e nao escrita a mao.
 
@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 
-VERSAO = "0.10.1"
+VERSAO = "0.10.2"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAIDA = os.path.join(RAIZ, "docs", "COTUCA_BOM.md")
 
@@ -245,7 +245,7 @@ MPN_POR_FP = {
 # O que NAO esta em folha nenhuma: modulos, peca de painel, cablagem, caixa.
 FORA = [
     ("modulo",   "ESP32-C3 SuperMini (ponte BLE)", "AliExpress", 1, 4.00, "estimado",
-     "5 fios ao soquete; o modulo cru ESP32-C3-MINI-1-H4 na LCSC e US$2,17"),
+     "encaixa no soquete U3 do cerebro (5V pelo SS14, GND, TX, RX, status); o modulo cru ESP32-C3-MINI-1-H4 na LCSC e US$2,17"),
     ("modulo",   "Amp classe D TPA3116D2 estereo", "AliExpress/Amazon", 1, 7.00, "estimado",
      "ja comprado (Clyxgs); terminais de parafuso, fora da placa"),
     ("modulo",   "Step-down 5 V fixo 1,5 A", "AliExpress", 1, 1.50, "estimado",

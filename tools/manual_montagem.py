@@ -30,7 +30,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.1.1"
+VERSAO = "0.1.2"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -335,11 +335,15 @@ def constroi():
           fig=mapa(C, ["C16"], baixo=True), qtd="×1",
           fonte="`MAPA_COLOCACAO.md`: C16 Bottom")
 
-    headers = [r for r in ("J3", "J4", "J5", "J6", "J11", "J12", "J13", "J15", "J16") if r in C.cpl]
+    # ⚠️ o J4 NAO: e a tomada de 01/09, quando a ponte ESP32 era um modulo a
+    # parte ligado por cabo. Hoje ela encaixa no soquete U3, que ja tem o 5V e o
+    # GND — o J4 so repete essas duas redes. Fica vazio.
+    headers = [r for r in ("J3", "J5", "J6", "J11", "J12", "J13", "J15", "J16") if r in C.cpl]
     passo("2", "Cérebro · headers de pinos (corte da barra 1×40)",
           tabela(["", "ref", "pinos", "para"], [["☐", r, len(C.fp[r]["pads"]), "`%s`" % C.cpl[r]["Val"]] for r in headers]) +
           lista(["Corte a barra no número de pinos certo (conte duas vezes).",
-                 "Encaixe o lado **curto** dos pinos na placa, por cima. Solde **um** pino, confira se ficou em pé (90°), depois os outros."]),
+                 "Encaixe o lado **curto** dos pinos na placa, por cima. Solde **um** pino, confira se ficou em pé (90°), depois os outros.",
+                 "O **J4** (\"a ponte ESP32\") **fica vazio**: a ponte encaixa no soquete U3, que já tem a alimentação."]),
           fig=mapa(C, headers), qtd="×%d" % len(headers))
     passo("2", "Cérebro · bornes de parafuso J1 e J2",
           lista(["A abertura dos parafusos fica virada **para fora da placa**, onde os fios vão chegar.",

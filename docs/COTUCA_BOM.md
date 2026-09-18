@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.10.1 · **2026-09-18** · commit `7d40454`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.10.2 · **2026-09-18** · commit `1680cae`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e
@@ -120,7 +120,7 @@
 
 | tipo | peca | fornecedor | qtd | US$/un | fonte | nota |
 |---|---|---|---|---|---|---|
-| modulo | ESP32-C3 SuperMini (ponte BLE) | AliExpress | 1 | 4.00 | estimado | 5 fios ao soquete; o modulo cru ESP32-C3-MINI-1-H4 na LCSC e US$2,17 |
+| modulo | ESP32-C3 SuperMini (ponte BLE) | AliExpress | 1 | 4.00 | estimado | encaixa no soquete U3 do cerebro (5V pelo SS14, GND, TX, RX, status); o modulo cru ESP32-C3-MINI-1-H4 na LCSC e US$2,17 |
 | modulo | Amp classe D TPA3116D2 estereo | AliExpress/Amazon | 1 | 7.00 | estimado | ja comprado (Clyxgs); terminais de parafuso, fora da placa |
 | modulo | Step-down 5 V fixo 1,5 A | AliExpress | 1 | 1.50 | estimado | ja comprado (Euogeudel, 5 un.); SAIDA FIXA, por decisao |
 | modulo | Decoy PD 15 V / 5 A | AliExpress | 1 | 3.00 | estimado | ja comprado (AITRIP); receptaculo USB-C na face de tras |
