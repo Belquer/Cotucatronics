@@ -55,7 +55,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.23.1"
+VERSAO = "0.23.2"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -1144,6 +1144,9 @@ ALTURAS = [
     (r"IDC-Header",                  8.85, "caixa de pinos IDC (so a caixa)"),
     # ponto de teste: e um pad de cobre, sem corpo nenhum.
     (r"TestPoint_Pad",               0.1, "pad de teste, sem corpo"),
+    # encoder EC11: corpo 6,5 mm (peca em mao, dB 18/09). E ele que fixa a folga
+    # placa<->tampa do painel quando aparafusado rente.
+    (r"RotaryEncoder",               6.5, "corpo do encoder EC11"),
     (r"PinHeader.*Vertical",        20.0, "header + ficha + fio"),
     (r"JST_XH",                     20.0, "JST + ficha + fio"),
     (r"CP_Radial_D(\d+)",           11.0, "electrolitico radial"),

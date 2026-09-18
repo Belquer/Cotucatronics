@@ -45,7 +45,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.1.0"
+VERSAO = "0.1.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, AQUI)
@@ -54,7 +54,9 @@ sys.path.insert(0, AQUI)
 # Vazio de proposito: o EC11E15244G1 nao tem rosca (ficha Alps: colar liso) e
 # nenhum pot com bucim roscado esta ainda escolhido e medido (18/09).
 FIXACAO = {
-    "painel": {},
+    # SW1: o encoder EM MAO tem bucim roscado (EC11 generico; foto do dB,
+    # 18/09) — nao o EC11E15244G1 do BOM, que nao tem. A peca em mao manda.
+    "painel": {"SW1": "EC11 generico com bucim roscado, peca em mao (dB, 18/09)"},
     "cerebro": {},
 }
 

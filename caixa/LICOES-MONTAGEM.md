@@ -2,7 +2,7 @@
 
 ### Cotucatronics · 18/09/2026 · rev. d · acrílico transparente **3,0 mm** · gravado da bancada
 
-> **rev. d (18/09/2026):** lições **#7** e **#8** (o IDC por baixo NÃO se vira; fita soldada). Lição **#7** — header do OLED soldado por baixo, jumpers
+> **rev. d (18/09/2026):** lições **#7**, **#8** e **#9** (o encoder roscado fixa a folga em 6,5 mm) (o IDC por baixo NÃO se vira; fita soldada). Lição **#7** — header do OLED soldado por baixo, jumpers
 > em L para baixo; âncora de pinos = o pad quadrado (VCC).
 >
 > **rev. c (17/09/2026):** lição #1 corrigida — o pot físico em uso é um
@@ -302,6 +302,40 @@ desenho** (footprint na face `B`, o que o KiCad espelha correctamente), e a
 folga placa↔tampa desenhada.
 
 **Precisa re-corte?** Não. **Ferragem:** nenhuma (a fita de ~300 mm já prevista).
+
+---
+
+## 9 · O encoder aparafusado fixa a folga em 6,5 mm — e tudo o que é mais alto bate
+
+**O que o dB tem em mão (18/09):** um EC11 genérico **com bucim roscado** (eixo
+estriado de 6 mm, 20 mm acima do corpo, corpo 11,7 × 6,5 mm de altura) — **não** o
+`EC11E15244G1` do BOM, que não tem rosca. Aparafusado à tampa, **prende a placa**
+(conta para o M2). E define a distância: **a placa fica 6,5 mm abaixo do acrílico.**
+
+**Consequência (medida contra a tabela de alturas):** na face de cima só cabe o
+que tiver menos de 6,5 mm. Batem:
+
+| peça | o que fazer | âncora por baixo |
+|---|---|---|
+| `J2` (OLED) | header por baixo, jumpers em L (#7) | pad 1 **quadrado** = VCC |
+| `J1` (IDC) | fita soldada nos pads (#8) — **não** virar a caixa de pinos, nem nas duas pontas (8 das 16 combinações dão curto ou troca, e por baixo do cérebro só há 9 mm) | pad 1 redondo — ver #8 |
+| `J3`, `J4`, `J5` (botões) | JST por baixo, ou fios soldados — interruptores, sem polaridade | pad 1 **quadrado** = sinal, pad 2 = GND |
+| `J6`, `J7` (LEDs, 1=A 2=K) | **fios soldados** por baixo, **não** JST (virar a ficha com chave troca A e K) | pad 1 **quadrado** = **+5V (ânodo)**; confirmar com `TP1` |
+| `C3` (100 µF, 11 mm) | por baixo; a polaridade vai pelo furo | pad 1 **quadrado** = **+** (+5V) |
+| `RV1`, `RV2` | **os pots NÃO podem ir na placa**: o corpo (≥ 8 mm) não cabe em 6,5. Ficam na tampa, **fiados** (caso B, #6) — os de 16 mm da gaveta servem | — |
+
+**Na tampa:** o furo do encoder é ø7 e a rosca é M7 — abrir para ~7,3 (a caixa
+cede). **Postes** de fixação (M2): altura **6,5 mm**, derivada do encoder, não
+escolhida.
+
+⚠️ **A verificar na peça:** se o encoder tem os **2 pinos do botão** (push) do outro
+lado. A placa usa o `ENC_A_PUSH`; um encoder sem interruptor perde essa função.
+
+**Para a PRÓXIMA revisão do painel:** a folga placa↔tampa **desenhada** a partir
+do encoder escolhido, e a face de cima só com o que cabe nela.
+
+**Precisa re-corte?** Só abrir o furo do encoder. **Ferragem:** porca e anilha do
+encoder; 4 postes de 6,5 mm (ou 6 + anilha).
 
 ---
 

@@ -355,8 +355,14 @@ Não repetir no `J1` nem nos JST dos LEDs.
 18/09). **Virar a caixa de pinos para baixo dá 0/26 ou 2/26 pinos certos e, em
 duas combinações, +3V3A em curto com GND** — simulado. Solução: **fita soldada
 directamente nos pads do painel, por baixo**, ficha IDC só do lado do cérebro;
-procedimento e continuidade em `caixa/LICOES-MONTAGEM.md` #8. Falta a pergunta
-da ficha encaixada aos `J3`–`J7`.
+procedimento e continuidade em `caixa/LICOES-MONTAGEM.md` #8. Virar nas **duas**
+pontas dá 26/26 em 8 de 16 combinações, mas por baixo do cérebro só há 9 mm.
+
+**O encoder real tem rosca (EC11 genérico, corpo 6,5 mm) e fixa a folga
+placa↔acrílico em 6,5 mm.** Tudo o que é mais alto na face de cima bate: `J3`–`J7`
+e o `C3` vão por baixo (os LEDs `J6`/`J7` com **fios soldados**, não JST); **os pots
+não podem ir na placa** — ficam na tampa, fiados, e os de 16 mm da gaveta servem
+(não é preciso comprar os RK097). Tabela e âncoras em `LICOES-MONTAGEM.md` #9.
 
 ---
 
