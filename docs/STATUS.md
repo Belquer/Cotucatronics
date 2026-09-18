@@ -344,15 +344,13 @@ arcade na tampa), não a placa fabricada.
 **Portão novo (18/09): `kicad/encaixe.py`**, só leitura, chamado pelo
 `para_fabrica` — hoje recusa as duas placas: o painel em M2, o cérebro em M6.
 
-**Painel, M6 medido pelo dB (18/09): o header do OLED com os jumpers fêmea direitos
-não cabe entre a placa e o acrílico.** A folga placa↔tampa nunca foi desenhada.
-Saídas para o `J2` (fila única, jumpers soltos — o contrato é o nome de cada
-fio): header soldado **por baixo**, ou **jumpers em L** / header de 90° por cima.
-⚠️ Visto por baixo, a ordem aparece espelhada e a serigrafia não se lê:
-**identificar VCC e GND por continuidade com o `TP1` (+5V) e o `TP3` (GND) antes
-de ligar.** Não repetir o truque no `J1` (IDC 2×13) nem nos JST dos LEDs
-(`J6`/`J7`): espelhar uma ficha com chave troca pinos. A mesma pergunta — cabe
-com a ficha encaixada? — fica por fazer ao `J1` e aos `J3`–`J7`.
+**Painel, M6 medido pelo dB (18/09): o header do OLED não cabe por cima** — nem com
+jumpers direitos, nem em L. **Resolvido: header soldado por baixo, jumpers em L
+para trás e para baixo** (`caixa/LICOES-MONTAGEM.md` #7). Âncora de pinos, visível
+dos dois lados: **o pad quadrado é o VCC**, e daí `VCC · GND · DIN · CLK · CS · DC ·
+RST`; confirmar por continuidade com o `TP1` (+5V) e o `TP3` (GND) antes de ligar.
+Não repetir no `J1` nem nos JST dos LEDs. Falta fazer a mesma pergunta — cabe com
+a ficha encaixada? — ao `J1` e aos `J3`–`J7`.
 
 ---
 

@@ -1,7 +1,10 @@
 # Lições de montagem — a caixa de acrílico, montada à mão
 
-### Cotucatronics · 17/09/2026 · rev. c · acrílico transparente **3,0 mm** · gravado da bancada
+### Cotucatronics · 18/09/2026 · rev. d · acrílico transparente **3,0 mm** · gravado da bancada
 
+> **rev. d (18/09/2026):** lição **#7** — header do OLED soldado por baixo, jumpers
+> em L para baixo; âncora de pinos = o pad quadrado (VCC).
+>
 > **rev. c (17/09/2026):** lição #1 corrigida — o pot físico em uso é um
 > **pot de corpo 16 mm** (Ø16,90 · bucha **M7×0,75** · **3 terminais Ø1,20 a
 > passo 5,0 mm** · pino anti-rotação a **7,80 mm @ 30°** por datasheet ≈ 7,5 mm
@@ -218,6 +221,44 @@ mantido como está.
 próxima rev do painel ganha o conector de fiação.
 
 **Ferragem:** 3 fios por pot (6 no total) + terminais.
+
+---
+
+## 7 · Header do OLED não cabe por cima — soldado por baixo, jumpers em L para baixo
+
+**Sintoma observado (dB, 18/09):** o header macho do `J2` (OLED) com os jumpers
+fêmea **direitos** não cabe entre a placa do painel e o acrílico. Jumpers **em L**
+por cima também não: a altura até à tampa chegava, mas o topo da caixa não deixa
+sair os fios; virar o L para baixo espreme o fio entre os componentes e a tampa.
+
+**Causa no design:** a folga placa↔tampa **nunca foi desenhada** — é a etapa M6
+da trilha M do IFÁ10000 (`/pcb`), que não existia quando o painel foi feito. Os
+conectores estão todos na face virada para a tampa.
+
+**Correção escolhida:** header **soldado por baixo** da placa, jumpers **em L
+virados para trás e para baixo**. Mais limpo e com o fio livre. Os fios são
+**codificados por cor** do lado do módulo.
+
+⚠️ **Por baixo a serigrafia não se lê e a ordem aparece ao contrário.** A âncora
+que se vê dos dois lados: **o pad 1 é QUADRADO, e o pad 1 é o VCC (+5V)**. A
+partir do quadrado a ordem é sempre **VCC · GND · DIN · CLK · CS · DC · RST**
+(pads 1–7, conferidos na placa fabricada `06db1c7`). Antes de ligar, confirmar
+com o multímetro por continuidade: o quadrado liga ao **`TP1` (+5V)**, o vizinho
+dele ao **`TP3` (GND)**. As cores dizem que fio é que sinal; só a âncora diz que
+pino é que sinal.
+
+⚠️ **Não repetir no `J1` (IDC 2×13) nem nos JST dos LEDs (`J6`/`J7`):** numa ficha
+com chave, montar do outro lado troca pinos — no IDC pares de vias com
+alimentação, nos LEDs ânodo com cátodo. A pergunta «cabe com a ficha encaixada?»
+fica por fazer a esses.
+
+**Para a PRÓXIMA revisão do painel:** conectores de cabo do **lado de baixo** por
+desenho, com os nomes em **`B.Silkscreen`** (legíveis de onde se liga), e a folga
+placa↔tampa desenhada, não descoberta.
+
+**Precisa re-corte?** Não.
+
+**Ferragem:** jumpers fêmea em L (7).
 
 ---
 
