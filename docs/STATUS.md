@@ -349,8 +349,14 @@ jumpers direitos, nem em L. **Resolvido: header soldado por baixo, jumpers em L
 para trás e para baixo** (`caixa/LICOES-MONTAGEM.md` #7). Âncora de pinos, visível
 dos dois lados: **o pad quadrado é o VCC**, e daí `VCC · GND · DIN · CLK · CS · DC ·
 RST`; confirmar por continuidade com o `TP1` (+5V) e o `TP3` (GND) antes de ligar.
-Não repetir no `J1` nem nos JST dos LEDs. Falta fazer a mesma pergunta — cabe com
-a ficha encaixada? — ao `J1` e aos `J3`–`J7`.
+Não repetir no `J1` nem nos JST dos LEDs.
+
+**`J1` (IDC) também não cabe por cima** (bate no OLED e no aperto do encoder — dB,
+18/09). **Virar a caixa de pinos para baixo dá 0/26 ou 2/26 pinos certos e, em
+duas combinações, +3V3A em curto com GND** — simulado. Solução: **fita soldada
+directamente nos pads do painel, por baixo**, ficha IDC só do lado do cérebro;
+procedimento e continuidade em `caixa/LICOES-MONTAGEM.md` #8. Falta a pergunta
+da ficha encaixada aos `J3`–`J7`.
 
 ---
 

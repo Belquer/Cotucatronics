@@ -2,7 +2,7 @@
 
 ### Cotucatronics · 18/09/2026 · rev. d · acrílico transparente **3,0 mm** · gravado da bancada
 
-> **rev. d (18/09/2026):** lição **#7** — header do OLED soldado por baixo, jumpers
+> **rev. d (18/09/2026):** lições **#7** e **#8** (o IDC por baixo NÃO se vira; fita soldada). Lição **#7** — header do OLED soldado por baixo, jumpers
 > em L para baixo; âncora de pinos = o pad quadrado (VCC).
 >
 > **rev. c (17/09/2026):** lição #1 corrigida — o pot físico em uso é um
@@ -259,6 +259,49 @@ placa↔tampa desenhada, não descoberta.
 **Precisa re-corte?** Não.
 
 **Ferragem:** jumpers fêmea em L (7).
+
+---
+
+## 8 · A caixa de pinos do IDC (`J1`) não cabe por cima — e NÃO se vira para baixo
+
+**Sintoma observado (dB, 18/09):** a caixa de pinos Würth do `J1` soldada por cima
+bate no OLED e não deixa espaço para aparafusar o encoder.
+
+⚠️ **Virá-la para baixo NÃO funciona, e pode queimar.** Uma caixa de pinos de 2
+filas com chave, vista do outro lado da placa, é a imagem ao espelho — e nenhuma
+rotação dela nem da ficha no cabo desfaz um espelho. Simulado a 18/09 contra as
+26 vias do contrato:
+
+| por baixo | ficha no cabo | certos | efeito |
+|---|---|---|---|
+| chave de um lado | direita | 0/26 | **+3V3A em curto com GND** (via 9 → pad 10) |
+| chave de um lado | virada | 2/26 | 24 sinais trocados |
+| rodada 180° | direita | 2/26 | 24 sinais trocados |
+| rodada 180° | virada | 0/26 | **+3V3A em curto com GND** |
+
+**Correção escolhida:** **fita soldada directamente nos pads do painel, por
+baixo, sem conector desse lado.** Cada condutor vai ao seu pad pelo número —
+não há espelho possível. Do lado do cérebro fica a ficha IDC no `J14` (é por aí
+que se desliga). Por cima do painel fica altura zero.
+
+**Como, sem se enganar:**
+1. Ficha IDC crimpada normal na ponta do cérebro: **fio vermelho = pino 1** (o
+   triângulo da ficha).
+2. Na ponta do painel, separar os condutores ~15 mm. **Vermelho = 1**, e daí em
+   diante pela ordem: **ímpares (1, 3 … 25) na fila mais afastada do bordo
+   comprido mais próximo, pares (2, 4 … 26) na fila mais perto dele.** O pad 1 é
+   **redondo** (não há âncora pela forma): fica **na ponta do `J1` do lado dos
+   conectores `J3`/`J6`**.
+3. **Antes de ligar, continuidade** da ficha solta (sonda nos furos da ficha) à
+   placa: pino **9 ↔ `TP2`** (+3V3A), pinos **11 e 12 ↔ `TP1`** (+5V), pino **1 ↔
+   `TP3`** (GND), pino **2 ↔ `J2` pad 4** (OLED_CLK). E **sem** continuidade entre
+   `TP1`, `TP2` e `TP3`. Se uma falhar, a fita entrou deslocada.
+
+**Para a PRÓXIMA revisão do painel:** o conector do cabo no lado de baixo **por
+desenho** (footprint na face `B`, o que o KiCad espelha correctamente), e a
+folga placa↔tampa desenhada.
+
+**Precisa re-corte?** Não. **Ferragem:** nenhuma (a fita de ~300 mm já prevista).
 
 ---
 
