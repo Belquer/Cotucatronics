@@ -325,6 +325,18 @@ genérico com M7): o furo de ø7 da tampa abre-se para passar a rosca, e as trê
 cotas acima medem-se na peça antes de soldar. **10 kΩ linear (B10K)** — os 100 kΩ
 do projecto são os trimpots do cérebro.
 
+**Cabo painel↔cérebro (18/09):** as duas pontas são a caixa de pinos macho Würth
+`61202621621` (4 compradas). O cabo é **IDC 2×13 fêmea-fêmea, com chave,
+directo (pino 1 ↔ pino 1), ~300 mm**: percurso medido ~170 mm pela parede de
+trás (`J1` do painel a 98 mm da frente, `J14` do cérebro a 19) mais os 80 mm de
+folga que a caixa pede para tirar o fundo. O BOM dizia ~150, estimado.
+
+⚠️ **Por medir na montagem a seco (M6): o `J14` pode bater no arcade da
+esquerda.** O corpo dele está a 11,6 mm do centro desse arcade (raio de exclusão
+18); a caixa de pinos tem 8,85 mm de altura (ficha Würth WR-BHD) e a folga por
+baixo dos arcade é 7,5 mm no pior caso — antes da ficha do cabo. Depende do
+diâmetro do corpo do botão abaixo da tampa, que só a peça diz.
+
 ---
 
 ## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li

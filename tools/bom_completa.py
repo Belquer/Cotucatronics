@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""bom_completa v0.10.0 — a BOM do instrumento inteiro, gerada dos esquemas.
+"""bom_completa v0.10.1 — a BOM do instrumento inteiro, gerada dos esquemas.
 
 POR QUE E GERADA, e nao escrita a mao.
 
@@ -24,7 +24,7 @@ import subprocess
 import sys
 from datetime import date
 
-VERSAO = "0.10.0"
+VERSAO = "0.10.1"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAIDA = os.path.join(RAIZ, "docs", "COTUCA_BOM.md")
 
@@ -262,8 +262,8 @@ FORA = [
      "isolado do chassis; 2 entradas de piezo + 2 saidas de linha"),
     ("painel",   "DPDT ON-ON-ON tipo 2", "ja comprados", 2, 2.00, "estimado",
      "⚠️ MEDIR O TIPO COM MULTIMETRO ANTES DE FIAR"),
-    ("cablagem", "Cabo IDC 2x13, 26 vias, ~150 mm, crimpado", "—", 1, 2.00, "estimado",
-     "testar cada crimpe POR TRACAO"),
+    ("cablagem", "Cabo IDC 2x13, 26 vias, ~300 mm, femea-femea com chave, directo (pino 1 a pino 1)", "—", 1, 3.00, "estimado",
+     "percurso medido a 18/09: ~170 mm pela parede de tras (J1 do painel a 98 mm da frente, J14 do cerebro a 19) + 80 mm de folga para tirar o fundo"),
     # ⚠️ ESTE CABO NAO ESTAVA NA BOM. Uma peca que nao esta em folha nenhuma e
     # que ninguem escreveu aqui simplesmente NAO EXISTE na lista de compras, e o
     # total nem a conta como zero — nao a conta de todo. Apareceu por eu mexer

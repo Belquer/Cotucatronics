@@ -1,6 +1,6 @@
 # COTUCA_BOM — o instrumento inteiro
 
-### gerado por `tools/bom_completa.py` v0.10.0 · **2026-09-17** · commit `627edd6`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
+### gerado por `tools/bom_completa.py` v0.10.1 · **2026-09-18** · commit `7d40454`  ⚠️ **ARVORE SUJA** — ha alteracoes por commitar
 
 
 > **Esta lista e GERADA das folhas KiCad.** Referencias, valores, footprints e
@@ -129,7 +129,7 @@
 | painel | Botao arcade 30 mm BRANCO (buzios) | EG Starts | 1 | 2.50 | estimado | sem LED |
 | painel | Jack TRS 1/4" NMJ6HCD2 (Neutrik) | Stompboxparts | 4 | 1.75 | medido | isolado do chassis; 2 entradas de piezo + 2 saidas de linha |
 | painel | DPDT ON-ON-ON tipo 2 | ja comprados | 2 | 2.00 | estimado | ⚠️ MEDIR O TIPO COM MULTIMETRO ANTES DE FIAR |
-| cablagem | Cabo IDC 2x13, 26 vias, ~150 mm, crimpado | — | 1 | 2.00 | estimado | testar cada crimpe POR TRACAO |
+| cablagem | Cabo IDC 2x13, 26 vias, ~300 mm, femea-femea com chave, directo (pino 1 a pino 1) | — | 1 | 3.00 | estimado | percurso medido a 18/09: ~170 mm pela parede de tras (J1 do painel a 98 mm da frente, J14 do cerebro a 19) + 80 mm de folga para tirar o fundo |
 | soquete | Tira femea 1x20 2,54 dourada (soquete da Daisy) | Harwin/LCSC | 2 | 1.00 | estimado | M20-7822046 (Harwin) ou equivalente — a substituibilidade vale os US$2 |
 | soquete | Tira femea 1x8 2,54 (soquete do ESP32-C3) | generico | 2 | 0.15 | estimado | o modulo entra em soquete para poder ser regravado e trocado |
 | cablagem | Cabo 8 vias ~150 mm ao DPDT, crimpado (J15 e J16) | — | 2 | 1.00 | estimado | 8 e nao 6 desde 08/09: os pinos 7 e 8 sao GND, referencia do cabo. Os dois condutores de terra nao vao a lug nenhum da chave — ou ao corpo dela, se for metalica, ou ficam como dreno junto ao par |
@@ -138,7 +138,7 @@
 
 ## 6 · Ordem de grandeza
 
-**≈ US$ 102.56 por instrumento**, so componentes e modulos.
+**≈ US$ 103.56 por instrumento**, so componentes e modulos.
 
 ⚠️ **NAO inclui**: PCB, montagem da JLC, taxa de *setup* das pecas
 Extended, caixa, parafusos, knobs, nem transporte. E a soma mistura precos
