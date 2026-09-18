@@ -308,6 +308,14 @@ revisão `J1 x ≥ 26,1`.
 **`SI2302CDS-T1-GE3`** que veio da Mouser (marcação **N2**). Mesma pinagem, 1 G ·
 2 S · 3 D, conferida na ficha Vishay doc. 68645 (17/09). Ver a nota no MANIFEST.
 
+⚠️ **O painel não tem por onde ser preso (18/09).** Sem furos de montagem; o
+encoder `EC11E15244G1` não tem rosca e os pots foram para a tampa. **Reprovado em
+M2 da trilha M do IFÁ10000** (certificação mecânica placa↔caixa, nova, na `/pcb`).
+Pontos furáveis medidos, em mm do canto superior esquerdo, lado dos componentes:
+**(77,5 · 32,0) · (109,0 · 32,0) · (146,0 · 4,0) · (172,0 · 32,0)** — M3 com anilha,
+fora do cobre de outras redes, em acrílico inteiro da tampa. Os primeiros 60 mm
+ficam em balanço. A tampa leva os furos a condizer (a caixa cede à placa).
+
 ---
 
 ## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li

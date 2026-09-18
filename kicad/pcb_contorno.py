@@ -55,7 +55,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.22.0"
+VERSAO = "0.22.1"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -1017,8 +1017,15 @@ def confere_caixa(nome, alvo):
         L.append("     folga as paredes: %.2f esq · %.2f dir · %.2f frente · "
                  "%.2f tras" % (x0 - li, lf - x0 - w, y0 - bi, bf - y0 - h))
     if mau:
-        raise SystemExit("*** " + "; ".join(mau) + " — a caixa ja existe, "
-                         "quem cede e a placa.")
+        # ⚠️ DESDE 18/09 A ORDEM E A OUTRA (IFA10000-M, skill pcb): a placa traz
+        # os seus meios de fixacao, e com isso e a CAIXA que cede — muito mais
+        # barata de refazer. Ate aqui esta mensagem dizia "a caixa ja existe,
+        # quem cede e a placa". A recusa fica (nao cabe = nao cabe); muda quem
+        # se manda ajustar.
+        raise SystemExit("*** " + "; ".join(mau) + " — pela IFA10000-M quem cede "
+                         "e a CAIXA: ajustar o gerador dela a esta placa, ou "
+                         "justificar por escrito (e o dB assina) porque tem de ser "
+                         "a placa.")
     return L
 
 

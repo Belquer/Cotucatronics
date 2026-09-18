@@ -1,6 +1,6 @@
 ---
 name: pcb
-description: Pipeline de ponta a ponta de um prompt até gerbers prontos para a JLCPCB — leva uma ideia/spec de placa por 9 estágios com portão em cada um até um pacote de fabricação que a fábrica aceita. Use em "novo PCB", "prompt to board", "design a board", "leva isto até aos gerbers", "/pcb", ou qualquer pedido que vá de uma ideia/especificação a uma placa fabricável. NÃO use para editar uma única folha de esquema já existente — isso é a skill `kicad`. Esta é a ORQUESTRADORA: chama `kicad`, `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, `pm`, `para_fabrica` — nunca reimplementa o que elas já fazem.
+description: Pipeline de ponta a ponta de um prompt até gerbers prontos para a JLCPCB — leva uma ideia/spec de placa por 9 estágios com portão em cada um até um pacote de fabricação que a fábrica aceita. Use em "novo PCB", "prompt to board", "design a board", "leva isto até aos gerbers", "/pcb", ou qualquer pedido que vá de uma ideia/especificação a uma placa fabricável. NÃO use para editar uma única folha de esquema já existente — isso é a skill `kicad`. Certifica também o encaixe mecânico placa↔caixa (IFÁ10000-M: fixação, furos, ângulos, tamanhos, volume, montagem — com a caixa a ceder à placa). Esta é a ORQUESTRADORA: chama `kicad`, `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, `pm`, `para_fabrica` — nunca reimplementa o que elas já fazem.
 ---
 
 # pcb — do prompt aos gerbers, com portão em cada estágio
@@ -9,7 +9,8 @@ description: Pipeline de ponta a ponta de um prompt até gerbers prontos para a 
 > `ifa10000`): 0 pré-voo · 1 avaliação+diagrama · 2 fontes · 3 colocação vs
 > caixa · **3.5 previsão de congestão** · 4 vias+pistas · 5 terra · 6 rótulos ·
 > 7 revisão tripla · 8 gerbers · 9 retrospetiva. Cada um passa com um número que
-> pode dizer **não**.
+> pode dizer **não**. E **dois portões de certificação** antes do 8: o de risco
+> e o **mecânico (IFÁ10000-M)** — este também corre no 3, antes do cobre.
 
 Esta skill é a **orquestradora**. Não desenha esquemas, não roteia, não corta
 caixas: **delega** a quem já sabe e cobra o portão de cada etapa. O corpo
@@ -31,6 +32,10 @@ com tempo perdido:
   verificador que mede o ponto errado aprova tudo com ar de ter conferido.
 - **Resultado negativo é achado** (`revisao-terra` R6). O que passou fica
   escrito, ou a próxima revisão refaz o trabalho.
+- **A caixa cede à placa — por ordem de prioridade, não como lei** (IFÁ10000-M).
+  É muito mais fácil ajustar uma embalagem do que uma PCB. Mas a placa traz os
+  seus próprios meios de fixação: sem eles não há como a prender, e aí é ela que
+  cede.
 
 ## Ferramenta — a fonte-da-verdade
 
@@ -56,7 +61,9 @@ A pipeline pára e espera aprovação antes de gastar dinheiro:
   de pagar. O CPL não é verificável por script (a rotação é a do footprint, a
   JLC espera a da biblioteca dela).
 - **⟨dB⟩ Estágio 3/7** — o VETO dos renders de placa, e a montagem a seco de UMA
-  caixa antes da série.
+  caixa antes da série (é a M9 do IFÁ10000-M).
+- **⟨dB⟩ IFÁ10000-M, prioridade 3** — toda cedência da placa à caixa, além dos
+  meios de fixação, leva a assinatura do dB com a justificação escrita.
 
 **Os três ⟨dB⟩ correm o mesmo método — o questionário do portão humano**
 (`references/portao-humano.md`): um item de cada vez, quatro campos por item
@@ -155,20 +162,25 @@ mora nas referências (`references/`) — aqui fica só o suficiente para conduz
 
 ### Estágio 3 — Colocação contra a estrutura física
 
-- **Objetivo:** a placa cabe na caixa e tudo o que atravessa o painel bate no
-  recorte certo — antes do cobre.
-- **O que faz:** contorno tirado do modelo da caixa; furos de fixação;
+- **Objetivo:** a placa **tem por onde ser presa**, e a caixa encaixa nela —
+  tudo o que atravessa o painel bate no recorte certo, antes do cobre.
+- **O que faz:** furos de fixação **da placa primeiro** (prioridade 1 do
+  IFÁ10000-M: ≥3 pontos, perto de onde se empurra); o vão interior da caixa é o
+  limite de tamanho da placa, e **o resto da caixa deriva-se dela** (furos,
+  recortes, postes);
   conectores/botões/display batem nos recortes do painel (`aberturas.json`);
   nenhum parafuso debaixo de um componente; zonas de altura respeitadas;
   cablagem/conectores com folga para o cabo e alcançáveis com a placa montada.
-- **Delega a:** `caixa` (os 5 portões, e é a autoridade sobre a geometria caixa↔
-  placa), `kicad/pcb_contorno.py` (importa o gerador da caixa, escreve
+- **Delega a:** `caixa` (os 5 portões, e gera a geometria da caixa **a partir da
+  placa** — prioridade 2 do IFÁ10000-M), `kicad/pcb_contorno.py` (importa o gerador da caixa, escreve
   `aberturas.json`), `poe_furos.py` (furos M3 derivados do contorno).
 - **PORTÃO:** os 5 portões de `caixa` (nesting, espelho, margem, **a placa
   cabe** `confere_caixa`, **furo livre** `confere_furos`). ⚠️ **A origem do
   footprint não é o eixo** — ler o veio em `F.Fab`. E os três que o DRC 2D não
   vê: **volume (Z), acesso (USB-C), camada vazia ≠ face vazia** — cada um é o seu
-  portão. ⟨dB⟩ montagem a seco de UMA caixa antes da série.
+  portão. **E as etapas M1–M6 do IFÁ10000-M** (interfaces, fixação, furos,
+  tamanhos, ângulos, volume) — M2 com zero pontos de fixação reprova aqui, antes
+  de haver cobre para refazer. ⟨dB⟩ montagem a seco de UMA caixa antes da série.
 - **Artefacto:** `.kicad_pcb` com contorno+furos, `aberturas.json`, e o handshake
   contorno↔aberturas confirmado.
 
@@ -327,6 +339,39 @@ C16↔J14 vivem em **`references/review-protocol.md`** — o registo de risco é
 **saída de certificação** da revisão tripla. `para_fabrica` recusa NO-GO como
 recusa um DRC sujo.
 
+### Portão de Certificação Mecânica — IFÁ10000-M (no 3, e outra vez antes do 8)
+
+A trilha mecânica do IFÁ10000: **o pareamento de cada placa com qualquer caixa
+em que ela entre** — furos, ângulos, tamanhos, volume, técnica de fixação,
+acesso e montagem, tudo explorado para um encaixe perfeito. O texto completo, as
+âncoras de cada etapa e a ficha estão em **`references/ifa10000-m.md`**; o
+registo de certificados vive em `docs/IFA10000.md`.
+
+**A ordem de prioridades** (é ordem, não lista absoluta):
+
+1. **A placa traz os seus meios de fixação.** Sem furos não há como a prender, e
+   nenhuma caixa o resolve — **aqui a placa cede**.
+2. **Com isso garantido, a caixa cede à placa em tudo o resto.** É muito mais
+   fácil ajustar uma embalagem do que uma PCB: a caixa regenera-se em minutos,
+   a placa custa fábrica e semanas, e fabricada não se desfaz.
+3. **A placa só cede noutra coisa com justificação excelente, escrita:** o que se
+   tentou na caixa e porque não serve (medido), de onde vem a restrição que a
+   caixa não absorve, e ⟨dB⟩ assina. Sem as três, é MUST-FIX na caixa.
+
+**As etapas:** M0 medição (cada cota com fonte; peça em mão > ficha) · M1
+interfaces · **M2 fixação** · M3 furos e recortes derivados · M4 tamanhos e
+contornos · M5 ângulos e orientação · M6 volume Z · M7 acesso e montagem · M8
+tolerâncias · **M9 encaixe a seco ⟨dB⟩** · M10 registo.
+
+- **Quando corre:** M1–M6 no **estágio 3**, antes do cobre (é aí que mudar a
+  placa ainda é barato); a trilha inteira **antes do 8**, com a caixa real.
+- **GO:** todas as etapas passam, cedências da placa todas justificadas e
+  assinadas. `para_fabrica` não devia correr com M2 reprovado.
+- **Âncora:** o painel rev C foi fabricado (5 unidades, 12/09) **sem um único
+  ponto de fixação** — desenhado para ficar pendurado nos eixos, os pots
+  passaram a ir na tampa por fios e o encoder não tem rosca. Todos os portões
+  estavam verdes, porque nenhum perguntava «como é que isto se prende?».
+
 ### Estágio 8 — Gerbers para a JLCPCB
 
 - **Objetivo:** um pacote de fabricação que a JLC aceita, e que diz de que estado
@@ -424,6 +469,9 @@ recusa um DRC sujo.
   bónus de tornar o risco de rotação da biblioteca da JLC moot.
 - `references/quality-standards.md` — o catálogo de modos de falha (20 linhas) e
   os números duros (silk, costura, desacoplamento, courtyard/borda).
+- `references/ifa10000-m.md` — a **certificação mecânica** placa↔caixa: a ordem de
+  prioridades (a placa traz a fixação; a caixa cede no resto; a placa só cede
+  com justificação assinada), as etapas M0–M10 com critério e âncora, e a ficha.
 - `references/review-protocol.md` — a revisão tripla: 3 lentes A/B/C, 3
   passagens, revisores independentes/adversariais, o livro-razão, e o **registo
   de risco** (a saída de certificação: SAFE-EMBARK/MUST-FIX/decisão-dB, GO/NO-GO).
@@ -477,6 +525,15 @@ fabrica a placa de ontem.
 
 ## Histórico
 
+- **v1.6.0 (2026-09-18)** — **Portão de Certificação Mecânica, IFÁ10000-M**
+  (`references/ifa10000-m.md`, nova): trilha do IFÁ10000 para o pareamento de
+  qualquer placa com qualquer caixa — M0–M10 com critério e âncora, e ficha. A
+  doutrina **inverte-se, por prioridade e não como lei** (pedido do dB): a placa
+  traz os seus meios de fixação; com isso, **a caixa cede à placa** no resto; a
+  placa só cede com justificação escrita e assinada. O estágio 3 deixa de tirar
+  o contorno "do modelo da caixa" e a `caixa` deixa de ser a autoridade sobre a
+  geometria: gera-a a partir da placa. Nasce do painel rev C, fabricado sem um
+  único ponto de fixação.
 - **v1.5.0 (2026-09-12)** — **Versionar TUDO.** `references/versionamento.md` ganha a
   secção «Versionar TUDO»: as três camadas (placa/pacote/script) generalizam-se para
   **todo artefato gerado que sai do repo** — cada um carrega um **carimbo**

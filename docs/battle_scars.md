@@ -8,6 +8,7 @@
 <!-- doc-check: ignore refs_apontam (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore kicad_layout (nome de skill, nao param) -->
 <!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore pcb_contorno (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore confere_caixa (idem) -->
 <!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
@@ -10282,3 +10283,45 @@ O `funcao_dos_pads` v0.3.0 escreve agora o contrato do `J2` por nome de fio, e
 o contrato PicoBlade antigo **reprova 6 de 7** sobre a placa encomendada — que é
 a medida de quanto o `main` estava longe da placa real durante nove dias, sem
 que isso tocasse numa placa fabricada.
+
+## 15ex — cinco placas fabricadas sem um ponto de fixação, com todos os portões verdes
+
+A pergunta do dB, a 18/09, foi simples: *«como prendo a placa do painel à caixa?
+não vejo furos»*. Medido na placa fabricada (`06db1c7`, 5 unidades a caminho):
+**nenhum footprint de furo, nenhum furo não metalizado**. O painel foi desenhado
+para ficar **pendurado nos eixos** de dois pots e de um encoder, aparafusados à
+tampa pela porca. Duas coisas tiraram-lhe os três apoios, e nenhuma o disse:
+
+- o **caso B** (17/09): os pots são de 16 mm, vão na tampa e ligam-se à placa por
+  fios — deixaram de a segurar;
+- o encoder `EC11E15244G1` **não tem rosca** — a ficha da Alps mostra um colar
+  liso, sem `M7` nem porca. O desenho supôs uma porca que não existe.
+
+⚠️ **Nenhum portão perguntava «como é que isto se prende?».** DRC, ERC,
+`funcao_dos_pads`, IDC, courtyards contra o bordo, paridade com a caixa: todos
+responderam ao que lhes perguntaram, e todos estavam verdes.
+
+Há quatro pontos furáveis (M3 com anilha, fora do cobre de outras redes, em
+acrílico inteiro), todos à direita de x=97. Os primeiros 60 mm, debaixo do
+módulo do OLED, não têm sítio nenhum e ficam em balanço.
+
+**A doutrina da casa inverteu-se no mesmo dia, a pedido do dB.** Até aqui o
+`pcb_contorno` recusava com *«a caixa já existe, quem cede é a placa»*, e a
+cicatriz de 06/09 dizia *«a caixa manda em três dimensões»*. Agora, **por ordem
+de prioridade e não como lei**:
+
+1. a placa traz os seus meios de fixação — sem furos não há como a prender, e aí
+   é ela que cede;
+2. com isso garantido, **a caixa cede à placa** em tudo o resto — é muito mais
+   fácil ajustar uma embalagem do que uma PCB;
+3. a placa só cede noutra coisa com justificação escrita, medida e assinada.
+
+> **Um desenho que depende de uma peça para se aguentar tem de reverificar a
+> fixação sempre que essa peça muda.** Os pots mudaram de tipo de interface — de
+> *prende a placa* para *só pede folga* — e a placa perdeu os apoios sem que
+> ninguém voltasse a contar.
+
+Virou a **trilha M do IFÁ10000**, na `/pcb` (`references/ifa10000-m.md`): M0–M10,
+com M2 «fixação» a reprovar zero pontos antes de haver cobre, e M1 a exigir
+re-certificação quando uma interface muda de tipo. O painel rev C é o primeiro
+registo — reprovado em M2.

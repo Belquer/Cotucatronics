@@ -68,6 +68,14 @@ código que continua lá porque ninguém lembra por quê.
 
 **Aposentou algo? Vai pro arquivo no MESMO commit.**
 
+## A trilha M — placas em caixas
+
+Se a pergunta é **«esta placa encaixa nesta caixa?»** — furos, ângulos, tamanhos,
+volume, fixação, montagem —, não é esta ficha: é a **trilha M do IFÁ10000**, que
+corre na skill `pcb` (`.claude/skills/pcb/references/ifa10000-m.md`). A ordem de
+prioridades dela: a placa traz os seus meios de fixação; com isso, a caixa cede
+à placa; a placa só cede com justificação escrita e assinada pelo dB.
+
 ## Como conduzir
 
 1. Abrir `docs/IFA10000.md` e copiar a **ficha de certificação** para o

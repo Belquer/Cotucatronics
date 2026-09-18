@@ -220,6 +220,9 @@ não aconteceu.
   apanhado por uma, MOSFET só pela outra. (15et)
 - **A função de um conector está na peça do outro lado do cabo.** OLED com
   as sete posições trocadas e todos os portões verdes. (15eu)
+- **Uma placa tem de ter por onde ser presa; o resto, a caixa cede.** O
+  painel rev C saiu da fábrica sem um ponto de fixação. Trilha M do
+  IFÁ10000, na `/pcb`. (15ex)
 - **…e do cabo que existe.** Cabo directo: o contrato é a posição. Jumpers
   soltos: é o nome de cada fio. Antes de chamar divergência a outro ramo,
   ler o commit que a criou. (15ew)

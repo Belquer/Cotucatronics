@@ -92,10 +92,13 @@ O que continua verdade: **mudar a caixa depois de a placa estar routeada** custa
 refazer trajectos, porque as posições mecânicas mudam e as pistas seguem-nas.
 Por isso as duas passagens fazem-se **antes** de rotear, nunca depois.
 
-**O que a caixa fixa e a placa tem de obedecer:** contorno · furos de fixação ·
-eixos que saem por ela · **e a coluna de ar** (o que desce da tampa por cima da
-placa). O último não tem ferramenta que o veja — é o que precisa de portão
-escrito à mão.
+**Quem cede a quem (IFÁ10000-M, desde 18/09):** a placa traz os seus **furos de
+fixação**; com isso, é a **caixa que cede à placa** — contorno interior, furos,
+eixos que saem por ela, postes — porque ajustar uma embalagem é muito mais
+barato do que refazer uma PCB. A placa só cede com justificação assinada pelo
+dB. Para o caminho crítico isto quer dizer: **a caixa pode regenerar-se depois
+da placa, a placa não depois da caixa**. E **a coluna de ar** (o que desce da
+tampa por cima da placa) continua sem ferramenta que a veja — é a M6.
 
 ## 4b. O que a automação mudou no caminho crítico
 

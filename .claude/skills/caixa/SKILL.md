@@ -17,6 +17,24 @@ description: Integrar a caixa e a electrónica do Cotucatronics de ponta a ponta
 Esta skill nunca decide electricamente nada. Manda na **geometria entre os dois
 artefactos** — e é aí que este projecto já perdeu mais tempo do que em ERC.
 
+## ⚠️ QUEM CEDE: a caixa, à placa — por ordem de prioridade (IFÁ10000-M)
+
+Decidido pelo dB a 18/09/2026, porque **é muito mais fácil ajustar uma embalagem
+do que uma PCB**: a caixa regenera-se em minutos, a placa custa fábrica e semanas.
+É **ordem de prioridades, não lei**:
+
+1. **A placa traz os seus meios de fixação.** Sem furos não há como a prender, e
+   nenhuma caixa resolve isso — aqui a placa cede.
+2. **Com isso garantido, a caixa cede à placa** em furos, recortes, postes,
+   ângulos, vão interior e ordem de montagem: gera-se **a partir da placa**.
+3. **A placa só cede noutra coisa com justificação excelente**, escrita, medida e
+   assinada pelo dB.
+
+Até 18/09 esta casa dizia o contrário («a caixa já existe, quem cede é a
+placa») — e o painel rev C foi fabricado sem um único ponto de fixação. A
+certificação completa é a **trilha M** do IFÁ10000, na skill `pcb`
+(`references/ifa10000-m.md`).
+
 ---
 
 ## 0. ANTES DE MEDIR: qual das caixas é a caixa?
@@ -478,6 +496,10 @@ as duas correcções seguintes foram para caixas reais mas erradas. Ver também
 
 ## Histórico
 
+- **v1.2.0 (2026-09-18)** — **quem cede passa a ser a caixa**, por ordem de
+  prioridade (IFÁ10000-M, pedido do dB): a placa traz os seus meios de fixação;
+  com isso, a caixa gera-se a partir da placa; a placa só cede com justificação
+  assinada. Secção nova no topo. Nasce do painel rev C, fabricado sem fixação.
 - **v1.1.1 (2026-09-16)** — §4f: furo do pino de indexação do pot **totalmente
   locado — ø3,2 mm · 7,5 mm centro-a-centro · à esquerda do eixo na vista de cima
   (−X, mesmo Y)**, tudo medido na peça pelo dB (supersede o datasheet),
