@@ -458,13 +458,16 @@ real) e o Estágio 8.
 
 A trilha mecânica do IFÁ10000: **o pareamento de cada placa com qualquer caixa
 em que ela entre** — furos, ângulos, tamanhos, volume, técnica de fixação,
-acesso e montagem, tudo explorado para um encaixe perfeito. O texto completo, as
-âncoras de cada etapa e a ficha estão em **`references/ifa10000-m.md`**; o
-registo de certificados vive em `docs/IFA10000.md`.
+acesso e montagem, tudo explorado para um encaixe perfeito.
 
-> **Nota:** a integração 3D caixa↔PCB (o encaixe volumétrico do IFÁ10000-M e o
-> futuro pipeline ppc/003) vai ser carveada para uma sub-skill **`/3ddesign`**
-> (a criar). Por agora vive aqui, dentro do /aipcb.
+**Este portão DELEGA à sub-skill `/3ddesign`** — o home executável da
+IFÁ10000-M e do pipeline 3D (ppc/003). A `/aipcb` **orquestra-a** aqui como
+chama `kicad_layout`, `caixa` e `revisao-terra`: não reimplementa o encaixe
+volumétrico. O texto completo, as âncoras M0–M10 e a ficha estão em
+**`.claude/skills/3ddesign/references/ifa10000-m.md`**; o motor de medição (STEP
+real via `kicad-cli` + `build123d`, as 6 asserções, o pré-voo que falha fechado)
+vive na `/3ddesign` (`mech/verifica_3d.py`, `mech/params.py`); o registo de
+certificados vive em `docs/IFA10000.md`.
 
 **A ordem de prioridades** (é ordem, não lista absoluta):
 
@@ -741,11 +744,14 @@ O que nenhum apanhar é o que continua a ser nosso — e é a lista final da §4
   bónus de tornar o risco de rotação da biblioteca da JLC moot.
 - `references/quality-standards.md` — o catálogo de modos de falha (20 linhas) e
   os números duros (silk, costura, desacoplamento, courtyard/borda).
-- `references/ifa10000-m.md` — a **certificação mecânica** placa↔caixa: a ordem
-  de prioridades (a placa traz a fixação; a caixa cede no resto; a placa só cede
-  com justificação assinada), as etapas M0–M10 com critério e âncora, e a ficha.
-  ⚠️ A integração 3D volumétrica caixa↔PCB (e o ppc/003) migra para a sub-skill
-  **`/3ddesign`** (a criar).
+- **`/3ddesign`** (sub-skill) — a **certificação mecânica** placa↔caixa e o
+  encaixe 3D volumétrico: a ordem de prioridades (a placa traz a fixação; a
+  caixa cede no resto; a placa só cede com justificação assinada), as etapas
+  M0–M10 com critério e âncora, e a ficha vivem em
+  `.claude/skills/3ddesign/references/ifa10000-m.md`; o motor de medição (STEP
+  real + `build123d`, as 6 asserções, o pré-voo) em `mech/verifica_3d.py` +
+  `mech/params.py`. O Portão de Certificação Mecânica delega a ela; o plano é o
+  ppc/003.
 - `references/review-protocol.md` — a revisão tripla: 3 lentes A/B/C, 3
   passagens, revisores independentes/adversariais, o livro-razão, e o **registo
   de risco** (a saída de certificação: SAFE-EMBARK/MUST-FIX/decisão-dB, GO/NO-GO).
@@ -788,16 +794,15 @@ O que nenhum apanhar é o que continua a ser nosso — e é a lista final da §4
 ## Skills que esta orquestra
 
 `kicad_layout` · `caixa` · `revisao-terra` · `design-review` · `pm` ·
-`medicao-limpa` · `edicao-segura` · `audit` · e o modelo `ifa10000`. O trabalho
-de esquema e verificação que era a antiga skill `/kicad` (aposentada em
-09/09/2026) entra por **este** fluxo; o layout e o roteamento correm com
-`kicad_layout` (OBRIGATÓRIA no fecho de qualquer placa). O braço executável de
-ponta a ponta é `kicad/faz_placa.py` (esquema→pacote de fabrica numa ordem
-escolhida por medição) — o fluxo conduz por cima dele, não o substitui.
-
-⚠️ **A integração 3D caixa↔PCB** (IFÁ10000-M volumétrico + o pipeline ppc/003)
-vai ser carveada para uma sub-skill **`/3ddesign`** (a criar por trabalho
-futuro); por agora vive aqui.
+`medicao-limpa` · `edicao-segura` · `3ddesign` · `audit` · e o modelo
+`ifa10000`. O trabalho de esquema e verificação que era a antiga skill `/kicad`
+(aposentada em 09/09/2026) entra por **este** fluxo; o layout e o roteamento
+correm com `kicad_layout` (OBRIGATÓRIA no fecho de qualquer placa). **A
+integração 3D caixa↔PCB** (IFÁ10000-M volumétrico + o pipeline ppc/003) corre na
+sub-skill **`/3ddesign`**, orquestrada por este fluxo no Portão de Certificação
+Mecânica. O braço executável de ponta a ponta é `kicad/faz_placa.py`
+(esquema→pacote de fabrica numa ordem escolhida por medição) — o fluxo conduz por
+cima dele, não o substitui.
 
 ## Anti-decadência
 
@@ -816,6 +821,14 @@ passada de `revisao-terra`, ou lente de revisão — no mesmo commit.
 
 ## Histórico
 
+- **v1.9.1 (2026-09-19)** — **extrai a integração 3D caixa↔PCB para a nova
+  `/3ddesign`; delega o Portão Mecânico a ela.** A `references/ifa10000-m.md`
+  migrou (`git mv`) para `.claude/skills/3ddesign/references/`; o Portão de
+  Certificação Mecânica IFÁ10000-M passa a **delegar** à `/3ddesign` (como delega
+  a `kicad_layout`/`caixa`), com o motor de medição 3D (STEP real via `kicad-cli`
+  + `build123d`, `mech/verifica_3d.py` + `mech/params.py`) e o pipeline ppc/003 a
+  viverem lá. `/3ddesign` entra na lista de skills orquestradas; o placeholder
+  «(a criar)» sai — a sub-skill existe.
 - **v1.9.0 (2026-09-19)** — **funde a orquestradora /pcb (v1.8.0) para dentro da
   /aipcb; /pcb aposentada.** A /aipcb passa a ser a skill canónica única: o seu
   frame de três portas + toda a máquina operacional da /pcb (os 9 estágios + a

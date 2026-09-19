@@ -80,3 +80,7 @@ kicad/_v2/venv/
 
 # scratch temporario do serigrafia_dfm.py
 kicad/_silk_*
+
+# STEP 3D regeneraveis do verifica_3d.py (/3ddesign): o RELATORIO_3D.md e
+# rastreado, mas os *.step (multi-MB) regeneram-se e nao vao para o git.
+mech/3d/*.step
