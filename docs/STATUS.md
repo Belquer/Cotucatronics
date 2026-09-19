@@ -6,6 +6,7 @@
 <!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore confere_arcade (funcao do pcb_contorno.py, em kicad/) -->
 <!-- doc-check: ignore y_max (valor da constante FRENTE_CEREBRO, no pcb_contorno.py) -->
+<!-- doc-check: ignore y_min (valor da constante FRENTE_CEREBRO, no pcb_contorno.py) -->
 <!-- doc-check: ignore refresca_redes (funcao do sincroniza_pcb, em kicad/) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
 <!-- doc-check: ignore silk_overlap (codigo de violacao do DRC do KiCad) -->
