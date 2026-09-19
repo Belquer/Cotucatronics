@@ -1,6 +1,6 @@
 # Grafismos por GRID — colocação por coordenada, não por arrasto
 
-Referência do **Estágio 6** da pipeline `pcb`, para a colocação de **grafismos**
+Referência do **Estágio 6** da pipeline `/aipcb`, para a colocação de **grafismos**
 (logo, nome, símbolo, banner decorativo) na serigrafia. **Substitui** o método de
 "arrastar no visualizador de gerber", que fica **explicitamente aposentado** no
 fim deste documento.

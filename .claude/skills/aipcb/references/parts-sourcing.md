@@ -1,6 +1,6 @@
 # Fontes de componentes — a árvore de 3 níveis e o portão STOP
 
-Referência do **estágio 2** da pipeline `pcb`. Toda linha do BOM tem de acabar
+Referência do **estágio 2** da pipeline `/aipcb`. Toda linha do BOM tem de acabar
 **ou** com um C-number da LCSC em stock que a JLC monta mesmo, **ou** com um
 footprint próprio, justificado e verificado por datasheet. Este documento fixa a
 árvore de decisão de 3 níveis e o portão STOP que o `scripts/manifesto_fontes.py`
@@ -247,8 +247,8 @@ footprint importado/construído tem `verified=yes`. É este o ficheiro que o
 com `--sabota`.
 
 ```bash
-python3 .claude/skills/pcb/scripts/manifesto_fontes.py manifesto_fontes.csv
-python3 .claude/skills/pcb/scripts/manifesto_fontes.py --sabota   # prova que sabe dizer não
+python3 .claude/skills/aipcb/scripts/manifesto_fontes.py manifesto_fontes.csv
+python3 .claude/skills/aipcb/scripts/manifesto_fontes.py --sabota   # prova que sabe dizer não
 ```
 
 ---

@@ -3,7 +3,7 @@
 # VERSAO: 1.0.0
 #
 # POR QUE ESTE SCRIPT EXISTE
-#   Numa sessao (2026-09-10) a pipeline `pcb` ficou bloqueada no estagio 0: os
+#   Numa sessao (2026-09-10) a pipeline `/aipcb` ficou bloqueada no estagio 0: os
 #   ficheiros eram KiCad-10 mas nao havia `kicad-cli` 10 no ambiente e todos os
 #   caminhos habituais falharam:
 #     - apt   -> so tem KiCad 7 (velho demais para ficheiros v10)
@@ -55,7 +55,7 @@
 #   stderr: progresso, CAVEATS e erros. (Assim quem chama captura o caminho limpo:
 #           KCLI=$(bootstrap_kicad.sh 10) )
 #
-# Referencia: .claude/skills/pcb/references/fab-automation.md
+# Referencia: .claude/skills/aipcb/references/fab-automation.md
 #   ("KiCad ausente no ambiente? Bootstrap por AppImage")
 
 set -eu

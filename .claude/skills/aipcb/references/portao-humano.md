@@ -1,6 +1,6 @@
 # Portão Humano — Questionário de Vistoria (o método do ⟨dB⟩)
 
-Referência dos portões **⟨dB⟩** da pipeline `pcb` — os que não são scriptáveis e
+Referência dos portões **⟨dB⟩** da pipeline `/aipcb` — os que não são scriptáveis e
 por isso passam por um humano: o **sign-off da spec** (Estágio 1), o **veto de
 render / dry-fit** (Estágio 3/7) e, sobretudo, a **inspeção pré-pagamento no
 pré-visualizador 3D da JLC** (Estágio 8). Subordinada à filosofia dos portões da

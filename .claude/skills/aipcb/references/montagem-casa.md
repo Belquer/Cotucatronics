@@ -1,6 +1,6 @@
 # Montagem em casa — chapa quente + o portão de custo
 
-Referência do **Estágio 8** da pipeline `pcb`, e do portão humano ⟨dB⟩ que decide
+Referência do **Estágio 8** da pipeline `/aipcb`, e do portão humano ⟨dB⟩ que decide
 **quem monta a placa**: a JLC (montagem SMT), ou tu, em casa, na chapa quente.
 Subordinada à mesma filosofia dos portões — um portão que só sabe uma resposta
 não é portão. A montagem em casa é a **segunda saída**, e há um número que decide

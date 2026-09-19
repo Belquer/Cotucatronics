@@ -1,6 +1,6 @@
 # Previsão de congestão — o método do Estágio 3.5
 
-Referência do **Estágio 3.5** da pipeline `pcb` (pré-layout, entre o 3
+Referência do **Estágio 3.5** da pipeline `/aipcb` (pré-layout, entre o 3
 colocação e o 4 vias/cobre). Subordinada à filosofia dos portões da SKILL.md —
 **um portão que avisa e deixa passar não é portão**, **medir no sítio certo**,
 **resultado negativo é achado**, **prova que a guarda sabe dizer não**.

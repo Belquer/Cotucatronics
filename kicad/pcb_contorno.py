@@ -1017,7 +1017,7 @@ def confere_caixa(nome, alvo):
         L.append("     folga as paredes: %.2f esq · %.2f dir · %.2f frente · "
                  "%.2f tras" % (x0 - li, lf - x0 - w, y0 - bi, bf - y0 - h))
     if mau:
-        # ⚠️ DESDE 18/09 A ORDEM E A OUTRA (IFA10000-M, skill pcb): a placa traz
+        # ⚠️ DESDE 18/09 A ORDEM E A OUTRA (IFA10000-M, skill aipcb): a placa traz
         # os seus meios de fixacao, e com isso e a CAIXA que cede — muito mais
         # barata de refazer. Ate aqui esta mensagem dizia "a caixa ja existe,
         # quem cede e a placa". A recusa fica (nao cabe = nao cabe); muda quem

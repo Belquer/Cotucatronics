@@ -11,7 +11,7 @@
 <!-- doc-check: ignore pcb_contorno (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore confere_arcade (funcao do pcb_contorno, em kicad/) -->
 <!-- doc-check: ignore para_fabrica (ferramenta em kicad/, fora do alcance do check_docs) -->
-<!-- doc-check: ignore portao_humano (script da skill pcb, em .claude/skills/pcb/scripts/) -->
+<!-- doc-check: ignore portao_humano (script da skill aipcb, em .claude/skills/aipcb/scripts/) -->
 <!-- doc-check: ignore confere_caixa (idem) -->
 <!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
@@ -10324,7 +10324,8 @@ de prioridade e não como lei**:
 > *prende a placa* para *só pede folga* — e a placa perdeu os apoios sem que
 > ninguém voltasse a contar.
 
-Virou a **trilha M do IFÁ10000**, na `/pcb` (`references/ifa10000-m.md`): M0–M10,
+Virou a **trilha M do IFÁ10000**, na sub-skill `/3ddesign`
+(`.claude/skills/3ddesign/references/ifa10000-m.md`, orquestrada pela `/aipcb`): M0–M10,
 com M2 «fixação» a reprovar zero pontos antes de haver cobre, e M1 a exigir
 re-certificação quando uma interface muda de tipo. O painel rev C é o primeiro
 registo — reprovado em M2.
@@ -10359,7 +10360,7 @@ intacto quando recusa, provado.
 
 O que ficou: `kicad/encaixe.py` (só lê, `--sabota` em cada verificação) no
 `para_fabrica`; o método de investigação escrito na trilha M; e a montagem com o
-mesmo peso da ligação na filosofia da `/pcb`.
+mesmo peso da ligação na filosofia da `/aipcb`.
 
 ## 15ez — três revisões perguntaram se o `J4` estava certo; nenhuma se ele era preciso
 

@@ -72,7 +72,8 @@ código que continua lá porque ninguém lembra por quê.
 
 Se a pergunta é **«esta placa encaixa nesta caixa?»** — furos, ângulos, tamanhos,
 volume, fixação, montagem —, não é esta ficha: é a **trilha M do IFÁ10000**, que
-corre na skill `pcb` (`.claude/skills/pcb/references/ifa10000-m.md`). A ordem de
+vive na sub-skill `/3ddesign` (`.claude/skills/3ddesign/references/ifa10000-m.md`),
+orquestrada pela `/aipcb`. A ordem de
 prioridades dela: a placa traz os seus meios de fixação; com isso, a caixa cede
 à placa; a placa só cede com justificação escrita e assinada pelo dB.
 
@@ -135,7 +136,7 @@ músico vai relatar é *"está baixo"*, que manda procurar ganho em vez de fiaç
   MEDIDO — `SAFE-EMBARK` (com prova), `MUST-FIX`, ou decisão do ⟨dB⟩ — **nunca
   afirmado** "parece bem". GO só com zero MUST-FIX em aberto. E certifica-se
   contra **sinal limpo**: é a etapa 0 (`medicao-limpa`) — limpa o artefacto de
-  ambiente antes de julgar o resíduo, senão certificas ruído. A skill `pcb`
+  ambiente antes de julgar o resíduo, senão certificas ruído. A skill `/aipcb`
   instancia isto para placas (o registo de risco como portão de saída da revisão
   tripla; âncora: o waiver C16↔J14 que a medição virou MUST-FIX).
 - **Documento vivo:** efeito novo que revele buraco no protocolo ganha etapa

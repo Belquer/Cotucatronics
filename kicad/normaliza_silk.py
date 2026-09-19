@@ -4,7 +4,7 @@
 POR QUE EXISTE.
 
 A JLC pede serigrafia com traco >= 0,15 mm e altura de texto >= 1 mm (tabela de
-capacidades em `.claude/skills/pcb/references/fab-automation.md`). O DFM da JLC
+capacidades em `.claude/skills/aipcb/references/fab-automation.md`). O DFM da JLC
 marcou-a a LARANJA quando o traco fica abaixo — imprimivel, mas fora do preferido,
 e a JLCONE conta-a. O nosso portao nao a via porque:
 

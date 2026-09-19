@@ -1,6 +1,6 @@
 # Padrões de qualidade — catálogo de falhas + números duros
 
-Referência dos **estágios 3, 5, 6 e 7** da pipeline `pcb`. Os números aqui são
+Referência dos **estágios 3, 5, 6 e 7** da pipeline `/aipcb`. Os números aqui são
 todos subordinados à filosofia dos portões da SKILL.md — **um portão que avisa e
 deixa passar não é portão**, **medir no sítio certo**, **resultado negativo é
 achado**, **a última linha de defesa não é a ferramenta que fez o trabalho**,

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """grid_grafismo — o MAPA para colocar grafismo por coordenada, nao por arrasto.
 
-Referencia do metodo: `.claude/skills/pcb/references/grafismos-grid.md` (Estagio 6
-da pipeline `pcb`). Este script automatiza o PASSO 2 do metodo: gerar um render
+Referencia do metodo: `.claude/skills/aipcb/references/grafismos-grid.md` (Estagio 6
+da pipeline `aipcb`). Este script automatiza o PASSO 2 do metodo: gerar um render
 da face superior com grid de 0,5 mm, majors de 5 mm rotulados, eixos no frame de
 coordenadas do KiCad, zonas "no-go" sombreadas (courtyards + pads + furos +
 margem da borda >= 1,5 mm) e os maiores retangulos de espaco livre anotados com
