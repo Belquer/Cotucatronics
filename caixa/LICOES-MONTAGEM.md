@@ -232,7 +232,7 @@ por cima também não: a altura até à tampa chegava, mas o topo da caixa não 
 sair os fios; virar o L para baixo espreme o fio entre os componentes e a tampa.
 
 **Causa no design:** a folga placa↔tampa **nunca foi desenhada** — é a etapa M6
-da trilha M do IFÁ10000 (`/pcb`), que não existia quando o painel foi feito. Os
+da trilha M do IFÁ10000 (`/aipcb`), que não existia quando o painel foi feito. Os
 conectores estão todos na face virada para a tampa.
 
 **Correção escolhida:** header **soldado por baixo** da placa, jumpers **em L

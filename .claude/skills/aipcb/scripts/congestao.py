@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""congestao.py — previsão de congestão pré-layout (Estágio 3.5 do /pcb)
+"""congestao.py — previsão de congestão pré-layout (Estágio 3.5 do /aipcb)
 
     congestao.py <placa.kicad_pcb>   mede a COLOCAÇÃO; sai !=0 em VERMELHO
     congestao.py --sabota            prova que sabe dizer NÃO (não precisa de placa)

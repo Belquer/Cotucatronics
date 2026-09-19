@@ -25,7 +25,7 @@
 # `para_fabrica` depois de exportar. Estas regras ficam como cinto-e-suspensorios.
 #
 # Numeros conferidos contra a tabela de capacidades em
-# `.claude/skills/pcb/references/fab-automation.md` (§ "Capacidades JLCPCB").
+# `.claude/skills/aipcb/references/fab-automation.md` (§ "Capacidades JLCPCB").
 
 # ---- cobre: minimos absolutos JLC 2 camadas (5 mil pista/folga; acima e livre) ----
 # ⚠️ ANEL: gatilha-se no MINIMO ABSOLUTO 0,13 mm, NAO no preferido 0,15. Medido a

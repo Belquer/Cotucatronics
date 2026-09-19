@@ -32,8 +32,8 @@ do que uma PCB**: a caixa regenera-se em minutos, a placa custa fábrica e seman
 
 Até 18/09 esta casa dizia o contrário («a caixa já existe, quem cede é a
 placa») — e o painel rev C foi fabricado sem um único ponto de fixação. A
-certificação completa é a **trilha M** do IFÁ10000, na skill `pcb`
-(`references/ifa10000-m.md`).
+certificação completa é a **trilha M** do IFÁ10000, na skill `/aipcb`
+(`.claude/skills/aipcb/references/ifa10000-m.md`).
 
 ---
 
@@ -496,6 +496,9 @@ as duas correcções seguintes foram para caixas reais mas erradas. Ver também
 
 ## Histórico
 
+- **v1.2.1 (2026-09-19)** — repointa a referência da **trilha M** do IFÁ10000:
+  a orquestradora `/pcb` foi fundida na `/aipcb` (canónica), e a `ifa10000-m.md`
+  passou para `.claude/skills/aipcb/references/`. Só a referência muda.
 - **v1.2.0 (2026-09-18)** — **quem cede passa a ser a caixa**, por ordem de
   prioridade (IFÁ10000-M, pedido do dB): a placa traz os seus meios de fixação;
   com isso, a caixa gera-se a partir da placa; a placa só cede com justificação

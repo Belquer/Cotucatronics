@@ -317,5 +317,5 @@ célula dedicada, pacote no `LEIA-ME.txt`), e o **`export/MANIFEST.md` é a font
 dele contra o MANIFEST e, se não bater, `git pull`. Nasce de um engano real
 (2026-09-12): um carrinho Mouser com um MPN de um **export superado** enquanto o
 repo já tinha o novo — um artefato que não se versiona não deixa detetar que
-envelheceu. O detalhe do método vive na skill `pcb`
-(`references/versionamento.md`, secção «Versionar TUDO»).
+envelheceu. O detalhe do método vive na skill `/aipcb`
+(`.claude/skills/aipcb/references/versionamento.md`, secção «Versionar TUDO»).

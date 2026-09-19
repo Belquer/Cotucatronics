@@ -1,6 +1,6 @@
 # Automação de fabrico KiCad → JLCPCB
 
-Referência dos **estágios 4 e 8** da pipeline `pcb`. Caminho headless e
+Referência dos **estágios 4 e 8** da pipeline `/aipcb`. Caminho headless e
 scriptável do esquema a um pacote de fabricação que a JLCPCB aceita. Alvo:
 **KiCad 8/9/10**. ⚠️ Confere sempre o que é sensível à versão contra
 `kicad-cli <sub> --help` no binário instalado — o help é a autoridade para o teu
@@ -42,7 +42,7 @@ do GitHub e a `api.github.com` continuam gated — usa a URL de download direta.
 
 **Comando (embrulhado em `scripts/bootstrap_kicad.sh`):**
 ```bash
-KCLI=$(.claude/skills/pcb/scripts/bootstrap_kicad.sh 10)   # 10 = MAIOR requerido
+KCLI=$(.claude/skills/aipcb/scripts/bootstrap_kicad.sh 10)   # 10 = MAIOR requerido
 "$KCLI" version                                            # -> 10.0.6
 ```
 O script é **idempotente** (reutiliza download/árvore extraída), **verifica** o

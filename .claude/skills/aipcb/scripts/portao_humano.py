@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""portao_humano.py — gerador do questionário do Portão Humano ⟨dB⟩ (/pcb)
+"""portao_humano.py — gerador do questionário do Portão Humano ⟨dB⟩ (/aipcb)
 
     portao_humano.py --cpl <cpl.csv> --bom <bom.csv> [--placa nome]
                      [--pacote <placa>_<data>_<commit>] [--branch <branch-do-PR>]

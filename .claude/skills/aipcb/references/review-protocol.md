@@ -1,6 +1,6 @@
 # Protocolo de revisão tripla (estágio 7)
 
-Referência do **estágio 7** da pipeline `pcb`. Modelado no `ifa10000`: **critério
+Referência do **estágio 7** da pipeline `/aipcb`. Modelado no `ifa10000`: **critério
 de passagem explícito por passo, números não vistos, passo reprovado interrompe,
 resultado negativo registado.** Três **lentes** diferentes para não repetirem o
 mesmo olhar, cada uma idealmente por um **revisor independente** — quem desenhou
@@ -27,7 +27,7 @@ noutra porque a pergunta é outra.
 
 **Pergunta:** o cobre implementa o circuito pretendido?
 
-- **ERC limpo** (dono: `kicad`); netlist ↔ layout batem; PCB sincronizado por
+- **ERC limpo** (dono: `/aipcb`); netlist ↔ layout batem; PCB sincronizado por
   **referência, não UUID** (`sincroniza_pcb.py` — o F8 casa por UUID e duplica
   cada peça num esquema gerado por script).
 - **Não-roteado por rede** (não o total — um total melhora enquanto uma rede
@@ -128,7 +128,7 @@ edição invalida a inspecção anterior** (`design-review`). O conjunto corre
 achados novos** — se a terceira ainda achar, continua. Os três são o piso; a
 estabilidade (uma passagem limpa) é o critério de paragem.
 
-Delega a: `kicad`, `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, e
+Delega a: `/aipcb` (esquema/ERC), `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, e
 `kicad/revisao_externa.py` (kicad-happy, MIT, testado em ~5800 projectos) como
 **segunda opinião externa** — a ferramenta de terceiros que pode dizer não sobre
 o que a nossa aprovou.
