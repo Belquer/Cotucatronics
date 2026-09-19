@@ -30,7 +30,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.2.0"
+VERSAO = "0.2.1"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -391,7 +391,14 @@ def constroi():
         if "D1 e D2" in nome:
             pare = "Diodo tem lado. A **faixa** no corpo do diodo fica do lado do pad marcado **K** no desenho (o cátodo). Ao contrário, a placa não liga ou queima o diodo."
         if "U1" in nome:
-            pare = "O **ponto/chanfro do pino 1** do chip vai no pad marcado **pino 1** no desenho. Girado, todos os pinos trocam."
+            # o OPA1642AID que chegou da Mouser (lote de 09/2026) nao tem ponto: tem
+            # uma FAIXA na ponta curta, a ligar os pinos 1 e 8. Confirmado pelo dB
+            # a 19/09 com o teste de diodo abaixo, no chip solto.
+            aviso = ("**Ache o pino 1 antes de soldar.** Segure o chip com a escrita **legível**: o pino 1 é o **de baixo à esquerda**. "
+                     "A marca dele pode ser um **ponto** nesse canto ou uma **faixa na ponta** (o lado curto), ligando os pinos 1 e 8. "
+                     "**Para ter certeza, teste o chip solto** com o multímetro em modo diodo: ponta **vermelha no pino 4** (embaixo à direita), "
+                     "preta em cada um dos outros → **0,4–0,8 V**. Invertendo as pontas → **OL**. Se esse padrão aparecer em outro pino, **pare**.")
+            pare = "O **pino 1** do chip vai no pad marcado **pino 1** no desenho. Girado, todos os pinos trocam — inclusive a alimentação."
         passo("2", "Cérebro · solde %s" % nome,
               tabela(["", "ref", "valor", "pegue do saco"], linhas) + lista([
                   "Estanhe **um** pad, segure a peça com a pinça, derreta esse pad — a peça fica presa.",
