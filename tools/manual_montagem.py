@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.4.1"
+VERSAO = "0.5.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -644,6 +644,13 @@ def constroi():
           qtd="2 furos", fonte="certificação IFÁ10000-M · `docs/STATUS.md` 18/09")
 
     # ------------------------------------------------------------ 4 caixa
+    passo("4", "Caixa · ORDEM que não se pode inverter: painel antes dos jacks",
+          "<p>%s</p>" % md("Com os **quatro jacks TRS** montados, a placa do painel **não sai mais**: a ponta do encoder fica presa no acrílico da tampa antes de a placa libertar os jacks.") +
+          lista(["Na montagem: ponha o **painel** na tampa **antes** de apertar os jacks.",
+                 "Na manutenção: para tirar o painel, **tire primeiro os quatro jacks**. Não force a placa — a ponta do encoder não passa.",
+                 "Vale a pena deixar os fios dos jacks com folga para eles saírem sem dessoldar."]),
+          aviso="Descoberto na bancada a 19/09, com a caixa montada.",
+          fonte="`caixa/LICOES-MONTAGEM.md` #11")
     passo("4", "Caixa · monte a seco, sem cola",
           lista(["**Não tire a película** das peças ainda.",
                  "Encaixe **frente + esquerda + direita + trás**. Os dentes entram à mão com leve atrito.",

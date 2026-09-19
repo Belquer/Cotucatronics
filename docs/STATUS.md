@@ -302,7 +302,26 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   profundidade por botão** e **altura de electrolítico por diâmetro** (D16 = 25,
   D10 = 16 mm, de catálogo). Com isso a altura livre é **7,5 mm** sob um azul e
   **21,5 mm** sob o branco.
-- ⚠️ **DIVERGÊNCIA ABERTA — a orientação do cérebro na caixa.** O modelo declara
+- ✅ **A orientação está resolvida (dB, 19/09): a Daisy fica debaixo do botão
+  CENTRAL.** É exactamente o que o modelo declara (`FRENTE_CEREBRO = "y_min"`):
+  sob o disco do meio está o `U2`. A placa **não** está virada ao contrário.
+  E o dB diz que a Daisy **cabe, apertada** — o que mede o que faltava: o
+  verificador dá **7,5 mm** livres sob um azul e a Daisy tem **17 mm**, logo a
+  profundidade do botão azul **não** são os 34 mm do pior caso. Para a Daisy
+  caber, o azul desce **~24 mm** abaixo do painel. ⚠️ **Por medir:** a
+  profundidade real do botão azul (a do branco, 20 mm, já foi medida). Enquanto
+  não for medida, a `confere_arcade` reprova `U2`, `J14` e `RV1` — e reprova
+  **por excesso de cautela**, que é o lado certo para errar.
+- ⚠️ **FICA ABERTO: qual é a peça alta debaixo do botão branco.** Com a
+  orientação confirmada, o `C1` (2200 µF) está a **64 mm** do furo mais próximo
+  — não pode ter sido ele. Debaixo do furo da esquerda está a **caixa de pinos
+  `J14`** (8,85 mm, mais a ficha do cabo IDC por cima); debaixo do da direita só
+  há peças rasteiras. **Por medir:** o que está debaixo do botão branco.
+- ⚠️ **O painel só sai com os jacks TRS fora (dB, 19/09).** Com os TRS
+  montados o painel não tem por onde sair: a ponta do encoder fica presa no
+  acrílico da tampa. Ordem de montagem e de manutenção: **o painel entra e sai
+  antes dos jacks**. Ver `caixa/LICOES-MONTAGEM.md` #11.
+- ⚠️ **(histórico) DIVERGÊNCIA — a orientação do cérebro na caixa.** O modelo declara
   `FRENTE_CEREBRO = "y_min"`, e **nessa** orientação o `C1` fica a **64 mm** do
   botão mais próximo: nada alto sob os furos. O `C1` só cai debaixo de um arcade
   na orientação **oposta** (`y_max`) — que foi rejeitada em 06/09 exactamente

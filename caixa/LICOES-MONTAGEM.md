@@ -1,7 +1,12 @@
 # Lições de montagem — a caixa de acrílico, montada à mão
 
-### Cotucatronics · 19/09/2026 · rev. e · acrílico transparente **3,0 mm** · gravado da bancada
+### Cotucatronics · 19/09/2026 · rev. f · acrílico transparente **3,0 mm** · gravado da bancada
 
+> **rev. f (19/09/2026):** lição **#11** — o painel só sai com os jacks TRS
+> fora; a ponta do encoder fica presa na tampa. E a #10 fechou a orientação do
+> cérebro (a Daisy está sob o botão central) e abriu a medida que falta: a
+> profundidade do botão azul.
+>
 > **rev. e (19/09/2026):** lição **#10** — a ordem dos três botões arcade nos
 > furos da tampa deixou de ser livre: **azul A, azul B, branco**, da esquerda
 > para a direita, porque um capacitor alto do cérebro fica debaixo do furo da
@@ -368,17 +373,39 @@ conectores. O capacitor é o **C1, 2200 µF**. Com isso a `confere_arcade`
 altura de electrolítico **por diâmetro** (D16 = 25 mm). Altura livre: **7,5 mm**
 sob um azul, **21,5 mm** sob o branco.
 
-⚠️ **E abriu uma divergência maior que a própria lição.** Na orientação que o
-modelo declara (`FRENTE_CEREBRO = "y_min"`), o `C1` fica a **64 mm** do botão
-mais próximo — não podia ter colidido. O `C1` só fica sob um arcade na
-orientação **oposta**, que foi rejeitada em 06/09 por pôr o `C1` e a Daisy sob
-botões. Nessa orientação o verificador acusa também **U2 (Daisy, 17 mm)** e os
-headers **J13/J16 (20 mm com ficha)**, contra 7,5 mm de folga sob um azul.
+**A orientação ficou resolvida no mesmo dia:** a **Daisy está debaixo do botão
+CENTRAL** (dB), que é o que o modelo declara (`FRENTE_CEREBRO = "y_min"`). A
+placa não está virada ao contrário.
 
-**O que falta medir, e fecha a lição:** que peça está debaixo de cada um dos
-três furos na caixa montada, e a altura real do `C1` (catálogo: 25 mm; sob o
-branco só cabem 21,5). Enquanto isso não for medido, a ordem dos botões está
-registada como **o que funcionou na bancada**, não como geometria conferida.
+⚠️ **E isso derruba o número da folga, não a lição.** A Daisy tem 17 mm e o
+verificador só dá 7,5 mm sob um azul — mas ela **cabe, apertada**, diz quem a
+montou. Logo o botão azul **não** desce os 34 mm do pior caso: para a Daisy
+caber, desce **~24 mm**. O pior caso veio de nunca se ter medido a cabeça do
+botão acima do painel. **Por medir: a profundidade do botão azul**, do painel
+para baixo — a do branco já foi medida (20 mm).
+
+⚠️ **E fica em aberto qual era a peça alta.** Com a orientação confirmada, o
+`C1` está a 64 mm do furo mais próximo. Debaixo do furo da esquerda está a
+**caixa de pinos `J14`**, com a ficha do cabo IDC por cima; debaixo do da
+direita, só peças rasteiras. A ordem dos botões fica registada como **o que
+funcionou na bancada**, não como geometria conferida.
+
+---
+
+## 11 · O painel só sai com os jacks TRS fora
+
+**O que aconteceu (dB, 19/09):** com os quatro jacks TRS montados, o painel
+**não tem por onde sair** — a ponta do encoder fica presa no acrílico da tampa
+antes de a placa libertar os jacks.
+
+**A regra que isto cria, e vale para montar e para reparar:** o painel **entra
+e sai antes dos jacks TRS**. Quem for trocar uma peça do painel tira primeiro
+os quatro jacks, e não o contrário.
+
+**Para a próxima caixa rev:** ou a placa do painel sai sem passar pela zona dos
+jacks, ou o furo do encoder na tampa é um rasgo que o deixa recuar. Enquanto
+não for uma coisa nem outra, isto é uma **ordem obrigatória**, não uma
+preferência.
 
 ---
 

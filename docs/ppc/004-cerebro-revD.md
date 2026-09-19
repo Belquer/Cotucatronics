@@ -86,23 +86,22 @@ Consequência: **§3 é edição de `.kicad_sch` à mão**, e vale a `edicao-seg
 
 ## §5 — ⚠️ O QUE BLOQUEIA, e não é burocracia
 
-A 19/09 o dB teve de trocar a ordem dos botões arcade porque o **C1 (2200 µF)**
-ficou alto de mais debaixo de um furo. O modelo diz o contrário: na orientação
-declarada (`FRENTE_CEREBRO = "y_min"`) o `C1` está a **64 mm** do botão mais
-próximo. O `C1` só cai sob um arcade na orientação **oposta** — a que foi
-rejeitada a 06/09 por pôr o `C1` **e a Daisy** sob botões.
+**Resolvido a 19/09:** a **Daisy está debaixo do botão central**, que é a
+orientação que o modelo declara (`y_min`). A placa não está virada ao
+contrário, e o `C1` não está debaixo de furo nenhum.
 
-Enquanto isto não for medido, **não se sabe onde a rev D tem de pôr as peças
-altas** — e recolocar peças pela suposição errada é pior do que não recolocar.
+**O que ficou a faltar é UMA medida, e ela decide a rev D inteira:** a
+**profundidade do botão azul** abaixo do painel. O verificador usa o pior caso
+(34 mm, cabeça = 0) e dá **7,5 mm** livres — mas a Daisy tem 17 mm e **coube,
+apertada**, o que só é possível se o azul descer **~24 mm**. Com o número real:
 
-Faltam três medidas, todas do dB, na caixa montada:
+- se o azul descer ~24 mm, a folga sob ele é ~17,5 mm, e a rev D **não precisa**
+  de recolocar nada por causa dos arcade — a limpeza (§1) é todo o trabalho;
+- se descer mais, `U2`, `J14` e `RV1` têm de sair de debaixo dos discos, e a rev
+  D passa a ser **recolocação**, com o roteamento a acompanhar.
 
-1. **Que peça está debaixo de cada um dos três furos de ø30** — em especial, a
-   Daisy (`U2`, 17 mm) está debaixo de algum?
-2. **Altura real do `C1`** montado, da placa ao topo. Catálogo: 25 mm. Sob o
-   botão branco cabem **21,5 mm**; sob um azul, **7,5 mm**.
-3. **Que lado da caixa** está de frente quando o dB diz que o branco ficou à
-   direita (o lado dos jacks? o da USB-C?).
+Medir o botão azul custa um paquímetro e decide entre um trabalho pequeno e um
+grande. **Por isso o §3 passo 6 continua bloqueado.**
 
-Com as três, resolve-se a divergência, a `confere_arcade` passa a dizer a
-verdade sobre esta caixa, e o passo 6 do §3 deixa de ser adivinhação.
+Outra coisa medida no mesmo dia, que a rev D não resolve mas a próxima caixa
+tem de resolver: **o painel só sai com os jacks TRS fora** (LICOES #11).
