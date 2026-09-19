@@ -373,9 +373,19 @@ conectores. O capacitor é o **C1, 2200 µF**. Com isso a `confere_arcade`
 altura de electrolítico **por diâmetro** (D16 = 25 mm). Altura livre: **7,5 mm**
 sob um azul, **21,5 mm** sob o branco.
 
-**A orientação ficou resolvida no mesmo dia:** a **Daisy está debaixo do botão
-CENTRAL** (dB), que é o que o modelo declara (`FRENTE_CEREBRO = "y_min"`). A
-placa não está virada ao contrário.
+**A orientação ficou resolvida no mesmo dia, e ao contrário do que eu tinha
+escrito.** A Daisy debaixo do botão central **não distingue** nada: ela cai sob
+o furo do meio nas duas orientações. Quem distingue é a **serigrafia** — com o
+lado do utilizador de frente, a do painel lê-se direita e a do **cérebro
+lê-se de cabeça para baixo**. A placa está **girada 180°** face ao modelo, na
+orientação que 06/09 tinha rejeitado por pôr peças altas sob os botões. E aí o
+`C1` (25 mm) cai debaixo do furo 1 — o capacitor alto que obrigou a trocar os
+botões, que era o que faltava explicar.
+
+⚠️ **E nada impedia o engano:** os quatro furos de fixação formam um
+**retângulo simétrico**, logo a placa aparafusa nos dois sentidos com o mesmo
+esforço. **A garantia tem de ser mecânica, não documental:** na rev D, fixação
+assimétrica ou recorte de chave, para a orientação errada não entrar.
 
 ⚠️ **E isso derruba o número da folga, não a lição.** A Daisy tem 17 mm e o
 verificador só dá 7,5 mm sob um azul — mas ela **cabe, apertada**, diz quem a

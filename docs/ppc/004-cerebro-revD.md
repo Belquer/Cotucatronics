@@ -87,9 +87,19 @@ Consequência: **§3 é edição de `.kicad_sch` à mão**, e vale a `edicao-seg
 
 ## §5 — ⚠️ O QUE BLOQUEIA, e não é burocracia
 
-**Resolvido a 19/09:** a **Daisy está debaixo do botão central**, que é a
-orientação que o modelo declara (`y_min`). A placa não está virada ao
-contrário, e o `C1` não está debaixo de furo nenhum.
+**Resolvido a 19/09, e ao contrário do que eu escrevi primeiro:** a placa está
+**girada 180°** face ao modelo. A prova é a serigrafia do cérebro de cabeça
+para baixo com o lado do utilizador de frente; a Daisy sob o botão central não
+provava nada, porque cai lá nas duas orientações. Na orientação real, o `C1`
+(25 mm) fica sob o furo 1 e o `U2` + `J13` + `J16` sob o furo 2.
+
+**Requisito novo para a rev D, e é o mais importante deste documento:** a
+fixação do cérebro é um **retângulo simétrico** (`H1`–`H4`), logo a placa entra
+nos dois sentidos e o errado não encontra resistência nenhuma. A rev D leva
+**fixação assimétrica ou recorte de chave**: a orientação errada tem de deixar
+de caber. Documentar não chega — já estava documentado numa constante, e o
+`encaixe.py` recusa se ela mudar, o que fez a ferramenta acreditar na
+declaração em vez de perguntar à placa.
 
 **O que ficou a faltar é UMA medida, e ela decide a rev D inteira:** a
 **profundidade do botão azul** abaixo do painel. O verificador usa o pior caso

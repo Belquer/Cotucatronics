@@ -302,9 +302,30 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   profundidade por botão** e **altura de electrolítico por diâmetro** (D16 = 25,
   D10 = 16 mm, de catálogo). Com isso a altura livre é **7,5 mm** sob um azul e
   **21,5 mm** sob o branco.
-- ✅ **A orientação está resolvida (dB, 19/09): a Daisy fica debaixo do botão
-  CENTRAL.** É exactamente o que o modelo declara (`FRENTE_CEREBRO = "y_min"`):
-  sob o disco do meio está o `U2`. A placa **não** está virada ao contrário.
+- ❌ **ERRO MEU, corrigido no mesmo dia.** Escrevi que a Daisy debaixo do botão
+  central provava a orientação declarada. **Não prova nada:** o `U2` cai sob o
+  furo do meio nas **duas** orientações — medi as duas e só depois vi. Um facto
+  que é igual nos dois lados não distingue os dois lados.
+- 🔴 **O cérebro está montado GIRADO 180° face ao modelo (dB, 19/09).** A prova
+  é a serigrafia: com o lado do utilizador virado para si (logo de frente) e a
+  olhar de cima, a serigrafia do **painel** lê-se direita e a do **cérebro** lê-se
+  **de cabeça para baixo**. Isso é a orientação `y_max` — a que foi **rejeitada**
+  a 06/09 exactamente por pôr peças altas sob os botões. E nessa orientação o
+  verificador acusa, medido hoje:
+  · **`C1` (2200 µF, 25 mm)** sob o furo **1** — bate com o capacitor alto que
+  obrigou a trocar a ordem dos botões, que era o que faltava explicar;
+  · **`U2` (17 mm)**, **`J13` (1×3)** e **`J16` (1×8)** sob o furo **2** — os dois
+  headers contam **20 mm** com ficha e fio.
+- 🔴 **E nada impedia:** os quatro furos de fixação do cérebro (`H1`–`H4`, ø3,2)
+  formam um **retângulo simétrico** — medido a 19/09 — por isso a placa aparafusa
+  nos dois sentidos, e o sentido errado não tem resistência mecânica nenhuma. O
+  `FRENTE_CEREBRO` é uma **constante declarada**, e o `encaixe.py` até **recusa**
+  se ela não for `y_min`: a ferramenta acredita na declaração e nunca pergunta à
+  placa. **Para a rev D isto é requisito:** a fixação tem de ser assimétrica (ou
+  ganhar um recorte de chave), para a orientação errada **não entrar**.
+- ⚠️ **Por decidir, e é o dB que decide:** girar o cérebro para a orientação do
+  modelo (e ver se os conectores ainda alcançam as paredes), ou assumir a
+  orientação girada e **recolocar as peças altas na rev D**.
   E o dB diz que a Daisy **cabe, apertada** — o que mede o que faltava: o
   verificador dá **7,5 mm** livres sob um azul e a Daisy tem **17 mm**, logo a
   profundidade do botão azul **não** são os 34 mm do pior caso. Para a Daisy
