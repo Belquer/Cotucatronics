@@ -30,7 +30,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.2.2"
+VERSAO = "0.3.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -447,9 +447,25 @@ def constroi():
           lista(["A abertura dos parafusos fica virada **para fora da placa**, onde os fios vão chegar.",
                  "`J1` = entrada do decoy PD (1 = **+**, 2 = GND) · `J2` = alimentação do amplificador (1 = **+15 V**, 2 = GND)."]),
           fig=mapa(C, ["J1", "J2"]), qtd="×2")
+    # o + de um eletrolitico no lugar do filme: o pad que partilha a rede com a saida
+    # do pre-amp (R14/R24), que esta em VBIAS (~7 V); o outro vai a entrada da Daisy,
+    # sempre mais baixa. Tirado das redes, nao do numero do pad.
+    def pad_mais(c, r):
+        redes_r = {p["rede"] for p in C.fp[r]["pads"]}
+        ps = [p["n"] for p in C.fp[c]["pads"] if p["rede"] in redes_r]
+        if len(ps) != 1:
+            sys.exit("RECUSO: %s devia partilhar exatamente uma rede com %s, partilha %d" % (c, r, len(ps)))
+        return ps[0]
+    mais = {"C14": pad_mais("C14", "R14"), "C24": pad_mais("C24", "R24")}
     passo("2", "Cérebro · capacitores de filme C14 e C24 (2u2)",
-          lista(["Sem polaridade. Encoste o corpo na placa antes de soldar."]),
-          fig=mapa(C, ["C14", "C24"]), qtd="×2")
+          lista(["Sem polaridade. Encoste o corpo na placa antes de soldar.",
+                 "**Não tem filme de 2,2 µF com pernas a 5 mm?** Use, pela ordem: um **filme de 1 µF** (ou dois em paralelo nos mesmos furos); "
+                 "ou um **eletrolítico de 2,2 a 10 µF, 25 V ou mais**, com o **+ no furo marcado + no desenho** — o que liga ao `R14`/`R24` "
+                 "(confirme com o bipe). Esse lado fica a ~7 V e o da Daisy sempre abaixo.",
+                 "**Nunca cerâmico multicamada** (X7R, Y5V) aqui: com 7 V em cima perde capacitância, distorce, e é **microfônico** — "
+                 "numa escultura que vibra, vira ruído no áudio."]),
+          fig=mapa(C, ["C14", "C24"], marcas=[(c, n, "+") for c, n in mais.items()]), qtd="×2",
+          fonte="substituição feita no cérebro #1 a 19/09 — `docs/STATUS.md`")
     elec = [r for r in ("C5", "C3", "C6", "C1") if r in C.cpl]
     vaz_tht = [r for r in dnp if r not in vazios_mostrados]
     vazios_mostrados.update(vaz_tht)

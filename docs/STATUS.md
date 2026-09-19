@@ -277,6 +277,26 @@ aqui*. Leia os dois antes de tocar em código.
 ---
 
 
+## 19/09/2026 — cérebro #1 na bancada: o que foi montado diferente da BOM
+
+A montagem do primeiro cérebro está em curso, pelo manual
+(`docs/montagem/manual_montagem.html`). O que este exemplar tem de diferente
+da BOM fica aqui, para ninguém o ler depois como erro de montagem:
+
+- **`C14`/`C24`: eletrolítico, não filme.** A BOM pede WIMA MKS2 2,2 µF 63 V
+  com passo 5 mm; não foi comprado (o dB contava com o stock do lab) e o
+  único 2,2 µF do lab era um filme de 400 V, grande de mais para o passo
+  5 mm e o corpo de 7,8 × 11,6 mm. Montou-se um **eletrolítico**, com o **+ no
+  lado do `R14`/`R24`** (VBIAS, ~7 V; a entrada da Daisy fica sempre abaixo), e
+  a polaridade foi conferida pelo dB. ⚠️ **Valor e tensão do eletrolítico
+  montado: por anotar.** O que muda: nada audível se ≥ 2,2 µF; o manual
+  (v0.3.0) passa a aceitar esta troca, com o + marcado no desenho, e proíbe
+  cerâmico multicamada (microfónico, e perde capacitância com 7 V em cima).
+- **`U1` (OPA1642AID da Mouser) marca o pino 1 com uma faixa na ponta**, a ligar
+  os pinos 1 e 8, não com ponto. Confirmado pelo dB com o teste de diodo no chip
+  solto (vermelha no pino 4 = V−, 0,4–0,8 V para os outros). O manual (v0.2.1)
+  descreve as duas marcas e o teste.
+
 ## 17/09/2026 — um ramo só, e o `J2` é o da placa que foi à fábrica
 
 O ramo `claude/slack-session-sm2ldz` (rev C, pacotes e encomendas de 12/09) foi
