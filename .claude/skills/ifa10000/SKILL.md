@@ -72,7 +72,8 @@ código que continua lá porque ninguém lembra por quê.
 
 Se a pergunta é **«esta placa encaixa nesta caixa?»** — furos, ângulos, tamanhos,
 volume, fixação, montagem —, não é esta ficha: é a **trilha M do IFÁ10000**, que
-corre na skill `/aipcb` (`.claude/skills/aipcb/references/ifa10000-m.md`). A ordem de
+vive na sub-skill `/3ddesign` (`.claude/skills/3ddesign/references/ifa10000-m.md`),
+orquestrada pela `/aipcb`. A ordem de
 prioridades dela: a placa traz os seus meios de fixação; com isso, a caixa cede
 à placa; a placa só cede com justificação escrita e assinada pelo dB.
 

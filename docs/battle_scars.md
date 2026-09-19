@@ -10324,7 +10324,8 @@ de prioridade e não como lei**:
 > *prende a placa* para *só pede folga* — e a placa perdeu os apoios sem que
 > ninguém voltasse a contar.
 
-Virou a **trilha M do IFÁ10000**, na `/aipcb` (`references/ifa10000-m.md`): M0–M10,
+Virou a **trilha M do IFÁ10000**, na sub-skill `/3ddesign`
+(`.claude/skills/3ddesign/references/ifa10000-m.md`, orquestrada pela `/aipcb`): M0–M10,
 com M2 «fixação» a reprovar zero pontos antes de haver cobre, e M1 a exigir
 re-certificação quando uma interface muda de tipo. O painel rev C é o primeiro
 registo — reprovado em M2.
