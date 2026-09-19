@@ -24,13 +24,14 @@ USO:  (Python do KiCad)  tools/manual_montagem.py
 """
 import csv
 import datetime
+import re
 import html
 import io
 import os
 import subprocess
 import sys
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -101,6 +102,60 @@ class Placa:
         return "?"
 
 
+# 2 x 1,25 · 3,2 x 1,6 · 3,2 x 2,5 mm — o codigo de 4 digitos e centesimos de polegada
+MEDIDA = {"0805": "2 × 1,25 mm", "1206": "3,2 × 1,6 mm", "1210": "3,2 × 2,5 mm"}
+# a ordem de montagem: o mais facil e mais baixo primeiro, o chip por ultimo
+PACOTE_ORDEM = ["C_0805", "R_0805", "C_1206", "R_1206", "R_1210", "SOT-23", "D_SMA", "D_SMB", "Fuse", "SOIC"]
+
+
+def valor_num(v):
+    """'0 Ω' < '100 Ω' < '1 kΩ' < '4,7 MΩ' — para os sacos sairem em ordem de valor."""
+    m = re.match(r"\s*([\d,\.]+)\s*([pnµkM]?)", v)
+    if not m:
+        return 0.0
+    return float(m.group(1).replace(",", ".")) * {"p": 1e-12, "n": 1e-9, "µ": 1e-6,
+                                                  "k": 1e3, "M": 1e6}.get(m.group(2), 1.0)
+
+
+def tamanhos(linhas):
+    """pequeno/medio/grande em TODO valor que existe em mais de um tamanho.
+
+    ⚠️ 19/09: o `100 Ω` de 0805 estava escrito so '100 Ω' e o de 1206 dizia
+    'GRANDE' — quem le pega o errado, e o dB quase perdeu uma peca por isso. O
+    nome nao pode depender de quem escreveu a linha: sai da comparacao entre os
+    sacos, e so aparece quando ha com que confundir."""
+    def area(s):
+        m = re.search(r"(\d{2})(\d{2})$", s["pacote"])
+        return int(m.group(1)) * int(m.group(2)) if m else None
+    por_valor = {}
+    for s in linhas:
+        por_valor.setdefault(s["valor"], set()).add(area(s))
+    for s in linhas:
+        a = area(s)
+        outras = sorted(x for x in por_valor[s["valor"]] if x is not None)
+        palavra = ""
+        if a is not None and len(outras) > 1:
+            palavra = {1: ["pequeno"], 2: ["pequeno", "grande"],
+                       3: ["pequeno", "médio", "grande"]}[len(outras)][outras.index(a)]
+        s["palavra"] = palavra
+        s["rotulo"] = (s["valor"] + " " + palavra).strip()
+        s["medida"] = MEDIDA.get(re.search(r"(\d{4})$", s["pacote"]).group(1)
+                                 if re.search(r"(\d{4})$", s["pacote"]) else "", "")
+    rots = [s["rotulo"] for s in linhas]
+    dup = [r for r in rots if rots.count(r) > 1]
+    if dup:
+        sys.exit("RECUSO: dois sacos ficariam com o mesmo nome escrito: %s" % " ".join(sorted(set(dup))))
+    return linhas
+
+
+def posto(s):
+    """ordem de montagem de um saco: pacote primeiro, depois o valor."""
+    for i, k in enumerate(PACOTE_ORDEM):
+        if s["pacote"].startswith(k):
+            return (i, valor_num(s["valor"]))
+    return (len(PACOTE_ORDEM), valor_num(s["valor"]))
+
+
 def sacos(placas):
     """Casa cada saco da Mouser com as refs das placas, e RECUSA em vez de adivinhar.
 
@@ -134,7 +189,7 @@ def sacos(placas):
             erros.append("saco %s trouxe %s e as placas pedem %d" % (s["linha"], s["qtd"], len(s["alvos"])))
     if erros:
         sys.exit("RECUSO: a tabela de sacos nao bate com as placas:\n  " + "\n  ".join(erros))
-    return linhas, por_ref
+    return tamanhos(linhas), por_ref
 
 
 def commit():
@@ -273,7 +328,6 @@ def constroi():
         sys.exit("RECUSO: pecas SMD sem saco da Mouser: %s" % " ".join("%s:%s" % a for a in sem_saco))
     # a linha de uma peca SMD num passo de solda: o saco diz-se com as palavras
     # que o estudante ESCREVEU nele no capitulo 1
-    smd_linha = lambda P, r: ["☐", r, "`%s`" % P.cpl[r]["Val"], "**%s**" % SACO[(P.nome, r)]["valor"]]
 
     # ------------------------------------------------------------ 0 antes de começar
     passo("0", "Ferramentas", lista([
@@ -317,15 +371,16 @@ def constroi():
     fora = {P.nome: ordena([r for r in P.cpl if (P.nome, r) not in SACO]) for P in (C, Pn)}
     passo("1", "Identifique os sacos da Mouser — e escreva o valor em cada um",
           "<p>%s</p>" % md("A etiqueta da Mouser **não diz o valor de um jeito fácil de ler**: o que salta à vista é um código, como `603-RC0805FR-07100RL`. Procure esse código na coluna **na etiqueta** e escreva no saco, com caneta, o que está na coluna **escreva no saco**. A tabela está em ordem alfabética do código.") +
-          tabela(["", "na etiqueta", "é", "escreva no saco", "qtd", "vai em"],
-                 [["☐", "`%s`" % s["mouser"], E(s["e"]), "**%s**" % s["valor"], s["qtd"], vai_em(s)]
+          tabela(["", "na etiqueta", "é", "escreva no saco", "mede", "qtd", "vai em"],
+                 [["☐", "`%s`" % s["mouser"], E(s["e"]), "**%s**" % s["rotulo"], s["medida"] or "—", s["qtd"], vai_em(s)]
                   for s in sorted(SACOS, key=lambda s: s["mouser"])]) +
           lista(["**Resistor Yageo** `RC0805FR-07`**`100K`**`L`: o número depois de `RC` é o **tamanho** (0805, 1206, 1210); o valor fica **entre o `-07` e o `L` final**. `R` = ohms, `K` = mil, `M` = milhão, `4M7` = 4,7 MΩ, `0R` = zero ohm.",
                  "**Capacitor Samsung** `CL21B`**`104`**`…`: `21` = 0805, `31` = 1206. O `104` é **10 seguido de 4 zeros**, em pF: 100 000 pF = **100 nF**. `106` = 10 µF. No Kemet `C1206C`**`223`**, o mesmo: 22 000 pF = **22 nF**.",
                  "Diodos, transistor, chip e fusível: o **nome é o valor** (`SS14`, `BAV99`, `OPA1642`).",
-                 "**Abra um saco de cada vez** e feche antes de abrir o próximo. Duas pecinhas 0805 soltas na mesa ficam iguais para sempre.",
+                 "**Abra um saco de cada vez** e feche antes de abrir o próximo. Duas pecinhas 0805 soltas na mesa ficam iguais para sempre. Os passos de solda seguem esta mesma ordem: **um saco por passo**, até esvaziá-lo.",
+                 "Quando o mesmo valor vem em **dois tamanhos**, o nome leva **pequeno / médio / grande** (0805 / 1206 / 1210). Escreva a palavra no saco: é o que distingue na bancada.",
                  "Não vieram neste pedido: cérebro `%s` · painel `%s`." % (" ".join(fora["cerebro"]), " ".join(fora["painel"]))]),
-          pare="Há **três sacos de 100 Ω** que só mudam no tamanho: `RC0805` (pequeno), `RC1206` (maior, só o `R7` do cérebro) e `RC1210` (o maior, `R5`/`R6` do painel). E `100K` é resistor, `104` é capacitor. Leia o código **inteiro**.",
+          pare="Há **três sacos de 100 Ω** que só mudam no tamanho. Escreva o tamanho no saco: **pequeno** (`RC0805`, 2 × 1,25 mm), **médio** (`RC1206`, 3,2 × 1,6 mm, só o `R7` do cérebro) e **grande** (`RC1210`, 3,2 × 2,5 mm, `R5`/`R6` do painel). E `100K` é resistor, `104` é capacitor. Leia o código **inteiro**.",
           qtd="%d sacos" % len(SACOS),
           fonte="notificação de envio da Mouser, pedido 40440548 · `export/mouser_40440548.csv`")
 
@@ -388,48 +443,66 @@ def constroi():
         ]), fonte="`caixa/CAIXA-ACRILICO-MONTAGEM.md` §1 · corte r2 (20 peças)")
 
     # ------------------------------------------------------------ 2 cérebro
-    top_smd = smd(C, "top")
-    ordem = [("resistores e capacitores 0805", lambda v: "0805" in v["Package"]),
-             ("peças 1206 e 1210", lambda v: "1206" in v["Package"] or "1210" in v["Package"]),
-             ("diodos duplos BAV99 (SOT-23)", lambda v: "SOT-23" in v["Package"]),
-             ("diodos D1 e D2 e o fusível F1", lambda v: any(k in v["Package"] for k in ("D_SMA", "D_SMB", "Fuse"))),
-             ("o amplificador operacional U1 (SOIC-8)", lambda v: "SOIC" in v["Package"])]
-    for nome, sel in ordem:
-        refs = [r for r in top_smd if sel(C.cpl[r])]
-        if not refs:
-            continue
-        linhas = [smd_linha(C, r) for r in ordena(refs)]
-        vaz = [r for r in dnp if not C.fp[r]["baixo"] and sel(pacote_de(C, r))]
-        vazios_mostrados.update(vaz)
-        aviso = None
-        pare = None
-        marcas = []
-        if "D1 e D2" in nome:
-            marcas = [(r, "1", "K (faixa)") for r in refs if r.startswith("D")]
-        if "U1" in nome:
-            marcas = [("U1", "1", "pino 1")]
-        if "SOT-23" in nome:
-            aviso = "SOT-23 só encaixa de um jeito: **2 pernas de um lado, 1 do outro** — igual ao desenho dos pads."
-        if "D1 e D2" in nome:
-            pare = "Diodo tem lado. A **faixa** no corpo do diodo fica do lado do pad marcado **K** no desenho (o cátodo). Ao contrário, a placa não liga ou queima o diodo."
-        if "U1" in nome:
-            # o OPA1642AID que chegou da Mouser (lote de 09/2026) nao tem ponto: tem
-            # uma FAIXA na ponta curta, a ligar os pinos 1 e 8. Confirmado pelo dB
-            # a 19/09 com o teste de diodo abaixo, no chip solto.
-            aviso = ("**Ache o pino 1 antes de soldar.** Segure o chip com a escrita **legível**: o pino 1 é o **de baixo à esquerda**. "
-                     "A marca dele pode ser um **ponto** nesse canto ou uma **faixa na ponta** (o lado curto), ligando os pinos 1 e 8. "
-                     "**Para ter certeza, teste o chip solto** com o multímetro em modo diodo: ponta **vermelha no pino 4** (embaixo à direita), "
-                     "preta em cada um dos outros → **0,4–0,8 V**. Invertendo as pontas → **OL**. Se esse padrão aparecer em outro pino, **pare**.")
-            pare = "O **pino 1** do chip vai no pad marcado **pino 1** no desenho. Girado, todos os pinos trocam — inclusive a alimentação."
-        passo("2", "Cérebro · solde %s" % nome,
-              tabela(["", "ref", "valor", "pegue do saco"], linhas) + lista([
-                  "Estanhe **um** pad, segure a peça com a pinça, derreta esse pad — a peça fica presa.",
-                  "Confira se está reta e centrada. Só então solde o(s) outro(s) pad(s).",
-              ] + (["Deixe **vazios** os lugares `%s` (✕ vermelho no desenho): %s" % (" ".join(ordena(vaz)), POR_QUE_VAZIO)] if vaz else [])),
-              fig=mapa(C, refs, marcas=marcas, vazios=vaz), aviso=aviso, pare=pare, qtd="×%d" % len(refs),
-              fonte="`kit/MAPA_COLOCACAO.md` do cérebro")
+    # ⚠️ 19/09: os passos SMD sao UM POR SACO, nao um por familia de encapsulamento.
+    # Quem monta esvazia um envelope de cada vez; agrupar por "0805" obrigava a ter
+    # sete sacos abertos ao mesmo tempo, que e exactamente como duas pecas 0805 de
+    # valores diferentes acabam na mesa juntas.
+    def passos_smd(P, cap, prefixo, lado="top"):
+        disponiveis = smd(P, lado)
+        for s in sorted(SACOS, key=posto):
+            refs = [r for pl, r in s["alvos"] if pl == P.nome and r in disponiveis]
+            if not refs:
+                continue
+            refs = ordena(refs)
+            noutra = ordena([r for pl, r in s["alvos"] if pl != P.nome])
+            outro_lado = ordena([r for pl, r in s["alvos"]
+                                 if pl == P.nome and r not in disponiveis and r in P.cpl])
+            marcas, aviso, pare = [], None, None
+            itens = ["Estanhe **um** pad, segure a peça com a pinça, derreta esse pad — a peça fica presa.",
+                     "Confira se está reta e centrada. Só então solde o(s) outro(s) pad(s)."]
+            if s["palavra"]:
+                aviso = ("Este é o **%s** dos `%s` (**%s**). Há outro saco de `%s` noutro tamanho — "
+                         "confira o código `%s` na etiqueta antes de abrir."
+                         % (s["palavra"], s["valor"], s["medida"], s["valor"], s["mouser"]))
+            if s["pacote"] == "SOT-23":
+                itens.append("SOT-23 só encaixa de um jeito: **2 pernas de um lado, 1 do outro** — igual ao desenho dos pads.")
+            if s["pacote"] in ("D_SMA", "D_SMB"):
+                marcas = [(r, "1", "K (faixa)") for r in refs]
+                pare = ("Diodo tem lado. A **faixa** no corpo do diodo fica do lado do pad marcado **K** no desenho "
+                        "(o cátodo). Ao contrário, a placa não liga ou queima o diodo.")
+            if s["pacote"].startswith("Fuse"):
+                itens.append("O fusível **não tem polaridade**: entra em qualquer sentido.")
+            if s["pacote"].startswith("SOIC"):
+                marcas = [("U1", "1", "pino 1")]
+                # o OPA1642AID que chegou da Mouser (lote de 09/2026) nao tem ponto: tem
+                # uma FAIXA na ponta curta, a ligar os pinos 1 e 8. Confirmado pelo dB
+                # a 19/09 com o teste de diodo, no chip solto.
+                aviso = ("**Ache o pino 1 antes de soldar.** Segure o chip com a escrita **legível**: o pino 1 é o **de baixo à esquerda**. "
+                         "A marca dele pode ser um **ponto** nesse canto ou uma **faixa na ponta** (o lado curto), ligando os pinos 1 e 8. "
+                         "**Para ter certeza, teste o chip solto** com o multímetro em modo diodo: ponta **vermelha no pino 4** (embaixo à direita), "
+                         "preta em cada um dos outros → **0,4–0,8 V**. Invertendo as pontas → **OL**. Se esse padrão aparecer em outro pino, **pare**.")
+                pare = "O **pino 1** do chip vai no pad marcado **pino 1** no desenho. Girado, todos os pinos trocam — inclusive a alimentação."
+            if outro_lado:
+                itens.append("Deste mesmo saco ainda falta `%s`, que vai **por baixo** — é o passo logo a seguir." % " ".join(outro_lado))
+            if noutra:
+                itens.append("Este saco **volta na outra placa** (`%s`). Se quiser esvaziá-lo de uma vez, solde os dois lugares agora, "
+                             "com as duas placas na bancada." % " ".join(noutra))
+            passo(cap, "%s · %s — saco %s" % (prefixo, s["rotulo"], s["mouser"]),
+                  tabela(["", "ref", "valor no desenho"], [["☐", r, "`%s`" % P.cpl[r]["Val"]] for r in refs]) +
+                  lista(itens), fig=mapa(P, refs, marcas=marcas), aviso=aviso, pare=pare,
+                  qtd="×%d" % len(refs), fonte="`export/mouser_40440548.csv` · `kit/MAPA_COLOCACAO.md`")
+
+    passos_smd(C, "2", "Cérebro")
+    vaz_smd = [r for r in dnp if not C.fp[r]["baixo"] and "0805" in C.fp[r]["fpid"]]
+    vazios_mostrados.update(vaz_smd)
+    passo("2", "Cérebro · confira o que fica VAZIO antes de virar a placa",
+          "<p>%s</p>" % md("Os lugares `%s` **não se montam** — %s" % (" ".join(ordena(vaz_smd)), POR_QUE_VAZIO)) +
+          lista(["Confira que estão mesmo vazios e que não há solda a ligar dois pads neles.",
+                 "Confira também que todas as outras peças SMD estão soldadas: nenhum saco deve ter sobrado cheio."]),
+          fig=mapa(C, [], vazios=vaz_smd), qtd="4 lugares")
     passo("2", "Cérebro · vire a placa e solde o C16 (100n) POR BAIXO",
-          lista(["O **C16** é a única peça SMD por baixo. Não tem polaridade. Pegue do saco **%s**." % SACO[("cerebro", "C16")]["valor"]]),
+          lista(["O **C16** é a única peça SMD por baixo. Não tem polaridade. É o último lugar do saco **%s** (`%s`)."
+                 % (SACO[("cerebro", "C16")]["rotulo"], SACO[("cerebro", "C16")]["mouser"])]),
           fig=mapa(C, ["C16"], baixo=True), qtd="×1",
           fonte="`MAPA_COLOCACAO.md`: C16 Bottom")
 
@@ -491,12 +564,7 @@ def constroi():
         sys.exit("RECUSO: posicoes DNP do cerebro sem aviso em passo nenhum: %s" % " ".join(sorted(set(dnp) - vazios_mostrados)))
 
     # ------------------------------------------------------------ 3 painel
-    p_smd = smd(Pn, "top")
-    passo("3", "Painel · solde as peças SMD (por cima)",
-          tabela(["", "ref", "valor", "pegue do saco"], [smd_linha(Pn, r) for r in ordena(p_smd)]) +
-          lista(["Mesma técnica do cérebro: um pad, a peça, confere, os outros.",
-                 "`Q1`/`Q2` são SOT-23: só encaixam de um jeito."]),
-          fig=mapa(Pn, p_smd), qtd="×%d" % len(p_smd))
+    passos_smd(Pn, "3", "Painel")
 
     passo("3", "Painel · o encoder SW1, por cima",
           lista(["Encaixe o encoder por cima: 3 pinos (A C B) de um lado, 2 pinos (botão) do outro, 2 patas grossas nas laterais.",
@@ -675,9 +743,13 @@ def constroi():
           pare="Confira as marcas **VIN / GND / VOUT** no seu step-down. VIN no 5 V queima a Daisy.",
           fonte="`HARDWARE.md` §1")
     passo("6", "Fios · botões e LEDs dos arcade (painel)",
-          lista(["Interruptor de cada arcade → o JST dele (J3 azul A, J4 azul B, J5 branco). Sem polaridade.",
+          lista(["**Onde vai cada botão**, olhando a tampa de cima, da esquerda para a direita: **azul A**, **azul B**, **branco (búzios)**. "
+                 "Os dois azuis (freeze) ficam **juntos**, e o branco fica **à direita** deles.",
+                 "Interruptor de cada arcade → o JST dele (J3 azul A, J4 azul B, J5 branco). Sem polaridade.",
                  "LED dos azuis: fio **A+/B+** no terminal **+** do LED do botão, **A−/B−** no **−**. O branco não tem LED."]),
-          fonte="valor de cada conector na placa")
+          aviso="A ordem não é escolha de gosto: no furo da direita há um capacitor alto do cérebro por baixo, e o botão **branco é mais curto** "
+                "porque não tem LED. Trocar a ordem põe um botão com LED em cima do capacitor. Medido na bancada a 19/09.",
+          fonte="`caixa/LICOES-MONTAGEM.md` #10 · `docs/STATUS.md` (19/09)")
     passo("6", "Fios · o cabo do painel no cérebro",
           lista(["A ficha que sobrou no cabo IDC vai no **J14** do cérebro: a chave da ficha entra no entalhe da caixa de pinos — só entra de um jeito.",
                  "O cabo corre pela **parede de trás**, com **~80 mm de folga**: é o que deixa tirar o fundo sem desligar."]),

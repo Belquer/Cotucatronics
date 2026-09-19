@@ -1,7 +1,12 @@
 # Lições de montagem — a caixa de acrílico, montada à mão
 
-### Cotucatronics · 18/09/2026 · rev. d · acrílico transparente **3,0 mm** · gravado da bancada
+### Cotucatronics · 19/09/2026 · rev. e · acrílico transparente **3,0 mm** · gravado da bancada
 
+> **rev. e (19/09/2026):** lição **#10** — a ordem dos três botões arcade nos
+> furos da tampa deixou de ser livre: **azul A, azul B, branco**, da esquerda
+> para a direita, porque um capacitor alto do cérebro fica debaixo do furo da
+> direita e só o botão branco (sem LED, mais curto) passa por cima dele.
+>
 > **rev. d (18/09/2026):** lições **#7**, **#8** e **#9** (o encoder roscado fixa a folga em 6,5 mm) (o IDC por baixo NÃO se vira; fita soldada). Lição **#7** — header do OLED soldado por baixo, jumpers
 > em L para baixo; âncora de pinos = o pad quadrado (VCC).
 >
@@ -336,6 +341,32 @@ do encoder escolhido, e a face de cima só com o que cabe nela.
 
 **Precisa re-corte?** Só abrir o furo do encoder. **Ferragem:** porca e anilha do
 encoder; 4 postes de 6,5 mm (ou 6 + anilha).
+
+---
+
+## 10 · A ordem dos botões arcade não é livre — o capacitor alto manda
+
+**O que aconteceu (dB, 19/09):** ao montar, um capacitor do cérebro ficou
+alto de mais debaixo de um dos furos de ø30. Os dois **azuis (freeze)** foram
+para os furos da **esquerda**, juntos, e o **branco (búzios)** para o da
+**direita**, que é o furo sobre o capacitor: o branco **não tem LED**, e por
+isso o corpo dele é bem mais curto.
+
+**Porque isto não aparecia antes:** a verificação de volume do `pcb_contorno`
+(`confere_arcade`) trata os três botões como **iguais**, com a profundidade do
+pior caso — 40 mm de ponta a ponta, que é a do botão **com LED**. Um botão sem
+LED é mais curto, e essa diferença nunca entrou na conta. O resultado é que a
+ferramenta não distingue qual furo aceita peça alta por baixo.
+
+**O que fica decidido para esta caixa:** ordem **azul A · azul B · branco**, da
+esquerda para a direita na vista de cima. Está no manual de montagem, no passo
+dos fios dos arcade.
+
+⚠️ **Por medir, e é o que fecha a lição:** a profundidade real do botão branco
+abaixo do painel, e qual é o capacitor que obrigou à troca. Com esses dois
+números, a `confere_arcade` passa a ter uma altura por **tipo de botão** em vez
+de uma só — e a próxima rev do cérebro pode escolher onde pôr as peças altas,
+em vez de descobrir na bancada.
 
 ---
 

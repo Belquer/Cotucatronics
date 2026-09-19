@@ -4,6 +4,7 @@
 <!-- doc-check: ignore sincroniza_pcb (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore para_fabrica (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
+<!-- doc-check: ignore confere_arcade (funcao do pcb_contorno.py, em kicad/) -->
 <!-- doc-check: ignore refresca_redes (funcao do sincroniza_pcb, em kicad/) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
 <!-- doc-check: ignore silk_overlap (codigo de violacao do DRC do KiCad) -->
@@ -292,6 +293,13 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   montado: por anotar.** O que muda: nada audível se ≥ 2,2 µF; o manual
   (v0.3.0) passa a aceitar esta troca, com o + marcado no desenho, e proíbe
   cerâmico multicamada (microfónico, e perde capacitância com 7 V em cima).
+- **Ordem dos botões arcade na tampa: azul A · azul B · branco**, da esquerda
+  para a direita. Não foi escolha de gosto: um capacitor alto do cérebro fica
+  debaixo do furo da direita, e o botão branco (búzios) é mais curto por não
+  ter LED. ⚠️ A `confere_arcade` do `pcb_contorno.py` trata os três botões como
+  iguais, com os 40 mm do botão **com LED** — por isso não podia apanhar isto.
+  **Por medir:** a profundidade do botão branco abaixo do painel, e **qual**
+  capacitor obrigou à troca. Ver `caixa/LICOES-MONTAGEM.md` #10.
 - **`U1` (OPA1642AID da Mouser) marca o pino 1 com uma faixa na ponta**, a ligar
   os pinos 1 e 8, não com ponto. Confirmado pelo dB com o teste de diodo no chip
   solto (vermelha no pino 4 = V−, 0,4–0,8 V para os outros). O manual (v0.2.1)
