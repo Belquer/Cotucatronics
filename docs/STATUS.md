@@ -5,6 +5,7 @@
 <!-- doc-check: ignore para_fabrica (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
 <!-- doc-check: ignore confere_arcade (funcao do pcb_contorno.py, em kicad/) -->
+<!-- doc-check: ignore y_max (valor da constante FRENTE_CEREBRO, no pcb_contorno.py) -->
 <!-- doc-check: ignore refresca_redes (funcao do sincroniza_pcb, em kicad/) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
 <!-- doc-check: ignore silk_overlap (codigo de violacao do DRC do KiCad) -->
@@ -293,13 +294,26 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   montado: por anotar.** O que muda: nada audível se ≥ 2,2 µF; o manual
   (v0.3.0) passa a aceitar esta troca, com o + marcado no desenho, e proíbe
   cerâmico multicamada (microfónico, e perde capacitância com 7 V em cima).
-- **Ordem dos botões arcade na tampa: azul A · azul B · branco**, da esquerda
-  para a direita. Não foi escolha de gosto: um capacitor alto do cérebro fica
-  debaixo do furo da direita, e o botão branco (búzios) é mais curto por não
-  ter LED. ⚠️ A `confere_arcade` do `pcb_contorno.py` trata os três botões como
-  iguais, com os 40 mm do botão **com LED** — por isso não podia apanhar isto.
-  **Por medir:** a profundidade do botão branco abaixo do painel, e **qual**
-  capacitor obrigou à troca. Ver `caixa/LICOES-MONTAGEM.md` #10.
+- **Ordem dos botões arcade na tampa: azul A · azul B · branco**, com o branco
+  do lado do capacitor alto — decidido na bancada porque o branco (búzios) não
+  tem LED e é mais curto. Medido pelo dB a 19/09: **o branco desce 20 mm abaixo
+  do painel, com conectores**; o capacitor é o **C1, 2200 µF**.
+  A `confere_arcade` (`pcb_contorno.py` **v0.24.0**) passou a ter **uma
+  profundidade por botão** e **altura de electrolítico por diâmetro** (D16 = 25,
+  D10 = 16 mm, de catálogo). Com isso a altura livre é **7,5 mm** sob um azul e
+  **21,5 mm** sob o branco.
+- ⚠️ **DIVERGÊNCIA ABERTA — a orientação do cérebro na caixa.** O modelo declara
+  `FRENTE_CEREBRO = "y_min"`, e **nessa** orientação o `C1` fica a **64 mm** do
+  botão mais próximo: nada alto sob os furos. O `C1` só cai debaixo de um arcade
+  na orientação **oposta** (`y_max`) — que foi rejeitada em 06/09 exactamente
+  por pôr o `C1` e a Daisy sob botões. Ou a placa montada está virada ao
+  contrário do modelo, ou as cotas dos furos não são as do desenho. **Não
+  registei como facto até medir**, porque muda o que a rev D tem de resolver.
+  Na orientação `y_max` o verificador também acusa **U2 (Daisy, 17 mm)** e os
+  headers **J13/J16 (20 mm com ficha)** debaixo de botões azuis, onde só cabem
+  7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
+  altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
+  Ver `caixa/LICOES-MONTAGEM.md` #10.
 - **`U1` (OPA1642AID da Mouser) marca o pino 1 com uma faixa na ponta**, a ligar
   os pinos 1 e 8, não com ponto. Confirmado pelo dB com o teste de diodo no chip
   solto (vermelha no pino 4 = V−, 0,4–0,8 V para os outros). O manual (v0.2.1)

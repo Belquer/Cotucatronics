@@ -362,11 +362,23 @@ ferramenta não distingue qual furo aceita peça alta por baixo.
 esquerda para a direita na vista de cima. Está no manual de montagem, no passo
 dos fios dos arcade.
 
-⚠️ **Por medir, e é o que fecha a lição:** a profundidade real do botão branco
-abaixo do painel, e qual é o capacitor que obrigou à troca. Com esses dois
-números, a `confere_arcade` passa a ter uma altura por **tipo de botão** em vez
-de uma só — e a próxima rev do cérebro pode escolher onde pôr as peças altas,
-em vez de descobrir na bancada.
+**Medido (dB, 19/09):** o botão branco desce **20 mm** abaixo do painel, com
+conectores. O capacitor é o **C1, 2200 µF**. Com isso a `confere_arcade`
+(v0.24.0) passou a ter **profundidade por botão** — azul 34, branco 20 — e
+altura de electrolítico **por diâmetro** (D16 = 25 mm). Altura livre: **7,5 mm**
+sob um azul, **21,5 mm** sob o branco.
+
+⚠️ **E abriu uma divergência maior que a própria lição.** Na orientação que o
+modelo declara (`FRENTE_CEREBRO = "y_min"`), o `C1` fica a **64 mm** do botão
+mais próximo — não podia ter colidido. O `C1` só fica sob um arcade na
+orientação **oposta**, que foi rejeitada em 06/09 por pôr o `C1` e a Daisy sob
+botões. Nessa orientação o verificador acusa também **U2 (Daisy, 17 mm)** e os
+headers **J13/J16 (20 mm com ficha)**, contra 7,5 mm de folga sob um azul.
+
+**O que falta medir, e fecha a lição:** que peça está debaixo de cada um dos
+três furos na caixa montada, e a altura real do `C1` (catálogo: 25 mm; sob o
+branco só cabem 21,5). Enquanto isso não for medido, a ordem dos botões está
+registada como **o que funcionou na bancada**, não como geometria conferida.
 
 ---
 

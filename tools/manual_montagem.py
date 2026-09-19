@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.4.0"
+VERSAO = "0.4.1"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -747,8 +747,9 @@ def constroi():
                  "Os dois azuis (freeze) ficam **juntos**, e o branco fica **à direita** deles.",
                  "Interruptor de cada arcade → o JST dele (J3 azul A, J4 azul B, J5 branco). Sem polaridade.",
                  "LED dos azuis: fio **A+/B+** no terminal **+** do LED do botão, **A−/B−** no **−**. O branco não tem LED."]),
-          aviso="A ordem não é escolha de gosto: no furo da direita há um capacitor alto do cérebro por baixo, e o botão **branco é mais curto** "
-                "porque não tem LED. Trocar a ordem põe um botão com LED em cima do capacitor. Medido na bancada a 19/09.",
+          aviso="A ordem não é escolha de gosto: o **C1 (2200 µF)** do cérebro fica debaixo de um dos furos, e só o botão **branco** passa por cima dele, "
+                "porque não tem LED e desce só 20 mm (o azul desce 34). **Antes de fechar a tampa**, olhe por baixo de cada furo e confirme que "
+                "nenhum botão com LED tem peça alta debaixo. Medido na bancada a 19/09.",
           fonte="`caixa/LICOES-MONTAGEM.md` #10 · `docs/STATUS.md` (19/09)")
     passo("6", "Fios · o cabo do painel no cérebro",
           lista(["A ficha que sobrou no cabo IDC vai no **J14** do cérebro: a chave da ficha entra no entalhe da caixa de pinos — só entra de um jeito.",

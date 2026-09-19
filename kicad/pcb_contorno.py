@@ -55,7 +55,7 @@ import re
 import sys
 import uuid
 
-VERSAO = "0.23.2"
+VERSAO = "0.24.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # --- a caixa, IMPORTADA do seu gerador --------------------------------------
@@ -1149,7 +1149,14 @@ ALTURAS = [
     (r"RotaryEncoder",               6.5, "corpo do encoder EC11"),
     (r"PinHeader.*Vertical",        20.0, "header + ficha + fio"),
     (r"JST_XH",                     20.0, "JST + ficha + fio"),
-    (r"CP_Radial_D(\d+)",           11.0, "electrolitico radial"),
+    # ⚠️ 19/09: 11 mm para TODO electrolitico subestimava o C1, que e D16 — um
+    # 2200 uF/35 V desse corpo anda pelos 25 mm de altura. Um verificador que
+    # subestima altura aprova colisao: a altura passa a sair do DIAMETRO, que e o
+    # que o footprint sabe. ⚠️ POR MEDIR: a altura real das pecas em mao; estes
+    # numeros sao de catalogo (Panasonic FR/EEU) e ficam do lado seguro.
+    (r"CP_Radial_D16",              25.0, "electrolitico radial D16 (por medir)"),
+    (r"CP_Radial_D10",              16.0, "electrolitico radial D10 (por medir)"),
+    (r"CP_Radial_D(\d+)",           11.0, "electrolitico radial ate D8"),
     (r"Potentiometer_.*3296",       10.0, "trimmer Bourns 3296"),
     (r"Electrosmith_Daisy",         17.0, "Daisy em soquete"),
     (r"TerminalBlock",              12.0, "terminal de parafuso"),
@@ -1465,27 +1472,40 @@ def confere_arcade(t, alvo, frente_em):
     # pior caso, cabeca = 0, que e o unico valor que nao mente para o lado
     # perigoso. Medir a saliencia abaixo do painel encolhe isto e so melhora.
     PAINEL = 2 * CAIXA.T             # tampa + reforco, onde o arcade monta
-    BOTAO = 40.0 - PAINEL            # pior caso: toda a folga vai para baixo
+    # ⚠️ 19/09: OS TRES BOTOES NAO SAO IGUAIS, e tratar todos como o pior caso
+    # escondeu uma colisao REAL. Na bancada o dB teve de trocar a ordem deles:
+    # o C1 (2200 uF, o mais alto do cerebro) ficou debaixo do furo da DIREITA, e
+    # so o branco passa por cima, porque nao tem LED. Medido pelo dB: o branco
+    # desce 20 mm abaixo do painel, com conectores. O azul continua no pior caso
+    # (40 mm de ponta a ponta, cabeca = 0) ate alguem medir a saliencia dele.
+    # A ordem e a da TAMPA, da esquerda para a direita, e tem de bater com o
+    # numero de furos de o30 — se nao bater, isto recusa em vez de adivinhar.
+    BOTOES = ("azul", "azul", "branco")
+    PROFUNDIDADE = {"azul": 40.0 - PAINEL, "branco": 20.0}
     ESPACADOR = CALCO_H + 4.0        # o que o `confere_caixa` obriga, arredondado
     PCB = 1.6
     y_face = 35.0                    # os tres arcade, na face da tampa
     horiz = y_face * math.cos(ang)
     sob = CAIXA.HF + (CAIXA.HB - CAIXA.HF) * horiz / CAIXA.RUN - CAIXA.T
     livre = sob - CAIXA.T                        # acima da face de cima do fundo
-    ponta = livre - CAIXA.T - BOTAO              # o reforco da tampa rouba T
     topo = ESPACADOR + PCB
-    folga = ponta - topo
 
     fx = [h[1] + CAIXA.T for h in CAIXA.TOP_HOLES if h[3] == 30]   # corpo -> face
     if not fx:
         return ["     (a tampa nao tem arcade de o30 — nada a conferir)"]
+    if len(fx) != len(BOTOES):
+        raise SystemExit("RECUSO: a tampa tem %d furos de o30 e BOTOES declara %d "
+                         "(%s) — diz qual botao vai em cada furo antes de conferir"
+                         % (len(fx), len(BOTOES), " ".join(BOTOES)))
     ax = [x - CAIXA.T - 0.5 - alvo["x0"] for x in sorted(fx)]
     ay = horiz - CAIXA.T - 0.5 - alvo["y0"]
+    # uma altura livre POR DISCO: o reforco da tampa rouba T em todos
+    folgas = [livre - CAIXA.T - PROFUNDIDADE[b] - topo for b in BOTOES]
+    folga = min(folgas)
 
-    L = ["     ARCADE: painel %g mm · botao 40 apertado -> %.0f abaixo (pior caso)"
-         % (PAINEL, BOTAO),
-         "     ponta a %.1f do fundo, placa a %.1f -> ALTURA LIVRE %.1f mm"
-         % (ponta, topo, folga),
+    L = ["     ARCADE: painel %g mm · botoes %s" % (PAINEL, " ".join(BOTOES)),
+         "     altura livre por disco (esq->dir): %s mm"
+         % " · ".join("%s %.1f" % (b, f) for b, f in zip(BOTOES, folgas)),
          "     discos o30 sobre a placa: y %.1f · x %s"
          % (ay, " ".join("%.0f" % v for v in ax))]
     ox, oy = alvo["origem"]
@@ -1510,12 +1530,12 @@ def confere_arcade(t, alvo, frente_em):
     # medir so pode tirar pecas desta lista, nunca por.
     R_CORPO_ARCADE = 15.0
 
-    def corpo_toca(ref_c):
+    def discos_do_corpo(ref_c):
         if ref_c not in corpos:
-            return False
+            return []
         x0_, y0_, x1_, y1_ = corpos[ref_c]
-        return any(math.hypot(max(x0_ - cx, 0, cx - x1_), max(y0_ - cy, 0, cy - y1_)) <= R_CORPO_ARCADE
-                   for cx, cy in [(a_, ay) for a_ in ax])
+        return [i for i, cx in enumerate(ax)
+                if math.hypot(max(x0_ - cx, 0, cx - x1_), max(y0_ - ay, 0, ay - y1_)) <= R_CORPO_ARCADE]
 
     bate = []
     for m in re.finditer(r'\n\t\(footprint "', t):
@@ -1541,19 +1561,23 @@ def confere_arcade(t, alvo, frente_em):
             bx, by = (ox + alvo["w"]) - kx, (oy + alvo["h"]) - ky
         ra = re.search(r'\(at ' + NUM + r' ' + NUM + r' (' + NUM + r')\)', bl)
         rot = float(ra.group(1)) if ra else 0.0
-        if (colide(bx, by, rot, pads_de(bl), [(a, ay) for a in ax], 15.0)
-                or corpo_toca(ref)):
-            bate.append((ref, fp, altura_de(fp)))
+        sob_discos = sorted(set(
+            [i for i, a in enumerate(ax) if colide(bx, by, rot, pads_de(bl), [(a, ay)], 15.0)]
+            + discos_do_corpo(ref)))
+        if sob_discos:
+            # a peca responde ao disco MAIS APERTADO que a cobre
+            bate.append((ref, fp, altura_de(fp), min(folgas[i] for i in sob_discos),
+                         "/".join(BOTOES[i] for i in sob_discos)))
     if bate:
-        maus = sorted((h, r, f) for r, f, h in bate if h is None or h > folga)
+        maus = sorted((h, r, f, fg, b) for r, f, h, fg, b in bate if h is None or h > fg)
         ok = len(bate) - len(maus)
-        L.append("     %d peca(s) sob os discos · %d cabem nos %.1f mm"
-                 % (len(bate), ok, folga))
-        for h, r, f in maus:
-            L.append("     ⚠️ %-5s %-5s %s" % (r, ("%.0f" % h) if h else "?",
-                                               f.split(":")[-1][:44]))
+        L.append("     %d peca(s) sob os discos · %d cabem na folga do disco que as cobre"
+                 % (len(bate), ok))
+        for h, r, f, fg, b in maus:
+            L.append("     ⚠️ %-5s %-5s > %.1f (%s) %s" % (r, ("%.0f" % h) if h else "?", fg, b,
+                                                           f.split(":")[-1][:36]))
         if not maus:
-            L.append("     nenhuma passa dos %.1f mm — cabe" % folga)
+            L.append("     nenhuma passa da folga do seu disco — cabe")
     else:
         L.append("     nenhuma peca debaixo dos arcade")
     return L
