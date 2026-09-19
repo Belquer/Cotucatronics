@@ -30,7 +30,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.2.1"
+VERSAO = "0.2.2"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -149,8 +149,9 @@ def commit():
 
 
 # ----------------------------------------------------------------- desenho
-def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None):
-    """SVG da placa com `refs` destacadas. `baixo` espelha em x (vista por baixo)."""
+def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, vazios=()):
+    """SVG da placa com `refs` destacadas. `baixo` espelha em x (vista por baixo).
+    `vazios`: posicoes DNP da zona do passo, riscadas — pad vazio sem aviso parece esquecimento."""
     PX = 4.2
     pad = 6.0
     W = (P.x1 - P.x0 + 2 * pad) * PX
@@ -169,12 +170,21 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None):
     pts = " ".join("%.1f,%.1f" % (tx(x), ty(y)) for x, y in P.contorno)
     out.append('<polygon points="%s" class="placa"/>' % pts)
     for ref, f in P.fp.items():
-        if not f["corpo"] or ref in refs:
+        if not f["corpo"] or ref in refs or ref in vazios:
             continue
         # pecas do outro lado desenham-se a tracejado
         lado_outro = f["baixo"] != baixo
         pts = " ".join("%.1f,%.1f" % (tx(x), ty(y)) for x, y in f["corpo"])
         out.append('<polygon points="%s" class="corpo%s"/>' % (pts, " outro" if lado_outro else ""))
+    for ref in vazios:
+        f = P.fp[ref]
+        pts = " ".join("%.1f,%.1f" % (tx(x), ty(y)) for x, y in f["corpo"])
+        xs = [tx(x) for x, _ in f["corpo"]]; ys = [ty(y) for _, y in f["corpo"]]
+        out.append('<polygon points="%s" class="vazio"/>' % pts)
+        out.append('<path d="M%.1f %.1fL%.1f %.1fM%.1f %.1fL%.1f %.1f" class="vazio-x"/>'
+                   % (min(xs), min(ys), max(xs), max(ys), min(xs), max(ys), max(xs), min(ys)))
+        out.append('<text x="%.1f" y="%.1f" class="rot vazio-rot">%s</text>'
+                   % ((min(xs) + max(xs)) / 2, max(ys) + 13, E(ref)))
     for x, y, rot in furos:
         out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="furo"/>' % (tx(x), ty(y), 1.6 * PX))
         out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="furo-anilha"/>' % (tx(x), ty(y), 3.5 * PX))
@@ -211,6 +221,8 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None):
     out.append("</svg>")
     cap = legenda or ("Vista **%s** · em azul: o que se coloca neste passo · ■ = pad 1" %
                       ("POR BAIXO (espelhada — como você vê com a placa virada)" if baixo else "por cima"))
+    if vazios:
+        cap += " · ✕ vermelho: fica **vazio**"
     return ('<figure class="fig%s"><div class="sc">%s</div><figcaption>%s</figcaption></figure>'
             % (" figbaixo" if baixo else "", "".join(out), md(cap)))
 
@@ -318,9 +330,17 @@ def constroi():
           fonte="notificação de envio da Mouser, pedido 40440548 · `export/mouser_40440548.csv`")
 
     dnp = [r for r, f in C.fp.items() if f["dnp"] and f["corpo"]]
+    # ⚠️ o pre-amp de 01/09 e SEGUIDOR (R10/R20 = 0R, OUT -> -IN). Estas posicoes sao a
+    # perna de ganho dele (docs/operacao/esquematicos/revB/BOM-MPN-revB.md): ficam na
+    # placa para o trimpot poder voltar, e vazias hoje. Um pad vazio sem aviso, na hora
+    # de soldar, le-se como peca esquecida — o dB perguntou por C11/C21 a 19/09.
+    POR_QUE_VAZIO = ("não é esquecimento: são a **perna de ganho** do pré-amp, que hoje é um seguidor "
+                     "(ganho 1, pelo `R10`/`R20` de 0 Ω). Só se montam se o ganho ajustável voltar.")
+    pacote_de = lambda P, r: {"Package": P.fp[r]["fpid"].split(":")[-1]}
+    vazios_mostrados = set()
     passo("1", "Confira as peças do CÉREBRO (placa grande)",
           tabela(["", "valor", "qtd", "referências", "encapsulamento", "lado"], inv_placa(C)) +
-          "<p>%s</p>" % md("**Não montar** (o lugar existe na placa, mas fica vazio): `%s`. Os pontos `TP` são só pads de teste, e os `H` são furos." % " ".join(sorted(dnp))),
+          "<p>%s</p>" % md("**Não montar** (o lugar existe na placa, mas fica vazio): `%s` — %s Os pontos `TP` são só pads de teste, e os `H` são furos." % (" ".join(ordena(dnp)), POR_QUE_VAZIO)),
           qtd="%d peças" % len(C.cpl),
           fonte="pacote de fábrica `cerebro_2026-09-12_06db1c7` · `cpl_rico_cerebro.csv`")
 
@@ -379,6 +399,8 @@ def constroi():
         if not refs:
             continue
         linhas = [smd_linha(C, r) for r in ordena(refs)]
+        vaz = [r for r in dnp if not C.fp[r]["baixo"] and sel(pacote_de(C, r))]
+        vazios_mostrados.update(vaz)
         aviso = None
         pare = None
         marcas = []
@@ -403,7 +425,8 @@ def constroi():
               tabela(["", "ref", "valor", "pegue do saco"], linhas) + lista([
                   "Estanhe **um** pad, segure a peça com a pinça, derreta esse pad — a peça fica presa.",
                   "Confira se está reta e centrada. Só então solde o(s) outro(s) pad(s).",
-              ]), fig=mapa(C, refs, marcas=marcas), aviso=aviso, pare=pare, qtd="×%d" % len(refs),
+              ] + (["Deixe **vazios** os lugares `%s` (✕ vermelho no desenho): %s" % (" ".join(ordena(vaz)), POR_QUE_VAZIO)] if vaz else [])),
+              fig=mapa(C, refs, marcas=marcas, vazios=vaz), aviso=aviso, pare=pare, qtd="×%d" % len(refs),
               fonte="`kit/MAPA_COLOCACAO.md` do cérebro")
     passo("2", "Cérebro · vire a placa e solde o C16 (100n) POR BAIXO",
           lista(["O **C16** é a única peça SMD por baixo. Não tem polaridade. Pegue do saco **%s**." % SACO[("cerebro", "C16")]["valor"]]),
@@ -428,11 +451,14 @@ def constroi():
           lista(["Sem polaridade. Encoste o corpo na placa antes de soldar."]),
           fig=mapa(C, ["C14", "C24"]), qtd="×2")
     elec = [r for r in ("C5", "C3", "C6", "C1") if r in C.cpl]
+    vaz_tht = [r for r in dnp if r not in vazios_mostrados]
+    vazios_mostrados.update(vaz_tht)
     passo("2", "Cérebro · capacitores eletrolíticos",
           tabela(["", "ref", "valor"], [["☐", r, "`%s`" % C.cpl[r]["Val"]] for r in elec]) +
           lista(["A perna **longa** (+) vai no pad **■ quadrado**. A **faixa** no corpo do capacitor marca o **−**, do lado oposto ao quadrado.",
-                 "Solde do menor para o maior: C5 → C3 → C6 → C1."]),
-          fig=mapa(C, elec),
+                 "Solde do menor para o maior: C5 → C3 → C6 → C1.",
+                 "Deixe **vazios** os lugares `%s` (✕ vermelho no desenho): %s" % (" ".join(ordena(vaz_tht)), POR_QUE_VAZIO)]),
+          fig=mapa(C, elec, vazios=vaz_tht),
           pare="Eletrolítico ao contrário **estoura** quando liga. Confira os quatro antes de soldar.",
           qtd="×%d" % len(elec))
     passo("2", "Cérebro · caixa de pinos IDC J14 (para o cabo do painel)",
@@ -444,6 +470,9 @@ def constroi():
                  "Truque para ficarem retos: encaixe as tiras **no módulo**, apoie o módulo sobre a placa, e solde as tiras com o módulo no lugar. Depois tire o módulo.",
                  "**Ainda não** deixe os módulos na placa — eles entram depois do teste de energia."]),
           fig=mapa(C, ["U2", "U3"]), qtd="2 + 2 tiras")
+
+    if set(dnp) - vazios_mostrados:
+        sys.exit("RECUSO: posicoes DNP do cerebro sem aviso em passo nenhum: %s" % " ".join(sorted(set(dnp) - vazios_mostrados)))
 
     # ------------------------------------------------------------ 3 painel
     p_smd = smd(Pn, "top")
@@ -720,6 +749,9 @@ svg .pad{fill:var(--papel);stroke:var(--azul);stroke-width:1.5}
 svg .pad1{fill:var(--azul);stroke:var(--azul)}
 svg .rot{fill:var(--azul);font-size:15px;font-weight:600;text-anchor:middle}
 svg .marca{fill:none;stroke:var(--perigo);stroke-width:2.5}
+svg .vazio{fill:none;stroke:var(--perigo);stroke-width:1.5;stroke-dasharray:3 2}
+svg .vazio-x{stroke:var(--perigo);stroke-width:1.5}
+svg .vazio-rot{fill:var(--perigo)}
 svg .marca-rot{fill:var(--perigo);text-anchor:start;font-size:14px}
 svg .furo{fill:var(--tinta)}
 svg .furo-anilha{fill:none;stroke:var(--perigo);stroke-width:2;stroke-dasharray:5 3}
