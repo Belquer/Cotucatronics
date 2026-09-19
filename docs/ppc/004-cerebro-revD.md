@@ -1,5 +1,6 @@
 # ppc/004 — cérebro **rev D**: tirar o que não se monta
 <!-- doc-check: ignore confere_arcade (função do pcb_contorno.py, em kicad/) -->
+<!-- doc-check: ignore y_min (valor da constante FRENTE_CEREBRO, no pcb_contorno.py) -->
 
 > **Estado: PLANO, com execução BLOQUEADA** em três medidas (§5). Escrito a
 > 2026-09-19, com a rev C em cima da bancada a ser montada.
