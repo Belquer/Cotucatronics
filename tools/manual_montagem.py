@@ -30,10 +30,12 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.1.4"
+VERSAO = "0.2.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
+# o pedido da Mouser que CHEGOU (transcrito da notificacao de envio), nao a lista de compra
+PEDIDO_MOUSER = os.path.join(RAIZ, "export", "mouser_40440548.csv")
 
 try:
     import pcbnew
@@ -97,6 +99,42 @@ class Placa:
             if p["n"] == n:
                 return p["rede"]
         return "?"
+
+
+def sacos(placas):
+    """Casa cada saco da Mouser com as refs das placas, e RECUSA em vez de adivinhar.
+
+    Um estudante com doze saquinhos de papel so le o que esta impresso na
+    etiqueta — e a etiqueta da Mouser diz `603-RC0805FR-07100RL`, nao "100 ohm".
+    Esta tabela e a ponte, e por isso nao pode estar errada em silencio: toda
+    ref tem de existir na placa fabricada, com o encapsulamento que o saco diz,
+    em UM saco so, e o saco tem de trazer pecas que cheguem. E toda peca SMD das
+    duas placas tem de sair de algum saco — o dB solda-as todas a mao."""
+    with io.open(PEDIDO_MOUSER, encoding="utf-8") as f:
+        brutas = [l for l in f if l.strip() and not l.startswith("#")]
+    linhas = list(csv.DictReader(brutas))
+    if len(linhas) != len(brutas) - 1:
+        sys.exit("RECUSO: %s tem %d linhas de dados e a leitura apanhou %d"
+                 % (PEDIDO_MOUSER, len(brutas) - 1, len(linhas)))
+    erros, por_ref = [], {}
+    for s in linhas:
+        s["alvos"] = []
+        for alvo in s["refs"].split():
+            placa, ref = alvo.split(":")
+            P = placas[placa]
+            if ref not in P.cpl:
+                erros.append("saco %s: %s nao existe no pacote de fabrica do %s" % (s["linha"], ref, placa))
+            elif s["pacote"] not in P.cpl[ref]["Package"]:
+                erros.append("saco %s e %s, mas %s:%s e %s" % (s["linha"], s["pacote"], placa, ref, P.cpl[ref]["Package"]))
+            if (placa, ref) in por_ref:
+                erros.append("%s:%s esta em dois sacos (%s e %s)" % (placa, ref, por_ref[(placa, ref)]["linha"], s["linha"]))
+            por_ref[(placa, ref)] = s
+            s["alvos"].append((placa, ref))
+        if int(s["qtd"]) < len(s["alvos"]):
+            erros.append("saco %s trouxe %s e as placas pedem %d" % (s["linha"], s["qtd"], len(s["alvos"])))
+    if erros:
+        sys.exit("RECUSO: a tabela de sacos nao bate com as placas:\n  " + "\n  ".join(erros))
+    return linhas, por_ref
 
 
 def commit():
@@ -215,6 +253,15 @@ def constroi():
                            if v["Side"] == lado and not any(k in v["Package"] for k in
                               ("_THT", "Radial", "PinHeader", "Terminal", "IDC", "JST", "Rotary",
                                "Potentiometer", "Daisy", "SUPERMINI", "C_Rect"))]
+    ordena = lambda refs: sorted(refs, key=lambda x: (x[0], int(''.join(c for c in x if c.isdigit()) or 0)))
+    SACOS, SACO = sacos({"cerebro": C, "painel": Pn})
+    sem_saco = [(P.nome, r) for P in (C, Pn) for lado in ("top", "bottom") for r in smd(P, lado)
+                if (P.nome, r) not in SACO]
+    if sem_saco:
+        sys.exit("RECUSO: pecas SMD sem saco da Mouser: %s" % " ".join("%s:%s" % a for a in sem_saco))
+    # a linha de uma peca SMD num passo de solda: o saco diz-se com as palavras
+    # que o estudante ESCREVEU nele no capitulo 1
+    smd_linha = lambda P, r: ["☐", r, "`%s`" % P.cpl[r]["Val"], "**%s**" % SACO[(P.nome, r)]["valor"]]
 
     # ------------------------------------------------------------ 0 antes de começar
     passo("0", "Ferramentas", lista([
@@ -248,6 +295,27 @@ def constroi():
             linhas.append(["☐", "`%s`" % val, len(refs), " ".join(sorted(refs, key=lambda x: (x[0], int(''.join(c for c in x if c.isdigit()) or 0)))),
                            pk.replace("_", " ")[:34], lado])
         return linhas
+
+    def vai_em(s):
+        por = {}
+        for placa, r in s["alvos"]:
+            por.setdefault(placa, []).append(r)
+        return " · ".join("%s %s" % ({"cerebro": "cérebro", "painel": "painel"}[k], " ".join(ordena(v)))
+                          for k, v in por.items())
+    fora = {P.nome: ordena([r for r in P.cpl if (P.nome, r) not in SACO]) for P in (C, Pn)}
+    passo("1", "Identifique os sacos da Mouser — e escreva o valor em cada um",
+          "<p>%s</p>" % md("A etiqueta da Mouser **não diz o valor de um jeito fácil de ler**: o que salta à vista é um código, como `603-RC0805FR-07100RL`. Procure esse código na coluna **na etiqueta** e escreva no saco, com caneta, o que está na coluna **escreva no saco**. A tabela está em ordem alfabética do código.") +
+          tabela(["", "na etiqueta", "é", "escreva no saco", "qtd", "vai em"],
+                 [["☐", "`%s`" % s["mouser"], E(s["e"]), "**%s**" % s["valor"], s["qtd"], vai_em(s)]
+                  for s in sorted(SACOS, key=lambda s: s["mouser"])]) +
+          lista(["**Resistor Yageo** `RC0805FR-07`**`100K`**`L`: o número depois de `RC` é o **tamanho** (0805, 1206, 1210); o valor fica **entre o `-07` e o `L` final**. `R` = ohms, `K` = mil, `M` = milhão, `4M7` = 4,7 MΩ, `0R` = zero ohm.",
+                 "**Capacitor Samsung** `CL21B`**`104`**`…`: `21` = 0805, `31` = 1206. O `104` é **10 seguido de 4 zeros**, em pF: 100 000 pF = **100 nF**. `106` = 10 µF. No Kemet `C1206C`**`223`**, o mesmo: 22 000 pF = **22 nF**.",
+                 "Diodos, transistor, chip e fusível: o **nome é o valor** (`SS14`, `BAV99`, `OPA1642`).",
+                 "**Abra um saco de cada vez** e feche antes de abrir o próximo. Duas pecinhas 0805 soltas na mesa ficam iguais para sempre.",
+                 "Não vieram neste pedido: cérebro `%s` · painel `%s`." % (" ".join(fora["cerebro"]), " ".join(fora["painel"]))]),
+          pare="Há **três sacos de 100 Ω** que só mudam no tamanho: `RC0805` (pequeno), `RC1206` (maior, só o `R7` do cérebro) e `RC1210` (o maior, `R5`/`R6` do painel). E `100K` é resistor, `104` é capacitor. Leia o código **inteiro**.",
+          qtd="%d sacos" % len(SACOS),
+          fonte="notificação de envio da Mouser, pedido 40440548 · `export/mouser_40440548.csv`")
 
     dnp = [r for r, f in C.fp.items() if f["dnp"] and f["corpo"]]
     passo("1", "Confira as peças do CÉREBRO (placa grande)",
@@ -310,7 +378,7 @@ def constroi():
         refs = [r for r in top_smd if sel(C.cpl[r])]
         if not refs:
             continue
-        linhas = [["☐", r, "`%s`" % C.cpl[r]["Val"]] for r in sorted(refs, key=lambda x: (x[0], int(''.join(c for c in x if c.isdigit()) or 0)))]
+        linhas = [smd_linha(C, r) for r in ordena(refs)]
         aviso = None
         pare = None
         marcas = []
@@ -325,13 +393,13 @@ def constroi():
         if "U1" in nome:
             pare = "O **ponto/chanfro do pino 1** do chip vai no pad marcado **pino 1** no desenho. Girado, todos os pinos trocam."
         passo("2", "Cérebro · solde %s" % nome,
-              tabela(["", "ref", "valor"], linhas) + lista([
+              tabela(["", "ref", "valor", "pegue do saco"], linhas) + lista([
                   "Estanhe **um** pad, segure a peça com a pinça, derreta esse pad — a peça fica presa.",
                   "Confira se está reta e centrada. Só então solde o(s) outro(s) pad(s).",
               ]), fig=mapa(C, refs, marcas=marcas), aviso=aviso, pare=pare, qtd="×%d" % len(refs),
               fonte="`kit/MAPA_COLOCACAO.md` do cérebro")
     passo("2", "Cérebro · vire a placa e solde o C16 (100n) POR BAIXO",
-          lista(["O **C16** é a única peça SMD por baixo. Não tem polaridade."]),
+          lista(["O **C16** é a única peça SMD por baixo. Não tem polaridade. Pegue do saco **%s**." % SACO[("cerebro", "C16")]["valor"]]),
           fig=mapa(C, ["C16"], baixo=True), qtd="×1",
           fonte="`MAPA_COLOCACAO.md`: C16 Bottom")
 
@@ -373,7 +441,7 @@ def constroi():
     # ------------------------------------------------------------ 3 painel
     p_smd = smd(Pn, "top")
     passo("3", "Painel · solde as peças SMD (por cima)",
-          tabela(["", "ref", "valor"], [["☐", r, "`%s`" % Pn.cpl[r]["Val"]] for r in sorted(p_smd, key=lambda x: (x[0], int(''.join(c for c in x if c.isdigit()) or 0)))]) +
+          tabela(["", "ref", "valor", "pegue do saco"], [smd_linha(Pn, r) for r in ordena(p_smd)]) +
           lista(["Mesma técnica do cérebro: um pad, a peça, confere, os outros.",
                  "`Q1`/`Q2` são SOT-23: só encaixam de um jeito."]),
           fig=mapa(Pn, p_smd), qtd="×%d" % len(p_smd))
@@ -674,7 +742,7 @@ article.passo{grid-template-columns:52px minmax(0,1fr);padding-block:12px;break-
 figure.fig{max-width:100%}.sc{overflow:hidden}
 article.passo .num{font-size:40px}
 article.passo h3{font-size:17px;break-after:avoid}
-figure.fig,.aviso,.pare,table{break-inside:avoid}
+figure.fig,.aviso,.pare{break-inside:avoid} table{break-inside:auto} tr{break-inside:avoid} thead{display:table-header-group}
 .sc{overflow:visible}
 svg.mapa{min-width:0}
 a{color:inherit;text-decoration:none}

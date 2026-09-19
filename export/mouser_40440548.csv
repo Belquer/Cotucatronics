@@ -1,0 +1,29 @@
+# carimbo: mouser_40440548.csv v1 · 2026-09-18
+# O QUE VEIO, nao o que se pediu: transcrito da notificacao de envio da Mouser
+# (pedido 40440548, fatura 92489985, enviado 14/09/2026 por UPS). 21 linhas,
+# todas com quantidade enviada = pedida. Difere de COMPRA_MOUSER.csv: os
+# electroliticos, o WIMA, a barra 1x40, os pots e o encoder NAO vieram neste pedido.
+# refs = <placa>:<ref> ...  (placa = cerebro | painel). O manual_montagem.py confere
+# cada ref contra o pacote de fabrica: tem de existir e o encapsulamento tem de conter `pacote`.
+linha,mouser,mpn,qtd,e,valor,pacote,refs,leitura
+1,603-RC0805FR-07100RL,RC0805FR-07100RL,6,resistor,100 Ω,R_0805,cerebro:R14 cerebro:R24 painel:R1 painel:R2,RC**0805**FR-07**100R**L — tamanho 0805; o valor fica entre o -07 e o L final; R = ohms
+2,603-RC0805FR-0710KL,RC0805FR-0710KL,6,resistor,10 kΩ,R_0805,cerebro:R50 cerebro:R51 painel:R3 painel:R4,RC**0805**FR-07**10K**L — K = mil
+3,603-RC0805FR-07100KL,RC0805FR-07100KL,5,resistor,100 kΩ,R_0805,cerebro:R5 cerebro:R6 cerebro:R8,RC**0805**FR-07**100K**L
+4,603-RC0805FR-0722KL,RC0805FR-0722KL,3,resistor,22 kΩ,R_0805,cerebro:R9,RC**0805**FR-07**22K**L
+5,603-RC0805JR-070RL,RC0805JR-070RL,4,resistor jumper,0 Ω,R_0805,cerebro:R10 cerebro:R20,RC**0805**JR-07**0R**L — zero ohm: é um fio em forma de resistor
+6,603-RC0805FR-074M7L,RC0805FR-074M7L,4,resistor,"4,7 MΩ",R_0805,cerebro:R11 cerebro:R21,"RC**0805**FR-07**4M7**L — M = milhão; 4M7 = 4,7 MΩ"
+7,603-RC0805FR-071KL,RC0805FR-071KL,4,resistor,1 kΩ,R_0805,cerebro:R12 cerebro:R22,RC**0805**FR-07**1K**L
+8,603-RC1206FR-07100RL,RC1206FR-07100RL,3,resistor,100 Ω GRANDE (1206),R_1206,cerebro:R7,RC**1206**FR-07**100R**L — mesmo valor da linha 1; muda o TAMANHO
+9,603-RC1210FR-07100RL,RC1210FR-07100RL,4,resistor,100 Ω MAIOR (1210),R_1210,painel:R5 painel:R6,RC**1210**FR-07**100R**L — mesmo valor da linha 1; muda o TAMANHO
+10,187-CL21B104KBCNNNC,CL21B104KBCNNNC,12,capacitor cerâmico,100 nF,C_0805,cerebro:C2 cerebro:C4 cerebro:C7 cerebro:C9 cerebro:C15 cerebro:C16 painel:C1 painel:C2 painel:C4 painel:C5,CL**21**B**104**… — 21 = 0805; 104 = 10 e mais 4 zeros em pF = 100 000 pF = 100 nF
+11,187-CL31B106KAHNNWE,CL31B106KAHNNWE,3,capacitor cerâmico,10 µF,C_1206,cerebro:C8,CL**31**B**106**… — 31 = 1206; 106 = 10 e mais 6 zeros em pF = 10 µF
+12,80-C1206C223J5G,C1206C223J5GACTU,4,capacitor cerâmico C0G,22 nF,C_1206,cerebro:C12 cerebro:C22,C**1206**C**223**… — 223 = 22 e mais 3 zeros em pF = 22 nF
+13,652-SMBJ24A,SMBJ24A,3,diodo TVS (proteção),SMBJ24A,D_SMB,cerebro:D1,o nome é o valor. Veio da Bourns (a lista dizia Littelfuse): mesma peça
+14,512-SS14,SS14,3,diodo Schottky,SS14,D_SMA,cerebro:D2,o nome é o valor
+15,621-BAV99-F,BAV99-7-F,4,diodo duplo,BAV99,SOT-23,cerebro:D11 cerebro:D21,o nome é o valor
+16,781-SI2302CDS-T1-GE3,SI2302CDS-T1-GE3,4,transistor MOSFET,SI2302,SOT-23,painel:Q1 painel:Q2,o corpo vem marcado N2
+17,595-OPA1642AID,OPA1642AID,3,amplificador operacional,OPA1642,SOIC-8,cerebro:U1,o nome é o valor
+18,652-MF-LSMF300/24X-2,MF-LSMF300/24X-2,3,fusível rearmável,PTC 3 A,Fuse_2920,cerebro:F1,o nome é o valor
+19,651-1715721,1715721,4,borne de parafuso 2 vias,borne 2p,TerminalBlock,cerebro:J1 cerebro:J2,verde; dá para reconhecer à vista
+20,306-B2BXHALFSNP,B2B-XH-A(LF)(SN),7,conector JST XH 2 vias,JST 2p,JST_XH,painel:J3 painel:J4 painel:J5 painel:J6 painel:J7,branco; dá para reconhecer à vista
+21,710-61202621621,61202621621,4,conector IDC 2×13 com caixa,IDC 26p,IDC-Header_2x13,cerebro:J14 painel:J1,preto com chave; dá para reconhecer à vista

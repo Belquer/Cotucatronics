@@ -1,4 +1,4 @@
-<!-- carimbo: MANIFEST.md v6 · 2026-09-18 · placas: painel rev C · cerebro rev C -->
+<!-- carimbo: MANIFEST.md v7 · 2026-09-18 · placas: painel rev C · cerebro rev C -->
 # MANIFEST — índice autoritativo de `export/`
 
 > **Protocolo:** antes de subir/consumir um artefato, confira o **carimbo** dele
@@ -17,6 +17,7 @@ pacotes); este MANIFEST diz qual é o carimbo corrente. Os dois têm de bater.
 | `COMPRA_MOUSER.csv` | v2 | 2026-09-12 | painel rev C · cerebro rev C | BOM de MPNs reais para **importar no Mouser BOM Tool** |
 | `BOM_CONSOLIDADO.csv` | v2 | 2026-09-12 | painel rev C · cerebro rev C | BOM unificada cerebro+painel (LCSC + MPN Mouser + designadores + qty) |
 | `MOUSER_ALTERNATES.md` | v2 | 2026-09-12 | painel rev C · cerebro rev C | pick PRIMÁRIO + 2–3 alternativas por peça-problema; as **7 verificadas em estoque** |
+| `mouser_40440548.csv` | v1 | 2026-09-18 | painel rev C · cerebro rev C | **o que CHEGOU** da Mouser (21 linhas, da notificação de envio de 14/09), cada saco casado com as refs das duas placas. O `manual_montagem.py` lê-o e **recusa** se uma ref não existe, se o tamanho não bate, se uma ref está em dois sacos, ou se uma peça SMD fica sem saco |
 | `COMPRA_MOUSER_template.xlsx` | v2 | 2026-09-12 | painel rev C · cerebro rev C | template de importação Mouser (col MPN + nº Mouser preenchido) |
 | `COMPRA_MOUSER_template.xls` | v2 | 2026-09-12 | painel rev C · cerebro rev C | idem, formato legado `.xls` |
 
@@ -82,8 +83,10 @@ roscado — ver `docs/STATUS.md` (18/09). **10 kΩ linear (B10K).**
 
 ## Status de encomenda (2026-09-12)
 
-- **Mouser (peças):** **PLACED** — Web Order # **40440548**, data **2026-09-12**
-  (peças/BOM, `COMPRA_MOUSER*`).
+- **Mouser (peças):** **ENTREGUE** — Web Order # **40440548**, data **2026-09-12**,
+  enviado 14/09 (fatura 92489985). Vieram **21 das linhas** do `COMPRA_MOUSER.csv`
+  v2, todas completas; **não vieram** os electrolíticos, o WIMA 2,2 µF, a barra
+  1×40, os pots e o encoder. O que veio, saco a saco: `mouser_40440548.csv`.
 - **JLCPCB (placas nuas):** **PLACED** — Order # **W2026091304545438**, data
   **2026-09-12** (placas nuas). Cobre **as duas placas, cérebro e painel**
   — confirmado pelo dB a 2026-09-17.
