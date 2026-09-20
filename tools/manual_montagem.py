@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.8.0"
+VERSAO = "0.8.1"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -830,6 +830,8 @@ def constroi():
           lista(["Igual para o `J6` (segundo piezo).", "Fio **< 60 mm**, **blindado**. E a malha depende do cabo: se ele tiver **dois condutores + malha**, a malha é escudo e liga **só do lado da placa**; se for **coaxial** (um central + malha), a **malha é o retorno** e liga **nas duas pontas** — solta no jack não dá menos ruído, dá **sinal nenhum**.",
                  "Com coaxial: centro no pino **1**, malha no pino **2** e na **manga** do jack; ligue **anel e manga juntos no jack** e deixe o pino 3 sem nada (é a mesma rede do 2).",
                  "**Rabicho curto** ao soldar a malha: malha destrançada é blindagem que se perde.",
+                 "**Malha grossa a tocar nos pinos 2 e 3? Não faz mal** — os dois são a **mesma rede** (`AGND`). O que não pode tocar é o **pino 1**, que é o sinal: malha no pino 1 é o piezo em curto, e o sintoma é **silêncio** nesse canal. O mais simples é soldar a malha **só no pino 2** e deixar o 3 vazio.",
+                 "**Confira no fim, sem energia:** entre o pino **1** e o **2** **NÃO** pode bipar. Entre o pino 1 e a **ponta** do jack, tem de bipar.",
                  "**Solde o cabo direto nos pinos do header**, sem conector destacável: o trecho é curto, fica dentro da caixa, e neste nó de 4,7 MΩ um crimpe frouxo vira **estalo**, não perda de sinal.",
                  "Termorretrátil em cada pino: segura o fio e impede que dois pinos se toquem.",
                  "**Limpe o fluxo com álcool isopropílico** depois de soldar. Resíduo entre pinos é caminho de fuga, e numa entrada de 4,7 MΩ isso aparece como ruído.",
