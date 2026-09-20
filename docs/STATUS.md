@@ -339,6 +339,21 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   — não pode ter sido ele. Debaixo do furo da esquerda está a **caixa de pinos
   `J14`** (8,85 mm, mais a ficha do cabo IDC por cima); debaixo do da direita só
   há peças rasteiras. **Por medir:** o que está debaixo do botão branco.
+- 🔴 **A caixa NÃO tem lugar definido para o módulo do amplificador (20/09).**
+  O `CAIXA-ACRILICO-MONTAGEM.md` §6 diz *"módulo do amp nos dele [espaçadores]"*,
+  mas esses espaçadores nunca existiram: a chapa de fundo tem **4** furos, e são
+  os do cérebro. E não há chão: a chapa é **193 × 113** e o cérebro ocupa
+  **180 × 100**, o que deixa faixas de **6,5 mm** à direita e atrás — não cabe
+  módulo nenhum ao lado. Medido a 20/09.
+  O volume que sobra é **por cima do cérebro**: **31,4 mm** na frente e
+  **56,4 mm** atrás (interior menos calço 6 + espaçador 10 + placa 1,6). Atrás
+  é onde cabe, e é também para onde as regras de cabo já mandam o amp (os
+  exciters saem pela direita, a linha da mesa vem do DPDT da parede de trás).
+  ⚠️ **Por medir antes de decidir:** as dimensões do módulo (com dissipador e
+  bornes), o padrão de furos dele, e a altura do `C1` já montado — um segundo
+  andar por cima do cérebro tem de passar por cima dos 25 mm do `C1`.
+  ⚠️ **E o calor:** a caixa é acrílico fechado. Um classe D a 15 V dentro de
+  caixa selada não foi discutido em lado nenhum do repo.
 - ⚠️ **O painel só sai com os jacks TRS fora (dB, 19/09).** Com os TRS
   montados o painel não tem por onde sair: a ponta do encoder fica presa no
   acrílico da tampa. Ordem de montagem e de manutenção: **o painel entra e sai
