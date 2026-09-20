@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""onde_furar v0.1.0 — onde se pode abrir um furo numa placa JA FABRICADA.
+"""onde_furar v0.2.0 — onde se pode abrir um furo numa placa JA FABRICADA.
 
     (Python do KiCad)  kicad/onde_furar.py <cerebro|painel> [--diametro 3.4]
+                       [--plastico]   parafuso isolante: o furo pode cair
+                                      DENTRO de um plano, mas nunca em traco,
+                                      via ou pad — e o relatorio diz que plano
+                                      e com que margem ate ao bordo dele.
 
 POR QUE EXISTE. A 20/09 o dB perguntou: *"nao vejo tracos em nenhum lado da
 placa, posso furar entao?"*. A pergunta e boa e a premissa e falsa:
@@ -35,7 +39,7 @@ import math
 import os
 import sys
 
-VERSAO = "0.1.0"
+VERSAO = "0.2.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # folgas, em mm, medidas do BORDO do furo (nao do centro)
@@ -55,7 +59,15 @@ def _pcbnew():
                  "Python.framework/Versions/3.9/bin/python3.9")
 
 
-def varre(nome, diametro=3.4, passo=1.0):
+# ⚠️ O PARAFUSO DE PLASTICO RESOLVE UM DOS DOIS PROBLEMAS, NAO OS DOIS.
+#   resolve: a cabeca metalica a tocar cobre nu, e a ponte GND<->AGND.
+#   NAO resolve: o furo CORTA cobre. Num plano largo um furo de 3,4 mm e um
+#   buraco num campo; num ESTRANGULAMENTO do plano, ele parte o caminho de
+#   retorno — e corrente de retorno que da a volta e a familia de defeito mais
+#   cara deste projecto (31/08: o terra custou 35 a 39 dB de chao de ruido).
+# Por isso o modo --plastico nao diz so "pode": diz em que plano cai e a que
+# distancia do bordo desse plano, que e a medida do estrangulamento.
+def varre(nome, diametro=3.4, passo=1.0, plastico=False):
     pcbnew = _pcbnew()
     p = os.path.join(AQUI, "cotuca_%s" % nome, "cotuca_%s.kicad_pcb" % nome)
     b = pcbnew.LoadBoard(p)
@@ -70,12 +82,16 @@ def varre(nome, diametro=3.4, passo=1.0):
     b.GetBoardPolygonOutlines(contorno, False)
 
     solidos = []                      # (poligono, folga) — tudo o que nao se pode tocar
+    planos = []                       # (rede, camada, poligono) — cobre de plano
     for z in [b.GetArea(i) for i in range(b.GetAreaCount())]:
         if not z.IsFilled():
             continue
         for lay in z.GetLayerSet().Seq():
             poly = z.GetFilledPolysList(lay)
-            if poly.OutlineCount():
+            if not poly.OutlineCount():
+                continue
+            planos.append((z.GetNetname() or "(sem rede)", b.GetLayerName(lay), poly))
+            if not plastico:
                 solidos.append((poly, FOLGA_COBRE))
     for f in b.GetFootprints():
         for lado in (pcbnew.F_CrtYd, pcbnew.B_CrtYd):
@@ -139,7 +155,7 @@ def varre(nome, diametro=3.4, passo=1.0):
                 bons.append((round(x, 1), round(y, 1)))
             y += passo
         x += passo
-    return b, (x0, y0, x1_, y1_), bons, r_furo
+    return b, (x0, y0, x1_, y1_), bons, r_furo, planos
 
 
 def agrupa(bons, passo=1.0):
@@ -164,6 +180,25 @@ def agrupa(bons, passo=1.0):
     return sorted(manchas, reverse=True)
 
 
+def margem_no_plano(pcbnew, planos, x, y, r_furo, limite=12.0):
+    """Em que plano(s) o furo cai, e a que distancia do bordo do plano.
+
+    A distancia mede-se por tentativa: aumenta-se o raio ate o furo deixar de
+    caber dentro do plano. E a medida do estrangulamento — pouca margem quer
+    dizer que o furo come um pescoco por onde passa a corrente toda."""
+    ui = lambda v: int(round(v * 1e6))
+    pt = pcbnew.VECTOR2I(ui(x), ui(y))
+    achados = []
+    for rede, camada, poly in planos:
+        if not poly.Collide(pt, ui(r_furo)):
+            continue
+        folga = r_furo
+        while folga < limite and poly.Collide(pt, ui(folga + 0.5)):
+            folga += 0.5
+        achados.append((rede, camada, folga - r_furo))
+    return achados
+
+
 def main():
     print("onde_furar v%s — so le, nunca grava" % VERSAO, file=sys.stderr)
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
@@ -174,18 +209,31 @@ def main():
     if "--diametro" in sys.argv:
         d = float(sys.argv[sys.argv.index("--diametro") + 1])
     nome = args[0]
-    b, (x0, y0, x1, y1), bons, r = varre(nome, d)
-    print("  placa %s · furo o%.1f mm · assento o%.1f mm" % (nome, d, 2 * r))
-    print("  folgas: %.1f mm ao cobre · %.1f ao corpo das pecas · %.1f ao bordo"
-          % (FOLGA_COBRE, FOLGA_CORPO, FOLGA_BORDO))
+    plastico = "--plastico" in sys.argv
+    b, (x0, y0, x1, y1), bons, r, planos = varre(nome, d, plastico=plastico)
+    print("  placa %s · furo o%.1f mm · assento o%.1f mm%s"
+          % (nome, d, 2 * r, " · PARAFUSO ISOLANTE (o furo pode cair em plano)" if plastico else ""))
+    print("  folgas: %.1f mm a traco/via/pad · %.1f ao corpo das pecas · %.1f ao bordo%s"
+          % (FOLGA_COBRE, FOLGA_CORPO, FOLGA_BORDO,
+             "" if plastico else " · e ao plano"))
     if not bons:
         print("  ✗ NENHUM ponto livre — nao ha onde furar esta placa sem tocar cobre ou peca")
         return 1
     manchas = agrupa(bons)
     print("  %d ponto(s) livres em %d mancha(s):" % (len(bons), len(manchas)))
+    pcbnew = _pcbnew()
     for n, cx, cy, _ in manchas[:12]:
-        print("     mancha de %3d mm² · centro a %.1f mm da esquerda e %.1f mm de cima"
-              % (n, cx - x0, cy - y0))
+        linha = ("     mancha de %3d mm² · centro a %.1f mm da esquerda e %.1f mm de cima"
+                 % (n, cx - x0, cy - y0))
+        for rede, camada, folga in margem_no_plano(pcbnew, planos, cx, cy, r):
+            linha += "\n        ⚠️ corta o plano %s em %s · margem ate ao bordo do plano: %s" % (
+                rede, camada,
+                ("> %.1f mm (campo largo)" % folga) if folga >= 6.0 else
+                ("%.1f mm — ESTRANGULAMENTO, nao furar aqui" % folga))
+        print(linha)
+    if plastico:
+        print("  ⚠️ parafuso isolante resolve a cabeca a tocar cobre; NAO resolve o furo"
+              "\n     cortar plano. Le a margem de cada mancha antes de escolher.")
     return 0
 
 
