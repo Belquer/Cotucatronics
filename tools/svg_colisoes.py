@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""svg_colisoes v0.5.0 — verificador de sobreposicao para SVGs entregues.
+"""svg_colisoes v0.6.0 — verificador de sobreposicao para SVGs entregues.
 
 ⚠️ ESTE E O PASSO 1 DA SKILL `design-review`, e vem ANTES do olho.
    Zero colisoes e o portao, e ele sabe dizer NAO — e sabe dizer
@@ -37,7 +37,7 @@ Uso: python3 svg_colisoes.py ficheiro.svg [--contentor 0.6] [--largura 0.55]
 """
 import re, sys, math, xml.etree.ElementTree as ET
 
-VERSAO = "0.5.0"
+VERSAO = "0.6.0"
 
 W_CHAR = 0.55
 
@@ -255,21 +255,74 @@ def main():
     sys.exit(1 if probs else 0)
 
 def path_segs(d, fechado):
-    """converte 'M x y L x y ...' / points em lista de segmentos"""
-    toks = re.findall(r"[MLZmlz]|-?\d+\.?\d*(?:e-?\d+)?", d)
-    pts, out, cur = [], [], None
-    nums = []
-    for t in toks:
-        if t in "MLZmlz":
-            if t in "Zz" and pts:
-                out.append((pts[-1], pts[0])); continue
-            if t in "Mm" and pts: out.extend(zip(pts, pts[1:])); pts = []
+    """converte um `d` de path (ou `points` de polyline) em segmentos.
+
+    ⚠️ 20/09: a versao anterior so entendia M/L/Z. Tudo o resto — e sobretudo
+    o **H** e o **V**, que levam UM numero — era lido como par de coordenadas,
+    e um caminho ortogonal saia como diagonais que nao existem. Nao e so falso
+    positivo: e o verificador a medir um desenho que nao e o que esta la.
+    Apanhado no desenho da chave DPDT do manual, cujos fios sao todos H/V.
+
+    Curvas (C/S/Q/T/A) aproximam-se pelo ponto final — melhor do que tratar os
+    pontos de controlo como vertices, que era o que acontecia.
+    """
+    ARGS = {"M": 2, "L": 2, "H": 1, "V": 1, "C": 6, "S": 4, "Q": 4, "T": 2, "A": 7, "Z": 0}
+    toks = re.findall(r"[MmLlHhVvCcSsQqTtAaZz]|-?\d*\.?\d+(?:[eE]-?\d+)?", d)
+    # `points` de polyline/polygon nao tem comandos: sao pares soltos
+    if not any(tk[0].isalpha() for tk in toks):
+        nums = [float(v) for v in toks]
+        pts = list(zip(nums[0::2], nums[1::2]))
+        out = list(zip(pts, pts[1:]))
+        if fechado and len(pts) > 2:
+            out.append((pts[-1], pts[0]))
+        return out
+    out, pts = [], []
+    cur = (0.0, 0.0)
+    ini = None
+    i, cmd = 0, None
+    while i < len(toks):
+        tk = toks[i]
+        if tk[0].isalpha():
+            cmd = tk
+            i += 1
+            if cmd in "Zz":
+                if ini and cur != ini:
+                    out.append((cur, ini))
+                cur = ini or cur
+                continue
+        if cmd is None:
+            i += 1
             continue
-        nums.append(float(t))
-        if len(nums) == 2: pts.append(tuple(nums)); nums = []
-    out.extend(zip(pts, pts[1:]))
-    if fechado and len(pts) > 2 and (pts[0], pts[-1]) not in out: out.append((pts[-1], pts[0]))
+        n = ARGS[cmd.upper()]
+        vals = [float(v) for v in toks[i:i + n]]
+        if len(vals) < n:
+            break
+        i += n
+        rel = cmd.islower()
+        c = cmd.upper()
+        if c == "H":
+            novo_pt = (cur[0] + vals[0] if rel else vals[0], cur[1])
+        elif c == "V":
+            novo_pt = (cur[0], cur[1] + vals[0] if rel else vals[0])
+        else:
+            dx, dy = vals[-2], vals[-1]
+            novo_pt = (cur[0] + dx, cur[1] + dy) if rel else (dx, dy)
+        if c == "M":
+            ini = novo_pt
+            if len(pts) > 1:
+                out.extend(zip(pts, pts[1:]))
+            pts = [novo_pt]
+        else:
+            out.append((cur, novo_pt))
+            pts.append(novo_pt)
+        cur = novo_pt
+        # um comando repetido sem letra continua o mesmo comando (M vira L)
+        if c == "M":
+            cmd = "l" if rel else "L"
+    if fechado and ini and cur != ini:
+        out.append((cur, ini))
     return out
+
 
 def seg_rect(p1, p2, r):
     """segmento p1-p2 toca o retangulo r=(x0,y0,x1,y1)?"""

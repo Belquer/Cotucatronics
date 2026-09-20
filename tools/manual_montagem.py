@@ -310,46 +310,58 @@ def dpdt(P, ref, canal):
     jack = ordena_n(por_rede[P.rede(ref, "2")])
     amp = ordena_n(por_rede[P.rede(ref, "3")])
     terra = ordena_n(por_rede[P.rede(ref, "7")])
-    W, H = 760, 340
+    # ⚠️ o canal de cada fio segue a ORDEM EM QUE SE DESENHA (comuns, jack, amp),
+    # nao o numero do pino: os fios que vao a mesma linha ficam lado a lado e o
+    # desenho cruza-se o menos possivel.
+    # ⚠️ E uma COR por fio (dB, 20/09): oito fios azuis iguais nao se seguem com
+    # o olho. A cor sai de tokens do tema, nunca de literais, senao o desenho
+    # desaparece no modo escuro.
+    ordem_fios = list(zip(comum, ("A", "B"))) + list(zip(jack, ("A", "B"))) + list(zip(amp, ("A", "B")))
+    # ⚠️ os canais comecam depois do texto das redes (que chega a ~x=170):
+    #    a versao anterior punha-os em x=96 e os fios riscavam os rotulos.
+    canais = {n: 196 + i * 24 for i, (n, _c) in enumerate(ordem_fios)}
+    cor = {n: "c%d" % (i + 1) for i, (n, _c) in enumerate(ordem_fios)}
+    for i, n in enumerate(terra):
+        canais[n] = 196 + (len(ordem_fios) + i) * 24
+    W, H = 760, 400
     E_ = E
     o = ['<svg viewBox="0 0 %d %d" role="img" aria-label="%s" class="mapa dpdt">'
          % (W, H, E_("ligacao do %s a chave DPDT do canal %s" % (ref, canal)))]
     o.append('<text x="14" y="22" class="rot forte">%s — canal %s</text>' % (E_(ref), E_(canal)))
     ypin = {}
     for i, n in enumerate(sorted(pads, key=int)):
-        y = 52 + i * 34
+        y = 56 + i * 40
         ypin[n] = y
-        o.append('<rect x="14" y="%d" width="26" height="22" class="%s"/>'
-                 % (y - 11, "pad1" if n == "1" else "pad"))
-        o.append('<text x="27" y="%d" class="rot dentro">%s</text>' % (y + 4, n))
-        o.append('<text x="48" y="%d" class="rot peq fraco">%s</text>' % (y - 2, E_(pads[n] or "—")))
+        o.append('<rect x="14" y="%d" width="26" height="22" class="%s %s"/>'
+                 % (y - 11, "pad1" if n == "1" else "pad", cor.get(n, "")))
+        o.append('<text x="27" y="%d" class="rot dentro" text-anchor="middle" font-size="11">%s</text>'
+                 % (y + 4, n))
+        o.append('<text x="48" y="%d" class="rot peq fraco" font-size="12">%s</text>'
+                 % (y - 15, E_(pads[n] or "—")))
     bx, by = 430, 44
-    o.append('<rect x="%d" y="%d" width="150" height="244" class="corpo"/>' % (bx, by))
+    o.append('<rect x="%d" y="%d" width="150" height="268" class="corpo"/>' % (bx, by))
     o.append('<text x="%d" y="%d" class="rot forte">CHAVE DPDT ON-ON-ON</text>' % (bx - 4, by - 10))
     col = {"A": bx + 42, "B": bx + 110}
-    LINHAS = (("lado JACK", 46), ("COMUM", 122), ("lado AMP", 198))
+    LINHAS = (("lado JACK", 52), ("COMUM", 132), ("lado AMP", 212))
     perna = {}
     for c in ("A", "B"):
         for k, (rot, dy) in enumerate(LINHAS):
             x, y = col[c], by + dy
             perna[(c, rot)] = (x, y)
-            o.append('<circle cx="%d" cy="%d" r="10" class="pad"/>' % (x, y))
-            o.append('<text x="%d" y="%d" class="rot dentro">%s</text>' % (x, y + 4, c + str(k + 1)))
-        o.append('<text x="%d" y="%d" class="rot peq meio">polo %s</text>' % (col[c], by + 232, c))
+            o.append('<circle cx="%d" cy="%d" r="13" class="pad"/>' % (x, y))
+            o.append('<text x="%d" y="%d" class="rot dentro" text-anchor="middle" font-size="12">%s</text>'
+                     % (x, y + 4, c + str(k + 1)))
+        o.append('<text x="%d" y="%d" class="rot peq meio" text-anchor="middle" font-size="12">polo %s</text>'
+                 % (col[c], by + 252, c))
     for rot, dy in LINHAS:
-        o.append('<text x="%d" y="%d" class="rot peq">%s</text>' % (bx + 158, by + dy - 2, rot))
-        o.append('<text x="%d" y="%d" class="rot peq fraco">perna n.º ____</text>' % (bx + 158, by + dy + 14))
-    # ⚠️ o canal de cada fio segue a ORDEM EM QUE SE DESENHA (comuns, depois
-    # jack, depois amp), nao o numero do pino: assim os fios que vao a mesma
-    # linha ficam lado a lado e o desenho cruza-se o menos possivel.
-    ordem_fios = list(zip(comum, ("A", "B"))) + list(zip(jack, ("A", "B"))) + list(zip(amp, ("A", "B")))
-    canais = {n: 96 + i * 26 for i, (n, _c) in enumerate(ordem_fios)}
-    for i, n in enumerate(terra):
-        canais[n] = 96 + (len(ordem_fios) + i) * 26
+        o.append('<text x="%d" y="%d" class="rot peq" font-size="12">%s</text>' % (bx + 158, by + dy - 2, rot))
+        o.append('<text x="%d" y="%d" class="rot peq fraco" font-size="12">perna n.º ____</text>'
+                 % (bx + 158, by + dy + 14))
     def fio(n, c, rot, cls="fio"):
+        cls = "%s %s" % (cls, cor.get(n, ""))
         x2, y2 = perna[(c, rot)]
         mx = canais[n]
-        desvio = 0 if c == "A" else 26          # o polo B passa ABAIXO da perna A
+        desvio = 0 if c == "A" else 22          # o polo B passa ABAIXO da perna A
         o.append('<path d="M40 %d H%d V%d H%d V%d H%d" class="%s"/>'
                  % (ypin[n], mx, y2 + desvio, x2 - 10 if c == "A" else x2 - 10,
                     y2, x2 - 10, cls))
@@ -361,9 +373,9 @@ def dpdt(P, ref, canal):
         fio(n, c, "lado AMP")
     for n in terra:
         o.append('<path d="M40 %d H%d V%d H%d" class="fio tracejado"/>'
-                 % (ypin[n], canais[n], H - 26, bx + 30))
-    o.append('<text x="%d" y="%d" class="rot peq">%s = dreno do cabo</text>'
-             % (bx + 36, H - 30, E_(" e ".join(terra))))
+                 % (ypin[n], canais[n], H - 34, bx + 30))
+    o.append('<text x="%d" y="%d" class="rot peq" font-size="12">%s = dreno do cabo</text>'
+             % (bx + 36, H - 38, E_(" e ".join(terra))))
     o.append("</svg>")
     return ('<figure class="fig"><div class="sc">%s</div><figcaption>%s</figcaption></figure>'
             % ("".join(o),
@@ -1009,11 +1021,12 @@ CAPS = {"0": "Antes de começar", "1": "Confira tudo", "2": "Cérebro", "3": "Pa
 CSS = r"""
 :root{--papel:#ffffff;--tinta:#15171b;--suave:#5d6470;--linha:#d8dbe0;--fundo2:#f2f3f5;
 --azul:#1452cc;--azul-claro:#dbe6ff;--perigo:#c8102e;--perigo-fundo:#fdecee;--atencao:#8a5a00;--atencao-fundo:#fff4d6;
---placa:#eef1ec;--corpo:#9aa1ab;}
+--placa:#eef1ec;--corpo:#9aa1ab;
+--fio1:#1452cc;--fio2:#0a7a4a;--fio3:#b0201f;--fio4:#8a4bd3;--fio5:#a35a00;--fio6:#0d7d8f;}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--papel:#101216;--tinta:#e8eaee;--suave:#9aa2ae;--linha:#2c3139;--fundo2:#181b21;
---azul:#7aa2ff;--azul-claro:#1d2a4a;--perigo:#ff6b7d;--perigo-fundo:#2b1418;--atencao:#f0c060;--atencao-fundo:#2a220f;--placa:#1b211c;--corpo:#5d6573;}}
+--azul:#7aa2ff;--azul-claro:#1d2a4a;--perigo:#ff6b7d;--perigo-fundo:#2b1418;--atencao:#f0c060;--atencao-fundo:#2a220f;--placa:#1b211c;--corpo:#5d6573;--fio1:#7aa2ff;--fio2:#4fd39a;--fio3:#ff8a8a;--fio4:#c9a0ff;--fio5:#e0a55c;--fio6:#5ad0e0;}}
 :root[data-theme="dark"]{--papel:#101216;--tinta:#e8eaee;--suave:#9aa2ae;--linha:#2c3139;--fundo2:#181b21;
---azul:#7aa2ff;--azul-claro:#1d2a4a;--perigo:#ff6b7d;--perigo-fundo:#2b1418;--atencao:#f0c060;--atencao-fundo:#2a220f;--placa:#1b211c;--corpo:#5d6573;}
+--azul:#7aa2ff;--azul-claro:#1d2a4a;--perigo:#ff6b7d;--perigo-fundo:#2b1418;--atencao:#f0c060;--atencao-fundo:#2a220f;--placa:#1b211c;--corpo:#5d6573;--fio1:#7aa2ff;--fio2:#4fd39a;--fio3:#ff8a8a;--fio4:#c9a0ff;--fio5:#e0a55c;--fio6:#5ad0e0;}
 body{background:var(--papel);color:var(--tinta);font:16px/1.55 "Barlow",system-ui,sans-serif;margin:0}
 .wrap{max-width:960px;margin:0 auto;padding-inline:20px;padding-block:28px 80px}
 h1,h2,.num{font-family:"Barlow Condensed","Barlow",system-ui,sans-serif;text-wrap:balance}
@@ -1059,14 +1072,18 @@ svg .vazio{fill:none;stroke:var(--perigo);stroke-width:1.5;stroke-dasharray:3 2}
 svg .vazio-x{stroke:var(--perigo);stroke-width:1.5}
 svg .vazio-rot{fill:var(--perigo)}
 svg.dpdt .rot{text-anchor:start;fill:var(--tinta);font-size:13px;font-weight:500}
-svg.dpdt .fio{fill:none;stroke:var(--azul);stroke-width:1.6}
+svg.dpdt .fio{fill:none;stroke:var(--azul);stroke-width:2.2;stroke-linejoin:round}
+svg.dpdt .c1{stroke:var(--fio1)}svg.dpdt .c2{stroke:var(--fio2)}svg.dpdt .c3{stroke:var(--fio3)}
+svg.dpdt .c4{stroke:var(--fio4)}svg.dpdt .c5{stroke:var(--fio5)}svg.dpdt .c6{stroke:var(--fio6)}
+svg.dpdt rect.c1{fill:var(--fio1)}svg.dpdt rect.c2{fill:var(--fio2)}svg.dpdt rect.c3{fill:var(--fio3)}
+svg.dpdt rect.c4{fill:var(--fio4)}svg.dpdt rect.c5{fill:var(--fio5)}svg.dpdt rect.c6{fill:var(--fio6)}
 svg.dpdt .fio.forte{stroke-width:3}
 svg.dpdt .fio.tracejado{stroke:var(--suave);stroke-dasharray:5 4}
 svg.dpdt .rot.forte{font-weight:600}
-svg.dpdt .rot.peq{font-size:11px}
+svg.dpdt .rot.peq{font-size:12px}
 svg.dpdt .rot.fraco{fill:var(--suave)}
 svg.dpdt .rot.meio{text-anchor:middle}
-svg.dpdt .rot.dentro{text-anchor:middle;font-size:11px;fill:var(--papel);font-weight:700}
+svg.dpdt .rot.dentro{text-anchor:middle;font-size:12px;fill:var(--papel);font-weight:700}
 svg.dpdt .pad{fill:var(--azul);stroke:none}
 svg.dpdt .pad1{fill:var(--azul);stroke:var(--tinta);stroke-width:2}
 svg.dpdt .corpo{fill:var(--fundo2);stroke:var(--corpo);stroke-width:1.5}
