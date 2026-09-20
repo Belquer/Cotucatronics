@@ -388,6 +388,15 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
   altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
   Ver `caixa/LICOES-MONTAGEM.md` #10.
+- **Amplificador: energia pelo `J2`, áudio pelo `J11` (dB, 20/09).** O módulo
+  em mão alimenta-se por **borne de parafuso**, então o `J2` leva a força
+  (+15 V/GND, fio curto e grosso — é retorno de força, regra da estrela) e o
+  `J11` leva o áudio (2 = referência, 3 = L, 4 = R). ⚠️ **O `J11` pino 1 NÃO se
+  liga:** é o mesmo +15 V, e ligar os dois põe a força em paralelo por dois
+  caminhos. Declarado em `encaixe.py` **v0.5.0** (`COMPLEMENTARES` +
+  `VESTIGIO_PINO`), com o portão a exigir a declaração pino a pino — declarar só
+  o par seria calar a duplicação em vez de a resolver. A rev D encolhe o `J11`
+  para 1×3.
 - **Step-down em mão: `GND IN` e `GND OUT` são o MESMO nó** (bipado pelo dB,
   20/09). Logo vai **um fio só** ao `J3` pino 2, do lado `OUT−` — que é o que o
   `ATERRAMENTO.md` pede (fio de terra dedicado; o retorno do 5 V por outro

@@ -762,10 +762,15 @@ def constroi():
     repetidos = {c: ordena(rs) for c, rs in juntos.items()
                  if len(rs) > 1 and not any(r in VESTIGIOS for r in rs)}
 
+    # pinos que existem na placa e NAO se ligam — mesma fonte do portao
+    NAO_LIGAR = {(r, n): txt for (pl, r, n), txt in encaixe.VESTIGIO_PINO.items() if pl == "cerebro"}
+
     def linha_conector(ref):
         f = C.fp[ref]
         pads = [pd for pd in sorted(f["pads"], key=lambda pd: (len(pd["n"]), pd["n"])) if not pd["npth"]]
-        pins = " · ".join("%s%s = %s" % ("■" if (pd["n"] == "1" and f["p1"]) else "", pd["n"], nome_rede(ref, pd))
+        pins = " · ".join("%s%s = %s%s" % ("■" if (pd["n"] == "1" and f["p1"]) else "", pd["n"],
+                                           nome_rede(ref, pd),
+                                           " **NÃO LIGAR**" if (ref, pd["n"]) in NAO_LIGAR else "")
                           for pd in pads)
         o_que = "**FICA VAZIO** (vestígio)" if ref in VESTIGIOS else (C.cpl[ref]["Val"] if ref in C.cpl else "—")
         liga = DEST.get(ref, ("—", ""))[0]
@@ -778,11 +783,11 @@ def constroi():
           lista(["`J15` e `J16` repetem cada sinal em dois pinos (1 e 4, 2 e 5, 3 e 6): são os **dois polos** da chave DPDT. Os pinos 7 e 8 são o terra de referência do cabo, e **não** vão a terminal nenhum da chave.",
                  "Em `J5`, `J6`, `J12` e `J13` o pino 1 é sempre o **sinal** e os outros dois são **terra**.",
                  "`J1` tem **2 pinos**, a 5,08 mm. O borne especificado (Phoenix `1715721`) traz **um pino por polo** — se a peça na sua mão tiver mais pinos, é outra peça: **pare e confira** antes de soldar."]),
-          pare=("**Dois conectores para a mesma coisa: %s.** Os dois levam **+15 V** ao mesmo módulo. "
-                "**Use um só.** Ligar os dois põe a alimentação em paralelo por dois caminhos e fecha um laço de terra — "
-                "e nada se queixa até o som ficar sujo. Escolha pelo que o SEU módulo tem: borne de parafuso → use o `J2`; "
-                "fileira de pinos → use o `J11`, e aí o `J2` fica vazio. Isto está reprovado no portão `encaixe.py` (M1) "
-                "e a rev D resolve." % " · ".join("%s e %s → %s" % (rs[0], rs[1], c) for c, rs in sorted(repetidos.items()))) if repetidos else None,
+          pare=("**O `J11` pino 1 NÃO se liga.** Ele traz o mesmo **+15 V** que já vai pelo `J2`, e o módulo em mão "
+                "alimenta-se pelo **borne de parafuso** (decidido a 20/09). Ligar os dois põe a força em paralelo por dois "
+                "caminhos e fecha um laço de terra — e nada se queixa até o som ficar sujo. "
+                "**Energia pelo `J2`** (fio curto e grosso, é o retorno de força) · **áudio pelo `J11`**: pino 2 = referência, "
+                "3 = L, 4 = R. O pino 1 sai na rev D." if ("J11", "1") in NAO_LIGAR else None),
           fonte="`kicad/encaixe.py` (DESTINOS) + redes de `cotuca_cerebro.kicad_pcb` · ficha Phoenix 1715721")
     j14 = [pd for pd in sorted(C.fp["J14"]["pads"], key=lambda pd: int(pd["n"])) if not pd["npth"]]
     meio = (len(j14) + 1) // 2

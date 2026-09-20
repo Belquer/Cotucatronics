@@ -47,7 +47,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.4.0"
+VERSAO = "0.5.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, AQUI)
@@ -99,10 +99,21 @@ DESTINOS = {
     },
 }
 # Dois conectores para a MESMA coisa, quando e de proposito e esta explicado.
-# ⚠️ Vazio de proposito: hoje o unico par e o J2/J11 do amplificador, e ele NAO
-# esta decidido — ver docs/ppc/004 (rev D). Declarar aqui calaria o portao sobre
-# uma duvida real.
-COMPLEMENTARES = {}
+# ⚠️ Declarar aqui NAO chega: se a duplicacao e de ENERGIA, o pino que sobra tem
+# de estar declarado em VESTIGIO_PINO. Caso contrario isto seria uma forma
+# elegante de calar o portao — e a duplicacao continuava na placa, calada.
+COMPLEMENTARES = {
+    ("cerebro", "J11", "J2"): "o modulo em mao alimenta-se pelo BORNE DE PARAFUSO (dB, 20/09): "
+                              "o J2 leva a forca (+15V/GND, fio curto e grosso, regra da estrela) "
+                              "e o J11 leva o audio (2=referencia, 3=L, 4=R).",
+}
+# Pinos que existem na placa fabricada e NAO se ligam. Isto e mais fino que o
+# VESTIGIO (que e do conector inteiro) e nasceu do J11 pino 1: o conector serve,
+# o pino e que sobra. A rev D encolhe o J11 para 1x3 — ver docs/ppc/004.
+VESTIGIO_PINO = {
+    ("cerebro", "J11", "1"): "+15V duplicado do J2. NAO LIGAR: alimentar pelos dois "
+                             "poe a forca em paralelo por dois caminhos e fecha laco de terra.",
+}
 # Vestigios conhecidos numa placa ja fabricada: ficam VAZIOS, e a proxima rev
 # tira-os. Declarar nao os absolve — so os torna visiveis no relatorio.
 VESTIGIO = {
@@ -240,7 +251,26 @@ def m1_interfaces(nome, b, sabota=False):
             continue
         coisa, _papel = destinos[j]
         irmaos = [r for r in por_destino[coisa.lower()] if r != j]
-        if irmaos and (nome, j) not in COMPLEMENTARES:
+        par = tuple([nome] + sorted([j] + irmaos))
+        if irmaos and par in COMPLEMENTARES:
+            # declarado complementar: so vale se o cobre duplicado estiver
+            # declarado pino a pino. Sem isso, a declaracao e so silencio.
+            sobra = [r for r in [j] + irmaos if any(energia(n) for n in redes.get(r, ()))]
+            if len(sobra) > 1:
+                # um dos dois leva a energia de verdade; o cobre do outro tem de
+                # estar declarado pino a pino, senao a declaracao e so silencio
+                declarados = {k[1]: k[2] for k in VESTIGIO_PINO if k[0] == nome}
+                falta = [r for r in sobra if r not in declarados]
+                if len(falta) > 1 and tuple(sorted([j] + irmaos)) not in ja_dito:
+                    ja_dito.add(tuple(sorted([j] + irmaos)))
+                    maus.append("%s declarado complementar, mas o cobre de energia que sobra "
+                                "em %s nao esta declarado em VESTIGIO_PINO"
+                                % ("/".join(sorted([j] + irmaos)), "/".join(sorted(falta))))
+                elif j == sorted([j] + irmaos)[0]:
+                    for r in sorted(declarados):
+                        if r in sobra:
+                            vist.append("%s pino %s (nao ligar)" % (r, declarados[r]))
+        elif irmaos:
             # ⚠️ e pior quando os dois levam ENERGIA: nao e so redundancia de
             # desenho, e o mesmo modulo alimentado por dois sitios — quem monta
             # liga os dois, faz laco de terra, e nada se queixa.
