@@ -47,7 +47,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.3.0"
+VERSAO = "0.4.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, AQUI)
@@ -73,24 +73,36 @@ FOLGA_CABO = 80.0
 # perguntaram se ele estava CERTO — nenhuma se era PRECISO. Um conector que
 # ninguem sabe dizer o que liga esta a mais; dois que dizem o MESMO destino sao
 # o rasto de uma migracao.
+# ⚠️ 20/09: o destino passou de FRASE a (COISA, PAPEL), e a razao e um defeito
+# que a versao em frase nao podia ver. O `J2` dizia "alimentacao do
+# amplificador" e o `J11` dizia "entrada de audio do amplificador": duas
+# frases diferentes, o mesmo modulo, e os DOIS a levar +15 V. A regra comparava
+# TEXTOS, logo nao havia duplicado nenhum para ela encontrar.
+#   coisa = o que esta do outro lado, escrito SEMPRE igual para a mesma peca
+#   papel = energia | sinal | misto — o que atravessa este conector
 DESTINOS = {
     "cerebro": {
-        "J1": "decoy PD (15 V)", "J2": "alimentacao do amplificador",
-        "J3": "step-down 5 V", "J4": "ponte ESP32",
-        "J5": "jack do piezo A", "J6": "jack do piezo B",
-        "J11": "entrada de audio do amplificador",
-        "J12": "jack de linha L", "J13": "jack de linha R",
-        "J14": "cabo IDC para o painel",
-        "J15": "chave DPDT L", "J16": "chave DPDT R",
-        "U2": "Daisy Seed", "U3": "ponte ESP32",
+        "J1": ("decoy PD", "energia"), "J2": ("modulo amplificador", "energia"),
+        "J3": ("modulo step-down 5 V", "energia"), "J4": ("ponte ESP32", "energia"),
+        "J5": ("jack do piezo A", "sinal"), "J6": ("jack do piezo B", "sinal"),
+        "J11": ("modulo amplificador", "misto"),
+        "J12": ("jack de linha L", "sinal"), "J13": ("jack de linha R", "sinal"),
+        "J14": ("cabo IDC para o painel", "misto"),
+        "J15": ("chave DPDT L", "sinal"), "J16": ("chave DPDT R", "sinal"),
+        "U2": ("Daisy Seed", "misto"), "U3": ("ponte ESP32", "misto"),
     },
     "painel": {
-        "J1": "cabo IDC do cerebro (fita soldada)", "J2": "cabo do OLED",
-        "J3": "botao arcade azul A", "J4": "botao arcade azul B",
-        "J5": "botao arcade branco (buzios)",
-        "J6": "LED do arcade azul A", "J7": "LED do arcade azul B",
+        "J1": ("cabo IDC do cerebro (fita soldada)", "misto"), "J2": ("cabo do OLED", "misto"),
+        "J3": ("botao arcade azul A", "sinal"), "J4": ("botao arcade azul B", "sinal"),
+        "J5": ("botao arcade branco (buzios)", "sinal"),
+        "J6": ("LED do arcade azul A", "sinal"), "J7": ("LED do arcade azul B", "sinal"),
     },
 }
+# Dois conectores para a MESMA coisa, quando e de proposito e esta explicado.
+# ⚠️ Vazio de proposito: hoje o unico par e o J2/J11 do amplificador, e ele NAO
+# esta decidido — ver docs/ppc/004 (rev D). Declarar aqui calaria o portao sobre
+# uma duvida real.
+COMPLEMENTARES = {}
 # Vestigios conhecidos numa placa ja fabricada: ficam VAZIOS, e a proxima rev
 # tira-os. Declarar nao os absolve — so os torna visiveis no relatorio.
 VESTIGIO = {
@@ -141,7 +153,7 @@ def m7_casa(sabota=False):
         casa["OLED"]["superficie"] = ""
     nomeados, orfaos, sem_casa = set(), [], []
     for placa, refs in DESTINOS.items():
-        for ref, destino in refs.items():
+        for ref, (destino, _papel) in refs.items():
             achou = [m for m, d in casa.items() if any(p.lower() in destino.lower() for p in d["pistas"])]
             if achou:
                 nomeados.update(achou)
@@ -217,18 +229,28 @@ def m1_interfaces(nome, b, sabota=False):
                                    if p.GetNetname() and not p.GetNetname().startswith("unconnected")}
     energia = lambda n: n.startswith("+") or n in ("GND", "AGND")
     conectores = sorted(r for r in redes if r.startswith("J") and redes[r])
-    maus, vist = [], []
+    maus, vist, ja_dito = [], [], set()
     por_destino = {}
-    for r, d in destinos.items():
-        por_destino.setdefault(d.lower(), []).append(r)
+    for r, (coisa, _papel) in destinos.items():
+        por_destino.setdefault(coisa.lower(), []).append(r)
     for j in conectores:
         suspeito = None
         if j not in destinos:
             maus.append("%s: ninguem declarou o que liga aqui" % j)
             continue
-        irmaos = [r for r in por_destino[destinos[j].lower()] if r != j]
-        if irmaos:
-            suspeito = "%s e %s levam os dois a '%s'" % (j, "/".join(irmaos), destinos[j])
+        coisa, _papel = destinos[j]
+        irmaos = [r for r in por_destino[coisa.lower()] if r != j]
+        if irmaos and (nome, j) not in COMPLEMENTARES:
+            # ⚠️ e pior quando os dois levam ENERGIA: nao e so redundancia de
+            # desenho, e o mesmo modulo alimentado por dois sitios — quem monta
+            # liga os dois, faz laco de terra, e nada se queixa.
+            com_energia = [r for r in [j] + irmaos
+                           if any(energia(n) for n in redes.get(r, ()))]
+            if len(com_energia) > 1:
+                suspeito = ("%s e %s vao os dois a '%s' e os dois levam ENERGIA (%s)"
+                            % (j, "/".join(irmaos), coisa, "/".join(sorted(com_energia))))
+            else:
+                suspeito = "%s e %s levam os dois a '%s'" % (j, "/".join(irmaos), coisa)
         elif redes[j] and all(energia(n) for n in redes[j]):
             socs = [u for u in redes if u.startswith("U") and redes[j] <= redes[u]]
             if socs:
@@ -237,7 +259,11 @@ def m1_interfaces(nome, b, sabota=False):
             if (nome, j) in vestigios:
                 vist.append(j)
             else:
-                maus.append(suspeito + " — vestigio?")
+                # o mesmo par visto dos dois lados e UM achado, nao dois
+                chave = tuple(sorted([j] + irmaos)) if irmaos else (j,)
+                if chave not in ja_dito:
+                    ja_dito.add(chave)
+                    maus.append(suspeito + " — vestigio?")
     ok = not maus
     txt = ("%d conector(es), cada um com destino e sem duplicados" % len(conectores)) if ok else "; ".join(maus)
     if vist:

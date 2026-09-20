@@ -10441,3 +10441,51 @@ casa de mais um não mudava o número, e a sabotagem do próprio M7 passava). Ho
 ele reprova dois, que é a verdade: **amplificador** e **step-down 5 V**. As
 linhas deles ficam na tabela com os campos **vazios de propósito** — apagar
 esconde o buraco, preencher com palpite é pior.
+
+---
+
+## 15fb — a regra do vestígio comparava TEXTOS, e por isso não via dois caminhos para o mesmo módulo
+
+O dB, a 20/09, depois de eu explicar de onde vem o `+15 V` do `J11`: *«isso é
+confuso, corrija e corrija o gerador que fez isso»*. A confusão era real e não
+era da explicação:
+
+| conector | o que a tabela dizia | o que ele leva |
+|---|---|---|
+| `J2` | *"alimentacao do amplificador"* | `+15V` · `GND` |
+| `J11` | *"entrada de audio do amplificador"* | `+15V` · `GND` · `AMP_IN_L` · `AMP_IN_R` |
+
+**Dois conectores levam 15 V ao mesmo módulo.** Quem monta liga os dois — são
+dois conectores, parecem duas coisas — e fica com a alimentação em paralelo por
+dois caminhos, ou seja, um laço de terra que nada denuncia até o som sujar.
+
+É a **mesma família do `J4`** (15ez), e o portão que nasceu dessa cicatriz
+estava lá, a correr, verde. Porquê:
+
+> **A regra procurava dois conectores com o MESMO TEXTO de destino.** Os textos
+> eram *"alimentacao do amplificador"* e *"entrada de audio do amplificador"* —
+> diferentes. Para a regra não havia duplicado nenhum. O destino era **prosa**,
+> e prosa distingue o que é igual só porque foi escrita por mãos diferentes.
+
+⚠️ **Um verificador que compara frases verifica a redacção, não o circuito.** O
+conserto não é escrever melhor: é o destino deixar de ser frase.
+
+**O que ficou (20/09):**
+
+- `kicad/encaixe.py` **v0.4.0**: `DESTINOS` passa de frase a **`(coisa, papel)`**
+  — a coisa escrita sempre igual para a mesma peça, o papel em
+  `energia | sinal | misto`. A regra agrupa por **coisa**, e quando dois
+  conectores vão à mesma e **ambos levam energia**, o relatório diz isso com
+  todas as letras. Hoje reprova o par `J2`/`J11`, que é a verdade.
+- `COMPLEMENTARES` existe para o par que é de propósito — e está **vazia**:
+  declarar o `J2`/`J11` agora calaria o portão sobre uma dúvida por decidir.
+- `tools/manual_montagem.py` **v0.7.0** deixou de ter a sua própria lista de
+  "o que liga aqui" e passou a **ler o `DESTINOS`** do portão. Duas cópias do
+  mesmo facto é a §8 da skill `kicad` outra vez: a que não corre envelhece.
+- O manual ganhou um **PARE** no mapa dos conectores: *use um só*, e diz como
+  escolher pelo módulo que se tem na mão.
+
+⚠️ **E a decisão de circuito continua aberta**, de propósito: qual dos dois
+alimenta o amplificador depende do módulo real (borne de parafuso → `J2`;
+fileira de pinos → `J11`). Fica no `ppc/004` como trabalho da rev D — o portão
+vermelho é o marcador dessa dívida, e não se cala declarando.

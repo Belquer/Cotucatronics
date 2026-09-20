@@ -38,6 +38,7 @@ chamando `confere_*` sobre o texto lido, como foi feito a 19/09 para os arcade.
 | `R13` `R23` | 4k7 | idem |
 | `C13` `C23` | 22 µF NP | idem |
 | `RV1` `RV2` | trimpot 100 k | idem |
+| `J2` **ou** `J11` (um dos dois) | borne de parafuso · header 1×4 | **dois caminhos de +15 V para o mesmo módulo** (bts 15fb). Qual sai **depende do módulo real**: se ele tem borne de parafuso, fica o `J2` e o `J11` passa a 1×3 (só áudio + GND); se tem fileira de pinos, fica o `J11` e o `J2` sai. ⚠️ **Por medir:** o que o módulo em mão tem |
 
 **O que FICA, e é decisão explícita:**
 

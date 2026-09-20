@@ -31,10 +31,16 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.6.2"
+VERSAO = "0.7.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
+# ⚠️ "o que liga aqui?" tem UMA fonte, e e a do portao: o DESTINOS do
+# kicad/encaixe.py. Escrever a lista outra vez aqui criava duas versoes do mesmo
+# facto, e a que nao corre e a que envelhece (skill kicad §8).
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "kicad"))
+import encaixe  # noqa: E402
+
 # o pedido da Mouser que CHEGOU (transcrito da notificacao de envio), nao a lista de compra
 PEDIDO_MOUSER = os.path.join(RAIZ, "export", "mouser_40440548.csv")
 
@@ -727,9 +733,10 @@ def constroi():
     # a lista de todos os conectores do cerebro, GERADA das redes da placa: o dB
     # pediu-a a 19/09 com a placa na mao, e ela e a mesma pergunta do "o que liga
     # aqui?" que a /aipcb obriga a fazer antes de cada conector.
-    # ⚠️ o J4 e vestigio (mesma lista que o VESTIGIO do kicad/encaixe.py): esta na
-    # placa, nao se monta. Aparecer na tabela sem esse rotulo convida a solda-lo.
-    VESTIGIOS = {"J4"}
+    # ⚠️ os vestigios saem do VESTIGIO do encaixe.py, nao de uma copia aqui:
+    # estao na placa, nao se montam, e aparecer na tabela sem esse rotulo convida
+    # a solda-los.
+    VESTIGIOS = {r for (pl, r) in encaixe.VESTIGIO if pl == "cerebro"}
     quem_mais = {}
     for r_, f_ in C.fp.items():
         for pd_ in f_["pads"]:
@@ -744,22 +751,39 @@ def constroi():
         outros = ordena([r_ for r_ in quem_mais.get(rede, ()) if r_ != ref])
         return "sinal → `%s`" % "` `".join(outros) if outros else "sinal"
 
+    DEST = encaixe.DESTINOS["cerebro"]
+    # dois conectores para a MESMA coisa: e o que o M1 do encaixe reprova, e
+    # quem monta tem de o ver ANTES de ligar os dois e fazer laco de terra.
+    juntos = {}
+    for r_, (coisa_, _p) in DEST.items():
+        juntos.setdefault(coisa_, []).append(r_)
+    # um par onde uma das pontas ja esta declarada vestigio nao e duvida: e o
+    # J4, que a tabela ja rotula FICA VAZIO. A duvida e o par NAO resolvido.
+    repetidos = {c: ordena(rs) for c, rs in juntos.items()
+                 if len(rs) > 1 and not any(r in VESTIGIOS for r in rs)}
+
     def linha_conector(ref):
         f = C.fp[ref]
         pads = [pd for pd in sorted(f["pads"], key=lambda pd: (len(pd["n"]), pd["n"])) if not pd["npth"]]
         pins = " · ".join("%s%s = %s" % ("■" if (pd["n"] == "1" and f["p1"]) else "", pd["n"], nome_rede(ref, pd))
                           for pd in pads)
         o_que = "**FICA VAZIO** (vestígio)" if ref in VESTIGIOS else (C.cpl[ref]["Val"] if ref in C.cpl else "—")
-        return ["`%s`" % ref, o_que, len(pads), pins]
+        liga = DEST.get(ref, ("—", ""))[0]
+        return ["`%s`" % ref, liga, o_que, len(pads), pins]
     js = ordena([r for r in C.fp if r.startswith("J") and C.fp[r]["corpo"]])
     curtos = [r for r in js if len([pd for pd in C.fp[r]["pads"] if not pd["npth"]]) <= 8]
     passo("6", "Fios · mapa de TODOS os conectores do cérebro",
-          tabela(["ref", "o que é", "pinos", "pino a pino"], [linha_conector(r) for r in curtos]) +
+          tabela(["ref", "liga em", "o que é", "pinos", "pino a pino"], [linha_conector(r) for r in curtos]) +
           "<p>%s</p>" % md("O **pad quadrado ■ é o pino 1** em todos. O `J14` (cabo do painel) tem 26 vias e está na tabela seguinte. Não existem `J7` a `J10`.") +
           lista(["`J15` e `J16` repetem cada sinal em dois pinos (1 e 4, 2 e 5, 3 e 6): são os **dois polos** da chave DPDT. Os pinos 7 e 8 são o terra de referência do cabo, e **não** vão a terminal nenhum da chave.",
                  "Em `J5`, `J6`, `J12` e `J13` o pino 1 é sempre o **sinal** e os outros dois são **terra**.",
                  "`J1` tem **2 pinos**, a 5,08 mm. O borne especificado (Phoenix `1715721`) traz **um pino por polo** — se a peça na sua mão tiver mais pinos, é outra peça: **pare e confira** antes de soldar."]),
-          fonte="gerado das redes de `cotuca_cerebro.kicad_pcb` · ficha Phoenix 1715721")
+          pare=("**Dois conectores para a mesma coisa: %s.** Os dois levam **+15 V** ao mesmo módulo. "
+                "**Use um só.** Ligar os dois põe a alimentação em paralelo por dois caminhos e fecha um laço de terra — "
+                "e nada se queixa até o som ficar sujo. Escolha pelo que o SEU módulo tem: borne de parafuso → use o `J2`; "
+                "fileira de pinos → use o `J11`, e aí o `J2` fica vazio. Isto está reprovado no portão `encaixe.py` (M1) "
+                "e a rev D resolve." % " · ".join("%s e %s → %s" % (rs[0], rs[1], c) for c, rs in sorted(repetidos.items()))) if repetidos else None,
+          fonte="`kicad/encaixe.py` (DESTINOS) + redes de `cotuca_cerebro.kicad_pcb` · ficha Phoenix 1715721")
     j14 = [pd for pd in sorted(C.fp["J14"]["pads"], key=lambda pd: int(pd["n"])) if not pd["npth"]]
     meio = (len(j14) + 1) // 2
     passo("6", "Fios · as 26 vias do J14 (cabo do painel)",
