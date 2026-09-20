@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.7.0"
+VERSAO = "0.7.1"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -806,8 +806,14 @@ def constroi():
           fig=mapa(C, ["J5", "J6"]), fonte="`HARDWARE.md` §2 · `CAIXA-ACRILICO-MONTAGEM.md` §6b")
     passo("6", "Fios · saídas de linha → cérebro J12 e J13",
           tab_j(C, "J12", {"1": "**ponta (tip)** do jack de linha", "2": "**manga (sleeve)**", "3": "**anel (ring)**"}) +
-          "<p>%s</p>" % md("Igual para o `J13` (canal R)."),
-          fig=mapa(C, ["J12", "J13"]), fonte="rede de cada pad, placa fabricada")
+          "<p>%s</p>" % md("Igual para o `J13` (canal R).") +
+          lista(["**Aqui jumper comum serve** (ao contrário do `J5`/`J6`): é sinal de **linha**, de baixa impedância, vindo da chave DPDT.",
+                 "**Torça o par** — sinal com o terra dele. O que capta zumbido é a **área do laço** entre ida e volta, não o tipo de fio.",
+                 "Afaste dos fios do **amplificador e dos exciters**: são eles que carregam corrente comutada.",
+                 "Crimpe Dupont recua com o tempo. Solde as pontas, ou prenda o corpo do conector com um pingo de cola."]),
+          fig=mapa(C, ["J12", "J13"]),
+          aviso="Não confunda com o `J5`/`J6`: lá é **entrada de piezo**, o trecho de maior impedância do instrumento — cabo **blindado**, < 60 mm, malha só do lado da placa.",
+          fonte="rede de cada pad, placa fabricada · `docs/operacao/ATERRAMENTO.md`")
     passo("6", "Fios · chaves DPDT → cérebro J15 (L) e J16 (R)",
           tab_j(C, "J15", {"1": "**comum** do polo 1", "2": "polo 1, posição **jack**", "3": "polo 1, posição **amp**",
                            "4": "**comum** do polo 2", "5": "polo 2, posição **jack**", "6": "polo 2, posição **amp**",
