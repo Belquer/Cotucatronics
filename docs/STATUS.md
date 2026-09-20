@@ -370,6 +370,10 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
   altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
   Ver `caixa/LICOES-MONTAGEM.md` #10.
+- **Step-down em mão: `GND IN` e `GND OUT` são o MESMO nó** (bipado pelo dB,
+  20/09). Logo vai **um fio só** ao `J3` pino 2, do lado `OUT−` — que é o que o
+  `ATERRAMENTO.md` pede (fio de terra dedicado; o retorno do 5 V por outro
+  caminho já custou um clique a ~3 Hz).
 - **`U1` (OPA1642AID da Mouser) marca o pino 1 com uma faixa na ponta**, a ligar
   os pinos 1 e 8, não com ponto. Confirmado pelo dB com o teste de diodo no chip
   solto (vermelha no pino 4 = V−, 0,4–0,8 V para os outros). O manual (v0.2.1)
