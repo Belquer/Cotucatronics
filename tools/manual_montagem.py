@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.7.3"
+VERSAO = "0.8.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -799,6 +799,31 @@ def constroi():
           lista(["O cabo é **direto e com chave**: pino 1 no pino 1. Não há nada a decidir — só entra de um jeito.",
                  "Esta tabela é para **medir**, não para montar: serve quando um botão não responde e você quer bipar a via certa."]),
           fig=mapa(C, ["J14"]), fonte="gerado das redes das duas placas")
+
+    # ⚠️ 20/09, a pedido do dB: "parece uma gambiarra, documente o jeito
+    # profissional". Coaxial com a malha como retorno E o padrao da industria —
+    # um cabo de guitarra e exactamente isso. O que era caseiro era a TERMINACAO.
+    # Este passo e o metodo, e vale para qualquer cabo de sinal da caixa.
+    passo("6", "Fios · como se faz um cabo de sinal (o método, não o improviso)",
+          "<p>%s</p>" % md("Vale para os piezos (`J5`/`J6`) e para as saídas de linha (`J12`/`J13`). O que separa um cabo profissional de um improviso não é a solda: são **descascar certo, aliviar o esforço e terminar a malha num ponto só**.") +
+          tabela(["passo", "medida", "porquê"], [
+              ["1 · corte no comprimento", "piezo **< 60 mm** · linha o que a caixa pedir + folga", "cabo sobrando vira antena e vira laço"],
+              ["2 · descasque a capa", "**25 mm**", "é o que dá para trabalhar a malha sem a destrançar toda"],
+              ["3 · junte a malha num rabicho", "**≤ 10 mm**", "malha aberta deixa de blindar; o rabicho é o trecho que não blinda — por isso curto"],
+              ["4 · descasque o centro", "**4–5 mm**", "mais do que isso fica condutor nu dentro do conector"],
+              ["5 · estanhe os dois", "banho rápido", "fio estanhado não se desfia e não abre com o tempo"],
+              ["6 · termine", "conector ou solda (abaixo)", "—"],
+              ["7 · termorretrátil", "um por condutor + um no conjunto", "isola e segura; o do conjunto é meio alívio de esforço"],
+              ["8 · alívio de esforço", "abraçadeira a **≤ 20 mm** da terminação", "**é isto que falta em 90% dos improvisos**: a força do cabo tem de morrer na abraçadeira, nunca na solda"],
+          ]) +
+          lista(["**Cabo:** blindado de instrumento/microfone, um condutor central. Não serve fio paralelo nem cabo de rede.",
+                 "**Terminação, duas maneiras certas.** (a) **Soldar direto no header** + termorretrátil + abraçadeira — é o que boutiques de pedais fazem num trecho curto dentro da caixa, e é o que já está soldado aqui. (b) **Conector de crimpe de sistema**, com trava: família **Molex KK-254** ou **Harwin M20** encaixam nos headers de 2,54 mm que a placa tem. ⚠️ O código exacto **confere-se na ficha do fabricante antes de comprar** — MPN é afirmação, não palpite.",
+                 "🚫 **Dupont genérico não é conector de sistema**: sem trava, contacto fraco, recua com vibração. Serve para bancada, não para um instrumento que viaja.",
+                 "**A malha termina num ponto só.** Aqui é a ilha `AGND`. Não a ligue também ao chassi nem a dois pinos.",
+                 "**Encaminhe longe** dos fios do amplificador, dos exciters e do step-down, e cruze-os a **90°** quando não der para afastar.",
+                 "**Teste do puxão:** segure a abraçadeira e puxe o cabo com força moderada. Se a solda sentir, o alívio está no sítio errado.",
+                 "**Marque as duas pontas** com fita e caneta antes de fechar a caixa."]),
+          fonte="`caixa/CAIXA-ACRILICO-MONTAGEM.md` §6b · `docs/operacao/ATERRAMENTO.md`")
 
     passo("6", "Fios · piezos → cérebro J5 e J6",
           tab_j(C, "J5", {"1": "**ponta (tip)** do jack · centro do cabo blindado", "2": "**manga (sleeve)** · malha do cabo", "3": "**anel (ring)** — vai à terra"}) +

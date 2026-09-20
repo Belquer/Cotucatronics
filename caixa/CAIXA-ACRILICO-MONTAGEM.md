@@ -169,6 +169,17 @@ milímetros.
 - **Exciters** saem do amp pela direita, e **nunca cruzam o pré-amp**.
 - **IDC do painel** (26 vias) corre pela parede de **trás**, longe da esquerda.
 - **Linha para a mesa**: do DPDT (parede de trás) ao amp e aos jacks de trás.
+- **Como se termina um cabo de sinal** (o método, escrito a 20/09 a pedido do
+  dB — *"parece uma gambiarra, documente o jeito profissional"*): capa
+  descascada **25 mm**, malha reunida num rabicho **≤ 10 mm**, centro **4–5 mm**,
+  os dois estanhados, terminação por **solda + termorretráctil** ou por
+  **conector de crimpe de sistema com trava** (famílias Molex KK-254 ou Harwin
+  M20 encaixam nos headers de 2,54 da placa; o código confirma-se na ficha),
+  e **abraçadeira de alívio a ≤ 20 mm da terminação**. O passo a passo completo
+  está no manual de montagem, no capítulo dos fios.
+  🚫 Dupont genérico não é conector de sistema: sem trava, recua com vibração.
+  ⚠️ **O alívio de esforço é a parte que falta em quase todo improviso**: a
+  força do cabo tem de morrer na abraçadeira, nunca na solda.
 - **Malha do cabo do piezo**: depende de quantos condutores o cabo tem, e
   confundir os dois casos custa o sinal inteiro (esclarecido a 20/09, com o
   cabo do dB na mão):
