@@ -47,7 +47,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, AQUI)
@@ -98,6 +98,67 @@ VESTIGIO = {
                        "desde 06/09 a ponte esta no soquete U3, com o mesmo 5V "
                        "e GND. Fica VAZIO; proxima rev: remover.",
 }
+
+# M7 — A CASA DE CADA MODULO. Um modulo nao e um componente: nao tem footprint,
+# nao entra em DRC nenhum, e por isso nao existe para as ferramentas. Se a casa
+# dele nao estiver escrita aqui, ele nao tem casa — e a caixa fecha-se sem ele.
+# ⚠️ 20/09: o dB perguntou onde poe o TPA3116 e a resposta do repo era "nos
+# espacadores dele", que nunca existiram. A chapa de fundo tem 4 furos e sao os
+# do cerebro; ao lado sobram 6,5 mm. Um modulo comprado e montado sem lugar e
+# planeamento que nao aconteceu, e so aparece com a caixa montada na mao.
+#   superficie: onde assenta · fixacao: o que o segura · fonte: quem o diz
+#   pistas: como esse modulo aparece escrito nos DESTINOS
+CASA = {
+    "Daisy Seed":         dict(superficie="cerebro (soquete U2)", fixacao="soquete 2x1x20, tiras femea",
+                               fonte="cotuca_cerebro.kicad_pcb (U2)", pistas=["Daisy"]),
+    "ponte ESP32":        dict(superficie="cerebro (soquete U3)", fixacao="soquete 2x1x8, tiras femea",
+                               fonte="cotuca_cerebro.kicad_pcb (U3)", pistas=["ponte ESP32"]),
+    "OLED":               dict(superficie="tampa, por dentro", fixacao="4 x standoff M2.5 + parafusos",
+                               fonte="caixa/CAIXA-ACRILICO-MONTAGEM.md §6", pistas=["OLED"]),
+    "decoy PD":           dict(superficie="parede de tras", fixacao="2 parafusos (ou fita dupla forte)",
+                               fonte="caixa/CAIXA-ACRILICO-MONTAGEM.md §6", pistas=["decoy PD"]),
+    # ⚠️ OS DOIS QUE NAO TEM CASA. Ficam aqui com o campo VAZIO de proposito:
+    # apagar a linha esconde o buraco, e preencher com um palpite e pior.
+    "amplificador":       dict(superficie="", fixacao="",
+                               fonte="por decidir (dB, 20/09) — ver docs/STATUS.md",
+                               pistas=["amplificador"]),
+    "step-down 5 V":      dict(superficie="", fixacao="",
+                               fonte="por decidir — nunca foi escrito em lado nenhum",
+                               pistas=["step-down"]),
+}
+
+
+def m7_casa(sabota=False):
+    """Todo modulo que um conector nomeia tem de ter casa declarada."""
+    casa = {k: dict(v) for k, v in CASA.items()}
+    if sabota:                      # tirar a casa de um que a tem
+        casa["OLED"]["superficie"] = ""
+    nomeados, orfaos, sem_casa = set(), [], []
+    for placa, refs in DESTINOS.items():
+        for ref, destino in refs.items():
+            achou = [m for m, d in casa.items() if any(p.lower() in destino.lower() for p in d["pistas"])]
+            if achou:
+                nomeados.update(achou)
+            elif any(k in destino.lower() for k in ("modulo", "placa ", "module")):
+                orfaos.append("%s:%s -> %s" % (placa, ref, destino))
+    for m, d in sorted(casa.items()):
+        if not d["superficie"] or not d["fixacao"]:
+            sem_casa.append(m)
+    nunca = sorted(set(casa) - nomeados)
+    txt = "%d modulos · %d com casa" % (len(casa), len(casa) - len(sem_casa))
+    if sem_casa:
+        txt += " · SEM CASA: %s" % ", ".join(sem_casa)
+    if orfaos:
+        txt += " · destino de modulo desconhecido: %s" % "; ".join(orfaos)
+    if nunca:
+        txt += " · declarado mas nenhum conector o nomeia: %s" % ", ".join(nunca)
+    ok = not sem_casa and not orfaos
+    # ⚠️ o peso CONTA os modulos sem casa, nao vale 1 por etapa: com peso fixo,
+    # tirar a casa de mais um modulo nao mudava o numero, e a propria sabotagem
+    # do M7 passava despercebida — um portao que ja esta vermelho tem de poder
+    # ficar MAIS vermelho.
+    return ok, txt, len(sem_casa) + len(orfaos)
+
 
 # Cabos entre placas: (nome, (placa, ref), (placa, ref), regex do BOM)
 CABOS = [
@@ -324,6 +385,9 @@ def corre(nomes, sabota=None):
                 ("M6 volume  ", m6_volume(P, n, sabota == "m6"))):
             print("     %s %s %s" % ("✓" if ok else "✗", etiqueta, txt))
             falhas += peso
+    ok, txt, peso = m7_casa(sabota == "casa")
+    print("  %s M7 casa dos modulos %s" % ("✓" if ok else "✗", txt))
+    falhas += peso
     for ok, txt in cabos(P, placas, bom_txt, sabota == "cabo"):
         print("  %s CABO %s" % ("✓" if ok else "✗", txt))
         falhas += not ok
@@ -335,7 +399,7 @@ def main():
     if "--sabota" in sys.argv:
         import contextlib
         maus = []
-        for alvo, placa in (("m1", "cerebro"), ("m1v", "cerebro"), ("m2", "cerebro"), ("m6", "cerebro"), ("cabo", "cerebro")):
+        for alvo, placa in (("m1", "cerebro"), ("m1v", "cerebro"), ("m2", "cerebro"), ("m6", "cerebro"), ("casa", "cerebro"), ("cabo", "cerebro")):
             with contextlib.redirect_stdout(io.StringIO()):
                 base = corre([placa])
                 sab = corre([placa], sabota=alvo)

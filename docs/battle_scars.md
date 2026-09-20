@@ -10400,3 +10400,44 @@ que já está num soquete** — com sabotagem nas duas. O `J4` fica declarado co
 vestígio: vazio nesta placa, fora na próxima. A primeira versão do detector
 («as redes estão contidas noutra peça») acusava todo o conector que leva sinais
 de um módulo para fora da placa — largo demais, e foi medido antes de entrar.
+
+---
+
+## 15fa — um módulo não é um componente: nenhuma ferramenta o vê, e por isso ele fica sem casa
+
+O dB, a 20/09, com a caixa montada na bancada: *«onde coloco o TPA3116 dentro da
+caixa?»*. A resposta que o repo dava era o `CAIXA-ACRILICO-MONTAGEM.md` §6:
+*«módulo do amp nos dele [espaçadores]»*. **Esses espaçadores nunca existiram.**
+A chapa de fundo tem quatro furos e são os do cérebro.
+
+E medido a 20/09, não havia sequer onde: a chapa é **193 × 113** e o cérebro
+ocupa **180 × 100** — sobram faixas de **6,5 mm** à direita e atrás. O único
+volume livre é **por cima** do cérebro (31,4 mm à frente, 56,4 atrás).
+
+> **Todas as ferramentas deste repo vêem footprints.** DRC, courtyard, `M4`,
+> `M6`, o manual, a BOM da placa: todos partem de uma peça que tem pegada no
+> `.kicad_pcb`. Um módulo comprado — amplificador, step-down, decoy PD — **não
+> tem footprint nenhum**. Ele não existe para nenhuma verificação, e a falta
+> dele não faz barulho em lado nenhum até a caixa estar fechada.
+
+O engano foi meu por omissão e do plano por hábito: escrever *«vai nos
+espaçadores dele»* **descreve uma intenção e parece uma decisão**. Ninguém
+percebe a diferença enquanto não tenta montar — e aí a caixa já está cortada.
+
+⚠️ **A regra, dada pelo dB e adoptada:** *cada módulo que não seja componente
+tem de ter a sua casa.* Casa é superfície + o que o segura + quem o diz. Sem os
+três, não é casa, é intenção.
+
+⚠️ **E a diferença entre módulo e componente não é de tamanho, é de quem o
+verifica.** O que tem footprint é conferido pela máquina; o que não tem só é
+conferido por alguém que se lembre. Lembrar não escala, por isso isto virou
+portão.
+
+**O que ficou (20/09):** `kicad/encaixe.py` **v0.3.0** ganhou a etapa **M7 —
+casa dos módulos**. A tabela `CASA` declara, por módulo, a superfície, a
+fixação e a fonte; o portão reprova quando um módulo nomeado por um conector
+não tem casa, e o peso **conta quantos** estão sem casa (com peso fixo, tirar a
+casa de mais um não mudava o número, e a sabotagem do próprio M7 passava). Hoje
+ele reprova dois, que é a verdade: **amplificador** e **step-down 5 V**. As
+linhas deles ficam na tabela com os campos **vazios de propósito** — apagar
+esconde o buraco, preencher com palpite é pior.
