@@ -346,9 +346,17 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   plano `GND`, em campo largo, com 4,7 a 11,1 mm de folga ao pad mais próximo).
   **O dB escolheu não furar:** a placa é insubstituível a meio da montagem, e o
   ganho de aperto não pagava o risco. Colar é reversível; furar não é.
-  ⚠️ **A cola quente amolece com o calor** e o classe D aquece: se a torre
-  ceder, o caminho é epóxi ou fita VHB, não mais cola. O `encaixe.py` M7 já
-  aceita esta casa; falta o **step-down**.
+  ⚠️ **O calor não chega por contacto** (nota corrigida a 20/09, com a razão do
+  dB): o amplificador aparafusa no **topo** da torre e a cola fica na **base**.
+  Sobram dois caminhos fracos — condução pela torre (os furos do módulo são a
+  parte fria dele; uma anilha de nylon entre módulo e torre corta isto de vez) e
+  o **ambiente da caixa fechada**, que é o que realmente mede. Cola EVA amolece
+  a 60–80 °C. **Teste barato:** meia hora a tocar alto e o dedo na base da
+  torre — cinco segundos sem largar ≈ abaixo de 50 °C, confortável.
+  ⚠️ **E o risco maior é mecânico, não térmico:** cola quente é forte em
+  cisalhamento e fraca em descascamento. Um cabo esticado descola a torre antes
+  de qualquer temperatura — folga nos fios, e cordão em volta de todo o pé.
+  O `encaixe.py` M7 já aceita esta casa; falta o **step-down**.
 - 🔴 **A caixa não tinha lugar definido para nenhum módulo (20/09).**
   O `CAIXA-ACRILICO-MONTAGEM.md` §6 diz *"módulo do amp nos dele [espaçadores]"*,
   mas esses espaçadores nunca existiram: a chapa de fundo tem **4** furos, e são
