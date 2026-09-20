@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.7.1"
+VERSAO = "0.7.2"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -802,7 +802,11 @@ def constroi():
 
     passo("6", "Fios · piezos → cérebro J5 e J6",
           tab_j(C, "J5", {"1": "**ponta (tip)** do jack · centro do cabo blindado", "2": "**manga (sleeve)** · malha do cabo", "3": "**anel (ring)** — vai à terra"}) +
-          lista(["Igual para o `J6` (segundo piezo).", "Fio **< 60 mm**, blindado. A malha liga **só do lado da placa**."]),
+          lista(["Igual para o `J6` (segundo piezo).", "Fio **< 60 mm**, blindado. A malha liga **só do lado da placa**.",
+                 "**Solde o cabo direto nos pinos do header**, sem conector destacável: o trecho é curto, fica dentro da caixa, e neste nó de 4,7 MΩ um crimpe frouxo vira **estalo**, não perda de sinal.",
+                 "Termorretrátil em cada pino: segura o fio e impede que dois pinos se toquem.",
+                 "**Limpe o fluxo com álcool isopropílico** depois de soldar. Resíduo entre pinos é caminho de fuga, e numa entrada de 4,7 MΩ isso aparece como ruído.",
+                 "Se quiser destacável mesmo assim: carcaça Dupont 1×3, e **transforme a malha num rabicho de fio comum antes de crimpar** — malha trançada crimpada direto dá contato ruim."]),
           fig=mapa(C, ["J5", "J6"]), fonte="`HARDWARE.md` §2 · `CAIXA-ACRILICO-MONTAGEM.md` §6b")
     passo("6", "Fios · saídas de linha → cérebro J12 e J13",
           tab_j(C, "J12", {"1": "**ponta (tip)** do jack de linha", "2": "**manga (sleeve)**", "3": "**anel (ring)**"}) +
