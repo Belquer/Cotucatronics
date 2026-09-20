@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.6.0"
+VERSAO = "0.6.1"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -343,6 +343,7 @@ def constroi():
 
     passo("0", "Cinco regras que valem para tudo", lista([
         "**O quadrado é o pino 1.** Em toda peça com polaridade, o pad quadrado na placa marca o pino 1 (ou o **+**). Nos desenhos deste manual ele aparece como ■.",
+        "**E o quadrado continua visível POR BAIXO**, depois da peça soldada. A serigrafia some debaixo do corpo do borne, do header ou do módulo — o pad quadrado não some: vire a placa e ele está lá, do outro lado dos mesmos furos.",
         "**Nunca vire de cabeça para baixo um conector com chave** (IDC, JST dos LEDs). Virar troca pinos — alguns são alimentação. Onde o manual manda soldar algo por baixo, ele diz exatamente o quê.",
         "**Antes de ligar qualquer coisa na energia, bipe.** Os passos dizem quais pontos têm que bipar e quais **não** podem bipar.",
         "**A peça na sua mão manda.** Se ela não bate com o desenho, **pare e pergunte**. Não force, não lixe placa, não improvise.",
@@ -518,8 +519,12 @@ def constroi():
           fig=mapa(C, headers), qtd="×%d" % len(headers))
     passo("2", "Cérebro · bornes de parafuso J1 e J2",
           lista(["A abertura dos parafusos fica virada **para fora da placa**, onde os fios vão chegar.",
-                 "`J1` = entrada do decoy PD (1 = **+**, 2 = GND) · `J2` = alimentação do amplificador (1 = **+15 V**, 2 = GND)."]),
-          fig=mapa(C, ["J1", "J2"]), qtd="×2")
+                 "`J1` = entrada do decoy PD (1 = **+**, 2 = GND) · `J2` = alimentação do amplificador (1 = **+15 V**, 2 = GND).",
+                 "**Depois de soldado o corpo tapa a serigrafia** — inclusive o triângulo do pino 1. Antes de apertar fio nenhum, ache o pino 1 por um destes dois:",
+                 "**(a) Vire a placa:** o pad **quadrado** é o pino 1. É o jeito mais rápido e não precisa de energia.",
+                 "**(b) Bipe:** no `J1`, o pino 1 bipa com o **fusível `F1`**. No `J2`, o pino 1 bipa com o **`+` do `C1`** (o capacitor grande) e com o pino 1 do `J11`. O outro pino de cada um bipa com qualquer terra."]),
+          fig=mapa(C, ["J1", "J2"], marcas=[("J1", "1", "+"), ("J2", "1", "+15 V")]), qtd="×2",
+          aviso="Trocar os dois fios do `J1` põe 15 V ao contrário em toda a placa. Confira por (a) **e** por (b) antes de ligar a energia.")
     # o + de um eletrolitico no lugar do filme: o pad que partilha a rede com a saida
     # do pre-amp (R14/R24), que esta em VBIAS (~7 V); o outro vai a entrada da Daisy,
     # sempre mais baixa. Tirado das redes, nao do numero do pad.
