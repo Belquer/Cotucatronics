@@ -119,8 +119,14 @@ CASA = {
                                fonte="caixa/CAIXA-ACRILICO-MONTAGEM.md §6", pistas=["decoy PD"]),
     # ⚠️ OS DOIS QUE NAO TEM CASA. Ficam aqui com o campo VAZIO de proposito:
     # apagar a linha esconde o buraco, e preencher com um palpite e pior.
-    "amplificador":       dict(superficie="", fixacao="",
-                               fonte="por decidir (dB, 20/09) — ver docs/STATUS.md",
+    # ⚠️ colado, nao aparafusado, e a razao importa: a placa e insubstituivel
+    # (5 unidades fabricadas, montagem a meio) e furar era risco sem retorno. O
+    # `onde_furar` dizia que os quatro pontos passavam com parafuso ISOLANTE; o
+    # dB escolheu nao gastar a placa num ganho de aperto. Decisao dele, 20/09.
+    "amplificador":       dict(superficie="prateleira sobre o cerebro, metade de tras",
+                               fixacao="4 torres M3 coladas a quente no cerebro "
+                                       "(114,5 · 175,5 · 114,95 · 175,95 mm da esquerda/topo)",
+                               fonte="dB, 20/09 — pontos conferidos com onde_furar.py v0.3.0",
                                pistas=["amplificador"]),
     "step-down 5 V":      dict(superficie="", fixacao="",
                                fonte="por decidir — nunca foi escrito em lado nenhum",

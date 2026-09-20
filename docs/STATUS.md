@@ -339,7 +339,17 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   — não pode ter sido ele. Debaixo do furo da esquerda está a **caixa de pinos
   `J14`** (8,85 mm, mais a ficha do cabo IDC por cima); debaixo do da direita só
   há peças rasteiras. **Por medir:** o que está debaixo do botão branco.
-- 🔴 **A caixa NÃO tem lugar definido para o módulo do amplificador (20/09).**
+- ✅ **O amplificador ganhou casa (dB, 20/09): prateleira sobre o cérebro, em
+  4 torres M3 COLADAS a quente**, na metade de trás (pontos a 114 · 175 mm da
+  esquerda e 5 · 95 mm do topo). O `onde_furar.py` v0.3.0 dizia que os quatro
+  pontos **passavam com parafuso isolante** e reprovavam com metálico (caem no
+  plano `GND`, em campo largo, com 4,7 a 11,1 mm de folga ao pad mais próximo).
+  **O dB escolheu não furar:** a placa é insubstituível a meio da montagem, e o
+  ganho de aperto não pagava o risco. Colar é reversível; furar não é.
+  ⚠️ **A cola quente amolece com o calor** e o classe D aquece: se a torre
+  ceder, o caminho é epóxi ou fita VHB, não mais cola. O `encaixe.py` M7 já
+  aceita esta casa; falta o **step-down**.
+- 🔴 **A caixa não tinha lugar definido para nenhum módulo (20/09).**
   O `CAIXA-ACRILICO-MONTAGEM.md` §6 diz *"módulo do amp nos dele [espaçadores]"*,
   mas esses espaçadores nunca existiram: a chapa de fundo tem **4** furos, e são
   os do cérebro. E não há chão: a chapa é **193 × 113** e o cérebro ocupa
