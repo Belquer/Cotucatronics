@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""onde_furar v0.2.0 — onde se pode abrir um furo numa placa JA FABRICADA.
+"""onde_furar v0.3.0 — onde se pode abrir um furo numa placa JA FABRICADA.
 
     (Python do KiCad)  kicad/onde_furar.py <cerebro|painel> [--diametro 3.4]
+                       [--ponto X,Y]  avalia ESTE ponto (mm da esquerda e do
+                                      topo da placa, vista por cima); repetivel
                        [--plastico]   parafuso isolante: o furo pode cair
                                       DENTRO de um plano, mas nunca em traco,
                                       via ou pad — e o relatorio diz que plano
@@ -39,7 +41,7 @@ import math
 import os
 import sys
 
-VERSAO = "0.2.0"
+VERSAO = "0.3.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
 # folgas, em mm, medidas do BORDO do furo (nao do centro)
@@ -199,9 +201,73 @@ def margem_no_plano(pcbnew, planos, x, y, r_furo, limite=12.0):
     return achados
 
 
+def avalia(nome, pontos, diametro=3.4):
+    """"Posso furar AQUI?" — a pergunta como ela e feita na bancada.
+
+    Recebe pontos em mm da esquerda e do topo da placa (que e como se mede com
+    a regua) e devolve, por ponto, a distancia ao cobre mais proximo de cada
+    especie. Nao decide sozinho entre parafuso metalico e isolante: da os dois
+    veredictos, porque a escolha e de quem monta."""
+    pcbnew = _pcbnew()
+    b, (x0, y0, x1, y1), _, r_furo, planos = varre(nome, diametro, passo=1e9)
+    mm = lambda v: v / 1e6
+    ui = lambda v: int(round(v * 1e6))
+    pads, vias, tracos, corpos = [], [], [], []
+    for f in b.GetFootprints():
+        for pd in f.Pads():
+            s = pd.GetSize()
+            pads.append((f.GetReference(), mm(pd.GetPosition().x), mm(pd.GetPosition().y),
+                         math.hypot(mm(s.x), mm(s.y)) / 2.0))
+        for lado in (pcbnew.F_CrtYd, pcbnew.B_CrtYd):
+            cy = f.GetCourtyard(lado)
+            if cy.OutlineCount():
+                corpos.append((f.GetReference(), cy))
+    for tr in b.GetTracks():
+        if tr.GetClass() == "PCB_VIA":
+            try:
+                w = tr.GetWidth(pcbnew.F_Cu)
+            except TypeError:
+                w = tr.GetWidth()
+            vias.append(("via", mm(tr.GetPosition().x), mm(tr.GetPosition().y), mm(w) / 2.0))
+        else:
+            tracos.append((mm(tr.GetStart().x), mm(tr.GetStart().y),
+                           mm(tr.GetEnd().x), mm(tr.GetEnd().y), mm(tr.GetWidth()) / 2.0))
+
+    def dist_seg(px, py, ax, ay, bx, by):
+        dx, dy = bx - ax, by - ay
+        L = dx * dx + dy * dy
+        u = 0.0 if L == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / L))
+        return math.hypot(px - (ax + u * dx), py - (ay + u * dy))
+
+    saida = []
+    for (px, py) in pontos:
+        x, y = x0 + px, y0 + py
+        perto_p = min(((math.hypot(x - cx, y - cy) - cr, ref) for ref, cx, cy, cr in pads + vias),
+                      default=(99, "-"))
+        perto_t = min((dist_seg(x, y, *tr[:4]) - tr[4] for tr in tracos), default=99)
+        bate = [ref for ref, cy in corpos if cy.Collide(pcbnew.VECTOR2I(ui(x), ui(y)), ui(r_furo))]
+        bordo = min(px, py, (x1 - x0) - px, (y1 - y0) - py)
+        emplano = margem_no_plano(pcbnew, planos, x, y, r_furo)
+        saida.append(dict(ponto=(px, py), pad=perto_p, traco=perto_t, corpos=bate,
+                          bordo=bordo, planos=emplano))
+    return saida, r_furo
+
+
 def main():
     print("onde_furar v%s — so le, nunca grava" % VERSAO, file=sys.stderr)
-    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    # ⚠️ filtrar so pelo "--" comia o NOME DA PLACA quando vinha depois de uma
+    # opcao com valor (--ponto 114,5): o valor nao comeca por "--" e passava por
+    # nome de placa. Saltar o valor de cada opcao que o leva.
+    COM_VALOR = ("--ponto", "--diametro")
+    args, saltar = [], False
+    for a_ in sys.argv[1:]:
+        if saltar:
+            saltar = False
+            continue
+        if a_ in COM_VALOR:
+            saltar = True
+        elif not a_.startswith("--"):
+            args.append(a_)
     if len(args) != 1 or args[0] not in ("cerebro", "painel"):
         print(__doc__)
         raise SystemExit(2)
@@ -209,6 +275,34 @@ def main():
     if "--diametro" in sys.argv:
         d = float(sys.argv[sys.argv.index("--diametro") + 1])
     nome = args[0]
+    if "--ponto" in sys.argv:
+        pontos = [tuple(float(v) for v in sys.argv[i + 1].split(","))
+                  for i, a in enumerate(sys.argv) if a == "--ponto"]
+        res, r = avalia(nome, pontos, d)
+        print("  placa %s · furo o%.1f mm · assento o%.1f mm (mm da esquerda e do topo)"
+              % (nome, d, 2 * r))
+        mau = 0
+        for e in res:
+            px, py = e["ponto"]
+            folga_pad = e["pad"][0] - r
+            folga_tr = e["traco"] - r
+            print("  ── %.1f , %.1f" % (px, py))
+            print("     pad/via mais proximo: %.1f mm de folga (%s) · traco: %.1f mm · bordo: %.1f mm"
+                  % (folga_pad, e["pad"][1], folga_tr, e["bordo"] - r))
+            if e["corpos"]:
+                print("     ✗ o assento bate no corpo de: %s" % " ".join(e["corpos"]))
+            for rede, camada, folga in e["planos"]:
+                print("     • cai no plano %s (%s) · margem ao bordo do plano %s"
+                      % (rede, camada, ("> %.1f mm — campo largo" % folga) if folga >= 6
+                         else ("%.1f mm — ESTRANGULAMENTO" % folga)))
+            ok_iso = (folga_pad >= FOLGA_COBRE and folga_tr >= FOLGA_COBRE
+                      and not e["corpos"] and e["bordo"] - r >= FOLGA_BORDO
+                      and all(f >= 6 for _, _, f in e["planos"]))
+            ok_met = ok_iso and not e["planos"]
+            print("     %s parafuso ISOLANTE · %s parafuso METALICO"
+                  % ("✓" if ok_iso else "✗", "✓" if ok_met else "✗"))
+            mau += not ok_iso
+        return 1 if mau else 0
     plastico = "--plastico" in sys.argv
     b, (x0, y0, x1, y1), bons, r, planos = varre(nome, d, plastico=plastico)
     print("  placa %s · furo o%.1f mm · assento o%.1f mm%s"
