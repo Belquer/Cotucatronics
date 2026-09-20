@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.8.1"
+VERSAO = "0.9.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
