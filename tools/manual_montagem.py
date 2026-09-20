@@ -288,6 +288,90 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, 
             % (" figbaixo" if baixo else "", "".join(out), md(cap)))
 
 
+def dpdt(P, ref, canal):
+    """Desenho da chave DPDT com o fio de cada pino do header `ref`.
+
+    ⚠️ As pernas estao rotuladas pela FUNCAO (comum · lado jack · lado amp),
+    nunca por numero: a numeracao muda de fabricante para fabricante e duas
+    ON-ON-ON iguais por fora comportam-se diferente. Quem monta mede primeiro e
+    escreve os numeros DELE nas linhas em branco. Os pares saem das REDES da
+    placa fabricada, nao de uma tabela escrita a mao.
+
+    ⚠️ E o tracado importa tanto como a ligacao: cada fio tem o seu canal
+    vertical e entra na perna pela esquerda. A primeira versao mandava todos a
+    mesma altura e os fios do polo B atravessavam as pernas do polo A — um
+    desenho que se le errado e pior do que nenhum."""
+    pads = {pd["n"]: pd["rede"] for pd in P.fp[ref]["pads"]}
+    por_rede = {}
+    for n, rede in pads.items():
+        por_rede.setdefault(rede, []).append(n)
+    ordena_n = lambda ns: sorted(ns, key=int)
+    comum = ordena_n(por_rede[P.rede(ref, "1")])
+    jack = ordena_n(por_rede[P.rede(ref, "2")])
+    amp = ordena_n(por_rede[P.rede(ref, "3")])
+    terra = ordena_n(por_rede[P.rede(ref, "7")])
+    W, H = 760, 340
+    E_ = E
+    o = ['<svg viewBox="0 0 %d %d" role="img" aria-label="%s" class="mapa dpdt">'
+         % (W, H, E_("ligacao do %s a chave DPDT do canal %s" % (ref, canal)))]
+    o.append('<text x="14" y="22" class="rot forte">%s — canal %s</text>' % (E_(ref), E_(canal)))
+    ypin = {}
+    for i, n in enumerate(sorted(pads, key=int)):
+        y = 52 + i * 34
+        ypin[n] = y
+        o.append('<rect x="14" y="%d" width="26" height="22" class="%s"/>'
+                 % (y - 11, "pad1" if n == "1" else "pad"))
+        o.append('<text x="27" y="%d" class="rot dentro">%s</text>' % (y + 4, n))
+        o.append('<text x="48" y="%d" class="rot peq fraco">%s</text>' % (y - 2, E_(pads[n] or "—")))
+    bx, by = 430, 44
+    o.append('<rect x="%d" y="%d" width="150" height="244" class="corpo"/>' % (bx, by))
+    o.append('<text x="%d" y="%d" class="rot forte">CHAVE DPDT ON-ON-ON</text>' % (bx - 4, by - 10))
+    col = {"A": bx + 42, "B": bx + 110}
+    LINHAS = (("lado JACK", 46), ("COMUM", 122), ("lado AMP", 198))
+    perna = {}
+    for c in ("A", "B"):
+        for k, (rot, dy) in enumerate(LINHAS):
+            x, y = col[c], by + dy
+            perna[(c, rot)] = (x, y)
+            o.append('<circle cx="%d" cy="%d" r="10" class="pad"/>' % (x, y))
+            o.append('<text x="%d" y="%d" class="rot dentro">%s</text>' % (x, y + 4, c + str(k + 1)))
+        o.append('<text x="%d" y="%d" class="rot peq meio">polo %s</text>' % (col[c], by + 232, c))
+    for rot, dy in LINHAS:
+        o.append('<text x="%d" y="%d" class="rot peq">%s</text>' % (bx + 158, by + dy - 2, rot))
+        o.append('<text x="%d" y="%d" class="rot peq fraco">perna n.º ____</text>' % (bx + 158, by + dy + 14))
+    # ⚠️ o canal de cada fio segue a ORDEM EM QUE SE DESENHA (comuns, depois
+    # jack, depois amp), nao o numero do pino: assim os fios que vao a mesma
+    # linha ficam lado a lado e o desenho cruza-se o menos possivel.
+    ordem_fios = list(zip(comum, ("A", "B"))) + list(zip(jack, ("A", "B"))) + list(zip(amp, ("A", "B")))
+    canais = {n: 96 + i * 26 for i, (n, _c) in enumerate(ordem_fios)}
+    for i, n in enumerate(terra):
+        canais[n] = 96 + (len(ordem_fios) + i) * 26
+    def fio(n, c, rot, cls="fio"):
+        x2, y2 = perna[(c, rot)]
+        mx = canais[n]
+        desvio = 0 if c == "A" else 26          # o polo B passa ABAIXO da perna A
+        o.append('<path d="M40 %d H%d V%d H%d V%d H%d" class="%s"/>'
+                 % (ypin[n], mx, y2 + desvio, x2 - 10 if c == "A" else x2 - 10,
+                    y2, x2 - 10, cls))
+    for n, c in zip(comum, ("A", "B")):
+        fio(n, c, "COMUM", "fio forte")
+    for n, c in zip(jack, ("A", "B")):
+        fio(n, c, "lado JACK")
+    for n, c in zip(amp, ("A", "B")):
+        fio(n, c, "lado AMP")
+    for n in terra:
+        o.append('<path d="M40 %d H%d V%d H%d" class="fio tracejado"/>'
+                 % (ypin[n], canais[n], H - 26, bx + 30))
+    o.append('<text x="%d" y="%d" class="rot peq">%s = dreno do cabo</text>'
+             % (bx + 36, H - 30, E_(" e ".join(terra))))
+    o.append("</svg>")
+    return ('<figure class="fig"><div class="sc">%s</div><figcaption>%s</figcaption></figure>'
+            % ("".join(o),
+               md("Pernas pelo **que fazem**, não pelo número: **meça a sua chave** e escreva os números dela "
+                  "nas linhas. Traço **grosso** = o sinal que vem da Daisy (vai aos dois **comuns**) · "
+                  "tracejado = o dreno do cabo, que **não** vai a perna nenhuma.")))
+
+
 def md(s):
     """negrito **x** e `codigo` — o minimo para o texto dos passos."""
     s = E(s)
@@ -851,8 +935,11 @@ def constroi():
           tab_j(C, "J15", {"1": "**comum** do polo 1", "2": "polo 1, posição **jack**", "3": "polo 1, posição **amp**",
                            "4": "**comum** do polo 2", "5": "polo 2, posição **jack**", "6": "polo 2, posição **amp**",
                            "7": "não liga na chave (terra do cabo)", "8": "não liga na chave (terra do cabo)"}) +
-          lista(["**Antes de soldar, meça a chave** com o multímetro: em cada posição, descubra qual pino do meio (comum) bipa com qual pino da ponta.",
-                 "Posição 1: comuns ligados às pernas **jack**. Posição 3: às pernas **amp**. Posição do meio: um polo em cada — **as duas saídas**."]),
+          lista(["**Antes de soldar, meça a chave** com o multímetro: em cada posição, descubra qual pino do meio (comum) bipa com qual pino da ponta. Escreva os números da SUA chave nas linhas em branco do desenho.",
+                 "Posição 1: comuns ligados às pernas **jack**. Posição 3: às pernas **amp**. Posição do meio: um polo em cada — **as duas saídas**.",
+                 "**Depois de fiar, confira sem energia**, bipando entre o header e a chave: posição *jack* → `1`–`2` e `4`–`5` · posição *amp* → `1`–`3` e `4`–`6` · posição *do meio* → **um par de cada** (por exemplo `1`–`2` e `4`–`6`).",
+                 "⚠️ Se no meio as duas metades derem o **mesmo**, a sua chave é do outro tipo e a posição do meio **não** manda para as duas saídas. Não é defeito de montagem: é a peça."]) +
+          dpdt(C, "J15", "L"),
           fig=mapa(C, ["J15", "J16"]),
           pare="Chave ON-ON-ON tem tipos diferentes. **Meça antes de fiar** — não confie na posição das pernas.",
           fonte="`docs/COTUCA_BOM.md` §5 · `HARDWARE.md` §3")
@@ -971,6 +1058,18 @@ svg .marca{fill:none;stroke:var(--perigo);stroke-width:2.5}
 svg .vazio{fill:none;stroke:var(--perigo);stroke-width:1.5;stroke-dasharray:3 2}
 svg .vazio-x{stroke:var(--perigo);stroke-width:1.5}
 svg .vazio-rot{fill:var(--perigo)}
+svg.dpdt .rot{text-anchor:start;fill:var(--tinta);font-size:13px;font-weight:500}
+svg.dpdt .fio{fill:none;stroke:var(--azul);stroke-width:1.6}
+svg.dpdt .fio.forte{stroke-width:3}
+svg.dpdt .fio.tracejado{stroke:var(--suave);stroke-dasharray:5 4}
+svg.dpdt .rot.forte{font-weight:600}
+svg.dpdt .rot.peq{font-size:11px}
+svg.dpdt .rot.fraco{fill:var(--suave)}
+svg.dpdt .rot.meio{text-anchor:middle}
+svg.dpdt .rot.dentro{text-anchor:middle;font-size:11px;fill:var(--papel);font-weight:700}
+svg.dpdt .pad{fill:var(--azul);stroke:none}
+svg.dpdt .pad1{fill:var(--azul);stroke:var(--tinta);stroke-width:2}
+svg.dpdt .corpo{fill:var(--fundo2);stroke:var(--corpo);stroke-width:1.5}
 svg .marca-rot{fill:var(--perigo);text-anchor:start;font-size:14px}
 svg .furo{fill:var(--tinta)}
 svg .furo-anilha{fill:none;stroke:var(--perigo);stroke-width:2;stroke-dasharray:5 3}
