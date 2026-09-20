@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.5.0"
+VERSAO = "0.6.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -718,6 +718,53 @@ def constroi():
                 continue
             linhas.append(["■ " + p["n"] if (p["n"] == "1" and f["p1"]) else p["n"], "`%s`" % p["rede"], destinos.get(p["n"], "—")])
         return tabela(["pino", "rede", "liga em"], linhas)
+
+    # a lista de todos os conectores do cerebro, GERADA das redes da placa: o dB
+    # pediu-a a 19/09 com a placa na mao, e ela e a mesma pergunta do "o que liga
+    # aqui?" que a /aipcb obriga a fazer antes de cada conector.
+    # ⚠️ o J4 e vestigio (mesma lista que o VESTIGIO do kicad/encaixe.py): esta na
+    # placa, nao se monta. Aparecer na tabela sem esse rotulo convida a solda-lo.
+    VESTIGIOS = {"J4"}
+    quem_mais = {}
+    for r_, f_ in C.fp.items():
+        for pd_ in f_["pads"]:
+            quem_mais.setdefault(pd_["rede"], set()).add(r_)
+
+    def nome_rede(ref, pd):
+        rede = pd["rede"]
+        if not rede:
+            return "—"
+        if not rede.startswith("Net-("):       # rede com nome: ele diz tudo
+            return "`%s`" % rede
+        outros = ordena([r_ for r_ in quem_mais.get(rede, ()) if r_ != ref])
+        return "sinal → `%s`" % "` `".join(outros) if outros else "sinal"
+
+    def linha_conector(ref):
+        f = C.fp[ref]
+        pads = [pd for pd in sorted(f["pads"], key=lambda pd: (len(pd["n"]), pd["n"])) if not pd["npth"]]
+        pins = " · ".join("%s%s = %s" % ("■" if (pd["n"] == "1" and f["p1"]) else "", pd["n"], nome_rede(ref, pd))
+                          for pd in pads)
+        o_que = "**FICA VAZIO** (vestígio)" if ref in VESTIGIOS else (C.cpl[ref]["Val"] if ref in C.cpl else "—")
+        return ["`%s`" % ref, o_que, len(pads), pins]
+    js = ordena([r for r in C.fp if r.startswith("J") and C.fp[r]["corpo"]])
+    curtos = [r for r in js if len([pd for pd in C.fp[r]["pads"] if not pd["npth"]]) <= 8]
+    passo("6", "Fios · mapa de TODOS os conectores do cérebro",
+          tabela(["ref", "o que é", "pinos", "pino a pino"], [linha_conector(r) for r in curtos]) +
+          "<p>%s</p>" % md("O **pad quadrado ■ é o pino 1** em todos. O `J14` (cabo do painel) tem 26 vias e está na tabela seguinte. Não existem `J7` a `J10`.") +
+          lista(["`J15` e `J16` repetem cada sinal em dois pinos (1 e 4, 2 e 5, 3 e 6): são os **dois polos** da chave DPDT. Os pinos 7 e 8 são o terra de referência do cabo, e **não** vão a terminal nenhum da chave.",
+                 "Em `J5`, `J6`, `J12` e `J13` o pino 1 é sempre o **sinal** e os outros dois são **terra**.",
+                 "`J1` tem **2 pinos**, a 5,08 mm. O borne especificado (Phoenix `1715721`) traz **um pino por polo** — se a peça na sua mão tiver mais pinos, é outra peça: **pare e confira** antes de soldar."]),
+          fonte="gerado das redes de `cotuca_cerebro.kicad_pcb` · ficha Phoenix 1715721")
+    j14 = [pd for pd in sorted(C.fp["J14"]["pads"], key=lambda pd: int(pd["n"])) if not pd["npth"]]
+    meio = (len(j14) + 1) // 2
+    passo("6", "Fios · as 26 vias do J14 (cabo do painel)",
+          tabela(["pino", "sinal", "pino", "sinal"],
+                 [[("■ " if j14[i]["n"] == "1" and C.fp["J14"]["p1"] else "") + j14[i]["n"], "`%s`" % j14[i]["rede"],
+                   j14[i + meio]["n"] if i + meio < len(j14) else "", "`%s`" % j14[i + meio]["rede"] if i + meio < len(j14) else ""]
+                  for i in range(meio)]) +
+          lista(["O cabo é **direto e com chave**: pino 1 no pino 1. Não há nada a decidir — só entra de um jeito.",
+                 "Esta tabela é para **medir**, não para montar: serve quando um botão não responde e você quer bipar a via certa."]),
+          fig=mapa(C, ["J14"]), fonte="gerado das redes das duas placas")
 
     passo("6", "Fios · piezos → cérebro J5 e J6",
           tab_j(C, "J5", {"1": "**ponta (tip)** do jack · centro do cabo blindado", "2": "**manga (sleeve)** · malha do cabo", "3": "**anel (ring)** — vai à terra"}) +
