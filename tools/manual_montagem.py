@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.6.1"
+VERSAO = "0.6.2"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -797,7 +797,10 @@ def constroi():
           fonte="`HARDWARE.md` §1 e §3")
     passo("6", "Fios · energia: decoy PD e step-down",
           tab_j(C, "J1", {"1": "**+** do decoy PD (15 V)", "2": "**−** do decoy PD"}) +
-          tab_j(C, "J3", {"1": "**VIN** do step-down", "2": "**GND** do step-down", "3": "**VOUT (5 V)** do step-down"}),
+          tab_j(C, "J3", {"1": "**VIN** do step-down", "2": "**GND** do step-down", "3": "**VOUT (5 V)** do step-down"}) +
+          lista(["**O módulo tem dois GND (IN e OUT) e a placa só dá um.** Bipe os dois pinos de terra do módulo: em qualquer step-down destes eles são o **mesmo nó**, e aí basta **um fio** ao `J3` pino 2 — de preferência partindo do lado **OUT**, que é por onde volta a corrente do 5 V. Se **não** bipar, o módulo é isolado (raro): aí ligue os dois, com um jumper curto no próprio módulo.",
+                 "**Um fio só, e dedicado.** O terra do 5 V voltar por outro caminho já custou um **clique a ~3 Hz** audível neste instrumento (`ATERRAMENTO.md`).",
+                 "🚫 **Não acrescente capacitor grande na ENTRADA do step-down.** 2200 µF ali produziram **guincho agudo** medido a 31/08: um conversor comutado é carga de potência constante e oscila contra a indutância do fio. E na **saída**, no máximo **100 µF**."]),
           fig=mapa(C, ["J1", "J3"]),
           pare="Confira as marcas **VIN / GND / VOUT** no seu step-down. VIN no 5 V queima a Daisy.",
           fonte="`HARDWARE.md` §1")
