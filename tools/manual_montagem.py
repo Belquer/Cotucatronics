@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.7.2"
+VERSAO = "0.7.3"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -802,7 +802,9 @@ def constroi():
 
     passo("6", "Fios · piezos → cérebro J5 e J6",
           tab_j(C, "J5", {"1": "**ponta (tip)** do jack · centro do cabo blindado", "2": "**manga (sleeve)** · malha do cabo", "3": "**anel (ring)** — vai à terra"}) +
-          lista(["Igual para o `J6` (segundo piezo).", "Fio **< 60 mm**, blindado. A malha liga **só do lado da placa**.",
+          lista(["Igual para o `J6` (segundo piezo).", "Fio **< 60 mm**, **blindado**. E a malha depende do cabo: se ele tiver **dois condutores + malha**, a malha é escudo e liga **só do lado da placa**; se for **coaxial** (um central + malha), a **malha é o retorno** e liga **nas duas pontas** — solta no jack não dá menos ruído, dá **sinal nenhum**.",
+                 "Com coaxial: centro no pino **1**, malha no pino **2** e na **manga** do jack; ligue **anel e manga juntos no jack** e deixe o pino 3 sem nada (é a mesma rede do 2).",
+                 "**Rabicho curto** ao soldar a malha: malha destrançada é blindagem que se perde.",
                  "**Solde o cabo direto nos pinos do header**, sem conector destacável: o trecho é curto, fica dentro da caixa, e neste nó de 4,7 MΩ um crimpe frouxo vira **estalo**, não perda de sinal.",
                  "Termorretrátil em cada pino: segura o fio e impede que dois pinos se toquem.",
                  "**Limpe o fluxo com álcool isopropílico** depois de soldar. Resíduo entre pinos é caminho de fuga, e numa entrada de 4,7 MΩ isso aparece como ruído.",

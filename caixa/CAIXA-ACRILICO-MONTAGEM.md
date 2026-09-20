@@ -169,8 +169,18 @@ milímetros.
 - **Exciters** saem do amp pela direita, e **nunca cruzam o pré-amp**.
 - **IDC do painel** (26 vias) corre pela parede de **trás**, longe da esquerda.
 - **Linha para a mesa**: do DPDT (parede de trás) ao amp e aos jacks de trás.
-- **Malha do cabo do piezo**: ligada **só do lado da placa**. Ligada nas duas
-  pontas fecha uma espira e ela canta.
+- **Malha do cabo do piezo**: depende de quantos condutores o cabo tem, e
+  confundir os dois casos custa o sinal inteiro (esclarecido a 20/09, com o
+  cabo do dB na mão):
+  - **dois condutores + malha** (há fio de retorno próprio): a malha é
+    **escudo** e liga **só do lado da placa**; nas duas pontas fecha espira.
+  - **coaxial** (um central + malha — o cabo em uso): a malha **é o retorno** e
+    liga **nas duas pontas**. Solta no jack não é menos ruído: é **sem caminho
+    de volta**, logo sem sinal.
+  - Nos dois casos não há espira aqui, porque os jacks são **isolados do
+    chassi** e a caixa é de acrílico — não existe segundo caminho. A espira
+    nasce quando a manga toca metal que chega ao terra por outro lado.
+  - Sempre **rabicho curto**: malha destrançada é blindagem que se perde.
 
 E a folga: **~80 mm** em todos os cabos que vão do fundo à casca — é o que
 permite abrir a caixa sem desligar nada.
