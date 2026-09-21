@@ -388,7 +388,17 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
   altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
   Ver `caixa/LICOES-MONTAGEM.md` #10.
-- **DPDT, a fiação que já funcionou (dB, 21/09): 3 fios e 3 jumpers**, com
+- **DPDT, a fiação que já funcionou (dB, 21/09, descrita da peça montada):
+  3 fios e UM jumper, chave usada na DIAGONAL.** `A1` = linha (mixer) ·
+  `B1` **vazia** · `A2`–`B2` jumpeados = o comum, que recebe o sinal ·
+  `A3` **vazia** · `B3` = amp (exciter). Nas três posições dá **só linha**,
+  **os dois**, **só amp**. Na placa: `J15` pino `1` → comum, `2` → `A1`,
+  `3` → `B3`; `4`/`5`/`6` não se usam, `7`/`8` são dreno.
+  ⚠️ **A verificar com o dB:** ele anotou o comum como *GND*. Nesta placa o
+  comum é `OUT_L_DAISY` (o sinal) — se fosse GND, a linha e o amp nunca
+  receberiam sinal, porque `LINHA_L` e `AMP_IN_L` só se encontram com a saída
+  da Daisy **através da chave**.
+- **(histórico) a leitura anterior: 3 fios e 3 jumpers**, com
   **nenhum terra na chave**. Medido na placa: os três sinais estão
   **duplicados** no header — `1`=`4` (`OUT_L_DAISY`), `2`=`5` (`LINHA_L`),
   `3`=`6` (`AMP_IN_L`) — porque os dois polos trabalham em paralelo, e é isso

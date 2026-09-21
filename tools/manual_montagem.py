@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.12.0"
+VERSAO = "0.13.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -353,7 +353,7 @@ def dpdt(P, ref, canal):
             o.append('<rect x="%.0f" y="%.0f" width="%d" height="%d" class="pad1 %s"/>'
                      % (x - r, y - r, 2 * r, 2 * r, cor.get(n, "")))
         else:
-            dobro = n in (comum[1], jack[1], amp[1])
+            dobro = n in (comum[1], jack[1], amp[1])   # mesmo sinal que 1/2/3: nao se usa
             o.append('<circle cx="%.0f" cy="%.0f" r="%d" class="pad %s%s"/>'
                      % (x, y, r, cor.get(n, "dreno"), " opcional" if dobro else ""))
         o.append('<text x="%.0f" y="%.0f" class="rot dentro" text-anchor="middle" font-size="12">%s</text>'
@@ -367,13 +367,15 @@ def dpdt(P, ref, canal):
     col = {"A": bx + 42, "B": bx + 110}
     LINHAS = (("lado JACK", 52), ("COMUM", 132), ("lado AMP", 212))
     perna = {}
+    VAZIAS = {("A", "lado AMP"), ("B", "lado JACK")}
     for c in ("A", "B"):
         for k, (rot, dy) in enumerate(LINHAS):
             x, y = col[c], by + dy
             perna[(c, rot)] = (x, y)
-            o.append('<circle cx="%d" cy="%d" r="13" class="pad"/>' % (x, y))
-            o.append('<text x="%d" y="%d" class="rot dentro" text-anchor="middle" font-size="12">%s</text>'
-                     % (x, y + 4, c + str(k + 1)))
+            o.append('<circle cx="%d" cy="%d" r="13" class="pad%s"/>'
+                     % (x, y, " vaga" if (c, rot) in VAZIAS else ""))
+            o.append('<text x="%d" y="%d" class="rot %s" text-anchor="middle" font-size="12">%s</text>'
+                     % (x, y + 4, "vaga-rot" if (c, rot) in VAZIAS else "dentro", c + str(k + 1)))
         o.append('<text x="%d" y="%d" class="rot peq meio" text-anchor="middle" font-size="12">polo %s</text>'
                  % (col[c], by + 252, c))
     for rot, dy in LINHAS:
@@ -387,29 +389,27 @@ def dpdt(P, ref, canal):
         desvio = 0 if c == "A" else 22          # o polo B passa ABAIXO da perna A
         o.append('<path d="M%.0f %.0f H%d V%d H%d V%d" class="%s"/>'
                  % (X0 + larg, ypin[n], mx, y2 + desvio, x2 - 13, y2, cls))
-    # ⚠️ 21/09: UM FIO POR REDE, nao um fio por pino. O desenho mostrava os oito
-    # pinos ligados porque a placa os tem; mas 1=4, 2=5 e 3=6 sao a mesma rede,
-    # logo bastam TRES fios e tres jumpers na chave — que e o que o dB ja tinha
-    # montado e funcionava. Mostrar o maximo como se fosse o necessario e
-    # transformar uma escolha em obrigacao (bts 15fc).
-    for n, c in zip(comum, ("A", "B")):
-        fio(n, c, "COMUM", "fio forte" if c == "A" else "fio forte opcional")
+    # ⚠️ 21/09, segunda correccao no mesmo dia, e desta vez copiada da PECA
+    # MONTADA que o dB descreveu: a chave usa-se na DIAGONAL, e nao em paralelo.
+    #   comum A + comum B jumpeados  <- o sinal da Daisy, UM fio
+    #   A1 = linha (mixer)   ·   B3 = amp (exciter)   ·   A3 e B1 VAZIAS
+    # Tres posicoes: so linha · os dois · so amp. Tres fios e UM jumper — menos
+    # do que os "tres jumpers" que eu tinha desenhado na correccao anterior.
+    # ⚠️ Eu tinha desenhado os dois polos em PARALELO (jack nos dois, amp nos
+    # dois). Da os mesmos tres modos e gasta o dobro das ligacoes na chave.
+    fio(comum[0], "A", "COMUM", "fio forte")
     # ⚠️ NAO SAO SO OS COMUNS. Na placa os TRES sinais estao duplicados:
     # 1=4 (comum), 2=5 (linha), 3=6 (amp). Logo 6 fios, ou 3 fios com 3 jumpers
     # na chave, sao a MESMA ligacao — a segunda foi a que o dB montou e que
     # funcionou, e usa metade dos condutores. Os jumpers desenham-se em todas as
     # linhas: desenhar so na dos comuns fazia parecer que as outras duas exigiam
     # dois fios cada.
-    for _rot, _dy in LINHAS:
-        (ax_, ay_), (bx_, _b) = perna[("A", _rot)], perna[("B", _rot)]
-        o.append('<path d="M%d %d H%d" class="fio jumper"/>' % (ax_ + 13, ay_, bx_ - 13))
     (ax_, ay_), (bx_, _b) = perna[("A", "COMUM")], perna[("B", "COMUM")]
+    o.append('<path d="M%d %d H%d" class="fio jumper"/>' % (ax_ + 13, ay_, bx_ - 13))
     o.append('<text x="%d" y="%d" class="rot peq meio" text-anchor="middle" font-size="12">'
              'jumper</text>' % ((ax_ + bx_) // 2, ay_ - 20))
-    for n, c in zip(jack, ("A", "B")):
-        fio(n, c, "lado JACK", "fio" if c == "A" else "fio opcional")
-    for n, c in zip(amp, ("A", "B")):
-        fio(n, c, "lado AMP", "fio" if c == "A" else "fio opcional")
+    fio(jack[0], "A", "lado JACK")
+    fio(amp[0], "B", "lado AMP")
     for n in terra:
         o.append('<path d="M%.0f %.0f H%d V%d H%d" class="fio tracejado"/>'
                  % (X0 + larg, ypin[n], canais[n], H - 34, bx + 30))
@@ -420,11 +420,12 @@ def dpdt(P, ref, canal):
     return ('<figure class="fig"><div class="sc">%s</div><figcaption>%s</figcaption></figure>'
             % ("".join(o),
                md("Pernas pelo **que fazem**, não pelo número: **meça a sua chave** e escreva os números dela "
-                  "nas linhas. **Três fios** (cheios) e **três jumpers** (pretos) — é isto que basta, e é "
-                  "o que já funcionou. Os fios **pontilhados** são a alternativa: usá-los dispensa os "
-                  "jumpers, porque na placa `%s`=`%s`, `%s`=`%s` e `%s`=`%s` são as mesmas redes. "
-                  "Tracejado cinzento = dreno do cabo, que **não** vai a perna nenhuma."
-                  % (comum[0], comum[1], jack[0], jack[1], amp[0], amp[1]))))
+                  "nas linhas. **Três fios e um jumper** — a fiação que já funcionou: o sinal entra nos "
+                  "**dois comuns** (jumpeados), a **linha** sai por um polo e o **amp** pelo outro, na "
+                  "diagonal. As duas pernas a cinzento ficam **vazias**. Os pinos `%s`, `%s` e `%s` do "
+                  "header são os mesmos sinais de `%s`, `%s` e `%s` — não se usam. Tracejado cinzento = "
+                  "dreno do cabo, que **não** vai a perna nenhuma."
+                  % (comum[1], jack[1], amp[1], comum[0], jack[0], amp[0]))))
 
 
 def md(s):
@@ -992,8 +993,9 @@ def constroi():
                            "7": "não liga na chave (terra do cabo)", "8": "não liga na chave (terra do cabo)"}) +
           lista(["**Antes de soldar, meça a chave** com o multímetro: em cada posição, descubra qual pino do meio (comum) bipa com qual pino da ponta. Escreva os números da SUA chave nas linhas em branco do desenho.",
                  "Posição 1: comuns ligados às pernas **jack**. Posição 3: às pernas **amp**. Posição do meio: um polo em cada — **as duas saídas**.",
-                 "**Bastam 3 fios.** Ligue `1` (comum), `2` (jack) e `3` (amp) a **um polo só** da chave, e faça **3 jumpers** no outro polo: comum com comum, jack com jack, amp com amp. A posição do meio continua a mandar para as duas saídas.",
-                 "Os pinos `4`, `5` e `6` são **os mesmos sinais** que `1`, `2` e `3` — a placa duplica-os para quem preferir levar 6 fios e não fazer jumper nenhum. **As duas fiações são idênticas**; a de 3 fios usa metade dos condutores e foi a que já funcionou.",
+                 "**Três fios e um jumper**, que é a fiação que já funcionou: `1` → **comum de um polo**; **jumper** entre os dois comuns; `2` → perna **linha** desse mesmo polo; `3` → perna **amp** do **outro** polo. A chave usa-se na **diagonal**, e duas pernas ficam **vazias**.",
+                 "O que isso dá nas três posições: **só linha (mixer)** · **os dois** · **só amp (exciter)**.",
+                 "Os pinos `4`, `5` e `6` são os **mesmos sinais** de `1`, `2` e `3` (a placa duplica-os) e **não se usam** nesta fiação. Os `7`/`8` são o dreno do cabo.",
                  "**Nada de terra vai à chave:** os pinos `7`/`8` são dreno do cabo. Corte-os rente e isole a ponta solta.",
                  "**Depois de fiar, confira sem energia**, bipando entre o header e a chave: posição *jack* → `1`–`2` e `4`–`5` · posição *amp* → `1`–`3` e `4`–`6` · posição *do meio* → **um par de cada** (por exemplo `1`–`2` e `4`–`6`).",
                  "⚠️ Se no meio as duas metades derem o **mesmo**, a sua chave é do outro tipo e a posição do meio **não** manda para as duas saídas. Não é defeito de montagem: é a peça."]) +
@@ -1130,6 +1132,8 @@ svg.dpdt .fio.tracejado{stroke:var(--suave);stroke-dasharray:5 4}
 svg.dpdt .fio.jumper{stroke:var(--tinta);stroke-width:2.4}
 svg.dpdt .fio.opcional{stroke-width:1.2;stroke-dasharray:2 4;opacity:.75}
 svg.dpdt circle.pad.opcional{fill:var(--papel);stroke-width:2}
+svg.dpdt circle.pad.vaga{fill:var(--papel);stroke:var(--corpo);stroke-width:2}
+svg.dpdt .rot.vaga-rot{fill:var(--suave);text-anchor:middle}
 svg.dpdt circle.pad.opcional.c2{stroke:var(--fio2)}svg.dpdt circle.pad.opcional.c4{stroke:var(--fio4)}
 svg.dpdt circle.pad.opcional.c6{stroke:var(--fio6)}
 svg.dpdt .rot.forte{font-weight:600}
