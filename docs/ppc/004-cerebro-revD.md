@@ -38,6 +38,7 @@ chamando `confere_*` sobre o texto lido, como foi feito a 19/09 para os arcade.
 | `R13` `R23` | 4k7 | idem |
 | `C13` `C23` | 22 µF NP | idem |
 | `RV1` `RV2` | trimpot 100 k | idem |
+| `J15` e `J16` passam de **1×8 para 1×4** | header 1×8 → 1×4 | **decidido a 21/09** (bts 15fc): os dois polos da chave estão em paralelo no cobre (`1`=`4`, `2`=`5`, `3`=`6`), logo metade dos pinos é conveniência, não necessidade. Ficam **comum · jack · amp · dreno**, e o paralelo faz-se com jumpers na chave — que é como a montagem que funciona já está feita. Metade do cabo (4 vias em vez de 8) |
 | `J11` pino 1 (o conector passa a **1×3**) | header 1×4 → 1×3 | **decidido a 20/09:** o módulo alimenta-se pelo **borne de parafuso**, logo fica o `J2` para a força e o `J11` só para o áudio (referência + L + R). O pino 1 é `+15V` duplicado (bts 15fb) |
 
 **O que FICA, e é decisão explícita:**

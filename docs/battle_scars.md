@@ -10489,3 +10489,50 @@ conserto não é escrever melhor: é o destino deixar de ser frase.
 alimenta o amplificador depende do módulo real (borne de parafuso → `J2`;
 fileira de pinos → `J11`). Fica no `ppc/004` como trabalho da rev D — o portão
 vermelho é o marcador dessa dívida, e não se cala declarando.
+
+---
+
+## 15fc — desenhei um fio por PINO, quando bastava um fio por REDE: de 3 condutores para 8
+
+O dB, a 21/09, ao ver o desenho da chave DPDT que eu tinha acabado de gerar:
+*«por que preciso ligar 1 e 4 se eles estão com um jumper ligando os dois pinos
+centrais? no design anterior, só tinha 3 cabos ligados, não 6»*. E a seguir:
+*«construímos um modelo simples que funcionava, e aqui você me deu uma solução
+bem mais complicada»*.
+
+Fui medir na placa, que era o que eu devia ter feito antes de desenhar:
+
+```
+J15:  1 = 4  OUT_L_DAISY     2 = 5  LINHA_L     3 = 6  AMP_IN_L     7 = 8  GND
+```
+
+**Os dois polos da chave estão em paralelo no cobre.** Logo o mínimo são
+**três fios e três jumpers** — que é exactamente o que o dB já tinha montado e
+que funcionava. Os oito pinos são uma *conveniência* da placa: permitem levar
+seis fios e dispensar os jumpers. Eu desenhei a conveniência como se fosse o
+requisito.
+
+> **Um fio por PINO é o desenho da placa; um fio por REDE é o desenho da
+> montagem.** O gerador lia os pads e ligava todos, porque os pads existem. Não
+> perguntou quantas redes DISTINTAS havia — que é a pergunta de quem tem o
+> ferro na mão e conta condutores.
+
+⚠️ **E o agravante não é geométrico, é de método.** Havia um protótipo montado
+e a funcionar. Eu tinha a placa como fonte e usei-a; não usei a **peça montada**
+como fonte, e por isso apresentei como instrução uma coisa mais cara do que a
+que já estava provada. *Quando existe uma montagem que funciona, ela é
+referência — e qualquer proposta que acrescente condutores, peças ou passos
+tem de dizer o que ganha em troca.* Se não diz, não é proposta: é regressão
+com cara de manual.
+
+**O que ficou (21/09):**
+
+- `tools/manual_montagem.py` **v0.12.0**: o desenho do DPDT passa a mostrar
+  **um fio por rede** — três cheios, para um polo só, mais os três jumpers. Os
+  pinos duplicados aparecem em **contorno vazio** com o fio a pontilhado, como
+  a alternativa que são. A legenda diz qual é qual.
+- O passo diz primeiro o que basta (3 fios), e só depois a alternativa.
+- `docs/ppc/004` (rev D): o `J15`/`J16` encolhe de **1×8 para 1×4** — comum,
+  jack, amp e o dreno. O paralelo dos polos faz-se na chave, com os jumpers,
+  como sempre se fez. Metade dos pinos, metade do cabo, e uma decisão a menos
+  para quem monta.

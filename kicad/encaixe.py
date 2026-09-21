@@ -47,7 +47,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.5.0"
+VERSAO = "0.6.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, AQUI)
@@ -294,10 +294,32 @@ def m1_interfaces(nome, b, sabota=False):
                 if chave not in ja_dito:
                     ja_dito.add(chave)
                     maus.append(suspeito + " — vestigio?")
+    # ⚠️ 21/09 (bts 15fc): um conector com PINOS a mais do que REDES distintas
+    # nao e defeito — mas e uma escolha que ninguem estava a contar, e foi assim
+    # que um manual mandou ligar 8 condutores onde bastavam 4. O portao passa a
+    # dize-lo em voz alta, com o numero, para a proxima rev decidir com o dado.
+    # ⚠️ contar PADS, nao o conjunto de redes: `redes[j]` ja e um set, e comparar
+    # um set consigo proprio da sempre igual — foi o primeiro erro desta guarda.
+    dobrados = []
+    for f in b.GetFootprints():
+        j = f.GetReference()
+        if j not in conectores:
+            continue
+        # ⚠️ so SINAL: um cabo de fita repete GND de proposito, um por par, e
+        # acusar isso ensinava a ignorar a linha. A duplicacao que custa
+        # condutor e a de sinal — no J15/J16 sao os dois polos em paralelo.
+        nets = [p.GetNetname() for p in f.Pads()
+                if p.GetNetname() and not p.GetNetname().startswith("unconnected")
+                and not energia(p.GetNetname())]
+        if len(nets) > len(set(nets)):
+            dobrados.append("%s %d pinos/%d redes" % (j, len(nets), len(set(nets))))
     ok = not maus
     txt = ("%d conector(es), cada um com destino e sem duplicados" % len(conectores)) if ok else "; ".join(maus)
     if vist:
         txt += " · vestigio(s) declarado(s), a deixar VAZIO: %s" % ", ".join(vist)
+    if dobrados:
+        txt += (" · pinos duplicados (bastam menos condutores, ver bts 15fc): %s"
+                % ", ".join(sorted(dobrados)))
     return ok, txt, len(maus)
 
 
