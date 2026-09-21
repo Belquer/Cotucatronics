@@ -367,6 +367,12 @@ def dpdt(P, ref, canal):
                     y2, x2 - 10, cls))
     for n, c in zip(comum, ("A", "B")):
         fio(n, c, "COMUM", "fio forte")
+    # ⚠️ os dois comuns sao a MESMA rede na placa (o dB montou assim e funcionou):
+    # dois fios, ou um fio e um jumper entre os comuns, sao a mesma ligacao.
+    (ax_, ay_), (bx_, by_) = perna[("A", "COMUM")], perna[("B", "COMUM")]
+    o.append('<path d="M%d %d H%d" class="fio jumper"/>' % (ax_ + 13, ay_, bx_ - 13))
+    o.append('<text x="%d" y="%d" class="rot peq meio" text-anchor="middle" font-size="12">'
+             'ou jumper</text>' % ((ax_ + bx_) // 2, ay_ - 20))
     for n, c in zip(jack, ("A", "B")):
         fio(n, c, "lado JACK")
     for n, c in zip(amp, ("A", "B")):
@@ -374,14 +380,17 @@ def dpdt(P, ref, canal):
     for n in terra:
         o.append('<path d="M40 %d H%d V%d H%d" class="fio tracejado"/>'
                  % (ypin[n], canais[n], H - 34, bx + 30))
-    o.append('<text x="%d" y="%d" class="rot peq" font-size="12">%s = dreno do cabo</text>'
+    o.append('<text x="%d" y="%d" class="rot peq" font-size="12">'
+             '%s = dreno do cabo · NÃO liga a perna nenhuma</text>'
              % (bx + 36, H - 38, E_(" e ".join(terra))))
     o.append("</svg>")
     return ('<figure class="fig"><div class="sc">%s</div><figcaption>%s</figcaption></figure>'
             % ("".join(o),
                md("Pernas pelo **que fazem**, não pelo número: **meça a sua chave** e escreva os números dela "
-                  "nas linhas. Traço **grosso** = o sinal que vem da Daisy (vai aos dois **comuns**) · "
-                  "tracejado = o dreno do cabo, que **não** vai a perna nenhuma.")))
+                  "nas linhas. Traço **grosso** = o sinal que vem da Daisy · tracejado cinzento = o dreno do "
+                  "cabo, que **não** vai a perna nenhuma. Os dois comuns são a **mesma rede**: ou leva dois "
+                  "fios (`%s` e `%s`), ou leva **um** e um **jumper** entre os comuns — dá no mesmo."
+                  % (comum[0], comum[1]))))
 
 
 def md(s):
@@ -949,6 +958,8 @@ def constroi():
                            "7": "não liga na chave (terra do cabo)", "8": "não liga na chave (terra do cabo)"}) +
           lista(["**Antes de soldar, meça a chave** com o multímetro: em cada posição, descubra qual pino do meio (comum) bipa com qual pino da ponta. Escreva os números da SUA chave nas linhas em branco do desenho.",
                  "Posição 1: comuns ligados às pernas **jack**. Posição 3: às pernas **amp**. Posição do meio: um polo em cada — **as duas saídas**.",
+                 "**Os dois comuns são a mesma rede.** Levar dois fios (`1` e `4`) ou levar **um fio e um jumper entre os dois comuns** é a mesma ligação — a segunda usa menos um fio, e foi assim que o dB montou o protótipo que funcionou.",
+                 "**Nada de terra vai à chave:** os pinos `7`/`8` são dreno do cabo. Corte-os rente e isole a ponta solta.",
                  "**Depois de fiar, confira sem energia**, bipando entre o header e a chave: posição *jack* → `1`–`2` e `4`–`5` · posição *amp* → `1`–`3` e `4`–`6` · posição *do meio* → **um par de cada** (por exemplo `1`–`2` e `4`–`6`).",
                  "⚠️ Se no meio as duas metades derem o **mesmo**, a sua chave é do outro tipo e a posição do meio **não** manda para as duas saídas. Não é defeito de montagem: é a peça."]) +
           dpdt(C, "J15", "L"),
@@ -1079,6 +1090,7 @@ svg.dpdt rect.c1{fill:var(--fio1)}svg.dpdt rect.c2{fill:var(--fio2)}svg.dpdt rec
 svg.dpdt rect.c4{fill:var(--fio4)}svg.dpdt rect.c5{fill:var(--fio5)}svg.dpdt rect.c6{fill:var(--fio6)}
 svg.dpdt .fio.forte{stroke-width:3}
 svg.dpdt .fio.tracejado{stroke:var(--suave);stroke-dasharray:5 4}
+svg.dpdt .fio.jumper{stroke:var(--tinta);stroke-width:2;stroke-dasharray:4 3}
 svg.dpdt .rot.forte{font-weight:600}
 svg.dpdt .rot.peq{font-size:12px}
 svg.dpdt .rot.fraco{fill:var(--suave)}
