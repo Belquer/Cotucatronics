@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.10.0"
+VERSAO = "0.11.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -388,10 +388,16 @@ def dpdt(P, ref, canal):
                  % (X0 + larg, ypin[n], mx, y2 + desvio, x2 - 13, y2, cls))
     for n, c in zip(comum, ("A", "B")):
         fio(n, c, "COMUM", "fio forte")
-    # ⚠️ os dois comuns sao a MESMA rede na placa (o dB montou assim e funcionou):
-    # dois fios, ou um fio e um jumper entre os comuns, sao a mesma ligacao.
-    (ax_, ay_), (bx_, by_) = perna[("A", "COMUM")], perna[("B", "COMUM")]
-    o.append('<path d="M%d %d H%d" class="fio jumper"/>' % (ax_ + 13, ay_, bx_ - 13))
+    # ⚠️ NAO SAO SO OS COMUNS. Na placa os TRES sinais estao duplicados:
+    # 1=4 (comum), 2=5 (linha), 3=6 (amp). Logo 6 fios, ou 3 fios com 3 jumpers
+    # na chave, sao a MESMA ligacao — a segunda foi a que o dB montou e que
+    # funcionou, e usa metade dos condutores. Os jumpers desenham-se em todas as
+    # linhas: desenhar so na dos comuns fazia parecer que as outras duas exigiam
+    # dois fios cada.
+    for _rot, _dy in LINHAS:
+        (ax_, ay_), (bx_, _b) = perna[("A", _rot)], perna[("B", _rot)]
+        o.append('<path d="M%d %d H%d" class="fio jumper"/>' % (ax_ + 13, ay_, bx_ - 13))
+    (ax_, ay_), (bx_, _b) = perna[("A", "COMUM")], perna[("B", "COMUM")]
     o.append('<text x="%d" y="%d" class="rot peq meio" text-anchor="middle" font-size="12">'
              'ou jumper</text>' % ((ax_ + bx_) // 2, ay_ - 20))
     for n, c in zip(jack, ("A", "B")):
@@ -409,9 +415,10 @@ def dpdt(P, ref, canal):
             % ("".join(o),
                md("Pernas pelo **que fazem**, não pelo número: **meça a sua chave** e escreva os números dela "
                   "nas linhas. Traço **grosso** = o sinal que vem da Daisy · tracejado cinzento = o dreno do "
-                  "cabo, que **não** vai a perna nenhuma. Os dois comuns são a **mesma rede**: ou leva dois "
-                  "fios (`%s` e `%s`), ou leva **um** e um **jumper** entre os comuns — dá no mesmo."
-                  % (comum[0], comum[1]))))
+                  "cabo, que **não** vai a perna nenhuma · tracejado preto = **jumper opcional**. "
+                  "Na placa os três sinais estão **duplicados** (`%s`=`%s`, `%s`=`%s`, `%s`=`%s`): por isso "
+                  "**6 fios sem jumper** e **3 fios com 3 jumpers** são a mesma ligação."
+                  % (comum[0], comum[1], jack[0], jack[1], amp[0], amp[1]))))
 
 
 def md(s):
@@ -979,7 +986,8 @@ def constroi():
                            "7": "não liga na chave (terra do cabo)", "8": "não liga na chave (terra do cabo)"}) +
           lista(["**Antes de soldar, meça a chave** com o multímetro: em cada posição, descubra qual pino do meio (comum) bipa com qual pino da ponta. Escreva os números da SUA chave nas linhas em branco do desenho.",
                  "Posição 1: comuns ligados às pernas **jack**. Posição 3: às pernas **amp**. Posição do meio: um polo em cada — **as duas saídas**.",
-                 "**Os dois comuns são a mesma rede.** Levar dois fios (`1` e `4`) ou levar **um fio e um jumper entre os dois comuns** é a mesma ligação — a segunda usa menos um fio, e foi assim que o dB montou o protótipo que funcionou.",
+                 "**Os três sinais estão duplicados na placa:** `1`=`4` (comum), `2`=`5` (linha), `3`=`6` (amp). Então há duas fiações equivalentes: **6 fios sem jumper nenhum**, ou **3 fios e 3 jumpers** na chave (comum com comum, jack com jack, amp com amp). A segunda usa metade dos condutores e foi a que funcionou no protótipo.",
+                 "Se usar 3 fios, ligue-os a **um polo só** e deixe os jumpers fazerem o resto. A posição do meio continua a mandar para as duas saídas.",
                  "**Nada de terra vai à chave:** os pinos `7`/`8` são dreno do cabo. Corte-os rente e isole a ponta solta.",
                  "**Depois de fiar, confira sem energia**, bipando entre o header e a chave: posição *jack* → `1`–`2` e `4`–`5` · posição *amp* → `1`–`3` e `4`–`6` · posição *do meio* → **um par de cada** (por exemplo `1`–`2` e `4`–`6`).",
                  "⚠️ Se no meio as duas metades derem o **mesmo**, a sua chave é do outro tipo e a posição do meio **não** manda para as duas saídas. Não é defeito de montagem: é a peça."]) +

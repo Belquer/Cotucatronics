@@ -388,12 +388,16 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
   altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
   Ver `caixa/LICOES-MONTAGEM.md` #10.
-- **DPDT, a fiação que já funcionou (dB, 21/09):** os **dois comuns ligados
-  entre si** com um jumper, **um só fio** da placa até eles, e **nenhum terra
-  na chave**. É eletricamente idêntico a levar dois fios (`J15` pinos 1 e 4 são
-  a mesma rede, `OUT_L_DAISY`), e usa menos um condutor. O desenho do manual
-  mostrava só a versão de dois fios e por isso pareceu divergir do que estava
-  montado — passou a mostrar as duas, com o jumper desenhado.
+- **DPDT, a fiação que já funcionou (dB, 21/09): 3 fios e 3 jumpers**, com
+  **nenhum terra na chave**. Medido na placa: os três sinais estão
+  **duplicados** no header — `1`=`4` (`OUT_L_DAISY`), `2`=`5` (`LINHA_L`),
+  `3`=`6` (`AMP_IN_L`) — porque os dois polos trabalham em paralelo, e é isso
+  que dá a posição do meio com **as duas saídas**. Logo **6 fios sem jumper** e
+  **3 fios com 3 jumpers** são a mesma ligação: na primeira o paralelo é feito
+  no cobre da placa, na segunda é feito na chave.
+  O desenho do manual mostrava só a de 6 fios e por isso pareceu divergir do
+  que estava montado; passou a mostrar as duas, com os jumpers desenhados nas
+  três linhas.
 - **Amplificador: energia pelo `J2`, áudio pelo `J11` (dB, 20/09).** O módulo
   em mão alimenta-se por **borne de parafuso**, então o `J2` leva a força
   (+15 V/GND, fio curto e grosso — é retorno de força, regra da estrela) e o
