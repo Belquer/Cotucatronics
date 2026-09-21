@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.9.0"
+VERSAO = "0.10.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -328,16 +328,38 @@ def dpdt(P, ref, canal):
     o = ['<svg viewBox="0 0 %d %d" role="img" aria-label="%s" class="mapa dpdt">'
          % (W, H, E_("ligacao do %s a chave DPDT do canal %s" % (ref, canal)))]
     o.append('<text x="14" y="22" class="rot forte">%s — canal %s</text>' % (E_(ref), E_(canal)))
+    # ⚠️ 21/09, a pedido do dB: o header sai com a GEOMETRIA REAL do footprint —
+    # a coluna, o passo de 2,54 mm, o pad 1 quadrado — e nao com pastilhas
+    # inventadas. O desenho e a placa na mao passam a ser a mesma imagem.
+    f = P.fp[ref]
+    reais = {pd["n"]: (pd["x"], pd["y"]) for pd in f["pads"]}
+    cxs = [x for x, _ in f["corpo"]]
+    cys = [y for _, y in f["corpo"]]
+    mmx0, mmy0 = min(cxs), min(cys)
+    PXD = 14.0                     # px por mm
+    X0, Y0 = 20, 46
+    larg = (max(cxs) - mmx0) * PXD
+    alt = (max(cys) - mmy0) * PXD
+    o.append('<rect x="%d" y="%d" width="%.0f" height="%.0f" rx="3" class="corpo"/>'
+             % (X0, Y0, larg, alt))
     ypin = {}
-    for i, n in enumerate(sorted(pads, key=int)):
-        y = 56 + i * 40
+    for n in sorted(pads, key=int):
+        mx, my = reais[n]
+        x = X0 + (mx - mmx0) * PXD
+        y = Y0 + (my - mmy0) * PXD
         ypin[n] = y
-        o.append('<rect x="14" y="%d" width="26" height="22" class="%s %s"/>'
-                 % (y - 11, "pad1" if n == "1" else "pad", cor.get(n, "")))
-        o.append('<text x="27" y="%d" class="rot dentro" text-anchor="middle" font-size="11">%s</text>'
-                 % (y + 4, n))
-        o.append('<text x="48" y="%d" class="rot peq fraco" font-size="12">%s</text>'
-                 % (y - 15, E_(pads[n] or "—")))
+        r = 12
+        if n == "1":
+            o.append('<rect x="%.0f" y="%.0f" width="%d" height="%d" class="pad1 %s"/>'
+                     % (x - r, y - r, 2 * r, 2 * r, cor.get(n, "")))
+        else:
+            o.append('<circle cx="%.0f" cy="%.0f" r="%d" class="pad %s"/>'
+                     % (x, y, r, cor.get(n, "dreno")))
+        o.append('<text x="%.0f" y="%.0f" class="rot dentro" text-anchor="middle" font-size="12">%s</text>'
+                 % (x, y + 4, n))
+        # ⚠️ o rotulo da rede sai DEPOIS do courtyard, senao cruza a borda dele
+        o.append('<text x="%.0f" y="%.0f" class="rot peq fraco" font-size="12">%s</text>'
+                 % (X0 + larg + 12, y - 12, E_(pads[n] or "—")))
     bx, by = 430, 44
     o.append('<rect x="%d" y="%d" width="150" height="268" class="corpo"/>' % (bx, by))
     o.append('<text x="%d" y="%d" class="rot forte">CHAVE DPDT ON-ON-ON</text>' % (bx - 4, by - 10))
@@ -362,9 +384,8 @@ def dpdt(P, ref, canal):
         x2, y2 = perna[(c, rot)]
         mx = canais[n]
         desvio = 0 if c == "A" else 22          # o polo B passa ABAIXO da perna A
-        o.append('<path d="M40 %d H%d V%d H%d V%d H%d" class="%s"/>'
-                 % (ypin[n], mx, y2 + desvio, x2 - 10 if c == "A" else x2 - 10,
-                    y2, x2 - 10, cls))
+        o.append('<path d="M%.0f %.0f H%d V%d H%d V%d" class="%s"/>'
+                 % (X0 + larg, ypin[n], mx, y2 + desvio, x2 - 13, y2, cls))
     for n, c in zip(comum, ("A", "B")):
         fio(n, c, "COMUM", "fio forte")
     # ⚠️ os dois comuns sao a MESMA rede na placa (o dB montou assim e funcionou):
@@ -378,8 +399,8 @@ def dpdt(P, ref, canal):
     for n, c in zip(amp, ("A", "B")):
         fio(n, c, "lado AMP")
     for n in terra:
-        o.append('<path d="M40 %d H%d V%d H%d" class="fio tracejado"/>'
-                 % (ypin[n], canais[n], H - 34, bx + 30))
+        o.append('<path d="M%.0f %.0f H%d V%d H%d" class="fio tracejado"/>'
+                 % (X0 + larg, ypin[n], canais[n], H - 34, bx + 30))
     o.append('<text x="%d" y="%d" class="rot peq" font-size="12">'
              '%s = dreno do cabo · NÃO liga a perna nenhuma</text>'
              % (bx + 36, H - 38, E_(" e ".join(terra))))
@@ -1086,8 +1107,10 @@ svg.dpdt .rot{text-anchor:start;fill:var(--tinta);font-size:13px;font-weight:500
 svg.dpdt .fio{fill:none;stroke:var(--azul);stroke-width:2.2;stroke-linejoin:round}
 svg.dpdt .c1{stroke:var(--fio1)}svg.dpdt .c2{stroke:var(--fio2)}svg.dpdt .c3{stroke:var(--fio3)}
 svg.dpdt .c4{stroke:var(--fio4)}svg.dpdt .c5{stroke:var(--fio5)}svg.dpdt .c6{stroke:var(--fio6)}
-svg.dpdt rect.c1{fill:var(--fio1)}svg.dpdt rect.c2{fill:var(--fio2)}svg.dpdt rect.c3{fill:var(--fio3)}
-svg.dpdt rect.c4{fill:var(--fio4)}svg.dpdt rect.c5{fill:var(--fio5)}svg.dpdt rect.c6{fill:var(--fio6)}
+svg.dpdt rect.c1,svg.dpdt circle.c1{fill:var(--fio1)}svg.dpdt rect.c2,svg.dpdt circle.c2{fill:var(--fio2)}
+svg.dpdt rect.c3,svg.dpdt circle.c3{fill:var(--fio3)}svg.dpdt rect.c4,svg.dpdt circle.c4{fill:var(--fio4)}
+svg.dpdt rect.c5,svg.dpdt circle.c5{fill:var(--fio5)}svg.dpdt rect.c6,svg.dpdt circle.c6{fill:var(--fio6)}
+svg.dpdt circle.dreno{fill:var(--suave)}
 svg.dpdt .fio.forte{stroke-width:3}
 svg.dpdt .fio.tracejado{stroke:var(--suave);stroke-dasharray:5 4}
 svg.dpdt .fio.jumper{stroke:var(--tinta);stroke-width:2;stroke-dasharray:4 3}
