@@ -10536,3 +10536,57 @@ com cara de manual.
   jack, amp e o dreno. O paralelo dos polos faz-se na chave, com os jumpers,
   como sempre se fez. Metade dos pinos, metade do cabo, e uma decisão a menos
   para quem monta.
+
+---
+
+## 15fd — o iPad ligava e nada acontecia: a ponte falava por pinos que a placa não tem
+
+A 21/09 o dB montou o cérebro, desligou o painel, e foi ao Loopy: o iPad viu o
+`Cotucatronics`, **ligou**, ele mexeu nos parâmetros — e nada. A placa dizia a
+verdade ao primeiro `board`:
+
+```
+midi: 0 volta(s) com sobra · pico 0 de 128 bytes do anel
+midi tx: DESCARTES 70 | falhas 631   <-- a ponte esta ligada?
+```
+
+**Nunca chegou um byte.** Causa, medida em dez minutos comparando duas fontes:
+
+| | pinos |
+|---|---|
+| `esp32/ponte/ponte.ino` **v0.5.0** | `GPIO4` (TX) · `GPIO5` (RX) · `GPIO6` (status) |
+| cérebro rev C, soquete `U3` | `IO21` (TX) · `IO20` (RX) · `IO3` (status) |
+
+**Os dois estavam certos no seu tempo.** O firmware escolheu `GPIO4/5/6` quando
+a ponte vivia em **cinco fios soltos** — e escolheu-os com razão escrita, para
+não gastar o `GPIO20/21`, que é a consola. Quando a ponte passou a entrar num
+**soquete**, a escolha deixou de ser dele: passou a estar em **cobre**. Ninguém
+voltou ao ficheiro.
+
+> **Quando uma peça deixa de ser ligada por fio e passa a entrar num soquete,
+> o mapa de pinos MUDA DE DONO.** O ficheiro que escolhia passa a obedecer, e
+> nada no ficheiro avisa que isso aconteceu.
+
+⚠️ **E o sintoma não acusa a causa, porque metade do sistema funciona.** O BLE
+não usa esses pinos: o iPad vê o nome, liga, o Loopy desenha os controlos. Tudo
+parece bem até se perguntar à Daisy **quantos bytes chegaram**. Um sistema que
+tem rádio e fio falha com a cara do rádio a funcionar.
+
+⚠️ **Nenhum portão do repo cruzava firmware com cobre.** Havia ERC, DRC,
+netlist, `encaixe`, `check_docs` — e duas fontes do mesmo facto (o mapa de
+pinos) sem ninguém a compará-las. Uma delas está gravada num ESP32, a outra
+fabricada em fibra de vidro: a comparação tinha de ser um **terceiro**.
+
+**O que ficou (21/09):**
+
+- `esp32/ponte/ponte.ino` **v1.0.0** (MAJOR, porque o contrato de fiação muda):
+  `PINO_TX = 21`, `PINO_RX = 20`, `PINO_STATUS = 3`. O cabeçalho diz que **a
+  placa é a fonte** desde a rev C, e declara o preço de usar o `IO20/21`: são o
+  UART0 da ROM, e o log do bootloader entra no RX de MIDI da Daisy no arranque
+  — lixo que o parser ignora, mas que é uma diferença real face aos `GPIO4/5`.
+- `tools/pinos_ponte.py` **v0.1.0**: lê as constantes do `.ino` e as redes do
+  `U3` no `.kicad_pcb` e **recusa** se divergirem, com o sentido cruzado
+  conferido (o TX da ponte tem de cair na rede que vai ao **RX** da Daisy).
+  Provado com sabotagem: pondo o `PINO_TX` de volta em `4`, reprova.
+- `esp32/README.md`: a tabela dos cinco fios passa a dizer os pinos do soquete,
+  com a nota de que mudou e porquê.

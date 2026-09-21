@@ -16,9 +16,16 @@ engordou e a decisão inteira volta à mesa.
 |---|---|---|
 | `5V` | rail 5 V | aceita 4,3–6,0 V |
 | `GND` | GND | |
-| `GPIO4` (TX) | **D14** (RX) | ★ CRUZADO |
-| `GPIO5` (RX) | **D13** (TX) | ★ CRUZADO |
-| `GPIO6` (status) | **D28** | **ativo em BAIXO** |
+| `IO21` (TX) | **D14** (RX) | ★ CRUZADO |
+| `IO20` (RX) | **D13** (TX) | ★ CRUZADO |
+| `IO3` (status) | **D28** | **ativo em BAIXO** |
+
+> ⚠️ **Mudou a 21/09 (ponte v1.0.0), e é MAJOR.** Até à v0.5.0 eram
+> `GPIO4/5/6`, escolhidos aqui porque a ponte vivia em cinco fios soltos.
+> Desde a rev C o módulo entra no **soquete `U3`** e os pinos estão em cobre:
+> a placa passou a ser a fonte. Uma ponte com firmware antigo numa placa rev C
+> **liga no iPad e não entrega nada** — o rádio não usa estes pinos.
+> `tools/pinos_ponte.py` compara os dois e recusa se divergirem.
 | `GPIO8` | — | LED de bordo, só desta placa |
 
 **DADOS CRUZADOS.** Ligar reto não queima: dá silêncio, idêntico a módulo

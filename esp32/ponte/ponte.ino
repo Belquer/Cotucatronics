@@ -38,15 +38,33 @@
 #include <MIDI.h>
 #include <Preferences.h>
 
-#define PONTE_VERSAO "0.5.0"
+#define PONTE_VERSAO "1.0.0"
 
 // ---- pinos -----------------------------------------------------------------
-// A GPIO Matrix do C3 poe a UART em quase qualquer pino — o oposto da Daisy.
-// Evitados: GPIO20/21 (console USB, preciso deles para depurar), GPIO2/8/9
-// (strapping), GPIO18/19 (USB nativo).
-static const int PINO_TX     = 4;   // -> D14 da Daisy (RX)   ★ CRUZADO
-static const int PINO_RX     = 5;   // <- D13 da Daisy (TX)   ★ CRUZADO
-static const int PINO_STATUS = 6;   // -> D28 da Daisy, ATIVO EM BAIXO
+// ⚠️⚠️ MAJOR a 21/09: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
+//
+// Ate a v0.5.0 este ficheiro escolhia os pinos — GPIO4/5/6 — porque a ponte
+// vivia em cinco fios soltos e a escolha era dele. Desde a rev C o modulo
+// entra num SOQUETE (`U3` do cerebro) e os pinos estao em COBRE:
+//
+//     IO20 <- MIDI_TX   (D13/USART1_TX da Daisy)   -> e o RX desta placa
+//     IO21 -> MIDI_RX   (D14/USART1_RX da Daisy)   -> e o TX desta placa
+//     IO3  -> PONTE_STATUS (D28 da Daisy), ATIVO EM BAIXO
+//
+// O firmware antigo gravado numa placa rev C da EXACTAMENTE o sintoma de
+// 21/09: o iPad ve e liga (o radio nao usa estes pinos), e a Daisy conta
+// `pico 0 de 128 bytes do anel` — nunca chegou um byte. Nao ha como o
+// perceber pelo BLE, porque o BLE funciona.
+//
+// ⚠️ O preco de IO20/21: sao o UART0 da ROM. No arranque o bootloader da ROM
+// cospe o log dele a 115200 por IO21, e esses bytes entram no RX de MIDI da
+// Daisy. Sao lixo para um parser de MIDI, que os ignora, e duram o arranque —
+// mas e uma diferenca real face aos GPIO4/5, e fica dita.
+// ⚠️ E por isso o `Serial` desta placa TEM de ser USB CDC (`CDCOnBoot=cdc`):
+// sem isso a consola sai por IO20/21 e mistura-se com o MIDI. Ver esp32/README.
+static const int PINO_TX     = 21;  // -> D14 da Daisy (RX)   ★ CRUZADO
+static const int PINO_RX     = 20;  // <- D13 da Daisy (TX)   ★ CRUZADO
+static const int PINO_STATUS = 3;   // -> D28 da Daisy, ATIVO EM BAIXO
 static const int PINO_LED    = 8;   // LED de bordo do SuperMini, ativo em baixo
 
 // GPIO8 e strapping, mas so no instante do boot; depois disso e o LED de
