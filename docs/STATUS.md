@@ -388,6 +388,13 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
   altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
   Ver `caixa/LICOES-MONTAGEM.md` #10.
+- **Painel, estado da primeira ligação (22/09):** alimentação **5 V e 3,3 V**
+  boas · os **três botões** respondem (o branco dos búzios é **NF**, exceção
+  declarada no firmware, `hal` v0.76.0) · os **dois pots** lidos pelo ADC ·
+  **LEDs dos arcade a funcionar** depois de trocar o chicote comprado, que vinha
+  com as cores cruzadas (bts 15fh).
+  ⚠️ **Por resolver: o OLED não liga** e o **encoder conta 1 pulso em 20
+  cliques**, com os três pinos dele a comutar — suspeita no terminal comum.
 - ⚠️ **Dívida medida a 22/09: 15 dos 47 mapas do manual têm colisão de texto.**
   Medido com `tools/svg_colisoes.py` mapa a mapa — **15 antes e 15 depois** da
   mudança do rótulo que desvia (logo não é regressão, é herança). São na maioria

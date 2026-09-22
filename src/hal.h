@@ -106,6 +106,10 @@ bool             ReadButton(int index);        // true = pressionado
 // possa mascarar a resposta — mesma razao de o `pk` medir a entrada de
 // audio antes de qualquer ganho. true = pino BAIXO (o que o botao faz).
 bool             ButtonNivelCru(int index);
+// Botao declarado NORMALMENTE FECHADO (excecao de hardware, ver o .cpp): a
+// leitura LOGICA inverte-se, o nivel CRU nao. Existe para o diagnostico poder
+// dizer que "sempre baixo" ali e o esperado.
+bool             ButtonNormalmenteFechado(int index);
 
 // Nivel CRU do pino ligado ao pad LB do WIDI (seed::D28), com pull-up
 // interno. Devolve o que o pino le, SEM interpretacao — quem classifica

@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.14.0"
+VERSAO = "0.15.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -802,7 +802,8 @@ def constroi():
                   ["2", "`%s`" % Pn.rede("J6", "2"), "**−** do LED do arcade"]]) +
           lista(["Aqui **não** use JST: virado por baixo ele trocaria + com −.",
                  "Solde dois fios (vermelho no ■, preto no outro) direto nos furos, **por baixo**. Faça igual no `J7` (arcade B).",
-                 "Marque na ponta de cada fio: **A+**, **A−**, **B+**, **B−**."]),
+                 "Marque na ponta de cada fio: **A+**, **A−**, **B+**, **B−**.",
+                 "⚠️ **Não confie na cor de um chicote comprado.** Um par macho/fêmea do mesmo saco pode sair com o vermelho de um lado a casar com o preto do outro — aconteceu aqui a 22/09, e os LEDs não acendiam com a placa perfeita. A ficha só entra de um jeito, mas a chave garante o **pino**, não a **cor**. **Bipe pino a pino antes de ligar**, e marque as duas pontas."]),
           fig=mapa(Pn, ["J6", "J7"], baixo=True, marcas=[("J6", "1", "+"), ("J7", "1", "+")]),
           qtd="4 fios", fonte="`LICOES-MONTAGEM.md` #9")
 

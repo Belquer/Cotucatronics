@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.75.0
+// hal_daisy_seed v0.76.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.75.0"
+#define COTUCA_HAL_VERSION "0.76.0"
 
 using namespace daisy;
 
@@ -623,6 +623,35 @@ bool ReadWidiLed()
     return widi_led.Read();
 }
 
+// ⚠️ 22/09 — O BOTAO BRANCO DO BUZIOS E NORMALMENTE FECHADO, e isto e uma
+// EXCECAO DECLARADA, nao um conserto silencioso.
+//
+// O arcade branco que o dB montou traz um microinterruptor com DOIS terminais
+// so, e em repouso ele esta FECHADO: a placa media `B1 baixo em 400/400
+// amostras`, e apertar ABRIA o contacto (8 amostras altas em 1,3 milhoes). Os
+// outros dois botoes, com LED, sao normalmente abertos como o desenho supoe.
+//
+// Porque em firmware e nao no fio: o botao nao tem terceiro terminal para onde
+// mudar. A alternativa era trocar o microinterruptor — e fica registada como a
+// preferida (bts 15fh), porque esta excecao e uma divergencia entre o que a
+// placa DIZ e o que a placa FAZ.
+//
+// ⚠️ E por isso ela tem de se VER: o `pino` marca os botoes declarados NF, e o
+// nivel CRU continua a reportar a verdade electrica — inverter ali faria o
+// diagnostico mentir exactamente onde ele serve para achar defeito.
+static const bool botao_nf[kNumButtons] = {
+    true,    // B1 buzios — branco, microinterruptor NF (dB, 22/09)
+    false,   // B2 freeze A
+    false,   // B3 rearme do CTOS
+    false,   // B4 freeze B
+};
+
+bool ButtonNormalmenteFechado(int index)
+{
+    if(index < 0 || index >= kNumButtons) return false;
+    return botao_nf[index];
+}
+
 bool ButtonNivelCru(int index)
 {
     if(index < 0 || index >= kNumButtons) return false;
@@ -634,7 +663,9 @@ bool ReadButton(int index)
     if(index < 0 || index >= kNumButtons)
         return false;
     ButtonState&   b   = buttons[index];
-    const bool     raw = !b.gpio.Read(); // pull-up: baixo = pressionado
+    // pull-up: baixo = fechado. "Pressionado" e fechado num botao NA e ABERTO
+    // num NF — a inversao vive AQUI, na leitura logica, e so aqui.
+    const bool     raw = botao_nf[index] ? b.gpio.Read() : !b.gpio.Read();
     const uint32_t now = System::GetNow();
 
     if(raw != b.raw_last)

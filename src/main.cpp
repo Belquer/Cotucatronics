@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.302.0"
+#define COTUCA_OS_VERSION "0.303.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -4950,10 +4950,16 @@ static void HandleLine(const char* line)
         // e quem le para de ler antes de precisar coordenar nada.
         hal::Log("pino: desde o boot, %lu amostras no laco —"
                  " CRU, sem debounce", (unsigned long)cru_amostras);
+        // ⚠️ O NIVEL CRU NAO SE INVERTE — ele e a verdade electrica, e e
+        // com ela que se acha defeito. Mas um botao declarado NORMALMENTE
+        // FECHADO le-se ao contrario, e sem esta marca a linha "SEMPRE
+        // BAIXO" passa por defeito quando e o funcionamento esperado.
         for(int i = 0; i < hal::Info().num_buttons && i < 8; i++)
-            hal::Log("  B%d  ja fechou pra GND: %-3s  (%lu amostras em baixo)",
+            hal::Log("  B%d  ja fechou pra GND: %-3s  (%lu amostras em baixo)%s",
                      i + 1, cru_ja_baixo[i] ? "SIM" : "NAO",
-                     (unsigned long)cru_n_baixo[i]);
+                     (unsigned long)cru_n_baixo[i],
+                     hal::ButtonNormalmenteFechado(i)
+                         ? "  <- NF declarado: em repouso fica BAIXO" : "");
         if(strstr(line, "reset"))
         {
             for(int i = 0; i < 8; i++) { cru_ja_baixo[i] = false; cru_n_baixo[i] = 0; }

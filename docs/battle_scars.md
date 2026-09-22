@@ -10709,3 +10709,36 @@ cérebro e reprova os 5 do painel, que é a verdade. Provado com `--sabota tp`.
 **Para a próxima rev do painel:** os `TP` passam para `B.Cu` com o nome em
 `B.Silkscreen` — e vale acrescentar os que faltam, porque hoje não há ponto de
 teste nenhum nos botões nem no encoder.
+
+---
+
+## 15fh — o chicote comprado cruza as cores, e a cor não é polaridade
+
+22/09. Os LEDs dos arcade não acendiam. A placa fazia tudo certo — os dois
+`frz_on` ligados, o firmware a pedir os LEDs acesos. O defeito estava no cabo, e
+a descrição do dB é a lição inteira:
+
+> *"comprei um saco com JSTs macho e fêmea. Eles só encaixam numa orientação.
+> Mas quando você conecta o macho e a fêmea, as cores estão trocadas. Então
+> agora, testado e funcionando, tenho um pigtail macho vermelho-e-preto ligado
+> a um pigtail fêmea preto-e-vermelho."*
+
+A ficha **só entra de um jeito** — logo ninguém suspeita dela. A chave mecânica
+garante a posição do PINO, e não a cor do FIO: quem monta o chicote decide de
+que lado põe o vermelho, e os dois lados do mesmo saco foram montados ao
+contrário um do outro.
+
+> **Cor de fio é convenção de quem crimpou, não propriedade do circuito.** O
+> que manda é o pino — e na placa, o pad quadrado. É a mesma regra do pino 1
+> dos chips e dos bornes (15ez, 15fb): *a marca física manda sobre o rótulo*.
+
+⚠️ **E o modo de falha é silencioso nas duas direções.** Num LED, inverter só
+apaga. Nos JST dos botões de arcade não faz mal nenhum, porque interruptor não
+tem polaridade — mas foi por isso que o manual já mandava **não usar JST** no
+`J6`/`J7`: ali a polaridade importa, e virar a ficha trocaria o ânodo com o
+cátodo. A cicatriz mostra que o risco não precisa da ficha virada: basta o
+chicote vir cruzado de fábrica.
+
+**A regra que fica, e é barata:** antes de ligar qualquer chicote comprado,
+**bipar pino a pino** e marcar as duas pontas. Vinte segundos por cabo, contra
+uma tarde a medir a placa que estava certa.
