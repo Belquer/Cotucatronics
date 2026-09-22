@@ -388,6 +388,32 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
   altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
   Ver `caixa/LICOES-MONTAGEM.md` #10.
+- ⚠️ **Dívida medida a 22/09: 15 dos 47 mapas do manual têm colisão de texto.**
+  Medido com `tools/svg_colisoes.py` mapa a mapa — **15 antes e 15 depois** da
+  mudança do rótulo que desvia (logo não é regressão, é herança). São na maioria
+  rótulos a cruzar o bordo da placa (`texto×borda contentor`) e dois casos de
+  `texto×texto` (`VCC`/`GND` no mapa do OLED, e `1 vermelho`/`2`). Até hoje só
+  os desenhos novos passavam pelo portão; os mapas antigos nunca passaram.
+- ✅ **22/09: o cérebro toca.** Piezo → pré-amp → Daisy → delay e reverb →
+  saída de linha, nos **dois** canais, sem clip em lado nenhum. O que estava
+  entre a montagem e este parágrafo está em `battle_scars.md` **15fd**, **15fe**
+  e **15ff**: ponte com pinos errados, três soldas frias em cadeia, e o divisor
+  de entrada que nunca tinha sido medido com o piezo real.
+- **Estado medido deste exemplar (22/09), para não se reinventar depois:**
+  · piezos: **18 nF** (corda de metal, entra no `p1`/`J5`) e **17 nF**
+  (estrutura junto à pele do tambor, entra no `p2`/`J6`)
+  · `C12` e `C22`: **22 nF de fábrica + 100 nF C0G soldado por cima** →
+  atenuação de **−17,8 dB** por canal
+  · picos tocando forte: **−1,4 dBFS** no `p1` e **−15,6 dBFS** no `p2`, `clip 0`
+  · `pre_level_ab` = **0,5** (era 1,0; a soma interna estourava em +5,5 dBFS)
+  · `k1`/`k2` = 0,60 · `post_level_l/r` = 0,88 · saída em **−12,7 dBFS** de pico
+  ⚠️ **A assimetria de 14 dB entre os canais é do INSTRUMENTO**, não defeito:
+  corda de metal e pele de tambor são fontes diferentes. Quem "corrigir" isso
+  desfaz o ajuste.
+  ⚠️ **Por decidir:** o `p1` está a 1,4 dB do teto. O firmware recomenda mais
+  6 dB — seria trocar o 100 nF do `C12` por 220 nF. Não feito ainda.
+  ⚠️ **Tudo isto vive na RAM:** qualquer regravação da Daisy repõe os params a
+  zero, e só os capacitores ficam.
 - **DPDT, a fiação que já funcionou (dB, 21/09, descrita da peça montada):
   3 fios e UM jumper, chave usada na DIAGONAL.** `A1` = linha (mixer) ·
   `B1` **vazia** · `A2`–`B2` jumpeados = o comum, que recebe o sinal ·

@@ -78,6 +78,26 @@ Consequência: **§3 é edição de `.kicad_sch` à mão**, e vale a `edicao-seg
    enquanto a rev D não for fabricada. A rev D entra como linha nova, não como
    substituição.
 
+## §3b — O que a primeira montagem (22/09) acrescentou à lista
+
+Três requisitos que não vêm de limpeza, vêm de bancada — ver `battle_scars.md`
+**15fe** e **15ff**:
+
+1. **Pontos de teste no caminho do piezo.** Os onze `TP` da placa cobrem
+   alimentação, terras e as saídas de linha; **nenhum** toca a cadeia de
+   entrada, que é a mais sensível e a que falhou. A rev D leva, por canal, um
+   `TP` na **saída do pré-amp** — que repousa no VBIAS e diz num segundo se o
+   `U1` está vivo.
+2. **O divisor de entrada com pads para dois valores.** O `C12`/`C22` de 22 nF
+   dá −6,9 dB com um piezo de 18 nF, e a bancada precisou de **−17,8 dB**. A
+   rev D leva o valor medido como ponto de partida **e** um segundo pad em
+   paralelo, porque cada fonte pede o seu — e a serigrafia diz que os dois
+   canais podem (e devem) ficar diferentes.
+3. **A conta de margem escrita ao lado do valor.** O −6 dB original era uma
+   estimativa que nenhuma revisão confrontou com o transdutor real. O que fecha
+   isto não é outro valor: é a **frase que diz qual piezo, qual acoplamento e
+   qual pico medido** justificam o valor.
+
 ## §4 — Aceitação (o que prova que está feito)
 
 - `compara_netlist.py` rev C → rev D: as **únicas** diferenças são as redes que

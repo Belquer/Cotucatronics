@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.13.0"
+VERSAO = "0.14.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -250,6 +250,7 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, 
         out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="furo"/>' % (tx(x), ty(y), 1.6 * PX))
         out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="furo-anilha"/>' % (tx(x), ty(y), 3.5 * PX))
         out.append('<text x="%.1f" y="%.1f" class="rot furo-rot">%s</text>' % (tx(x), ty(y) - 4.3 * PX, E(rot)))
+    postos = []          # caixas dos rotulos ja escritos, para nao se pisarem
     for ref in refs:
         f = P.fp.get(ref)
         if not f:
@@ -273,7 +274,40 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, 
             cx = sum(x for x, _ in f["corpo"]) / len(f["corpo"])
             cy = min(y for _, y in f["corpo"])
             lab = (rotulos or {}).get(ref, ref)
-            out.append('<text x="%.1f" y="%.1f" class="rot">%s</text>' % (tx(cx), ty(cy) - 5, E(lab)))
+            # ⚠️ 22/09: o rotulo ia sempre ACIMA da peca, e acima pode estar
+            # OUTRA peca — o `U1` escrevia sobre o contorno do `C22`, que e
+            # defeito (design-review §1). Descer cegamente tambem nao serve:
+            # descido, ele bateu no rotulo do `R5`. Entao testam-se quatro
+            # posicoes e escolhe-se a primeira livre, contra as pecas E contra
+            # os rotulos ja postos. Livre nenhuma, fica a de cima e o portao
+            # acusa — melhor acusar do que esconder.
+            larg = len(lab) * 0.55 * 15.0
+            xs_c = [tx(x) for x, _ in f["corpo"]]
+            ys_c = [ty(y) for _, y in f["corpo"]]
+            cands = [(tx(cx), min(ys_c) - 5),                       # acima
+                     (tx(cx), max(ys_c) + 15),                      # abaixo
+                     (max(xs_c) + larg / 2 + 6, (min(ys_c) + max(ys_c)) / 2 + 5),
+                     (min(xs_c) - larg / 2 - 6, (min(ys_c) + max(ys_c)) / 2 + 5)]
+            def livre(lx, ly):
+                a = (lx - larg / 2, ly - 11, lx + larg / 2, ly + 4)
+                for g in list(P.fp.values()):
+                    if not g["corpo"] or g["ref"] == ref:
+                        continue
+                    gx = [tx(x) for x, _ in g["corpo"]]
+                    gy = [ty(y) for _, y in g["corpo"]]
+                    if not (a[2] < min(gx) or a[0] > max(gx) or a[3] < min(gy) or a[1] > max(gy)):
+                        return False
+                for b in postos:
+                    if not (a[2] < b[0] or a[0] > b[2] or a[3] < b[1] or a[1] > b[3]):
+                        return False
+                return True
+            lx, ly = cands[0]
+            for c in cands:
+                if livre(*c):
+                    lx, ly = c
+                    break
+            postos.append((lx - larg / 2, ly - 11, lx + larg / 2, ly + 4))
+            out.append('<text x="%.1f" y="%.1f" class="rot">%s</text>' % (lx, ly, E(lab)))
     for ref, n, txt in marcas:
         for p in P.fp[ref]["pads"]:
             if p["n"] == n:
@@ -701,6 +735,25 @@ def constroi():
           fig=mapa(C, elec, vazios=vaz_tht),
           pare="Eletrolítico ao contrário **estoura** quando liga. Confira os quatro antes de soldar.",
           qtd="×%d" % len(elec))
+    # ⚠️ 22/09 (bts 15fe): tres soldas frias em cadeia custaram um dia de
+    # bancada, e as duas primeiras — o divisor do VBIAS e os pinos do U1 —
+    # apareciam como "piezo mudo". Duas leituras de multimetro, feitas AQUI,
+    # tinham-nas apanhado antes de existir piezo no jack.
+    passo("2", "Cérebro · PROVE o pré-amp antes de seguir (dois multímetros de dois segundos)",
+          "<p>%s</p>" % md("Ligue os **15 V** (decoy PD no `J1`) e meça, com a ponta preta no `TP8` (GND):") +
+          tabela(["medida", "onde", "tem de dar", "se não der"], [
+              ["alimentação do pré-amp", "`TP3`", "**~14,6 V**", "o `R7` ou o trilho de 15 V"],
+              ["**polarização**", "**`TP4`**", "**~metade do `TP3`** (~7,3 V)", "solda fria no `R5`/`R6` — foi este o defeito de 22/09"],
+              ["saída do canal A", "`U1` pino **1**", "**igual ao `TP4`**", "junta do `U1`, lado A"],
+              ["saída do canal B", "`U1` pino **7**", "**igual ao `TP4`**", "junta do `U1`, lado B"],
+          ]) +
+          lista(["**Alimentação boa não é polarização boa.** O `TP2` e o `TP3` podem dar 15 V e 14,6 V com o instrumento inteiro mudo: sem o `TP4` você não sabe.",
+                 "As duas saídas do `U1` repousam no VBIAS. Uma delas fora disso, com a outra certa, é **junta do chip** — e o par simétrico é o que denuncia.",
+                 "Se uma junta for intermitente, ela passa uma vez e falha depois. **Pressione levemente o `U1` com um palito** enquanto mede: se a leitura mudar, refaça os oito pinos."]),
+          pare="Não siga para os piezos com o `TP4` fora dos ~7 V. Tudo o que vier depois — jack, cabo, transdutor — vai parecer culpado, e não é.",
+          fig=mapa(C, ["U1", "R5", "R6"]),
+          fonte="`docs/battle_scars.md` 15fe · medido na primeira montagem, 22/09")
+
     passo("2", "Cérebro · caixa de pinos IDC J14 (para o cabo do painel)",
           lista(["A caixa de pinos tem um **entalhe** (chave) no meio de um dos lados compridos. Coloque-a com o entalhe do lado desenhado na serigrafia da placa.",
                  "O **pino 1** fica no pad marcado ■ no desenho."]),

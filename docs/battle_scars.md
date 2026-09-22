@@ -10590,3 +10590,83 @@ fabricada em fibra de vidro: a comparação tinha de ser um **terceiro**.
   Provado com sabotagem: pondo o `PINO_TX` de volta em `4`, reprova.
 - `esp32/README.md`: a tabela dos cinco fios passa a dizer os pinos do soquete,
   com a nota de que mudou e porquê.
+
+---
+
+## 15fe — três soldas frias em cadeia, e cada sintoma apontava para o lugar errado
+
+21–22/09, a primeira ligação do cérebro montado. O dB: *"o iPad conecta, mudo os
+parâmetros no Loopy e nada acontece"*. Do fim ao princípio, foram **três**
+defeitos independentes, todos de montagem, e nenhum deles se parecia com o que
+era:
+
+| o que parecia | o que era | o que desmentiu |
+|---|---|---|
+| problema do iPad ou do Loopy | ponte com firmware de pinos antigos (15fd) | `midi: pico 0 de 128 bytes do anel` |
+| piezo ou cabo mortos | **solda fria no divisor do VBIAS** (`R5`/`R6`) | `TP4` = 0 V com `TP2` = 15 V e `TP3` = 14,66 V |
+| jack `p2` mal fiado | **junta intermitente no `U1`** | pressionar o chip fazia o canal voltar |
+
+> **Alimentação boa não é polarização boa.** O `TP2` e o `TP3` diziam 15 V e
+> 14,66 V, e o instrumento estava morto na mesma: sem o `TP4` a leitura de
+> alimentação é meia verdade que se lê como verdade inteira.
+
+⚠️ **O `p2` respondeu ao dedo UMA vez, e essa resposta mandou-me para o jack.**
+Era o `U1` a fazer contacto intermitente. *Um teste que passa uma vez e falha
+depois não é um teste que passou: é um que ainda não foi repetido.*
+
+### O método que resolveu, e é o que fica
+
+1. **O gêmeo simétrico como controle.** Esta placa tem dois canais idênticos.
+   Tocar com o dedo no `R12` (canal A, deu −13,4 dBFS) e no `R22` (canal B, deu
+   −81,3 dBFS) — mesma peça, mesmo gesto, mesma placa — isolou o defeito sem
+   dessoldar nada. **Quando há um par, não se mede valor absoluto: mede-se a
+   diferença.**
+2. **Pressão com o instrumento a medir.** Oito amostras seguidas enquanto o dB
+   carregava no `U1`: a primeira deu `IN_R −28,6 dBFS`, as sete seguintes
+   `−82`. Intermitência não se vê, apanha-se — e apanha-se com o medidor a
+   correr enquanto se aplica a força.
+3. **Medir estático antes de caçar sinal.** A tensão contínua num pino diz em
+   dois segundos o que meia dúzia de testes de dedo diz mal.
+
+**O que fica no manual:** depois de soldar o `U1`, **medir as saídas dos dois
+canais contra o VBIAS**. Hoje o passo mandava soldar e seguir. Duas leituras de
+multímetro teriam encontrado isto antes de haver piezo no jack.
+
+---
+
+## 15ff — o divisor de entrada foi projetado em −6 dB e nunca ninguém mediu o piezo
+
+Com as três soldas resolvidas, o instrumento tocou — **e saturou o conversor**
+nos dois canais (`clip 4045` e `292`). O dB, com razão: *"isso é decepcionante,
+revisamos a placa várias vezes"*.
+
+**E a placa está certa.** O pré-amp é seguidor de ganho 1, o divisor capacitivo
+existe (`C12`/`C22`, 22 nF, com a BOM a chamá-lo *"divisor −6 dB"*), e ele faz
+exactamente −6,9 dB com o piezo real. O que faltou não está no desenho:
+
+> **Nenhuma revisão perguntou quantos volts o piezo entrega.** ERC, DRC,
+> netlist, courtyard, `encaixe`, `check_docs` — todos verificam **correcção**.
+> Nenhum verifica **adequação de nível**. O `−6 dB` foi escolhido sobre uma
+> estimativa que nunca foi confrontada com o transdutor real na escultura real.
+
+**Os números, agora medidos (22/09):**
+
+| | |
+|---|---|
+| piezo (medido no plugue) | **18 nF** e **17 nF** |
+| divisor original `C12` = 22 nF | 18/(18+22) → **−6,9 dB** |
+| com +100 nF C0G em paralelo | 18/(18+122) → **−17,8 dB** |
+| pico depois, tocando forte | **−1,4 dBFS** (corda) e **−15,6 dBFS** (tambor), `clip 0` |
+
+⚠️ **E os dois canais NÃO devem ficar iguais.** Um piezo está colado a uma corda
+de metal e o outro numa estrutura junto à pele do tambor: 14 dB de diferença
+**é do instrumento**, não da placa. A placa tem um divisor por canal justamente
+para isso, e a próxima pessoa que "corrigir" a assimetria vai desfazer o ajuste.
+Por isso o valor de cada canal fica escrito com a razão ao lado.
+
+⚠️ **Uma armadilha de leitura, apanhada no mesmo dia:** o `pk` mostra o pico
+**grampeado em 0 dBFS**, logo não diz QUANTO se passou do teto. Quem só olha o
+`pk` fica sem saber se falta 1 dB ou 20. O `hist` mostra a distribuição e o
+ponto **pós-ganho** — e foi ele que revelou que, depois do divisor, o estouro
+que restava já não era da entrada mas da **soma interna** (`+5,5 dBFS`,
+resolvido baixando o `pre_level_ab` de 1,0 para 0,5).
