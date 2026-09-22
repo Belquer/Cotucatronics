@@ -399,14 +399,41 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   (CS) · 6 **verde** (DC) · 7 **branco** (RST). A ordem do cabo coincide com a
   do `J2`, logo é ligação direta — contando o pino 1 pelo **pad quadrado**, que
   com o header soldado por baixo fica do lado oposto ao que a serigrafia sugere.
-  ⚠️ **Por resolver: o OLED não liga** e o **encoder conta 1 pulso em 20
-  cliques**, com os três pinos dele a comutar — suspeita no terminal comum.
-- ⚠️ **Dívida medida a 22/09: 15 dos 47 mapas do manual têm colisão de texto.**
-  Medido com `tools/svg_colisoes.py` mapa a mapa — **15 antes e 15 depois** da
-  mudança do rótulo que desvia (logo não é regressão, é herança). São na maioria
-  rótulos a cruzar o bordo da placa (`texto×borda contentor`) e dois casos de
-  `texto×texto` (`VCC`/`GND` no mapa do OLED, e `1 vermelho`/`2`). Até hoje só
-  os desenhos novos passavam pelo portão; os mapas antigos nunca passaram.
+  ✅ **O encoder está bom (22/09): 19 pulsos em 20 cliques, 3 pushes em 3.**
+  Contava 1 em 20 porque o laço principal estava a 1 volta/s, estrangulado
+  pelo painel partido — e o `Debounce` da libDaisy quer 1 kHz. Consertado o
+  envio do SPI, passou a contar **sem lhe tocar** (`battle_scars` **15fi**).
+  **O sentido está certo como está (dB, 22/09):** o encoder foi soldado na
+  placa, e a orientação que ele dá é a que vale. O que estava errado era a
+  minha leitura, não a peça — `enc inverte a` **não** se corre, e o
+  `enc_sinal` fica em `+1` no fonte.
+- ❌ **O módulo OLED está MORTO, e o caminho até ele está PROVADO BOM (22/09).**
+  Fechado ao fim de uma tarde, e por esta ordem: os cinco sinais chegam ao
+  módulo (par diferencial do `fio le`, com a fita fora e posta), nenhuma ponte
+  entre eles (`fio curto`, dez pares), nenhum curto à terra, 5 V e terra
+  medidos **nos pinos do módulo** contra o `TP3`, cada sinal no pino com o nome
+  certo, e o bloco de selecção da traseira em **SPI** (o 0 Ω do lado `SPI`, o
+  lado `I2C` vazio). Com o barramento a 85% de ocupação o `CLK` e o `DIN` dão
+  **1,5 V** de média no módulo e o `CS` fica activo: **os dados chegam lá,
+  certos, e o vidro não responde.** O módulo seguinte entra num caminho já
+  medido inteiro. ⚠️ Mas **antes** disto havia um defeito nosso a tapar tudo —
+  o quadro esgotava oito prazos de 100 ms e nada saía da Daisy (`battle_scars`
+  **15fi**); o módulo só pôde ser acusado depois de esse estar consertado.
+- ✅ **Dívida das colisões do manual: FECHADA a 22/09 — 78 de 78 figuras
+  passam o portão.** E a medição antiga ("15 dos 47") estava a ser feita com
+  caixas erradas: os SVGs não declaravam `xmlns`, o verificador não achava o
+  `<style>`, e modelava todo rótulo centrado como se começasse no ponto. O que
+  se consertou foi dos dois lados — o `manual_montagem.py` v0.23.0 passou a pôr
+  **todos** os rótulos (peças, marcas, furos e vazios) no mesmo motor de
+  colocação, com teste contra as arestas reais do contorno e varredura de
+  recurso; o `svg_colisoes.py` v0.9.0 deixou de adivinhar CSS em silêncio. Ver
+  `battle_scars.md` **15fl**.
+- ✅ **`tools/portoes.py` v0.1.0 — um comando corre os 16 portões de leitura.**
+  Nasceu do pedido do dB de 22/09 (*"verifique que as bts estão sendo devidamente
+  implementadas e não só registradas"*): 48 ferramentas, nenhuma corrida em
+  conjunto, e **três vermelhas** no primeiro varrimento. Traz catraca de dívida —
+  50 fantasmas de documentação e 10 achados de encaixe da rev C têm a linha
+  declarada; acima dela reprova, abaixo manda baixar a linha.
 - ✅ **22/09: o cérebro toca.** Piezo → pré-amp → Daisy → delay e reverb →
   saída de linha, nos **dois** canais, sem clip em lado nenhum. O que estava
   entre a montagem e este parágrafo está em `battle_scars.md` **15fd**, **15fe**

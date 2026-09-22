@@ -10742,3 +10742,217 @@ chicote vir cruzado de fábrica.
 **A regra que fica, e é barata:** antes de ligar qualquer chicote comprado,
 **bipar pino a pino** e marcar as duas pontas. Vinte segundos por cabo, contra
 uma tarde a medir a placa que estava certa.
+
+## 15fi — o `Result` que ninguém lê: o painel dizia "tela ACESA" com 800 ms de prazo esgotado por quadro
+
+22/09. O OLED do painel não acendia. Passámos **a tarde inteira** a interrogar o
+fio — continuidade, pontes entre os cinco sinais, curtos à terra, alimentação no
+módulo, ordem dos sinais nos pinos dele, resistores de selecção de interface na
+traseira. Tudo bom, e provado com medição diferencial, não com impressão.
+
+O que denunciou não foi uma medição eléctrica. Foi um **tempo**:
+
+```
+QUADRO pico 800 632 us   ← PS_256
+QUADRO pico 800 416 us   ← PS_64
+QUADRO pico 800 355 us   ← PS_16
+QUADRO pico 799 792 us   ← PS_4
+```
+
+**64× de relógio e o quadro não mexe um milissegundo.** Transferência a sério
+encolhe quando o relógio acelera; **prazo esgotado não encolhe**. E o número era
+redondo de mais: o `BlockingTransmit` da libDaisy tem prazo por omissão de
+**100 ms**, e um quadro de 64 linhas são **8 páginas**. `8 × 100 = 800`.
+
+A sonda `oledspi`, escrita nesse instante, mediu a fronteira:
+
+```
+  1 byte   OK      39 us        32 bytes  OK      50 us
+  8 bytes  OK      13 us        64 bytes  ERR  99 988 us  <- prazo esgotado
+ 16 bytes  OK      27 us       128 bytes  ERR  99 988 us  <- prazo esgotado
+```
+
+Até 32 bytes passa e **o tempo cresce com o tamanho** — os bits saem. Acima
+disso devolve `ERR` e queima os 100 ms. O driver `SSD130x` manda cada página
+num bloco de **128**, que é o lado partido da fronteira. Os comandos de 1 byte
+da inicialização passavam todos; a imagem nunca saiu uma única vez.
+
+> **O `Result` de cada envio era DEITADO FORA** — pelo driver da biblioteca e
+> pelo nosso `OledInit`, que devolve `void` disfarçado de sucesso. Por isso o
+> comando `oled` respondia *"tela ACESA"* com toda a confiança enquanto oito
+> prazos morriam por quadro.
+
+O conserto (hal 0.82.0): `OledFb::EnviaQuadro()` manda **32 bytes de cada vez**.
+
+| | antes | depois |
+|---|---|---|
+| quadro | 800 632 µs | **2 597 µs** |
+| voltas do laço com o painel | 1/s (−99%) | **12 836/s (−8%)** |
+
+⚠️ **E o painel apagado custava 99% do laço principal.** O instrumento inteiro
+andava a 1 volta por segundo por causa de um display que nem sequer ligava. Um
+defeito de periférico a comer a máquina toda, sem nunca se anunciar.
+
+**A regra, e ela é a lição da casa aplicada a bibliotecas alheias:**
+
+> **Chamada que devolve código de erro e é usada como `void` é uma medição que
+> nunca se fez.** E o gémeo: quando um tempo não responde ao parâmetro que o
+> devia controlar, não se está a medir trabalho — está-se a medir uma espera.
+
+⚠️ **Isto NÃO é o conserto da causa, e diz-se.** *Por que* um envio de 64 bytes
+esgota o prazo nesta configuração continua em aberto — a fronteira até se move
+com o relógio (passa aos 40 bytes no `PS_256`, parte aos 40 no `PS_2`). O que
+está no código é a volta por cima de uma fronteira **medida**, com a fronteira
+escrita ao lado e a sonda `oledspi` lá para a remedir.
+
+### O SEGUNDO defeito que este tinha em cima: o encoder
+
+O encoder do painel contava **1 pulso em 20 cliques** e **1 push em 3**, e
+andou uma sessão inteira na lista de defeitos abertos como coisa própria —
+suspeita de terminal comum aberto, de solda, de peça má. Era o mesmo defeito.
+
+O `EncoderPoll()` corre no **laço principal**, e o `Debounce()` da libDaisy
+limita-se a 1 kHz por dentro: foi escrito à espera de ser chamado **mil vezes
+por segundo**. Com o laço a 1 volta/s por causa dos 800 ms do painel, um
+detente inteiro cabia entre duas amostras. Consertado o envio do SPI, e **sem
+lhe tocar**, o mesmo encoder deu **19 pulsos em 20 cliques e 3 pushes em 3**.
+
+> **Um periférico bloqueante avaria coisas que não têm nada a ver com ele, e a
+> ligação não aparece em lado nenhum.** Dois defeitos em subsistemas diferentes
+> — um display de saída e um encoder de entrada — com uma causa só, e nada nos
+> sintomas a sugerir parentesco.
+>
+> **O que teria feito a ligação aparecer é um número que existia o tempo todo:
+> as voltas por segundo do laço.** O `oledbench` imprimia-o (`voltas/s: 1 com o
+> painel · 13 275 quieto · −99%`) e ninguém o leu como sintoma — leu-se como
+> custo de desenhar. Taxa do laço é sinal vital, e sinal vital confere-se antes
+> de se acusar qualquer periférico.
+
+**Desfecho:** com os bits a sair, o `CLK` e o `DIN` medidos **no módulo** deram
+1,5 V de média com o barramento a 85% de ocupação, e o `CS` activo. Os dados
+chegam lá, certos e no ritmo certo, e o vidro não responde: **o módulo está
+morto**. O caminho todo — placa, painel, fita, cabo, alimentação, firmware —
+fica provado bom para o módulo seguinte.
+
+## 15fj — a retenção do `fio` morre num reinício, e o repouso normal do SPI virou diagnóstico de avaria
+
+22/09, duas vezes no mesmo dia. O comando `fio <pino> <0|1>` segura um dos cinco
+sinais do OLED num nível fixo para se medir no conector. Mandei medir; o dB
+mediu com todo o cuidado e trouxe:
+
+```
+pinos 2 e 4 (CLK, DIN)      0 V
+pinos 5, 6, 7 (CS, DC, RST) 3,3 V
+```
+
+Li aquilo como **dois sinais mortos** e mandei caçar curtos à terra. Não era. O
+`main()` chama `OledInit()` no arranque, e **qualquer reinício devolve o CLK e o
+DIN ao periférico SPI** — que em repouso os deixa baixos, com o CS e o RST
+altos. Cinco em cinco: era o repouso normal do barramento, medido com precisão.
+
+> **A instrução de medir não trazia como conferir a própria pré-condição.** Eu
+> supus que as retenções estivessem de pé e nunca perguntei à placa se estavam.
+
+Conserto (OS 0.307.0, hal 0.80.0): o comando **`fio estado`**, que diz quem
+manda em cada pino *naquele instante* — retido pelo `fio` e em que nível, ou
+devolvido ao SPI. Apanhou o segundo reinício em flagrante, meia hora depois.
+
+**A regra:** *toda medição feita no mundo físico a pedido de um estado de
+software tem de poder perguntar, no momento da medição, se esse estado ainda
+existe.* Estado que morre em silêncio transforma leitura certa em conclusão
+errada — e a leitura certa não se defende sozinha.
+
+## 15fk — prever a média de uma linha que está 97% parada é medir o software, não o fio
+
+22/09. Pus o barramento a desenhar sem parar e mandei medir o `CLK` com o
+multímetro, prevendo **1,5 a 1,8 V** — a média de uma linha a comutar. O dB
+mediu **poucos mV** e a leitura dele estava certa; a previsão é que estava
+errada.
+
+A conta que eu não fiz: naquele momento o quadro levava 800 ms para 1024 bytes,
+ou **780 µs por byte**, e no `PS_256` os oito bits de um byte levam 20 µs. O
+relógio estava activo **2,6% do tempo**. Média esperada: `3,3 × 0,5 × 0,026` ≈
+**43 mV** — exactamente o que ele leu.
+
+> **Multímetro numa linha digital mede o CICLO DE TRABALHO, não a actividade.**
+> Antes de prever um número, calcular a fracção do tempo em que a linha comuta —
+> e se essa fracção for pequena, o teste não distingue "parado" de "a trabalhar"
+> e não deve ser pedido.
+
+Depois do conserto da 15fi o mesmo teste passou a valer: quadro de 2,6 ms, e no
+`PS_256` a 60 Hz o barramento fica ~85% ocupado. A medição seguinte deu 1,5 V no
+`CLK` e no `DIN`, e foi ela que fechou o caso.
+
+## 15fl — quarenta e oito ferramentas, nenhum comando que as corresse: o portão que ninguém passa é decoração
+<!-- doc-check: ignore svg_colisoes (ferramenta em tools/, fora do alcance do check_docs) -->
+
+22/09. O dB pediu: *"verifique que as bts estão sendo devidamente implementadas
+e não só registradas"*. A resposta não foi ler as cicatrizes — foi **correr os
+portões que elas mandaram construir**. E descobriu-se que ninguém os corria.
+
+O repositório tem **48 ferramentas** em `kicad/`, `tools/` e `docs/operacao/`.
+Dezasseis são portões de leitura a sério. Nenhuma era corrida em conjunto, e
+no primeiro varrimento **três estavam vermelhas**:
+
+| portão | o que estava mal | há quanto tempo |
+|---|---|---|
+| `svg_colisoes` sobre o manual | 15 das 78 figuras com sobreposição | semanas — a ferramenta existia e passava-se só pelos desenhos NOVOS |
+| `derivados.py` | acusava dois documentos **correctos** de órfãos | desde que o gerador passou a compor o nome |
+| `versoes_readme.py` | três versões erradas no README | desde a última sessão |
+
+> **Uma regra escrita numa cicatriz não vale enquanto não existir um comando
+> que a verifique E alguém que o corra.** A primeira metade estava feita há
+> muito; a segunda nunca tinha sido.
+
+O conserto é o `tools/portoes.py`: um comando, dezasseis portões, e um relato
+que diz o que cada um impede.
+
+### E ele traz CATRACA, porque dívida real não se apaga nem se ignora
+
+Dois portões estão vermelhos por defeitos **conhecidos e escritos**: os 50
+fantasmas da documentação e os 10 achados de encaixe da rev C, que está
+congelada e só se conserta na rev D. Havia duas saídas más — tirar o portão da
+lista (esconder) ou deixá-lo vermelho para sempre (treinar toda a gente a
+ignorar o vermelho). A terceira é declarar o número:
+
+- **abaixo da linha:** passa, e diz "dívida declarada: N";
+- **acima:** REPROVA;
+- **desceu:** passa, e **manda baixar a linha no ficheiro** — a dívida só anda
+  num sentido.
+
+Provado nos dois sentidos antes de ser aceite: com a linha em 49 reprovou os
+50 reais, com a linha em 51 mandou baixá-la.
+
+### As três ferramentas que estavam a mentir, e era sempre o mesmo defeito
+
+⚠️ **Verificador cujo ALCANCE é mais estreito que a sua AFIRMAÇÃO aprova o que
+não olhou.** O `derivados.py` já tinha esta lição escrita no próprio corpo, de
+uma vez anterior — e voltou a cair nela. Três casos no mesmo dia:
+
+1. **`svg_colisoes.py`** dizia ler CSS e lia só o `font-size`, por classe, sem
+   contexto nem especificidade. Resolvia `.rot` como 12 px porque uma regra do
+   desenho da DPDT usava o mesmo nome de classe, e ignorava o `text-anchor`.
+   **Modelava cada rótulo centrado como se começasse no ponto** — meia largura
+   de desvio em 178 textos. E os SVGs do manual não declaravam `xmlns`, pelo
+   que a busca pelo `<style>` com espaço de nomes não achava nada e ele caía no
+   omisso **em silêncio**. Agora: procura por nome local, só aceita selectores
+   de uma classe só, **descarta classes com regras em desacordo**, e **declara
+   quantos textos teve de adivinhar**. E o gerador escreve tamanho e alinhamento
+   como **atributo** — uma fonte, não duas.
+2. **`derivados.py`** procurava o nome do `.md` como literal dentro dos `.py`.
+   O `lista_roteamento.py` escreve `"ROTEAMENTO-%s.md" % q.upper()` — nome que
+   nunca aparece inteiro. Agora aceita o gerador que o **próprio documento
+   nomeia**, se o ficheiro existir: uma afirmação do documento contra o disco.
+3. **`versoes_readme.py`** andava só num sentido — o README contra o disco.
+   Ficheiro novo nunca era notado: o `portoes.py` e o `colisoes_manual.py`
+   nasceram nesse dia, com versão, e ele disse **"0 ausentes"**. Havia sete
+   ficheiros com versão que o README não nomeava, dois deles de dias antes.
+   A regra é *"o README lista todos"*; verificar metade dela é dar a outra
+   metade por cumprida.
+
+### O que o portão das colisões não vê, e por isso tem gémeo
+
+Rótulo que foge para longe não colide com nada e não serve para nada. O
+`manual_montagem.py` passou a **medir e relatar o desvio**: 113 rótulos
+colocados, o mais afastado a 106 px, 12 acima de 60. Número que o portão nunca
+veria e o leitor vê de imediato.

@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.38.0
+// hal.h v0.42.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -370,6 +370,37 @@ bool             OledSondaPino(const char* nome, bool alto);
 // descricao. A placa faz sozinha o que o multimetro faria em dez
 // medicoes — e sem depender de um multimetro que ja mentiu hoje.
 int              OledCacaPonte(char* achados, int cap);
+
+// LEITOR DE TRES ESTADOS dos cinco pinos do OLED: le cada um com o pull
+// interno para cima e depois para baixo, e a comparacao das duas separa
+//   SOLTO (segue o pull interno) · preso a TERRA · puxado para CIMA.
+//
+// E o que o `fio` nao sabe fazer: ele SEGURA um nivel para medir la
+// fora, e um 0 V medido no conector tanto pode ser curto como ausencia.
+//
+// So conclui EM PAR — uma leitura com a fita ligada, outra sem — porque
+// o pull-up do proprio modulo OLED e indistinguivel de um curto ao 3V3.
+// Deixa os cinco sem pull e o SPI desfeito: pede `oled` a seguir.
+void             OledLeCinco(bool* com_pullup, bool* com_pulldown);
+
+// QUEM MANDA NO PINO `i` (0..4 = rst dc cs clk din) NESTE INSTANTE:
+// 0 ou 1 = retido pelo `fio` nesse nivel · -1 = nao retido.
+//
+// (!) Existe porque uma medicao no conector so vale se a retencao ainda
+// estiver de pe, e um REINICIO apaga-a sem dizer nada — devolve CLK e
+// DIN ao SPI, que em repouso os deixa BAIXOS. Ler 0 V nesses dois e 3,3
+// nos outros tres e o repouso NORMAL do barramento, nao avaria.
+int              OledRetido(int i);
+
+// SONDA DO SPI: faz os envios ela mesma, com a configuracao do painel, e
+// relata por tamanho o CODIGO (0 = OK, 1 = ERR) e o TEMPO em us.
+//
+// Existe porque o driver do `SSD130x` deita fora o `Result` de cada
+// envio: um quadro inteiro pode esgotar oito prazos de 100 ms e o nosso
+// `oled` continua a dizer "tela ACESA". Devolve quantas linhas encheu,
+// ou -1 se o proprio `Init` do SPI recusou. Toma o SPI: pede `oled`.
+int              OledSondaSpi(int ps, int* tam, int* res,
+                              uint32_t* us, int cap);
 // Prescaler do SPI do painel, ajustavel sem gravar. Fio comprido perdoa
 // menos em MHz alto — e isso se MEDE varrendo, nao se supoe.
 bool             OledVelocidade(int ps);   // 2,4,8,16,32,64,128,256

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.303.0"
+#define COTUCA_OS_VERSION "0.308.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -4457,6 +4457,29 @@ static void HandleLine(const char* line)
     // Contar quadros nao prova que os pixels chegaram limpos: SPI rapida em
     // fio comprido CORROMPE, nao emudece. O `oledbench` mede velocidade; a
     // correcao so o olho fecha. Tem de vir ANTES de "oled" no despacho.
+    if(strncmp(line, "oledspi", 7) == 0)
+    {
+        const char* ap = line + 7;
+        while(*ap == ' ') ap++;
+        int ps = 0; while(*ap >= '0' && *ap <= '9') ps = ps * 10 + (*ap++ - '0');
+        if(!ps) ps = 8;
+        int      tam[10], res[10];
+        uint32_t us[10];
+        const int n = hal::OledSondaSpi(ps, tam, res, us, 10);
+        if(n < 0)
+        { hal::Log("oledspi: o Init do SPI RECUSOU. Nem se chega a enviar."); return; }
+        hal::Log("oledspi: envios desta sonda a PS_%d (o driver do SSD130x"
+                 " deita este codigo fora):", ps);
+        for(int i = 0; i < n; i++)
+            hal::Log("  %3d byte(s)  %-3s  %lu us%s", tam[i],
+                     res[i] ? "ERR" : "OK", (unsigned long)us[i],
+                     us[i] > 90000u ? "   <- PRAZO ESGOTADO (100 ms)" : "");
+        hal::Log("  tempo que CRESCE com o tamanho = os bits saem."
+                 "  ~100 000 us fixos = o prazo esgotou e nao saiu nada.");
+        hal::Log("  o SPI ficou com esta sonda — rode `oled` para devolver"
+                 " o barramento ao painel.");
+        return;
+    }
     if(strncmp(line, "oledpad", 7) == 0)
     {
         if(!hal::OledConfigurado()) { hal::Log("oledpad: painel nao inicializa"); return; }
@@ -4902,6 +4925,67 @@ static void HandleLine(const char* line)
         return;
     }
     // `fio <rst|dc|cs|clk|din> <0|1>` — segura o pino e para.
+    if(strncmp(line, "fio estado", 10) == 0)
+    {
+        static const char* kNome[5] = {"rst", "dc", "cs", "clk", "din"};
+        const bool spi = hal::OledConfigurado();
+        hal::Log("fio estado — QUEM MANDA nos cinco pinos NESTE INSTANTE:");
+        if(spi)
+        {
+            hal::Log("  o SPI esta CONFIGURADO. Nenhuma retencao do `fio`"
+                     " esta de pe.");
+            hal::Log("  em repouso o barramento poe CLK e DIN BAIXOS e"
+                     " CS e RST ALTOS — medir 0 V nos dois primeiros e o"
+                     " NORMAL, nao avaria.");
+        }
+        else
+        {
+            int n = 0;
+            for(int i = 0; i < 5; i++)
+            {
+                const int r = hal::OledRetido(i);
+                if(r < 0) continue;
+                n++;
+                hal::Log("  %-4s RETIDO em %s (~%s V no conector)", kNome[i],
+                         r ? "ALTO" : "baixo", r ? "3,3" : "0");
+            }
+            if(!n)
+                hal::Log("  o SPI esta desfeito e NADA esta retido: os cinco"
+                         " pinos estao como entradas sem pull. Medir agora nao"
+                         " responde nada.");
+            else
+                hal::Log("  os outros nao estao retidos. (!) Um REINICIO apaga"
+                         " tudo isto: confira aqui ANTES de acreditar num"
+                         " numero medido no conector.");
+        }
+        return;
+    }
+    if(strncmp(line, "fio le", 6) == 0)
+    {
+        static const char* kNome[5] = {"rst", "dc", "cs", "clk", "din"};
+        bool pu[5], pd[5];
+        hal::OledLeCinco(pu, pd);
+        hal::Log("fio le: TRES ESTADOS nos cinco pinos (le do lado da Daisy,"
+                 " com o pull interno invertido duas vezes):");
+        for(int i = 0; i < 5; i++)
+        {
+            const char* v = (pu[i] && !pd[i]) ? "SOLTO — so o pull interno manda"
+                          : (!pu[i] && !pd[i]) ? "*** PRESO A TERRA ***"
+                          : (pu[i] && pd[i])   ? "puxado para CIMA por algo de fora"
+                                               : "*** INCOERENTE (baixo com pull-up,"
+                                                 " alto com pull-down) ***";
+            hal::Log("  %-4s pull-up %s · pull-down %s  ->  %s", kNome[i],
+                     pu[i] ? "ALTO " : "baixo", pd[i] ? "ALTO " : "baixo", v);
+        }
+        hal::Log("  COM a fita ligada o SAUDAVEL e `puxado para CIMA`: o modulo"
+                 " OLED tem pull-up nas entradas.");
+        hal::Log("  SEM a fita o saudavel e `SOLTO`. Um pino que fica SOLTO com"
+                 " a fita posta nao chega ao modulo; um que fica PRESO A TERRA"
+                 " nas duas esta em curto do lado da placa.");
+        hal::Log("  (!) LEITURA SO CONCLUI EM PAR: corra com a fita e sem ela."
+                 "  o SPI foi desfeito — rode `oled` depois.");
+        return;
+    }
     if(strncmp(line, "fio curto", 9) == 0)
     {
         char achados[160] = {0};
@@ -4929,6 +5013,8 @@ static void HandleLine(const char* line)
         if(!*nome || (*a != '0' && *a != '1'))
         {
             hal::Log("uso: fio <rst|dc|cs|clk|din> <0|1>");
+            hal::Log("  `fio le` LE os cinco e separa SOLTO de PRESO A TERRA;"
+                     " `fio curto` caca pontes entre eles.");
             hal::Log("  segura o pino no nivel e PARA. Mede no conector do"
                      " painel: 0 = ~0 V, 1 = ~3,3 V.");
             hal::Log("  se o nivel nao chegar la, o defeito esta entre a"
@@ -4941,6 +5027,9 @@ static void HandleLine(const char* line)
                  nome, alto ? "ALTO" : "baixo", alto ? "3,3" : "0");
         hal::Log("  o SPI foi desconfigurado por isto — rode `oled` depois"
                  " para reinicializar o painel.");
+        hal::Log("  (!) A RETENCAO MORRE NUM REINICIO, sem aviso: o arranque"
+                 " refaz o SPI e CLK/DIN voltam ao repouso BAIXO. Antes de"
+                 " confiar no que o multimetro disser, `fio estado`.");
         return;
     }
     if(strncmp(line, "pino", 4) == 0)
@@ -6523,7 +6612,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] | pkout [reset] (entrada / saida) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | fio le | fio estado | oledspi | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] | pkout [reset] (entrada / saida) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

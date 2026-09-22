@@ -27,11 +27,12 @@ import datetime
 import re
 import html
 import io
+import math
 import os
 import subprocess
 import sys
 
-VERSAO = "0.16.0"
+VERSAO = "0.23.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -210,9 +211,25 @@ def commit():
 
 
 # ----------------------------------------------------------------- desenho
+DESVIOS = []     # (distancia, texto, placa) de cada rotulo colocado
+
+
 def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, vazios=()):
     """SVG da placa com `refs` destacadas. `baixo` espelha em x (vista por baixo).
-    `vazios`: posicoes DNP da zona do passo, riscadas — pad vazio sem aviso parece esquecimento."""
+    `vazios`: posicoes DNP da zona do passo, riscadas — pad vazio sem aviso parece esquecimento.
+
+    ⚠️ TODO TEXTO DESTE MAPA PASSA PELO MESMO MOTOR DE COLOCACAO (22/09).
+    Ate aqui so os rotulos das pecas-alvo testavam posicao; os das marcas, dos
+    furos e dos vazios iam num deslocamento FIXO, sem teste nenhum. Resultado:
+    15 das 78 figuras do manual com sobreposicao, declaradas como divida no
+    STATUS e nunca consertadas, porque a `design-review` so era corrida nos
+    desenhos NOVOS e estas nascem 78 de cada vez.
+
+    A regra que o verificador aplica, e que este motor passa a respeitar:
+    **um texto esta bem quando fica INTEIRAMENTE dentro de uma forma ou
+    INTEIRAMENTE fora dela.** Atravessar a borda e que e defeito — e e o que
+    um deslocamento fixo produz assim que a peca ao lado muda de tamanho.
+    """
     PX = 4.2
     pad = 6.0
     W = (P.x1 - P.x0 + 2 * pad) * PX
@@ -225,32 +242,69 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, 
     def ty(y):
         return (y - P.y0 + pad) * PX
 
-    out = ['<svg viewBox="0 0 %.0f %.0f" role="img" aria-label="%s" class="mapa">'
+    out = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %.0f %.0f" role="img" aria-label="%s" class="mapa">'
            % (W, H, E("mapa da placa %s, %s, com %s em destaque"
                       % (P.nome, "vista por baixo" if baixo else "vista por cima", ", ".join(refs) or "nada")))]
     pts = " ".join("%.1f,%.1f" % (tx(x), ty(y)) for x, y in P.contorno)
     out.append('<polygon points="%s" class="placa"/>' % pts)
+
+    # ---- o que o texto nao pode atravessar --------------------------------
+    #
+    # O verificador mede CAIXAS. Entao guarda-se aqui a caixa de tudo o que se
+    # desenha, e o motor de colocacao exige disjuncao. A placa e caso a parte:
+    # ela e um CONTENTOR, e texto dentro dela e legitimo — o que nao pode e
+    # cruzar-lhe a borda.
+    formas = []
+    xs_p = [tx(x) for x, _ in P.contorno]
+    ys_p = [ty(y) for _, y in P.contorno]
+    placa_bb = (min(xs_p), min(ys_p), max(xs_p), max(ys_p))
+
+    # ⚠️ A CAIXA ENVOLVENTE DA PLACA NAO CHEGA: o contorno tem recortes, e um
+    # rotulo pode estar dentro da caixa e FORA da placa, a cruzar uma aresta.
+    # O verificador ve as arestas como segmentos e acusa `texto×linha`. Entao
+    # guardam-se as arestas, e testa-se contra elas.
+    arestas = []
+    for i in range(len(P.contorno)):
+        x1, y1 = P.contorno[i]
+        x2, y2 = P.contorno[(i + 1) % len(P.contorno)]
+        arestas.append((tx(x1), ty(y1), tx(x2), ty(y2)))
+
+    def cx_de(corpo):
+        gx = [tx(x) for x, _ in corpo]
+        gy = [ty(y) for _, y in corpo]
+        return (min(gx), min(gy), max(gx), max(gy))
+
     for ref, f in P.fp.items():
-        if not f["corpo"] or ref in refs or ref in vazios:
+        if not f["corpo"]:
             continue
-        # pecas do outro lado desenham-se a tracejado
+        if ref in refs or ref in vazios:
+            continue
         lado_outro = f["baixo"] != baixo
         pts = " ".join("%.1f,%.1f" % (tx(x), ty(y)) for x, y in f["corpo"])
         out.append('<polygon points="%s" class="corpo%s"/>' % (pts, " outro" if lado_outro else ""))
+        formas.append(cx_de(f["corpo"]))
+
+    vazio_cxs = []
     for ref in vazios:
         f = P.fp[ref]
         pts = " ".join("%.1f,%.1f" % (tx(x), ty(y)) for x, y in f["corpo"])
-        xs = [tx(x) for x, _ in f["corpo"]]; ys = [ty(y) for _, y in f["corpo"]]
+        b = cx_de(f["corpo"])
         out.append('<polygon points="%s" class="vazio"/>' % pts)
         out.append('<path d="M%.1f %.1fL%.1f %.1fM%.1f %.1fL%.1f %.1f" class="vazio-x"/>'
-                   % (min(xs), min(ys), max(xs), max(ys), min(xs), max(ys), max(xs), min(ys)))
-        out.append('<text x="%.1f" y="%.1f" class="rot vazio-rot">%s</text>'
-                   % ((min(xs) + max(xs)) / 2, max(ys) + 13, E(ref)))
+                   % (b[0], b[1], b[2], b[3], b[0], b[3], b[2], b[1]))
+        formas.append(b)
+        vazio_cxs.append((ref, b))
+
+    furo_cxs = []
     for x, y, rot in furos:
         out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="furo"/>' % (tx(x), ty(y), 1.6 * PX))
         out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="furo-anilha"/>' % (tx(x), ty(y), 3.5 * PX))
-        out.append('<text x="%.1f" y="%.1f" class="rot furo-rot">%s</text>' % (tx(x), ty(y) - 4.3 * PX, E(rot)))
-    postos = []          # caixas dos rotulos ja escritos, para nao se pisarem
+        r = 3.5 * PX
+        b = (tx(x) - r, ty(y) - r, tx(x) + r, ty(y) + r)
+        formas.append(b)
+        furo_cxs.append((rot, b))
+
+    alvo_cxs = []
     for ref in refs:
         f = P.fp.get(ref)
         if not f:
@@ -270,49 +324,149 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, 
                            % (tx(p["x"]) - r, ty(p["y"]) - r, 2 * r, 2 * r))
             else:
                 out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="pad"/>' % (tx(p["x"]), ty(p["y"]), r))
+            formas.append((tx(p["x"]) - r, ty(p["y"]) - r, tx(p["x"]) + r, ty(p["y"]) + r))
         if f["corpo"]:
-            cx = sum(x for x, _ in f["corpo"]) / len(f["corpo"])
-            cy = min(y for _, y in f["corpo"])
-            lab = (rotulos or {}).get(ref, ref)
-            # ⚠️ 22/09: o rotulo ia sempre ACIMA da peca, e acima pode estar
-            # OUTRA peca — o `U1` escrevia sobre o contorno do `C22`, que e
-            # defeito (design-review §1). Descer cegamente tambem nao serve:
-            # descido, ele bateu no rotulo do `R5`. Entao testam-se quatro
-            # posicoes e escolhe-se a primeira livre, contra as pecas E contra
-            # os rotulos ja postos. Livre nenhuma, fica a de cima e o portao
-            # acusa — melhor acusar do que esconder.
-            larg = len(lab) * 0.55 * 15.0
-            xs_c = [tx(x) for x, _ in f["corpo"]]
-            ys_c = [ty(y) for _, y in f["corpo"]]
-            cands = [(tx(cx), min(ys_c) - 5),                       # acima
-                     (tx(cx), max(ys_c) + 15),                      # abaixo
-                     (max(xs_c) + larg / 2 + 6, (min(ys_c) + max(ys_c)) / 2 + 5),
-                     (min(xs_c) - larg / 2 - 6, (min(ys_c) + max(ys_c)) / 2 + 5)]
-            def livre(lx, ly):
-                a = (lx - larg / 2, ly - 11, lx + larg / 2, ly + 4)
-                for g in list(P.fp.values()):
-                    if not g["corpo"] or g["ref"] == ref:
-                        continue
-                    gx = [tx(x) for x, _ in g["corpo"]]
-                    gy = [ty(y) for _, y in g["corpo"]]
-                    if not (a[2] < min(gx) or a[0] > max(gx) or a[3] < min(gy) or a[1] > max(gy)):
-                        return False
-                for b in postos:
-                    if not (a[2] < b[0] or a[0] > b[2] or a[3] < b[1] or a[1] > b[3]):
-                        return False
-                return True
-            lx, ly = cands[0]
-            for c in cands:
-                if livre(*c):
-                    lx, ly = c
-                    break
-            postos.append((lx - larg / 2, ly - 11, lx + larg / 2, ly + 4))
-            out.append('<text x="%.1f" y="%.1f" class="rot">%s</text>' % (lx, ly, E(lab)))
+            b = cx_de(f["corpo"])
+            formas.append(b)
+            alvo_cxs.append((ref, (rotulos or {}).get(ref, ref), b))
+
+    marca_cxs = []
     for ref, n, txt in marcas:
         for p in P.fp[ref]["pads"]:
             if p["n"] == n:
-                out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="marca"/>' % (tx(p["x"]), ty(p["y"]), 2.2 * PX))
-                out.append('<text x="%.1f" y="%.1f" class="rot marca-rot">%s</text>' % (tx(p["x"]) + 3.2 * PX, ty(p["y"]) + 4, E(txt)))
+                r = 2.2 * PX
+                out.append('<circle cx="%.1f" cy="%.1f" r="%.1f" class="marca"/>' % (tx(p["x"]), ty(p["y"]), r))
+                b = (tx(p["x"]) - r, ty(p["y"]) - r, tx(p["x"]) + r, ty(p["y"]) + r)
+                formas.append(b)
+                marca_cxs.append((txt, b))
+
+    # ---- o motor de colocacao ---------------------------------------------
+    #
+    # A caixa e calculada com a MESMA formula do `svg_colisoes.py`
+    # (largura = n x corpo x 0,55; de -0,75 em a +0,25 em da linha de base).
+    # Se os dois modelos divergirem, o gerador aprova-se a si proprio e o
+    # portao reprova — que e a pior combinacao possivel.
+    FOLGA = 1.0
+    postos = []
+
+    def caixa(lx, ly, texto, fs):
+        w = len(texto) * 0.55 * fs
+        return (lx - w / 2.0, ly - fs * 0.75, lx + w / 2.0, ly + fs * 0.25)
+
+    def disjunto(a, b):
+        return (a[2] + FOLGA < b[0] or a[0] - FOLGA > b[2]
+                or a[3] + FOLGA < b[1] or a[1] - FOLGA > b[3])
+
+    def dentro(a, b):
+        return a[0] >= b[0] + FOLGA and a[1] >= b[1] + FOLGA and a[2] <= b[2] - FOLGA and a[3] <= b[3] - FOLGA
+
+    def corta(b, seg):
+        """A caixa `b` toca o segmento `seg`? Liang-Barsky sobre a caixa."""
+        x1, y1, x2, y2 = seg
+        dx, dy = x2 - x1, y2 - y1
+        t0, t1 = 0.0, 1.0
+        for pp, qq in ((-dx, x1 - (b[0] - FOLGA)), (dx, (b[2] + FOLGA) - x1),
+                       (-dy, y1 - (b[1] - FOLGA)), (dy, (b[3] + FOLGA) - y1)):
+            if pp == 0:
+                if qq < 0:
+                    return False
+            else:
+                r = qq / pp
+                if pp < 0:
+                    if r > t1: return False
+                    if r > t0: t0 = r
+                else:
+                    if r < t0: return False
+                    if r < t1: t1 = r
+        return True
+
+    def serve(b):
+        if b[0] < 1 or b[1] < 1 or b[2] > W - 1 or b[3] > H - 1:
+            return False
+        if not (dentro(b, placa_bb) or disjunto(b, placa_bb)):
+            return False
+        for f in formas:
+            if not disjunto(b, f):
+                return False
+        for q in postos:
+            if not disjunto(b, q):
+                return False
+        for seg in arestas:
+            if corta(b, seg):
+                return False
+        return True
+
+    def poe(ax, ay, texto, classe, fs, base=()):
+        """Escolhe a primeira posicao livre e escreve. Nenhuma livre: fica a
+        primeira da lista e o portao acusa — acusar e melhor que esconder."""
+        cands = list(base)
+        for raio in (14, 20, 26, 34, 44, 56, 70, 86, 104, 124, 146):
+            for k in range(24):
+                a = math.radians(k * 15.0 - 90.0)
+                cands.append((ax + raio * math.cos(a), ay + raio * math.sin(a)))
+        escolhida = None
+        for c in cands:
+            if serve(caixa(c[0], c[1], texto, fs)):
+                escolhida = c
+                break
+        if escolhida is None:
+            # VARREDURA, e ela existe porque a espiral desiste cedo em zonas
+            # densas. Grelha grossa sobre a tela toda, e fica a caixa livre
+            # MAIS PERTO da ancora — longe e feio, sobreposto e defeito.
+            melhor, dist = None, None
+            yy = 12.0
+            while yy < H - 6:
+                xx = 12.0
+                while xx < W - 6:
+                    if serve(caixa(xx, yy, texto, fs)):
+                        d = (xx - ax) ** 2 + (yy - ay) ** 2
+                        if dist is None or d < dist:
+                            melhor, dist = (xx, yy), d
+                    xx += 7.0
+                yy += 7.0
+            escolhida = melhor or (cands[0] if cands else (ax, ay))
+        # QUANTO O ROTULO TEVE DE FUGIR — o gemeo numerico do olho.
+        # A varredura de recurso acha sempre um sitio livre; o que ela nao
+        # sabe e se o sitio ainda diz respeito a peca. Um rotulo a 200 px da
+        # peca nao colide com nada e nao serve para nada.
+        DESVIOS.append((math.hypot(escolhida[0] - ax, escolhida[1] - ay),
+                        texto, P.nome))
+        postos.append(caixa(escolhida[0], escolhida[1], texto, fs))
+        # ⚠️ TAMANHO E ALINHAMENTO COMO ATRIBUTO, nao so na folha de estilo.
+        # O `svg_colisoes.py` nao resolve CSS a serio — nao ha contexto nem
+        # especificidade — e a 22/09 ele resolveu `.rot` como 12 px porque uma
+        # regra do desenho da DPDT tinha o mesmo nome de classe. Mediu 78
+        # figuras com caixas deslocadas de meia largura e ninguem soube.
+        # Aqui o numero e o mesmo que o motor usou: uma fonte, nao duas.
+        out.append('<text x="%.1f" y="%.1f" class="%s" font-size="%.0f"'
+                   ' text-anchor="middle">%s</text>'
+                   % (escolhida[0], escolhida[1], classe, fs, E(texto)))
+
+    for ref, lab, b in alvo_cxs:
+        cxm = (b[0] + b[2]) / 2.0
+        poe(cxm, b[1] - 5, lab, "rot", 15.0,
+            base=[(cxm, b[1] - 5), (cxm, b[3] + 15),
+                  (b[2] + len(lab) * 0.55 * 15.0 / 2 + 6, (b[1] + b[3]) / 2 + 5),
+                  (b[0] - len(lab) * 0.55 * 15.0 / 2 - 6, (b[1] + b[3]) / 2 + 5)])
+
+    for ref, b in vazio_cxs:
+        cxm = (b[0] + b[2]) / 2.0
+        poe(cxm, b[3] + 13, ref, "rot vazio-rot", 15.0,
+            base=[(cxm, b[3] + 13), (cxm, b[1] - 5)])
+
+    for rot, b in furo_cxs:
+        cxm = (b[0] + b[2]) / 2.0
+        poe(cxm, b[1] - 4, rot, "rot furo-rot", 15.0,
+            base=[(cxm, b[1] - 4), (cxm, b[3] + 14)])
+
+    for txt, b in marca_cxs:
+        cym = (b[1] + b[3]) / 2.0
+        poe(b[2] + len(txt) * 0.55 * 15.0 / 2 + 5, cym + 4, txt, "rot marca-rot", 15.0,
+            base=[(b[2] + len(txt) * 0.55 * 15.0 / 2 + 5, cym + 4),
+                  (b[0] - len(txt) * 0.55 * 15.0 / 2 - 5, cym + 4),
+                  ((b[0] + b[2]) / 2, b[1] - 5),
+                  ((b[0] + b[2]) / 2, b[3] + 15)])
+
     out.append("</svg>")
     cap = legenda or ("Vista **%s** · em azul: o que se coloca neste passo · ■ = pad 1" %
                       ("POR BAIXO (espelhada — como você vê com a placa virada)" if baixo else "por cima"))
@@ -359,9 +513,9 @@ def dpdt(P, ref, canal):
         canais[n] = 196 + (len(ordem_fios) + i) * 24
     W, H = 760, 400
     E_ = E
-    o = ['<svg viewBox="0 0 %d %d" role="img" aria-label="%s" class="mapa dpdt">'
+    o = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-label="%s" class="mapa dpdt">'
          % (W, H, E_("ligacao do %s a chave DPDT do canal %s" % (ref, canal)))]
-    o.append('<text x="14" y="22" class="rot forte">%s — canal %s</text>' % (E_(ref), E_(canal)))
+    o.append('<text x="14" y="22" class="rot forte" font-size="13" text-anchor="start">%s — canal %s</text>' % (E_(ref), E_(canal)))
     # ⚠️ 21/09, a pedido do dB: o header sai com a GEOMETRIA REAL do footprint —
     # a coluna, o passo de 2,54 mm, o pad 1 quadrado — e nao com pastilhas
     # inventadas. O desenho e a placa na mao passam a ser a mesma imagem.
@@ -393,11 +547,11 @@ def dpdt(P, ref, canal):
         o.append('<text x="%.0f" y="%.0f" class="rot dentro" text-anchor="middle" font-size="12">%s</text>'
                  % (x, y + 4, n))
         # ⚠️ o rotulo da rede sai DEPOIS do courtyard, senao cruza a borda dele
-        o.append('<text x="%.0f" y="%.0f" class="rot peq fraco" font-size="12">%s</text>'
+        o.append('<text x="%.0f" y="%.0f" class="rot peq fraco" font-size="12" text-anchor="start">%s</text>'
                  % (X0 + larg + 12, y - 12, E_(pads[n] or "—")))
     bx, by = 430, 44
     o.append('<rect x="%d" y="%d" width="150" height="268" class="corpo"/>' % (bx, by))
-    o.append('<text x="%d" y="%d" class="rot forte">CHAVE DPDT ON-ON-ON</text>' % (bx - 4, by - 10))
+    o.append('<text x="%d" y="%d" class="rot forte" font-size="13" text-anchor="start">CHAVE DPDT ON-ON-ON</text>' % (bx - 4, by - 10))
     col = {"A": bx + 42, "B": bx + 110}
     LINHAS = (("lado JACK", 52), ("COMUM", 132), ("lado AMP", 212))
     perna = {}
@@ -413,8 +567,8 @@ def dpdt(P, ref, canal):
         o.append('<text x="%d" y="%d" class="rot peq meio" text-anchor="middle" font-size="12">polo %s</text>'
                  % (col[c], by + 252, c))
     for rot, dy in LINHAS:
-        o.append('<text x="%d" y="%d" class="rot peq" font-size="12">%s</text>' % (bx + 158, by + dy - 2, rot))
-        o.append('<text x="%d" y="%d" class="rot peq fraco" font-size="12">perna n.º ____</text>'
+        o.append('<text x="%d" y="%d" class="rot peq" font-size="12" text-anchor="start">%s</text>' % (bx + 158, by + dy - 2, rot))
+        o.append('<text x="%d" y="%d" class="rot peq fraco" font-size="12" text-anchor="start">perna n.º ____</text>'
                  % (bx + 158, by + dy + 14))
     def fio(n, c, rot, cls="fio"):
         cls = "%s %s" % (cls, cor.get(n, ""))
@@ -447,7 +601,7 @@ def dpdt(P, ref, canal):
     for n in terra:
         o.append('<path d="M%.0f %.0f H%d V%d H%d" class="fio tracejado"/>'
                  % (X0 + larg, ypin[n], canais[n], H - 34, bx + 30))
-    o.append('<text x="%d" y="%d" class="rot peq" font-size="12">'
+    o.append('<text x="%d" y="%d" class="rot peq" font-size="12" text-anchor="start">'
              '%s = dreno do cabo · NÃO liga a perna nenhuma</text>'
              % (bx + 36, H - 38, E_(" e ".join(terra))))
     o.append("</svg>")
@@ -1314,6 +1468,20 @@ def main():
     os.makedirs(os.path.dirname(SAIDA), exist_ok=True)
     io.open(SAIDA, "w", encoding="utf-8").write(h)
     print("  %d passos · %d KB -> %s" % (len(PASSOS), len(h) // 1024, os.path.relpath(SAIDA, RAIZ)))
+    if DESVIOS:
+        piores = sorted(DESVIOS, reverse=True)[:5]
+        print("  rotulos: %d colocados · mais afastado %.0f px (%s, %s)"
+              " · %d acima de 60 px · %d acima de 90"
+              % (len(DESVIOS), piores[0][0], piores[0][1], piores[0][2],
+                 sum(1 for d in DESVIOS if d[0] > 60),
+                 sum(1 for d in DESVIOS if d[0] > 90)))
+        longe = [d for d in DESVIOS if d[0] > 120]
+        if longe:
+            print("  (!) %d rotulo(s) a mais de 120 px da peca — o portao de"
+                  " colisao nao ve isto, o leitor ve:" % len(longe))
+            for d in piores:
+                if d[0] > 120:
+                    print("      %.0f px  %s (%s)" % d)
     return 0
 
 

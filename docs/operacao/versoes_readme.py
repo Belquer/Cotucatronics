@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""versoes_readme v1.1.1 — confere o mapa de ficheiros do README contra os
+"""versoes_readme v1.2.0 — confere o mapa de ficheiros do README contra os
 ficheiros. O `CLAUDE.md` exige que o mapa traga a versao ACTUAL de cada um;
 nada cobrava isso, e 15 de 58 tinham derivado.
 
@@ -74,11 +74,30 @@ for _f in (_g.glob(str(RAIZ / "tools/*.py")) + _g.glob(str(RAIZ / "kicad/*/gera_
 for _p, _a, _b in incoerentes:
     print("  INCOERENTE  %-40s cabecalho v%s · VERSAO %s" % (_p, _a, _b))
 
+# ⚠️ E O SENTIDO CONTRARIO? Ate 22/09 este portao andava so num: o README
+# contra o disco. Um ficheiro NOVO nunca era notado — o `tools/portoes.py` e o
+# `tools/colisoes_manual.py` nasceram nesse dia, com versao e tudo, e o portao
+# disse "0 ausentes" com o README a nao os mencionar. A regra e "o README lista
+# TODOS os ficheiros"; verificar metade dela e dar por cumprida a outra metade.
+nao_listados = []
+for _f in sorted(_g.glob(str(RAIZ / "tools/*.py"))
+                 + _g.glob(str(RAIZ / "kicad/*.py"))
+                 + _g.glob(str(RAIZ / "docs/operacao/*.py"))):
+    _rel = str(pathlib.Path(_f).relative_to(RAIZ))
+    if _rel.endswith("__init__.py"): continue
+    if _rel in rd: continue
+    _t = pathlib.Path(_f).read_text(encoding="utf-8", errors="replace")
+    if not re.search(r'VERSAO\s*=\s*"[\d.]+"', _t): continue   # sem versao, sem linha
+    nao_listados.append(_rel)
+for _p in nao_listados:
+    print("  NAO LISTADO %-40s existe, tem versao, e o README nao o nomeia" % _p)
+
 print("\n  %d batem · %d divergem · %d ausentes · %d por conferir · %d incoerentes"
-      % (ok, len(div), len(ausente), len(mudo), len(incoerentes)))
+      " · %d nao listados"
+      % (ok, len(div), len(ausente), len(mudo), len(incoerentes), len(nao_listados)))
 
 if "--write" in sys.argv and div:
     novo = pat.sub(lambda m: (m.group(1) + (real(m.group("p")) or m.group("v")) + m.group(4)), rd)
     RD.write_text(novo, encoding="utf-8")
     print("  README.md reescrito: %d versoes acertadas" % len(div))
-sys.exit(1 if div or ausente or incoerentes else 0)
+sys.exit(1 if div or ausente or incoerentes or nao_listados else 0)

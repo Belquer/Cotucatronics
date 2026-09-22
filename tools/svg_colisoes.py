@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""svg_colisoes v0.6.0 — verificador de sobreposicao para SVGs entregues.
+"""svg_colisoes v0.9.0 — verificador de sobreposicao para SVGs entregues.
 
 ⚠️ ESTE E O PASSO 1 DA SKILL `design-review`, e vem ANTES do olho.
    Zero colisoes e o portao, e ele sabe dizer NAO — e sabe dizer
@@ -37,11 +37,11 @@ Uso: python3 svg_colisoes.py ficheiro.svg [--contentor 0.6] [--largura 0.55]
 """
 import re, sys, math, xml.etree.ElementTree as ET
 
-VERSAO = "0.6.0"
+VERSAO = "0.9.0"
 
 W_CHAR = 0.55
 
-def bbox_text(el, fs):
+def bbox_text(el, fs, anc=None):
     """A caixa de um <text>. Usa a largura MEDIDA quando o ficheiro a traz.
 
     O KiCad escreve `textLength` em cada <text> — a largura exacta que ele
@@ -54,7 +54,13 @@ def bbox_text(el, fs):
     s = "".join(el.itertext())
     tl = el.get("textLength")
     w = float(tl) if tl else len(s) * fs * W_CHAR
-    anc = el.get("text-anchor", "start")
+    # ⚠️ O ANCHOR TAMBEM VEM DO CSS, e ate 22/09 so se lia o atributo.
+    # Um `<text class="rot">` com `text-anchor:middle` na folha de estilo era
+    # modelado como se comecasse no ponto — a caixa saia deslocada de meia
+    # largura, e a ferramenta reportava colisoes que nao existiam E calava
+    # outras que existiam. A mesma familia do `font-size`, que ja se lia.
+    if anc is None:
+        anc = el.get("text-anchor") or "start"
     if anc == "middle": x0 = x - w / 2
     elif anc == "end":  x0 = x - w
     else:               x0 = x
@@ -140,17 +146,64 @@ def main():
         cw, ch = 1000.0, 1000.0
 
     # font-size por classe (do <style>) + inline
-    css = {}
-    for st in root.iter("{http://www.w3.org/2000/svg}style"):
-        for m in re.finditer(r"\.([\w-]+)\s*\{([^}]*)\}", st.text or ""):
-            fm = re.search(r"font-size\s*:\s*([\d.]+)", m.group(2))
-            if fm: css[m.group(1)] = float(fm.group(1))
+    ambiguas = set()   # classes com regras em desacordo: nao se usam
+    css = {}      # classe -> tamanho
+    css_anc = {}  # classe -> text-anchor
+    # ⚠️ SEM DEPENDER DO ESPACO DE NOMES, e foi isso que falhou a 22/09.
+    # Os SVGs do manual nao declaravam `xmlns`; o ElementTree parseia-os sem
+    # espaco de nomes, esta procura com `{...svg}style` nao achava nada, e a
+    # ferramenta caia no omisso de 12 px e `text-anchor: start` — modelando
+    # cada rotulo CENTRADO como se comecasse no ponto. Meia largura de desvio
+    # em todos os textos, em silencio. A busca por nome local sobrevive as
+    # duas formas, e o gerador tambem foi consertado: os dois lados.
+    for st in [e for e in root.iter()
+               if (e.tag.split("}")[-1] if isinstance(e.tag, str) else "") == "style"]:
+        for m in re.finditer(r"([\w.#\s,>-]+)\{([^}]*)\}", st.text or ""):
+            corpo = m.group(2)
+            fm = re.search(r"font-size\s*:\s*([\d.]+)", corpo)
+            am = re.search(r"text-anchor\s*:\s*([\w-]+)", corpo)
+            # um seletor pode nomear varias classes ("svg .rot.peq"): guarda
+            # em TODAS, porque nao se resolve especificidade aqui — e o que
+            # interessa e nao ficar com o omisso "start" quando ha regra.
+            # (!) SO SELETORES DE UMA CLASSE SO. Esta ferramenta NAO resolve
+            # CSS: nao ha contexto nem especificidade. A 22/09 ela aceitou
+            # `svg.dpdt .rot.peq{font-size:12px}` como se falasse de `.rot`,
+            # e mediu o manual inteiro com 12 px onde eram 15. Regra composta
+            # nao se le — e se duas regras discordarem sobre a MESMA classe,
+            # a classe e marcada AMBIGUA e nao se usa. Adivinhar em silencio
+            # e o que se esta a consertar; adivinhar melhor nao serve.
+            sel = m.group(1).strip()
+            cs = re.findall(r"\.([\w-]+)", sel)
+            if len(cs) != 1 or not re.fullmatch(r"\.[\w-]+", sel):
+                continue
+            c = cs[0]
+            if fm:
+                v = float(fm.group(1))
+                if c in css and css[c] != v: ambiguas.add(c)
+                css[c] = v
+            if am:
+                if c in css_anc and css_anc[c] != am.group(1): ambiguas.add(c)
+                css_anc[c] = am.group(1)
+    assumidos = []   # textos cujo tamanho nao estava declarado em lado nenhum
+
+    def anchor(el):
+        m = re.search(r"text-anchor\s*:\s*([\w-]+)", el.get("style", "") or "")
+        if m: return m.group(1)
+        if el.get("text-anchor"): return el.get("text-anchor")
+        # a ULTIMA classe que tem regra vence, que e a aproximacao honesta
+        # a cascata sem implementar especificidade
+        achado = None
+        for c in (el.get("class") or "").split():
+            if c in css_anc and c not in ambiguas: achado = css_anc[c]
+        return achado or "start"
+
     def fsize(el):
         m = re.search(r"font-size\s*:\s*([\d.]+)", el.get("style", "") or "")
         if m: return float(m.group(1))
         if el.get("font-size"): return float(el.get("font-size"))
         for c in (el.get("class") or "").split():
-            if c in css: return css[c]
+            if c in css and c not in ambiguas: return css[c]
+        assumidos.append("".join(el.itertext())[:20])
         return 12.0
 
     # ⚠️ OS GLIFOS NAO SAO DESENHO. O kicad-cli escreve cada texto DUAS vezes:
@@ -192,7 +245,7 @@ def main():
             chave = ((el.text or "").strip(), el.get("x"), el.get("y"), el.get("font-size"))
             if chave in vistos: continue
             vistos.add(chave)
-            texts.append(bbox_text(el, fsize(el)))
+            texts.append(bbox_text(el, fsize(el), anchor(el)))
         elif tag == "rect":
             x, y = num(el.get("x"), cw, 0.0), num(el.get("y"), ch, 0.0)
             w, h = num(el.get("width"), cw, 0.0), num(el.get("height"), ch, 0.0)
@@ -251,6 +304,12 @@ def main():
         print("   Zero colisoes aqui nao significa nada. Ver a skill design-review §1.")
         sys.exit(3)
     print(f"{fn}: {len(texts)} textos, {len(shapes)} formas, {len(segs)} segmentos, {len(probs)} colisoes")
+    # ⚠️ ASSUMIR EM SILENCIO E O MODO DE FALHA CARO. A 22/09 esta ferramenta
+    # mediu 78 figuras com 12 px e `start` porque nao achou o `<style>`, e
+    # ninguem soube. Agora ela diz de quantos textos teve de adivinhar.
+    if assumidos:
+        print("   (!) %d texto(s) SEM tamanho declarado — assumi 12 px: %s"
+              % (len(assumidos), ", ".join(sorted(set(assumidos))[:6])))
     for p in probs: print("  !!", *p, flush=True)
     sys.exit(1 if probs else 0)
 

@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.76.0
+// hal_daisy_seed v0.82.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.76.0"
+#define COTUCA_HAL_VERSION "0.82.0"
 
 using namespace daisy;
 
@@ -1737,6 +1737,34 @@ class OledFb : public daisy::SSD130x4WireSpi128x64Driver
     // A licao: o custo estava no CODIGO, nao no periferico. Fui desenhar
     // DMA para um problema que era um laco de 8192 iteracoes.
     void Copia(const uint8_t* fb) { memcpy(buffer_, fb, sizeof(buffer_)); }
+
+    // O QUADRO EM PEDACOS DE 32 BYTES, e o numero foi MEDIDO (22/09).
+    //
+    // O `Update()` da libDaisy manda a pagina inteira — 128 bytes — num
+    // `BlockingTransmit` so. Nesta placa um envio de 128 bytes devolve
+    // `ERR` e gasta os 100 ms do prazo, em QUALQUER prescaler; ate 32
+    // bytes passa sempre, e os bytes saem mesmo (o tempo cresce com o
+    // tamanho). A sonda `oledspi` imprime a tabela.
+    //
+    // O sintoma sem isto: 8 paginas x 100 ms = 800 ms por quadro, o laco
+    // principal a cair de 13 000 voltas/s para 1, e o vidro APAGADO —
+    // com o `oled` a dizer "tela ACESA", porque o driver do SSD130x
+    // DEITA FORA o `Result` de cada envio e o nosso `OledInit` nunca o viu.
+    //
+    // (!) NAO e o conserto da causa, e digo-o: por que e que um envio de
+    // 64 bytes esgota o prazo nesta configuracao continua em aberto. Isto
+    // e a volta por cima da fronteira medida, com a fronteira escrita.
+    void EnviaQuadro()
+    {
+        for(uint8_t pag = 0; pag < 8; pag++)
+        {
+            transport_.SendCommand((uint8_t)(0xB0 + pag));
+            transport_.SendCommand(0x00);
+            transport_.SendCommand(0x10);
+            for(int off = 0; off < 128; off += 32)
+                transport_.SendData(&buffer_[128 * pag + off], 32);
+        }
+    }
 };
 OledFb* OledFb::eu = nullptr;
 
@@ -1758,6 +1786,20 @@ static uint32_t oled_chars   = 0;
 // do `dup on|off`.
 static int oled_ps = 8;   // VERIFICADO no vidro: PS_4 e PS_8 desenham limpo.
 static bool oled_pronto = false;
+
+// MEMORIA DAS RETENCOES DO `fio`, e ela existe por uma medicao perdida.
+//
+// A 22/09 o dB mediu os cinco pinos no conector contando que as cinco
+// retencoes estivessem de pe. Nao estavam: um reinicio pelo meio tinha
+// devolvido CLK e DIN ao SPI, que em repouso os deixa BAIXOS. O padrao
+// medido — 0 V nos dois do SPI, 3,3 V nos tres GPIO — foi lido como
+// avaria e e o repouso normal do barramento.
+//
+// A retencao NAO sobrevive a um reinicio, e ninguem tinha como saber.
+// Estes -1 dizem "ninguem retem"; o arranque zera-os por serem estaticos,
+// que e exactamente a semantica certa.
+static int oled_retido[5] = {-1, -1, -1, -1, -1};
+static const char* const kFioNome[5] = {"rst", "dc", "cs", "clk", "din"};
 
 // Reinicializa DE VERDADE quando o prescaler muda: o `if(oled_pronto)`
 // existia para nao repetir o Init, e com velocidade ajustavel ele viraria
@@ -1867,7 +1909,7 @@ bool OledDesenha(const uint8_t* fb)
     const uint32_t t0 = NowTicks();
     if(!OledFb::eu) return false;
     OledFb::eu->Copia(fb);
-    oled.Update();
+    OledFb::eu->EnviaQuadro();   // 32 bytes de cada vez: ver EnviaQuadro
     const bool ok = true;
     const uint32_t us = (NowTicks() - t0) / TicksPerUs();
     if(us > oled_fb_us_pico) oled_fb_us_pico = us;
@@ -1896,7 +1938,7 @@ void OledPreenche(bool aceso)
 {
     if(!oled_pronto) return;
     oled.Fill(aceso);
-    oled.Update();   // BLOQUEANTE, e aceitavel: roda no loop, por comando
+    if(OledFb::eu) OledFb::eu->EnviaQuadro();   // 32 em 32   // BLOQUEANTE, e aceitavel: roda no loop, por comando
     oled_updates++;
 }
 
@@ -1930,7 +1972,7 @@ void OledTexto(const char* l1, const char* l2)
         oled.SetCursor((uint16_t)x, 38);
         oled.WriteString(l2, Font_6x8, true);
     }
-    oled.Update();
+    if(OledFb::eu) OledFb::eu->EnviaQuadro();   // 32 em 32
 }
 
 // TRES LINHAS, fonte pequena, alinhadas a esquerda.
@@ -1950,7 +1992,7 @@ void OledLinhas(const char* l1, const char* l2, const char* l3)
         oled.WriteString(v[i], Font_6x8, true);
         for(const char* q = v[i]; *q; q++) oled_chars++;
     }
-    oled.Update();
+    if(OledFb::eu) OledFb::eu->EnviaQuadro();   // 32 em 32
     oled_updates++;
 }
 
@@ -1977,6 +2019,8 @@ bool OledSondaPino(const char* nome, bool alto)
     else return false;
     sonda.Init(p, GPIO::Mode::OUTPUT, GPIO::Pull::NOPULL);
     sonda.Write(alto);
+    for(int i = 0; i < 5; i++)
+        if(!strcmp(nome, kFioNome[i])) oled_retido[i] = alto ? 1 : 0;
     // O painel deixa de estar inicializado: quem reconfigura um pino do
     // SPI como GPIO quebra o barramento, e afirmar o contrario seria
     // exatamente a string fixa que ja mentiu aqui hoje.
@@ -2037,8 +2081,137 @@ int OledCacaPonte(char* achados, int cap)
     }
     for(int i = 0; i < 5; i++)
         g[i].Init(kPino[i], GPIO::Mode::INPUT, GPIO::Pull::NOPULL);
+    for(int i = 0; i < 5; i++) oled_retido[i] = -1;
     oled_pronto = false;
     return n;
+}
+
+// LEITOR DE TRES ESTADOS — o gemeo, na direcao da ENTRADA, do `fio`.
+//
+// O `fio` SEGURA um nivel e manda medir la fora; e quando o multimetro
+// diz 0 V ele nao sabe dizer QUAL dos dois 0 V e:
+//
+//   ha cobre a puxar o pino para a terra, ou
+//   nao chega nivel nenhum ate la, e o 0 V e a ausencia.
+//
+// Isto le do lado de ca, com o pull INTERNO invertido duas vezes:
+//
+//   pull-up ALTO  e pull-down baixo  = SOLTO — so o pull interno manda
+//   as duas BAIXO                    = preso a TERRA
+//   as duas ALTO                     = alguem de fora puxa para CIMA
+//
+// (!) O terceiro caso e o SAUDAVEL quando a fita esta ligada: o modulo
+// OLED tem pull-up nas entradas e vence o pull-down interno do MCU. Foi
+// esse mesmo pull-up que fez a primeira versao do caca-ponte acusar 20
+// pontes em 20 pares. Com a fita FORA o saudavel passa a ser SOLTO — e
+// por isso a leitura so CONCLUI em par: uma com fita, outra sem. Uma
+// leitura sozinha nao separa "o painel esta la" de "o painel nao esta".
+void OledLeCinco(bool* com_pullup, bool* com_pulldown)
+{
+    const daisy::Pin kPino[5] = {seed::D5, seed::D6, seed::D7,
+                                 seed::D8, seed::D10};
+    daisy::GPIO g[5];
+    for(int i = 0; i < 5; i++)
+        g[i].Init(kPino[i], GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
+    System::Delay(5);
+    for(int i = 0; i < 5; i++) com_pullup[i] = g[i].Read();
+    for(int i = 0; i < 5; i++)
+        g[i].Init(kPino[i], GPIO::Mode::INPUT, GPIO::Pull::PULLDOWN);
+    System::Delay(5);
+    for(int i = 0; i < 5; i++) com_pulldown[i] = g[i].Read();
+    // Deixa-os neutros: pull interno preso falsearia a proxima medicao
+    // com multimetro, que e a ferramenta externa deste diagnostico.
+    for(int i = 0; i < 5; i++)
+        g[i].Init(kPino[i], GPIO::Mode::INPUT, GPIO::Pull::NOPULL);
+    for(int i = 0; i < 5; i++) oled_retido[i] = -1;
+    oled_pronto = false;
+}
+
+// QUEM MANDA NOS CINCO PINOS AGORA — a pergunta que valida (ou anula)
+// qualquer medicao feita no conector com o multimetro.
+//
+// Devolve o nivel retido pelo `fio` (0 ou 1) ou -1 para "nao retido".
+// Se o SPI estiver configurado, NENHUMA retencao esta de pe: um reinicio
+// refaz o barramento e os pinos voltam ao repouso dele.
+// SONDA DO SPI — le o codigo de erro que o nosso caminho deita fora.
+//
+// POR QUE EXISTE, e custou uma tarde (22/09). O painel nao acendia, e
+// medimos a tarde inteira do lado do FIO: continuidade, pontes, curtos,
+// alimentacao, ordem dos sinais no modulo. Tudo bom. O que denunciou foi
+// o TEMPO do quadro: 800 ms, e IGUAL de PS_256 a PS_4 — 64x de relogio
+// sem mexer um milissegundo. Transferencia a serio encolhe; timeout nao.
+//
+// 800 ms = 8 paginas x 100 ms, que e o prazo por omissao do
+// `BlockingTransmit`. E por pagina vao 3 comandos de 1 byte e 1 bloco de
+// 128: se os 32 envios esgotassem dava 3 200 ms. Logo os curtos passam e
+// os longos nao.
+//
+// O `SSD130x` da libDaisy DEITA FORA o `Result` de cada envio, e o nosso
+// `OledInit` devolve `void` disfarcado de sucesso. Esta sonda faz os
+// envios ela mesma, com a MESMA configuracao, e relata os dois numeros
+// que faltavam: o codigo e o tempo, por tamanho.
+//
+// (!) Toma o SPI para si. Pede `oled` a seguir.
+int OledSondaSpi(int ps_pedido, int* tam, int* res, uint32_t* us, int cap)
+{
+    static const int kN[] = {1, 8, 16, 24, 31, 32, 33, 40, 64, 128};
+    static uint8_t   buf[128];
+    for(int i = 0; i < 128; i++) buf[i] = (uint8_t)(0x55u + (unsigned)i);
+
+    SpiHandle         spi;
+    SpiHandle::Config c;
+    c.periph          = SpiHandle::Config::Peripheral::SPI_1;
+    c.mode            = SpiHandle::Config::Mode::MASTER;
+    c.direction       = SpiHandle::Config::Direction::TWO_LINES_TX_ONLY;
+    c.datasize        = 8;
+    c.clock_polarity  = SpiHandle::Config::ClockPolarity::LOW;
+    c.clock_phase     = SpiHandle::Config::ClockPhase::ONE_EDGE;
+    c.nss             = SpiHandle::Config::NSS::HARD_OUTPUT;
+    // A FRONTEIRA E DO FIFO OU DO TEMPO? So se sabe movendo o relogio.
+    // O FIFO do SPI1 no H7 tem 32 bytes: fronteira parada nos 32 em
+    // qualquer velocidade = o periferico enche a fila e nao desloca nada.
+    using BPS = SpiHandle::Config::BaudPrescaler;
+    BPS bp = BPS::PS_8;
+    switch(ps_pedido)
+    {
+        case 2:   bp = BPS::PS_2;   break;
+        case 4:   bp = BPS::PS_4;   break;
+        case 16:  bp = BPS::PS_16;  break;
+        case 64:  bp = BPS::PS_64;  break;
+        case 256: bp = BPS::PS_256; break;
+        default:  bp = BPS::PS_8;   break;
+    }
+    c.baud_prescaler  = bp;
+    c.pin_config.sclk = seed::D8;
+    c.pin_config.miso = daisy::Pin(daisy::PORTX, 0);
+    c.pin_config.mosi = seed::D10;
+    c.pin_config.nss  = seed::D7;
+    if(spi.Init(c) != SpiHandle::Result::OK)
+    {
+        oled_pronto = false;
+        return -1;               // o proprio Init recusou: -1 diz isso
+    }
+
+    int n = 0;
+    for(unsigned k = 0; k < sizeof(kN) / sizeof(kN[0]) && n < cap; k++)
+    {
+        const uint32_t t0 = System::GetUs();
+        const SpiHandle::Result r
+            = spi.BlockingTransmit(buf, (size_t)kN[k]);
+        const uint32_t t1 = System::GetUs();
+        tam[n] = kN[k];
+        res[n] = (r == SpiHandle::Result::OK) ? 0 : 1;
+        us[n]  = t1 - t0;
+        n++;
+    }
+    oled_pronto = false;
+    return n;
+}
+
+int OledRetido(int i)
+{
+    if(i < 0 || i > 4) return -1;
+    return oled_pronto ? -1 : oled_retido[i];
 }
 
 bool OledConfigurado() { return oled_pronto; }

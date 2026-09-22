@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""derivados v1.1.0 — "gerado" deixa de ser rotulo e passa a ser afirmavel.
+"""derivados v1.2.0 — "gerado" deixa de ser rotulo e passa a ser afirmavel.
 
 O PROBLEMA QUE RESOLVE (05/09). O `manifest.h` ja era a fonte unica, e mesmo
 assim o mapa de CC dava numeros diferentes em documentos diferentes. A causa
@@ -25,7 +25,7 @@ O QUE ISTO VERIFICA
 USO:  derivados.py
 """
 import re, pathlib, sys
-print("derivados v1.1.0")
+print("derivados v1.2.0")
 RAIZ = pathlib.Path(__file__).resolve().parents[2]
 
 def ler(p):
@@ -76,7 +76,21 @@ for p in sorted((RAIZ / "docs").rglob("*.md")):
         # sem carimbo explicito: as versoes soltas que nao sejam de gerador
         vers = [v for v in re.findall(r'(?<!\.py )v(\d+\.\d+\.\d+)', cab)
                 if not re.search(r'gerar_[a-z_]+\.py[^\n]{0,4}v' + re.escape(v), cab)]
-    tem_ger = nome in escritos
+    # ⚠️ E SE O GERADOR COMPOE O NOME? A varredura acima procura o nome do
+    # .md como LITERAL dentro dos .py, e o `lista_roteamento.py` escreve
+    #     "ROTEAMENTO-%s.md" % q.upper()
+    # — nome que nunca aparece inteiro em lado nenhum. A 22/09 isto acusou
+    # dois documentos correctos de orfaos. E a MESMA familia que o comentario
+    # acima descreve: alcance mais estreito que a afirmacao.
+    #
+    # O documento NOMEIA o gerador dele. Isso e verificavel sem adivinhar:
+    # basta o ficheiro existir. Uma afirmacao do documento contra o disco.
+    nomeado = None
+    for mg in re.finditer(r"`([\w./-]+\.py)`", cab):
+        if (RAIZ / mg.group(1)).exists():
+            nomeado = mg.group(1)
+            break
+    tem_ger = nome in escritos or nomeado is not None
     # derivado de outro DERIVADO?
     de_derivado = re.search(r'Gerad[oa] de `([A-Z][A-Za-z-]+\.md)`', cab)
 
@@ -89,7 +103,9 @@ for p in sorted((RAIZ / "docs").rglob("*.md")):
     # contra a versao do manifest era eu a assumir uma fonte unica que nao
     # vale para tudo — e a acusar um carimbo correcto de estar atrasado.
     elif re.search(r'commit `?[0-9a-f]{7,}', cab):
-        print("  ✅ %-38s carimbado por commit (nao deriva do manifest)" % rel)
+        print("  ✅ %-38s carimbado por commit%s" % (rel,
+              " (gerador: %s)" % nomeado if nomeado and nome not in escritos
+              else " (nao deriva do manifest)"))
     elif VER_MANIF not in vers and vers:
         print("  🟡 ATRASADO %-33s declara %s · fonte hoje v%s" % (rel, ", ".join("v"+v for v in vers), VER_MANIF))
         achados += 1
