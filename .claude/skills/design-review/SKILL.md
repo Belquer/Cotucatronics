@@ -52,6 +52,33 @@ portão: um script que o chama pára.
 | **1** | verificado, há colisões — **defeito no desenho** |
 | **3** | **NÃO VERIFICÁVEL** — não consegui olhar. Nem aprovação nem reprovação |
 
+## 1b · EMENDA DE 22/09 — o portão mediu 78 figuras com a caixa errada
+
+Durante semanas o manual teve **15 das 78 figuras com sobreposição** sem
+ninguém saber, e quando a medição foi feita ela estava **errada nas duas
+direcções**. Três causas, e todas valem para qualquer SVG teu:
+
+1. **O SVG tem de declarar `xmlns`.** Sem ele o `ElementTree` parseia sem
+   espaço de nomes, o verificador não acha o `<style>`, e cai no omisso de
+   12 px e `text-anchor: start` **em silêncio**.
+2. **Tamanho e alinhamento vão como ATRIBUTO, não só em classe.** O
+   verificador não resolve CSS a sério — não há contexto nem especificidade.
+   Ele resolvia `.rot` como 12 px porque um desenho diferente tinha uma regra
+   com o mesmo nome de classe. Desde a v0.9.0 ele **só aceita selectores de
+   uma classe só e descarta classes com regras em desacordo**, e **diz quantos
+   textos teve de adivinhar** — mas a resposta certa é não o obrigar a
+   adivinhar. Um rótulo centrado modelado como se começasse no ponto está
+   deslocado de **meia largura**, e isso inventa colisões E cala colisões.
+3. **Figura gerada em lote precisa do seu próprio portão.** A regra "toda
+   imagem passa pelo verificador" era cumprida só nos desenhos NOVOS; ninguém
+   ia buscar 78 SVGs embutidos num HTML um a um. Para o manual existe agora o
+   `tools/colisoes_manual.py`, que os extrai, **embute o `<style>` do
+   documento** e corre o portão em cada um.
+
+> **E o portão não vê tudo.** Um rótulo que fugiu para longe da peça não
+> colide com nada e não serve para nada. O gerador do manual passou a **medir
+> o desvio** e a relatá-lo. Portão de geometria pede gémeo de legibilidade.
+
 Ler o 3 como "há colisões" é o erro fácil, porque ambos são ≠ 0 e querem dizer
 o contrário um do outro. O 3 sai quando não há `<text>` nenhum — as letras
 podem estar como paths — e aí *"zero colisões" seria uma frase verdadeira
