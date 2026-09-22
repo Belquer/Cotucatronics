@@ -10956,3 +10956,74 @@ Rótulo que foge para longe não colide com nada e não serve para nada. O
 `manual_montagem.py` passou a **medir e relatar o desvio**: 113 rótulos
 colocados, o mais afastado a 106 px, 12 acima de 60. Número que o portão nunca
 veria e o leitor vê de imediato.
+
+## 15fm — dois módulos OLED mortos, e o segundo fomos nós que o matámos pelos pinos de sinal
+
+22/09. O dB: *"por que já temos dois OLEDs queimados?"* Duas mortes no mesmo
+sítio não é azar, é causa — e as causas são **diferentes**, o que só se soube
+por o primeiro estar escrito:
+
+- **Módulo nº 1 (23/08)** — `STATUS.md`: *"GND e 3V3 estavam invertidos na
+  placa de distribuição, e o módulo recebeu polaridade reversa."* Causa
+  conhecida, e morreu com a placa de distribuição: o painel fabricado tem a
+  polaridade no cobre.
+- **Módulo nº 2 (22/09)** — causa apurada neste dia, e é **nossa**.
+
+### A topologia, lida no cobre
+
+```
++15 V ──> J3 (step-down) ──> rede +5V ──┬──> U2 pad 39  (VIN da Daisy: ENTRADA)
+                                        ├──> J14 pinos 11 e 12 ─> painel ──> módulo
+                                        └──> TP5
+```
+
+Os 5 V do painel vêm do **step-down**, que corre do **+15 V**. A Daisy não os
+gera. Logo, com a bancada desligada e a Daisy viva no USB:
+
+> **medido: `TP5` = 0 V.**
+
+E o firmware, nesse mesmo instante, **inicializa o OLED no arranque** e desenha
+continuamente. Cinco sinais a 3,3 V contra um módulo com `VCC` a zero.
+
+⚠️ **Um módulo assim é alimentado pelos DÍODOS DE PROTECÇÃO das entradas.** A
+corrente entra por um pino de sinal, atravessa a protecção e tenta alimentar o
+chip inteiro por ali. Mata **devagar**, ao longo de sessões — e deixa a lógica
+com ar de viva: pull-ups bons, níveis de repouso certos, vidro morto. Que é
+exactamente o quadro que passámos uma tarde a investigar do lado do fio.
+
+E fizemo-lo muitas vezes sem pensar. Só neste dia corri o `oledbench` durante
+**seis minutos, duas vezes**.
+
+### O conserto, e ele não precisou de fio novo
+
+O barramento é só de escrita: não há realimentação nenhuma. Mas o **módulo tem
+pull-up nas entradas**, e esse pull-up **só existe quando ele tem VCC**. Então
+pergunta-se com o pull-down interno do MCU, e quem vence diz a verdade:
+
+| leitura dos cinco pinos | significa |
+|---|---|
+| ALTOS | o pull-up do módulo ganha → **painel alimentado** |
+| baixos | só o pull interno manda → **sem 5 V: NÃO CONDUZIR** |
+
+`OledPainelAlimentado()` (hal 0.83.0) corre **antes de qualquer pino ser
+conduzido**, e o `OledInit` recusa-se com a razão escrita. `oled forca` passa
+por cima para quem souber o que faz.
+
+> **A sonda que fechou o diagnóstico e a guarda que impede a repetição são a
+> MESMA medição.** O par diferencial que provou a cablagem — fita fora, fita
+> posta — era, sem ninguém reparar, um detector de alimentação do painel.
+
+### O que a rev D tem de levar, e não é opcional
+
+1. **Resistores em série nos cinco sinais.** Confirmado no cobre: as cinco
+   redes tocam **só** o `U2` e o `J14` no cérebro, e **só** o `J1` e o `J2` no
+   painel. **Não há um único componente pelo meio.** Umas centenas de ohms
+   limitam a corrente que entra pela protecção do módulo a algo inofensivo,
+   não mudam nada a estas velocidades, e custam cinco 0805.
+2. **Ou o painel tem 5 V sempre que a Daisy tem, ou o firmware tem de saber.**
+   Hoje sabe — pela sonda acima. Mas a sonda é remendo: o desenho certo é o
+   painel não poder ter sinal conduzido sem ter alimentação.
+
+⚠️ **E a lição de método:** o primeiro módulo morreu com a causa escrita, e foi
+por estar escrita que se soube, hoje, que o segundo **não** morreu da mesma
+coisa. Sem esse parágrafo de 23/08 eu teria "confirmado" a polaridade e parado.

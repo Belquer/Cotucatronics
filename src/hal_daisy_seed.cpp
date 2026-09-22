@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.82.0
+// hal_daisy_seed v0.83.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.82.0"
+#define COTUCA_HAL_VERSION "0.83.0"
 
 using namespace daisy;
 
@@ -1815,9 +1815,55 @@ bool OledVelocidade(int ps)
 }
 int OledVelocidadeAtual() { return oled_ps; }
 
-bool OledInit()
+// O PAINEL TEM ALIMENTACAO? — e esta pergunta vale um modulo por sessao.
+//
+// MEDIDO a 22/09: com a bancada desligada e a Daisy viva no USB, o `TP5`
+// (rede +5V) da ZERO. Os 5 V do painel vem do step-down, que corre do +15 V;
+// o pad 39 do `U2` e VIN, uma ENTRADA. Ou seja: sempre que se trabalha so com
+// USB, o modulo esta sem VCC — e o firmware, que inicializa o OLED no arranque
+// e desenha sem parar, conduz-lhe cinco sinais a 3,3 V.
+//
+// Um modulo nessas condicoes e alimentado pelos DIODOS DE PROTECCAO das
+// entradas dele. Mata devagar, ao longo de sessoes, e deixa a logica com ar de
+// viva — pull-ups bons, niveis de repouso certos, vidro morto. Ja morreram
+// DOIS: o primeiro por polaridade invertida na placa de distribuicao (23/08,
+// causa conhecida e resolvida), o segundo sem causa apurada ate aqui.
+//
+// A sonda nao precisa de fio novo: o proprio modulo tem PULL-UP nas entradas,
+// e ele so existe quando o modulo tem VCC. Entao pergunta-se com o pull-down
+// INTERNO — quem vence e quem esta la.
+//
+//   painel alimentado -> os cinco leem ALTO (o pull-up do modulo ganha)
+//   painel sem 5 V    -> os cinco leem baixo (so o pull-down interno manda)
+//
+// Exige 3 dos 5 e nao os 5: um pino com defeito nao deve impedir o painel bom.
+bool OledPainelAlimentado()
+{
+    const daisy::Pin kPino[5] = {seed::D5, seed::D6, seed::D7,
+                                 seed::D8, seed::D10};
+    daisy::GPIO g[5];
+    for(int i = 0; i < 5; i++)
+        g[i].Init(kPino[i], GPIO::Mode::INPUT, GPIO::Pull::PULLDOWN);
+    System::Delay(5);
+    int altos = 0;
+    for(int i = 0; i < 5; i++) altos += g[i].Read() ? 1 : 0;
+    return altos >= 3;
+}
+
+bool OledInit(bool forcar)
 {
     if(oled_pronto) return true;
+    // (!) ANTES DE CONDUZIR UM UNICO PINO. Recusar e barato; o modulo nao e.
+    if(!forcar && !OledPainelAlimentado())
+    {
+        Log("oled: RECUSO — o painel nao responde com alimentacao (os cinco"
+            " pinos seguem o pull interno).");
+        Log("  Conduzir sinal a 3,3 V num modulo sem VCC alimenta-o pelos"
+            " diodos de proteccao e mata-o devagar. Ja custou modulos.");
+        Log("  Ligue os 15 V (o +5V do painel vem do step-down) e repita."
+            "  `oled forca` passa por cima, se souber o que faz.");
+        return false;
+    }
     daisy::OledDisplay<OledFb>::Config cfg;
     // Defaults ja dao MODO 0 (polarity LOW + phase ONE_EDGE), que e o que
     // o SSD1309 quer. Nao se toca no que ja esta certo.

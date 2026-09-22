@@ -104,6 +104,17 @@ Três requisitos que não vêm de limpeza, vêm de bancada — ver `battle_scars
    isto não é outro valor: é a **frase que diz qual piezo, qual acoplamento e
    qual pico medido** justificam o valor.
 
+4. **Resistores em série nos cinco sinais do OLED, e a alimentação do painel**
+   (bts **15fm**, 22/09). Dois módulos mortos, e o segundo fomos nós: com a
+   bancada desligada e a Daisy no USB, o `TP5` dá **0 V** — os 5 V do painel
+   vêm do step-down, que corre do +15 V — e o firmware conduz os cinco sinais
+   a 3,3 V num módulo sem `VCC`, alimentando-o pelos díodos de protecção. As
+   cinco redes não têm **nenhum** componente entre o `U2` e o módulo. A rev D
+   leva **uma centena de ohms em série por linha** e, se possível, o painel
+   alimentado de um trilho que exista sempre que a Daisy existe. O remendo em
+   firmware (`OledPainelAlimentado`, hal 0.83.0) fica de qualquer forma — mas
+   é remendo, e diz-se que é.
+
 ## §4 — Aceitação (o que prova que está feito)
 
 - `compara_netlist.py` rev C → rev D: as **únicas** diferenças são as redes que

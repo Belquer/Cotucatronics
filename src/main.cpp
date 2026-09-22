@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.308.0"
+#define COTUCA_OS_VERSION "0.309.1"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -607,6 +607,7 @@ static bool     knob_dono[cotuca::kNumKnobs] = {false};
 // ao fim de 5 s sem actividade. Durante a performance ninguem lhe
 // toca, portanto ele esta apagado quando o ouvido esta a trabalhar.
 static const uint32_t kOledDormeMs = 5000u;
+static bool     oled_pronto_forcado = false;  // so para o relato do `oled forca`
 static bool     enc_na_tela   = false;   // nasce APAGADO
 static uint32_t oled_dorme_em = 0;       // 0 = ja dorme
 
@@ -4457,6 +4458,15 @@ static void HandleLine(const char* line)
     // Contar quadros nao prova que os pixels chegaram limpos: SPI rapida em
     // fio comprido CORROMPE, nao emudece. O `oledbench` mede velocidade; a
     // correcao so o olho fecha. Tem de vir ANTES de "oled" no despacho.
+    if(strncmp(line, "oled forca", 10) == 0)
+    {
+        hal::Log("oled forca: a passar por cima da recusa. Se o painel estiver"
+                 " sem 5 V, conduzir sinal nele MATA o modulo — ja custou dois.");
+        oled_pronto_forcado = hal::OledInit(true);
+        hal::Log("  %s", oled_pronto_forcado
+                 ? "painel inicializado a forca." : "nem a forca inicializou.");
+        return;
+    }
     if(strncmp(line, "oledspi", 7) == 0)
     {
         const char* ap = line + 7;
@@ -4604,8 +4614,12 @@ static void HandleLine(const char* line)
             // deteccao possivel aqui, hoje ou nunca.
             hal::Log("oled: CONFIGURADO (nao detectado — o painel e escrita"
                      " pura e nunca responde)");
-            hal::Log("      SPI1 modo 0, PS_64 | CLK D8 · DIN D10 · CS D7"
-                     " · DC D6 · RST D5 | MISO nao atribuido");
+            // ⚠️ O PRESCALER LIDO, nao um numero cravado. Ate 22/09 esta
+            // linha dizia sempre `PS_64` enquanto o `oledvel` mexia no valor
+            // a serio — instrumento a mentir sobre a propria configuracao,
+            // que e a familia que esta casa persegue.
+            hal::Log("      SPI1 modo 0, PS_%d | CLK D8 · DIN D10 · CS D7"
+                     " · DC D6 · RST D5 | MISO nao atribuido", hal::OledVelocidadeAtual());
         }
         if(strncmp(a, "off", 3) == 0)
         {
@@ -6612,7 +6626,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | fio le | fio estado | oledspi | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] | pkout [reset] (entrada / saida) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | fio le | fio estado | oledspi | oled forca | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] | pkout [reset] (entrada / saida) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

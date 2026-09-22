@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.42.0
+// hal.h v0.43.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -323,7 +323,17 @@ bool             VarreTudoAtivo();
 // CONFIGURACAO foi feita — o `Init` da libDaisy e `void` e nao tem o que
 // reportar. Chamar isso de deteccao seria a string fixa `placa viva: sim`
 // outra vez (bts, cap. instrumentacao).
-bool             OledInit();          // true = CONFIGURADO, nao detectado
+// (!) RECUSA-SE a conduzir os pinos se o painel nao tiver alimentacao —
+// ver `OledPainelAlimentado`. Conduzir 3,3 V num modulo sem VCC alimenta-o
+// pelos diodos de proteccao das entradas e mata-o ao longo de sessoes. Ja
+// morreram dois modulos. `forcar` passa por cima, para quem sabe o que faz.
+bool             OledInit(bool forcar = false);
+
+// O painel tem 5 V? Responde com o PULL-UP do proprio modulo contra o
+// pull-down interno do MCU: se o modulo esta alimentado, ele ganha.
+// Nao precisa de fio de retorno nenhum — e a unica realimentacao que
+// este barramento so-de-escrita tem.
+bool             OledPainelAlimentado();          // true = CONFIGURADO, nao detectado
 void             OledPreenche(bool aceso);   // tela toda acesa/apagada
 void             OledTexto(const char* l1, const char* l2);
 // Tres linhas pequenas — o formato de instrumento, nao de titulo.
