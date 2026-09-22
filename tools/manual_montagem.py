@@ -31,7 +31,7 @@ import os
 import subprocess
 import sys
 
-VERSAO = "0.15.0"
+VERSAO = "0.16.0"
 RAIZ = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PACOTE = "06db1c7"
 SAIDA = os.path.join(RAIZ, "docs", "montagem", "manual_montagem.html")
@@ -807,10 +807,18 @@ def constroi():
           fig=mapa(Pn, ["J6", "J7"], baixo=True, marcas=[("J6", "1", "+"), ("J7", "1", "+")]),
           qtd="4 fios", fonte="`LICOES-MONTAGEM.md` #9")
 
+    # ⚠️ 22/09: a Waveshare NAO publica as cores do cabo — a wiki dela lista so
+    # os nomes dos pinos. Estas foram levantadas na peca em mao pelo dB, e ficam
+    # aqui porque a coluna "anote" ficou em branco quando ele montou, e sem ela
+    # a unica forma de ligar sete fios iguais e contar posicoes debaixo da placa.
+    # A cor e ATALHO, nao autoridade: quem manda e o pad quadrado (bts 15fh).
+    CORES_OLED = {"1": "**vermelho**", "2": "**preto**", "3": "**azul**",
+                  "4": "**amarelo**", "5": "**laranja**", "6": "**verde**",
+                  "7": "**branco**"}
     j2 = [(p["n"], p["rede"]) for p in sorted(Pn.fp["J2"]["pads"], key=lambda p: int(p["n"]))]
     passo("3", "Painel · header do OLED (J2) por baixo",
-          tabela(["pad", "sinal", "cor do fio no seu cabo (anote)"],
-                 [["■ 1" if n == "1" else n, "`%s`" % r, "__________"] for n, r in j2]) +
+          tabela(["pad", "sinal", "cor no cabo Waveshare"],
+                 [["■ 1" if n == "1" else n, "`%s`" % r, CORES_OLED.get(n, "__________")] for n, r in j2]) +
           lista(["Corte 7 pinos da barra. Encaixe **por baixo** e solde por cima.",
                  "Os jumpers do OLED entram **por baixo**, com conectores **em L virados para trás e para baixo**."]),
           fig=mapa(Pn, ["J2"], baixo=True, marcas=[("J2", "1", "VCC"), ("J2", "2", "GND")]),

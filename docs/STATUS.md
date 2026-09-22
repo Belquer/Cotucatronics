@@ -393,6 +393,12 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   declarada no firmware, `hal` v0.76.0) · os **dois pots** lidos pelo ADC ·
   **LEDs dos arcade a funcionar** depois de trocar o chicote comprado, que vinha
   com as cores cruzadas (bts 15fh).
+  **Cabo do OLED, cores levantadas na peça (dB, 22/09)** — a Waveshare não as
+  publica, a wiki dela só lista nomes de pino: `J2` pino 1 = **vermelho** (+5 V)
+  · 2 **preto** (GND) · 3 **azul** (DIN) · 4 **amarelo** (CLK) · 5 **laranja**
+  (CS) · 6 **verde** (DC) · 7 **branco** (RST). A ordem do cabo coincide com a
+  do `J2`, logo é ligação direta — contando o pino 1 pelo **pad quadrado**, que
+  com o header soldado por baixo fica do lado oposto ao que a serigrafia sugere.
   ⚠️ **Por resolver: o OLED não liga** e o **encoder conta 1 pulso em 20
   cliques**, com os três pinos dele a comutar — suspeita no terminal comum.
 - ⚠️ **Dívida medida a 22/09: 15 dos 47 mapas do manual têm colisão de texto.**
