@@ -93,7 +93,13 @@ Três requisitos que não vêm de limpeza, vêm de bancada — ver `battle_scars
    rev D leva o valor medido como ponto de partida **e** um segundo pad em
    paralelo, porque cada fonte pede o seu — e a serigrafia diz que os dois
    canais podem (e devem) ficar diferentes.
-3. **A conta de margem escrita ao lado do valor.** O −6 dB original era uma
+3. **Os `TP` do lado acessível, com o nome impresso** (bts 15fg). No cérebro
+   está certo por acaso — ele deita no fundo. **No painel está errado**: os 5
+   `TP` estão em `TOP`, virados para o acrílico, e com a referência em `F.Fab`,
+   que não se imprime. A próxima rev do painel leva-os para `B.Cu` +
+   `B.Silkscreen`, e ganha `TP` nos botões e no encoder, que hoje não têm
+   nenhum. O `encaixe.py` **M8** já reprova isto.
+4. **A conta de margem escrita ao lado do valor.** O −6 dB original era uma
    estimativa que nenhuma revisão confrontou com o transdutor real. O que fecha
    isto não é outro valor: é a **frase que diz qual piezo, qual acoplamento e
    qual pico medido** justificam o valor.

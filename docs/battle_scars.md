@@ -10670,3 +10670,42 @@ Por isso o valor de cada canal fica escrito com a razão ao lado.
 ponto **pós-ganho** — e foi ele que revelou que, depois do divisor, o estouro
 que restava já não era da entrada mas da **soma interna** (`+5,5 dBFS`,
 resolvido baixando o `pre_level_ab` de 1,0 para 0,5).
+
+---
+
+## 15fg — ponto de teste do lado errado da placa, e sem nome impresso
+
+22/09, o dB com o painel na mão, a começar a fase de testes: *"os tps estão em
+cima na placa, então tenho que removê-la da tampa para testar"*. E logo a
+seguir: *"não tenho esses tps na serigrafia"*.
+
+Medido nas duas placas, e o contraste é a lição:
+
+| placa | assenta no | TPs | lado | nome impresso? |
+|---|---|---|---|---|
+| cérebro | fundo | 11 | topo | **sim** (`F.Silkscreen`) |
+| painel | **tampa** | 5 | topo | **não** (`F.Fab`) |
+
+> **O lado acessível de uma placa depende de onde ela assenta.** O cérebro
+> deita no fundo, logo o topo fica para cima e os `TP` ficam à mão — estava
+> certo **por acaso de simetria**, e ninguém reparou que era acaso. O painel
+> **pendura-se na tampa**: o topo dele encosta no acrílico, e medir exige
+> desmontar a peça que se quer testar em funcionamento.
+
+⚠️ **E o nome importa tanto como o pad.** A referência dos `TP` do painel vive
+em `F.Fab`, que é camada de fabrico e **não se imprime**. São cinco pads
+anónimos: quem mede tem de contar posições ou abrir o KiCad para saber qual é o
++5 V — exactamente quando tem as duas mãos ocupadas com pontas de prova.
+
+⚠️ **O mais incómodo: o repo já sabia a resposta.** O `assenta` (`fundo` ou
+`tampa`) está no `pcb_contorno` desde sempre, e é dele que sai toda a geometria
+de caixa. O dado existia; faltava a **pergunta**.
+
+**O que ficou (22/09):** `kicad/encaixe.py` **v0.7.0**, etapa **M8**. Ela deriva
+o lado acessível do `assenta` e exige duas coisas de cada `TP`: estar nesse
+lado, e ter a referência na serigrafia **desse** lado. Hoje aprova os 11 do
+cérebro e reprova os 5 do painel, que é a verdade. Provado com `--sabota tp`.
+
+**Para a próxima rev do painel:** os `TP` passam para `B.Cu` com o nome em
+`B.Silkscreen` — e vale acrescentar os que faltam, porque hoje não há ponto de
+teste nenhum nos botões nem no encoder.

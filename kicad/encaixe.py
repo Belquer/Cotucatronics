@@ -47,7 +47,7 @@ import os
 import re
 import sys
 
-VERSAO = "0.6.0"
+VERSAO = "0.7.0"
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.path.dirname(AQUI)
 sys.path.insert(0, AQUI)
@@ -323,6 +323,47 @@ def m1_interfaces(nome, b, sabota=False):
     return ok, txt, len(maus)
 
 
+def m8_pontos_de_teste(nome, b, alvo, sabota=False):
+    """O ponto de teste fica do lado ACESSIVEL, e com o nome impresso.
+
+    ⚠️ 22/09, dB, com o painel na mao: *"os tps estao em cima na placa, entao
+    tenho que remove-la da tampa para testar"* — e *"nao tenho esses tps na
+    serigrafia"*. As duas coisas medidas: os 5 TPs do painel estao em `TOP` e o
+    texto da referencia deles vive em `F.Fab`, que NAO se imprime.
+
+    O painel PENDURA-SE na tampa: o lado de cima dele encosta no acrilico. Logo
+    o lado acessivel de uma placa depende de onde ela assenta, e isso o repo ja
+    sabe — esta no `assenta` do `pcb_contorno`. No cerebro (assenta no fundo) o
+    topo e o lado bom, e por isso ninguem reparou: estava certo por acaso.
+
+    ⚠️ E um ponto de teste sem nome impresso e meio ponto de teste: quem mede
+    precisa de saber QUAL pad e o +5 V antes de encostar a ponta. O nome na
+    camada de fabrico serve ao fabricante, nao a quem monta."""
+    lado_bom = "topo" if alvo.get("assenta") == "fundo" else "baixo"
+    silk_bom = "B.Silkscreen" if lado_bom == "baixo" else "F.Silkscreen"
+    tps = [f for f in b.GetFootprints() if f.GetReference().startswith("TP")]
+    if sabota:
+        tps = tps[:1] if tps else []
+        lado_bom = "baixo" if lado_bom == "topo" else "topo"
+    maus = []
+    for f in tps:
+        ref = f.GetReference()
+        lado = "baixo" if f.IsFlipped() else "topo"
+        camada = b.GetLayerName(f.Reference().GetLayer())
+        if lado != lado_bom:
+            maus.append("%s no lado %s (a placa assenta no %s: acessivel e o %s)"
+                        % (ref, lado, alvo.get("assenta"), lado_bom))
+        elif camada != silk_bom:
+            maus.append("%s sem nome impresso (a ref esta em %s, nao em %s)"
+                        % (ref, camada, silk_bom))
+    ok = not maus and bool(tps)
+    if not tps:
+        return True, "sem pontos de teste nesta placa", 0
+    txt = ("%d ponto(s) de teste, todos no lado acessivel (%s) e com nome impresso"
+           % (len(tps), lado_bom)) if ok else "; ".join(maus[:4])
+    return ok, txt, len(maus)
+
+
 # ------------------------------------------------------------------ M2
 def m2_fixacao(nome, b, sabota=False):
     pcbnew = _pcbnew()
@@ -466,7 +507,8 @@ def corre(nomes, sabota=None):
                 ("M1 interface", m1_interfaces(n, placas[n], {"m1": "destino", "m1v": "vestigio"}.get(sabota))),
                 ("M2 fixacao ", m2_fixacao(n, placas[n], sabota == "m2")),
                 ("M4 contorno", m4_contorno(n)),
-                ("M6 volume  ", m6_volume(P, n, sabota == "m6"))):
+                ("M6 volume  ", m6_volume(P, n, sabota == "m6")),
+                ("M8 teste   ", m8_pontos_de_teste(n, placas[n], _alvo(P, n), sabota == "tp"))):
             print("     %s %s %s" % ("✓" if ok else "✗", etiqueta, txt))
             falhas += peso
     ok, txt, peso = m7_casa(sabota == "casa")
@@ -483,7 +525,7 @@ def main():
     if "--sabota" in sys.argv:
         import contextlib
         maus = []
-        for alvo, placa in (("m1", "cerebro"), ("m1v", "cerebro"), ("m2", "cerebro"), ("m6", "cerebro"), ("casa", "cerebro"), ("cabo", "cerebro")):
+        for alvo, placa in (("m1", "cerebro"), ("m1v", "cerebro"), ("m2", "cerebro"), ("m6", "cerebro"), ("casa", "cerebro"), ("tp", "cerebro"), ("cabo", "cerebro")):
             with contextlib.redirect_stdout(io.StringIO()):
                 base = corre([placa])
                 sab = corre([placa], sabota=alvo)
