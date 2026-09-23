@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.314.0"
+#define COTUCA_OS_VERSION "0.316.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -5281,9 +5281,39 @@ static void HandleLine(const char* line)
                             sizeof(nomes) - strlen(nomes) - 1);
                 }
             }
-            hal::Log("sem CC: %d de %d params — alcancaveis por `set`,"
-                     " invisiveis ao iPad", sem, params.Count());
+            // ⚠️ DE PROPOSITO E ACIDENTE NAO SE CONTAM JUNTOS.
+            //
+            // Desde 22/09 ha params FORA do mapa por decisao — o
+            // instrumento tem chave fisica para eles, e duas fontes de
+            // verdade para o mesmo estado e o defeito. Uma contagem nua
+            // le-se como avaria, e o conserto obvio (repor os CCs) desfaz
+            // a decisao em silencio. Entao a lista declarada vive aqui, e
+            // o que estiver fora dela e ACHADO.
+            static const char* const kDeProposito[] = {
+                "route_a_l", "route_b_l", "route_a_r", "route_b_r",
+                "out_l", "out_r"};
+            int proposital = 0, inesperado = 0;
+            char maus[120]; maus[0] = 0;
+            for(int p = 0; p < params.Count(); p++)
+            {
+                if(tem_cc[p]) continue;
+                bool ok = false;
+                for(unsigned q = 0;
+                    q < sizeof(kDeProposito) / sizeof(kDeProposito[0]); q++)
+                    if(!strcmp(params.Name(p), kDeProposito[q])) ok = true;
+                if(ok) { proposital++; continue; }
+                inesperado++;
+                strncat(maus, inesperado > 1 ? " " : "",
+                        sizeof(maus) - strlen(maus) - 1);
+                strncat(maus, params.Name(p), sizeof(maus) - strlen(maus) - 1);
+            }
+            hal::Log("sem CC: %d de %d params — %d DE PROPOSITO (a chave"
+                     " fisica manda) · %d inesperado(s)",
+                     sem, params.Count(), proposital, inesperado);
             if(sem) hal::Log("        %s%s", nomes, sem > 6 ? " ..." : "");
+            if(inesperado)
+                hal::Log("        *** FORA DA LISTA DECLARADA: %s — param"
+                         " mudo ao iPad sem ninguem ter decidido isso", maus);
         }
 
         // COLISAO DE CC — pergunta DIFERENTE de "sem CC", e a diferenca

@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v1.13.0
+// manifest.h (instrumento "bancada") v2.0.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -1902,15 +1902,28 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         AddMidi(112, p_shift_hz, kCanalCompart);         // COMPARTILHADO pelos dois ramos
 AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         AddMidi(117, p_post_level_r, kCanalCompart);             // pot A1 (D16)
-                AddMidi(113, p_out_l, kCanalCompart);            // 0 = corta o ramo L   // COMPARTILHADO: so ch1
-        AddMidi(114, p_out_r, kCanalCompart);            // 0 = corta o ramo R   // COMPARTILHADO: so ch1
-        // MATRIZ 2x2 — o CC diz a SAIDA, o canal diz a CADEIA. Mesmo
-        // esquema de todo o instrumento, sem numero novo por celula:
-        // quatro interruptores em dois CCs.
-        AddMidi(97, p_route_l[0], kCanalEntradaA);
-        AddMidi(97, p_route_l[1], kCanalEntradaB);
-        AddMidi(98, p_route_r[0], kCanalEntradaA);
-        AddMidi(98, p_route_r[1], kCanalEntradaB);
+        // ---- SEM CC DE PROPOSITO: quem manda nisto e a CHAVE FISICA ----
+        //
+        // Decisao do dB, 22/09: **uma fonte de verdade por controlo.** Seis
+        // parametros saem do mapa MIDI porque o instrumento ja tem um
+        // interruptor de verdade para a mesma coisa, e dois donos para o
+        // mesmo estado e o defeito — nao a conveniencia.
+        //
+        //   out_l  (CC 113)  out_r  (CC 114)   — cortar o ramo
+        //   route_a_l / route_b_l (CC 97)      — exciter / linha / ambos
+        //   route_a_r / route_b_r (CC 98)      — idem, ramo R
+        //
+        // Os DPDT do painel traseiro decidem se o jack recebe a linha ou a
+        // saida do amplificador. Um botao no iPad a dizer o contrario do que
+        // a chave esta a fazer nao e uma segunda via: e uma mentira com ar de
+        // controlo. Quem quiser o corte por software tem-no por `set`.
+        //
+        // ⚠️ Os parametros FICAM, com o valor de nascenca 1.0 — so deixam de
+        // ser enderecaveis pelo iPad. Tirar o parametro seria mudar o sinal;
+        // tirar o CC muda so quem pode mexer nele.
+        //
+        // (a matriz 2x2 que aqui vivia — o CC dizia a SAIDA e o canal dizia a
+        //  CADEIA, quatro interruptores em dois CCs — sai inteira por isso.)
         AddMidi(105, p_bench_boost[0], kCanalCompart);   // exciter L
         AddMidi(102, p_gov_ceiling[1], kCanalCompart);   // exciter R
         AddMidi(104, p_gov_release[1], kCanalCompart);   // exciter R

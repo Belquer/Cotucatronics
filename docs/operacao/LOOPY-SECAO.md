@@ -1,6 +1,6 @@
 # Loopy Pro — secção nova, com MIDI learn
 
-**Gerado por `gerar_secao_loopy.py v0.3.0` a partir do `manifest.h`, manifest v1.13.0.** Não editar à mão — correr o gerador.
+**Gerado por `gerar_secao_loopy.py v0.3.0` a partir do `manifest.h`, manifest v2.0.0.** Não editar à mão — correr o gerador.
 
 ⚠️ **Isto é a ORDEM DE APRENDIZAGEM, não o layout.** O Loopy endereça widgets por índice de array dentro da cena, e esse índice só existe depois de alguém os criar. Cria os widgets na ordem abaixo e faz `learn` um a um — assim o mapa fica igual ao documento.
 
@@ -147,22 +147,6 @@
 | **61** | ch3 (cadeia B) | `dly_mix_b` | Fader | 0 – 1 | 0 |
 | **64** | ch1 (compartilhado) | `dly_time` | Fader | 0 – 1 | 0 |
 
-## ROTEAMENTO
-
-| CC | canal | parâmetro | widget | faixa | nasce |
-|---|---|---|---|---|---|
-| **97** | ch2 (cadeia A) | `route_a_l` | Botao (corta o ramo) | 0 – 1 | 1 |
-| **97** | ch3 (cadeia B) | `route_b_l` | Botao (corta o ramo) | 0 – 1 | 1 |
-| **98** | ch2 (cadeia A) | `route_a_r` | Botao (corta o ramo) | 0 – 1 | 1 |
-| **98** | ch3 (cadeia B) | `route_b_r` | Botao (corta o ramo) | 0 – 1 | 1 |
-
-## SAIDA
-
-| CC | canal | parâmetro | widget | faixa | nasce |
-|---|---|---|---|---|---|
-| **113** | ch1 (compartilhado) | `out_l` | Botao (corta o ramo) | 0 – 1 | 1 |
-| **114** | ch1 (compartilhado) | `out_r` | Botao (corta o ramo) | 0 – 1 | 1 |
-
 ## EXCITERS
 
 | CC | canal | parâmetro | widget | faixa | nasce |
@@ -260,4 +244,4 @@ São **botões de valor fixo**, não faders: cada botão manda o CC 121 com o se
 
 ---
 
-**122 vínculos** nesta folha.
+**116 vínculos** nesta folha.

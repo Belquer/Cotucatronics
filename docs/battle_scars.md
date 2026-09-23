@@ -11148,3 +11148,50 @@ ser a regra.
 mesmo, e por causa do conserto anterior. **Depois de um conserto que muda uma
 taxa por ordens de grandeza, procurar o que contava por passagem** — não
 esperar que o próximo defeito se apresente como defeito novo.
+
+## 15fo — uma fonte de verdade por controlo: seis parâmetros saem do mapa MIDI
+
+22/09, decisão do dB: *"vou eliminar out L e R do iPad e Exciter/Line or Both
+— these have physical keys and I want to have a single source of truth."*
+
+Saem do mapa **seis** vínculos:
+
+| CC | param | quem manda de verdade |
+|---|---|---|
+| 113 / 114 | `out_l` · `out_r` | corte do ramo |
+| 97 (ch2/ch3) | `route_a_l` · `route_b_l` | DPDT: exciter / linha / ambos |
+| 98 (ch2/ch3) | `route_a_r` · `route_b_r` | idem, ramo R |
+
+> **Duas fontes de verdade para o mesmo estado não são redundância, são
+> defeito.** Um botão no iPad a dizer o contrário do que a chave física está a
+> fazer não é uma segunda via: é uma mentira com ar de controlo. E é pior que
+> não ter controlo nenhum, porque se acredita nela.
+
+⚠️ **Os parâmetros FICAM**, com o valor de nascença 1.0 — só deixam de ser
+endereçáveis pelo iPad, e continuam alcançáveis por `set`. Tirar o parâmetro
+seria mudar o sinal; tirar o CC muda só **quem pode mexer nele**.
+
+### A contagem nua convidava ao desfazer
+
+O `board` já contava os params sem CC e já os nomeava. Mas a linha lia-se como
+avaria — *"invisíveis ao iPad"* — e o conserto óbvio seria repor os CCs,
+desfazendo a decisão em silêncio meses depois.
+
+Então a lista dos que estão fora **por decisão** passou a viver no código, e o
+relato separa as duas coisas:
+
+```
+sem CC: 6 de 122 params — 6 DE PROPOSITO (a chave fisica manda) · 0 inesperado(s)
+        route_a_l route_b_l route_a_r route_b_r out_l out_r
+```
+
+Um param que caia do mapa sem estar na lista sai como **`*** FORA DA LISTA
+DECLARADA ***`** — que é a diferença entre uma decisão e um acidente, e nenhuma
+contagem sozinha a sabe fazer.
+
+### E uma nota órfã caiu junto
+
+O `gerar_ccmap.py` guardava uma nota por param (*"0 corta o ramo"*) e avisou:
+**"2 nota(s) de param que já não existe"**. Nota de um vínculo que já não
+existe é lápide invertida — e foi o próprio gerador que a acusou, que é o que
+se espera de um gerador que conhece o seu alcance.

@@ -1,11 +1,14 @@
 # CC MAP — Cotucatronics
 <!-- CARIMBO gerar_ccmap -->
-> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v0.11.0` em **2026-09-05 08:32 EDT**.
+> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v0.11.0` em **2026-09-23 16:49 EDT**.
 > Nao editar a mao: rode `python3 docs/operacao/gerar_ccmap.py`.
 >
-> **122 vinculos em 84 numeros de CC** · `src/manifest.h` @ `ddbcc49` · manifest v1.13.0
+> **116 vinculos em 80 numeros de CC** · `src/manifest.h` @ `ddbcc49` · manifest v2.0.0
 >
 > Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6` (escuta = manda + 3).
+>
+> ⚠️ **ARVORE SUJA** — `src/manifest.h` tem alteracoes por commitar.
+> Este mapa descreve codigo que mais ninguem tem.
 <!-- FIM CARIMBO -->
 
 
@@ -157,10 +160,6 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 94 | ch1 | ch4 | `test_tone_level` | tom | 0 – 1 |
 | 95 | ch1 | ch4 | `test_tone_out` | tom | 0 – 2 |
 | 96 | ch1 | ch4 | `test_tone_via` | tom | 0 – 1 |
-| 97 | ch2 | ch5 | `route_a_l` | saída | 0 – 1 |
-| 97 | ch3 | ch6 | `route_b_l` | saída | 0 – 1 |
-| 98 | ch2 | ch5 | `route_a_r` | saída | 0 – 1 |
-| 98 | ch3 | ch6 | `route_b_r` | saída | 0 – 1 |
 | 100 | ch1 | ch4 | `pre_level_ab` | saída | 0 – 1 |
 | 101 | ch1 | ch4 | `gov_ceiling_l` | proteção | 0 – 1 |
 | 102 | ch1 | ch4 | `gov_ceiling_r` | proteção | 0 – 1 |
@@ -172,14 +171,12 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 108 | ch1 | ch4 | `sim_hz` | — | 60 – 8000 |
 | 109 | ch1 | ch4 | `sim_fb` | — | 0 – 2 |
 | 112 | ch1 | ch4 | `shift_hz` | proteção | 0 – 10 |
-| 113 | ch1 | ch4 | `out_l` | saída | 0 – 1 |
-| 114 | ch1 | ch4 | `out_r` | saída | 0 – 1 |
 | 116 | ch1 | ch4 | `post_level_l` | — | 0 – 1 |
 | 117 | ch1 | ch4 | `post_level_r` | — | 0 – 1 |
 | 118 | ch1 | ch4 | `exc_filter_l` | saída | 0 – 1 |
 | 119 | ch1 | ch4 | `exc_filter_r` | saída | 0 – 1 |
 
-<!-- 122 vinculos em 84 numeros de CC -->
+<!-- 116 vinculos em 80 numeros de CC -->
 >
 > Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6` (escuta = manda + 3).
 >

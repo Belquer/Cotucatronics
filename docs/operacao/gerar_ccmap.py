@@ -113,8 +113,9 @@ NOTAS = {
     "test_tone_freq": "80…2000 Hz · nasce em 848",
     "post_level_l": "<b>volume do ramo L</b> — POT físico em A0 (D15)",
     "post_level_r": "<b>volume do ramo R</b> — POT físico em A1 (D16)",
-    "out_l": "<b>0 corta o ramo</b> (mute pós-limiter; volume é o level_l)",
-    "out_r": "<b>0 corta o ramo</b>",
+    # (out_l / out_r sairam do mapa a 22/09 — uma fonte de verdade por
+    #  controlo, e a chave fisica e a fonte. A nota foi com eles: nota de um
+    #  vinculo que ja nao existe e lapide invertida, e este gerador acusa-a.)
     "tarol_on": "<b>TAROLATOR</b> — ruído percussivo com o envelope da pancada; nasceu oitavador e não faz oitava",
     "tarol_mix": "0…4× — 100% é o máximo que o efeito gera; acima disso o limiter grampeia",
     "test_tone_out": "<b>0=A+B</b> · 1=A · 2=B",
