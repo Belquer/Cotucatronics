@@ -112,6 +112,33 @@ horas de arranjo de ecrã.
 
 Decodificado em 24/08 e confirmado contra dois bindings feitos à mão.
 
+🔴 **DUAS EXTENSÕES PARECIDAS, SÍTIOS DIFERENTES (dB, 23/09).** Custou uma
+importação recusada e uma renomeação à mão:
+
+| onde | como se chama |
+|---|---|
+| **dentro** do `.lpproj`, em `Control Profiles/` | `<nome>.lpcontrol**profile**` |
+| **exportado solto**, para importar no Loopy | `<nome>.lpcontrol**ler**profile` |
+
+⚠️ E a armadilha não é só o nome: a importação tinha **duas** falhas ao mesmo
+tempo — a extensão errada e a identidade do dispositivo cravada no gerador.
+Corrigida a primeira, o Loopy continuou a recusar (*"perfil global sem
+bindings"*), e **parecia a mesma falha por consertar**. Duas causas empilhadas
+lêem-se como uma só que não cedeu.
+
+🔴 **A IDENTIDADE DO DISPOSITIVO SAI DO PROJECTO, nunca de um literal.** O
+ficheiro chama-se `<id>.MIDI.<Nome do dispositivo>.controllerprofile`, e o
+plist repete `Device` e `Device Name` lá dentro. Se o id não corresponder a um
+controlador que o Loopy conhece, ele mostra **perfil global sem bindings** — lê
+o ficheiro e não lhe acha dono. O projecto do dB tinha **dois Cotucatronics
+emparelhados** (`Cotucatronics` e `Cotucatronics1`), e o literal do gerador
+apontava para o que ele não estava a usar.
+
+E o pacote traz **um ficheiro por dispositivo**, não um sozinho: gerar só o
+nosso e deixar cair a pedaleira é perder os bindings dela. O
+`gerar_perfil_loopy.py` v0.8.0 copia o pacote inteiro e substitui apenas os
+dispositivos cujo nome diz Cotucatronics.
+
 🔴 **CORRIGIDO EM 01/09, e o erro anterior custou um projecto inutilizado.**
 Esta skill dizia que o `Subject` era posicional — `"<Tipo>:<cena>:<posição>"`.
 **Não é.** Verificado num export real:

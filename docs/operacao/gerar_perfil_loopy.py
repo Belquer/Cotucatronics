@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.6.0 — escreve o .lpcontrolprofile a partir do projeto.
+"""gerar_perfil_loopy v0.8.0 — escreve o .lpcontrollerprofile a partir do projeto.
 
-    gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
+    gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrollerprofile]
 
 Le o projeto exportado do Loopy Pro (zip com Project.sqlite), casa cada
 widget com o seu parametro pelo TITULO, e emite um perfil de controlo
@@ -166,7 +166,13 @@ def ccs_do_manifest(raiz):
 
 def main():
     lpproj = sys.argv[1]
-    saida  = sys.argv[2] if len(sys.argv) > 2 else 'Cotucatronics-gerado.lpcontrolprofile'
+    # ⚠️ DUAS EXTENSOES PARECIDAS, SITIOS DIFERENTES (dB, 23/09):
+    #   DENTRO do .lpproj a pasta e  `<nome>.lpcontrolprofile`
+    #   EXPORTADO solto o ficheiro e `<nome>.lpcontrollerprofile`  <- com "ler"
+    # Esta ferramenta escreve o EXPORTADO. Ate 23/09 usava a forma de dentro,
+    # e o dB teve de renomear a mao — depois de o Loopy ja lhe ter recusado o
+    # ficheiro por outra razao, o que fez parecer que era a mesma falha.
+    saida  = sys.argv[2] if len(sys.argv) > 2 else 'Cotucatronics-gerado.lpcontrollerprofile'
     raiz   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     raiz   = os.path.dirname(raiz) if os.path.basename(raiz)=='docs' else raiz
     tmp = tempfile.mkdtemp()
@@ -231,12 +237,72 @@ def main():
     for r in casados[:6]:
         print(f"     {r[0]:8s} {r[1]:26s} {r[2]:18s} -> {r[3]:16s} cc{r[4]} ch{r[5]}  {r[6]}")
 
-    plist = {'Bindings': binds, 'Device':'227f559e',
-             'Device Name':'Cotucatronics1 Bluetooth', 'Type':'MIDI'}
-    os.makedirs(saida, exist_ok=True)
-    alvo = os.path.join(saida, '227f559e.MIDI.Cotucatronics1 Bluetooth.controllerprofile')
-    with open(alvo,'wb') as f: plistlib.dump(plist, f)
-    print(f"\n   escrito: {alvo}  ({len(binds)} bindings)")
+    # ---- A IDENTIDADE DO DISPOSITIVO SAI DO PROJECTO, NAO DE UM LITERAL ----
+    #
+    # ⚠️ Ate 23/09 isto estava cravado:
+    #     'Device':'227f559e', 'Device Name':'Cotucatronics1 Bluetooth'
+    # Um literal que foi verdade em Agosto. O dB importou o perfil e o Loopy
+    # deu-lhe "perfil global sem bindings" — ele LE o ficheiro, nao encontra
+    # dono para aquele id, e mostra-o sem controlador. O projecto dele tinha
+    # DOIS Cotucatronics emparelhados (`Cotucatronics` e `Cotucatronics1`) e o
+    # literal apontava para o que ele nao estava a usar.
+    #
+    # E o pacote tambem estava errado em FORMA: saia com UM ficheiro sozinho,
+    # quando o do Loopy traz um ficheiro POR DISPOSITIVO. Agora copia-se o
+    # pacote do projecto inteiro e substituem-se so os dispositivos cujo nome
+    # diz Cotucatronics — os outros (pedaleira, etc.) passam intactos.
+    perfis = []
+    base = os.path.join(tmp, 'Control Profiles')
+    if os.path.isdir(base):
+        for pacote in sorted(os.listdir(base)):
+            d = os.path.join(base, pacote)
+            if not os.path.isdir(d): continue
+            for f in sorted(os.listdir(d)):
+                if f.endswith('.controllerprofile'):
+                    perfis.append((pacote, os.path.join(d, f), f))
+    alvos = []
+    for pacote, caminho, nome in perfis:
+        try:
+            pl = plistlib.load(open(caminho, 'rb'))
+        except Exception:
+            continue
+        if 'cotucatronics' in str(pl.get('Device Name', '')).lower():
+            alvos.append((pacote, nome, pl.get('Device'), pl.get('Device Name')))
+    if not alvos:
+        # sem molde: cai no comportamento antigo, e DIZ que esta a adivinhar
+        print("   (!) o projecto nao traz nenhum perfil de dispositivo com"
+              " 'Cotucatronics' no nome — a identidade vai ADIVINHADA")
+        alvos = [('Cotucatronics.lpcontrolprofile',
+                  '227f559e.MIDI.Cotucatronics1 Bluetooth.controllerprofile',
+                  '227f559e', 'Cotucatronics1 Bluetooth')]
+
+    pacote_saida = alvos[0][0]
+    raiz_saida = saida
+    if not raiz_saida.endswith('.lpcontrollerprofile'):
+        print("   (!) a saida nao acaba em `.lpcontrollerprofile` — e essa a"
+              " extensao do perfil EXPORTADO. Dentro do .lpproj a pasta usa"
+              " `.lpcontrolprofile`, sem o \"ler\": nao troque as duas.")
+    if os.path.isdir(raiz_saida): shutil.rmtree(raiz_saida)
+    os.makedirs(raiz_saida, exist_ok=True)
+    # copia tudo o que havia no pacote de origem (outros controladores)
+    origem = os.path.join(base, pacote_saida) if os.path.isdir(base) else None
+    copiados = 0
+    if origem and os.path.isdir(origem):
+        for f in sorted(os.listdir(origem)):
+            if f.endswith('.controllerprofile'):
+                shutil.copy2(os.path.join(origem, f), os.path.join(raiz_saida, f))
+                copiados += 1
+    escritos = 0
+    for pacote, nome, dev, devnome in alvos:
+        if pacote != pacote_saida: continue
+        plist = {'Bindings': binds, 'Device': dev,
+                 'Device Name': devnome, 'Type': 'MIDI'}
+        with open(os.path.join(raiz_saida, nome), 'wb') as f:
+            plistlib.dump(plist, f)
+        escritos += 1
+        print("   dispositivo: %-28s id %s" % (devnome, dev))
+    print(f"\n   escrito: {raiz_saida}  ({len(binds)} bindings"
+          f" em {escritos} dispositivo(s), {copiados - escritos} outro(s) intacto(s))")
     shutil.rmtree(tmp)
 
 main()
