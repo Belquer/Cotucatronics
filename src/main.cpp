@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.317.0"
+#define COTUCA_OS_VERSION "0.318.1"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -5261,6 +5261,7 @@ static void HandleLine(const char* line)
         // nomeia os primeiros para que a conta nao vire um numero sem
         // assunto.
         {
+            static const int kSemCcMostra = 12;   // >= a lista declarada abaixo
             bool tem_cc[cotuca::kMaxParams] = {false};
             for(int k = 0; k < manifest.n_midi; k++)
             {
@@ -5268,12 +5269,18 @@ static void HandleLine(const char* line)
                 if(p >= 0 && p < params.Count()) tem_cc[p] = true;
             }
             int sem = 0;
-            char nomes[160]; nomes[0] = 0;
+            char nomes[240]; nomes[0] = 0;
             for(int p = 0; p < params.Count(); p++)
             {
                 if(tem_cc[p]) continue;
                 sem++;
-                if(sem <= 6)
+                // ⚠️ O TECTO DA LISTA TEM DE SEGUIR A LISTA DECLARADA.
+                // Estava em 6 de quando eram 6; a 23/09 passaram a 8 e o
+                // relato escondeu dois atras de "...", logo a seguir a eu ter
+                // escrito que uma contagem nua convida a desfazer a decisao.
+                // Um tecto que nao acompanha o que conta e um numero velho
+                // com cara de novo.
+                if(sem <= kSemCcMostra)
                 {
                     strncat(nomes, sem > 1 ? " " : "",
                             sizeof(nomes) - strlen(nomes) - 1);
@@ -5291,7 +5298,8 @@ static void HandleLine(const char* line)
             // o que estiver fora dela e ACHADO.
             static const char* const kDeProposito[] = {
                 "route_a_l", "route_b_l", "route_a_r", "route_b_r",
-                "out_l", "out_r"};
+                "out_l", "out_r",
+                "exc_filter_l", "exc_filter_r"};
             int proposital = 0, inesperado = 0;
             char maus[120]; maus[0] = 0;
             for(int p = 0; p < params.Count(); p++)
@@ -5310,7 +5318,8 @@ static void HandleLine(const char* line)
             hal::Log("sem CC: %d de %d params — %d DE PROPOSITO (a chave"
                      " fisica manda) · %d inesperado(s)",
                      sem, params.Count(), proposital, inesperado);
-            if(sem) hal::Log("        %s%s", nomes, sem > 6 ? " ..." : "");
+            if(sem) hal::Log("        %s%s", nomes,
+                             sem > kSemCcMostra ? " ..." : "");
             if(inesperado)
                 hal::Log("        *** FORA DA LISTA DECLARADA: %s — param"
                          " mudo ao iPad sem ninguem ter decidido isso", maus);

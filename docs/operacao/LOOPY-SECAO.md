@@ -1,6 +1,6 @@
 # Loopy Pro — secção nova, com MIDI learn
 
-**Gerado por `gerar_secao_loopy.py v0.3.0` a partir do `manifest.h`, manifest v2.0.0.** Não editar à mão — correr o gerador.
+**Gerado por `gerar_secao_loopy.py v0.3.0` a partir do `manifest.h`, manifest v3.0.0.** Não editar à mão — correr o gerador.
 
 ⚠️ **Isto é a ORDEM DE APRENDIZAGEM, não o layout.** O Loopy endereça widgets por índice de array dentro da cena, e esse índice só existe depois de alguém os criar. Cria os widgets na ordem abaixo e faz `learn` um a um — assim o mapa fica igual ao documento.
 
@@ -147,13 +147,6 @@
 | **61** | ch3 (cadeia B) | `dly_mix_b` | Fader | 0 – 1 | 0 |
 | **64** | ch1 (compartilhado) | `dly_time` | Fader | 0 – 1 | 0 |
 
-## EXCITERS
-
-| CC | canal | parâmetro | widget | faixa | nasce |
-|---|---|---|---|---|---|
-| **118** | ch1 (compartilhado) | `exc_filter_l` | Fader | 0 – 1 | 1 |
-| **119** | ch1 (compartilhado) | `exc_filter_r` | Fader | 0 – 1 | 1 |
-
 ## FONTE
 
 | CC | canal | parâmetro | widget | faixa | nasce |
@@ -244,4 +237,4 @@ São **botões de valor fixo**, não faders: cada botão manda o CC 121 com o se
 
 ---
 
-**116 vínculos** nesta folha.
+**114 vínculos** nesta folha.

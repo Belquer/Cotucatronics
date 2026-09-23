@@ -1,11 +1,14 @@
 # CC MAP — Cotucatronics
 <!-- CARIMBO gerar_ccmap -->
-> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v0.11.0` em **2026-09-23 17:11 EDT**.
+> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v0.11.0` em **2026-09-23 17:22 EDT**.
 > Nao editar a mao: rode `python3 docs/operacao/gerar_ccmap.py`.
 >
-> **116 vinculos em 80 numeros de CC** · `src/manifest.h` @ `f38d198` · manifest v2.0.0
+> **114 vinculos em 78 numeros de CC** · `src/manifest.h` @ `f38d198` · manifest v3.0.0
 >
 > Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6` (escuta = manda + 3).
+>
+> ⚠️ **ARVORE SUJA** — `src/manifest.h` tem alteracoes por commitar.
+> Este mapa descreve codigo que mais ninguem tem.
 <!-- FIM CARIMBO -->
 
 
@@ -170,10 +173,8 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 | 112 | ch1 | ch4 | `shift_hz` | proteção | 0 – 10 |
 | 116 | ch1 | ch4 | `post_level_l` | — | 0 – 1 |
 | 117 | ch1 | ch4 | `post_level_r` | — | 0 – 1 |
-| 118 | ch1 | ch4 | `exc_filter_l` | saída | 0 – 1 |
-| 119 | ch1 | ch4 | `exc_filter_r` | saída | 0 – 1 |
 
-<!-- 116 vinculos em 80 numeros de CC -->
+<!-- 114 vinculos em 78 numeros de CC -->
 >
 > Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6` (escuta = manda + 3).
 >

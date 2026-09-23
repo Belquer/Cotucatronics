@@ -1,5 +1,5 @@
 #pragma once
-// manifest.h (instrumento "bancada") v2.0.0
+// manifest.h (instrumento "bancada") v3.0.0
 // ============================================================
 // Cotucatronics OS — MANIFEST do instrumento
 // Este é o ÚNICO arquivo que muda de escultura para escultura,
@@ -1962,8 +1962,21 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         // CC 118/119 no ch1, com os outros params de saida (113/114 out,
         // 116/117 post_level). Eram 105 nos canais de ENTRADA, o que
         // punha um param de saida a ser endereçado pelo eixo errado.
-        AddMidi(118, p_exc_on[0], kCanalCompart);   // exciter L
-        AddMidi(119, p_exc_on[1], kCanalCompart);   // exciter R
+        // exc_filter_l / exc_filter_r (CC 118/119) SAEM a 23/09, mesma
+        // razao dos seis acima: quem decide se um ramo vai para um exciter e
+        // o DPDT, nao um botao no iPad.
+        //
+        // ⚠️ E o nome MENTE: nao e filtro nem saida — e o interruptor que
+        // liga a proteccao anti-realimentacao do ramo (shift + governor).
+        // O dB leu-os como "saidas confusas", e tinha razao em achar
+        // confuso: o rotulo nao diz o que o parametro faz.
+        //
+        // Com o CC fora, ficam em 1.0 — PROTECCAO SEMPRE LIGADA, que e o
+        // lado seguro, e e o que o comentario do proprio caminho ja pedia:
+        // "proteger sem precisar custa timbre, nao proteger quando precisa
+        // custa o instrumento". O preco esta declarado: o ramo que sair pela
+        // linha leva shift e governor na mesma — audivel so se o `shift_hz`
+        // (CC 112) nao estiver em zero.
 
         // ---- ORDEM DE SACRIFICIO (indice 0 cai primeiro) ----
         //
