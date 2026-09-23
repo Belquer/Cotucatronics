@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.316.0"
+#define COTUCA_OS_VERSION "0.317.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -6625,14 +6625,32 @@ static void HandleLine(const char* line)
                  (unsigned long)injetados_local,
                  OuviDoFio() ? "   (o fio de volta FUNCIONA)"
                              : "   (o fio de volta NUNCA foi provado)");
+        // ⚠️ DUAS CONTAGENS MEDIDAS, E A SUBTRACCAO SO QUANDO ELA VALE.
+        //
+        // A 22/09 esta linha imprimiu `perdidas -63`: voltaram 243 onde
+        // sairam 180. O `eco_proprio` conta QUALQUER CC que chegue num canal
+        // de espelho — nao so os nossos de volta — e a subtraccao assumia uma
+        // correspondencia de um para um que nao existe.
+        //
+        // Numero negativo nao e erro de aritmetica: e o MODELO a denunciar-se.
+        // Entao imprime-se o que se MEDIU, e a diferenca so se chama "perdidas"
+        // quando ela pode ser isso. Voltarem MAIS do que sairam e informacao
+        // util — quer dizer que alguem alem de nos fala nesses canais.
         hal::Log("  eco: TX %lu (ch%d compart / ch%d A / ch%d B)"
-                 " | voltaram %lu | perdidas %ld",
+                 " | chegaram nos canais de espelho %lu",
                  (unsigned long)eco_tx,
                  cotuca::CanalEspelhoDe(cotuca::kCanalCompart) + 1,
                  cotuca::CanalEspelhoDe(cotuca::kCanalEntradaA) + 1,
                  cotuca::CanalEspelhoDe(cotuca::kCanalEntradaB) + 1,
-                 (unsigned long)eco_proprio,
-                 (long)eco_tx - (long)eco_proprio);
+                 (unsigned long)eco_proprio);
+        if(eco_proprio > eco_tx)
+            hal::Log("        +%lu ACIMA do que saiu — alguem ALEM de nos fala"
+                     " nos canais de espelho (contadas e deitadas fora, nao"
+                     " aplicadas)", (unsigned long)(eco_proprio - eco_tx));
+        else
+            hal::Log("        %lu nao voltaram  (o iPad pode afinar o eco; so"
+                     " e defeito se NENHUMA voltar)",
+                     (unsigned long)(eco_tx - eco_proprio));
         hal::Log("  delay: %lu vezes que o clamp do ponteiro de leitura"
                  " mordeu%s", (unsigned long)delay_fx.Clamps(),
                  delay_fx.Clamps()
