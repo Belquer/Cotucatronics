@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.5.0 — escreve o .lpcontrolprofile a partir do projeto.
+"""gerar_perfil_loopy v0.6.0 — escreve o .lpcontrolprofile a partir do projeto.
 
     gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
 
@@ -46,7 +46,32 @@ TITULOS = {
  'test_tone_out':('tone_dest','compart'),   # nome do switch de 3 posicoes
  'test_tone_stage':('test_tone_stage','compart'), # pre (directo) / post (cadeia)
  'test_tone_via':('test_tone_stage','compart'),   # nome antigo, ainda casa
- 'tone_freq':('tone_freq','compart'), 'shift_hz':('shift_hz','compart'),
+ 'shift_hz':('shift_hz','compart'),
+ # ---- CORRIGIDOS a 23/09: apontavam para params que FORAM RENOMEADOS ----
+ # `tone_freq`, `tone_mix`, `tone_dest` e `test_tone_stage` nao existem no
+ # manifest ha muito. A ferramenta dizia "sem CC no manifest", que se le como
+ # "o param nao tem CC" — quando o CC existe e era o MAPA daqui que apontava
+ # para um nome morto. Lapide invertida, na tabela de quem procura.
+ 'test_tone_level':('test_tone_level','compart'),
+ 'test_tone_freq':('test_tone_freq','compart'),
+ 'test_tone_out':('test_tone_out','compart'),
+ 'test_tone_stage':('test_tone_via','compart'),
+ 'test_tone_via':('test_tone_via','compart'),
+ # ---- NOTCH: no manifest chamam-se `notch_*`, no painel do dB "Notch N" ----
+ # Sao BIDIMENSIONAIS (ramo x boca) e por isso precisam da chave que nomeia
+ # a boca — ver a nota em `ccs_do_manifest`.
+ 'notch_a':('notch_on_a','compart'), 'notch_b':('notch_on_b','compart'),
+ 'notch_1_hz_a':('notch_hz_a1','compart'), 'notch_1_gain_a':('notch_db_a1','compart'),
+ 'notch_1_hz_b':('notch_hz_b1','compart'), 'notch_1_gain_b':('notch_db_b1','compart'),
+ 'notch_2_hz_a':('notch_hz_a2','compart'), 'notch_2_gain_a':('notch_db_a2','compart'),
+ 'notch_2_hz_b':('notch_hz_b2','compart'), 'notch_2_gain_b':('notch_db_b2','compart'),
+ 'notch_3_hz_a':('notch_hz_a3','compart'), 'notch_3_gain_a':('notch_db_a3','compart'),
+ 'notch_3_hz_b':('notch_hz_b3','compart'), 'notch_3_gain_b':('notch_db_b3','compart'),
+ 'notch_4_hz_a':('notch_hz_a4','compart'), 'notch_4_gain_a':('notch_db_a4','compart'),
+ 'notch_4_hz_b':('notch_hz_b4','compart'), 'notch_4_gain_b':('notch_db_b4','compart'),
+ # ---- TAROLATOR: o widget chama-se assim, o param `tarol_on_*` ----
+ 'tarolator_a':('tarol_on_a','a'), 'tarolator_b':('tarol_on_b','b'),
+ 'tarolator_mix_a':('tarol_mix_a','a'), 'tarolator_mix_b':('tarol_mix_b','b'),
  # MUTE DE RAMO (pos-limiter). Os nomes velhos ainda casam: um perfil
  # exportado antes de 28/08 continua a encontrar o param certo.
  'out_l':('out_l','compart'), 'out_r':('out_r','compart'),
@@ -89,16 +114,54 @@ MODULO_DE = {'drive':'drv_mix', 'phaser':'phs_mix', 'warble':'wrb_mix',
 
 def norm(s): return re.sub(r'[^a-z0-9]+','_', s.lower()).strip('_')
 
+AMBIGUOS = []   # identificadores que davam CC errado em silencio
+
 def ccs_do_manifest(raiz):
-    """param -> cc, lido do manifest.h (fonte unica da verdade)."""
+    """param -> cc, lido do manifest.h (fonte unica da verdade).
+
+    ⚠️ INDICE PERDIDO DAVA VINCULO ERRADO EM SILENCIO (23/09).
+
+    A versao anterior capturava `p_([A-Za-z0-9_]+)` e parava no `[`. Para um
+    param BIDIMENSIONAL — `p_notch_hz[0][0]`, que tem OITO CCs (3,4,7,8,11,
+    12,15,16) — ela guardava uma chave so, e a atribuicao deixava ganhar a
+    ULTIMA. Seis identificadores estavam nessa situacao:
+
+        p_notch_db (8 CCs) · p_notch_hz (8) · p_notch_on (2)
+        p_gov_ceiling (2)  · p_gov_release (2) · p_bench_boost (2)
+
+    Isto nao produz orfao — produz **vinculo que parece certo e endereca o
+    controlo errado**, que e pior: o widget responde, so que ao outro ramo ou
+    a outra boca do notch. E nenhuma verificacao a jusante o apanharia.
+
+    Agora as chaves nomeiam o elemento:
+        p_X            -> "X"            (so se for inequivoco)
+        p_X[i]         -> "X_a" / "X_b"
+        p_X[i][j]      -> "X_a1".."X_b4"
+    E chave que receberia DOIS CCs diferentes e DESCARTADA e registada em
+    AMBIGUOS — um orfao barulhento vale mais que um vinculo mudo e errado.
+    """
     txt = open(os.path.join(raiz,'src','manifest.h')).read()
+    achados = {}   # chave -> conjunto de CCs
+
+    def poe(chave, cc):
+        achados.setdefault(chave, set()).add(int(cc))
+
+    for cc, par, idxs in re.findall(
+            r'AddMidi\(\s*(\d+)\s*,\s*p_([A-Za-z0-9_]+)((?:\s*\[\s*\d+\s*\])*)', txt):
+        ns = [int(v) for v in re.findall(r'\d+', idxs)]
+        poe(par, cc)                                   # nome nu
+        if len(ns) >= 1:
+            poe("%s_%s" % (par, 'ab'[ns[0]]), cc)      # por cadeia
+        if len(ns) >= 2:
+            poe("%s_%s%d" % (par, 'ab'[ns[0]], ns[1] + 1), cc)   # por boca
+
     m = {}
-    for cc, par in re.findall(r'AddMidi\(\s*(\d+)\s*,\s*p_([A-Za-z0-9_]+)', txt):
-        par = re.sub(r'\[\s*0\s*\]$','', par)
-        m.setdefault(par, int(cc))
-    # params por cadeia aparecem sem sufixo no simbolo — repor
-    for cc, par, idx in re.findall(r'AddMidi\(\s*(\d+)\s*,\s*p_([A-Za-z0-9_]+)\[\s*(\d)\s*\]', txt):
-        m[f"{par}_{'ab'[int(idx)]}"] = int(cc)
+    del AMBIGUOS[:]
+    for chave, ccs in sorted(achados.items()):
+        if len(ccs) == 1:
+            m[chave] = next(iter(ccs))
+        else:
+            AMBIGUOS.append((chave, sorted(ccs)))
     return m
 
 def main():

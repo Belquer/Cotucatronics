@@ -11195,3 +11195,59 @@ O `gerar_ccmap.py` guardava uma nota por param (*"0 corta o ramo"*) e avisou:
 **"2 nota(s) de param que já não existe"**. Nota de um vínculo que já não
 existe é lápide invertida — e foi o próprio gerador que a acusou, que é o que
 se espera de um gerador que conhece o seu alcance.
+
+## 15fp — o gerador do perfil perdia o índice e endereçava a boca errada do notch, em silêncio
+
+23/09. O dB exportou o projecto do Loopy para eu gerar o perfil de controlo —
+o ficheiro que põe o `In` no canal de espelho em todos os widgets de uma vez,
+em vez de mais de cem edições à mão. A primeira corrida deu **71 casados,
+17 órfãos**, e os órfãos contavam duas histórias diferentes.
+
+### Metade era lápide invertida na tabela de quem procura
+
+Três widgets saíam como *"sem CC no manifest (`tone_freq`)"*. Mas o `CC 93`
+existe e chama-se **`test_tone_freq`**: `tone_freq`, `tone_mix`, `tone_dest` e
+`test_tone_stage` foram renomeados há muito, e a tabela de títulos do gerador
+continuava a apontar para os nomes mortos.
+
+> ⚠️ **A mensagem lia-se ao contrário do que acontecia.** *"Sem CC no
+> manifest"* diz "o param não tem CC"; o que se passava era que **o mapa desta
+> ferramenta apontava para um nome que já não existe**. Um verificador que
+> descreve a sua própria falha como falha do que verifica manda procurar no
+> sítio errado.
+
+Os outros dez eram os **notch**, que no painel se chamam "Notch 1 Hz A" e no
+manifest `notch_*` — títulos que a tabela nunca tinha aprendido.
+
+### E por baixo estava uma armadilha maior, que NÃO produzia órfão
+
+```python
+re.findall(r'AddMidi\(\s*(\d+)\s*,\s*p_([A-Za-z0-9_]+)', txt)
+```
+
+A captura pára no `[`. Para um param **bidimensional** — `p_notch_hz[0][0]`,
+que tem **oito CCs** (3,4,7,8,11,12,15,16) — ficava uma chave só, e a
+atribuição deixava ganhar a **última**. Dez chaves estavam nessa situação:
+
+```
+notch_db  CCs 5,6,9,10,13,14,17,18     gov_ceiling   CCs 101,102
+notch_hz  CCs 3,4,7,8,11,12,15,16      gov_release   CCs 103,104
+notch_on  CCs 1,2                      bench_boost   CCs 105,106
+```
+
+> **Isto não dava órfão — dava vínculo que PARECE certo e endereça o controlo
+> errado.** O widget responde, só que à outra boca do notch ou ao outro ramo.
+> Nenhuma verificação a jusante o apanharia: o perfil é válido, o CC existe, o
+> widget mexe. É a forma mais cara de estar errado.
+
+O conserto nomeia o elemento (`notch_hz_a1`..`notch_db_b4`) e, quando uma
+chave receberia **dois CCs diferentes**, **descarta-a** e regista-a como
+ambígua — porque um órfão barulhento vale mais que um vínculo mudo e errado.
+
+**Depois: 87 casados, 1 órfão** (o widget `presets`, que não é parâmetro), com
+os CCs 1 a 10 distintos no ch4, que é como as dez bocas do notch se endereçam.
+
+⚠️ **E o aviso do próprio cabeçalho aplica-se sempre:** *"o endereço é
+POSICIONAL — reordenar widgets numa página reendereça os bindings em
+silêncio"*. Apagar oito widgets, como se fez neste dia, desloca tudo o que vem
+depois deles. **Perfil regenera-se depois de mexer no layout, não antes.**
