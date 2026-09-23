@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.83.0
+// hal_daisy_seed v0.84.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.83.0"
+#define COTUCA_HAL_VERSION "0.84.0"
 
 using namespace daisy;
 
@@ -2258,6 +2258,27 @@ int OledRetido(int i)
 {
     if(i < 0 || i > 4) return -1;
     return oled_pronto ? -1 : oled_retido[i];
+}
+
+// SOLTAR O BARRAMENTO — os cinco pinos como ENTRADA, sem conduzir nada.
+//
+// A guarda do `OledInit` so testa NO ARRANQUE do painel. Se a bancada for
+// desligada DEPOIS — e e o que acontece numa sessao real — os pinos ficam como
+// saidas do SPI, o firmware continua a desenhar, e a injeccao pelos diodos de
+// proteccao recomeca sem ninguem dar por ela. Ver bts 15fm.
+//
+// O sitio natural para soltar e quando o painel ADORMECE: ele ja dorme aos 5 s
+// sem encoder, e a dormir nao tem nada para mostrar. Assim a placa so conduz
+// enquanto ha alguem a mexer, e ao acordar o `OledInit` volta a PERGUNTAR se
+// ha alimentacao antes de conduzir o primeiro pino.
+void OledSolta()
+{
+    const daisy::Pin kPino[5] = {seed::D5, seed::D6, seed::D7,
+                                 seed::D8, seed::D10};
+    daisy::GPIO g[5];
+    for(int i = 0; i < 5; i++)
+        g[i].Init(kPino[i], GPIO::Mode::INPUT, GPIO::Pull::NOPULL);
+    oled_pronto = false;
 }
 
 bool OledConfigurado() { return oled_pronto; }

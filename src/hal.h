@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.43.0
+// hal.h v0.44.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -333,7 +333,14 @@ bool             OledInit(bool forcar = false);
 // pull-down interno do MCU: se o modulo esta alimentado, ele ganha.
 // Nao precisa de fio de retorno nenhum — e a unica realimentacao que
 // este barramento so-de-escrita tem.
-bool             OledPainelAlimentado();          // true = CONFIGURADO, nao detectado
+bool             OledPainelAlimentado();
+
+// Larga os cinco pinos (entrada, sem pull) e marca o painel como nao
+// configurado. Chama-se quando o painel adormece: a placa deixa de conduzir
+// seja o que for, e o `OledInit` seguinte volta a testar a alimentacao antes
+// do primeiro pino. E a segunda metade da guarda da bts 15fm — sem ela, a
+// primeira so protege o arranque.
+void             OledSolta();          // true = CONFIGURADO, nao detectado
 void             OledPreenche(bool aceso);   // tela toda acesa/apagada
 void             OledTexto(const char* l1, const char* l2);
 // Tres linhas pequenas — o formato de instrumento, nao de titulo.

@@ -11013,6 +11013,62 @@ por cima para quem souber o que faz.
 > MESMA medição.** O par diferencial que provou a cablagem — fita fora, fita
 > posta — era, sem ninguém reparar, um detector de alimentação do painel.
 
+### O desfecho: o conversor de alta tensão do módulo está morto
+
+Medido a 22/09, com a ponta preta no `GND` do módulo e a vermelha a varrer o
+canto da alimentação (os dois SOT-23-6, o díodo e os passivos à volta):
+**nada acima de 5 V**, onde tinham de estar **12 a 13**.
+
+O SSD1309 não acende o vidro com os 5 V da entrada — precisa de uma tensão
+alta que o módulo gera dentro dele. Com esse conversor morto dá exactamente o
+quadro que custou a tarde: pull-ups bons, níveis de repouso certos, dados a
+chegar com a forma e o ritmo certos, **vidro sem tensão nenhuma para acender**.
+
+> **Nenhuma medição do lado do fio podia lá chegar, porque do lado do fio
+> estava tudo bom.** A pergunta certa não era "o sinal chega?" — era "o que
+> este módulo precisa para acender, além do sinal?".
+
+⚠️ **E a ligação com a injecção pelos pinos é PLAUSÍVEL, NÃO DEMONSTRADA.**
+Provado: a placa injecta (`TP5` = 0 V com a Daisy no USB) e o conversor morreu.
+A ponte entre as duas é raciocínio — a corrente que entra pela protecção das
+entradas acaba no trilho que alimenta esse conversor, e um conversor com a
+entrada a 2,6 V famintos tenta comutar e não consegue. Fica escrito como
+hipótese, não como facto.
+
+### A guarda tinha dois buracos, e só apareceram por eu a ir TESTAR
+
+Escrever a guarda não é ter a guarda. Ao exercitá-la:
+
+1. **Ela só testava no `OledInit`.** Desligar a bancada *depois* do painel já
+   estar a funcionar deixava os cinco pinos como saídas do SPI, o firmware
+   continuava a desenhar, e a injecção recomeçava sem ninguém dar por ela.
+   Conserto: **o barramento é LARGADO quando o painel adormece** (`OledSolta`,
+   hal 0.84.0) — os cinco pinos ficam entradas sem pull, e ao acordar o
+   `OledInit` volta a perguntar antes do primeiro pino.
+2. **Os comandos da consola nunca armavam sono.** O `oledpad` até punha
+   `oled_dorme_em = 0` de propósito, para o padrão não desaparecer enquanto se
+   olha — e o efeito lateral era o painel ficar conduzido indefinidamente.
+   Conserto: um minuto, armado por `oled`, `oled texto`, `oledvel` e `oledpad`.
+
+### E o defeito que eu cometi no minuto seguinte a escrever sobre ele
+
+A 15fi é sobre um `Result` deitado fora. No mesmo dia, um nível acima:
+
+```cpp
+const bool primeira = !hal::OledConfigurado();
+hal::OledInit();            // <-- o resultado, DEITADO FORA
+if(primeira) Log("oled: CONFIGURADO ...");
+```
+
+A guarda recusava-se a conduzir, devolvia `false`, e o despacho anunciava
+**`CONFIGURADO`** e **`tela ACESA`** na mesma. O `board` era o único a dizer a
+verdade — *"não configurado ainda"* — e passei três leituras a desconfiar do
+`board`.
+
+> **Construir a guarda e LER a guarda são dois trabalhos.** O segundo não vem
+> de graça com o primeiro, e é invisível: uma guarda ignorada tem exactamente
+> o mesmo aspecto de uma guarda que aprovou.
+
 ### O que a rev D tem de levar, e não é opcional
 
 1. **Resistores em série nos cinco sinais.** Confirmado no cobre: as cinco

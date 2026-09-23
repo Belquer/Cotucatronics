@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.309.1"
+#define COTUCA_OS_VERSION "0.312.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -610,6 +610,22 @@ static const uint32_t kOledDormeMs = 5000u;
 static bool     oled_pronto_forcado = false;  // so para o relato do `oled forca`
 static bool     enc_na_tela   = false;   // nasce APAGADO
 static uint32_t oled_dorme_em = 0;       // 0 = ja dorme
+
+// SONO DA CONSOLA — um minuto, e existe para o barramento nao ficar
+// conduzido para sempre.
+//
+// Os comandos que acendem a tela pela serie (`oled`, `oled texto`, `oledvel`,
+// `oledpad`) nao armavam sono nenhum — o `oledpad` ate punha `oled_dorme_em`
+// a zero de proposito, para o padrao nao desaparecer enquanto se olha. O
+// efeito lateral era o painel ficar a ser conduzido indefinidamente, e com a
+// bancada desligada a meio isso e injeccao pelos diodos de proteccao do
+// modulo (bts 15fm). Um minuto chega para olhar e limita a exposicao.
+static const uint32_t kOledConsolaMs = 60000u;
+static void ArmaSonoConsola()
+{
+    oled_dorme_em = cotuca::hal::NowMs() + kOledConsolaMs;
+    if(!oled_dorme_em) oled_dorme_em = 1u;   // 0 significa "ja dorme"
+}
 
 // ---- O GESTO QUE ACORDA: ENGOLE APAGADO, ACENDE NO FIM ----
 //
@@ -4495,11 +4511,11 @@ static void HandleLine(const char* line)
         if(!hal::OledConfigurado()) { hal::Log("oledpad: painel nao inicializa"); return; }
         oled_bench_on = false;              // solta o bench, se estiver a correr
         enc_na_tela   = false;              // e o painel de texto, que sobrescreveria
-        oled_dorme_em = 0;
         for(int i = 0; i < 1024; i++) oled_fb[i] = (uint8_t)((i & 1) ? 0xAA : 0x55);
         hal::OledFbZeraPico();              // <-- OU O NUMERO E DE OUTRA CORRIDA
         const bool ok = hal::OledDesenha(oled_fb);
         uint32_t us = 0; hal::OledDmaEstado(nullptr, nullptr, &us);
+        ArmaSonoConsola();
         hal::Log("oledpad: padrao 1 px %s · quadro %lu us · prescaler %d",
                  ok ? "no ar" : "RECUSADO", (unsigned long)us, hal::OledVelocidadeAtual());
         hal::Log("  olha o painel: cinza UNIFORME = limpo · faixas/blocos = corrompeu");
@@ -4585,6 +4601,7 @@ static void HandleLine(const char* line)
         }
         hal::OledInit();
         hal::OledPreenche(true);
+        ArmaSonoConsola();
         hal::Log("oledvel: prescaler %d, painel reinicializado, tela ACESA.",
                  hal::OledVelocidadeAtual());
         hal::Log("  quanto MAIOR o numero, mais LENTO o SPI — fio comprido"
@@ -4605,7 +4622,17 @@ static void HandleLine(const char* line)
         const char* a = line + 4;
         while(*a == ' ') a++;
         const bool primeira = !hal::OledConfigurado();
-        hal::OledInit();
+        // ⚠️ E O RESULTADO LE-SE. Ate 22/09 esta linha era `hal::OledInit();`
+        // solta: a guarda recusava-se a conduzir um painel sem alimentacao,
+        // devolvia `false`, e o despacho anunciava "CONFIGURADO" e "tela
+        // ACESA" na mesma. Escrevi a cicatriz 15fi sobre um `Result` deitado
+        // fora e cometi o mesmo defeito um nivel acima, no mesmo dia.
+        if(!hal::OledInit())
+        {
+            hal::Log("oled: NAO inicializou — a razao esta acima."
+                     "  Nenhum pino foi conduzido.");
+            return;
+        }
         if(primeira)
         {
             // O QUE A PLACA SABE E O QUE ELA NAO PODE SABER, separados.
@@ -4633,6 +4660,7 @@ static void HandleLine(const char* line)
             const char* t = a + 5;
             while(*t == ' ') t++;
             hal::OledTexto(*t ? t : "COTUCATRONICS", "v" COTUCA_OS_VERSION);
+            ArmaSonoConsola();
             hal::Log("oled: texto escrito. ISTO PROVA MAIS QUE O FILL —"
                      " tela cheia so mostra que o painel liga; texto prova"
                      " enderecamento de pixel e que o DC separa comando de"
@@ -4641,6 +4669,7 @@ static void HandleLine(const char* line)
             return;
         }
         hal::OledPreenche(true);
+        ArmaSonoConsola();
         hal::Log("oled: tela ACESA. Se acendeu inteira, os cinco fios chegam."
                  " `oled texto` escreve · `oled off` apaga.");
         return;
@@ -7478,8 +7507,13 @@ int main(void)
             enc_na_tela    = false;
             oled_gesto_ate = 0;   // dormiu: o proximo gesto recomeca
             if(hal::OledConfigurado()) hal::OledPreenche(false);
-            hal::Log("oled: a dormir (%lu s sem encoder) — o painel"
-                     " aceso custa 6 dB de chao de ruido",
+            // (!) E LARGA O BARRAMENTO. A dormir nao ha o que mostrar, e
+            // conduzir sinal num painel que pode ficar sem 5 V a qualquer
+            // momento ja custou um modulo (bts 15fm). Ao acordar, o
+            // `OledInit` volta a perguntar se ha alimentacao.
+            hal::OledSolta();
+            hal::Log("oled: a dormir (%lu s sem encoder) — barramento LARGADO"
+                     " (nada conduzido) · o painel aceso custa 6 dB de chao",
                      (unsigned long)(kOledDormeMs / 1000u));
         }
         // ---- ENCODER NA TELA ----

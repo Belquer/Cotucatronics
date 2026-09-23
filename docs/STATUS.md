@@ -407,18 +407,23 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   placa, e a orientação que ele dá é a que vale. O que estava errado era a
   minha leitura, não a peça — `enc inverte a` **não** se corre, e o
   `enc_sinal` fica em `+1` no fonte.
-- ❌ **O módulo OLED está MORTO, e o caminho até ele está PROVADO BOM (22/09).**
-  Fechado ao fim de uma tarde, e por esta ordem: os cinco sinais chegam ao
-  módulo (par diferencial do `fio le`, com a fita fora e posta), nenhuma ponte
-  entre eles (`fio curto`, dez pares), nenhum curto à terra, 5 V e terra
-  medidos **nos pinos do módulo** contra o `TP3`, cada sinal no pino com o nome
-  certo, e o bloco de selecção da traseira em **SPI** (o 0 Ω do lado `SPI`, o
-  lado `I2C` vazio). Com o barramento a 85% de ocupação o `CLK` e o `DIN` dão
-  **1,5 V** de média no módulo e o `CS` fica activo: **os dados chegam lá,
-  certos, e o vidro não responde.** O módulo seguinte entra num caminho já
-  medido inteiro. ⚠️ Mas **antes** disto havia um defeito nosso a tapar tudo —
-  o quadro esgotava oito prazos de 100 ms e nada saía da Daisy (`battle_scars`
-  **15fi**); o módulo só pôde ser acusado depois de esse estar consertado.
+- ❌ **Módulo OLED nº 2 morto: o CONVERSOR DE ALTA TENSÃO dele (22/09).**
+  Medido no canto da alimentação do módulo, contra o `GND` dele: **nada acima
+  de 5 V**, onde tinham de estar 12–13. O SSD1309 não acende o vidro com os
+  5 V da entrada. Isso explica o quadro inteiro — lógica viva, dados a chegar
+  com a forma certa, vidro sem tensão para acender — e **nenhuma medição do
+  lado do fio podia lá chegar**. O caminho até ao módulo está provado bom de
+  ponta a ponta: sinais, ausência de pontes e curtos, 5 V e terra nos pinos
+  dele, cada sinal no nome certo, selecção de interface em SPI, e o barramento
+  a transmitir (1,5 V de média no `CLK` e no `DIN` com 85% de ocupação).
+  **O módulo novo entra num caminho todo medido.** Ver `battle_scars` **15fm**.
+- ✅ **A placa já não pode matar o módulo dessa maneira (OS 0.312.0).** Três
+  guardas, e as duas últimas só apareceram por se ter ido exercitar a
+  primeira: (1) não conduz o primeiro pino sem confirmar que o módulo responde
+  com alimentação; (2) **larga o barramento quando o painel adormece** — antes
+  a guarda só protegia o arranque; (3) os comandos da consola armam sono de um
+  minuto. ⚠️ Rev D leva na mesma resistores em série nos cinco sinais
+  (`ppc/004 §3b.4`): o firmware é remendo, o cobre é o conserto.
 - ✅ **Dívida das colisões do manual: FECHADA a 22/09 — 78 de 78 figuras
   passam o portão.** E a medição antiga ("15 dos 47") estava a ser feita com
   caixas erradas: os SVGs não declaravam `xmlns`, o verificador não achava o
