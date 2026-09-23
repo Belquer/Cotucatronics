@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.84.0
+// hal_daisy_seed v0.85.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.84.0"
+#define COTUCA_HAL_VERSION "0.85.0"
 
 using namespace daisy;
 
@@ -1307,6 +1307,7 @@ static uint32_t midi_tx_uart_err  = 0;   // CheckError() nao-zero
 static uint32_t midi_tx_bytes     = 0;   // bytes entregues
 static uint32_t midi_tx_pico      = 0;   // maior ocupacao da fila
 static uint32_t midi_tx_recuos    = 0;   // quantas vezes se calou
+static uint32_t midi_tx_ok_ms     = 0;   // ultima vez que a UART ACEITOU
 static uint32_t midi_tx_seguidas  = 0;
 static uint32_t midi_tx_retry_ms  = 0;
 
@@ -1391,20 +1392,47 @@ void MidiTxPump()
     }
     if(enviados)
     {
-        midi_tx_tail     = (midi_tx_tail + enviados) % cap;
-        midi_tx_bytes   += enviados;
-        midi_tx_seguidas = 0;
-        midi_tx_retry_ms = 0;
+        midi_tx_tail       = (midi_tx_tail + enviados) % cap;
+        midi_tx_bytes     += enviados;
+        midi_tx_seguidas   = 0;
+        midi_tx_retry_ms   = 0;
+        midi_tx_ok_ms      = NowMs();
+        if(!midi_tx_ok_ms) midi_tx_ok_ms = 1u;
         return;
     }
-    // Periferico nao aceitou nada: nao se insiste nesta volta.
-    midi_tx_erros++;
-    if(++midi_tx_seguidas >= 3u)
+    // ⚠️ "O PERIFERICO NAO ACEITOU" NAO E FALHA — E A LINHA CHEIA.
+    //
+    // MEDIDO a 22/09: `DESCARTES 1433` contra `1026 bytes entregues`, com
+    // `falhas 1404` e `recuos 445`. A 31250 baud a UART engole ~3 125 bytes/s
+    // e este laco passa aqui ~13 000 vezes/s: a esmagadora maioria das
+    // passagens encontra a FIFO cheia, e isso e o funcionamento NORMAL de
+    // uma linha saturada.
+    //
+    // A versao anterior contava cada uma como erro e, ao fim de TRES
+    // SEGUIDAS, calava-se 500 ms. Tres seguidas acontecem em fraccoes de
+    // milissegundo. 445 recuos = 222 segundos de silencio, e o anel a
+    // transbordar por tras.
+    //
+    // ⚠️ E o defeito estava LATENTE ate hoje: com o painel partido o laco
+    // andava a UMA volta por segundo, e tres falhas seguidas levavam tres
+    // segundos a acontecer. Consertar o OLED levou o laco a 12 836 voltas/s
+    // e destapou isto. **Acelerar um laco e mudar o regime de tudo o que
+    // corre dentro dele** — e o que era raro passa a ser a regra.
+    //
+    // O recuo passa a medir-se em TEMPO SEM ESCOAR, nao em tentativas: so
+    // ha problema se nada sair durante 100 ms, que a 3 125 bytes/s e mais
+    // de 300 bytes de atraso — sinal de linha morta, nao de linha ocupada.
     {
-        midi_tx_seguidas = 0;
-        midi_tx_recuos++;
-        midi_tx_retry_ms = NowMs() + 500u;
-        if(!midi_tx_retry_ms) midi_tx_retry_ms = 1u;   // 0 significa "sem recuo"
+        const uint32_t ag = NowMs();
+        if(!midi_tx_ok_ms) midi_tx_ok_ms = ag;      // primeira volta
+        if((uint32_t)(ag - midi_tx_ok_ms) >= 100u)
+        {
+            midi_tx_erros++;
+            midi_tx_recuos++;
+            midi_tx_ok_ms    = ag;
+            midi_tx_retry_ms = ag + 50u;            // 50 ms, nao 500
+            if(!midi_tx_retry_ms) midi_tx_retry_ms = 1u;
+        }
     }
 }
 

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.312.0"
+#define COTUCA_OS_VERSION "0.314.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -4081,7 +4081,30 @@ static void HandleLine(const char* line)
         return;
     }
     if(strncmp(line, "tone on", 7) == 0)
-    { params.Set(manifest.p_test_tone_level, 0.5f); hal::Log("tone ON"); return; }
+    {
+        params.Set(manifest.p_test_tone_level, 0.5f);
+        hal::Log("tone ON");
+        // ⚠️ E DIZ SE ALGUEM O ESTA A CALAR A JUSANTE. Os `post_level_*` tem
+        // DONO — seguem os pots do painel — e um pot no fim do curso poe o
+        // ramo a zero. A 22/09 isso passou por "o test tone deixou de falar",
+        // e a caca comecou pelo tom em vez de acabar no volume.
+        //
+        // E o corolario que o `estado` do flash nao pode cumprir: param com
+        // dono NAO se repoe por software. O pot sobrepoe-se no milissegundo
+        // seguinte, e o relato da gravacao diz "reposto" na mesma.
+        const float pl = params.Get(manifest.p_post_level_l);
+        const float pr = params.Get(manifest.p_post_level_r);
+        if(pl < 0.02f || pr < 0.02f)
+            hal::Log("  (!) mas o ramo %s esta a ZERO, e quem manda nele e o"
+                     " POT do painel (`knob` mostra o dono). Gire o pot — nao"
+                     " adianta `set`, o pot ganha.",
+                     (pl < 0.02f && pr < 0.02f) ? "L e o R"
+                                                : (pl < 0.02f ? "L" : "R"));
+        else
+            hal::Log("  post_level L %.3f · R %.3f (seguem os pots)",
+                     (double)pl, (double)pr);
+        return;
+    }
     if(strncmp(line, "tone off", 8) == 0)
     { params.Set(manifest.p_test_tone_level, 0.0f); hal::Log("tone OFF"); return; }
     // GANHO DE TESTE DA DRENAGEM. Sem ele a defesa e indemonstravel: a

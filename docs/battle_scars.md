@@ -11083,3 +11083,68 @@ verdade — *"não configurado ainda"* — e passei três leituras a desconfiar 
 ⚠️ **E a lição de método:** o primeiro módulo morreu com a causa escrita, e foi
 por estar escrita que se soube, hoje, que o segundo **não** morreu da mesma
 coisa. Sem esse parágrafo de 23/08 eu teria "confirmado" a polaridade e parado.
+
+## 15fn — acelerar o laço mudou o regime de tudo o que corria dentro dele, e o MIDI parou de sair
+
+22/09, horas depois da 15fi. O dB pediu que os pots se espelhassem no Loopy.
+O espelho já existia, já estava ligado por omissão, e os vínculos estavam lá
+(`CC 116` → `post_level_l`, `CC 117` → `post_level_r`). Ele girou o pot e o
+Loopy não mexeu.
+
+Os contadores disseram onde parava:
+
+```
+eco: TX 750  (era 185)   -> a placa MANDOU +565 mensagens
+voltaram 126 (era 126)   -> nenhuma delas voltou
+midi tx: 1026 bytes entregues | fila 94/256 (pico 255)
+         DESCARTES 1433 | falhas 1404 | recuos 445 | erro de UART 0
+```
+
+O anel de transmissão cheio (pico 255 de 256) com **1433 descartes** contra
+**1026 bytes entregues**. A 31250 baud, 1026 bytes são um terço de segundo: a
+UART não estava a escoar, e `erro de UART 0` dizia que o periférico estava bom.
+
+### A causa: "a linha está cheia" contada como falha
+
+```c
+uint32_t enviados = 0;
+while(enviados < k && (USART1->ISR & USART_ISR_TXE_TXFNF))
+    USART1->TDR = tmp[enviados++];
+if(enviados) { ...; return; }
+midi_tx_erros++;
+if(++midi_tx_seguidas >= 3u) { midi_tx_recuos++; retry = NowMs() + 500u; }
+```
+
+A 31250 baud a UART engole ~3 125 bytes/s, e o laço passa ali **~13 000 vezes
+por segundo**. A esmagadora maioria das passagens encontra a FIFO cheia — que é
+o funcionamento **normal** de uma linha saturada. Três seguidas acontecem em
+fracções de milissegundo, e cada uma custava **meio segundo de silêncio**.
+445 recuos × 500 ms = **222 segundos calado**, com o anel a transbordar atrás.
+
+> **Contar "ocupado" como "avariado" transforma controlo de fluxo em avaria.**
+> O recuo passou a medir-se em TEMPO SEM ESCOAR (100 ms sem um byte aceite),
+> não em tentativas falhadas — e o recuo caiu de 500 ms para 50.
+
+| | antes | depois |
+|---|---|---|
+| fila do anel | **255/256** | pico **6** de 256 |
+| descartes | **1433** | **zero** |
+
+### ⚠️ E a lição maior: o defeito estava LATENTE, e fui eu que o acordei
+
+Isto existia há muito e era invisível. **Com o painel partido o laço andava a
+UMA volta por segundo** (a 15fi: 800 ms de prazo esgotado por quadro), e três
+falhas seguidas levavam três segundos a acontecer — raro de mais para doer.
+Consertar o OLED levou o laço a **12 836 voltas/s**, e o que era raro passou a
+ser a regra.
+
+> **Acelerar um laço é mudar o REGIME de tudo o que corre dentro dele.** Um
+> conserto que multiplica a taxa por dez mil não é uma melhoria local: é uma
+> mudança de condições de operação para cada linha de código lá dentro. Toda
+> lógica que conta EVENTOS por passagem — tentativas, falhas seguidas, janelas
+> por volta — muda de significado, e a que conta TEMPO não muda.
+
+⚠️ E o sintoma apareceu como *"o MIDI piorou hoje"*, o que é verdade: piorou
+mesmo, e por causa do conserto anterior. **Depois de um conserto que muda uma
+taxa por ordens de grandeza, procurar o que contava por passagem** — não
+esperar que o próximo defeito se apresente como defeito novo.
