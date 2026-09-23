@@ -1,14 +1,11 @@
 # CC MAP — Cotucatronics
 <!-- CARIMBO gerar_ccmap -->
-> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v0.11.0` em **2026-09-23 17:22 EDT**.
+> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v0.11.0` em **2026-09-23 17:23 EDT**.
 > Nao editar a mao: rode `python3 docs/operacao/gerar_ccmap.py`.
 >
-> **114 vinculos em 78 numeros de CC** · `src/manifest.h` @ `f38d198` · manifest v3.0.0
+> **114 vinculos em 78 numeros de CC** · `src/manifest.h` @ `435140a` · manifest v3.0.0
 >
 > Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6` (escuta = manda + 3).
->
-> ⚠️ **ARVORE SUJA** — `src/manifest.h` tem alteracoes por commitar.
-> Este mapa descreve codigo que mais ninguem tem.
 <!-- FIM CARIMBO -->
 
 
