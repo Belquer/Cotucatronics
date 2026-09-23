@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.8.0 — escreve o .lpcontrollerprofile a partir do projeto.
+"""gerar_perfil_loopy v0.9.0 — escreve o .lpcontrolprofile a partir do projeto.
 
-    gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrollerprofile]
+    gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
 
 Le o projeto exportado do Loopy Pro (zip com Project.sqlite), casa cada
 widget com o seu parametro pelo TITULO, e emite um perfil de controlo
@@ -19,8 +19,14 @@ O indice NAO e a posicao na tela nem na nossa lista: e a ordem do array
 `widgets` da Scene, contada por tipo. Foi o que os dois bindings a mao
 provaram — Sli:1:2 e Gate Thresh A, Sli:1:6 e Piezo Mix.
 
-⚠️ O endereço e POSICIONAL. Reordenar widgets numa pagina reendereça os
-bindings em silencio. Regerar o perfil depois de mexer no layout.
+🔴 O endereço e o ID do widget (`"#1526"`), NAO a posicao. A versao anterior
+deste cabecalho dizia o contrario, a skill `loopy` ja o tinha corrigido a
+01/09, e a ferramenta continuou a escrever posicional ate 23/09 — tres
+importacoes recusadas com "perfil sem bindings" e nenhuma a dizer porque.
+
+O id e ESTAVEL: reordenar ou apagar widgets numa pagina NAO o muda. Mas
+REGERAR as paginas apaga os ids todos, e ai os bindings ficam orfaos sem erro
+nenhum — ver a skill, seccao "consequencia que destroi um projecto".
 """
 import sqlite3, json, sys, re, os, zipfile, tempfile, plistlib, shutil
 
@@ -166,13 +172,12 @@ def ccs_do_manifest(raiz):
 
 def main():
     lpproj = sys.argv[1]
-    # ⚠️ DUAS EXTENSOES PARECIDAS, SITIOS DIFERENTES (dB, 23/09):
-    #   DENTRO do .lpproj a pasta e  `<nome>.lpcontrolprofile`
-    #   EXPORTADO solto o ficheiro e `<nome>.lpcontrollerprofile`  <- com "ler"
-    # Esta ferramenta escreve o EXPORTADO. Ate 23/09 usava a forma de dentro,
-    # e o dB teve de renomear a mao — depois de o Loopy ja lhe ter recusado o
-    # ficheiro por outra razao, o que fez parecer que era a mesma falha.
-    saida  = sys.argv[2] if len(sys.argv) > 2 else 'Cotucatronics-gerado.lpcontrollerprofile'
+    # A extensao e `.lpcontrolprofile` nos DOIS sitios — dentro do .lpproj e
+    # exportado. A 23/09 andamos a troca-la por `.lpcontrollerprofile` e a
+    # importar tres versoes seguidas: era um DESVIO, e a causa real do "perfil
+    # sem bindings" estava no Subject (ver acima). Extensao errada e sintoma
+    # visivel; Subject errado e sintoma mudo — e foi o mudo que mandava.
+    saida  = sys.argv[2] if len(sys.argv) > 2 else 'Cotucatronics-gerado.lpcontrolprofile'
     raiz   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     raiz   = os.path.dirname(raiz) if os.path.basename(raiz)=='docs' else raiz
     tmp = tempfile.mkdtemp()
@@ -182,8 +187,29 @@ def main():
     proj = json.loads(next(b for i,(t,b) in obj.items() if t=='Project'))
     ccs  = ccs_do_manifest(raiz)
 
-    # o perfil que vive DENTRO do .lpproj usa id; o exportado sozinho, posicao
-    dentro_do_projeto = os.environ.get('PERFIL_NO_PROJETO') == '1'
+    # 🔴 O SUBJECT E SEMPRE `#<id>`, e a crenca contraria custou um dia inteiro.
+    #
+    # Esta linha dizia: "o perfil que vive DENTRO do .lpproj usa id; o exportado
+    # sozinho, posicao" — e punha o modo por id atras de uma variavel de
+    # ambiente. **A skill `loopy` corrigiu isto a 01/09**, verificado num export
+    # real, e a ferramenta nunca foi actualizada:
+    #
+    #     Subject = "#<id do objecto do widget>"      ex: "#1526"
+    #
+    # Provado outra vez a 23/09, comparando lado a lado o perfil que o LOOPY
+    # escreveu com o que esta ferramenta escrevia:
+    #
+    #     Loopy:      "Subject": "#1526"
+    #     ferramenta: "Subject": "LPSliderWidget:1:0"
+    #
+    # Um Subject posicional nao corresponde a widget nenhum, e o Loopy mostra
+    # "perfil sem bindings" — sem erro, sem dizer qual. O dB importou tres
+    # versoes deste ficheiro a caçar a EXTENSAO, que nunca foi a causa.
+    #
+    # ⚠️ A licao de metodo: a skill estava certa e a ferramenta contradizia-a.
+    # Documento corrigido sem a ferramenta corrigida e uma correccao que nao
+    # chegou onde o trabalho acontece.
+    dentro_do_projeto = True
     binds, casados, orfaos = [], [], []
     for n, s in enumerate(proj['scenes']):
         d = json.loads(obj[s['_value']][1])
@@ -222,7 +248,7 @@ def main():
             # uma CONVERSAO — fora do projeto o id nao significa nada.
             # Dentro do projeto o id e estavel: reordenar a pagina nao mexe
             # nele, e foi reordenar que desenderecou dois bindings ontem.
-            alvo = f"#{wid}" if dentro_do_projeto else f"LP{t}:{n}:{k}"
+            alvo = f"#{wid}"
             binds.append({'Actions':[{'Identifier':'Trigger Widget',
                           'Parameters':{'Widget Action':'Value'},
                           'Subject': alvo, 'Timing':'Sequential'}],
@@ -278,10 +304,8 @@ def main():
 
     pacote_saida = alvos[0][0]
     raiz_saida = saida
-    if not raiz_saida.endswith('.lpcontrollerprofile'):
-        print("   (!) a saida nao acaba em `.lpcontrollerprofile` — e essa a"
-              " extensao do perfil EXPORTADO. Dentro do .lpproj a pasta usa"
-              " `.lpcontrolprofile`, sem o \"ler\": nao troque as duas.")
+    if not raiz_saida.endswith('.lpcontrolprofile'):
+        print("   (!) a saida nao acaba em `.lpcontrolprofile`.")
     if os.path.isdir(raiz_saida): shutil.rmtree(raiz_saida)
     os.makedirs(raiz_saida, exist_ok=True)
     # copia tudo o que havia no pacote de origem (outros controladores)

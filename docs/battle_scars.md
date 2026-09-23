@@ -11251,3 +11251,60 @@ os CCs 1 a 10 distintos no ch4, que é como as dez bocas do notch se endereçam.
 POSICIONAL — reordenar widgets numa página reendereça os bindings em
 silêncio"*. Apagar oito widgets, como se fez neste dia, desloca tudo o que vem
 depois deles. **Perfil regenera-se depois de mexer no layout, não antes.**
+
+## 15fq — a skill estava certa e a ferramenta contradizia-a: um dia atrás da extensão errada
+
+23/09. O perfil de controlo gerado dava sempre *"perfil sem bindings"* no
+Loopy. Passei o dia a caçar a **extensão** — o dB corrigiu-me para
+`.lpcontrollerprofile`, mudei, continuou a falhar; corrigiu-se depois para
+`.lpcontrolprofile`, que é a certa nos dois sítios. **Nenhuma das duas era a
+causa.**
+
+A causa apareceu em dez segundos quando finalmente comparei o que o Loopy
+escreve com o que a ferramenta escrevia — lado a lado, no mesmo formato:
+
+```
+Loopy:      "Subject": "#1526"
+ferramenta: "Subject": "LPSliderWidget:1:0"
+```
+
+O Loopy endereça o widget por **id**. A ferramenta endereçava por **posição**,
+e um `Subject` que não corresponde a widget nenhum dá um perfil que carrega e
+não liga nada.
+
+### E isto já estava escrito na skill há três semanas
+
+> 🔴 **CORRIGIDO EM 01/09, e o erro anterior custou um projecto inutilizado.**
+> Esta skill dizia que o `Subject` era posicional. **Não é.** Verificado num
+> export real: `Subject = "#<id do objecto do widget>"`.
+
+A skill `loopy` foi corrigida a 01/09. O `gerar_perfil_loopy.py` **continuou a
+escrever posicional**, e o cabeçalho dele ainda pregava *"o endereço é
+POSICIONAL"* — a contradizer, em letra grande, o documento que devia seguir.
+O modo por id até existia, escondido atrás de uma variável de ambiente.
+
+> **Documento corrigido sem ferramenta corrigida é uma correcção que não
+> chegou onde o trabalho acontece.** Uma skill é onde se procura; a ferramenta
+> é onde se decide. Quando as duas discordam, ganha a ferramenta — em silêncio,
+> e contra quem leu a skill e ficou descansado.
+
+### Sintoma visível contra sintoma mudo
+
+⚠️ A extensão errada é **visível**: o ficheiro não abre, vê-se, corrige-se. O
+`Subject` errado é **mudo**: o Loopy aceita o ficheiro, mostra-o, e diz apenas
+*"sem bindings"* — sem dizer quais, nem porquê.
+
+> **Persegui o visível um dia inteiro enquanto o mudo era o que mandava.**
+> Quando há dois candidatos e um deles não se queixa, é por esse que se começa
+> — porque o que se queixa vai continuar a queixar-se depois de consertado, e
+> o outro não.
+
+### A verificação que passa a ser obrigatória, e são duas linhas
+
+Todo `Subject` emitido tem de existir como `id` na tabela `objects` do
+projecto. Corrido agora: **87 alvos, 0 inexistentes**. Transforma *"perfil sem
+bindings"* — que não diz nada — em *"estes N alvos não existem"*, que diz tudo.
+
+⚠️ E o id é **estável**: reordenar ou apagar widgets numa página não o muda —
+ao contrário do que o cabeçalho antigo dizia. O que destrói tudo é **regerar**
+as páginas, que apaga os ids e deixa os bindings órfãos sem erro nenhum.

@@ -112,19 +112,32 @@ horas de arranjo de ecrã.
 
 Decodificado em 24/08 e confirmado contra dois bindings feitos à mão.
 
-🔴 **DUAS EXTENSÕES PARECIDAS, SÍTIOS DIFERENTES (dB, 23/09).** Custou uma
-importação recusada e uma renomeação à mão:
+🔴 **A EXTENSÃO É `.lpcontrolprofile` NOS DOIS SÍTIOS** — dentro do `.lpproj` e
+exportada. A 23/09 andámos a trocá-la por `.lpcontrollerprofile` e a importar
+três versões seguidas: era **desvio**, não causa.
 
-| onde | como se chama |
-|---|---|
-| **dentro** do `.lpproj`, em `Control Profiles/` | `<nome>.lpcontrol**profile**` |
-| **exportado solto**, para importar no Loopy | `<nome>.lpcontrol**ler**profile` |
+⚠️ **E é esta a lição, não a extensão.** A importação falhava por **`Subject`
+posicional** — corrigido nesta skill a 01/09 e **nunca levado à ferramenta**.
+Extensão errada é sintoma **visível**; `Subject` errado é sintoma **mudo** (o
+Loopy diz só *"perfil sem bindings"*, sem dizer qual nem porquê). Perseguiu-se
+o visível durante um dia inteiro enquanto o mudo era o que mandava.
 
-⚠️ E a armadilha não é só o nome: a importação tinha **duas** falhas ao mesmo
-tempo — a extensão errada e a identidade do dispositivo cravada no gerador.
-Corrigida a primeira, o Loopy continuou a recusar (*"perfil global sem
-bindings"*), e **parecia a mesma falha por consertar**. Duas causas empilhadas
-lêem-se como uma só que não cedeu.
+> **Documento corrigido sem ferramenta corrigida é uma correcção que não
+> chegou onde o trabalho acontece.** A skill estava certa desde 01/09 e o
+> `gerar_perfil_loopy.py` contradizia-a no próprio cabeçalho.
+
+A prova que fechou, e devia ter sido a primeira coisa a fazer — comparar o que
+o Loopy escreve com o que nós escrevemos, lado a lado:
+
+```
+Loopy:      "Subject": "#1526"
+ferramenta: "Subject": "LPSliderWidget:1:0"
+```
+
+**E a verificação que passa a ser obrigatória:** todo `Subject` emitido tem de
+existir como `id` na tabela `objects` do projecto. São duas linhas de SQL, e
+transformam "perfil sem bindings" — que não diz nada — em "estes N alvos não
+existem", que diz tudo.
 
 🔴 **A IDENTIDADE DO DISPOSITIVO SAI DO PROJECTO, nunca de um literal.** O
 ficheiro chama-se `<id>.MIDI.<Nome do dispositivo>.controllerprofile`, e o
