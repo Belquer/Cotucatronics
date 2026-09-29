@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_ble v0.4.0 — a consola do Cotucatronics SEM FIO, por BLE.
+"""cotuca_ble v0.5.1 — a consola do Cotucatronics SEM FIO, por BLE.
 
     tools/cotuca_ble.py [--send "board" "midi" ...] [--listen SEG] [--nome NOME]
 
@@ -25,7 +25,7 @@ import argparse
 import asyncio
 import sys
 
-VERSAO = "0.4.0"
+VERSAO = "0.5.1"
 
 NUS_SVC = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 NUS_RX  = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"   # o Mac ESCREVE aqui
@@ -64,6 +64,13 @@ async def corre(nome, comandos, segundos):
         if not achados:
             print("    NENHUM — o Bluetooth do Mac esta ligado? Sem aparelho"
                   " nenhum a varredura nao provou nada.")
+        # ⚠️ ATE A PONTE v1.3.0, "nao vi" tambem queria dizer "o Loopy esta
+        # agarrado": o anuncio parava enquanto havia ligacao, e a ponte ficava
+        # INVISIVEL. Desde a v1.3.0 ela reanuncia enquanto ha vaga (3 no C3),
+        # entao "nao vi" voltou a significar so uma coisa.
+        print("\n    (a ponte v1.3.0+ continua a anunciar mesmo com o Loopy"
+              " ligado — cabem 3. Se ela nao aparece, esta sem alimentacao,"
+              " fora de alcance, ou com firmware anterior a v1.3.0.)")
         return 3
     print("  achei: %s" % d.address)
     async with BleakClient(d) as c:
@@ -106,7 +113,13 @@ async def corre(nome, comandos, segundos):
             await asyncio.sleep(1.2)
         if segundos:
             await asyncio.sleep(segundos)
-        await c.stop_notify(NUS_TX)
+        # (!) o `stop_notify` rebenta no macOS a fechar ("Service Discovery
+        # has not been performed yet") — sair do contexto ja desliga, e uma
+        # falha na ARRUMACAO nao pode esconder um resultado que correu bem.
+        try:
+            await c.stop_notify(NUS_TX)
+        except Exception:
+            pass
     print("\n[fim]")
     return 0
 

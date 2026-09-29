@@ -1,5 +1,5 @@
 // ============================================================================
-// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.2.0
+// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.3.1
 //                 + consola sem fio por NUS (ppc/006 fase 1)
 // ESP32-C3 SuperMini · substitui o WIDI Core 1.3
 //
@@ -39,7 +39,7 @@
 #include <MIDI.h>
 #include <Preferences.h>
 
-#define PONTE_VERSAO "1.2.0"
+#define PONTE_VERSAO "1.3.1"
 
 // ---- pinos -----------------------------------------------------------------
 // ⚠️⚠️ MAJOR a 21/09: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
@@ -152,6 +152,33 @@ static uint32_t  nus_para_daisy = 0, nus_do_daisy = 0;
 // contador no fim do percurso responde por todo o percurso, que e o mesmo
 // defeito do `pkout` sem o `pk`. Este conta a CHEGADA.
 static uint32_t  nus_escritas = 0, nus_bytes_crus = 0;
+
+// ---- O ANUNCIO FICA DE PE ENQUANTO HOUVER VAGA -----------------------------
+//
+// 🔴 MEDIDO a 29/09. O `begin()` do BLEMIDI faz `advertiseOnDisconnect(true)`,
+// e no NimBLE o anuncio PARA quando alguem se liga. Consequencia: com o Loopy
+// agarrado, a ponte fica INVISIVEL — o Mac varre e nao a ve.
+//
+// ⚠️ E "nao vi" e indistinguivel de "esta desligada". O dB pediu feedback para
+// esse caso; o conserto certo nao e explicar melhor o silencio, e ELIMINA-LO:
+// o C3 aceita CONFIG_BT_NIMBLE_MAX_CONNECTIONS = 3 ligacoes, entao cabem o
+// iPad, o Mac e uma de sobra. Reanuncia-se enquanto houver vaga, e as duas
+// consolas convivem — MIDI para o Loopy, consola para quem estiver a medir.
+static uint32_t anuncio_ultimo_ms = 0;
+static uint32_t reanuncios = 0;
+
+static void MantemAnuncio()
+{
+    if((uint32_t)(millis() - anuncio_ultimo_ms) < 2000u) return;
+    anuncio_ultimo_ms = millis();
+    NimBLEServer* srv = NimBLEDevice::getServer();
+    if(!srv) return;
+    if(srv->getConnectedCount() >= CONFIG_BT_NIMBLE_MAX_CONNECTIONS) return;
+    NimBLEAdvertising* adv = NimBLEDevice::getAdvertising();
+    if(adv->isAdvertising()) return;
+    adv->start();
+    reanuncios++;
+}
 
 class NusRxCB : public NimBLECharacteristicCallbacks
 {
@@ -306,7 +333,16 @@ static void DaSerial(const midi::Message<128>& m)
             uint8_t cru[192];
             const size_t k = Desempacota7(&m.sysexArray[3], n - 4,
                                           cru, sizeof(cru));
-            if(nus_tx && conectado)
+            // ⚠️ SEM O `conectado`, e a razao e da v1.3.0. Aquele booleano
+            // e do BLEMIDI e diz "ha ALGUEM ligado" — com tres ligacoes
+            // possiveis, deixou de significar o que significava: uma queda
+            // do Loopy punha-o a falso e CALAVA a consola de quem continuava
+            // ligado. Variavel com dois empregos, a familia C do audit.
+            //
+            // O `notify()` do NimBLE ja faz a coisa certa sozinho: entrega a
+            // quem subscreveu, e nao faz nada se ninguem subscreveu. A
+            // guarda era a mentir sobre o estado de outra pessoa.
+            if(nus_tx)
             {
                 nus_tx->setValue(cru, k);
                 nus_tx->notify();
@@ -449,6 +485,14 @@ static void Shell()
                 Serial.printf("ponte v%s · BAUD %lu · %s\n", PONTE_VERSAO,
                               (unsigned long)BAUD,
                               conectado ? "CONECTADO" : "sem link");
+                {
+                    NimBLEServer* sv = NimBLEDevice::getServer();
+                    Serial.printf("  ligacoes: %u de %d ocupada(s) ·"
+                                  " %lu reanuncio(s)\n",
+                                  sv ? (unsigned)sv->getConnectedCount() : 0,
+                                  CONFIG_BT_NIMBLE_MAX_CONNECTIONS,
+                                  (unsigned long)reanuncios);
+                }
                 Serial.printf("  radio: %s\n",
                               NimBLEDevice::getAdvertising()->isAdvertising()
                                   ? "a ANUNCIAR (descobrivel)"
@@ -593,6 +637,7 @@ void loop()
     SER.read();
     PiscaLed();
     Shell();
+    MantemAnuncio();   // ha vaga? entao anuncia — ver a nota do bloco
 
     // ESCOA A CONSOLA. So daqui: o laco e o unico dono da Serial1, e escrever
     // da tarefa do BLE partiria uma mensagem MIDI ao meio.
