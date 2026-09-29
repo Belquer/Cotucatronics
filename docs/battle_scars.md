@@ -11424,3 +11424,64 @@ existe para conferir versões estava a mentir sobre uma.** É a mesma família d
 > portão a vigiar a cópia.** Aqui há portão — o `versoes_readme.py` compara o
 > cabeçalho com a constante — e ele apanha o ficheiro, mas não apanhava esta
 > constante por ser de OUTRO ficheiro.
+
+## 15fu — a ponte grava-se por rádio, e o culpado era a supervisão, não a velocidade
+
+29/09, `ppc/006` fase 2. A imagem de 628 KB atravessou o BLE, passou o MD5,
+arrancou, sobreviveu 15 s a anunciar e **confirmou-se sozinha**:
+
+```
+particao app1 · CONFIRMADA      (estava em app0)
+```
+
+Mas chegar lá levou quatro tentativas, e a sequência das medições é a lição.
+
+### Três hipóteses, e a que estava certa não era a primeira
+
+| # | hipótese | como se testou | veredito |
+|---|---|---|---|
+| 1 | intervalo de ligação grande | passou-se a **medir** o intervalo | **errada** — já era 30 ms |
+| 2 | MTU pequeno a partir as escritas | `setMTU(517)` e medir o real | **certa em parte** — dobrou o débito (0,9 → 1,8 kB/s) |
+| 3 | prazo de **supervisão** curto | medir o prazo e a flash | **era esta** |
+
+```
+supervisao 72 (720 ms) · pico da flash 85 422 us
+```
+
+Uma escrita na flash **bloqueia 85 ms** e a supervisão era de **720 ms**. Duas
+ou três escritas próximas e o central desiste — que é a queda a meio da
+imagem, sempre num sítio diferente. Subida para 4 s: **628 KB, zero quedas.**
+
+> **O débito não era o problema; a tolerância ao silêncio era.** Passei duas
+> tentativas a tentar ir mais depressa quando o que faltava era poder parar
+> mais tempo.
+
+### E o pedido nunca saiu, por uma guarda que guardava a coisa errada
+
+```c
+if(ultimo_itvl > 24) { updateConnParams(h, 12, 24, 0, 400); }
+```
+
+O intervalo já era 24, logo a condição nunca deu verdade — e o pedido levava
+**também o prazo de supervisão**, que era a parte que interessava. Uma guarda
+escrita sobre um dos parâmetros a impedir o envio de todos.
+
+> **Guarda que decide por um campo e bloqueia a mensagem inteira é guarda
+> escrita no sítio errado.** Pedir o que já está bom não custa nada; não pedir
+> o que falta custou três tentativas.
+
+### A violação da minha própria regra, três blocos abaixo de a ter escrito
+
+O `!ota` matava a sessão antes de enviar um byte: eu chamava o
+`ComandoDaPonte` de dentro da callback do NimBLE, e o `Update.begin()` **apaga
+flash**. Este mesmo ficheiro já dizia *"a callback só ENFILEIRA; quem escreve
+é o laço"* — escrita para a `Serial1`, sem eu ver que valia para **tudo o que
+demora**.
+
+### O que fica provado, e é o requisito do dB
+
+⚠️ **Quatro tentativas abortadas não deixaram marca nenhuma.** A ponte
+continuou a anunciar na imagem anterior de todas as vezes, porque só se
+escreve na partição **inactiva**. E a confirmação é tardia de propósito — só
+depois de **15 s de laço com o rádio a anunciar**, o que apanha crash-loop e
+rádio morto, os dois modos que deixariam a caixa inalcançável.

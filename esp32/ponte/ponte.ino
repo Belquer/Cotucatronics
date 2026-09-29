@@ -1,5 +1,5 @@
 // ============================================================================
-// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.4.1
+// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.7.0
 //                 + consola sem fio por NUS (ppc/006 fase 1)
 // ESP32-C3 SuperMini · substitui o WIDI Core 1.3
 //
@@ -39,7 +39,7 @@
 #include <MIDI.h>
 #include <Preferences.h>
 
-#define PONTE_VERSAO "1.4.1"
+#define PONTE_VERSAO "1.7.0"
 
 // ---- pinos -----------------------------------------------------------------
 // ⚠️⚠️ MAJOR a 21/09: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
@@ -190,7 +190,7 @@ static uint32_t  nus_escritas = 0, nus_bytes_crus = 0;
 //
 static bool      ota_ativo   = false;
 static uint32_t  ota_total   = 0, ota_recebido = 0, ota_ultimo_ms = 0;
-static uint32_t  ota_tentativas = 0;
+static uint32_t  ota_tentativas = 0, ota_pico_us = 0;
 static char      ota_erro[64] = {0};
 static bool      confirmado  = false;
 static uint32_t  arranque_ms = 0;
@@ -200,6 +200,47 @@ static void OtaAborta(const char* porque)
     Update.abort();
     ota_ativo = false;
     snprintf(ota_erro, sizeof(ota_erro), "%s", porque);
+}
+
+// ---- PARAMETROS DA LIGACAO: MEDIR, E SO DEPOIS PEDIR -----------------------
+//
+// A 29/09 a transferencia da imagem andava a 0,8 kB/s com pedacos de 180 B e
+// escrita confirmada — ou seja ~5 escritas por segundo, o que aponta para um
+// intervalo de ligacao de ~200 ms. Mas APONTAR NAO E MEDIR: o `!board` passa
+// a dizer o intervalo REAL, e so assim se sabe se o pedido pegou.
+//
+// ⚠️ E o pedido nao e garantido. Quem manda no intervalo e o CENTRAL (o Mac,
+// o iPad); a periferica so pede. Por isso o relato mostra o que ficou, nao o
+// que se pediu — a diferenca entre os dois ja custou um dia esta semana.
+//
+// 12 x 1,25 ms = 15 ms · 24 = 30 ms. Latencia 0 e supervisao 4 s: a imagem
+// leva minutos e uma supervisao curta derruba na primeira pausa da flash.
+static uint32_t params_pedidos = 0;
+static uint16_t ultimo_itvl = 0;
+
+static void PedeIntervaloCurto()
+{
+    NimBLEServer* srv = NimBLEDevice::getServer();
+    if(!srv || !srv->getConnectedCount()) return;
+    for(size_t i = 0; i < srv->getConnectedCount(); i++)
+    {
+        NimBLEConnInfo ci = srv->getPeerInfo(i);
+        ultimo_itvl = ci.getConnInterval();
+        // 🔴 A CONDICAO ERRADA ERA `if(intervalo > 24)`, e por isso o pedido
+        // NUNCA saia: o intervalo ja era 24. Mas o pedido nao e so sobre o
+        // intervalo — leva tambem o PRAZO DE SUPERVISAO, e era esse que
+        // faltava. Medido a 29/09: supervisao 720 ms contra uma escrita de
+        // flash que bloqueia 85 ms. Duas ou tres proximas e o central
+        // desiste, que e a queda a meio da imagem.
+        //
+        // Pedir o que ja esta bom nao custa nada; NAO pedir o que falta custa
+        // a transferencia inteira. Pede-se sempre, ate a supervisao subir.
+        if(ci.getConnTimeout() < 300)
+        {
+            srv->updateConnParams(ci.getConnHandle(), 12, 24, 0, 400);
+            params_pedidos++;
+        }
+    }
 }
 
 static uint32_t anuncio_ultimo_ms = 0;
@@ -230,16 +271,29 @@ static void ComandoDaPonte(const char* c)
     char m[200];
     if(!strncmp(c, "board", 5))
     {
+        // ⚠️ MEDE AGORA, nao no relogio de outra pessoa. A primeira versao
+        // so media no temporizador de 3 s, e o `!board` chega ~1 s depois de
+        // ligar: o relato saia com `intervalo 0`, que nao e medicao — e o
+        // instrumento a nao ter olhado ainda. Numero que ainda nao existe
+        // tem de ser pedido, nao esperado.
+        PedeIntervaloCurto();
         NimBLEServer* sv = NimBLEDevice::getServer();
         snprintf(m, sizeof(m),
                  "ponte v%s · %s · ligacoes %u/%d · consola %lu->/%lu<- B\n"
-                 "  particao %s · %s\n",
+                 "  particao %s · %s\n"
+                 "  intervalo %u x1,25ms (%u ms) · %lu pedido(s) de encurtar\n"
+                 "  ota: pico de escrita %lu us · MTU %u\n",
                  PONTE_VERSAO, conectado ? "com link" : "sem link",
                  sv ? (unsigned)sv->getConnectedCount() : 0,
                  CONFIG_BT_NIMBLE_MAX_CONNECTIONS,
                  (unsigned long)nus_para_daisy, (unsigned long)nus_do_daisy,
                  esp_ota_get_running_partition()->label,
-                 confirmado ? "CONFIRMADA" : "por confirmar (volta atras se cair)");
+                 confirmado ? "CONFIRMADA" : "por confirmar (volta atras se cair)",
+                 (unsigned)ultimo_itvl, (unsigned)(ultimo_itvl * 125 / 100),
+                 (unsigned long)params_pedidos, (unsigned long)ota_pico_us,
+                 (unsigned)(sv && sv->getConnectedCount()
+                            ? sv->getPeerMTU(sv->getPeerInfo((size_t)0).getConnHandle())
+                            : 0));
         DizAoMac(m);
         return;
     }
@@ -522,6 +576,16 @@ void setup()
     // `RADIO.begin()` fazer o resto — o `init` e o `createServer` dele sao
     // idempotentes, e o anuncio dele constroi a tabela com os DOIS servicos.
     NimBLEDevice::init("Cotucatronics");
+    // ⚠️ MTU GRANDE, E A RAZAO E MEDIDA. A 29/09 a imagem ia a 0,9 kB/s com
+    // o intervalo de ligacao ja em 30 ms — a 30 ms uma escrita confirmada
+    // devia dar ~6 kB/s. Sete vezes mais lento que o intervalo permite e a
+    // assinatura de MTU pequeno: com o omisso de 23, uma escrita de 180 B
+    // nao cabe num pedido e o central parte-a em ESCRITA LONGA, com varias
+    // idas e voltas por pedaco.
+    //
+    // 517 e o maximo do ATT. O central negoceia para baixo se quiser — e por
+    // isso o `!board` mostra o MTU REAL, nao o pedido.
+    NimBLEDevice::setMTU(517);
     {
         NimBLEServer* srv = NimBLEDevice::createServer();
         NimBLEService* sv = srv->createService(NUS_SVC);
@@ -634,6 +698,25 @@ static void Shell()
                               NimBLEDevice::getAdvertising()->isAdvertising()
                                   ? "a ANUNCIAR (descobrivel)"
                                   : "NAO anuncia — ou ha link, ou parou");
+                {
+                    // O MESMO relato do radio, tambem no USB: numero que so
+                    // existe num dos canos obriga a escolher o cano pela
+                    // pergunta, e foi isso que me atrasou aqui.
+                    NimBLEServer* sv2 = NimBLEDevice::getServer();
+                    uint16_t tmo = 0, mtu = 0;
+                    if(sv2 && sv2->getConnectedCount())
+                    {
+                        NimBLEConnInfo ci = sv2->getPeerInfo((size_t)0);
+                        tmo = ci.getConnTimeout();
+                        mtu = sv2->getPeerMTU(ci.getConnHandle());
+                    }
+                    Serial.printf("  ligacao: intervalo %u (%u ms) · supervisao"
+                                  " %u (%u ms) · MTU %u · pico da flash %lu us\n",
+                                  (unsigned)ultimo_itvl,
+                                  (unsigned)(ultimo_itvl * 125 / 100),
+                                  (unsigned)tmo, (unsigned)(tmo * 10),
+                                  (unsigned)mtu, (unsigned long)ota_pico_us);
+                }
                 Serial.printf("  NUS: %lu escrita(s) do Mac, %lu B crus"
                               " · fila %s\n",
                               (unsigned long)nus_escritas,
@@ -775,6 +858,12 @@ void loop()
     PiscaLed();
     Shell();
     if(cmd_ha) { cmd_ha = false; ComandoDaPonte(cmd_pendente); }
+    // pede o intervalo curto a cada 3 s enquanto houver ligacao — barato, e
+    // apanha tambem o caso de o central renegociar por conta propria
+    {
+        static uint32_t prox = 0;
+        if((uint32_t)(millis() - prox) > 1000u) { prox = millis(); PedeIntervaloCurto(); }
+    }
     MantemAnuncio();   // ha vaga? entao anuncia — ver a nota do bloco
 
     // ---- CONFIRMA A IMAGEM, E SO DEPOIS DE ELA SE PROVAR ----
@@ -823,7 +912,11 @@ void loop()
             // isso o `nus_descartes` do callback ABORTA a gravacao em vez de
             // somar e seguir — e por isso o MD5 confere no fim, que apanha o
             // que a contagem nao apanhar.
-            if(Update.write(lote, n) != n)
+            const uint32_t t0 = micros();
+            const size_t escritos = Update.write(lote, n);
+            const uint32_t dt = micros() - t0;
+            if(dt > ota_pico_us) ota_pico_us = dt;
+            if(escritos != n)
                 OtaAborta("escrita na flash falhou");
             else
             {
