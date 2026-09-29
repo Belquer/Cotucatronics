@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — qspi_raw v0.2.0
+// Cotucatronics OS — qspi_raw v0.10.0
 //
 // ACESSO DIRETO AO QUADSPI, PARA A JANELA DE ESCRITA.
 //
@@ -74,6 +74,63 @@ COTUCA_ITCM uint32_t LeJedecId();
 void     SetDummyQpi(uint32_t n);
 void     SetOpcode(uint32_t op);   // 0x9F em SPI, 0xAF em QPI
 void     SetModo(uint32_t m);      // 1 = uma linha, 4 = quatro linhas
+// ---- ESCRITA: apagar, programar, ler (ppc/006 fase 3) ---------------------
+//
+// O cabecalho ja dizia: "se ler tres bytes funciona, o mesmo mecanismo
+// escreve — o que muda entre os dois e a TABELA DE COMANDOS, nao o
+// mecanismo". Isto e essa tabela.
+//
+// 🔴 ZONA SEGURA IMPOSTA EM CODIGO, e ela nao e cerimonia.
+//
+// A 29/09 uma gravacao no endereco errado apagou o app que estava a correr e
+// custou meia hora de recuperacao com BOOT+RESET (bts 15fv). A causa foi uma
+// subtraccao que eu nao fiz. Um `erase` com o endereco errado faz o mesmo em
+// silencio e sem hipotese de arrepender — entao a funcao RECUSA qualquer
+// endereco fora da zona declarada, e quem quiser sair dela tem de o dizer por
+// escrito, uma vez, num sitio que se le.
+//
+//   0x90000000  META            (sectores de 4 KB)
+//   0x90040000  ESCOLHEDOR      <- NUNCA por software
+//   0x90050000  EXECUCAO        <- so o escolhedor escreve aqui
+//   0x90200000  ENCENACAO       <- o OTA escreve aqui
+//   0x90400000  RASCUNHO        <- a zona segura enquanto se prova o driver
+//
+// ⚠️ `ZonaSegura` comeca em RASCUNHO. Alargar e uma decisao, nao um ajuste.
+bool     PodeEscrever(uint32_t addr, uint32_t n);
+void     AlargaZona(uint32_t inicio, uint32_t fim);   // declarar e deliberado
+
+// Status do chip: bit 0 = WIP (ocupado), bit 1 = WEL (escrita habilitada).
+// Devolve VALIDADE; o byte sai por ponteiro.
+// ⚠️ 0x00 e resposta LEGITIMA (chip ocioso) — cicatriz 13k: nenhum valor do
+// dominio pode significar "sem dado".
+bool     LeStatus(uint8_t* fora);
+
+// Abre e fecha a janela SEM emitir comando. Enche 6 palavras:
+//   [0] SR antes  [1] bytes drenados da FIFO  [2] SR depois do ABORT
+//   [3] voltas do BUSY
+//   [4] SR depois do EN  [5] SR restaurado
+void     SondaJanela(uint32_t* fora6);
+
+// Botoes de varredura da leitura hibrida. `sshift`: 0/1 forca, 2 = como o
+// memory-mapped o tinha. `dummy_ler`: ciclos dummy do 0xEB (o mapeado usa 6).
+void     SetSshift(uint32_t v);
+void     SetDummyLer(uint32_t n);
+uint32_t Sshift();
+uint32_t DummyLer();
+
+// Apaga um sector de 64 KB. `addr` tem de estar alinhado e na zona segura.
+// Devolve false se recusou ou se o chip nao ficou pronto.
+bool     ApagaSector64(uint32_t addr);
+
+// Programa ate 256 bytes, sem atravessar a fronteira de pagina. O chamador
+// parte em paginas — a funcao RECUSA um pedido que atravesse, em vez de o
+// partir por dentro: partir calado esconde um erro de conta de quem chama.
+bool     ProgramaPagina(uint32_t addr, const uint8_t* dados, uint32_t n);
+
+// Le `n` bytes por comando indirecto (NAO pelo memory-mapped). E assim que o
+// escolhedor le a encenacao enquanto a QSPI esta fora do modo mapeado.
+bool     LeBloco(uint32_t addr, uint8_t* dados, uint32_t n);
+
 uint32_t UltimoSR();
 uint32_t UltimasFalhas();
 

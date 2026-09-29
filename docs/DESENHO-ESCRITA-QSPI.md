@@ -117,6 +117,18 @@ que batia com o sintoma, e errada (bts 13j).
 | `AddressMode` | **4 linhas** |
 | `DataMode` | **4 linhas** |
 | `DummyCycles` | **6** |
+| `AlternateByteMode` | **4 linhas** |
+| `AlternateBytes` | **`0xA0`** |
+| `AlternateBytesSize` | 8 bits |
+| `SIOOMode` | **`INST_ONLY_FIRST_CMD`** |
+
+🔴 **AS QUATRO ÚLTIMAS LINHAS FALTAVAM ATÉ 29/09, e eram as que decidiam.**
+Com `AlternateBytes = 0xA0` os bits M5-M4 valem `10`, o que põe o chip em
+**leitura contínua (XIP)** — e nesse modo **o chip deixa de interpretar o
+primeiro byte como opcode**. Foi por isso que, durante cinco semanas, nenhum
+comando indirecto funcionou: não estavam errados, não estavam a ser ouvidos.
+Ver bts 15fw e 15fy. A tabela acima é agora a estrutura COMPLETA lida em
+`EnableMemoryMappedMode`.
 
 Não é SPI nem QPI: é **híbrido**. Só a instrução vai serial; endereço e dado
 vão em quatro linhas. Qualquer comando novo nasce sabendo disso.
@@ -266,3 +278,88 @@ o difícil já está resolvido.
 
 A ordem não mudou: ID → recusa gritada de chip desconhecido → erase → program
 → `save`/`load` sobrevivendo a desligar da tomada.
+
+
+---
+
+# ✅ RESOLVIDO — 29/09. A QSPI escreve com o app a correr da QSPI.
+
+Este documento esteve cinco semanas com a frente parada e a condição de
+retomada a apontar para o RM0433. **O manual não foi preciso.** O que resolveu
+foi ler três funções da libDaisy — `SetMode`, `HAL_QSPI_Abort` e
+`EnableMemoryMappedMode`.
+
+## As três hipóteses vivas: mortas, e nenhuma era a causa
+
+| hipótese de 22/08 | veredicto de 29/09 |
+|---|---|
+| dois passos vs um (`Command`+`Receive`) | **irrelevante** — um passo funciona |
+| `NbData`/`DLR` | **irrelevante** — 1 ou 3 bytes, igual |
+| ordem de escrita do `CCR` | **real mas secundária** — é `DLR → CCR → AR` |
+
+A causa não estava na lista, porque a lista foi feita a olhar para o COMANDO e
+as duas causas estavam na JANELA e no MODO DO CHIP.
+
+## O que ficou provado, com números
+
+```
+qspi janela  ->  CR.EN=0 derruba o BUSY em 0 voltas
+                 CR.ABORT nao o derruba em 200 000, quatro gravacoes seguidas
+qspi id      ->  9D 60 17    ISSI · IS25LP · 8 MB
+qspi sr      ->  0x40        WIP=0 WEL=0 QE=1
+qspi ler     ->  16/16 iguais ao memory-mapped
+qspi prova   ->  apagar · conferir FF · programar · reler: 0 de 32 diferem
+```
+
+## A sequência que funciona, e a ordem é tudo
+
+1. `CR.EN = 0` — **desligar**, não abortar. Reinicia máquina de estados e FIFO.
+2. esperar o `BUSY` cair (cai imediatamente)
+3. `CCR = 0`; `CR` reconstruído **sem `TCEN`** (o contador de timeout é do modo
+   mapeado e é ele que segura o `nCS`)
+4. `CR.EN = 1`
+5. **sair da leitura contínua**: uma leitura `0xEB` com `ABR = 0x00`
+6. só então o comando, com `DLR → CCR → AR` (o `AR` é o gatilho)
+7. ao fechar: **restaurar o `ABR`**, senão o app não busca instruções e morre
+
+## A tabela de comandos, provada nesta placa
+
+Tudo em **uma linha**, **zero dummy**, endereço de **24 bits** — o chip está em
+SPI simples, a libDaisy nunca chama `EnterQuadMode`:
+
+| comando | opcode | instr | endereço | dado | dummy |
+|---|---|---|---|---|---|
+| WREN | `0x06` | 1 | nenhum | nenhum | 0 |
+| RDSR | `0x05` | 1 | nenhum | 1 | 0 |
+| apagar bloco 64K | `0xD8` | 1 | 1 | nenhum | 0 |
+| programar página | `0x02` | 1 | 1 | 1 | 0 |
+| ler | `0xEB` | 1 | 4 | 4 | 6 + `ABR=0x00` |
+
+## ⚠️ E a razão de este driver existir, escrita na biblioteca
+
+```cpp
+QSPIHandle::Result QSPIHandle::Impl::CheckProgramMemory()
+{
+    if(System::GetProgramMemoryRegion() == System::MemoryRegion::QSPI)
+        return Result::ERR;      // recusa apagar/programar
+}
+```
+
+Todo caminho de escrita da libDaisy começa por aqui. **A biblioteca recusa-se a
+escrever na QSPI quando o programa corre da QSPI** — que é exactamente a nossa
+configuração. Não é limitação a contornar por descuido: é a declaração de que
+quem escreve tem de correr de outro sítio, e é o que o `qspi_raw` faz (ITCM,
+interrupções mascaradas).
+
+## Limitação que o OTA tem de respeitar
+
+O apagar corre com as interrupções mascaradas e leva centenas de milissegundos.
+**Não pode ser chamado com o instrumento a tocar.** A gravação tem de ter o som
+desligado — decisão de desenho, não detalhe de implementação.
+
+## Onde continuar
+
+O escolhedor (`ppc/006` fase 3) pode agora ser construído sobre mecanismo
+provado. A zona segura do driver começa em `0x90400000` (rascunho) e é
+`AlargaZona()` que a abre — deliberadamente, para que ninguém apague o app por
+engano numa chamada distraída.

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.320.1"
+#define COTUCA_OS_VERSION "0.329.0"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3980,6 +3980,152 @@ static void HandleLine(const char* line)
                  " — a rotina executa de la e retorna", (unsigned long)r);
         return;
     }
+    // `qspi afina <sshift> <dummy>` — botoes da leitura hibrida, sem gravar.
+    if(strncmp(line, "qspi afina", 10) == 0)
+    {
+        const char* a2 = line + 10;
+        char* fim = nullptr;
+        while(*a2 == ' ') a2++;
+        if(*a2)
+        {
+            cotuca::qspi::SetSshift((uint32_t)strtol(a2, &fim, 10));
+            if(fim && *fim)
+                cotuca::qspi::SetDummyLer((uint32_t)strtol(fim, nullptr, 10));
+        }
+        hal::Log("qspi afina: sshift=%lu (2 = como o mapeado)  dummy do 0xEB=%lu",
+                 (unsigned long)cotuca::qspi::Sshift(),
+                 (unsigned long)cotuca::qspi::DummyLer());
+        return;
+    }
+    // `qspi janela` — a janela abre? Nenhum comando e emitido.
+    if(strncmp(line, "qspi janela", 11) == 0)
+    {
+        uint32_t d[6] = {0};
+        cotuca::qspi::SondaJanela(d);
+        hal::Log("qspi janela: SR antes=%08lX  bytes drenados da FIFO=%lu",
+                 (unsigned long)d[0], (unsigned long)d[1]);
+        hal::Log("  depois do EN=0 : SR=%08lX  BUSY=%lu  FLEVEL=%lu"
+                 "  (custou %lu voltas)",
+                 (unsigned long)d[2], (unsigned long)((d[2] >> 5) & 1u),
+                 (unsigned long)((d[2] >> 8) & 0x3Fu), (unsigned long)d[3]);
+        hal::Log("  depois do EN=1 : SR=%08lX   restaurado: SR=%08lX",
+                 (unsigned long)d[4], (unsigned long)d[5]);
+        if((d[2] >> 5) & 1u)
+            hal::Log("  VEREDICTO: o BUSY NAO cai com o ABORT — o problema e"
+                     " SAIR do memory-mapped. Nenhuma tabela de comandos"
+                     " funciona daqui, e a tabela deixa de ser suspeita.");
+        else
+            hal::Log("  VEREDICTO: a janela abre (BUSY caiu, FLEVEL=%lu) — o"
+                     " problema esta no COMANDO, nao na janela.",
+                     (unsigned long)((d[2] >> 8) & 0x3Fu));
+        return;
+    }
+    // `qspi sr` — le o registo de estado. Inofensivo: nao escreve nada.
+    if(strncmp(line, "qspi sr", 7) == 0)
+    {
+        uint8_t sr = 0;
+        if(!cotuca::qspi::LeStatus(&sr))
+            hal::Log("qspi: a leitura do status FALHOU (SR do periferico"
+                     " =%08lX) — nao ha byte para mostrar",
+                     (unsigned long)cotuca::qspi::UltimoSR());
+        else
+            hal::Log("qspi: RDSR cru = %02X  (WIP=%u WEL=%u) — 00 e resposta"
+                     " normal de chip ocioso, nao ausencia de resposta",
+                     sr, (unsigned)(sr & 1u), (unsigned)((sr >> 1) & 1u));
+        return;
+    }
+    // `qspi ler <hex>` — 16 bytes pelo comando indirecto E pelo memory-mapped,
+    // lado a lado.
+    //
+    // ESTE E O PORTAO. O memory-mapped e o hardware a ler por conta dele, com
+    // uma tabela de comandos que eu nao escrevi; se as duas colunas batem, o
+    // meu opcode, os meus ciclos dummy e o meu tamanho de endereco estao
+    // certos — e sao os MESMOS campos que o apagar e o programar usam. Se nao
+    // batem, nao se escreve nada: seria escrever no sitio errado.
+    if(strncmp(line, "qspi ler", 8) == 0)
+    {
+        uint32_t addr = 0x90400000u;
+        const char* a2 = line + 8;
+        while(*a2 == ' ') a2++;
+        if(*a2) addr = (uint32_t)strtoul(a2, nullptr, 16);
+        uint8_t ind[16], mm[16];
+        for(int i = 0; i < 16; i++) mm[i] = ((volatile uint8_t*)addr)[i];
+        const bool ok = cotuca::qspi::LeBloco(addr, ind, 16);
+        if(!ok)
+        {
+            hal::Log("qspi: a leitura indirecta falhou (SR=%08lX) — a tabela"
+                     " de comandos esta errada, NAO escrever nada",
+                     (unsigned long)cotuca::qspi::UltimoSR());
+            return;
+        }
+        int dif = 0;
+        for(int i = 0; i < 16; i++) if(ind[i] != mm[i]) dif++;
+        hal::Log("qspi %08lX indirecto: %02X %02X %02X %02X %02X %02X %02X %02X",
+                 (unsigned long)addr, ind[0], ind[1], ind[2], ind[3],
+                 ind[4], ind[5], ind[6], ind[7]);
+        hal::Log("qspi %08lX mapeado  : %02X %02X %02X %02X %02X %02X %02X %02X",
+                 (unsigned long)addr, mm[0], mm[1], mm[2], mm[3],
+                 mm[4], mm[5], mm[6], mm[7]);
+        if(dif)
+            hal::Log("qspi: %d de 16 bytes DIFEREM — o comando indirecto le"
+                     " outro sitio, ou le mal. Portao FECHADO.", dif);
+        else
+            hal::Log("qspi: 16/16 iguais — o comando indirecto le o mesmo que"
+                     " o hardware. Portao ABERTO para apagar/programar.");
+        return;
+    }
+    // `qspi prova` — a escada completa NA ZONA DE RASCUNHO (0x90400000).
+    //
+    // ⚠️ Nao aceita endereco por argumento, DE PROPOSITO. Um comando de
+    // consola que apaga o endereco que lhe derem e a mesma arma de 29/09 com
+    // gatilho mais leve. Para apagar outra coisa, e preciso mexer no codigo —
+    // e quem mexe no codigo le a zona segura pelo caminho.
+    if(strncmp(line, "qspi prova", 10) == 0)
+    {
+        const uint32_t addr = 0x90400000u;
+        uint8_t buf[32];
+        if(!cotuca::qspi::PodeEscrever(addr, 65536u))
+        {
+            hal::Log("qspi: a zona segura nao cobre %08lX — recusado",
+                     (unsigned long)addr);
+            return;
+        }
+        hal::Log("qspi prova: 1/4 apagar o sector de 64K em %08lX...",
+                 (unsigned long)addr);
+        if(!cotuca::qspi::ApagaSector64(addr))
+        {
+            hal::Log("qspi prova: APAGAR FALHOU (SR=%08lX). Para aqui.",
+                     (unsigned long)cotuca::qspi::UltimoSR());
+            return;
+        }
+        if(!cotuca::qspi::LeBloco(addr, buf, 32)) { hal::Log("qspi prova: leitura falhou"); return; }
+        int naoff = 0;
+        for(int i = 0; i < 32; i++) if(buf[i] != 0xFF) naoff++;
+        hal::Log("qspi prova: 2/4 apagado -> %d de 32 bytes nao sao FF"
+                 " (esperado 0)", naoff);
+        if(naoff) { hal::Log("qspi prova: o apagar nao pegou. Para aqui."); return; }
+        uint8_t padrao[32];
+        for(int i = 0; i < 32; i++) padrao[i] = (uint8_t)(0xC0 + i);
+        hal::Log("qspi prova: 3/4 programar 32 bytes...");
+        if(!cotuca::qspi::ProgramaPagina(addr, padrao, 32))
+        {
+            hal::Log("qspi prova: PROGRAMAR FALHOU (SR=%08lX)",
+                     (unsigned long)cotuca::qspi::UltimoSR());
+            return;
+        }
+        if(!cotuca::qspi::LeBloco(addr, buf, 32)) { hal::Log("qspi prova: leitura falhou"); return; }
+        int dif = 0;
+        for(int i = 0; i < 32; i++) if(buf[i] != padrao[i]) dif++;
+        hal::Log("qspi prova: 4/4 releitura -> %d de 32 bytes diferem"
+                 " (esperado 0). Primeiros: %02X %02X %02X %02X",
+                 dif, buf[0], buf[1], buf[2], buf[3]);
+        if(dif)
+            hal::Log("qspi prova: REPROVA. O driver nao escreve o que diz.");
+        else
+            hal::Log("qspi prova: PASSA. Apagar, programar e reler funcionam"
+                     " — o escolhedor pode ser construido em cima disto.");
+        return;
+    }
     if(strncmp(line, "qspi id", 7) == 0)
     {
         // `qspi id [n]` — n = ciclos dummy, pra varrer sem regravar.
@@ -6787,7 +6933,7 @@ static void HandleLine(const char* line)
     // cobra. Tres comandos escritos hoje (`dup`, `espelho`, `dreno`)
     // existiam sem constar, e comando que nao consta e comando que nao
     // existe para quem esta na bancada com a serial aberta.
-    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | fio le | fio estado | oledspi | oled forca | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] | pkout [reset] (entrada / saida) | b1 randomize | b2 freeze | b3 rearme");
+    hal::Log("? k1..k2 <0-1> (level_l/level_r) | microfonia [caca|auto|vigia <l|r> <seg> <piso>|off] | set <nome> <real> | tone on/off | board | list | mods | dyn | cpu | hist [reset] | probe | bb | midi | mscope on/off/stats | log on/off | ble [raw|mirror on/off] | sync | dfu go | reboot | pitch <ratio> | ctos [rearm|teto|prazo] | rearm | vistos [reset] | qspi id/sr/janela/afina/ler/prova | miditest | midiloop | dup on/off | espelho on/off | capturar <a|b|g> <nome> | preset list/dump/load | (colar linhas `cadeia`/`global` de um dump recarrega a biblioteca) | oled [texto <msg>|off] | varre [reset|tudo] | encpino [reset] | knob [s c l h|pino|prova] | enc [reset|detente <n>|tela on/off|inverte <a|b|g>] | fio <pino> <0|1> | fio curto | fio le | fio estado | oledspi | oled forca | oledvel <n> | oledpad | oledbench [hz] [seg] | splash [jogada] | pino [reset] | dreno <ms> | buzios | pk [reset] | pkout [reset] (entrada / saida) | b1 randomize | b2 freeze | b3 rearme");
 }
 
 // confere manifest.req contra a placa. Falhou = LED rápido + log.

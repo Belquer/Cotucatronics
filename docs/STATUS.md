@@ -1976,8 +1976,14 @@ que só a disciplina protege":**
 
 **Na fila depois disso:** inventário do que nunca foi exercitado (bts 13w) ·
 unificar as duas recusas temporais globais · ponteiros de preset com
-pré-escuta · painel no OLED · QSPI (janela ITCM provada, falta a leitura
-indireta — não gastar gravação sem o RM0433).
+pré-escuta · painel no OLED.
+
+> **QSPI: RESOLVIDO a 29/09** — apagar, programar e reler funcionam com o app a
+> correr da QSPI (`qspi prova` passa; `qspi id` → `9D 60 17`). Eram duas causas
+> empilhadas: sair do memory-mapped é `CR.EN=0` e não `ABORT`, e o chip estava
+> em leitura contínua, onde não existe opcode. O RM0433 não foi preciso — o que
+> resolveu foi ler três funções da libDaisy. Ver bts 15fw–15fz e
+> [DESENHO-ESCRITA-QSPI.md](DESENHO-ESCRITA-QSPI.md).
 
 ---
 

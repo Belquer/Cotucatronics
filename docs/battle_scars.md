@@ -11540,3 +11540,178 @@ a gesto.
 > **Ao terceiro atrito repetido, medir o atrito em vez de melhorar a pontaria.**
 > É a mesma lição da §1 da `bancada-firmware`, e eu voltei a aprendê-la do lado
 > errado.
+
+## 15fw — a QSPI escreve: eram DOIS problemas empilhados, e por isso a busca não encolhia (29/09)
+
+Aberto desde 22/08. Resolvido hoje, e o que o manteve fechado cinco semanas não
+foi dificuldade — foi **duas causas independentes a produzirem o mesmo
+sintoma**, o que faz toda a varredura parecer inútil.
+
+**O sintoma, constante e enganador:** `SR = 0x00001E20` — `BUSY=1`,
+`FLEVEL=30`, `TCF=0` — para *qualquer* comando. Opcode `0x9F`, `0xAF`, `0x05`;
+uma linha ou quatro; 0 a 10 ciclos dummy; `SSHIFT` nos três estados. **Vinte e
+quatro combinações medidas, todas `FF` ou `88`.** Nenhuma delas estava errada.
+
+### Causa 1 — sair do memory-mapped é DESLIGAR o periférico, não abortá-lo
+
+```
+CR.EN = 0    ->  BUSY cai em ZERO voltas
+CR.ABORT = 1 ->  BUSY não cai em 200 000 voltas, quatro gravações seguidas
+```
+
+E o gabarito nunca usou `ABORT` para isto: o `SetMode` da libDaisy é
+literalmente `Init(config_)`, que começa por `HAL_QSPI_DeInit` → `CR &= ~EN`.
+**A biblioteca não transiciona de modo; reconstrói o periférico.**
+
+⚠️ **A cicatriz 13l registou "sair do memory-mapped exige ABORT" como ACHADO DE
+PROTOCOLO.** Está parcialmente certo — e é por isso que foi caro. A própria 13l
+avisa: *"um chute que acerta parcialmente é o que financia o chute seguinte"*.
+Financiou quatro gravações minhas, cinco semanas depois de ela ser escrita.
+
+> **Um achado parcial documentado como achado fecha a investigação no sítio
+> errado.** Ao registar um achado, escrever também o que ele NÃO estabelece.
+
+### Causa 2 — o chip estava em leitura contínua (XIP), onde NÃO EXISTE OPCODE
+
+O `EnableMemoryMappedMode` manda, além do `0xEB`:
+
+```cpp
+AlternateByteMode = QSPI_ALTERNATE_BYTES_4_LINES;
+AlternateBytes    = 0x000000A0;   // M5-M4 = 10  ->  leitura contínua
+SIOOMode          = QSPI_SIOO_INST_ONLY_FIRST_CMD;
+```
+
+Com `M5-M4 = 10` o chip passa a esperar **endereço** onde antes esperava
+instrução. Todos os meus comandos eram lidos como endereços. **O chip nunca
+esteve mudo — nunca esteve a ouvir opcodes.**
+
+A saída é uma leitura `0xEB` com o byte alternativo a `0x00`: a mudança mínima
+sobre o único formato provado nesta placa.
+
+⚠️ **E o `ABR` tem de voltar ao fechar a janela.** O app CORRE da QSPI; se o
+byte alternativo ficar a zero, a primeira busca de instrução a seguir ao
+`return` lê lixo e a placa morre.
+
+### Por que duas causas empilhadas enganam mais que uma difícil
+
+Cada gravação parecia não ensinar nada, porque consertar **uma** das duas não
+move o sintoma. O critério de bissecção da 13l — *"se a hipótese falhar, o
+espaço de busca diminui?"* — responde **não** enquanto houver duas causas, e
+isso é indistinguível de estar a varrer a variável errada.
+
+> **Quando N tentativas falham todas da MESMA maneira, suspeitar de causas
+> EMPILHADAS antes de suspeitar da variável.** O instrumento que desempilha é
+> o que mede uma camada isoladamente — aqui, o `qspi janela`, que abre e fecha
+> o memory-mapped **sem emitir comando nenhum** e diz qual das duas metades
+> está partida.
+
+### O que resolveu foi LEITURA, três vezes
+
+`SetMode`, `HAL_QSPI_Abort`, `EnableMemoryMappedMode` — três funções lidas, três
+respostas. Zero gravações gastas a descobri-las. É a 13j outra vez: *"o teste
+que decide é o que lê a fonte da configuração"*.
+
+### A prova, e é externa
+
+```
+qspi id           -> 9D 60 17     ISSI · IS25LP · 8 MB
+qspi sr           -> 0x40         WIP=0 WEL=0 QE=1
+qspi ler 90040000 -> 16/16 iguais ao memory-mapped
+qspi prova        -> apagar · FF · programar · reler: 0 de 32 diferem
+```
+
+A última linha é a que vale: o dado escrito pelo meu comando indirecto é
+visível pelo caminho **mapeado**, que é o hardware a ler com a configuração da
+libDaisy. Dois caminhos independentes, a concordar byte a byte.
+
+**Limitação a levar para o desenho do OTA:** o apagar corre com as interrupções
+mascaradas e leva centenas de milissegundos. Não pode ser chamado com o
+instrumento a tocar.
+
+## 15fx — o documento foi corrigido e o comentário no código não: foi o comentário que me ensinou o bug (29/09)
+
+A 22/08 a hipótese *"a libDaisy põe o chip em QPI"* foi **refutada por
+leitura** e o `DESENHO-ESCRITA-QSPI.md` foi corrigido no mesmo dia.
+
+Dentro do `qspi_raw.cpp`, em letras grandes, ficou isto:
+
+```
+// A libDaisy poe o chip em QPI no Init (`EnterQuadMode`...)
+// TODOS os comandos futuros — erase, program, status-poll —
+// nascem em QPI tambem, com seus opcodes e formatos quad. Esta
+// coluna existe pra ninguem redescobrir isso no erase.
+```
+
+A 29/09 abri o ficheiro para escrever o erase, **li esse comentário, e acreditei
+nele**. Escrevi os três campos de modo em quad. Nenhum comando foi ouvido, e
+gastei uma gravação a descobri-lo.
+
+O parágrafo termina com *"para ninguém redescobrir isso no erase"*. Fez o
+oposto exacto do que prometia, e com autoridade.
+
+> **Comentário com autoridade que afirma premissa revogada re-ensina o bug — e
+> é o comentário que se lê quando se vai programar, não o documento.** Ao
+> refutar uma hipótese, o conserto tem DUAS metades: o documento e cada sítio
+> do código que a afirma. Corrigir só o documento é deixar a armadilha armada
+> no sítio onde alguém vai pôr a mão.
+
+E o defeito tinha a forma mais perigosa: **os defaults da sonda eram a hipótese
+refutada** (`g_opcode = 0xAF`, `g_modo = 3`). Uma sonda cujo default é a
+hipótese errada responde sempre o mesmo e parece hardware mudo.
+
+> **Default de instrumento é afirmação sobre o mundo.** Quando a afirmação
+> cai, o default cai com ela.
+
+## 15fy — tabela incompleta com ar de completa custa mais que tabela ausente (29/09)
+
+O `DESENHO-ESCRITA-QSPI.md` tinha a tabela do formato de leitura:
+
+| campo | valor |
+|---|---|
+| `InstructionMode` | 1 LINHA |
+| `Instruction` | `0xEB` |
+| `AddressMode` | 4 linhas |
+| `DataMode` | 4 linhas |
+| `DummyCycles` | 6 |
+
+e a seguir, a frase: *"Qualquer comando novo nasce sabendo disso."*
+
+Faltavam três campos — `AlternateByteMode`, `AlternateBytes = 0xA0` e
+`SIOOMode = INST_ONLY_FIRST_CMD` — e eram exactamente os que **impediam
+qualquer comando de nascer**. A tabela não tinha reticências, nem "campos
+principais", nem nota de recorte: tinha cinco linhas e uma promessa de
+suficiência.
+
+> **Tabela derivada de uma fonte declara a fonte E o recorte.** "Copiei os
+> campos que me pareceram relevantes" é informação; uma tabela sem essa nota
+> lê-se como a estrutura inteira, e quem a lê deixa de ir à fonte — que é o
+> valor dela e também o perigo.
+
+Uma tabela ausente manda-me ler o `EnableMemoryMappedMode`. A tabela presente
+convenceu-me de que não era preciso.
+
+## 15fz — reconstruí o defeito contra o qual o projecto já tinha uma lei (29/09)
+
+Escrevi o driver novo com esta assinatura:
+
+```cpp
+uint32_t LeStatus();      // 0xFFFFFFFF = falhou
+```
+
+e a impressão dizia *"SR=FF significa que a leitura falhou"*. O valor de falha
+imprime-se como `FF`, que é **indistinguível de um status `0xFF` verdadeiro**.
+
+A cicatriz **13k** deste projecto chama-se *"Nenhum valor de dado pode
+significar «sem dado»"*, tem cinco casos num dia, e o caso central dela é
+literalmente o `RDSR` da QSPI. Escrevi o mesmo defeito, no mesmo periférico,
+com o mesmo registo.
+
+Consertado para `bool LeStatus(uint8_t* fora)` — validade no retorno, valor por
+ponteiro. E a mensagem passou a dizer que `0x00` é resposta normal de chip
+ocioso, que é a segunda metade da 13k.
+
+> **Conhecer a lei não a aplica.** A 13k só me ocorreu quando fui LER a 13k por
+> outro motivo. Lei que depende de eu me lembrar dela no momento certo não é
+> lei — é sorte com nome. O que a teria apanhado é uma pergunta de rotina ao
+> desenhar qualquer assinatura: *o que devolve esta função quando não tem
+> resposta, e esse valor pertence ao domínio?*
