@@ -3,7 +3,7 @@
 // Único arquivo do projeto que pode incluir daisy_seed.h.
 // ============================================================
 
-// hal_daisy_seed v0.85.0
+// hal_daisy_seed v0.86.0
 #include "hal.h"
 #include "daisy_seed.h"
 #include "dev/oled_ssd130x.h"
@@ -14,7 +14,7 @@
 #include <cstdio>
 #include <cstring>
 
-#define COTUCA_HAL_VERSION "0.85.0"
+#define COTUCA_HAL_VERSION "0.86.0"
 
 using namespace daisy;
 
@@ -731,6 +731,9 @@ static int     log_slot = 0;
 
 // NUNCA chamar do callback de áudio: isto bloqueia por milissegundos.
 // Só do loop principal / boot.
+// definido junto ao anel do MIDI, mais abaixo
+static void ConsolaEspelha(const uint8_t* b, size_t n);
+
 void Log(const char* fmt, ...)
 {
     char    tmp[kLogMax];
@@ -760,6 +763,11 @@ void Log(const char* fmt, ...)
     memcpy(out, tmp, (size_t)n);
     out[n++] = '\r';
     out[n++] = '\n';
+
+    // O ESPELHO VEM ANTES DO DISJUNTOR DO USB, de proposito: quando o host
+    // esta fora e o `Log` fica mudo, a consola sem fio e a UNICA que resta —
+    // e e exactamente ai que ela vale mais.
+    ConsolaEspelha(out, (size_t)n);
 
     // DISJUNTOR. O teto de 50 ms por Log parecia generoso — e virou
     // arma: com o host fora, um fluxo de logs continuos custa 50 ms
@@ -1299,6 +1307,37 @@ uint32_t MidiRingTam()   { return (uint32_t)kMidiRing; }
 // enquanto o recuo nao arma. O laco continua a servir MIDI, botoes,
 // encoders e painel com o cabo no chao.
 static uint8_t  midi_tx_ring[256];
+
+// ---- ESPELHO DA CONSOLA (ppc/006 fase 1) -----------------------------------
+//
+// Cada linha de log sai TAMBEM embrulhada em SysEx pela UART do MIDI, para a
+// ponte a reemitir por BLE. A consola do USB nao muda: isto acrescenta um
+// ouvinte, nao troca de cano.
+//
+// ⚠️ MELHOR-ESFORCO, E DE PROPOSITO. Tres regras, e as tres vem de cicatrizes:
+//
+//  1. NUNCA BLOQUEIA. O `Log` e chamado de todo o lado; um espelho que espere
+//     mata o laco. Aqui so se copia para um anel — a 15fi mostrou o que custa
+//     um periferico bloqueante no caminho do desenho (13 000 voltas/s -> 1).
+//  2. O MIDI TEM PRIORIDADE. So se emite um quadro de consola quando o anel
+//     de transmissao esta praticamente vazio. Diagnostico nao pode atrasar o
+//     instrumento a tocar.
+//  3. O QUE NAO COUBER E CONTADO. Anel cheio descarta e soma; perder calado e
+//     a familia proibida.
+static uint8_t   con_ring[2048];
+static volatile uint32_t con_cab = 0, con_cau = 0;
+static uint32_t  con_perdidos = 0, con_quadros = 0;
+
+static void ConsolaEspelha(const uint8_t* b, size_t n)
+{
+    for(size_t i = 0; i < n; i++)
+    {
+        const uint32_t prox = (con_cab + 1) % sizeof(con_ring);
+        if(prox == con_cau) { con_perdidos++; return; }
+        con_ring[con_cab] = b[i];
+        con_cab = prox;
+    }
+}
 static volatile uint32_t midi_tx_head = 0;
 static volatile uint32_t midi_tx_tail = 0;
 static uint32_t midi_tx_descartes = 0;   // bytes que nao couberam
@@ -1434,6 +1473,52 @@ void MidiTxPump()
             if(!midi_tx_retry_ms) midi_tx_retry_ms = 1u;
         }
     }
+}
+
+// A BOMBA DO ESPELHO — chamada do laco, nunca de outro sitio.
+//
+// Um quadro por passagem, e so quando o anel do MIDI esta quase vazio: a
+// consola nunca pode fazer o instrumento esperar. 105 bytes crus e o tecto
+// que a ponte declara (o `Message<128>` da biblioteca MIDI dela).
+void ConsolaPump()
+{
+    if(con_cau == con_cab) return;
+    if(midi_tx_head != midi_tx_tail) return;   // MIDI primeiro, sempre
+
+    uint8_t cru[105];
+    size_t  n = 0;
+    while(con_cau != con_cab && n < sizeof(cru))
+    {
+        cru[n++] = con_ring[con_cau];
+        con_cau = (con_cau + 1) % sizeof(con_ring);
+    }
+
+    // 8->7: sete bytes viajam em oito, com os bits altos no primeiro. Sem
+    // isto um acento (>= 0x80) fecharia o SysEx a meio.
+    uint8_t q[3 + 128];
+    size_t  o = 0;
+    q[o++] = 0xF0; q[o++] = 0x7D; q[o++] = 0x01;
+    for(size_t i = 0; i < n; i += 7)
+    {
+        const size_t bloco = (n - i) < 7 ? (n - i) : 7;
+        uint8_t altos = 0;
+        for(size_t k = 0; k < bloco; k++)
+            if(cru[i + k] & 0x80) altos |= (uint8_t)(1u << k);
+        q[o++] = altos;
+        for(size_t k = 0; k < bloco; k++) q[o++] = cru[i + k] & 0x7F;
+    }
+    q[o++] = 0xF7;
+    MidiSendBytes(q, o);
+    con_quadros++;
+}
+
+void ConsolaEstado(uint32_t* quadros, uint32_t* perdidos, uint32_t* na_fila)
+{
+    if(quadros)  *quadros  = con_quadros;
+    if(perdidos) *perdidos = con_perdidos;
+    if(na_fila)
+        *na_fila = (con_cab + (uint32_t)sizeof(con_ring) - con_cau)
+                   % (uint32_t)sizeof(con_ring);
 }
 
 void MidiTxEstado(uint32_t* descartes, uint32_t* erros, uint32_t* uart_err,

@@ -128,9 +128,16 @@ slots reprovam o CRC.
 
 ## §6 — Fases, e a ordem não é negociável
 
-1. **Console por BLE** (ponte + Daisy + Mac). Nada de gravar nada. É a fase que
-   dá valor imediato e que **prova o transporte** antes de ele carregar uma
-   imagem.
+1. ✅ **Console por BLE — FEITO a 29/09** (`battle_scars` **15ft**). O dB
+   escreveu `board` no Mac e a placa respondeu sem cabo. Os dois sentidos
+   provados com contadores nos três pontos: `NUS: N escrita(s)` na ponte,
+   `consola sem fio: N linha(s) executada(s)` na Daisy, e `N B da Daisy ->
+   Mac` de volta. Ferramentas: `tools/cotuca_ble.py`,
+   `run/consola-sem-fio.command`.
+   ⚠️ **Dívida medida:** o anel do espelho (2 KB) enche numa rajada — `144
+   perdidos` no primeiro `board`. Melhor-esforço por desenho, e contado. Se
+   incomodar: anel maior (a SRAM tem folga) ou subir o baud do par durante
+   rajadas, que é a mesma manobra da fase 5.
 2. **OTA da ponte**, com as duas partições e rollback do ESP-IDF. O C3 recupera
    sozinho e o USB dele fica acessível por fora se correr mal — é a metade que
    não arrisca a caixa.

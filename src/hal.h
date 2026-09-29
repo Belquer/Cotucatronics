@@ -1,5 +1,5 @@
 #pragma once
-// hal.h v0.44.0
+// hal.h v0.45.0
 // ============================================================
 // Cotucatronics OS — HAL (Hardware Abstraction Layer)
 // A fronteira de independência de fornecedor.
@@ -202,6 +202,14 @@ void             PollMidi();
 // erro, e o `MidiEspelha` ficava la dentro. Um cabo solto matava o
 // instrumento. Ver hal_daisy_seed.cpp e HARDWARE.md §4.
 void             MidiSendBytes(const uint8_t* bytes, size_t n);
+
+// ESPELHO DA CONSOLA por SysEx (ppc/006 fase 1). `ConsolaPump` chama-se do
+// LACO: emite um quadro por passagem e SO quando o anel do MIDI esta vazio —
+// diagnostico nunca atrasa o instrumento. Melhor-esforco por desenho: o que
+// nao couber e contado em `perdidos`.
+void             ConsolaPump();
+void             ConsolaEstado(uint32_t* quadros, uint32_t* perdidos,
+                               uint32_t* na_fila);
 
 // Chamada do LACO, uma vez por volta. Arranca a transferencia por DMA
 // se houver bytes e nada em curso. Volta sempre.

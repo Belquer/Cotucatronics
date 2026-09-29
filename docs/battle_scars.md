@@ -11370,3 +11370,57 @@ se deduzir do silêncio do ar.
 a ligação ainda caía — o Mac guardava a tabela partida da tentativa anterior.
 Reiniciar o Bluetooth do Mac resolveu. **Tabela que muda entre gravações pede
 cache limpa antes de se acusar o firmware.**
+
+## 15ft — a consola por rádio fechou, e o caminho inteiro é feito de peças que já lá estavam
+
+29/09, `ppc/006` fase 1. O dB escreveu `board` no Mac e a placa respondeu
+**sem cabo nenhum**:
+
+```
+Cotucatronics OS v0.320.0
+modulos: hal 0.86.0 · midi 0.9.0 · params 0.12.0 · dynamics 0.6.0
+...
+```
+
+O caminho tem quatro troços e **nenhum deles é tecnologia nova**:
+
+```
+Mac --BLE NUS--> ponte --F0 7D <tipo> ... F7--> Daisy --> HandleLine
+```
+
+- **NUS ao lado do BLE MIDI**, no mesmo servidor, sem tocar no pareamento do
+  Loopy — o serviço não vai no anúncio, e a descoberta pós-ligação chega.
+- **SysEx no par que já existe**, porque **não há fio sobrando** entre as duas
+  placas (só `IO20`/`IO21`/`IO3`) e o SysEx é a única moldura que não se
+  confunde com CC.
+- **O MESMO `HandleLine`.** Muda o transporte, nunca o significado: um comando
+  novo aparece nos dois canos sem trabalho. Dois interpretadores para os
+  mesmos comandos seria a família que este projecto mais persegue.
+- **O corpo do SysEx, que o parser engolia**, passa a ser guardado — mas só
+  quando alguém regista uma callback. Sem ela, um dump de patch alheio
+  continua a ser descartado sem custo.
+
+### As três regras do espelho, e as três vêm de cicatrizes
+
+1. **Nunca bloqueia.** O `Log` é chamado de todo o lado; um espelho que espera
+   mata o laço — a 15fi mostrou o preço (13 000 voltas/s → 1).
+2. **O MIDI tem prioridade.** Só se emite um quadro de consola quando o anel
+   de transmissão está vazio. Diagnóstico não atrasa o instrumento a tocar.
+3. **O que não couber é contado.** `144 perdidos (anel cheio)` na primeira
+   rajada — melhor-esforço declarado, não silêncio.
+
+⚠️ **E o espelho vem ANTES do disjuntor do USB**, de propósito: quando o host
+está fora e o `Log` fica mudo, a consola sem fio é a única que resta — e é
+exactamente aí que ela vale mais.
+
+### O relatório denunciou-se a si próprio
+
+A primeira saída por rádio trazia `midi 0.8.1` com o `midi.h` já em `0.9.0`: o
+`COTUCA_MIDI_VERSION` não acompanhou o cabeçalho do ficheiro. **O relatório que
+existe para conferir versões estava a mentir sobre uma.** É a mesma família do
+`PS_64` cravado (22/09) e do tecto da lista que não seguia a lista (23/09).
+
+> **Número que descreve outra coisa tem de ser lido dela, ou copiado com um
+> portão a vigiar a cópia.** Aqui há portão — o `versoes_readme.py` compara o
+> cabeçalho com a constante — e ele apanha o ficheiro, mas não apanhava esta
+> constante por ser de OUTRO ficheiro.

@@ -11,7 +11,7 @@
 // Compile com: make BOARD=daisy_seed
 // ============================================================
 
-#define COTUCA_OS_VERSION "0.318.1"
+#define COTUCA_OS_VERSION "0.320.1"
 
 // A/B DA DUPLICACAO, NO MESMO BINARIO.
 //
@@ -3911,6 +3911,44 @@ static void declara_modos()
                  " os widgets nao vao acompanhar. `espelho on` devolve.");
 }
 
+static void HandleLine(const char* line);   // definido mais abaixo
+
+// Desempacota 8->7 e entrega ao interpretador. Ver ppc/006 §2.
+static uint32_t consola_quadros = 0, consola_ignorados = 0, consola_linhas = 0;
+
+static void ConsolaSysex(const uint8_t* corpo, uint32_t n)
+{
+    // corpo = <0x7D> <tipo> <empacotado...>   (sem o F0 nem o F7)
+    if(n < 3 || corpo[0] != 0x7D) { consola_ignorados++; return; }
+    if(corpo[1] != 0x02)          { consola_ignorados++; return; }
+    consola_quadros++;
+
+    static char linha[192];
+    static uint32_t k = 0;
+    const uint8_t* emp = corpo + 2;
+    const uint32_t m   = n - 2;
+    uint32_t i = 0;
+    while(i < m)
+    {
+        const uint8_t altos = emp[i++];
+        for(uint32_t j = 0; j < 7 && i < m; j++, i++)
+        {
+            const char c = (char)(emp[i] | (((altos >> j) & 1u) ? 0x80 : 0));
+            if(c == '\n' || c == '\r')
+            {
+                if(k) { linha[k] = 0; consola_linhas++; HandleLine(linha); }
+                k = 0;
+            }
+            else if(k < sizeof(linha) - 1)
+            {
+                linha[k++] = c;
+            }
+            // (linha maior que o tampao: os excedentes caem, e a linha que
+            //  sair sera curta — o `HandleLine` ja lida com comando invalido)
+        }
+    }
+}
+
 static void HandleLine(const char* line)
 {
     using namespace cotuca;
@@ -6664,6 +6702,20 @@ static void HandleLine(const char* line)
                  " mordeu%s", (unsigned long)delay_fx.Clamps(),
                  delay_fx.Clamps()
                      ? "  *** atraso_ saiu da faixa: NaN ou Inf ***" : "");
+        {
+            uint32_t cq = 0, cp = 0, cf = 0;
+            hal::ConsolaEstado(&cq, &cp, &cf);
+            hal::Log("  consola sem fio (saida): %lu quadro(s) emitido(s) ·"
+                     " %lu B na fila · %lu perdidos (anel cheio)",
+                     (unsigned long)cq, (unsigned long)cf, (unsigned long)cp);
+        }
+        hal::Log("  consola sem fio: %lu quadro(s) nossos · %lu linha(s)"
+                 " executada(s) · %lu sysex de outrem ignorado(s)",
+                 (unsigned long)consola_quadros, (unsigned long)consola_linhas,
+                 (unsigned long)consola_ignorados);
+        hal::Log("        sysex vistos %lu · %lu grandes de mais para o tampao",
+                 (unsigned long)midi.SysexQuadros(),
+                 (unsigned long)midi.SysexGrandes());
         hal::Log("  autoria: %lu CCs recusados pela janela de %lu ms",
                  (unsigned long)cc_janela, (unsigned long)kJanelaMs);
     // OS DOIS DESCARTES NOVOS, cada um com o seu numero. Sem separa-los,
@@ -7084,6 +7136,14 @@ int main(void)
              manifest.n_midi, (int)cotuca::kMaxMidiMap);
 
     hal::SetSerialLineCallback(HandleLine);
+    // ---- CONSOLA SEM FIO: o mesmo interpretador, por outro cano ----------
+    //
+    // ⚠️ E O MESMO `HandleLine`, DE PROPOSITO. Dois interpretadores para os
+    // mesmos comandos seria a familia que este projecto mais persegue: duas
+    // fontes do mesmo facto, a derivar em silencio. Aqui muda o TRANSPORTE,
+    // nunca o significado — quem chega por radio executa exactamente o que
+    // chega pelo cabo, e um comando novo aparece nos dois sem trabalho.
+    midi.SetSysexCallback(ConsolaSysex);
 
     hal::StartAudio(AudioCb);
     hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION " [%s] — pronto.",
@@ -7637,6 +7697,7 @@ int main(void)
         // latencia do espelho nao ganha uma volta inteira de laco.
         SUB(9);
         hal::MidiTxPump();
+        hal::ConsolaPump();   // espelho da consola: so quando o MIDI esta quieto
 
         SUB(7);   // veredito do sync, com LogAlways
         // VEREDITO DO SYNC. Roda no laco porque so aqui o

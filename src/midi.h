@@ -1,6 +1,6 @@
 #pragma once
 // ============================================================
-// Cotucatronics OS — midi v0.8.1
+// Cotucatronics OS — midi v0.9.0
 // Máquina de estados MIDI mínima. Board-agnostic: não inclui
 // hal.h nem header de fabricante nenhum, exatamente como
 // params.h e dynamics.h.
@@ -19,7 +19,7 @@
 namespace cotuca
 {
 
-#define COTUCA_MIDI_VERSION "0.8.1"
+#define COTUCA_MIDI_VERSION "0.9.0"
 
 // canal 0–15 (o do fio) ou omni
 constexpr int kMidiOmni    = -1;
@@ -191,6 +191,18 @@ class MidiParser
   public:
     using CcCallback = void (*)(uint8_t channel, uint8_t cc, uint8_t value);
 
+    // ---- CORPO DE SYSEX, que ate 29/09 era engolido -------------------
+    //
+    // POR QUE PASSA A SER GUARDADO (ppc/006 fase 1). A consola da Daisy vive
+    // no USB, que e o cabo que obriga a abrir a caixa. Por radio ela tem de
+    // vir pelo unico par de fios que liga a ponte a esta placa — o do MIDI —
+    // e o SysEx e a unica moldura que nao se confunde com CC.
+    //
+    // ⚠️ O ENGOLIR CONTINUA A SER O OMISSO. Sem callback registada nada muda:
+    // um dump de patch de um teclado alheio continua a ser descartado sem
+    // custo. Quem quer o corpo, pede-o.
+    using SysexCallback = void (*)(const uint8_t* corpo, uint32_t n);
+
     // channel: 0–15, ou kMidiOmni pra aceitar todos.
     void Init(int channel, CcCallback cb)
     {
@@ -246,6 +258,12 @@ class MidiParser
             {
                 in_sysex_ = false;
                 Trace(b, MidiVerdict::SysexFim);
+                if(sysex_cb_ && sysex_n_)
+                {
+                    sysex_quadros_++;
+                    sysex_cb_(sysex_buf_, sysex_n_);
+                }
+                sysex_n_ = 0;
                 return;
             }
             // Qualquer status não-real-time encerra um sysex em curso,
@@ -258,6 +276,7 @@ class MidiParser
                 in_sysex_ = true;
                 status_   = 0; // sysex cancela running status
                 nd_       = 0;
+                sysex_n_  = 0;
                 Trace(b, MidiVerdict::SysexInicio);
                 return;
             }
@@ -279,7 +298,12 @@ class MidiParser
         if(in_sysex_)
         {
             Trace(b, MidiVerdict::SysexCorpo);
-            return; // corpo de sysex: engole calado
+            if(sysex_cb_)
+            {
+                if(sysex_n_ < kSysexMax) sysex_buf_[sysex_n_++] = b;
+                else                     sysex_grandes_++;
+            }
+            return; // corpo de sysex: engolido, ou guardado se alguem pediu
         }
         if(status_ == 0)
         {
@@ -313,6 +337,11 @@ class MidiParser
     int     Channel() const { return channel_; }
     uint8_t RunningStatus() const { return status_; }
     bool    InSysex() const { return in_sysex_; }
+
+    void SetSysexCallback(SysexCallback cb) { sysex_cb_ = cb; }
+    // Quadros cujo corpo nao coube no tampao — CONTADO, nunca calado.
+    uint32_t SysexGrandes() const { return sysex_grandes_; }
+    uint32_t SysexQuadros() const { return sysex_quadros_; }
     int     PendingData() const { return nd_; }
 
     uint32_t Bytes() const { return bytes_; }
@@ -380,6 +409,14 @@ class MidiParser
     uint8_t data_[2]  = {};
     int     nd_       = 0;
     bool    in_sysex_ = false;
+    // 192 chega para uma linha de log empacotada 8->7 (160 crus -> 183)
+    // mais os tres bytes de cabecalho. Corpo maior e CONTADO e descartado.
+    static const uint32_t kSysexMax = 192;
+    SysexCallback sysex_cb_      = nullptr;
+    uint8_t       sysex_buf_[kSysexMax];
+    uint32_t      sysex_n_       = 0;
+    uint32_t      sysex_grandes_ = 0;
+    uint32_t      sysex_quadros_ = 0;
 
     uint32_t bytes_ = 0, cc_ = 0, other_ = 0, orphan_ = 0;
     uint32_t realtime_ = 0, filtered_ = 0;
