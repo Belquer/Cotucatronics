@@ -1,5 +1,6 @@
 // ============================================================================
-// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v0.4.0
+// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.1.0
+//                 + consola sem fio por NUS (ppc/006 fase 1)
 // ESP32-C3 SuperMini · substitui o WIDI Core 1.3
 //
 // O QUE ESTA PLACA E: um fio com rádio. Nada mais.
@@ -38,7 +39,7 @@
 #include <MIDI.h>
 #include <Preferences.h>
 
-#define PONTE_VERSAO "1.0.0"
+#define PONTE_VERSAO "1.1.0"
 
 // ---- pinos -----------------------------------------------------------------
 // ⚠️⚠️ MAJOR a 21/09: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
@@ -101,6 +102,106 @@ static const size_t TX_BUFFER = 1024;
 // Loopy fica preso a identidade do dispositivo.
 BLEMIDI_CREATE_INSTANCE("Cotucatronics", RADIO)
 MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, SER)
+
+// ============================================================================
+// CONSOLA SEM FIO — Nordic UART Service ao lado do BLE MIDI   (ppc/006 fase 1)
+// ============================================================================
+//
+// POR QUE EXISTE. Metade do trabalho de Setembro foi diagnostico pela consola
+// da Daisy, e a consola vive no USB — o cabo que obriga a abrir a caixa. Isto
+// poe a MESMA consola por radio, sem tocar no MIDI.
+//
+// ⚠️ E NAO HA FIO SOBRANDO entre as duas placas: so IO20/IO21/IO3. A consola
+// tem de caber no par que ja carrega MIDI, e a unica moldura que nao se
+// confunde com CC e o SysEx — que a Daisy ja parseia.
+//
+//     Mac  --BLE NUS-->  esta placa  --F0 7D <tipo> ... F7-->  Daisy
+//
+//   tipo 0x01  Daisy -> Mac   (linhas de log)
+//   tipo 0x02  Mac   -> Daisy (comandos)
+//
+// (!) O CORPO DE UM SYSEX SO ADMITE BYTES < 0x80, e o log da Daisy tem
+// acentos e simbolos em UTF-8. Entao empacota-se 8->7: sete bytes originais
+// viajam em oito, com os bits altos recolhidos no primeiro. Nao e escolha
+// estetica — sem isso um "ç" fecha o SysEx a meio.
+//
+// ⚠️ O SERVICO NUS NAO VAI NO ANUNCIO. O pacote de anuncio tem 31 bytes e ja
+// leva o servico MIDI e o nome "Cotucatronics", que o perfil do Loopy usa
+// como identidade. Servico anunciado a mais partiria o pareamento existente
+// para ganhar o que a descoberta pos-ligacao ja da de graca.
+#include <NimBLEDevice.h>
+
+static const char* NUS_SVC = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
+static const char* NUS_RX  = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";  // Mac escreve
+static const char* NUS_TX  = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E";  // placa notifica
+
+static NimBLECharacteristic* nus_tx = nullptr;
+
+// Fila do que veio do Mac. ⚠️ A CALLBACK DO NIMBLE CORRE NOUTRA TAREFA, e
+// escrever na Serial1 de la interleava com o que a biblioteca MIDI esta a
+// enviar — tres bytes de um CC partidos ao meio por uma linha de consola.
+// Entao a callback so ENFILEIRA; quem escreve e o laco, que e o unico dono
+// da porta. Mesma disciplina do `MidiTxPump` da Daisy.
+static const size_t NUS_FILA = 1024;
+static uint8_t   nus_fila[NUS_FILA];
+static volatile size_t nus_cab = 0, nus_cau = 0;
+static uint32_t  nus_descartes = 0;   // bytes do Mac que nao couberam
+static uint32_t  nus_para_daisy = 0, nus_do_daisy = 0;
+
+class NusRxCB : public NimBLECharacteristicCallbacks
+{
+    void onWrite(NimBLECharacteristic* c) override
+    {
+        const std::string v = c->getValue();
+        for(size_t i = 0; i < v.size(); i++)
+        {
+            const size_t prox = (nus_cab + 1) % NUS_FILA;
+            if(prox == nus_cau) { nus_descartes++; return; }  // cheia: conta e para
+            nus_fila[nus_cab] = (uint8_t)v[i];
+            nus_cab = prox;
+        }
+    }
+};
+
+// 8->7: `n` bytes crus viram ceil(n/7)*8 bytes, todos < 0x80.
+static size_t Empacota7(const uint8_t* cru, size_t n, uint8_t* fora, size_t cap)
+{
+    size_t o = 0;
+    for(size_t i = 0; i < n; i += 7)
+    {
+        const size_t bloco = (n - i) < 7 ? (n - i) : 7;
+        if(o + 1 + bloco > cap) break;
+        uint8_t altos = 0;
+        for(size_t k = 0; k < bloco; k++)
+            if(cru[i + k] & 0x80) altos |= (uint8_t)(1u << k);
+        fora[o++] = altos;
+        for(size_t k = 0; k < bloco; k++) fora[o++] = cru[i + k] & 0x7F;
+    }
+    return o;
+}
+
+static size_t Desempacota7(const uint8_t* emp, size_t n, uint8_t* fora, size_t cap)
+{
+    size_t o = 0, i = 0;
+    while(i < n)
+    {
+        const uint8_t altos = emp[i++];
+        for(size_t k = 0; k < 7 && i < n && o < cap; k++, i++)
+            fora[o++] = (uint8_t)(emp[i] | ((altos >> k) & 1u ? 0x80 : 0));
+    }
+    return o;
+}
+
+// Escreve um quadro de consola na UART. SO DO LACO — ver a nota da fila.
+static void MandaSysexAoDaisy(const uint8_t* cru, size_t n)
+{
+    uint8_t emp[256];
+    const size_t m = Empacota7(cru, n, emp, sizeof(emp));
+    Serial1.write(0xF0); Serial1.write(0x7D); Serial1.write(0x02);
+    Serial1.write(emp, m);
+    Serial1.write(0xF7);
+    nus_para_daisy += n;
+}
 
 // ---- contadores: o que a ponte sabe sobre si propria ------------------------
 static volatile bool     conectado      = false;
@@ -185,7 +286,30 @@ static void DaBle(const midi::Message<128>& m)
     Encaminha(m, true);
 }
 
-static void DaSerial(const midi::Message<128>& m) { Encaminha(m, false); }
+static void DaSerial(const midi::Message<128>& m)
+{
+    // ⚠️ A CONSOLA NAO E MIDI, E NAO PODE SAIR COMO MIDI. Um quadro nosso
+    // reemitido pelo `Encaminha` viraria uma mensagem de tres bytes sem
+    // sentido no Loopy — ruido num canal que o dB usa a tocar.
+    if(m.type == midi::SystemExclusive)
+    {
+        const unsigned n = m.getSysExSize();
+        if(n >= 5 && m.sysexArray[1] == 0x7D && m.sysexArray[2] == 0x01)
+        {
+            uint8_t cru[192];
+            const size_t k = Desempacota7(&m.sysexArray[3], n - 4,
+                                          cru, sizeof(cru));
+            if(nus_tx && conectado)
+            {
+                nus_tx->setValue(cru, k);
+                nus_tx->notify();
+            }
+            nus_do_daisy += k;
+            return;                       // NOSSO: nao vai para o MIDI
+        }
+    }
+    Encaminha(m, false);
+}
 
 void setup()
 {
@@ -204,6 +328,20 @@ void setup()
 
     RADIO.setHandleMessage(DaBle);
     SER.setHandleMessage(DaSerial);
+
+    // NUS AO LADO DO MIDI, no MESMO servidor. O `createServer()` do NimBLE
+    // devolve o que ja existe — o BLEMIDI ja o criou no `RADIO.begin()`
+    // acima, e por isso esta ordem nao e negociavel.
+    {
+        NimBLEServer* srv = NimBLEDevice::createServer();
+        NimBLEService* sv = srv->createService(NUS_SVC);
+        NimBLECharacteristic* rx = sv->createCharacteristic(
+            NUS_RX, NIMBLE_PROPERTY::WRITE | NIMBLE_PROPERTY::WRITE_NR);
+        rx->setCallbacks(new NusRxCB());
+        nus_tx = sv->createCharacteristic(NUS_TX, NIMBLE_PROPERTY::NOTIFY);
+        sv->start();
+        // (!) de proposito FORA do anuncio — ver a nota do bloco NUS.
+    }
 
     BLERADIO.setHandleConnected([]() {
         conectado = true;
@@ -266,6 +404,11 @@ static void Shell()
                 Serial.printf("ponte v%s · BAUD %lu · %s\n", PONTE_VERSAO,
                               (unsigned long)BAUD,
                               conectado ? "CONECTADO" : "sem link");
+                Serial.printf("  consola: %lu B do Mac -> Daisy · %lu B da Daisy"
+                              " -> Mac · %lu descartados (fila cheia)\n",
+                              (unsigned long)nus_para_daisy,
+                              (unsigned long)nus_do_daisy,
+                              (unsigned long)nus_descartes);
                 Serial.printf("  pinos: TX=%d RX=%d STATUS=%d (ativo em BAIXO) LED=%d\n",
                               PINO_TX, PINO_RX, PINO_STATUS, PINO_LED);
                 // QUEDAS COM RECENCIA. "Quantas desde o boot" nao responde a
@@ -396,6 +539,24 @@ void loop()
     SER.read();
     PiscaLed();
     Shell();
+
+    // ESCOA A CONSOLA. So daqui: o laco e o unico dono da Serial1, e escrever
+    // da tarefa do BLE partiria uma mensagem MIDI ao meio.
+    //
+    // Junta o que houver numa passagem, ate 105 bytes — o tecto vem do
+    // `Message<128>` da biblioteca MIDI do outro lado: 128 menos F0/7D/tipo/F7
+    // sao 124 empacotados, que valem 108 crus. 105 deixa folga e e redondo.
+    if(nus_cau != nus_cab)
+    {
+        uint8_t lote[105];
+        size_t n = 0;
+        while(nus_cau != nus_cab && n < sizeof(lote))
+        {
+            lote[n++] = nus_fila[nus_cau];
+            nus_cau = (nus_cau + 1) % NUS_FILA;
+        }
+        MandaSysexAoDaisy(lote, n);
+    }
     // ESCRITA DIFERIDA. A queda so marcou; e aqui que a flash e tocada, e
     // no maximo a cada 10 s. Isto tambem escoa naturalmente para o momento
     // certo: depois de uma queda nao ha trafego BLE a atrasar.

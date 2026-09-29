@@ -84,3 +84,6 @@ kicad/_silk_*
 # STEP 3D regeneraveis do verifica_3d.py (/3ddesign): o RELATORIO_3D.md e
 # rastreado, mas os *.step (multi-MB) regeneram-se e nao vao para o git.
 mech/3d/*.step
+
+# ambiente do BLE (tools/consola-sem-fio.command recria-o numa linha)
+.venv-ble/
