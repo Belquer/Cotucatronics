@@ -74,13 +74,32 @@ responder na nova velocidade, os dois caem para 31250 sozinhos.
 O bootloader da Electrosmith salta para um endereço **fixo** (`0x90040000`).
 Logo é lá que a decisão tem de viver.
 
+**O mapa real da QSPI, lido do descritor do DFU a 29/09** — e ele corrigiu um
+número deste plano:
+
 ```
-0x90040000  ESCOLHEDOR   ~32 KB  gravado UMA vez, fisicamente, NUNCA por OTA
-0x90048000  META          4 KB   estado, CRC, intenção
-0x90060000  EXECUÇÃO     512 KB  onde o app SEMPRE corre (um só endereço)
-0x90200000  ENCENAÇÃO    512 KB  onde a imagem nova aterra, vinda do rádio
+@Flash /0x90000000/64*4Kg  /0x90040000/60*64Kg  /0x90400000/60*64Kg
+        └ sectores de 4 KB   └ sectores de 64 KB
+```
+
+⚠️ **O META não pode viver em `0x90048000`**, como esta secção dizia primeiro:
+ali o sector mínimo apagável são **64 KB**, e um META de 4 KB não se reescreve
+sem apagar 64. Mas há **256 KB de sectores de 4 KB** em `0x90000000`, abaixo do
+app, e é lá que ele pertence.
+
+```
+0x90000000  META          4 KB   (sector pequeno: reescreve-se barato)
+0x90040000  ESCOLHEDOR   64 KB   um sector, gravado UMA vez, NUNCA por OTA
+0x90050000  EXECUÇÃO    512 KB   onde o app SEMPRE corre (um só endereço)
+0x90200000  ENCENAÇÃO   512 KB   onde a imagem nova aterra, vinda do rádio
             (sobram ~6,5 MB)
 ```
+
+✅ **E o mecanismo de gravação está provado (29/09):** o `FLASH_ADDRESS` do
+Makefile da libDaisy é `?=`, logo aceita ser trocado, e o bootloader anuncia a
+QSPI inteira ao DFU. Escrevi 289 KB em `0x90200000` e a placa continuou a
+arrancar de `0x90040000` sem estranhar — gravar num endereço não perturba o
+outro, que é o que todo o resto assume.
 
 **A ideia que troca "dois executáveis" por "uma cópia repetível":** o app tem
 **um** endereço de execução, e a imagem nova chega a uma área de **encenação**.
