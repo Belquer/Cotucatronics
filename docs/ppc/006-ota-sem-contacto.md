@@ -63,37 +63,57 @@ responder na nova velocidade, os dois caem para 31250 sozinhos.
 
 ## §3 — O mecanismo que torna o brick impossível
 
-O bootloader da Electrosmith carrega de um endereço **fixo** (`0x90040000`).
-Logo, a escolha entre imagens tem de viver lá.
+> **🔴 DESENHO REVISTO a 29/09, e a medição é que o obrigou.** A versão
+> anterior desta secção supunha dois slots **executáveis**. Não dá sem custo:
+> o app executa da QSPI (`BOOT_QSPI`) e um binário só corre no endereço para
+> que foi ligado — dois slots executáveis exigiriam **compilar a imagem duas
+> vezes**, uma por endereço, e escolher a certa no envio. E `BOOT_SRAM`, que
+> resolveria isso, está fora: **285 KB de código + 325 KB de dados = 610 KB**
+> contra 512 KB de SRAM (medido a 29/09).
+
+O bootloader da Electrosmith salta para um endereço **fixo** (`0x90040000`).
+Logo é lá que a decisão tem de viver.
 
 ```
-0x90040000  ESCOLHEDOR   ~8 KB   gravado UMA vez, fisicamente, NUNCA por OTA
-0x90050000  META          4 KB   qual slot vale, CRC, contador de tentativas
-0x90060000  SLOT A       512 KB
-0x900E0000  SLOT B       512 KB
+0x90040000  ESCOLHEDOR   ~32 KB  gravado UMA vez, fisicamente, NUNCA por OTA
+0x90048000  META          4 KB   estado, CRC, intenção
+0x90060000  EXECUÇÃO     512 KB  onde o app SEMPRE corre (um só endereço)
+0x90200000  ENCENAÇÃO    512 KB  onde a imagem nova aterra, vinda do rádio
             (sobram ~6,5 MB)
 ```
 
-**O escolhedor** é um programa minúsculo: lê o META, confere o **CRC da imagem
-inteira** do slot preferido, põe o `VTOR` e salta. CRC mau → tenta o outro
-slot. Os dois maus → fica num **modo de resgate** que só sabe fazer uma coisa:
-receber uma imagem pela UART e gravá-la. É o fundo do poço, e tem chão.
+**A ideia que troca "dois executáveis" por "uma cópia repetível":** o app tem
+**um** endereço de execução, e a imagem nova chega a uma área de **encenação**.
+O escolhedor, no arranque:
 
-**Por que não pode brickar, e a lista é curta:**
+1. lê o META;
+2. se houver **intenção pendente**, copia encenação → execução e só então
+   limpa a intenção;
+3. confere o CRC da área de execução;
+4. põe o `VTOR` e salta.
+
+⚠️ **E é aqui que está a propriedade toda:** se a energia cair **a meio da
+cópia**, a área de execução fica meia escrita — mas a **encenação continua
+intacta** e o META **continua a dizer "pendente"**. No arranque seguinte o
+escolhedor repete a cópia. A janela perigosa deixa de ser fatal e passa a ser
+**repetível**, que é coisa diferente.
 
 | o que pode falhar | porquê não mata |
 |---|---|
-| falha de energia a gravar um slot | grava-se sempre o slot **inactivo**; o activo fica intacto |
-| imagem nova com defeito | o escolhedor exige CRC **e** o app novo tem de confirmar-se vivo; sem confirmação, o META volta ao slot anterior no arranque seguinte |
-| META corrompido a meio | escreve-se em **dois passos** — grava o registo novo, só depois invalida o velho; há sempre um válido |
-| escolhedor com defeito | **não se actualiza nunca**; é gravado uma vez e verificado byte a byte antes de fechar a caixa |
-| bootloader da Electrosmith | o OTA nunca escreve na flash interna |
+| energia a meio da recepção | escreve-se na **encenação**; a execução nem foi tocada |
+| energia a meio da **cópia** | a encenação sobrevive e o META diz "pendente": repete-se |
+| imagem nova com defeito | CRC na recepção **e** antes do salto; e o app novo tem de confirmar-se vivo, senão o META volta ao anterior |
+| META corrompido a meio | escrita em **dois passos** — grava o novo, só depois invalida o velho |
+| escolhedor com defeito | **não se actualiza nunca**; gravado uma vez e provado com sabotagem antes de fechar |
 
-⚠️ **O risco que FICA, e é honesto dizê-lo:** um defeito **no escolhedor**. Ele
-é a única peça sem rede de segurança, e por isso tem de ser pequeno, sem
-dependências, e provado com sabotagem antes de a caixa fechar — imagem com CRC
-errado, META em branco, os dois slots vazios. Se ele estiver certo, o resto
-recupera-se sozinho.
+⚠️ **O risco que FICA, e é o único:** um defeito **no escolhedor**. Pequeno,
+sem dependências, e provado com sabotagem antes de a caixa fechar — CRC
+errado, META em branco, encenação vazia, e corte de energia a meio da cópia.
+
+⚠️ **E o app tem de ser religado** de `0x90040000` para `0x90060000`. Enquanto
+o escolhedor não estiver gravado, uma imagem religada **não arranca** — o
+bootloader saltaria para um `0x90040000` vazio. **Por isso os passos 3 e 4 são
+uma sessão física, e não se começam sem a caixa aberta.**
 
 ## §4 — Diagnóstico sem contacto: o console por SysEx
 
