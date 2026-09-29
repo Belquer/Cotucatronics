@@ -138,9 +138,36 @@ slots reprovam o CRC.
    perdidos` no primeiro `board`. Melhor-esforço por desenho, e contado. Se
    incomodar: anel maior (a SRAM tem folga) ou subir o baud do par durante
    rajadas, que é a mesma manobra da fase 5.
-2. **OTA da ponte**, com as duas partições e rollback do ESP-IDF. O C3 recupera
-   sozinho e o USB dele fica acessível por fora se correr mal — é a metade que
-   não arrisca a caixa.
+2. 🟡 **OTA da ponte — MECANISMO FEITO, TRANSFERÊNCIA POR AFINAR** (29/09).
+
+   **O que está provado:** o bootloader deste núcleo traz
+   `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y` (lido no `sdkconfig` do C3), há
+   `app0`/`app1` de 1,25 MB e a imagem ocupa 627 KB. O comando `!ota <N> <md5>`
+   chega **por rádio**, o `Update.begin()` aceita, a imagem começa a escrever
+   na partição inactiva, e **duas tentativas abortadas não deixaram marca** —
+   a ponte continua a anunciar na imagem anterior, que é o desenho a
+   funcionar. A confirmação é tardia de propósito: só depois de **15 s de laço
+   com o rádio a anunciar**, o que apanha crash-loop e rádio morto.
+
+   ⚠️ **O que falta, medido:** a transferência anda a **0,8–0,9 kB/s** e o
+   link cai por volta dos 36 KB de 627. A 0,9 kB/s a imagem levaria 12
+   minutos, o que já é inaceitável antes de cair.
+
+   **As duas causas prováveis, e o teste de cada uma:**
+   - **Intervalo de ligação grande.** Com escrita confirmada, o débito é
+     `1 escrita por intervalo`; 0,9 kB/s com pedaços de 180 B dá ~5 escritas
+     por segundo, o que aponta para um intervalo de ~200 ms. Conserto:
+     `updateConnParams` do lado da ponte a pedir 15–30 ms.
+   - **A escrita na flash a esfomear o rádio.** O `Update.write` acumula 4 KB
+     e grava um sector de cada vez; durante isso o laço não corre. Conserto:
+     medir o tempo do sector e, se for ele, ceder à tarefa do BLE entre
+     blocos.
+
+   ⚠️ **E o que NÃO se deve fazer:** voltar à escrita sem confirmação para
+   ganhar velocidade. Num comando perde-se uma letra; numa imagem perde-se a
+   imagem (bts **15fr**). Se for preciso débito, o caminho é **escrita sem
+   resposta com ACK próprio** — a ponte notifica a cada N bytes e o Mac
+   espera por isso — que dá velocidade **e** prova de entrega.
 3. **Escolhedor + META + slots**, provado com sabotagem, ainda **com a caixa
    aberta**.
 4. **Sessão física final:** gravar o escolhedor, gravar as duas imagens,

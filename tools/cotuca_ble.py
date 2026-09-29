@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_ble v0.5.1 — a consola do Cotucatronics SEM FIO, por BLE.
+"""cotuca_ble v0.6.0 — a consola do Cotucatronics SEM FIO, por BLE.
 
     tools/cotuca_ble.py [--send "board" "midi" ...] [--listen SEG] [--nome NOME]
 
@@ -25,14 +25,47 @@ import argparse
 import asyncio
 import sys
 
-VERSAO = "0.5.1"
+VERSAO = "0.6.0"
 
 NUS_SVC = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 NUS_RX  = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"   # o Mac ESCREVE aqui
 NUS_TX  = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"   # a placa NOTIFICA aqui
 
 
-async def corre(nome, comandos, segundos):
+async def manda_ota(c, caminho):
+    """Grava a ponte por radio (ppc/006 fase 2).
+
+    ⚠️ ESCRITA COM CONFIRMACAO, SEMPRE. Sem resposta e mais rapido e ja nos
+    custou um diagnostico (bts 15fr): num comando perdido perde-se uma letra,
+    numa imagem perde-se a imagem. O MD5 apanha o que a contagem nao apanhar.
+    """
+    import hashlib, os
+    dados = open(caminho, "rb").read()
+    md5 = hashlib.md5(dados).hexdigest()
+    print("  imagem: %s · %d B · md5 %s" % (os.path.basename(caminho),
+                                            len(dados), md5))
+    await c.write_gatt_char(NUS_RX, ("!ota %d %s\n" % (len(dados), md5)).encode(),
+                            response=True)
+    await asyncio.sleep(1.0)
+
+    PEDACO = 180          # cabe num MTU tipico sem fragmentar
+    enviados = 0
+    t0 = asyncio.get_event_loop().time()
+    while enviados < len(dados):
+        fim = min(enviados + PEDACO, len(dados))
+        await c.write_gatt_char(NUS_RX, dados[enviados:fim], response=True)
+        enviados = fim
+        if enviados % (PEDACO * 100) == 0 or enviados == len(dados):
+            dt = asyncio.get_event_loop().time() - t0
+            print("    %6d / %d B  (%.1f kB/s)"
+                  % (enviados, len(dados), enviados / 1024.0 / max(dt, 0.01)))
+    print("  imagem entregue — a ponte confere o MD5 e reinicia.")
+    print("  ⚠️ Se ela nao voltar a anunciar em 15 s, o bootloader volta"
+          " sozinho a imagem anterior no reinicio seguinte.")
+    await asyncio.sleep(6.0)
+
+
+async def corre(nome, comandos, segundos, ota=None):
     from bleak import BleakClient, BleakScanner
     print("  a varrer 10 s...")
     # ⚠️ "NAO ENCONTRADO" NAO E RESPOSTA. A primeira versao dizia so isso, e
@@ -98,6 +131,8 @@ async def corre(nome, comandos, segundos):
 
         await c.start_notify(NUS_TX, chegou)
         print("  ligado · consola aberta\n")
+        if ota:
+            await manda_ota(c, ota)
         for cmd in comandos:
             dados = (cmd + "\n").encode()
             # ⚠️ COM CONFIRMACAO, e a 29/09 isto foi o conserto do diagnostico.
@@ -130,11 +165,13 @@ def main():
     p.add_argument("--send", nargs="*", default=[])
     p.add_argument("--listen", type=float, default=0.0)
     p.add_argument("--nome", default="Cotucatronics")
+    p.add_argument("--ota", default=None,
+                   help="grava a PONTE com este .bin, por radio")
     a = p.parse_args()
-    if not a.send and not a.listen:
+    if not a.send and not a.listen and not a.ota:
         a.listen = 5.0
     try:
-        return asyncio.run(corre(a.nome, a.send, a.listen))
+        return asyncio.run(corre(a.nome, a.send, a.listen, a.ota))
     except Exception as e:
         print("  FALHOU: %s" % e)
         return 3

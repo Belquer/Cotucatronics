@@ -1,5 +1,5 @@
 // ============================================================================
-// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.3.1
+// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.4.1
 //                 + consola sem fio por NUS (ppc/006 fase 1)
 // ESP32-C3 SuperMini · substitui o WIDI Core 1.3
 //
@@ -39,7 +39,7 @@
 #include <MIDI.h>
 #include <Preferences.h>
 
-#define PONTE_VERSAO "1.3.1"
+#define PONTE_VERSAO "1.4.1"
 
 // ---- pinos -----------------------------------------------------------------
 // ⚠️⚠️ MAJOR a 21/09: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
@@ -130,6 +130,8 @@ MIDI_CREATE_INSTANCE(HardwareSerial, Serial1, SER)
 // como identidade. Servico anunciado a mais partiria o pareamento existente
 // para ganhar o que a descoberta pos-ligacao ja da de graca.
 #include <NimBLEDevice.h>
+#include <Update.h>
+#include <esp_ota_ops.h>
 
 static const char* NUS_SVC = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E";
 static const char* NUS_RX  = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E";  // Mac escreve
@@ -164,6 +166,42 @@ static uint32_t  nus_escritas = 0, nus_bytes_crus = 0;
 // o C3 aceita CONFIG_BT_NIMBLE_MAX_CONNECTIONS = 3 ligacoes, entao cabem o
 // iPad, o Mac e uma de sobra. Reanuncia-se enquanto houver vaga, e as duas
 // consolas convivem — MIDI para o Loopy, consola para quem estiver a medir.
+// ============================================================================
+// OTA DA PONTE — gravar por radio, sem hipotese de brick (ppc/006 fase 2)
+// ============================================================================
+//
+// O bootloader deste nucleo traz `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y`
+// (verificado no sdkconfig do C3, 29/09). Isso muda tudo: a imagem nova
+// arranca em PENDING_VERIFY e, se ninguem a CONFIRMAR, o bootloader volta
+// sozinho a anterior no reinicio seguinte.
+//
+// ⚠️ E A CONFIRMACAO NAO PODE SER NA PRIMEIRA LINHA DO `setup()`. Confirmar
+// cedo e o mesmo que nao ter rede: uma imagem que arranca e morre a seguir
+// seria dada por boa. Aqui so se confirma depois de o RADIO estar a anunciar
+// **e** o laco ter dado 15 s — o que apanha crash-loop e radio morto, que sao
+// os dois modos que deixariam a caixa inalcancavel.
+//
+// O protocolo entra pela consola: uma linha comecada por `!` e para a PONTE,
+// tudo o resto segue para a Daisy. Isso resolve de borda outra coisa — ate
+// agora o estado da ponte so se via pelo USB dela.
+//
+//     !board            estado da ponte, por radio
+//     !ota <N> <md5>    recebe N bytes de imagem, verificados por MD5
+//
+static bool      ota_ativo   = false;
+static uint32_t  ota_total   = 0, ota_recebido = 0, ota_ultimo_ms = 0;
+static uint32_t  ota_tentativas = 0;
+static char      ota_erro[64] = {0};
+static bool      confirmado  = false;
+static uint32_t  arranque_ms = 0;
+
+static void OtaAborta(const char* porque)
+{
+    Update.abort();
+    ota_ativo = false;
+    snprintf(ota_erro, sizeof(ota_erro), "%s", porque);
+}
+
 static uint32_t anuncio_ultimo_ms = 0;
 static uint32_t reanuncios = 0;
 
@@ -180,6 +218,55 @@ static void MantemAnuncio()
     reanuncios++;
 }
 
+extern volatile bool conectado;   // declarado com os contadores, mais abaixo
+
+// Comandos da PONTE (chegam com `!`). Poucos de proposito: isto nao e uma
+// segunda consola, e a porta de servico do radio.
+static char cmd_pendente[96] = {0};
+static volatile bool cmd_ha = false;
+
+static void ComandoDaPonte(const char* c)
+{
+    char m[200];
+    if(!strncmp(c, "board", 5))
+    {
+        NimBLEServer* sv = NimBLEDevice::getServer();
+        snprintf(m, sizeof(m),
+                 "ponte v%s · %s · ligacoes %u/%d · consola %lu->/%lu<- B\n"
+                 "  particao %s · %s\n",
+                 PONTE_VERSAO, conectado ? "com link" : "sem link",
+                 sv ? (unsigned)sv->getConnectedCount() : 0,
+                 CONFIG_BT_NIMBLE_MAX_CONNECTIONS,
+                 (unsigned long)nus_para_daisy, (unsigned long)nus_do_daisy,
+                 esp_ota_get_running_partition()->label,
+                 confirmado ? "CONFIRMADA" : "por confirmar (volta atras se cair)");
+        DizAoMac(m);
+        return;
+    }
+    if(!strncmp(c, "ota ", 4))
+    {
+        uint32_t n = 0; const char* p = c + 4;
+        while(*p >= '0' && *p <= '9') n = n * 10 + (uint32_t)(*p++ - '0');
+        while(*p == ' ') p++;
+        if(n < 65536u || n > 1310720u)
+        { DizAoMac("ota: tamanho fora de faixa (64 KB a 1,25 MB)\n"); return; }
+        if(!Update.begin(n))
+        {
+            snprintf(m, sizeof(m), "ota: nao comecou — %s\n",
+                     Update.errorString());
+            DizAoMac(m); return;
+        }
+        if(*p) Update.setMD5(p);      // sem MD5 ainda vai, mas diz-se
+        ota_ativo = true; ota_total = n; ota_recebido = 0;
+        ota_ultimo_ms = millis(); ota_tentativas++; ota_erro[0] = 0;
+        snprintf(m, sizeof(m), "ota: a receber %lu B%s\n",
+                 (unsigned long)n, *p ? " (MD5 declarado)" : " SEM MD5");
+        DizAoMac(m);
+        return;
+    }
+    DizAoMac("ponte: `!board` ou `!ota <bytes> <md5>`\n");
+}
+
 class NusRxCB : public NimBLECharacteristicCallbacks
 {
     void onWrite(NimBLECharacteristic* c) override
@@ -187,10 +274,50 @@ class NusRxCB : public NimBLECharacteristicCallbacks
         const std::string v = c->getValue();
         nus_escritas++;
         nus_bytes_crus += v.size();
+
+        // ⚠️ EM OTA NAO SE OLHA PARA O CONTEUDO. Uma imagem tem bytes iguais
+        // a '!' e a '\n' por todo o lado; interpretar durante a transferencia
+        // seria o mesmo defeito do parser que confunde dado com comando.
+        if(!ota_ativo)
+        {
+            // LINHA PARA A PONTE? So se comecar por '!' — tudo o resto e da
+            // Daisy, e a ponte continua a nao saber o que significa.
+            if(v.size() && v[0] == '!')
+            {
+                static char cmd[96];
+                size_t k = 0;
+                for(size_t i = 1; i < v.size() && k < sizeof(cmd) - 1; i++)
+                {
+                    if(v[i] == '\n' || v[i] == '\r') break;
+                    cmd[k++] = v[i];
+                }
+                cmd[k] = 0;
+                // 🔴 SO ENFILEIRA. Chamar o `ComandoDaPonte` daqui foi a
+                // violacao da regra que este ficheiro ja tinha escrita tres
+                // blocos acima — e o `Update.begin()` APAGA FLASH, que e uma
+                // operacao longa. Feita na tarefa do BLE, a pilha perde o
+                // tempo dela e DERRUBA A LIGACAO: medido a 29/09, o `!ota`
+                // matava a sessao antes de enviar um byte de imagem.
+                //
+                // A regra vale para tudo o que demora, nao so para a Serial1.
+                strncpy(cmd_pendente, cmd, sizeof(cmd_pendente) - 1);
+                cmd_pendente[sizeof(cmd_pendente) - 1] = 0;
+                cmd_ha = true;
+                return;
+            }
+        }
+
         for(size_t i = 0; i < v.size(); i++)
         {
             const size_t prox = (nus_cab + 1) % NUS_FILA;
-            if(prox == nus_cau) { nus_descartes++; return; }  // cheia: conta e para
+            if(prox == nus_cau)
+            {
+                nus_descartes++;
+                // Em OTA, um byte perdido corrompe a imagem: aborta em vez
+                // de somar e seguir. Ver a nota do escoamento.
+                if(ota_ativo) OtaAborta("fila cheia a meio da imagem");
+                return;
+            }
             nus_fila[nus_cab] = (uint8_t)v[i];
             nus_cab = prox;
         }
@@ -227,6 +354,15 @@ static size_t Desempacota7(const uint8_t* emp, size_t n, uint8_t* fora, size_t c
 }
 
 // Escreve um quadro de consola na UART. SO DO LACO — ver a nota da fila.
+// Responde ao Mac pela consola. Usa-se para o que e da PONTE — o que vem da
+// Daisy ja passa pelo `DaSerial`.
+static void DizAoMac(const char* txt)
+{
+    if(!nus_tx) return;
+    nus_tx->setValue((uint8_t*)txt, strlen(txt));
+    nus_tx->notify();
+}
+
 static void MandaSysexAoDaisy(const uint8_t* cru, size_t n)
 {
     uint8_t emp[256];
@@ -238,7 +374,7 @@ static void MandaSysexAoDaisy(const uint8_t* cru, size_t n)
 }
 
 // ---- contadores: o que a ponte sabe sobre si propria ------------------------
-static volatile bool     conectado      = false;
+volatile bool            conectado      = false;
 static uint32_t          quedas         = 0;         // desconexoes desde o boot
 static uint32_t          ultima_queda_ms = 0;        // 0 = nunca caiu
 
@@ -432,6 +568,7 @@ void setup()
                   PONTE_VERSAO, (unsigned long)BAUD);
     Serial.printf("  memoria: %lu quedas desde sempre, em %lu arranques\n",
                   (unsigned long)quedas_vida, (unsigned long)arranques);
+    arranque_ms = millis();   // o relogio da confirmacao comeca aqui
     Serial.printf("  TX=GPIO%d -> D14 · RX=GPIO%d <- D13 · STATUS=GPIO%d -> D28\n",
                   PINO_TX, PINO_RX, PINO_STATUS);
     Serial.println("  `board` estado · `zera` apaga a memoria de quedas · `teste` dispara um CC.");
@@ -637,7 +774,32 @@ void loop()
     SER.read();
     PiscaLed();
     Shell();
+    if(cmd_ha) { cmd_ha = false; ComandoDaPonte(cmd_pendente); }
     MantemAnuncio();   // ha vaga? entao anuncia — ver a nota do bloco
+
+    // ---- CONFIRMA A IMAGEM, E SO DEPOIS DE ELA SE PROVAR ----
+    //
+    // ⚠️ Confirmar cedo e o mesmo que nao ter rede. Uma imagem que arranca e
+    // morre a seguir seria dada por boa, e o bootloader nunca mais voltaria
+    // atras. Entao exigem-se as DUAS coisas que faltariam numa imagem ma:
+    //   · o radio a ANUNCIAR (se o BLE nao subir, a caixa fica inalcancavel);
+    //   · 15 s de laco (apanha crash-loop, que e o outro modo de morte).
+    // Nao confirmada, a proxima reinicializacao volta a imagem anterior.
+    if(!confirmado && arranque_ms
+       && (uint32_t)(millis() - arranque_ms) > 15000u
+       && NimBLEDevice::getAdvertising()->isAdvertising())
+    {
+        esp_ota_img_states_t st;
+        const esp_partition_t* par = esp_ota_get_running_partition();
+        if(esp_ota_get_state_partition(par, &st) == ESP_OK
+           && st == ESP_OTA_IMG_PENDING_VERIFY)
+        {
+            esp_ota_mark_app_valid_cancel_rollback();
+            Serial.printf("ota: imagem CONFIRMADA (%s) — 15 s de pe com o"
+                          " radio a anunciar\n", par->label);
+        }
+        confirmado = true;
+    }
 
     // ESCOA A CONSOLA. So daqui: o laco e o unico dono da Serial1, e escrever
     // da tarefa do BLE partiria uma mensagem MIDI ao meio.
@@ -654,7 +816,51 @@ void loop()
             lote[n++] = nus_fila[nus_cau];
             nus_cau = (nus_cau + 1) % NUS_FILA;
         }
-        MandaSysexAoDaisy(lote, n);
+        if(ota_ativo)
+        {
+            // ⚠️ EM OTA, PERDER UM BYTE E FATAL. No modo consola um byte
+            // perdido e uma letra feia; aqui e uma imagem corrompida. Por
+            // isso o `nus_descartes` do callback ABORTA a gravacao em vez de
+            // somar e seguir — e por isso o MD5 confere no fim, que apanha o
+            // que a contagem nao apanhar.
+            if(Update.write(lote, n) != n)
+                OtaAborta("escrita na flash falhou");
+            else
+            {
+                ota_recebido += n;
+                ota_ultimo_ms = millis();
+                if(ota_recebido >= ota_total)
+                {
+                    if(Update.end(true))
+                    {
+                        DizAoMac("ota: imagem aceite e MD5 confere."
+                                 " A reiniciar — o bootloader volta atras"
+                                 " sozinho se ela nao confirmar.\n");
+                        delay(200);
+                        ESP.restart();
+                    }
+                    else
+                    {
+                        char m[80];
+                        snprintf(m, sizeof(m), "ota: RECUSADA — %s\n",
+                                 Update.errorString());
+                        DizAoMac(m);
+                        OtaAborta("fim recusado");
+                    }
+                }
+            }
+        }
+        else
+        {
+            MandaSysexAoDaisy(lote, n);
+        }
+    }
+    // Transferencia que emudece a meio deixa a flash meio escrita; um prazo
+    // fecha isso em vez de a deixar pendurada ate ao proximo reinicio.
+    if(ota_ativo && (uint32_t)(millis() - ota_ultimo_ms) > 10000u)
+    {
+        OtaAborta("10 s sem bytes");
+        DizAoMac("ota: ABORTADA — 10 s sem bytes. A imagem anterior fica.\n");
     }
     // ESCRITA DIFERIDA. A queda so marcou; e aqui que a flash e tocada, e
     // no maximo a cada 10 s. Isto tambem escoa naturalmente para o momento
