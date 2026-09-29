@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Auditoria profunda de consistência no Cotucatronics — caça nomes fantasma, lápides invertidas, declarações falsas, números mortos, tabelas à mão a envelhecer por cima de geradas, links mortos, isenções órfãs, verificações sem objeto, frases partidas por renomeação e destinos dessincronizados. Use ao apagar um nome de toda a árvore, ao remover uma feature, ao fechar uma reestruturação, e antes de dar documentação por limpa.
+description: Auditoria profunda de consistência no Cotucatronics — confere a FONTE DE DATUM de toda dimensão partilhada (duas fontes é defeito mesmo que os números batam), e caça nomes fantasma, lápides invertidas, declarações falsas, números mortos, tabelas à mão a envelhecer por cima de geradas, links mortos, isenções órfãs, verificações sem objeto, frases partidas por renomeação e destinos dessincronizados. Use ao apagar um nome de toda a árvore, ao remover uma feature, ao fechar uma reestruturação, e antes de dar documentação por limpa.
 ---
 
 # /audit — auditar sem partir nada
@@ -285,6 +285,48 @@ O achado é duplicar o **corpo**. A pergunta é «este sítio reconstrói o que 
 ⚠️ **Achado mesmo quando o output é idêntico hoje.** A cópia não está errada:
 está **por envelhecer**. Reportar só quando já divergiu é reportar o incêndio,
 não a instalação eléctrica — e a divergência, quando chega, não dá erro.
+
+## PASSADA NOVA — FONTE DE DATUM (29/09)
+
+**Para cada dimensão presente em dois artefactos: qual é a FONTE e qual é a
+DERIVADA?**
+
+Vale para qualquer número que exista em mais do que um sítio — furo, altura,
+espessura, coordenada, folga, prazo de bloco, endereço de flash.
+
+> 🔴 **Dimensão com duas fontes é defeito, MESMO QUE OS NÚMEROS BATAM HOJE.**
+
+Bater hoje não é propriedade do sistema: é coincidência com data de validade. As
+duas cópias divergem na primeira alteração que só um dos lados recebe, e a
+divergência **não dá erro em lado nenhum** — os dois ficheiros continuam
+válidos, cada um com o seu número, e quem lê um deles nunca vê o outro.
+
+### O que a passada produz
+
+Uma tabela, e uma linha por dimensão partilhada:
+
+| dimensão | onde aparece | fonte | derivada | como se deriva |
+|---|---|---|---|---|
+| furo do pot | painel · caixa | painel | caixa | gerador lê o painel |
+
+- **Linha sem fonte declarada** = achado.
+- **Linha com duas fontes** = achado, com a severidade do que a dimensão
+  governa (um furo errado é uma peça deitada fora).
+- **Linha cuja derivação é "copiei"** = achado: cópia não é derivação. Derivação
+  é código que corre outra vez.
+
+### Onde isto morde primeiro, neste projecto
+
+O painel é o datum (`HARDWARE.md` §0, `/aipcb` §2b, bts 15ga). Portanto **toda
+dimensão de corte da caixa é derivada do painel** — e qualquer número de furo
+que viva no ficheiro da caixa é cópia até prova em contrário.
+
+⚠️ **E o caso que engana:** a dimensão derivada pode estar CERTA e ainda assim
+ser achado. A passada não pergunta "o número está certo?" — pergunta "quem o
+manda?". Auditar o valor em vez da procedência é a forma de aprovar um sistema
+que vai partir na semana seguinte.
+
+---
 
 ## O TESTE QUE LÊ A RECUSA COMO APROVAÇÃO
 

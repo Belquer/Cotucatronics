@@ -14,6 +14,12 @@
 <!-- doc-check: ignore lib_footprint_mismatch (codigo de violacao do DRC do KiCad) -->
 <!-- doc-check: ignore courtyards_overlap (codigo de violacao do DRC do KiCad) -->
 
+> 🔴 **rev B: BANCADA · rev C: MECÂNICA-PRIMEIRO.** A rev B valida pré-amp,
+> firmware, SuMiA, búzios e a sessão de escuta — **não são as placas do
+> instrumento**. A rev C é desenhada com **o painel como datum e o fundo como
+> tampa**: ver [ppc/007](ppc/007-mecanica-primeiro.md),
+> [HARDWARE.md §0](operacao/HARDWARE.md) e bts 15ga.
+
 **Onde estamos.** O par deste documento é
 [battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
 aqui*. Leia os dois antes de tocar em código.

@@ -11715,3 +11715,78 @@ ocioso, que é a segunda metade da 13k.
 > lei — é sorte com nome. O que a teria apanhado é uma pergunta de rotina ao
 > desenhar qualquer assinatura: *o que devolve esta função quando não tem
 > resposta, e esse valor pertence ao domínio?*
+
+## 15ga — o fundo era o datum, e por isso a caixa não se monta: nove sintomas, uma causa (29/09)
+
+O dB tentou montar a rev C e relatou **nove** coisas. Elas parecem nove
+problemas; são um.
+
+1. caixa impossível de montar no tamanho actual
+2. módulo do amp gigante
+3. TRS de linha a bloquear a remoção do painel
+4. cabo blindado dos piezos grosso demais
+5. alturas de pot e encoder diferentes depois de soldados
+6. OLED exposto a danos
+7. módulo USB-C sem sítio para aparafusar
+8. headers e jumper wires precários
+9. — e o conjunto: nada sai sem desmontar outra coisa
+
+**A causa única:** o **fundo foi tratado como datum** e a mecânica como
+consumidora do desenho eléctrico. Desenhou-se a electrónica, arrumou-se no
+fundo, e o painel recebeu o que sobrou.
+
+A prática de pedais e de Eurorack é o inverso, e não por gosto:
+
+> **O painel é o datum. O fundo é tampa.**
+
+Porque é o painel que a pessoa toca, é ele que tem de ter as tolerâncias, e é
+ele que define onde tudo o resto pode estar. Um fundo-datum empurra o erro
+acumulado para a face onde ele se vê e se sente.
+
+### Cada sintoma é a mesma inversão, vista de um ângulo
+
+| sintoma | o que o painel-datum teria imposto |
+|---|---|
+| 3 — TRS bloqueia o painel | conector montado na placa, com rosca de painel: sai com o painel |
+| 4 — cabo dos piezos grosso | zero fios de sinal internos; a blindagem fica no cabo externo |
+| 5 — alturas diferentes | peças enfiadas sem soldar → painel aparafusado → **soldar depois** |
+| 6 — OLED exposto | display atrás do painel; o painel É a protecção |
+| 7 — USB-C sem fixação | conversão de energia **na placa**, não em módulo aparafusado |
+| 8 — headers precários | sanduíche de placas unidas por header, sem cabos internos |
+
+### A confirmação externa, e é de um produto que se vende
+
+O `GuitarPedalSTM32` (GuitarML) manda, no processo de montagem dele:
+
+> *"use enclosure to ensure proper fit while soldering"* ·
+> *"solder LEDs using enclosure as guide for height"*
+
+e usa `Pot_RightAngle_LongPin_16mm` — **pino longo**, que é a folga física que
+permite à caixa mandar. Ver [REFERENCIA-GUITARPEDAL-STM32.md](REFERENCIA-GUITARPEDAL-STM32.md).
+
+> **Uma regra de arquitectura que também aparece num produto alheio deixou de
+> ser preferência.** Procurar a confirmação externa antes de declarar uma regra
+> custa uma tarde e poupa uma revisão inteira a defendê-la.
+
+### ⚠️ E a lacuna que isto revela nos nossos portões
+
+ERC, DRC, `funcao_dos_pads`, folgas, courtyards: **todos verdes, e a caixa não
+se monta.** Nenhum portão da `/aipcb` mede montabilidade.
+
+> **Nenhuma ferramenta do projecto responde "isto monta-se?".** Quem responde é
+> o dB com as peças na mão — e o modelo 3D do ppc/003 é a única coisa que
+> antecipa essa resposta. Um portão verde não é silêncio sobre montagem: é
+> silêncio com **cara** de aprovação, que é a família de defeito mais cara que
+> este projecto tem.
+
+### E a que fica escrita para não se perder
+
+> **Madeira é aparência; painel é tolerância.** O datum nunca vive em material
+> que se move com a humidade. Se a face bonita é de madeira, ela é **capa** de
+> um painel que não é.
+
+### rev B = bancada
+
+Enquanto isto não estiver escrito em todo o lado, alguém trata a rev B como
+final. **A rev B valida pré-amp, firmware, SuMiA, búzios e a sessão de escuta.
+Não são as placas do instrumento.** A rev C é a arquitectura acima.

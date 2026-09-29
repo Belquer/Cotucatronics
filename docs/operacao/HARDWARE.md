@@ -1,9 +1,62 @@
 # HARDWARE — Cotucatronics
+<!-- doc-check: ignore funcao_dos_pads (portao do /aipcb, ferramenta em kicad/) -->
 
 > Decisões fechadas, com o **porquê** de cada uma. Esquemáticos em
 > `esquematicos/`. Quando uma decisão for revista, o motivo antigo fica
 > registrado — premissa revogada em silêncio é a família de bug mais cara
 > deste projeto.
+
+---
+
+## 0 · O PAINEL É O DATUM — regra do projecto, não desta revisão
+
+> Esta secção vem primeiro porque manda nas outras. Uma decisão eléctrica que a
+> contrarie está errada mesmo que o circuito esteja certo.
+
+**O painel é o datum. O fundo é tampa.** O painel carrega as tolerâncias, define
+onde tudo o resto pode estar, e é a peça a partir da qual a caixa é derivada. O
+fundo **não carrega nada**.
+
+A regra nasceu de nove sintomas relatados a montar a rev C — caixa impossível de
+montar, TRS a bloquear o painel, alturas de pot diferentes depois de soldadas,
+OLED exposto, módulo USB-C sem fixação, headers precários. Nove sintomas, **uma
+causa**: o fundo tratado como datum e a mecânica como consumidora do desenho
+eléctrico. Ver bts 15ga.
+
+### O que a regra impõe, e cada linha é executável
+
+| regra | o que proíbe |
+|---|---|
+| ordem de montagem: peças enfiadas **sem soldar** → painel aparafusado → **soldar depois** | acertar altura por cálculo |
+| sanduíche de placas unidas por **header**: controlo (topo) · E/S (borda, a 90°) · cérebro (fundo) | cabos internos de sinal |
+| conectores **PCB-mount com rosca de painel** | fios de áudio internos; a blindagem fica no cabo externo |
+| conversão de energia **na placa** (recetáculo USB-C + chip de PD sink) | módulo aparafusado |
+| comutação de potência em **compartimento próprio**, com parede e terra próprios | partilhar plano com sinal — é regra eléctrica, não de espaço |
+| display **atrás** do painel | o painel é a protecção |
+| o datum nunca vive em material que se move com a humidade | **madeira é aparência; painel é tolerância** |
+
+⚠️ **Fio só para o que se move ou vive na parede longe da placa** — e mesmo esse
+com header na placa, para que a placa saia sem dessoldar nada. "Zero cabos" é
+falso até num produto vendido: o `GuitarPedalSTM32` tem fio nos footswitches. A
+regra honesta é **zero fios de SINAL**.
+
+### 🔴 rev B = BANCADA
+
+A rev B valida pré-amp, firmware, SuMiA, búzios e a sessão de escuta.
+**Não são as placas do instrumento.** A rev C é a arquitectura desta secção.
+
+### Nenhum portão mede isto
+
+ERC, DRC, `funcao_dos_pads`, folgas e courtyards podem estar **todos verdes com
+a caixa por montar**. Quem responde "isto monta-se?" é o dB com as peças na mão;
+o modelo 3D do `ppc/003` é a única coisa que antecipa a resposta.
+
+### Confirmação externa
+
+[REFERENCIA-GUITARPEDAL-STM32.md](../REFERENCIA-GUITARPEDAL-STM32.md) — um pedal
+aberto, vendido e montado por terceiros, cujo processo de montagem diz *"use
+enclosure to ensure proper fit while soldering"* e cujos pots são de **pino
+longo** para que a caixa possa mandar.
 
 ---
 

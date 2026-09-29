@@ -62,6 +62,62 @@ Sem estes, o fluxo **não começa** — devolve-se a espec com o que falta:
 
 ---
 
+## 2b · MECÂNICA-PRIMEIRO — corre ANTES da §2 e antes da porta 1
+
+> Está numerada 2b e colocada antes da §2 de propósito: é a secção que decide se
+> a §2 sequer faz sentido. Escolher símbolos e footprints antes de fixar o datum
+> é escolher peças para uma caixa que ainda não existe.
+
+**O painel é o datum. O fundo é tampa.** O fundo não carrega nada.
+
+Nasceu de nove sintomas de montagem da rev C com **uma** causa: o fundo tratado
+como datum, a mecânica como consumidora do desenho eléctrico. bts 15ga.
+
+### As sete asserções, e todas são verificáveis
+
+1. **O painel é o datum**; a caixa é derivada dele, nunca o contrário.
+2. **Ordem de montagem: peças enfiadas sem soldar → painel aparafusado → soldar
+   depois.** Nunca acertar altura por cálculo — a mecânica decide, a solda segue.
+3. **Sanduíche unida por header, zero cabos internos de sinal:**
+   controlo (topo) · E/S (borda, a 90°) · cérebro (fundo).
+4. **Conectores PCB-mount com rosca de painel.** Sem fios de áudio internos; a
+   blindagem fica no cabo externo.
+5. **Conversão de energia na placa** (recetáculo USB-C + chip de PD sink), não em
+   módulo aparafusado.
+6. **Comutação de potência em compartimento próprio**, com parede e terra
+   próprios — regra eléctrica, não de espaço.
+7. **Display atrás do painel**; o painel é a protecção.
+
+E a que atravessa todas: **madeira é aparência, painel é tolerância.** O datum
+nunca vive em material que se move com a humidade.
+
+### O footprint é onde isto passa a ser possível ou impossível
+
+> **Pino longo não é detalhe de encomenda: é a folga física que permite à
+> mecânica mandar.** Um pot de pino curto obriga a acertar a altura por cálculo,
+> porque não há curso para a ajustar — e nesse momento a asserção 2 deixou de
+> ser executável, qualquer que seja a intenção do desenho.
+
+Ao escolher footprint de qualquer peça que atravesse o painel, a pergunta é:
+**quanto curso vertical é que isto me deixa?** Zero curso é defeito de
+arquitectura, não de montagem.
+
+### ⚠️ E a fronteira que nenhum portão desta skill vigia
+
+ERC, DRC, `funcao_dos_pads`, folgas, courtyards: **todos verdes, e a caixa não
+se monta.** Ver §5. A verificação de montabilidade é o dB com as peças na mão; o
+modelo 3D do `ppc/003` é a única coisa que a antecipa. **Um portão verde aqui é
+silêncio com cara de aprovação.**
+
+### Prova externa
+
+`docs/REFERENCIA-GUITARPEDAL-STM32.md` — um pedal aberto e vendido cujo README
+manda *"use enclosure to ensure proper fit while soldering"*, cuja biblioteca de
+footprints se chama `GuitarPedal125B` (a caixa no nome), e em que **17 de 101
+footprints** são through-hole: exactamente os que atravessam o painel.
+
+---
+
 ## 2 · A fonte
 
 **KiCad, biblioteca oficial.** O símbolo oficial traz a função por pino
@@ -626,6 +682,14 @@ ainda **`scripts/manifesto_fontes.py`** (Estágio 2), **`scripts/congestao.py`**
 ---
 
 ## 5 · Portões: a pergunta que respondem, e a que NÃO respondem
+
+> 🔴 **NENHUM portão desta lista mede MONTABILIDADE.** ERC, DRC,
+> `funcao_dos_pads`, folgas e courtyards podem estar todos verdes com a caixa
+> por montar — aconteceu na rev C, com nove sintomas (bts 15ga). A resposta a
+> "isto monta-se?" vem do dB com as peças na mão, e o modelo do `ppc/003` é a
+> única coisa que a antecipa. Ao reportar portões verdes, **dizer esta frase**;
+> caso contrário o verde lê-se como aprovação de uma pergunta que ninguém fez.
+
 
 Todo verificador entra nesta tabela com as duas colunas. Foi a coluna da
 direita que faltou na rev B.

@@ -134,6 +134,56 @@ o escolhedor não estiver gravado, uma imagem religada **não arranca** — o
 bootloader saltaria para um `0x90040000` vazio. **Por isso os passos 3 e 4 são
 uma sessão física, e não se começam sem a caixa aberta.**
 
+## §3b — ✅ O driver de escrita está PROVADO (29/09)
+
+A fase 3 estava desenhada sobre um driver que **só lia três bytes de
+identificação** — e nem isso fazia, como se veio a descobrir. Hoje escreve.
+
+```
+qspi janela  ->  CR.EN=0 derruba o BUSY em 0 voltas (o ABORT nao, em 200 000)
+qspi id      ->  9D 60 17    ISSI · IS25LP · 8 MB
+qspi sr      ->  0x40        WIP=0 WEL=0 QE=1
+qspi ler     ->  16/16 iguais ao memory-mapped   <- prova externa
+qspi prova   ->  apagar · conferir FF · programar · reler: 0 de 32 diferem
+```
+
+`src/qspi_raw.{h,cpp}` **v0.10.0**, OS **v0.329.0**, commit `8186fc3`.
+A história completa está em bts 15fw–15fz e no
+[DESENHO-ESCRITA-QSPI.md](../DESENHO-ESCRITA-QSPI.md).
+
+### Três coisas que MUDAM o desenho desta fase
+
+**1. A zona segura existe e é de código, não de disciplina.** O driver nasce a
+cobrir só `0x90400000`–`0x907FFFFF` (rascunho). `ApagaSector64` e
+`ProgramaPagina` recusam fora dela. O escolhedor terá de chamar `AlargaZona()`
+explicitamente para poder escrever no slot de execução — e essa chamada é o
+sítio onde se põe a verificação de que o alvo não é `0x90040000`. Cicatriz
+15fv, de hoje de manhã, escrita em código em vez de em prosa.
+
+**2. 🔴 O APAGAR NÃO PODE CORRER COM O INSTRUMENTO A TOCAR.** Corre com as
+interrupções mascaradas e leva centenas de milissegundos: o áudio pára, o MIDI
+pára, e o relógio do bloco perde-se. Isto **não é detalhe de implementação, é
+requisito de desenho** — a gravação por rádio tem de ter uma fase declarada de
+"som desligado", e o utilizador tem de a ver acontecer. Um OTA que tenta ser
+transparente durante o apagar produz um instrumento que engasga sem explicação.
+
+**3. A libDaisy recusa-se a escrever na QSPI quando o programa corre da QSPI**
+(`CheckProgramMemory`, em todo caminho de escrita dela). Não é limitação a
+contornar por descuido — é a declaração de que quem escreve tem de correr de
+outro sítio. O `qspi_raw` corre da ITCM com as interrupções mascaradas, e é por
+isso que ele existe. Quem retomar isto e pensar em "usar a libDaisy e poupar
+trabalho" deve ler esta linha antes.
+
+### O que fazer a seguir, por ordem
+
+1. **O escolhedor**, agora sobre mecanismo provado: script de ligação próprio em
+   `0x90040000`, cópia para ITCM, META + CRC, modo de resgate, combinações de
+   botões.
+2. **Sessão física da fase 4** — escolhedor primeiro, app em `0x90050000`
+   depois. A ordem não é negociável e a razão está na 15fv.
+3. **Testes de sabotagem** antes de confiar: CRC errado, imagem truncada,
+   corte de energia a meio do apagar.
+
 ## §4 — Diagnóstico sem contacto: o console por SysEx
 
 Hoje tudo — `board`, `midi`, `fio`, `oledspi`, `knob`, `pk` — vive na **CDC do

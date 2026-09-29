@@ -37,6 +37,39 @@ certificação completa é a **trilha M** do IFÁ10000, na sub-skill `/3ddesign`
 
 ---
 
+## 0a. A CAIXA RECEBE O PAINEL — e o painel é o datum
+
+> Refina o "quem cede" acima. A caixa cede à placa, sim — mas **a placa já cedeu
+> ao painel**, e é do painel que os cortes saem.
+
+**A caixa deixa de ser desenhada a partir do interior estimado.** Ela **recebe o
+painel**, e os cortes são **derivados** dele: furo de pot, janela de display,
+recorte de jack, tudo com a coordenada que o painel já fixou.
+
+**O painel é o datum; o fundo é tampa e não carrega nada.** bts 15ga —
+nove sintomas de montagem da rev C com uma causa só. A regra completa está em
+`docs/operacao/HARDWARE.md` §0 e na `/aipcb` §2b.
+
+### O que isto proíbe, em concreto
+
+- ⚠️ **Nenhuma dimensão de corte é medida no modelo da caixa.** Se um número de
+  furo existe no ficheiro da caixa **e** no do painel, um dos dois é cópia — e
+  cópia envelhece. Ver a passada *fonte de datum* da `/audit`.
+- **O fundo não recebe fixação de peça de painel.** Módulo aparafusado ao fundo
+  para servir uma peça do painel é a inversão a voltar pela porta das traseiras.
+- **Madeira é aparência, painel é tolerância.** Se a face bonita é de madeira,
+  ela é **capa** de um painel que não é — o datum nunca vive em material que se
+  move com a humidade.
+
+### E a asserção que falta aos portões
+
+Os cinco portões da §2 medem geometria. **Nenhum mede se a caixa se MONTA** —
+se cada peça entra e sai na ordem declarada, com a ferramenta a alcançar cada
+parafuso. Essa é a sétima asserção do `ppc/003`, e é a única que antecipa o dB
+com as peças na mão.
+
+---
+
 ## 0. ANTES DE MEDIR: qual das caixas é a caixa?
 
 Este projecto teve **quatro** fontes para a mesma caixa ao mesmo tempo, com

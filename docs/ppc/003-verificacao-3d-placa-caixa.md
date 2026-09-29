@@ -72,7 +72,29 @@ mão noutro ficheiro da trilha 3D; `verifica_3d.py` importa, não copia.
 Licenças: build123d/bd_warehouse Apache-2.0, kiutils MIT, boxes.py GPLv3.
 Referência-só: KiCad StepUp (FreeCAD), enclozure (CadQuery).
 
-## §3 — As 6 asserções (rígidas vs declaradas)
+## §2b — ⚠️ ESTE PLANO PASSA A SER DESENHADO SOBRE A ARQUITECTURA NOVA
+
+> Acrescentado a 29/09. O `ppc/007` (mecânica-primeiro) **vem antes deste**: a
+> montagem 3D verifica a rev C com o **painel como datum**, não a rev B.
+> Verificar a arquitectura antiga com rigor novo é gastar o rigor no sítio
+> errado. Ver bts 15ga e `docs/operacao/HARDWARE.md` §0.
+
+## §3 — As 7 asserções (rígidas vs declaradas)
+
+### 7 — A CAIXA É MONTÁVEL  *(nova, 29/09)*
+
+**Cada peça entra e sai na ordem declarada, com a ferramenta a alcançar cada
+parafuso.** Não é folga: é sequência. Uma caixa cujas peças cabem todas e que
+exige dessoldar algo para trocar um pot **falha esta asserção com todas as
+folgas verdes**.
+
+O que a asserção obriga a produzir: uma **ordem de montagem escrita**, peça a
+peça, e para cada parafuso o vector de aproximação da chave. É a única asserção
+que responde à pergunta que nenhum portão do projecto responde — *isto
+monta-se?* — e por isso é a única que antecipa a verificação real, que é o dB
+com as peças na mão (bts 15ga).
+
+### As seis originais
 
 - **Rígidas (do STEP):** (1) placa cabe na cavidade (bbox+calços, folga borda ≥
   declarada); (2) furos alinham placa↔postes/brackets (parafusado); (3) altura
