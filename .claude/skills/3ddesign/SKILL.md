@@ -82,7 +82,37 @@ prove o que afirma **PARA a pipeline** (exit ≠ 0).
 
 ---
 
-## 3 · As 6 asserções
+## 2b · ⚠️ A ARQUITECTURA QUE ESTA SKILL VERIFICA MUDOU (29/09)
+
+**Verifica-se a rev C com o painel como datum, não a rev B.** O `ppc/007` vem
+antes do `ppc/003`: gastar rigor de verificação sobre a arquitectura antiga é
+gastá-lo no sítio errado.
+
+**O painel é o datum; o fundo é tampa e não carrega nada.** Portanto, no modelo:
+
+- a caixa é **derivada** do painel — nenhuma dimensão de corte nasce no modelo
+  da caixa (ver a passada *fonte de datum* da `/audit`);
+- as alturas de peça de painel **não são fixas no modelo**: a peça tem curso
+  vertical, e o modelo verifica se o curso CHEGA, não se a altura bate;
+- o que atravessa o painel monta-se na placa, não na parede com fio.
+
+## 3 · As 7 asserções
+
+### 7 — A CAIXA É MONTÁVEL  *(nova, 29/09 — ppc/003 §3)*
+
+**Cada peça entra e sai na ordem declarada, com a ferramenta a alcançar cada
+parafuso.** Não é folga, é **sequência**: uma caixa cujas peças cabem todas e
+que exige dessoldar algo para trocar um pot falha esta asserção com todas as
+folgas verdes.
+
+> 🔴 **É a única asserção que antecipa a verificação REAL**, que é o dB com as
+> peças na mão. Nenhum portão do projecto — ERC, DRC, folgas, courtyards —
+> responde "isto monta-se?", e a rev C provou-o com nove sintomas (bts 15ga).
+
+Entregável: a **ordem de montagem escrita**, peça a peça, com o vector de
+aproximação da chave para cada parafuso. Sem ela a asserção não é verificável.
+
+### As seis originais
 
 **Rígidas (físicas, computadas do STEP):**
 
