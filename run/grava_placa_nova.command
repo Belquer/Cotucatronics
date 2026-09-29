@@ -24,7 +24,7 @@
 # A ordem completa, numa placa de fabrica (ver battle_scars):
 #     BOOT+RST -> program-boot -> RST,depois BOOT -> program-dfu
 # E o app NAO cabe na flash interna (283 KB contra 128 KB): nao ha atalho.
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../src"
 echo "grava_placa_nova v0.2.0"
 
 # So linhas de DFU da ST; o resto da USB (interfaces Arturia e afins) nao conta.

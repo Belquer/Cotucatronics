@@ -1,6 +1,6 @@
 #!/bin/bash
 # ccmap-pdf.command v0.1.0 — wrapper duplo-clicavel de ccmap-pdf.sh
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../docs"
 ./ccmap-pdf.sh
 echo
 read -p "Press Enter to close..."

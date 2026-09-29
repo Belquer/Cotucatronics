@@ -1,6 +1,6 @@
 #!/bin/bash
 # monitor.command v0.1.0 — wrapper duplo-clicavel do cotuca_serial.py
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../src"
 echo "monitor.command v0.1.0"
 echo
 echo "Comandos do firmware: board | list | k1..k4 <0-1> | tone on | tone off"

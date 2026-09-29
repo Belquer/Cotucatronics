@@ -3,7 +3,7 @@
 #
 # v0.2.0: junta o banco do midi.h ao do dynamics.h. Os dois rodam no
 # Mac porque os dois arquivos sao C++ puro e board-agnostic.
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../src"
 echo "test.command v0.4.0 — os CINCO testes nativos"
 echo
 echo "dynamics.h e midi.h sao C++ puro e board-agnostic, entao a"

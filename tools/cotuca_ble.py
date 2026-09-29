@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_ble v0.1.0 — a consola do Cotucatronics SEM FIO, por BLE.
+"""cotuca_ble v0.4.0 — a consola do Cotucatronics SEM FIO, por BLE.
 
     tools/cotuca_ble.py [--send "board" "midi" ...] [--listen SEG] [--nome NOME]
 
@@ -25,7 +25,7 @@ import argparse
 import asyncio
 import sys
 
-VERSAO = "0.1.0"
+VERSAO = "0.4.0"
 
 NUS_SVC = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 NUS_RX  = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"   # o Mac ESCREVE aqui
@@ -34,14 +34,50 @@ NUS_TX  = "6e400003-b5a3-f393-e0a9-e50e24dcca9e"   # a placa NOTIFICA aqui
 
 async def corre(nome, comandos, segundos):
     from bleak import BleakClient, BleakScanner
-    print("  a procurar `%s`..." % nome)
-    d = await BleakScanner.find_device_by_name(nome, timeout=10.0)
+    print("  a varrer 10 s...")
+    # ⚠️ "NAO ENCONTRADO" NAO E RESPOSTA. A primeira versao dizia so isso, e
+    # nao distinguia "a ponte esta morta" de "anuncia com outro nome" de "o
+    # Mac nao esta a ver radio nenhum". Varrer e MOSTRAR o que se viu
+    # transforma um nao em dados — e foi o que faltou a tarde inteira do
+    # OLED, medir o que ha em vez de perguntar pelo que se espera.
+    achados = await BleakScanner.discover(timeout=10.0, return_adv=True)
+    d = None
+    for dev, adv in achados.values():
+        n = (adv.local_name or dev.name or "")
+        if n == nome:
+            d = dev; break
+    if d is None:   # 2a tentativa: pelo SERVICO, que nao depende do nome
+        for dev, adv in achados.values():
+            if NUS_SVC in [u.lower() for u in (adv.service_uuids or [])]:
+                d = dev
+                print("  (achei pelo SERVICO, nao pelo nome: %r)"
+                      % (adv.local_name or dev.name))
+                break
     if d is None:
-        print("  NAO ENCONTRADO. A ponte esta alimentada? (o +5V dela vem do"
-              " step-down, logo precisa dos 15 V)")
+        print("  NAO ACHEI `%s`. O que o radio viu nestes 10 s (%d aparelhos):"
+              % (nome, len(achados)))
+        for dev, adv in sorted(achados.values(),
+                               key=lambda x: -(x[1].rssi or -999))[:12]:
+            print("    %-28s rssi %-5s %s"
+                  % ((adv.local_name or dev.name or "(sem nome)")[:28],
+                     adv.rssi, dev.address))
+        if not achados:
+            print("    NENHUM — o Bluetooth do Mac esta ligado? Sem aparelho"
+                  " nenhum a varredura nao provou nada.")
         return 3
     print("  achei: %s" % d.address)
     async with BleakClient(d) as c:
+        # ⚠️ DESPEJA A TABELA ANTES DE SUBSCREVER. A 29/09 a ligacao caiu no
+        # `start_notify` com um "disconnected" seco, e nao havia como saber se
+        # a tabela estava errada ou se a subscricao pedia emparelhamento.
+        # Imprimir o que se VE antes de tentar usar transforma as duas em
+        # perguntas separadas — e o que se ve fica mesmo que o resto caia.
+        print("  --- tabela GATT ---")
+        for sv in c.services:
+            print("    servico %s" % sv.uuid)
+            for ch in sv.characteristics:
+                print("      %s  %s" % (ch.uuid, ",".join(ch.properties)))
+        print("  --- fim da tabela ---\n")
         svcs = {s.uuid.lower() for s in c.services}
         if NUS_SVC not in svcs:
             print("  LIGOU, mas nao tem o servico de consola. A ponte esta em"
@@ -56,8 +92,17 @@ async def corre(nome, comandos, segundos):
         await c.start_notify(NUS_TX, chegou)
         print("  ligado · consola aberta\n")
         for cmd in comandos:
-            print("  > %s" % cmd)
-            await c.write_gatt_char(NUS_RX, (cmd + "\n").encode(), response=False)
+            dados = (cmd + "\n").encode()
+            # ⚠️ COM CONFIRMACAO, e a 29/09 isto foi o conserto do diagnostico.
+            # A primeira versao escrevia SEM resposta: a ponte contou zero
+            # escritas e o cliente nao se queixou de nada — silencio
+            # indistinguivel de sucesso, que e a familia que este projecto
+            # persegue. Com confirmacao, ou passa ou diz o nome do erro.
+            try:
+                await c.write_gatt_char(NUS_RX, dados, response=True)
+                print("  > %s   (%d B entregues)" % (cmd, len(dados)))
+            except Exception as e:
+                print("  > %s   *** A ESCRITA FALHOU: %s" % (cmd, e))
             await asyncio.sleep(1.2)
         if segundos:
             await asyncio.sleep(segundos)

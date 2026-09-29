@@ -11308,3 +11308,65 @@ bindings"* — que não diz nada — em *"estes N alvos não existem"*, que diz 
 ⚠️ E o id é **estável**: reordenar ou apagar widgets numa página não o muda —
 ao contrário do que o cabeçalho antigo dizia. O que destrói tudo é **regerar**
 as páginas, que apaga os ids e deixa os bindings órfãos sem erro nenhum.
+
+## 15fr — escrita BLE sem confirmação: o silêncio outra vez lido como sucesso
+
+29/09, a montar a consola sem fio (`ppc/006` fase 1). O Mac ligava-se à ponte,
+a tabela GATT aparecia completa, o comando era enviado — e a ponte contava
+**zero**. O cliente não se queixava de nada.
+
+A causa: eu escrevia **sem confirmação** (`response=False`). O CoreBluetooth
+aceita o pedido, devolve controlo, e se a escrita não sair não diz nada.
+
+> **Terceira vez esta semana, e é sempre a mesma forma.** O `Result` do SPI
+> deitado fora (15fi), a minha própria guarda do painel ignorada (15fm), e
+> agora uma escrita sem eco. Todas produziram *"correu bem"* sobre coisa
+> nenhuma.
+
+Trocado por `response=True`, a resposta passou a ser uma de duas — `6 B
+entregues` ou o nome do erro — e passou logo à primeira.
+
+### O instrumento que separou os troços, e fica
+
+Antes disso o `consola: 0 B` não distinguia **"o rádio não entregou"** de
+**"a fila da ponte não escoou"**: um contador no FIM do percurso responde por
+todo o percurso. Dois consertos, os dois pequenos:
+
+- **`NUS: N escrita(s), M B crus`** — conta a CHEGADA, não o fim;
+- **`eco <texto>`** na consola USB da ponte — injecta na fila **como se viesse
+  do rádio**, e prova o troço ponte→Daisy sem BLE nenhum.
+
+Com os dois, a medição foi imediata: `eco` moveu o contador do fim e o `NUS`
+ficou em zero. **O troço que eu controlava estava bom; o que faltava era o
+rádio.** Sem eles, era um "não funciona" sem sítio.
+
+## 15fs — o anúncio BLE e a tabela GATT: duas ordens erradas, nenhum erro
+
+29/09. Acrescentar um serviço ao servidor NimBLE que o BLEMIDI já tinha
+arrancado deu **dois sintomas diferentes em duas tentativas**, e nenhum deles
+foi um erro de compilação ou de execução:
+
+| tentativa | o que fiz | o sintoma |
+|---|---|---|
+| 1ª | criar o serviço depois do `RADIO.begin()` | **o anúncio PAROU** — o Mac varreu 10 s, viu 21 aparelhos, não viu este |
+| 2ª | idem, reiniciando o anúncio à mão | anuncia e liga, mas a **característica de notificação não existe** |
+| 3ª | criar o serviço **antes** do `RADIO.begin()` | funciona |
+
+A razão está no `begin()` da biblioteca: ele faz init, cria o servidor, cria o
+serviço MIDI, e **arranca o anúncio no fim** — e no NimBLE é o arranque do
+anúncio que **constrói a tabela GATT**. Serviço criado depois entra na lista e
+as características ficam de fora.
+
+> **A biblioteca aceitou as duas ordens erradas em silêncio.** Só o cliente do
+> outro lado soube dizer que faltava alguma coisa — e na primeira tentativa
+> nem isso, porque um rádio que deixou de anunciar tem exactamente a mesma
+> cara de um rádio fora de alcance.
+
+Conserto de diagnóstico, e vale mais que o de código: o `board` da ponte passa
+a dizer **`radio: a ANUNCIAR (descobrivel)`**. Pergunta-se pelo USB em vez de
+se deduzir do silêncio do ar.
+
+⚠️ **E a cache GATT do macOS entra na história.** Depois de corrigida a ordem,
+a ligação ainda caía — o Mac guardava a tabela partida da tentativa anterior.
+Reiniciar o Bluetooth do Mac resolveu. **Tabela que muda entre gravações pede
+cache limpa antes de se acusar o firmware.**

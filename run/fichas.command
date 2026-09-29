@@ -1,6 +1,6 @@
 #!/bin/bash
 # fichas.command v0.1.0 — embrulho de duplo-clique para tools/fichas.py
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../tools"
 echo "Fichas tecnicas do Cotucatronics"
 echo
 echo "  1) descarregar o que falta   (vai a rede)"

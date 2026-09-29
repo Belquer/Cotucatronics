@@ -1,6 +1,6 @@
 #!/bin/bash
 # measure.command v0.1.0 — wrapper duplo-clicavel do cotuca_measure.py
-cd "$(dirname "$0")"
+cd "$(dirname "$0")/../src"
 echo "measure.command v0.1.0"
 echo
 echo "Mede a frequencia real da saida do firmware por FFT."

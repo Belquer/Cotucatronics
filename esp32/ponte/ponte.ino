@@ -1,5 +1,5 @@
 // ============================================================================
-// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.1.0
+// Cotucatronics — ponte BLE MIDI <-> UART MIDI      ponte v1.2.0
 //                 + consola sem fio por NUS (ppc/006 fase 1)
 // ESP32-C3 SuperMini · substitui o WIDI Core 1.3
 //
@@ -39,7 +39,7 @@
 #include <MIDI.h>
 #include <Preferences.h>
 
-#define PONTE_VERSAO "1.1.0"
+#define PONTE_VERSAO "1.2.0"
 
 // ---- pinos -----------------------------------------------------------------
 // ⚠️⚠️ MAJOR a 21/09: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
@@ -147,12 +147,19 @@ static uint8_t   nus_fila[NUS_FILA];
 static volatile size_t nus_cab = 0, nus_cau = 0;
 static uint32_t  nus_descartes = 0;   // bytes do Mac que nao couberam
 static uint32_t  nus_para_daisy = 0, nus_do_daisy = 0;
+// ⚠️ CONTA A ESCRITA, NAO SO O FIM DO CAMINHO. A 29/09 o `consola:` deu zero
+// e isso nao distinguia "o BLE nao entregou" de "a fila nao escoou" — um
+// contador no fim do percurso responde por todo o percurso, que e o mesmo
+// defeito do `pkout` sem o `pk`. Este conta a CHEGADA.
+static uint32_t  nus_escritas = 0, nus_bytes_crus = 0;
 
 class NusRxCB : public NimBLECharacteristicCallbacks
 {
     void onWrite(NimBLECharacteristic* c) override
     {
         const std::string v = c->getValue();
+        nus_escritas++;
+        nus_bytes_crus += v.size();
         for(size_t i = 0; i < v.size(); i++)
         {
             const size_t prox = (nus_cab + 1) % NUS_FILA;
@@ -321,17 +328,28 @@ void setup()
     Serial1.setTxBufferSize(TX_BUFFER);   // tem de vir ANTES do begin
     Serial1.begin(BAUD, SERIAL_8N1, PINO_RX, PINO_TX);
 
-    RADIO.begin(MIDI_CHANNEL_OMNI);
-    SER.begin(MIDI_CHANNEL_OMNI);
-    RADIO.turnThruOff();
-    SER.turnThruOff();
-
-    RADIO.setHandleMessage(DaBle);
-    SER.setHandleMessage(DaSerial);
-
-    // NUS AO LADO DO MIDI, no MESMO servidor. O `createServer()` do NimBLE
-    // devolve o que ja existe — o BLEMIDI ja o criou no `RADIO.begin()`
-    // acima, e por isso esta ordem nao e negociavel.
+    // ---- NUS ANTES do RADIO.begin(), e a ORDEM E O CONSERTO ----
+    //
+    // 🔴 MEDIDO a 29/09, depois de duas tentativas erradas. O `begin()` do
+    // BLEMIDI faz, por esta ordem: init do dispositivo, cria o servidor, cria
+    // o servico MIDI, `service->start()`, e **arranca o anuncio**. E no
+    // NimBLE e o arranque do ANUNCIO que constroi a tabela GATT.
+    //
+    // Criar o nosso servico DEPOIS disso tem dois sintomas, nesta ordem:
+    //   1a tentativa: o anuncio PARA — o Mac varre 10 s, ve 21 aparelhos, e
+    //      nao ve este. Radio que deixou de anunciar tem a mesma cara de
+    //      radio fora de alcance.
+    //   2a tentativa (com o anuncio reiniciado a mao): anuncia e liga, mas a
+    //      caracteristica de notificacao NAO EXISTE — o servico entrou na
+    //      lista e as caracteristicas ficaram fora da tabela.
+    //
+    // Nenhum dos dois deu erro. A biblioteca aceitou as duas ordens erradas
+    // em silencio, e so o cliente do outro lado soube dizer que faltava algo.
+    //
+    // Entao inicializa-se o dispositivo aqui, cria-se o NUS, e deixa-se o
+    // `RADIO.begin()` fazer o resto — o `init` e o `createServer` dele sao
+    // idempotentes, e o anuncio dele constroi a tabela com os DOIS servicos.
+    NimBLEDevice::init("Cotucatronics");
     {
         NimBLEServer* srv = NimBLEDevice::createServer();
         NimBLEService* sv = srv->createService(NUS_SVC);
@@ -342,6 +360,15 @@ void setup()
         sv->start();
         // (!) de proposito FORA do anuncio — ver a nota do bloco NUS.
     }
+
+    RADIO.begin(MIDI_CHANNEL_OMNI);
+    SER.begin(MIDI_CHANNEL_OMNI);
+    RADIO.turnThruOff();
+    SER.turnThruOff();
+
+    RADIO.setHandleMessage(DaBle);
+    SER.setHandleMessage(DaSerial);
+
 
     BLERADIO.setHandleConnected([]() {
         conectado = true;
@@ -399,11 +426,38 @@ static void Shell()
         if(c == '\n' || c == '\r')
         {
             buf[n] = 0;
-            if(n && strncmp(buf, "board", 5) == 0)
+            if(n && strncmp(buf, "eco ", 4) == 0)
+            {
+                // INJECTA na fila do NUS como se tivesse vindo do radio.
+                // Parte o caminho em dois: com isto prova-se ponte->Daisy
+                // sem depender do BLE, e o que sobra e so o troco do radio.
+                const char* t = buf + 4;
+                for(const char* q = t; *q; q++)
+                {
+                    const size_t prox = (nus_cab + 1) % NUS_FILA;
+                    if(prox == nus_cau) { nus_descartes++; break; }
+                    nus_fila[nus_cab] = (uint8_t)*q;
+                    nus_cab = prox;
+                }
+                const size_t prox = (nus_cab + 1) % NUS_FILA;
+                if(prox != nus_cau) { nus_fila[nus_cab] = '\n'; nus_cab = prox; }
+                Serial.printf("eco: %u byte(s) na fila — o laco escoa ja\n",
+                              (unsigned)strlen(t) + 1);
+            }
+            else if(n && strncmp(buf, "board", 5) == 0)
             {
                 Serial.printf("ponte v%s · BAUD %lu · %s\n", PONTE_VERSAO,
                               (unsigned long)BAUD,
                               conectado ? "CONECTADO" : "sem link");
+                Serial.printf("  radio: %s\n",
+                              NimBLEDevice::getAdvertising()->isAdvertising()
+                                  ? "a ANUNCIAR (descobrivel)"
+                                  : "NAO anuncia — ou ha link, ou parou");
+                Serial.printf("  NUS: %lu escrita(s) do Mac, %lu B crus"
+                              " · fila %s\n",
+                              (unsigned long)nus_escritas,
+                              (unsigned long)nus_bytes_crus,
+                              nus_cau == nus_cab ? "vazia" : "COM COISA PARADA");
                 Serial.printf("  consola: %lu B do Mac -> Daisy · %lu B da Daisy"
                               " -> Mac · %lu descartados (fila cheia)\n",
                               (unsigned long)nus_para_daisy,
