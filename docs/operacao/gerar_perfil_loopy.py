@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""gerar_perfil_loopy v0.9.0 — escreve o .lpcontrolprofile a partir do projeto.
+"""gerar_perfil_loopy v1.0.1 — escreve o .lpcontrolprofile a partir do projeto.
 
-    gerar_perfil_loopy.py <Cotucatronics.lpproj> [saida.lpcontrolprofile]
+    gerar_perfil_loopy.py <Cotucatronics.lpproj> <saida.lpproj>
 
 Le o projeto exportado do Loopy Pro (zip com Project.sqlite), casa cada
 widget com o seu parametro pelo TITULO, e emite um perfil de controlo
@@ -302,6 +302,55 @@ def main():
                   '227f559e.MIDI.Cotucatronics1 Bluetooth.controllerprofile',
                   '227f559e', 'Cotucatronics1 Bluetooth')]
 
+    # ---- SAIDA COMO .lpproj: a UNICA que funciona para bindings de widget ----
+    #
+    # 🔴 DESCOBERTO a 23/09 com dois perfis REAIS que o dB exportou do Loopy:
+    #
+    #     exportado solto: "Subject": "Playing Tracks" · "Identifier": "Mute"
+    #     este gerador:    "Subject": "#1775"          <- id de um WIDGET
+    #
+    # Perfil exportado sozinho enderea ACCOES GLOBAIS — tocar, parar, mute.
+    # Nunca widgets, e nao pode: solto, ele nao sabe de projecto nenhum, e um
+    # `#1775` ali nao significa coisa alguma. O Loopy carrega-o e mostra
+    # "perfil global sem bindings", que era exactamente o sintoma.
+    #
+    # ⚠️ Por isso um perfil de widgets NAO SE ENTREGA SOLTO. Tem de voltar
+    # para dentro do `.lpproj`, em `Control Profiles/`. Foi por isso que o
+    # `.lpproj` sempre funcionou ao dB e o perfil nunca — e eu passei o dia a
+    # afinar o invólucro de uma entrega que nao podia funcionar de forma
+    # nenhuma. A forma estava certa; o SITIO e que estava errado.
+    if saida.endswith('.lpproj'):
+        import zipfile as _zf
+        if os.path.exists(saida): os.remove(saida)
+        alvo_nomes = {nome: (dev, devnome) for _, nome, dev, devnome in alvos}
+        # ⚠️ COPIA ENTRADA A ENTRADA DO ARQUIVO, nao anda pelo sistema de
+        # ficheiros. Um `os.walk` perde as ENTRADAS DE DIRECTORIO do zip
+        # (`Resources/`, `Control Profiles/`…) — o meu primeiro tentame
+        # entregou 16 entradas onde o original tinha 20, e um bundle que nao
+        # e estruturalmente identico ao que o Loopy escreveu e mais uma
+        # variavel a somar a uma investigacao que ja tinha de mais.
+        import io as _io
+        orig = _zf.ZipFile(lpproj)
+        z = _zf.ZipFile(saida, 'w', _zf.ZIP_DEFLATED)
+        trocados = 0
+        for info in orig.infolist():
+            base = info.filename.rstrip('/').split('/')[-1]
+            if base in alvo_nomes and 'Control Profiles' in info.filename:
+                dev, devnome = alvo_nomes[base]
+                plist = {'Bindings': binds, 'Device': dev,
+                         'Device Name': devnome, 'Type': 'MIDI'}
+                buf = _io.BytesIO(); plistlib.dump(plist, buf)
+                z.writestr(info, buf.getvalue())
+                trocados += 1
+            else:
+                z.writestr(info, orig.read(info.filename))
+        z.close(); orig.close()
+        print("   dispositivos substituidos DENTRO do projecto: %d" % trocados)
+        print("   paginas, ids e tudo o resto: INTACTOS")
+        print(f"\n   escrito: {saida}  ({len(binds)} bindings)")
+        shutil.rmtree(tmp)
+        return
+
     pacote_saida = alvos[0][0]
     raiz_saida = saida
     if not raiz_saida.endswith('.lpcontrolprofile'):
@@ -317,6 +366,8 @@ def main():
                 shutil.copy2(os.path.join(origem, f), os.path.join(raiz_saida, f))
                 copiados += 1
     escritos = 0
+    print("   (!) saida SOLTA: um perfil de widgets so funciona DENTRO do"
+          " .lpproj. Passe uma saida terminada em `.lpproj`.")
     for pacote, nome, dev, devnome in alvos:
         if pacote != pacote_saida: continue
         plist = {'Bindings': binds, 'Device': dev,
