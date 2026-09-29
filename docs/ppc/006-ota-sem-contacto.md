@@ -186,8 +186,22 @@ slots reprovam o CRC.
    silêncio é que faltava, não velocidade. Débito final ~1,6 kB/s (~6,5 min).
    Comandos: `!board` e `!ota <N> <md5>`; cliente `tools/cotuca_ble.py --ota`.
 
-3. **Escolhedor + META + slots**, provado com sabotagem, ainda **com a caixa
-   aberta**.
+3. 🟡 **Escolhedor + META + slots — EM CURSO.**
+
+   ✅ **Provado a 29/09:** o `FLASH_ADDRESS` aceita ser trocado e o bootloader
+   anuncia a QSPI inteira ao DFU; o app religa para `0x90050000` e o binário
+   sai correcto (`.isr_vector 0x90050000`); o mapa real de sectores está lido.
+
+   🔴 **E a ORDEM é obrigatória, por cicatriz (15fv):** o **escolhedor
+   primeiro**, num sector de 64 KB em `0x90040000`, e só depois o app no slot
+   de execução. Gravar o app religado enquanto o app velho ainda ocupa
+   `0x90040000 + 289 KB` **apaga o que está a correr** — os dois sobrepõem-se
+   em 225 KB, e foi o que aconteceu.
+
+   ✅ **E a recuperação ficou mais barata:** o bootloader passou de
+   `extdfu-10ms` para `intdfu-2000ms`. A janela de DFU era de **dez
+   milissegundos** — não havia instante a apanhar — e agora são **dois
+   segundos**.
 4. **Sessão física final:** gravar o escolhedor, gravar as duas imagens,
    exercitar as três sabotagens e as combinações de botões. Só então fechar.
 5. **OTA da Daisy por BLE**, já com rede de segurança debaixo.

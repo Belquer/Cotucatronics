@@ -11485,3 +11485,58 @@ continuou a anunciar na imagem anterior de todas as vezes, porque só se
 escreve na partição **inactiva**. E a confirmação é tardia de propósito — só
 depois de **15 s de laço com o rádio a anunciar**, o que apanha crash-loop e
 rádio morto, os dois modos que deixariam a caixa inalcançável.
+
+## 15fv — "risco zero" sem fazer a subtracção: gravei o app novo por cima do que estava a correr
+
+29/09, primeiro passo da fase 3. Disse ao dB, com todas as letras, que gravar o
+app religado em `0x90050000` era **risco zero** porque a placa continuaria a
+arrancar do app velho em `0x90040000`.
+
+Era falso, e a conta que o desmentia cabia numa linha:
+
+```
+app velho:  0x90040000 + 289 188 B  ->  ocupa ate ~0x90086000
+slot novo:  0x90050000              ->  64 KB DEPOIS do inicio do velho
+sobreposicao: 225 KB
+```
+
+A gravação apagou o miolo do app que estava a correr. A placa deixou de
+enumerar, e recuperá-la levou meia hora.
+
+> **Tratei a distância entre os ENDEREÇOS INICIAIS como se fosse a distância
+> entre as IMAGENS.** Dois endereços só são "diferentes" para este efeito se as
+> imagens não se tocarem — e isso é uma subtracção, não uma impressão.
+
+⚠️ **E o mapa certo tinha sido escrito por mim vinte minutos antes**, no mesmo
+documento: `ESCOLHEDOR 64 KB` seguido de `EXECUÇÃO 512 KB`. Escrevê-lo não me
+fez usá-lo. **Documento certo não protege de decisão tomada sem o reler.**
+
+**A ordem certa, e é a que fica:** o escolhedor primeiro — um sector de 64 KB
+em `0x90040000`, que não invade nada — e só depois o app no slot de execução.
+Assim nunca há dois donos do mesmo endereço.
+
+### O que salvou, e nada disto foi sorte
+
+- **Ponto de retorno guardado ANTES de começar** (a regra da `bancada-firmware`
+  que já custou seis gravações às cegas uma vez): `app-0x90040000-KNOWN-GOOD.bin`
+  no disco, com a árvore limpa e o commit anotado.
+- **O DFU da ROM da ST**, que vive no silício e responde a BOOT0 alto no
+  arranque — independente do app, do bootloader e de tudo o que eu pudesse ter
+  partido.
+- **A laçada antes do botão.** Pedir o toque e só então começar a gravar é a
+  família de bug de ordem aplicada a duas pessoas; armar a espera primeiro
+  apanhou o DFU à tentativa 531 sem ninguém ter de acertar o instante.
+
+### E o atrito que eu andava a contornar em vez de medir
+
+O RESET simples nunca abria janela nenhuma, e eu tentei três vezes antes de ir
+ver porquê. O bootloader instalado era o
+`dsy_bootloader_v6_4-extdfu-**10ms**` — a janela durava **dez milissegundos**.
+Não havia instante a apanhar.
+
+Reinstalado como `intdfu-**2000ms**`: dois segundos. O toque passou de corrida
+a gesto.
+
+> **Ao terceiro atrito repetido, medir o atrito em vez de melhorar a pontaria.**
+> É a mesma lição da §1 da `bancada-firmware`, e eu voltei a aprendê-la do lado
+> errado.
