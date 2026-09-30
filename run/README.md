@@ -7,6 +7,7 @@ ficheiro, para não ser preciso abrir nenhum para saber qual é qual.
 
 | ficheiro | o que faz |
 |---|---|
+| **`vigia-reset.command`** | **Apanha reinícios da Daisy** enquanto se mexe nos conectores. Lê o nó de dispositivo em `/dev`, não a placa — uma Daisy que reinicia re-enumera no USB, e o macOS testemunha isso mesmo quando o firmware cai. Tem batimento, para "estável" e "morto" não terem a mesma cara. |
 | **`consola-sem-fio.command`** | A consola da Daisy **por BLE, sem cabo** — liga **uma vez** e fica aberta: escreve comando atrás de comando, `sair` fecha. ⚠️ O macOS mata um processo sem permissão de Bluetooth **sem perguntar** — este é lançado por si, e por isso o sistema pergunta. |
 | `monitor.command` | A mesma consola, mas pelo **USB**. Mais rápida e sem lacunas; precisa do cabo. |
 | `measure.command` | Mede níveis e picos da placa e imprime o relatório. |
