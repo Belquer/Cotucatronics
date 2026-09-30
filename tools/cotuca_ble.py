@@ -32,7 +32,7 @@ import argparse
 import asyncio
 import sys
 
-VERSAO = "0.6.0"
+VERSAO = "0.6.1"
 
 NUS_SVC = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 NUS_RX  = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"   # o Mac ESCREVE aqui
