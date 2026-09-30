@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_ble v0.7.0 — a consola do Cotucatronics SEM FIO, por BLE.
+"""cotuca_ble v0.7.1 — a consola do Cotucatronics SEM FIO, por BLE.
 
     tools/cotuca_ble.py --viva          <- consola interactiva (bancada)
     tools/cotuca_ble.py [--send "board" "midi" ...] [--listen SEG] [--nome NOME]
@@ -33,7 +33,7 @@ import argparse
 import asyncio
 import sys
 
-VERSAO = "0.7.0"
+VERSAO = "0.7.1"
 
 NUS_SVC = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 NUS_RX  = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"   # o Mac ESCREVE aqui
@@ -153,7 +153,40 @@ async def corre(nome, comandos, segundos, ota=None, viva=False):
               " fora de alcance, ou com firmware anterior a v1.3.0.)")
         return 3
     print("  achei: %s" % d.address)
-    async with BleakClient(d) as c:
+
+    # ⚠️ LIGAR E UM PASSO PROPRIO, E FALHA DE MANEIRAS PROPRIAS. Ate a v0.7.0
+    # isto era um `async with` seco dentro do try do main, e a 29/09 imprimiu
+    # "FALHOU: " — o nome do erro em branco, porque ha excepcoes do bleak cujo
+    # str() e vazio. Erro sem mensagem e ausencia de dado com cara de dado, que
+    # e a familia da cicatriz 13k. Agora diz-se o TIPO, que nunca e vazio.
+    cli = None
+    ultima = None
+    for tentativa in (1, 2):
+        try:
+            print("  a ligar (tentativa %d, ate 25 s)..." % tentativa)
+            cli = BleakClient(d, timeout=25.0)
+            await cli.connect()
+            break
+        except Exception as e:
+            ultima = e
+            print("    nao ligou: %s: %s"
+                  % (type(e).__name__, str(e) or "(a excepcao nao traz texto)"))
+            cli = None
+            await asyncio.sleep(2.0)
+    if cli is None:
+        print("\n  NAO CONSEGUI LIGAR. A ponte FOI VISTA (o anuncio chegou),")
+        print("  portanto esta alimentada e ao alcance — o que falhou foi a")
+        print("  ligacao, que e outra coisa.")
+        print("  ultimo erro: %r" % (ultima,))
+        print("\n  O que costuma destravar, por ordem de custo:")
+        print("   1. o macOS guarda a ligacao em cache: desliga e liga o")
+        print("      Bluetooth do Mac (nao e superticao — limpa o cache do")
+        print("      CoreBluetooth, e ja destravou isto a 29/09);")
+        print("   2. a ponte pode estar com as 3 vagas ocupadas: fecha o Loopy")
+        print("      no iPad e tenta outra vez;")
+        print("   3. reinicia a ponte (tirar e por a alimentacao dela).")
+        return 3
+    async with cli as c:
         # ⚠️ DESPEJA A TABELA ANTES DE SUBSCREVER. A 29/09 a ligacao caiu no
         # `start_notify` com um "disconnected" seco, e nao havia como saber se
         # a tabela estava errada ou se a subscricao pedia emparelhamento.
@@ -224,7 +257,12 @@ def main():
     try:
         return asyncio.run(corre(a.nome, a.send, a.listen, a.ota, a.viva))
     except Exception as e:
-        print("  FALHOU: %s" % e)
+        # O TIPO NUNCA E VAZIO; o texto pode ser. Imprimir so o texto foi o que
+        # produziu o "FALHOU: " nu de 29/09.
+        print("  FALHOU: %s: %s"
+              % (type(e).__name__, str(e) or "(a excepcao nao traz texto)"))
+        import traceback
+        traceback.print_exc()
         return 3
 
 
