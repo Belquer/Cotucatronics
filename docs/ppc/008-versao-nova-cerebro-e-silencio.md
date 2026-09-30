@@ -540,14 +540,124 @@ E o banco de condensadores não chega: os 1000 µF deram só ~50 % de melhoria
 porque *"condensadores grandes têm resistência interna que limita a eficiência
 deles em alta frequência"*. **Bulk é necessário, não suficiente.**
 
-### 🔴 E a parte que NÃO tem prior art
+### ✅ A LACUNA FECHOU: existe precedente, e existe o conserto
 
-> **Nenhum desenho aberto combina entrada de instrumento de alta impedância COM
-> saída em class-D na mesma placa.**
+Eu escrevi acima que ninguém publicou esta combinação. **Estava errado** — há um
+caso de primeira mão, do laboratório do **Halldór Úlfarsson** (Intelligent
+Instruments Lab), com a mesma geometria: pickups de alta impedância, transdutor
+de 20 W accionado por amplificador de 50 W, **tudo no mesmo corpo e na mesma
+alimentação**.
 
-O agente procurou especificamente. Essa combinação — que é exactamente a nossa —
-é genuinamente inédita no hardware aberto publicado. **Não há nada para copiar
-nessa fronteira, e vai precisar de validação em bancada própria.**
+**Sintoma:** *"estamos a ter ruído digital na saída de áudio quando a
+alimentamos da mesma fonte que o amplificador."*
+
+**Diagnóstico do mantedor da Bela:** *"recomendo uma entrada de alimentação
+dedicada (ou seja: **sem terra partilhado**) para o amplificador de potência,
+senão vais ter um laço de terra. Em alternativa, se o teu amplificador tiver
+entrada balanceada, deves conseguir atacá-lo com sinal balanceado."*
+
+**Resultado:** *"o sinal balanceado parece ser a resolução do nosso problema."*
+
+E o registo longo do mesmo laboratório é o documento mais útil de toda a
+pesquisa, porque é um instrumento de realimentação — *"qualquer ruído no sistema
+tende a acumular-se"*:
+
+| tentativa | resultado |
+|---|---|
+| pickups nos 5 V do computador | *"imensa porcaria digital… tão sujo que nem tentámos filtrar"* |
+| mesma fonte que computador e amp, **com** regulador e filtragem | *"ainda demasiado sujo… porque os componentes partilham terra e partilham ruído por ali"* |
+| **pilha de 9 V dedicada** | *"o mais limpo que conseguimos pôr estes pickups a soar"* |
+
+### 🔴 GANHO EM ANALÓGICO, ANTES DO ADC — não em software depois
+
+Do mesmo registo, e vale para o nosso firmware:
+
+> *"tivemos de acrescentar muito ganho digitalmente… esse ganho digital acabou
+> por ser uma fonte consistente de sujidade."*
+
+O conserto foi um **pré-amplificador analógico ×5** alimentado pela mesma pilha.
+**O ganho vai antes do conversor.** Ampliar em software amplifica também o chão
+de ruído que o conversor já digitalizou.
+
+### 🔴 E O EXCITER ABANA AS TUAS PRÓPRIAS SOLDAS
+
+Segunda falha documentada, piezo de alta impedância e actuador no mesmo corpo: o
+ADC entrava em colapso durante a realimentação, e a causa raiz era **mecânica**:
+
+> *"uma má ligação de solda na linha de 3,3 V que ia para os faders e
+> interruptores, que às vezes **desligava com as vibrações fortes da caixa
+> produzidas pelo altifalante**."*
+
+⚠️ **Isto pode ser o mecanismo da noite de 29/09** — o DPDT desligado, os fios
+do OLED, o conector da ponte. *"Consertaremos uma coisa e outra vai estragar"*
+deixa de ser azar e passa a ser previsão. **A revisão mecânica tem de contar com
+a vibração do próprio instrumento**, não só com a montagem.
+
+### O que a prática de instrumentos actuados (NIME) acrescenta
+
+- **Magnetic Resonator Piano** (McPherson) **evita class-D de propósito** e usa
+  um **amplificador de transcondutância** (corrente proporcional à tensão de
+  entrada), em **configuração diferencial** *"para que os terras de potência e
+  de sinal possam ser separados; as tensões induzidas no terra de potência por
+  outros amplificadores cancelam-se"*. E faz **cancelamento antecipativo**:
+  o amplificador expõe uma tensão proporcional à corrente do actuador, e
+  *"subtraindo uma versão escalada dela, esta interferência é
+  significativamente atenuada."*
+- **Overtone Fiddle** (Overholt) resolve o acoplamento **mecanicamente**: o
+  pickup vai no **fim do braço**, não no corpo, *"o que permite um uso menos
+  contido da realimentação gerada por DSP, porque há muito pouca fuga directa
+  do actuador embebido no corpo de volta ao pickup."* **Perguntar se o piezo e
+  o exciter podem ser desacoplados por colocação antes de os combater
+  electricamente.**
+- **Berdahl** (CCRMA) prova que um **limitador de RMS no laço de realimentação**
+  torna o estado de energia nula localmente assintoticamente estável — com
+  prova de Lyapunov. Leitura obrigatória antes de escrever o DSP de
+  realimentação.
+- **EMvibe** impõe uma restrição de segurança **no software de síntese**:
+  *"não podemos enviar uma forma de onda arbitrária. Temos de garantir uma
+  pequena porção de tempo desligado no sinal, para não danificar os
+  amplificadores."*
+- **Lorentz Lap Brass** (NIME 2024), class-D PAM8406 a accionar cordas: *"há
+  diafonia electrónica notável entre o circuito do pickup óptico e o sinal
+  presente nas cordas"* — **e eles já tinham escolhido pickups ÓPTICOS** para
+  serem cegos a campos magnéticos, e mesmo assim apanharam diafonia do class-D.
+
+### ⚠️ CORRECÇÕES a coisas que eu escrevi acima
+
+1. **O Alex Rice NÃO é um amplificador de carga.** É de **alta impedância,
+   balanceado, JFET discreto**, com 3 MΩ e realimentação que *aumenta*
+   deliberadamente a resistência de entrada. O argumento do amplificador de
+   carga pertence ao **Rod Elliott** e ao **LOM Elektrosluch** — não a ele. A
+   recomendação de carga mantém-se; a atribuição estava errada.
+2. **🔴 O TPA3116D2 NÃO TEM espalhamento de espectro.** Uma busca no texto
+   integral do datasheet dá **zero** ocorrências de *"spread"*. Tem selecção de
+   frequência por pinos (`AM0/AM1/AM2` → 400/500/600/1000/1200 kHz) e um pino
+   `SYNC`. **Eu recomendei-te ligar espalhamento de espectro — no nosso
+   amplificador isso não existe.** Ele vive na família TAS58xx, por registo.
+3. **O MAX98357A comuta a 300 kHz**, não 330 (a ficha contra o guia da
+   Adafruit).
+
+### As duas recomendações que passam a ser as primeiras
+
+> **(a) Alimentação separada e SEM TERRA PARTILHADO para o amplificador dos
+> exciters, com ligação BALANCEADA da metade sensível para a metade que
+> comuta.** É o conserto que funcionou no único caso de primeira mão com a
+> nossa geometria, é o que a Electrosmith vende, e é o que o McPherson desenhou
+> de origem.
+>
+> **(b) Ganho em ANALÓGICO antes do ADC**, nunca em software depois.
+
+### 🔴 E a parte que continua sem medição
+
+Três fontes primárias **discordam** sobre plano de terra dividido ou contínuo ao
+lado de uma entrada sensível: o TAS5825M pede plano contíguo, o TPA3116D2 pede
+estrela no CI, e a Adafruit divide AGND de PGND com uma ferrite. **Não existe
+medição que compare as três numa placa com piezo à entrada e class-D à saída.**
+E **nenhuma fonte primária dá uma distância física mínima** entre um class-D e
+uma entrada de alta impedância.
+
+> **Deixar opções de layout na primeira versão:** footprints de ferrite, e um
+> jumper de dividir-ou-unir. Isto prototipa-se, não se lê.
 
 ### Duas coisas que contrariam suposições comuns
 
