@@ -102,6 +102,67 @@ morre por aqui.
 Candidatos verificados: **STM32H7R3Z8T6** ($6,10/100 na ST, 600 MHz, LQFP144) +
 **APS6404L-3SQR-SN** (8 MB, SOP-8, 3,0 V, $2,90/100).
 
+### 🔴 CORRECÇÃO (estudo da memória, 29/09): a PSRAM NÃO devolve os 12,9 pontos
+
+Aquela medição foi **externo contra interno**, não SDRAM contra PSRAM. Custo de
+uma linha de cache de 32 bytes (o Cortex-M7 tem linha fixa de 32 B):
+
+| memória | 1.ª palavra | pico | **falha de 32 B** |
+|---|---|---|---|
+| **SRAM interna** | ~0 | ~3 GB/s | **~11 ns** |
+| XSPI x16 @152 MHz (APS256, config da ST) | ~50 ns | 608 MB/s | 103 ns |
+| **SDRAM da Daisy** @120 MHz CL3 | ~80 ns | 480 MB/s | **147 ns** |
+| HyperRAM x8 @166 MHz | 56 ns | 333 MB/s | 152 ns |
+| HyperRAM x8 @100 MHz (3,0 V) | 56 ns | 200 MB/s | 216 ns |
+
+**A PSRAM empata com a SDRAM. Só a memória interna é ~14× melhor**, e é aí que
+vivem os 12,9 pontos.
+
+### E daí sai a melhor ideia da pesquisa toda: ENCOLHER, não acrescentar
+
+> Um buffer de freeze de **2 s estéreo a 48 kHz** são **750 KB em float32** — e
+> **375 KB em int16**.
+
+Dois desses são **750 KB**, e o **H7A3/H7B3 tem 1024 KB contíguos**. Com os
+pitch e o delay a caber no resto, **a memória externa desaparece**: zero sinais,
+zero erratas de OCTOSPI, zero corrente de refrescamento ao pé do analógico, e os
+12,9 pontos de volta.
+
+⚠️ **A tensão que isto cria, e que só se resolve medindo:** o H7A3/H7B3 corre a
+**280 MHz = 0,58×** a nossa CPU, o que dava 113 % do prazo pela conta de
+relógio. Mas essa conta **não contabiliza as paragens de memória**, que é
+precisamente o que melhora quando tudo vem para dentro. A conta de relógio diz
+que não cabe; a física da memória diz que pode caber. **Não se decide por
+argumento.**
+
+### ⚠️ E a peça que eu recomendei NÃO serve
+
+A **APS6404L** (Quad-SPI) tem **escrita mapeada quebrada**. Errata da ST
+(ES0478 §2.6.8, ES0491 §2.8.6, ES0596 §2.4.1): *"memory-mapped write error
+response when DQS output is disabled"*, estado **P — contorno parcial**. E o
+contorno obrigatório traz o seu próprio defeito: *"os bytes que deviam ser
+mascarados são escritos na memória"* — ou seja, **escrita parcial estraga as
+amostras vizinhas**. O representante da AP Memory confirma-o no fórum da ST.
+
+Se houver memória externa, as opções sãs são **x16 XSPI** (APS256XXN, $3,90/100,
+mais rápida que a nossa SDRAM actual) ou **HyperRAM** (IS66WVH8M8BLL, validada
+pela ST, com driver e exemplo, e cujo RWDS torna a escrita por byte **realmente
+segura** — contorna a pior errata).
+
+### 🔴 Dois riscos novos, e o segundo é de RUÍDO
+
+**Contenção de DMA.** Medição num fórum da ST: HyperRAM a 100 MHz deu
+**178 MB/s** — e caiu para **54 MB/s** quando um DMA de UART disputou o mesmo
+barramento AXI. **O nosso DMA de SAI corre sempre.** É o maior risco isolado
+deste plano, e mede-se no primeiro protótipo.
+
+**Corrente de refrescamento da PSRAM.** A ficha da AP Memory: *"a corrente de
+pico do refrescamento periódico interno pode chegar a 25 mA, durando algumas
+dezenas de microssegundos"*. A ISSI especifica **60 mA** em rajada a 166 MHz.
+**Isso é um transitório periódico, a taxa fixa, ao lado do analógico** — a mesma
+família do transitório do callback que estraga a Daisy (§5). Se houver PSRAM,
+**leva trilho filtrado próprio**.
+
 🔴 **O RISCO QUE TEM DE SER MEDIDO ANTES DE DESENHAR COBRE:** os motores de
 pitch fazem **acesso disperso**, e acesso disperso em memória série é dominado
 por latência. Já medimos **+12,9 pontos de CPU** ao pôr o reverb em SDRAM. Com
@@ -278,7 +339,7 @@ piezo**. Fica como experiência, não como facto.
 ## §7 — O que falta, e o que NÃO foi verificado
 
 **Estudos por fechar:** pré-amps de piezo publicados e medidos · plataformas
-abertas (Mutable Instruments, Bela, Axoloti, OWL) · PSRAM em detalhe.
+abertas (Mutable Instruments, Bela, Axoloti, OWL).
 
 **Lacunas declaradas, para ninguém as tratar como factos:**
 
@@ -292,6 +353,13 @@ abertas (Mutable Instruments, Bela, Axoloti, OWL) · PSRAM em detalhe.
   percentagens não são de confiar.
 - **O argumento verbatim de Rick Hartley contra dividir o plano** — atribuído
   universalmente, sem transcrição nem artigo encontrado.
+- **Nenhuma medição de EMI comparando SDRAM com Octo-SPI existe** em nada que
+  os agentes encontraram. Os argumentos de contagem de pinos e de excursão de
+  tensão são raciocínio de primeiros princípios. **Se quisermos saber, medimos
+  nós.**
+- **A SDRAM da Daisy pode já ser de 1,8 V** (a AS4C16M32MSA é a peça *mobile* da
+  Alliance). Se for, metade do argumento de ruído sobre excursão de tensão não
+  se aplica ao nosso caso — a metade da contagem de pinos aplica-se na mesma.
 - ⚠️ **O sumarizador de busca fabricou preços e resumos repetidamente** durante
   esta pesquisa — o mesmo preço para quatro peças diferentes, e a inversão do
   sentido de um documento da TI. **Todo número aqui foi lido de uma página, não
