@@ -426,6 +426,120 @@ ele continuar a existir.
 de latão à outra entrada, folha de blindagem ao terra. *"Uma abordagem
 single-ended sacrifica 6 dB de ganho"* e é mediamente mais ruidosa.
 
+### 🔴 CORRECÇÃO (8.º estudo): AMPLIFICADOR DE CARGA, não alta impedância
+
+O sétimo estudo recomendou um amplificador de tensão de alta impedância (2-3 MΩ,
+op-amp JFET) — que é o que **todos** os desenhos abertos de piezo fazem. **E é
+exactamente aquilo por que eles estão documentados como propensos a zumbido.**
+
+Rod Elliott (ESP, Project 202) **construiu e comparou** as três topologias:
+
+> *"O amplificador de carga não tinha praticamente zumbido nenhum. Isto é um
+> bónus real, porque era quase impossível eliminar o zumbido na versão de alta
+> impedância."* · A versão de alta impedância *"produzia zumbido de 50 Hz
+> independentemente da distância a que estivesse de qualquer fonte."*
+
+**E o argumento decisivo é sobre NÓS:** nenhum dos desenhos estudados tem um
+class-D na mesma placa. **O nosso tem.** O amplificador de carga **remove a
+antena** em vez de tentar blindá-la — a entrada passa a ser terra virtual de
+impedância quase nula, imune à capacitância do cabo e ao ruído triboeléctrico.
+
+O mecanismo do zumbido, quantificado (Mudhar): *"a impedância capacitiva de uma
+fonte de 15 nF é ~200 kΩ a 50 Hz, e por isso é fácil acoplar zumbido
+capacitivamente."* E mediu **NE5534 a 62 dB de S/N contra NE5532 a 49 dB** na
+mesma fonte de 15 nF — **13 dB só da escolha do op-amp**.
+
+**Dimensionamento (TI SBOA287):** ganho de ruído ≈ `1 + C_piezo/Cf` (×11 com
+disco de 10 nF e `Cf` = 1 nF) · corte inferior = `1/(2π·Rf·Cf)` · `Vout = Q/Cf`.
+⚠️ **Não usar a SBOA340** — é uma nota de medição de corrente, e um resumo
+automático dela produziu conteúdo plausível e errado sobre amplificadores de
+carga.
+
+**Referência aberta completa:** `github.com/arxwtf/2023_PiezoPreamp2` (MIT,
+KiCad 7, cada peça com propriedade "Purpose"): **OPA145 JFET singles, um por
+canal** — *"dois singles e não um duplo, para minimizar a diafonia"* · `Rf`
+10 MΩ · `Cf` comutável 1n/5n7/11n/23n · série de entrada **75 Ω** · ESD por
+**TVS bidireccional de ~1,0 pF** (Bourns CDSOD323-T12LC).
+
+**RECOMENDAÇÃO REVISTA: amplificador de carga, com opção de strap para voltar a
+alta impedância de 1 MΩ.** As duas topologias partilham o op-amp e quase todos
+os passivos — a cobertura é barata.
+
+### O que copiar do Mutable Ears, agora com o esquema traçado
+
+⚠️ O PDF verdadeiro **não está no índice de documentação da Mutable**:
+`pichenettes.github.io/mutable-instruments-documentation/modules/ears/downloads/ears_v40.pdf`
+
+Cadeia com as anotações da própria Émilie Gillet: jack → `C3` **68 pF** para
+GND (*"LPF > 500 kHz"*) → `C5` 4,7 µF → `R5` **1,0 MΩ** → `R4` **10 kΩ série**
+(*"protecção de V+"*) → **OPA1641**. O clamp `D3` BAT54S tem footprint mas está
+**DNP**.
+
+**Três coisas a copiar, e a terceira é a mais valiosa:**
+
+1. **68 pF de derivação RF mesmo no jack.**
+2. **10 kΩ em série antes do op-amp** — o máximo absoluto do OPA1641 permite
+   ±0,5 V para lá dos trilhos se a corrente for limitada a 10 mA, logo 10 kΩ com
+   ±12 V tolera ~±112 V no jack. **É por isso que o clamp externo é DNP.**
+3. **A evolução.** O antepassado de 2014 (Mikrophonie 2) punha dois 1N4148
+   directamente no nó de 1 MΩ, assimetricamente. Gillet moveu o clamp para
+   **atrás** dos 10 kΩ, tornou-o simétrico, e depois **despopulou-o**.
+   > **Fuga e capacitância de díodo num nó de alta impedância é o erro que ela
+   > projectou para fora.**
+
+### Regras de layout do nó de alta impedância (OPA1641 §10.1)
+
+- *"Considerar um **anel de guarda** de baixa impedância, accionado, à volta dos
+  traços críticos."*
+- *"Afastar os traços de entrada dos de alimentação e de saída o mais possível.
+  Se não puderem ser separados, **cruzar perpendicularmente** é muito melhor do
+  que em paralelo."*
+- Traços de entrada **curtos**.
+- ⚠️ **E uma nota de montagem:** limpeza pós-assemblagem e **cozedura a 85 °C
+  durante 30 min** depois de limpeza aquosa. **Resíduo de fluxo atravessado num
+  nó de 1-10 MΩ é um caminho real de fuga e ruído** — e esta placa vai ser
+  retrabalhada à mão.
+
+**Mais:** ligar o **lado de latão** do disco ao terra (Open Music Labs). E
+planear o transitório: um piezo percutido *"pode dar saída na ordem dos
+quilovolts"* — indicação de clipe no mínimo, limitador a decidir
+explicitamente.
+
+### ⚠️ CORRECÇÃO sobre o espalhamento de espectro do class-D
+
+Eu listei-o como medida de ruído. **É mais estreito do que parece:** o
+MAX98357A varia a frequência de comutação **±20 kHz em torno de 330 kHz**, e
+*"acima de 10 MHz o espectro alargado parece ruído para efeitos de EMI"*.
+Ajuda a **emissão radiada acima de 10 MHz** e **não faz nada** pelo fundamental
+de 330 kHz a centímetros da entrada. **Não substitui filtragem.**
+
+**E a TI descreve a nossa situação nas palavras dela** (TPA3116 §layout):
+*"Pode haver casos em que é necessário acrescentar um filtro LC de reconstrução
+completo. Isto pode acontecer se houver circuitos próximos sensíveis a ruído."*
+→ **filtro LC completo, não o atalho da ferrite.**
+
+Mais: *"manter o laço de corrente de cada saída, através da ferrite e do
+condensador, de volta ao GND, o mais pequeno e apertado possível — o tamanho
+deste laço determina a eficácia dele como antena"* · *"todos os terras ligados
+no GND do CI, que deve ser o ponto de terra em estrela"* · snubber **18 Ω +
+330 pF** com retorno directo aos pinos de GND.
+
+⚠️ **E escolher a frequência de comutação contra o aliasing do nosso ADC**, não
+só contra os limites de EMC.
+
+### 🔴 Isolamento galvânico: não é sugestão de fórum, é prática que se vende
+
+A **Electrosmith vende módulos DC-DC isolados** nos produtos dela — `PDS1-S5-S5-M`
+e `PDS1-S24-S5-M` — a alimentar o áudio **separadamente do MCU** no Petal e no
+Patch.
+
+> **Com um class-D na mesma placa, orçamentar um DC-DC isolado para a
+> alimentação analógica desde o início.**
+
+E o banco de condensadores não chega: os 1000 µF deram só ~50 % de melhoria
+porque *"condensadores grandes têm resistência interna que limita a eficiência
+deles em alta frequência"*. **Bulk é necessário, não suficiente.**
+
 ### 🔴 E a parte que NÃO tem prior art
 
 > **Nenhum desenho aberto combina entrada de instrumento de alta impedância COM
