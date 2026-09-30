@@ -7,7 +7,7 @@ ficheiro, para não ser preciso abrir nenhum para saber qual é qual.
 
 | ficheiro | o que faz |
 |---|---|
-| **`consola-sem-fio.command`** | A consola da Daisy **por BLE, sem cabo**. Pergunta que comandos enviar (vazio = só escutar). ⚠️ O macOS mata um processo sem permissão de Bluetooth **sem perguntar** — este é lançado por si, e por isso o sistema pergunta. |
+| **`consola-sem-fio.command`** | A consola da Daisy **por BLE, sem cabo** — liga **uma vez** e fica aberta: escreve comando atrás de comando, `sair` fecha. ⚠️ O macOS mata um processo sem permissão de Bluetooth **sem perguntar** — este é lançado por si, e por isso o sistema pergunta. |
 | `monitor.command` | A mesma consola, mas pelo **USB**. Mais rápida e sem lacunas; precisa do cabo. |
 | `measure.command` | Mede níveis e picos da placa e imprime o relatório. |
 | `medir_pente.command` | Varre o pente de frequências e mede a resposta — o que se usa a afinar o notch. |

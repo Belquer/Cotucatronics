@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""cotuca_ble v0.6.1 — a consola do Cotucatronics SEM FIO, por BLE.
+"""cotuca_ble v0.7.0 — a consola do Cotucatronics SEM FIO, por BLE.
 
+    tools/cotuca_ble.py --viva          <- consola interactiva (bancada)
     tools/cotuca_ble.py [--send "board" "midi" ...] [--listen SEG] [--nome NOME]
 
 POR QUE EXISTE (ppc/006, fase 1). Metade do trabalho de Setembro foi
@@ -32,7 +33,7 @@ import argparse
 import asyncio
 import sys
 
-VERSAO = "0.6.1"
+VERSAO = "0.7.0"
 
 NUS_SVC = "6e400001-b5a3-f393-e0a9-e50e24dcca9e"
 NUS_RX  = "6e400002-b5a3-f393-e0a9-e50e24dcca9e"   # o Mac ESCREVE aqui
@@ -72,7 +73,46 @@ async def manda_ota(c, caminho):
     await asyncio.sleep(6.0)
 
 
-async def corre(nome, comandos, segundos, ota=None):
+async def consola_viva(c):
+    """CONSOLA INTERACTIVA — uma ligacao, muitos comandos.
+
+    ⚠️ EXISTE PORQUE A FORMA DE UM TIRO SO ESTAVA ERRADA PARA BANCADA. Ate a
+    v0.6.1 o `.command` perguntava UMA linha, enviava, e fechava — e a 29/09,
+    a meio de um troubleshoot com a caixa montada, o dB escreveu `board`, viu
+    a janela fechar-se, e o `oled te` que escreveu a seguir foi parar ao
+    prompt de "Enter para fechar". Perdeu-se o comando e perdeu-se a sessao.
+
+    E o custo nao era so o gesto: cada comando pagava uma varredura de 10 s e
+    uma ligacao nova, o que num diagnostico de intermitencia MUDA O SISTEMA
+    QUE SE MEDE — religar o radio e uma variavel a mais entre duas leituras.
+    """
+    laco = asyncio.get_event_loop()
+    print("  --- consola viva. Escreve comandos; `sair` fecha. ---\n")
+    while True:
+        try:
+            linha = await laco.run_in_executor(None, sys.stdin.readline)
+        except Exception:
+            break
+        if not linha:               # EOF (Ctrl-D, ou stdin fechado)
+            break
+        cmd = linha.strip()
+        if not cmd:
+            continue
+        if cmd in ("sair", "exit", "quit"):
+            break
+        try:
+            await c.write_gatt_char(NUS_RX, (cmd + "\n").encode(),
+                                    response=True)
+        except Exception as e:
+            print("  *** A ESCRITA FALHOU: %s" % e)
+            print("  (a ligacao caiu? fecha e volta a abrir)")
+            break
+        # Deixa a resposta chegar antes de devolver o prompt. Sem isto a
+        # resposta do comando anterior sai por cima do que se esta a escrever.
+        await asyncio.sleep(1.5)
+
+
+async def corre(nome, comandos, segundos, ota=None, viva=False):
     from bleak import BleakClient, BleakScanner
     print("  a varrer 10 s...")
     # ⚠️ "NAO ENCONTRADO" NAO E RESPOSTA. A primeira versao dizia so isso, e
@@ -155,6 +195,8 @@ async def corre(nome, comandos, segundos, ota=None):
             await asyncio.sleep(1.2)
         if segundos:
             await asyncio.sleep(segundos)
+        if viva:
+            await consola_viva(c)
         # (!) o `stop_notify` rebenta no macOS a fechar ("Service Discovery
         # has not been performed yet") — sair do contexto ja desliga, e uma
         # falha na ARRUMACAO nao pode esconder um resultado que correu bem.
@@ -174,11 +216,13 @@ def main():
     p.add_argument("--nome", default="Cotucatronics")
     p.add_argument("--ota", default=None,
                    help="grava a PONTE com este .bin, por radio")
+    p.add_argument("--viva", action="store_true",
+                   help="consola interactiva: uma ligacao, muitos comandos")
     a = p.parse_args()
-    if not a.send and not a.listen and not a.ota:
+    if not a.send and not a.listen and not a.ota and not a.viva:
         a.listen = 5.0
     try:
-        return asyncio.run(corre(a.nome, a.send, a.listen, a.ota))
+        return asyncio.run(corre(a.nome, a.send, a.listen, a.ota, a.viva))
     except Exception as e:
         print("  FALHOU: %s" % e)
         return 3
