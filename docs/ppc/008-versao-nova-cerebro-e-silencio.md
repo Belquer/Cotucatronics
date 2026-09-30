@@ -313,6 +313,107 @@ portátil). **Os deltas de ~20 dB são credíveis; os microvolts absolutos não.
 
 ## §6 — A entrada dos piezos
 
+### 🔴 PRIMEIRO, O QUE MATA A DISCUSSÃO TODA (9.º estudo)
+
+Ruído intrínseco calculado para cada topologia contra piezos de 10-30 nF,
+20 Hz-20 kHz sem ponderação:
+
+> **Todas ficam entre 0,19 µV e 2,5 µV referidos à entrada.**
+> **O nosso −75 dBFS medido são ≈178 µV.**
+
+Mesmo um **TL072** — a pior peça que alguém poria aqui — é **~37 dB mais
+silencioso que o nosso chão medido**. **Nenhuma escolha de topologia move o
+nosso número.**
+
+| referência | chão |
+|---|---|
+| **nós, hoje** | −75 dBFS ≈ 178 µV ≈ **−72,8 dBu** |
+| nós, antes do conserto de terra | −34,2 dBFS ≈ 19,5 mV |
+| **o nosso próprio conversor, pela ficha** | −90 dBFS ≈ 32 µV |
+| **Grace Design FELiX2**, entrada de instrumento | < **−98 dBu** |
+| Fishman Pro EQ Platinum | −89 dBu (A) |
+| Headway EDB-2 | −87 dBu |
+
+*"Como os pedais profissionais"* são ≈ **−98 dBu**. Estamos a ≈ **−73**. E
+estamos **15-24 dB pior que a ficha do conversor que já lá está** — o ruído nem
+chega ao limite do chip.
+
+> **Os 25 dB que faltam são interferência, terra e alimentação** — a mesma
+> classe de problema que o nosso conserto de terra já resolveu 35 dB. Nada no
+> ruído intrínseco de um pré-amp se move 35 dB.
+
+### 🔴 A ESCADA DE DIAGNÓSTICO, e corre-se antes de desenhar cobre
+
+1. **Curto-circuitar a entrada do pré-amp nos terminais do piezo** e medir.
+2. **Curto-circuitar a entrada do conversor** e medir. ⚠️ **Se isto der ≈ −75
+   dBFS, o pré-amp é inocente por completo** e todo o trabalho de entrada é
+   desperdício.
+3. **Desligar e ligar os exciters** com o piezo ligado, e medir o delta.
+
+**Medir SEM ponderação.** A ponderação A esconde exactamente a região de baixa
+frequência que um microfone de contacto existe para captar.
+
+### O que fazer na mesma — porque é barato e certo
+
+⚠️ **Estamos na PIOR configuração de terra que existe.** A Endevco TP-270
+ordena-as por medição:
+
+| | configuração | veredicto |
+|---|---|---|
+| 1.ª | transdutor com caixa à terra + **montagem ISOLADA** + amp single-ended | *"o sistema mais simples disponível"* |
+| 2.ª | montagem à terra + **amplificador DIFERENCIAL** | o remédio quando não se pode isolar |
+| **3.ª** | **montagem à terra + amp à terra** | ⚠️ *"o método mais propenso a ruído"* — **o nosso** |
+
+**Ou isolamos os piezos do corpo** (aceitando que a ressonância de montagem cai
+15-30 %), **ou vamos a diferencial. Não fazer nenhuma das duas é a pior
+opção.**
+
+### Correcções ao que eu já tinha escrito aqui
+
+1. **O Alex Rice, como publicado, tem os graves destruídos.** `C2`/`C3` = 220 pF
+   ficam **em série com o piezo** e dominam a capacitância: corte a **~250 Hz**,
+   não os 20 Hz que o autor reclama. A Stompville mediu-o e corrigiu com 22 nF →
+   **8,5 Hz**; a aritmética independente dá 8,94 Hz. E a impedância de entrada
+   real é **~1,7 MΩ medidos**, não os 3 MΩ documentados.
+2. **"1 MΩ chega" para os nossos piezos.** Com 10-30 nF, 1 MΩ já dá 8-16 Hz. O
+   folclore dos 10 MΩ vem de elementos **pequenos** (200 pF precisa de 20 MΩ).
+3. **Resistência de polarização maior é MAIS SILENCIOSA** — confirmado com
+   números: 1 MΩ → 1,02 nV/√Hz referidos a 1 kHz; 22 MΩ → 0,22. O piezo derva o
+   ruído da resistência. *"Valores altos são ruidosos"* é **erro** para fonte
+   capacitiva.
+4. ⚠️ **A TI revisou o ruído do TL072 de 18 para 37 nV/√Hz** em Julho de 2025
+   (SLOS080W). **Toda a literatura secundária ainda cita 18.**
+5. **Ganho perto da unidade, e com atenuador.** Uma pancada leve num piezo passa
+   **1 V de pico**. Com o conversor a ~1 Vrms de fundo de escala, precisamos de
+   **margem, não de ganho** — e é por isso que o chão do conversor domina.
+
+### E o que a literatura de instrumentos actuados acrescenta ao acoplamento
+
+- **TI SLAA901**, e é o número que assusta: a saída de um class-D comuta a
+  **0,7-2 V/ns**. `I = C·dV/dt` → **250 pF numa borda de 2 V/ns puxam ~0,5 A de
+  pico**. Uns poucos pF de dispersão para um nó de megaohms é uma corrente
+  enorme. **Nunca usar filtro de saída só com condensador.**
+- E do mesmo documento: *"ruído que parece relacionado com a comutação da saída
+  pode na verdade estar a irradiar das ligações de alimentação"* — **consertar o
+  desacoplamento antes de perseguir o filtro de saída.**
+- **Par entrançado até aos exciters, nunca cabo paralelo** (Jim Brown) — sozinho
+  pode dar 20-30 dB.
+- **Ruído triboeléctrico é de primeira ordem aqui**, não refinamento: o cabo
+  está preso a um corpo que estamos deliberadamente a abanar. Cabo de baixo
+  ruído com camada de grafite (Mogami W2319/W2524, Canare GS-6, Belden 9239),
+  **curto**, e **preso ao corpo junto do transdutor**.
+
+### ⚠️ E as especificações comerciais não se podem comparar
+
+O agente prova-o: a Radial PZ-DI publica *"EIN −98 dBu"* — mas o ruído Johnson
+da própria entrada de 10 MΩ que ela declara é **−82,6 dBu**. A figura publicada
+está **16 dB abaixo do ruído da própria resistência de entrada** dela. **Nenhum
+fabricante declara a capacitância da fonte junto com a figura de ruído.** Os
+−128 dB da Grace são a entrada de **microfone** com fonte de 50 Ω, não a de
+instrumento.
+
+
+
 **Um piezo nunca pode atacar o conversor directamente.** As entradas são de
 capacitor comutado; o CS4270 di-lo: *"THD+N degrada-se para impedância de fonte
 acima de 1 kΩ"*. O nosso piezo está em megaohms.
