@@ -361,10 +361,112 @@ Isto **reforça** a decisão do §0: uma placa própria hoje seria uma aposta de
 abastecimento por cima de todo o resto do risco. E reforça a acção com prazo —
 comprar os Seed3 enquanto há.
 
+## §6c — O que as plataformas abertas já resolveram (estudo 7/7)
+
+### ✅ O que a NOSSA carrier já faz certo
+
+Verificado no `cotuca_cerebro`, e coincide com a prática publicada:
+
+| nosso | o que a literatura diz |
+|---|---|
+| **`OPA1642`** na entrada dos piezos | JFET, 5,1 nV/√Hz. ⚠️ *"não uses MCP6002 na entrada de instrumento — 28 nV/√Hz contra 5,1 é 15 dB de penalização onde mais custa"* |
+| **Ilha de AGND com ponte ÚNICA** (`MAPA-DE-TERRA.md` §6) | a decisão que a Daisy empurra para a carrier (`R7 DNI 0R`) |
+| **Pré-amp encostado aos jacks, dentro da ilha, pista curta** | o padrão de particionamento por colocação |
+| **Malha do piezo ao AGND só de UM lado** | *"nas duas pontas fecha laço"* |
+| **`2200 µF` + `100 n` no terminal do amp** | medido a 31/08: sem banco, o exciter zumbe |
+
+**A parte analógica do desenho não é o problema.** Isso é informação: o ruído
+que resta não está nestas decisões.
+
+### ❌ O que falta, e é barato
+
+1. **Filtro de reconstrução na saída: `3k3` + `2n2` = 22 kHz.** É o conserto
+   comunitário confirmado para a regressão de SNR da Daisy Rev7, e a GuitarML já
+   o traz **desenhado de origem** no SoundSketch. Não existe na nossa carrier.
+2. **O class-D como DOMÍNIO DE ENERGIA PRÓPRIO** — trilho próprio, ferrite
+   própria, retorno de terra próprio e **linha de desligamento por software**
+   (Bela cape rev C3 faz exactamente isto com o PAM8406). Temos o banco de
+   condensadores, não temos o domínio nem o desligamento.
+3. **Filtrar NO amplificador**: LC (10 µH + 220 nF) mais snubber RC (3,3 Ω +
+   1 nF), e um RC entre o PVCC e o AVCC do próprio amp (Phil's Lab, TPA3130D2).
+
+### A comparação de conversores medida EM SISTEMA
+
+Blocos de 48 amostras a 48 kHz, mesma placa, mesmo teste:
+
+| codec | chão medido |
+|---|---|
+| WM8731 | **−79 dB** |
+| AK4556 | −92 dB |
+| **TAC5242** | **−95 dB** |
+| aparelho desligado (chão do teste) | −104 dB |
+
+**+16 dB do WM8731 para o TAC5242, medido, não de ficha.** E o TAC5242 tem
+**entradas diferenciais** — o que permitiria atacar o conversor diferencialmente
+a partir do pré-amp de piezo e **rejeitar a oscilação de terra entre a entrada e
+o conversor**. Isso casa com o achado seguinte.
+
+### O pré-amp de piezo: o número que desqualifica a ligação directa
+
+Um piezo é uma fonte de tensão em série com **5–10 nF**. A impedância de entrada
+fixa a frequência de corte:
+
+| impedância de entrada | corte | veredicto |
+|---|---|---|
+| **30 kΩ** — a Daisy Seed NUA, sem pré-amp | **530 Hz – 1,06 kHz** | desqualificante |
+| 1 MΩ — Mutable **Ears** (OPA1641) | 16–32 Hz | funcional |
+| **3 MΩ** — **Alex Rice** | **5,3–10,6 Hz** | alvo |
+
+⚠️ **A Daisy Seed não tem buffer de entrada nenhum**: `AUDIO_IN` → 0 Ω → 2,2 µF
+→ `LINEIN` do codec. Quem ligar um piezo directamente a ela perde tudo abaixo de
+~500 Hz. **É por isso que o nosso pré-amp existe**, e é a razão mais forte para
+ele continuar a existir.
+
+**O Alex Rice é um par diferencial JFET, balanceado** — piezo ao centro, bordo
+de latão à outra entrada, folha de blindagem ao terra. *"Uma abordagem
+single-ended sacrifica 6 dB de ganho"* e é mediamente mais ruidosa.
+
+### 🔴 E a parte que NÃO tem prior art
+
+> **Nenhum desenho aberto combina entrada de instrumento de alta impedância COM
+> saída em class-D na mesma placa.**
+
+O agente procurou especificamente. Essa combinação — que é exactamente a nossa —
+é genuinamente inédita no hardware aberto publicado. **Não há nada para copiar
+nessa fronteira, e vai precisar de validação em bancada própria.**
+
+### Duas coisas que contrariam suposições comuns
+
+- **2 camadas chegam.** O catálogo inteiro da Mutable Instruments é de **2
+  camadas** (Clouds 106×89 mm, Elements 106×164 mm) com desempenho de ruído
+  excelente. Quatro camadas é o padrão, não é requisito.
+- **A Electrosmith FECHOU o esquema da Daisy de propósito.** Andrew Ikenberry:
+  *"o esquema público passou a ser um esquema reduzido — não vamos fornecer
+  toda a informação necessária para clonar a Seed existente."* O módulo que
+  estamos a usar já não é um desenho de que se possa aprender.
+
+### Erratas alheias que valem como nossas
+
+- **Ksoloti v0.3 INVERTEU a decisão de terra do Axoloti**: *"3.3VA e GNDA agora
+  reservados só para áudio e codec; 3.3V e GND para o digital e também para o
+  ADC/DAC do STM32."* Mesma família de placa, decisão oposta, dois anos depois.
+- **OWL2, notas de bancada:** *"mover o C408 de 100 n para junto do pino VA"*
+  levou o ruído de VA de **60 mV para 40 mV**. Colocação de desacoplamento
+  descobre-se na bancada, não no DRC.
+- **Axoloti:** alargar um furo de fixação curto-circuitou dois planos de energia
+  internos e matou o regulador. **Zona de exclusão entre furos e planos.**
+- **GuitarML, arrependimentos declarados pelo próprio autor:** cerâmicos Classe 2
+  no caminho de áudio (por preço), **sem pulldown de hardware no BOOT0**, e
+  **wipers dos pots directos ao ADC sem resistência em série nem condensador** —
+  este último é o único defeito claro num desenho de resto cuidadoso.
+
 ## §7 — O que falta, e o que NÃO foi verificado
 
-**Estudos por fechar:** pré-amps de piezo publicados e medidos · plataformas
-abertas (Mutable Instruments, Bela, Axoloti, OWL).
+**Estudos: 7 de 7 fechados.** ⚠️ A frente de **exciters/class-D** é a mais
+fina — um agente paralelo falhou ao arrancar e foi coberta de segunda mão.
+Merece uma passagem própria: class-D de entrada I2S (TAS5805M, MAX98357A)
+contra entrada analógica, limites térmicos e de impedância dos exciters, e
+falhas documentadas de acoplamento de class-D em entradas de alta impedância.
 
 **Lacunas declaradas, para ninguém as tratar como factos:**
 
