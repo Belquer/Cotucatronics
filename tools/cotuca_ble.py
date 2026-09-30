@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cotuca_ble v0.6.0 — a consola do Cotucatronics SEM FIO, por BLE.
+"""cotuca_ble v0.6.1 — a consola do Cotucatronics SEM FIO, por BLE.
 
     tools/cotuca_ble.py [--send "board" "midi" ...] [--listen SEG] [--nome NOME]
 
@@ -17,9 +17,16 @@ MIDI e o nome `Cotucatronics`, que o perfil do Loopy usa como identidade —
 anunciar mais partiria o pareamento para ganhar o que a descoberta
 pos-ligacao ja da. Portanto: liga-se PRIMEIRO, procura-se DEPOIS.
 
-⚠️ E o iPad pode estar ligado ao mesmo tempo. O BLE do ESP32-C3 aceita uma
-ligacao de cada vez por omissao: se o Loopy estiver agarrado, isto nao liga.
-Nao e defeito — e o radio. O comando diz isso em vez de esperar calado.
+✅ E O iPAD PODE ESTAR LIGADO AO MESMO TEMPO. A ponte v1.7.0 leva
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS = 3, e o dB confirmou em bancada a 29/09:
+Loopy e consola agarrados ao mesmo tempo, os dois a funcionar.
+
+🔴 Este paragrafo dizia o CONTRARIO ate 29/09 — "aceita uma ligacao de cada
+vez ... se o Loopy estiver agarrado, isto nao liga". Era verdade antes do
+conserto, ficou aqui depois dele, e nesse mesmo dia fez-me avisar o dB de uma
+limitacao que ja nao existia. E a cicatriz 15fx: documentacao que afirma
+premissa revogada re-ensina o bug, e o cabecalho e o que se le. Ao consertar
+um limite, procurar TODO sitio que o anuncia.
 """
 import argparse
 import asyncio
