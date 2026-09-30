@@ -336,6 +336,31 @@ piezo**. Fica como experiência, não como facto.
 
 ---
 
+## §6b — 🔴 O CONSTRANGIMENTO NÃO É PREÇO, É PRAZO (29/09)
+
+Lido em páginas ao vivo da Mouser: **52 semanas de prazo de fábrica em
+praticamente todo o conjunto STM32H7.** O preço deixa de ser a variável.
+
+| peça | stock | reposição | papel |
+|---|---|---|---|
+| **STM32H750VBT6** | **24** | mid-**2027** | o MCU da Daisy, LQFP100 |
+| **STM32H7A3ZIT6** | **16** | sem data | **a rota de 1 MB contíguo** |
+| STM32H7B3ZIT6Q | 440 | — | idem, LQFP144 |
+| STM32H750ZBT6 | **2 432** | — | LQFP144, $8,94/100 |
+| STM32H723ZGT6 | **1 582** | — | LQFP144, $9,80/100 |
+| STM32H747IIT6 | 34 | 2027-05 | 30 semanas (excepção) |
+
+> ⚠️ **A opção tecnicamente mais interessante é a menos disponível.** O
+> H7A3/H7B3 é o que permitiria encolher os buffers para `int16` e eliminar a
+> memória externa — e há 16 e 440 peças.
+
+**Só duas peças são simultaneamente baratas, LQFP e disponíveis hoje:**
+STM32H750ZBT6 e STM32H723ZGT6, ambas LQFP144.
+
+Isto **reforça** a decisão do §0: uma placa própria hoje seria uma aposta de
+abastecimento por cima de todo o resto do risco. E reforça a acção com prazo —
+comprar os Seed3 enquanto há.
+
 ## §7 — O que falta, e o que NÃO foi verificado
 
 **Estudos por fechar:** pré-amps de piezo publicados e medidos · plataformas
@@ -343,8 +368,12 @@ abertas (Mutable Instruments, Bela, Axoloti, OWL).
 
 **Lacunas declaradas, para ninguém as tratar como factos:**
 
-- **Zero preços lidos na Mouser ou DigiKey** — ambas bloqueiam acesso
-  automático. Tudo veio da ST eStore, do LCSC e de agregadores.
+- ~~Zero preços da Mouser/DigiKey.~~ **FECHADO a 29/09** por leitura em
+  navegador real. Onde as duas fontes coincidem, **batem ao cêntimo**:
+  H750VBT6 $7,81/100, H723ZGT6 $9,80/100, H7B3ZIT6Q $9,75/100 na ST **e** na
+  Mouser. A tabela de preços está validada por duas fontes independentes.
+  Continua sem preços da DigiKey além da unidade (páginas atrás de verificação
+  interactiva que não se contorna).
 - **Preços de PCB da JLCPCB são DERIVADOS**, não cotados: a ferramenta exige
   login e Gerbers. **Correr antes de orçamentar.**
 - **Se a JLCPCB permite ENIG no serviço Económico** — vale ~$75 de uma vez.
@@ -360,6 +389,9 @@ abertas (Mutable Instruments, Bela, Axoloti, OWL).
 - **A SDRAM da Daisy pode já ser de 1,8 V** (a AS4C16M32MSA é a peça *mobile* da
   Alliance). Se for, metade do argumento de ruído sobre excursão de tensão não
   se aplica ao nosso caso — a metade da contagem de pinos aplica-se na mesma.
+- ⚠️ **TERCEIRA ocorrência do mesmo defeito de método:** um resumo de busca deu
+  o H750VBT6 a **$9,10 com 9 258 em stock**; a página ao vivo diz **$12,06, 24
+  unidades, 52 semanas**. Não se cita preço que não tenha sido lido numa página.
 - ⚠️ **O sumarizador de busca fabricou preços e resumos repetidamente** durante
   esta pesquisa — o mesmo preço para quatro peças diferentes, e a inversão do
   sentido de um documento da TI. **Todo número aqui foi lido de uma página, não
