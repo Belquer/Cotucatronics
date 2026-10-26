@@ -1,139 +1,144 @@
 ---
 name: bug-de-ordem
-description: Diagnóstico das três famílias de bug de ordem do Cotucatronics — corrida de contexto, ordem de configuração, e variável com dois empregos. Use quando algo funciona às vezes, funciona no simulador mas não na placa, ou quando um teste dá resultado incoerente. Nomear a família vem ANTES de consertar.
+description: Diagnosis of the three families of ordering bug in Cotucatronics — context race, configuration order, and a variable with two jobs. Use when something works sometimes, works in the simulator but not on the board, or when a test gives an incoherent result. Naming the family comes BEFORE fixing.
 ---
 
-# As três famílias de bug de ordem
+# The three families of ordering bug
 
-**Bug novo: nomear a família antes de consertar.** Conserto sem nome vira
-remendo, e o remendo esconde a família para a próxima vez.
-Ver `docs/battle_scars.md` cap. 1.
+**New bug: name the family before fixing it.** A fix without a name becomes a
+patch, and the patch hides the family for next time.
+See `docs/battle_scars.md` ch. 1.
 
-## A — Corrida de contexto
+## A — Context race
 
-*Armar e conferir precisam acontecer no mesmo contexto.*
+*Arming and checking have to happen in the same context.*
 
-Se o armamento roda numa ISR/callback e a checagem no loop (ou vice-versa),
-os dois observam mundos diferentes. Sintoma clássico: contadores pareados que
-"provam" o oposto do que acontece — M1==M2 dizendo que nenhuma linha prendeu,
-quando o par vinha de linhas diferentes.
+If the arming runs in an ISR/callback and the check runs in the loop (or vice
+versa), the two observe different worlds. Classic symptom: paired counters that
+"prove" the opposite of what is happening — M1==M2 saying that no line latched,
+when the pair came from different lines.
 
-**Pergunta diagnóstica:** *quem arma e quem lê, e rodam no mesmo contexto?*
+**Diagnostic question:** *who arms and who reads, and do they run in the same
+context?*
 
-## B — Ordem de configuração
+## B — Configuration order
 
-*Configurar antes de consumir.*
+*Configure before you consume.*
 
-Um valor lido antes de ser configurado não dá erro — dá o default, em silêncio.
-Foi assim que um módulo ficou mudo: `r_window` preenchido depois do
-`prepareToProcess`, quando o patch já tinha lido o tamanho.
+A value read before it is configured does not throw an error — it gives the
+default, silently. That is how a module went dead: `r_window` filled in after
+`prepareToProcess`, when the patch had already read the size.
 
-**Pergunta diagnóstica:** *quem lê esse valor, e já leu antes de eu escrever?*
-Na dúvida, **escrever nos dois momentos** (antes e depois) e comentar por quê.
+**Diagnostic question:** *who reads that value, and have they already read it
+before I write it?* When in doubt, **write at both moments** (before and after)
+and comment why.
 
-## C — Uma variável com dois empregos
+## C — One variable with two jobs
 
-*A mais traiçoeira, porque o teste parece limpo.*
+*The most treacherous one, because the test looks clean.*
 
-Uma coisa serve a dois propósitos, e um teste muda os dois de uma vez. O
-resultado mede a soma e não separa nada. Nomeada em 17/08 depois de custar
-uma escalada de ganho fantasma (`fx2_gain` 8→48→64 calibrado contra o caso
-errado).
+One thing serves two purposes, and a test changes both at once. The result
+measures the sum and separates nothing. Named on 08/17 after it cost a phantom
+gain escalation (`fx2_gain` 8→48→64 calibrated against the wrong case).
 
-**Pergunta diagnóstica, obrigatória antes de mexer:** *quais são TODOS os
-empregos desta variável?* Listar. Se forem dois, o voo precisa isolar um.
+**Diagnostic question, mandatory before touching anything:** *what are ALL the
+jobs of this variable?* List them. If there are two, the flight has to isolate
+one.
 
-## Protocolo quando o sintoma se repete
+## Protocol when the symptom repeats
 
-**Na terceira repetição do mesmo sintoma, pare de gerar hipóteses e procure o
-teste que corta o sistema ao meio.**
+**On the third repetition of the same symptom, stop generating hypotheses and
+look for the test that cuts the system in half.**
 
-Trocar de suspeito parece progresso e não é — é a mesma medição vestida de
-nova. Uma hora foi gasta com cinco hipóteses (link BLE, fader, app, DMA,
-dump), nenhuma confirmada nem descartada, enquanto o **loopback** — que prova
-a placa inteira em dez segundos — esperava na fila desde o começo.
+Switching suspects looks like progress and is not — it is the same measurement
+dressed up as new. An hour was spent on five hypotheses (BLE link, fader, app,
+DMA, dump), none confirmed and none ruled out, while the **loopback** — which
+proves the whole board in ten seconds — had been waiting in the queue from the
+start.
 
-Para canal de entrada, o teste que corta ao meio **é o loopback**.
+For an input channel, the test that cuts it in half **is the loopback**.
 
-## Quarta família: a lacuna do observador externo
+## Fourth family: the external-observer gap
 
-Um processo com humano no circuito, observado de fora por varredura
-periódica, tem entre o evento e a leitura uma janela em que o estado errado
-é gravado. Isso **não é latência** — é corrupção.
+A process with a human in the loop, observed from the outside by periodic
+scanning, has between the event and the reading a window in which the wrong
+state is recorded. This **is not latency** — it is corruption.
 
-Caso (22/08): o modo `learn` pulsava um CC para o dB armar um widget no
-Loopy; um script lia o histórico a cada 3 s e mandava avançar. Entre uma
-chamada e outra passavam minutos, e o firmware seguia pulsando o mesmo CC.
-Todo widget armado nesse intervalo aprendeu o CC errado — quatro deles.
+Case (08/22): the `learn` mode pulsed a CC so dB could arm a widget in Loopy;
+a script read the history every 3 s and told it to advance. Minutes passed
+between one call and the next, and the firmware kept pulsing the same CC. Every
+widget armed in that interval learned the wrong CC — four of them.
 
-O sinal certo já existia e estava sendo desperdiçado: um CC chegando com o
-número do alvo atual **só pode** vir de um widget que acabou de aprendê-lo.
-A placa via isso e apenas incrementava um contador.
+The right signal already existed and was being wasted: a CC arriving with the
+number of the current target **can only** come from a widget that just learned
+it. The board saw this and merely incremented a counter.
 
-> **Quem decide o avanço tem que ser quem vê a confirmação.** Detecção de
-> fora só serve quando nada muda enquanto ninguém olha.
+> **Whoever decides the advance has to be whoever sees the confirmation.**
+> Detection from the outside only works when nothing changes while no one is
+> looking.
 
-**Sintoma que a denuncia:** "está tudo caindo no mesmo valor / no mesmo
-passo". Estado que deveria variar e não varia, num processo cujo relógio
-está fora do sistema observado.
+**Symptom that gives it away:** "everything is landing on the same value / the
+same step". State that should vary and does not, in a process whose clock is
+outside the observed system.
 
-**Irmã da terceira família:** um modo que anda sozinho e um modo que espera
-confirmação não são configuração do mesmo procedimento — são dois
-procedimentos. Tratá-los como um parâmetro é dar dois empregos a uma
-variável, e escolher errado desalinha tudo em silêncio.
+**Sister of the third family:** a mode that runs on its own and a mode that
+waits for confirmation are not configuration of the same procedure — they are
+two procedures. Treating them as one parameter is giving one variable two jobs,
+and choosing wrong silently misaligns everything.
 
-## Quando fechar janelas não acaba, inverta a pergunta
+## When closing windows never ends, invert the question
 
-Cinco versões de firmware num mecanismo de endereçamento por MIDI learn: a
-placa pulsava um CC, o operador armava o widget, ela avançava. Cada versão
-fechava uma janela onde o número errado podia ser gravado, e a cada janela
-fechada aparecia outra. Nunca fechou.
+Five firmware versions on a MIDI-learn addressing mechanism: the board pulsed a
+CC, the operator armed the widget, it advanced. Each version closed a window
+where the wrong number could be recorded, and with each window closed another
+appeared. It never closed.
 
-O dB inverteu: *"configurei todos para mandar no canal 1 — fala com eles e
-vê se batem; se não baterem, ajusta do seu lado."* Duas varreduras e 128
-bytes de contador fecharam 65 de 65, e flagraram quatro widgets com número
-de outro parâmetro sem ninguém procurar.
+dB inverted it: *"I set them all to send on channel 1 — talk to them and see if
+they match; if they don't, adjust on your side."* Two scans and 128 bytes of
+counter closed 65 of 65, and flagged four widgets with another parameter's
+number without anyone searching.
 
-> **Um mecanismo que precisa de janela de sincronia a cada passo, com uma
-> das pontas fora da sua vista, está errado — não mal ajustado.** Procure a
-> formulação em que cada lado fala quando quer, e alguém apenas escuta e se
-> adapta.
+> **A mechanism that needs a synchronization window at every step, with one of
+> its ends outside your view, is wrong — not mis-tuned.** Look for the
+> formulation in which each side speaks when it wants, and someone merely
+> listens and adapts.
 
-**Sinal de que você está no mecanismo errado:** consertos que geram
-consertos, todos na mesma família (timing, ordem, sincronia), sem que o
-problema original encolha.
+**Sign that you are on the wrong mechanism:** fixes that spawn fixes, all in
+the same family (timing, order, synchronization), without the original problem
+shrinking.
 
-**E declare o que você não enxerga.** Eu dirigi três horas de coreografia
-sem ter acesso nenhum ao lado do operador — não via widget, nem nome, nem
-página. Isso muda qual mecanismo é viável e tinha de ser dito na primeira
-mensagem, não depois de ele perguntar.
+**And declare what you cannot see.** I ran three hours of choreography with no
+access at all to the operator's side — I could not see the widget, the name,
+the page. That changes which mechanism is viable and had to be said in the
+first message, not after he asked.
 
-## Pré-condição de API herdada, revogada por decisão de build
+## Inherited API precondition, revoked by a build decision
 
-Uma decisão de Makefile tomada meses antes pode invalidar a pré-condição de
-uma biblioteca, **sem nenhum aviso de compilação**. É bug de ordem na escala
-do projeto, não da função.
+A Makefile decision made months earlier can invalidate the precondition of a
+library, **with no compilation warning at all**. It is an ordering bug on the
+scale of the project, not of the function.
 
-Caso (22/08): `PersistentStorage::Save()` da libDaisy tira a QSPI do modo
-memory-mapped para apagar. O código que faz isso mora na QSPI. A
-pré-condição — *"o app não executa da QSPI"* — é verdadeira em `BOOT_NONE` e
-**revogada por `APP_TYPE=BOOT_QSPI`**. Nada no build reclama; a chamada
-compila e a placa trava por sorte de cache.
+Case (08/22): libDaisy's `PersistentStorage::Save()` takes the QSPI out of
+memory-mapped mode to erase. The code that does this lives in the QSPI. The
+precondition — *"the app does not execute from the QSPI"* — is true under
+`BOOT_NONE` and **revoked by `APP_TYPE=BOOT_QSPI`**. Nothing in the build
+complains; the call compiles and the board hangs by luck of the cache.
 
-> **Descrição diz o que a função faz; código diz o que ela EXIGE.** Antes de
-> construir sobre API herdada, ler a implementação procurando o que ela supõe
-> do ambiente — e conferir se alguma decisão de build já revogou isso.
+> **The description says what the function does; the code says what it
+> REQUIRES.** Before building on an inherited API, read the implementation
+> looking for what it assumes about the environment — and check whether some
+> build decision has already revoked it.
 
-**Onde a pré-condição escondida quase sempre mora:** operações que mudam o
-modo de um periférico do qual o código executa; que escrevem em memória de
-onde se busca instrução; que desabilitam interrupção por tempo indefinido.
+**Where the hidden precondition almost always lives:** operations that change
+the mode of a peripheral the code is executing from; that write to memory from
+which instructions are fetched; that disable interrupts for an indefinite time.
 
-**E desconfie de "a biblioteca já resolveu isso"** — mesmo vindo de quem
-conhece a plataforma. Nesse caso a descrição dizia "escreve numa área
-reservada afastada do código"; o código alinhava a 256 bytes, tinha offset
-default ZERO dentro da região do bootloader, e apagava por setor de 4 KB.
+**And distrust "the library already handles that"** — even coming from someone
+who knows the platform. In that case the description said "writes to a reserved
+area well away from the code"; the code aligned to 256 bytes, had a default
+offset of ZERO inside the bootloader's region, and erased by 4 KB sector.
 
-## Registro
+## Record
 
-Hipótese nova: **registrar a aposta com percentual** antes de testar. Aposta
-sem número é opinião que se reescreve depois do resultado.
+New hypothesis: **record the bet with a percentage** before testing. A bet
+without a number is an opinion you rewrite after the result.

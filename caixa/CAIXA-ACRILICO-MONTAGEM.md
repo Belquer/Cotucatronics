@@ -1,216 +1,220 @@
-# Caixa em acrílico — materiais e montagem
-### Cotucatronics · 06/09/2026 · acrílico transparente **3,0 mm**, Ponoko
-> Vale para a caixa que já está a ser cortada (calços cegos, rosca no acrílico) e
-> para as seguintes (calços com porca cativa — ficheiro `cotuca_caixa_corte.svg`
-> regenerado hoje). A diferença está na §4.
+# Acrylic enclosure — materials and assembly
+### Cotucatronics · 09/06/2026 · transparent acrylic **3.0 mm**, Ponoko
+> Valid for the enclosure already being cut (blind standoffs, thread in the acrylic) and
+> for the following ones (standoffs with captive nut — file `cotuca_caixa_corte.svg`
+> regenerated today). The difference is in §4.
 
 ---
 
-## 1 · Materiais e ferramentas
+## 1 · Materials and tools
 
-| item | qtd | nota |
+| item | qty | note |
 |---|---|---|
-| **Weld-On 4** (SCIGRIP 4) | 1 frasco | solvente fino — todas as juntas a 90° |
-| **Weld-On 16** | 1 tubo | gel — só a junta tampa ↔ frente e tampa ↔ trás (11,8°) |
-| frasco aplicador com **agulha** | 1 | vem com o Weld-On 4 ou compra-se à parte; sem ele não há capilaridade |
-| luvas de **nitrilo** | | cloreto de metileno; latex não serve |
-| fita de pintor forte, ou 4 grampos de mola | | segurar a seco e durante a cura |
-| esquadro pequeno | 1 | conferir os cantos antes de o solvente pegar |
-| **parafuso M3 × 10, cabeça cilíndrica** | 6 | fundo → calços |
-| **porca M3** | 6 | só nas caixas com calço de sexágono (série) |
-| broca **ø2,5** + macho **M3** | | só na primeira caixa (calços cegos) |
-| **espaçador M3 × 10 F-F** + 8× parafuso M3 × 6 | 4 + 8 | carrier no fundo. ⚠️ **10 e não 8**: a placa passa por cima de seis calços de 2 × T = **6 mm**, e o `pcb_contorno.py` pede 9 de mínimo |
-| espaçadores para o módulo do amp | 4 | altura conforme o módulo |
-| pé de borracha **ø15 adesivo** | 4 | fundo, a 12 mm dos cantos |
-| lixa 400 e 600 (à água) | | só se quiseres as arestas polidas; o laser já deixa liso |
-| pano de microfibra, álcool isopropílico | | limpar sem riscar; **nunca acetona** |
+| **Weld-On 4** (SCIGRIP 4) | 1 bottle | thin solvent — all the 90° joints |
+| **Weld-On 16** | 1 tube | gel — only the lid ↔ front and lid ↔ back joint (11.8°) |
+| applicator bottle with a **needle** | 1 | comes with the Weld-On 4 or bought separately; without it there is no capillary action |
+| **nitrile** gloves | | methylene chloride; latex does not do |
+| strong painter's tape, or 4 spring clamps | | hold dry and during the cure |
+| small square | 1 | check the corners before the solvent takes hold |
+| **M3 × 10 screw, cheese head** | 6 | bottom → standoffs |
+| **M3 nut** | 6 | only on the enclosures with a hex standoff (series) |
+| **ø2.5** drill bit + **M3** tap | | only on the first enclosure (blind standoffs) |
+| **M3 × 10 F-F spacer** + 8× M3 × 6 screw | 4 + 8 | carrier on the bottom. ⚠️ **10 and not 8**: the board passes over six standoffs of 2 × T = **6 mm**, and `pcb_contorno.py` asks for 9 minimum |
+| spacers for the amp module | 4 | height per the module |
+| **ø15 adhesive** rubber foot | 4 | bottom, 12 mm from the corners |
+| 400 and 600 sandpaper (wet) | | only if you want the edges polished; the laser already leaves them smooth |
+| microfiber cloth, isopropyl alcohol | | clean without scratching; **never acetone** |
 
-**Não usar:** super-cola (racha o acrílico em teia branca), epóxi, cola quente,
-acetona para limpar (opaca a superfície).
-
----
-
-## 2 · Antes de qualquer solvente: montar a seco
-
-1. **Película de proteção fica** em todas as peças até ao fim da colagem. O
-   vapor do solvente esbranquiça a superfície onde toca.
-2. Encaixa a seco: **frente + esquerda + direita + trás**. Os dedos entram à
-   mão com atrito leve. Se prender: lixa 400 nas laterais dos dedos dessa junta,
-   uma passagem. Se folgar: aponta — é o kerf para a série (`K` no gerador).
-3. Pousa a **tampa** por cima, a seco. Os dedos da frente e de trás entram
-   enviesados (11,8°) — em acrílico prendem mais que em madeira. Se não
-   entrarem com pressão de mão, lixa os cantos superiores dos dedos da frente e
-   de trás; **nunca a tampa.**
-4. Mede o exterior: 200 × 120, 55 na frente, 80 atrás. Diagonais do fundo
-   aberto iguais = esquadro.
-5. **Encaixa o fundo por baixo** com as peças montadas. Tem de entrar com folga
-   de 0,5. Tira-o.
-6. **Encaixa as peças reais nos furos** — arcade, pots, encoder, OLED, jacks,
-   DPDT, USB-C — **antes de colar a tampa.** Um furo 0,5 mm fora é uma casca
-   nova; agora custa cinco minutos de lixa.
+**Do not use:** superglue (cracks the acrylic into a white web), epoxy, hot glue,
+acetone to clean (clouds the surface).
 
 ---
 
-## 3 · Soldar a casca (sem a tampa)
+## 2 · Before any solvent: dry-fit
 
-1. Desmonta. Monta de novo **frente + esquerda + direita + trás**, sem a tampa.
-   Fita em volta. Esquadro nas diagonais.
-2. Weld-On 4 no frasco de agulha. **Ponta da agulha ao longo da linha de cada
-   junta, por dentro** — o líquido entra por capilaridade. Não pinceles, não
-   espalhes antes. Uma passagem lenta por junta.
-3. Trinta segundos sem mexer por junta. Quatro cantos, dois minutos.
-4. **Nervura:** cola-se à tampa, não à casca — fica para a §4.
-5. Uma hora antes de tocar. Vinte e quatro antes de carregar.
+1. **The protective film stays** on all pieces until the end of the gluing. The
+   solvent vapor whitens the surface where it touches.
+2. Dry-fit: **front + left + right + back**. The fingers go in by hand with light
+   friction. If it binds: 400 sandpaper on the sides of the fingers of that joint,
+   one pass. If it is loose: note it — it is the kerf for the series (`K` in the
+   generator).
+3. Rest the **lid** on top, dry. The front and back fingers go in at an angle
+   (11.8°) — in acrylic they bind more than in wood. If they do not go in with
+   hand pressure, sand the top corners of the front and back fingers; **never the
+   lid.**
+4. Measure the exterior: 200 × 120, 55 at the front, 80 at the back. Equal
+   diagonals of the open bottom = square.
+5. **Fit the bottom underneath** with the pieces assembled. It has to go in with
+   0.5 clearance. Remove it.
+6. **Fit the real pieces into the holes** — arcade, pots, encoder, OLED, jacks,
+   DPDT, USB-C — **before gluing the lid.** A hole 0.5 mm off is a new shell; now
+   it costs five minutes of sanding.
 
-## 4 · Calços — a primeira caixa e as seguintes
+---
 
-**Onde:** por dentro, nos 4 cantos e a meio da frente e de trás. Face de baixo
-a **T mm da borda inferior das paredes** (3, nesta caixa) — usa o próprio fundo como calibre:
-encosta-o por dentro, rente à borda, cola os calços em cima dele, tira o fundo
-antes de secar.
+## 3 · Solvent-weld the shell (without the lid)
 
-**Primeira caixa (calços cegos, já cortados):** empilha 2 quadrados com Weld-On
-4, cola o par à parede e ao vizinho. Depois de seco: **furo ø2,5 por baixo,
-macho M3**, devagar, sem forçar — acrílico racha por tensão. Vale umas dezenas
-de aperto/desaperto.
+1. Disassemble. Reassemble **front + left + right + back**, without the lid. Tape
+   around it. Square on the diagonals.
+2. Weld-On 4 in the needle bottle. **The needle tip along the line of each joint,
+   from inside** — the liquid enters by capillary action. Do not brush, do not
+   spread beforehand. One slow pass per joint.
+3. Thirty seconds without moving per joint. Four corners, two minutes.
+4. **Rib:** it is glued to the lid, not to the shell — that is left for §4.
+5. One hour before touching it. Twenty-four before loading it.
 
-**Série (calços com sexágono):** cada calço são **dois quadrados diferentes**:
-- **CB** (baixo): tem o sexágono de 5,7 mm — cola-se com o sexágono virado
-  **para baixo**
-- **CT** (cima): liso — cola-se em cima do CB e tapa o sexágono
+## 4 · Standoffs — the first enclosure and the following ones
 
-Antes de colar o CT, **mete a porca M3 no sexágono**. Ela fica cativa: o CT
-tapa por cima, o fundo tapa por baixo, e o sexágono não a deixa rodar. O
-parafuso enrosca em aço para sempre. Sem furo, sem macho, sem calor.
+**Where:** inside, in the 4 corners and at the middle of the front and back. Bottom
+face at **T mm from the lower edge of the walls** (3, in this enclosure) — use the
+bottom itself as a gauge: set it inside, flush with the edge, glue the standoffs on
+top of it, remove the bottom before it dries.
 
-## 4b · Reforço da tampa — antes de montar seja o que for nela
+**First enclosure (blind standoffs, already cut):** stack 2 squares with Weld-On 4,
+glue the pair to the wall and to the neighbor. Once dry: **ø2.5 hole from
+underneath, M3 tap**, slowly, without forcing — acrylic cracks under stress. Good
+for a few dozen tighten/loosen cycles.
 
-A peça `REFORCO`, 193 × 50, cola-se **por baixo da tampa**, centrada, com o
-bordo da frente a **10 mm** da borda dianteira do corpo, de modo que os três
-furos de ø30 fiquem concêntricos com os da tampa.
+**Series (standoffs with hex):** each standoff is **two different squares**:
+- **CB** (bottom): has the 5.7 mm hex — glued with the hex facing **down**
+- **CT** (top): smooth — glued on top of the CB and covers the hex
 
-- **Weld-On 4 de face a face**, com agulha, pela aresta — capilaridade. Peso
-  distribuído (tábua + livro), 30 min. Só depois de curar é que se monta o que
-  quer que seja nos ø30.
-- Confere a concentricidade **a seco**, com um botão enfiado nos dois furos,
-  antes de pôr solvente. Depois de pegar não se corrige.
-- ⚠️ Aresta de acrílico cortada a laser fica com **tensão residual**, e há
-  indicação de que solvente sobre aresta tensionada acelera o *crazing*
-  (aquelas fissuras finas). **Não está confirmado em fonte** — se te
-  preocupar, recozer as duas peças antes de colar (80 °C, 1 h por mm, arrefecer
-  devagar) é o procedimento normal e não estraga nada.
+Before gluing the CT, **put the M3 nut in the hex**. It becomes captive: the CT
+covers it from above, the bottom covers it from below, and the hex does not let it
+turn. The screw threads into steel forever. No hole, no tap, no heat.
 
-**Porquê:** um pé são ~300 N a meio do vão entre a parede da frente e a
-nervura. Em 3 mm isso flete a olho e, com o tempo, raja **a partir dos furos**.
-Com o reforço são 6 mm onde o pé pisa e 3 mm onde os pots e o encoder passam —
-que é a razão de a tampa ser de 3 (o PTV09 tem ~7 mm de rosca).
+## 4b · Lid reinforcement — before mounting anything on it
 
-✅ **O furo do reforço é ø30, e o arcade monta num painel de 6 mm.** Não é
-dedução: o **protótipo em madeira tinha 6 mm** e os botões — os de LED e o dos
-búzios — apertaram lá. Um objecto que existiu vale mais que qualquer ficha, e
-foi essa medição que fechou a questão.
+The `REFORCO` piece, 193 × 50, is glued **underneath the lid**, centered, with the
+front edge **10 mm** from the front edge of the body, so that the three ø30 holes
+are concentric with those of the lid.
 
-## 4c · Se o pé apertar dois botões ao mesmo tempo
+- **Weld-On 4 face to face**, with a needle, along the edge — capillary action.
+  Distributed weight (board + book), 30 min. Only after curing do you mount
+  anything on the ø30s.
+- Check the concentricity **dry**, with a button pushed into both holes, before
+  putting solvent. Once it takes hold it cannot be corrected.
+- ⚠️ A laser-cut acrylic edge is left with **residual stress**, and there is an
+  indication that solvent on a stressed edge accelerates *crazing* (those fine
+  cracks). **It is not confirmed in a source** — if it worries you, annealing the
+  two pieces before gluing (80 °C, 1 h per mm, cool slowly) is the normal
+  procedure and does no harm.
 
-Os três arcade estão à **distância máxima que a face permite**: eixos em
-x = 30 · 100 · 170, **70 mm entre eixos e 40 entre bordos**. Não dá para
-afastar mais — três furos de ø30 numa face de 200 com 12 mm de material até à
-parede é o limite geométrico.
+**Why:** a foot is ~300 N at mid-span between the front wall and the rib. In 3 mm
+that flexes visibly and, over time, cracks **from the holes**. With the
+reinforcement it is 6 mm where the foot steps and 3 mm where the pots and the
+encoder pass through — which is the reason the lid is 3 (the PTV09 has ~7 mm of
+thread).
 
-⚠️ **E 40 mm pode não chegar.** A parte da frente de um pé calçado anda pelos
-70–90 mm de largura: cabe em cima de dois bordos ao mesmo tempo. Se acontecer
-na bancada, o que resolve **não é mais espaço — é um ressalto**:
+✅ **The reinforcement hole is ø30, and the arcade mounts on a 6 mm panel.** It is
+not a deduction: the **wood prototype had 6 mm** and the buttons — the LED ones and
+the cowrie-shell one — tightened there. An object that existed is worth more than
+any datasheet, and it was that measurement that closed the question.
 
-- duas tiras de acrílico de 3 mm, ~10 × 45, coladas **de topo** (a 10 mm de
-  altura) na tampa, a meio caminho entre os botões — x ≈ 65 e 135;
-- ou, mais discreto, as mesmas tiras deitadas: 3 mm de degrau já muda para onde
-  o pé escorrega, e não estorva a vista.
+## 4c · If the foot presses two buttons at the same time
 
-Fica por decidir **depois de pisar**, que é a única forma de saber. As tiras
-cortam-se a qualquer momento numa sobra de chapa.
+The three arcades are at the **maximum distance the face allows**: axes at
+x = 30 · 100 · 170, **70 mm between axes and 40 between edges**. There is no way to
+spread them further — three ø30 holes on a 200 face with 12 mm of material up to the
+wall is the geometric limit.
 
-## 5 · A tampa, por último
+⚠️ **And 40 mm may not be enough.** The front part of a shod foot spans the 70–90
+mm of width: it fits on top of two edges at the same time. If it happens on the
+bench, what solves it **is not more space — it is a ridge**:
 
-Só depois de a §2·6 ter confirmado que todas as peças entram nos furos:
+- two strips of 3 mm acrylic, ~10 × 45, glued **on edge** (10 mm high) on the lid,
+  halfway between the buttons — x ≈ 65 and 135;
+- or, more discreetly, the same strips lying flat: 3 mm of step already changes
+  where the foot slides, and does not get in the way of the view.
 
-1. **Nervura:** cola-se sob a tampa com Weld-On 4, ao longo dos 200 mm, a
-   **y ≈ 62 mm da frente** (entre a fila dos arcade e a dos knobs). Peso em
-   cima, 30 min.
-2. Weld-On **16** nas ranhuras da frente e de trás da tampa (as de 11,8°).
-   Weld-On **4** nas ranhuras das laterais (as de 90°).
-3. Pousa, alinha os dedos, peso distribuído (tábua + livro). Limpa o excesso do
-   gel com pano seco enquanto está fresco.
-4. 24 h. Só então tira as películas.
+It is left to decide **after stepping on it**, which is the only way to know. The
+strips are cut at any moment from a scrap of sheet.
 
-## 6 · Montar o interior
+## 5 · The lid, last
 
-Tudo entra **pelo fundo aberto**, e tudo com conector — nenhum fio soldado de
-placa a painel.
+Only after §2·6 has confirmed that all the pieces go into the holes:
 
-1. **Na tampa, por dentro:** arcade (porca), pots e encoder (porca), OLED (4×
-   M2.5). Cabos: JST nos arcade, o de 7 vias no OLED.
-2. **Nas laterais e trás:** jacks (porca), DPDT (porca), decoy PD (2 parafusos
-   ou fita dupla forte). Fios ao carrier com header.
-3. **No fundo:** carrier nos 4 espaçadores M3 × 10; módulo do amp nos dele;
-   os dois ligam ao resto por terminal de parafuso e IDC.
-4. Liga o IDC do painel, os jacks, os DPDT, a ponte. **Folga de ~80 mm** em
-   todos os cabos que vão do fundo à casca — é o que permite abrir sem
-   desligar.
-5. Fundo para cima, 6 parafusos M3 × 10. Pés adesivos.
+1. **Rib:** glued under the lid with Weld-On 4, along the 200 mm, at **y ≈ 62 mm
+   from the front** (between the arcade row and the knob row). Weight on top, 30
+   min.
+2. Weld-On **16** in the front and back grooves of the lid (the 11.8° ones).
+   Weld-On **4** in the side grooves (the 90° ones).
+3. Rest it, align the fingers, distributed weight (board + book). Wipe the excess
+   gel with a dry cloth while it is fresh.
+4. 24 h. Only then remove the films.
 
-### 6b · Percursos de cabo
+## 6 · Mounting the interior
 
-Vinham do desenho da página 4, que descrevia uma caixa que nunca foi feita — as
-cotas dela morreram, estas regras não, porque falam de **relações** e não de
-milímetros.
+Everything goes in **through the open bottom**, and everything with a connector — no
+wire soldered board-to-panel.
 
-- **Piezos** entram pela esquerda e vão direitos ao pré-amp: **< 60 mm**. É o
-  troço de maior impedância do instrumento inteiro.
-- **Exciters** saem do amp pela direita, e **nunca cruzam o pré-amp**.
-- **IDC do painel** (26 vias) corre pela parede de **trás**, longe da esquerda.
-- **Linha para a mesa**: do DPDT (parede de trás) ao amp e aos jacks de trás.
-- **Como se termina um cabo de sinal** (o método, escrito a 20/09 a pedido do
-  dB — *"parece uma gambiarra, documente o jeito profissional"*): capa
-  descascada **25 mm**, malha reunida num rabicho **≤ 10 mm**, centro **4–5 mm**,
-  os dois estanhados, terminação por **solda + termorretráctil** ou por
-  **conector de crimpe de sistema com trava** (famílias Molex KK-254 ou Harwin
-  M20 encaixam nos headers de 2,54 da placa; o código confirma-se na ficha),
-  e **abraçadeira de alívio a ≤ 20 mm da terminação**. O passo a passo completo
-  está no manual de montagem, no capítulo dos fios.
-  🚫 Dupont genérico não é conector de sistema: sem trava, recua com vibração.
-  ⚠️ **O alívio de esforço é a parte que falta em quase todo improviso**: a
-  força do cabo tem de morrer na abraçadeira, nunca na solda.
-- **Malha do cabo do piezo**: depende de quantos condutores o cabo tem, e
-  confundir os dois casos custa o sinal inteiro (esclarecido a 20/09, com o
-  cabo do dB na mão):
-  - **dois condutores + malha** (há fio de retorno próprio): a malha é
-    **escudo** e liga **só do lado da placa**; nas duas pontas fecha espira.
-  - **coaxial** (um central + malha — o cabo em uso): a malha **é o retorno** e
-    liga **nas duas pontas**. Solta no jack não é menos ruído: é **sem caminho
-    de volta**, logo sem sinal.
-  - Nos dois casos não há espira aqui, porque os jacks são **isolados do
-    chassi** e a caixa é de acrílico — não existe segundo caminho. A espira
-    nasce quando a manga toca metal que chega ao terra por outro lado.
-  - Sempre **rabicho curto**: malha destrançada é blindagem que se perde.
+1. **On the lid, from inside:** arcade (nut), pots and encoder (nut), OLED (4×
+   M2.5). Cables: JST on the arcades, the 7-way one on the OLED.
+2. **On the sides and back:** jacks (nut), DPDT (nut), PD decoy (2 screws or strong
+   double-sided tape). Wires to the carrier with a header.
+3. **On the bottom:** carrier on the 4 M3 × 10 spacers; amp module on its own; the
+   two connect to the rest by screw terminal and IDC.
+4. Connect the panel IDC, the jacks, the DPDTs, the bridge. **~80 mm of slack** on
+   all the cables that go from the bottom to the shell — it is what allows you to
+   open without disconnecting.
+5. Bottom up, 6 M3 × 10 screws. Adhesive feet.
 
-E a folga: **~80 mm** em todos os cabos que vão do fundo à casca — é o que
-permite abrir a caixa sem desligar nada.
+### 6b · Cable routes
 
-## 7 · Trocar ou reparar
+They came from the page-4 drawing, which described an enclosure that was never made
+— its dimensions died, these rules did not, because they speak of **relations** and
+not of millimeters.
 
-| o quê | como |
+- **Piezos** come in from the left and go straight to the pre-amp: **< 60 mm**. It
+  is the highest-impedance run of the whole instrument.
+- **Exciters** leave the amp on the right, and **never cross the pre-amp**.
+- **Panel IDC** (26 ways) runs along the **back** wall, far from the left.
+- **Line to the mixer**: from the DPDT (back wall) to the amp and the back jacks.
+- **How a signal cable is terminated** (the method, written on 09/20 at dB's
+  request — *"it looks like a kludge, document the professional way"*): sheath
+  stripped **25 mm**, braid gathered into a pigtail **≤ 10 mm**, center **4–5 mm**,
+  both tinned, termination by **solder + heat-shrink** or by **a latching system
+  crimp connector** (the Molex KK-254 or Harwin M20 families fit the board's 2.54
+  headers; the code is confirmed in the datasheet), and a **strain-relief clamp ≤
+  20 mm from the termination**. The complete step-by-step is in the assembly
+  manual, in the wires chapter.
+  🚫 A generic Dupont is not a system connector: with no latch, it backs out with
+  vibration.
+  ⚠️ **The strain relief is the part missing from almost every improvisation**: the
+  force of the cable has to die at the clamp, never at the solder.
+- **Piezo cable braid**: it depends on how many conductors the cable has, and
+  confusing the two cases costs the whole signal (clarified on 09/20, with dB's
+  cable in hand):
+  - **two conductors + braid** (there is a return wire of its own): the braid is a
+    **shield** and connects **only on the board side**; on both ends it closes a
+    loop.
+  - **coaxial** (one center + braid — the cable in use): the braid **is the
+    return** and connects **on both ends**. Loose at the jack it is not less noise:
+    it is **no return path**, so no signal.
+  - In both cases there is no loop here, because the jacks are **isolated from the
+    chassis** and the enclosure is acrylic — there is no second path. The loop is
+    born when the sleeve touches metal that reaches ground by another route.
+  - Always a **short pigtail**: an unbraided shield is shielding that is lost.
+
+And the slack: **~80 mm** on all the cables that go from the bottom to the shell —
+it is what allows you to open the enclosure without disconnecting anything.
+
+## 7 · Swap or repair
+
+| what | how |
 |---|---|
-| carrier, amp, step-down, ponte | 6 parafusos, o fundo desce com tudo |
-| arcade, pot, encoder | desligar o JST/fio, porca por dentro, sai por cima |
-| OLED | 4× M2.5 por dentro, cabo de 7 vias |
-| jack, DPDT | porca por dentro, fio ao header |
-| **a casca** | não se repara: corta-se uma nova e transplanta-se o interior |
+| carrier, amp, step-down, bridge | 6 screws, the bottom comes down with everything |
+| arcade, pot, encoder | disconnect the JST/wire, nut from inside, comes out the top |
+| OLED | 4× M2.5 from inside, 7-way cable |
+| jack, DPDT | nut from inside, wire to the header |
+| **the shell** | not repaired: a new one is cut and the interior is transplanted |
 
-Regra: **o que custa dinheiro sai; o que fica soldado é acrílico.**
+Rule: **what costs money comes out; what stays glued is acrylic.**
 
-## 8 · O que esta caixa decide para a série
+## 8 · What this enclosure decides for the series
 
-- kerf real em acrílico (`K` no gerador: dedos justos → 0,15; folgados → 0,25)
-- se a junta de 11,8° serve com Weld-On 16, ou se a série leva bisel
-- se 55 mm de frente chega com os arcade dentro
-- se os calços de porca cativa entram no próximo pedido (sim, salvo surpresa)
+- real kerf in acrylic (`K` in the generator: tight fingers → 0.15; loose → 0.25)
+- whether the 11.8° joint works with Weld-On 16, or whether the series needs a bevel
+- whether 55 mm of front is enough with the arcades inside
+- whether the captive-nut standoffs make it into the next order (yes, barring a
+  surprise)

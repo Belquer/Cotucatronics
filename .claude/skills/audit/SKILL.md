@@ -1,397 +1,398 @@
 ---
 name: audit
-description: Auditoria profunda de consistência no Cotucatronics — caça nomes fantasma, lápides invertidas, declarações falsas, números mortos, tabelas à mão a envelhecer por cima de geradas, links mortos, isenções órfãs, verificações sem objeto, frases partidas por renomeação e destinos dessincronizados. Use ao apagar um nome de toda a árvore, ao remover uma feature, ao fechar uma reestruturação, e antes de dar documentação por limpa.
+description: Deep consistency audit in Cotucatronics — hunts ghost names, inverted tombstones, false statements, dead numbers, hand tables aging on top of generated ones, dead links, orphan exemptions, objectless checks, sentences broken by a rename, and desynchronized destinations. Use when deleting a name from the whole tree, when removing a feature, when closing a restructuring, and before calling documentation clean.
 ---
 
-# /audit — auditar sem partir nada
+# /audit — audit without breaking anything
 
-**Uma auditoria que quebra o build perdeu o direito de ter razão.** E uma
-que "limpa" um nome deixando a frase em volta a mentir é pior do que não
-ter corrido: tirar o qualificador de uma afirmação morta faz o morto passar
-por vivo.
+**An audit that breaks the build has lost the right to be right.** And one that
+"cleans" a name while leaving the sentence around it lying is worse than not
+having run: removing the qualifier from a dead statement makes the dead pass for
+alive.
 
-Esta skill é o processo. A parte mecânica está em `docs/operacao/auditar.sh`
-(v1.2.0), que chama `coerencia.py`, `versoes_readme.py` e `vizinhos.py` —
-corre-o primeiro, sempre.
+This skill is the process. The mechanical part is in `docs/operacao/auditar.sh`
+(v1.2.0), which calls `coerencia.py`, `versoes_readme.py` and `vizinhos.py` — run
+it first, always.
 
-## A ORDEM É INEGOCIÁVEL
+## THE ORDER IS NON-NEGOTIABLE
 
-Ela existe porque a inversão de dois passos quebra o build de verdade.
+It exists because inverting two steps breaks the build for real.
 
 ```
-1. BASELINE   correr todo verificador ANTES de tocar. Guardar exit code
-              E os contadores (fantasmas, órfãos, aposentados, ERC…).
-              Sem baseline não se sabe o que é herdado e o que é teu.
-2. INVENTÁRIO por `git ls-files`, NUNCA por glob à mão (ver abaixo).
-3. CLASSIFICAR cada ocorrência, antes de editar uma única.
-4. EDITAR     com âncora única (skill `edicao-segura`), nunca replace cego.
-5. GREP       o relato vem do ficheiro, não da intenção.
-6. RE-VERIFICAR e comparar contra o baseline, número a número.
-7. SINCRONIZAR os três destinos.
-8. PENDENTES  varrer o que a árvore declara por fazer, e para cada um
-              perguntar se ainda é verdade. Pendência resolvida que ficou
-              escrita é uma declaração falsa com data.
+1. BASELINE   run every checker BEFORE touching anything. Save the exit code
+              AND the counters (ghosts, orphans, retired, ERC…).
+              Without a baseline you do not know what is inherited and what is yours.
+2. INVENTORY  by `git ls-files`, NEVER by hand-globbing (see below).
+3. CLASSIFY   each occurrence, before editing a single one.
+4. EDIT       with a unique anchor (skill `edicao-segura`), never a blind replace.
+5. GREP       the report comes from the file, not from the intention.
+6. RE-VERIFY  and compare against the baseline, number by number.
+7. SYNC       the three destinations.
+8. PENDING    sweep what the tree declares to be done, and for each one
+              ask whether it is still true. A resolved pending item left
+              written is a false statement with a date.
 ```
 
-### O passo 2 enumera-se pelo git, nunca à mão
+### Step 2 enumerates by git, never by hand
 
-Varri o fonte com `*.h *.cpp Makefile` — 33 ficheiros — e dei o trabalho por
-fechado. A árvore tem **137 rastreados em 14 extensões**. Ficaram de fora
-`.py` (22), `.command` (8), `.sh` (3), `.lds`, `.ino`, `.html`, `.txt` e um
-**segundo `Makefile`**. O `check_repo.sh` escapou e só apareceu na varredura
-final, por acaso.
+I swept the source with `*.h *.cpp Makefile` — 33 files — and called the work
+done. The tree has **137 tracked files in 14 extensions**. Left out were `.py`
+(22), `.command` (8), `.sh` (3), `.lds`, `.ino`, `.html`, `.txt` and a **second
+`Makefile`**. The `check_repo.sh` escaped and only showed up in the final sweep, by
+accident.
 
-> **Enumerar é do git; escolher à mão é como se esquece um tipo de ficheiro
-> inteiro.** `git ls-files -z | xargs -0 grep -lI` — e ainda
-> `--others --exclude-standard` para o que não está rastreado, mais o vault,
-> que vive fora do git.
+> **Enumerating is git's job; choosing by hand is how you forget a whole file type.**
+> `git ls-files -z | xargs -0 grep -lI` — and also `--others --exclude-standard`
+> for what is not tracked, plus the vault, which lives outside git.
 
-O `auditar.sh` imprime as extensões que existem na árvore ao lado do
-resultado: extensão nova aparece à vista, em vez de ficar de fora em silêncio.
+The `auditar.sh` prints the extensions that exist in the tree alongside the result:
+a new extension appears in plain view, instead of staying out in silence.
 
-### O passo 2 e o passo 4 têm dependência de ordem
+### Step 2 and step 4 have an ordering dependency
 
-Há ficheiros que são **licença** para outros: `docs/params-aposentados.txt`
-e as directivas `<!-- doc-check: ignore … -->` autorizam a doc a citar um
-nome que já não existe no fonte.
+There are files that are a **license** for others: `docs/params-aposentados.txt`
+and the `<!-- doc-check: ignore … -->` directives authorize the doc to cite a name
+that no longer exists in the source.
 
-> **Apagar a licença antes da menção quebra o `check_docs`.** Menções
-> primeiro, licença por último, verificador a fechar.
+> **Deleting the license before the mention breaks `check_docs`.** Mentions first,
+> license last, checker to close.
 
-## OS TRÊS DESTINOS
+## THE THREE DESTINATIONS
 
-Repo (`docs/`) · vault (`~/Documents/Obsidian Vault/Cotucatronics/`) ·
-skills (`.claude/skills/*/SKILL.md`). A skill é a que **carrega sozinha na
-hora do uso** — deixá-la suja é deixar suja a cópia que fala primeiro. E a
-`description:` do frontmatter conta como corpo: ela aparece no listador.
+Repo (`docs/`) · vault (`~/Documents/Obsidian Vault/Cotucatronics/`) · skills
+(`.claude/skills/*/SKILL.md`). The skill is the one that **loads by itself at the
+time of use** — leaving it dirty is leaving dirty the copy that speaks first. And
+the frontmatter's `description:` counts as body: it shows up in the lister.
 
-⚠️ O vault tem uma cópia do `README.md` da **raiz**, não a de
-`docs/operacao/`. Comparar pelo basename produz falso positivo.
+⚠️ The vault has a copy of the **root** `README.md`, not the one in
+`docs/operacao/`. Comparing by basename produces a false positive.
 
-## AS CLASSES — e qual delas o grep apanha
+## THE CLASSES — and which of them grep catches
 
-O `auditar.sh` cobre as cinco primeiras. As outras exigem leitura, e é por
-isso que ele **não finge** cobri-las: verificador que passa sempre é a
-classe 10 dele próprio.
+The `auditar.sh` covers the first five. The others require reading, and that is why
+it **does not pretend** to cover them: a checker that always passes is its own
+class 10.
 
-| # | Classe | Mecânico? |
+| # | Class | Mechanical? |
 |---|---|---|
-| 1 | link morto (ficheiro referido que não existe) | ✅ |
-| 2 | isenção órfã (`doc-check: ignore` de nome ausente do corpo) | ✅ |
-| 3 | aposentado órfão / **entrada duplicada** na lista | ✅ |
-| 4 | destino dessincronizado (repo ≠ vault ≠ skill) | ✅ |
-| 5 | fantasma / CC errado / faixa que não bate | ✅ `check_docs` |
-| 6 | **lápide invertida** | ❌ leitura |
-| 7 | **tabela à mão a envelhecer por cima de uma gerada** | ❌ leitura |
-| 8 | **contradição intra-ficheiro** | ❌ leitura |
-| 9 | **número morto que passa por actual** | ❌ leitura |
-| 10 | **verificação sem objeto** | ❌ leitura |
-| 11 | **defeito órfão do seu sujeito** | ❌ leitura |
-| 12 | **item pendente** (🔴🟡⬜⏳ TODO, "por confirmar", "em aberto") | ✅ `coerencia.py` |
-| 13 | **frase partida pela renomeação** | ✅ `vizinhos.py` |
+| 1 | dead link (referenced file that does not exist) | ✅ |
+| 2 | orphan exemption (`doc-check: ignore` of a name absent from the body) | ✅ |
+| 3 | orphan retired item / **duplicate entry** in the list | ✅ |
+| 4 | desynchronized destination (repo ≠ vault ≠ skill) | ✅ |
+| 5 | ghost / wrong CC / range that does not match | ✅ `check_docs` |
+| 6 | **inverted tombstone** | ❌ reading |
+| 7 | **hand table aging on top of a generated one** | ❌ reading |
+| 8 | **intra-file contradiction** | ❌ reading |
+| 9 | **dead number passing for current** | ❌ reading |
+| 10 | **objectless check** | ❌ reading |
+| 11 | **defect orphaned from its subject** | ❌ reading |
+| 12 | **pending item** (🔴🟡⬜⏳ TODO, "to confirm", "open") | ✅ `coerencia.py` |
+| 13 | **sentence broken by the rename** | ✅ `vizinhos.py` |
 
-### 6. Lápide invertida
+### 6. Inverted tombstone
 
-Comentário que afirma que algo **continua** — e não continua.
+A comment that claims that something **still stands** — and it does not.
 
-Caso real: o `manifest.h` dizia, de um grupo de params de um efeito
-aposentado, *"CONTINUAM na tabela de propósito"*. Não continuavam: todas as
-ocorrências restantes estavam dentro de comentários, e não havia um único
-`t.Add()` para nenhum deles. Eu acreditei no comentário e reportei ao dB que
-era preciso mudar código. Era falso.
+Real case: `manifest.h` said, of a group of params of a retired effect, *"they
+STILL stand in the table on purpose"*. They did not: all the remaining occurrences
+were inside comments, and there was not a single `t.Add()` for any of them. I
+believed the comment and reported to dB that code had to change. It was false.
 
-> **Comentário que afirma o estado do código é a afirmação menos fiável do
-> ficheiro** — ele não compila, ninguém o testa, e sobrevive à mudança que
-> o desmente. Prova pelo símbolo (`grep` da declaração), nunca pela prosa.
+> **A comment that claims the state of the code is the least reliable statement in
+> the file** — it does not compile, no one tests it, and it survives the change
+> that disproves it. Prove by the symbol (`grep` the declaration), never by the
+> prose.
 
-### 7. Tabela à mão por cima de uma gerada
+### 7. Hand table on top of a generated one
 
-`src/BOARDS.md` tem uma tabela intitulada *"Mapa de CC do instrumento
-**atual**"*, escrita à mão, que lista três params inexistentes e um
-removido em 28/08. O mapa gerado de verdade é `docs/operacao/CCMAP.md`,
-produzido por `gerar_ccmap.py` a partir do `manifest.h`, e traz aviso de
-*não editar à mão*.
+`src/BOARDS.md` had a table titled *"CC map of the **current** instrument"*,
+written by hand, that listed three nonexistent params and one removed on 08/28. The
+truly generated map is `docs/operacao/CCMAP.md`, produced by `gerar_ccmap.py` from
+`manifest.h`, and it carries a *do not edit by hand* warning.
 
-> **Antes de corrigir uma tabela, descobre se ela é gerada.** Corrigir a
-> gerada à mão é trabalho que a próxima geração desfaz; corrigir a de mão
-> quando existe uma gerada é manter viva a que mente.
+> **Before correcting a table, find out whether it is generated.** Correcting the
+> generated one by hand is work the next generation undoes; correcting the hand one
+> when a generated one exists is keeping alive the one that lies.
 
-⚠️ **E ao apontar a de mão para a fonte, confirma que a fonte não aponta de
-volta.** O `ROTEIRO-KICAD` §5 listava as 26 vias do IDC e passou a dizer «vê o
-gerador» — mas o cabeçalho do gerador dizia «a pinagem sai do §5». Ficavam os
-dois a apontar um para o outro, e nenhum era a fonte.
+⚠️ **And when pointing the hand one at the source, confirm the source does not
+point back.** The `ROTEIRO-KICAD` §5 listed the IDC's 26 vias and came to say «see
+the generator» — but the generator's header said «the pinout comes from §5». The
+two were left pointing at each other, and neither was the source.
 
-> **Documento explica; gerador afirma.** No §5 ficou só o que **não** se deduz
-> da tabela — porque é que as terras estão onde estão, e os 6 dB medidos com o
-> painel aceso. Isso não vive no gerador e morreria com a tabela.
+> **A document explains; a generator asserts.** In §5 only what **cannot** be
+> deduced from the table was left — why the grounds are where they are, and the 6
+> dB measured with the panel board lit. That does not live in the generator and
+> would die with the table.
 
-Como descobrir: `grep -rl '<nome do doc>' --include='*.py' --include='*.sh'`.
+How to find out: `grep -rl '<doc name>' --include='*.py' --include='*.sh'`.
 
-### 8. Contradição intra-ficheiro
+### 8. Intra-file contradiction
 
-O `README.md` anunciava o `flash.sh` a entrar no bootloader por `dfu go`
-e, trezentas linhas abaixo, dizia *"gravar exige o botão BOOT"*. As duas no
-mesmo ficheiro, ambas afirmativas, nenhuma marcada como histórica.
+The `README.md` announced `flash.sh` entering the bootloader by `dfu go` and, three
+hundred lines down, said *"flashing requires the BOOT button"*. Both in the same
+file, both affirmative, neither marked as historical.
 
-> Procurar pelo **par**, não pela frase: estado declarado duas vezes é
-> candidato a divergir. Versões, contagens, "nenhum defeito conhecido",
-> "ainda não implementado", números de CPU.
+> Search for the **pair**, not the sentence: a state declared twice is a candidate
+> to diverge. Versions, counts, "no known defects", "not yet implemented", CPU
+> numbers.
 
-### 9. Número morto que passa por actual — **a armadilha desta skill**
+### 9. Dead number passing for current — **the trap of this skill**
 
-O `README` dizia *"Com o delay do motor externo carregado: 5,7% média"*. A
-carga real hoje é 59,5%. Enquanto o qualificador lá estava, a frase ao menos
-avisava que era de outra configuração.
+The `README` said *"With the external engine's delay loaded: 5.7% average"*. The
+real load today is 59.5%. While the qualifier was there, the sentence at least
+warned that it was from another configuration.
 
-> **Tirar o qualificador de um número morto é falsificá-lo.** Ao apagar um
-> nome de uma frase que carrega medição: ou actualizas o número contra a
-> fonte que mede, ou apagas a frase inteira. Nunca só o nome.
+> **Removing the qualifier from a dead number is falsifying it.** When deleting a
+> name from a sentence that carries a measurement: either you update the number
+> against the source that measures, or you delete the whole sentence. Never just
+> the name.
 
-### 10. Verificação sem objeto
+### 10. Objectless check
 
-O `check_repo.sh` teve um bloco inteiro a conferir exports que já não
-existiam: passava sempre, e ia continuar a passar para sempre.
+The `check_repo.sh` had a whole block checking exports that no longer existed: it
+always passed, and was going to keep passing forever.
 
-Forma subtil, encontrada nesta árvore: uma isenção `doc-check: ignore
-route_exciter` cujo comentário diz *"a menção é o registo da renomeação"* —
-e a menção que ela protegia já não está no corpo. **A isenção passou a ser
-o único registo do que ela existia para proteger.** Apagá-la por "órfã"
-apagaria a última cópia. Ler antes de podar.
+A subtle form, found in this tree: a `doc-check: ignore route_exciter` exemption
+whose comment says *"the mention is the record of the rename"* — and the mention it
+protected is no longer in the body. **The exemption became the only record of what
+it existed to protect.** Deleting it as "orphan" would delete the last copy. Read
+before pruning.
 
-### 11. Defeito órfão do seu sujeito
+### 11. Defect orphaned from its subject
 
-🔴 *"A serial morre com o efeito X ligado"* — o efeito saiu há semanas. O
-defeito é real (starvation da ISR do USB por callback longo), o **repro** é
-que morreu com o sujeito.
+🔴 *"The serial dies with effect X on"* — the effect went out weeks ago. The defect
+is real (starvation of the USB ISR by a long callback), the **repro** is what died
+with the subject.
 
-> Ao aposentar uma feature, varrer os defeitos abertos: os que a nomeiam ou
-> fecham com ela, ou perdem o modo de reproduzir. Renomear pelo mecanismo.
+> When retiring a feature, sweep the open defects: the ones that name it either
+> close with it, or lose their way to reproduce. Rename by the mechanism.
 
-### Como podar uma isenção sem perder o registo
+### How to prune an exemption without losing the record
 
-Uma `doc-check: ignore` só trabalha se o nome aparecer **entre crases** no
-corpo — e o escopo é o **ficheiro inteiro**, apesar de a docstring do
-`check_docs` dizer "na linha ou na anterior". Antes de podar, três perguntas:
+A `doc-check: ignore` only works if the name appears **between backticks** in the
+body — and the scope is the **whole file**, despite `check_docs`'s docstring saying
+"on the line or the previous one". Before pruning, three questions:
 
-1. O nome aparece em crase no corpo deste ficheiro? Se sim, **não é órfã**.
-2. O comentário da isenção carrega informação que não existe em mais lado
-   nenhum? Se sim, **migrar para `params-aposentados.txt`** — é a casa
-   declarada de nome aposentado — e só então apagar a directiva.
-3. Outro ficheiro carrega o mesmo registo E usa o nome? Então esta é sobra.
+1. Does the name appear in backticks in this file's body? If so, **it is not an
+   orphan**.
+2. Does the exemption's comment carry information that exists nowhere else? If so,
+   **migrate it to `params-aposentados.txt`** — it is the declared home for a
+   retired name — and only then delete the directive.
+3. Does another file carry the same record AND use the name? Then this one is a
+   leftover.
 
-Foi assim que seis órfãs viraram zero sem perder uma linha de história: duas
-migraram, quatro eram cópias de um registo que vivia noutro documento.
+That is how six orphans became zero without losing a line of history: two migrated,
+four were copies of a record that lived in another document.
 
-### 12. A passada de pendentes
+### 12. The pending pass
 
-`coerencia.py` varre as marcas que a árvore usa para dizer "por fazer":
-os emojis de estado, `TODO`/`FIXME`/`XXX`/`HACK`, e as frases portuguesas
-("por confirmar", "por medir", "em aberto", "ficou por", "não foi validado").
+`coerencia.py` sweeps the marks the tree uses to say "to be done": the state emojis,
+`TODO`/`FIXME`/`XXX`/`HACK`, and the Portuguese phrases ("por confirmar", "por
+medir", "em aberto", "ficou por", "não foi validado").
 
-**Duas armadilhas de precisão, ambas pagas aqui:**
+**Two precision traps, both paid for here:**
 
-- `\bTODO\b` com *ignorecase* casa o português **"todo"**. A primeira versão
-  desta passada trouxe ~200 falsos positivos. TODO/FIXME são **maiúsculas-só**;
-  só as frases é que são insensíveis.
-- `pend[êe]ncia` sem `\b` casa **de**pendência e **inde**pendência.
+- `\bTODO\b` with *ignorecase* matches the Portuguese **"todo"**. The first version
+  of this pass brought ~200 false positives. TODO/FIXME are **uppercase-only**; only
+  the phrases are case-insensitive.
+- `pend[êe]ncia` without `\b` matches **de**pendência and **inde**pendência.
 
-> Um verificador que berra é um verificador que se desliga. Precisão antes de
-> cobertura: a passada só vale se cada linha que ela imprime merecer leitura.
+> A checker that screams is a checker that gets switched off. Precision before
+> coverage: the pass is only worth it if every line it prints deserves reading.
 
-O que fazer com o resultado: para cada pendência, **ainda é verdade?** As que
-já se resolveram e ficaram escritas são a classe 9 disfarçada — uma declaração
-falsa com data em cima.
+What to do with the result: for each pending item, **is it still true?** The ones
+already resolved and left written are class 9 in disguise — a false statement with a
+date on top.
 
-### 13. A frase partida pela renomeação
+### 13. The sentence broken by the rename
 
-Renomeei uma frase no `hal_daisy_seed.cpp` com âncora única e verificada. A
-âncora casou uma vez. O `grep` confirmou o texto novo. O `make` passou. E a
-frase ficou assim:
+I renamed a sentence in `hal_daisy_seed.cpp` with a unique, verified anchor. The
+anchor matched once. The `grep` confirmed the new text. The `make` passed. And the
+sentence was left like this:
 
 ```
     // ... "a serial morre sob callback
     // ligado": quem morria era o LOOP
 ```
 
-porque a **continuação estava na linha seguinte**, que ninguém tocou.
+because the **continuation was on the next line**, which no one touched.
 
-> **A âncora única prova que o casamento foi ÚNICO. Não prova que a frase
-> continua a LER-SE.** São garantias diferentes, e só a primeira é mecânica.
-> Compilador, `grep` e `assert` calam-se todos os três.
+> **A unique anchor proves the match was UNIQUE. It does not prove the sentence
+> still READS.** They are different guarantees, and only the first is mechanical.
+> Compiler, `grep` and `assert` all three stay silent.
 
-`vizinhos.py` lê o diff e assinala as vizinhanças em risco. O discriminador
-que o torna utilizável: **só há risco se a edição tocou o FIM da linha.**
-Renomeação no meio deixa a cauda igual e a frase reata como reatava. Sem esse
-filtro a ferramenta assinalava 211 vizinhanças — ruído a fingir de achado, que
-é a classe 10 aplicada a ela própria. Com ele, 89; e com `--termo=<nome>`, que
-aperta para os casos em que a **cauda removida continha o nome**, 16.
+`vizinhos.py` reads the diff and flags the neighborhoods at risk. The discriminator
+that makes it usable: **there is only a risk if the edit touched the END of the
+line.** A rename in the middle leaves the tail equal and the sentence resumes as it
+resumed. Without that filter the tool flagged 211 neighborhoods — noise posing as a
+finding, which is class 10 applied to itself. With it, 89; and with `--termo=<name>`,
+which tightens to the cases where the **removed tail contained the name**, 16.
 
 ```bash
-python3 docs/operacao/vizinhos.py --termo=<nome-que-sai>
+python3 docs/operacao/vizinhos.py --termo=<name-going-out>
 ```
 
-Ela não decide — manda ler. Numa remoção de nome, ler essas dez ou vinte
-linhas é o preço de não deixar uma frase sem sentido no meio da árvore.
+It does not decide — it orders reading. In a name removal, reading those ten or
+twenty lines is the price of not leaving a senseless sentence in the middle of the
+tree.
 
-### 14. Corpo de emissor copiado em vez de chamado
+### 14. Emitter body copied instead of called
 
-O `gera_soquete.py` tinha uma função `nao_liga(x, y)` que emitia um bloco
-`(no_connect ...)`. E tinha, quinhentas linhas abaixo, **o corpo dela outra
-vez**, escrito à mão:
+The `gera_soquete.py` had a function `nao_liga(x, y)` that emitted a
+`(no_connect ...)` block. And it had, five hundred lines down, **its body again**,
+written by hand:
 
 ```python
 L.append('\t(no_connect\n\t\t(at %s %s)\n\t\t(uuid "%s")\n\t)\n'
          % (g(_x), g(_y), u()))
 ```
 
-Enquanto o emissor não mudou, as duas versões produziram output idêntico e
-nada as distinguia. Quando o `uuid` passou a exigir chave, **só o original a
-recebeu** — a cópia ficou com a assinatura antiga e o gerador rebentou. Se a
-mudança tivesse sido silenciosa em vez de partir a assinatura, a cópia teria
-continuado a emitir a versão velha, sem erro nenhum.
+As long as the emitter did not change, the two versions produced identical output
+and nothing distinguished them. When the `uuid` came to require a key, **only the
+original received it** — the copy was left with the old signature and the generator
+blew up. If the change had been silent instead of breaking the signature, the copy
+would have kept emitting the old version, with no error at all.
 
-> **É a classe 7 em forma de código.** Duas fontes do mesmo comportamento, e a
-> que não é chamada é a que envelhece. A tabela à mão pelo menos parece uma
-> tabela; um corpo de emissor duplicado parece código normal, e é por isso que
-> só se encontra procurando por ele.
+> **It is class 7 in code form.** Two sources of the same behavior, and the one not
+> called is the one that ages. The hand table at least looks like a table; a
+> duplicated emitter body looks like normal code, and that is why you only find it
+> by searching for it.
 
-**Como procurar** — não por nomes de função, que a cópia justamente não usa,
-mas pelo **output**: toda a família de emissores escreve strings com forma
-reconhecível.
+**How to search** — not by function names, which the copy precisely does not use,
+but by the **output**: the whole family of emitters writes strings with a
+recognizable shape.
 
-⚠️ **E ancora na ACUMULAÇÃO, não na forma.** Buscar só a forma devolveu oito
-acertos por ficheiro, e metade eram **leitores** — `Lb.find('(symbol "%s"')`,
-`_confere_lib`, `lib_embutida` — que procuram a forma em vez de a produzir.
-Isso é a **classe 10** a acontecer dentro desta passada: ruído a fingir de
-achado. O que emite é o que faz `append`:
+⚠️ **And anchor on the ACCUMULATION, not on the shape.** Searching only the shape
+returned eight hits per file, and half were **readers** — `Lb.find('(symbol "%s"')`,
+`_confere_lib`, `lib_embutida` — which look for the shape instead of producing it.
+That is **class 10** happening inside this pass: noise posing as a finding. What
+emits is what does `append`:
 
 ```bash
 grep -n "L\.append(" gera_*.py | grep -o "L\.append(f\?'\{1,3\}.\{0,26\}" | sort | uniq -c
 ```
 
-Cada forma deve aparecer **uma vez**. Duas ou mais, e só uma dentro de um
-`def`: as outras são cópias. Corrido sobre os três geradores deste projecto dá
-uma linha por forma — a única cópia que existia foi a que originou esta classe.
+Each shape must appear **once**. Two or more, and only one inside a `def`: the
+others are copies. Run over this project's three generators it gives one line per
+shape — the only copy that existed was the one that gave rise to this class.
 
-A mesma busca serve para qualquer gerador, trocando o acumulador: SQL montado à
-mão ao lado de um construtor, cabeçalhos HTTP, mensagens de log com formato
-fixo.
+The same search serves any generator, swapping the accumulator: SQL built by hand
+next to a builder, HTTP headers, log messages with a fixed format.
 
-⚠️ **E o discriminador que evita o ruído:** duplicar a *chamada* é normal e
-esperado — um `nao_liga()` invocado em vinte sítios é o desenho a funcionar.
-O achado é duplicar o **corpo**. A pergunta é «este sítio reconstrói o que um
-`def` já constrói?», não «esta forma aparece muitas vezes?».
+⚠️ **And the discriminator that avoids the noise:** duplicating the *call* is normal
+and expected — a `nao_liga()` invoked in twenty places is the design working. The
+finding is duplicating the **body**. The question is «does this place reconstruct
+what a `def` already constructs?», not «does this shape appear many times?».
 
-⚠️ **Achado mesmo quando o output é idêntico hoje.** A cópia não está errada:
-está **por envelhecer**. Reportar só quando já divergiu é reportar o incêndio,
-não a instalação eléctrica — e a divergência, quando chega, não dá erro.
+⚠️ **A finding even when the output is identical today.** The copy is not wrong: it
+is **about to age**. Reporting only when it has already diverged is reporting the
+fire, not the electrical wiring — and the divergence, when it comes, throws no
+error.
 
-## O TESTE QUE LÊ A RECUSA COMO APROVAÇÃO
+## THE TEST THAT READS THE REFUSAL AS APPROVAL
 
-Num só dia, quatro verificações minhas deram o veredicto **ao contrário** — e
-nenhuma por o código auditado estar errado:
+In a single day, four checks of mine gave the verdict **backwards** — and none
+because the audited code was wrong:
 
-| o teste | porque aprovou em falso |
+| the test | why it falsely passed |
 |---|---|
-| `grep -q "gravado"` | a recusa diz **`"Nada gravado"`**, que contém `"gravado"` |
-| `case "$out" in *gravado*)` | o mesmo, outra sintaxe |
-| `set -- $cfg` num `for` | o **zsh não separa palavras** sem aspas — dois valores entraram como um |
-| busca por prosa num documento | `"preenchimento"` onde o ficheiro diz `"enchimento"` |
+| `grep -q "gravado"` | the refusal says **`"Nada gravado"`**, which contains `"gravado"` |
+| `case "$out" in *gravado*)` | the same, other syntax |
+| `set -- $cfg` in a `for` | **zsh does not split words** without quotes — two values entered as one |
+| search for prose in a document | `"preenchimento"` where the file says `"enchimento"` |
 
-> **A mensagem de falha quase sempre contém a palavra de sucesso**, porque é
-> escrita para gente ler: *«nada gravado»*, *«no changes committed»*, *«0 tests
-> failed»*, *«failed to build»*. Um teste que casa a **subcadeia** lê a recusa
-> como aprovação.
+> **The failure message almost always contains the success word**, because it is
+> written for people to read: *«nada gravado»*, *«no changes committed»*, *«0 tests
+> failed»*, *«failed to build»*. A test that matches the **substring** reads the
+> refusal as approval.
 
-⚠️ **É o pior modo de falhar que há**, e vale a pena dizer porquê: a ferramenta
-estava certa, a mensagem estava certa, e só quem a consultou é que percebeu o
-contrário. Não há nada partido para encontrar depois — só uma conclusão errada
-já espalhada por quem a leu.
+⚠️ **It is the worst failure mode there is**, and it is worth saying why: the tool
+was right, the message was right, and only whoever consulted it got the opposite.
+There is nothing broken to find afterwards — only a wrong conclusion already spread
+among those who read it.
 
-**O que se ancora, por ordem de preferência:**
+**What you anchor on, in order of preference:**
 
-1. **o código de saída** — e o do comando certo: `cmd | tail` devolve o do
-   `tail`, não o do `cmd`;
-2. **o início da linha** (`^ *gravado ·`), não a palavra solta;
-3. **a estrutura** (a secção existe? o bloco existe?), nunca a prosa — que muda
-   quando alguém reescreve uma frase e não mexe em nada.
+1. **the exit code** — and that of the right command: `cmd | tail` returns `tail`'s,
+   not `cmd`'s;
+2. **the start of the line** (`^ *gravado ·`), not the loose word;
+3. **the structure** (does the section exist? does the block exist?), never the
+   prose — which changes when someone rewrites a sentence and touches nothing else.
 
-⚠️ **E a mesma armadilha do outro lado:** procurar por prosa para provar que uma
-lição foi absorvida deu **dois falsos negativos** numa conferência de dez, por
-uma palavra e um travessão. **Um verificador de documentação ancora em títulos,
-não em frases.**
+⚠️ **And the same trap from the other side:** searching for prose to prove a lesson
+was absorbed gave **two false negatives** in a review of ten, over one word and one
+dash. **A documentation checker anchors on titles, not on sentences.**
 
-## FERRAMENTA NÃO CORRIDA NÃO EXISTE
+## A TOOL NOT RUN DOES NOT EXIST
 
-A classe 14 foi escrita, revista e dada por boa. Depois **corri-a**, e ela
-devolvia oito acertos por ficheiro, metade deles **leitores** da forma em vez
-de emissores dela — a classe 10 a acontecer dentro da passada que eu tinha
-acabado de escrever para apanhar defeitos. O discriminador que a torna
-utilizável (ancorar na acumulação, não na forma) só apareceu na primeira
-corrida real.
+Class 14 was written, reviewed and called good. Then **I ran it**, and it returned
+eight hits per file, half of them **readers** of the shape instead of emitters of it
+— class 10 happening inside the pass I had just written to catch defects. The
+discriminator that makes it usable (anchor on the accumulation, not on the shape)
+only showed up on the first real run.
 
-> **Ferramenta consertada e não corrida não está consertada; ferramenta nova e
-> não corrida não existe.** Uma passada por estrear não é uma passada fraca —
-> é uma promessa, e as promessas não apanham defeitos.
+> **A tool fixed and not run is not fixed; a tool new and not run does not exist.** A
+> pass yet to debut is not a weak pass — it is a promise, and promises catch no
+> defects.
 
-E corre-se **sobre a árvore inteira**, não sobre o caso que a motivou: foi ao
-correr sobre todos os `gera_*.py` — e não sobre o ficheiro onde o defeito
-nasceu — que a classe 14 encontrou o terceiro gerador.
+And you run it **over the whole tree**, not over the case that motivated it: it was
+by running over all the `gera_*.py` — and not over the file where the defect was
+born — that class 14 found the third generator.
 
-## A REGRA DO PORQUÊ — quando o nome sai e quando o registo sai
+## THE WHY RULE — when the name goes and when the record goes
 
-Ao apagar um nome de toda a árvore, cada ocorrência é uma de duas coisas:
+When deleting a name from the whole tree, each occurrence is one of two things:
 
-- **O nome é a RAZÃO de uma decisão que ainda vale.** O bloco é 48 porque
-  um módulo de FFT exigia 256. → **a razão fica, só o nome sai.**
-- **O registo É sobre ele.** A linha no livro de certificações, a lápide no
-  arquivo de aposentadas. → **sai inteiro, e isso é perda de registo.**
+- **The name is the REASON for a decision that still holds.** The block is 48
+  because an FFT module required 256. → **the reason stays, only the name goes.**
+- **The record IS about it.** The line in the certification book, the tombstone in
+  the retired archive. → **it goes whole, and that is a loss of record.**
 
-> **Declarar as perdas do segundo tipo, nominalmente, no relatório.** O
-> utilizador autorizou apagar um nome; não autorizou apagar em silêncio a
-> prova de que um ensaio foi corrido.
+> **Declare the losses of the second type, by name, in the report.** The user
+> authorized deleting a name; they did not authorize silently deleting the proof that
+> a test was run.
 
-O nome vai para a mensagem do commit — git é onde a história pertence.
+The name goes into the commit message — git is where history belongs.
 
-## IDENTIFICADOR DE API NÃO SE RENOMEIA
+## AN API IDENTIFIER IS NOT RENAMED
 
-Uma macro `XPTO_NOTHROW` de um SDK não vira `MOTOR_NOTHROW`. Receita com
-macro inventada não é uma receita genérica: é uma receita **falsa**, e falha
-em silêncio no dia em que alguém a seguir.
+A `XPTO_NOTHROW` macro of an SDK does not become `MOTOR_NOTHROW`. A recipe with an
+invented macro is not a generic recipe: it is a **false** recipe, and it fails
+silently the day someone follows it.
 
-> Quando o nome a apagar é símbolo e não prosa, a escolha é **apagar a
-> receita** ou **manter o símbolo**. Generalizar não está na mesa.
+> When the name to delete is a symbol and not prose, the choice is **delete the
+> recipe** or **keep the symbol**. Generalizing is not on the table.
 
-Mesma regra para caminhos reais em git: `git show <hash>:Max/x.maxpat` é
-uma instrução de recuperação. Se o nome tem de sair, **provar o caminho
-novo antes de escrever** — e o número que ele devolve entra na doc.
+Same rule for real paths in git: `git show <hash>:Max/x.maxpat` is a recovery
+instruction. If the name has to go, **prove the new path before writing** — and the
+number it returns goes into the doc.
 
-## FECHO
+## CLOSE
 
 ```bash
-./docs/operacao/auditar.sh <termo>          # ou: auditar.command
-python3 docs/operacao/vizinhos.py --termo=<termo>   # ler cada uma
-python3 src/check_docs.py; echo $?          # tem de bater com o baseline
-git ls-files -z | xargs -0 grep -lI -i '<termo>'    # tem de dar VAZIO
+./docs/operacao/auditar.sh <term>          # or: auditar.command
+python3 docs/operacao/vizinhos.py --termo=<term>   # read each one
+python3 src/check_docs.py; echo $?          # must match the baseline
+git ls-files -z | xargs -0 grep -lI -i '<term>'    # must come back EMPTY
 ```
 
-O último não é `grep -rni` numa lista de pastas escrita à mão — é a árvore
-inteira pelo git. Foi a lista à mão que deixou o `check_repo.sh` de fora.
+The last one is not `grep -rni` over a hand-written list of folders — it is the
+whole tree by git. It was the hand list that left `check_repo.sh` out.
 
-> **Quando a afirmação é sobre um CONJUNTO, a verificação conta o conjunto —
-> nunca a amostra.** Converti dois geradores, relatei «os dois geradores», e
-> havia um terceiro a minar `uuid4` na folha ao lado: contei os que tinha
-> olhado, não os que existem. `grep -c uuid4 gera_*.py` custa um segundo e não
-> depende de memória nenhuma.
+> **When the claim is about a SET, the verification counts the set — never the
+> sample.** I converted two generators, reported «the two generators», and there was
+> a third mining `uuid4` in the file next door: I counted the ones I had looked at,
+> not the ones that exist. `grep -c uuid4 gera_*.py` costs a second and depends on no
+> memory.
 >
-> A forma da armadilha é sempre a mesma — uma lista escrita à mão a fazer de
-> universo. A lista de pastas, os dois geradores, os ficheiros que me lembro de
-> ter aberto. **O universo pergunta-se ao `git`, ao `glob`, ao gerador; não à
-> memória de quem audita.**
+> The shape of the trap is always the same — a hand-written list posing as the
+> universe. The folder list, the two generators, the files I remember having opened.
+> **The universe is asked of `git`, of `glob`, of the generator; not of the memory of
+> whoever audits.**
 
-Relatar: ficheiros tocados, contadores **antes → depois**, achados que não
-foram consertados (e porquê), e as perdas de registo, uma a uma.
+Report: files touched, counters **before → after**, findings that were not fixed
+(and why), and the record losses, one by one.
 
-Ver também: [[edicao-segura]] (âncora e verificação),
-[[medicao-limpa]] (nunca concluir sem medir),
-[[instrumentacao]] (instrumentação falha como código de produção).
+See also: [[edicao-segura]] (anchor and verification),
+[[medicao-limpa]] (never conclude without measuring),
+[[instrumentacao]] (instrumentation fails like production code).

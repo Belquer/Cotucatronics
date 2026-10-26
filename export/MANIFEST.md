@@ -1,95 +1,100 @@
 <!-- carimbo: MANIFEST.md v7 · 2026-09-18 · placas: painel rev C · cerebro rev C -->
-# MANIFEST — índice autoritativo de `export/`
+# MANIFEST — authoritative index of `export/`
 
-> **Protocolo:** antes de subir/consumir um artefato, confira o **carimbo** dele
-> contra este MANIFEST; se não bater, `git pull`. Um carrinho, um upload ou uma
-> montagem que parta de um carimbo mais antigo que o daqui está a consumir uma
-> cópia superada — a raiz do engano do MPN velho que já custou.
+> **Protocol:** before uploading/consuming an artifact, check its **stamp**
+> against this MANIFEST; if it doesn't match, `git pull`. A cart, an upload, or an
+> assembly that starts from a stamp older than the one here is consuming a
+> superseded copy — the root of the old-MPN mistake that has already cost us.
 
-Este é o **único** ponto de "estou com a versão de agora?". O carimbo vive em cada
-artefato (primeira linha do CSV/MD, célula `carimbo` no xlsx/xls, `LEIA-ME.txt` nos
-pacotes); este MANIFEST diz qual é o carimbo corrente. Os dois têm de bater.
+This is the **only** point for "am I on the current version?". The stamp lives in
+each artifact (first line of the CSV/MD, `carimbo` cell in the xlsx/xls,
+`LEIA-ME.txt` in the packages); this MANIFEST says which stamp is current. The two
+have to match.
 
-## Compra (Mouser) — arquivos soltos
+## Purchase (Mouser) — loose files
 
-| Artefato | Versão/stamp | Data | Placa rev | Para quê |
+| Artifact | Version/stamp | Date | Board rev | For what |
 |---|---|---|---|---|
-| `COMPRA_MOUSER.csv` | v2 | 2026-09-12 | painel rev C · cerebro rev C | BOM de MPNs reais para **importar no Mouser BOM Tool** |
-| `BOM_CONSOLIDADO.csv` | v2 | 2026-09-12 | painel rev C · cerebro rev C | BOM unificada cerebro+painel (LCSC + MPN Mouser + designadores + qty) |
-| `MOUSER_ALTERNATES.md` | v2 | 2026-09-12 | painel rev C · cerebro rev C | pick PRIMÁRIO + 2–3 alternativas por peça-problema; as **7 verificadas em estoque** |
-| `mouser_40440548.csv` | v1 | 2026-09-18 | painel rev C · cerebro rev C | **o que CHEGOU** da Mouser (21 linhas, da notificação de envio de 14/09), cada saco casado com as refs das duas placas. O `manual_montagem.py` lê-o e **recusa** se uma ref não existe, se o tamanho não bate, se uma ref está em dois sacos, ou se uma peça SMD fica sem saco |
-| `COMPRA_MOUSER_template.xlsx` | v2 | 2026-09-12 | painel rev C · cerebro rev C | template de importação Mouser (col MPN + nº Mouser preenchido) |
-| `COMPRA_MOUSER_template.xls` | v2 | 2026-09-12 | painel rev C · cerebro rev C | idem, formato legado `.xls` |
+| `COMPRA_MOUSER.csv` | v2 | 2026-09-12 | painel rev C · cerebro rev C | BOM of real MPNs to **import into the Mouser BOM Tool** |
+| `BOM_CONSOLIDADO.csv` | v2 | 2026-09-12 | painel rev C · cerebro rev C | unified cerebro+painel BOM (LCSC + Mouser MPN + designators + qty) |
+| `MOUSER_ALTERNATES.md` | v2 | 2026-09-12 | painel rev C · cerebro rev C | PRIMARY pick + 2–3 alternatives per problem part; the **7 verified in stock** |
+| `mouser_40440548.csv` | v1 | 2026-09-18 | painel rev C · cerebro rev C | **what ARRIVED** from Mouser (21 rows, from the 14/09 shipping notification), each bag matched to the refs of the two boards. The `manual_montagem.py` reads it and **refuses** if a ref doesn't exist, if the size doesn't match, if a ref is in two bags, or if an SMD part ends up with no bag |
+| `COMPRA_MOUSER_template.xlsx` | v2 | 2026-09-12 | painel rev C · cerebro rev C | Mouser import template (MPN col + Mouser no. filled in) |
+| `COMPRA_MOUSER_template.xls` | v2 | 2026-09-12 | painel rev C · cerebro rev C | same, legacy `.xls` format |
 
-**v2 = corte dos 7 MPNs verificados em estoque no Mouser (2026-09-12).** O corte
-anterior (v1, export inicial) tinha MPNs que foram substituídos por
-backorder/no-match e **não deve mais ser consumido** — foi essa cópia velha que
-gerou o carrinho com MPN superado.
+**v2 = cut with the 7 MPNs verified in stock at Mouser (2026-09-12).** The previous
+cut (v1, the initial export) had MPNs that were replaced due to backorder/no-match
+and **should no longer be consumed** — it was that old copy that generated the cart
+with the superseded MPN.
 
-## Pacotes de fábrica (JLCPCB) — pastas
+## Factory packages (JLCPCB) — folders
 
-Estes carregam o seu próprio carimbo no `LEIA-ME.txt` (gerador + data + commit),
-que **é** o mecanismo de versão da placa. Stamp = `para_fabrica v0.19.0 · commit 06db1c7`.
+These carry their own stamp in the `LEIA-ME.txt` (generator + date + commit),
+which **is** the board's versioning mechanism. Stamp =
+`para_fabrica v0.19.0 · commit 06db1c7`.
 
-| Artefato | Versão/stamp | Data | Placa rev | Para quê |
+| Artifact | Version/stamp | Date | Board rev | For what |
 |---|---|---|---|---|
-| `cerebro_2026-09-12_06db1c7/` | para_fabrica v0.19.0 · 06db1c7 | 2026-09-12 | cerebro rev C | pacote de fábrica do cérebro |
-| ├ `cerebro_2026-09-12_06db1c7_gerbers.zip` | (do pacote 06db1c7) | 2026-09-12 | cerebro rev C | gerbers+drill para a JLCPCB |
-| ├ `bom_cerebro.csv` / `cpl_cerebro.csv` | (do pacote 06db1c7) | 2026-09-12 | cerebro rev C | BOM + colocação (CPL da JLC) |
-| ├ `cpl_rico_cerebro.csv` | (do pacote 06db1c7) | 2026-09-12 | cerebro rev C | CPL com Val/Package preservados |
-| ├ `VISTORIA.md` | (do pacote 06db1c7) | 2026-09-12 | cerebro rev C | vistoria/portão do pacote |
-| └ `kit/` (COMPRA_LCSC.csv · MAPA_COLOCACAO.md · LEIA-ME-KIT.txt) | (do pacote 06db1c7) | 2026-09-12 | cerebro rev C | kit de montagem em casa (carrinho LCSC + mapa) |
-| `painel_2026-09-12_06db1c7/` | para_fabrica v0.19.0 · 06db1c7 | 2026-09-12 | painel rev C | pacote de fábrica do painel |
-| ├ `painel_2026-09-12_06db1c7_gerbers.zip` | (do pacote 06db1c7) | 2026-09-12 | painel rev C | gerbers+drill para a JLCPCB |
-| ├ `bom_painel.csv` / `cpl_painel.csv` | (do pacote 06db1c7) | 2026-09-12 | painel rev C | BOM + colocação (CPL da JLC) |
-| ├ `cpl_rico_painel.csv` | (do pacote 06db1c7) | 2026-09-12 | painel rev C | CPL com Val/Package preservados |
-| ├ `VISTORIA.md` | (do pacote 06db1c7) | 2026-09-12 | painel rev C | vistoria/portão do pacote |
-| └ `kit/` (COMPRA_LCSC.csv · MAPA_COLOCACAO.md · LEIA-ME-KIT.txt) | (do pacote 06db1c7) | 2026-09-12 | painel rev C | kit de montagem em casa (carrinho LCSC + mapa) |
+| `cerebro_2026-09-12_06db1c7/` | para_fabrica v0.19.0 · 06db1c7 | 2026-09-12 | cerebro rev C | factory package for the cerebro |
+| ├ `cerebro_2026-09-12_06db1c7_gerbers.zip` | (from package 06db1c7) | 2026-09-12 | cerebro rev C | gerbers+drill for JLCPCB |
+| ├ `bom_cerebro.csv` / `cpl_cerebro.csv` | (from package 06db1c7) | 2026-09-12 | cerebro rev C | BOM + placement (JLC CPL) |
+| ├ `cpl_rico_cerebro.csv` | (from package 06db1c7) | 2026-09-12 | cerebro rev C | CPL with Val/Package preserved |
+| ├ `VISTORIA.md` | (from package 06db1c7) | 2026-09-12 | cerebro rev C | package inspection/gate |
+| └ `kit/` (COMPRA_LCSC.csv · MAPA_COLOCACAO.md · LEIA-ME-KIT.txt) | (from package 06db1c7) | 2026-09-12 | cerebro rev C | home assembly kit (LCSC cart + map) |
+| `painel_2026-09-12_06db1c7/` | para_fabrica v0.19.0 · 06db1c7 | 2026-09-12 | painel rev C | factory package for the painel |
+| ├ `painel_2026-09-12_06db1c7_gerbers.zip` | (from package 06db1c7) | 2026-09-12 | painel rev C | gerbers+drill for JLCPCB |
+| ├ `bom_painel.csv` / `cpl_painel.csv` | (from package 06db1c7) | 2026-09-12 | painel rev C | BOM + placement (JLC CPL) |
+| ├ `cpl_rico_painel.csv` | (from package 06db1c7) | 2026-09-12 | painel rev C | CPL with Val/Package preserved |
+| ├ `VISTORIA.md` | (from package 06db1c7) | 2026-09-12 | painel rev C | package inspection/gate |
+| └ `kit/` (COMPRA_LCSC.csv · MAPA_COLOCACAO.md · LEIA-ME-KIT.txt) | (from package 06db1c7) | 2026-09-12 | painel rev C | home assembly kit (LCSC cart + map) |
 
-## Fora de `export/` — carimbados, mas com pendência
+## Outside `export/` — stamped, but with a pending issue
 
-| Artefato | Versão/stamp | Data | Placa rev | Para quê |
+| Artifact | Version/stamp | Date | Board rev | For what |
 |---|---|---|---|---|
-| `docs/datasheets/README.md` | ⚠️ **regenerar online** | 2026-09-08 (fichas.py v0.9.0, `18729f1`) | pré-rev-C-sourcing | índice de fichas; **lista MPNs superados** (PTC `2920L330/24MR`→`MF-LSMF300/24X-2`, MOSFET `AO3400A`→`SI2302CDS-T1-GE3`, filme `MKS2C042201K00KSSD`→`MKS2C042201M00KN00`, IDC 3M `N2526/N3793`→Würth `61202621621`). Casar cada MPN novo à sua **ficha** exige download online — não fazer por substituição cega (ver nota). |
-| `tools/codigos_lcsc.json` | ⚠️ **regenerar online** | 2026-09-08 (codigos_lcsc.py v0.2.0, `1ce1d20`) | pré-rev-C-sourcing | mapa LCSC→JLCPCB; MPNs Mouser aqui divergem por caminho (LCSC vs Mouser). O trio `mpn`/`codigo`/`prova` tem de ficar coerente — trocar só a string do `mpn` mente sobre o código LCSC e a prova. Requer lookup LCSC online. |
+| `docs/datasheets/README.md` | ⚠️ **regenerate online** | 2026-09-08 (fichas.py v0.9.0, `18729f1`) | pre-rev-C-sourcing | datasheet index; **lists superseded MPNs** (PTC `2920L330/24MR`→`MF-LSMF300/24X-2`, MOSFET `AO3400A`→`SI2302CDS-T1-GE3`, film `MKS2C042201K00KSSD`→`MKS2C042201M00KN00`, IDC 3M `N2526/N3793`→Würth `61202621621`). Matching each new MPN to its **datasheet** requires an online download — don't do it by blind substitution (see note). |
+| `tools/codigos_lcsc.json` | ⚠️ **regenerate online** | 2026-09-08 (codigos_lcsc.py v0.2.0, `1ce1d20`) | pre-rev-C-sourcing | LCSC→JLCPCB map; Mouser MPNs here diverge by path (LCSC vs Mouser). The `mpn`/`codigo`/`prova` trio has to stay consistent — changing only the `mpn` string lies about the LCSC code and the proof. Requires an online LCSC lookup. |
 
-> **Nota sobre "regenerar online".** Estes dois não são substituição de string
-> segura: cada MPN carrega uma **ficha PDF** (README) ou um **par código-LCSC +
-> prova** (json) que descrevem a peça antiga. Trocar só o MPN deixaria a ficha/prova
-> a falar de outra peça — uma declaração falsa, pior que o valor velho. O conserto
-> correcto pede rede (download da ficha nova / lookup LCSC do part novo), que este
-> ambiente não alcança. **Até lá, a fonte-da-verdade dos MPNs finais é
-> `MOUSER_ALTERNATES.md` (as 7 verificadas) + `BOM_CONSOLIDADO.csv`.**
+> **Note on "regenerate online".** These two are not safe string substitutions:
+> each MPN carries a **PDF datasheet** (README) or a **LCSC-code + proof pair**
+> (json) that describe the old part. Changing only the MPN would leave the
+> datasheet/proof talking about a different part — a false statement, worse than
+> the old value. The correct fix needs the network (download the new datasheet /
+> LCSC lookup of the new part), which this environment cannot reach. **Until then,
+> the source of truth for the final MPNs is `MOUSER_ALTERNATES.md` (the 7
+> verified) + `BOM_CONSOLIDADO.csv`.**
 
-## ⚠️ Nota para quem monta o painel — `Q1`/`Q2`
+## ⚠️ Note for whoever assembles the painel — `Q1`/`Q2`
 
-O `kit/MAPA_COLOCACAO.md` do pacote `painel_2026-09-12_06db1c7` (e o Value na
-placa, em F.Fab) diz **`AO3400A`**. A peça que veio da Mouser (#40440548) é o
-**`SI2302CDS-T1-GE3`** (Vishay, marcação **N2**). **É essa que se solda nos
-`Q1`/`Q2`.** Mesmo SOT-23 e mesma pinagem — 1 G · 2 S · 3 D, conferida na
-ficha Vishay doc. 68645 (`docs/datasheets/SI2302CDS-T1-GE3.pdf`) a 2026-09-17.
-Só o nome difere; o mapa não foi editado porque é artefato carimbado do
-pacote que foi à fábrica.
+The `kit/MAPA_COLOCACAO.md` of the `painel_2026-09-12_06db1c7` package (and the
+Value on the board, in F.Fab) says **`AO3400A`**. The part that came from Mouser
+(#40440548) is the **`SI2302CDS-T1-GE3`** (Vishay, marking **N2**). **That's the
+one soldered at `Q1`/`Q2`.** Same SOT-23 and same pinout — 1 G · 2 S · 3 D,
+verified against Vishay datasheet doc. 68645
+(`docs/datasheets/SI2302CDS-T1-GE3.pdf`) on 2026-09-17. Only the name differs; the
+map was not edited because it's a stamped artifact of the package that went to the
+factory.
 
-## ⚠️ Pots `RV1`/`RV2` do painel — NÃO vieram da Mouser
+## ⚠️ Pots `RV1`/`RV2` of the painel — did NOT come from Mouser
 
-O `COMPRA_MOUSER.csv` v2 lista 4 × `PTV09A-4020F-B103`, mas **os pots não foram
-comprados na Mouser** (dB, 2026-09-18): havia pots em casa, de 16 mm, que não
-cabem na placa (pinos a 5,0 mm; a placa tem o layout Bourns PTV09A de montagem
-traseira, pinos a 2,5 mm). E pela ficha Bourns PTV09 nenhum dos dois códigos do
-repo tem rosca: `-4` é **sem bucim**, `-1` é **bucim liso**; só o estilo `-6` é
-roscado. Para prender a placa pelos pots é preciso um pot de 9 mm com bucim
-roscado — ver `docs/STATUS.md` (18/09). **10 kΩ linear (B10K).**
+The `COMPRA_MOUSER.csv` v2 lists 4 × `PTV09A-4020F-B103`, but **the pots were not
+bought at Mouser** (dB, 2026-09-18): there were pots at home, 16 mm, that don't fit
+on the board (pins at 5,0 mm; the board has the rear-mount Bourns PTV09A layout,
+pins at 2,5 mm). And per the Bourns PTV09 datasheet neither of the repo's two codes
+has a thread: `-4` is **without bushing**, `-1` is **smooth bushing**; only style
+`-6` is threaded. To fasten the board by the pots you need a 9 mm pot with a
+threaded bushing — see `docs/STATUS.md` (18/09). **10 kΩ linear (B10K).**
 
-## Status de encomenda (2026-09-12)
+## Order status (2026-09-12)
 
-- **Mouser (peças):** **ENTREGUE** — Web Order # **40440548**, data **2026-09-12**,
-  enviado 14/09 (fatura 92489985). Vieram **21 das linhas** do `COMPRA_MOUSER.csv`
-  v2, todas completas; **não vieram** os electrolíticos, o WIMA 2,2 µF, a barra
-  1×40, os pots e o encoder. O que veio, saco a saco: `mouser_40440548.csv`.
-- **JLCPCB (placas nuas):** **PLACED** — Order # **W2026091304545438**, data
-  **2026-09-12** (placas nuas). Cobre **as duas placas, cérebro e painel**
-  — confirmado pelo dB a 2026-09-17.
-  **ENVIADO** (email JLC, 17/09): 5 × `cerebro_2026-09-12_06db1c7` e
+- **Mouser (parts):** **DELIVERED** — Web Order # **40440548**, date
+  **2026-09-12**, shipped 14/09 (invoice 92489985). **21 of the rows** of
+  `COMPRA_MOUSER.csv` v2 came, all complete; **what did not come**: the
+  electrolytics, the WIMA 2,2 µF, the 1×40 strip, the pots, and the encoder. What
+  came, bag by bag: `mouser_40440548.csv`.
+- **JLCPCB (bare boards):** **PLACED** — Order # **W2026091304545438**, date
+  **2026-09-12** (bare boards). Covers **both boards, cerebro and painel**
+  — confirmed by dB on 2026-09-17.
+  **SHIPPED** (JLC email, 17/09): 5 × `cerebro_2026-09-12_06db1c7` and
   5 × `painel_2026-09-12_06db1c7`, DHL Express Priority (DDP), tracking
   **7099774990**.

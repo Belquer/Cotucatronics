@@ -1,179 +1,185 @@
 ---
 name: 3ddesign
-description: Integração mecânica 3D placa ↔ caixa do Cotucatronics — o home executável da certificação IFÁ10000-M e do pipeline ppc/003. Use em "cabe na caixa?", "folga da tampa", "os furos alinham?", "IFÁ10000-M", "verificação 3D", "STEP", ou qualquer pergunta de encaixe placa-vs-caixa (volume, altura por zona, cabo, montagem). Chamada pela /aipcb no Portão de Certificação Mecânica (estágio 3, antes do cobre; e outra vez antes do 8, com a caixa real). Mede geometria REAL do STEP — não opinião. Não desenha esquema nem roteia cobre (isso é /aipcb + kicad_layout); não corta a caixa (isso é /caixa).
+description: 3D mechanical integration of the board ↔ enclosure of Cotucatronics — the executable home of the IFÁ10000-M certification and of the ppc/003 pipeline. Use for "cabe na caixa?" ("does it fit in the enclosure?"), "folga da tampa" ("lid clearance"), "os furos alinham?" ("do the holes line up?"), "IFÁ10000-M", "verificação 3D" ("3D verification"), "STEP", or any board-vs-enclosure fitment question (volume, height by zone, cable, assembly). Called by /aipcb at the Mechanical Certification Gate (stage 3, before copper; and again before 8, with the real enclosure). It measures REAL geometry from the STEP — not opinion. It does not draw the schematic or route copper (that is /aipcb + kicad_layout); it does not cut the enclosure (that is /caixa).
 ---
 
-# /3ddesign — o encaixe volumétrico placa ↔ caixa
+# /3ddesign — the volumetric fit of the board ↔ enclosure
 
-> **A folga vem do STEP, não do desenho. A montagem vem do olho, não do número.
-> O que se afirma sem medir chama-se envelope-declarado — e assina-se, não se
-> disfarça de física.**
+> **The clearance comes from the STEP, not from the drawing. The assembly comes
+> from the eye, not from the number. What is asserted without measuring is called
+> a declared-envelope — and it is signed, not disguised as physics.**
 
-Esta skill é o **home executável** da trilha mecânica do IFÁ10000 (a
-**IFÁ10000-M**) e do **ppc/003**. A `/aipcb` **orquestra-a** — chama-a no Portão
-de Certificação Mecânica como chama `kicad_layout`, `caixa` e `revisao-terra`.
-Não reimplementa o que elas fazem: mede o **STEP real** da placa, cruza-o com as
-cotas da caixa, e diz **sim/não** com número.
+This skill is the **executable home** of the mechanical track of IFÁ10000 (the
+**IFÁ10000-M**) and of **ppc/003**. `/aipcb` **orchestrates it** — it calls it at
+the Mechanical Certification Gate the same way it calls `kicad_layout`, `caixa`,
+and `revisao-terra`. It does not reimplement what they do: it measures the
+**real STEP** of the board, cross-checks it with the enclosure dimensions, and
+says **yes/no** with a number.
 
-Nasceu do painel rev C: cinco placas fabricadas **sem um único ponto de
-fixação** porque nenhum portão perguntava «como é que isto se prende, e cabe?».
-A trilha M respondeu à fixação; esta skill responde ao **volume**.
+It was born from panel rev C: five boards fabricated **without a single fastening
+point** because no gate asked "how does this get held, and does it fit?". The M
+track answered the fastening; this skill answers the **volume**.
 
 ---
 
-## 1 · Responde / NÃO responde
+## 1 · Answers / DOES NOT answer
 
-| ferramenta | responde | NÃO responde |
+| tool | answers | DOES NOT answer |
 |---|---|---|
-| `kicad-cli` STEP export | a **geometria real** da placa em 3D (corpos, alturas, contorno) | folga contra a caixa · cabo · montagem |
-| `build123d` / OCP | bbox, altura por sólido, **interferência** de sólidos (`&`/`intersect`), folga mínima (`distances`) | se o modelo 3D **existe** e está **certo** (peça sem STEP some em silêncio) |
-| `kiutils` | zonas nomeadas do `.kicad_pcb` (contorno, footprints, courtyards p/ keep-out) | qualquer geometria **3D** — é leitor 2D do ficheiro |
-| olho humano ⟨dB⟩ | o envelope 4-6, o encaixe a seco — **a peça em mão manda** | nada que exija medir do STEP |
+| `kicad-cli` STEP export | the **real geometry** of the board in 3D (bodies, heights, outline) | clearance against the enclosure · cable · assembly |
+| `build123d` / OCP | bbox, height per solid, **interference** of solids (`&`/`intersect`), minimum clearance (`distances`) | whether the 3D model **exists** and is **right** (a part with no STEP vanishes silently) |
+| `kiutils` | named zones of the `.kicad_pcb` (outline, footprints, courtyards for keep-out) | any **3D** geometry — it is a 2D reader of the file |
+| human eye ⟨dB⟩ | the 4-6 envelope, the dry-fit — **the piece in hand rules** | anything that requires measuring from the STEP |
 
-**Regra (da /aipcb §5):** um portão que "passa" só se aceita depois de o ter
-visto **recusar** sob sabotagem. Verde na primeira corrida é suspeito.
+**Rule (from /aipcb §5):** a gate that "passes" is only accepted after you have
+seen it **refuse** under sabotage. Green on the first run is suspect.
 
 ---
 
-## 0 · Pré-voo — o portão que falha fechado
+## 0 · Pre-flight — the gate that fails closed
 
-Antes de acreditar em qualquer número, prova-se a cadeia. Qualquer passo que não
-prove o que afirma **PARA a pipeline** (exit ≠ 0).
+Before believing any number, the chain is proven. Any step that does not prove
+what it claims **STOPS the pipeline** (exit ≠ 0).
 
-1. **Resolver o `kicad-cli` — e REJEITAR os impostores.**
-   - ❌ **stubs**: `kbcache/.../bin/kicad-cli` e `fakebin/kicad-cli` — shell < 100 B
-     que **só ecoa a versão**. Ecoar `10.0.6` não é ser o KiCad 10.
-   - ❌ **`/usr/bin/kicad-cli` 7.0.11** — falha a abrir o board novo com
+1. **Resolve `kicad-cli` — and REJECT the impostors.**
+   - ❌ **stubs**: `kbcache/.../bin/kicad-cli` and `fakebin/kicad-cli` — shell < 100 B
+     that **only echoes the version**. Echoing `10.0.6` is not being KiCad 10.
+   - ❌ **`/usr/bin/kicad-cli` 7.0.11** — fails to open the new board with
      *Unknown token 'generator_version'*.
-   - ✅ **único caminho válido:** `APPDIR=<appdir> <appdir>/AppRun.sh kicad-cli`
-     a reportar **10.0.6**. **Checagem dura:** o alvo resolvido (`<appdir>/bin/
-     kicad-cli`) é um **ELF multi-MB**, não um script. `file` diz `ELF`, não
+   - ✅ **the only valid path:** `APPDIR=<appdir> <appdir>/AppRun.sh kicad-cli`
+     reporting **10.0.6**. **Hard check:** the resolved target (`<appdir>/bin/
+     kicad-cli`) is a **multi-MB ELF**, not a script. `file` says `ELF`, not
      `POSIX shell script`.
-2. **O STEP real sai** com:
-   `AppRun.sh kicad-cli pcb export step --subst-models` (STEP **AP214** por
-   defeito — rótulo + cor por sólido), **com `KICAD10_3DMODEL_DIR` setado**
-   (paths não-resolvidos **somem em silêncio**). O board outline tem de ser
-   **polígono fechado**; **exit 0 e ficheiro > 1 MB** (ref cérebro: **3,0 MB**;
-   medido 3,19 MB). ⚠️ **Este KiCad 10 NÃO tem `--format`** — passá-lo faz o
-   `kicad-cli` cuspir o help e sair (parece exit-0 sem escrever ficheiro).
-   Warnings de `Fuse_2920` e `Electrosmith_Daisy_Seed` são **esperados** a menos
-   que a lib esteja apontada — declaram-se como **envelope conhecido**, não erro.
-3. **`import build123d`** (0.12.0) tem de correr. **FreeCAD e os 4 MCPs de CAD
-   estão AUSENTES aqui** → futuro/opcional, **nunca baseline**. Nenhum MCP de CAD
-   é conectável neste ambiente: a skill usa **bibliotecas + CLI, sem MCP**.
+2. **The real STEP comes out** with:
+   `AppRun.sh kicad-cli pcb export step --subst-models` (STEP **AP214** by
+   default — label + color per solid), **with `KICAD10_3DMODEL_DIR` set**
+   (unresolved paths **vanish silently**). The board outline has to be a
+   **closed polygon**; **exit 0 and file > 1 MB** (brain board ref: **3.0 MB**;
+   measured 3.19 MB). ⚠️ **This KiCad 10 does NOT have `--format`** — passing it
+   makes `kicad-cli` spit out the help and exit (looks like exit-0 without
+   writing a file). Warnings about `Fuse_2920` and `Electrosmith_Daisy_Seed` are
+   **expected** unless the lib is pointed at — they are declared as a **known
+   envelope**, not an error.
+3. **`import build123d`** (0.12.0) has to run. **FreeCAD and the 4 CAD MCPs are
+   ABSENT here** → future/optional, **never baseline**. No CAD MCP is connectable
+   in this environment: the skill uses **libraries + CLI, no MCP**.
 
 ---
 
-## 2 · A stack adotada (com licença)
+## 2 · The adopted stack (with license)
 
-- **`kicad-cli` STEP export** (via AppRun) — a geometria real da placa.
-- **`build123d` 0.12.0** (Apache-2.0) — o **motor de medição**:
-  `import_step` → `Compound`; `.solids()` / `get_type(Solid)` preserva `.label` /
-  `.color` do AP214; `bounding_box()` → `BoundBox`; **`distances(*others)`** =
-  folga mínima; **`intersect()` / `&`** não-vazio = **interferência**.
-- **`kiutils`** (MIT, offline) — lê contorno + footprints + courtyards do
-  `.kicad_pcb` para **nomear** as zonas de keep-out (não faz 3D).
-- **`bd_warehouse`** (Apache-2.0) — standoffs / insertos / parafusos; casa com a
-  diretriz «tudo parafusado» da `caixa`.
-- **`boxes.py`** (GPLv3) — **RODAR como ferramenta externa, NÃO vendorizar**
-  (GPL): painéis laser + finger joints + kerf embutido, saída SVG/DXF.
+- **`kicad-cli` STEP export** (via AppRun) — the real geometry of the board.
+- **`build123d` 0.12.0** (Apache-2.0) — the **measurement engine**:
+  `import_step` → `Compound`; `.solids()` / `get_type(Solid)` preserves `.label` /
+  `.color` of the AP214; `bounding_box()` → `BoundBox`; **`distances(*others)`** =
+  minimum clearance; **`intersect()` / `&`** non-empty = **interference**.
+- **`kiutils`** (MIT, offline) — reads outline + footprints + courtyards of the
+  `.kicad_pcb` to **name** the keep-out zones (does no 3D).
+- **`bd_warehouse`** (Apache-2.0) — standoffs / inserts / screws; matches the
+  "everything screwed" directive of `caixa`.
+- **`boxes.py`** (GPLv3) — **RUN as an external tool, DO NOT vendor** (GPL): laser
+  panels + finger joints + built-in kerf, SVG/DXF output.
 
-**Referência-só (não instalar):** KiCad StepUp (FreeCAD), enclozure (CadQuery).
-
----
-
-## 3 · As 6 asserções
-
-**Rígidas (físicas, computadas do STEP):**
-
-1. **A placa cabe na cavidade** — bbox do STEP + calços, folga de borda ≥ a
-   declarada em `params.py`.
-2. **Furos alinham placa ↔ postes/brackets** (tudo parafusado) — dentro da
-   tolerância declarada, ≥ 3 pontos.
-3. **Altura por zona** — o componente mais alto de **cada zona** (Daisy Seed,
-   IDC J14, eletrolíticos) < interior da tampa na **cunha de 11,8° POR ZONA** (o
-   teto varia com x; a folga mede-se zona a zona, não com um número único).
-
-**Envelope-declarado (afirmamos o número, NÃO é simulação; ⟨dB⟩ assina):**
-
-4. **Recortes da tampa** — janela OLED, furos de pots 16 mm (Caso B), encoder.
-5. **Cabos / serviço** — J1 ↔ J14, pots-para-tampa (Caso B), folga de serviço.
-6. **Montabilidade** — parafusos acessíveis, placa removível **sem dessoldar**.
-
-> **A fronteira 3-vs-4 é a lição inteira:** 1-3 saem do STEP e podem dizer
-> **não** sozinhas; 4-6 são afirmações que a **peça em mão** (M9, ⟨dB⟩) confirma.
-> Rotular 4-6 como física seria a mentira da rev B outra vez.
+**Reference-only (do not install):** KiCad StepUp (FreeCAD), enclozure (CadQuery).
 
 ---
 
-## 4 · Faseamento
+## 3 · The 6 assertions
 
-- **Fase A** (o que roda hoje): params single-source (`mech/params.py`) + STEP
-  livre + asserções **1-3** + cunha por zona.
-- **Fase B**: asserções **4-6** (cabo / serviço), casada com a **caixa rev
-  parafusada** — a geometria dos postes/recortes entra do gerador da caixa.
+**Rigid (physical, computed from the STEP):**
+
+1. **The board fits in the cavity** — STEP bbox + standoffs, edge clearance ≥ the
+   one declared in `params.py`.
+2. **The holes align board ↔ posts/brackets** (everything screwed) — within the
+   declared tolerance, ≥ 3 points.
+3. **Height by zone** — the tallest component of **each zone** (Daisy Seed, IDC
+   J14, electrolytics) < lid interior on the **11.8° wedge PER ZONE** (the ceiling
+   varies with x; the clearance is measured zone by zone, not with a single
+   number).
+
+**Declared-envelope (we assert the number, it is NOT a simulation; ⟨dB⟩ signs):**
+
+4. **Lid cutouts** — OLED window, 16 mm pot holes (Case B), encoder.
+5. **Cables / service** — J1 ↔ J14, pots-to-lid (Case B), service clearance.
+6. **Assemblability** — accessible screws, board removable **without
+   desoldering**.
+
+> **The 3-vs-4 boundary is the whole lesson:** 1-3 come out of the STEP and can
+> say **no** on their own; 4-6 are assertions that the **piece in hand** (M9,
+> ⟨dB⟩) confirms. Labeling 4-6 as physics would be the rev B lie all over again.
 
 ---
 
-## 5 · Cicatrizes (uma linha cada)
+## 4 · Phasing
 
-- **Stub de `kicad-cli` que só ecoa a versão.** 48 B de shell não abrem um board.
-- **`/usr/bin` 7.0.11 rejeita o board novo.** *Unknown token 'generator_version'*.
-- **`KICAD10_3DMODEL_DIR` não-setado dropa peças em silêncio.** STEP sai "ok",
-  faltam corpos, a altura mente para menos.
-- **`--format step` neste KiCad 10 cospe o help e sai exit-0 sem ficheiro.** A
-  família é a sub-ordem; a saída já é AP214.
-- **FreeCAD não instalável aqui.** Nenhum MCP de CAD conectável. Baseline =
-  bibliotecas + CLI.
-- **bbox-declarado ≠ STEP-real é vermelho, não nota.** O `params.py` STUB
-  (120×80) contra o cérebro real (180×100) diverge — o MANIFEST tem de o marcar.
+- **Phase A** (what runs today): single-source params (`mech/params.py`) + free
+  STEP + assertions **1-3** + wedge by zone.
+- **Phase B**: assertions **4-6** (cable / service), matched with the **screwed
+  enclosure rev** — the geometry of the posts/cutouts comes in from the enclosure
+  generator.
 
 ---
 
-## 6 · O executável
+## 5 · Scars (one line each)
 
-- **`mech/params.py`** (v0.1.0) — a **fonte única**: cotas da caixa, espessura
-  3,0 mm (acrílico fundido), ângulo da tampa 11,8°, alturas máx por zona, folga
-  de borda, e o bloco `ENVELOPE_DECLARADO` das asserções 4-6. Nada de cota
-  escrita à mão noutro sítio: importa-se, não se copia.
-- **`mech/verifica_3d.py`** (v0.1.0) — corre §0 (pré-voo, falha fechado), exporta
-  o STEP via AppRun, mede com `build123d`, corre as asserções 1-3 (4-6 como
-  envelope lido de `params.py`), e escreve **`mech/3d/RELATORIO_3D.md`**. Só lê:
-  **nunca reescreve o `.kicad_pcb`** (a cicatriz do `pcb_contorno` que reescreveu
-  o cérebro fabricado).
+- **`kicad-cli` stub that only echoes the version.** 48 B of shell do not open a
+  board.
+- **`/usr/bin` 7.0.11 rejects the new board.** *Unknown token 'generator_version'*.
+- **`KICAD10_3DMODEL_DIR` unset drops parts silently.** STEP comes out "ok",
+  bodies missing, the height lies low.
+- **`--format step` in this KiCad 10 spits out the help and exits exit-0 with no
+  file.** The family is the sub-order; the output is already AP214.
+- **FreeCAD not installable here.** No connectable CAD MCP. Baseline = libraries +
+  CLI.
+- **declared-bbox ≠ real-STEP is red, not a note.** The STUB `params.py` (120×80)
+  against the real brain board (180×100) diverges — the MANIFEST has to flag it.
+
+---
+
+## 6 · The executable
+
+- **`mech/params.py`** (v0.1.0) — the **single source**: enclosure dimensions,
+  thickness 3.0 mm (cast acrylic), lid angle 11.8°, max heights per zone, edge
+  clearance, and the `ENVELOPE_DECLARADO` block of assertions 4-6. No dimension
+  written by hand anywhere else: it is imported, not copied.
+- **`mech/verifica_3d.py`** (v0.1.0) — runs §0 (pre-flight, fails closed), exports
+  the STEP via AppRun, measures with `build123d`, runs assertions 1-3 (4-6 as an
+  envelope read from `params.py`), and writes **`mech/3d/RELATORIO_3D.md`**. It
+  only reads: **it never rewrites the `.kicad_pcb`** (the scar of `pcb_contorno`
+  that rewrote the fabricated brain board).
 
 ---
 
 ## 7 · MANIFEST
 
-Cada **`mech/3d/*.step`** e o **`RELATORIO_3D.md`** entram no **`export/
-MANIFEST.md`** com carimbo (`carimbo: <arquivo> · <data> · placa: …`) e a flag
-**«bbox declarado vs STEP real»** — **divergiu = vermelho**. Um artefato 3D que
-não se versiona não deixa detetar que envelheceu (edicao-segura §Versionar TUDO).
-Os `*.step` (multi-MB) regeneram-se e ficam gitignored; o `RELATORIO_3D.md` é
-rastreado.
+Each **`mech/3d/*.step`** and the **`RELATORIO_3D.md`** enter the
+**`export/MANIFEST.md`** with a stamp (`carimbo: <file> · <date> · board: …`) and
+the **"declared bbox vs real STEP"** flag — **diverged = red**. A 3D artifact that
+is not versioned leaves no way to detect that it has aged (edicao-segura §Version
+EVERYTHING). The `*.step` (multi-MB) regenerate and stay gitignored; the
+`RELATORIO_3D.md` is tracked.
 
 ---
 
-## Skills irmãs
+## Sibling skills
 
-Chamada pela **`/aipcb`** (Portão de Certificação Mecânica). Delega a **`caixa`**
-(geometria da caixa, os 5 portões), **`kicad_layout`** (medida por rede, cobre),
-**`medicao-limpa`** (a etapa 0 do método), **`edicao-segura`** (bump semver +
-reportar), e é a instância volumétrica do modelo **`ifa10000`**. A ficha M0–M10 e
-a ordem de prioridades vivem em **`references/ifa10000-m.md`**; o registo de
-certificados em `docs/IFA10000.md`; o plano do pipeline em `docs/ppc/003`.
+Called by **`/aipcb`** (Mechanical Certification Gate). It delegates to **`caixa`**
+(enclosure geometry, the 5 gates), **`kicad_layout`** (measure per net, copper),
+**`medicao-limpa`** (step 0 of the method), **`edicao-segura`** (semver bump +
+report), and is the volumetric instance of the model **`ifa10000`**. The M0–M10
+datasheet and the priority order live in **`references/ifa10000-m.md`**; the
+register of certificates in `docs/IFA10000.md`; the pipeline plan in `docs/ppc/003`.
 
 ---
 
-## Histórico
+## History
 
-- **v0.1.0 (2026-09-19)** — nasce da fusão /pcb→/aipcb: a integração 3D
-  volumétrica caixa↔PCB é extraída para esta sub-skill, o home executável do
-  IFÁ10000-M (a `references/ifa10000-m.md` migrou da /aipcb para cá) e do
-  ppc/003. Encoda a pipeline sandbox-provada: pré-voo que rejeita stubs e o
-  7.0.11, STEP AP214 via AppRun (3,19 MB, provado), medição com build123d 0.12.0
-  (56 sólidos, bbox 180×100×22 mm do cérebro), asserções 1-3 rígidas + 4-6
-  envelope-declarado. Traz `mech/params.py` e `mech/verifica_3d.py` (ambos
-  v0.1.0). Fase A a rodar; Fase B (cabo/serviço) casada com a caixa rev
-  parafusada.
+- **v0.1.0 (2026-09-19)** — born from the /pcb→/aipcb merge: the volumetric 3D
+  integration enclosure↔PCB is extracted into this sub-skill, the executable home
+  of IFÁ10000-M (the `references/ifa10000-m.md` migrated from /aipcb to here) and
+  of ppc/003. It encodes the sandbox-proven pipeline: pre-flight that rejects
+  stubs and the 7.0.11, STEP AP214 via AppRun (3.19 MB, proven), measurement with
+  build123d 0.12.0 (56 solids, bbox 180×100×22 mm of the brain board), rigid
+  assertions 1-3 + declared-envelope 4-6. It brings `mech/params.py` and
+  `mech/verifica_3d.py` (both v0.1.0). Phase A running; Phase B (cable/service)
+  matched with the screwed enclosure rev.

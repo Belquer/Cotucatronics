@@ -1,17 +1,16 @@
 ---
 name: pcb
-description: APOSENTADA em 2026-09-19 — fundida na /aipcb. Não usar. Todo o pipeline de ponta a ponta (prompt → gerbers), a orquestração das skills irmãs e a certificação mecânica placa↔caixa (IFÁ10000-M) entram agora pelo /aipcb.
+description: RETIRED on 2026-09-19 — merged into /aipcb. Do not use. The entire end-to-end pipeline (prompt → gerbers), the orchestration of the sister skills and the mechanical board↔enclosure certification (IFÁ10000-M) now enter through /aipcb.
 ---
 
-Fundida no `/aipcb` em 2026-09-19. Não usar.
+Merged into `/aipcb` on 2026-09-19. Do not use.
 
-Todo o trabalho que corria aqui — o pipeline de 9 estágios (mais a etapa 0 de
-pré-voo e o portão 3.5), o Portão de Certificação de Risco, o Portão de
-Certificação Mecânica IFÁ10000-M, a orquestração de `kicad_layout`, `caixa`,
-`revisao-terra`, `design-review`, `pm` e `para_fabrica` — vive agora no
-`/aipcb`, a skill canónica única.
+All the work that ran here — the 9-stage pipeline (plus the pre-flight stage 0 and
+gate 3.5), the Risk Certification Gate, the IFÁ10000-M Mechanical Certification Gate,
+the orchestration of `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, `pm`
+and `para_fabrica` — now lives in `/aipcb`, the single canonical skill.
 
-O conteúdo original desta orquestradora (as referências em `references/` e os
-scripts em `scripts/`) foi movido para `.claude/skills/aipcb/references/` e
-`.claude/skills/aipcb/scripts/`. Ver `.claude/skills/aipcb/SKILL.md`, secção
-«Histórico» (v1.9.0), para o registo da fusão.
+The original content of this orchestrator (the references in `references/` and the
+scripts in `scripts/`) was moved to `.claude/skills/aipcb/references/` and
+`.claude/skills/aipcb/scripts/`. See `.claude/skills/aipcb/SKILL.md`, "History"
+section (v1.9.0), for the record of the merge.

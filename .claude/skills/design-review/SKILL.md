@@ -1,106 +1,108 @@
 ---
 name: design-review
-description: Portão de saída obrigatório para qualquer artefato visual — SVG, esquemático, build sheet, render de PCB, slide, mockup, plot. Use SEMPRE que produzir ou editar um visual, antes de o apresentar. O passo 1 é a ferramenta `tools/svg_colisoes.py`, que pode dizer não; só depois entra o olho. Apanha texto sobre texto, texto sobre forma, elementos a sair da página, rótulos sobre fios, e a armadilha da vista velha (editar depois do último olhar). Dispara em qualquer entrega de .svg/.pdf/.png com layout, em "design review", "confere o visual", ou no dB a reportar sobreposição — mas o objetivo é correr SEM ser pedida.
+description: Mandatory exit gate for any visual artifact — SVG, schematic, build sheet, PCB render, slide, mockup, plot. Use ALWAYS when you produce or edit a visual, before presenting it. Step 1 is the tool `tools/svg_colisoes.py`, which can say no; only then does the eye come in. It catches text over text, text over shape, elements running off the page, labels over wires, and the stale-view trap (editing after the last look). Triggers on any delivery of .svg/.pdf/.png with layout, on "design review", "confere o visual" ("check the visual"), or on dB reporting overlap — but the goal is to run WITHOUT being asked.
 ---
 
 # design-review
 
-> **Esta é a versão do Cotucatronics, e vive no repo de propósito.** Absorveu a
-> skill homónima do plugin (que vive num cache de sessão e não sobrevive) e a
-> **emenda de 05/09**, que acrescentou o passo 1. Uma skill por assunto: se
-> reaparecer a do plugin, esta manda, porque é a que tem o portão.
+> **This is the Cotucatronics version, and it lives in the repo on purpose.** It
+> absorbed the plugin's skill of the same name (which lives in a session cache
+> and does not survive) and the **amendment of 09/05**, which added step 1. One
+> skill per subject: if the plugin's reappears, this one rules, because it is the
+> one with the gate.
 
-Um artefato visual entregue sem inspeção é um artefato **não verificado** — a
-versão gráfica do instrumento que não testemunha a si mesmo.
+A visual artifact delivered without inspection is an **unverified** artifact —
+the graphic version of the instrument that does not witness itself.
 
-## 0 · A regra de ferro
+## 0 · The iron rule
 
-> **Nenhum visual sai sem que o RENDER FINAL tenha sido VISTO — e qualquer
-> edição invalida toda inspeção anterior.**
+> **No visual goes out without the FINAL RENDER having been SEEN — and any edit
+> invalidates every prior inspection.**
 
-O segundo termo é o que mais morde: "corrigi e exportei" não é "corrigi e
-conferi". Editou → renderizou → **olhou de novo**. Sem exceção, inclusive para
-"mudanças triviais de uma linha" — foi uma mudança de uma linha (mover uma
-nota) que atravessou um componente.
+The second term is the one that bites most: "I fixed it and exported" is not "I
+fixed it and checked". Edited → rendered → **looked again**. No exception,
+including for "trivial one-line changes" — it was a one-line change (moving a
+note) that crossed a component.
 
 ---
 
-## 1 · O PORTÃO: `tools/svg_colisoes.py`, e vem ANTES do olho
+## 1 · THE GATE: `tools/svg_colisoes.py`, and it comes BEFORE the eye
 
-**Emenda de 05/09.** Quatro entregas com "revisão visual limpa" tinham
-sobreposições. Duas eram visíveis e passaram porque o olho olhou o todo e não
-a fatia; **duas eram de meio pixel** — texto a tocar o risco de uma cruz,
-rótulo a cruzar uma linha tracejada cinzenta — invisíveis em qualquer render, e
-mesmo assim defeito.
+**Amendment of 09/05.** Four deliveries with "clean visual review" had overlaps.
+Two were visible and passed because the eye looked at the whole and not the
+slice; **two were half-a-pixel** — text touching the stroke of a cross, a label
+crossing a gray dashed line — invisible in any render, and a defect all the same.
 
-> **O olho é o instrumento errado para sobreposição fina.** Serve para
-> composição, legibilidade, hierarquia. Não serve para "este texto toca esta
-> linha?", que é pergunta de geometria e tem resposta exata.
+> **The eye is the wrong instrument for fine overlap.** It serves composition,
+> legibility, hierarchy. It does not serve "does this text touch this line?",
+> which is a question of geometry and has an exact answer.
 
 ```bash
 python3 tools/svg_colisoes.py ficheiro.svg
 ```
 
-**Zero colisões é o portão** — e ele sabe dizer não, que é o que o torna
-portão: um script que o chama pára.
+**Zero collisions is the gate** — and it knows how to say no, which is what makes
+it a gate: a script that calls it stops.
 
-⚠️ **São TRÊS desfechos, não dois, e o terceiro não é reprovação:**
+⚠️ **There are THREE outcomes, not two, and the third is not a failure:**
 
-| saída | quer dizer |
+| exit | means |
 |---|---|
-| **0** | verificado, zero colisões — **passa** |
-| **1** | verificado, há colisões — **defeito no desenho** |
-| **3** | **NÃO VERIFICÁVEL** — não consegui olhar. Nem aprovação nem reprovação |
+| **0** | verified, zero collisions — **passes** |
+| **1** | verified, there are collisions — **defect in the drawing** |
+| **3** | **NOT VERIFIABLE** — I couldn't look. Neither approval nor rejection |
 
-Ler o 3 como "há colisões" é o erro fácil, porque ambos são ≠ 0 e querem dizer
-o contrário um do outro. O 3 sai quando não há `<text>` nenhum — as letras
-podem estar como paths — e aí *"zero colisões" seria uma frase verdadeira
-sobre nada*. **Verificação sem objeto é a classe que a skill `audit` persegue,
-e esta ferramenta recusa-se a cometê-la.**
+Reading the 3 as "there are collisions" is the easy mistake, because both are
+≠ 0 and they mean the opposite of each other. The 3 comes out when there is no
+`<text>` at all — the letters may be paths — and then *"zero collisions" would be
+a true sentence about nothing*. **Verification without an object is the class the
+`audit` skill chases, and this tool refuses to commit it.**
 
-O que ele testa:
+What it tests:
 
 | | |
 |---|---|
-| **texto × texto** | sempre defeito |
-| **texto × segmento** | geometria real (Liang–Barsky), não bbox de path — um path em L não acusa o texto que está no canto vazio dele |
-| **texto × borda de forma** | texto **dentro** de um rect/círculo é etiqueta e é legítimo; texto a **cruzar** a borda é defeito |
-| formas com `opacity < 0,5` | sombreado decorativo, não contam |
+| **text × text** | always a defect |
+| **text × segment** | real geometry (Liang–Barsky), not the bbox of a path — an L-shaped path does not flag the text sitting in its empty corner |
+| **text × shape edge** | text **inside** a rect/circle is a label and is legitimate; text **crossing** the edge is a defect |
+| shapes with `opacity < 0.5` | decorative shading, don't count |
 
-⚠️ **A largura do texto é estimada** (0,55 em por caractere, Helvetica), e é
-**conservadora de propósito** — acusa uns pixels antes do toque real. É o
-comportamento certo para um portão: *falso positivo custa mover um rótulo;
-falso negativo custa uma entrega errada.*
+⚠️ **The text width is estimated** (0.55 em per character, Helvetica), and is
+**deliberately conservative** — it flags a few pixels before the real touch. It
+is the right behavior for a gate: *a false positive costs moving a label; a false
+negative costs a wrong delivery.*
 
-### Cada acusação diz QUANTO, e isso muda o que se faz com ela
+### Each flag says HOW MUCH, and that changes what you do with it
 
-A partir da v0.5.0 cada linha traz a profundidade da sobreposição no eixo mais
-raso, em unidades da folha:
+As of v0.5.0, each line carries the overlap depth on the shallowest axis, in
+sheet units:
 
 ```
-!! texto×texto  V- 4              42 um     <- ruído do modelo
-!! texto×borda  V- rect 54,252    1.65      <- a sério, vai-se olhar
+!! texto×texto  V- 4              42 um     <- model noise
+!! texto×borda  rect 54,252    1.65      <- real, go look
 ```
 
-⚠️ **Nasceu de eu ter reportado mal.** O portão acusou um par `V-`/`4` e eu
-disse ao dB que era colisão a sério. Fui medir: **42 micrómetros** — dentro do
-erro do próprio modelo, que supõe ascendente de 0,75 do corpo, e a fonte de
-traços do KiCad não tem essa métrica. O símbolo estava correcto e simétrico;
-não havia nada para endireitar.
+⚠️ **It was born from my having reported it wrong.** The gate flagged a `V-`/`4`
+pair and I told dB it was a real collision. I went to measure: **42 micrometers**
+— within the error of the model itself, which assumes an ascender of 0.75 of the
+body, and KiCad's stroke font does not have that metric. The symbol was correct
+and symmetric; there was nothing to straighten.
 
-> **Veredito binário obriga quem lê a ir calcular à mão.** Medir não baixa a
-> régua — o portão continua a acusar — dá contexto a quem decide. Abaixo de
-> ~0,1 da unidade da folha, suspeitar do modelo antes de suspeitar do desenho.
+> **A binary verdict forces whoever reads it to go calculate by hand.** Measuring
+> does not lower the bar — the gate still flags — it gives context to whoever
+> decides. Below ~0.1 of the sheet unit, suspect the model before suspecting the
+> drawing.
 
-E o contrário também vale: na mesma folha havia **cinco** acusações de 0,9 a
-1,65 que eu não tinha distinguido do ruído. Quantificar separou-as.
+And the opposite also holds: on the same sheet there were **five** flags from 0.9
+to 1.65 that I had not distinguished from the noise. Quantifying separated them.
 
-**A linha de resultado vai no relatório**, sempre: `N textos, M segmentos, 0
-colisões`. **Sem essa linha, a revisão não aconteceu.**
+**The result line goes in the report**, always: `N texts, M segments, 0
+collisions`. **Without that line, the review did not happen.**
 
-### E numa PLACA: `--layers <F|B>.Silkscreen`, e o DRC ao lado
+### And on a BOARD: `--layers <F|B>.Silkscreen`, and the DRC alongside
 
-A serigrafia de um `.kicad_pcb` exporta-se por camada e passa pelo mesmo portão:
+The silkscreen of a `.kicad_pcb` is exported per layer and passes through the
+same gate:
 
 ```bash
 kicad-cli pcb export svg --output /tmp/s.svg --layers F.Silkscreen \
@@ -108,207 +110,212 @@ kicad-cli pcb export svg --output /tmp/s.svg --layers F.Silkscreen \
 python3 tools/svg_colisoes.py /tmp/s.svg
 ```
 
-⚠️ **Numa placa o mesmo achado tem GRAU diferente**, e a tabela dos graus vive
-na skill `kicad_layout` **§11g-bis** — não aqui, para as duas não derivarem. O resumo
-para usar ao ler a saída: `texto × texto` é sempre defeito; `texto × contorno de
-OUTRA peça` é defeito; `texto × contorno da PRÓPRIA peça` é **aviso**, evita-se
-quando há sítio e embarca-se quando não há.
+⚠️ **On a board the same finding has a different DEGREE**, and the table of
+degrees lives in the `kicad_layout` skill **§11g-bis** — not here, so the two do
+not diverge. The summary to use when reading the output: `text × text` is always
+a defect; `text × outline of ANOTHER part` is a defect; `text × outline of the
+PART ITSELF` is a **warning**, avoided when there is room and shipped when there
+isn't.
 
-⚠️ **Eu já escrevi aqui que era "o caso normal" enquanto a `kicad` dizia "na
-placa é defeito"** — duas skills, duas frases afirmativas, nenhuma marcada. Foi
-preciso ir medir para ver que nenhuma das duas estava certa sozinha: faltava o
-grau. **Quando duas skills da casa afirmam coisas opostas, a resposta não é
-escolher — é a distinção que falta às duas.**
+⚠️ **I already wrote here that it was "the normal case" while `kicad` said "on the
+board it's a defect"** — two skills, two assertive sentences, neither flagged. It
+took going to measure to see that neither of the two was right on its own: the
+degree was missing. **When two house skills assert opposite things, the answer is
+not to choose — it is the distinction both of them lack.**
 
-Classificar por «são a mesma referência?» separa os casos: das 9 `silk_overlap`
-do cérebro, 9 eram a peça sobre si própria.
+Classifying by "are they the same reference?" separates the cases: of the brain
+board's 9 `silk_overlap`, 9 were the part over itself.
 
-⚠️ **E corre-se o DRC do KiCad ao lado, porque numa placa é ele quem manda.**
-`silk_overlap`, `silk_over_copper`, `silk_edge_clearance`. Os dois responderam
-diferente — `0 texto×texto` contra `9 silk_overlap` — e foi ir medir a
-discordância que destapou quatro defeitos na ferramenta que arruma a
-serigrafia. **Dois verificadores que discordam são informação; escolher o que
-agrada é deitá-la fora.**
+⚠️ **And you run KiCad's DRC alongside, because on a board it is the one that
+rules.** `silk_overlap`, `silk_over_copper`, `silk_edge_clearance`. The two
+answered differently — `0 text×text` against `9 silk_overlap` — and it was going to
+measure the disagreement that uncovered four defects in the tool that arranges the
+silkscreen. **Two checkers that disagree are information; choosing the one you
+like is throwing it away.**
 
-⚠️ **A comparação antes/depois mede-se no MESMO contexto.** O KiCad acha o
-`.kicad_pro` pelo nome do ficheiro: uma cópia chamada `_teste_x.kicad_pcb` cai
-nas regras por omissão e inventa violações que a placa não tem. Ou a cópia vive
-na pasta do projecto com o nome que casa, ou se mede o antes e o depois no
-mesmo sítio — e aí lê-se a **diferença**, nunca o valor absoluto.
+⚠️ **The before/after comparison is measured in the SAME context.** KiCad finds
+the `.kicad_pro` by the file name: a copy called `_teste_x.kicad_pcb` falls into
+the default rules and invents violations the board does not have. Either the copy
+lives in the project folder with the matching name, or you measure the before and
+the after in the same place — and then you read the **difference**, never the
+absolute value.
 
-### O que fazer quando a ferramenta não alcança
+### What to do when the tool doesn't reach
 
-PNG de plot, PDF, render do KiCad: ela não lê. Aí vale a regra antiga —
-fatiar em regiões e olhar cada uma — **mais** a lição de 05/09: *olhar o todo
-não substitui olhar a fatia, porque o todo esconde exatamente o que é
-pequeno.*
+A plot PNG, a PDF, a KiCad render: it does not read them. There the old rule holds
+— slice into regions and look at each one — **plus** the lesson of 09/05: *looking
+at the whole does not replace looking at the slice, because the whole hides
+exactly what is small.*
 
-### O KiCad tem caminho, mas com `--esquematico`
+### KiCad has a path, but with `--esquematico`
 
 ```bash
 kicad-cli sch export svg --output /tmp/x  ficheiro.kicad_sch
 python3 tools/svg_colisoes.py /tmp/x/ficheiro.svg --esquematico
 ```
 
-⚠️ **Sem a bandeira, um esquema limpo acusa dezenas — e todas são convenção.**
-Medido a 05/09 nas três folhas do revB:
+⚠️ **Without the flag, a clean schematic flags dozens — and all of them are
+convention.** Measured on 09/05 on the three sheets of revB:
 
-| folha | sem o modo | com `--esquematico` |
+| sheet | without the mode | with `--esquematico` |
 |---|---|---|
 | `cotuca_energia` | 39 | **6** |
 | `cotuca_preamp` | 74 | **7** |
 | `cotuca_soquete` | 116 | **26** |
 
-A razão é de desenho, não de ferramenta: **num esquemático, texto a tocar
-linha é a convenção.** Um rótulo de rede *prende-se* ao fio — é o que um
-rótulo é; um número de pino *assenta* na perna. Dos 74 do pré-amp, 67 eram
-`AGND` (13×), `VBIAS`, `V+PRE`, `PWR_FLAG` e os pinos 1–8.
+The reason is one of design, not tool: **in a schematic, text touching a line is
+the convention.** A net label *attaches* to the wire — it is what a label is; a
+pin number *sits* on the leg. Of the pre-amp's 74, 67 were `AGND` (13×), `VBIAS`,
+`V+PRE`, `PWR_FLAG`, and pins 1–8.
 
-> **Acusar a convenção é pior do que não acusar nada:** ensina a ignorar o
-> portão, e é o anti-padrão do §6 desta mesma skill.
+> **Flagging the convention is worse than flagging nothing:** it teaches you to
+> ignore the gate, and it is the anti-pattern of §6 of this same skill.
 
-O modo mantém `texto × texto` e `texto × borda`, que continuam a ser defeito
-num esquemático — foi assim que apareceu um `V-` por cima do pino `4` no
-pré-amp, que três revisões de olho não tinham visto.
+The mode keeps `text × text` and `text × edge`, which are still a defect in a
+schematic — that is how a `V-` on top of pin `4` showed up in the pre-amp, which
+three eye reviews had not seen.
 
-### ⚠️ Há DOIS portões para esquemático, e não são o mesmo
+### ⚠️ There are TWO gates for a schematic, and they are not the same
 
-| | lê | vê |
+| | reads | sees |
 |---|---|---|
-| `tools/colisoes_sch.py` | o **fonte** `.kicad_sch` | coordenadas exactas em mm, antes de virarem curvas |
-| `tools/svg_colisoes.py --esquematico` | o **render** exportado | o que está realmente desenhado na folha |
+| `tools/colisoes_sch.py` | the **source** `.kicad_sch` | exact coordinates in mm, before they become curves |
+| `tools/svg_colisoes.py --esquematico` | the exported **render** | what is actually drawn on the sheet |
 
-**Correr os dois, e a discordância é informação.** No pré-amp o do fonte diz
-**117 textos, 0 colisões**; o do render diz **194, 7** — entre elas um `V-`
-por cima do pino `4`.
+**Run both, and the disagreement is information.** In the pre-amp the source one
+says **117 texts, 0 collisions**; the render one says **194, 7** — among them a
+`V-` on top of pin `4`.
 
-**O mecanismo está medido (06/09), e o cego é o do fonte.** Ele salta a secção
-`lib_symbols` de propósito — está na docstring dele: *"tudo que imprime
-letras, **fora do lib_symbols**"*. Lê `label`, `global_label`,
-`hierarchical_label` e as propriedades `Reference`/`Value`. Logo **não vê
-nomes nem números de pino**, que é onde os símbolos guardam as letras. E não
-vê o **bloco de título e a moldura** — `Date:`, `Rev:`, `File:`, `Id: 1/1`,
-as coordenadas de borda — porque o KiCad desenha isso do *worksheet* e não do
-`.kicad_sch`: 27 dos textos do render não existem no ficheiro.
+**The mechanism is measured (09/06), and the blind one is the source's.** It
+skips the `lib_symbols` section on purpose — it is in its docstring:
+*"everything that prints letters, **outside lib_symbols**"*. It reads `label`,
+`global_label`, `hierarchical_label` and the `Reference`/`Value` properties. So
+**it does not see pin names or numbers**, which is where the symbols keep the
+letters. And it does not see the **title block and the frame** — `Date:`, `Rev:`,
+`File:`, `Id: 1/1`, the edge coordinates — because KiCad draws those from the
+*worksheet* and not from the `.kicad_sch`: 27 of the render's texts do not exist in
+the file.
 
-Foi exactamente por isso que só o render viu o `V- 4`: `V-` é **nome de
-pino** e `4` é **número de pino**, e `(number "4")` aparece **1 vez dentro do
-`lib_symbols` e 0 fora**. Os dois lados da colisão vivem na secção que o
-outro salta.
+That is exactly why only the render saw the `V- 4`: `V-` is a **pin name** and `4`
+is a **pin number**, and `(number "4")` appears **1 time inside `lib_symbols` and 0
+outside**. The two sides of the collision live in the section the other one skips.
 
-> **Nenhum dos dois substitui o outro, e agora sabe-se porquê:** o do fonte
-> tem as coordenadas exactas mas não vê o que o símbolo desenha; o do render
-> vê tudo o que está na folha mas mede sobre o desenho. Um `0` de qualquer um
-> **não autoriza dispensar o outro**.
+> **Neither of the two replaces the other, and now we know why:** the source one
+> has the exact coordinates but does not see what the symbol draws; the render one
+> sees everything on the sheet but measures over the drawing. A `0` from either
+> one **does not authorize dispensing with the other**.
 
-> Dois verificadores que respondem à mesma pergunta e discordam: o correcto
-> não é escolher o que agrada, é registar a discordância e ir medir porquê.
+> Two checkers that answer the same question and disagree: the correct thing is
+> not to choose the one you like, it is to record the disagreement and go measure
+> why.
 
-⚠️ E o cabeçalho do `colisoes_sch.py` justifica-se com uma premissa que hoje
-se mediu **falsa** — diz que o `svg_colisoes` devolve sempre código 3 nos
-exports do KiCad *"porque não há um único `<text>` para medir"*. Há **222**,
-invisíveis (`opacity="0"`) mas com `textLength`. A ferramenta continua útil; a
-razão escrita para ela existir é que está velha.
+⚠️ And the header of `colisoes_sch.py` justifies itself with a premise that was
+measured **false** today — it says `svg_colisoes` always returns code 3 on KiCad
+exports *"because there isn't a single `<text>` to measure"*. There are **222**,
+invisible (`opacity="0"`) but with `textLength`. The tool is still useful; the
+written reason for it to exist is stale.
 
-O portão elétrico é a skill `kicad`; este é o visual, e nenhum substitui o
-outro.
+The electrical gate is the `kicad` skill; this is the visual one, and neither
+replaces the other.
 
-### ⚠️ E na PLACA a serigrafia tem portão próprio, que vive na `kicad`
+### ⚠️ And on the BOARD the silkscreen has its own gate, which lives in `kicad`
 
-Um render de PCB não se revê a olho para caçar texto sobreposto: o `kicad-cli
-pcb drc` **conta** — `silk_overlap`, `silk_over_copper`, `silk_edge_clearance` —
-e o `kicad/arruma_silk.py` arruma. A regra completa está na skill **`kicad`
-§11g-bis** da `kicad_layout`, e não se repete aqui: **duas skills a dizerem quase o mesmo
-derivam, e aí ninguém sabe qual manda.**
+A PCB render is not reviewed by eye to hunt overlapping text: `kicad-cli pcb drc`
+**counts** — `silk_overlap`, `silk_over_copper`, `silk_edge_clearance` — and
+`kicad/arruma_silk.py` arranges it. The full rule is in the **`kicad` §11g-bis**
+of `kicad_layout`, and is not repeated here: **two skills saying almost the same
+thing diverge, and then nobody knows which one rules.**
 
-O que fica deste lado é a metade que a contagem não responde:
+What stays on this side is the half that counting does not answer:
 
-| pergunta | quem |
+| question | who |
 |---|---|
-| há texto por cima de texto, de cobre, ou fora da placa? | `kicad` — conta |
-| o texto **lê-se** no tamanho a que vai ser impresso? | esta skill — olha o render |
-| a referência aponta para a peça **certa**? | só o olho |
+| is there text over text, over copper, or off the board? | `kicad` — counts |
+| does the text **read** at the size it will be printed? | this skill — looks at the render |
+| does the reference point to the **right** part? | only the eye |
 
-⚠️ **Contagem zero não autoriza dispensar o olho** — é o mesmo corolário do
-§9b da `kicad`, e aqui vale igual: autoriza olhar sabendo onde.
+⚠️ **A count of zero does not authorize dispensing with the eye** — it is the same
+corollary as §9b of `kicad`, and here it holds the same: it authorizes looking
+knowing where.
 
-⚠️ E há uma armadilha própria do PCB: **arrumar a serigrafia empurra o texto
-para o obstáculo que ainda não está a ser verificado.** Medido — afastar dos
-pads levou as sobreposições de 18 para 5 e o texto-sobre-cobre de 6 para 12. Se
-vires uma contagem melhorar e outra piorar na mesma passagem, não é progresso: é
-o defeito a mudar de sítio.
+⚠️ And there is a trap specific to the PCB: **arranging the silkscreen pushes the
+text toward the obstacle that is not yet being checked.** Measured — moving away
+from the pads took the overlaps from 18 to 5 and the text-over-copper from 6 to
+12. If you see one count improve and another worsen in the same pass, it is not
+progress: it is the defect changing place.
 
 ---
 
-## 2 · A ordem, fixa
+## 2 · The order, fixed
 
 ```
-gerar → svg_colisoes (0) → fatiar e olhar (composição) → entregar
+generate → svg_colisoes (0) → slice and look (composition) → deliver
 ```
 
-**Qualquer edição depois de qualquer um dos três reinicia os três.**
+**Any edit after any of the three restarts the three.**
 
 ---
 
-## 3 · O laço do olho
+## 3 · The eye loop
 
-1. **Renderizar no formato de entrega** (SVG→PNG; `.kicad_sch`→SVG via
-   `kicad-cli`; HTML→screenshot). Inspecionar o fonte não vale: a sobreposição
-   só existe no render.
-2. **Ver em fatias.** Imagem alta (>1200 px) é cortada em 2–4 faixas com
-   **~8% de sobreposição** entre elas — defeito na emenda dos cortes escapa de
-   cortes sem sobreposição — e cada faixa passa pelo olho.
-3. **Varrer com a lista fechada** (abaixo). Não é "olhar se está bom": é
-   procurar cada classe nomeada, uma a uma.
-4. **Defeito achado → corrige → VOLTA AO PASSO 1**, o do portão, não o do olho.
-5. Só então empacotar. Empacotar antes de conferir gera o "zip com defeito
-   conhecido dentro".
+1. **Render in the delivery format** (SVG→PNG; `.kicad_sch`→SVG via `kicad-cli`;
+   HTML→screenshot). Inspecting the source does not count: the overlap only exists
+   in the render.
+2. **View in slices.** A tall image (>1200 px) is cut into 2–4 strips with **~8%
+   overlap** between them — a defect at the seam of the cuts escapes cuts without
+   overlap — and each strip passes by the eye.
+3. **Sweep with the closed list** (below). It is not "look if it's good": it is to
+   search for each named class, one by one.
+4. **Defect found → fix → BACK TO STEP 1**, the gate's, not the eye's.
+5. Only then package. Packaging before checking generates the "zip with a known
+   defect inside".
 
-## 4 · A lista fechada
+## 4 · The closed list
 
-Depois do portão, o olho já não procura toque. Procura isto:
+After the gate, the eye no longer searches for touch. It searches for this:
 
-- **Composição e hierarquia** — o que salta primeiro é o que importa primeiro?
-- **Elemento × borda**: nada cortado pela margem da página/viewBox; texto longo
-  à direita é o suspeito nº 1.
-- **Fio × fio / fio × forma** onde o cruzamento sugere ligação falsa. ⚠️ Ver a
-  skill `kicad` §4: o **olho não pode arbitrar** ligação — só o netlist.
-- **Emendas**: fio que PARECE contínuo mas tem vão (o D2 do grampo teve 17 px
-  de vão invisível no fonte, visível no render).
-- **Legibilidade no tamanho final**: fonte < ~9 px no render de entrega é
-  ilegível em mobile; conferir na largura que o dB vai ver.
-- **Sobreposição de camadas** (z-order): elemento desenhado depois a cobrir
-  informação de antes.
-- **Coerência rótulo-desenho**: o texto diz "12 baldes", o desenho tem 13.
+- **Composition and hierarchy** — does what jumps out first is what matters first?
+- **Element × edge**: nothing cut by the page/viewBox margin; long text on the
+  right is suspect #1.
+- **Wire × wire / wire × shape** where the crossing suggests a false connection.
+  ⚠️ See the `kicad` skill §4: the **eye cannot arbitrate** a connection — only the
+  netlist.
+- **Seams**: a wire that LOOKS continuous but has a gap (the clamp's D2 had 17 px
+  of invisible gap in the source, visible in the render).
+- **Legibility at the final size**: a font < ~9 px in the delivery render is
+  illegible on mobile; check at the width dB will see.
+- **Layer overlap** (z-order): an element drawn later covering information from
+  before.
+- **Label-drawing consistency**: the text says "12 buckets", the drawing has 13.
 
-## 5 · Como isto se torna automático
+## 5 · How this becomes automatic
 
-1. **Nos geradores:** o `.py` que escreve o SVG chama o verificador antes de
-   copiar para a entrega; com colisões, escreve para `/tmp` e **recusa
-   entregar**. Um `assert` no fim do gerador.
-2. **Na skill:** o passo 1 é este, e a linha de resultado vai no relatório.
-3. **No que não é SVG:** fatiar e olhar, declarando que a ferramenta não
-   alcançou.
+1. **In the generators:** the `.py` that writes the SVG calls the checker before
+   copying to the delivery; with collisions, it writes to `/tmp` and **refuses to
+   deliver**. An `assert` at the end of the generator.
+2. **In the skill:** step 1 is this, and the result line goes in the report.
+3. **In what is not SVG:** slice and look, declaring that the tool did not reach.
 
-## 6 · Anti-padrões nomeados, os que já aconteceram
+## 6 · Named anti-patterns, the ones that have already happened
 
-- **Exportar após editar sem re-ver** — o caso da nota sobre o C3.
-- **Conferir só a região editada** — o conserto empurra o vizinho.
-- **Confiar no fonte** ("as coordenadas parecem certas") — sobreposição é
-  propriedade do render, não do fonte.
-- **Corte sem sobreposição** — o defeito mora na emenda.
-- **"É só um texto, não precisa"** — texto é o elemento que mais colide.
-- **⚠️ "A revisão visual passou"** — sem a linha do portão, não passou. Foi
-  esse o padrão que a emenda de 05/09 veio fechar, e tinha três reincidências.
+- **Exporting after editing without re-viewing** — the case of the note over C3.
+- **Checking only the edited region** — the fix pushes the neighbor.
+- **Trusting the source** ("the coordinates look right") — overlap is a property
+  of the render, not of the source.
+- **Cut without overlap** — the defect lives at the seam.
+- **"It's just text, it doesn't need it"** — text is the element that collides
+  most.
+- **⚠️ "The visual review passed"** — without the gate line, it did not pass. That
+  was the pattern the 09/05 amendment came to close, and it had three recurrences.
 
-## 7 · Relação com as outras
+## 7 · Relationship with the others
 
-| pergunta | quem responde |
+| question | who answers |
 |---|---|
-| há sobreposição? | **esta skill, passo 1** — geometria, não olho |
-| o desenho lê-se? | **esta skill, passo 3** |
-| o ficheiro abre? as ligações existem? | skill **`kicad`** — ERC e netlist |
-| o código está coerente? | skill **`audit`** |
+| is there overlap? | **this skill, step 1** — geometry, not the eye |
+| does the drawing read? | **this skill, step 3** |
+| does the file open? do the connections exist? | skill **`kicad`** — ERC and netlist |
+| is the code consistent? | skill **`audit`** |
 
-As três partilham a regra: **o que passou fica declarado.** Inspeção
-não-declarada será refeita ou, pior, presumida.
+The three share the rule: **what passed is declared.** An undeclared inspection
+will be redone or, worse, presumed.

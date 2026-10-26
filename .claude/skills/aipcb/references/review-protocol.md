@@ -1,194 +1,193 @@
-# Protocolo de revisão tripla (estágio 7)
+# Triple review protocol (stage 7)
 
-Referência do **estágio 7** da pipeline `/aipcb`. Modelado no `ifa10000`: **critério
-de passagem explícito por passo, números não vistos, passo reprovado interrompe,
-resultado negativo registado.** Três **lentes** diferentes para não repetirem o
-mesmo olhar, cada uma idealmente por um **revisor independente** — quem desenhou
-auto-completa o que espera, não o que está na folha — e o conjunto corre **3×**.
+Reference for **stage 7** of the `/aipcb` pipeline. Modeled on `ifa10000`: **an
+explicit pass criterion per step, numbers not checkmarks, a failed step interrupts,
+a negative result recorded.** Three different **lenses** so they do not repeat the
+same look, each ideally by an **independent reviewer** — whoever designed it
+auto-completes what they expect, not what is on the sheet — and the set runs **3×**.
 
-> A regra que governa tudo: **a última linha de defesa não pode ser a mesma
-> ferramenta que fez o trabalho** (`kicad_layout` §12s). Um auto-teste tem
-> exactamente os pontos cegos de quem o escreveu — o gate de fabrica apanhou um
-> plano estilhaçado que o auto-teste do router não viu.
-
----
-
-## Por que três lentes, e não uma lista
-
-Uma lista única de checks lê-se de uma penada e cansa-se a meio — e os defeitos
-não vêm de uma família só. Três lentes forçam três **posturas mentais**
-diferentes sobre a mesma placa: *implementa o circuito?* · *a fábrica consegue
-construir?* · *cabe no mundo e na mão?* Um defeito que escapa a uma lente cai
-noutra porque a pergunta é outra.
+> The rule that governs everything: **the last line of defense cannot be the same
+> tool that did the work** (`kicad_layout` §12s). A self-test has exactly the blind
+> spots of whoever wrote it — the fab gate caught a shattered plane that the router's
+> self-test did not see.
 
 ---
 
-## Lente A — Eléctrica / conectividade
+## Why three lenses, and not a list
 
-**Pergunta:** o cobre implementa o circuito pretendido?
-
-- **ERC limpo** (dono: `/aipcb`); netlist ↔ layout batem; PCB sincronizado por
-  **referência, não UUID** (`sincroniza_pcb.py` — o F8 casa por UUID e duplica
-  cada peça num esquema gerado por script).
-- **Não-roteado por rede** (não o total — um total melhora enquanto uma rede
-  regride). Invariante: **nenhuma rede pode piorar**, chave (rede, espécie) — um
-  plano estilhaça enquanto o não-roteado da rede fica na mesma.
-- **`funcao_dos_pads.py`** — pad → rede → **função** (significado, não ligação).
-  Um símbolo genérico (pinos 1,2,3) num footprint de função fixa dá netlist
-  **correcta** e função **errada**: sinal na entrada inversora, fonte do MOSFET
-  no cátodo do LED, cátodo do Schottky ao contrário. **Nenhum ERC/DRC/"0 por
-  rotear" vê isto.** O contrato escreve-se como *"estes dois pads têm de estar na
-  MESMA rede"* (sobrevive a renomeações), nomes literais só para decisões humanas
-  (`GND`, `+5V`). Provado com `--sabota`.
-
-**Passa se:** ERC=0, paridade esquema↔placa OK, não-roteado por rede = 0 com o
-invariante mantido, `funcao_dos_pads.py` sai 0.
+A single list of checks is read in one breath and tires out halfway — and defects do
+not come from a single family. Three lenses force three different **mental postures**
+on the same board: *does it implement the circuit?* · *can the factory build it?* ·
+*does it fit in the world and in the hand?* A defect that escapes one lens falls into
+another because the question is different.
 
 ---
 
-## Lente B — Fabricabilidade / DFM
+## Lens A — Electrical / connectivity
 
-**Pergunta:** a fábrica e o montador constroem-na bem — e a fábrica **aceita**-a?
+**Question:** does the copper implement the intended circuit?
 
-- **DRC vs as capacidades reais** com `.kicad_dru` (ver `fab-automation.md` §2) e
-  **`--refill-zones`** — senão o DRC compara com um fill velho e devolve folgas
-  fantasma. Atenção: anel, trilho/espaço mín., furo mín., **spoke térmico**
-  (abaixo de 0,09/0,09 mm a 1 oz não etcha fiável e mesmo assim passa o DRC).
-- **`starved_thermal`** (pad num gargalo de cobre — solda mal, conduz pior);
-  **courtyards** IPC-7351B (excesso nominal 0,25 mm; medir colocações novas por
-  **courtyard, não por pad**).
-- **BOM ↔ CPL ↔ placa** — acordo a três (designador, orientação, valor).
-- ⚠️ **A rotação de montagem não é verificável por script** (`para_fabrica`): o
-  ângulo do CPL é o do footprint, a fábrica espera o da biblioteca dela; para
-  muitos pacotes diferem — **confirmar peça-a-peça no preview ⟨dB⟩ antes de
-  pagar**.
-- O pacote sai **carimbado** com data/commit/árvore-suja; um pacote incompleto é
-  impossível de confundir com um bom (`INCOMPLETA` no nome).
+- **Clean ERC** (owner: `/aipcb`); netlist ↔ layout match; PCB synced by
+  **reference, not UUID** (`sincroniza_pcb.py` — the F8 matches by UUID and duplicates
+  each part in a script-generated schematic).
+- **Unrouted per net** (not the total — a total improves while a net regresses).
+  Invariant: **no net may get worse**, key (net, kind) — a plane shatters while the
+  net's unrouted stays the same.
+- **`funcao_dos_pads.py`** — pad → net → **function** (meaning, not connection). A
+  generic symbol (pins 1,2,3) on a fixed-function footprint gives a **correct**
+  netlist and a **wrong** function: signal on the inverting input, MOSFET source on
+  the LED cathode, Schottky cathode backwards. **No ERC/DRC/"0 to route" sees this.**
+  The contract is written as *"these two pads have to be on the SAME net"* (survives
+  renames), literal names only for human decisions (`GND`, `+5V`). Proven with
+  `--sabota`.
 
-**Passa se:** DRC=0 com regras JLC e zonas re-preenchidas, courtyards sem
-sobreposição, BOM=CPL=placa, rotação ⟨dB⟩ confirmada, carimbo presente.
+**Passes if:** ERC=0, schematic↔board parity OK, unrouted per net = 0 with the
+invariant held, `funcao_dos_pads.py` exits 0.
 
 ---
 
-## Lente C — Físico / mecânico + fatores humanos
+## Lens B — Manufacturability / DFM
 
-**Pergunta:** cabe no mundo e no humano que a usa?
+**Question:** do the factory and the assembler build it well — and does the factory
+**accept** it?
 
-- **Encaixe na caixa** (`caixa` gates 4/5; volume + acesso + face — ver
+- **DRC vs the real capabilities** with `.kicad_dru` (see `fab-automation.md` §2) and
+  **`--refill-zones`** — otherwise the DRC compares with an old fill and returns
+  phantom clearances. Watch out: annular ring, min track/space, min hole, **thermal
+  spoke** (below 0.09/0.09 mm at 1 oz it does not etch reliably and even so passes the
+  DRC).
+- **`starved_thermal`** (a pad in a copper bottleneck — solders badly, conducts
+  worse); **courtyards** IPC-7351B (nominal excess 0.25 mm; measure new placements by
+  **courtyard, not by pad**).
+- **BOM ↔ CPL ↔ board** — a three-way agreement (designator, orientation, value).
+- ⚠️ **The assembly rotation is not script-verifiable** (`para_fabrica`): the CPL's
+  angle is the footprint's, the factory expects its library's; for many packages they
+  differ — **confirm part by part in the ⟨dB⟩ preview before paying**.
+- The package comes out **stamped** with date/commit/dirty-tree; an incomplete package
+  is impossible to confuse with a good one (`INCOMPLETA` in the name).
+
+**Passes if:** DRC=0 with JLC rules and zones refilled, courtyards without overlap,
+BOM=CPL=board, ⟨dB⟩ rotation confirmed, stamp present.
+
+---
+
+## Lens C — Physical / mechanical + human factors
+
+**Question:** does it fit in the world and in the human who uses it?
+
+- **Fit in the enclosure** (`caixa` gates 4/5; volume + access + face — see
   `quality-standards.md` §1).
-- **Legibilidade do silk com o OLHO** (`design-review`) — contagem-zero autoriza
-  olhar *sabendo onde*, não saltar o olho; `refs_apontam.py` para peça-errada.
-- **Alcance de conectores**, **térmica** (espaço peça-a-peça para calor, cobre
-  para corrente), e "lê-se do lado que se solda" — que **só o olho** confirma.
+- **Silk legibility with the EYE** (`design-review`) — a zero count authorizes looking
+  *knowing where*, not skipping the eye; `refs_apontam.py` for wrong-part.
+- **Connector reach**, **thermal** (part-to-part space for heat, copper for current),
+  and "reads from the side you solder" — which **only the eye** confirms.
 
-**Passa se:** os gates de `caixa` passam, o `design-review` (svg_colisoes + olho)
-passa, `refs_apontam.py` sai 0, e o alcance/térmica estão anotados com número.
-
----
-
-## Revisores independentes / adversariais
-
-- **Uma pessoa diferente por lente onde possível;** no mínimo, a última linha de
-  defesa não é a ferramenta que fez o trabalho (§12s).
-- O revisor é **adversarial**: tenta provar que a placa está errada, não que está
-  certa. "Parece bem" não é um resultado.
-- Quando a pipeline corre com múltiplos agentes, cada lente é um agente separado
-  com a sua ferramenta e a sua ficha — e um quarto agente concilia o livro-razão.
+**Passes if:** the `caixa` gates pass, the `design-review` (svg_colisoes + eye)
+passes, `refs_apontam.py` exits 0, and reach/thermal are annotated with a number.
 
 ---
 
-## O livro-razão de achados (para nada cair em silêncio)
+## Independent / adversarial reviewers
 
-Formato fixo (une `revisao-terra` + `ifa10000`), preenchido **por passagem**:
-
-1. **O que foi revisto** — ficheiro, revisão, data, lentes/passagens cobertas.
-2. **O QUE PASSOU, explícito, por lente** (R6) — resultado negativo é achado.
-3. **Achados por severidade** 🔴/🟠/🟡/⚪, cada um com: **onde · regra violada pelo
-   nome · consequência medível/audível · conserto mínimo · fio/componente/
-   redesenho**.
-4. **Ordem de ataque** — uma variável de cada vez, com o critério de aceitação
-   escrito **antes** do conserto.
-5. **O que NÃO foi verificado** e porquê (R8).
-
-Preenche-se com **números**. `[x] ok` não é resultado.
-
-> *Diagnosticado-e-não-instrumentado é o estado em que um defeito vive mais
-> tempo — toda a gente sabe, ninguém conta* (§11g-sexies). **Um achado que
-> reaparece vira lente/passada/portão novo no MESMO commit, nunca uma nota.** É a
-> ponte para o estágio 9.
+- **A different person per lens where possible;** at minimum, the last line of defense
+  is not the tool that did the work (§12s).
+- The reviewer is **adversarial**: tries to prove the board is wrong, not that it is
+  right. "Looks fine" is not a result.
+- When the pipeline runs with multiple agents, each lens is a separate agent with its
+  own tool and its own sheet — and a fourth agent reconciles the ledger.
 
 ---
 
-## Correr 3×
+## The ledger of findings (so nothing falls in silence)
 
-O conjunto A+B+C corre **três vezes**, porque a primeira passagem muda a placa
-(conserta achados) e a placa mudada é um artefacto novo por rever — **qualquer
-edição invalida a inspecção anterior** (`design-review`). O conjunto corre
-**no mínimo três vezes** e **não pára antes de uma passagem inteira sair sem
-achados novos** — se a terceira ainda achar, continua. Os três são o piso; a
-estabilidade (uma passagem limpa) é o critério de paragem.
+Fixed format (joins `revisao-terra` + `ifa10000`), filled **per pass**:
 
-Delega a: `/aipcb` (esquema/ERC), `kicad_layout`, `caixa`, `revisao-terra`, `design-review`, e
-`kicad/revisao_externa.py` (kicad-happy, MIT, testado em ~5800 projectos) como
-**segunda opinião externa** — a ferramenta de terceiros que pode dizer não sobre
-o que a nossa aprovou.
+1. **What was reviewed** — file, revision, date, lenses/passes covered.
+2. **WHAT PASSED, explicit, per lens** (R6) — a negative result is a finding.
+3. **Findings by severity** 🔴/🟠/🟡/⚪, each with: **where · rule violated by name ·
+   measurable/audible consequence · minimal fix · wire/component/redesign**.
+4. **Order of attack** — one variable at a time, with the acceptance criterion written
+   **before** the fix.
+5. **What was NOT verified** and why (R8).
+
+It is filled with **numbers**. `[x] ok` is not a result.
+
+> *Diagnosed-and-not-instrumented is the state in which a defect lives longest —
+> everyone knows, no one counts it* (§11g-sexies). **A finding that reappears becomes a
+> new lens/pass/gate in the SAME commit, never a note.** It is the bridge to stage 9.
 
 ---
 
-## Certificação de risco — a saída da revisão tripla
+## Run 3×
 
-O livro-razão lista o que se **achou**; a certificação decide o que **EMBARCA**.
-É o portão de saída do estágio 7 para o 8: `para_fabrica` só corre com o registo
-em **GO**. Modelado no `ifa10000` — o protocolo de certificação canónico do
-projeto — de onde vem a frase que governa tudo aqui:
+The A+B+C set runs **three times**, because the first pass changes the board (fixes
+findings) and the changed board is a new artifact to review — **any edit invalidates
+the previous inspection** (`design-review`). The set runs **at least three times** and
+**does not stop before one whole pass comes out with no new findings** — if the third
+still finds something, it continues. The three are the floor; stability (one clean
+pass) is the stopping criterion.
 
-> **Um waiver é uma MEDIÇÃO, não uma opinião.**
+Delegates to: `/aipcb` (schematic/ERC), `kicad_layout`, `caixa`, `revisao-terra`,
+`design-review`, and `kicad/revisao_externa.py` (kicad-happy, MIT, tested on ~5800
+projects) as a **second external opinion** — the third-party tool that can say no
+about what ours approved.
 
-Esta secção é a instância desse protocolo para placas.
+---
 
-### Certifica contra o sinal, não contra o ruído
+## Risk certification — the exit of the triple review
 
-Antes de dar veredito a qualquer item, **limpa os artefactos de ambiente**. Um
-DRC a devolver dezenas de *"library not configured"* vem de um `fp-lib-table` em
-falta — é ambiente, não placa; resolve-o, volta a correr, e só então lê o
-**resíduo real**. É a etapa 0 (`medicao-limpa`) aplicada à revisão: certifica-se
-contra **sinal limpo**.
+The ledger lists what was **found**; the certification decides what **SHIPS**. It is
+the exit gate from stage 7 to 8: `para_fabrica` only runs with the record at **GO**.
+Modeled on `ifa10000` — the project's canonical certification protocol — from which
+comes the sentence that governs everything here:
 
-> **Corolário: um aviso que ainda não explicaste NÃO é automaticamente ruído.**
-> "Ruído" é um veredito medido — não a suposição preguiçosa de quem quer fechar.
+> **A waiver is a MEASUREMENT, not an opinion.**
 
-### O REGISTO DE RISCO — uma linha por item embarcado
+This section is the instance of that protocol for boards.
 
-Todo aviso embarcado e todo waiver entra no registo, **um por linha**:
+### Certify against the signal, not against the noise
 
-| campo | conteúdo |
+Before giving a verdict on any item, **clean the environment artifacts**. A DRC
+returning dozens of *"library not configured"* comes from a missing `fp-lib-table` —
+it is environment, not board; resolve it, run again, and only then read the **real
+residue**. It is step 0 (`medicao-limpa`) applied to the review: you certify against a
+**clean signal**.
+
+> **Corollary: a warning you have not yet explained is NOT automatically noise.**
+> "Noise" is a measured verdict — not the lazy assumption of whoever wants to close.
+
+### THE RISK REGISTER — one line per shipped item
+
+Every shipped warning and every waiver enters the register, **one per line**:
+
+| field | content |
 |---|---|
-| **id** | identificador estável do item |
-| **item** | o aviso/waiver, em uma frase |
-| **lente/etapa** | onde apareceu (A/B/C, ou o estágio) |
-| **severidade** | 🔴/🟠/🟡/⚪ |
-| **evidência MEDIDA** | o número/medição que sustenta o veredito — nunca "parece bem" |
-| **veredito** | `SAFE-EMBARK` (com prova) · `MUST-FIX` · `decisão-dB` |
-| **ação** | o conserto, ou o encaminhamento ao ⟨dB⟩ |
+| **id** | stable identifier of the item |
+| **item** | the warning/waiver, in one sentence |
+| **lens/step** | where it appeared (A/B/C, or the stage) |
+| **severity** | 🔴/🟠/🟡/⚪ |
+| **MEASURED evidence** | the number/measurement that backs the verdict — never "looks fine" |
+| **verdict** | `SAFE-EMBARK` (with proof) · `MUST-FIX` · `dB-decision` |
+| **action** | the fix, or the routing to ⟨dB⟩ |
 
 **GO/NO-GO:**
 
-- **GO** exige **zero MUST-FIX em aberto**.
-- **SAFE-EMBARK** só vale com **evidência medida** — waiver sem número é
-  **MUST-FIX por omissão**.
-- **decisão-dB** sobe ao portão humano ⟨dB⟩; não se auto-aprova.
+- **GO** requires **zero open MUST-FIX**.
+- **SAFE-EMBARK** only holds with **measured evidence** — a waiver with no number is
+  **MUST-FIX by omission**.
+- **dB-decision** goes up to the ⟨dB⟩ human gate; it does not self-approve.
 
-### Âncora — o caso C16↔J14 (porque este registo existe)
+### Anchor — the C16↔J14 case (why this register exists)
 
-Um courtyard-overlap entre o **C16** (0805) e o **J14** (box-header DIN-41651)
-parecia um **waiver razoável** — courtyards são folga nominal, sobrepõem-se sem
-drama. A opinião dizia *waive*. Ao medir **corpo-contra-corpo** em vez de
-courtyard, o 0805 estava **fisicamente dentro** do shroud do header de assento
-rente: colisão real, não folga. A medição inverteu a opinião — **MUST-FIX**, não
-SAFE-EMBARK.
+A courtyard-overlap between **C16** (0805) and **J14** (box-header DIN-41651) looked
+like a **reasonable waiver** — courtyards are nominal clearance, they overlap without
+drama. The opinion said *waive*. On measuring **body against body** instead of
+courtyard, the 0805 was **physically inside** the shroud of the flush-seating header:
+a real collision, not clearance. The measurement inverted the opinion — **MUST-FIX**,
+not SAFE-EMBARK.
 
-> O fosso entre o que a opinião concede e o que a medição prova **é a razão
-> inteira deste registo.**
+> The gulf between what the opinion grants and what the measurement proves **is the
+> whole reason for this register.**
 
-E é por isso que courtyards e colocações novas se medem por **corpo**, não por
-courtyard nominal (lente B).
+And that is why courtyards and new placements are measured by **body**, not by nominal
+courtyard (lens B).

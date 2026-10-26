@@ -1,479 +1,490 @@
-# Lições de montagem — a caixa de acrílico, montada à mão
+# Assembly lessons — the acrylic enclosure, assembled by hand
 
-### Cotucatronics · 19/09/2026 · rev. f · acrílico transparente **3,0 mm** · gravado da bancada
+### Cotucatronics · 19/09/2026 · rev. f · transparent acrylic **3.0 mm** · recorded from the bench
 
-> **rev. f (19/09/2026):** lição **#11** — o painel só sai com os jacks TRS
-> fora; a ponta do encoder fica presa na tampa. E a #10 fechou a orientação do
-> cérebro (a Daisy está sob o botão central) e abriu a medida que falta: a
-> profundidade do botão azul.
+> **rev. f (19/09/2026):** lesson **#11** — the panel board only comes out with
+> the TRS jacks removed; the encoder's tip catches on the lid. And #10 closed the
+> brain board's orientation (the Daisy is under the center button) and opened the
+> measure that is still missing: the depth of the blue button.
 >
-> **rev. e (19/09/2026):** lição **#10** — a ordem dos três botões arcade nos
-> furos da tampa deixou de ser livre: **azul A, azul B, branco**, da esquerda
-> para a direita, porque um capacitor alto do cérebro fica debaixo do furo da
-> direita e só o botão branco (sem LED, mais curto) passa por cima dele.
+> **rev. e (19/09/2026):** lesson **#10** — the order of the three arcade buttons
+> in the lid's holes stopped being free: **blue A, blue B, white**, left to right,
+> because a tall capacitor on the brain board sits under the right hole and only
+> the white button (no LED, shorter) clears over it.
 >
-> **rev. d (18/09/2026):** lições **#7**, **#8** e **#9** (o encoder roscado fixa a folga em 6,5 mm) (o IDC por baixo NÃO se vira; fita soldada). Lição **#7** — header do OLED soldado por baixo, jumpers
-> em L para baixo; âncora de pinos = o pad quadrado (VCC).
+> **rev. d (18/09/2026):** lessons **#7**, **#8** and **#9** (the threaded encoder
+> fixes the clearance at 6.5 mm) (the IDC underneath does NOT get flipped; soldered
+> ribbon). Lesson **#7** — OLED header soldered from below, jumpers in an L facing
+> down; pin anchor = the square pad (VCC).
 >
-> **rev. c (17/09/2026):** lição #1 corrigida — o pot físico em uso é um
-> **pot de corpo 16 mm** (Ø16,90 · bucha **M7×0,75** · **3 terminais Ø1,20 a
-> passo 5,0 mm** · pino anti-rotação a **7,80 mm @ 30°** por datasheet ≈ 7,5 mm
-> medido pelo dB), **NÃO** um PTV09A de 9 mm. Isto **supersede** a premissa
-> anterior do PTV09A. Adicionada a **nota #6** (footprint RV1/RV2 do painel vs
-> pot físico — resolução por **fiação**, caso B; sem problema no painel já
-> fabricado). Cota da tampa mantida (ø3,2 · 7,5–7,8 mm c-c · esquerda/−X na vista
-> de cima).
+> **rev. c (17/09/2026):** lesson #1 corrected — the physical pot in use is a
+> **16 mm body pot** (Ø16.90 · bushing **M7×0.75** · **3 terminals Ø1.20 at a 5.0
+> mm pitch** · anti-rotation pin at **7.80 mm @ 30°** per datasheet ≈ 7.5 mm
+> measured by dB), **NOT** a 9 mm PTV09A. This **supersedes** the earlier PTV09A
+> premise. Added **note #6** (panel RV1/RV2 footprint vs physical pot — resolved by
+> **wiring**, case B; no problem on the already-fabricated panel). Lid dimension
+> kept (ø3.2 · 7.5–7.8 mm c-c · left/−X in the top view).
 
-> **rev. b (16/09/2026):** lição #1 — furo do pino de indexação do pot
-> **totalmente locado na peça** (**ø3,2 mm · 7,5 mm centro-a-centro · à esquerda
-> do eixo na vista de cima**), substituindo a incerteza anterior do datasheet.
+> **rev. b (16/09/2026):** lesson #1 — the pot's indexing-pin hole **fully located
+> on the part** (**ø3.2 mm · 7.5 mm center-to-center · to the left of the shaft in
+> the top view**), replacing the earlier datasheet uncertainty.
 
-> Isto não é o manual de montagem (esse é o `CAIXA-ACRILICO-MONTAGEM.md`). Isto
-> é o que a **peça em mão** ensinou depois de cortada e montada — cinco coisas
-> que só apareceram com o acrílico real na mesa, cada uma com a linha do gerador
-> onde nasce, a correção escolhida (**parafusada**, ver diretriz no fim), se
-> obriga a re-corte, e a ferragem que passa a fazer falta. É a matéria-prima da
-> próxima **caixa rev**.
+> This is not the assembly manual (that is `CAIXA-ACRILICO-MONTAGEM.md`). This is
+> what the **part in hand** taught after it was cut and assembled — five things
+> that only showed up with the real acrylic on the table, each with the generator
+> line where it is born, the chosen fix (**screwed**, see the directive at the
+> end), whether it forces a re-cut, and the hardware that becomes necessary. It is
+> the raw material of the next **enclosure rev**.
 
 ---
 
-> ## ⚠️ Para a caixa ATUAL (a que já está montada)
+> ## ⚠️ For the CURRENT enclosure (the one already assembled)
 >
-> Estas correções são para a **próxima** revisão. A caixa que já existe fica
-> como está: **o fundo só segura se os 6 calços estiverem colados às paredes
-> primeiro** — cola os 6 calços, deixa curar, e só depois aperta os 6 parafusos
-> por baixo. Não há furo parede↔fundo nesta caixa; a carga do fundo passa toda
-> pelas colas dos calços (é precisamente o defeito nº 5). Não tentes apertar o
-> fundo antes de os calços estarem firmes na parede.
+> These corrections are for the **next** revision. The enclosure that already
+> exists stays as it is: **the bottom only holds if the 6 standoffs are glued to
+> the walls first** — glue the 6 standoffs, let them cure, and only then tighten
+> the 6 screws from below. There is no wall↔bottom hole in this enclosure; the
+> bottom's load passes entirely through the standoffs' glue joints (this is
+> precisely defect #5). Do not try to tighten the bottom before the standoffs are
+> firm on the wall.
 
 ---
 
-## 1 · Furo do pino de indexação do pot — não existe no gerador
+## 1 · Pot indexing-pin hole — does not exist in the generator
 
-**Sintoma observado:** os pots (e o encoder) não assentam rentes à face; ficam
-com folga para rodar em vez de travarem contra o painel.
+**Observed symptom:** the pots (and the encoder) do not seat flush to the face;
+they are left with play to rotate instead of locking against the panel board.
 
-**Causa no design:** o gerador faz **só o ø7 central** por pot —
-`cotuca_caixa_corte.py:264` (encoder em x=105, RV1/pot L em x=140, RV2/pot R em
-x=175, todos a y=92). **Não faz o furo do pino anti-rotação** (*locating pin* /
-*anti-rotation pin*; o furo que o recebe é o *locating hole*). Sem esse furo o
-corpo do pot não tem onde encaixar o pino e não assenta.
+**Cause in the design:** the generator makes **only the central ø7** per pot —
+`cotuca_caixa_corte.py:264` (encoder at x=105, RV1/pot L at x=140, RV2/pot R at
+x=175, all at y=92). **It does not make the anti-rotation pin hole** (*locating
+pin* / *anti-rotation pin*; the hole that receives it is the *locating hole*).
+Without that hole the pot body has nowhere to seat the pin and does not sit flush.
 
-**Distância MEDIDA (locada): 7,5mm centro-a-centro.** Medido direto na peça
-pelo dB, do eixo-centro ao pino-centro. **A peça em mão manda — supersede o
-datasheet.**
+**MEASURED distance (located): 7.5mm center-to-center.** Measured directly on the
+part by dB, from shaft-center to pin-center. **The part in hand is boss — it
+supersedes the datasheet.**
 
-**Esclarecimento importante a registrar** (evita confusão futura): o pot físico
-em uso é um **pot de corpo 16 mm** — Ø16,90 · bucha **M7×0,75** · **3 terminais
-Ø1,20 a passo 5,0 mm** · pino anti-rotação/locate a **7,80 mm de raio @ 30°**
-por datasheet (≈ 7,5 mm medido pelo dB, à esquerda). **Isto supersede a premissa
-anterior do PTV09A**: o PTV09A é um pot de **9 mm** (passo de pino 2,5 mm, postes
-de locate ~4,4 mm) e **não é** a peça física. O **7,5mm é a trava anti-rotação
-do lado do PAINEL** — o *tab*/pino que entra na **TAMPA** da caixa; é a feature
-que a cota da tampa recebe. O furo da **TAMPA** usa **ø3,2mm · 7,5mm c-c**
-(mantido). Sobre o footprint RV1/RV2 do painel (PTV09A) vs o pot 16 mm físico,
-ver a **nota #6** — resolvido por **fiação** (caso B), sem problema no painel já
-fabricado.
+**Important clarification to record** (avoids future confusion): the physical pot
+in use is a **16 mm body pot** — Ø16.90 · bushing **M7×0.75** · **3 terminals
+Ø1.20 at a 5.0 mm pitch** · anti-rotation/locate pin at **7.80 mm radius @ 30°**
+per datasheet (≈ 7.5 mm measured by dB, to the left). **This supersedes the
+earlier PTV09A premise**: the PTV09A is a **9 mm** pot (2.5 mm pin pitch, locate
+posts ~4.4 mm) and **is not** the physical part. The **7.5mm is the anti-rotation
+lock on the PANEL side** — the *tab*/pin that enters the enclosure **LID**; it is
+the feature the lid dimension receives. The **LID** hole uses **ø3.2mm · 7.5mm
+c-c** (kept). On the panel RV1/RV2 footprint (PTV09A) vs the physical 16 mm pot,
+see **note #6** — resolved by **wiring** (case B), no problem on the
+already-fabricated panel.
 
-**Posição angular do furo (agora conhecida):** furo do pino a **7,5mm c-c, à
-esquerda do eixo na vista de cima do painel** (**−X, mesmo Y** do centro do
-eixo). Olhando o painel de cima, o furo do pino anti-rotação fica à **ESQUERDA**
-do furo do eixo.
+**Angular position of the hole (now known):** pin hole at **7.5mm c-c, to the left
+of the shaft in the top view of the panel board** (**−X, same Y** as the shaft
+center). Looking at the panel board from above, the anti-rotation pin hole is to
+the **LEFT** of the shaft hole.
 
-> ⚠️ **Cuidado para a implementação no gerador:** «esquerda na vista de cima»
-> tem de ser mapeado pelo transform de coordenadas da tampa (`to_top()` /
-> qualquer *mirror* da TAMPA em `cotuca_caixa_corte.py`) — **confirmar o SINAL
-> contra o transform antes de gerar**, para não sair espelhado. É a família de
-> bug de eixo/*mirror* que a própria skill avisa. **A peça em mão + a vista de
-> cima mandam.**
+> ⚠️ **Care for the implementation in the generator:** «left in the top view» has
+> to be mapped by the lid's coordinate transform (`to_top()` / any *mirror* of the
+> LID in `cotuca_caixa_corte.py`) — **confirm the SIGN against the transform before
+> generating**, so it does not come out mirrored. It is the axis/*mirror* family of
+> bug the skill itself warns about. **The part in hand + the top view are boss.**
 
-Regra (§0 da skill `caixa`, e vale aqui inteira): **a peça em mão manda.** O
-**pot 16 mm tem pino anti-rotação** (7,80 mm @ 30° por datasheet) — confirmar na
-peça se a tampa precisa de **1 ou 2** furos de indexação.
+Rule (§0 of the `caixa` skill, and it holds here in full): **the part in hand is
+boss.** The **16 mm pot has an anti-rotation pin** (7.80 mm @ 30° per datasheet) —
+confirm on the part whether the lid needs **1 or 2** indexing holes.
 
-**Correção escolhida:** adicionar furo(s) no *locating hole* à cota medida
-(**7,5mm c-c**), diâmetro **ø3,2mm** (medido pelo dB, confirmado na peça).
+**Chosen fix:** add hole(s) at the *locating hole* to the measured dimension
+(**7.5mm c-c**), diameter **ø3.2mm** (measured by dB, confirmed on the part).
 
-> **Spec completa da lição #1 (locate hole do pot):** **ø3,2mm · 7,5mm
-> centro-a-centro · à esquerda do eixo na vista de cima do painel (−X, mesmo Y)**.
+> **Full spec of lesson #1 (pot locate hole):** **ø3.2mm · 7.5mm
+> center-to-center · to the left of the shaft in the top view of the panel board
+> (−X, same Y)**.
 
-**Precisa re-corte?** **Sim.**
+**Needs re-cut?** **Yes.**
 
-**Ferragem:** nenhuma.
-
----
-
-## 2 · OLED monta por fora, exposto
-
-**Sintoma observado:** o módulo OLED acaba empurrado para a face **externa** da
-tampa — vidro, PCB e cabo ficam do lado de fora, à vista e desprotegidos.
-
-**Causa no design:** hoje a tampa tem 4× **ø2,5** (`cotuca_caixa_corte.py:265`)
-mais a **janela 55×27,5** (`:266`), e **nada mais** — sem *standoff*/espaçador
-que defina de que lado o módulo se monta. Sem batente interno, a montagem
-natural empurra o módulo para fora.
-
-**Correção escolhida:** montar o OLED **por dentro**, em **4 standoffs M2.5** —
-o vidro olha pela janela, o parafuso entra pela frente, e o módulo e o cabo
-ficam **dentro** da caixa.
-
-**Precisa re-corte?** **Não** — os 4 furos ø2,5 já existem. Só se quiseres um
-**rebaixo** para o vidro afinar com a face é que há re-corte.
-
-**Ferragem:** 4 standoffs M2.5 + parafusos.
+**Hardware:** none.
 
 ---
 
-## 3 · Os cabos não entraram na caixa
+## 2 · OLED mounts outward, exposed
 
-**Sintoma observado:** os fios do OLED não tinham por onde entrar; na montagem
-passaram-se **pelos retângulos de ventilação** como gambiarra — os `BACK_RECTS`
-(`cotuca_caixa_corte.py:270`) e os `BOT_RECTS` (`:343`).
+**Observed symptom:** the OLED module ends up pushed to the **outer** face of the
+lid — glass, PCB and cable are left on the outside, exposed and unprotected.
 
-**Causa no design:** é **consequência direta do nº 2** — com o OLED por fora, o
-módulo e o seu chicote ficam do lado errado da face e o cabo não tem furo de
-serviço para voltar para dentro.
+**Cause in the design:** today the lid has 4× **ø2.5** (`cotuca_caixa_corte.py:265`)
+plus the **55×27.5 window** (`:266`), and **nothing else** — no standoff/spacer
+that defines which side the module mounts on. With no internal stop, the natural
+assembly pushes the module outward.
 
-**Correção escolhida:** **resolve-se ao corrigir o nº 2.** Com o OLED montado
-por dentro, o cabo já nasce dentro da caixa e não há gambiarra pelas grelhas.
+**Chosen fix:** mount the OLED **on the inside**, on **4 M2.5 standoffs** — the
+glass looks out through the window, the screw goes in from the front, and the
+module and cable stay **inside** the enclosure.
 
-**Precisa re-corte?** Não por si — segue o nº 2.
+**Needs re-cut?** **No** — the 4 ø2.5 holes already exist. Only if you want a
+**recess** for the glass to sit flush with the face is there a re-cut.
 
-**Ferragem:** nenhuma (a do nº 2).
-
----
-
-## 4 · A cola do reforço/nervura mancha o acrílico transparente
-
-**Sintoma observado:** o solvente das juntas do reforço e da nervura **nubla e
-mancha** a tampa transparente — o embranquecimento onde o vapor/solvente toca,
-que o próprio manual já avisa (`CAIXA-ACRILICO-MONTAGEM.md:36` e `:98-101`).
-
-**Causa no design:** a peça `REFORCO` (`cotuca_caixa_corte.py:345-350`) e a
-`NERVURA` (`:363`) são **soldadas com Weld-On 4 capilar** por baixo da tampa
-transparente. Solvente sobre acrílico transparente = mancha visível, e numa
-casca transparente o interior é a cara (§4e da skill `caixa`).
-
-**Correção escolhida:** **aparafusar** o reforço e a nervura — furos **ø3,4 na
-TAMPA** + bolso de porca na peça (a mesma maquinaria de porca cativa dos calços,
-ver nº 5) — **zero solvente**. A mancha desaparece na origem porque a origem
-(o solvente) deixa de existir.
-
-**Precisa re-corte?** **Sim.**
-
-**Ferragem:** ~9 M3 + 9 porcas.
+**Hardware:** 4 M2.5 standoffs + screws.
 
 ---
 
-## 5 · Fundo — fixação escondida e colada (*design smell*)
+## 3 · The cables did not enter the enclosure
 
-**Sintoma observado:** a fixação do fundo é confusa e frágil. O fundo pendura em
-**6 parafusos M3** que sobem para **porcas cativas em 6 calços** colados; a carga
-inteira do fundo passa por **6 colas de 12 mm**, sem nenhum furo que ligue
-parede a fundo.
+**Observed symptom:** the OLED wires had nowhere to enter; during assembly they
+were run **through the ventilation rectangles** as a kludge — the `BACK_RECTS`
+(`cotuca_caixa_corte.py:270`) and the `BOT_RECTS` (`:343`).
 
-**Causa no design:** os calços **CB/CT** (`cotuca_caixa_corte.py:366-370`) são
-**colados nas PAREDES**, 3 mm acima da borda inferior
-(`CAIXA-ACRILICO-MONTAGEM.md:66-84`). Não há furo parede↔fundo — o fundo só se
-segura pelas 6 colas dos calços. É escondido (não se vê como está preso) e
-frágil (toda a carga em 6 juntas coladas de 12 mm).
+**Cause in the design:** it is a **direct consequence of #2** — with the OLED on
+the outside, the module and its harness end up on the wrong side of the face and
+the cable has no service hole to come back inside.
 
-**Correção escolhida:** **postes parafusados à parede E ao fundo** — porca cativa
-dos **dois** lados, furo **ø3,4 pela parede** (cabeça de parafuso visível, e não
-faz mal ser visível) mais o furo **ø3,4 do fundo que já existe**. O fundo passa
-a estar preso por parafuso à estrutura, não pendurado em cola.
+**Chosen fix:** **solved by fixing #2.** With the OLED mounted on the inside, the
+cable is already born inside the enclosure and there is no kludge through the
+grilles.
 
-**Precisa re-corte?** **Sim.**
+**Needs re-cut?** Not on its own — it follows #2.
 
-**Ferragem:** ~12 M3 + 12 porcas.
+**Hardware:** none (that of #2).
 
 ---
 
-## 6 · Footprint RV1/RV2 do painel (PTV09A) vs o pot físico de 16 mm — resolvido por fiação
+## 4 · The stiffener/rib glue stains the transparent acrylic
 
-**O que os arquivos dizem (conferido no PCB e no esquema):** RV1 e RV2 no painel
-usam o footprint `Potentiometer_THT:Potentiometer_Bourns_PTV09A-1_Single_Vertical`
-(pot **9 mm** montado NA PCB). Medido no `cotuca_painel.kicad_pcb`:
+**Observed symptom:** the solvent of the stiffener and rib joints **clouds and
+stains** the transparent lid — the whitening where the vapor/solvent touches,
+which the manual itself already warns about (`CAIXA-ACRILICO-MONTAGEM.md:36` and
+`:98-101`).
 
-- **3 pads passantes** — pad 1 (GND) em (0, 0), pad 2 (POT_L no RV1 / POT_R no
-  RV2) em (0, −2,5), pad 3 (+3V3A) em (0, −5). **Passo centro-a-centro = 2,5 mm**,
-  furo **ø1,0 mm**, pad ø1,8 mm.
-- **2 postes de fixação "MP"** (locate do PTV09A) furo ø2,2 mm em (7, −6,9) e
-  (7, 1,9).
-- **Corpo (F.Fab) ~12 × 9,7 mm; courtyard ~14,4 × 13,7 mm** — dimensão de pot 9 mm.
-- Esquema/BOM do painel declaram MPN **PTV09A-1020S-B103** (Bourns, 9 mm, 10k lin).
+**Cause in the design:** the `REFORCO` part (`cotuca_caixa_corte.py:345-350`) and
+the `NERVURA` (`:363`) are **bonded with capillary Weld-On 4** underneath the
+transparent lid. Solvent on transparent acrylic = visible stain, and on a
+transparent shell the interior is the face (§4e of the `caixa` skill).
 
-**O pot físico** é um **16 mm** com **3 terminais a passo 5,0 mm** — ou seja,
-**2× o passo** do footprint (5,0 vs 2,5 mm) e corpo bem maior. Como peça
-**board-mounted** ele **NÃO caberia** no footprint PTV09A do painel.
+**Chosen fix:** **screw** the stiffener and the rib — **ø3.4 holes in the LID** +
+a nut pocket in the part (the same captive-nut machinery as the standoffs, see #5)
+— **zero solvent**. The stain disappears at the source because the source (the
+solvent) ceases to exist.
 
-**Resolução (caso B, decidido pelo usuário — NÃO é problema de fabricação):** os
-pots são montados na **TAMPA** e ligados por **FIO** às pads RV1/RV2 do painel —
-**não** soldados como pots board-mounted. Com fiação, soldam-se **3 fios nas 3
-pads** de cada RV; o passo do footprint (2,5 mm) **é irrelevante** para fiação, e
-os postes MP ficam sem uso. A função é preservada (POT_L/POT_R/+3V3A/GND chegam
-ao pot). **O painel já fabricado está OK — não há re-fabricação a fazer por causa
-disto.**
+**Needs re-cut?** **Yes.**
 
-**Para a PRÓXIMA revisão do painel (clareza, não urgência):** trocar o footprint
-PTV09A de RV1/RV2 por um **header/conector de 3 pinos de fiação** (ou marcar
-explicitamente como pads de solda-fio), para o desenho ficar honesto — **fiado,
-não board-mounted**.
-
-**Nota de BOM (não alterar o BOM já pedido — só registrar):** o pot real
-comprado é um **16 mm** (M7×0,75, 3T @ 5,0 mm, anti-rot 7,80 @ 30°), à parte; o
-**"PTV09A" no `export/painel_2026-09-12_06db1c7/bom_painel.csv` (linha RV1,RV2)**
-e o MPN `PTV09A-1020S-B103` no esquema são **vestigiais** para a peça física —
-funcionam como a *landing* de fiação. Discrepância registrada; BOM encomendado
-mantido como está.
-
-**Precisa re-corte / re-fabricação?** **Não** (nem caixa nem painel). Só a
-próxima rev do painel ganha o conector de fiação.
-
-**Ferragem:** 3 fios por pot (6 no total) + terminais.
+**Hardware:** ~9 M3 + 9 nuts.
 
 ---
 
-## 7 · Header do OLED não cabe por cima — soldado por baixo, jumpers em L para baixo
+## 5 · Bottom — hidden, glued fastening (*design smell*)
 
-**Sintoma observado (dB, 18/09):** o header macho do `J2` (OLED) com os jumpers
-fêmea **direitos** não cabe entre a placa do painel e o acrílico. Jumpers **em L**
-por cima também não: a altura até à tampa chegava, mas o topo da caixa não deixa
-sair os fios; virar o L para baixo espreme o fio entre os componentes e a tampa.
+**Observed symptom:** the bottom's fastening is confusing and fragile. The bottom
+hangs from **6 M3 screws** that rise to **captive nuts in 6 glued standoffs**; the
+bottom's entire load passes through **6 12 mm glue joints**, with no hole tying
+wall to bottom.
 
-**Causa no design:** a folga placa↔tampa **nunca foi desenhada** — é a etapa M6
-da trilha M do IFÁ10000 (`/aipcb`), que não existia quando o painel foi feito. Os
-conectores estão todos na face virada para a tampa.
+**Cause in the design:** the **CB/CT** standoffs (`cotuca_caixa_corte.py:366-370`)
+are **glued to the WALLS**, 3 mm above the lower edge
+(`CAIXA-ACRILICO-MONTAGEM.md:66-84`). There is no wall↔bottom hole — the bottom is
+held only by the 6 standoffs' glue. It is hidden (you cannot see how it is held)
+and fragile (all the load in 6 glued 12 mm joints).
 
-**Correção escolhida:** header **soldado por baixo** da placa, jumpers **em L
-virados para trás e para baixo**. Mais limpo e com o fio livre. Os fios são
-**codificados por cor** do lado do módulo.
+**Chosen fix:** **posts screwed to the wall AND to the bottom** — captive nut on
+**both** sides, **ø3.4 hole through the wall** (screw head visible, and being
+visible does no harm) plus the **ø3.4 bottom hole that already exists**. The bottom
+goes from hanging on glue to being screwed to the structure.
 
-⚠️ **Por baixo a serigrafia não se lê e a ordem aparece ao contrário.** A âncora
-que se vê dos dois lados: **o pad 1 é QUADRADO, e o pad 1 é o VCC (+5V)**. A
-partir do quadrado a ordem é sempre **VCC · GND · DIN · CLK · CS · DC · RST**
-(pads 1–7, conferidos na placa fabricada `06db1c7`). Antes de ligar, confirmar
-com o multímetro por continuidade: o quadrado liga ao **`TP1` (+5V)**, o vizinho
-dele ao **`TP3` (GND)**. As cores dizem que fio é que sinal; só a âncora diz que
-pino é que sinal.
+**Needs re-cut?** **Yes.**
 
-⚠️ **Não repetir no `J1` (IDC 2×13) nem nos JST dos LEDs (`J6`/`J7`):** numa ficha
-com chave, montar do outro lado troca pinos — no IDC pares de vias com
-alimentação, nos LEDs ânodo com cátodo. A pergunta «cabe com a ficha encaixada?»
-fica por fazer a esses.
-
-**Para a PRÓXIMA revisão do painel:** conectores de cabo do **lado de baixo** por
-desenho, com os nomes em **`B.Silkscreen`** (legíveis de onde se liga), e a folga
-placa↔tampa desenhada, não descoberta.
-
-**Precisa re-corte?** Não.
-
-**Ferragem:** jumpers fêmea em L (7).
+**Hardware:** ~12 M3 + 12 nuts.
 
 ---
 
-## 8 · A caixa de pinos do IDC (`J1`) não cabe por cima — e NÃO se vira para baixo
+## 6 · Panel RV1/RV2 footprint (PTV09A) vs the physical 16 mm pot — resolved by wiring
 
-**Sintoma observado (dB, 18/09):** a caixa de pinos Würth do `J1` soldada por cima
-bate no OLED e não deixa espaço para aparafusar o encoder.
+**What the files say (checked on the PCB and in the schematic):** RV1 and RV2 on
+the panel board use the footprint
+`Potentiometer_THT:Potentiometer_Bourns_PTV09A-1_Single_Vertical` (a **9 mm** pot
+mounted ON the PCB). Measured in `cotuca_painel.kicad_pcb`:
 
-⚠️ **Virá-la para baixo NÃO funciona, e pode queimar.** Uma caixa de pinos de 2
-filas com chave, vista do outro lado da placa, é a imagem ao espelho — e nenhuma
-rotação dela nem da ficha no cabo desfaz um espelho. Simulado a 18/09 contra as
-26 vias do contrato:
+- **3 through-hole pads** — pad 1 (GND) at (0, 0), pad 2 (POT_L on RV1 / POT_R on
+  RV2) at (0, −2.5), pad 3 (+3V3A) at (0, −5). **Center-to-center pitch = 2.5 mm**,
+  hole **ø1.0 mm**, pad ø1.8 mm.
+- **2 "MP" mounting posts** (PTV09A locate) hole ø2.2 mm at (7, −6.9) and (7, 1.9).
+- **Body (F.Fab) ~12 × 9.7 mm; courtyard ~14.4 × 13.7 mm** — a 9 mm pot's
+  dimension.
+- The panel's schematic/BOM declare MPN **PTV09A-1020S-B103** (Bourns, 9 mm, 10k
+  lin).
 
-| por baixo | ficha no cabo | certos | efeito |
+**The physical pot** is a **16 mm** one with **3 terminals at a 5.0 mm pitch** —
+that is, **2× the pitch** of the footprint (5.0 vs 2.5 mm) and a much larger body.
+As a **board-mounted** part it **would NOT fit** the panel's PTV09A footprint.
+
+**Resolution (case B, decided by the user — NOT a fabrication problem):** the pots
+are mounted on the **LID** and connected by **WIRE** to the panel's RV1/RV2 pads —
+**not** soldered as board-mounted pots. With wiring, you solder **3 wires to the 3
+pads** of each RV; the footprint pitch (2.5 mm) **is irrelevant** for wiring, and
+the MP posts go unused. The function is preserved (POT_L/POT_R/+3V3A/GND reach the
+pot). **The already-fabricated panel board is OK — there is no re-fabrication to do
+because of this.**
+
+**For the NEXT panel revision (clarity, not urgency):** swap the RV1/RV2 PTV09A
+footprint for a **3-pin wiring header/connector** (or explicitly mark it as
+wire-solder pads), so the drawing is honest — **wired, not board-mounted**.
+
+**BOM note (do not change the already-ordered BOM — just record):** the real pot
+purchased is a **16 mm** one (M7×0.75, 3T @ 5.0 mm, anti-rot 7.80 @ 30°),
+separate; the **"PTV09A" in `export/painel_2026-09-12_06db1c7/bom_painel.csv`
+(line RV1,RV2)** and the MPN `PTV09A-1020S-B103` in the schematic are **vestigial**
+for the physical part — they function as the wiring *landing*. Discrepancy
+recorded; the ordered BOM kept as is.
+
+**Needs re-cut / re-fabrication?** **No** (neither enclosure nor panel board).
+Only the next panel rev gains the wiring connector.
+
+**Hardware:** 3 wires per pot (6 total) + terminals.
+
+---
+
+## 7 · The OLED header does not fit over the top — soldered from below, jumpers in an L facing down
+
+**Observed symptom (dB, 18/09):** the male header of `J2` (OLED) with **straight**
+female jumpers does not fit between the panel board and the acrylic. Jumpers in an
+**L** over the top do not either: the height to the lid reached, but the top of the
+enclosure does not let the wires out; turning the L down squeezes the wire between
+the components and the lid.
+
+**Cause in the design:** the board↔lid clearance was **never drawn** — it is step
+M6 of the IFÁ10000 M-track (`/aipcb`), which did not exist when the panel was made.
+The connectors are all on the face toward the lid.
+
+**Chosen fix:** header **soldered from below** the board, jumpers **in an L turned
+back and down**. Cleaner and with the wire free. The wires are **color-coded** on
+the module side.
+
+⚠️ **From below the silkscreen cannot be read and the order appears reversed.** The
+anchor that is seen from both sides: **pad 1 is SQUARE, and pad 1 is VCC (+5V)**.
+From the square, the order is always **VCC · GND · DIN · CLK · CS · DC · RST**
+(pads 1–7, checked on the fabricated board `06db1c7`). Before wiring, confirm with
+the multimeter by continuity: the square connects to **`TP1` (+5V)**, its neighbor
+to **`TP3` (GND)**. The colors say which wire is which signal; only the anchor says
+which pin is which signal.
+
+⚠️ **Do not repeat on `J1` (IDC 2×13) nor on the LED JSTs (`J6`/`J7`):** on a keyed
+connector, mounting from the other side swaps pins — on the IDC pairs of vias with
+power, on the LEDs anode with cathode. The question «does it fit with the connector
+mated?» is left undone on those.
+
+**For the NEXT panel revision:** cable connectors on the **bottom** side by design,
+with the names on **`B.Silkscreen`** (readable from where you connect), and the
+board↔lid clearance drawn, not discovered.
+
+**Needs re-cut?** No.
+
+**Hardware:** female L jumpers (7).
+
+---
+
+## 8 · The IDC pin box (`J1`) does not fit over the top — and does NOT get flipped down
+
+**Observed symptom (dB, 18/09):** the Würth pin box of `J1` soldered over the top
+hits the OLED and leaves no room to screw down the encoder.
+
+⚠️ **Flipping it down does NOT work, and may burn.** A 2-row keyed pin box, seen
+from the other side of the board, is the mirror image — and no rotation of it or of
+the connector on the cable undoes a mirror. Simulated on 18/09 against the
+contract's 26 vias:
+
+| from below | connector on cable | correct | effect |
 |---|---|---|---|
-| chave de um lado | direita | 0/26 | **+3V3A em curto com GND** (via 9 → pad 10) |
-| chave de um lado | virada | 2/26 | 24 sinais trocados |
-| rodada 180° | direita | 2/26 | 24 sinais trocados |
-| rodada 180° | virada | 0/26 | **+3V3A em curto com GND** |
+| key on one side | straight | 0/26 | **+3V3A shorted to GND** (via 9 → pad 10) |
+| key on one side | flipped | 2/26 | 24 signals swapped |
+| rotated 180° | straight | 2/26 | 24 signals swapped |
+| rotated 180° | flipped | 0/26 | **+3V3A shorted to GND** |
 
-**Correção escolhida:** **fita soldada directamente nos pads do painel, por
-baixo, sem conector desse lado.** Cada condutor vai ao seu pad pelo número —
-não há espelho possível. Do lado do cérebro fica a ficha IDC no `J14` (é por aí
-que se desliga). Por cima do painel fica altura zero.
+**Chosen fix:** **ribbon soldered directly to the panel pads, from below, with no
+connector on that side.** Each conductor goes to its pad by number — there is no
+mirror possible. On the brain board side the IDC connector stays at `J14` (that is
+where you disconnect). Over the top of the panel board, the height is zero.
 
-**Como, sem se enganar:**
-1. Ficha IDC crimpada normal na ponta do cérebro: **fio vermelho = pino 1** (o
-   triângulo da ficha).
-2. Na ponta do painel, separar os condutores ~15 mm. **Vermelho = 1**, e daí em
-   diante pela ordem: **ímpares (1, 3 … 25) na fila mais afastada do bordo
-   comprido mais próximo, pares (2, 4 … 26) na fila mais perto dele.** O pad 1 é
-   **redondo** (não há âncora pela forma): fica **na ponta do `J1` do lado dos
-   conectores `J3`/`J6`**.
-3. **Antes de ligar, continuidade** da ficha solta (sonda nos furos da ficha) à
-   placa: pino **9 ↔ `TP2`** (+3V3A), pinos **11 e 12 ↔ `TP1`** (+5V), pino **1 ↔
-   `TP3`** (GND), pino **2 ↔ `J2` pad 4** (OLED_CLK). E **sem** continuidade entre
-   `TP1`, `TP2` e `TP3`. Se uma falhar, a fita entrou deslocada.
+**How, without going wrong:**
+1. IDC connector crimped normally on the brain board end: **red wire = pin 1** (the
+   triangle on the connector).
+2. On the panel board end, separate the conductors ~15 mm. **Red = 1**, and from
+   there on in order: **odds (1, 3 … 25) in the row farthest from the nearest long
+   edge, evens (2, 4 … 26) in the row closest to it.** Pad 1 is **round** (there is
+   no anchor by shape): it is **at the `J1` end on the side of connectors
+   `J3`/`J6`**.
+3. **Before wiring, continuity** from the loose connector (probe in the connector's
+   holes) to the board: pin **9 ↔ `TP2`** (+3V3A), pins **11 and 12 ↔ `TP1`**
+   (+5V), pin **1 ↔ `TP3`** (GND), pin **2 ↔ `J2` pad 4** (OLED_CLK). And **no**
+   continuity between `TP1`, `TP2` and `TP3`. If one fails, the ribbon went in
+   shifted.
 
-**Para a PRÓXIMA revisão do painel:** o conector do cabo no lado de baixo **por
-desenho** (footprint na face `B`, o que o KiCad espelha correctamente), e a
-folga placa↔tampa desenhada.
+**For the NEXT panel revision:** the cable connector on the bottom side **by
+design** (footprint on the `B` face, which KiCad mirrors correctly), and the
+board↔lid clearance drawn.
 
-**Precisa re-corte?** Não. **Ferragem:** nenhuma (a fita de ~300 mm já prevista).
+**Needs re-cut?** No. **Hardware:** none (the ~300 mm ribbon is already planned).
 
 ---
 
-## 9 · O encoder aparafusado fixa a folga em 6,5 mm — e tudo o que é mais alto bate
+## 9 · The screwed-down encoder fixes the clearance at 6.5 mm — and anything taller hits
 
-**O que o dB tem em mão (18/09):** um EC11 genérico **com bucim roscado** (eixo
-estriado de 6 mm, 20 mm acima do corpo, corpo 11,7 × 6,5 mm de altura) — **não** o
-`EC11E15244G1` do BOM, que não tem rosca. Aparafusado à tampa, **prende a placa**
-(conta para o M2). E define a distância: **a placa fica 6,5 mm abaixo do acrílico.**
+**What dB has in hand (18/09):** a generic EC11 **with a threaded bushing** (6 mm
+knurled shaft, 20 mm above the body, body 11.7 × 6.5 mm tall) — **not** the
+`EC11E15244G1` from the BOM, which has no thread. Screwed to the lid, it **holds
+the board** (it counts toward M2). And it sets the distance: **the board sits 6.5
+mm below the acrylic.**
 
-**Consequência (medida contra a tabela de alturas):** na face de cima só cabe o
-que tiver menos de 6,5 mm. Batem:
+**Consequence (measured against the height table):** on the top face only what is
+less than 6.5 mm fits. These hit:
 
-| peça | o que fazer | âncora por baixo |
+| part | what to do | anchor from below |
 |---|---|---|
-| `J2` (OLED) | header por baixo, jumpers em L (#7) | pad 1 **quadrado** = VCC |
-| `J1` (IDC) | fita soldada nos pads (#8) — **não** virar a caixa de pinos, nem nas duas pontas (8 das 16 combinações dão curto ou troca, e por baixo do cérebro só há 9 mm) | pad 1 redondo — ver #8 |
-| `J3`, `J4`, `J5` (botões) | JST por baixo, ou fios soldados — interruptores, sem polaridade | pad 1 **quadrado** = sinal, pad 2 = GND |
-| `J6`, `J7` (LEDs, 1=A 2=K) | **fios soldados** por baixo, **não** JST (virar a ficha com chave troca A e K) | pad 1 **quadrado** = **+5V (ânodo)**; confirmar com `TP1` |
-| `C3` (100 µF, 11 mm) | por baixo; a polaridade vai pelo furo | pad 1 **quadrado** = **+** (+5V) |
-| `RV1`, `RV2` | **os pots NÃO podem ir na placa**: o corpo (≥ 8 mm) não cabe em 6,5. Ficam na tampa, **fiados** (caso B, #6) — os de 16 mm da gaveta servem | — |
+| `J2` (OLED) | header from below, jumpers in an L (#7) | pad 1 **square** = VCC |
+| `J1` (IDC) | ribbon soldered to the pads (#8) — do **not** flip the pin box, nor at either end (8 of the 16 combinations give a short or a swap, and under the brain board there are only 9 mm) | pad 1 round — see #8 |
+| `J3`, `J4`, `J5` (buttons) | JST from below, or soldered wires — switches, no polarity | pad 1 **square** = signal, pad 2 = GND |
+| `J6`, `J7` (LEDs, 1=A 2=K) | **soldered wires** from below, **not** JST (flipping the keyed connector swaps A and K) | pad 1 **square** = **+5V (anode)**; confirm with `TP1` |
+| `C3` (100 µF, 11 mm) | from below; polarity goes by the hole | pad 1 **square** = **+** (+5V) |
+| `RV1`, `RV2` | **the pots CANNOT go on the board**: the body (≥ 8 mm) does not fit in 6.5. They go on the lid, **wired** (case B, #6) — the 16 mm ones from the drawer work | — |
 
-**Na tampa:** o furo do encoder é ø7 e a rosca é M7 — abrir para ~7,3 (a caixa
-cede). **Postes** de fixação (M2): altura **6,5 mm**, derivada do encoder, não
-escolhida.
+**On the lid:** the encoder hole is ø7 and the thread is M7 — open it to ~7.3 (the
+enclosure gives). **Posts** for fastening (M2): height **6.5 mm**, derived from the
+encoder, not chosen.
 
-⚠️ **A verificar na peça:** se o encoder tem os **2 pinos do botão** (push) do outro
-lado. A placa usa o `ENC_A_PUSH`; um encoder sem interruptor perde essa função.
+⚠️ **To verify on the part:** whether the encoder has the **2 button pins** (push)
+on the other side. The board uses `ENC_A_PUSH`; an encoder with no switch loses
+that function.
 
-**Para a PRÓXIMA revisão do painel:** a folga placa↔tampa **desenhada** a partir
-do encoder escolhido, e a face de cima só com o que cabe nela.
+**For the NEXT panel revision:** the board↔lid clearance **drawn** from the chosen
+encoder, and the top face only with what fits on it.
 
-**Precisa re-corte?** Só abrir o furo do encoder. **Ferragem:** porca e anilha do
-encoder; 4 postes de 6,5 mm (ou 6 + anilha).
-
----
-
-## 10 · A ordem dos botões arcade não é livre — o capacitor alto manda
-
-**O que aconteceu (dB, 19/09):** ao montar, um capacitor do cérebro ficou
-alto de mais debaixo de um dos furos de ø30. Os dois **azuis (freeze)** foram
-para os furos da **esquerda**, juntos, e o **branco (búzios)** para o da
-**direita**, que é o furo sobre o capacitor: o branco **não tem LED**, e por
-isso o corpo dele é bem mais curto.
-
-**Porque isto não aparecia antes:** a verificação de volume do `pcb_contorno`
-(`confere_arcade`) trata os três botões como **iguais**, com a profundidade do
-pior caso — 40 mm de ponta a ponta, que é a do botão **com LED**. Um botão sem
-LED é mais curto, e essa diferença nunca entrou na conta. O resultado é que a
-ferramenta não distingue qual furo aceita peça alta por baixo.
-
-**O que fica decidido para esta caixa:** ordem **azul A · azul B · branco**, da
-esquerda para a direita na vista de cima. Está no manual de montagem, no passo
-dos fios dos arcade.
-
-**Medido (dB, 19/09):** o botão branco desce **20 mm** abaixo do painel, com
-conectores. O capacitor é o **C1, 2200 µF**. Com isso a `confere_arcade`
-(v0.24.0) passou a ter **profundidade por botão** — azul 34, branco 20 — e
-altura de electrolítico **por diâmetro** (D16 = 25 mm). Altura livre: **7,5 mm**
-sob um azul, **21,5 mm** sob o branco.
-
-**A orientação ficou resolvida no mesmo dia, e ao contrário do que eu tinha
-escrito.** A Daisy debaixo do botão central **não distingue** nada: ela cai sob
-o furo do meio nas duas orientações. Quem distingue é a **serigrafia** — com o
-lado do utilizador de frente, a do painel lê-se direita e a do **cérebro
-lê-se de cabeça para baixo**. A placa está **girada 180°** face ao modelo, na
-orientação que 06/09 tinha rejeitado por pôr peças altas sob os botões. E aí o
-`C1` (25 mm) cai debaixo do furo 1 — o capacitor alto que obrigou a trocar os
-botões, que era o que faltava explicar.
-
-⚠️ **E nada impedia o engano:** os quatro furos de fixação formam um
-**retângulo simétrico**, logo a placa aparafusa nos dois sentidos com o mesmo
-esforço. **A garantia tem de ser mecânica, não documental:** na rev D, fixação
-assimétrica ou recorte de chave, para a orientação errada não entrar.
-
-⚠️ **E isso derruba o número da folga, não a lição.** A Daisy tem 17 mm e o
-verificador só dá 7,5 mm sob um azul — mas ela **cabe, apertada**, diz quem a
-montou. Logo o botão azul **não** desce os 34 mm do pior caso: para a Daisy
-caber, desce **~24 mm**. O pior caso veio de nunca se ter medido a cabeça do
-botão acima do painel. **Por medir: a profundidade do botão azul**, do painel
-para baixo — a do branco já foi medida (20 mm).
-
-⚠️ **E fica em aberto qual era a peça alta.** Com a orientação confirmada, o
-`C1` está a 64 mm do furo mais próximo. Debaixo do furo da esquerda está a
-**caixa de pinos `J14`**, com a ficha do cabo IDC por cima; debaixo do da
-direita, só peças rasteiras. A ordem dos botões fica registada como **o que
-funcionou na bancada**, não como geometria conferida.
+**Needs re-cut?** Just opening the encoder hole. **Hardware:** the encoder's nut
+and washer; 4 posts of 6.5 mm (or 6 + washer).
 
 ---
 
-## 11 · O painel só sai com os jacks TRS fora
+## 10 · The order of the arcade buttons is not free — the tall capacitor is boss
 
-**O que aconteceu (dB, 19/09):** com os quatro jacks TRS montados, o painel
-**não tem por onde sair** — a ponta do encoder fica presa no acrílico da tampa
-antes de a placa libertar os jacks.
+**What happened (dB, 19/09):** on assembly, a capacitor on the brain board was too
+tall under one of the ø30 holes. The two **blue (freeze)** ones went to the
+**left** holes, together, and the **white (cowrie shells)** one to the **right**,
+which is the hole over the capacitor: the white one **has no LED**, and so its body
+is much shorter.
 
-**A regra que isto cria, e vale para montar e para reparar:** o painel **entra
-e sai antes dos jacks TRS**. Quem for trocar uma peça do painel tira primeiro
-os quatro jacks, e não o contrário.
+**Why this did not show up before:** the `pcb_contorno` volume check
+(`confere_arcade`) treats the three buttons as **equal**, with the worst-case
+depth — 40 mm end to end, which is that of the button **with an LED**. A button
+with no LED is shorter, and that difference never entered the count. The result is
+that the tool does not distinguish which hole accepts a tall part underneath.
 
-**Para a próxima caixa rev:** ou a placa do painel sai sem passar pela zona dos
-jacks, ou o furo do encoder na tampa é um rasgo que o deixa recuar. Enquanto
-não for uma coisa nem outra, isto é uma **ordem obrigatória**, não uma
-preferência.
+**What is decided for this enclosure:** order **blue A · blue B · white**, left to
+right in the top view. It is in the assembly manual, in the step for the arcade
+wires.
+
+**Measured (dB, 19/09):** the white button descends **20 mm** below the panel
+board, with connectors. The capacitor is **C1, 2200 µF**. With this, the
+`confere_arcade` (v0.24.0) now has **depth per button** — blue 34, white 20 — and
+electrolytic height **by diameter** (D16 = 25 mm). Free height: **7.5 mm** under a
+blue, **21.5 mm** under the white.
+
+**The orientation was resolved the same day, and contrary to what I had written.**
+The Daisy under the center button **distinguishes** nothing: it falls under the
+middle hole in both orientations. What distinguishes is the **silkscreen** — with
+the user side facing you, the panel's reads right-side-up and the **brain board's
+reads upside down**. The board is **rotated 180°** relative to the model, in the
+orientation that 09/06 had rejected for putting tall parts under the buttons. And
+then `C1` (25 mm) falls under hole 1 — the tall capacitor that forced the buttons
+to be swapped, which was what remained to be explained.
+
+⚠️ **And nothing prevented the mistake:** the four mounting holes form a
+**symmetric rectangle**, so the board screws down in both directions with the same
+effort. **The guarantee has to be mechanical, not documentary:** on rev D, an
+asymmetric mounting or a keyed cutout, so the wrong orientation cannot go in.
+
+⚠️ **And this knocks down the clearance number, not the lesson.** The Daisy is 17
+mm and the checker only gives 7.5 mm under a blue — but it **fits, tightly**, says
+whoever assembled it. So the blue button does **not** descend the 34 mm of the
+worst case: for the Daisy to fit, it descends **~24 mm**. The worst case came from
+never having measured the button head above the panel board. **To be measured: the
+depth of the blue button**, from the panel board downward — the white one's has
+already been measured (20 mm).
+
+⚠️ **And it is left open which was the tall part.** With the orientation confirmed,
+`C1` is 64 mm from the nearest hole. Under the left hole is the **pin box `J14`**,
+with the IDC cable connector on top; under the right one, only low parts. The order
+of the buttons is recorded as **what worked on the bench**, not as checked
+geometry.
 
 ---
 
-## Diretriz da próxima versão
+## 11 · The panel board only comes out with the TRS jacks removed
 
-> **TUDO PARAFUSADO — cola só se for absolutamente necessário.**
+**What happened (dB, 19/09):** with the four TRS jacks mounted, the panel board
+**has no way to come out** — the encoder's tip catches on the lid's acrylic before
+the board frees the jacks.
+
+**The rule this creates, and it holds for assembly and for repair:** the panel
+board **goes in and comes out before the TRS jacks**. Whoever is going to swap a
+part on the panel board first removes the four jacks, and not the other way around.
+
+**For the next enclosure rev:** either the panel board comes out without passing
+through the jack zone, or the encoder hole in the lid is a slot that lets it recede.
+Until it is one or the other, this is a **mandatory order**, not a preference.
+
+---
+
+## Directive for the next version
+
+> **EVERYTHING SCREWED — glue only if absolutely necessary.**
 >
-> A próxima caixa é **100% desmontável e reworkável**. A cola (Weld-On) deixa de
-> ser o meio de montagem por omissão e passa a exceção justificada. Todas as
-> cinco correções acima seguem daqui: onde antes havia solvente ou dependência
-> de cola, passa a haver parafuso + porca cativa.
+> The next enclosure is **100% disassemblable and reworkable**. Glue (Weld-On)
+> stops being the default assembly means and becomes a justified exception. All
+> five corrections above follow from here: where there was once solvent or
+> dependence on glue, there comes a screw + captive nut.
 
-## A decisão do casco — a maior obra
+## The shell decision — the biggest job
 
-O casco (as paredes e o modo como fecham) é a maior reescrita, e a decisão do
-usuário está tomada:
+The shell (the walls and the way they close) is the biggest rewrite, and the
+user's decision is made:
 
-- **Escolhido: postes / cantoneiras internos parafusados.** São **clones dos
-  postes do nº 5** — reusam a maquinaria de **bolso de porca** que já existe no
-  gerador: `hexagono()` e a *feature* `"hex"`
-  (`cotuca_caixa_corte.py:366-368` e a verificação em `:521`). Escolhido sobre
-  T-slot porque tem **MUITO menos reescrita de gerador**: a máquina de porca
-  cativa já está feita e testada; só é preciso replicá-la nos cantos.
+- **Chosen: internal screwed posts / brackets.** They are **clones of the posts
+  from #5** — they reuse the **nut-pocket** machinery that already exists in the
+  generator: `hexagono()` and the `"hex"` feature (`cotuca_caixa_corte.py:366-368`
+  and the check at `:521`). Chosen over T-slot because it has **MUCH less generator
+  rewrite**: the captive-nut machine is already made and tested; it only needs
+  replicating at the corners.
 
-- **T-slot fica como upgrade estético futuro.** É o acabamento mais bonito, mas
-  não agora. Nota técnica: as **2 juntas da tampa a 11,8°** complicam um T-slot
-  *in-plane* — mais uma razão para deixar o T-slot para depois e ir de postes
-  parafusados já.
+- **T-slot stays as a future aesthetic upgrade.** It is the prettier finish, but
+  not now. Technical note: the **2 lid joints at 11.8°** complicate an *in-plane*
+  T-slot — one more reason to leave the T-slot for later and go with screwed posts
+  now.
 
 ---
 
-## Tabela-resumo — as 5 correções
+## Summary table — the 5 corrections
 
-| # | correção | re-corte? | ferragem | obra |
+| # | correction | re-cut? | hardware | job |
 |---|---|---|---|---|
-| 1 | furo(s) **ø3,2** do pino de indexação do pot (**7,5mm c-c**, à esquerda do eixo em vista de cima, medido na peça) | **Sim** | nenhuma | pequena |
-| 2 | OLED por dentro, em 4 standoffs M2.5 | Não (furos existem)* | 4 standoffs M2.5 + parafusos | pequena |
-| 3 | cabos entram (resolve-se com o nº 2) | Não | — | nula (segue nº 2) |
-| 4 | reforço + nervura **aparafusados** (ø3,4 na tampa + bolso de porca) | **Sim** | ~9 M3 + 9 porcas | média |
-| 5 | fundo: **postes parafusados à parede E ao fundo** — **o casco, a MAIOR obra** | **Sim** | ~12 M3 + 12 porcas | **maior** |
+| 1 | **ø3.2** hole(s) for the pot indexing pin (**7.5mm c-c**, left of the shaft in top view, measured on the part) | **Yes** | none | small |
+| 2 | OLED on the inside, on 4 M2.5 standoffs | No (holes exist)* | 4 M2.5 standoffs + screws | small |
+| 3 | cables enter (solved with #2) | No | — | none (follows #2) |
+| 4 | stiffener + rib **screwed** (ø3.4 in the lid + nut pocket) | **Yes** | ~9 M3 + 9 nuts | medium |
+| 5 | bottom: **posts screwed to the wall AND to the bottom** — **the shell, the BIGGEST job** | **Yes** | ~12 M3 + 12 nuts | **biggest** |
 
-\* nº 2 só pede re-corte se quiseres um rebaixo para o vidro afinar com a face.
+\* #2 only needs a re-cut if you want a recess for the glass to sit flush with the
+face.
 
-> **Nota #6 (não é correção da caixa):** o pot é montado na tampa e **fiado** às
-> pads RV1/RV2 do painel (caso B). Sem problema no painel já fabricado; a próxima
-> rev do painel troca o footprint PTV09A por um conector de 3 pinos de fiação.
-> Ver secção **6**.
+> **Note #6 (not an enclosure correction):** the pot is mounted on the lid and
+> **wired** to the panel's RV1/RV2 pads (case B). No problem on the
+> already-fabricated panel board; the next panel rev swaps the PTV09A footprint for
+> a 3-pin wiring connector. See section **6**.
 
-> A obra maior é o **casco (nº 5)**: reescrever a fixação do fundo como postes
-> parafusados nos cantos, clonando a máquina de porca cativa (`hexagono()` /
-> `"hex"`) para lá dos 6 calços de hoje.
+> The biggest job is the **shell (#5)**: rewriting the bottom's fastening as posts
+> screwed at the corners, cloning the captive-nut machine (`hexagono()` / `"hex"`)
+> beyond today's 6 standoffs.
 
 ---
 
-## Procedência
+## Provenance
 
-Gravado a 16/09/2026 da montagem à mão da caixa r2 (acrílico 3,0 mm). As cinco
-lições vêm da peça real na bancada, não de ficha — que é a regra da própria
-skill `caixa` (§0: a peça em mão manda). Alimenta a próxima **caixa rev**; a
-reescrita da geometria do gerador (postes/T-slot, furo do pino) é tarefa
-posterior — este documento é o **escopo**, não a implementação.
+Recorded on 16/09/2026 from the hand assembly of enclosure r2 (acrylic 3.0 mm).
+The five lessons come from the real part on the bench, not from a datasheet — which
+is the rule of the `caixa` skill itself (§0: the part in hand is boss). It feeds
+the next **enclosure rev**; the rewrite of the generator's geometry (posts/T-slot,
+the pin hole) is a later task — this document is the **scope**, not the
+implementation.

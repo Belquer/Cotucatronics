@@ -1,143 +1,147 @@
 ---
 name: ifa10000
-description: Protocolo de certificação de todo efeito que entra no Cotucatronics — 10 etapas com critério de passagem explícito, mais a etapa 0 de medição limpa. Use ao embarcar qualquer efeito novo (módulo externo ou bloco permanente do shell), ao revalidar um efeito existente, ou quando perguntarem se algo está certificado.
+description: Certification protocol for every effect that enters Cotucatronics — 10 steps with an explicit pass criterion, plus step 0 of clean measurement. Use when shipping any new effect (external module or permanent shell block), when revalidating an existing effect, or when asked whether something is certified.
 ---
 
-# IFÁ10000 — certificação de efeitos
+# IFÁ10000 — effect certification
 
-Documento completo: `docs/IFA10000.md`. Histórias que compraram cada etapa:
+Full document: `docs/IFA10000.md`. The stories that bought each step:
 `docs/battle_scars.md`.
 
-**Todo efeito que entra passa por aqui. Sem exceção, sem atalho.** Efeito que
-não passa não entra no build — fica no repo, documentado, com a etapa que
-reprovou.
+**Every effect that enters goes through here. No exception, no shortcut.** An
+effect that does not pass does not enter the build — it stays in the repo,
+documented, with the step that failed.
 
-## Auditoria de params — três camadas, quinze minutos
+## Param audit — three layers, fifteen minutes
 
-Roda inteira depois de qualquer refactor que toque no callback. Achou uma
-feature morta havia cinco commits (cicatriz 12j).
+Run it whole after any refactor that touches the callback. It found a dead feature
+five commits old (scar 12j).
 
-**1. Quem lê cada param?** Compare a lista de `t.Add("nome"` no manifest com
-`params.Real(manifest.p_nome)` no `main.cpp`. Param sem leitor é **feature
-morta até prova em contrário** — e compila, fica na tabela, e mantém o CC
-apontando pro nada.
+**1. Who reads each param?** Compare the list of `t.Add("nome"` in the manifest with
+`params.Real(manifest.p_nome)` in `main.cpp`. A param with no reader is a **dead
+feature until proven otherwise** — and it compiles, stays in the table, and keeps
+the CC pointing at nothing.
 
-**2. Faixa declarada × trava interna.** Ver a seção abaixo. Atenção à
-DIREÇÃO: faixa MAIOR que a trava é curso morto (defeito); faixa MENOR é
-escolha musical (não é).
+**2. Declared range × internal clamp.** See the section below. Mind the DIRECTION: a
+range LARGER than the clamp is dead travel (a defect); a range SMALLER is a musical
+choice (it is not).
 
-**3. Varredura viva.** Cada param no mínimo e no máximo, com leitura de volta
-da placa. Pega o que o texto não vê: curva errada, clamp no caminho, param
-que não chega.
+**3. Live sweep.** Each param at the minimum and the maximum, with a read-back from
+the board. It catches what the text does not see: a wrong curve, a clamp in the
+path, a param that does not arrive.
 
-## Antes de tudo: a faixa do param bate com a trava do efeito?
+## Before anything: does the param's range match the effect's clamp?
 
-Pergunta de trinta segundos que já pegou um fader com **61% de curso morto**
-(cicatriz 12i).
+A thirty-second question that already caught a fader with **61% dead travel** (scar
+12i).
 
-Todo efeito que trava um param internamente — `if(n > hi) n = hi` — cria um
-teto que o manifest não conhece. Os dois arquivos ficam corretos em isolamento
-e o defeito vive no espaço entre eles: o param guarda 400, o efeito usa 167,
-e mais da metade do fader não faz nada.
+Every effect that clamps a param internally — `if(n > hi) n = hi` — creates a
+ceiling the manifest does not know about. The two files are each correct in
+isolation and the defect lives in the space between them: the param holds 400, the
+effect uses 167, and more than half the fader does nothing.
 
 ```
-1. procure os clamps do efeito:  grep -n "if(n > \|if(ms > \|> teto" <efeito>.h
-2. calcule o teto REAL (pode depender de outro parametro: no freeze o teto
-   do grao e um terco do NUCLEO)
-3. compare com min/max do t.Add() no manifest
-4. faixa maior que a trava -> corte a FAIXA, nao ponha curva
+1. find the effect's clamps:  grep -n "if(n > \|if(ms > \|> teto" <efeito>.h
+2. compute the REAL ceiling (it may depend on another parameter: in freeze the
+   grain's ceiling is a third of the CORE)
+3. compare with the min/max of the t.Add() in the manifest
+4. range larger than the clamp -> cut the RANGE, do not add a curve
 ```
 
-**Limite REMOVE o inútil do alcance; curva só o redistribui.** A distinção é
-do `dly_time` em 18/08, e ela foi aplicada uma vez e não generalizada — por
-isso está aqui, como pergunta de rotina em vez de nota sobre um param.
+**A limit REMOVES the useless from the reach; a curve only redistributes it.** The
+distinction is from `dly_time` on 08/18, and it was applied once and not generalized
+— which is why it is here, as a routine question instead of a note about one param.
 
-## ANTES DE TUDO: a caixa única
+## BEFORE ANYTHING: the single box
 
-**Ler `docs/FEATURES.md` inteiro antes de acrescentar qualquer coisa.** Toda
-feature vigente está lá com params, CCs e estado; as aposentadas estão no
-arquivo do mesmo documento, com *por que saiu* e *como reviver*.
+**Read `docs/FEATURES.md` in full before adding anything.** Every current feature is
+there with its params, CCs and state; the retired ones are in the same document's
+archive, with *why it went out* and *how to revive it*.
 
-A pergunta que a caixa existe para forçar: ***o que já está aqui que eu
-deveria revisar antes de acrescentar mais?***
+The question the box exists to force: ***what is already here that I should review
+before adding more?***
 
-Custou dois tetos estourados em silêncio no mesmo dia (`kMaxParams` e
-`kMaxMidiMap`) — os búzios sumiram do instrumento e ninguém soube até alguém
-olhar uma tabela de debug. E feature aposentada sem registro vira folclore:
-código que continua lá porque ninguém lembra por quê.
+It cost two ceilings blown in silence on the same day (`kMaxParams` and
+`kMaxMidiMap`) — the cowrie shells vanished from the instrument and no one knew until
+someone looked at a debug table. And a retired feature with no record becomes
+folklore: code that stays there because no one remembers why.
 
-**Aposentou algo? Vai pro arquivo no MESMO commit.**
+**Retired something? It goes to the archive in the SAME commit.**
 
-## A trilha M — placas em caixas
+## The M-track — boards in enclosures
 
-Se a pergunta é **«esta placa encaixa nesta caixa?»** — furos, ângulos, tamanhos,
-volume, fixação, montagem —, não é esta ficha: é a **trilha M do IFÁ10000**, que
-vive na sub-skill `/3ddesign` (`.claude/skills/3ddesign/references/ifa10000-m.md`),
-orquestrada pela `/aipcb`. A ordem de
-prioridades dela: a placa traz os seus meios de fixação; com isso, a caixa cede
-à placa; a placa só cede com justificação escrita e assinada pelo dB.
+If the question is **«does this board fit in this enclosure?»** — holes, angles,
+sizes, volume, fastening, assembly —, this is not the sheet: it is the **M-track of
+IFÁ10000**, which lives in the sub-skill `/3ddesign`
+(`.claude/skills/3ddesign/references/ifa10000-m.md`), orchestrated by `/aipcb`. Its
+priority order: the board brings its own means of fastening; with that, the
+enclosure yields to the board; the board only yields with a written justification
+signed by dB.
 
-## Como conduzir
+## How to conduct it
 
-1. Abrir `docs/IFA10000.md` e copiar a **ficha de certificação** para o
-   relatório da sessão.
-2. Rodar a **etapa 0** antes de qualquer número (skill `medicao-limpa`).
-3. Percorrer as 10 etapas **na ordem**. Etapa reprovada interrompe — não se
-   pula para a seguinte "pra ver se passa".
-4. Preencher a ficha com **números**, não com vistos. `[x] ok` não é resultado.
-5. Etapa 10 fecha sincronizando repo **e** vault na mesma ação.
+1. Open `docs/IFA10000.md` and copy the **certification sheet** into the session
+   report.
+2. Run **step 0** before any number (skill `medicao-limpa`).
+3. Go through the 10 steps **in order**. A failed step interrupts — you do not skip
+   to the next "to see if it passes".
+4. Fill the sheet with **numbers**, not with checkmarks. `[x] ok` is not a result.
+5. Step 10 closes by syncing the repo **and** the vault in the same action.
 
-## As etapas, em uma linha cada
+## The steps, one line each
 
-| # | Etapa | Passa se |
+| # | Step | Passes if |
 |---|---|---|
-| 0 | **MEDIÇÃO LIMPA** | canal provado, ambiente zerado, unidade e regime declarados |
-| 1 | CONTRATO | wrapper e `description.json` contam a mesma história |
-| 2 | EMBARQUE | boot limpo, nenhum `-1` em ligação de param |
-| 3 | MOTOR *(motor externo)* | param mexido ao vivo muda o som na hora |
-| 4 | MEMÓRIA | cabe com folga declarada, região justificada no código |
-| 5 | CARGA | pico cabe no prazo com folga ≥ 25%, nos dois blocos |
-| 6 | MATERIAL | responde ao sinal certo, e o registro diz qual foi |
-| 7 | FAIXA | existe tabela de onde satura, medida antes do limiter |
-| 8 | SEGURANÇA | decisão de cada param nos búzios escrita no manifest |
-| 9 | ACEITE | o dB ouviu ≥ 1 min tocando a escultura e aprovou |
+| 0 | **CLEAN MEASUREMENT** | channel proven, environment zeroed, unit and regime declared |
+| 1 | CONTRACT | wrapper and `description.json` tell the same story |
+| 2 | EMBARK | clean boot, no `-1` on any param binding |
+| 3 | ENGINE *(external engine)* | a param moved live changes the sound at once |
+| 4 | MEMORY | fits with declared slack, region justified in the code |
+| 5 | LOAD | peak fits within the deadline with ≥ 25% slack, on both blocks |
+| 6 | MATERIAL | responds to the right signal, and the record says which it was |
+| 7 | RANGE | there is a table of where it saturates, measured before the limiter |
+| 8 | SAFETY | the decision for each param in the cowrie shells written in the manifest |
+| 9 | ACCEPTANCE | dB listened ≥ 1 min playing the sculpture and approved |
 
-## Cada param novo precisa provar que MOVE algo
+## Each new param must prove that it MOVES something
 
-Existir na tabela, receber CC e aparecer no `list` **não é o mesmo** que estar
-ligado ao som. Em 18/08 o `shm_mix` fazia as três coisas e não escalava nada —
-a função de mistura nunca era chamada. O efeito funcionava, soava bonito, e o
-controle girava solto.
+Existing in the table, receiving a CC and showing up in `list` **is not the same** as
+being connected to the sound. On 08/18 `shm_mix` did all three things and scaled
+nothing — the mixing function was never called. The effect worked, sounded nice, and
+the control turned loose.
 
-**Antes de fechar a etapa 2, para cada param novo:** mexer no extremo e provar
-que o som muda. Se não muda, o param está desconectado — e o sintoma que o
-músico vai relatar é *"está baixo"*, que manda procurar ganho em vez de fiação.
-| 10 | REGISTRO | quem clonar amanhã reproduz sem perguntar nada |
+**Before closing step 2, for each new param:** move the extreme and prove the sound
+changes. If it does not change, the param is disconnected — and the symptom the
+musician will report is *"it's quiet"*, which sends you looking for gain instead of
+wiring.
+| 10 | RECORD | whoever clones tomorrow reproduces without asking anything |
 
-## Skills irmãs — o braço executável do protocolo
+## Sister skills — the executable arm of the protocol
 
-| Skill | Quando |
+| Skill | When |
 |---|---|
-| `medicao-limpa` | antes de **toda** medição (é a etapa 0) |
-| `instrumentacao` | ao escrever/alterar log, caixa-preta, contadores, sondas |
-| `bug-de-ordem` | quando algo funciona às vezes, ou o teste sai incoerente |
-| `edicao-segura` | em **toda** alteração de arquivo |
+| `medicao-limpa` | before **every** measurement (it is step 0) |
+| `instrumentacao` | when writing/changing a log, black box, counters, probes |
+| `bug-de-ordem` | when something works sometimes, or a test comes out incoherent |
+| `edicao-segura` | on **every** file change |
 
-## Regras que valem em qualquer etapa
+## Rules that hold at any step
 
-- **Pico decide, média mente.** Um módulo de FFT: média 7,8%, pico 210%.
-- **Estreia é o preço da mudança; regime é o aluguel.** Medir separado.
-- **Padrão de acesso importa mais que tamanho.** 108 KB em SDRAM = +12,9 pp
-  de CPU; os mesmos em SRAM = +5,6 pp.
-- **Régua errada produz "não funciona" falso.** Cada efeito tem seu material.
-- **Encanamento provado não é feature entregue.** O aceite é do músico.
-- **Um waiver é uma medição, não uma opinião.** Toda limitação ou desvio que se
-  **embarca** numa certificação vai para um **registo de risco** com veredito
-  MEDIDO — `SAFE-EMBARK` (com prova), `MUST-FIX`, ou decisão do ⟨dB⟩ — **nunca
-  afirmado** "parece bem". GO só com zero MUST-FIX em aberto. E certifica-se
-  contra **sinal limpo**: é a etapa 0 (`medicao-limpa`) — limpa o artefacto de
-  ambiente antes de julgar o resíduo, senão certificas ruído. A skill `/aipcb`
-  instancia isto para placas (o registo de risco como portão de saída da revisão
-  tripla; âncora: o waiver C16↔J14 que a medição virou MUST-FIX).
-- **Documento vivo:** efeito novo que revele buraco no protocolo ganha etapa
-  nova. O IFÁ10000 melhora a cada certificação.
+- **The peak decides, the average lies.** An FFT module: average 7.8%, peak 210%.
+- **The debut is the price of the change; the regime is the rent.** Measure
+  separately.
+- **The access pattern matters more than size.** 108 KB in SDRAM = +12.9 pp of CPU;
+  the same in SRAM = +5.6 pp.
+- **The wrong ruler produces a false "it doesn't work".** Each effect has its
+  material.
+- **Proven plumbing is not a delivered feature.** The acceptance is the musician's.
+- **A waiver is a measurement, not an opinion.** Every limitation or deviation that
+  is **shipped** in a certification goes into a **risk register** with a MEASURED
+  verdict — `SAFE-EMBARK` (with proof), `MUST-FIX`, or a decision by ⟨dB⟩ — **never
+  asserted** "looks fine". GO only with zero open MUST-FIX. And you certify against
+  a **clean signal**: it is step 0 (`medicao-limpa`) — clean the environment
+  artifact before judging the residue, otherwise you certify noise. The `/aipcb`
+  skill instantiates this for boards (the risk register as the exit gate of the
+  triple review; anchor: the C16↔J14 waiver that measurement turned into MUST-FIX).
+- **A living document:** a new effect that reveals a hole in the protocol gains a
+  new step. IFÁ10000 improves with each certification.

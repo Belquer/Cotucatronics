@@ -1,168 +1,166 @@
-# Previsão de congestão — o método do Estágio 3.5
+# Congestion forecast — the Stage 3.5 method
 
-Referência do **Estágio 3.5** da pipeline `/aipcb` (pré-layout, entre o 3
-colocação e o 4 vias/cobre). Subordinada à filosofia dos portões da SKILL.md —
-**um portão que avisa e deixa passar não é portão**, **medir no sítio certo**,
-**resultado negativo é achado**, **prova que a guarda sabe dizer não**.
+Reference for **Stage 3.5** of the `/aipcb` pipeline (pre-layout, between 3
+placement and 4 vias/copper). Subordinate to the gate philosophy of SKILL.md —
+**a gate that warns and lets you pass is not a gate**, **measure at the right spot**,
+**a negative result is a finding**, **prove that the guard knows how to say no**.
 
-> **A frase que governa este estágio:** congestão descoberta a rotear é falha de
-> **arquitetura** tarde demais. O router não a resolve — só a revela quando já
-> custa refazer a colocação. Por isso mede-se a densidade **antes de encostar
-> cobre**, sobre a colocação e o netlist, e um número pode dizer *não*.
+> **The sentence that governs this stage:** congestion discovered while routing is a
+> failure of **architecture** caught too late. The router does not solve it — it only
+> reveals it when redoing the placement already costs. That is why density is measured
+> **before laying down copper**, over the placement and the netlist, and a number can
+> say *no*.
 
-## Índice
+## Index
 
-1. [As cinco métricas](#1-as-cinco-métricas) — o que se mede e a fórmula de cada uma
-2. [As duas recusas duras](#2-as-duas-recusas-duras) — os `if` que param a fila
-3. [O portão GO / REVER-COLOCAÇÃO](#3-o-portão-go--rever-colocação)
-4. [As âncoras J14/C16 e J1/C5](#4-as-âncoras-j14c16-e-j1c5)
-5. [A ferramenta `scripts/congestao.py`](#5-a-ferramenta-scriptscongestaopy)
-
----
-
-## 1. As cinco métricas
-
-Todas medidas da **colocação + netlist** (footprints e redes), **sem uma única
-pista**. Números do projecto carregados, não re-derivados (ver
-`quality-standards.md` §2): pista default 0,25 mm, clearance 0,20 mm →
-**passo de canal em ar livre 0,45 mm**; IDC passo 2,54 mm, pad ⌀1,70 → **folga
-inter-pad 0,84 mm** (cabe exactamente **1** pista às regras da placa). B.Cu é
-plano de terra **sólido** nas duas placas, logo **todo sinal não-terra escapa
-pela única camada de sinal F.Cu** — um sinal empurrado para B.Cu **corta o
-plano** (é a métrica 5).
-
-### 1.1 Orçamento de canais de escape por conector — a métrica que prevê J14/C16
-
-Para um conector de **≥2 filas** numa placa de **1 camada de sinal**, cada
-broadside (lado longo) passa ~`ncol` canais de escape (uma pista por coluna de
-pinos, à folga inter-pad de 0,84 mm). Um broadside está **morto** se tem menos
-de **3 mm** de placa aberta além do courtyard para onde abrir o leque.
-
-```
-PROCURA  S      = nº de redes não-plano distintas que TÊM de sair do footprint
-                  (GND/AGND vão ao plano → não contam)
-OFERTA          = (broadsides vivos) × ncol        ncol = colunas de pinos
-veredicto       = VERMELHO  se  S > OFERTA
-                  ÂMBAR     se  S > 0,8 × OFERTA
-                  VERDE     caso contrário
-```
-
-Encostar um conector de duas filas a um bordo mata um dos dois broadsides e
-**parte a oferta ao meio** — é a raiz de J14 e de J1.
-
-### 1.2 Densidade de pinos por célula
-
-Grelha de **5 mm**; conta pads por célula. O pico localiza o campo de pinos que
-alimenta a sobre-alocação da métrica 1 (num 2×13, cinco células adjacentes no
-máximo da grelha = as 26 almofadas do IDC).
-
-### 1.3 Densidade de cruzamento do ratsnest
-
-Árvore geradora mínima (MST/Prim) por rede de sinal, amostrada em células de
-5 mm: o comprimento de airwire que cada célula acumula. Picos = onde muitos
-sinais têm de se cruzar antes de existir cobre — o gargalo que o router vai herdar.
-
-### 1.4 Procura vs oferta de cobre por região
-
-Por célula de 5 mm:
-
-```
-PROCURA (mm)  = Σ (comprimento de airwire na célula × largura de classe da rede)
-                larguras: potência 1,0+clr · rail "+…" 0,5+clr · sinal 0,25+clr
-OFERTA  (mm)  = área livre de F.Cu na célula / passo de canal (0,45 mm)
-                área livre = 5×5 − área de pads na célula
-rácio         = PROCURA / OFERTA     RED >1 · ÂMBAR >0,6 · ok caso contrário
-```
-
-### 1.5 Fragmentação de plano na colocação
-
-Comprimento de pista de **sinal em B.Cu** por célula de 5 mm — cada milímetro de
-sinal em B.Cu é um corte no plano de terra. Alto = retorno obrigado a contornar
-ranhuras (liga-se à revisão de terra do Estágio 5 — `revisao-terra` P5/P6, o
-retorno que contorna o fosso). Numa placa sem cobre ainda é zero; a métrica serve
-o 3.5 quando já há um esboço de roteamento, e serve o Estágio 5 depois.
+1. [The five metrics](#1-the-five-metrics) — what is measured and each one's formula
+2. [The two hard refusals](#2-the-two-hard-refusals) — the `if`s that stop the queue
+3. [The GO / REVISE-PLACEMENT gate](#3-the-go--revise-placement-gate)
+4. [The J14/C16 and J1/C5 anchors](#4-the-j14c16-and-j1c5-anchors)
+5. [The tool `scripts/congestao.py`](#5-the-tool-scriptscongestaopy)
 
 ---
 
-## 2. As duas recusas duras
+## 1. The five metrics
 
-Provadas na sessão ppc/002 rev C. Escrevem-se como **recusa**, não como aviso:
+All measured from the **placement + netlist** (footprints and nets), **without a
+single trace**. Project numbers loaded, not re-derived (see `quality-standards.md`
+§2): default trace 0.25 mm, clearance 0.20 mm → **free-air channel pitch 0.45 mm**;
+IDC pitch 2.54 mm, pad ⌀1.70 → **inter-pad clearance 0.84 mm** (exactly **1** trace
+fits at the board rules). B.Cu is a **solid** ground plane on both boards, so **every
+non-ground signal escapes through the single signal layer F.Cu** — a signal pushed to
+B.Cu **cuts the plane** (that is metric 5).
 
-- **(a) recusar um conector de ≥2 filas onde PROCURA > OFERTA** de canais de
-  escape (métrica 1.1). Foi o que apanhou J14 e J1 a partir só da colocação.
-- **(b) recusar um courtyard que sobrepõe outro courtyard, a borda da placa
-  (folga negativa), ou o corpo (F.Fab/B.Fab) de outro componente.** Mede-se por
-  **corpo**, não por courtyard nominal — a lição C16↔J14 (`review-protocol.md`):
-  um courtyard-overlap parecia dispensável, mas corpo-contra-corpo era colisão
-  real. *Um waiver é uma medição, não uma opinião.*
+### 1.1 Escape-channel budget per connector — the metric that predicts J14/C16
 
-`scripts/congestao.py` faz o exit ≠0 disparar em: **(a)** qualquer conector
-vermelho de escape; **(b)** courtyard além da borda, ou courtyard sobre o corpo
-de outro componente do mesmo lado. (Courtyard∩courtyard puro é o
-`courtyards_overlap` que o DRC do Estágio 7 já possui; aqui a recusa dura pré-
-layout foca-se no corpo, que é o que o DRC de courtyard nominal **não** vê.)
-
----
-
-## 3. O portão GO / REVER-COLOCAÇÃO
-
-Duas saídas, nunca "avança com aviso":
-
-- **GO** — nenhuma região vermelha. Segue para o Estágio 4 (vias+pistas).
-- **REVER-COLOCAÇÃO** — há vermelho. A região volta ao **Estágio 3** (recolocar),
-  **ou ao 1/2** se o que estrangula é o **pinout do próprio conector** (a fila ou
-  a ordem de pinos que nenhuma recolocação salva — é decisão de esquema). **Nunca
-  se avança para o 4 com vermelho em aberto** — rotear por cima de uma colocação
-  vermelha é gastar tempo a confirmar o inevitável.
-
-**Artefacto:** o **mapa de congestão** vai para o **registo de risco** (uma
-região por linha, com procura/oferta medidas), ligado ao **Portão de
-Certificação de Risco** (saída do Estágio 7, ver `review-protocol.md`). O 3.5 é a
-forma **pré-layout** do **IFÁ10000** — o protocolo de certificação canónico do
-projeto: certifica a colocação contra **medida**, não contra opinião.
-
----
-
-## 4. As âncoras J14/C16 e J1/C5
-
-**J14/C16 (cérebro) — congestão apanhada tarde demais.** J14 é um IDC 2×13
-board-to-board encostado ao bordo de cima: broadside de cima **morto**
-(gap 2,80 mm < 3 mm), 17 sinais para escapar por 13 colunas de um só lado →
-**procura 17 > oferta 13, VERMELHO**. O corredor interior (o único vivo) já
-estava tomado pelo front-end do pré-amp (D11/R11/J5), por isso o cap de
-desacoplamento **C16 (100n +3V3A) não teve casa junto ao seu rail e foi parar
-DENTRO do corpo de J14** — o MUST-FIX C16↔J14 do registo de risco. O nudge de
-J14 para dentro estava **fisicamente bloqueado pelo pré-amp**; o cérebro
-resolveu levando **C16 para B.Cu + FreeRouting**, não relaxando o orçamento de
-escape. É por isso que `congestao.py` ainda marca J14 vermelho na rev C fechada:
-o over-commit é real; foi contornado por roteamento, não desfeito na colocação.
-
-**J1/C5 (painel) — latente, resolvido pelo nudge.** J1 é o **mesmo** IDC 2×13,
-mesma classe de falha, e o seu cap +3V3A **C5** estava a ~0,5 mm do corpo — um
-nudge de ser o próximo C16. Aqui a recolocação era possível: o **nudge real de
-5,5 mm** de J1 para dentro abriu o broadside de cima (gap passou a 3,30 mm ≥ 3),
-oferta 13→26, **17 < 26 VERDE**, e C5 ganhou casa. `congestao.py` confirma:
-painel passa o portão 3.5 na rev C. O mesmo defeito, os dois desfechos — um
-contornado por cobre porque a colocação estava presa, o outro desfeito na
-colocação porque havia espaço.
-
----
-
-## 5. A ferramenta `scripts/congestao.py`
-
-Read-only (carrega a placa, mede, **nunca grava**). Um *starter*: implementa as
-métricas 1.1 e 1.2 e as duas recusas duras; as métricas 1.3–1.5 estão descritas
-aqui e nos scripts de origem para quem quiser endurecê-las.
+For a **≥2-row** connector on a board with **1 signal layer**, each broadside (long
+side) passes ~`ncol` escape channels (one trace per pin column, at the inter-pad
+clearance of 0.84 mm). A broadside is **dead** if it has less than **3 mm** of open
+board beyond the courtyard into which to fan out.
 
 ```
-congestao.py <placa.kicad_pcb>   mede a colocação; sai !=0 em VERMELHO
-congestao.py --sabota            prova que sabe dizer NÃO (sem placa, sem KiCad)
+DEMAND  S       = nr. of distinct non-plane nets that MUST leave the footprint
+                  (GND/AGND go to the plane → do not count)
+SUPPLY          = (live broadsides) × ncol         ncol = pin columns
+verdict         = RED    if  S > SUPPLY
+                  AMBER  if  S > 0.8 × SUPPLY
+                  GREEN  otherwise
 ```
 
-O motor numérico opera sobre um modelo puro (dicts), por isso o `--sabota` corre
-sem placa: planta um conector sobre-alocado, um courtyard fora da borda e um
-courtyard dentro do corpo de outro, e exige que **os três** bloqueiem — a guarda
-tem dentes (convenção do projeto: `funcao_dos_pads.py --sabota`,
-`manifesto_fontes.py --sabota`). Limitação declarada: mede courtyard/corpo por
-**bounding box**, não por polígono — apanha o corpo-em-corpo grosso (C16↔J14);
-refinar para polígono é trabalho de endurecimento.
+Pushing a two-row connector against an edge kills one of the two broadsides and
+**halves the supply** — it is the root of J14 and J1.
+
+### 1.2 Pin density per cell
+
+A **5 mm** grid; counts pads per cell. The peak locates the pin field that feeds
+metric 1's over-allocation (on a 2×13, five adjacent cells at the grid maximum = the
+IDC's 26 pads).
+
+### 1.3 Ratsnest crossing density
+
+Minimum spanning tree (MST/Prim) per signal net, sampled in 5 mm cells: the airwire
+length each cell accumulates. Peaks = where many signals have to cross before copper
+exists — the bottleneck the router will inherit.
+
+### 1.4 Copper demand vs supply per region
+
+Per 5 mm cell:
+
+```
+DEMAND (mm)   = Σ (airwire length in the cell × net class width)
+                widths: power 1.0+clr · rail "+…" 0.5+clr · signal 0.25+clr
+SUPPLY (mm)   = free F.Cu area in the cell / channel pitch (0.45 mm)
+                free area = 5×5 − pad area in the cell
+ratio         = DEMAND / SUPPLY      RED >1 · AMBER >0.6 · ok otherwise
+```
+
+### 1.5 Plane fragmentation in the placement
+
+Length of **signal trace on B.Cu** per 5 mm cell — each millimeter of signal on B.Cu
+is a cut in the ground plane. High = return forced to go around slots (it links to the
+Stage 5 ground review — `revisao-terra` P5/P6, the return that goes around the moat).
+On a board with no copper it is still zero; the metric serves 3.5 when there is
+already a routing sketch, and serves Stage 5 afterwards.
+
+---
+
+## 2. The two hard refusals
+
+Proven in session ppc/002 rev C. They are written as a **refusal**, not as a warning:
+
+- **(a) refuse a ≥2-row connector where DEMAND > SUPPLY** of escape channels (metric
+  1.1). It is what caught J14 and J1 from the placement alone.
+- **(b) refuse a courtyard that overlaps another courtyard, the board edge (negative
+  clearance), or another component's body (F.Fab/B.Fab).** It is measured by
+  **body**, not by nominal courtyard — the C16↔J14 lesson (`review-protocol.md`): a
+  courtyard overlap seemed dispensable, but body-against-body was a real collision.
+  *A waiver is a measurement, not an opinion.*
+
+`scripts/congestao.py` makes the exit ≠0 fire on: **(a)** any red escape connector;
+**(b)** a courtyard beyond the edge, or a courtyard over another same-side component's
+body. (Pure courtyard∩courtyard is the `courtyards_overlap` that the Stage 7 DRC
+already has; here the pre-layout hard refusal focuses on the body, which is what the
+nominal-courtyard DRC does **not** see.)
+
+---
+
+## 3. The GO / REVISE-PLACEMENT gate
+
+Two exits, never "advance with a warning":
+
+- **GO** — no red region. Proceed to Stage 4 (vias+traces).
+- **REVISE-PLACEMENT** — there is red. The region goes back to **Stage 3** (re-place),
+  **or to 1/2** if what bottlenecks is the **connector's own pinout** (the row or the
+  pin order that no re-placement saves — it is a schematic decision). **You never
+  advance to Stage 4 with an open red** — routing over a red placement is spending
+  time confirming the inevitable.
+
+**Artifact:** the **congestion map** goes to the **risk register** (one region per
+line, with demand/supply measured), linked to the **Risk Certification Gate** (exit of
+Stage 7, see `review-protocol.md`). 3.5 is the **pre-layout** form of **IFÁ10000** —
+the project's canonical certification protocol: it certifies the placement against
+**measurement**, not against opinion.
+
+---
+
+## 4. The J14/C16 and J1/C5 anchors
+
+**J14/C16 (brain board) — congestion caught too late.** J14 is a board-to-board IDC
+2×13 pushed against the top edge: top broadside **dead** (gap 2.80 mm < 3 mm), 17
+signals to escape through 13 columns on a single side → **demand 17 > supply 13,
+RED**. The inner corridor (the only live one) was already taken by the pre-amp
+front-end (D11/R11/J5), so the decoupling cap **C16 (100n +3V3A) had no home next to
+its rail and ended up INSIDE J14's body** — the risk register's MUST-FIX C16↔J14. The
+nudge of J14 inward was **physically blocked by the pre-amp**; the brain board
+resolved it by taking **C16 to B.Cu + FreeRouting**, not by relaxing the escape
+budget. That is why `congestao.py` still marks J14 red in the closed rev C: the
+over-commit is real; it was worked around by routing, not undone in the placement.
+
+**J1/C5 (panel board) — latent, resolved by the nudge.** J1 is the **same** IDC 2×13,
+the same class of failure, and its +3V3A cap **C5** was ~0.5 mm from the body — one
+nudge away from being the next C16. Here re-placement was possible: the **real 5.5 mm
+nudge** of J1 inward opened the top broadside (gap became 3.30 mm ≥ 3), supply 13→26,
+**17 < 26 GREEN**, and C5 got a home. `congestao.py` confirms: the panel board passes
+the 3.5 gate in rev C. The same defect, the two outcomes — one worked around by copper
+because the placement was stuck, the other undone in the placement because there was room.
+
+---
+
+## 5. The tool `scripts/congestao.py`
+
+Read-only (loads the board, measures, **never writes**). A *starter*: it implements
+metrics 1.1 and 1.2 and the two hard refusals; metrics 1.3–1.5 are described here and
+in the source scripts for whoever wants to harden them.
+
+```
+congestao.py <placa.kicad_pcb>   measures the placement; exits !=0 on RED
+congestao.py --sabota            proves it knows how to say NO (no board, no KiCad)
+```
+
+The numeric engine operates over a pure model (dicts), so `--sabota` runs without a
+board: it plants an over-allocated connector, a courtyard off the edge, and a
+courtyard inside another's body, and requires that **all three** block — the guard has
+teeth (project convention: `funcao_dos_pads.py --sabota`, `manifesto_fontes.py
+--sabota`). Declared limitation: it measures courtyard/body by **bounding box**, not
+by polygon — it catches the coarse body-in-body (C16↔J14); refining to a polygon is
+hardening work.

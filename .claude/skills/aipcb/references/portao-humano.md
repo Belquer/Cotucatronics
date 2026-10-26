@@ -1,203 +1,198 @@
-# Portão Humano — Questionário de Vistoria (o método do ⟨dB⟩)
+# Human Gate — Inspection Questionnaire (the ⟨dB⟩ method)
 
-Referência dos portões **⟨dB⟩** da pipeline `/aipcb` — os que não são scriptáveis e
-por isso passam por um humano: o **sign-off da spec** (Estágio 1), o **veto de
-render / dry-fit** (Estágio 3/7) e, sobretudo, a **inspeção pré-pagamento no
-pré-visualizador 3D da JLC** (Estágio 8). Subordinada à filosofia dos portões da
-SKILL.md — **um portão que avisa e deixa passar não é portão**, **medir no sítio
-certo, ou o visto não vale nada**, **prova que a guarda sabe dizer não**.
+Reference for the **⟨dB⟩** gates of the `/aipcb` pipeline — the ones that are not
+scriptable and therefore pass through a human: the **spec sign-off** (Stage 1), the
+**render / dry-fit veto** (Stage 3/7) and, above all, the **pre-payment inspection
+in JLC's 3D previewer** (Stage 8). Subordinate to the gate philosophy of the
+SKILL.md — **a gate that warns and lets you pass is not a gate**, **measure in the
+right place, or the checkmark is worth nothing**, **prove the guard can say no**.
 
-> **A frase que governa este portão:** "confirmar rotações" não é um portão — é
-> um convite ao mal-entendido. O humano e o script imaginam coisas diferentes e o
-> erro passa. Um portão humano só é portão quando é um **questionário**: um item
-> de cada vez, cada item ancorado num sítio concreto e num visual concreto, e
-> **nenhum avanço sem um ✅ explícito**. A ambiguidade não é um "talvez" — é um
-> **NÃO** que pára a fila.
+> **The sentence that governs this gate:** "confirm rotations" is not a gate — it is
+> an invitation to misunderstanding. The human and the script imagine different
+> things and the error passes. A human gate is only a gate when it is a
+> **questionnaire**: one item at a time, each item anchored to a concrete place and a
+> concrete visual, and **no advance without an explicit ✅**. Ambiguity is not a
+> "maybe" — it is a **NO** that stops the queue.
 
-## Índice
+## Index
 
-1. [O formato de quatro campos](#1-o-formato-de-quatro-campos)
-2. [A regra do portão: um item de cada vez, sem avanço em ambiguidade](#2-a-regra-do-portão)
-3. [Princípios anti-miscomunicação](#3-princípios-anti-miscomunicação)
-4. [As categorias que o questionário cobre sempre](#4-as-categorias)
-5. [O gerador `scripts/portao_humano.py`](#5-o-gerador)
-6. [Onde o portão corre](#6-onde-o-portão-corre)
+1. [The four-field format](#1-the-four-field-format)
+2. [The gate rule: one item at a time, no advance on ambiguity](#2-the-gate-rule)
+3. [Anti-miscommunication principles](#3-anti-miscommunication-principles)
+4. [The categories the questionnaire always covers](#4-the-categories)
+5. [The generator `scripts/portao_humano.py`](#5-the-generator)
+6. [Where the gate runs](#6-where-the-gate-runs)
 
-## 1. O formato de quatro campos
+## 1. The four-field format
 
-Cada item apresenta-se **sozinho** e traz um cabeçalho (**ITEM**) mais **quatro
-campos**, nesta ordem exacta:
+Each item presents itself **alone** and carries a header (**ITEM**) plus **four
+fields**, in this exact order:
 
-- **ITEM** — designador + peça + pacote (ex.: `D2 — SS14 (D_SMA)`). Nunca "os
-  díodos"; sempre a peça nomeada.
-- **ONDE OLHAR** — o sítio exacto: qual vista do pré-visualizador 3D da JLC
-  (rodar para topo/baixo), qual camada de gerber, e a **coordenada** X/Y da peça
-  mais o **valor de rotação do CPL**. O olho tem de chegar ao pixel certo sem
-  adivinhar.
-- **O QUE DEVES VER** — o estado correcto, em concreto: a **banda/cátodo**, o
-  **ponto de pino-1**, a perna **+/−**, o **pinout**. O que a peça certa,
-  orientada certa, mostra ali.
-- **COMO CONFIRMAR** — o que é um **PASS** e o que é um **FAIL**, ambos escritos.
-  O FAIL nomeia a consequência ("invertido 180° → o díodo conduz ao contrário") e
-  a rota ("corrigir a rotação no CPL/footprint, NÃO pagar").
-- **RESPOSTA** — `☐ ✅ conforme` / `☐ ❌ + o que vês`. O ❌ obriga a escrever **o
-  que se viu** — porque um ❌ mudo não encaminha para conserto nenhum.
+- **ITEM** — designator + part + package (e.g.: `D2 — SS14 (D_SMA)`). Never "the
+  diodes"; always the named part.
+- **WHERE TO LOOK** — the exact place: which view of JLC's 3D previewer (rotate to
+  top/bottom), which gerber layer, and the part's X/Y **coordinate** plus the
+  **CPL rotation value**. The eye has to reach the right pixel without guessing.
+- **WHAT YOU SHOULD SEE** — the correct state, concretely: the **band/cathode**, the
+  **pin-1 dot**, the **+/−** leg, the **pinout**. What the right part, oriented
+  right, shows there.
+- **HOW TO CONFIRM** — what a **PASS** is and what a **FAIL** is, both written. The
+  FAIL names the consequence ("flipped 180° → the diode conducts backwards") and the
+  route ("fix the rotation in the CPL/footprint, do NOT pay").
+- **ANSWER** — `☐ ✅ conforming` / `☐ ❌ + what you see`. The ❌ forces you to write
+  **what you saw** — because a mute ❌ routes to no fix.
 
-## 2. A regra do portão
+## 2. The gate rule
 
-- **Um item de cada vez.** Apresenta-se o item, espera-se a RESPOSTA, e só então
-  se passa ao seguinte. Uma lista despejada de uma vez é lida na diagonal — e é
-  na diagonal que o 180° passa.
-- **Só ✅ avança.** Qualquer **❌**, ou qualquer **ambiguidade** ("acho que sim",
-  "não dá para ver bem"), **PÁRA** o questionário e encaminha para um **conserto**
-  (corrigir rotação/pinout/fonte, ou reordenar o conector). Nunca para o
-  pagamento.
-- **O passe limpo é a precondição do pagamento.** Só um questionário inteiro em
-  ✅ autoriza o humano a pagar — e **o pagamento continua a ser acção do humano**,
-  não do script. O portão autoriza; não paga.
-- **O ❌ é um achado, não um incómodo.** Fica escrito (o que se viu), e o conserto
-  fecha-o. Resultado negativo é achado — o que passou fica registado.
+- **One item at a time.** You present the item, wait for the ANSWER, and only then
+  move to the next. A list dumped all at once is read at a glance — and it is at a
+  glance that the 180° passes.
+- **Only ✅ advances.** Any **❌**, or any **ambiguity** ("I think so", "can't quite
+  see"), **STOPS** the questionnaire and routes to a **fix** (fix
+  rotation/pinout/source, or reorder the connector). Never to payment.
+- **The clean pass is the precondition for payment.** Only a whole questionnaire in
+  ✅ authorizes the human to pay — and **payment stays a human action**, not the
+  script's. The gate authorizes; it does not pay.
+- **The ❌ is a finding, not a nuisance.** It stays written (what was seen), and the
+  fix closes it. A negative result is a finding — what passed stays recorded.
 
-## 3. Princípios anti-miscomunicação
+## 3. Anti-miscommunication principles
 
-Toda a ambiguidade que este portão remove vem de uma âncora em falta. As regras:
+All the ambiguity this gate removes comes from a missing anchor. The rules:
 
-- **Ancora sempre no concreto:** designador + coordenada + valor de rotação do
-  CPL + visual esperado. Nunca um "confere as peças" ou "vê se as rotações estão
-  bem".
-- **O CPL não é verificável por script:** a rotação no CPL é a do **footprint**
-  (KiCad); a JLC monta pela rotação da **biblioteca dela**. O perigo dos **180°**
-  (biblioteca JLC vs KiCad) só se vê no pré-visualizador 3D — por isso o portão é
-  humano.
-- **Diz o PASS e o FAIL, os dois.** Um campo que só descreve o estado certo deixa
-  o revisor sem saber o que é uma reprovação. O FAIL nomeia a consequência física.
-- **Nome do desenho ≠ nome da compra.** Quando o `Value` e o MPN/LCSC são a mesma
-  peça com designações diferentes (ex.: `SS14` ↔ `1N5819`), o item **assinala-o** —
-  senão a serigrafia e a encomenda falam de coisas que parecem diferentes.
-- **Polaridade e orientação são perguntas distintas.** A banda/cátodo (a peça
-  conduz ao contrário) e o pino-1/rotação (o pinout todo troca) verificam-se cada
-  uma no seu item, com o seu FAIL.
-- **A render do NOSSO board é a fonte-de-verdade; o preview 3D da JLC não prova a
-  rotação da biblioteca dela** (lição de 2026-09-11). O pré-visualizador 3D da
-  JLCONE desenha o **modelo 3D da peça na biblioteca DELES** por cima do nosso
-  footprint — e uma "inversão" que ali aparece é, muitas vezes, **artefacto do
-  modelo 3D** (o modelo roda vs. o nosso footprint), **não** um defeito da placa.
-  Não se conclui do preview sozinho: **confirma-se** comparando a **banda de cátodo**
-  ou o **canto do pino-1** do preview da JLC contra a **render do nosso próprio
-  board** (gerar crops por peça se preciso). E há uma **rede de segurança** que não
-  depende de acertar o olho: pedir **Confirm Parts Placement = YES** — a JLC manda
-  a folha de colocação para tu aprovares antes de montar. Só as **polarizadas /
-  pino-1** são críticas aqui (díodos SMA/SMB com a banda de cátodo à esquerda,
-  SOT-23 com a perna única, SOIC com o triângulo do pino-1 no canto top-left); os
-  **passivos são simétricos** e não gastam olho.
+- **Always anchor on the concrete:** designator + coordinate + CPL rotation value +
+  expected visual. Never a "check the parts" or "see if the rotations are right".
+- **The CPL is not script-verifiable:** the rotation in the CPL is the
+  **footprint**'s (KiCad); the JLC assembles by the rotation of **its own library**.
+  The **180°** danger (JLC library vs KiCad) is only seen in the 3D previewer — which
+  is why the gate is human.
+- **Say the PASS and the FAIL, both.** A field that only describes the correct state
+  leaves the reviewer not knowing what a failure is. The FAIL names the physical
+  consequence.
+- **The drawing name ≠ the purchase name.** When the `Value` and the MPN/LCSC are the
+  same part under different designations (e.g.: `SS14` ↔ `1N5819`), the item **flags
+  it** — otherwise the silkscreen and the order speak of things that look different.
+- **Polarity and orientation are distinct questions.** The band/cathode (the part
+  conducts backwards) and the pin-1/rotation (the whole pinout swaps) are each
+  verified in their own item, with their own FAIL.
+- **The render of OUR board is the source of truth; JLC's 3D preview does not prove
+  the rotation of their library** (lesson of 2026-09-11). JLCONE's 3D previewer draws
+  the **3D model of the part in THEIR library** on top of our footprint — and an
+  "inversion" that appears there is often an **artifact of the 3D model** (the model
+  rotates vs. our footprint), **not** a board defect. You do not conclude from the
+  preview alone: you **confirm** by comparing the **cathode band** or the **pin-1
+  corner** of JLC's preview against the **render of our own board** (generate per-part
+  crops if needed). And there is a **safety net** that does not depend on getting the
+  eye right: ask for **Confirm Parts Placement = YES** — the JLC sends the placement
+  sheet for you to approve before assembling. Only the **polarized / pin-1** ones are
+  critical here (SMA/SMB diodes with the cathode band on the left, SOT-23 with the
+  single leg, SOIC with the pin-1 triangle in the top-left corner); the **passives
+  are symmetric** and do not waste the eye.
 
-## 4. As categorias
+## 4. The categories
 
-O questionário é **auto-derivado da placa** (do CPL + BOM) e cobre **sempre**
-estas categorias, por esta ordem — e **abre SEMPRE pelo Item 0** (carregar o
-pacote) antes de qualquer item de inspeção:
+The questionnaire is **auto-derived from the board** (from the CPL + BOM) and
+**always** covers these categories, in this order — and **ALWAYS opens with Item 0**
+(load the package) before any inspection item:
 
-0. **Carregar o pacote certo (antes de tudo)** — qual ficheiro carregar na
-   JLCPCB/JLCONE e **como**, antes da inspeção começar. O questionário não pode
-   assumir que a placa já está carregada — este é o primeiro item de todo o
-   questionário:
-   - **Gerber a carregar:** o `.zip` carimbado exacto,
-     `export/<placa>_<data>_<commit>/<placa>_<data>_<commit>_gerbers.zip` — é este
-     que entra na JLCONE (*Add Gerber*), não o `.kicad_pcb` nem gerbers soltos.
-   - **Como o buscar:** o pacote está **committado no repo, na branch do PR** — vive
-     no **GitHub, não necessariamente na máquina do humano**. ⚠️ O terminal da
-     pipeline corre no **sandbox na nuvem** e **não põe ficheiros na máquina do
-     humano**: a recuperação é um comando que **o humano corre localmente**. O
-     caminho preferido é o terminal (`git fetch` / `git checkout <branch>` /
-     `git pull` e abrir a pasta `export/…`, ou `git clone -b <branch> …`); o
-     **fallback** é o GitHub no browser (página do `.zip` → **Download raw file**,
-     ou **Code → Download ZIP** da branch).
-   - **Proveniência:** abrir o `LEIA-ME.txt` do pacote e confirmar que carimba o
-     **commit** certo e **árvore limpa** — é ESSA a revisão que se encomenda (guarda
-     contra encomendar um pacote velho ou trocado). A proveniência lê-se no
-     `LEIA-ME.txt`, não no CPL.
-   - **Montagem SMT:** quando a JLC pedir, juntar `cpl_<placa>.csv` (posições) +
-     `bom_<placa>.csv` (BOM), da MESMA pasta.
-   - **Camadas:** 2.
-1. **Nível-placa** — nº de camadas, dimensões, contorno vs caixa, quantidade a
-   encomendar. (⚠️ pedir 4 camadas num desenho de 2 paga um plano interior a mais.)
-2. **Peças polarizadas** — díodos, electrolíticos, tântalo, LEDs, ICs de pino-1:
-   cada uma, a **banda/cátodo/pino-1** vs a serigrafia.
-3. **Pacotes com risco de rotação** — SOT-23, SOIC/SOP, SON/QFN, SMA/SMB/SOD,
-   electrolítico, módulos, conectores: confirmar a **orientação no 3D vs o pino-1
-   pretendido** (o perigo dos 180° da biblioteca JLC vs KiCad).
-4. **Conectores / contratos de pinagem** — OLED vs módulo (perigo VCC/GND e
-   DIN/CLK trocados com cabo 1:1), IDC placa-a-placa (26/26, pino-1 alinhado),
-   polaridade de alimentação.
-5. **BOM / montagem** — toda linha SMT com LCSC em stock **de montagem** (≠ stock
-   na LCSC); THT (pots, radiais) enviados à parte; DNP correcto.
-6. **Mecânica** — conectores/botões/display/pots/encoder alcançam os recortes do
-   painel (dry-fit vs render da caixa).
-7. **Confirmação final antes de pagar** — o passe limpo de tudo acima, a
-   precondição do pagamento.
+0. **Load the right package (before anything)** — which file to load into
+   JLCPCB/JLCONE and **how**, before the inspection begins. The questionnaire cannot
+   assume the board is already loaded — this is the first item of every questionnaire:
+   - **Gerber to load:** the exact stamped `.zip`,
+     `export/<placa>_<data>_<commit>/<placa>_<data>_<commit>_gerbers.zip` — this is the
+     one that goes into JLCONE (*Add Gerber*), not the `.kicad_pcb` nor loose gerbers.
+   - **How to fetch it:** the package is **committed in the repo, on the PR's branch**
+     — it lives on **GitHub, not necessarily on the human's machine**. ⚠️ The
+     pipeline's terminal runs in the **cloud sandbox** and **does not put files on the
+     human's machine**: the recovery is a command **the human runs locally**. The
+     preferred path is the terminal (`git fetch` / `git checkout <branch>` / `git
+     pull` and open the `export/…` folder, or `git clone -b <branch> …`); the
+     **fallback** is GitHub in the browser (the `.zip`'s page → **Download raw file**,
+     or **Code → Download ZIP** of the branch).
+   - **Provenance:** open the package's `LEIA-ME.txt` and confirm it stamps the right
+     **commit** and a **clean tree** — THAT is the revision you order (a guard against
+     ordering an old or swapped package). Provenance is read in the `LEIA-ME.txt`, not
+     in the CPL.
+   - **SMT assembly:** when the JLC asks, add `cpl_<placa>.csv` (positions) +
+     `bom_<placa>.csv` (BOM), from the SAME folder.
+   - **Layers:** 2.
+1. **Board-level** — number of layers, dimensions, outline vs enclosure, quantity to
+   order. (⚠️ asking for 4 layers on a 2-layer drawing pays for an extra inner plane.)
+2. **Polarized parts** — diodes, electrolytics, tantalum, LEDs, pin-1 ICs: each one,
+   the **band/cathode/pin-1** vs the silkscreen.
+3. **Packages with rotation risk** — SOT-23, SOIC/SOP, SON/QFN, SMA/SMB/SOD,
+   electrolytic, modules, connectors: confirm the **orientation in 3D vs the intended
+   pin-1** (the 180° danger of the JLC library vs KiCad).
+4. **Connectors / pinout contracts** — OLED vs module (VCC/GND and DIN/CLK swap
+   danger with a 1:1 cable), board-to-board IDC (26/26, pin-1 aligned), power polarity.
+5. **BOM / assembly** — every SMT line with an LCSC in **assembly** stock (≠ stock on
+   LCSC); THT (pots, radials) shipped separately; DNP correct.
+6. **Mechanical** — connectors/buttons/display/pots/encoder reach the panel board's
+   cutouts (dry-fit vs enclosure render).
+7. **Final confirmation before paying** — the clean pass of everything above, the
+   precondition for payment.
 
-### 4a. Checklist de settings do pedido JLCONE (parte do portão, antes de pagar)
+### 4a. Checklist of JLCONE order settings (part of the gate, before paying)
 
-A vistoria de rotação não é a única coisa que se confere na JLCONE — os **settings
-do pedido** são portão a par das peças (lição de 2026-09-11). Antes de pagar,
-confirmar, um a um:
+The rotation inspection is not the only thing you check in JLCONE — the **order
+settings** are a gate on par with the parts (lesson of 2026-09-11). Before paying,
+confirm, one by one:
 
-- **Camadas: 2.** (⚠️ pedir 4 num desenho de 2 paga um plano interior a mais.)
-- **Via Tented — CRÍTICO.** As nossas laranjas "mask-exposing-trace" (§DFM) só são
-  benignas **com a via coberta**. Se a via ficar destapada, deixam de ser benignas.
-  Confirmar **Via Tented** ligado.
-- **Acabamento: ENIG.**
-- **Assembly → Confirm Parts Placement = YES.** A rede de segurança da rotação (§3):
-  a JLC manda a folha de colocação para aprovares antes de montar.
-- **Remark das peças bottom-side / hand-solder** — sinalizar as peças do fundo ou a
-  soldar à mão (ex.: `C16` no cérebro) na nota do pedido.
-- **Top vs Bottom Designator no matching de peças.** No casamento de peças, a JLCONE
-  separa **listas Top e Bottom**. Conferir que as peças do fundo (ex.: `C16`)
-  aparecem na lista **Bottom** — e não sumiram por a lista Top ser a única que
-  olhaste.
+- **Layers: 2.** (⚠️ asking for 4 on a 2-layer drawing pays for an extra inner plane.)
+- **Via Tented — CRITICAL.** Our "mask-exposing-trace" oranges (§DFM) are only benign
+  **with the via covered**. If the via is left uncovered, they stop being benign.
+  Confirm **Via Tented** on.
+- **Finish: ENIG.**
+- **Assembly → Confirm Parts Placement = YES.** The rotation safety net (§3): the JLC
+  sends the placement sheet for you to approve before assembling.
+- **Remark the bottom-side / hand-solder parts** — flag the bottom parts or the
+  hand-soldered ones (e.g.: `C16` on the brain board) in the order note.
+- **Top vs Bottom Designator in the part matching.** In the part matching, JLCONE
+  separates **Top and Bottom lists**. Check that the bottom parts (e.g.: `C16`) appear
+  in the **Bottom** list — and did not vanish because the Top list was the only one
+  you looked at.
 
-## 5. O gerador
+## 5. The generator
 
-`scripts/portao_humano.py` (read-only, determinístico) constrói o questionário a
-partir do **CPL + BOM** da placa (opcionalmente o `.kicad_pcb` para coordenadas),
-no formato de quatro campos, cobrindo as categorias **0 a 7** — abrindo sempre
-pelo **Item 0** (carregar o pacote):
+`scripts/portao_humano.py` (read-only, deterministic) builds the questionnaire from
+the board's **CPL + BOM** (optionally the `.kicad_pcb` for coordinates), in the
+four-field format, covering categories **0 to 7** — always opening with **Item 0**
+(load the package):
 
 ```bash
 python3 scripts/portao_humano.py --cpl <cpl.csv> --bom <bom.csv> \
         --placa "<nome>" --camadas "2 camadas" \
         --pacote "<placa>_<data>_<commit>" --branch "<branch-do-PR>" \
         --out export/<placa>_<data>_<commit>/VISTORIA.md
-python3 scripts/portao_humano.py --sabota      # prova que assinala o risco conhecido
+python3 scripts/portao_humano.py --sabota      # proves it flags the known risk
 ```
 
-O `--pacote` (ou, se omitido, o nome da pasta do `--out`) dá ao **Item 0** o
-caminho exacto do `.zip` a carregar; o `--branch` diz de que branch do PR o
-buscar. O `--sabota` também exige que o **Item 0** apareça e nomeie um `.zip`.
+The `--pacote` (or, if omitted, the `--out` folder's name) gives **Item 0** the exact
+path of the `.zip` to load; the `--branch` says which PR branch to fetch it from. The
+`--sabota` also requires that **Item 0** appear and name a `.zip`.
 
-Auto-lista as peças polarizadas (por heurística de valor/footprint + BOM), os
-pacotes com risco de rotação (por nome de footprint: SOT-23/SOIC/SOP/QFN/SON/
-SMA/SMB/SOD/electrolítico/módulo), os conectores/contratos-de-pinagem, e os
-passos de nível-placa + confirmação final. O `--sabota` corre sobre uma placa
-sintética com defeitos plantados e **exige** que cada classe conhecida (SOT-23,
-SMB/SMA cátodo, SOIC pino-1, OLED, IDC, alias de nome) apareça — uma guarda que
-nunca assinalou nada é promessa, não verificação.
+It auto-lists the polarized parts (by a value/footprint heuristic + BOM), the packages
+with rotation risk (by footprint name:
+SOT-23/SOIC/SOP/QFN/SON/SMA/SMB/SOD/electrolytic/module), the connectors/pinout
+contracts, and the board-level + final-confirmation steps. The `--sabota` runs over a
+synthetic board with planted defects and **requires** each known class (SOT-23,
+SMB/SMA cathode, SOIC pin-1, OLED, IDC, name alias) to appear — a guard that never
+flagged anything is a promise, not a verification.
 
-O artefacto por placa é o `VISTORIA.md`, escrito **dentro do pacote de fábrica**
-(`export/<placa>_<data>_<commit>/`), ao lado do CPL/BOM/gerbers a que se refere.
+The per-board artifact is the `VISTORIA.md`, written **inside the fab package**
+(`export/<placa>_<data>_<commit>/`), next to the CPL/BOM/gerbers it refers to.
 
-## 6. Onde o portão corre
+## 6. Where the gate runs
 
-O mesmo método serve os três portões ⟨dB⟩ da pipeline:
+The same method serves the three ⟨dB⟩ gates of the pipeline:
 
-- **Estágio 1 — sign-off da spec:** o diagrama e a spec correm o questionário na
-  sua forma de nível-placa e de contratos (categorias 1 e 4) antes de se gastar
-  em peças.
-- **Estágio 3/7 — veto de render / dry-fit:** a categoria 6 (mecânica) é o veto
-  do dry-fit de UMA caixa antes da série.
-- **Estágio 8 — inspeção pré-pagamento na JLC:** o questionário completo, item a
-  item, no pré-visualizador 3D — **a abrir pelo Item 0 (carregar o pacote
-  carimbado + proveniência)**, porque a inspeção não pode assumir a placa já
-  carregada. **Só o passe limpo autoriza o pagamento.**
+- **Stage 1 — spec sign-off:** the diagram and the spec run the questionnaire in its
+  board-level and contract form (categories 1 and 4) before spending on parts.
+- **Stage 3/7 — render / dry-fit veto:** category 6 (mechanical) is the dry-fit veto
+  of ONE enclosure before the batch.
+- **Stage 8 — pre-payment inspection at JLC:** the full questionnaire, item by item,
+  in the 3D previewer — **opening with Item 0 (load the stamped package +
+  provenance)**, because the inspection cannot assume the board already loaded. **Only
+  the clean pass authorizes payment.**
 
-Sem o ⟨dB⟩ em ✅, o estágio fica em `INCOMPLETA` — nunca se confunde com feito.
+Without the ⟨dB⟩ in ✅, the stage stays at `INCOMPLETA` — never confused with done.

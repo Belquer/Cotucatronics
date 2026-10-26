@@ -1,62 +1,63 @@
 ---
 name: loopy
-description: Gerar e alterar projectos e perfis de controlo do Loopy Pro por script — o formato do `.lpproj` (SQLite com JSON), o do `.lpcontrolprofile`, e a diferença entre os dois. Use ao criar páginas/widgets, ao mapear CCs, ao regenerar bindings depois de renomear params, ou quando o dB pedir algo "para importar no Loopy".
+description: Generate and change Loopy Pro projects and control profiles by script — the format of the `.lpproj` (SQLite with JSON), that of the `.lpcontrolprofile`, and the difference between the two. Use when creating pages/widgets, when mapping CCs, when regenerating bindings after renaming params, or when dB asks for something "para importar no Loopy" ("to import into Loopy").
 ---
 
-# Loopy Pro por script
+# Loopy Pro by script
 
-## PRIMEIRO: perfil ou projecto? São coisas diferentes
+## FIRST: profile or project? They are different things
 
-O erro que custa a volta é entregar um e o outro é que era preciso.
+The mistake that costs a round-trip is delivering one when the other was needed.
 
 | | `.lpcontrolprofile` | `.lpproj` |
 |---|---|---|
-| **contém** | o MAPEAMENTO de CC → widget | os **widgets em si**, páginas, cores, títulos |
-| **cria widgets?** | ⛔ **não** — endereça os que já existem | ✅ sim |
-| **serve para** | ligar um controlador a uma página já construída | entregar a **página construída** |
-| **precisa de** | o `.lpproj` exportado, para saber os índices | nada |
+| **contains** | the MAPPING of CC → widget | the **widgets themselves**, pages, colors, titles |
+| **creates widgets?** | ⛔ **no** — it addresses the ones that already exist | ✅ yes |
+| **serves to** | connect a controller to an already-built page | deliver the **built page** |
+| **needs** | the exported `.lpproj`, to know the indices | nothing |
 
-> **"Dá-me para importar no Loopy" quase sempre quer dizer PROJECTO.** Perfil só
-> resolve se os widgets já existirem — e se ainda não existem, o perfil não tem
-> a que se agarrar.
+> **"Give it to me to import into Loopy" almost always means PROJECT.** A profile
+> only solves it if the widgets already exist — and if they don't yet, the profile
+> has nothing to hold on to.
 
 ---
 
-## O formato do `.lpproj`
+## The format of the `.lpproj`
 
-Um zip. Dentro:
+A zip. Inside:
 
 ```
-Project.sqlite      ← tudo o que interessa
+Project.sqlite      ← everything that matters
 Info.plist  Profiles/  Profile.lpcontrolprofile
 Resources/  Resources.plist  Thumbnail.jpg
 ```
 
-### `Project.sqlite`, duas tabelas
+### `Project.sqlite`, two tables
 
 ```sql
 CREATE TABLE objects (id INTEGER PRIMARY KEY, type TEXT, contents BLOB);
 CREATE TABLE meta    (name TEXT UNIQUE, value BLOB);
 ```
 
-⚠️ **O `contents` é JSON em texto, NÃO é plist binário.** Vale a pena confirmar
-antes de assumir — `b'{"frame":...'` e não `b'bplist00'`. Isto torna o formato
-inteiramente tratável por script.
+⚠️ **The `contents` is JSON as text, NOT a binary plist.** It is worth confirming
+before assuming — `b'{"frame":...'` and not `b'bplist00'`. This makes the format
+entirely scriptable.
 
-### Referências entre objectos
+### References between objects
 
-Toda ligação é um par com o tipo e o `id`:
+Every link is a pair with the type and the `id`:
 
 ```json
 {"_type": "SliderWidget", "_value": 1526}
 ```
 
-O mesmo padrão embrulha valores estruturados: `{"_type":"Rect","_value":[x,y,w,h]}`,
+The same pattern wraps structured values:
+`{"_type":"Rect","_value":[x,y,w,h]}`,
 `{"_type":"Color","_value":[r,g,b,a]}`, `{"_type":"Set","_value":[...]}`.
 
-### Os objectos que interessam para uma página
+### The objects that matter for a page
 
-**`Scene`** — uma página:
+**`Scene`** — a page:
 
 ```json
 {"title":"central", "columns":5, "rows":2, "orientation":3,
@@ -72,7 +73,7 @@ O mesmo padrão embrulha valores estruturados: `{"_type":"Rect","_value":[x,y,w,
  "color":{"_type":"Color","_value":[0.90,0.36,0.17,1]}}
 ```
 
-**`ButtonWidget`** — botão:
+**`ButtonWidget`** — button:
 
 ```json
 {"frame":{"_type":"Rect","_value":[1,0,0.5,0.5]},
@@ -80,78 +81,79 @@ O mesmo padrão embrulha valores estruturados: `{"_type":"Rect","_value":[x,y,w,
  "color":{"_type":"Color","_value":[1,0.008,0.004,1]}}
 ```
 
-Outros vistos: `SteppedDialWidget` (switch de N posições), `RotaryEncoderWidget`,
+Others seen: `SteppedDialWidget` (N-position switch), `RotaryEncoderWidget`,
 `TextWidget`, `Group`, `Track`.
 
-⚠️ **O `frame` é em unidades de GRELHA da cena, não em píxeis.** Uma cena `5x2`
-tem coordenadas de 0 a 5 na horizontal; `0.5` de largura é meia célula.
+⚠️ **The `frame` is in GRID units of the scene, not in pixels.** A `5x2` scene has
+coordinates from 0 to 5 horizontally; `0.5` of width is half a cell.
 
-**`Project`** amarra tudo: `scenes` (lista de referências), `currentScene`,
+**`Project`** ties it all together: `scenes` (list of references), `currentScene`,
 `midiSources`, `groups`, `activeControlProfileNames`.
 
-### Para acrescentar uma página
+### To add a page
 
-1. `id` novos que não colidam — `max(id)+1` em diante.
-2. Um `Scene` com `widgets` a apontar para os ids novos.
-3. Acrescentar a referência do `Scene` à lista `scenes` do `Project`.
-4. Rezipar preservando **todos** os outros ficheiros do bundle.
+1. New `id`s that do not collide — `max(id)+1` onward.
+2. A `Scene` with `widgets` pointing to the new ids.
+3. Add the reference of the `Scene` to the `scenes` list of the `Project`.
+4. Re-zip preserving **all** the other files of the bundle.
 
-⚠️ **Ao re-zipar, escrever TAMBÉM as entradas de directório.** Um `os.walk` que
-só escreve ficheiros perde `Control Profiles/` e `Resources/`, que fazem parte
-do bundle. E não chega escrever só as vazias — `Control Profiles/` contém outro
-directório. **O teste que apanha isto é comparar a lista de nomes do zip de
-entrada com a do de saída**; contar ficheiros não apanha nada.
+⚠️ **When re-zipping, write the directory entries TOO.** An `os.walk` that only
+writes files loses `Control Profiles/` and `Resources/`, which are part of the
+bundle. And writing only the empty ones is not enough — `Control Profiles/`
+contains another directory. **The test that catches this is comparing the list of
+names in the input zip with that of the output one**; counting files catches
+nothing.
 
-⚠️ **Nunca escrever por cima do projecto do dB.** Gerar um ficheiro novo, e
-deixá-lo importar — projecto é onde vive o trabalho dele, e um erro aqui apaga
-horas de arranjo de ecrã.
+⚠️ **Never write over dB's project.** Generate a new file, and let him import it —
+the project is where his work lives, and an error here erases hours of screen
+arrangement.
 
 ---
 
-## O formato do `.lpcontrolprofile`
+## The format of the `.lpcontrolprofile`
 
-Decodificado em 24/08 e confirmado contra dois bindings feitos à mão.
+Decoded on 08/24 and confirmed against two bindings made by hand.
 
-🔴 **CORRIGIDO EM 01/09, e o erro anterior custou um projecto inutilizado.**
-Esta skill dizia que o `Subject` era posicional — `"<Tipo>:<cena>:<posição>"`.
-**Não é.** Verificado num export real:
+🔴 **CORRECTED ON 09/01, and the previous error cost one unusable project.** This
+skill said that the `Subject` was positional — `"<Type>:<scene>:<position>"`.
+**It is not.** Verified in a real export:
 
 ```
-Subject = "#<id do objecto do widget>"      ex: "#1526"
+Subject = "#<id of the widget object>"      ex: "#1526"
 ```
 
-E há **DOIS perfis, um por direcção**, e ambos endereçam por `id`:
+And there are **TWO profiles, one per direction**, and both address by `id`:
 
-| ficheiro | direcção | trigger | alvo |
+| file | direction | trigger | target |
 |---|---|---|---|
-| `Control Profile.lpcontrolprofile/Internal…` | **widget → MIDI** (envio) | `"1482:Value"` — id do widget e a acção | — |
-| `Control Profiles/<nome>/<dev>.MIDI.…` | **MIDI → widget** (retorno) | `"b364"` — MIDI em hex | `"#1526"` |
+| `Control Profile.lpcontrolprofile/Internal…` | **widget → MIDI** (send) | `"1482:Value"` — widget id and the action | — |
+| `Control Profiles/<name>/<dev>.MIDI.…` | **MIDI → widget** (return) | `"b364"` — MIDI in hex | `"#1526"` |
 
 ```
-Trigger MIDI = <status><cc>[<valor>]        em hex
-               status = 0xB0 | (canal-1)    b0=ch1  b3=ch4  b4=ch5  b5=ch6
-               sem valor -> contínuo · com valor -> gesto de botão
+Trigger MIDI = <status><cc>[<value>]        in hex
+               status = 0xB0 | (channel-1)  b0=ch1  b3=ch4  b4=ch5  b5=ch6
+               no value -> continuous · with value -> button gesture
 Action       = {"Identifier":"Trigger Widget",
                 "Parameters":{"Widget Action":"Value"},
                 "Subject":"#<id>", "Timing":"Sequential"}
 ```
 
-🔴 **CONSEQUÊNCIA QUE DESTRÓI UM PROJECTO:** regerar as páginas **apaga os ids**,
-e todos os bindings dos dois perfis passam a apontar para objectos que já não
-existem. O projecto abre, os widgets aparecem, **e não sai nem entra um único
-byte** — sem erro em lado nenhum.
+🔴 **CONSEQUENCE THAT DESTROYS A PROJECT:** regenerating the pages **erases the
+ids**, and all the bindings of the two profiles now point to objects that no
+longer exist. The project opens, the widgets appear, **and not a single byte goes
+out or comes in** — with no error anywhere.
 
-Foi exactamente o que aconteceu em 01/09: um `.lpproj` gerado com 143 widgets e
-158 + 202 bindings órfãos. O sintoma no instrumento era `bytes 0 | cc 0`.
+That is exactly what happened on 09/01: a `.lpproj` generated with 143 widgets and
+158 + 202 orphan bindings. The symptom on the instrument was `bytes 0 | cc 0`.
 
-**Portanto: quem regenera páginas TEM de regenerar os dois perfis na mesma
-passagem**, com os ids novos — ou **reutilizar os ids antigos** para os widgets
-que sobrevivem. Emitir projecto sem perfis é entregar uma página morta.
+**Therefore: whoever regenerates pages HAS to regenerate the two profiles in the
+same pass**, with the new ids — or **reuse the old ids** for the widgets that
+survive. Emitting a project without profiles is delivering a dead page.
 
-## O perfil é por DISPOSITIVO, e eles acumulam
+## The profile is per DEVICE, and they accumulate
 
-Um bundle carrega **um perfil por nome de dispositivo**, e eles ficam lá. Num
-export real de 01/09:
+A bundle carries **one profile per device name**, and they stay there. In a real
+export from 09/01:
 
 ```
 Ctos Midi.lpcontrolprofile/
@@ -160,53 +162,54 @@ Ctos Midi.lpcontrolprofile/
     d51a4338.MIDI.FootCtrlPlus Bluetooth        12 bindings
 ```
 
-**Vale o do dispositivo que estiver LIGADO**, e mais nenhum.
+**The one for the device that is CONNECTED counts**, and no other.
 
-⚠️ **Um nome antigo guardado de uma sessão anterior deixa a página inteira
-muda.** Foi o que aconteceu em 01/09: o Loopy estava ligado como
-`Cotucatronics 1` — sobra de um emparelhamento antigo — enquanto o trabalho todo
-estava no perfil `Cotucatronics`. Os widgets no ecrã, o BLE ligado, e **zero
-bytes no instrumento**.
+⚠️ **An old name saved from a previous session leaves the whole page mute.** That
+is what happened on 09/01: Loopy was connected as `Cotucatronics 1` — leftover
+from an old pairing — while all the work was in the `Cotucatronics` profile. The
+widgets on the screen, the BLE connected, and **zero bytes on the instrument**.
 
-O sintoma não aponta para lá: parece firmware, parece fio, parece o projecto.
-**Conferir a que dispositivo o Loopy está ligado vem antes de desmontar
-seja o que for** — e um bundle com três perfis é o aviso de que há por onde
-errar.
+The symptom does not point there: it looks like firmware, it looks like a wire, it
+looks like the project. **Checking which device Loopy is connected to comes before
+dismantling anything** — and a bundle with three profiles is the warning that
+there is a way to get it wrong.
 
-⚠️ **E o teste que o apanha é do lado do INSTRUMENTO, não do Loopy:** o contador
-de bytes de MIDI recebidos. Zero bytes com o BLE ligado diz que o corte está
-antes da placa, e distingue "não mandou" de "mandou e não aplicou".
-
----
-
-## O casamento é por TÍTULO, e por isso os renames partem-no
-
-O gerador liga widget↔param pelo **título** do widget. Renomear um param quebra
-o casamento em silêncio — o widget fica órfão e o CC deixa de chegar.
-
-**Sintoma:** o gerador reporta `sem CC no manifest (<nome antigo>)`. Isso não é
-defeito do Loopy; é o mapa de títulos por actualizar.
-
-⚠️ **Manter os nomes antigos no mapa a apontar para os novos.** O ecrã do dB tem
-o título antigo escrito nele, e obrigá-lo a renomear vinte widgets para acompanhar
-um rename de código é a troca errada — **o código é que se adapta ao que está
-pintado no vidro.**
-
-E o inverso também aparece: `título não reconhecido` quer dizer que o widget
-existe no ecrã e o param **já não existe no firmware** — param aposentado com
-widget vivo. Esse não se conserta no mapa: **apaga-se o widget**, ou fica a
-mentir para sempre.
+⚠️ **And the test that catches it is on the INSTRUMENT side, not Loopy's:** the
+counter of MIDI bytes received. Zero bytes with BLE connected says the cut is
+before the board, and distinguishes "it didn't send" from "it sent and didn't
+apply".
 
 ---
 
-## O laço de entrega
+## The marriage is by TITLE, and that is why renames break it
 
-1. O dB **exporta** o projecto do Loopy (`.lpproj`).
-2. Correr o gerador contra esse ficheiro.
-3. **Ler a contagem de órfãos**, não só a de casados. Órfão é achado, não ruído.
-4. Entregar, e dizer **o que não casou e porquê** — perfil com 80 de 87
-   bindings parece completo e não é.
+The generator links widget↔param by the **title** of the widget. Renaming a param
+breaks the marriage silently — the widget is orphaned and the CC stops arriving.
 
-⚠️ **Verificar contra o `manifest.h`, nunca contra a memória.** Os CCs mudam:
-numa só sessão mudaram seis. Documento ou perfil escrito à mão deriva na primeira
-alteração, e quem o segue monta o instrumento de ontem.
+**Symptom:** the generator reports `sem CC no manifest (<old name>)`. That is not a
+Loopy defect; it is the title map that needs updating.
+
+⚠️ **Keep the old names in the map pointing to the new ones.** dB's screen has the
+old title written on it, and forcing him to rename twenty widgets to keep up with
+a code rename is the wrong trade — **it is the code that adapts to what is painted
+on the glass.**
+
+And the inverse also appears: `título não reconhecido` means the widget exists on
+the screen and the param **no longer exists in the firmware** — a retired param
+with a live widget. That one is not fixed in the map: **the widget is deleted**,
+or it lies forever.
+
+---
+
+## The delivery loop
+
+1. dB **exports** the project from Loopy (`.lpproj`).
+2. Run the generator against that file.
+3. **Read the orphan count**, not just the married one. An orphan is a finding, not
+   noise.
+4. Deliver, and say **what did not marry and why** — a profile with 80 of 87
+   bindings looks complete and is not.
+
+⚠️ **Verify against `manifest.h`, never against memory.** The CCs change: in a
+single session six changed. A document or profile written by hand diverges on the
+first change, and whoever follows it builds yesterday's instrument.

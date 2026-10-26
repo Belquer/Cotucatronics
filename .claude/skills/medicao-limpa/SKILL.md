@@ -1,36 +1,37 @@
 ---
 name: medicao-limpa
-description: Pré-voo obrigatório antes de QUALQUER medição no Cotucatronics — prova que o canal fala, zera o ambiente, declara unidade e regime. Use antes de rodar qualquer teste de bancada, ler a caixa-preta, medir CPU, ou interpretar contadores. É a etapa 0 do IFÁ10000.
+description: Mandatory pre-flight before ANY measurement in Cotucatronics — proves the channel speaks, zeroes the environment, declares unit and regime. Use before running any bench test, reading the black box, measuring CPU, or interpreting counters. It is step 0 of IFÁ10000.
 ---
 
-# Medição limpa — etapa 0 do IFÁ10000
+# Clean measurement — step 0 of IFÁ10000
 
-**Um zero num canal não confirmado não é dado. É ausência de dado.**
-Quatro janelas de teste de MIDI foram lidas como "link morto" quando o
-log estava mudo por um `bb arm` meu (caso 8 de `docs/battle_scars.md`).
+**A zero on an unconfirmed channel is not data. It is the absence of data.**
+Four MIDI test windows were read as "dead link" when the log was mute because
+of a `bb arm` of mine (case 8 of `docs/battle_scars.md`).
 
-Nenhuma medição começa antes destes cinco passos.
+No measurement begins before these five steps.
 
-## 1. Provar que o canal fala — ANTES de qualquer leitura
+## 1. Prove the channel speaks — BEFORE any reading
 
-Mandar um comando de eco conhecido e **conferir a resposta**:
+Send a known echo command and **check the response**:
 
 ```
 log on
 board
 ```
 
-- Sem eco → **aborta**. Não interpreta, não formula hipótese, não relata.
-- Com eco → o canal está vivo e o silêncio seguinte passa a significar algo.
+- No echo → **abort**. Don't interpret, don't form a hypothesis, don't report.
+- With echo → the channel is alive and the silence that follows now means
+  something.
 
-Se um comando de status imprimir `[LOG MUDO]`, o mudo está ativo: `log on`
-destrava. Firmware < v0.39.0 não declara — nesse caso, resetar.
+If a status command prints `[LOG MUDO]`, the mute is active: `log on`
+unlocks it. Firmware < v0.39.0 doesn't declare it — in that case, reset.
 
-## 2. Zerar o ambiente — faz parte da medição
+## 2. Zero the environment — it is part of the measurement
 
-Estado de teste anterior contamina o teste seguinte. Já aconteceu duas vezes:
-`tone on` esquecido mascarando o piezo na medição do reverb; búzios ligados
-modificando o instrumento sozinho durante os testes de MIDI.
+A previous test state contaminates the next test. It has happened twice:
+`tone on` forgotten, masking the piezo in the reverb measurement; cowrie shells
+on, modifying the instrument on their own during the MIDI tests.
 
 ```
 tone off
@@ -38,256 +39,260 @@ set buzios_on 0
 list
 ```
 
-Conferir no `list` se algum parâmetro está fora do default aprovado —
-varredura de CC deixa `fx2_gain` e `src_mix` bagunçados. Se estiver, **o
-RESET devolve o manifest aprovado** (e num teste de MIDI, exige reparear).
+Check in `list` whether any parameter is outside the approved default — a CC
+sweep leaves `fx2_gain` and `src_mix` in a mess. If so, **the RESET restores the
+approved manifest** (and in a MIDI test, it requires re-pairing).
 
-## 2b. Conferir que ninguém mais está mexendo
+## 2b. Check that nobody else is touching things
 
-Estado de teste anterior não é a única contaminação. **Comandos fantasma
-existem:** transições de link BLE fazem o iOS reenviar o estado de todos os
-widgets, e o instrumento obedece. Já pôs sete parâmetros no máximo no meio de
-uma sessão — `src_mix` e `gate_thresh` no topo emudeceram tudo.
-
-```
-ble      → quantas (re)conexões e quantos CCs a quarentena recusou
-list     → algum param no extremo (0.00 ou 1.00) que você não pôs lá?
-```
-
-**Sete parâmetros no topo simultâneo não é gesto humano.** Se o `list` mostra
-extremos que você não colocou, a medição anterior está contaminada e o
-instrumento precisa voltar aos defaults antes de qualquer leitura.
-
-## 3. Declarar o que está sendo medido
-
-Toda medição registra, por escrito, antes de rodar:
-
-- **unidade**: µs? % de que prazo? RMS, pico ou norm? real ou normalizado?
-- **regime TEMPORAL**: estreia ou permanente?
-- **regime FÍSICO**: como o sinal está sendo produzido? Um transdutor solto,
-  batido por contato direto, é outro instrumento que o mesmo transdutor
-  montado e excitado por vibração. Medi a entrada com **dedo no disco solto**
-  e registrei "a entrada satura" — afirmação sobre o instrumento montado,
-  feita com uma medição que nunca o tocou (cicatriz 12a).
-
-> **O regime é parte do dado, não contexto do dado.** Um número sem regime
-> declarado não é medição incompleta: é medição cuja validade ninguém pode
-> julgar, inclusive quem a fez.
-- **contexto**: qual bloco (48/256), qual clock, `-O2` ou `-O3`?
-- **material**: qual sinal está entrando (ver etapa 6 do IFÁ10000)?
-
-## 4. Um voo, uma variável
-
-Antes de mexer, **listar os empregos daquela variável**. A terceira família
-de bug de ordem é "uma coisa com dois empregos, e um teste que muda os dois
-de uma vez". Se a variável serve a dois propósitos, o voo mede dois efeitos
-somados e não separa nenhum.
-
-## 4b. ATRIBUIR um delta exige que só uma coisa tenha mudado
-
-A `full-audit` diz isto como R2 — *«delta entre builds NÃO é atribuível»* — e a
-palavra **builds** faz a regra parecer estreita. Não é.
-
-> **A regra do A/B não é sobre builds: é sobre deltas.** Duas medições que
-> diferem em mais de uma coisa não atribuem nada a nenhuma delas — seja o que
-> for que se meça: tempo de CPU, ruído de fundo, minutos de laser, **dólares**.
-
-Caso (06/09): entre duas facturas da Ponoko o preço caiu $1,90. Atribuí-o ao
-encaixe — a única das mudanças em que estava a pensar. Tinham mudado **duas**:
-o encaixe *e* a espessura do material, que muda a geometria dos dentes. Medido
-depois: o preço segue o **comprimento de corte** ($5,87/m, previsão a $0,02) e
-o encaixe não muda o comprimento. **O encaixe poupou $0,00.** O $1,90 era todo
-da espessura. E eu já tinha escrito uma regra de projecto em cima da
-atribuição errada.
-
-**O que fazer quando não dá para isolar** — e muitas vezes não dá, porque o
-outro lado da comparação já aconteceu:
-
-> **A atribuição não se adivinha, decompõe-se.** Procura-se a grandeza a que o
-> resultado é proporcional, e testa-se com as medições que existem. Duas
-> facturas chegaram para separar «por área» de «por metro de corte»: uma erra
-> $3,52, a outra $0,02. A partir daí cada troço tem preço, e a atribuição
-> deixa de ser opinião.
-
-### E o irmão: dois pontos ajustam sempre uma recta
-
-Depois de decompor o preço da Ponoko em `$/m de corte`, escrevi que *«prevê-se
-com $0,02 de erro»*. Não era um resultado — era **aritmética**: com dois
-pontos e uma recta, o erro é zero por construção, seja qual for a grandeza que
-se escolha. O terceiro ponto (uma factura nova) errou **5%**, e vários modelos
-de duas variáveis passaram a ajustar os três — o que, com três pontos e dois
-parâmetros, também é garantido e não prova nada.
-
-> **Um modelo só se testa em pontos que não o ajustaram.** Contar quantos
-> pontos e quantos parâmetros, e dizer os dois, faz parte de declarar o número
-> (§3). «Ajusta perfeitamente» com n pontos e n parâmetros é uma frase vazia.
-
-⚠️ **Cuidado especial com números que chegam de fora** — uma factura, um
-relatório, uma frase do dB. Vêm com ar de facto e sem histórico, e é
-precisamente por não terem a forma de um benchmark que a regra do A/B não se
-reconhece a tempo.
-
-## 5. Caixa-preta: armar por comando, no início do voo
-
-- `bb arm` **explicitamente**, no começo — nunca no meio de um fluxo.
-- **A sessão de leitura não escreve nada.**
-- `bb arm` silencia o log até `log on` (ou reset). Está declarado no
-  cabeçalho dos comandos de status a partir da v0.39.0.
-
-## 5b. Antes de dimensionar, confirmar que o problema existe no regime real
-
-Dimensionar cedo é resolver um problema que talvez não exista, com um número
-que com certeza não vale.
-
-Quando há medição pendente, a ordem certa é fazer primeiro **o que serve para
-os dois desfechos possíveis**. Caso (20/08): antes de dimensionar atenuador
-para uma saturação medida fora do regime de uso, entra a **proteção** — que não
-mexe no ganho, protege o ADC clipando ou não, e não depende do resultado da
-medição.
-
-## 6. Antes de gastar código numa hipótese, a medição que a MATARIA
-
-Hipótese boa e endossada pelo próprio código ainda é hipótese. Antes de
-implementar, rodar o teste que a **derrubaria** se ela estivesse errada.
-
-Caso (20/08): a aspereza do shimmer parecia ruído de emenda de grão — o
-cabeçalho do `detune.h` até prescrevia "grão mais longo". A medição de
-**planura espectral** da faixa suspeita respondeu em trinta segundos:
+A previous test state is not the only contamination. **Ghost commands exist:**
+BLE link transitions make iOS resend the state of every widget, and the
+instrument obeys. It has already pushed seven parameters to the maximum in the
+middle of a session — `src_mix` and `gate_thresh` at the top muted everything.
 
 ```
-cauda do shimmer 0,009   |   cauda seca de reverb 0,004   →  TONAL, não ruído
+ble      → how many (re)connections and how many CCs the quarantine refused
+list     → any param at the extreme (0.00 or 1.00) that you didn't put there?
 ```
 
-Grão mais longo teria custado memória e **piorado** a faixa. Hipótese morta
-antes de virar código.
+**Seven parameters at the top simultaneously is not a human gesture.** If `list`
+shows extremes you didn't set, the previous measurement is contaminated and the
+instrument needs to return to defaults before any reading.
 
-- **planura ≈ 1** → ruído (emendas, aliasing, granulação)
-- **planura ≈ 0** → tonal (som legítimo no lugar errado)
+## 3. Declare what is being measured
 
-Os dois pedem consertos opostos: filtro de ruído contra o primeiro, **EQ**
-contra o segundo.
+Every measurement records, in writing, before running:
 
-## 7. Régua medida, não ouvido, para escolher profundidade
+- **unit**: µs? % of what deadline? RMS, peak, or norm? real or normalized?
+- **TEMPORAL regime**: onset or steady-state?
+- **PHYSICAL regime**: how is the signal being produced? A loose transducer,
+  struck by direct contact, is a different instrument from the same transducer
+  mounted and excited by vibration. I measured the input with a **finger on the
+  loose disc** and recorded "the input saturates" — a statement about the
+  mounted instrument, made with a measurement that never touched it (scar 12a).
 
-Quando o conserto é de grau (quanto cortar, quanto realimentar), a referência
-é uma **medição do sinal que já soa certo**, não uma escolha de gosto.
+> **The regime is part of the data, not context around the data.** A number with
+> no declared regime is not an incomplete measurement: it is a measurement whose
+> validity nobody can judge, including whoever made it.
+- **context**: which block (48/256), which clock, `-O2` or `-O3`?
+- **material**: what signal is coming in (see step 6 of IFÁ10000)?
 
-Caso: para escolher a queda de presença do shimmer, a régua foi a razão
-(2–6 kHz)/(300–2000 Hz) da cauda **seca** — o timbre natural do instrumento
-na sala. Seco 0,28; shimmer sem sino 1,01; com −6 dB em 3 kHz, 0,19.
+## 4. One flight, one variable
 
-## 8. A queixa tem tantas partes quantas o dB nomeou
+Before you touch anything, **list that variable's jobs**. The third family of
+ordering bug is "one thing with two jobs, and a test that changes both at once."
+If the variable serves two purposes, the flight measures two effects summed and
+separates neither.
 
-*"Agudas **e médio-agudas**"* são duas partes. Consertar uma, medir melhora e
-publicar vitória deixa a outra em pé — e às vezes **pior**: tirar energia de
-cima fez a faixa médio-aguda crescer de 26,4% para 35,7% como fatia do total.
+## 4b. ASSIGNING a delta requires that only one thing changed
 
-Antes de publicar, reler a própria medição perguntando **o que ela diz sobre
-a parte que eu não ataquei**.
+The `full-audit` states this as R2 — *"a delta between builds is NOT
+attributable"* — and the word **builds** makes the rule seem narrow. It isn't.
 
-## 9. Numa queixa com "mas", o pedido é o que vem depois
+> **The A/B rule is not about builds: it's about deltas.** Two measurements that
+> differ in more than one thing attribute nothing to any of them — whatever is
+> being measured: CPU time, background noise, laser minutes, **dollars**.
 
-*"Quando ligo o drive tenho mais ganho **mas** a distorção legal
-desapareceu."* Li o ganho como o defeito e reprojetei a normalização do
-módulo para eliminá-lo. O ganho estava certo. A distorção ausente era o
-pedido, e eu consertei a reclamação que ele não fez.
+Case (06/09): between two Ponoko invoices the price dropped $1,90. I attributed
+it to the fit — the only one of the changes I had in mind. Two had changed: the
+fit *and* the material thickness, which changes the geometry of the teeth.
+Measured afterward: the price follows the **cut length** ($5,87/m, prediction to
+$0,02) and the fit doesn't change the length. **The fit saved $0,00.** The $1,90
+was all from the thickness. And I had already written a project rule on top of
+the wrong attribution.
 
-Pior: **os dois números que decidiam estavam na minha tela quando escolhi.**
-As duas normalizações davam THD idêntico (12,0%); a diferença era o peso da
-camada, +30,4 dB contra −3,2 dB. Escolhi a que resolvia o ganho.
+**What to do when you can't isolate** — and often you can't, because the other
+side of the comparison has already happened:
 
-> **Quando duas grandezas mudam juntas numa queixa, a que o operador NOMEIA
-> como boa não é a que ele quer consertada.** Antes de mexer, repetir a
-> queixa em voz alta e sublinhar o pedido.
+> **Attribution isn't guessed, it's decomposed.** You look for the quantity the
+> result is proportional to, and you test it with the measurements you have. Two
+> invoices were enough to separate "by area" from "by meter of cut": one misses
+> by $3,52, the other by $0,02. From there each segment has a price, and the
+> attribution stops being opinion.
 
-E o corolário da etapa 6: **hipótese sobre módulo com matemática fechada se
-testa replicando a matemática em dois minutos, não gravando a placa.** As
-duas medições que decidiram o caso do drive — camada por tone, THD por
-nível — rodaram no host, sem tocar no hardware, e mataram duas hipóteses
-minhas antes de virarem código.
+### And its sibling: two points always fit a line
 
-## 10. Número dito de passagem é medição também
+After decomposing the Ponoko price into `$/m of cut`, I wrote that *"it's
+predicted to within $0,02 of error"*. That wasn't a result — it was
+**arithmetic**: with two points and a line, the error is zero by construction,
+whatever quantity you choose. The third point (a new invoice) missed by **5%**,
+and several two-variable models then fit all three — which, with three points and
+two parameters, is also guaranteed and proves nothing.
 
-Em 22/08 relatei "CPU 180 µs" numa frase lateral, ao lado de um 509 da mesma
-sessão. Parece otimização de 65%. Os dois eram **regimes diferentes**: 181 é
-o piso com todo efeito desligado (default pós-gravação), 526 é o mesmo
-perfil do 509. Nada tinha mudado.
+> **A model is only tested on points that didn't fit it.** Counting how many
+> points and how many parameters, and stating both, is part of declaring the
+> number (§3). "Fits perfectly" with n points and n parameters is an empty
+> phrase.
 
-A regra já estava escrita nesta skill. Escapou porque a menção era *de
-passagem*, não uma medição formal — e é exatamente aí que ela escapa.
+⚠️ **Special caution with numbers that arrive from outside** — an invoice, a
+report, a sentence from dB. They come with the air of fact and no history, and it
+is precisely because they don't have the shape of a benchmark that the A/B rule
+isn't recognized in time.
 
-> **Se um número aparece perto de outro da mesma grandeza, o leitor VAI
-> compará-los.** O regime tem que vir junto, ou a comparação vira uma
-> mentira que ninguém escreveu de propósito.
+## 5. Black box: arm by command, at the start of the flight
 
-## 11. Verificação que exige desligar o sensor é desenho invertido
+- `bb arm` **explicitly**, at the start — never in the middle of a flow.
+- **The reading session writes nothing.**
+- `bb arm` silences the log until `log on` (or reset). It is declared in the
+  header of the status commands from v0.39.0 on.
 
-Dois mecanismos resolviam o mesmo problema e eram mutuamente exclusivos: um
-deles precisava que a placa **não escutasse** para funcionar — e escutar era
-a única forma de provar que ele tinha funcionado.
+## 5b. Before sizing, confirm that the problem exists in the real regime
 
-> **Método que exige desligar o sensor que o verificaria está invertido. O
-> certo deixa o mundo agir e observa; o errado age e supõe.**
+Sizing early is solving a problem that may not exist, with a number that
+certainly doesn't hold.
 
-Reconhecer cedo: se o mecanismo pede para suspender a entrada, silenciar um
-canal, ou "não escutar agora", perguntar **o que deixo de poder observar
-enquanto ele roda**. Se a resposta incluir a própria coisa que ele deveria
-produzir, parar ali — não são cinco versões de ajuste, é o mecanismo errado.
+When there's a pending measurement, the right order is to do first **what serves
+both possible outcomes**. Case (20/08): before sizing an attenuator for a
+saturation measured outside the regime of use, the **protection** goes in — which
+doesn't touch the gain, protects the ADC whether it clips or not, and doesn't
+depend on the measurement's result.
 
-## 12. Orçamento e parede não são o mesmo limite
+## 6. Before spending code on a hypothesis, the measurement that would KILL it
 
-    TETO  = orçamento administrativo. ESCOLHIDO. Onde se decide que a
-            carga está alta demais para o conforto.
-    PRAZO = parede física. IMPOSTO pelo hardware. Onde falha de verdade.
+A good hypothesis endorsed by the code itself is still a hypothesis. Before
+implementing, run the test that would **knock it down** if it were wrong.
 
-Em 22/08 uma defesa foi proposta como "M picos acima do **teto** numa janela
-T". Com o número na mão — pico 975, teto 850, zero falhas — ficou evidente
-que ultrapassar o teto é rotina benigna nessa carga: o critério derrubaria
-efeito o tempo todo numa configuração que toca limpa.
+Case (20/08): the harshness of the shimmer looked like grain-splice noise — the
+header of `detune.h` even prescribed "longer grain." The **spectral flatness**
+measurement of the suspect band answered in thirty seconds:
 
-> **Confundir orçamento com parede faz a proteção criar o defeito que
-> deveria evitar.** Toda defesa declara em qual dos dois mira — e a resposta
-> muda o critério, não só o número.
+```
+shimmer tail 0,009   |   dry reverb tail 0,004   →  TONAL, not noise
+```
 
-**E o erro só apareceu ao DIMENSIONAR.** No papel a formulação soava
-razoável. Dimensionamento não é detalhe de implementação: é onde a opção é
-testada contra a realidade.
+Longer grain would have cost memory and **made the band worse**. Hypothesis dead
+before it became code.
 
-## 13. Constante escolhida ≠ constante medida — etiquete
+- **flatness ≈ 1** → noise (splices, aliasing, granulation)
+- **flatness ≈ 0** → tonal (legitimate sound in the wrong place)
 
-`kEstLimite = 3` / `kEstJanelaMs = 2000` vieram de um CRITÉRIO declarado
-("não punir o evento isolado"), não de medição — o fenômeno media zero. O
-comentário diz isso, e diz para revisar se o uso real discordar.
+The two call for opposite fixes: a noise filter against the first, **EQ** against
+the second.
 
-> Daqui a meses, "por que 3?" tem que achar a resposta no código, em vez de
-> virar arqueologia.
+## 7. A measured ruler, not the ear, to choose depth
 
-## 14. Conserto muda o regime — refaça o que ele tornou obsoleto
+When the fix is one of degree (how much to cut, how much to feed back), the
+reference is a **measurement of the signal that already sounds right**, not a
+matter of taste.
 
-Em 22/08, uma chave de potência barrava o sinal de áudio antes do
-amplificador. Com o sinal barrado o amplificador ficava em vazio, e a fonte
-media **13 V firmes sob carga** — medição correta, e que descartava a fonte.
+Case: to choose the presence drop of the shimmer, the ruler was the ratio
+(2–6 kHz)/(300–2000 Hz) of the **dry** tail — the instrument's natural timbre in
+the room. Dry 0,28; shimmer without bell 1,01; with −6 dB at 3 kHz, 0,19.
 
-Consertada a chave, o sinal passou, a carga apareceu, e a fonte caiu para
-6 V. **A medição anterior era verdade sobre o sistema quebrado, não sobre o
-consertado.**
+## 8. The complaint has as many parts as dB named
 
-> **Ao consertar uma causa, listar quais medições aquele conserto tornou
-> obsoletas — e refazê-las.** "Já descartei X" tem validade limitada ao
-> regime em que X foi descartado.
+*"Highs **and mid-highs**"* are two parts. Fixing one, measuring an improvement,
+and declaring victory leaves the other standing — and sometimes **worse**: taking
+energy off the top made the mid-high band grow from 26,4% to 35,7% as a slice of
+the total.
 
-É a mesma família da cicatriz 12a (medir o instrumento num regime que não é o
-de uso), com uma torção: aqui o regime mudou **por causa do nosso próprio
-conserto**, não por descuido de montagem.
+Before publishing, re-read your own measurement, asking **what it says about the
+part you didn't attack**.
 
-## 15. A hipótese plausível é a perigosa — leia a fonte da configuração
+## 9. In a complaint with "but", the request is what comes after
 
-Em 22/08 o JEDEC ID vinha `FF FF FF` e a explicação era boa: *a libDaisy põe
-o chip em QPI; chip em QPI ignora comando de 1 linha; a linha fica em
-pull-up; ler barramento em repouso dá `FF`.* Explicava o sintoma **byte a
+*"When I turn on the drive I have more gain **but** the nice distortion
+disappeared."* I read the gain as the defect and redesigned the module's
+normalization to eliminate it. The gain was right. The absent distortion was the
+request, and I fixed the complaint he didn't make.
+
+Worse: **the two numbers that decided were on my screen when I chose.** The two
+normalizations gave identical THD (12,0%); the difference was the layer's weight,
++30,4 dB against −3,2 dB. I chose the one that solved the gain.
+
+> **When two quantities change together in a complaint, the one the operator
+> NAMES as good is not the one he wants fixed.** Before touching anything, repeat
+> the complaint out loud and underline the request.
+
+And the corollary of step 6: **a hypothesis about a module with closed-form math
+is tested by replicating the math in two minutes, not by flashing the board.** The
+two measurements that decided the drive case — layer by tone, THD by level — ran
+on the host, without touching the hardware, and killed two of my hypotheses before
+they became code.
+
+## 10. A number said in passing is a measurement too
+
+On 22/08 I reported "CPU 180 µs" in a side remark, next to a 509 from the same
+session. It looks like a 65% optimization. The two were **different regimes**: 181
+is the floor with every effect off (post-flash default), 526 is the same profile
+as the 509. Nothing had changed.
+
+The rule was already written in this skill. It escaped because the mention was *in
+passing*, not a formal measurement — and that is exactly where it escapes.
+
+> **If a number appears near another of the same quantity, the reader WILL compare
+> them.** The regime has to come along, or the comparison becomes a lie nobody
+> wrote on purpose.
+
+## 11. A check that requires turning off the sensor is inverted design
+
+Two mechanisms solved the same problem and were mutually exclusive: one of them
+needed the board **not to listen** in order to work — and listening was the only
+way to prove it had worked.
+
+> **A method that requires turning off the sensor that would verify it is
+> inverted. The right one lets the world act and observes; the wrong one acts and
+> assumes.**
+
+Recognize it early: if the mechanism asks to suspend the input, silence a channel,
+or "not listen right now", ask **what I lose the ability to observe while it
+runs**. If the answer includes the very thing it is supposed to produce, stop
+there — it's not five versions of tuning, it's the wrong mechanism.
+
+## 12. Budget and wall are not the same limit
+
+    CEILING = administrative budget. CHOSEN. Where you decide that the
+              load is too high for comfort.
+    DEADLINE = physical wall. IMPOSED by the hardware. Where it actually fails.
+
+On 22/08 a safeguard was proposed as "M peaks above the **ceiling** in a window
+T". With the number in hand — peak 975, ceiling 850, zero failures — it became
+clear that exceeding the ceiling is benign routine at that load: the criterion
+would knock the effect out all the time in a configuration that plays clean.
+
+> **Confusing budget with wall makes the protection create the defect it was
+> supposed to avoid.** Every safeguard declares which of the two it aims at — and
+> the answer changes the criterion, not just the number.
+
+**And the error only appeared on SIZING.** On paper the formulation sounded
+reasonable. Sizing is not an implementation detail: it's where the option is
+tested against reality.
+
+## 13. A chosen constant ≠ a measured constant — label it
+
+`kEstLimite = 3` / `kEstJanelaMs = 2000` came from a declared CRITERION ("don't
+punish the isolated event"), not from measurement — the phenomenon measured zero.
+The comment says so, and says to revise it if real usage disagrees.
+
+> Months from now, "why 3?" has to find the answer in the code, instead of
+> becoming archaeology.
+
+## 14. A fix changes the regime — redo what it made obsolete
+
+On 22/08, a power switch barred the audio signal before the amplifier. With the
+signal barred the amplifier sat in no-load, and the supply measured **13 V firm
+under load** — a correct measurement, and one that ruled out the supply.
+
+With the switch fixed, the signal passed, the load appeared, and the supply
+dropped to 6 V. **The earlier measurement was true about the broken system, not
+about the fixed one.**
+
+> **When you fix a cause, list which measurements that fix made obsolete — and
+> redo them.** "I already ruled out X" has validity limited to the regime in which
+> X was ruled out.
+
+It's the same family as scar 12a (measuring the instrument in a regime that isn't
+the one of use), with a twist: here the regime changed **because of our own fix**,
+not through a mounting oversight.
+
+## 15. The plausible hypothesis is the dangerous one — read the source of the configuration
+
+On 22/08 the JEDEC ID came back `FF FF FF` and the explanation was good: *libDaisy
+puts the chip in QPI; a chip in QPI ignores a 1-line command; the line sits at
+pull-up; reading a bus at rest gives `FF`.* It explained the symptom **byte by
 byte**.
 
-Estava errada. O código dizia:
+It was wrong. The code said:
 
 ```cpp
 // we haven't added the ability to switch to quad mode. So they're
@@ -295,119 +300,120 @@ Estava errada. O código dizia:
 QSPIHandle::Result EnterQuadMode() __attribute__((unused));
 ```
 
-Seis gravações varrendo dummies e modos não responderam o que um `grep` no
-`Init` respondeu em um minuto.
+Six flashes sweeping dummies and modes didn't answer what a `grep` in `Init`
+answered in one minute.
 
-> **Quando o sintoma tem explicação plausível, a plausibilidade é o perigo.**
-> O teste que decide não é o que CONFIRMA a hipótese — é o que **lê a fonte
-> da configuração**.
+> **When the symptom has a plausible explanation, the plausibility is the
+> danger.** The test that decides is not the one that CONFIRMS the hypothesis —
+> it's the one that **reads the source of the configuration**.
 
-É o inverso da etapa 6 ("a medição que a mataria"): ali a hipótese era fraca e
-a medição a matou barato. Aqui era boa demais para ser questionada, e o que a
-derrubou foi **leitura, não medição**. Antes de varrer parâmetros de um
-periférico, ler quem o configurou.
+It's the inverse of step 6 ("the measurement that would kill it"): there the
+hypothesis was weak and the measurement killed it cheaply. Here it was too good to
+be questioned, and what knocked it down was **reading, not measuring**. Before
+sweeping a peripheral's parameters, read whoever configured it.
 
-## 16. Item de backlog é afirmação sobre o código, e envelhece
+## 16. A backlog item is a statement about the code, and it ages
 
-*"`frz_size`: 61% de curso morto, faixa 20–400"* — verificado no fonte: a
-faixa é 20–165 e o clamp é 166,7. Batem. Corrigido meses antes, e o item
-seguiu na fila, citado por mim em vários alinhamentos.
+*"`frz_size`: 61% dead travel, range 20–400"* — verified in the source: the range
+is 20–165 and the clamp is 166,7. They match. Fixed months earlier, and the item
+stayed in the queue, cited by me in several alignments.
 
-> **Antes de citar uma pendência, verificá-la** — sobretudo as antigas, que
-> são as que mais provavelmente já foram consertadas por outro caminho.
+> **Before citing a pending item, verify it** — especially the old ones, which are
+> the ones most likely already fixed by another path.
 
-## 17. A primeira leitura é aquecimento — inclusive de uma sonda velha
+## 17. The first reading is warm-up — including of an old probe
 
-A regra §1 diz para provar que o canal fala. Este é o irmão dela do lado do
-instrumento: **a primeira aquisição depois de abrir o dispositivo é lixo.**
+Rule §1 says to prove the channel speaks. This is its sibling on the instrument
+side: **the first acquisition after opening the device is garbage.**
 
-Caso (28/08): a primeira corrida de um mapeamento deu `ch3/ch4` a −28,8 dBFS
-onde depois se mediu −77,2 — 48 dB de diferença, e nenhum caminho do código
-que a produzisse. Era o transiente da stream do `sounddevice` a ser apanhado
-pela primeira `rec`.
+Case (28/08): the first run of a mapping gave `ch3/ch4` at −28,8 dBFS where
+−77,2 was later measured — 48 dB of difference, and no code path that would
+produce it. It was the transient of the `sounddevice` stream being caught by the
+first `rec`.
 
-Duas defesas, as duas baratas:
+Two defenses, both cheap:
 
 ```python
-rms(0.4)                      # leitura de aquecimento, deitada fora
-x = x[int(0.15*SR):]          # descarta o ataque dentro de cada aquisição
+rms(0.4)                      # warm-up reading, thrown away
+x = x[int(0.15*SR):]          # discard the attack within each acquisition
 ```
 
-E a verificação que separa dado de artefacto: **medir o MESMO estado três
-vezes.** Com o instrumento quente repetiu a 0,1 dB.
+And the check that separates data from artifact: **measure the SAME state three
+times.** With the instrument warm it repeated to 0,1 dB.
 
-> **Número que não fecha com nenhum caminho do código é suspeita contra o
-> INSTRUMENTO antes de ser contra o sistema.** Verificar a sonda custa
-> segundos; caçar um defeito que não existe custa a sessão.
+> **A number that doesn't close with any code path is a suspicion against the
+> INSTRUMENT before it's against the system.** Checking the probe costs seconds;
+> hunting a defect that doesn't exist costs the session.
 
-## 18. Sinal periódico contínuo mede mal tudo o que faz cópia de si próprio
+## 18. A continuous periodic signal measures badly everything that copies itself
 
-Delay, reverb, chorus, freeze — todos devolvem uma cópia atrasada da entrada.
-Com um seno contínuo, o seco e a cópia somam-se **com fase fixa** e
-interferem. O número resultante não é o nível do efeito: é o resultado da
-interferência.
+Delay, reverb, chorus, freeze — all return a delayed copy of the input. With a
+continuous sine, the dry and the copy sum **with fixed phase** and interfere. The
+resulting number is not the level of the effect: it's the result of the
+interference.
 
-Caso (28/08): com o delay ligado a saída mediu −44,4 dBFS contra uma base de
-−35,6. **Ligar um efeito baixou o nível 8,8 dB** — e nada no firmware fazia
-isso.
+Case (28/08): with the delay on, the output measured −44,4 dBFS against a base of
+−35,6. **Turning on an effect lowered the level 8,8 dB** — and nothing in the
+firmware did that.
 
-A comparação válida saiu de outro par, com uma variável só e o **chão** como
-referência:
+The valid comparison came from another pair, with one variable only and the
+**floor** as reference:
 
 ```
-route_r_a=0, delay desligado   −69,2 dBFS   (chão)
-route_r_a=0, delay LIGADO      −39,5 dBFS   (+29,7 dB acima do chão)
+route_r_a=0, delay off   −69,2 dBFS   (floor)
+route_r_a=0, delay ON    −39,5 dBFS   (+29,7 dB above the floor)
 ```
 
-> **Para "está cá ou não está", compare contra o CHÃO com uma variável só** —
-> nunca dois estados que ambos contêm interferência. Se precisar do nível
-> absoluto do efeito, use rajada ou ruído, não seno.
+> **For "is it here or not", compare against the FLOOR with one variable only** —
+> never two states that both contain interference. If you need the absolute level
+> of the effect, use a burst or noise, not a sine.
 
-## 17b. O aquecimento aplica-se à PLACA inteira, não só à sonda
+## 17b. The warm-up applies to the WHOLE BOARD, not just the probe
 
-O item 17 diz que a primeira leitura é aquecimento. **Vale também para a
-primeira medição depois de uma GRAVAÇÃO** — e nesse caso o erro é enorme, não
-marginal.
+Item 17 says the first reading is warm-up. **It also holds for the first
+measurement after a FLASH** — and in that case the error is huge, not marginal.
 
-*Medido em 02/09 com dois builds inertes (só um comentário a mudar): a primeira
-leitura após o flash deu ~15 000 voltas/s e as três seguintes ~22 800, nos dois.
-Descartada a primeira, os builds diferem **0,27%** — contra 1,3% de dispersão do
-próprio instrumento no mesmo binário.*
+*Measured on 02/09 with two inert builds (only a comment changed): the first
+reading after the flash gave ~15 000 turns/s and the next three ~22 800, on both.
+With the first discarded, the builds differ **0,27%** — against 1,3% of dispersion
+from the instrument itself on the same binary.*
 
-Esse artefacto gerou um item aberto — "5 pontos de base por explicar" — que
-sobreviveu dois dias, atravessou dois pedidos de conselho, e quase levou a um
-diff de mapa do linker e a mover o laço para ITCM. **A regra estava escrita e o
-número que a aplicava custava três minutos.**
+That artifact spawned an open item — "5 base points unexplained" — that survived
+two days, crossed two requests for advice, and nearly led to a linker-map diff and
+to moving the loop into ITCM. **The rule was written and the number that applied
+it cost three minutes.**
 
-> **Antes de atribuir uma diferença entre builds, meça a dispersão DENTRO de
-> um.** Se a diferença não sair desse envelope, não há o que caçar — e o
-> envelope mede-se descartando a primeira leitura.
+> **Before attributing a difference between builds, measure the dispersion WITHIN
+> one.** If the difference doesn't fall outside that envelope, there's nothing to
+> hunt — and the envelope is measured by discarding the first reading.
 
-## 19. Código raro no caminho quente custa pelo TAMANHO, não pelo que corre
+## 19. Rare code on the hot path costs by SIZE, not by what runs
 
-Um `if` que quase nunca dá verdade é barato. **O corpo dele, inlinado, não é.**
-Se o compilador arrasta para dentro da função quente um desenho, uma fonte ou um
-parser que corre uma vez por arranque, a I-cache paga a conta **a cada volta**.
+An `if` that almost never comes out true is cheap. **Its body, inlined, is not.**
+If the compiler drags into the hot function a drawing, a font, or a parser that
+runs once per startup, the I-cache pays the bill **on every turn**.
 
-*Medido: ligar a abertura do OLED no corpo do laço derrubou a base de ~21 500
-para ~18 600 voltas/s **com o splash parado**. Um `__attribute__((noinline))`
-devolveu oito dos treze pontos — e foi o **único delta** entre os dois builds,
-que é o A/B mais apertado que este projecto consegue.*
+*Measured: turning on the OLED open in the body of the loop dropped the base from
+~21 500 to ~18 600 turns/s **with the splash stopped**. A
+`__attribute__((noinline))` gave back eight of the thirteen points — and was the
+**only delta** between the two builds, which is the tightest A/B this project can
+manage.*
 
-Sintoma que denuncia: **a base mudou e o trabalho não.** Se o número de voltas
-por segundo cai sem que nada novo corra, procure inchaço de código antes de
-procurar trabalho novo.
+The symptom that gives it away: **the base changed and the work didn't.** If the
+number of turns per second falls without anything new running, look for code bloat
+before looking for new work.
 
-## 20. Linha de base guardada apanha regressão que ninguém foi procurar
+## 20. A saved baseline catches a regression nobody went looking for
 
-O defeito acima não foi apanhado por suspeita. Foi apanhado porque **havia um
-número de base da mesma sessão** e a comparação ofereceu-se sozinha.
+The defect above was not caught by suspicion. It was caught because **there was a
+base number from the same session** and the comparison offered itself.
 
-> Toda medição vale duas vezes: uma para a pergunta que a motivou, outra como
-> linha de base para a pergunta seguinte. **Registe a base mesmo quando ela não
-> é a resposta.**
+> Every measurement is worth twice: once for the question that motivated it, once
+> as a baseline for the next question. **Record the base even when it isn't the
+> answer.**
 
-## Ao terminar
+## When finishing
 
-Relatar o número **com a unidade e o regime junto**. Número sem unidade já
-condenou um módulo bom (freeze, 233 965 µs de estreia contra 3 520 de regime).
+Report the number **with the unit and the regime alongside**. A number with no
+unit has already condemned a good module (freeze, 233 965 µs of onset against
+3 520 of steady-state).

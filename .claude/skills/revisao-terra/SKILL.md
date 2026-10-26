@@ -1,233 +1,234 @@
 ---
 name: revisao-terra
-description: Revisão de aterramento, massa e desacoplamento no desenho de placa — classifica cada condutor de terra, confere estrela contra margarida, AGND/DGND, condensadores por tipo de carga, acoplamento pelo ar e entradas de alta impedância. Use ao desenhar ou rever hardware, ao montar um circuito novo, e sempre que houver zumbido, guincho, clique ou ruído que não se explica no firmware.
+description: Grounding, ground and decoupling review in board design — classifies each ground conductor, checks star against daisy chain, AGND/DGND, capacitors by load type, air coupling and high-impedance inputs. Use when designing or reviewing hardware, when building a new circuit, and whenever there is hum, squeal, click or noise that is not explained in the firmware.
 ---
 
-# Revisão de terra — a varredura
+# Ground review — the sweep
 
-Formulada por **quantificação fechada**: cada condutor de terra tem um conjunto
-finito de estados legais, e **tudo que não está num estado legal é achado, por
-definição**. Um defeito de massa não escapa por não ser reconhecido — escapa
-por haver um lugar onde a regra não olhou.
+Formulated by **closed quantification**: each ground conductor has a finite set of
+legal states, and **everything that is not in a legal state is a finding, by
+definition**. A ground defect does not escape by not being recognized — it escapes
+because there is a place where the rule did not look.
 
-Ruído de massa é caro porque **imita tudo o resto**: parece ruído de ADC, parece
-defeito de firmware, parece componente queimado. Uma varredura sistemática
-custa uma hora; o diagnóstico por hipótese custou uma tarde e três inocentes.
-
----
-
-## Regras de ferro DO PRÓPRIO REVISOR
-
-Estas vêm antes das passadas, porque o revisor erra primeiro.
-
-**R1 — Medição sem carga não vale.** Em repouso não há corrente, e sem corrente
-não há queda de tensão. **Dá zero em cima de um defeito.** Toda medição de
-terra declara em que condição de carga foi feita, ou não é medição.
-
-**R2 — Uma variável de cada vez.** Mudar duas coisas e ouvir melhoria não diz
-qual delas agiu — e uma delas pode estar a piorar. Isto inclui não fazer
-reset/ciclo de energia entre testes sem o declarar: a recuperação pode vir do
-reset e ser atribuída à mudança.
-
-**R3 — Anotar todos os números ANTES de mexer.** Sem o "antes" não há como
-provar que o "depois" melhorou. Metade das discussões de massa morrem aqui.
-
-**R4 — Hipótese sem teste que a derrube é narrativa, não diagnóstico.** Para
-cada suspeita, escrever **qual observação a mataria**. Se não houver nenhuma, a
-suspeita não entra no relatório.
-
-**R5 — Ler o próprio código antes de acusar o cobre.** Guarda mal posta, filtro
-com constante errada, histerese medida do centro em vez da fronteira — tudo
-isto **imita ruído com perfeição**. Antes de afirmar "o ADC é ruidoso",
-**medir o ruído** e comparar com o limiar do software.
-
-**R6 — Resultado negativo é achado.** O que passou fica escrito, ou a próxima
-revisão refaz o trabalho.
-
-**R7 — Cada achado sai com severidade e com dono.** 🔴 destrói peça ou perde
-sinal · 🟠 audível/visível · 🟡 latente · ⚪ higiene. E: conserta-se com fio,
-com componente, ou com desenho?
-
-**R8 — Declarar o que não foi verificado** e porquê. Nunca omitir.
+Ground noise is expensive because it **imitates everything else**: it looks like ADC
+noise, looks like a firmware defect, looks like a burned component. A systematic sweep
+costs an hour; diagnosis by hypothesis cost an afternoon and three innocents.
 
 ---
 
-## As passadas
+## Iron rules OF THE REVIEWER THEMSELVES
 
-Cada passada responde UMA pergunta. Nenhuma é opcional; passada saltada é
-**declarada**, não silenciada.
+These come before the passes, because the reviewer errs first.
 
-### P0 — Inventário e classificação
+**R1 — A measurement without load is worthless.** At rest there is no current, and
+without current there is no voltage drop. **It gives zero on top of a defect.** Every
+ground measurement declares under what load condition it was made, or it is not a
+measurement.
 
-**Listar TODOS os condutores de terra do desenho.** Cada um é exactamente um
-destes três:
+**R2 — One variable at a time.** Changing two things and hearing an improvement does
+not say which one acted — and one of them may be making things worse. This includes
+not doing a reset/power cycle between tests without declaring it: the recovery may
+come from the reset and be attributed to the change.
 
-| tipo | o que é | corrente | destino legal |
+**R3 — Record all the numbers BEFORE touching anything.** Without the "before" there
+is no way to prove that the "after" improved. Half the ground arguments die here.
+
+**R4 — A hypothesis without a test that would knock it down is narrative, not
+diagnosis.** For each suspicion, write **which observation would kill it**. If there
+is none, the suspicion does not enter the report.
+
+**R5 — Read your own code before accusing the copper.** A badly placed guard, a
+filter with the wrong constant, hysteresis measured from the center instead of the
+boundary — all of this **imitates noise perfectly**. Before stating "the ADC is
+noisy", **measure the noise** and compare it with the software threshold.
+
+**R6 — A negative result is a finding.** What passed is written down, or the next
+review redoes the work.
+
+**R7 — Each finding comes out with severity and with an owner.** 🔴 destroys a part or
+loses signal · 🟠 audible/visible · 🟡 latent · ⚪ hygiene. And: is it fixed with a
+wire, with a component, or with the design?
+
+**R8 — Declare what was not verified** and why. Never omit.
+
+---
+
+## The passes
+
+Each pass answers ONE question. None is optional; a skipped pass is **declared**, not
+silenced.
+
+### P0 — Inventory and classification
+
+**List ALL the ground conductors in the design.** Each one is exactly one of these
+three:
+
+| type | what it is | current | legal destination |
 |---|---|---|---|
-| **força** | volta da corrente consumida | alta, pulsada | fio próprio à estrela |
-| **referência lógica** | zero do ADC e dos pinos digitais | ~nenhuma | fica no aparelho que lê |
-| **referência de áudio** | zero que viaja com o sinal | ~nenhuma | ilha de `AGND` |
+| **power** | the return of the consumed current | high, pulsed | its own wire to the star |
+| **logic reference** | the zero of the ADC and the digital pins | ~none | stays in the device that reads |
+| **audio reference** | the zero that travels with the signal | ~none | `AGND` island |
 
-**Condutor não classificável = achado.** Condutor num destino que não é o legal
-do seu tipo = achado.
+**An unclassifiable conductor = a finding.** A conductor at a destination that is not
+the legal one for its type = a finding.
 
-⚠️ **O erro mais comum desta passada** é levar referência à estrela. "Estrela é
-bom, então levo tudo à estrela" — mas referência levada à estrela **injecta**
-a diferença de tensão estrela↔leitor na medição. Estrela é para **corrente**.
+⚠️ **The most common error of this pass** is taking a reference to the star. "The star
+is good, so I take everything to the star" — but a reference taken to the star
+**injects** the star↔reader voltage difference into the measurement. The star is for
+**current**.
 
-Pergunta que decide: *este condutor transporta corrente, ou define um zero?*
+The deciding question: *does this conductor carry current, or define a zero?*
 
-### P1 — Estrela contra margarida
+### P1 — Star against daisy chain
 
-- **Onde está o ponto de estrela?** Se não se souber apontar um ponto físico,
-  não há estrela — achado 🔴.
-- Para **cada** consumidor de força: tem fio próprio até lá, ou chega através
-  de outro? Chegar através de outro = achado.
-- **O retorno do maior consumidor é o fio mais curto e grosso?** Se não, achado.
-- **Há chave, relé ou conector no caminho de retorno?** Achado — resistência de
-  contacto variável no caminho de todos.
+- **Where is the star point?** If you cannot point to a physical point, there is no
+  star — finding 🔴.
+- For **each** power consumer: does it have its own wire all the way there, or does it
+  arrive through another? Arriving through another = a finding.
+- **Is the largest consumer's return the shortest and thickest wire?** If not, a finding.
+- **Is there a switch, relay or connector in the return path?** A finding — variable
+  contact resistance in everyone's path.
 
-### P2 — Ilhas de referência são folhas
+### P2 — Reference islands are leaves
 
-Toda referência (lógica ou de áudio) deve **entrar num aparelho e não sair para
-mais lado nenhum**.
+Every reference (logic or audio) must **enter a device and not leave for anywhere
+else**.
 
-- Traçar cada ilha: onde termina? Se toca dois aparelhos, é achado.
-- **Conferência física:** com a placa fora do soquete, continuidade entre a ilha
-  e o trilho de força. **Se apitar, há ligação a mais.**
-- O **positivo de referência** (3V3 dos pots, etc.) sai da mesma placa que faz a
-  medição? Alimentar de uma fonte e referenciar noutra = achado.
+- Trace each island: where does it end? If it touches two devices, it is a finding.
+- **Physical check:** with the board out of the socket, continuity between the island
+  and the power rail. **If it beeps, there is a connection too many.**
+- Does the **reference positive** (the pots' 3V3, etc.) come from the same board that
+  does the measurement? Powering from one source and referencing on another = a finding.
 
-### P3 — `AGND` e `DGND`
+### P3 — `AGND` and `DGND`
 
-Placas com codec juntam os dois **internamente, num ponto só**, de propósito.
+Boards with a codec join the two **internally, at a single point**, on purpose.
 
-- **Estão juntos em algum sítio fora da placa?** Achado 🔴 — dois pontos de
-  encontro formam anel, e a corrente divide-se pelos dois caminhos; a fracção
-  que escolhe o de dentro passa pela referência do codec.
-- **A alimentação entra pelo `DGND`?** Entrar pelo `AGND` é achado 🔴 — o
-  retorno de toda a placa atravessa a ponte estreita.
-- **O retorno do áudio (jacks, entrada do amp, entradas analógicas) vem do
-  `AGND`?** Vir do trilho geral é achado 🟠.
+- **Are they joined anywhere off the board?** Finding 🔴 — two meeting points form a
+  loop, and the current splits between the two paths; the fraction that chooses the
+  inner one passes through the codec's reference.
+- **Does the power enter through `DGND`?** Entering through `AGND` is a finding 🔴 —
+  the whole board's return crosses the narrow bridge.
+- **Does the audio return (jacks, the amp input, the analog inputs) come from
+  `AGND`?** Coming from the general rail is a finding 🟠.
 
-### P3b — Sinal entre placas alimentadas separadamente
+### P3b — Signal between separately powered boards
 
-Para **cada par de placas ligadas por sinal** (UART, SPI, I2C, GPIO):
+For **each pair of boards connected by signal** (UART, SPI, I2C, GPIO):
 
-> *Existe um estado de alimentação em que uma está viva e a outra não?*
+> *Is there a power state in which one is alive and the other is not?*
 
-Na bancada há quase sempre — uma no USB, outra no trilho. Se sim:
+On the bench there almost always is — one on USB, the other on the rail. If so:
 
-- 🔴 **Tem laço de terra DIRECTO ao lado dos fios de sinal?** Não ter = achado
-  que **mata a placa viva**, não a morta.
-- Sem ele, a placa alimentada injecta corrente pelos díodos de protecção da
-  desalimentada; a linha fica indefinida, o periférico entra em erro, e quem
-  tenta **transmitir** fica preso.
+- 🔴 **Is there a DIRECT ground loop next to the signal wires?** Not having one = a
+  finding that **kills the live board**, not the dead one.
+- Without it, the powered board injects current through the unpowered one's protection
+  diodes; the line becomes undefined, the peripheral goes into error, and whoever
+  tries to **transmit** gets stuck.
 
-⚠️ **O defeito aparece do lado ALIMENTADO** — procura-se onde se manifesta, e
-mora do outro lado do cabo.
+⚠️ **The defect appears on the POWERED side** — you look where it manifests, and it
+lives on the other side of the cable.
 
-⚠️ **NÃO tirar a terra de sinal para resolver ruído.** É a troca de um zumbido
-por uma placa morta. Ruído de alimentação resolve-se com **desacoplamento local**
-(§P4), que mata a corrente onde nasce; a terra de sinal não se negoceia.
+⚠️ **Do NOT remove the signal ground to solve noise.** It is trading a hum for a dead
+board. Power noise is solved with **local decoupling** (§P4), which kills the current
+where it is born; the signal ground is not negotiable.
 
-*(Esta passada nasceu de um conselho errado, dado em 31/08 por aplicação da
-regra da §P0 — "referência não vai à estrela" — a um caso que ela não cobre.
-Custou uma placa que não arrancava e uma tarde a caçar firmware inocente.)*
+*(This pass was born from a wrong piece of advice, given on 31/08 by applying the §P0
+rule — "a reference does not go to the star" — to a case it does not cover. It cost a
+board that would not boot and an afternoon hunting innocent firmware.)*
 
-### P4 — Desacoplamento por TIPO DE CARGA
+### P4 — Decoupling by LOAD TYPE
 
-A pergunta *"precisa de condensador?"* **não tem resposta única para o
-sistema**. Classificar cada consumidor:
+The question *"does it need a capacitor?"* **has no single answer for the system**.
+Classify each consumer:
 
-| carga | precisa | erro comum |
+| load | needs | common error |
 |---|---|---|
-| corrente pulsada audível (amp classe D) | banco grande **+ 100 nF** nos pinos | banco em falta → zumbido cruzado |
-| **potência constante** (conversor comutado) | **nada de grande na entrada** | banco → **guincho** |
-| rajadas de rádio (BLE/WiFi) | **100 µF + 100 nF** locais | nada → o rádio sai pelo altifalante |
-| lógica (MCU) | 100 µF + 100 nF locais | nada → ruído difuso |
+| audible pulsed current (class-D amp) | a large bank **+ 100 nF** at the pins | missing bank → cross-hum |
+| **constant power** (switching converter) | **nothing large at the input** | a bank → **squeal** |
+| radio bursts (BLE/WiFi) | local **100 µF + 100 nF** | nothing → the radio comes out of the speaker |
+| logic (MCU) | local 100 µF + 100 nF | nothing → diffuse noise |
 
-- **Todo consumidor tem o PAR?** Só o grande deixa passar as arestas; só o
-  pequeno não tem energia. Um sozinho = achado.
-- **Está colado nos pinos?** A mais de poucos centímetros, liga-se através da
-  indutância que existe para contornar — achado 🟠.
-- **Tensão ≥1,5–2× o trilho?** Polaridade certa?
-- 🔴 **Banco grande de baixa ESR na entrada de conversor comutado** =
-  impedância de entrada negativa contra indutância da fiação → oscila
-  (Middlebrook). Achado que **destrói o som na hora**.
-- ⚠️ **Na saída de um step-down, 100 µF — não 2200.** Capacitância a mais
-  também mexe na estabilidade da malha.
-- **Inrush:** banco grande pode fazer uma fonte PD ler curto e re-negociar. Se
-  o arranque for intermitente, é isto — declarar, não caçar defeito novo.
+- **Does every consumer have the PAIR?** The large one alone lets the edges through;
+  the small one alone has no energy. One alone = a finding.
+- **Is it glued to the pins?** More than a few centimeters away, it connects through
+  the very inductance it exists to bypass — a finding 🟠.
+- **Voltage ≥1.5–2× the rail?** Right polarity?
+- 🔴 **A large low-ESR bank at the input of a switching converter** = negative input
+  impedance against the wiring inductance → it oscillates (Middlebrook). A finding
+  that **destroys the sound immediately**.
+- ⚠️ **At a step-down's output, 100 µF — not 2200.** Too much capacitance also affects
+  the loop's stability.
+- **Inrush:** a large bank can make a PD source read a short and re-negotiate. If the
+  startup is intermittent, this is it — declare it, do not hunt a new defect.
 
-### P5 — Entradas de alta impedância
+### P5 — High-impedance inputs
 
-Fonte de impedância alta (piezo, captador, cristal) **é uma antena**, e o que
-ela apanha passa por **toda** a cadeia de ganho a jusante.
+A high-impedance source (piezo, pickup, crystal) **is an antenna**, and what it picks
+up passes through **the entire** downstream gain chain.
 
-- Retorno na ilha de `AGND`?
-- Sinal e retorno **viajam juntos** (lado a lado ou torcidos)? Caminhos
-  separados = área de laço = achado.
-- Cabo blindado: **malha ligada numa ponta só?** Nas duas pontas ela vira anel
-  e conduz — achado.
-- ⚠️ **Há um gate/expansor a tapar ruído de entrada?** Achado disfarçado: o
-  limiar que silencia o ruído também come as caudas do instrumento. Se o
-  limiar teve de subir, o defeito está na entrada.
+- Return on the `AGND` island?
+- Do the signal and return **travel together** (side by side or twisted)? Separate
+  paths = loop area = a finding.
+- Shielded cable: **shield connected at one end only?** At both ends it becomes a loop
+  and conducts — a finding.
+- ⚠️ **Is there a gate/expander covering input noise?** A disguised finding: the
+  threshold that silences the noise also eats the instrument's tails. If the threshold
+  had to be raised, the defect is at the input.
 
-### P6 — Acoplamento pelo ar
+### P6 — Coupling through the air
 
-Nem tudo é cobre, e o que se acopla pelo ar **é imune a esquema de terra**.
+Not everything is copper, and what couples through the air **is immune to a ground
+scheme**.
 
-- **Saída de amp classe D** = onda quadrada a centenas de kHz com corrente
-  alta. Cabos de entrada em paralelo com ela = achado 🟠. Cruzamentos **em
-  ângulo recto**.
-- **Rádio** (BLE/WiFi): tem **duas caras**, e parecem dois defeitos —
-  **conectado**, rajadas no intervalo de ligação = **zumbido contínuo**;
-  **desconectado**, rajadas de anúncio (~100–300 ms) = **clique a ~3 Hz**.
-  Mesmo mecanismo, dois ritmos. Não os tratar como defeitos separados.
-- Percurso de cabos declarado no desenho, ou "logo se vê na montagem"? O
-  segundo é achado ⚪ que vira 🟠 na montagem seguinte.
+- **A class-D amp output** = a square wave at hundreds of kHz with high current. Input
+  cables parallel to it = a finding 🟠. Crossings **at a right angle**.
+- **Radio** (BLE/WiFi): it has **two faces**, and they look like two defects —
+  **connected**, bursts at the connection interval = **continuous hum**;
+  **disconnected**, advertising bursts (~100–300 ms) = **a click at ~3 Hz**. Same
+  mechanism, two rhythms. Do not treat them as separate defects.
+- Is the cable routing declared in the design, or "we'll see at assembly"? The second
+  is a ⚪ finding that becomes 🟠 at the next assembly.
 
-### P7 — Plano de medição
+### P7 — Measurement plan
 
-A revisão termina com **como se prova**, não com opinião.
+The review ends with **how it is proven**, not with opinion.
 
-- Ponto de estrela como referência, multímetro em **AC/mV**, **sob carga**.
-- Um número por consumidor, **anotado antes de qualquer mudança** (R3).
-- Critério de aceitação **escrito antes do conserto**: que número, em que ponto,
-  significa resolvido.
+- The star point as reference, multimeter on **AC/mV**, **under load**.
+- One number per consumer, **recorded before any change** (R3).
+- Acceptance criterion **written before the fix**: what number, at what point, means
+  resolved.
 
-| leitura | significa |
+| reading | means |
 |---|---|
-| 0 mV | está de facto na estrela |
-| dezenas de mV | chega lá através de outra coisa — falta fio próprio |
-| subiu após a mudança | a mudança piorou; desfazer |
+| 0 mV | it is in fact at the star |
+| tens of mV | it arrives there through something else — its own wire is missing |
+| rose after the change | the change made it worse; undo it |
 
-⚠️ **Procurar um medidor de massa gratuito.** Um clique periódico audível que
-segue um LED, um relé, um refrescamento de ecrã — isso é acoplamento a
-denunciar-se sozinho. Um LED consome miliamperes: **se é audível, o
-acoplamento é grande**, e tudo o resto que a placa faz passa pelo mesmo
-caminho sem padrão que dê por si.
+⚠️ **Look for a free ground meter.** An audible periodic click that follows an LED, a
+relay, a screen refresh — that is coupling denouncing itself. An LED draws milliamps:
+**if it is audible, the coupling is large**, and everything else the board does passes
+through the same path without a pattern that gives it away.
 
-**Silenciá-lo por firmware esconde o defeito.** Depois da massa arrumada ele
-desaparece sozinho — e é esse o teste de que ficou bem feita.
-
----
-
-## Formato do relatório
-
-1. **O que foi revisto** — desenho, revisão, data. Passadas cobertas.
-2. **O QUE PASSOU**, explícito, por passada (R6).
-3. **Achados por severidade**, cada um com: onde · regra violada **pelo nome** ·
-   consequência audível/medível · conserto mínimo · fio, componente ou desenho.
-4. **Ordem de ataque** — uma variável de cada vez (R2), com o critério de
-   aceitação de cada passo escrito **antes**.
-5. **O que NÃO foi verificado** e porquê (R8).
+**Silencing it in firmware hides the defect.** Once the ground is tidied it disappears
+on its own — and that is the test that it was done right.
 
 ---
 
-## Anti-decadência
+## Report format
 
-Família de defeito nova descoberta numa revisão **entra como passada ou item
-neste arquivo** — proposta, nunca em silêncio. A revisão que não se actualiza
-revê o projecto de ontem.
+1. **What was reviewed** — design, revision, date. Passes covered.
+2. **WHAT PASSED**, explicit, per pass (R6).
+3. **Findings by severity**, each with: where · rule violated **by name** ·
+   audible/measurable consequence · minimum fix · wire, component or design.
+4. **Order of attack** — one variable at a time (R2), with each step's acceptance
+   criterion written **beforehand**.
+5. **What was NOT verified** and why (R8).
+
+---
+
+## Anti-decay
+
+A new defect family discovered in a review **enters as a pass or item in this file** —
+proposed, never in silence. The review that does not update itself reviews yesterday's
+project.

@@ -1,237 +1,236 @@
-# Fontes de componentes — a árvore de 3 níveis e o portão STOP
+# Component sources — the 3-level tree and the STOP gate
 
-Referência do **estágio 2** da pipeline `/aipcb`. Toda linha do BOM tem de acabar
-**ou** com um C-number da LCSC em stock que a JLC monta mesmo, **ou** com um
-footprint próprio, justificado e verificado por datasheet. Este documento fixa a
-árvore de decisão de 3 níveis e o portão STOP que o `scripts/manifesto_fontes.py`
-aplica.
+Reference for **stage 2** of the `/aipcb` pipeline. Every BOM line has to end up
+**either** with an in-stock LCSC C-number that JLC actually assembles, **or** with
+an own footprint, justified and verified against the datasheet. This document fixes
+the 3-level decision tree and the STOP gate that `scripts/manifesto_fontes.py`
+enforces.
 
-> ⚠️ **Preços e taxas mudam.** Os números aqui são "ordem de grandeza / como
-> funciona", nunca um contrato — **re-confirmar a cotação viva na página da
-> encomenda da JLCPCB** antes de confiar em qualquer valor em cache.
+> ⚠️ **Prices and fees change.** The numbers here are "order of magnitude / how it
+> works", never a contract — **re-confirm the live quote on the JLCPCB order page**
+> before trusting any cached value.
 
 ---
 
-## 1. O modelo de peças da JLCPCB
+## 1. JLCPCB's part model
 
-### Os tiers
+### The tiers
 
-O tier é propriedade da peça LCSC **como está em stock para montagem**, não da
-entrada no catálogo da LCSC — uma peça pode vender-se em bobine e **não** estar
-na biblioteca de montagem.
+The tier is a property of the LCSC part **as it is in stock for assembly**, not of
+the entry in the LCSC catalog — a part may sell on reel and **not** be in the
+assembly library.
 
-| Tier | O que é | Taxa de feeder |
+| Tier | What it is | Feeder fee |
 |---|---|---|
-| **Basic** | ~600–700 jellybeans sempre carregados na máquina (R/C 0402/0603/0805, transístores, LEDs, reguladores comuns) | **Nenhuma** |
-| **Preferred Extended** | Extended de alta rotação, marcado "Preferred" | **Isento** em Economic PCBA |
-| **Extended** (não-preferred) | Todo o resto na biblioteca; precisa de feeder montado para o teu job | **por tipo de peça único** |
+| **Basic** | ~600–700 jellybeans always loaded in the machine (R/C 0402/0603/0805, transistors, LEDs, common regulators) | **None** |
+| **Preferred Extended** | High-rotation Extended, marked "Preferred" | **Waived** in Economic PCBA |
+| **Extended** (non-preferred) | Everything else in the library; needs a feeder mounted for your job | **per unique part type** |
 
-Ranking custo-óptimo: **Basic > Preferred Extended > Extended > (custom / fora da
-biblioteca)**. A taxa de feeder do Extended é **uma vez por C-number distinto**,
-não por colocação (100× o mesmo condensador = uma taxa).
+Cost-optimal ranking: **Basic > Preferred Extended > Extended > (custom / outside the
+library)**. The Extended feeder fee is **once per distinct C-number**, not per
+placement (100× the same capacitor = one fee).
 
-### O que "na biblioteca de montagem da JLC" significa
+### What "in JLC's assembly library" means
 
-= o C-number aparece no catálogo de **montagem SMT da JLCPCB** com stock de
-montagem > 0 e tier atribuído. É um **pool de stock diferente** do retalho da
-LCSC — empresas irmãs, logística separada, mesma referência C-number.
+= the C-number appears in the **JLCPCB SMT assembly** catalog with assembly stock > 0
+and an assigned tier. It is a **different stock pool** from LCSC retail — sister
+companies, separate logistics, same C-number reference.
 
-Como conferir uma peça (`C#####`):
-- **UI oficial:** `https://jlcpcb.com/parts` — mostra tier, stock de montagem,
-  escada de preço. (Fraca para busca paramétrica — ver §2.)
-- **Na encomenda:** o fluxo de montagem casa cada C-number e sinaliza "fora de
-  stock" / "não na biblioteca" por linha. Autoritativo, mas não scriptável antes.
-- **Programático:** §2.
+How to check a part (`C#####`):
+- **Official UI:** `https://jlcpcb.com/parts` — shows tier, assembly stock, price
+  ladder. (Weak for parametric search — see §2.)
+- **In the order:** the assembly flow matches each C-number and flags "out of stock"
+  / "not in the library" per line. Authoritative, but not scriptable beforehand.
+- **Programmatic:** §2.
 
-Não há **API REST pública oficial** de stock/montagem. Todo acesso programático
-é via datasets raspados ou wrappers da comunidade.
+There is **no official public REST API** for stock/assembly. All programmatic access
+is via scraped datasets or community wrappers.
 
 ---
 
-## 2. Busca programática (achar peça na biblioteca / equivalente)
+## 2. Programmatic search (find a part in the library / equivalent)
 
-### (a) `jlcparts` (yaqwsx) — fonte offline recomendada
+### (a) `jlcparts` (yaqwsx) — recommended offline source
 
 - Repo: `https://github.com/yaqwsx/jlcparts` · UI: `https://yaqwsx.github.io/jlcparts/`
-- Uma GitHub Action raspa a biblioteca de montagem para `cache.sqlite3`; depois
-  `jlcparts buildtables ... cache.sqlite3 web/public/data` emite JSON por
-  categoria. Puxa a DB construída e **consulta local por SQL** — sem limites de
-  rate, determinista, offline.
-- Cada registo traz: C-number, fabricante+MPN, categoria/subcategoria,
-  pacote/footprint, flag Basic/Extended(+Preferred), stock, escada de preço,
-  URL do datasheet, e um blob de atributos paramétricos. É isto que permite a
-  busca paramétrica de "acha um equivalente".
-- ⚠️ O repo canónico é **yaqwsx/jlcparts** (nomes tipo "yaganidev/jlcparts" são
+- A GitHub Action scrapes the assembly library into `cache.sqlite3`; then
+  `jlcparts buildtables ... cache.sqlite3 web/public/data` emits JSON per category.
+  Pull the built DB and **query locally with SQL** — no rate limits, deterministic,
+  offline.
+- Each record carries: C-number, manufacturer+MPN, category/subcategory,
+  package/footprint, Basic/Extended(+Preferred) flag, stock, price ladder,
+  datasheet URL, and a parametric-attributes blob. It is this that enables the
+  parametric "find an equivalent" search.
+- ⚠️ The canonical repo is **yaqwsx/jlcparts** (names like "yaganidev/jlcparts" are
   mirrors/forks).
 
 ### (b) `jlcsearch` (tscircuit)
 
-Motor de busca de peças JLC em stock; **qualquer página devolve JSON acrescentando
-`.json`** ao URL → queries paramétricas triviais com LCSC#, fabricante, pacote,
-descrição, stock, preço.
+Search engine for in-stock JLC parts; **any page returns JSON by appending `.json`**
+to the URL → trivial parametric queries by LCSC#, manufacturer, package,
+description, stock, price.
 
 ### (c) Apify "JLCPCB Parts Finder"
 
-`https://apify.com/amicable_grid/jlcpcb-parts-finder/api` — C-number → JSON com
-stock vivo, escada de preço, specs, pacote, MOQ, datasheet. API paga; bom para
-confirmar uma peça a pedido.
+`https://apify.com/amicable_grid/jlcpcb-parts-finder/api` — C-number → JSON with
+live stock, price ladder, specs, package, MOQ, datasheet. Paid API; good for
+confirming a part on demand.
 
-### (d) Endpoints diretos da LCSC (frágeis — precisam CSRF + cookies)
+### (d) Direct LCSC endpoints (fragile — need CSRF + cookies)
 
-`GET https://lcsc.com/api/global/additional/search?q=<C-number>` e
-`POST https://lcsc.com/api/products/search`. Throttle ~100 req/min, sem API
-oficial. Usar com parcimónia.
+`GET https://lcsc.com/api/global/additional/search?q=<C-number>` and
+`POST https://lcsc.com/api/products/search`. Throttle ~100 req/min, no official API.
+Use sparingly.
 
-### Checklist de equivalente SEGURO (fallback do nível 1)
+### SAFE equivalent checklist (level-1 fallback)
 
-Quando o MPN exacto não é peça montável, busca no dataset uma peça na biblioteca
-(Basic → Preferred Extended → Extended) que bata em **todos** estes antes de substituir:
+When the exact MPN is not an assemblable part, search the dataset for a part in the
+library (Basic → Preferred Extended → Extended) that matches **all** of these before
+substituting:
 
-1. **Footprint/pacote** idêntico (0402, SOT-23-3, SOIC-8). Pacote diferente =
-   footprint diferente = não é drop-in.
-2. **Valor primário** — R/C/L, ou a família funcional para ICs.
-3. **Tensão** ≥ original. **4. Corrente/potência** ≥ original.
-5. **Tolerância** ≤ original (mais apertada ou igual, nunca mais folgada).
-6. **Dieléctrico/temp** — em caps, **X7R/X5R/C0G têm de bater de classe** (um Y5V
-   "equivalente" de um X7R não é seguro).
-7. **Faixa de temperatura** ≥ original.
-8. Para ICs/reguladores: **pinout idêntico** + spec eléctrica (dropout, Iq,
-   família lógica/limiar, speed grade).
+1. **Footprint/package** identical (0402, SOT-23-3, SOIC-8). Different package =
+   different footprint = not a drop-in.
+2. **Primary value** — R/C/L, or the functional family for ICs.
+3. **Voltage** ≥ original. **4. Current/power** ≥ original.
+5. **Tolerance** ≤ original (tighter or equal, never looser).
+6. **Dielectric/temp** — on caps, **X7R/X5R/C0G have to match class** (a Y5V
+   "equivalent" of an X7R is not safe).
+7. **Temperature range** ≥ original.
+8. For ICs/regulators: **identical pinout** + electrical spec (dropout, Iq,
+   logic family/threshold, speed grade).
 
-Só depois de todas as linhas aplicáveis baterem é que o substituto é "seguro".
-Regista o MPN original, o LCSC# escolhido, o tier e os parâmetros que bateram —
-é o rasto de auditoria.
+Only after all the applicable lines match is the substitute "safe". Record the
+original MPN, the chosen LCSC#, the tier and the parameters that matched — it is the
+audit trail.
 
 ---
 
-## 3. Importar / converter uma peça (fallback do nível 2)
+## 3. Import / convert a part (level-2 fallback)
 
-Quando não há equivalente aceitável na biblioteca mas a peça **existe** na
-LCSC/EasyEDA, puxa símbolo+footprint+3D em vez de desenhar à mão.
+When there is no acceptable equivalent in the library but the part **exists** on
+LCSC/EasyEDA, pull symbol+footprint+3D instead of drawing it by hand.
 
-### `easyeda2kicad.py` (uPesy) — conversor primário
+### `easyeda2kicad.py` (uPesy) — primary converter
 
 ```bash
 pip install easyeda2kicad
 easyeda2kicad --full --lcsc_id=C2040
 easyeda2kicad --full --lcsc_id=C2040 --output <proj>/lib/jlc --overwrite
 ```
-- KiCad v6–v9; emite `.kicad_sym` + `.pretty/` + `.3dshapes/`.
-- ⚠️ Aponta `--output` para uma lib **do projecto** e adiciona-a às
-  `sym-lib-table`/`fp-lib-table` **do projecto** — a peça viaja com o repo.
-- ⚠️ README: *"a correcção dos símbolos/footprints não é garantida — confere
-  sempre."* → corre a verificação §4 antes de confiar num footprint convertido.
+- KiCad v6–v9; emits `.kicad_sym` + `.pretty/` + `.3dshapes/`.
+- ⚠️ Point `--output` at a **project** lib and add it to the project's
+  `sym-lib-table`/`fp-lib-table` — the part travels with the repo.
+- ⚠️ README: *"the correctness of symbols/footprints is not guaranteed — always
+  check."* → run the §4 verification before trusting a converted footprint.
 
-### `JLC2KiCadLib` (TousstNicolas) — alternativa
+### `JLC2KiCadLib` (TousstNicolas) — alternative
 
 ```bash
 pip install JLC2KiCadLib
 JLC2KiCadLib C1337258 -dir My_lib -symbol_lib My_symbol_lib \
   -footprint_lib My_footprint_lib -models STEP WRL
 ```
-Escreve uma árvore de lib de projecto auto-contida, fácil de commitar.
+Writes a self-contained project lib tree, easy to commit.
 
-### Outras fontes (quando o EasyEDA não tem bom modelo)
+### Other sources (when EasyEDA has no good model)
 
-SnapEDA · Component Search Engine (SamacSys) · Ultra Librarian — export nativo
-KiCad, muitas vezes **mais IPC-exacto** que o EasyEDA convertido; mas **sem
-C-number**, por isso ainda deves a §2 para atar um C-number montável à linha.
-
----
-
-## 4. Construir do datasheet (fallback do nível 3)
-
-Só quando a peça é real e não tem símbolo/footprint utilizável em lado nenhum.
-
-- **Footprint:** land patterns por **IPC-7351(B)**. Sufixo de densidade no nome:
-  **M** (Most, hand-solder), **N** (Nominal — o default são), **L** (Least).
-  Usa **Nominal (N)** salvo razão de densidade. Courtyard em `F.CrtYd`/`B.CrtYd`
-  (o DRC do KiCad acusa sobreposição; excesso nominal ≈ 0,25 mm). **Nunca apagar
-  o courtyard.**
-- Ferramentas: Footprint Wizard do KiCad (famílias paramétricas) ·
-  `pointhi/kicad-footprint-generator` · calculadoras IPC-7351.
-- **Símbolo:** números/nomes/tipos de pino direto da tabela de pinout; pinos de
-  potência com tipo correcto; pino do símbolo mapeia 1:1 ao pad do footprint.
-
-### Verificar um footprint à-mão ANTES de confiar
-
-1. **Auditoria de cotas vs datasheet:** passo, tamanho de pad, courtyard, span —
-   passo trocado ou X/Y invertido é o assassino nº 1.
-2. **Contagem/numeração de pads vs pinout;** marca de pino-1 no silk/fab bate com
-   o canto do datasheet.
-3. **Checker do Footprint Editor + DRC** depois de colocado.
-4. **3D + teste em papel:** imprime 1:1 e põe a peça real por cima — apanha erro
-   métrico/imperial e de passo na hora.
-5. **Polaridade/orientação:** para peças polarizadas a marca de pino-1/cátodo/mais
-   no **fab** tem de ser inequívoca — ela conduz a rotação do CPL (§5).
-6. **Paste/mask:** aberturas de paste presentes; thermal pad segmentado
-   (QFN/DFN).
-
-Regista: revisão+página do datasheet do land pattern, as cotas usadas, e
-quem/o quê verificou. É o artefacto que justifica um footprint próprio.
+SnapEDA · Component Search Engine (SamacSys) · Ultra Librarian — native KiCad
+export, often **more IPC-accurate** than the converted EasyEDA; but **no C-number**,
+so you still owe §2 to tie an assemblable C-number to the line.
 
 ---
 
-## 5. BOM / CPL e a armadilha da rotação
+## 4. Build from the datasheet (level-3 fallback)
 
-**BOM** (colunas mínimas): `Comment` (valor), `Designator`, `Footprint`,
-`LCSC Part #`. Peças iguais numa linha só, designadores juntos por vírgula.
+Only when the part is real and has no usable symbol/footprint anywhere.
 
-**CPL/centroide:** `Designator`, `Mid X`, `Mid Y`, `Layer` (Top/Bottom),
-`Rotation` (graus, convenção JLC, em **mm**).
+- **Footprint:** land patterns per **IPC-7351(B)**. Density suffix in the name:
+  **M** (Most, hand-solder), **N** (Nominal — the default is), **L** (Least).
+  Use **Nominal (N)** barring a density reason. Courtyard on `F.CrtYd`/`B.CrtYd`
+  (KiCad's DRC flags overlap; nominal excess ≈ 0.25 mm). **Never delete the
+  courtyard.**
+- Tools: KiCad's Footprint Wizard (parametric families) ·
+  `pointhi/kicad-footprint-generator` · IPC-7351 calculators.
+- **Symbol:** pin numbers/names/types straight from the pinout table; power pins
+  with the correct type; symbol pin maps 1:1 to the footprint pad.
 
-⚠️ **A rotação 0° do KiCad quase nunca bate com a da biblioteca da JLC** — para
-muitos pacotes (SOT-23-x, SOIC/SOP, QFN, caps de tântalo/electro, LEDs, díodos
-SOD-123) o desfasamento é fixo (90/180/270°); alguns precisam de offset XY. E o
-CPL da JLC usa convenção **Y-flipada** vs KiCad. Enviar a rotação crua → peça
-montada torta → **placa morta**. Ferramentas que corrigem: `Bouni/kicad-jlcpcb-
-tools` (GUI), `matthewlai/JLCKicadTools` (CLI), KiBot. **Depois de gerar,
-confirmar peça-a-peça no pré-visualizador da JLC** — é o portão ⟨dB⟩ do estágio 8,
-não é scriptável.
+### Verify a hand-built footprint BEFORE trusting it
+
+1. **Dimension audit vs datasheet:** pitch, pad size, courtyard, span — a swapped
+   pitch or an X/Y inversion is the #1 killer.
+2. **Pad count/numbering vs pinout;** pin-1 mark on the silk/fab matches the corner
+   in the datasheet.
+3. **Footprint Editor checker + DRC** after placing.
+4. **3D + paper test:** print 1:1 and put the real part on top — catches
+   metric/imperial and pitch errors on the spot.
+5. **Polarity/orientation:** for polarized parts the pin-1/cathode/plus mark on the
+   **fab** has to be unambiguous — it drives the CPL rotation (§5).
+6. **Paste/mask:** paste apertures present; segmented thermal pad (QFN/DFN).
+
+Record: datasheet revision+page of the land pattern, the dimensions used, and
+who/what verified it. It is the artifact that justifies an own footprint.
 
 ---
 
-## 6. A árvore de 3 níveis — decisão determinista (por linha do BOM)
+## 5. BOM / CPL and the rotation trap
 
-Corre **por linha**. Não avança a placa para layout/fabrica enquanto **toda**
-linha não passar o STOP gate.
+**BOM** (minimum columns): `Comment` (value), `Designator`, `Footprint`,
+`LCSC Part #`. Identical parts on a single line, designators joined by commas.
+
+**CPL/centroid:** `Designator`, `Mid X`, `Mid Y`, `Layer` (Top/Bottom),
+`Rotation` (degrees, JLC convention, in **mm**).
+
+⚠️ **KiCad's 0° rotation almost never matches JLC's library** — for many packages
+(SOT-23-x, SOIC/SOP, QFN, tantalum/electro caps, LEDs, SOD-123 diodes) the offset is
+fixed (90/180/270°); some need an XY offset. And JLC's CPL uses a **Y-flipped**
+convention vs KiCad. Sending the raw rotation → part mounted crooked → **dead
+board**. Tools that fix it: `Bouni/kicad-jlcpcb-tools` (GUI),
+`matthewlai/JLCKicadTools` (CLI), KiBot. **After generating, confirm part-by-part in
+JLC's previewer** — it is the ⟨dB⟩ gate of stage 8, not scriptable.
+
+---
+
+## 6. The 3-level tree — deterministic decision (per BOM line)
+
+Run it **per line**. The board does not advance to layout/fabrication until **every**
+line passes the STOP gate.
 
 ```
-Q0. Já há um C-number válido e em stock nesta linha (stock>0 E na biblioteca)?
-    SIM → regista tier → PASSA.
-    NÃO → NÍVEL 1.
+Q0. Is there already a valid, in-stock C-number on this line (stock>0 AND in the library)?
+    YES → record tier → PASS.
+    NO → LEVEL 1.
 
-NÍVEL 1: equivalente na biblioteca (mais barato, mais fiável).
-    busca por categoria+pacote+valor → filtra stock>0 E na biblioteca →
-    ranking Basic>Preferred Extended>Extended → confirma o checklist de equivalência §2.
-    match seguro → atribui C-number + tier + params + MPN original → PASSA.
-    sem equivalente seguro → NÍVEL 2.
+LEVEL 1: equivalent in the library (cheapest, most reliable).
+    search by category+package+value → filter stock>0 AND in the library →
+    rank Basic>Preferred Extended>Extended → confirm the §2 equivalence checklist.
+    safe match → assign C-number + tier + params + original MPN → PASS.
+    no safe equivalent → LEVEL 2.
 
-NÍVEL 2: importar a peça exacta (existe na LCSC/EasyEDA).
-    easyeda2kicad --full --lcsc_id=C##### --output <proj>/lib/jlc   (ou JLC2KiCadLib)
-    → lib do PROJECTO → verificação §4.
-    C-number na biblioteca de montagem → PASSA.
-    comprável mas NÃO na biblioteca → marca "cliente-fornece/consignado" → PASSA*
-        (*só se a encomenda permitir peça auto-fornecida).
-    sem símbolo/footprint em lado nenhum → NÍVEL 3.
+LEVEL 2: import the exact part (exists on LCSC/EasyEDA).
+    easyeda2kicad --full --lcsc_id=C##### --output <proj>/lib/jlc   (or JLC2KiCadLib)
+    → PROJECT lib → §4 verification.
+    C-number in the assembly library → PASS.
+    buyable but NOT in the library → mark "customer-supplied/consigned" → PASS*
+        (*only if the order allows a self-supplied part).
+    no symbol/footprint anywhere → LEVEL 3.
 
-NÍVEL 3: construir do datasheet.
-    símbolo do pinout · footprint IPC-7351 Nominal(N) · courtyard em F.CrtYd
-    → VERIFICAÇÃO §4 (obrigatória) → atar fonte (C-number ou cliente-fornece)
-    → PASSA.
+LEVEL 3: build from the datasheet.
+    symbol from the pinout · IPC-7351 Nominal(N) footprint · courtyard on F.CrtYd
+    → §4 VERIFICATION (mandatory) → tie the source (C-number or customer-supplied)
+    → PASS.
 
-═══ STOP GATE ═══  avança só quando, para CADA linha, uma é verdade:
-  (A) C-number válido, em stock, na biblioteca de montagem, tier registado; OU
-  (B) footprint importado/à-mão §4-VERIFICADO com C-number confirmado na
-      biblioteca; OU
-  (C) linha explicitamente cliente-fornece com footprint verificado (só se a
-      encomenda permitir).
-  Qualquer linha sem (A/B/C) = BLOQUEADA. Não se gera o pacote de fabrica.
+═══ STOP GATE ═══  advance only when, for EACH line, one is true:
+  (A) valid C-number, in stock, in the assembly library, tier recorded; OR
+  (B) imported/hand-built footprint §4-VERIFIED with a C-number confirmed in the
+      library; OR
+  (C) line explicitly customer-supplied with a verified footprint (only if the
+      order allows).
+  Any line without (A/B/C) = BLOCKED. The fabrication package is not generated.
 ```
 
-### O manifesto de fontes (o artefacto do portão)
+### The source manifest (the gate's artifact)
 
-CSV/JSON commitado ao lado do projecto, uma linha por linha do BOM:
+CSV/JSON committed alongside the project, one line per BOM line:
 
 ```
 designator, intended_MPN, resolved_LCSC, tier(Basic/Preferred Extended/Extended/NA),
@@ -240,99 +239,99 @@ footprint_source(kicad_std|easyeda2kicad|JLC2KiCadLib|snapeda|hand),
 verified(yes/no + método), datasheet_ref, notes
 ```
 
-O abastecimento está "feito" quando **toda** linha tem `resolved_LCSC` não-vazio
-**e** (`assembly_stock` > 0) **ou** flag cliente-fornece justificada, **e** todo
-footprint importado/construído tem `verified=yes`. É este o ficheiro que o
-`scripts/manifesto_fontes.py` lê e recusa (sai ≠0 e lista as bloqueadas). Provado
-com `--sabota`.
+Sourcing is "done" when **every** line has a non-empty `resolved_LCSC` **and**
+(`assembly_stock` > 0) **or** a justified customer-supplied flag, **and** every
+imported/built footprint has `verified=yes`. It is this file that
+`scripts/manifesto_fontes.py` reads and refuses (exits ≠0 and lists the blocked
+ones). Proven with `--sabota`.
 
 ```bash
 python3 .claude/skills/aipcb/scripts/manifesto_fontes.py manifesto_fontes.csv
-python3 .claude/skills/aipcb/scripts/manifesto_fontes.py --sabota   # prova que sabe dizer não
+python3 .claude/skills/aipcb/scripts/manifesto_fontes.py --sabota   # proves it can say no
 ```
 
 ---
 
-## 7. Sourcing com Claude-on-Chrome — o navegador do humano é a fonte-da-verdade
+## 7. Sourcing with Claude-on-Chrome — the human's browser is the source of truth
 
-Toda a §2 acima assume acesso programático ao stock. Nesta sessão isso partiu-se,
-e a lição é dura o suficiente para virar método próprio.
+All of §2 above assumes programmatic access to stock. In this session that broke,
+and the lesson is hard enough to become its own method.
 
-### Causa-raiz
+### Root cause
 
-O **sandbox do agente não alcança a Mouser nem a Octopart** — `mouser.com` e
-`octopart.com` respondem **403** por política de egress (curl e WebFetch batem na
-parede). O **`WebSearch` funciona**, mas só prova uma coisa: quando devolve uma
-página `mouser.com/ProductDetail/...`, o Mouser **CATALOGA** aquela peça. **Nunca
-diz o stock.** Catálogo é presença; stock é disponibilidade — e são coisas
-diferentes.
+The **agent sandbox cannot reach Mouser or Octopart** — `mouser.com` and
+`octopart.com` reply **403** by egress policy (curl and WebFetch hit the wall).
+**`WebSearch` works**, but it only proves one thing: when it returns a
+`mouser.com/ProductDetail/...` page, Mouser **CATALOGS** that part. **It never says
+the stock.** Catalog is presence; stock is availability — and they are different
+things.
 
-### Regra de ouro
+### Golden rule
 
-> **O navegador do humano (Claude-on-Chrome) é a fonte-da-verdade de
-> disponibilidade.** O sandbox propõe; o navegador confirma. **NUNCA declarar "em
-> estoque" a partir do sandbox** — o mais longe que o sandbox chega é "o Mouser
-> cataloga esta peça". **Catálogo ≠ estoque.** Uma linha de BOM só está *sourced*
-> quando o humano leu o verde de estoque na própria tela.
+> **The human's browser (Claude-on-Chrome) is the source of truth of
+> availability.** The sandbox proposes; the browser confirms. **NEVER declare "in
+> stock" from the sandbox** — the furthest the sandbox gets is "Mouser catalogs this
+> part". **Catalog ≠ stock.** A BOM line is only *sourced* when the human has read
+> the green stock on their own screen.
 
-### "Disponível" tem definição — e ela exclui o backorder
+### "Available" has a definition — and it excludes backorder
 
-MATCH no catálogo **não** é disponibilidade. O filtro tem de ser explícito, senão
-deixa passar peça que existe e não embarca:
+A MATCH in the catalog is **not** availability. The filter has to be explicit, or it
+lets through a part that exists and does not ship:
 
-- **Definição de "disponível":** há estoque **"Ships Now" ≥ a quantidade
-  necessária**.
-- **Tratar como INDISPONÍVEL (rejeitar e escolher alternativa):** **No Match**;
-  **0 "Ships Now"**; **qualquer "Backordered"**; e **long lead time** (o Mouser
-  marca *"Long lead time reported on this product"* / lead de várias semanas).
-- ⚠️ **Um MPN pode dar MATCH e mesmo assim estar backordered — isso NÃO conta como
-  sourced.** O filtro ingénuo "No Match?" deixa o backorder escapar, porque o
-  backorder *dá match*. Por isso o backorder tem de ser rejeitado **por nome**,
-  não por ausência.
+- **Definition of "available":** there is **"Ships Now" ≥ the needed quantity** in
+  stock.
+- **Treat as UNAVAILABLE (reject and pick an alternative):** **No Match**;
+  **0 "Ships Now"**; **any "Backordered"**; and **long lead time** (Mouser marks
+  *"Long lead time reported on this product"* / several-week lead).
+- ⚠️ **An MPN can MATCH and still be backordered — that does NOT count as sourced.**
+  The naive "No Match?" filter lets the backorder slip through, because the backorder
+  *does match*. So the backorder has to be rejected **by name**, not by absence.
 
-**Âncora (o que custou esta sessão):** o Samsung `CL31A106KBHNNNE` (10 µF **50 V**)
-deu **match** no Mouser e estava **3 Backordered / long lead** — passou reto pelo
-filtro "no match" e teria fechado o pedido num item que não embarca. Foi trocado
-pelo `CL31B106KAHNNWE` (10 µF **25 V**, ~10 k em estoque, *Ships Now*). O objetivo
-declarado do método é **não repetir o ping-pong de MPN indisponível**.
+**Anchor (what this session cost):** the Samsung `CL31A106KBHNNNE` (10 µF **50 V**)
+**matched** on Mouser and was **3 Backordered / long lead** — it sailed through the
+"no match" filter and would have closed the order on an item that does not ship. It
+was swapped for `CL31B106KAHNNWE` (10 µF **25 V**, ~10 k in stock, *Ships Now*). The
+method's stated goal is to **not repeat the unavailable-MPN ping-pong**.
 
-### Preferir fabricantes que a Mouser carrega
+### Prefer manufacturers that Mouser carries
 
-A escolha do MPN candidato já resolve metade do problema. **Preferir** marcas que
-o Mouser certamente lista:
+The choice of candidate MPN already solves half the problem. **Prefer** brands Mouser
+certainly lists:
 
 > Yageo · KEMET · Murata · TDK · Samsung · Vishay · onsemi · Nexperia · Diodes ·
 > TE · Amphenol · Würth · Bourns · Littelfuse · Panasonic.
 
-**Evitar** códigos/marcas que a Mouser costuma **não** listar — foi o que gerou os
-*"No Match"* desta sessão: **AOS** (`AO3400A`), **código-exato WIMA**
-(`MKS2C042201...`), **3M/Sullins específicos** (`N2513`, `PRPC...`). O AO3400A é
-óptimo no papel e simplesmente não é catálogo Mouser; fica como *valor de esquema
-e âncora de equivalência*, e o que se compra é o equivalente catalogado (ex.: o
-`SI2302CDS-T1-GE3` da Vishay).
+**Avoid** codes/brands Mouser usually does **not** list — that is what produced the
+*"No Match"* of this session: **AOS** (`AO3400A`), **exact-code WIMA**
+(`MKS2C042201...`), **specific 3M/Sullins** (`N2513`, `PRPC...`). The AO3400A is great
+on paper and simply is not in the Mouser catalog; it stays as a *schematic value and
+equivalence anchor*, and what you buy is the cataloged equivalent (e.g.: Vishay's
+`SI2302CDS-T1-GE3`).
 
-### Fluxo em 3 passos
+### 3-step flow
 
-1. **Pipeline gera o BOM consolidado** (`export/BOM_CONSOLIDADO.csv`) com **MPNs
-   candidatos** das marcas acima — uma linha por peça física, spec + footprint +
-   qty. É trabalho de sandbox, e pára em "candidato", nunca em "confirmado".
-2. **Hand-off pro Claude-on-Chrome** — o humano abre o navegador com o Claude e
-   corre o prompt-template abaixo, peça a peça, filtrando por estoque real.
-3. **Travar os confirmados** no `export/COMPRA_MOUSER.csv` + no template
-   (`.xlsx`/`.xls`), preenchendo **Mfr Part# E Mouser#** (match exato, os dois
-   campos) só para as peças que voltaram com *Ships Now* ≥ qty. O que voltou
-   backordered/long-lead volta ao passo 1 por uma alternativa.
+1. **The pipeline generates the consolidated BOM** (`export/BOM_CONSOLIDADO.csv`)
+   with **candidate MPNs** from the brands above — one line per physical part, spec +
+   footprint + qty. It is sandbox work, and it stops at "candidate", never at
+   "confirmed".
+2. **Hand-off to Claude-on-Chrome** — the human opens the browser with Claude and
+   runs the prompt-template below, part by part, filtering by real stock.
+3. **Lock the confirmed ones** in `export/COMPRA_MOUSER.csv` + in the template
+   (`.xlsx`/`.xls`), filling in **Mfr Part# AND Mouser#** (exact match, both fields)
+   only for the parts that came back with *Ships Now* ≥ qty. What came back
+   backordered/long-lead goes back to step 1 for an alternative.
 
-### O que o Chrome devolve
+### What Chrome returns
 
-**Por peça, o estoque `Ships Now` E o lead time** — não "existe no catálogo". A
-coluna de retorno passa a ser:
+**Per part, the `Ships Now` stock AND the lead time** — not "it exists in the
+catalog". The return column becomes:
 
 ```
 Peça | Mfr Part# | Mouser# | Ships Now (qty) | lead
 ```
 
-### Prompt-template pronto pro Chrome (bloco copiável)
+### Prompt-template ready for Chrome (copyable block)
 
 ```
 Estás no mouser.com com sessão do humano. Para CADA peça da lista abaixo:
@@ -353,28 +352,27 @@ Lista:
   ...
 ```
 
-O objetivo, dito outra vez: **não repetir o ping-pong de MPN indisponível.** O
-sandbox propõe candidatos catalogados; o navegador do humano fecha com estoque
-real; e nenhuma linha de BOM se dá por *sourced* sem o "Ships Now ≥ qty" lido na
-tela.
+The goal, said again: **do not repeat the unavailable-MPN ping-pong.** The sandbox
+proposes cataloged candidates; the human's browser closes with real stock; and no
+BOM line is taken as *sourced* without the "Ships Now ≥ qty" read on the screen.
 
 ---
 
-## Ferramentas — referência rápida
+## Tools — quick reference
 
-| Etapa | Ferramenta | Comando / URL |
+| Step | Tool | Command / URL |
 |---|---|---|
-| Busca paramétrica (offline) | jlcparts (yaqwsx) | `github.com/yaqwsx/jlcparts` |
-| Busca (JSON) | jlcsearch (tscircuit) | acrescenta `.json` ao URL da listagem |
-| Busca (hosted) | Apify JLCPCB Parts Finder | `apify.com/amicable_grid/jlcpcb-parts-finder` |
-| UI oficial | JLCPCB Parts Library | `jlcpcb.com/parts` |
-| Converter LCSC→KiCad | easyeda2kicad.py | `pip install easyeda2kicad` |
-| Converter LCSC→KiCad | JLC2KiCadLib | `pip install JLC2KiCadLib` |
-| Libs de fornecedor | SnapEDA · CSE · Ultra Librarian | web + plugin KiCad (sem C-number) |
-| Construir footprint | Footprint Wizard · pointhi/kicad-footprint-generator | IPC-7351 Nominal(N) |
-| BOM+CPL + rotação (GUI) | Bouni/kicad-jlcpcb-tools | PCM; corrige rotação+offset |
-| BOM+CPL + rotação (CLI) | matthewlai/JLCKicadTools | DB de correcção de rotação |
+| Parametric search (offline) | jlcparts (yaqwsx) | `github.com/yaqwsx/jlcparts` |
+| Search (JSON) | jlcsearch (tscircuit) | append `.json` to the listing URL |
+| Search (hosted) | Apify JLCPCB Parts Finder | `apify.com/amicable_grid/jlcpcb-parts-finder` |
+| Official UI | JLCPCB Parts Library | `jlcpcb.com/parts` |
+| Convert LCSC→KiCad | easyeda2kicad.py | `pip install easyeda2kicad` |
+| Convert LCSC→KiCad | JLC2KiCadLib | `pip install JLC2KiCadLib` |
+| Vendor libs | SnapEDA · CSE · Ultra Librarian | web + KiCad plugin (no C-number) |
+| Build footprint | Footprint Wizard · pointhi/kicad-footprint-generator | IPC-7351 Nominal(N) |
+| BOM+CPL + rotation (GUI) | Bouni/kicad-jlcpcb-tools | PCM; fixes rotation+offset |
+| BOM+CPL + rotation (CLI) | matthewlai/JLCKicadTools | rotation-correction DB |
 
-Ferramentas do próprio repo para este estágio: `tools/codigos_lcsc.py`,
+Tools from the repo itself for this stage: `tools/codigos_lcsc.py`,
 `tools/fichas.py`, `tools/bom_completa.py`, `kicad/mpn_nas_folhas.py`,
-`kicad/dnp_para_pcb.py`, e o `scripts/manifesto_fontes.py` desta skill.
+`kicad/dnp_para_pcb.py`, and this skill's `scripts/manifesto_fontes.py`.

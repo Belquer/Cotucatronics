@@ -1,169 +1,175 @@
-# versionamento — três camadas, uma regra de ouro (congelamento-no-lançamento)
+# versionamento — three layers, one golden rule (freeze-at-release)
 
-> **O que muda o artefacto fabricado tem de aparecer na placa.** Um pacote que sai
-> com o silk a dizer uma revisão e o gerber a dizer outra é um pacote que mente
-> sobre si mesmo — e é a fábrica, ou o dB com a placa na mão, quem paga a mentira.
+> **What changes the fabricated artifact has to show up on the board.** A package
+> that ships with the silk saying one revision and the gerber saying another is a
+> package that lies about itself — and it is the factory, or dB with the board in
+> hand, who pays for the lie.
 >
-> **⚠️ CONGELAMENTO-NO-LANÇAMENTO (2026-09-12).** A rev NÃO sobe a cada commit que
-> mexe no gerber. Sobe **por LANÇAMENTO**: enquanto uma placa não é **fabricada /
-> pedida**, ela fica no **mesmo rev**, e as iterações pré-fabricação **partilham
-> esse rev** — distinguem-se pelo **stamp de commit** do pacote, não por um número
-> novo. O número/letra só sobe quando um board é **efectivamente FABRICADO/PEDIDO**;
-> aí esse rev fica congelado e a **próxima** mudança de gerber abre o rev seguinte.
+> **⚠️ FREEZE-AT-RELEASE (2026-09-12).** The rev does NOT go up on every commit that
+> touches the gerber. It goes up **per RELEASE**: while a board is not **fabricated /
+> ordered**, it stays at the **same rev**, and the pre-fabrication iterations **share
+> that rev** — they are distinguished by the package's **commit stamp**, not by a new
+> number. The number/letter only goes up when a board is **actually FABRICATED/ORDERED**;
+> at that point that rev is frozen and the **next** gerber change opens the following rev.
 
-Este projecto versiona em **três camadas independentes**, cada uma a responder
-uma pergunta diferente. Confundi-las é o erro: subir o semver de um script não é
-subir a revisão da placa, e carimbar um commit não é dizer que o cobre mudou.
+This project versions in **three independent layers**, each answering a different
+question. Confusing them is the error: bumping the semver of a script is not
+bumping the revision of the board, and stamping a commit is not saying the copper
+changed.
 
-## As três camadas
+## The three layers
 
-### 1. Rev da placa, no silk — `rev <LETRA><N>`, POR PLACA
+### 1. Board rev, on the silk — `rev <LETTER><N>`, PER BOARD
 
-Vive na serigrafia da própria placa (`gr_text "cerebro rev C"`,
-`gr_text "painel rev C"`), escrita pelo gerador (`kicad/pcb_contorno.py`,
-função `marca`). É a identidade do **artefacto físico**.
+Lives on the silkscreen of the board itself (`gr_text "cerebro rev C"`,
+`gr_text "painel rev C"`), written by the generator (`kicad/pcb_contorno.py`,
+function `marca`). It is the identity of the **physical artifact**.
 
-- **Letra** = **geração**. É o rev "em aberto" enquanto a placa não foi
-  fabricada. Todas as iterações pré-fabricação (correcções, reposicionamentos,
-  mudanças de silk ou de cobre) **ficam nesta mesma letra** — o silk diz
-  `rev C`, sem número, e o que as separa é o **stamp de commit** do pacote.
-- **Quando sobe** = **só no lançamento**. Assim que uma placa `rev C` é
-  **fabricada/pedida**, esse rev fica **congelado** (o artefacto físico que
-  existe no mundo é `rev C`); a **próxima** mudança que altere o gerber/drill
-  abre o rev **seguinte** (`rev D`). O bump é a decisão de fabricar, não um
-  commit qualquer.
-- **Número** = opcional, e só faz sentido para distinguir **spins fabricados**
-  dentro de uma geração; enquanto não há fabrico, não se usa número (`rev C`, não
-  `rev C1`). O importante é: **não há um número novo por commit.**
-- É **POR PLACA**. O cérebro e o painel evoluem independentes: um pode já ter
-  sido fabricado e estar congelado enquanto o outro continua em aberto — cada um
-  carrega a sua verdade.
+- **Letter** = **generation**. It is the "open" rev while the board has not been
+  fabricated. All the pre-fabrication iterations (fixes, repositionings, silk or
+  copper changes) **stay at this same letter** — the silk says `rev C`, with no
+  number, and what separates them is the package's **commit stamp**.
+- **When it goes up** = **only at release**. As soon as a `rev C` board is
+  **fabricated/ordered**, that rev is **frozen** (the physical artifact that
+  exists in the world is `rev C`); the **next** change that alters the
+  gerber/drill opens the **following** rev (`rev D`). The bump is the decision to
+  fabricate, not just any commit.
+- **Number** = optional, and only makes sense to distinguish **fabricated spins**
+  within a generation; while there is no fabrication, no number is used (`rev C`,
+  not `rev C1`). The important thing is: **there is no new number per commit.**
+- It is **PER BOARD**. The brain board and the panel board evolve independently:
+  one may already have been fabricated and be frozen while the other is still
+  open — each carries its own truth.
 
-### 2. Stamp do pacote — short SHA do commit, em `export/`
+### 2. Package stamp — the commit's short SHA, in `export/`
 
-Cada pacote de fábrica vive em `export/<placa>_<data>_<commit>/`, e o `<commit>`
-é o **short SHA** do git no estado de que o pacote saiu (`para_fabrica` carimba
-`git rev-parse --short HEAD` + a data + o aviso de árvore-suja). É a
-**procedência**: diz de que ponto exacto do repo os gerbers foram gerados, e é
-recuperável do PR. Duas placas com a mesma rev de silk podem ter stamps
-diferentes se algo à volta mudou — o stamp é do **pacote**, a rev é da **placa**.
+Each factory package lives in `export/<placa>_<data>_<commit>/`, and the
+`<commit>` is the git **short SHA** in the state the package came out of
+(`para_fabrica` stamps `git rev-parse --short HEAD` + the date + the dirty-tree
+warning). It is the **provenance**: it says from exactly which point of the repo
+the gerbers were generated, and it is recoverable from the PR. Two boards with
+the same silk rev can have different stamps if something around them changed —
+the stamp is of the **package**, the rev is of the **board**.
 
-### 3. Semver dos scripts — o pipeline
+### 3. Script semver — the pipeline
 
-Cada ferramenta do pipeline (`para_fabrica`, `pcb_contorno`, `faz_placa`,
-`kit_montagem`, …) carrega `VERSAO = "X.Y.Z"` e bumpa segundo a `edicao-segura`
-(MAJOR incompatível · MINOR adição compatível · PATCH correcção sem mudança de
-comportamento). É a versão do **método**, não da placa. Melhorar o gerador não
-sobe a rev da placa; só sobe se a saída do gerador **mudar o gerber**.
+Each tool of the pipeline (`para_fabrica`, `pcb_contorno`, `faz_placa`,
+`kit_montagem`, …) carries `VERSAO = "X.Y.Z"` and bumps per `edicao-segura`
+(MAJOR incompatible · MINOR compatible addition · PATCH fix with no behavior
+change). It is the version of the **method**, not of the board. Improving the
+generator does not bump the board rev; it only bumps if the generator's output
+**changes the gerber**.
 
-## A regra de ouro
+## The golden rule
 
-> **A rev de um artefacto FABRICADO tem de ser rastreável — mas por LANÇAMENTO,
-> não por commit.**
-> **Enquanto a placa não foi fabricada/pedida, o gerber pode mudar N vezes e a rev
-> FICA** (as iterações distinguem-se pelo stamp de commit do pacote).
-> **A rev só sobe quando um board é efectivamente fabricado/pedido: aí congela, e a
-> mudança seguinte de gerber abre o rev a seguir.**
+> **The rev of a FABRICATED artifact has to be traceable — but per RELEASE,
+> not per commit.**
+> **While the board has not been fabricated/ordered, the gerber can change N times
+> and the rev STAYS** (the iterations are distinguished by the package's commit stamp).
+> **The rev only goes up when a board is actually fabricated/ordered: at that point
+> it freezes, and the next gerber change opens the rev after it.**
 
-O que continua a valer: um pacote nunca pode dizer no silk uma coisa e no gerber
-outra. O que MUDOU: "gerber mudou" já **não** obriga a subir o número — obriga só
-a um **stamp de commit** novo, dentro do mesmo rev, até haver um fabrico.
+What still holds: a package can never say one thing on the silk and another in the
+gerber. What CHANGED: "the gerber changed" no longer **forces** the number up — it
+only forces a new **commit stamp**, within the same rev, until there is a
+fabrication.
 
-Casos, para não ficar por fé:
+Cases, so it is not left to faith:
 
-| mudança | gerber/drill muda? | placa já foi fabricada nesta rev? | rev da placa | stamp | semver script |
+| change | gerber/drill changes? | board already fabricated at this rev? | board rev | stamp | script semver |
 |---|---|---|---|---|---|
-| corrigir cobre/silk numa placa **ainda não fabricada** | sim | não | **fica** (mesma letra) | **novo** | do gerador, se mudou |
-| mover/escalar a marca numa placa ainda não fabricada | **sim** (silk é gerber) | não | **fica** | **novo** | do gerador, se mudou |
-| primeira mudança de gerber **depois** de a placa ter sido fabricada | sim | sim (congelada) | **sobe** (letra a seguir) | novo | — |
-| agrupar a BOM por LCSC, escrever CPL rico | não | — | **fica** | novo (é outro commit) | sobe |
-| corrigir um comentário/doc, um teste, uma skill | não | — | **fica** | (não gera pacote) | sobe |
-| re-preencher zonas sem alterar geometria | não | — | **fica** | novo se re-empacotar | — |
+| fix copper/silk on a board **not yet fabricated** | yes | no | **stays** (same letter) | **new** | of the generator, if it changed |
+| move/scale the mark on a board not yet fabricated | **yes** (silk is gerber) | no | **stays** | **new** | of the generator, if it changed |
+| first gerber change **after** the board has been fabricated | yes | yes (frozen) | **goes up** (next letter) | new | — |
+| group the BOM by LCSC, write rich CPL | no | — | **stays** | new (it is another commit) | goes up |
+| fix a comment/doc, a test, a skill | no | — | **stays** | (generates no package) | goes up |
+| re-fill zones without changing geometry | no | — | **stays** | new if re-packaged | — |
 
-⚠️ **Silk É gerber** — mover/acrescentar/apagar serigrafia muda o `.GTO`/`.GBO`
-que a fábrica imprime. Mas sob congelamento-no-lançamento isso **não** sobe a rev
-enquanto a placa não foi fabricada: gera um **pacote novo (stamp novo), mesma
-rev**. Exemplo: o cérebro e o painel ficaram ambos em **`rev C`** ao longo de
-várias iterações pré-fabricação (reordenação do J2 do painel, reposicionamento +
-escala da marca do cérebro) — cada uma com o seu stamp de commit, todas `rev C`,
-porque nenhuma placa foi ainda mandada cortar. O cobre foi provado idêntico
-(fingerprint de cobre/rede igual, 0 alterações) nas iterações que só mexeram silk.
+⚠️ **Silk IS gerber** — moving/adding/deleting silkscreen changes the `.GTO`/`.GBO`
+that the factory prints. But under freeze-at-release this does **not** bump the rev
+while the board has not been fabricated: it generates a **new package (new stamp),
+same rev**. Example: the brain board and the panel board both stayed at **`rev C`**
+across several pre-fabrication iterations (reordering the panel's J2, repositioning +
+scaling the brain board's mark) — each with its own commit stamp, all `rev C`,
+because no board had yet been sent to be cut. The copper was proven identical
+(identical copper/net fingerprint, 0 changes) in the iterations that only touched silk.
 
-## Onde vive o histórico
+## Where the history lives
 
-O **histórico de revisões** — cada rev, o que mudou, e o commit — vive em
-**`docs/relatorio/002.md`**, na secção «Histórico de revisões». Uma linha por
-bump, na forma **rev → o que mudou → commit**. É lá que se lê a saga de cada
-placa; o silk diz *qual* rev, o 002 diz *porquê* e *de onde*.
+The **revision history** — each rev, what changed, and the commit — lives in
+**`docs/relatorio/002.md`**, in the «Revision history» section. One line per bump,
+in the form **rev → what changed → commit**. That is where you read each board's
+saga; the silk says *which* rev, 002 says *why* and *from where*.
 
-## Parte do Estágio 8 / do portão
+## Part of Stage 8 / of the gate
 
-Emitir um pacote **afirma** que o rev do silk bate com o **estado de fabrico** da
-placa:
+Emitting a package **asserts** that the silk rev matches the board's **fabrication
+state**:
 
-- Enquanto a placa **não foi fabricada**, iterar o gerber é normal e **não** sobe
-  a rev: emite-se um **pacote novo (stamp novo), mesma rev**. O que rastreia a
-  iteração é o stamp de commit, não um número. `para_fabrica` não corre sem o
-  registo de risco em GO, e o portão humano (`portao-humano.md`) abre com a
-  proveniência pelo LEIA-ME: confere-se, item a item, que a rev carimbada no
-  pacote e a rev impressa no silk são a **mesma** — e que essa é a rev **em
-  aberto** da placa.
-- **No momento de fabricar/pedir**, a rev em aberto congela: é essa a rev do
-  artefacto físico que vai existir. A **próxima** mudança de gerber, depois disso,
-  **tem** de subir a rev — senão um pacote novo estaria a reutilizar a rev de uma
-  placa que já está cortada, e dois artefactos físicos diferentes partilhariam a
-  mesma identidade.
+- While the board **has not been fabricated**, iterating the gerber is normal and
+  does **not** bump the rev: a **new package (new stamp), same rev** is emitted.
+  What tracks the iteration is the commit stamp, not a number. `para_fabrica` does
+  not run without the risk record at GO, and the human gate (`portao-humano.md`)
+  opens with provenance from the LEIA-ME: it is checked, item by item, that the rev
+  stamped on the package and the rev printed on the silk are the **same** — and that
+  this is the board's **open** rev.
+- **At the moment of fabricating/ordering**, the open rev freezes: that is the rev
+  of the physical artifact that will exist. The **next** gerber change, after that,
+  **has** to bump the rev — otherwise a new package would be reusing the rev of a
+  board that is already cut, and two different physical artifacts would share the
+  same identity.
 
-A pergunta que o Estágio 8 faz antes de deixar pagar: **«esta rev já foi
-fabricada? Se sim, este gerber tem de trazer a rev seguinte; se não, mantém-se a
-rev em aberto e o que distingue este pacote é o stamp.»** Se a resposta não bater
-com o silk, o estágio não fecha.
+The question Stage 8 asks before letting you pay: **«has this rev already been
+fabricated? If so, this gerber has to carry the next rev; if not, the open rev stays
+and what distinguishes this package is the stamp.»** If the answer does not match the
+silk, the stage does not close.
 
-## Versionar TUDO — todo artefato gerado carrega carimbo (2026-09-12)
+## Version EVERYTHING — every generated artifact carries a stamp (2026-09-12)
 
-As três camadas acima cobrem a **placa**, o **pacote** e o **script**. Faltava a
-generalização: **todo artefato que sai do repo para ser consumido lá fora**
-— não só os pacotes de fábrica — tem de **declarar a própria versão**, para que
-ninguém consuma uma cópia velha sem perceber.
+The three layers above cover the **board**, the **package** and the **script**. The
+generalization was missing: **every artifact that leaves the repo to be consumed out
+there** — not just factory packages — has to **declare its own version**, so that no
+one consumes an old copy without realizing it.
 
-> **Raiz do problema (2026-09-12):** o carrinho do Mouser do dB ficou com um MPN
-> **de um export superado**, enquanto o repo já tinha o novo. Nenhum dos dois lados
-> dizia "sou a versão X" de forma comparável — e um artefato que não se versiona
-> não deixa detetar que envelheceu. Um export que não se carimba é um pacote que
-> mente sobre si mesmo, exactamente como o silk que discorda do gerber.
+> **Root of the problem (2026-09-12):** dB's Mouser cart ended up with an MPN **from
+> a superseded export**, while the repo already had the new one. Neither side said
+> "I am version X" in a comparable way — and an artifact that does not version itself
+> gives no way to detect that it has aged. An export that is not stamped is a package
+> that lies about itself, exactly like the silk that disagrees with the gerber.
 
-**A regra, em três partes:**
+**The rule, in three parts:**
 
-1. **Carimbo no próprio artefato.** Todo ficheiro gerado carrega, no início e num
-   lugar válido para o seu formato, um carimbo:
+1. **Stamp in the artifact itself.** Every generated file carries, at the start and
+   in a place valid for its format, a stamp:
 
    ```
    carimbo: <arquivo> v<N> · <YYYY-MM-DD> · placas: painel rev C · cerebro rev C
    ```
 
-   - **CSV** → primeira linha como comentário `#`.
-   - **Markdown** → comentário HTML `<!-- ... -->` no topo (ou um bloco visível).
-   - **xlsx/xls** → uma **célula dedicada** (`carimbo` numa aba própria e/ou uma
-     célula fora das colunas que a ferramenta importa — nunca na coluna A dos dados,
-     senão vira uma "peça" fantasma na importação).
-   - **Pacote de fábrica** → já o faz pelo `LEIA-ME.txt` (gerador + data + commit).
+   - **CSV** → first line as a `#` comment.
+   - **Markdown** → HTML comment `<!-- ... -->` at the top (or a visible block).
+   - **xlsx/xls** → a **dedicated cell** (`carimbo` on its own tab and/or a cell
+     outside the columns the tool imports — never in column A of the data, or it
+     becomes a phantom "part" on import).
+   - **Factory package** → already does it via the `LEIA-ME.txt` (generator + date + commit).
 
-   O `v<N>` começa em `v1` e **sobe a cada novo corte** que muda o conteúdo
-   consumível (um MPN trocado, uma qty recalculada). Não é o SHA deste commit
-   (auto-referência impossível) — a **procedência** fina vem do MANIFEST + git.
+   The `v<N>` starts at `v1` and **goes up on each new cut** that changes the
+   consumable content (a swapped MPN, a recalculated qty). It is not the SHA of this
+   commit (impossible self-reference) — the fine **provenance** comes from the
+   MANIFEST + git.
 
-2. **O MANIFEST é a fonte única de "o mais novo".** `export/MANIFEST.md` lista
-   **todo** deliverable corrente com o seu carimbo. É onde se responde "estou com
-   a versão de agora?": compara-se o carimbo do artefato em mão contra o MANIFEST;
-   se não bater, `git pull`.
+2. **The MANIFEST is the single source of "the newest".** `export/MANIFEST.md` lists
+   **every** current deliverable with its stamp. It is where you answer "am I on the
+   current version?": you compare the stamp of the artifact in hand against the
+   MANIFEST; if it does not match, `git pull`.
 
-3. **Protocolo de entrega/consumo.** Quando **eu entrego** um ficheiro, **declaro o
-   carimbo** ("este é o `COMPRA_MOUSER.csv` v2, 2026-09-12"). Quando **o humano vai
-   consumir** (subir ao Mouser, mandar à fábrica, montar), **confere o carimbo**
-   contra o MANIFEST **antes** de agir. As duas metades existem porque a saída de
-   uma ferramenta não prova que o insumo estava actual — o carimbo, sim.
+3. **Delivery/consumption protocol.** When **I deliver** a file, **I declare the
+   stamp** ("this is `COMPRA_MOUSER.csv` v2, 2026-09-12"). When **the human is about
+   to consume** (upload to Mouser, send to the factory, assemble), **they check the
+   stamp** against the MANIFEST **before** acting. The two halves exist because a
+   tool's output does not prove the input was current — the stamp does.
 
-É a mesma verdade das três camadas, alargada: **congelamento-no-lançamento** diz
-que a rev da placa só sobe no fabrico; **Versionar TUDO** diz que *qualquer*
-artefato consumível se carimba e se confere contra o MANIFEST antes de virar
-compra, upload ou solda.
+It is the same truth as the three layers, extended: **freeze-at-release** says that
+the board rev only goes up at fabrication; **Version EVERYTHING** says that *any*
+consumable artifact is stamped and checked against the MANIFEST before it becomes a
+purchase, upload, or solder.

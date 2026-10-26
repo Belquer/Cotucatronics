@@ -1,99 +1,96 @@
-# Grafismos por GRID — colocação por coordenada, não por arrasto
+# Graphics by GRID — placement by coordinate, not by drag
 
-Referência do **Estágio 6** da pipeline `/aipcb`, para a colocação de **grafismos**
-(logo, nome, símbolo, banner decorativo) na serigrafia. **Substitui** o método de
-"arrastar no visualizador de gerber", que fica **explicitamente aposentado** no
-fim deste documento.
+Reference for **Stage 6** of the `/aipcb` pipeline, for the placement of **graphics**
+(logo, name, symbol, decorative banner) on the silkscreen. It **replaces** the method
+of "dragging in the gerber viewer", which is **explicitly retired** at the end of this
+document.
 
-> Grafismo aqui é serigrafia **decorativa** — o que não é referência nem valor
-> funcional. As refs/valores seguem o resto do Estágio 6 (`arruma_silk.py`,
-> `refs_apontam.py`); este documento é só sobre o que se põe por gosto.
-
----
-
-## Causa-raiz — por que este método existe
-
-Posicionar um grafismo **por olho / por pixel** — arrastar até "parecer certo" —
-custou três coisas nesta sessão:
-
-1. **Re-render em loop.** Cada nudge pedia um novo render para conferir, e o
-   ciclo *arrasta → renderiza → ainda não → arrasta* não converge: o olho
-   corrige por frações que o gerber nem resolve, e a placa vira um churn de
-   commits que só mexem serigrafia.
-2. **Colisão com pads.** O banner assentou **sobre os pads MIDI/áudio do U2** —
-   invisível no arrasto, porque no viewer o texto **desenhou-se por cima** dos
-   pads como se nada fosse.
-3. **A armadilha do viewer.** **Arrastar no visualizador de gerber ENGANA**: o
-   viewer **NÃO recorta silk sobre pad** — mostra o texto inteiro, bonito, por
-   cima do cobre. **A fábrica recorta** (silk sobre pad é removido na produção),
-   e o que chega é **texto quebrado**, com letras comidas onde havia pad ou furo.
-   O que se aprovou no ecrã não é o que se fabrica.
-
-> **O viewer de gerber mostra o silk que a fábrica vai apagar.** Aprovar
-> posição no viewer é aprovar uma imagem que não existe na placa.
+> A graphic here is **decorative** silkscreen — what is neither a reference nor a
+> functional value. The refs/values follow the rest of Stage 6 (`arruma_silk.py`,
+> `refs_apontam.py`); this document is only about what you put there for taste.
 
 ---
 
-## Método — em coordenadas, uma passada só
+## Root cause — why this method exists
 
-1. **Fecha o design com SÓ silk funcional.** Referências e valores arrumados
-   (Estágio 6 normal); **nenhum grafismo decorativo ainda**. O grafismo entra
-   por último, contra uma placa já estável.
+Positioning a graphic **by eye / by pixel** — dragging until it "looks right" — cost
+three things this session:
 
-2. **Gera um render da placa com grid de 0,5 mm.** Linhas maiores rotuladas a
-   cada **5 mm**; os **eixos XY no MESMO frame de coordenadas do KiCad** (a mesma
-   origem, o mesmo sentido — para o número que se lê no grid ser o número que se
-   escreve na peça); as **zonas "no-go" sombreadas** (courtyards + pads + furos +
-   **margem da borda ≥ 1,5 mm**); e os **retângulos de espaço livre anotados com
-   as dimensões em mm**. O render é o mapa; o grid é a régua.
+1. **Re-render in a loop.** Each nudge asked for a new render to check, and the cycle
+   *drag → render → not yet → drag* does not converge: the eye corrects by fractions
+   the gerber cannot even resolve, and the board becomes a churn of commits that only
+   move silkscreen.
+2. **Collision with pads.** The banner landed **on the MIDI/audio pads of U2** —
+   invisible in the drag, because in the viewer the text **drew itself on top** of the
+   pads as if nothing.
+3. **The viewer trap.** **Dragging in the gerber viewer DECEIVES**: the viewer **does
+   NOT clip silk over pad** — it shows the whole text, pretty, on top of the copper.
+   **The factory clips** (silk over pad is removed in production), and what arrives is
+   **broken text**, with letters eaten where there was a pad or hole. What you approved
+   on screen is not what gets fabricated.
 
-3. **Declara a bbox de cada grafismo ANTES.** Ex.: *"COTUCATRONICS, altura de
-   texto 2,6 mm = **45 × 8,5 mm**"*. Saber a caixa que o grafismo ocupa **antes**
-   de o colocar é o que troca tentativa-e-erro por "cabe / não cabe" lido no
-   mapa. Um grafismo sem bbox declarada não entra.
-
-4. **O humano aprova a posição LENDO as coordenadas do grid.** Uma passada só:
-   olha o mapa, escolhe o retângulo livre, lê a coordenada de canto/centro. Sem
-   arrastar, sem "chega um bocadinho pra esquerda".
-
-5. **Transfere o grafismo para as coordenadas exatas.** **1 edição só-silk → 1
-   regen de gerber.** O transfer **rejeita silk sobre pad/furo** (é a
-   *gerber-truth*: o que a fábrica recortaria é recusado na origem, não descoberto
-   no fim). Sem iteração — a posição já foi aprovada no passo 4 contra o mapa
-   verdadeiro.
-
-6. **Aposenta o "arrastar no visualizador de gerber".** Não é um passo opcional
-   ao lado deste — é o método **substituído**. O viewer serve para conferir o que
-   já foi colocado por coordenada; **nunca** para escolher a posição.
+> **The gerber viewer shows the silk the factory will erase.** Approving a position in
+> the viewer is approving an image that does not exist on the board.
 
 ---
 
-## Nota de versionamento
+## Method — in coordinates, a single pass
 
-Grafismo **altera o gerber** (silk é gerber — ver `references/versionamento.md`).
-Mas sob a regra **congela-no-release**, o **rev só sobe quando a placa é
-efetivamente fabricada/pedida**. Enquanto a placa não foi mandada, mover ou
-colocar um grafismo gera **pacote novo (stamp de commit novo), mesma rev**. A
-letra do rev não se mexe por causa de um logo numa placa que ainda não foi à
-fábrica.
+1. **Close the design with ONLY functional silk.** References and values tidied
+   (normal Stage 6); **no decorative graphic yet**. The graphic enters last, against an
+   already-stable board.
+
+2. **Generate a render of the board with a 0.5 mm grid.** Larger lines labeled every
+   **5 mm**; the **XY axes in the SAME coordinate frame as KiCad** (the same origin, the
+   same direction — so the number you read on the grid is the number you write on the
+   part); the **"no-go" zones shaded** (courtyards + pads + holes + **edge margin ≥ 1.5
+   mm**); and the **free-space rectangles annotated with the dimensions in mm**. The
+   render is the map; the grid is the ruler.
+
+3. **Declare each graphic's bbox BEFORE.** E.g.: *"COTUCATRONICS, text height 2.6 mm =
+   **45 × 8.5 mm**"*. Knowing the box the graphic occupies **before** placing it is what
+   trades trial-and-error for "fits / does not fit" read on the map. A graphic with no
+   declared bbox does not enter.
+
+4. **The human approves the position by READING the grid coordinates.** A single pass:
+   look at the map, choose the free rectangle, read the corner/center coordinate. No
+   dragging, no "a little to the left".
+
+5. **Transfer the graphic to the exact coordinates.** **1 silk-only edit → 1 gerber
+   regen.** The transfer **rejects silk over pad/hole** (it is the *gerber-truth*: what
+   the factory would clip is refused at the source, not discovered at the end). No
+   iteration — the position was already approved in step 4 against the true map.
+
+6. **Retire "dragging in the gerber viewer".** It is not an optional step alongside
+   this one — it is the **replaced** method. The viewer serves to check what has already
+   been placed by coordinate; **never** to choose the position.
 
 ---
 
-## BEST-EFFORT — o helper `kicad/grid_grafismo.py`
+## Versioning note
 
-O método acima é o contrato. A ferramenta abaixo automatiza o passo 2 (o mapa).
-**Só se commita se realmente funcionar** — ver o estado no cabeçalho do próprio
-`kicad/grid_grafismo.py` e no relatório da sessão. Se não for possível deixá-la
-**sólida** num tempo razoável, fica um **stub documentado com esta spec**, e o
-relatório di-lo **stub** — não se finge ferramenta.
+A graphic **changes the gerber** (silk is gerber — see `references/versionamento.md`).
+But under the **freeze-on-release** rule, the **rev only goes up when the board is
+actually fabricated/ordered**. While the board has not been sent, moving or placing a
+graphic generates a **new package (new commit stamp), same rev**. The rev letter does
+not move because of a logo on a board that has not yet gone to the factory.
+
+---
+
+## BEST-EFFORT — the `kicad/grid_grafismo.py` helper
+
+The method above is the contract. The tool below automates step 2 (the map). **It is
+only committed if it really works** — see the state in the header of
+`kicad/grid_grafismo.py` itself and in the session report. If it is not possible to get
+it **solid** in a reasonable time, it stays a **documented stub with this spec**, and
+the report says it is a **stub** — you do not fake a tool.
 
 Spec (v0.1.0):
 
-- Renderiza a **face superior** (F.Cu + F.SilkS + F.Courtyard) via
-  `kicad-cli`/`pcbnew`.
-- Sobrepõe o **grid de 0,5 mm** + **majors de 5 mm rotulados** + **eixos em mm no
-  frame do KiCad** (mesma origem/sentido do ficheiro).
-- **Sombreia as zonas no-go** (courtyards / pads / furos / margem da borda).
-- Imprime os **maiores retângulos livres com dimensões** (para casar com a bbox
-  declarada do grafismo no passo 3).
-- Usa a `kicad-cli` real e o `pcbnew` de Python.
+- Renders the **top face** (F.Cu + F.SilkS + F.Courtyard) via `kicad-cli`/`pcbnew`.
+- Overlays the **0.5 mm grid** + **labeled 5 mm majors** + **axes in mm in the KiCad
+  frame** (same origin/direction as the file).
+- **Shades the no-go zones** (courtyards / pads / holes / edge margin).
+- Prints the **largest free rectangles with dimensions** (to match the graphic's
+  declared bbox in step 3).
+- Uses the real `kicad-cli` and Python's `pcbnew`.

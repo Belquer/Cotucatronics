@@ -1,721 +1,712 @@
-# BOARDS.md — placas suportadas e regras de recurso
+# BOARDS.md — supported boards and resource rules
 
-**Documento v0.14.0**
+**Document v0.14.0**
 
-Como portar o Cotucatronics OS pra uma placa nova, e as regras de recurso que
-valem em todas elas.
+How to port the Cotucatronics OS to a new board, and the resource rules that
+hold across all of them.
 
 ---
 
-## Placas
+## Boards
 
-| Board | `BOARD=` | Arquivo | Estado |
+| Board | `BOARD=` | File | State |
 |---|---|---|---|
-| Daisy Seed 2 (DFM) | `daisy_seed` | `hal_daisy_seed.cpp` v0.3.1 | ✅ validada em bancada |
-| Teensy 4.1 | `teensy41` | `hal_teensy41.cpp` | 🔜 planejada |
+| Daisy Seed 2 (DFM) | `daisy_seed` | `hal_daisy_seed.cpp` v0.3.1 | ✅ validated on the bench |
+| Teensy 4.1 | `teensy41` | `hal_teensy41.cpp` | 🔜 planned |
 
 ### Daisy Seed 2 — `BoardInfo`
 
-| Campo | Valor |
+| Field | Value |
 |---|---|
 | `name` | `"Daisy Seed"` |
-| `num_knobs` | 5 (4 de caráter + SRC MIX) |
+| `num_knobs` | 5 (4 character + SRC MIX) |
 | `has_audio_in` | `true` |
 | `sample_rate` | 48000 Hz |
 | `block_size` | 48 (~1 ms) |
 | `big_ram_bytes` | 67108864 (64 MB SDRAM) |
 
-A detecção de Seed 1.1 vs Seed 2 DFM é automática dentro do `hw.Init()` da
-libDaisy (`CheckBoardVersion()`), e o codec PCM3060 do Seed 2 é tratado lá
-dentro. **Nada disso vaza pro nosso código.**
+Detecting Seed 1.1 vs Seed 2 DFM is automatic inside libDaisy's `hw.Init()`
+(`CheckBoardVersion()`), and the Seed 2's PCM3060 codec is handled in there.
+**None of this leaks into our code.**
 
-> ### Daisy: o app roda da QSPI de 8 MB, via bootloader
+> ### Daisy: the app runs from the 8 MB QSPI, via bootloader
 >
-> Desde a v0.4.0 o firmware é compilado com **`APP_TYPE=BOOT_QSPI`**: o app vive
-> na **QSPI flash de 8 MB** e **os 128 KB de flash interna são do bootloader**
-> da Electrosmith. Nenhum byte do nosso código mora na flash interna — o mapa de
-> memória mostra `FLASH: 0 B`, e isso está certo.
+> Since v0.4.0 the firmware is compiled with **`APP_TYPE=BOOT_QSPI`**: the app
+> lives in the **8 MB QSPI flash** and **the 128 KB of internal flash belong to
+> Electrosmith's bootloader**. Not one byte of our code lives in internal flash —
+> the memory map shows `FLASH: 0 B`, and that is correct.
 >
-> **Por quê:** o primeiro módulo de DSP externo sozinho levou o firmware a 94,14% dos
-> 128 KB internos. O segundo não caberia. Na QSPI o mesmo firmware ocupa 1,52%
-> de 7 936 KB.
+> **Why:** the first external DSP module alone pushed the firmware to 94.14% of
+> the 128 KB internal. The second would not fit. On QSPI the same firmware takes
+> 1.52% of 7,936 KB.
 >
-> **O que isso custa:**
-> - o Cortex-M7 executa da QSPI mais devagar que da flash interna — mitigado
->   pelo I-cache, mas é real, e vale medir se um módulo pesado começar a estourar
->   o prazo do bloco de áudio;
-> - o boot ganha ~2 s de janela de graça do bootloader;
-> - gravar tem um passo a mais, **uma vez por placa** (`make program-boot`).
+> **What it costs:**
+> - the Cortex-M7 executes from QSPI slower than from internal flash — mitigated
+>   by the I-cache, but it is real, and worth measuring if a heavy module starts
+>   to blow the audio block's deadline;
+> - boot gains ~2 s of grace window from the bootloader;
+> - flashing has one extra step, **once per board** (`make program-boot`).
 >
-> **Não é regra do projeto, é configuração da Daisy.** Uma placa nova não herda
-> nada disso: o `APP_TYPE` é do `Makefile` e do ecossistema Electrosmith. O
-> Teensy 4.1 tem 8 MB de flash direto, sem bootloader intermediário.
+> **This is not a project rule, it is Daisy configuration.** A new board inherits
+> none of it: `APP_TYPE` belongs to the `Makefile` and to the Electrosmith
+> ecosystem. The Teensy 4.1 has 8 MB of flash directly, with no intermediate
+> bootloader.
 >
-> Fluxo de gravação completo em [TESTES.md](TESTES.md).
+> Full flashing flow in [TESTES.md](TESTES.md).
 
 ---
 
-## Painel v2 — guia de solda
+## Panel board v2 — soldering guide
 
-**5 pots + 2 botões momentâneos.** Hardware ainda não soldado; o
-firmware já está pronto e testável por serial (T11 no
-[TESTES.md](TESTES.md)).
+**5 pots + 2 momentary buttons.** Hardware not yet soldered; the firmware is
+already done and testable over serial (T11 in [TESTES.md](TESTES.md)).
 
-### Os 5 pots
+### The 5 pots
 
-| Pot | Função | libDaisy | Pino físico |
+| Pot | Function | libDaisy | Physical pin |
 |---|---|---|---|
-| k1 | **level** (volume master) | `seed::A0` | **16** |
+| k1 | **level** (master volume) | `seed::A0` | **16** |
 | k2 | **src_mix** (piezo ↔ jack) | `seed::A1` | 17 |
-| k3 | macro de caráter | `seed::A2` | 18 |
-| k4 | macro de caráter | `seed::A3` | 19 |
-| k5 | macro de caráter | `seed::A4` | 20 |
+| k3 | character macro | `seed::A2` | 18 |
+| k4 | character macro | `seed::A3` | 19 |
+| k5 | character macro | `seed::A4` | 20 |
 
-**10 kΩ lineares.** Ligação de cada um:
+**10 kΩ linear.** Wiring of each one:
 
 ```
   3V3A  ──── terminal 1
   wiper ──── ADC (A0–A4)  ──┬── 100 nF ── AGND
-  AGND  ──── terminal 3     └── (o capacitor vai JUNTO do wiper)
+  AGND  ──── terminal 3     └── (the capacitor goes RIGHT AT the wiper)
 ```
 
-O **100 nF no wiper** não é opcional: sem ele o ADC lê o ruído que o
-pot capta como antena, e o parâmetro treme sozinho. Ponha perto do
-pino da placa, não perto do pot.
+The **100 nF at the wiper** is not optional: without it the ADC reads the noise
+the pot picks up like an antenna, and the parameter jitters on its own. Place it
+near the board pin, not near the pot.
 
-**Use 3V3A e AGND, não 3V3D e DGND.** Os pots são referência analógica;
-alimentá-los pelo lado digital injeta o chaveamento direto no valor
-lido.
+**Use 3V3A and AGND, not 3V3D and DGND.** The pots are an analog reference;
+powering them from the digital side injects the switching straight into the read
+value.
 
-> **k1 e k2 são FIXOS em todo instrumento** — volume e fonte. Só k3–k5
-> mudam de escultura pra escultura. Isso dá ao painel uma gramática
-> constante: a mão aprende uma vez e vale pra qualquer peça.
+> **k1 and k2 are FIXED on every instrument** — volume and source. Only k3–k5
+> change from sculpture to sculpture. That gives the panel a constant grammar:
+> the hand learns it once and it holds for any piece.
 
-### Os 2 botões
+### The 2 buttons
 
-| Botão | Função | libDaisy | Pino físico |
+| Button | Function | libDaisy | Physical pin |
 |---|---|---|---|
-| B1 | randomizador | `seed::D26` | 33 |
-| B2 | assinalável (hold) | `seed::D27` | 34 |
+| B1 | randomizer | `seed::D26` | 33 |
+| B2 | assignable (hold) | `seed::D27` | 34 |
 
 ```
-  botão ── um terminal no pino (D26/D27)
-        └─ outro terminal em DGND
+  button ── one terminal on the pin (D26/D27)
+         └─ other terminal on DGND
 ```
 
-**Sem resistor externo.** O firmware liga o pull-up interno, então o
-botão só precisa fechar pra terra. Repouso lê alto, pressionado lê
-baixo. Debounce de 10 ms é feito em software, por tempo.
+**No external resistor.** The firmware enables the internal pull-up, so the
+button only needs to close to ground. At rest it reads high, pressed it reads
+low. A 10 ms debounce is done in software, by timing.
 
-> ### ⚠️ A0–A4 SÃO D15–D19. O mesmo pino físico.
+> ### ⚠️ A0–A4 ARE D15–D19. The same physical pin.
 >
-> Na Daisy, `A0` é apenas outro nome pra `D15`, `A1` pra `D16`, e
-> assim por diante até `A4` = `D19`. **Não são pinos diferentes.**
+> On the Daisy, `A0` is just another name for `D15`, `A1` for `D16`, and so on up
+> to `A4` = `D19`. **They are not different pins.**
 >
-> É por isso que os botões foram pra D26/D27: qualquer pino de D15 a
-> D19 colidiria com um pot, e D13/D14 já são a UART do MIDI. D26 e
-> D27 estão entre os poucos sem alias de ADC (A10=D25, A11=D28) e sem
-> função tomada.
+> That is why the buttons went to D26/D27: any pin from D15 to D19 would collide
+> with a pot, and D13/D14 are already the MIDI UART. D26 and D27 are among the
+> few with no ADC alias (A10=D25, A11=D28) and no function taken.
 >
-> Se um dia mover um botão, **confira o alias antes de soldar** —
-> a colisão não dá erro de compilação nem de boot: dá pot que não lê
-> e botão que não responde, os dois em silêncio.
+> If you ever move a button, **check the alias before soldering** — the collision
+> throws no compile error and no boot error: it gives you a pot that does not read
+> and a button that does not respond, both in silence.
 
-**Sobre os números de pino físico:** seguem a mesma contagem do
-[TESTES.md](TESTES.md), em que o pino 18 é AUDIO OUT L e o 20 é AGND.
-**Confira contra o diagrama oficial da Electrosmith antes de encostar
-o ferro** — a referência que não depende dessa contagem é o nome
-`D`/`A`.
+**About the physical pin numbers:** they follow the same count as
+[TESTES.md](TESTES.md), in which pin 18 is AUDIO OUT L and pin 20 is AGND.
+**Check against Electrosmith's official diagram before touching the iron** — the
+reference that does not depend on that count is the `D`/`A` name.
 
 ---
 
-## MIDI — guia de solda do WIDI
+## MIDI — WIDI soldering guide
 
-**A porta MIDI da Daisy é a USART1 a 31250 baud, 8N1.** Ligada no boot
-por `hal::SetMidiByteCallback()`; placa que nunca chama não paga
-periférico nenhum.
+**The Daisy's MIDI port is USART1 at 31250 baud, 8N1.** Turned on at boot by
+`hal::SetMidiByteCallback()`; a board that never calls it pays for no
+peripheral.
 
-### Pinos
+### Pins
 
-| Sinal | libDaisy | STM32 | Pino físico | Vai em quê no módulo |
+| Signal | libDaisy | STM32 | Physical pin | Goes to what on the module |
 |---|---|---|---|---|
-| **TX** (a placa fala) | `seed::D13` | `PB6` | **14** | **RX** do WIDI |
-| **RX** (a placa ouve) | `seed::D14` | `PB7` | **15** | **TX** do WIDI |
-| 3V3 | — | — | ver serigrafia | VCC do WIDI |
-| GND | — | — | qualquer DGND | GND do WIDI |
-| **LB** (estado do link) | `seed::D28` | — | — | pad **LB** do WIDI |
+| **TX** (the board speaks) | `seed::D13` | `PB6` | **14** | **RX** of the WIDI |
+| **RX** (the board listens) | `seed::D14` | `PB7` | **15** | **TX** of the WIDI |
+| 3V3 | — | — | see silkscreen | VCC of the WIDI |
+| GND | — | — | any DGND | GND of the WIDI |
+| **LB** (link state) | `seed::D28` | — | — | **LB** pad of the WIDI |
 
-> ### D29 e D30 ESTÃO LIVRES desde 20/08
+> ### D29 AND D30 ARE FREE as of 08/20
 >
-> Eram **LG** (D29) e **LR** (D30), lidos junto com o LB para descobrir
-> qual pad carregava o estado de conexão. Foram medidos por dois dias e
-> **não marcaram nada útil** — removidos do hardware.
+> They were **LG** (D29) and **LR** (D30), read together with LB to find out
+> which pad carried the connection state. They were measured for two days and
+> **marked nothing useful** — removed from the hardware.
 >
-> **Isso é resultado, não desistência:** LG e LR estão descartados como
-> candidatos *por não marcarem*, o que fecha duas das três hipóteses. O
-> que o **LB** indica segue pergunta aberta — a legenda da CME foi
-> desmentida por medição (o dB desconectou e o LB ficou fixo), então o
-> LB **não** é conectado/desconectado.
+> **This is a result, not a surrender:** LG and LR are discarded as candidates
+> *because they mark nothing*, which closes two of the three hypotheses. What the
+> **LB** indicates remains an open question — the CME's legend was disproved by
+> measurement (dB disconnected and LB stayed fixed), so the LB is **not**
+> connected/disconnected.
 >
-> **D29 e D30 voltaram para o pool de pinos disponíveis.** São candidatos
-> naturais para o próximo subsistema que precisar de GPIO — mais botões,
-> um LED de status nosso, um encoder. **Confira o alias de ADC antes de
-> soldar** (a regra do quadro acima vale igual): a colisão não dá erro de
-> compilação nem de boot, dá pot que não lê e botão que não responde, os
-> dois em silêncio.
+> **D29 and D30 went back into the pool of available pins.** They are natural
+> candidates for the next subsystem that needs GPIO — more buttons, a status LED
+> of our own, an encoder. **Check the ADC alias before soldering** (the rule in
+> the box above applies the same): the collision throws no compile error and no
+> boot error, it gives a pot that does not read and a button that does not
+> respond, both in silence.
 
-> ### ⚠️ É CRUZADO. Este é o erro que custa uma tarde.
+> ### ⚠️ IT IS CROSSED. This is the mistake that costs an afternoon.
 >
-> **TX do módulo → RX da placa (D14).** **RX do módulo → TX da placa
-> (D13).** Ligar reto — TX no TX — não queima nada e não dá erro
-> nenhum: simplesmente não chega byte. O sintoma é `bytes 0` no
-> comando `midi`, idêntico ao de um módulo sem alimentação.
+> **TX of the module → RX of the board (D14).** **RX of the module → TX of the
+> board (D13).** Wiring it straight — TX to TX — burns nothing and throws no
+> error at all: no byte simply arrives. The symptom is `bytes 0` on the `midi`
+> command, identical to a module with no power.
 >
-> **Se o `midi` mostrar `bytes 0`, desconfie do cruzamento antes de
-> qualquer outra coisa.**
+> **If `midi` shows `bytes 0`, suspect the crossover before anything else.**
 
-**Sobre os números de pino físico.** D13/D14 vêm direto do
-`daisy_seed.h` da libDaisy (`PORTB,6` e `PORTB,7`) — esses são certos.
-Os números 14 e 15 seguem da numeração do SOM, em que os pinos 1–15 são
-D0–D14 (é o que faz o pino 18 ser AUDIO OUT L e o 20 ser AGND, como o
-[TESTES.md](TESTES.md) já usava). **Confira contra o diagrama oficial
-da Electrosmith antes de encostar o ferro** — errar o pino de
-alimentação custa a placa, e D-número é a referência que não depende
-dessa contagem.
+**About the physical pin numbers.** D13/D14 come straight from libDaisy's
+`daisy_seed.h` (`PORTB,6` and `PORTB,7`) — those are certain. The numbers 14 and
+15 follow from the SOM's numbering, in which pins 1–15 are D0–D14 (which is what
+makes pin 18 be AUDIO OUT L and pin 20 be AGND, as [TESTES.md](TESTES.md)
+already used). **Check against Electrosmith's official diagram before touching
+the iron** — getting the power pin wrong costs the board, and the D-number is the
+reference that does not depend on that count.
 
-Os pinos de **3V3 e GND não estão listados por número de propósito**:
-o SOM tem mais de um GND, e chutar o pino de alimentação é a única
-coisa aqui que estraga hardware. Localize na serigrafia.
+The **3V3 and GND pins are not listed by number on purpose**: the SOM has more
+than one GND, and guessing the power pin is the one thing here that destroys
+hardware. Locate it on the silkscreen.
 
-**São os pinos default do `MidiUartTransport` da libDaisy.** Um cabo
-montado pra qualquer exemplo de MIDI da Electrosmith serve aqui sem
-alteração — foi por isso que foram escolhidos, e não por preferência.
+**These are the default pins of libDaisy's `MidiUartTransport`.** A cable wired
+for any Electrosmith MIDI example works here without change — that is why they
+were chosen, and not out of preference.
 
-### ✅ CONFERIDO 2026-08-17, com o WIDI Core na mão
+### ✅ CHECKED 2026-08-17, with the WIDI Core in hand
 
-Antes de encostar o ferro, o estado que importa:
+Before touching the iron, the state that matters:
 
-- **Pinos:** D13 (TX, PB6) e D14 (RX, PB7) — vêm direto do `daisy_seed.h`
-  da libDaisy, são os default do `MidiUartTransport`, e não colidem com
-  nada: os cinco pots ocupam A0–A4 (= D15–D19) e os botões D26/D27.
-- **Parser:** board-agnostic em `midi.h`, commitado em `b3d994c`. A ISR
-  só enfileira; quem despacha é `hal::PollMidi()` no loop principal —
-  mesma disciplina que o serial aprendeu na marra.
-- **Mapa de CC:** 13 entradas (limite 16). Ver a tabela abaixo.
+- **Pins:** D13 (TX, PB6) and D14 (RX, PB7) — come straight from libDaisy's
+  `daisy_seed.h`, are the defaults of `MidiUartTransport`, and collide with
+  nothing: the five pots occupy A0–A4 (= D15–D19) and the buttons D26/D27.
+- **Parser:** board-agnostic in `midi.h`, committed in `b3d994c`. The ISR only
+  enqueues; whoever dispatches is `hal::PollMidi()` in the main loop — the same
+  discipline the serial learned the hard way.
+- **CC map:** 13 entries (limit 16). See the table below.
 
-> **O MIDI deixou de ser conveniência e virou CONTROLE DE VOO.** A serial
-> USB morre segundos depois de o callback ficar longo (defeito conhecido, ver
-> [TESTES.md](TESTES.md)); o MIDI é imune — UART própria, DMA, nada a ver
-> com o CDC. Todo param que só a serial alcançava está no mapa agora.
+> **MIDI stopped being a convenience and became FLIGHT CONTROL.** USB serial dies
+> seconds after the callback runs long (known defect, see [TESTES.md](TESTES.md));
+> MIDI is immune — its own UART, DMA, nothing to do with the CDC. Every param that
+> only the serial could reach is on the map now.
 
-### Mapa de CC
+### CC map
 
-**O mapa vive em [docs/operacao/CCMAP.md](../docs/operacao/CCMAP.md), que é
-GERADO** do `manifest.h` pelo `gerar_ccmap.py` — e é lá que se lê, não aqui.
+**The map lives in [docs/operacao/CCMAP.md](../docs/operacao/CCMAP.md), which is
+GENERATED** from `manifest.h` by `gerar_ccmap.py` — and that is where you read it,
+not here.
 
-Até 04/09 esta secção trazia uma tabela à mão intitulada *"do instrumento
-atual"* que listava quatro params já inexistentes. Tabela de mão a envelhecer
-por cima de uma gerada mente com ar de autoridade; foi removida em vez de
-corrigida, porque corrigi-la seria manter viva a que mente.
+Until 09/04 this section carried a hand-made table titled *"of the current
+instrument"* that listed four params that no longer exist. A hand table aging on
+top of a generated one lies with an air of authority; it was removed instead of
+corrected, because correcting it would be keeping alive the one that lies.
 
-A faixa escolhida continua a valer como decisão: os CCs baixos ficam na faixa
-"undefined" da spec MIDI — não colidem com nada padrão (1 é mod wheel, 7 é
-volume, 64 é sustain), então controlador genérico sai de fábrica sem as usar.
+The chosen range still stands as a decision: the low CCs sit in the MIDI spec's
+"undefined" range — they collide with nothing standard (1 is mod wheel, 7 is
+volume, 64 is sustain), so a generic controller ships from the factory without
+using them.
 
-**Param com `steps` quantiza no ponto ÚNICO de escrita:** o `Set()` arredonda
-à grade, e MIDI, serial e knob herdam a mesma. Nada a tratar em cada via.
+**A param with `steps` quantizes at the SINGLE point of writing:** `Set()` rounds
+to the grid, and MIDI, serial and knob inherit the same. Nothing to handle in
+each path.
 
-**`buzios_on` vira chave sem tratamento especial:** o param é [0,1], o
-`main` testa `>= 0.5`, e `MidiNorm(63)=0.496` cai abaixo enquanto
-`MidiNorm(64)=0.504` cai acima. O contrato já fazia isso funcionar.
+**`buzios_on` becomes a switch with no special handling:** the param is [0,1],
+`main` tests `>= 0.5`, and `MidiNorm(63)=0.496` falls below while
+`MidiNorm(64)=0.504` falls above. The contract already made this work.
 
-### ✅ REVOGADO: o pareamento SOBREVIVE ao reset (medido em 2026-08-18)
+### ✅ REVOKED: the pairing SURVIVES the reset (measured on 2026-08-18)
 
-Esta seção mandava, até a v0.40.0, esquecer e reparear o WIDI depois de
-todo RESET. **A regra foi revogada por medição** — não existe procedimento
-especial. Grave, teste, siga.
+Until v0.40.0 this section ordered forgetting and re-pairing the WIDI after
+every RESET. **The rule was revoked by measurement** — there is no special
+procedure. Flash, test, go.
 
-| Medido em 18/08, v0.40.0, sem reparear | |
+| Measured on 08/18, v0.40.0, without re-pairing | |
 |---|---|
-| depois de DFU + gravação + reset | 65 CCs, 220 bytes |
-| órfãos / ressync / perdidos / erros | 0 / 0 / 0 / 0 |
+| after DFU + flashing + reset | 65 CCs, 220 bytes |
+| orphans / resyncs / lost / errors | 0 / 0 / 0 / 0 |
 
-**De onde veio a regra falsa:** o comando `bb arm` silenciava o log e não
-tinha caminho de volta. Quatro janelas de teste mediram esse silêncio e
-foram lidas como "link morto"; o pareamento virou a explicação plausível
-que preencheu o buraco. História completa no caso 8 e no adendo do
-capítulo 11 de [../docs/battle_scars.md](../docs/battle_scars.md).
+**Where the false rule came from:** the `bb arm` command silenced the log and had
+no path back. Four test windows measured that silence and read it as "dead link";
+the pairing became the plausible explanation that filled the hole. Full story in
+case 8 and in the addendum to chapter 11 of
+[../docs/battle_scars.md](../docs/battle_scars.md).
 
-**O que fica da seção antiga, e continua valendo:** `bytes 0` é um sintoma
-**cego** — idêntico em fio cruzado, módulo sem alimentação, app sem
-autorização, central competindo, e log mudo. Por isso a primeira pergunta
-diante de um zero nunca é *"qual a causa?"* e sim ***"este canal está
-provado?"*** — `log on`, conferir eco, e só então interpretar. Se um
-comando de status imprimir `[LOG MUDO]`, você está olhando pro seu próprio
-silêncio.
+**What remains of the old section, and still holds:** `bytes 0` is a **blind**
+symptom — identical for a crossed wire, a module with no power, an app with no
+authorization, a competing central, and a muted log. That is why the first
+question facing a zero is never *"what's the cause?"* but ***"is this channel
+proven?"*** — `log on`, check the echo, and only then interpret. If a status
+command prints `[LOG MUDO]`, you are looking at your own silence.
 
-### 🔬 MIDI SCOPE — o analisador é nosso, e roda na própria placa
+### 🔬 MIDI SCOPE — the analyzer is ours, and runs on the board itself
 
-Ferramenta **oficial e permanente**. Sem apps externos, sem hardware
-extra: um cabo USB e a serial.
+An **official and permanent** tool. No external apps, no extra hardware: a USB
+cable and the serial.
 
 ```
-mscope on      stream: hex cru + o que o parser CONCLUIU de cada byte
-mscope stats   uma linha por segundo (pro caso fader-deslizando)
+mscope on      stream: raw hex + what the parser CONCLUDED from each byte
+mscope stats   one line per second (for the sliding-fader case)
 mscope off
-midi           contadores permanentes, sempre ativos
+midi           permanent counters, always active
 ```
 
-**Por que duas colunas.** O objetivo nº1 é ver o parser **dessincronizar**,
-e pra isso não basta mostrar o que chegou — tem que mostrar o que ele
-concluiu. O mesmo byte significa coisas opostas conforme o estado: `0x45`
-é *data1 de um CC* ou *órfão*, dependendo do que veio antes.
+**Why two columns.** Goal #1 is to see the parser **desync**, and for that it is
+not enough to show what arrived — it has to show what it concluded. The same byte
+means opposite things depending on state: `0x45` is *data1 of a CC* or an
+*orphan*, depending on what came before.
 
 ```
-  B0  status canal
-  1D  data parcial (data1)
+  B0  channel status
+  1D  partial data (data1)
   45  CC ch1 cc29 val69 -> rev_mix 0.543
-  45  ?? DADO SEM STATUS
-  B0  !! TRUNCADA (ressync)
+  45  ?? DATA WITH NO STATUS
+  B0  !! TRUNCATED (resync)
 ```
 
-**Contadores permanentes** (no `midi`, sempre ativos, espelhados na
-caixa-preta a cada segundo):
+**Permanent counters** (in `midi`, always active, mirrored in the black box every
+second):
 
 | | |
 |---|---|
-| `bytes` | chegaram pela UART |
-| `msgs completas` | viraram mensagem |
-| **`APLICADAS`** | acharam dono no mapa |
-| `ressync` | status chegou com data pendente = mensagem cortada |
-| `órfãos` | data sem status = fluxo pego no meio |
-| `fila perdeu` | descarte na ISR |
-| estado | aguardando STATUS / data1 / data2 |
+| `bytes` | arrived over the UART |
+| `complete msgs` | became a message |
+| **`APPLIED`** | found an owner in the map |
+| `resync` | status arrived with data pending = truncated message |
+| `orphans` | data with no status = stream caught mid-flow |
+| `queue lost` | dropped in the ISR |
+| state | awaiting STATUS / data1 / data2 |
 
-> **`msgs completas` vs `APLICADAS` é a separação que importa:** "chegou e
-> não virou mensagem" e "virou mensagem e não virou som" são consertos
-> completamente diferentes. Um é fio/parser, o outro é mapa de CC.
+> **`complete msgs` vs `APPLIED` is the separation that matters:** "arrived and
+> did not become a message" and "became a message and did not become sound" are
+> completely different fixes. One is wire/parser, the other is CC map.
 
-**O scope respeita o orçamento duro.** Ele escreve pelo `hal::Log`, que
-descarta em vez de esperar — em rajada o stream tem **buracos, e isso é
-projeto**. Ferramenta de diagnóstico que segura o loop é o próximo
-`DelayMs` (ver cap. 7 do [battle_scars](../docs/battle_scars.md)). **Os
-contadores nunca mentem; o stream sim** — e é por isso que existe o modo
-`stats`, em que o dilúvio vira uma linha por segundo.
+**The scope respects the hard budget.** It writes through `hal::Log`, which drops
+rather than waits — in a burst the stream has **holes, and that is by design**. A
+diagnostic tool that holds the loop is the next `DelayMs` (see ch. 7 of
+[battle_scars](../docs/battle_scars.md)). **The counters never lie; the stream
+does** — and that is why the `stats` mode exists, in which the deluge becomes one
+line per second.
 
-### ⚡ DEPOIS DE GRAVAR: reconecte, NÃO esqueça
+### ⚡ AFTER FLASHING: reconnect, DO NOT forget
 
-**O link BLE sobrevive à gravação. A sessão CoreMIDI não.** São camadas
-diferentes, e confundi-las custava três passos onde bastam dois.
+**The BLE link survives flashing. The CoreMIDI session does not.** They are
+different layers, and confusing them cost three steps where two are enough.
 
-| Camada | Depois de `dfu go` + gravar |
+| Layer | After `dfu go` + flash |
 |---|---|
-| **BLE** (o que o pino LB vê) | ✅ conectado — `LB 0/100%` |
-| **Sessão CoreMIDI** (o que o Loopy usa) | ❌ morre |
+| **BLE** (what the LB pin sees) | ✅ connected — `LB 0/100%` |
+| **CoreMIDI session** (what Loopy uses) | ❌ dies |
 
-**O ritual, medido em 18/08:**
+**The ritual, measured on 08/18:**
 
-1. ~~Esquecer o Bluetooth no iPad~~ — **desnecessário**, o pareamento nunca
-   quebrou
-2. **Reconectar o WIDI** no painel de Bluetooth MIDI (dá pra fazer dentro do
-   próprio Loopy Pro)
-3. Voltar a tocar
+1. ~~Forget the Bluetooth on the iPad~~ — **unnecessary**, the pairing never
+   broke
+2. **Reconnect the WIDI** in the Bluetooth MIDI panel (you can do it inside Loopy
+   Pro itself)
+3. Go back to playing
 
-> **Isto refina a matriz de seis quadrantes abaixo:** `FIXO + zero tráfego`
-> **não distingue** *"o app parou de mandar"* de *"a sessão MIDI caiu com o
-> rádio intacto"*. Mesmo par de sintomas, causas diferentes — e a segunda é a
-> que acontece **toda vez** que se grava.
+> **This refines the six-quadrant matrix below:** `FIXED + zero traffic` **does
+> not distinguish** *"the app stopped sending"* from *"the MIDI session dropped
+> with the radio intact"*. Same pair of symptoms, different causes — and the
+> second is the one that happens **every time** you flash.
 >
-> O comando `ble` detecta esse caso específico (LB fixo + zero bytes desde o
-> boot) e imprime a instrução em vez do diagnóstico.
+> The `ble` command detects this specific case (LB fixed + zero bytes since boot)
+> and prints the instruction instead of the diagnosis.
 
 ---
 
-### 📡 DIAGNÓSTICO WIDI/BLE — três camadas, nenhum app de terceiro
+### 📡 WIDI/BLE DIAGNOSIS — three layers, no third-party app
 
-O `mscope` responde *"o que chegou"*. Ele nunca soube responder *"o rádio
-está vivo?"* — e essa é a pergunta do palco. Este é o mscope da camada de
-rádio, mesma filosofia: **a ferramenta é nossa e nenhum app de terceiro
-entra no caminho crítico.**
+The `mscope` answers *"what arrived"*. It never knew how to answer *"is the radio
+alive?"* — and that is the stage's question. This is the mscope of the radio
+layer, same philosophy: **the tool is ours and no third-party app enters the
+critical path.**
 
-#### Camada 1 — o LED no pad LB
+#### Layer 1 — the LED on the LB pad
 
-LED + 470 Ω soldados no pad **LB** do WIDI Core, com **V3 como fonte**.
-**Só o LB** — LG e LR foram removidos em 20/08 (ver o quadro na seção de
-solda do WIDI).
+LED + 470 Ω soldered on the WIDI Core's **LB** pad, with **V3 as the source**.
+**LB only** — LG and LR were removed on 08/20 (see the box in the WIDI soldering
+section).
 
-Legenda oficial do módulo, conforme a **CME**:
+Official legend of the module, per the **CME**:
 
-| LED | Significa |
+| LED | Means |
 |---|---|
-| pisca lento | anunciando (advertising) — ninguém conectado |
-| fixo | conectado |
+| slow blink | advertising — no one connected |
+| fixed | connected |
 
-> ⚠️ **A BANCADA DISCORDOU, E QUEM MANDA É A BANCADA.** Esta tabela era
-> hipótese da CME, repassada pelo dB, e a medição a desmentiu: **o dB
-> desconectou e o LB ficou FIXO.** Logo o LB não é
-> conectado/desconectado — carrega outra coisa, e qual ainda não se sabe.
+> ⚠️ **THE BENCH DISAGREED, AND THE BENCH IS BOSS.** This table was a CME
+> hypothesis, relayed by dB, and measurement disproved it: **dB disconnected and
+> the LB stayed FIXED.** So the LB is not connected/disconnected — it carries
+> something else, and what that is is still unknown.
 >
-> A saída óbvia era "então é o LG ou o LR". Os dois foram lidos por dois
-> dias e **não marcaram nada**, e por isso saíram do hardware em 20/08.
-> Restou uma pergunta aberta com **dois candidatos a menos** — o que é
-> progresso, não o mesmo lugar de antes.
+> The obvious way out was "then it's the LG or the LR". Both were read for two
+> days and **marked nothing**, and that is why they came out of the hardware on
+> 08/20. What remains is an open question with **two fewer candidates** — which is
+> progress, not the same place as before.
 >
-> Na prática o LB segue **útil como sinal cru**: `LB 0/100%` (fixo) vs
-> transições contando. O que não se pode é traduzi-lo para "conectado"
-> sem medir de novo.
+> In practice the LB stays **useful as a raw signal**: `LB 0/100%` (fixed) vs
+> transitions counting. What you cannot do is translate it to "connected" without
+> measuring again.
 
-#### A matriz LED × mscope — seis quadrantes, um culpado cada
+#### The LED × mscope matrix — six quadrants, one culprit each
 
-O LED sozinho não basta, o `mscope` sozinho não basta. **Cruzados, cada
-combinação tem um culpado só** — que é exatamente o que faltava quando
-`bytes 0` era compatível com cinco causas ao mesmo tempo.
+The LED alone is not enough, the `mscope` alone is not enough. **Crossed, each
+combination has a single culprit** — which is exactly what was missing when
+`bytes 0` was compatible with five causes at once.
 
-| LED | tráfego no `mscope` | O que está acontecendo | Culpado / conserto |
+| LED | traffic in `mscope` | What is happening | Culprit / fix |
 |---|---|---|---|
-| pisca lento | zero | anunciando, ninguém conectou | **a central**: parear; Forget Device se recusar |
-| pisca lento | chegando | contradição — não deveria existir | **a instrumentação**: LED mal soldado, ou pad errado. O rádio está bem |
-| fixo | zero | conectado, e mesmo assim nada chega | **o app**: não está mandando, CC fora do mapa, ou canal alheio |
-| fixo | chegando | ✅ tudo certo | — |
-| apagado | zero | módulo sem alimentação | **a energia**: rail de 5 V, fio, solda |
-| apagado | chegando | rádio funcionando, LED não | **o LED**, não o link. Ignore e siga tocando |
+| slow blink | zero | advertising, no one connected | **the central**: pair; Forget Device if it refuses |
+| slow blink | arriving | contradiction — should not exist | **the instrumentation**: LED badly soldered, or wrong pad. The radio is fine |
+| fixed | zero | connected, and still nothing arrives | **the app**: not sending, CC off the map, or wrong channel |
+| fixed | arriving | ✅ all good | — |
+| off | zero | module with no power | **the power**: 5 V rail, wire, solder |
+| off | arriving | radio working, LED not | **the LED**, not the link. Ignore it and keep playing |
 
-A linha que mais paga o trabalho de soldar é a terceira: **fixo + zero**
-era, até aqui, indistinguível de tudo o mais. Ela separa "o rádio falhou"
-de "o rádio está ótimo e o problema é o que você configurou no iPad".
+The line that most pays for the work of soldering is the third: **fixed + zero**
+was, until now, indistinguishable from everything else. It separates "the radio
+failed" from "the radio is fine and the problem is what you configured on the
+iPad".
 
-#### Camada 2 — o comando `ble`
+#### Layer 2 — the `ble` command
 
 ```
 ble
 ```
 
-Responde quatro coisas que o `midi` nunca soube:
+It answers four things the `midi` never knew:
 
-- **idade do último byte** — a medida que separa *"nunca conectou"* de
-  *"conectou e caiu"*. `bytes 0` é idêntico nos dois; idade não é.
-- **mensagens da sessão** — zeradas a cada (re)conexão detectada.
-- **quedas** — silêncio > 10 s **depois** de ter havido tráfego. A
-  condição *"depois de tráfego"* é o que impede uma placa que nunca
-  pareou de acumular uma queda a cada 10 s.
-- **(re)conexões detectadas** — ver abaixo.
+- **age of the last byte** — the measure that separates *"never connected"* from
+  *"connected and dropped"*. `bytes 0` is identical in both; age is not.
+- **session messages** — zeroed on each detected (re)connection.
+- **drops** — silence > 10 s **after** there had been traffic. The condition
+  *"after traffic"* is what stops a board that never paired from accumulating a
+  drop every 10 s.
+- **(re)connections detected** — see below.
 
-Tudo carimbado na caixa-preta (slots 86, 87, 88), então sobrevive ao
-RESET e pode ser lido depois de um voo em que a serial não existia.
+All stamped in the black box (slots 86, 87, 88), so it survives RESET and can be
+read after a flight in which the serial did not exist.
 
-E o `ble` **denuncia `[LOG MUDO]`** como todos os outros comandos de
-status — etapa 0 embutida. Ferramenta de diagnóstico que pode mentir por
-silêncio já custou um dia inteiro (caso 8 do battle_scars).
+And `ble` **flags `[LOG MUDO]`** like all the other status commands — step 0
+built in. A diagnostic tool that can lie by silence already cost a whole day
+(case 8 of battle_scars).
 
-#### O detector de dump de sincronização
+#### The sync-dump detector
 
-**Um padrão de campo virou sensor.** Ao (re)conectar, o controlador
-despeja o estado de vários controles de uma vez — nós observamos isso
-acontecendo várias vezes antes de entender o que era. Agora a placa
-reconhece sozinha:
+**A field pattern became a sensor.** On (re)connecting, the controller dumps the
+state of several controls at once — we watched this happen several times before
+understanding what it was. Now the board recognizes it on its own:
 
-> **≥ 4 CCs DISTINTOS em menos de 100 ms, logo após silêncio > 5 s**
-> ⇒ "provável (re)conexão", carimbado.
+> **≥ 4 DISTINCT CCs in less than 100 ms, right after silence > 5 s**
+> ⇒ "probable (re)connection", stamped.
 
-**Distintos, e não quantidade** — e essa palavra é o detector inteiro.
-Varrer um fader sozinho manda dezenas de mensagens do *mesmo* CC em
-100 ms; pelo critério de quantidade, tocar seria indistinguível de
-reconectar.
+**Distinct, and not quantity** — and that word is the whole detector. Sweeping a
+single fader sends dozens of messages of the *same* CC in 100 ms; by a quantity
+criterion, playing would be indistinguishable from reconnecting.
 
-#### Camada 3 — árvore de decisão: "o Bluetooth parou"
+#### Layer 3 — decision tree: "the Bluetooth stopped"
 
-**1. O LED, antes de qualquer coisa.**
-Apagado → é energia, não rádio: rail de 5 V, fio, solda. Pisca lento →
-ninguém está conectado, vá pro passo 3. Fixo → o link existe; o problema
-está adiante, vá pro passo 2.
+**1. The LED, before anything else.**
+Off → it is power, not radio: 5 V rail, wire, solder. Slow blink → no one is
+connected, go to step 3. Fixed → the link exists; the problem is further on, go
+to step 2.
 
-**2. `ble` — o link está vivo ou parado?**
-Sem eco nenhum, confira `[LOG MUDO]` e mande `log on` primeiro: um zero
-num canal não provado não é dado. Com o log vivo: *NUNCA RECEBEU* → nunca
-pareou. *CALADO há mais de 10 s* → caiu, siga pro passo 3. *VIVO* → o
-rádio está bem e o problema é o mapa: confira CC e canal com `midi`.
+**2. `ble` — is the link alive or stopped?**
+With no echo at all, check `[LOG MUDO]` and send `log on` first: a zero on an
+unproven channel is not data. With the log alive: *NEVER RECEIVED* → never paired.
+*SILENT for more than 10 s* → dropped, go to step 3. *ALIVE* → the radio is fine
+and the problem is the map: check CC and channel with `midi`.
 
-**3. Um central no universo.**
-Mais de um aparelho tentando falar com o mesmo WIDI é a causa mais
-comum e a mais invisível. Desligue o Bluetooth de tudo que não for o
-aparelho em uso — o iPhone esquecido no bolso conta.
+**3. One central in the universe.**
+More than one device trying to talk to the same WIDI is the most common cause and
+the most invisible. Turn off the Bluetooth of everything that is not the device
+in use — the iPhone forgotten in your pocket counts.
 
-**4. Os consertos conhecidos, em ordem de custo.**
-*Forget Device* no aparelho e parear de novo → power-cycle do módulo →
-parear de novo. Se voltar, o `ble` carimba a (re)conexão sozinho e o
-número de quedas fica no registro.
+**4. The known fixes, in order of cost.**
+*Forget Device* on the device and pair again → power-cycle the module → pair
+again. If it comes back, `ble` stamps the (re)connection on its own and the drop
+count stays in the record.
 
-> **O que esta árvore substitui:** uma hora gasta trocando de suspeito
-> cinco vezes — link caindo, fader desconfigurado, app sem autorização,
-> DMA abortado, controlador mandando dump — sem confirmar nem descartar
-> nenhuma. O sintoma era sempre o mesmo `bytes 0`, e a explicação era nova
-> a cada rodada. Quatro passos com um culpado cada valem mais que cinco
-> hipóteses com nenhum.
+> **What this tree replaces:** an hour spent switching suspects five times — link
+> dropping, misconfigured fader, app with no authorization, aborted DMA,
+> controller sending a dump — without confirming or ruling out any. The symptom
+> was always the same `bytes 0`, and the explanation was new each round. Four
+> steps with one culprit each are worth more than five hypotheses with none.
 
-### Por que DMA em modo listen, e não polling nem uma IRQ por byte
+### Why DMA in listen mode, and not polling nor one IRQ per byte
 
-O fluxo MIDI é esporádico e em rajadas curtas. Polling ou desperdiça o
-loop principal ou perde byte; uma interrupção por byte a 31250 baud é
-troca de contexto à toa. `DmaListenStart` — DMA circular com interrupção
-de IDLE — só incomoda a CPU quando uma rajada termina. É o mesmo
-mecanismo que a própria libDaisy usa no `MidiUartTransport`.
+The MIDI flow is sporadic and in short bursts. Polling either wastes the main
+loop or loses a byte; an interrupt per byte at 31250 baud is a pointless context
+switch. `DmaListenStart` — circular DMA with an IDLE interrupt — only bothers the
+CPU when a burst ends. It is the same mechanism libDaisy itself uses in
+`MidiUartTransport`.
 
-> **O buffer do DMA tem que morar em seção acessível por DMA**
-> (`DMA_BUFFER_MEM_SECTION`, que é `.sram1_bss`). Num buffer comum o
-> DMA escreve na RAM e o núcleo lê o cache: os bytes chegam e o parser
-> vê zeros. No mapa de memória ele aparece em `RAM_D2_DMA` — 256 bytes.
+> **The DMA buffer has to live in a DMA-accessible section**
+> (`DMA_BUFFER_MEM_SECTION`, which is `.sram1_bss`). In a common buffer the DMA
+> writes to RAM and the core reads the cache: the bytes arrive and the parser sees
+> zeros. In the memory map it appears under `RAM_D2_DMA` — 256 bytes.
 
-### O que é da placa e o que não é
+### What belongs to the board and what does not
 
-O HAL entrega **bytes crus**, um a um. Não parseia. A máquina de estados
-MIDI é board-agnostic e mora em [midi.h](midi.h), do lado do shell.
+The HAL delivers **raw bytes**, one by one. It does not parse. The MIDI state
+machine is board-agnostic and lives in [midi.h](midi.h), on the shell side.
 
-Isso não é purismo: "como os bytes chegam" muda de placa pra placa
-(DMA, interrupção, polling), mas "o que eles significam" não muda nunca.
-Um parser dentro do HAL teria que ser reescrito no Teensy — e reescrito
-igual.
+This is not purism: "how the bytes arrive" changes from board to board (DMA,
+interrupt, polling), but "what they mean" never changes. A parser inside the HAL
+would have to be rewritten on the Teensy — and rewritten the same.
 
-**O RX chega por interrupção e é despachado no loop principal**, via
-`hal::PollMidi()`, exatamente como as linhas do serial. Mesma regra,
-mesmo motivo: rodar o parser na ISR significa mexer em `params` e
-possivelmente logar de dentro dela, que é o deadlock que matou o `list`
-na v0.2.0.
+**The RX arrives by interrupt and is dispatched in the main loop**, via
+`hal::PollMidi()`, exactly like the serial lines. Same rule, same reason: running
+the parser in the ISR means touching `params` and possibly logging from inside it,
+which is the deadlock that killed `list` in v0.2.0.
 
 ---
 
-## Ruído: o USB do computador é a fonte dominante
+## Noise: the computer's USB is the dominant source
 
-> **Alimentar a Daisy pelo USB do computador injeta ruído audível.**
-> Medido, não suposto.
+> **Powering the Daisy from the computer's USB injects audible noise.** Measured,
+> not assumed.
 >
-> **A bateria interna sempre esteve no projeto; o USB é só pra gravar
-> firmware.** Então isto não é requisito novo — é a medida do que a
-> configuração de bancada custa, e a confirmação de que o ruído
-> reportado NÃO acompanha o instrumento montado.
+> **The internal battery was always in the project; the USB is only for flashing
+> firmware.** So this is not a new requirement — it is the measure of what the
+> bench setup costs, and the confirmation that the reported noise does NOT come
+> along with the assembled instrument.
 >
-> Na bateria, o único ruído que sobra é o residual de 1 kHz abaixo —
-> nosso, a −90 dBFS. É o único que vai pro campo.
+> On battery, the only noise left is the residual 1 kHz below — ours, at −90 dBFS.
+> It is the only one that goes to the field.
 
-Protocolo: entrada em curto (`AUDIO_IN_L` → `AGND`, piezo fora), cadeia
-neutralizada (`dly_mix` 0, `tone_mix` 0, `shift_hz` 0, `bench_boost` 1×,
-`gate_thresh` **0** pra manter o gate aberto — com ele fechando, o piso
-fica mascarado e a medição não vale nada). Espectro por `cotuca_noise.py`.
+Protocol: input shorted (`AUDIO_IN_L` → `AGND`, piezo out), chain neutralized
+(`dly_mix` 0, `tone_mix` 0, `shift_hz` 0, `bench_boost` 1×, `gate_thresh` **0** to
+keep the gate open — with it closing, the floor is masked and the measurement is
+worthless). Spectrum by `cotuca_noise.py`.
 
-| | USB do computador | Powerbank | Δ |
+| | Computer USB | Powerbank | Δ |
 |---|---|---|---|
-| Pico | −44,1 dBFS | **−64,4** | **−20 dB** |
-| 16 002 Hz | −80,9 | some | — |
-| 7 998 Hz | −85,2 | some | — |
-| 3 000 Hz | −86,9 | −100,5 | −13,6 |
-| 1 998 Hz | −88,9 | −97,4 | −8,5 |
-| 1 002 Hz | −88,1 | −90,4 | −2,3 |
+| Peak | −44.1 dBFS | **−64.4** | **−20 dB** |
+| 16,002 Hz | −80.9 | gone | — |
+| 7,998 Hz | −85.2 | gone | — |
+| 3,000 Hz | −86.9 | −100.5 | −13.6 |
+| 1,998 Hz | −88.9 | −97.4 | −8.5 |
+| 1,002 Hz | −88.1 | −90.4 | −2.3 |
 
-**Os dois sintomas têm assinatura distinta e a mesma fonte:**
+**The two symptoms have distinct signatures and the same source:**
 
-- **Apito agudo** = o harmônico de **16 kHz** da série de 1 kHz. Some por
-  completo na bateria.
-- **Crackling** = energia **impulsiva**: fator de crista de 30 dB no USB
-  (pico 30 dB acima do RMS), contra 12 dB na bateria. Ruído contínuo tem
-  crista baixa; crista alta é evento isolado, que é o que se ouve como
-  estalo.
+- **High-pitched whistle** = the **16 kHz** harmonic of the 1 kHz series. Vanishes
+  completely on battery.
+- **Crackling** = **impulsive** energy: a crest factor of 30 dB on USB (peak 30 dB
+  above RMS), against 12 dB on battery. Continuous noise has a low crest; a high
+  crest is an isolated event, which is what you hear as a pop.
 
-### O residual de 1 kHz é NOSSO, e é a taxa de bloco
+### The 1 kHz residual is OURS, and it is the block rate
 
-Os 1 002 Hz sobrevivem na bateria quase no mesmo nível. **Sem host USB não
-existe frame** — então esse pico não pode ser USB. Bloco 48 a 48 kHz dá
-exatamente **1 000 blocos por segundo**.
+The 1,002 Hz survive on battery at nearly the same level. **With no USB host there
+is no frame** — so that peak cannot be USB. A block of 48 at 48 kHz gives exactly
+**1,000 blocks per second**.
 
-Fica registrado como **não resolvido e provavelmente inaudível**: −90 dBFS
-e sem os harmônicos altos, que eram o que o ouvido pegava. Se um dia
-incomodar, o teste que confirma é barato — **mudar o bloco move a
-frequência** (128 → 375 Hz). E as duas causas plausíveis movem junto, então
-o teste confirma a origem mas **não distingue**:
+It is recorded as **unresolved and probably inaudible**: −90 dBFS and without the
+high harmonics, which were what the ear was catching. If it ever bothers, the test
+that confirms is cheap — **changing the block moves the frequency** (128 → 375
+Hz). And the two plausible causes move together, so the test confirms the origin
+but **does not distinguish**:
 
-1. **Software** — parâmetro lido uma vez por bloco e aplicado em degrau na
-   fronteira: zipper noise. Conserto: interpolar o ganho ao longo do bloco.
-2. **Hardware** — pico de consumo do callback acoplando na alimentação
-   analógica. Software não resolve.
+1. **Software** — a parameter read once per block and applied as a step at the
+   boundary: zipper noise. Fix: interpolate the gain over the block.
+2. **Hardware** — the callback's current peak coupling into the analog supply.
+   Software does not solve it.
 
-### Armadilha de interpretação registrada
+### A recorded interpretation trap
 
-Na primeira leitura deste espectro a série de 1 kHz foi nomeada "frame
-USB" porque batia com um suspeito da lista. Estava certo por acaso: no
-teste 1 a placa **estava** no USB do computador. Quando o teste da bateria
-foi lido fora de ordem, a mesma série virou "taxa de bloco" e a conclusão
-inverteu.
+On the first reading of this spectrum the 1 kHz series was named "USB frame"
+because it matched a suspect from the list. It was right by accident: in test 1
+the board **was** on the computer's USB. When the battery test was read out of
+order, the same series became "block rate" and the conclusion inverted.
 
-**Frequência coincidir com suspeito conhecido não é identificação.** Duas
-fontes diferentes aqui produzem exatamente 1 kHz, e só o teste que remove
-uma delas separa as duas.
+**A frequency coinciding with a known suspect is not identification.** Two
+different sources here produce exactly 1 kHz, and only the test that removes one of
+them separates the two.
 
 ---
 
-## Estado versionado — INSTRUMENTO
+## Versioned state — INSTRUMENT
 
-> **Regra da casa: o repo versiona o INSTRUMENTO. Bancada é estado
-> transitório.** O que está no `main` é o que deve estar na placa pra
-> tocar; qualquer configuração de medição é receita documentada, não
-> commit.
+> **House rule: the repo versions the INSTRUMENT. The bench is transient state.**
+> What is in `main` is what should be on the board to play; any measurement
+> configuration is a documented recipe, not a commit.
 
-| | Valor | Onde muda |
+| | Value | Where it changes |
 |---|---|---|
-| Clock | **480 MHz** | permanente, `hw.Init(true)` |
-| Bloco | **48** — 1 000 µs, latência 1 ms | `Requirements::block_size` |
-| Módulos | `delay` no slot instrument, **fx2 vazio** | `MODULE_SRC` no `Makefile` |
-| `dly_time` / `dly_mix` | 0,40 / 0,50 | manifest |
+| Clock | **480 MHz** | permanent, `hw.Init(true)` |
+| Block | **48** — 1,000 µs, 1 ms latency | `Requirements::block_size` |
+| Modules | `delay` in the instrument slot, **fx2 empty** | `MODULE_SRC` in the `Makefile` |
+| `dly_time` / `dly_mix` | 0.40 / 0.50 | manifest |
 | App | QSPI via bootloader | `APP_TYPE=BOOT_QSPI` |
-| CPU medida | **188 µs de 1 000 — 18,8%** | |
+| Measured CPU | **188 µs of 1,000 — 18.8%** | |
 
-### Nota sobre `-O3`
+### Note on `-O3`
 
-Fica até o orçamento apertar. Medido contra `-O2`: média **piorou** de
-11,3% para 13,0%, pico praticamente igual. O app executa da QSPI e o
-binário inflou 13% (260 → 295 KB) — mais código, mais falha de I-cache,
-e em memória externa isso custa mais que o inlining rende.
+It stays until the budget tightens. Measured against `-O2`: the average **got
+worse** from 11.3% to 13.0%, peak practically the same. The app executes from QSPI
+and the binary inflated 13% (260 → 295 KB) — more code, more I-cache misses, and
+in external memory that costs more than the inlining earns.
 
-> **Ao reverter, REMEDIR TUDO.** Todos os números deste documento e dos
-> commits — 188 µs do instrumento, 3 520 do módulo de FFT, 7 349 do freeze —
-> têm `-O3` como base. Comparar número novo com número velho depois de
-> trocar a otimização é comparar coisas diferentes.
+> **When reverting, RE-MEASURE EVERYTHING.** All the numbers in this document and
+> in the commits — 188 µs of the instrument, 3,520 of the FFT module, 7,349 of the
+> freeze — have `-O3` as a baseline. Comparing a new number with an old one after
+> switching the optimization is comparing different things.
 
 ---
 
-## Pool de SRAM dos módulos — HISTÓRICO (até 20/08)
+## Module SRAM pool — HISTORY (through 08/20)
 
-> ⚠️ **Os números desta secção são do sistema de módulos externos, que saiu
-> inteiro a 20/08.** Ficam porque a lição de dimensionamento sobrevive à
-> ferramenta. **O valor de hoje é outro: 92,4%**, e vive no
-> [STATUS.md](../docs/STATUS.md). Não comparar os dois.
+> ⚠️ **The numbers in this section are from the external module system, which went
+> out entirely on 08/20.** They stay because the sizing lesson survives the tool.
+> **Today's value is different: 92.4%**, and lives in
+> [STATUS.md](../docs/STATUS.md). Do not compare the two.
 
-O alocador servia um pool estático de **48 KB** em SRAM e só caía pra
-`AllocBig()` (SDRAM) no que não coubesse. Estado com dois módulos:
+The allocator served a static pool of **48 KB** in SRAM and only fell to
+`AllocBig()` (SDRAM) for what did not fit. State with two modules:
 
-| Módulo | SRAM | Blocos |
+| Module | SRAM | Blocks |
 |---|---|---|
-| delay | 9 368 B | 12 |
-| o do slot Fx2 | 38 128 B | 22 |
-| **total** | **47 496 B de 49 152** | **96,6%** |
+| delay | 9,368 B | 12 |
+| the Fx2-slot one | 38,128 B | 22 |
+| **total** | **47,496 B of 49,152** | **96.6%** |
 
-**Um terceiro módulo não cabe.** O número sempre foi esse; o warm-up no
-`Init` só o tornou visível, porque antes parte das alocações acontecia
-no primeiro `Process` e ficava fora da contabilidade.
+**A third module does not fit.** The number was always that; the warm-up in `Init`
+only made it visible, because before, part of the allocations happened in the
+first `Process` and stayed off the books.
 
-### O método, antes de crescer o pool ou migrar às cegas
+### The method, before growing the pool or migrating blind
 
-A decisão fica adiada até o módulo 3 existir, mas o **método** já está
-definido, e ele importa mais que a decisão:
+The decision is deferred until module 3 exists, but the **method** is already
+defined, and it matters more than the decision:
 
-1. **Rotular as alocações por origem** no `MemReport`, separando
-   **quentes** (lidas amostra a amostra — sinais de bloco, linhas de
-   delay, buffers de FFT) de **mornas** (estado, filas de evento,
-   tabelas consultadas por bloco).
-2. **Quentes ficam na SRAM.** Migrá-las pra SDRAM custa latência de
-   acesso dentro do callback, que é exatamente onde não há folga.
-3. **Mornas migram barato.** Estado que se lê uma vez por bloco não
-   sente a diferença.
-4. Só então decidir: crescer o pool, migrar as mornas, ou as duas.
+1. **Label the allocations by origin** in the `MemReport`, separating **hot** ones
+   (read sample by sample — block signals, delay lines, FFT buffers) from **warm**
+   ones (state, event queues, tables consulted per block).
+2. **Hot ones stay in SRAM.** Migrating them to SDRAM costs access latency inside
+   the callback, which is exactly where there is no slack.
+3. **Warm ones migrate cheaply.** State read once per block does not feel the
+   difference.
+4. Only then decide: grow the pool, migrate the warm ones, or both.
 
-Crescer o pool às cegas rouba SRAM de quem talvez precise mais; migrar
-às cegas pode empurrar um buffer quente pra SDRAM e criar um gargalo
-onde não havia. **Sem o mapa, as duas escolhas são apostas.**
+Growing the pool blind steals SRAM from whoever might need it more; migrating
+blind can push a hot buffer to SDRAM and create a bottleneck where there was none.
+**Without the map, both choices are bets.**
 
-> Ressalva honesta sobre o rótulo: o alocador **não sabe** a semântica
-> de quem chama — o motor externo pedia memória sem dizer pra quê. Rotular por
-> origem exige ou anotação manual por módulo, ou heurística por
-> tamanho e fase de alocação. A heurística é barata e imperfeita; a
-> anotação é exata e não escala pra patch que muda. Escolher entre as
-> duas é parte da tarefa, não detalhe dela.
+> An honest caveat about the label: the allocator **does not know** the semantics
+> of the caller — the external engine asked for memory without saying what for.
+> Labeling by origin requires either manual annotation per module, or a heuristic
+> by allocation size and phase. The heuristic is cheap and imperfect; the
+> annotation is exact and does not scale to a patch that changes it. Choosing
+> between the two is part of the task, not a detail of it.
 
 ---
 
-## Regra da RAM grande
+## The big-RAM rule
 
-> **`AllocBig()` é o único acesso à SDRAM em todo o projeto.**
+> **`AllocBig()` is the only access to the SDRAM in the whole project.**
 
-É a regra que faz a fronteira HAL valer também pra memória, não só pra API.
+It is the rule that makes the HAL boundary hold for memory too, not just for the
+API.
 
-### Proibido
+### Forbidden
 
-Declarar `DSY_SDRAM_BSS` — ou o macro de seção equivalente de qualquer outra
-placa — **fora de `hal_<board>.cpp`**. Isso inclui módulos, exports de motor
-externo, buffers de freeze, delays longos e notch banks.
+Declaring `DSY_SDRAM_BSS` — or the equivalent section macro of any other board —
+**outside `hal_<board>.cpp`**. This includes modules, external-engine exports,
+freeze buffers, long delays and notch banks.
 
 ```cpp
-// ERRADO: prende o módulo à Daisy e fura a fronteira
+// WRONG: binds the module to the Daisy and breaches the boundary
 static float DSY_SDRAM_BSS buffer[1024 * 1024];
 ```
 
 ```cpp
-// CERTO: portão único, e a checagem de nullptr é obrigatória
+// RIGHT: single gate, and the nullptr check is mandatory
 float* buffer = (float*)cotuca::hal::AllocBig(1024 * 1024 * sizeof(float));
 if(!buffer)
-    return false; // placa sem RAM grande, ou pool esgotado
+    return false; // board with no big RAM, or pool exhausted
 ```
 
-### Por quê
+### Why
 
-1. **Portabilidade.** Um módulo que declara `DSY_SDRAM_BSS` não compila no
-   Teensy. Um que chama `AllocBig()` compila em qualquer lugar e degrada com
-   graça: a placa sem RAM grande devolve `nullptr` e o módulo se recusa a
-   carregar, com erro claro no boot.
-2. **Contabilidade.** Seções declaradas espalhadas pelo código são invisíveis
-   até o linker estourar. Pelo portão, o total é sempre conhecido.
-3. **Determinismo.** O alocador é bump — sem free, sem fragmentação, sem
-   surpresa em tempo de execução.
+1. **Portability.** A module that declares `DSY_SDRAM_BSS` does not compile on the
+   Teensy. One that calls `AllocBig()` compiles anywhere and degrades gracefully:
+   the board with no big RAM returns `nullptr` and the module refuses to load, with
+   a clear error at boot.
+2. **Accountability.** Sections declared scattered through the code are invisible
+   until the linker blows up. Through the gate, the total is always known.
+3. **Determinism.** The allocator is bump — no free, no fragmentation, no runtime
+   surprise.
 
-### Contrato de uso
+### Usage contract
 
-- **Só no boot.** `AllocBig()` **nunca** no callback de áudio.
-- **Checar `nullptr` sempre.** Quem chama decide o que fazer sem a RAM.
-- **Sem `free`.** É bump allocator: o que foi entregue não volta. Declare o
-  que precisa uma vez.
-- **Declare em `Requirements`.** O manifest de cada instrumento anuncia
-  `big_ram_bytes`, conferido no boot contra `hal::Info().big_ram_bytes`.
-  Placa insuficiente = LED rápido + log, em vez de bug no palco.
+- **Boot only.** `AllocBig()` **never** in the audio callback.
+- **Check `nullptr` always.** The caller decides what to do without the RAM.
+- **No `free`.** It is a bump allocator: what was handed out does not come back.
+  Declare what you need once.
+- **Declare it in `Requirements`.** Each instrument's manifest announces
+  `big_ram_bytes`, checked at boot against `hal::Info().big_ram_bytes`. An
+  insufficient board = fast LED + log, instead of a bug on stage.
 
-### Extrato no boot
+### Boot extract
 
-Todo boot imprime quanto saiu pelo portão:
+Every boot prints how much went out through the gate:
 
 ```
 SDRAM via AllocBig: 524296 de 67108864 bytes
 ```
 
-Se um módulo alocar por fora, **esse número não fecha** — é o detector de
-violação da regra.
+If a module allocates outside, **that number does not balance** — it is the
+detector of a violation of the rule.
 
-O comando `mods` traz o seu próprio extrato, mais detalhado.
+The `mods` command brings its own extract, more detailed.
 
-### Armadilha conhecida — agora ativa
+### Known trap — now active
 
-`sdram_pool` em `hal_daisy_seed.cpp` reserva a região SDRAM **inteira**
-(64 MB). Até a v0.3.0 o `--gc-sections` descartava o pool porque nada chamava
-`AllocBig()`, e o mapa mostrava `SDRAM: 0 B`. **A partir da v0.4.0 há quem
-chame — delay, freeze, reverb e os motores de pitch — e os 64 MB voltaram de
-uma vez:** o mapa mostra `SDRAM: 100%`.
+`sdram_pool` in `hal_daisy_seed.cpp` reserves the **entire** SDRAM region (64 MB).
+Through v0.3.0 the `--gc-sections` discarded the pool because nothing called
+`AllocBig()`, and the map showed `SDRAM: 0 B`. **As of v0.4.0 there are callers —
+delay, freeze, reverb and the pitch engines — and the 64 MB came back all at
+once:** the map shows `SDRAM: 100%`.
 
-Isso é o pool, não o consumo — mas a consequência é real: **não sobra byte pra
-mais nada em `.sdram_bss`**. Toda alocação tem que passar pelo portão. Como
-passa, é seguro — mas só enquanto a regra for respeitada.
+This is the pool, not the consumption — but the consequence is real: **not a byte
+is left for anything else in `.sdram_bss`**. Every allocation has to go through the
+gate. As long as it does, it is safe — but only while the rule is respected.
 
 ---
 
-## Portar pra uma placa nova
+## Porting to a new board
 
-1. Escreva `hal_<board>.cpp` implementando **todo** o contrato de `hal.h`:
-   `Init`, `Info`, `StartAudio`, `ReadKnob`, `ReadButton`, `SetLed`, `Log`,
+1. Write `hal_<board>.cpp` implementing **all** of `hal.h`'s contract: `Init`,
+   `Info`, `StartAudio`, `ReadKnob`, `ReadButton`, `SetLed`, `Log`,
    `SetSerialLineCallback`, `PollSerial`, `DelayMs`, `AllocBig`, `AllocBigUsed`.
-2. Preencha `BoardInfo` com a verdade da placa. Sem RAM grande?
-   `big_ram_bytes = 0` e `AllocBig()` devolvendo `nullptr` — não minta, o
-   boot depende disso pra recusar instrumentos que não cabem.
-3. `make BOARD=<board>`. O Makefile acha `hal_<board>.cpp` sozinho e lista as
-   placas disponíveis se errar o nome.
-4. Rode o [TESTES.md](TESTES.md). T1–T3 não dependem de placa.
+2. Fill `BoardInfo` with the truth of the board. No big RAM? `big_ram_bytes = 0`
+   and `AllocBig()` returning `nullptr` — do not lie, the boot depends on this to
+   refuse instruments that do not fit.
+3. `make BOARD=<board>`. The Makefile finds `hal_<board>.cpp` on its own and lists
+   the available boards if you get the name wrong.
+4. Run [TESTES.md](TESTES.md). T1–T3 do not depend on the board.
 
-### Armadilhas por implementar
+### Traps to implement
 
-- **`Log()` não pode ser chamado de ISR** se transmitir pelo mesmo periférico
-  que gera a interrupção. Na Daisy isso travava a placa inteira. Se o RX da
-  sua placa for por interrupção, **enfileire e despache no `PollSerial()`**.
-- **`ReadKnob()` devolve `-1`** quando não há pot físico ligado. O loop
-  principal trata isso como "sem hardware, obedeça o serial". Não devolva 0.
+- **`Log()` cannot be called from an ISR** if it transmits over the same
+  peripheral that generates the interrupt. On the Daisy this froze the whole board.
+  If your board's RX is by interrupt, **enqueue and dispatch in `PollSerial()`**.
+- **`ReadKnob()` returns `-1`** when there is no physical pot connected. The main
+  loop treats this as "no hardware, obey the serial". Do not return 0.

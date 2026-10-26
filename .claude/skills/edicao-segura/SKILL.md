@@ -1,104 +1,102 @@
 ---
 name: edicao-segura
-description: Disciplina de edição de fonte no Cotucatronics — âncora conferida antes, grep depois, versão semântica bumpada e reportada. Use em TODA alteração de arquivo do projeto. Edições silenciosamente falhas já custaram uma célula inteira de instrumentação e duas entradas de documento que eu relatei como escritas e nunca existiram.
+description: Source-editing discipline in Cotucatronics — anchor checked before, grep after, semantic version bumped and reported. Use on EVERY file change in the project. Silently failed edits have already cost an entire instrumentation cell and two document entries that I reported as written and that never existed.
 ---
 
-# Edição segura de fonte
+# Safe source editing
 
-**Uma edição que falha em silêncio é pior que uma que quebra o build** — ela
-te deixa relatar como feito algo que não existe.
+**An edit that fails silently is worse than one that breaks the build** — it lets
+you report as done something that does not exist.
 
-Já custou: duas entradas do `battle_scars.md` reportadas como escritas e nunca
-inseridas (âncora errada, sem verificação); e uma célula inteira de
-instrumentação cuja ausência apareceu como `VOLTAS=0, nan` — o código nunca
-tinha entrado no arquivo.
+It has already cost: two entries of `battle_scars.md` reported as written and never
+inserted (wrong anchor, no verification); and an entire instrumentation cell whose
+absence showed up as `VOLTAS=0, nan` — the code had never made it into the file.
 
-## Protocolo
+## Protocol
 
-### 1. Antes — a âncora é única?
+### 1. Before — is the anchor unique?
 
 ```python
 assert s.count(ancora) == 1, "ancora <nome>"
 ```
 
-Conferir **antes de escrever**. Se o assert estourar, nada foi gravado e o
-arquivo continua íntegro — é o comportamento desejado, não uma falha do
-processo.
+Check **before writing**. If the assert blows up, nothing was written and the file
+remains intact — that is the desired behavior, not a process failure.
 
-Âncora com 0 ocorrências = o texto que você imaginou não existe.
-Âncora com 2+ = você não sabe qual vai mudar.
+An anchor with 0 occurrences = the text you imagined does not exist.
+An anchor with 2+ = you do not know which one you will change.
 
-### 2. Depois — confirmar no arquivo
+### 2. After — confirm in the file
 
 ```bash
 grep -n "<trecho novo>" <arquivo>
 ```
 
-**Nunca reportar uma edição sem ter feito o grep.** O relato vem do arquivo,
-não da intenção.
+**Never report an edit without having done the grep.** The report comes from the
+file, not from the intention.
 
-### 3. Compilar antes de relatar
+### 3. Compile before reporting
 
-Alteração em `.cpp`/`.h` só é "feita" depois de `make` limpo. Erros comuns
-que só o compilador pega: função de escopo de arquivo usando `hal::` sem o
-`using namespace cotuca;`, e helper definido depois de quem o chama.
+A change in `.cpp`/`.h` is only "done" after a clean `make`. Common errors that only
+the compiler catches: a file-scope function using `hal::` without the
+`using namespace cotuca;`, and a helper defined after its caller.
 
-### 4. Versão semântica — sempre
+### 4. Semantic version — always
 
-Todo arquivo tocado bumpa e **expõe a versão em runtime**:
+Every file touched bumps and **exposes the version at runtime**:
 
-- MAJOR: mudança incompatível (protocolo, assinatura, remoção)
-- MINOR: adição compatível (comando novo, tunable novo)
-- PATCH: correção que não muda comportamento
+- MAJOR: an incompatible change (protocol, signature, removal)
+- MINOR: a compatible addition (new command, new tunable)
+- PATCH: a fix that does not change behavior
 
-`main.cpp` carrega `COTUCA_OS_VERSION` **e** o comentário do cabeçalho —
-**os dois** precisam mudar juntos.
+`main.cpp` carries `COTUCA_OS_VERSION` **and** the header comment — **both** need to
+change together.
 
-### 4b. Conferir a VERSÃO — no arquivo e na placa
+### 4b. Check the VERSION — in the file and on the board
 
-**Rotina obrigatória**, e ela existe porque falhou três vezes seguidas no
-mesmo dia: eu anunciei consertos como gravados enquanto o `main.cpp` ficava
-travado numa versão antiga, porque as edições morriam em `assert` de âncora e
-eu só olhava o resultado da *gravação*.
+**Mandatory routine**, and it exists because it failed three times in a row on the
+same day: I announced fixes as flashed while `main.cpp` stayed stuck on an old
+version, because the edits died in an anchor `assert` and I only looked at the result
+of the *flashing*.
 
 ```bash
 head -3 main.cpp | grep esqueleto     # o que o fonte diz
 # e depois, na placa:  `board` imprime  Cotucatronics OS vX.Y.Z
 ```
 
-**Os dois têm que bater.** Se o fonte não subiu de versão, a edição não
-entrou — por mais que a gravação tenha dito `GRAVOU`.
+**The two must match.** If the source did not bump its version, the edit did not go
+in — no matter that the flashing said `GRAVOU`.
 
-> **Saída de ferramenta não é confirmação de intenção.** A laçada confirma que
-> gravou. O `assert` confirma que a âncora casou. O `grep` confirma que o texto
-> entrou. São três confirmações diferentes — não trate a primeira como se
-> cobrisse as três.
+> **Tool output is not confirmation of intent.** The loop confirms that it flashed.
+> The `assert` confirms that the anchor matched. The `grep` confirms that the text
+> went in. They are three different confirmations — do not treat the first as if it
+> covered all three.
 
-**Corolário:** quanto melhor a proteção contra edição silenciosa, mais fácil é
-não perceber que ela agiu — o efeito de uma edição barrada é o arquivo
-continuar igual, e arquivo igual não faz barulho.
+**Corollary:** the better the protection against silent editing, the easier it is not
+to notice that it acted — the effect of a blocked edit is the file staying the same,
+and an unchanged file makes no noise.
 
-### 5. Relatar
+### 5. Report
 
-Dizer **quais arquivos mudaram e em que versão ficaram**. Sempre.
+Say **which files changed and what version they ended up at**. Always.
 
-## Regra da deleção por faixa
+## The range-deletion rule
 
-**Nunca apagar uma faixa cujos limites você calculou sem listar o que há
-dentro.** Duas vezes em 20/08 isso custou código e prosa (cicatriz 12e).
+**Never delete a range whose bounds you computed without listing what is inside it.**
+Twice on 20/08 this cost code and prose (scar 12e).
 
-O compilador testemunha **dependências de símbolo, e nada mais**. Então:
+The compiler witnesses **symbol dependencies, and nothing more**. So:
 
-> **O perigo de uma deleção por faixa é proporcional a quanto do conteúdo
-> apagado não é referenciado por nome em outro lugar.**
+> **The danger of a range deletion is proportional to how much of the deleted content
+> is not referenced by name elsewhere.**
 
-As duas classes que somem em silêncio:
-- **código só-escrita** — instrumentação, contadores, log, efeito colateral.
-  Produz *zero com cara de dado*.
-- **prosa** — comentários que explicam um porquê. Some ainda mais calado,
-  porque ninguém nunca nota a falta de um parágrafo.
+The two classes that vanish silently:
+- **write-only code** — instrumentation, counters, log, side effect. It produces *a
+  zero that looks like data*.
+- **prose** — comments that explain a why. It vanishes even more quietly, because no
+  one ever notices a missing paragraph.
 
-**Antídoto, duas etapas:**
+**Antidote, two steps:**
 
 ```python
 m = re.search(padrao, s, re.S)
@@ -107,164 +105,160 @@ print(s[m.start():m.end()].count("\n"))    # confere a contagem
 # só então apagar
 ```
 
-`.*?` com `re.S` pode atravessar o arquivo inteiro dependendo do lookahead.
-**A falha é rodar operação destrutiva com matcher de extensão imprevisível** —
-não o casamento inesperado.
+`.*?` with `re.S` can traverse the entire file depending on the lookahead. **The
+failure is running a destructive operation with a matcher of unpredictable extent** —
+not the unexpected match.
 
-**Recuperação:** `git show HEAD:arquivo` e recolagem cirúrgica.
-**Nunca `git checkout`** quando há trabalho não commitado no mesmo arquivo.
+**Recovery:** `git show HEAD:arquivo` and surgical re-paste.
+**Never `git checkout`** when there is uncommitted work in the same file.
 
-## Regra do primeiro caso de uma forma nova
+## The rule of the first case of a new form
 
-Padrão copiado carrega uma **pré-condição que ninguém escreveu**.
+A copied pattern carries a **precondition that no one wrote down**.
 
-Caso (20/08): `Add(nome, def_norm, min_real, max_real)` — o primeiro argumento
-é NORMALIZADO e está no nome. Todo param do projeto tinha `min_real = 0`, e com
-mínimo zero normalizado e real coincidem: a distinção nunca precisou existir.
-O primeiro param de faixa **simétrica** `[-1,+1]` nasceu na ponta em vez do
-centro, com um transdutor mudo e sem sintoma.
+Case (20/08): `Add(nome, def_norm, min_real, max_real)` — the first argument is
+NORMALIZED and is in the name. Every param in the project had `min_real = 0`, and with
+a zero minimum the normalized and the real coincide: the distinction never needed to
+exist. The first param with a **symmetric** range `[-1,+1]` was born at the end
+instead of the center, with a dead transducer and no symptom.
 
-> **Ao ser o primeiro caso de uma forma nova** — faixa negativa, unidade
-> diferente, sinal invertido, tipo novo — **reler a assinatura em vez de
-> imitar o vizinho.** Os vizinhos estavam certos por um motivo que pode não
-> valer para o caso novo.
+> **When it is the first case of a new form** — negative range, different unit,
+> inverted sign, new type — **re-read the signature instead of imitating the
+> neighbor.** The neighbors were right for a reason that may not hold for the new case.
 
-## Regra de premissa
+## The premise rule
 
-Se a tarefa começa com uma premissa sobre o estado do sistema ("com a v0.39.0
-gravada..."), **verificar a premissa antes de agir sobre ela**. Uma sessão
-inteira já foi planejada em cima de um firmware que não estava na placa.
+If the task begins with a premise about the system's state ("with v0.39.0
+flashed..."), **verify the premise before acting on it**. An entire session was once
+planned on top of a firmware that was not on the board.
 
-## Guarda de faixa em float se escreve pela NEGAÇÃO
+## A float range guard is written by NEGATION
 
-**NaN falha toda comparação.** Isso torna a forma direta insegura:
+**NaN fails every comparison.** That makes the direct form unsafe:
 
 ```cpp
 if(r >= 0.f && r < (float)cap_)  { usa(r); }        // NaN PASSA como "fora"
 if(!(r >= 0.f && r < (float)cap_)) { r = 0.f; }     // NaN cai na rede
 ```
 
-Em 22/08, `delay.h:117` tinha `while(r < 0.f) r += cap_;` e escondia **dois**
-defeitos: com `atraso_` em +Inf o laço nunca terminava; com NaN ele saía na
-hora e `(size_t)NaN` — comportamento **indefinido** — indexava fora do
-buffer em silêncio. O segundo era o pior e estava invisível.
+On 22/08, `delay.h:117` had `while(r < 0.f) r += cap_;` and hid **two** defects: with
+`atraso_` at +Inf the loop never terminated; with NaN it exited immediately and
+`(size_t)NaN` — **undefined** behavior — indexed out of the buffer silently. The
+second was the worse one and was invisible.
 
-> **Toda guarda de faixa em float que protege um índice se escreve pela
-> negação.** Qualquer `if(x >= lo && x < hi)` guardando acesso derivado de
-> float é candidato a ter a forma invertida.
+> **Every float range guard that protects an index is written by negation.** Any
+> `if(x >= lo && x < hi)` guarding a float-derived access is a candidate for having
+> the inverted form.
 
-Quando for auditar, o padrão a procurar é: **float → índice**. Conversão de
-float para inteiro com valor fora de faixa (ou NaN/Inf) é UB, não wrap.
+When auditing, the pattern to look for is: **float → index**. Converting a float to an
+integer with an out-of-range value (or NaN/Inf) is UB, not a wrap.
 
-**E leia o contexto antes de tocar.** O segundo defeito só apareceu porque a
-linha foi lida inteira antes de ser trocada. Conserto parcial que parece
-completo é pior que nenhum: fecha o sintoma que denunciava o resto.
+**And read the context before touching.** The second defect only appeared because the
+line was read in full before being swapped. A partial fix that looks complete is
+worse than none: it closes the symptom that was denouncing the rest.
 
-## O tamanho da seção prova que o atributo foi aplicado
+## The section size proves the attribute was applied
 
-Quando `__attribute__((section(...)))` **é o mecanismo** — código que precisa
-rodar de outra memória, dado que precisa morar noutra região — o tamanho da
-seção no output do build é a verificação, e ela é grátis.
+When `__attribute__((section(...)))` **is the mechanism** — code that needs to run
+from another memory, data that needs to live in another region — the section size in
+the build output is the check, and it is free.
 
-Em 22/08 marquei o atributo em dois ajudantes e esqueci na função principal.
-Ela rodou de onde não devia e travou a placa: dois RESETs físicos e uma
-reinstalação de bootloader. O número estava impresso antes de tudo isso:
+On 22/08 I marked the attribute on two helpers and forgot it on the main function. It
+ran from where it should not have and crashed the board: two physical RESETs and a
+bootloader reinstall. The number was printed before all of that:
 
-    ITCMRAM:  68 B    <- pouco demais pro que eu tinha escrito
-    ITCMRAM: 212 B    <- depois do conserto
+    ITCMRAM:  68 B    <- too little for what I had written
+    ITCMRAM: 212 B    <- after the fix
 
-> **Seção do tamanho errado é atributo não-aplicado até prova em contrário.**
-> Ler "a seção existe" e parar ali é meio caminho; o que importa é "a seção
-> tem o tamanho certo".
+> **A section of the wrong size is an unapplied attribute until proven otherwise.**
+> Reading "the section exists" and stopping there is halfway; what matters is "the
+> section has the right size".
 
-Mesma família do `.map` que pegou o `.bss` indo para a DTCM numa troca de
-`APP_TYPE`: **o linker fala; o custo é ler.**
+Same family as the `.map` that caught the `.bss` going to the DTCM in an `APP_TYPE`
+swap: **the linker speaks; the cost is reading.**
 
-Escreva a expectativa no cabeçalho do arquivo, junto do `#define` do
-atributo — é lá que alguém vai acrescentar a próxima função e esquecer.
+Write the expectation in the file header, next to the attribute's `#define` — that is
+where someone will add the next function and forget.
 
-## Sentinela negativa exige init explícito E teste explícito
+## A negative sentinel requires explicit init AND explicit test
 
-`-1` como "nenhum" convive no mesmo tipo com `0`, que significa "o primeiro".
-As duas metades falham em silêncio, por motivos opostos:
+`-1` as "none" coexists in the same type with `0`, which means "the first". The two
+halves fail silently, for opposite reasons:
 
 ```cpp
 BotaoAlvo t[N] = {};        // zero-init: param = 0, e ZERO E INDICE VALIDO
 if(SacrifTravado(i)) ...    // -1 e VERDADEIRO; 0 (indice valido) e falso
 ```
 
-Em 22/08 as duas apareceram no mesmo dia, no mesmo projeto. Na primeira, a
-marca de "travado" aparecia em todos os efeitos sãos e sumia no índice 0. Na
-segunda, o botão randomizador passou a apontar para o `level` e para o LED do
-freeze.
+On 22/08 both appeared on the same day, in the same project. In the first, the
+"locked" mark appeared on every healthy effect and vanished at index 0. In the second,
+the randomizer button started pointing to `level` and to the freeze LED.
 
-> **`= {}` não respeita a sentinela; `if(x)` não a testa.** Inicializador no
-> próprio `struct` (`int param = -1;`) e comparação explícita (`>= 0`).
+> **`= {}` does not respect the sentinel; `if(x)` does not test it.** An initializer
+> in the `struct` itself (`int param = -1;`) and an explicit comparison (`>= 0`).
 
-## GPIO se remapeia no fonte; periférico, não
+## GPIO remaps in the source; a peripheral does not
 
-Antes de propor "troco no firmware em vez de refazer a solda", perguntar se o
-pino é GPIO puro ou está amarrado a periférico.
+Before proposing "I'll change it in firmware instead of redoing the solder", ask
+whether the pin is pure GPIO or is tied to a peripheral.
 
-Em 22/08 o LED e o switch do freeze vieram invertidos e custaram dois números
-no fonte — GPIO não tem preferência de pino. Minutos depois, o MIDI de volta
-exigiu fio novo: `D13`/`D14` são `PB6`/`PB7`, as pernas da USART1, e a função
-está amarrada pelo silício.
+On 22/08 the freeze LED and switch came swapped and cost two numbers in the source —
+GPIO has no pin preference. Minutes later, the MIDI back required a new wire: `D13`/`D14`
+are `PB6`/`PB7`, the legs of USART1, and the function is tied by the silicon.
 
-> A diferença não aparece no esquema — aparece na tabela de funções
-> alternadas do chip. UART, SAI, ADC e QSPI não se remapeiam livremente.
+> The difference does not appear in the schematic — it appears in the chip's
+> alternate-function table. UART, SAI, ADC and QSPI do not remap freely.
 
-## Reestruturação tem três frentes; o compilador cobra uma
+## A restructuring has three fronts; the compiler enforces one
 
-Código, documentação e símbolos. O compilador cobra os símbolos que
-**quebram** — e cala sobre os que sobrevivem sem uso e sobre a doc que
-continua descrevendo o desenho morto.
+Code, documentation and symbols. The compiler enforces the symbols that **break** —
+and stays silent about the ones that survive unused and about the doc that keeps
+describing the dead design.
 
-Em 22/08 um audit achou doze casos de deriva de uma única reestruturação:
-params fantasmas citados na doc por meses, contadores lidos-sem-escritor e
-escritos-sem-leitor, e três órfãos que o compilador já acusava em warning
-sem que ninguém lesse.
+On 22/08 an audit found twelve cases of drift from a single restructuring: ghost
+params cited in the doc for months, counters read-without-writer and
+written-without-reader, and three orphans that the compiler was already flagging in a
+warning without anyone reading it.
 
-> **Ao terminar uma reestruturação, varrer as três frentes.** E se a lição
-> se repetir, automatizar: `make check-docs` neste projeto verifica a doc
-> contra o manifest a cada build. Hábito automatizado vence hábito lembrado.
+> **When finishing a restructuring, sweep the three fronts.** And if the lesson
+> repeats, automate it: `make check-docs` in this project checks the doc against the
+> manifest on every build. An automated habit beats a remembered habit.
 
-**Ao escrever o verificador, a ordem é inegociável: limpar primeiro.** Contra
-base suja o primeiro build falha em massa e a tentação vira baixar a régua.
+**When writing the checker, the order is non-negotiable: clean first.** Against a
+dirty base the first build fails en masse and the temptation becomes lowering the bar.
 
-**E cuidado com o verificador que acusa a frase que documenta o conserto** —
-casar padrão em texto pega a cicatriz que narra a remoção. Três regras
-resolveram: nome que existe no fonte é legítimo; família conta como nome;
-aposentados vão para uma lista declarada, que vira documentação útil por si.
+**And beware the checker that flags the sentence that documents the fix** — matching a
+pattern in text catches the scar that narrates the removal. Three rules solved it: a
+name that exists in the source is legitimate; a family counts as a name; retired ones
+go to a declared list, which becomes useful documentation in itself.
 
-## Âncora de edição prova EXISTÊNCIA, não unicidade
+## An edit anchor proves EXISTENCE, not uniqueness
 
-O padrão que parece cuidadoso e não é:
+The pattern that looks careful and is not:
 
 ```python
 assert velho in s          # <-- só prova que existe
 s = s.replace(velho, novo, 1)   # <-- e troca o PRIMEIRO
 ```
 
-Caso real (28/08). Ancorei a inserção de um subcomando em
-`if(strncmp(a, "reset", 5) == 0)`. Esse texto existe **três vezes** no
-`main.cpp` — nos comandos `varre`, `encpino` e `enc`. O bloco foi parar ao
-handler do `vistos`, quinhentas linhas acima do destino.
+Real case (28/08). I anchored the insertion of a subcommand at
+`if(strncmp(a, "reset", 5) == 0)`. That text exists **three times** in `main.cpp` — in
+the `varre`, `encpino` and `enc` commands. The block ended up at the `vistos` handler,
+five hundred lines above the destination.
 
-**E então compilou, gravou e não deu erro em lado nenhum.** O comando novo
-respondia com o relatório genérico, porque o `enc` não reconhecia o
-subcomando e caía no caso final. Duas gravações com uma funcionalidade que
-simplesmente não existia — e um `vistos inverte g` acessível que ninguém ia
-digitar.
+**And then it compiled, flashed, and gave no error anywhere.** The new command
+responded with the generic report, because `enc` did not recognize the subcommand and
+fell into the final case. Two flashings with a feature that simply did not exist — and
+an accessible `vistos inverte g` that no one would ever type.
 
-O guarda custa uma linha:
+The guard costs one line:
 
 ```python
 assert s.count(velho) == 1, "AMBIGUO: " + tag
 ```
 
-**E não basta.** Depois de inserir, verifique **programaticamente** onde o
-bloco caiu, em vez de o reler e achar que está bem:
+**And that is not enough.** After inserting, verify **programmatically** where the
+block landed, instead of re-reading it and assuming it is fine:
 
 ```python
 alvo = [i for i, l in enumerate(linhas) if 'strncmp(a, "inverte"' in l][0]
@@ -272,50 +266,50 @@ h    = [i for i, l in enumerate(linhas) if 'strncmp(line,' in l and i < alvo][-1
 print("bloco dentro de:", linhas[h].strip())
 ```
 
-> **Escolha âncoras com o CONTEXTO que as torna únicas** — a linha anterior, o
-> nome do handler, o comentário acima. Texto de estrutura repetida (`{`,
-> `return;`, um `if` genérico) nunca é âncora.
+> **Choose anchors with the CONTEXT that makes them unique** — the previous line, the
+> handler's name, the comment above. Repeated-structure text (`{`, `return;`, a
+> generic `if`) is never an anchor.
 
-O agravante deste caso: **eu tinha o guarda escrito noutro script da mesma
-sessão**, com a mensagem `"AMBIGUO"`. Não o apliquei aqui.
+The aggravating part of this case: **I had the guard written in another script of the
+same session**, with the message `"AMBIGUO"`. I did not apply it here.
 
-> **Defesa que existe e não se aplica por hábito não é defesa: é sorte.** Se
-> um guarda vale a pena escrever uma vez, ele vira o helper que TODA edição
-> usa — não uma boa prática que se lembra quando dá jeito.
+> **A safeguard that exists and is not applied by habit is not a safeguard: it is
+> luck.** If a guard is worth writing once, it becomes the helper that EVERY edit uses
+> — not a best practice remembered when convenient.
 
-## Isenção de verificador supõe um PAPEL, e refactor muda papel
+## A checker exemption assumes a ROLE, and a refactor changes the role
 
-O `check_docs` recorta de propósito as tabelas de sonda (`kLivresPin`,
-`kEncPin`, `kPino`) antes de procurar `seed::Dnn`: sonda aponta para pinos que
-já têm dono, e sem a isenção todo pino instrumentado viraria conflito.
+`check_docs` deliberately cuts out the probe tables (`kLivresPin`, `kEncPin`, `kPino`)
+before looking for `seed::Dnn`: a probe points to pins that already have an owner, and
+without the exemption every instrumented pin would become a conflict.
 
-Em 28/08 promovi o `kEncPin` a **fonte única** — o `EncoderInit` passou a ler
-dela num laço em vez de ter os pinos escritos à mão ao lado. A tabela deixou
-de ser sonda e passou a ser a declaração.
+On 28/08 I promoted `kEncPin` to **single source** — `EncoderInit` now reads from it in
+a loop instead of having the pins written by hand alongside. The table stopped being a
+probe and became the declaration.
 
-O verificador continuou a recortá-la, e acusou: *"D0, D1, D2, D3, D4, D9,
-D17, D18, D19 no PINOS.md e não aparecem no fonte"* — **nove pinos, todos os
-dos encoders**. Verdade para ele, falso para a placa.
+The checker kept cutting it out, and flagged: *"D0, D1, D2, D3, D4, D9, D17, D18, D19
+in PINOS.md and they do not appear in the source"* — **nine pins, all the encoders'**.
+True for it, false for the board.
 
-> **Ao promover uma estrutura a fonte única, procure quem a estava a ignorar
-> de propósito.** Isenções são escritas contra um papel; quando o papel muda,
-> a isenção passa a mentir — e mente para o lado silencioso, porque um
-> verificador que ignora não acusa nada.
+> **When promoting a structure to single source, look for who was ignoring it on
+> purpose.** Exemptions are written against a role; when the role changes, the
+> exemption starts to lie — and it lies toward the silent side, because a checker that
+> ignores flags nothing.
 
-Neste caso o verificador acusou, e isso foi sorte da forma do erro: ele
-comparava duas direcções. Uma isenção que só suprimisse o falso positivo teria
-ficado calada para sempre.
+In this case the checker flagged it, and that was luck in the form of the error: it
+compared two directions. An exemption that only suppressed the false positive would
+have stayed silent forever.
 
-## Versionar TUDO — todo artefato gerado carrega carimbo
+## Version EVERYTHING — every generated artifact carries a stamp
 
-Não é só o fonte que se versiona (§4). **Todo artefato gerado que sai do repo para
-ser consumido lá fora** — BOM, export, template, pacote — carrega um **carimbo** no
-início e num lugar válido para o seu formato (`carimbo: <arquivo> v<N> · <data> ·
-placas: …`; CSV como comentário `#`, Markdown em comentário HTML, xlsx/xls numa
-célula dedicada, pacote no `LEIA-ME.txt`), e o **`export/MANIFEST.md` é a fonte
-única de "o mais novo"**: antes de subir/consumir um artefato, confere-se o carimbo
-dele contra o MANIFEST e, se não bater, `git pull`. Nasce de um engano real
-(2026-09-12): um carrinho Mouser com um MPN de um **export superado** enquanto o
-repo já tinha o novo — um artefato que não se versiona não deixa detetar que
-envelheceu. O detalhe do método vive na skill `/aipcb`
-(`.claude/skills/aipcb/references/versionamento.md`, secção «Versionar TUDO»).
+It is not only the source that is versioned (§4). **Every generated artifact that
+leaves the repo to be consumed outside** — BOM, export, template, package — carries a
+**stamp** at the beginning and in a place valid for its format (`carimbo: <arquivo>
+v<N> · <data> · placas: …`; CSV as a `#` comment, Markdown in an HTML comment,
+xlsx/xls in a dedicated cell, package in `LEIA-ME.txt`), and the **`export/MANIFEST.md`
+is the single source of "the newest"**: before uploading/consuming an artifact, its
+stamp is checked against the MANIFEST and, if it does not match, `git pull`. It is
+born from a real mistake (2026-09-12): a Mouser cart with an MPN from a **superseded
+export** while the repo already had the new one — an artifact that is not versioned
+does not let you detect that it has aged. The method's detail lives in the `/aipcb`
+skill (`.claude/skills/aipcb/references/versionamento.md`, section "Version EVERYTHING").

@@ -1,393 +1,406 @@
 ---
 name: kicad_layout
-description: Layout e roteamento de PCB no KiCad — planos e cobre, o que nenhum DRC vê, medir por rede, serigrafia que se lê e designadores que apontam para a peça certa, e rotear por script sem acreditar no roteador. Use ao colocar peças, encaminhar cobre, arrumar textos da placa ou preparar o pacote de fábrica. É OBRIGATÓRIA no fecho de qualquer placa, chamada pela skill `kicad`.
+description: PCB layout and routing in KiCad — planes and copper, what no DRC sees, measuring per net, silkscreen that reads and designators that point to the right part, and routing by script without trusting the router. Use when placing parts, routing copper, tidying board text, or preparing the factory package. It is MANDATORY at the close of any board, called by the `kicad` skill.
 ---
 
-# /kicad_layout — o esquema acabou, e começa outra máquina
+# /kicad_layout — the schematic is done, and another machine begins
 
-> **Esta skill saiu da `kicad` a 08/09/2026**, quando o capítulo de layout passou
-> a ser **mais de metade** dela (1033 de 2022 linhas). Uma skill que não se lê
-> antes de usar não é uma skill — é um arquivo. A `kicad` continua a mandar no
-> **esquemático**; esta manda na **placa**, e as duas encontram-se no fecho.
+> **This skill split off from `kicad` on 08/09/2026**, when the layout chapter
+> grew to **more than half** of it (1033 of 2022 lines). A skill you don't read
+> before using is not a skill — it's a file. `kicad` still rules the
+> **schematic**; this one rules the **board**, and the two meet at the close.
 
-## ⚠️ A NUMERAÇÃO É A ORIGINAL, DE PROPÓSITO
+## ⚠️ THE NUMBERING IS THE ORIGINAL, ON PURPOSE
 
-As secções mantêm os números que tinham na `kicad` — **§11**, **§11g-bis**,
-**§12r**, e por aí. Não foram renumeradas.
+The sections keep the numbers they had in `kicad` — **§11**, **§11g-bis**,
+**§12r**, and so on. They were not renumbered.
 
-> **Renumerar teria partido todos os apontadores de uma vez**, e há dezenas: em
-> comentários de código (`arruma_silk` cita a §11c, o `refs_apontam` a §11g-ter),
-> nas cicatrizes, na `design-review`. Um número que muda de valor é pior que um
-> número feio — é a classe 13 da skill `audit`, a frase partida pela renomeação,
-> aplicada a referências cruzadas.
+> **Renumbering would have broken every pointer at once**, and there are dozens:
+> in code comments (`arruma_silk` cites §11c, `refs_apontam` cites §11g-ter),
+> in the scars, in `design-review`. A number that changes value is worse than an
+> ugly number — it's class 13 of the `audit` skill, the sentence broken by a
+> rename, applied to cross-references.
 
-O salto de §10 para §11 nesta skill não é um erro: é o sinal de onde ela foi
-cortada.
+The jump from §10 to §11 in this skill is not a mistake: it's the mark of where
+it was cut.
 
-## A FRONTEIRA, E ELA É REAL
+## THE BOUNDARY, AND IT IS REAL
 
-| pergunta | quem responde |
+| question | who answers |
 |---|---|
-| o ficheiro **abre**? as ligações **existem**? | skill **`kicad`** — ERC e netlist |
-| o desenho **lê-se**? | skill **`design-review`** |
-| o cobre corresponde à netlist? a serigrafia lê-se? o pacote sai? | **esta** |
+| does the file **open**? do the connections **exist**? | **`kicad`** skill — ERC and netlist |
+| does the drawing **read**? | **`design-review`** skill |
+| does the copper match the netlist? does the silkscreen read? does the package come out? | **this one** |
 
-⚠️ **Nenhuma substitui as outras, e a ordem não é negociável:** o esquemático
-tem de estar provado antes de o cobre valer alguma coisa. Rotear sobre uma
-netlist errada produz uma placa perfeita do circuito errado.
+⚠️ **None replaces the others, and the order is non-negotiable:** the schematic
+has to be proven before the copper is worth anything. Routing over a wrong
+netlist produces a perfect board of the wrong circuit.
 
-⚠️ **E o que esta skill NÃO pode ver:** se a placa faz o que o esquema queria.
-Ela prova que o cobre corresponde à netlist, não que a netlist está certa.
+⚠️ **And what this skill CANNOT see:** whether the board does what the schematic
+intended. It proves that the copper matches the netlist, not that the netlist is
+right.
 
-## 11. LAYOUT: o esquema acaba, e começa uma máquina com outras regras
+## 11. LAYOUT: the schematic ends, and a machine with other rules begins
 
-Tudo acima é esquema. A partir daqui é cobre, e o cobre castiga outras coisas.
-Estas regras não são deste instrumento — são de **qualquer** placa de dois
-lados com plano de terra, e é por isso que estão numa skill e não num README.
+Everything above is schematic. From here on it's copper, and copper punishes
+other things. These rules are not specific to this instrument — they belong to
+**any** two-sided board with a ground plane, and that's why they live in a skill
+and not in a README.
 
-### 11.0 O F8 casa por UUID, e um gerador troca todos os UUID
+### 11.0 F8 matches by UUID, and a generator swaps every UUID
 
-`Update PCB from Schematic` **não casa por referência** — casa por UUID. Um
-esquema gerado por script muda todos os UUID a cada geração, portanto o F8 não
-reconhece nada e **acrescenta um segundo exemplar de cada peça ao lado do
-primeiro**. O sintoma não é um erro: é a placa a ficar confusa, com a Daisy
-duas vezes e o resto por descobrir.
+`Update PCB from Schematic` **does not match by reference** — it matches by UUID.
+A script-generated schematic changes every UUID on each generation, so F8
+recognizes nothing and **adds a second copy of each part next to the first**. The
+symptom is not an error: it's the board turning confusing, with the Daisy twice
+over and the rest yet to be discovered.
 
-> **Se o esquema é gerado, o F8 não serve, e o conserto não é apagar
-> duplicados à mão.** É um sincronizador que casa por **referência**, tira os
-> que sobram, põe os que faltam e escreve as redes nos pads
-> (`sincroniza_pcb.py`). O F8 deixa de ser um passo do processo.
+> **If the schematic is generated, F8 is useless, and the fix is not deleting
+> duplicates by hand.** It's a synchronizer that matches by **reference**,
+> removes the extras, adds the missing ones, and writes the nets onto the pads
+> (`sincroniza_pcb.py`). F8 stops being a step of the process.
 
-Duas armadilhas dentro do sincronizador, ambas pagas:
+Two traps inside the synchronizer, both paid for:
 
-- **A biblioteca do sistema também conta.** O primeiro sincronizador só
-  conhecia a `.pretty` do projecto, e esvaziei as duas placas com `--zero`
-  **antes de provar que sabia reconstruir**. Prova o caminho de volta antes de
-  usar o caminho de ida.
-- **O `.kicad_mod` traz o seu próprio `Reference` `REF**`.** Se acrescentares o
-  teu, o KiCad fica com o último e a placa mostra `REF**`. Tira o do módulo.
+- **The system library counts too.** The first synchronizer only knew the
+  project's `.pretty`, and I emptied both boards with `--zero` **before proving
+  it could rebuild**. Prove the way back before using the way there.
+- **The `.kicad_mod` brings its own `Reference` `REF**`.** If you add yours,
+  KiCad keeps the last one and the board shows `REF**`. Remove the module's.
 
-### 11a. Cobre nas duas camadas não deixa camada nenhuma para sinal
+### 11a. Copper on both layers leaves no layer for signal
 
-⚠️ **A regra estrutural que substitui meia sessão de trabalho esperto.**
+⚠️ **The structural rule that replaces half a session of clever work.**
 
-Um dois-lados tem duas camadas. Se puseres plano de terra em F.Cu **e** em
-B.Cu, não sobra camada para sinal — e então toda a pista atravessa um plano.
-**Atravessar um plano não é passar por cima dele. É cortá-lo:** o cobre recua
-dos dois lados da pista e o plano fica em pedaços.
+A two-sided board has two layers. If you put a ground plane on F.Cu **and** on
+B.Cu, no layer is left for signal — and then every trace crosses a plane.
+**Crossing a plane is not passing over it. It's cutting it:** the copper pulls
+back from both sides of the trace and the plane ends up in pieces.
 
-O arranjo certo, e é o normal da indústria:
+The right arrangement, and it's the industry norm:
 
 ```
-B.Cu   plano sólido de terra, inteiro
-F.Cu   sinal, e nenhuma zona
-       + uma via em cada pad SMD de terra, a descer ao plano
+B.Cu   solid ground plane, whole
+F.Cu   signal, and no zone
+       + one via in each SMD ground pad, dropping to the plane
 ```
 
-> **Quando um roteador te parece precisar de ficar mais esperto, desconfia do
-> desenho antes de desconfiar do roteador.** A pergunta era "como ensino o
-> roteador a ver zonas"; a resposta foi "tira o plano do caminho dele". Vinte
-> linhas de geometria contra meia sessão de heurística, e a segunda nunca teria
-> ficado fiável.
+> **When a router seems to need to get smarter, distrust the drawing before you
+> distrust the router.** The question was "how do I teach the router to see
+> zones"; the answer was "take the plane out of its way." Twenty lines of
+> geometry against half a session of heuristics, and the second would never have
+> become reliable.
 
-Custo: **19 vias no cérebro, 8 no painel.** É o preço normal, e paga-se uma vez.
+Cost: **19 vias on the brain board, 8 on the panel board.** It's the normal
+price, and you pay it once.
 
-### 11b. Cobre adjacente não é cobre ligado
+### 11b. Adjacent copper is not connected copper
 
-Pus as vias **ao lado** dos pads e não as liguei a nada. O DRC devolveu
-`via_dangling` em cada uma das 19. **0,9 mm de vazio isola tão bem como 9 mm.**
+I put the vias **next to** the pads and connected them to nothing. The DRC
+returned `via_dangling` on each of the 19. **0,9 mm of void isolates as well as
+9 mm.**
 
-Cada via leva um **coto** até ao pad, na camada do pad. E a via vai para o
-lado, nunca em cima do pad: **via no pad suga solda por capilaridade** e deixa
-a junta pobre — e no lado SMD quem solda é a fábrica.
+Each via carries a **stub** to the pad, on the pad's layer. And the via goes to
+the side, never on top of the pad: **a via in the pad wicks solder by
+capillarity** and leaves the joint starved — and on the SMD side it's the factory
+that solders.
 
-### 11c. Todo teste de espaço olha pads **E** pistas
+### 11c. Every spacing test looks at pads **AND** traces
 
-O primeiro teste de colisão das vias só olhou pads, e enfiou duas vias a 0,10 e
-0,15 mm de pistas que a pessoa já tinha roteado à mão. **O que já lá está é
-obstáculo, tenha vindo de onde vier.**
+The first via collision test looked only at pads, and shoved two vias 0,10 and
+0,15 mm from traces that the person had already routed by hand. **What's already
+there is an obstacle, no matter where it came from.**
 
-### 11d. `--refill-zones`, ou o DRC compara com um enchimento velho
+### 11d. `--refill-zones`, or the DRC compares against an old fill
 
 ```bash
 kicad-cli pcb drc --refill-zones --save-board -o r.rpt placa.kicad_pcb
 ```
 
-Sem `--refill-zones` o DRC compara as pistas novas contra o **enchimento
-anterior** das zonas e devolve dezenas de `clearance` fantasma. Vais caçar
-defeitos que não existem.
+Without `--refill-zones` the DRC compares the new traces against the zones'
+**previous fill** and returns dozens of phantom `clearance` errors. You'll go
+hunting defects that don't exist.
 
-> **E antes de dizeres que uma ferramenta não faz X, corre `--help`.** Escrevi
-> num commit que o `kicad-cli` não sabia encher zonas. Sabia, e a flag chamava-
-> se exactamente aquilo. Foi a terceira afirmação do género no mesmo dia.
+> **And before you say a tool doesn't do X, run `--help`.** I wrote in a commit
+> that `kicad-cli` couldn't fill zones. It could, and the flag was named exactly
+> that. It was the third claim of its kind that same day.
 
-### 11e. MEDIR POR REDE — o total mente por omissão
+### 11e. MEASURE PER NET — the total lies by default
 
-⚠️ **A regra que apanha a regressão que se disfarça de progresso.**
+⚠️ **The rule that catches the regression disguised as progress.**
 
-Um roteamento baixou o total de ligações por fazer de **71 para 52** e ao mesmo
-tempo partiu a ilha de AGND em oito pedaços. O total melhorou. A placa piorou.
-E o DRC dizia geometria zero o tempo todo, porque do ponto de vista dele nada
-estava errado.
+A routing run brought the total of unrouted connections down from **71 to 52**
+and at the same time broke the AGND island into eight pieces. The total improved.
+The board got worse. And the DRC reported zero geometry the whole time, because
+from its point of view nothing was wrong.
 
-O que se mede, sempre, e nunca só o primeiro:
+What you measure, always, and never just the first:
 
-| medida | o que apanha |
+| measure | what it catches |
 |---|---|
-| por ligar, **por rede** | a regressão escondida atrás de um total melhor |
-| `Zone [X] <-> Zone [X]` | o plano cortado em pedaços |
-| `starved_thermal` | pad agarrado a uma ilha estreita (largura de cobre, não plano cortado) |
-| `via_dangling` | via que não liga a nada dos dois lados |
-| geometria (`clearance`, `short`) | o que qualquer fábrica recusa |
+| unrouted, **per net** | the regression hidden behind a better total |
+| `Zone [X] <-> Zone [X]` | the plane cut into pieces |
+| `starved_thermal` | pad clinging to a narrow island (copper width, not a cut plane) |
+| `via_dangling` | via that connects to nothing on either side |
+| geometry (`clearance`, `short`) | what any factory rejects |
 
-⚠️ **E esta tabela é a versão fraca da regra.** Uma lista de sintomas protege
-contra o que já aconteceu; contra o que ainda não aconteceu não protege nada —
-e o sintoma seguinte apareceu duas horas depois (§12a). A forma forte é comparar
-o **perfil** de ligações por fazer, rede a rede, antes e depois, com uma única
-regra de aceitação: **nenhuma rede pode piorar**. Usa a tabela para ler um
-relatório; usa o invariante para deixar uma ferramenta escrever cobre.
+⚠️ **And this table is the weak version of the rule.** A list of symptoms
+protects against what has already happened; against what hasn't happened yet it
+protects nothing — and the next symptom showed up two hours later (§12a). The
+strong form is to compare the **profile** of unrouted connections, net by net,
+before and after, with a single acceptance rule: **no net may get worse**. Use
+the table to read a report; use the invariant to let a tool write copper.
 
-⚠️ **E o nome da rede NÃO está na linha do achado.** O cabeçalho do
-`unconnected_items` diz só `Missing connection between items`; a rede vem nas
-**duas linhas de item seguintes**. Um extractor que casa o cabeçalho devolve
-**zero achados com ar de placa limpa** contra um DRC que diz 47.
-**Verificador que mente é pior que verificador nenhum** — este devolveu-me a
-placa limpa e eu quase segui.
+⚠️ **And the net name is NOT on the finding's line.** The `unconnected_items`
+header says only `Missing connection between items`; the net comes in the **next
+two item lines**. An extractor that matches the header returns **zero findings
+with the look of a clean board** against a DRC that says 47. **A checker that
+lies is worse than no checker** — this one handed me back the clean board and I
+almost went with it.
 
-### 11f. O que NENHUM DRC vê
+### 11f. What NO DRC sees
 
-O DRC é 2D e mede cobre. Três coisas ficam de fora, e cada uma já custou:
+The DRC is 2D and measures copper. Three things are left out, and each has
+already cost something:
 
-1. **Volume.** O botão de arcade desce pela terceira dimensão. Uma peça alta
-   debaixo dele passa em todos os testes e não deixa fechar a caixa. Precisa de
-   uma tabela de alturas por padrão de footprint e de um portão próprio.
-2. **Acesso.** O USB-C tem de continuar a ser alcançável com a placa montada,
-   ou a primeira regravação abre a caixa toda. **Planta, volume e acesso são
-   três portões, não um.**
-3. **Camada vazia ≠ face vazia.** Uma camada sem objectos não prova que aquela
-   face está livre; prova que ninguém desenhou lá.
+1. **Volume.** The arcade button descends through the third dimension. A tall
+   part underneath it passes every test and won't let the enclosure close. It
+   needs a table of heights per footprint pattern and a gate of its own.
+2. **Access.** The USB-C has to remain reachable with the board assembled, or the
+   first reflash opens the whole enclosure. **Plan, volume, and access are three
+   gates, not one.**
+3. **Empty layer ≠ empty face.** A layer with no objects doesn't prove that face
+   is free; it proves nobody drew there.
 
-### 11g. Duas coisas que arruínam a serigrafia
+### 11g. Two things that ruin the silkscreen
 
-- **Referências em cima dos pads.** Um sincronizador que põe cada referência
-  numa posição fixa relativa acerta em cheio nos pads: `silk_over_copper` 39.
-  Arruma-se por script, e **prova-se pelo número que NÃO muda** — ligações por
-  rotear 104 → 104 diz que só se mexeu em serigrafia.
-- **O logótipo no centro da placa.** Foi lá parar por defeito e ficou por cima
-  de 64 de 130 pads. Procura-se a **maior faixa livre** e põe-se lá.
+- **References on top of the pads.** A synchronizer that places each reference at
+  a fixed relative position lands squarely on the pads: `silk_over_copper` 39.
+  It's tidied by script, and **proven by the number that does NOT change** —
+  connections left to route 104 → 104 says only silkscreen was touched.
+- **The logo at the center of the board.** It ended up there by default and sat
+  on top of 64 of 130 pads. You look for the **largest free strip** and put it
+  there.
 
-### 11g-bis. SERIGRAFIA: cada obstáculo que se acrescenta empurra o texto para o próximo
+### 11g-bis. SILKSCREEN: each obstacle you add pushes the text to the next one
 
-⚠️ **A regra que o utilizador pediu, e que custou quatro medições para ficar
-certa.**
+⚠️ **The rule the user asked for, and that took four measurements to get right.**
 
-Uma ferramenta que afasta as referências dos **pads** e mais nada não arruma a
-serigrafia: muda o defeito de sítio. Medido no cérebro, passo a passo:
+A tool that moves the references away from the **pads** and nothing else does not
+tidy the silkscreen: it just moves the defect elsewhere. Measured on the brain
+board, step by step:
 
-| obstáculos que o teste conhecia | `silk_overlap` | `silk_over_copper` | `silk_edge_clearance` |
+| obstacles the test knew about | `silk_overlap` | `silk_over_copper` | `silk_edge_clearance` |
 |---|---|---|---|
-| só pads | 18 | 6 | 1 |
-| + serigrafia | **5** | **12** ⬆ | 1 |
-| + pistas, sem isentar os próprios pads | 5 | **1** | 1 |
-| + contorno da placa | 6 | 1 | **0** |
+| pads only | 18 | 6 | 1 |
+| + silkscreen | **5** | **12** ⬆ | 1 |
+| + traces, without exempting the parts' own pads | 5 | **1** | 1 |
+| + board outline | 6 | 1 | **0** |
 
-Cada linha conserta uma coluna e estraga a seguinte, porque o texto **foge para
-o sítio que ainda não está a ser verificado**. Só para quando os quatro estão na
-lista: **pads, pistas, serigrafia e contorno**.
+Each row fixes one column and spoils the next, because the text **flees to the
+spot that isn't being checked yet**. It only stops when all four are on the list:
+**pads, traces, silkscreen, and outline**.
 
-> **Um verificador incompleto não deixa o defeito onde estava — empurra-o para
-> onde ele não é visto.** É pior que não ter verificador, porque a contagem que
-> ele mostra melhora.
+> **An incomplete checker doesn't leave the defect where it was — it pushes it to
+> where it isn't seen.** It's worse than having no checker, because the count it
+> shows improves.
 
-⚠️ **E a isenção dos próprios pads tem de cair.** Ela existe porque a referência
-por cima do próprio pad é o caso normal de um SMD pequeno — mas assim que a
-serigrafia entra nos obstáculos, as referências fogem do contorno e vão parar
-exactamente aí. Sem a isenção, quem não tiver sítio **fica onde está e diz**, que
-é melhor que ser empurrado para pior.
+⚠️ **And the exemption of a part's own pads has to go.** It exists because a
+reference over its own pad is the normal case for a small SMD — but as soon as
+the silkscreen enters the obstacle list, the references flee the outline and end
+up exactly there. Without the exemption, whoever has no room **stays where it is
+and says so**, which is better than being pushed to somewhere worse.
 
-⚠️⚠️ **E AQUI A REGRA MUDA DE GRAU EM RELAÇÃO AO ESQUEMA.** No esquemático, a
-referência dentro do corpo do próprio símbolo é onde ela mora (§9b) e comparar
-uma contra a outra dá alarme falso. Na placa **conta**: as duas coisas saem na
-mesma tinta branca e a leitura piora.
+⚠️⚠️ **AND HERE THE RULE CHANGES IN DEGREE RELATIVE TO THE SCHEMATIC.** In the
+schematic, the reference inside the body of its own symbol is where it lives
+(§9b) and comparing one against the other gives a false alarm. On the board it
+**counts**: the two things come out in the same white ink and legibility gets
+worse.
 
-⚠️ **Mas o grau importa, e esta secção já disse a coisa errada por não o
-distinguir.** Escrito assim — *"na placa é defeito"* — entrou em contradição
-directa com a `/design-review`, que chamava ao mesmo caso *"o caso normal"*.
-Duas skills, duas frases afirmativas, nenhuma marcada como histórica: a classe 8
-da skill `audit`, entre ficheiros. **A resolução não é escolher a que agrada.**
+⚠️ **But degree matters, and this section already said the wrong thing by not
+distinguishing it.** Written like that — *"on the board it's a defect"* — it fell
+into direct contradiction with `/design-review`, which called the same case *"the
+normal case"*. Two skills, two affirmative statements, neither marked as
+historical: class 8 of the `audit` skill, across files. **The resolution is not
+to pick the one you like.**
 
-| caso | grau | quem manda |
+| case | degree | who rules |
 |---|---|---|
-| **texto × texto** | defeito, sempre | trava o portão |
-| referência × contorno de **OUTRA** peça | defeito | conserta-se |
-| referência × contorno da **PRÓPRIA** peça | **aviso** | evita-se quando há sítio; embarca-se quando não há |
-| referência × cobre exposto (`silk_over_copper`) | defeito | a fábrica recorta e o texto some |
+| **text × text** | defect, always | blocks the gate |
+| reference × outline of **ANOTHER** part | defect | gets fixed |
+| reference × outline of **ITS OWN** part | **warning** | avoided when there's room; shipped when there isn't |
+| reference × exposed copper (`silk_over_copper`) | defect | the factory clips it and the text vanishes |
 
-É por isso que o `arruma_silk` trata o contorno próprio como obstáculo — para o
-**evitar** — e o `para_fabrica` **não recusa** por ele. As duas coisas são
-coerentes, e nenhuma delas é "é defeito" ou "é normal" sozinha. Foram embarcadas
-seis assim no cérebro e uma no painel, com esta linha a justificá-las.
+That's why `arruma_silk` treats the part's own outline as an obstacle — to
+**avoid** it — and `para_fabrica` **does not reject** because of it. The two
+things are consistent, and neither of them is "it's a defect" or "it's normal" on
+its own. Six were shipped this way on the brain board and one on the panel board,
+with this line justifying them.
 
-**A prova de que a ferramenta não estragou nada é o número que NÃO muda:**
-pistas, vias, pads e peças idênticos antes e depois. Serigrafia só mexe em
-serigrafia.
+**The proof that the tool spoiled nothing is the number that does NOT change:**
+traces, vias, pads, and parts identical before and after. Silkscreen only touches
+silkscreen.
 
-### 11g-quater. Quatro maneiras de medir o texto no sítio errado
+### 11g-quater. Four ways to measure the text in the wrong place
 
-O `arruma_silk` tinha **quatro** defeitos ao mesmo tempo, e a família é uma só:
-*a conta certa já existia no ficheiro e não estava aplicada onde devia.* Nenhum
-deles dava erro; os quatro produziam **aprovação**.
+The `arruma_silk` had **four** defects at once, and the family is a single one:
+*the right calculation already existed in the file and wasn't applied where it
+should be.* None of them raised an error; all four produced **approval**.
 
-**1 — o campo de referência RODA COM A PEÇA.** O `(at ...)` de uma propriedade é
-relativo ao footprint. Fazer `fx + dx, fy + dy` soma um offset do espaço da
-**peça** a uma coordenada do espaço da **placa**: nas peças a 0° acerta por
-acidente, nas rodadas não. O `U2` (180°) foi avaliado **7,2 mm ao lado** de onde
-está — do outro lado do módulo.
+**1 — the reference field ROTATES WITH THE PART.** A property's `(at ...)` is
+relative to the footprint. Doing `fx + dx, fy + dy` adds an offset in the
+**part's** space to a coordinate in the **board's** space: on parts at 0° it's
+right by accident, on rotated ones it isn't. `U2` (180°) was evaluated **7,2 mm
+to the side** of where it is — on the other side of the module.
 
 ```python
-X = fx + dx*cos(a) + dy*sin(a)     # a MESMA que os pads já usavam
+X = fx + dx*cos(a) + dy*sin(a)     # the SAME one the pads already used
 Y = fy - dx*sin(a) + dy*cos(a)
 ```
 
-> ⚠️ **E o modo de falhar é o pior que há: no sítio errado não havia nada.** A
-> ferramenta disse *livre* e deu a referência por arrumada. **Quem mede no sítio
-> errado não reprova nada — aprova tudo, e com ar de quem verificou.**
+> ⚠️ **And the failure mode is the worst there is: in the wrong place there was
+> nothing.** The tool said *free* and considered the reference tidied. **Whoever
+> measures in the wrong place fails nothing — approves everything, and with the
+> air of having checked.**
 
-**2 — e a VOLTA leva a inversa.** Os candidatos são deltas no espaço da placa e
-o campo grava-se no espaço da peça. Escrever o delta cru faz o KiCad rodá-lo
-outra vez ao desenhar, e a peça acaba com o texto num **terceiro** sítio. Prova
-barata: `campo_do_abs(abs_do_campo(x)) == x`.
+**2 — and the WAY BACK takes the inverse.** The candidates are deltas in the
+board's space and the field is written in the part's space. Writing the raw delta
+makes KiCad rotate it again when drawing, and the part ends up with the text in a
+**third** place. Cheap proof: `campo_do_abs(abs_do_campo(x)) == x`.
 
-**3 — `cos(π)` não dá −1 e mais nada.** Dá `sin(π) = 1,2e-16`, e o offset sai
-`-4,40873e-16`. É a **§2b** num sítio novo: zero em notação científica, que o
-KiCad aceita e que nenhum leitor com `(-?[\d.]+)` apanha. Todo número que entra
-num ficheiro KiCad passa pelo formatador, **incluindo os que vêm de uma conta de
-rotação**.
+**3 — `cos(π)` doesn't give just −1.** It gives `sin(π) = 1,2e-16`, and the
+offset comes out `-4,40873e-16`. It's **§2b** in a new place: zero in scientific
+notation, which KiCad accepts and which no reader using `(-?[\d.]+)` catches.
+Every number that enters a KiCad file passes through the formatter, **including
+those that come from a rotation calculation**.
 
-**4 — a serigrafia é feita de SEGMENTOS, não de pontos.** Guardar três amostras
-por segmento (início, meio, fim) deixa vãos proporcionais ao comprimento: no
-contorno do `J1`, com 41 mm, os vãos são de 10 mm, e a referência do `C5` ficou
-a **0,11 mm** da linha sem ninguém dar por ela. O teste correcto —
-ponto-a-segmento — já estava no ficheiro, nas pistas. **A §11c manda olhar pads
-e pistas; a serigrafia ficou de fora da regra por não ser cobre.**
+**4 — the silkscreen is made of SEGMENTS, not points.** Keeping three samples per
+segment (start, middle, end) leaves gaps proportional to the length: on the
+outline of `J1`, at 41 mm, the gaps are 10 mm, and the reference of `C5` ended up
+**0,11 mm** from the line without anyone noticing. The correct test —
+point-to-segment — was already in the file, in the traces. **§11c says to look at
+pads and traces; the silkscreen was left out of the rule because it isn't
+copper.**
 
-⚠️ **E um `fp_rect` NÃO é uma linha.** `(start ...)` e `(end ...)` são cantos
-**opostos**: tratá-lo como um segmento testa a **diagonal** do rectângulo e
-ignora as quatro arestas, que são o obstáculo real.
+⚠️ **And an `fp_rect` is NOT a line.** `(start ...)` and `(end ...)` are
+**opposite** corners: treating it as a segment tests the rectangle's **diagonal**
+and ignores the four edges, which are the real obstacle.
 
-### 11g-quinquies. O recuo «fica onde estava» pode criar o defeito
+### 11g-quinquies. The "stays where it was" fallback can create the defect
 
-Consertados os quatro, a ferramenta moveu cinco referências e anunciou *"5
-movidas, 6 sem sítio"*. O portão disse **texto×texto: 1**, onde antes eram 0. O
-DRC concordou.
+With the four fixed, the tool moved five references and announced *"5 moved, 6
+with no room"*. The gate said **text×text: 1**, where before it was 0. The DRC
+agreed.
 
-A lista de posições ocupadas enchia-se **à medida que o laço andava**: quem
-ainda não tinha sido visitado era invisível. E a ordem do laço é a ordem no
-**ficheiro**, que não tem relação nenhuma com a geometria da placa.
+The list of occupied positions filled up **as the loop ran**: whoever hadn't been
+visited yet was invisible. And the loop's order is the order in the **file**,
+which has no relation at all to the board's geometry.
 
 ```
-RV1 visitado primeiro → não vê R21 → muda-se para cima dele
-R21 visitado depois   → já não há sítio → "fica onde estava" → dentro do RV1
+RV1 visited first → doesn't see R21 → moves on top of it
+R21 visited later  → no room left → "stays where it was" → inside RV1
 ```
 
-> **«Fica onde estava» soa a não ter feito nada, e não é.** É reafirmar uma
-> posição que entretanto **deixou de estar livre, por causa de uma mudança da
-> própria ferramenta.** O recuo que existia para ser seguro tornou-se o
-> mecanismo do defeito.
+> **"Stays where it was" sounds like doing nothing, and it isn't.** It's
+> reaffirming a position that in the meantime **stopped being free, because of a
+> change by the tool itself.** The fallback that existed to be safe became the
+> mechanism of the defect.
 
-**Duas coisas, e são precisas as duas:**
+**Two things, and both are needed:**
 
-1. **Todas** as posições entram na lista **antes** do laço começar — e aí a
-   ordem deixa de importar.
-2. **Auto-teste no fim:** se ficarem duas referências sobrepostas, **não grava**
-   e diz. *Mover texto não pode criar o defeito que vem arrumar.*
+1. **All** positions go into the list **before** the loop begins — and then the
+   order stops mattering.
+2. **Self-test at the end:** if two references end up overlapping, it **does not
+   write** and says so. *Moving text cannot create the defect it came to tidy.*
 
-⚠️ E isto vale para toda ferramenta que arruma por iteração — encaminhadores,
-colocadores, arrumadores de texto. **Um verificador que só olha para o que já
-processou aprova o que ainda não viu.**
+⚠️ And this holds for every tool that tidies by iteration — routers, placers,
+text tidiers. **A checker that only looks at what it has already processed
+approves what it hasn't seen yet.**
 
-### 11g-sexies. NÃO COLIDIR É RESTRIÇÃO; APONTAR PARA A PEÇA É OBJECTIVO
+### 11g-sexies. NOT COLLIDING IS A CONSTRAINT; POINTING TO THE PART IS THE OBJECTIVE
 
-⚠️ **A §11g-ter previu este defeito por escrito e ele esteve lá na mesma**, em 8
-referências, porque nada o media. *Diagnosticado e por instrumentar é o estado
-em que um defeito vive mais tempo: toda a gente sabe, ninguém conta.*
+⚠️ **§11g-ter foresaw this defect in writing and it was there anyway**, on 8
+references, because nothing measured it. *Diagnosed and yet-to-be-instrumented is
+the state in which a defect lives longest: everybody knows, nobody counts.*
 
-**A causa estava a montante e era uma constante.** O sincronizador criava toda
-peça nova com a referência a `-11,5 mm` — igual para um condensador de 11 mm e
-para um ponto de teste de 1,5 mm, 23 das 70. E o arrumador não lhes tocava,
-porque só mexia no que **colidia**, e a 11,5 mm não se colide com nada.
+**The cause was upstream and was a constant.** The synchronizer created every new
+part with the reference at `-11,5 mm` — the same for an 11 mm capacitor and for a
+1,5 mm test point, 23 of the 70. And the tidier didn't touch them, because it
+only moved what **collided**, and at 11,5 mm nothing collides with anything.
 
-> **Duas ferramentas, cada uma correcta no seu critério, e o defeito no meio.**
-> Nenhuma tinha por missão *«o designador aponta para a peça dele»*.
+> **Two tools, each correct by its own criterion, and the defect in between.**
+> Neither had as its mission *"the designator points to its own part"*.
 
-> **O óptimo de uma restrição sem objectivo é sempre o vazio:** quanto mais
-> longe, menos obstáculos. Enquanto "não colidir" foi a única regra, o candidato
-> *"para fora da placa"* ganhou sempre — e ganhou com razão.
+> **The optimum of a constraint with no objective is always emptiness:** the
+> farther away, the fewer obstacles. As long as "don't collide" was the only
+> rule, the candidate *"off the board"* always won — and won rightly.
 
-**As quatro peças do conserto:**
+**The four pieces of the fix:**
 
 | | |
 |---|---|
-| **objectivo** | entre os livres ganha o **mais perto da própria peça**, não o primeiro de uma ordem fixa |
-| **critério do dono** | a peça mais próxima do texto tem de ser a **dona** — é o que torna isto verificável e não estético |
-| **tecto** | sem ele o objectivo ainda premeia fugir |
-| **o texto é um RECTÂNGULO** | um raio isotrópico é grande de mais em cima (recusa posições boas) e pequeno de mais aos lados (aceita posições sobre um pad) |
+| **objective** | among the free spots the **closest to its own part** wins, not the first in a fixed order |
+| **owner criterion** | the part closest to the text has to be the **owner** — this is what makes it verifiable and not aesthetic |
+| **ceiling** | without it the objective still rewards fleeing |
+| **the text is a RECTANGLE** | an isotropic radius is too large vertically (rejects good positions) and too small sideways (accepts positions over a pad) |
 
-⚠️ **E o recuo tem TRÊS degraus, pela escala do estrago:** sem sítio limpo,
-procura-se **mais longe mantendo o cobre livre**, e só no fim se aceita cobre.
-Largar tudo de uma vez compra `silk_over_copper` que não é preciso — e o cobre
-é o que **apaga** o texto, porque a fábrica recorta a serigrafia sobre a
-abertura de máscara. **Meio designador é pior que nenhum: parece um.**
+⚠️ **And the fallback has THREE steps, by the scale of the damage:** with no
+clean spot, you search **farther out while keeping the copper clear**, and only at
+the end do you accept copper. Letting go of everything at once buys
+`silk_over_copper` you don't need — and copper is what **erases** the text,
+because the factory clips the silkscreen over the mask opening. **Half a
+designator is worse than none: it looks like one.**
 
-**A troca diz-se com números:** 8 → 0 a identificar a peça errada, 75 movidas;
-pagou-se `silk_overlap` +2 e +2, e `silk_over_copper` +2 numa placa. *Texto a
-tocar num traço lê-se; texto a apontar para a peça errada mente.*
+**The trade-off is told in numbers:** 8 → 0 identifying the wrong part, 75 moved;
+it cost `silk_overlap` +2 and +2, and `silk_over_copper` +2 on one board. *Text
+touching a trace is readable; text pointing to the wrong part lies.*
 
-⚠️ **E entra no portão de fábrica, que é a única forma de não voltar.** Um
-`refs_apontam` que compara a distância à própria peça com a distância à mais
-próxima. Provado nos dois sentidos — defeito conhecido injectado, e o token que
-ele lê renomeado, para que a guarda grite em vez de aprovar zero peças (§2c).
+⚠️ **And it goes into the factory gate, which is the only way not to come back.**
+A `refs_apontam` that compares the distance to its own part against the distance
+to the nearest one. Proven both ways — a known defect injected, and the token it
+reads renamed, so that the guard screams instead of approving zero parts (§2c).
 
-### 11g-septies. A GUARDA DE UMA FERRAMENTA MEDE COM A RÉGUA DE QUEM JULGA
+### 11g-septies. A TOOL'S GUARD MEASURES WITH THE RULER OF WHOEVER JUDGES
 
-O `arruma_silk` tem auto-teste próprio e ele **aprovou** um arranjo que fez o
-portão subir de `texto×texto 0` para `1`. Não foi um bug: o auto-teste usa o
-modelo de caixa da ferramenta e o `svg_colisoes` usa o dele (0,55 em por
-caractere). Dois modelos do mesmo texto, e o da ferramenta é o mais permissivo.
+The `arruma_silk` has its own self-test and it **approved** an arrangement that
+drove the gate up from `text×text 0` to `1`. It wasn't a bug: the self-test uses
+the tool's box model and `svg_colisoes` uses its own (0,55 em per character). Two
+models of the same text, and the tool's is the more permissive.
 
-> **Uma guarda que mede com régua própria não guarda contra o critério de quem
-> julga.** Ela aprova honestamente, segundo a régua dela, o que o portão
-> reprova.
+> **A guard that measures with its own ruler does not guard against the criterion
+> of whoever judges.** It honestly approves, by its own ruler, what the gate
+> rejects.
 
-**O conserto é a prova externa virada para dentro:** antes de gravar, a
-ferramenta corre o **portão** sobre o antes e o depois, e recusa se o número
-subir. É a mesma disciplina que se aplica a um desenho, aplicada a uma
-ferramenta própria.
+**The fix is the external proof turned inward:** before writing, the tool runs the
+**gate** over the before and the after, and refuses if the number goes up. It's
+the same discipline applied to a drawing, applied to a tool of one's own.
 
-⚠️ **E confirma-se que o resultado ABRE, antes de substituir o original.** Uma
-escrita com deslocamentos desactualizados comeu o espaço de um `(at 0 1.65 0)`
-e deixou `(at0 1.65 0)`: o KiCad recusou a placa inteira e só o comando
-*seguinte* o revelou. Grava-se numa cópia, carrega-se, e só então se escreve.
+⚠️ **And you confirm that the result OPENS, before replacing the original.** A
+write with stale offsets ate the space in an `(at 0 1.65 0)` and left
+`(at0 1.65 0)`: KiCad rejected the whole board and only the *next* command
+revealed it. You write to a copy, load it, and only then write.
 
-⚠️ **A F.Fab conta, mas não conta o mesmo.** Ela não é impressa — 210 dos 336
-textos vivem lá — e é a camada que se lê no editor. Arrumá-la é legítimo, com
-regras próprias: ali pads e pistas não custam nada, **mas os contornos de peça
-da própria Fab custam**. *«Não é impresso» não quer dizer «não tem obstáculos» —
-quer dizer que os obstáculos são outros, e outros não é nenhum.* Sem isso,
-arrumar empurrava os valores para cima dos contornos e o painel subia de 51 para
-68 colisões.
+⚠️ **The F.Fab counts, but it doesn't count the same.** It isn't printed — 210 of
+the 336 texts live there — and it's the layer read in the editor. Tidying it is
+legitimate, with its own rules: there pads and traces cost nothing, **but the
+Fab's own part outlines do cost**. *"Not printed" doesn't mean "no obstacles" —
+it means the obstacles are different, and different isn't none.* Without that,
+tidying pushed the values on top of the outlines and the panel board rose from 51
+to 68 collisions.
 
-⚠️⚠️ **E CADA PASSAGEM É JULGADA E ACEITE POR SI.** Julgadas em bloco, no painel
-a passagem da Fab era óptima (51→37, texto×texto 10→3) e foi recusada inteira
-porque a da serigrafia, no mesmo pacote, piorava a serigrafia. **Uma boa ficou
-refém de uma má por viajarem juntas.** O portão estava certo a recusar o
-conjunto; o erro era o conjunto existir.
+⚠️⚠️ **AND EACH PASS IS JUDGED AND ACCEPTED ON ITS OWN.** Judged as a block, on
+the panel board the Fab pass was optimal (51→37, text×text 10→3) and was rejected
+whole because the silkscreen pass, in the same package, made the silkscreen
+worse. **A good one was held hostage by a bad one because they traveled
+together.** The gate was right to reject the set; the error was that the set
+existed.
 
-⚠️ **E o `total` conta tanto como o `texto×texto`.** Um portão que só olhasse o
-segundo deixou a Fab do painel subir de 51 para 68 sem gritar, porque o
-texto×texto tinha descido. **Um critério só é um portão para o que ele mede.**
+⚠️ **And the `total` counts as much as the `text×text`.** A gate that looked only
+at the second let the panel board's Fab rise from 51 to 68 without screaming,
+because the text×text had dropped. **A criterion is only a gate for what it
+measures.**
 
-Medido, com o veredicto por passagem na saída:
+Measured, with the verdict per pass in the output:
 
 ```
 cerebro  ✓ Reference (F.Silkscreen)  0->0   · total   6->6
@@ -396,705 +409,718 @@ painel   ✓ Value     (F.Fab)        10->3   · total  51->37
          ✗ Reference (F.Silkscreen)  0->1   RECUSADA
 ```
 
-### 11g-octies. O QUE SE IMPRIME AO LADO E O QUE SE IMPRIME NUM BLOCO
+### 11g-octies. WHAT GETS PRINTED ALONGSIDE AND WHAT GETS PRINTED IN A BLOCK
 
-Um ponto de teste sem o nome da rede na serigrafia é um ponto anónimo: o nome
-vive no campo `Value`, que está na **F.Fab** e **não se imprime**. Quem chega à
-bancada vê `TP7` e não sabe se é `+3V3A` ou `AGND`.
+A test point without the net name on the silkscreen is an anonymous point: the
+name lives in the `Value` field, which is on **F.Fab** and **is not printed**.
+Whoever gets to the bench sees `TP7` and doesn't know whether it's `+3V3A` or
+`AGND`.
 
-⚠️ **O nome sai do `(net ...)` do PAD, nunca do `Value`.** O `Value` é uma
-afirmação sobre a rede; o pad **é** a rede. Se o ponto mudar de sítio no cobre,
-o `Value` continua a dizer o que dizia — e a serigrafia passa a mentir,
-impressa, em tinta, na peça. A ler o pad, o rótulo ou está certo ou não existe.
+⚠️ **The name comes from the PAD's `(net ...)`, never from `Value`.** The `Value`
+is a claim about the net; the pad **is** the net. If the point moves on the
+copper, the `Value` keeps saying what it said — and the silkscreen starts lying,
+printed, in ink, on the part. Reading from the pad, the label is either right or
+doesn't exist.
 
-**Duas formas, e a densidade decide qual:**
+**Two forms, and density decides which:**
 
-| | quando | a referência |
+| | when | the reference |
 |---|---|---|
-| **rótulo ao lado** de cada ponto | passo largo (6 mm chegou) | **sai** da serigrafia — `TP7` ao lado de `+3V3A` é ruído |
-| **bloco de legenda** | passo apertado (4 mm não chegou) | **fica** — é o que liga o ponto à linha |
+| **label beside** each point | wide pitch (6 mm was enough) | **leaves** the silkscreen — `TP7` next to `+3V3A` is noise |
+| **legend block** | tight pitch (4 mm wasn't enough) | **stays** — it's what ties the point to the line |
 
-> **A mesma decisão, invertida, e as duas certas.** O que muda não é o critério:
-> é se a informação está *ao lado* ou *noutro sítio*. Ao lado, o designador é
-> ruído; noutro sítio, é o índice.
+> **The same decision, inverted, and both right.** What changes is not the
+> criterion: it's whether the information is *beside* or *elsewhere*. Beside, the
+> designator is noise; elsewhere, it's the index.
 
-⚠️ **Onze rótulos e um bloco não ocupam a mesma área.** Onze textos têm de achar
-onze buracos, cada um ao lado do seu ponto; o bloco precisa de **um**, e escolhe
-entre centenas. Foi por isso que o que não cabia espalhado coube inteiro —
-**com zero colisões acrescentadas**.
+⚠️ **Eleven labels and one block don't occupy the same area.** Eleven texts have
+to find eleven holes, each beside its own point; the block needs **one**, and
+chooses among hundreds. That's why what didn't fit spread out fit as a whole —
+**with zero added collisions**.
 
-⚠️ **E o bloco vai PERTO do que descreve.** Uma legenda a 90 mm obriga a
-procurá-la, e quem está com a ponta de prova numa mão não procura: desiste, e
-mede o pino errado.
+⚠️ **And the block goes NEAR what it describes.** A legend 90 mm away forces you
+to hunt for it, and whoever has the probe tip in one hand doesn't hunt: they give
+up, and measure the wrong pin.
 
-### 11g-nonies. O QUE UMA FERRAMENTA NÃO VÊ, ELA ATROPELA
+### 11g-nonies. WHAT A TOOL DOESN'T SEE, IT RUNS OVER
 
-O `arruma_silk` conhecia os campos dos **footprints** e mais nada. Os `gr_text`
-da placa — `COTUCATRONICS`, `cerebro rev B`, e depois a legenda dos pontos de
-teste — eram invisíveis para ele: era livre de mudar uma referência para cima do
-título da placa, e **nenhuma guarda dele daria por isso**. Um `grep -c gr_text`
-no ficheiro devolvia **zero**.
+The `arruma_silk` knew the **footprints'** fields and nothing else. The board's
+`gr_text` — `COTUCATRONICS`, `cerebro rev B`, and later the test-point legend —
+were invisible to it: it was free to move a reference on top of the board title,
+and **none of its guards would notice**. A `grep -c gr_text` on the file returned
+**zero**.
 
-> **Antes de acreditar num arrumador, pergunta o que ele lê.** Ele obedece à
-> lista de obstáculos que tem, e essa lista é uma afirmação sobre o mundo que
-> alguém escreveu uma vez — não é o mundo.
+> **Before trusting a tidier, ask what it reads.** It obeys the obstacle list it
+> has, and that list is a claim about the world that someone wrote once — it is
+> not the world.
 
-Descobriu-se ao inverter a ordem do fluxo: rotular primeiro e arrumar depois só
-faz sentido se o arrumador **vir** os rótulos. Sem isso, a segunda ferramenta
-desfaz o trabalho da primeira em silêncio.
+It was discovered by inverting the order of the flow: labeling first and tidying
+afterward only makes sense if the tidier **sees** the labels. Without that, the
+second tool silently undoes the first's work.
 
-### 11g-decies. UM PORTÃO POR PASSO NÃO APROVA UM PASSO QUE PRECISA DO SEGUINTE
+### 11g-decies. ONE GATE PER STEP DOESN'T APPROVE A STEP THAT NEEDS THE NEXT ONE
 
-A ordem certa parecia clara: os rótulos escolhem o lugar primeiro (o que se lê
-na bancada é a **rede**, não o `TP7`), e o arrumador afasta as referências
-depois. Está certo — e **não funciona** com um portão por ferramenta:
+The right order seemed clear: the labels pick the place first (what you read at
+the bench is the **net**, not the `TP7`), and the tidier moves the references away
+afterward. It's correct — and it **doesn't work** with one gate per tool:
 
 ```
-estado intermédio: os rótulos em cima das referências
-portão do rotulador: texto×texto 0 -> 12 → RECUSADO
+intermediate state: the labels on top of the references
+labeler gate: text×text 0 -> 12 → REJECTED
 ```
 
-O portão não sabia que o passo seguinte arrumava aquilo. Estava a julgar um
-estado que nunca ia existir.
+The gate didn't know that the next step tidied that. It was judging a state that
+was never going to exist.
 
-> **Ou o portão é do FLUXO, ou cada passo se basta.** As duas saídas são
-> legítimas e a escolha é de custo: um portão de fluxo obriga a refazer a
-> orquestração; «cada passo basta-se» custa um resultado pior — aqui, os
-> rótulos a contornar referências em vez de as mandar embora.
+> **Either the gate belongs to the FLOW, or each step stands on its own.** Both
+> ways out are legitimate and the choice is one of cost: a flow gate forces you to
+> redo the orchestration; "each step stands on its own" costs a worse result —
+> here, the labels routing around references instead of sending them away.
 
-⚠️ **E há uma terceira, que é a que resolveu:** perguntar se o estado intermédio
-tem de existir. Não tinha — a referência do ponto de teste podia **mudar de
-camada** em vez de ser deslocada, e aí não havia competição nenhuma pelo espaço.
-*O conflito entre dois passos costuma ser a pergunta errada a montante.*
+⚠️ **And there's a third, which is the one that solved it:** asking whether the
+intermediate state has to exist. It didn't — the test point's reference could
+**change layer** instead of being moved, and then there was no competition for the
+space at all. *The conflict between two steps is usually the wrong question
+upstream.*
 
-### 11g-ter. A fronteira com a `/design-review`, no lado da placa
+### 11g-ter. The boundary with `/design-review`, on the board side
 
-A `/design-review` é o portão **visual**; o DRC é o **numérico**. Na serigrafia
-de uma placa nenhum dos dois chega sozinho:
+The `/design-review` is the **visual** gate; the DRC is the **numerical** one. On
+a board's silkscreen neither of the two is enough on its own:
 
-| pergunta | quem responde |
+| question | who answers |
 |---|---|
-| há texto por cima de texto, de cobre, ou fora da placa? | `kicad-cli pcb drc` — conta |
-| o texto **lê-se**, e aponta para a peça certa? | `/design-review` — olha o render |
-| a referência está do lado por onde se solda? | só o olho |
+| is there text on top of text, of copper, or off the board? | `kicad-cli pcb drc` — it counts |
+| does the text **read**, and point to the right part? | `/design-review` — it looks at the render |
+| is the reference on the side from which you solder? | only the eye |
 
-⚠️ **Contagem zero não autoriza saltar o olho** — autoriza olhar sabendo onde.
-Uma referência tecnicamente livre pode estar encostada à peça errada, e nenhum
-DRC tem opinião sobre isso.
+⚠️ **A zero count does not authorize skipping the eye** — it authorizes looking
+while knowing where. A technically free reference can be nestled against the wrong
+part, and no DRC has an opinion on that.
 
-### 11h. A ilha de terra analógica e a ponte única
+### 11h. The analog ground island and the single bridge
 
-AGND é uma **ilha** dentro do plano de GND, com prioridade maior para ganhar o
-cobre, e liga-se a GND **num sítio só** — uma ponte, num ponto escolhido. Duas
-pontes fazem uma malha, e a malha é a corrente de retorno digital a passar pelo
-chão do analógico. A ilha tem de existir nas **duas** metades do arranjo: zona
-de AGND em B.Cu, e as vias dos pads de AGND a cair dentro dela.
+AGND is an **island** inside the GND plane, with higher priority to win the
+copper, and connects to GND **in a single place** — a bridge, at a chosen point.
+Two bridges make a mesh, and the mesh is the digital return current passing
+through the analog's floor. The island has to exist in **both** halves of the
+arrangement: an AGND zone on B.Cu, and the vias of the AGND pads dropping into it.
 
-**O plano fecha ligações de graça:** 23 ligações de terra fecharam-se sem uma
-única pista, só por o cobre estar lá.
+**The plane closes connections for free:** 23 ground connections closed without a
+single trace, just because the copper was there.
 
-### 11i. Um roteador que insiste é pior que um que desiste
+### 11i. A router that insists is worse than one that gives up
 
-O roteador prova percursos triviais — a direito, dois Ls — e contorna por A\*
-se for preciso. **O que não sair fica para a pessoa.** Um roteador que insiste
-faz caminhos que ninguém quereria e que depois ninguém percebe ao rever.
+The router tries trivial paths — straight, two Ls — and routes around via A\* if
+needed. **What won't come out is left for the person.** A router that insists
+makes paths nobody would want and that then nobody understands on review.
 
-E **verifica-se a si próprio**: corre o DRC com as zonas cheias e **retira as
-redes que forem acusadas**, devolvendo-as à lista. Escrever e depois medir não
-chega — tem de desfazer.
+And it **verifies itself**: it runs the DRC with the zones filled and **removes
+the nets that get flagged**, returning them to the list. Writing and then
+measuring isn't enough — it has to undo.
 
-Quatro rondas de defeitos, e as quatro valem para qualquer roteador que
-escrevas:
+Four rounds of defects, and all four hold for any router you write:
 
-1. os obstáculos não incluíam as pistas que o próprio roteador tinha acabado de
-   pôr — 81 cruzamentos;
-2. a colisão testava só o centro da célula, e passaram folgas de 0,02 mm;
-3. os limites vinham da extensão das peças, não do contorno da placa — pistas
-   fora da placa;
-4. e mesmo assim duas redes violavam, o que é a razão de existir a retracção.
+1. the obstacles didn't include the traces the router itself had just laid — 81
+   crossings;
+2. the collision tested only the cell's center, and clearances of 0,02 mm slipped
+   through;
+3. the bounds came from the extent of the parts, not from the board outline —
+   traces off the board;
+4. and even so two nets violated, which is the reason the retraction exists.
 
-### 11j. Guardas que se escrevem uma vez e valem para todos os produtos
+### 11j. Guards you write once and that hold for all products
 
-A automação só compensa se as ferramentas **souberem recusar**. Cada uma
-destas é uma linha de defesa que não depende de eu me lembrar:
+Automation only pays off if the tools **know how to refuse**. Each of these is a
+line of defense that doesn't depend on my remembering:
 
-- o roteador **recusa correr** se encontrar zona em F.Cu (11a);
-- o gerador de contorno **recusa escrever** se a placa não couber na caixa, ou
-  se um furo de fixação ficar debaixo de uma peça;
-- o gerador da caixa **recusa** um valor de espessura por omissão em campos onde
-  a omissão é perigosa;
-- a lista gerada sai **carimbada com data, commit e aviso de árvore suja**.
+- the router **refuses to run** if it finds a zone on F.Cu (11a);
+- the outline generator **refuses to write** if the board doesn't fit in the
+  enclosure, or if a mounting hole ends up under a part;
+- the enclosure generator **refuses** a default thickness value in fields where
+  the default is dangerous;
+- the generated list comes out **stamped with date, commit, and a dirty-tree
+  warning**.
 
-> **Quando uma instrução pode matar hardware, a garantia não é a instrução
-> estar certa — é a instrução não poder matar.** O mesmo vale para uma
-> ferramenta: a garantia não é eu lembrar-me da regra, é a ferramenta parar.
+> **When an instruction can kill hardware, the guarantee is not that the
+> instruction is right — it's that the instruction cannot kill.** The same holds
+> for a tool: the guarantee is not my remembering the rule, it's the tool
+> stopping.
 
-### 11k. O caminho até à fábrica
+### 11k. The path to the factory
 
-Tudo em `kicad-cli`, sem abrir a interface, portanto tudo repetível por
-produto:
+All in `kicad-cli`, without opening the interface, so all repeatable per product:
 
 ```bash
 K=/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli
-$K pcb drc --refill-zones --save-board -o drc.rpt placa.kicad_pcb   # o portão
+$K pcb drc --refill-zones --save-board -o drc.rpt placa.kicad_pcb   # the gate
 $K pcb export gerbers -o fab/ placa.kicad_pcb
 $K pcb export drill   -o fab/ placa.kicad_pcb
 $K pcb export pos     -o fab/cpl.csv --format csv --units mm placa.kicad_pcb
 $K sch export bom     -o fab/bom.csv esquema.kicad_sch
 ```
 
-⚠️ **O `kicad-cli` não tem subcomando de roteamento**, e o módulo `pcbnew`
-**não traz o PNS** (nem `Shove`, nem `Walkaround`, nem autoroute) — confirmado
-a listar o módulo, não deduzido.
+⚠️ **The `kicad-cli` has no routing subcommand**, and the `pcbnew` module
+**doesn't bring the PNS** (no `Shove`, no `Walkaround`, no autoroute) — confirmed
+by listing the module, not deduced.
 
-⚠️⚠️ **MAS HÁ EXPORT DE DSN, E EU DISSE O CONTRÁRIO.** O `pcbnew` expõe
-`ExportSpecctraDSN` e `ImportSpecctraSES`, portanto **o FreeRouting — que é um
-autoroteador a sério, com rip-up e shove — é alcançável**. Escrevi aqui, e no
-README, e num commit, que não era. Ver 15de.
+⚠️⚠️ **BUT THERE IS DSN EXPORT, AND I SAID THE OPPOSITE.** The `pcbnew` exposes
+`ExportSpecctraDSN` and `ImportSpecctraSES`, so **FreeRouting — which is a serious
+autorouter, with rip-up and shove — is reachable**. I wrote here, and in the
+README, and in a commit, that it wasn't. See 15de.
 
 ```python
 import pcbnew
 b = pcbnew.LoadBoard("placa.kicad_pcb")
 pcbnew.ExportSpecctraDSN(b, "placa.dsn")     # -> freerouting
-pcbnew.ImportSpecctraSES(b, "placa.ses")     # <- o resultado
+pcbnew.ImportSpecctraSES(b, "placa.ses")     # <- the result
 pcbnew.SaveBoard("placa.kicad_pcb", b)
 ```
 
-⚠️ **E CORRE-SE COM O PYTHON DO PRÓPRIO KICAD, que existe.** O `pcbnew`
-importado do Python do sistema falha no `dlopen` — pede as bibliotecas wx do
-KiCad — e eu tirei daí a conclusão errada de que o módulo era inutilizável. O
-interpretador está em
+⚠️ **AND YOU RUN IT WITH KICAD'S OWN PYTHON, which exists.** The `pcbnew`
+imported from the system Python fails at `dlopen` — it asks for KiCad's wx
+libraries — and I drew from that the wrong conclusion that the module was
+unusable. The interpreter is at
 
 ```
 /Applications/KiCad/KiCad.app/Contents/Frameworks/Python.framework/Versions/3.9/bin/python3.9
 ```
 
-e importa `pcbnew` 10.0.5 sem um queixume. Não o achei porque listei o `bin/`
-com `head` e ele está mais abaixo na ordem alfabética, depois dos `img2py` e
-companhia. **Um `ls | head` não é uma busca.**
+and imports `pcbnew` 10.0.5 without a grumble. I didn't find it because I listed
+`bin/` with `head` and it's further down the alphabetical order, after `img2py`
+and company. **An `ls | head` is not a search.**
 
-⚠️ **E o `--save-board` reformata o ficheiro.** Um medidor por expressão
-regular com janela fixa passa a alcançar campos que antes não alcançava, e a
-mesma placa dá dois números diferentes em duas medições. Foi o que me
-aconteceu, e a placa não tinha mudado. **Medição por regex em formato que a
-ferramenta reescreve não é medição.**
+⚠️ **And `--save-board` reformats the file.** A measurer using a regular
+expression with a fixed window starts reaching fields it didn't reach before, and
+the same board gives two different numbers across two measurements. That's what
+happened to me, and the board hadn't changed. **Measurement by regex on a format
+the tool rewrites is not measurement.**
 
 
-## 12. ROTEAR POR SCRIPT: o que se aprende quando se deixa a maquina tentar
+## 12. ROUTING BY SCRIPT: what you learn when you let the machine try
 
-### 12.0 Uma camada de sinal e um grafo planar, e as ligacoes nao sao
+### 12.0 One signal layer and a planar graph, and the connections aren't
 
-Um roteador limitado a uma camada para sempre — e nao por falta de esperteza.
-Dois sinais que precisem de se cruzar nao tem por onde. Medido: a versao de uma
-camada so fechou 24 de 71 e ficou ali. Com a segunda camada e vias, a mesma
-placa foi de **122 para 23**.
+A router limited to one layer, forever — and not for lack of cleverness. Two
+signals that need to cross have no way to. Measured: the one-layer version only
+closed 24 of 71 and stalled there. With the second layer and vias, the same board
+went from **122 to 23**.
 
-A saida e a da industria ha quarenta anos: salta-se para o outro lado com duas
-vias, anda-se um bocado, volta-se. **E a via tem de ser CARA no custo da
-busca** (aqui, 30 celulas), senao a busca salta por tudo e por nada, e cada
-salto abre uma fenda no plano.
+The way out is the industry's for forty years: you jump to the other side with
+two vias, travel a bit, come back. **And the via has to be EXPENSIVE in the
+search cost** (here, 30 cells), otherwise the search jumps for anything and
+nothing, and each jump opens a crack in the plane.
 
-### 12a. O estrago no plano tem DUAS formas, e eu so procurava uma
+### 12a. The damage to the plane has TWO forms, and I was only looking for one
 
-A obvia: `Zone [X] <-> Zone [X]` — o plano partido em ilhas.
+The obvious one: `Zone [X] <-> Zone [X]` — the plane broken into islands.
 
-A outra, que me escapou e custou uma ronda inteira: **um pad cortado do plano**.
-A pista em B.Cu passa entre o pad e o cobre, o pad fica orfao, e isso aparece
-como uma ligacao por fazer normalissima na rede GND. O plano continua inteiro.
-A terra e que nao. Medido: um roteamento baixou o total de 47 para 20 **e levou
-o `GND` de 0 para 5**.
+The other one, which escaped me and cost a whole round: **a pad cut off from the
+plane**. The trace on B.Cu passes between the pad and the copper, the pad is
+orphaned, and that shows up as a perfectly ordinary unrouted connection on the GND
+net. The plane stays whole. The ground doesn't. Measured: a routing run brought
+the total from 47 to 20 **and took `GND` from 0 to 5**.
 
-> **Por isso nao se conta uma forma de estrago. Conta-se o PERFIL.** Quantas
-> ligacoes faltam em cada rede, antes e depois, e a regra de aceitacao e uma
-> so: **nenhuma rede pode piorar**. Nao ha lista de sintomas a manter
-> actualizada, e nao ha sintoma novo que passe por nao estar na lista.
+> **That's why you don't count one form of damage. You count the PROFILE.** How
+> many connections are missing on each net, before and after, and the acceptance
+> rule is a single one: **no net may get worse**. There's no symptom list to keep
+> updated, and there's no new symptom that slips through by not being on the list.
 
-Uma lista de sintomas conhecidos protege contra o que ja aconteceu. Um
-invariante protege contra o que ainda nao aconteceu.
+A list of known symptoms protects against what has already happened. An invariant
+protects against what hasn't happened yet.
 
-### 12b. A isencao vale para o defeito que se viu, nunca para o nome dele
+### 12b. The exemption applies to the defect you saw, never to its name
 
-A placa chega com defeitos que nao sao da ferramenta, e ela tem de os subtrair
-ou passa a vida a culpar-se por estrago alheio e a retirar as suas pistas
-todas. Mas **a assinatura da isencao e o par (tipo, rede), nao a rede**.
+The board arrives with defects that aren't the tool's, and it has to subtract them
+or it spends its life blaming itself for someone else's damage and pulling up all
+its traces. But **the exemption's signature is the pair (type, net), not the
+net**.
 
-Isentei `AGND` inteira por causa de uma via solta na linha de base — e com isso
-deixei passar uma folga de 0,193 mm numa pista de AGND, que e outro defeito na
-mesma rede.
+I exempted all of `AGND` because of a stray via in the baseline — and with that I
+let a clearance of 0,193 mm on an AGND trace slip through, which is another defect
+on the same net.
 
-### 12c. A retraccao por bisseccao, e porque nao se retira em bloco
+### 12c. Retraction by bisection, and why you don't remove in bulk
 
-Quando alguma rede piora, a resposta preguicosa e tirar todas as pistas que
-passaram pela outra camada. A maioria e inofensiva — o cobre flui a volta — e
-tira-las e deitar fora trabalho bom por causa de trabalho mau.
+When some net gets worse, the lazy answer is to pull up every trace that went
+through the other layer. Most are harmless — the copper flows around — and pulling
+them up is throwing away good work because of bad work.
 
-Procura-se **qual**: comeca-se por tirar todas e confirmar que zera (se nao
-zerar, o estrago ja la estava e nao ha nada a retirar), e depois devolvem-se uma
-a uma, ficando as que couberem. Na pratica isolou 2 travessias culpadas em 33 —
-e as outras 31 ficaram.
+You look for **which one**: you start by removing all and confirming it zeroes (if
+it doesn't zero, the damage was already there and there's nothing to remove), and
+then you put them back one by one, keeping those that fit. In practice it isolated
+2 guilty crossings out of 33 — and the other 31 stayed.
 
-### 12d. APERTAR A FOLGA PIOROU O RESULTADO
+### 12d. TIGHTENING THE CLEARANCE MADE THE RESULT WORSE
 
-Contra-intuitivo o bastante para ficar escrito. Medido, sempre de raiz e ate
-convergir:
+Counterintuitive enough to be written down. Measured, always from scratch and
+until convergence:
 
-| folga | malha | ligacoes por fazer |
+| clearance | mesh | unrouted connections |
 |---|---|---|
-| **0,35 mm** | **0,25 mm** | **23** ← fica esta |
+| **0,35 mm** | **0,25 mm** | **23** ← this one stays |
 | 0,26 mm | 0,25 mm | 34 |
 | 0,26 mm | 0,20 mm | 44 |
 
-A razao e a ganancia: com mais espaco disponivel o roteador enfia mais pistas
-cedo, e essas pistas fecham corredores de que as ligacoes seguintes
-precisavam — e mais delas acabam retiradas por estragarem o plano.
-**Um roteador guloso melhora quando se lhe aperta o apetite, nao a folga.**
+The reason is greed: with more space available the router shoves more traces in
+early, and those traces close corridors the following connections needed — and
+more of them end up removed for spoiling the plane. **A greedy router improves
+when you tighten its appetite, not its clearance.**
 
-E a malha mais fina nao acha mais caminhos: acha os mesmos mais devagar, e bate
-no tecto de nos antes de chegar ao fim.
+And the finer mesh doesn't find more paths: it finds the same ones more slowly,
+and hits the node ceiling before reaching the end.
 
-> ⚠️ Da primeira vez mudei as duas de uma so vez, e a medicao nao soube dizer
-> qual delas tinha feito o estrago. **Uma variavel de cada vez, mesmo quando
-> parece obvio que andam juntas.**
+> ⚠️ The first time I changed both at once, and the measurement couldn't tell
+> which of them had done the damage. **One variable at a time, even when it seems
+> obvious they go together.**
 
-### 12e. Mexer numa peca mata o cobre que lhe tocava
+### 12e. Moving a part kills the copper that touched it
 
-Mudei uma peca de sitio numa placa ja roteada. As pistas que iam ter com ela
-ficaram a apontar para onde ela ja nao estava, e o DRC seguinte devolveu
-**curtos-circuitos** na linha de base — que a ferramenta, correctamente, tratou
-como "nao e meu" e nao contou.
+I moved a part on an already-routed board. The traces that led to it ended up
+pointing to where it no longer was, and the next DRC returned **short circuits**
+in the baseline — which the tool, correctly, treated as "not mine" and didn't
+count.
 
-> **Quando a colocacao muda, o cobre que lhe tocava e lixo.** Nao se remenda:
-> apaga-se tudo e roteia-se de raiz. Numa cadeia automatizada isso custa dois
-> minutos, e e por isso que a cadeia se paga.
+> **When the placement changes, the copper that touched it is garbage.** You don't
+> patch it: you erase everything and route from scratch. In an automated chain
+> that costs two minutes, and that's why the chain pays for itself.
 
-### 12f. A ordem dos passos, e o defeito que passa em todos os testes
+### 12f. The order of the steps, and the defect that passes every test
 
-A costura das vias corria **antes** da colocacao das pecas: cosia os pads onde
-eles ainda nao estavam. Nunca deu erro, porque a placa ja chegava colocada e a
-segunda corrida e idempotente — os numeros batiam sempre.
+The via stitching ran **before** the parts were placed: it stitched the pads where
+they weren't yet. It never raised an error, because the board already arrived
+placed and the second run is idempotent — the numbers always matched.
 
-**So se ve no dia em que alguma coisa muda de sitio.** Mudei a ponte de terra e
-a costura continuou a falar da posicao antiga.
+**You only see it on the day something moves.** I moved the ground bridge and the
+stitching kept talking about the old position.
 
-> Um defeito de ordem que so aparece quando algo muda e um defeito que passa em
-> **todos** os testes menos no dia em que interessa. A defesa nao e mais um
-> teste: e a ordem estar certa, e o passo que depende de posicoes vir depois de
-> as posicoes serem escritas.
+> An order defect that only appears when something changes is a defect that passes
+> **all** the tests except on the day it matters. The defense is not one more
+> test: it's the order being right, and the step that depends on positions coming
+> after the positions are written.
 
-### 12g. Ninguem em dois sitios ao mesmo tempo
+### 12g. Nobody in two places at once
 
-Uma referencia colocada por uma grelha **e** por uma tabela de posicoes
-explicitas fica com a explicita — ate ao passo seguinte recalcular a grelha e a
-devolver ao sitio antigo, em silencio. Mudei a ponte, o ficheiro continuou a
-mostra-la onde estava, e **nenhum passo se queixou**.
+A reference placed by a grid **and** by a table of explicit positions keeps the
+explicit one — until the next step recomputes the grid and returns it to the old
+place, silently. I moved the bridge, the file kept showing it where it was, and
+**no step complained**.
 
-> **Uma colocacao que se desfaz sem dizer nada e pior que uma que falha.** Isto
-> nao se resolve com cuidado: resolve-se com um portao que recusa arrancar se
-> alguma referencia aparecer nas duas listas.
+> **A placement that undoes itself without saying anything is worse than one that
+> fails.** This isn't solved with care: it's solved with a gate that refuses to
+> start if any reference appears in both lists.
 
-### 12h. A ferramenta que recusa encontra o que ninguem foi procurar
+### 12h. The tool that refuses finds what nobody went looking for
 
-A costura recusou-se a descer uma via para um plano que ali nao existia, e
-disse de quem era o pad. O pad era do **net-tie que e a unica ponte entre a
-terra analogica e a digital** — e estava a 57 mm da ilha que devia unir.
+The stitching refused to drop a via into a plane that didn't exist there, and said
+whose pad it was. The pad belonged to the **net-tie that is the only bridge
+between the analog and the digital ground** — and it was 57 mm from the island it
+was supposed to join.
 
-A topologia ate estava certa (continuava a ser uma ponte so), mas toda a
-corrente de retorno analogica voltava por uma pista fina em vez de por cobre
-largo, e **uma ponte com impedancia e meia ponte**. A ponte passou para a
-fronteira da ilha, com um pad de cada lado: plano a plano.
+The topology was actually correct (it was still a single bridge), but all the
+analog return current came back through a thin trace instead of through wide
+copper, and **a bridge with impedance is half a bridge**. The bridge moved to the
+island's boundary, with a pad on each side: plane to plane.
 
-> Ninguem tinha ido procurar isto. Apareceu porque uma ferramenta pequena se
-> recusou a fazer uma coisa sem sentido **e explicou porque**. Uma ferramenta
-> que falha em silencio, ou que faz o que lhe pedem sem perguntar, nao teria
-> encontrado nada.
+> Nobody had gone looking for this. It showed up because a small tool refused to
+> do something senseless **and explained why**. A tool that fails silently, or
+> that does what it's asked without question, would have found nothing.
 
-### 12j. Não há ordem de ataque vencedora — há vencedora nesta placa
+### 12j. There is no winning attack order — there's a winner on this board
 
-Um roteador guloso dá resultados diferentes conforme quem entra primeiro.
-Medido, de raiz e até convergir:
+A greedy router gives different results depending on who goes first. Measured, from
+scratch and until convergence:
 
-| ordem | cérebro | painel |
+| order | brain board | panel board |
 |---|---|---|
-| mais curta primeiro | **19** | 13 |
-| a do DRC | 23 | **10** |
-| mais longa primeiro | 29 | 11 |
+| shortest first | **19** | 13 |
+| the DRC's | 23 | **10** |
+| longest first | 29 | 11 |
 
-Cada placa tem a sua vencedora, e não há forma de a adivinhar olhando. Por isso
-a ferramenta **corre as três em cópias e fica com a melhor, medindo** — em vez
-de me deixar escolher uma e defendê-la.
+Each board has its own winner, and there's no way to guess it by looking. That's
+why the tool **runs all three on copies and keeps the best, by measuring** —
+instead of letting me pick one and defend it.
 
-> Automação não é só correr os passos sozinha. É **tirar decisões de cima de
-> alguém** — e uma decisão que se resolve medindo três vezes não devia estar à
-> espera de opinião.
+> Automation isn't just running the steps on its own. It's **taking decisions off
+> someone's shoulders** — and a decision that's settled by measuring three times
+> shouldn't be waiting on an opinion.
 
-⚠️ E compara-se pelas **duas** medidas, ligações e geometria. A ordem que fecha
-mais ligações pode ser a que estraga mais cobre, e escolher pela primeira sem
-olhar à segunda é escolher o pior resultado com confiança.
+⚠️ And you compare by **both** measures, connections and geometry. The order that
+closes the most connections may be the one that spoils the most copper, and
+choosing by the first without looking at the second is choosing the worst result
+with confidence.
 
-### 12k. Um de cada vez sobre os mesmos ficheiros
+### 12k. One at a time on the same files
 
-Duas escritas concorrentes sobre um `.kicad_pcb` **não dão excepção nem ficheiro
-corrompido**. Dão um número: 34 violações de geometria numa placa onde nenhuma
-das duas corridas, sozinha, produzia mais do que zero.
+Two concurrent writes on a `.kicad_pcb` **give neither an exception nor a
+corrupted file**. They give a number: 34 geometry violations on a board where
+neither of the two runs, alone, produced more than zero.
 
-> **Uma medição contaminada tem o mesmo aspecto de uma boa.** Não traz marca e
-> entra num relatório com a mesma cara que as outras.
+> **A contaminated measurement looks the same as a good one.** It carries no mark
+> and enters a report with the same face as the others.
 
-A defesa é um **ferrolho** que recusa arrancar se outra corrida já estiver a
-escrever as mesmas placas, e diz o pid da que está. Dez linhas.
+The defense is a **lock** that refuses to start if another run is already writing
+the same boards, and says the pid of the one that is. Ten lines.
 
-⚠️ E lançar um segundo trabalho sobre os mesmos ficheiros **é uma escrita, não
-uma leitura** — mesmo quando quem o lança não está a tocar em nada, porque o
-processo que ficou a correr está.
+⚠️ And launching a second job on the same files **is a write, not a read** — even
+when whoever launches it isn't touching anything, because the process left running
+is.
 
-### 12l. O algoritmo melhor na notação pode ser pior na máquina
+### 12l. The algorithm that's better on paper can be worse on the machine
 
-A retracção testa uma rede de cada vez — um DRC por rede. Parece preguiça, e a
-versão que parte ao meio parece a correcção óbvia. Medida, é pior nos dois eixos:
+The retraction tests one net at a time — one DRC per net. It looks like laziness,
+and the version that splits in the middle looks like the obvious correction.
+Measured, it's worse on both axes:
 
-- **mais lenta**: com 5 culpadas em 33, descer nas metades que falham custa mais
-  testes que percorrer a lista. A bissecção paga-se quando há **uma** culpada;
-- **pior resultado**: 25 ligações por fazer contra 19, porque o recuo de que ela
-  precisa para as culpadas-em-conjunto retira **todas** as candidatas de uma vez.
+- **slower**: with 5 guilty of 33, descending into the failing halves costs more
+  tests than walking the list. Bisection pays off when there's **one** guilty one;
+- **worse result**: 25 unrouted connections against 19, because the fallback it
+  needs for the guilty-together ones removes **all** the candidates at once.
 
-> **"Melhorar" uma parte que ninguém mediu é uma aposta, não um conserto.**
+> **"Improving" a part nobody measured is a bet, not a fix.**
 
-### 12m. O código de saída da ferramenta anterior faz parte da medição
+### 12m. The exit code of the previous tool is part of the measurement
 
-O roteador recusa gravar quando não consegue provar o que fez, e repõe a placa —
-correctamente. Se a cadeia **ignorar o código de saída**, uma passada falhada
-fica indistinguível de uma passada que não tinha nada a fazer, e o número final
-muda sem que nada o explique.
+The router refuses to write when it can't prove what it did, and restores the
+board — correctly. If the chain **ignores the exit code**, a failed pass becomes
+indistinguishable from a pass that had nothing to do, and the final number changes
+with nothing to explain it.
 
-⚠️ E o mesmo vale para o *shell*: em zsh, **um glob sem correspondência aborta a
-linha inteira**. Um `rm -f a b*` encadeado com `&&` a uma edição faz a edição não
-correr, e a mensagem `no matches found` perde-se no meio da saída de outro
-comando. Custou três medições idênticas e duas conclusões sobre código que não
-estava no ficheiro.
+⚠️ And the same holds for the *shell*: in zsh, **a glob with no match aborts the
+whole line**. An `rm -f a b*` chained with `&&` to an edit makes the edit not run,
+and the message `no matches found` gets lost in the middle of another command's
+output. It cost three identical measurements and two conclusions about code that
+wasn't in the file.
 
-> **Resultados idênticos entre condições que deviam diferir não são um
-> resultado: são uma avaria do aparelho.** Foi só isso que apanhou o erro.
+> **Identical results across conditions that should differ are not a result:
+> they're an instrument malfunction.** That alone caught the error.
 
-### 12n. Zero pistas à volta não é espaço livre
+### 12n. Zero traces around is not free space
 
-Quando um roteador falha, a explicação fácil é congestionamento. Mede-se antes
-de acreditar nela: as falhas desta placa tinham **zero pistas num raio de 8 mm**
-e concentravam-se todas em peças de duas filas de pinos.
+When a router fails, the easy explanation is congestion. You measure before
+believing it: this board's failures had **zero traces within an 8 mm radius** and
+were all concentrated on parts with two rows of pins.
 
-O que as fechava era aritmética:
-
-```
-vão entre dois pads de um header 2,54 com pads 1,70:   0,840 mm
-o roteador exigia largura/2 + folga + margem-da-grelha
-                        0,125 +  0,35 +          0,178 = 0,950 mm
-```
-
-Ele não conseguia **sair de entre os pinos** — de nenhum conector, em nenhuma
-placa.
-
-> **Um sítio sem nada à volta que a ferramenta não alcança não está
-> congestionado: está fechado por uma regra da própria ferramenta.**
-
-⚠️ **E o conserto é uma passada apertada no FIM, nunca desde o início.** Apertar
-desde o início mede-se pior (23 → 34): com mais espaço o roteador ganancioso
-enfia pistas cedo e fecha corredores de que as seguintes precisavam. No fim o
-que já foi roteado já lá está, e a folga apertada só serve para entrar onde a
-larga não entrava.
-
-⚠️ **A malha aperta com a folga**, porque a margem da grelha (`PASSO·0,71`)
-conta no mesmo corredor. E malha fina na placa toda esgota a busca — daí a
-busca da passada apertada ficar presa a uma **caixa** em volta de cada ligação:
-o que sobra de uma passada larga é quase sempre curto.
-
-### 12o. Entre dois pinos de conector não cabem a pista e o plano
-
-O mesmo cálculo, na direcção contrária. Para caberem no corredor a pista **e** o
-cobre do plano a contornar o pad:
+What closed them off was arithmetic:
 
 ```
-pista/2 0,125 + folga 0,20 + cobre mínimo 0,25 + folga 0,20 = 0,775 mm
-disponível de cada lado:                                       0,420 mm
+gap between two pads of a 2,54 header with 1,70 pads:   0,840 mm
+the router required width/2 + clearance + grid-margin
+                        0,125 +  0,35 +         0,178 = 0,950 mm
 ```
 
-Uma pista na camada do plano, entre dois pinos de conector, **não divide o
-espaço com o cobre de terra: expulsa-o**, e os pinos de terra do conector ficam
-órfãos. Marcar os pads da rede do plano com um raio maior nessa camada custa
-alguns caminhos e poupa a retracção de os descobrir um a um, a um DRC cada.
+It couldn't **get out from between the pins** — of any connector, on any board.
 
-### 12p. Uma ferramenta que recusa precisa de poder investigar tudo o que fez
+> **A spot with nothing around it that the tool can't reach is not congested:
+> it's closed off by a rule of the tool itself.**
 
-A retracção interrogava só as redes que tinham passado pela camada do plano,
-porque a teoria do estrago era essa. Quando o estrago veio de outro lado, a
-lista não o continha, e a ferramenta **desistiu de gravar um trabalho quase todo
-bom** por causa de uma pista que nem sabia acusar.
+⚠️ **And the fix is a tight pass at the END, never from the start.** Tightening
+from the start measures worse (23 → 34): with more space the greedy router shoves
+traces in early and closes corridors the next ones needed. At the end what was
+already routed is already there, and the tight clearance only serves to get in
+where the wide one couldn't.
 
-> Senão a recusa deixa de ser prudência e passa a ser um ponto cego com boas
-> maneiras.
+⚠️ **The mesh tightens with the clearance**, because the grid margin
+(`PASSO·0,71`) counts in the same corridor. And a fine mesh over the whole board
+exhausts the search — hence the tight pass's search is confined to a **box** around
+each connection: what's left over from a wide pass is almost always short.
 
-⚠️ E **a referência de um filtro é a propriedade física, não o parâmetro do
-momento.** O filtro de suspeitos usava a folga da corrida; numa passada
-apertada a folga encolhe, o filtro encolhe com ela, e ele devolveu "0 de 3
-suspeitas" numa corrida em que havia estrago.
+### 12o. Between two connector pins the trace and the plane don't both fit
 
-### 12q. Um conector de duas filas precisa de fuga dos dois lados
-
-Quando os sinais de um conector não roteiam e o diagnóstico dá **zero pistas num
-raio de 8 mm**, olha para o bordo da placa. Um header de duas filas encostado a
-um bordo deixa a fila de fora com um canal estreito e a de dentro sem saída —
-porque sair pelo outro lado obriga a passar entre dois pads, e aí só cabe uma
-pista se a folga for a da placa e não a do roteador (§12n).
-
-Medido: canal de 1,05 mm para treze sinais. Descer o conector 4 mm (e o bloco
-de peças logo abaixo 2 mm, para lhe dar lugar) levou-o a 5,05 mm e fechou três
-ligações — **18 por fazer contra 21**, sem tocar em mais nada.
-
-> **Encostar um conector de duas filas a um bordo é dar-lhe metade dos pinos**,
-> e nada no desenho o denuncia.
-
-⚠️ **E a posição nova mede-se com PÁTIOS, não com pads.** A primeira busca deu
-2,49 mm de folga entre pads e o DRC devolveu dois `courtyards_overlap`. O que
-reserva espaço num footprint é o pátio — e o pátio deste conector chegava a
-0,8 mm fora da placa.
-
-### 12r. A fuga do pad: apertar a folga só junto às pontas
-
-Quando as ligações que sobram **terminam todas num pad de passo fino** — um
-SOIC de 1,27 mm, os pinos de um conector — o problema não é o caminho: é o
-primeiro milímetro. A folga generosa que serve para o resto do percurso não
-cabe entre os pads de onde é preciso sair.
-
-Apertar a folga em toda a parte mede-se pior (23 → 34), porque o roteador
-guloso enfia pistas cedo e fecha corredores. Apertá-la **só nos primeiros ~3 mm
-à volta das duas pontas** não tem esse efeito: ali não há corredor a fechar, há
-um pad de onde é preciso sair. Medido: **18 → 12**.
-
-> **Um parâmetro que é mau em toda a parte pode ser exactamente certo num
-> sítio.** Três experiências a medir a folga alta e baixa, quando a resposta era
-> que ela não devia ser um número global de todo.
-
-⚠️ O apertado nunca desce abaixo da regra da placa, e o DRC valida o percurso
-inteiro com a mesma regra — a retracção continua a existir por trás.
-
-### 12s. Quando afinar deixa de render, o que falta é uma capacidade
-
-Malha, folga, tecto de nós, ordem de ataque, corredor achado numa malha grossa:
-cinco afinações, nenhuma rendeu mais de duas ligações e três renderam menos.
-Todas partiam do mesmo pressuposto — **que existe caminho livre e falta
-achá-lo**. Para as últimas não existe.
-
-A capacidade que falta chama-se **arrancar e refazer**: tira-se o cobre que
-estorva, passa-se, e volta-se a rotear o que se tirou, que agora dá a volta
-porque tinha alternativas e a outra não. Numa passada isolada: 15 → 8.
-
-> **Quando cinco afinações seguidas rendem uma ou duas cada e oscilam entre
-> corridas, já não se está a melhorar nada — está-se a ajustar ruído.** É o
-> sinal para mudar de ideia, não para afinar melhor.
-
-⚠️ **E uma capacidade certa pode não estar pronta.** Na cadeia inteira o
-arrancar-e-refazer mediu 14 contra 12, e uma corrida entregou a placa com um
-plano de terra partido que o auto-teste do roteador não apanhou — foi o portão
-da fábrica que o viu. Ficou opcional.
-
-> **A última linha de defesa não pode ser a mesma ferramenta que fez o
-> trabalho.** Um auto-teste tem exactamente os pontos cegos de quem o escreveu.
-
-### 12t. Um invariante só protege na dimensão em que foi medido
-
-A regra de aceitação — *nenhuma rede pode piorar* — substituiu uma lista de
-sintomas precisamente para não haver sintoma novo que passasse por não estar na
-lista (§12a). Passou um:
+The same calculation, in the opposite direction. For both the trace **and** the
+plane's copper routing around the pad to fit in the corridor:
 
 ```
-antes  GND = 1   (um pad solto)
-depois GND = 1   (o pad ligou-se, e o PLANO PARTIU-SE)
-piorou -> NADA
+trace/2 0,125 + clearance 0,20 + min copper 0,25 + clearance 0,20 = 0,775 mm
+available on each side:                                             0,420 mm
 ```
 
-Contar por rede protege contra a rede errada; **não protege contra a espécie
-errada dentro da mesma rede**. Um plano partido não é "mais uma ligação por
-fazer" que se compensa com outra qualquer. A chave passou a ser
-**(rede, espécie)**.
+A trace on the plane's layer, between two connector pins, **doesn't share the
+space with the ground copper: it evicts it**, and the connector's ground pins are
+orphaned. Marking the plane-net pads with a larger radius on that layer costs a
+few paths and saves the retraction from discovering them one by one, at one DRC
+each.
 
-⚠️ **E é a mesma família da assinatura `(tipo, rede)` das violações** (§12b), que
-eu tinha corrigido horas antes no mesmo ficheiro. **Uma lição aprendida num
-sítio não se aplica sozinha ao sítio do lado** — procura os gémeos por corrigir
-sempre que corrigires um destes.
+### 12p. A tool that refuses needs to be able to investigate everything it did
 
-⚠️ **E o verificador leva um verificador.** `roteia.py --auto-teste` interroga a
-regra com os casos que ela tem de apanhar, começando pelo que ela deixou passar.
-Prova-se que tem dentes correndo-o contra a versão antiga: falha.
+The retraction interrogated only the nets that had gone through the plane's layer,
+because that was the theory of the damage. When the damage came from elsewhere,
+the list didn't contain it, and the tool **gave up writing an almost entirely good
+job** because of a trace it couldn't even flag.
 
-> **Um verificador que não é verificado é uma opinião com ar de medição.**
+> Otherwise the refusal stops being prudence and becomes a blind spot with good
+> manners.
 
-### 12u. Desfazer trabalho para tentar mais trabalho leva a mesma regra
+⚠️ And **a filter's reference is the physical property, not the parameter of the
+moment.** The suspect filter used the run's clearance; in a tight pass the
+clearance shrinks, the filter shrinks with it, and it returned "0 of 3 suspects"
+in a run where there was damage.
 
-Arrancar o cobre que estorva para deixar passar outra ligação (*rip-up*) é a
-capacidade que falta quando as últimas ligações já não têm caminho livre — e
-nenhuma afinação a substitui, porque nenhuma busca acha um caminho que não há.
-Numa passada isolada: 15 por fazer → 8.
+### 12q. A two-row connector needs escape on both sides
 
-Mas se a rede arrancada não conseguir refazer-se, é uma troca — e às vezes um
-prejuízo, porque a arrancada **estava feita**.
+When a connector's signals won't route and the diagnosis gives **zero traces
+within an 8 mm radius**, look at the board edge. A two-row header pushed up against
+an edge leaves the outer row with a narrow channel and the inner one with no way
+out — because getting out the other side forces a pass between two pads, and there
+only one trace fits if the clearance is the board's and not the router's (§12n).
 
-> **Uma operação que desfaz trabalho para tentar mais trabalho precisa da mesma
-> regra que tudo o resto: só vale se o número descer.** Guarda-se o estado
-> antes, e volta-se atrás se não desceu.
+Measured: a 1,05 mm channel for thirteen signals. Lowering the connector 4 mm (and
+the block of parts just below it 2 mm, to make room) took it to 5,05 mm and closed
+three connections — **18 unrouted against 21**, without touching anything else.
 
-⚠️ E limita-se quanto arranca. Se uma ligação precisa de arrancar meia placa,
-não é ela que está mal roteada — é o desenho, e isso é uma pergunta para quem
-desenha, não um problema para o roteador resolver a martelo.
+> **Pushing a two-row connector up against an edge gives it half the pins**, and
+> nothing in the drawing gives it away.
 
-> **Uma capacidade que só pode melhorar ou não fazer nada pertence ao caminho
-> por omissão.** Antes das duas correcções, esta não pertencia — fechava
-> ligações e partia planos.
+⚠️ **And the new position is measured with COURTYARDS, not with pads.** The first
+search gave 2,49 mm of clearance between pads and the DRC returned two
+`courtyards_overlap`. What reserves space in a footprint is the courtyard — and
+this connector's courtyard reached 0,8 mm off the board.
 
-### 12v. O FreeRouting é alcançável, e é melhor
+### 12r. Pad escape: tighten the clearance only near the ends
 
-O `pcbnew` expõe `ExportSpecctraDSN` e `ImportSpecctraSES`. Na mesma placa, de
-raiz:
+When the connections that remain **all end at a fine-pitch pad** — a 1,27 mm SOIC,
+a connector's pins — the problem isn't the path: it's the first millimeter. The
+generous clearance that serves for the rest of the route doesn't fit between the
+pads you need to get out of.
 
-| | por ligar | tempo |
+Tightening the clearance everywhere measures worse (23 → 34), because the greedy
+router shoves traces in early and closes corridors. Tightening it **only in the
+first ~3 mm around the two ends** doesn't have that effect: there's no corridor to
+close there, there's a pad you need to get out of. Measured: **18 → 12**.
+
+> **A parameter that's bad everywhere can be exactly right in one place.** Three
+> experiments measuring the clearance high and low, when the answer was that it
+> shouldn't be a global number at all.
+
+⚠️ The tight value never drops below the board's rule, and the DRC validates the
+whole route with the same rule — the retraction still exists behind it.
+
+### 12s. When tuning stops paying off, what's missing is a capability
+
+Mesh, clearance, node ceiling, attack order, a corridor found on a coarse mesh:
+five tunings, none yielded more than two connections and three yielded less. All
+started from the same assumption — **that there's a free path and it just needs
+finding**. For the last ones there isn't.
+
+The missing capability is called **rip up and redo**: you remove the copper that's
+in the way, you pass through, and you re-route what you removed, which now goes
+around because it had alternatives and the other didn't. In an isolated pass:
+15 → 8.
+
+> **When five tunings in a row yield one or two each and oscillate between runs,
+> you're no longer improving anything — you're adjusting noise.** It's the signal
+> to change your mind, not to tune better.
+
+⚠️ **And a right capability may not be ready.** In the whole chain
+rip-up-and-redo measured 14 against 12, and one run delivered the board with a
+broken ground plane that the router's self-test didn't catch — it was the factory
+gate that saw it. It stayed optional.
+
+> **The last line of defense cannot be the same tool that did the work.** A
+> self-test has exactly the blind spots of whoever wrote it.
+
+### 12t. An invariant only protects in the dimension in which it was measured
+
+The acceptance rule — *no net may get worse* — replaced a symptom list precisely
+so that no new symptom could slip through by not being on the list (§12a). One
+slipped through:
+
+```
+before GND = 1   (one loose pad)
+after  GND = 1   (the pad connected, and the PLANE BROKE)
+got worse -> NOTHING
+```
+
+Counting per net protects against the wrong net; **it doesn't protect against the
+wrong kind within the same net**. A broken plane is not "one more unrouted
+connection" that's offset by any other. The key became **(net, kind)**.
+
+⚠️ **And it's the same family as the violations' `(type, net)` signature** (§12b),
+which I had fixed hours earlier in the same file. **A lesson learned in one place
+doesn't apply itself to the place next door** — look for the twins yet to be fixed
+whenever you fix one of these.
+
+⚠️ **And the checker gets a checker.** `roteia.py --auto-teste` interrogates the
+rule with the cases it has to catch, starting with the one it let through. You
+prove it has teeth by running it against the old version: it fails.
+
+> **A checker that isn't checked is an opinion with the air of a measurement.**
+
+### 12u. Undoing work to attempt more work follows the same rule
+
+Ripping up the copper in the way to let another connection through (*rip-up*) is
+the capability that's missing when the last connections no longer have a free path
+— and no tuning replaces it, because no search finds a path that isn't there. In
+an isolated pass: 15 unrouted → 8.
+
+But if the ripped-up net can't be remade, it's a trade — and sometimes a loss,
+because the ripped-up one **was done**.
+
+> **An operation that undoes work to attempt more work needs the same rule as
+> everything else: it only counts if the number goes down.** You save the state
+> before, and you go back if it didn't drop.
+
+⚠️ And you limit how much it rips up. If a connection needs to rip up half the
+board, it's not that connection that's badly routed — it's the design, and that's
+a question for the designer, not a problem for the router to solve with a hammer.
+
+> **A capability that can only improve or do nothing belongs in the default
+> path.** Before the two corrections, this one didn't belong — it closed
+> connections and broke planes.
+
+### 12v. FreeRouting is reachable, and it's better
+
+The `pcbnew` exposes `ExportSpecctraDSN` and `ImportSpecctraSES`. On the same
+board, from scratch:
+
+| | unrouted | time |
 |---|---|---|
-| roteador escrito à mão | 12 | ~9 min (duas placas) |
+| hand-written router | 12 | ~9 min (two boards) |
 | **FreeRouting** | **8** | **35 s** |
 
-E as que sobram ao FreeRouting são **todas ligações ao plano**, não sinal: ele
-fecha todos os sinais. Faz *rip-up* e *shove* a sério.
+And the ones left over to FreeRouting are **all connections to the plane**, not
+signal: it closes all the signals. It does real *rip-up* and *shove*.
 
 ```python
-import pcbnew                      # com o Python do BUNDLE do KiCad
+import pcbnew                      # with KiCad's BUNDLE Python
 b = pcbnew.LoadBoard("placa.kicad_pcb")
 pcbnew.ExportSpecctraDSN(b, "p.dsn")
 # java -jar freerouting.jar -de p.dsn -do p.ses -mp 100 -mt 1
 pcbnew.ImportSpecctraSES(b, "p.ses"); pcbnew.SaveBoard("placa.kicad_pcb", b)
 ```
 
-⚠️ **Quatro coisas que ele não sabe, e que quem o chama tem de tratar:**
+⚠️ **Four things it doesn't know, and that whoever calls it has to handle:**
 
-1. **Net-ties.** A ponte entre duas terras aparece-lhe como cobre "sem rede" e
-   ele roteia por cima: curto-circuito. Põe-se um *keepout* sobre ela no DSN.
-2. **`-mt 1`.** A própria ferramenta avisa que a optimização multi-tarefa está
-   partida e gera violações de folga. Um aviso de uma ferramenta sobre si mesma
-   não se ignora por pressa.
-3. **As larguras vêm das classes de rede da placa**, não de uma tabela dentro do
-   teu script (§12w).
-4. **Ele conta um pad como ligado se cai dentro do polígono do plano**; o KiCad
-   só o conta se o cobre *enchido* lhe chegar. À volta de um conector apertado o
-   cobre é apagado no enchimento e os dois discordam. Quem manda é o KiCad.
+1. **Net-ties.** The bridge between two grounds appears to it as copper "with no
+   net" and it routes over it: short circuit. You put a *keepout* over it in the
+   DSN.
+2. **`-mt 1`.** The tool itself warns that the multi-threaded optimization is
+   broken and generates clearance violations. A tool's warning about itself is not
+   ignored out of haste.
+3. **The widths come from the board's net classes**, not from a table inside your
+   script (§12w).
+4. **It counts a pad as connected if it falls inside the plane's polygon**; KiCad
+   only counts it if the *filled* copper reaches it. Around a tight connector the
+   copper is erased in the fill and the two disagree. KiCad rules.
 
-⚠️ E telefona para casa a cada arranque (`api.freerouting.app`), sem opção
-documentada para desligar.
+⚠️ And it phones home on every startup (`api.freerouting.app`), with no documented
+option to turn it off.
 
-⚠️ **E a costura passa a atrapalhar.** As vias que se punham para os pads SMD
-chegarem ao plano deixam de ser necessárias — ele fá-lo sozinho — e ocupam
-sítio: com elas o plano sai partido. Quando se troca o roteador, reavaliam-se
-todas as peças que existiam para compensar as fraquezas do antigo.
+⚠️ **And the stitching starts getting in the way.** The vias that were placed so
+the SMD pads could reach the plane are no longer needed — it does it on its own —
+and they take up room: with them the plane comes out broken. When you swap the
+router, you reassess every piece that existed to compensate for the old one's
+weaknesses.
 
-### 12w. Uma regra que vive dentro de uma ferramenta só vale para essa ferramenta
+### 12w. A rule that lives inside a tool only holds for that tool
 
-As larguras dos trilhos de potência viviam numa tabela dentro do meu roteador.
-Funcionou enquanto o roteador era meu — e escondia que **o DRC não sabia delas**.
-Quando entrou um roteador de fora, ele desenhou o trilho de entrada com largura
-de sinal, porque não tinha como saber.
+The widths of the power rails lived in a table inside my router. It worked while
+the router was mine — and it hid that **the DRC didn't know about them**. When an
+outside router came in, it drew the input rail at signal width, because it had no
+way to know.
 
-> O sítio de uma regra de desenho são as **classes de rede** da placa: qualquer
-> roteador as lê, e o DRC passa a exigi-las em vez de as ignorar.
+> The place for a design rule is the board's **net classes**: any router reads
+> them, and the DRC starts requiring them instead of ignoring them.
 
-⚠️ E atribuem-se por **padrão de nome**, não por lista: uma rede acrescentada
-depois entra na classe certa sozinha, em vez de ficar esquecida na largura por
-omissão.
+⚠️ And they're assigned by **name pattern**, not by list: a net added later enters
+the right class on its own, instead of being forgotten at the default width.
 
-### 12x. `Zone [X] <-> Zone [X]` NÃO é uma medição estável
+### 12x. `Zone [X] <-> Zone [X]` is NOT a stable measurement
 
-⚠️⚠️ **O achado mais desconfortável desta série, porque invalida verdicts que
-eu já tinha dado.**
+⚠️⚠️ **The most uncomfortable finding of this series, because it invalidates
+verdicts I had already given.**
 
-Cinco corridas do `kicad-cli pcb drc` sobre **cópias idênticas do mesmo
-ficheiro**, com as zonas cheias uma vez e gravadas:
+Five runs of `kicad-cli pcb drc` on **identical copies of the same file**, with the
+zones filled once and saved:
 
 ```
-planos partidos:   3 · 0 · 0 · 3 · 0
-ligações por fazer: 15 · 15 · 15 · 15 · 15
-perfil por rede:   AGND=4 GND=8   nas cinco
+broken planes:       3 · 0 · 0 · 3 · 0
+unrouted connections: 15 · 15 · 15 · 15 · 15
+profile per net:     AGND=4 GND=8   in all five
 ```
 
-Os **factos** são estáveis; o **rótulo** não. O mesmo item por fazer sai umas
-vezes descrito como *zona contra zona* e outras como pad contra outra coisa.
+The **facts** are stable; the **label** isn't. The same unrouted item comes out
+sometimes described as *zone against zone* and other times as pad against
+something else.
 
-Eu tinha construído o veredicto do portão em cima desse rótulo, e reportei
-«planos inteiros ✓» dezenas de vezes sobre uma moeda ao ar. Pior: a retracção do
-roteador tomava decisões com ele — o que explica parte da variação entre
-corridas que eu andei a atribuir à ganância do roteador (§12d, §12j).
+I had built the gate's verdict on top of that label, and reported "whole planes ✓"
+dozens of times over a coin toss. Worse: the router's retraction made decisions
+with it — which explains part of the variation between runs that I had been
+attributing to the router's greed (§12d, §12j).
 
-> **O critério que manda é o PERFIL POR REDE**, que é estável e que a §12a já
-> ensinava. Um plano que se parta a sério faz subir as ligações por fazer da sua
-> rede, e o perfil apanha isso. O contador de `Zone <-> Zone` fica como
-> **indicação** — serve para saber onde olhar, nunca para decidir.
+> **The criterion that rules is the PROFILE PER NET**, which is stable and which
+> §12a already taught. A plane that truly breaks drives up the unrouted
+> connections of its net, and the profile catches that. The `Zone <-> Zone`
+> counter stays as an **indication** — it serves to know where to look, never to
+> decide.
 
-⚠️ **E um portão não recusa por ruído**, porque um portão que recusa por ruído
-ensina quem o lê a ignorá-lo.
+⚠️ **And a gate does not reject on noise**, because a gate that rejects on noise
+teaches whoever reads it to ignore it.
 
-**Como se descobre isto:** correndo a mesma medição sobre o mesmo ficheiro mais
-do que uma vez. É barato, quase nunca se faz, e foi o que separou o facto do
-rótulo aqui. A mesma disciplina apanhou o glob abortado (§12m) — *resultados
-idênticos entre condições que deviam diferir são uma avaria do aparelho*; esta é
-a face oposta: **resultados diferentes entre condições que deviam ser idênticas
-são outra.**
+**How you discover this:** by running the same measurement on the same file more
+than once. It's cheap, almost never done, and it's what separated the fact from
+the label here. The same discipline caught the aborted glob (§12m) — *identical
+results across conditions that should differ are an instrument malfunction*; this
+is the opposite face: **different results across conditions that should be
+identical are another.**
 
-### 12y. O passo da malha TEM de dividir 1,27
+### 12y. The mesh step MUST divide 1,27
 
-A fuga de um pad da fila de trás de um header de 2,54 passa pelo meio exacto do
-vão entre dois pads da frente — com pads de 1,70 e folga 0,22 a tolerância é
-**0,075 mm**, a 1,27 do centro do pad. Uma malha de 0,25 (1,27/5,08) não tem nó
-lá, e o roteador responde «fica para a pessoa», **igual** a quando a placa está
-cheia. Medido no painel: 0,25 → 0 de 3; 0,125 → 0 (erra por 0,002); 0,0635
-(1,27/20) → 3 de 3 em placa vazia. O `roteia.py` recusa um passo que não divida.
+The escape of a pad from the back row of a 2,54 header passes through the exact
+middle of the gap between two front pads — with 1,70 pads and 0,22 clearance the
+tolerance is **0,075 mm**, at 1,27 from the pad's center. A 0,25 mesh (1,27/5,08)
+has no node there, and the router answers "left for the person," **just like** when
+the board is full. Measured on the panel board: 0,25 → 0 of 3; 0,125 → 0 (misses
+by 0,002); 0,0635 (1,27/20) → 3 of 3 on an empty board. The `roteia.py` refuses a
+step that doesn't divide.
 
-⚠️ **E conserta a malha antes de concluir que não há espaço** — mas não pares
-nela: as três só fecharam na placa real quando a fila de trás ganhou saída (o
-`J1` desceu). Duas causas, a mesma cara. (cicatriz 15eq)
+⚠️ **And fix the mesh before concluding there's no space** — but don't stop at it:
+the three only closed on the real board when the back row got a way out (`J1` came
+down). Two causes, the same face. (scar 15eq)
 
-### 12z. Courtyard contra o BORDO: o KiCad não pergunta, e o canto é redondo
+### 12z. Courtyard against the EDGE: KiCad doesn't ask, and the corner is round
 
-O DRC não tem regra de courtyard contra `Edge.Cuts` por omissão: «geometria 0»
-com o `J1` 2,83 mm fora. O pad não serve de medida (os pads estavam dentro; saía
-o plástico). `dentro_do_contorno.py`:
+The DRC has no courtyard-against-`Edge.Cuts` rule by default: "geometry 0" with
+`J1` 2,83 mm outside. The pad doesn't serve as a measure (the pads were inside;
+the plastic stuck out). `dentro_do_contorno.py`:
 
-- cada vértice do courtyard **contra o polígono** do bordo, e cada vértice do
-  bordo contra o courtyard — o canto tem raio 3 e um vértice a 0,535 do bordo
-  de cima caía fora do arco;
-- distância pelo `NearestPoint`, **nunca** `SHAPE_LINE_CHAIN.Distance()`, que
-  numa cadeia fechada dá 0 para todo ponto interior (74 de 74 reprovados a
-  `0.000` na primeira versão);
-- footprint sem courtyard é achado; isenção com número na razão;
-- provado subindo o `SW1` 25 mm (8 mm não saía de uma placa de 36). (15er)
+- each courtyard vertex **against the polygon** of the edge, and each edge vertex
+  against the courtyard — the corner has radius 3 and a vertex 0,535 from the top
+  edge fell outside the arc;
+- distance via `NearestPoint`, **never** `SHAPE_LINE_CHAIN.Distance()`, which on a
+  closed chain gives 0 for every interior point (74 of 74 failed at `0.000` in the
+  first version);
+- a footprint without a courtyard is a finding; exemption with a number in the
+  reason;
+- proven by moving `SW1` up 25 mm (8 mm didn't get out of a 36 mm board). (15er)
 
-### 12i. O portao antes da fabrica
+### 12i. The gate before the factory
 
-Uma encomenda e irreversivel e demora semanas: o erro nao se descobre no ecra,
-descobre-se quando a caixa chega. Por isso o ultimo passo nao e "exportar
-gerbers" — e um portao que mede e **recusa**, e so depois exporta.
+An order is irreversible and takes weeks: the error isn't discovered on the
+screen, it's discovered when the box arrives. That's why the last step isn't
+"export gerbers" — it's a gate that measures and **refuses**, and only then
+exports.
 
-O que se mede, e porque cada um esta na lista:
+What you measure, and why each one is on the list:
 
-| medida | porque |
+| measure | why |
 |---|---|
-| geometria | a fabrica recusa — ou pior, nao recusa, e entrega uma placa em curto |
-| ligacoes por fazer, **por rede** | uma placa incompleta nao e incompleta: nao funciona |
-| `Zone [X] <-> Zone [X]` | plano de terra em pedacos, invisivel no meio das ligacoes |
-| `starved_thermal` | pad agarrado a uma ilha estreita: solda mal, conduz pior |
+| geometry | the factory refuses — or worse, doesn't refuse, and delivers a shorted board |
+| unrouted connections, **per net** | an incomplete board isn't incomplete: it doesn't work |
+| `Zone [X] <-> Zone [X]` | ground plane in pieces, invisible among the connections |
+| `starved_thermal` | pad clinging to a narrow island: solders poorly, conducts worse |
 
-E o pacote sai **carimbado com data gerada, commit e aviso de arvore suja**: um
-pacote que nao diz de que estado do repositorio saiu nao se reproduz, e o que
-nao se reproduz nao se corrige.
+And the package comes out **stamped with generated date, commit, and a dirty-tree
+warning**: a package that doesn't say what repository state it came from can't be
+reproduced, and what can't be reproduced can't be fixed.
 
-⚠️ **Um pacote incompleto tem de ser impossivel de confundir com um bom.** A
-saida forcada existe — ha razoes legitimas para querer ver os gerbers de uma
-placa por acabar — mas escreve `INCOMPLETA` no nome do ficheiro.
+⚠️ **An incomplete package has to be impossible to confuse with a good one.** The
+forced output exists — there are legitimate reasons to want to see the gerbers of
+an unfinished board — but it writes `INCOMPLETA` in the file name.
 
-⚠️ **E o portao diz o que NAO pode ver.** Prova que o cobre corresponde a
-netlist, nao que a netlist esta certa. E a **rotacao da montagem** nao se
-verifica por script nenhum: o angulo que o KiCad escreve no CPL e o do
-footprint, e a fabrica espera o da biblioteca dela — para muitos
-encapsulamentos os dois nao batem, e confirma-se peca a peca na
-pre-visualizacao, antes de pagar. O ficheiro sai; a promessa nao.
+⚠️ **And the gate says what it CANNOT see.** It proves the copper matches the
+netlist, not that the netlist is right. And the **assembly rotation** isn't
+verified by any script: the angle KiCad writes in the CPL is the footprint's, and
+the factory expects its library's — for many packages the two don't match, and you
+confirm it part by part in the preview, before paying. The file comes out; the
+promise doesn't.
