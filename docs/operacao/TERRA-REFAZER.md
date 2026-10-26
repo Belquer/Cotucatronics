@@ -1,81 +1,81 @@
-# Refazer o terra — folha de bancada
+# Redoing the ground — bench sheet
 
-Escrita em 02/09 para a montagem do dia seguinte. O diagnóstico está em
-battle_scars **15bm** e na varredura P3.
+Written on 02/09 for the next day's assembly. The diagnosis is in
+battle_scars **15bm** and in the P3 sweep.
 
-## ANTES de desmontar — anota isto (regra R3)
+## BEFORE disassembling — note this (rule R3)
 
-Multímetro em **AC / mV**, **com a peça a tocar** (medição sem carga dá zero
-em cima de um defeito — regra R1):
+Multimeter on **AC / mV**, **with the part playing** (a measurement with no load reads
+zero on top of a defect — rule R1):
 
-| medir entre | antes | depois |
+| measure between | before | after |
 |---|---|---|
-| `AGND` da Daisy ↔ trilho do permaproto | | |
-| `AGND` da Daisy ↔ negativo da entrada do amp | | |
-| `AGND` da Daisy ↔ `GND` dos 15 V | | |
+| Daisy `AGND` ↔ permaproto rail | | |
+| Daisy `AGND` ↔ negative of the amp input | | |
+| Daisy `AGND` ↔ `GND` of the 15 V | | |
 
-E anota **como soa** — o chiado, com uma palavra que consigas repetir amanhã.
+And note **how it sounds** — the hiss, with a word you can repeat tomorrow.
 
-## O desenho
+## The drawing
 
 ```
-ILHA DE AGND  (referência — não transporta corrente)
-├── gnd dos jacks dos piezos
-├── AGND da Daisy
-└── negativo da ENTRADA do amp
-     …e mais nada.
+AGND ISLAND  (reference — does not carry current)
+├── gnd of the piezo jacks
+├── Daisy AGND
+└── negative of the amp INPUT
+     …and nothing else.
 
-ESTRELA  (corrente — no negativo da fonte)
-├── GND dos 15 V do amp      ← fio próprio, curto e grosso
-├── alimentação da Daisy
-└── alimentação da ESP32
+STAR  (current — at the supply negative)
+├── GND of the amp's 15 V      ← its own wire, short and thick
+├── Daisy power
+└── ESP32 power
 ```
 
-**A ponte entre os dois mundos já existe e é única:** a Daisy une `AGND` e
-`DGND` internamente, num ponto. Não a dupliques.
+**The bridge between the two worlds already exists and is unique:** the Daisy joins
+`AGND` and `DGND` internally, at one point. Do not duplicate it.
 
-## A pergunta que decide cada fio
+## The question that decides each wire
 
-> **Este condutor transporta corrente, ou define um zero?**
+> **Does this conductor carry current, or define a zero?**
 
-Corrente → estrela, fio próprio. Zero → ilha, e não sai de lá.
+Current → star, its own wire. Zero → island, and it does not leave there.
 
-## Critério de aceitação, escrito ANTES (regra R7)
+## Acceptance criterion, written BEFORE (rule R7)
 
-**A tensão AC entre `AGND` e o trilho SOBE** — passam a ser dois zeros
-diferentes, e isso é o esperado, não um defeito. **E o chiado desce
-audivelmente.**
+**The AC voltage between `AGND` and the rail RISES** — they become two different
+zeros, and that is expected, not a defect. **And the hiss drops
+audibly.**
 
-Se o chiado **não** descer: desfaz e diz. A hipótese cai, e a próxima é a
-P1 (estrela contra margarida) — pode haver um consumidor a chegar à estrela
-*através* de outro.
+If the hiss does **not** drop: undo and say so. The hypothesis falls, and the next
+one is P1 (star vs. daisy-chain) — there may be a consumer reaching the star
+*through* another.
 
-## Uma variável de cada vez (regra R2)
+## One variable at a time (rule R2)
 
-Faz **só** a separação do `AGND`. Não aproveites para mexer em cabos,
-condensadores ou percursos ao mesmo tempo — se mexeres em duas coisas e
-melhorar, não sabes qual agiu, e uma delas pode estar a piorar.
+Do **only** the `AGND` separation. Do not take the chance to touch cables,
+capacitors or routes at the same time — if you change two things and it
+improves, you do not know which acted, and one of them may be making things worse.
 
-## Cuidados de percurso
+## Routing cautions
 
-- **Sinal e retorno do piezo viajam juntos** — lado a lado ou torcidos. Área
-  entre eles é espira, e espira apanha campo.
-- **Cabo blindado: malha numa ponta só**, a da Daisy. Nas duas pontas ela
-  vira anel e conduz.
-- **Cabos de entrada não correm em paralelo com a saída do amp** — classe D
-  é onda quadrada a centenas de kHz com corrente alta. Cruzamentos em
-  ângulo recto (P6).
+- **Signal and return of the piezo travel together** — side by side or twisted. The
+  area between them is a loop, and a loop picks up field.
+- **Shielded cable: shield at one end only**, the Daisy end. At both ends it
+  becomes a ring and conducts.
+- **Input cables do not run parallel to the amp output** — class D
+  is a square wave at hundreds of kHz with high current. Cross at right
+  angles (P6).
 
-## ⚠️ Não confundir com o erro de 31/08
+## ⚠️ Do not confuse this with the 31/08 mistake
 
-Ali eu mandei tirar a terra de **SINAL** entre a ESP e a Daisy, e isso matou
-a placa. **Aqui não se tira terra nenhuma** — separa-se uma **referência**
-de um **trilho de corrente**. São coisas opostas, e a passada P3b da
-varredura existe por causa desse erro.
+There I said to remove the **SIGNAL** ground between the ESP and the Daisy, and that
+killed the board. **Here no ground is removed** — a **reference** is separated
+from a **current rail**. They are opposite things, and the P3b pass of the
+sweep exists because of that mistake.
 
-## Por verificar depois
+## To verify later
 
-- **P1** (estrela contra margarida) e **P2** (ilhas são folhas) — exigem ver
-  a montagem feita.
-- **O amp tem `100 µF + 100 nF` nos pinos?** Amp classe D sem banco local é
-  candidato ao residual que sobrou depois de tirar a USB do Mac.
+- **P1** (star vs. daisy-chain) and **P2** (islands are leaves) — require seeing
+  the assembly done.
+- **Does the amp have `100 µF + 100 nF` on the pins?** A class-D amp with no local bank
+  is a candidate for the residual that remained after unplugging the USB from the Mac.

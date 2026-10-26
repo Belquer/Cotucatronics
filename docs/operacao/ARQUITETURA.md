@@ -1,95 +1,96 @@
-# ARQUITETURA DE SINAL — Cotucatronics
+# SIGNAL ARCHITECTURE — Cotucatronics
 
-> Firmware v0.130.0 · `6002a70` · Daisy Seed 2, BOOT_QSPI, C++ puro
+> Firmware v0.130.0 · `6002a70` · Daisy Seed 2, BOOT_QSPI, pure C++
 
-## Topologia
+## Topology
 
 ```
 p1 → in_gain_a → gate_a → [drive · phaser · warble] ─┐
 p2 → in_gain_b → gate_b → [drive · phaser · warble] ─┤ (× piezo_mix)
-     ├→ × dly_a/b → DELAY (1 instância) ─────────────┤
-     ├→ × frz_a/b → FREEZE_A · FREEZE_B ─────────────┤→ soma → level → split
+     ├→ × dly_a/b → DELAY (1 instance) ──────────────┤
+     ├→ × frz_a/b → FREEZE_A · FREEZE_B ─────────────┤→ sum → level → split
      ├→ × esp_a   → [SHIMMER_A ↺ SALA_A] ────────────┤
      ├→ × esp_b   → [SHIMMER_B ↺ SALA_B] ────────────┤
-     └→ seco (as duas, inteiro) ─────────────────────┘
+     └→ dry (both, whole) ───────────────────────────┘
 ```
 
-**Cauda PARALELA, não serial.** Cada destino recebe um envio próprio das duas
-cadeias. A cauda serial era escolha, não lei — e a lei imaginada bloqueava o
-envio por efeito.
+**PARALLEL tail, not serial.** Each destination receives its own send from the
+two chains. The serial tail was a choice, not a law — and the imagined law
+blocked the per-effect send.
 
-## O que é por cadeia, o que é compartilhado
+## What is per chain, what is shared
 
-**Por cadeia (23 params):** `in_gain`, `gate_thresh/release`, `drv_on/mix`,
-`phs_on/mix`, `wrb_on/mix`, `dly_on/mix`, `frz_on/vol/size`, **e o espaço
-inteiro** — `rev_on/mix/size/damp`, `shm_on/mix/feedback/shift/tone`. Mais
+**Per chain (23 params):** `in_gain`, `gate_thresh/release`, `drv_on/mix`,
+`phs_on/mix`, `wrb_on/mix`, `dly_on/mix`, `frz_on/vol/size`, **and the whole
+space** — `rev_on/mix/size/damp`, `shm_on/mix/feedback/shift/tone`. Plus
 `gov_*`, `bench_boost`, `exc_on`.
 
-**Compartilhado (22 params):** afinação dos efeitos de caráter (`drv_drive/
+**Shared (22 params):** the tuning of the character effects (`drv_drive/
 tone/sujeira`, `phs_rate/depth/fb/stages`, `wrb_rate/depth/irreg`), `dly_time`,
 `piezo_mix`, `pre_level_ab`, `buzios_*`, `test_tone_*`, `route_*`, `shift_hz`.
 
-**Razão musical dos dois espaços:** corda dá tom sustentado, e pitch shift
-sobre altura definida soa harmônico; tambor dá transiente de espectro largo, e
-subir uma oitava disso vira metálico e borra o ataque. **Cada material vai
-para o espaço que o revela.**
+**Musical reason for the two spaces:** a string gives a sustained tone, and pitch
+shift over a definite pitch sounds harmonic; a drum gives a wide-spectrum
+transient, and raising that an octave turns metallic and smears the attack.
+**Each material goes to the space that reveals it.**
 
-## Proteção — CTOS
+## Protection — CTOS
 
-| conceito | valor | natureza |
+| concept | value | nature |
 |---|---|---|
-| **TETO** | 850 µs | orçamento administrativo, **escolhido** |
-| **PRAZO** | 1000 µs | parede física, imposta pelo hardware |
+| **CEILING** | 850 µs | administrative budget, **chosen** |
+| **DEADLINE** | 1000 µs | physical wall, imposed by the hardware |
 
-> Confundir os dois faz a proteção criar o defeito que deveria evitar.
-> **Toda defesa declara em qual dos dois mira.**
+> Confusing the two makes the protection create the defect it should avoid.
+> **Every safeguard declares which of the two it aims at.**
 
-- **Teto**: N blocos consecutivos acima de 850 → derruba efeito por prioridade.
-- **Prazo**: 3 estouros de 1000 µs em 2 s → derruba. Constantes **escolhidas,
-  não medidas** (zero estouros observados em bancada).
-- Testável nos dois sentidos: `ctos prazo <us>` e `ctos teto <us>` forçam
-  valores artificiais. *Proteção não-exercitada é proteção suposta.*
+- **Ceiling**: N consecutive blocks above 850 → drops an effect by priority.
+- **Deadline**: 3 overruns of 1000 µs in 2 s → drops. Constants **chosen,
+  not measured** (zero overruns observed on the bench).
+- Testable both ways: `ctos prazo <us>` and `ctos teto <us>` force artificial
+  values. *Unexercised protection is supposed protection.*
 
-**Regimes medidos (v0.123.2, leitor corrigido):**
+**Regimes measured (v0.123.2, reader fixed):**
 
-| regime | média | pico |
+| regime | mean | peak |
 |---|---|---|
-| tudo desligado | 183 | 262 |
+| everything off | 183 | 262 |
 | drive 48× A+B, reverb A+B, shimmer A | 536 | 687 |
-| + sujeira, shimmer B, delay, phaser | 697 | 992 |
-| TUDO ligado | 818 | ~975 |
+| + dirt, shimmer B, delay, phaser | 697 | 992 |
+| everything ON | 818 | ~975 |
 
-⚠️ **2,5 % de folga no pico com tudo ligado.** Não é uso desenhado (dois
-shimmers contradizem a premissa dos espaços), mas é alcançável.
+⚠️ **2.5% of slack at the peak with everything on.** It is not designed use (two
+shimmers contradict the premise of the spaces), but it is reachable.
 
 ## Anti-feedback
 
-`governor` + `shifter SSB`, **por ramo** (duplicados quando o segundo exciter
-entrou). `shift_hz` é **compartilhado por acústica**: dois exciters no mesmo
-corpo com shifts diferentes bateriam.
+`governor` + `shifter SSB`, **per branch** (duplicated when the second exciter
+came in). `shift_hz` is **shared for acoustic reasons**: two exciters on the same
+body with different shifts would beat.
 
 ---
 
-# COMANDOS SERIAL
+# SERIAL COMMANDS
 
-| comando | o que faz |
+| command | what it does |
 |---|---|
-| `list` | todos os params com valor atual |
-| `set <nome> <valor>` | escreve em **unidade real** (não normalizada) |
-| `board` | placa, versão, memória, mapa de pinos |
-| `cpu` | média e pico por regime · `cpu reset` |
-| `ctos` | estado da proteção, quedas, estouros · `ctos rearm` / `prazo` / `teto` |
-| `midi` | tráfego, aplicadas, descartadas, `cc_janela` |
-| `vistos` | **inventário de endereçamento** — o que chegou e de qual CC |
-| `sync` | empurra os 76 params pro Loopy pelo espelho |
-| `hist` | histograma de nível (entrada e pós-ganho) |
-| `bb` / `bb arm` | caixa-preta |
-| `b1` `b2` `b3` | simula os botões |
-| `tone on` / `tone off` | tom de teste |
-| `pitch` `pk` `dyn` `mscope` `ble` `log` | diagnóstico |
-| `qspi vida` / `qspi id` | sonda da janela ITCM |
-| `dfu` | entra em modo de gravação |
+| `list` | all params with current value |
+| `set <name> <value>` | writes in **real units** (not normalized) |
+| `board` | board, version, memory, pin map |
+| `cpu` | mean and peak per regime · `cpu reset` |
+| `ctos` | protection state, drops, overruns · `ctos rearm` / `prazo` / `teto` |
+| `midi` | traffic, applied, discarded, `cc_janela` |
+| `vistos` | **addressing inventory** — what arrived and from which CC |
+| `sync` | pushes the 76 params to Loopy through the mirror |
+| `hist` | level histogram (input and post-gain) |
+| `bb` / `bb arm` | black box |
+| `b1` `b2` `b3` | simulates the buttons |
+| `tone on` / `tone off` | test tone |
+| `pitch` `pk` `dyn` `mscope` `ble` `log` | diagnostics |
+| `qspi vida` / `qspi id` | probe of the ITCM window |
+| `dfu` | enters flashing mode |
 
-**`vistos` é o método de endereçamento** — a placa escuta e reporta; o dB varre
-o Loopy. Venceu o `learn` (a placa anunciando) porque **não exige a placa
-surda**, e foi ele que flagrou quatro widgets com número de outro parâmetro.
+**`vistos` is the addressing method** — the board listens and reports; dB sweeps
+the Loopy. It beat `learn` (the board announcing) because it **does not require
+the board to be deaf**, and it was what flagged four widgets carrying another
+parameter's number.

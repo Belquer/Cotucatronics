@@ -1,70 +1,73 @@
-# Pauta da sessão de escuta
+# Listening session agenda
 
-**Por que existe:** os itens estavam espalhados pelos alinhamentos das
-últimas sessões. Sem lista, a sessão julga o que lembrar em vez do que deve —
-e ~20 versões de firmware seguem sem veredito de ouvido.
+**Why it exists:** the items were scattered across the alignment notes of the
+last few sessions. Without a list, the session judges what it remembers instead
+of what it should — and ~20 firmware versions have gone by with no verdict from
+the ear.
 
-**Quando:** é o passo 2 do plano dos presets, e vem **antes** de congelar o
-slot 0. Salvar um estado de boot sobre parâmetros não-julgados é fotografar
-uma dívida e chamá-la de referência.
-
----
-
-## 1. Drive — o topo do dial de sujeira
-
-`drv_sujeira` (CC 36) foi aprovado **só em 0**, que é o tanh tube. O
-wavefolder no topo nunca passou pelo ouvido — só por medição (THD 17,9% →
-58,9% no pico, 8× mais energia acima do 7º harmônico, aliasing contido a
-−65 dB pelo passa-baixa fixo de 2 kHz).
-
-**Julgar:** o topo serve? Onde no curso ele para de servir? A faixa entre 0
-e 1 tem resolução útil ou o interessante está espremido?
-
-## 2. Shimmer religado, com `shm_shift` conferido
-
-Em 22/08 o `shm_shift_a` estava em **0,00** — shimmer sem transposição soa
-como reverb realimentado, não como shimmer. É possível que boa parte do
-julgamento anterior do shimmer tenha sido feita nesse estado.
-
-**Julgar:** com transposição de verdade, a cauda serve? O `shm_tone`
-(corte + sino de −6 dB em 3 kHz, escolhido contra a razão medida da cauda
-seca) resolveu a aspereza que gerou o "ainda ardido"?
-
-## 3. Delay seco
-
-Reescrito em C++ em 20/08, com piso de 50 ms e feedback 0,4 lido do patch
-original. **Nunca foi julgado sozinho** — sempre soou dentro de uma cadeia.
-
-**Julgar:** o piso de 50 ms é curto o bastante? O feedback fixo em 0,4 pede
-controle?
-
-## 4. Os dois espaços com material real
-
-A cauda paralela com espaço A e espaço B independentes foi construída para
-"corda com shimmer, couro com reverb limpo". Medida (490 µs na config alvo),
-nunca tocada com os dois materiais ao mesmo tempo.
-
-**Julgar:** a separação faz o que prometia? Os `rev_mix` por cadeia dosam
-como se espera?
-
-## 5. Gate, warble, freeze duplo, búzios
-
-Os que passaram por reescrita ou restauração e não têm veredito:
-`Gate::Abre()` (retomada aberta), warble com mix, os dois freezes
-independentes, e o detector de búzios restaurado dos mortos.
+**When:** it is step 2 of the presets plan, and it comes **before** freezing
+slot 0. Saving a boot state over unjudged parameters is photographing a debt and
+calling it a reference.
 
 ---
 
-## O que a sessão NÃO deve fazer
+## 1. Drive — the top of the dirt dial
 
-**Não ajustar enquanto julga.** Julgar é dizer se serve; ajustar é outra
-sessão. Misturar os dois produz "melhorou" sem referência.
+`drv_sujeira` (CC 36) was approved **only at 0**, which is the tanh tube. The
+wavefolder at the top has never passed the ear — only measurement (THD 17.9% →
+58.9% at the peak, 8× more energy above the 7th harmonic, aliasing held to
+−65 dB by the fixed 2 kHz low-pass).
 
-**Não deixar o Code instrumentando durante a escuta.** Custou dois
-diagnósticos falsos em 22/08: scripts carregavam uma "base" inteira a cada
-medição e sobrescreviam ajustes do dB no meio da tocada (bts 12l).
+**To judge:** does the top serve? Where in the travel does it stop serving? Does
+the range between 0 and 1 have useful resolution, or is the interesting part
+squeezed?
 
-**Declarar o regime de CPU antes.** Com tudo ligado o pico está em ~940 µs
-de um prazo de 1000 (bts 12u). Se a sessão usar configuração pesada, um
-estouro de bloco é uma explicação possível para artefato ouvido — e não deve
-ser confundido com defeito de efeito.
+## 2. Shimmer back on, with `shm_shift` checked
+
+On 22/08 `shm_shift_a` was at **0.00** — shimmer with no transposition sounds
+like a fed-back reverb, not like shimmer. It is possible that much of the earlier
+judgment of the shimmer was made in that state.
+
+**To judge:** with real transposition, does the tail serve? Did `shm_tone`
+(a cut + a −6 dB bell at 3 kHz, chosen against the measured ratio of the dry
+tail) resolve the harshness that produced the "still scorched"?
+
+## 3. Dry delay
+
+Rewritten in C++ on 20/08, with a 50 ms floor and feedback 0.4 read from the
+original patch. **It has never been judged on its own** — it has always sounded
+inside a chain.
+
+**To judge:** is the 50 ms floor short enough? Does the feedback fixed at 0.4 ask
+for control?
+
+## 4. The two spaces with real material
+
+The parallel tail with independent space A and space B was built for
+"string with shimmer, leather with clean reverb". Measured (490 µs in the target
+config), never played with both materials at the same time.
+
+**To judge:** does the separation do what it promised? Do the per-chain
+`rev_mix` meter out as expected?
+
+## 5. Gate, warble, double freeze, cowrie shells
+
+The ones that went through a rewrite or restoration and have no verdict:
+`Gate::Abre()` (resumed open), warble with mix, the two independent freezes,
+and the cowrie-shell detector brought back from the dead.
+
+---
+
+## What the session must NOT do
+
+**Do not adjust while judging.** Judging is saying whether it serves; adjusting
+is another session. Mixing the two produces "it got better" with no reference.
+
+**Do not leave the Code instrumenting during the listening.** It cost two false
+diagnoses on 22/08: scripts loaded a whole "base" on every measurement and
+overwrote dB's adjustments in the middle of the playing (bts 12l).
+
+**Declare the CPU regime beforehand.** With everything on, the peak is at ~940 µs
+of a 1000 deadline (bts 12u). If the session uses a heavy configuration, a block
+overrun is a possible explanation for an artifact heard — and must not be
+confused with an effect defect.

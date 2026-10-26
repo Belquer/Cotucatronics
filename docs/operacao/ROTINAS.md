@@ -1,93 +1,94 @@
-# ROTINAS — atalhos de sessão
+# ROUTINES — session shortcuts
 
-> Palavras que o dB digita e o que cada uma dispara. As rotinas existem para
-> que fechar uma sessão não dependa de lembrar sete passos.
+> Words that dB types and what each one triggers. The routines exist so that
+> closing a session doesn't depend on remembering seven steps.
 
 ---
 
-## `ud` — update completo (fim de sessão)
+## `ud` — full update (end of session)
 
-A rotina de fechamento. Executa, nesta ordem:
+The closing routine. It runs, in this order:
 
-1. **`bts`** — cicatrizes novas nos três destinos (`battle_scars.md`, skills,
-   vault). Cada uma com: o que aconteceu, a regra destilada, e como ela
-   generaliza.
-2. **Skills** — regra nova vai para a skill onde ela seria *aplicada*
+1. **`bts`** — new scars in the three destinations (`battle_scars.md`, skills,
+   vault). Each one with: what happened, the distilled rule, and how it
+   generalizes.
+2. **Skills** — a new rule goes to the skill where it would be *applied*
    (`instrumentacao`, `edicao-segura`, `medicao-limpa`, `bancada-firmware`).
-   Se a skill certa não existe no repo, **não inventar onde ela mora** —
-   ancorar na que carrega junto e declarar.
-3. **`STATUS.md`** — estado atual, fila, e o que ficou aberto.
-4. **`FEATURES.md`** — feature nova, aposentadoria com *por que saiu* e *como
-   reviver*.
-5. **📁 `docs/operacao/`** — **esta pasta**. Ver o checklist abaixo.
-6. **`make check-docs`** — tem que passar antes do commit.
-7. **`cp`** — commit e push.
-8. **`ppc`** — prompt de retomada para a próxima sessão.
+   If the right skill doesn't exist in the repo, **don't invent where it lives** —
+   anchor it to the one that loads alongside and declare it.
+3. **`STATUS.md`** — current state, queue, and what was left open.
+4. **`FEATURES.md`** — a new feature, a retirement with *why it left* and *how to
+   revive*.
+5. **📁 `docs/operacao/`** — **this folder**. See the checklist below.
+6. **`make check-docs`** — must pass before the commit.
+7. **`cp`** — commit and push.
+8. **`ppc`** — resume prompt for the next session.
 
-### Checklist do passo 5 (o update desta pasta)
+### Checklist of step 5 (the update of this folder)
 
-Nem toda sessão mexe em tudo. Confira o que mudou:
+Not every session touches everything. Check what changed:
 
-- [ ] **Mudou pino?** → `PINOS.md`, lido do `hal_daisy_seed.cpp`, não da memória
-- [ ] **Mudou CC ou param?** → `python3 gerar_ccmap.py > CCMAP.md` (é gerado)
-- [ ] **Mudou hardware, energia ou peça?** → `HARDWARE.md`, com o *porquê*
-- [ ] **Mudou topologia, CTOS ou comando serial?** → `ARQUITETURA.md`
-- [ ] **Mudou o desenho dos presets?** → `PRESETS.md`
-- [ ] **Regra nova que atravessa tudo?** → seção "regras da casa" do `README.md`
-- [ ] **Versão do firmware mudou?** → cabeçalho do `README.md` desta pasta
-- [ ] **Esquemático ficou velho?** → regenerar ou **declarar a parte superada**
-      (ver a nota sobre os SVGs no `README.md` — doc velha não-declarada é a
-      família de bug mais cara deste projeto)
+- [ ] **Did a pin change?** → `PINOS.md`, read from `hal_daisy_seed.cpp`, not from memory
+- [ ] **Did a CC or param change?** → `python3 gerar_ccmap.py > CCMAP.md` (it's generated)
+- [ ] **Did hardware, power, or a part change?** → `HARDWARE.md`, with the *why*
+- [ ] **Did topology, CTOS, or a serial command change?** → `ARQUITETURA.md`
+- [ ] **Did the preset design change?** → `PRESETS.md`
+- [ ] **A new rule that cuts across everything?** → the "house rules" section of `README.md`
+- [ ] **Did the firmware version change?** → the header of this folder's `README.md`
+- [ ] **Did the schematic go stale?** → regenerate or **declare the superseded part**
+      (see the note about the SVGs in `README.md` — an undeclared stale doc is the
+      most expensive family of bug in this project)
 
-**A regra que justifica o passo 5:** *toda reestruturação tem três frentes —
-código, documentação e símbolos. O compilador cobra a primeira; o `check-docs`
-cobra a segunda dentro do repo; esta pasta é a terceira e só a rotina a cobra.*
+**The rule that justifies step 5:** *every restructuring has three fronts —
+code, documentation, and symbols. The compiler charges for the first; `check-docs`
+charges for the second within the repo; this folder is the third and only the
+routine charges for it.*
 
 ---
 
 ## `bts` — battle scars
 
-Registra uma cicatriz nos três destinos. Uma cicatriz tem:
+Records a scar in the three destinations. A scar has:
 
-- **o caso** — o que aconteceu, com números e endereços
-- **a regra destilada** — a forma transferível, que sobrevive ao caso
-- **como generaliza** — a família a que pertence, ou a família nova que abre
+- **the case** — what happened, with numbers and addresses
+- **the distilled rule** — the transferable form, that survives the case
+- **how it generalizes** — the family it belongs to, or the new family it opens
 
-Cicatriz que só narra o caso não é cicatriz, é anedota.
-
----
-
-## `ppc` — prompt para continuar
-
-Prompt de retomada a frio para o Claude Code. Contém: commit e versão de
-partida (**o bom conhecido declarado**), o que ler primeiro, a fila na ordem
-que o dB quer, e as regras da casa que valem para a sessão.
+A scar that only narrates the case isn't a scar, it's an anecdote.
 
 ---
 
-## `cp` — commit e push
+## `ppc` — prompt to continue
 
-Commit com mensagem que descreve o **porquê**, não o quê. Push para `main`.
-Árvore limpa antes de abrir frente nova.
-
----
-
-## `cv` — currículo
-
-Atualiza o Bio Master do dB e regenera as saídas de bio/CV. Independente das
-outras — vive fora do repo do instrumento.
+A cold-resume prompt for Claude Code. It contains: the starting commit and version
+(**the known-good declared**), what to read first, the queue in the order
+that dB wants, and the house rules that apply to the session.
 
 ---
 
-## O triângulo
+## `cp` — commit and push
 
-| vértice | papel |
+A commit with a message that describes the **why**, not the what. Push to `main`.
+A clean tree before opening a new front.
+
+---
+
+## `cv` — CV
+
+Updates dB's Bio Master and regenerates the bio/CV outputs. Independent of the
+others — it lives outside the instrument's repo.
+
+---
+
+## The triangle
+
+| vertex | role |
 |---|---|
-| **dB** | visão, decisões, e o **aceite de ouvido** — que nenhum dos outros dois pode dar |
-| **Claude chat** | estratégia, arquitetura, hipóteses, auditoria externa |
-| **Claude Code** | implementação, compilação, medição em hardware |
+| **dB** | vision, decisions, and the **acceptance by ear** — which neither of the other two can give |
+| **Claude chat** | strategy, architecture, hypotheses, external audit |
+| **Claude Code** | implementation, compilation, measurement on hardware |
 
-**Cada vértice pode vetar os outros dois com dados.** Foi assim que o
-`out_width` foi aposentado (o Code apontou que M/S não faz sentido com dois
-exciters no mesmo corpo), que o `learn` foi removido (exigia a placa surda), e
-que o BOOT_SRAM foi reprovado (40 % mais rápido, com trava sem explicação).
+**Each vertex can veto the other two with data.** That's how `out_width` was
+retired (Code pointed out that M/S makes no sense with two exciters on the same
+body), how `learn` was removed (it required the board deaf), and how BOOT_SRAM was
+rejected (40% faster, with a latch with no explanation).

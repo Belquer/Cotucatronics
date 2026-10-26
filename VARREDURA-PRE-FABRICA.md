@@ -1,96 +1,96 @@
-# Varredura pré-fábrica — cérebro rev B + painel rev B
-### 08/09/2026 · sobre os `.kicad_sch` e `.kicad_pcb` recebidos (KiCad 10.0) · leitura estrutural, não regex
-> **Veredito: NÃO GERAR GERBERS.** Seis defeitos que tornam a placa não funcional
-> ou inutilizável na caixa, todos no desenho — nenhum é de fabrico. Todos se
-> corrigem no esquema/placa antes do pacote, e nenhum é grande. Mas cada um,
-> sozinho, era uma placa que a Dendê levava para a Europa sem funcionar.
+# Pre-fabrication sweep — brain board rev B + panel board rev B
+### 08/09/2026 · on the `.kicad_sch` and `.kicad_pcb` received (KiCad 10.0) · structural reading, not regex
+> **Verdict: DO NOT GENERATE GERBERS.** Six defects that make the board nonfunctional
+> or unusable in the enclosure, all in the design — none is a fabrication one. All are
+> fixed in the schematic/board before the package, and none is large. But each one,
+> alone, was a board that Dendê would take to Europe without it working.
 
 ---
 
-## 🔴 CRÍTICOS — a placa não funciona
+## 🔴 CRITICALS — the board doesn't work
 
-### C1 · Pré-amp: sinal na entrada INVERSORA, realimentação na NÃO-inversora (ambos os canais)
-**Evidência (esquema, trace com junções):** `U1` unidade A —
-- pino **2 (−IN)**: `R12` (1k, entrada), `R11` (4M7, VBIAS), `C12` (22n), `D11.3` (clamp) → **a rede de entrada**
-- pino **3 (+IN)**: `R10` (0Ω → saída), `RV1`, `R13`, `C11` (DNP) → **a rede de realimentação**
-- na placa: `U1` pad 2 = `Net-(U1A--)`, pad 3 = `Net-(U1A-+)` ← `R10` ← pad 1 (OUT). Canal B igual (pads 5/6).
+### C1 · Preamp: signal on the INVERTING input, feedback on the NON-inverting one (both channels)
+**Evidence (schematic, trace with junctions):** `U1` unit A —
+- pin **2 (−IN)**: `R12` (1k, input), `R11` (4M7, VBIAS), `C12` (22n), `D11.3` (clamp) → **the input net**
+- pin **3 (+IN)**: `R10` (0Ω → output), `RV1`, `R13`, `C11` (DNP) → **the feedback net**
+- on the board: `U1` pad 2 = `Net-(U1A--)`, pad 3 = `Net-(U1A-+)` ← `R10` ← pad 1 (OUT). Channel B the same (pads 5/6).
 
-**Consequência:** saída ligada ao +IN e sinal no −IN é **realimentação positiva** — o OPA1642 trava numa das alimentações. Não amplifica, não segue, não passa som. Os dois canais.
+**Consequence:** output connected to +IN and signal on −IN is **positive feedback** — the OPA1642 latches at one of the supplies. It doesn't amplify, doesn't follow, doesn't pass sound. Both channels.
 
-**Causa provável:** o símbolo `cotuca:OPA1642` desenha `−` em baixo e `+` em cima (o oposto da biblioteca oficial). Quando o símbolo genérico de 3 pinos foi trocado pelo de SOIC-8 sem mexer nos fios, as duas redes trocaram de pino. A verificação "netlist idêntica" contou ligações, não funções.
+**Probable cause:** the `cotuca:OPA1642` symbol draws `−` at the bottom and `+` at the top (the opposite of the official library). When the generic 3-pin symbol was swapped for the SOIC-8 one without touching the wires, the two nets swapped pins. The "identical netlist" check counted connections, not functions.
 
-**Conserto:** trocar as duas redes de pino em U1A e U1B — a rede de entrada (R12/R11/C12/D11) vai ao **pino 3 (+)**, a de realimentação (R10/RV1/R13/C11) ao **pino 2 (−)**. Na placa, os pads 2 e 3 são vizinhos: duas pistas trocam. **Não** renumerar o símbolo — pad 2 do chip real é −IN.
+**Fix:** swap the two nets' pins on U1A and U1B — the input net (R12/R11/C12/D11) goes to **pin 3 (+)**, the feedback one (R10/RV1/R13/C11) to **pin 2 (−)**. On the board, pads 2 and 3 are neighbors: two traces swap. Do **not** renumber the symbol — pad 2 of the real chip is −IN.
 
-### C2 · MOSFETs do painel: dreno e fonte trocados
-**Evidência:** símbolo `cotuca:MOSFET_N` = **1 G, 2 D, 3 S**. Folha de dados AO3400A (SOT-23, top view, lida): **1 G, 2 S, 3 D**. Na placa: `Q1` pad 2 = `LED_K_A` (cátodo do LED), pad 3 = `GND`.
-**Consequência:** o díodo de corpo (fonte→dreno) fica entre o cátodo do LED e o GND: **os dois LEDs acendem permanentemente**, independentes do gate. O freeze A/B perde a luz de estado.
-**Conserto:** trocar os pinos 2 e 3 no símbolo `MOSFET_N` (2 = S, 3 = D) **ou** trocar as duas redes nos pads. Confirmar com a ficha, que já está no repo.
+### C2 · Panel board MOSFETs: drain and source swapped
+**Evidence:** the `cotuca:MOSFET_N` symbol = **1 G, 2 D, 3 S**. AO3400A datasheet (SOT-23, top view, read): **1 G, 2 S, 3 D**. On the board: `Q1` pad 2 = `LED_K_A` (LED cathode), pad 3 = `GND`.
+**Consequence:** the body diode (source→drain) ends up between the LED cathode and GND: **both LEDs light permanently**, independent of the gate. Freeze A/B loses its state light.
+**Fix:** swap pins 2 and 3 in the `MOSFET_N` symbol (2 = S, 3 = D) **or** swap the two nets on the pads. Confirm with the datasheet, which is already in the repo.
 
-### C3 · D2 (Schottky da ponte ESP32) ao contrário
-**Evidência:** footprint `Diode_SMD:D_SMA` — pad 1 = **cátodo** (convenção KiCad, a faixa do silk está no pad 1). Na placa `D2` pad 1 = `+5V`, pad 2 = `+5V_PONTE`. Intenção documentada na folha de energia: *"faixa = cátodo, virada para a ponte"*.
-**Consequência:** o trilho +5V não alimenta a ponte (bloqueado), e o USB do ESP32 **realimenta o trilho** — o defeito exato que o díodo existia para impedir, e que a bancada já pagou. `D1` (TVS) está certo: pad 1 (K) = +15V.
-**Conserto:** trocar as redes dos pads 1↔2 de D2 (ou rodar 180° e re-rotear). Símbolo `cotuca:D_H` é genérico (pinos sem A/K) — dar-lhe nomes A/K para isto não voltar a acontecer.
+### C3 · D2 (ESP32 bridge Schottky) backwards
+**Evidence:** footprint `Diode_SMD:D_SMA` — pad 1 = **cathode** (KiCad convention, the silk band is on pad 1). On the board `D2` pad 1 = `+5V`, pad 2 = `+5V_PONTE`. Intent documented on the power sheet: *"band = cathode, facing the bridge"*.
+**Consequence:** the +5V rail doesn't power the bridge (blocked), and the ESP32's USB **feeds back the rail** — the exact defect the diode existed to prevent, and that the bench already paid for. `D1` (TVS) is correct: pad 1 (K) = +15V.
+**Fix:** swap the nets of D2's pads 1↔2 (or rotate 180° and re-route). The `cotuca:D_H` symbol is generic (pins with no A/K) — give it A/K names so this doesn't happen again.
 
-### C4 · Encoder SW1: NENHUM pad ligado
-**Evidência:** símbolo `cotuca:EC11` pinos **1,2,3,4,5**; footprint `RotaryEncoder_Alps_EC11E-Switch` pads **A, B, C, S1, S2, MP**. Na placa, os 5 pads de sinal têm `net = None`. `ENC_A_A/B/PUSH` chegam pelo IDC (vias 20–22) e param.
-**Consequência:** o encoder não faz nada. Os únicos menus do instrumento ficam sem entrada.
-**Conserto:** renumerar os pinos do símbolo para os nomes dos pads: `A`, `C` (comum), `B`, `S1`, `S2` — o footprint Alps usa letras. Re-importar e rotear (5 pistas curtas). O "0 por rotear" não apanhou porque sem pad não há ligação a fazer.
+### C4 · Encoder SW1: NO pad connected
+**Evidence:** the `cotuca:EC11` symbol has pins **1,2,3,4,5**; the `RotaryEncoder_Alps_EC11E-Switch` footprint has pads **A, B, C, S1, S2, MP**. On the board, the 5 signal pads have `net = None`. `ENC_A_A/B/PUSH` arrive via the IDC (vias 20–22) and stop.
+**Consequence:** the encoder does nothing. The instrument's only menus are left with no input.
+**Fix:** renumber the symbol's pins to the pads' names: `A`, `C` (common), `B`, `S1`, `S2` — the Alps footprint uses letters. Re-import and route (5 short traces). The "0 to route" didn't catch it because with no pad there's no connection to make.
 
-### C5 · Sinal para o amp nunca chega ao conector do amp
-**Evidência:** rede `EXC_L` = só `J15.3` e `J15.6` (terminais "exciter" da chave DPDT). Rede `AMP_IN_L` = `J11.3` + `R50` (10k ao GND). **Duas redes, nenhum fio entre elas.** Idem R.
-**Consequência:** a posição "amp" da chave não vai a lado nenhum; a entrada do módulo (J11.3/4) fica só com o 10k ao GND. Nenhum som nos exciters via placa.
-**Conserto:** `EXC_L` e `AMP_IN_L` são a mesma rede — renomear uma (sugestão: tudo `AMP_IN_L/R`) na folha do soquete, re-importar, rotear.
+### C5 · Signal to the amp never reaches the amp connector
+**Evidence:** net `EXC_L` = only `J15.3` and `J15.6` (the "exciter" terminals of the DPDT switch). Net `AMP_IN_L` = `J11.3` + `R50` (10k to GND). **Two nets, no wire between them.** Same for R.
+**Consequence:** the switch's "amp" position goes nowhere; the module's input (J11.3/4) is left with only the 10k to GND. No sound at the exciters via the board.
+**Fix:** `EXC_L` and `AMP_IN_L` are the same net — rename one (suggestion: everything `AMP_IN_L/R`) on the socket sheet, re-import, route.
 
-### C6 · Cérebro sem furos de fixação
-**Evidência:** `Edge.Cuts` é só o retângulo arredondado; zero footprints `MountingHole`, zero `np_thru_hole`. A FILA do briefing de 06/09 pedia 4× M3 em (15,5 · 128,5) × (3,5 · 96,5) — não entrou.
-**Consequência:** a placa não se fixa ao fundo da caixa; os furos ø3,2 do acrílico não têm par.
-**Conserto:** 4× `MountingHole:MountingHole_3.2mm_M3` nas coordenadas do `pcb_contorno.py`, com anel de exclusão de cobre. Re-correr a paridade contra a caixa.
-
----
-
-## 🟠 ALTOS — confirmar antes de encomendar
-
-### A1 · Ordem dos pinos do OLED (J2) contra o cabo da Waveshare
-Placa: **1 GND · 2 +5V · 3 CLK · 4 DIN · 5 CS · 6 DC · 7 RST**. O módulo Waveshare 2,42" SPI tem, na ordem do conector: **VCC · GND · DIN · CLK · CS · DC · RST**. Com um cabo 1:1, **VCC e GND trocam** (OLED morre ao ligar) e DIN/CLK trocam. Ou se reordena J2 para a ordem do módulo (recomendado — o cabo de fábrica passa a servir), ou se crimpa um cabo cruzado e se escreve isso no LEIA-ME. Confirmar a ordem no módulo em mão antes de decidir.
-
-### A2 · Pots: MPN é o estilo horizontal
-`RV1`/`RV2` têm footprint `PTV09A-1` (vertical, bucim) e **MPN `PTV09A-4020S-B103`** (`-4` = rear mount, sem bucim, eixo deitado). Comprado assim, o eixo não sobe pela tampa. MPN correto: **`PTV09A-1020S-B103`** (Mouser/DigiKey — é THT, não passa pela JLC).
-
-### A3 · A placa é de 2 camadas; a documentação diz 4
-Cobre: só `F.Cu` e `B.Cu`. Zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, `NT1` como única ponte — **isto está correto e verificado**. Mas o briefing, o roteiro e a revisão de terra falam em "4 camadas, L2 terra sólido". Decidir e alinhar: a encomenda na JLC tem de dizer 2 camadas (mais barato), e os documentos têm de deixar de dizer 4. Sem plano interior, o retorno do amp é a zona de B.Cu — aceitável para 3 A com a largura que tem.
+### C6 · Brain board with no mounting holes
+**Evidence:** `Edge.Cuts` is only the rounded rectangle; zero `MountingHole` footprints, zero `np_thru_hole`. The QUEUE from the 06/09 briefing called for 4× M3 at (15,5 · 128,5) × (3,5 · 96,5) — it didn't get in.
+**Consequence:** the board doesn't fasten to the bottom of the enclosure; the acrylic's ø3,2 holes have no mate.
+**Fix:** 4× `MountingHole:MountingHole_3.2mm_M3` at the `pcb_contorno.py` coordinates, with a copper exclusion ring. Re-run the parity against the enclosure.
 
 ---
 
-## 🟡 MÉDIOS — arrumar, não travam
+## 🟠 HIGH — confirm before ordering
 
-- `D2` Value `1N5819` / MPN `SS14`; `F1` Value `PTC 3A` / MPN `2920L330` (3,3 A). Value e MPN contam histórias diferentes.
-- `RV1.3`/`RV2.3` (trimpots DNP) sem rede — pôr bandeira "no connect".
-- Pistas de **AGND a 0,187 mm** entre pads do pré-amp: passa na JLC (mín. 0,127), mas é fino para retorno; 0,3 custa nada.
-- Códigos LCSC **não estão nos ficheiros-fonte** que recebi (nem em símbolos nem na placa) — vivem no CSV gerado. Conferir o CSV contra a placa antes de subir.
-- Painel sem furos de fixação: pendura pelos bucins dos pots e do encoder. Decisão consciente? Com IDC + 5 JST a puxar, aguenta, mas fica dito.
+### A1 · OLED pin order (J2) against the Waveshare cable
+Board: **1 GND · 2 +5V · 3 CLK · 4 DIN · 5 CS · 6 DC · 7 RST**. The Waveshare 2,42" SPI module has, in connector order: **VCC · GND · DIN · CLK · CS · DC · RST**. With a 1:1 cable, **VCC and GND swap** (OLED dies on power-up) and DIN/CLK swap. Either reorder J2 to the module's order (recommended — the factory cable then works), or crimp a crossed cable and write that in the LEIA-ME. Confirm the order with the module in hand before deciding.
+
+### A2 · Pots: the MPN is the horizontal style
+`RV1`/`RV2` have the footprint `PTV09A-1` (vertical, bushing) and **MPN `PTV09A-4020S-B103`** (`-4` = rear mount, no bushing, shaft lying down). Bought that way, the shaft doesn't rise through the lid. Correct MPN: **`PTV09A-1020S-B103`** (Mouser/DigiKey — it's THT, doesn't go through JLC).
+
+### A3 · The board is 2-layer; the documentation says 4
+Copper: only `F.Cu` and `B.Cu`. Zones `GND` (prio 0) and `AGND` (prio 1) both on `B.Cu`, separated, `NT1` as the single bridge — **this is correct and verified**. But the briefing, the roadmap, and the ground review speak of "4 layers, L2 solid ground". Decide and align: the JLC order has to say 2 layers (cheaper), and the documents have to stop saying 4. Without an inner plane, the amp's return is the B.Cu zone — acceptable for 3 A with the width it has.
 
 ---
 
-## ✅ Verificado e certo
+## 🟡 MEDIUM — tidy up, don't block
 
-| o quê | como |
+- `D2` Value `1N5819` / MPN `SS14`; `F1` Value `PTC 3A` / MPN `2920L330` (3,3 A). Value and MPN tell different stories.
+- `RV1.3`/`RV2.3` (DNP trimpots) with no net — add a "no connect" flag.
+- **AGND traces at 0,187 mm** between preamp pads: passes at JLC (min. 0,127), but it's thin for a return; 0,3 costs nothing.
+- LCSC codes **are not in the source files** I received (neither in symbols nor on the board) — they live in the generated CSV. Check the CSV against the board before uploading.
+- Panel board with no mounting holes: it hangs from the pots' and the encoder's bushings. A conscious decision? With the IDC + 5 JST pulling, it holds, but it's said.
+
+---
+
+## ✅ Verified and correct
+
+| what | how |
 |---|---|
-| Contrato IDC 26/26 | pad→rede de `J14` (cérebro) vs `J1` (painel), via a via: 0 divergências |
-| Pinagem da Daisy | 40 pads vs `Seed3_pinout.csv`: AGND 20, +3V3A 21, VIN 39, GND 40, áudio 16–19, D29/D30 livres, D26 = `BOT_BUZIOS` |
-| Ponte única de terra | com `NT1` excluído, `GND` e `AGND` não partilham cobre em lado nenhum |
-| Roteamento | 0 redes com mais de uma ilha nas duas placas (o `J12.3` liga por pista que o atravessa) |
-| Polaridades certas | `D1` TVS (K→+15V) · `D11/D21` BAV99 (1→AGND, 2→V+PRE, 3→sinal: clamp correto) · eletrolíticos pad 1 = + em todos |
-| Potência | +15V a 1,0 mm · +5V/3V3 0,5 · vias ø0,6/0,3 · nada a < 0,3 mm do bordo · furo mínimo 0,5 (PicoBlade) |
-| Esquema ↔ placa | 70/70 e 28/28 referências, valores e DNP iguais |
-| Soquete ESP32 | ordem dos 2×8 pads bate com a SuperMini (5V·GND·3V3·4·3·2·1·0 / 5·6·7·8·9·10·20·21) |
-| Desacople | +5V (C15), +3V3A (C16), +5V_PONTE (C3+C4), V+PRE (C6+C7+C8+C9), painel +5V (C3+C4), +3V3A (C5) |
+| IDC contract 26/26 | pad→net of `J14` (brain board) vs `J1` (panel board), via by via: 0 divergences |
+| Daisy pinout | 40 pads vs `Seed3_pinout.csv`: AGND 20, +3V3A 21, VIN 39, GND 40, audio 16–19, D29/D30 free, D26 = `BOT_BUZIOS` |
+| Single ground bridge | with `NT1` excluded, `GND` and `AGND` don't share copper anywhere |
+| Routing | 0 nets with more than one island on both boards (the `J12.3` connects via a trace that crosses it) |
+| Polarities correct | `D1` TVS (K→+15V) · `D11/D21` BAV99 (1→AGND, 2→V+PRE, 3→signal: correct clamp) · electrolytics pad 1 = + on all |
+| Power | +15V at 1,0 mm · +5V/3V3 0,5 · vias ø0,6/0,3 · nothing < 0,3 mm from the edge · minimum hole 0,5 (PicoBlade) |
+| Schematic ↔ board | 70/70 and 28/28 references, values, and DNP identical |
+| ESP32 socket | order of the 2×8 pads matches the SuperMini (5V·GND·3V3·4·3·2·1·0 / 5·6·7·8·9·10·20·21) |
+| Decoupling | +5V (C15), +3V3A (C16), +5V_PONTE (C3+C4), V+PRE (C6+C7+C8+C9), panel board +5V (C3+C4), +3V3A (C5) |
 
 ---
 
-## O padrão por baixo dos seis
+## The pattern beneath the six
 
-Cinco dos seis críticos (C1–C5) são **o mesmo defeito**: símbolo genérico da biblioteca `cotuca` — pinos `1,2,3` sem nome de função — casado com um footprint real cujos pads têm função fixa (SOIC-8, SOT-23, D_SMA, EC11). A netlist do KiCad fica "correta" — cada pino liga a um pad — e a função fica errada. Nenhum ERC, DRC ou "0 por rotear" o vê, porque todos verificam **ligação**, não **significado**.
+Five of the six criticals (C1–C5) are **the same defect**: a generic symbol from the `cotuca` library — pins `1,2,3` with no function name — matched with a real footprint whose pads have a fixed function (SOIC-8, SOT-23, D_SMA, EC11). KiCad's netlist comes out "correct" — each pin connects to a pad — and the function comes out wrong. No ERC, DRC, or "0 to route" sees it, because they all check **connection**, not **meaning**.
 
-A verificação que apanha isto é uma tabela por peça polarizada: **pad → rede → função esperada pela ficha**. Foi a que fiz aqui à mão para U1, Q, D e SW1. Vale escrevê-la como passada do portão (`kicad` §7): para cada footprint com pads nomeados ou polarizados, o gerador declara a função de cada pad e o verificador compara com a rede.
+The check that catches this is a table per polarized part: **pad → net → function expected by the datasheet**. It's the one I did here by hand for U1, Q, D, and SW1. Worth writing it as a gate pass (`kicad` §7): for each footprint with named or polarized pads, the generator declares the function of each pad and the checker compares with the net.
 
-**Ordem de conserto:** C1 → C2 → C3 → C5 → C4 → C6 (todos no esquema/símbolos, depois um "Update PCB", re-rotear o pouco que muda, DRC, e **repetir esta varredura**), depois A1/A2 na BOM e LEIA-ME, A3 na encomenda. Só então Gerbers.
+**Fix order:** C1 → C2 → C3 → C5 → C4 → C6 (all in the schematic/symbols, then an "Update PCB", re-route the little that changes, DRC, and **repeat this sweep**), then A1/A2 in the BOM and LEIA-ME, A3 in the order. Only then Gerbers.

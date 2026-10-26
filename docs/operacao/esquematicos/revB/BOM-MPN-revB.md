@@ -1,404 +1,404 @@
-> [!warning] APOSENTADA a 08/09/2026 — nao encomendar por aqui
+> [!warning] RETIRED on 08/09/2026 — do not order from here
 >
-> A lista de compras viva e **`COTUCA_BOM.md`**, gerada das folhas KiCad por
-> `tools/bom_completa.py`; a compra da rev C e `export/BOM_CONSOLIDADO.csv`
-> (ver `export/MANIFEST.md`). Esta foi escrita a mao e ja divergia do esquema.
+> The live purchase list is **`COTUCA_BOM.md`**, generated from the KiCad sheets by
+> `tools/bom_completa.py`; the rev C purchase is `export/BOM_CONSOLIDADO.csv`
+> (see `export/MANIFEST.md`). This one was written by hand and already diverged from the schematic.
 >
-> **Tudo o que ela tinha de util foi migrado**, e estes MPNs foram CORRIGIDOS
-> — se os leres aqui, estao errados:
+> **Everything useful in it was migrated**, and these MPNs were CORRECTED
+> — if you read them here, they are wrong:
 >
-> | aqui diz | o vivo (17/09), e porque |
+> | it says here | the live one (17/09), and why |
 > |---|---|
-> | `2920L300/24MR` | **`MF-LSMF300/24X-2`** (Bourns) — o /300 nao existia (o de 24 V era o `2920L330/24MR`), e esse foi por sua vez trocado na compra da rev C por este, verificado em estoque na Mouser a 12/09 |
-> | `PEC11R-4220F-S0024` | **`EC11E15244G1`** (Alps) — o PEC11R tem pinos a 5,0 mm e o footprint e do Alps, a 2,5 |
-> | `PTV09A-4020**F**-B103` | **`PTV09A-1020S-B103`** — `S` e eixo estriado, o `F` e liso, e a nota ao lado desta propria tabela pedia estriado. A troca de `4020` para `1020` esta no gerador sem razao escrita |
-> | `1935161` | **`1715721`** — a MKDS **1** tem 1,5 mm menos de largura que a MKDS **1,5**, que e a do footprint |
-> | `53047-0710` (J_OLED, PicoBlade) | **`61304011121`** cortado a 1x07 — o OLED traz cabo com jumpers femea, e a placa leva header macho de 2,54 (17/09) |
+> | `2920L300/24MR` | **`MF-LSMF300/24X-2`** (Bourns) — the /300 did not exist (the 24 V one was the `2920L330/24MR`), and that one was in turn swapped in the rev C purchase for this one, verified in stock at Mouser on 12/09 |
+> | `PEC11R-4220F-S0024` | **`EC11E15244G1`** (Alps) — the PEC11R has pins at 5,0 mm and the footprint is the Alps one, at 2,5 |
+> | `PTV09A-4020**F**-B103` | **`PTV09A-1020S-B103`** — `S` is a knurled shaft, `F` is smooth, and the note next to this very table called for knurled. The swap from `4020` to `1020` is in the generator with no written reason |
+> | `1935161` | **`1715721`** — the MKDS **1** is 1,5 mm narrower than the MKDS **1,5**, which is the one in the footprint |
+> | `53047-0710` (J_OLED, PicoBlade) | **`61304011121`** cut down to 1x07 — the OLED comes with a cable with female jumpers, and the board takes a 2,54 male header (17/09) |
 >
-> E duas coisas que so apareceram ao migrar: **os soquetes da Daisy e do ESP32
-> nao estavam orcados em lado nenhum**, e o **cabo ate aos DPDT nao estava na
-> BOM de todo** — passou a 8 vias a 08/09, com os pinos 7 e 8 em GND.
+> And two things that only surfaced during migration: **the sockets for the Daisy and the ESP32
+> were not budgeted anywhere**, and the **cable to the DPDTs was not in the
+> BOM at all** — it became 8-way on 08/09, with pins 7 and 8 on GND.
 >
-> Fica pelo historico: as razoes de escolha aqui escritas continuam a valer, e
-> foi delas que sairam as notas que agora vivem no gerador.
+> Kept for the record: the selection reasons written here still hold, and
+> it was from them that the notes now living in the generator came.
 
-# BOM por MPN — Cotucatronics rev B
+# BOM by MPN — Cotucatronics rev B
 <!-- doc-check: ignore power_pin_not_driven (codigo de violacao do ERC do KiCad) -->
-### 05/09/2026 · dois projetos KiCad · JLCPCB monta o SMD · dB compra e solda o resto
+### 05/09/2026 · two KiCad projects · JLCPCB assembles the SMD · dB buys and solders the rest
 
-> ⚠️ **Nomes actualizados a 05/09 para os do esquema.** O KiCad trata uma
-> referência sem parte numérica (`R0A`, `C1A`, `RVA`, `DA`) como não anotada e
-> renumera-a sozinha ao gravar. A dezena passou a dizer o canal:
-> `R10`–`R14` = canal A, `R20`–`R24` = canal B, `C11`–`C14` / `C21`–`C24`,
-> `RV1`/`RV2`, `D11`/`D21`. Mapa completo em `ERC-ISENCOES.md`.
-> **Os 10 k das entradas do amp são `R50`/`R51`** — a dezena 2 foi ocupada
-> pelo canal B do pré-amp, e a referência é única em toda a hierarquia.
-> **Regra:** o footprint vem da folha de dados do MPN escolhido, não de medição.
-> Só se mede o que não tem ficha (§5). Códigos LCSC: o Code puxa na hora do
-> pedido com stock confirmado — a ferramenta de BOM da JLC casa por MPN.
-> Critério de escolha: **peça de fabricante conhecido, em stock na LCSC, no
-> tier Basic quando existe** (Basic = sem taxa de setup; Extended = ~US$3/peça
-> uma vez por pedido).
-
----
-
-## 1 · CÉREBRO — SMD, JLCPCB monta (face de cima)
-
-### Semicondutores
-| ref | qtd | peça | MPN | encaps. | tier | nota |
-|---|---|---|---|---|---|---|
-| U1 | 1 | amp-op dual JFET | **OPA1642AIDR** (TI) | SOIC-8 | Extended | **confirmar stock antes do pedido — trava tudo.** Alternativa se faltar: OPA1652AIDR (CMOS, 4,5 nV) |
-| D11, D21 | 2 | díodo duplo série | **BAV99,215** (Nexperia) | SOT-23 | Basic | clamp da entrada; pino 3 = sinal |
-| D2 | 1 | Schottky 1 A 40 V | **SS14** (MDD ou Vishay) | SMA | Basic | o 1N5819 da bancada, em SMD; faixa para a ponte |
-| D1 | 1 | TVS 24 V standoff | **SMBJ24A** (Littelfuse) | SMB | Basic/Ext | cátodo no +15 V |
-| F1 | 1 | PTC 3 A hold, ≥ 24 V | **2920L300/24MR** (Littelfuse) | 2920 | Extended | os 1812 de 3 A só chegam a 16 V — 15 V PD é margem zero |
-
-### Resistores 0805, 1 %, filme espesso (Uniroyal 0805W8F… ou Yageo RC0805FR — todos Basic)
-| ref | qtd | valor | nota |
-|---|---|---|---|
-| R11, R21 | 2 | 4,7 MΩ | polarização da entrada — **1 %**; 5 % desloca o VBIAS do nó |
-| R12, R22 | 2 | 1 kΩ | proteção da entrada |
-| R13, R23 | 2 | 4,7 kΩ | **DNP** — perna de ganho, só se voltar o trimpot |
-| R10, R20 | 2 | 0 Ω | seguidor: OUT → −IN |
-| R14, R24 | 2 | 100 Ω | isolamento de saída |
-| R5, R6 | 2 | 100 kΩ | divisor VBIAS |
-| R8 | 1 | 100 kΩ | divisor do trilho → A2 |
-| R9 | 1 | 22 kΩ | idem |
-| R50, R51 | 2 | 10 kΩ | entradas do amp ao GND (fora da chave) — **eram `R10`/`R11`; a dezena 1 passou a ser do canal A do pré-amp** |
-| R7 | 1 | 100 Ω **¼ W, 1206** | filtro V+PRE; 0805 é ⅛ W |
-
-### Capacitores SMD
-| ref | qtd | valor | MPN / spec | encaps. | tier | nota |
-|---|---|---|---|---|---|---|
-| C11, C21 | 2 | 22 pF **C0G** 50 V | qualquer C0G Basic | 0805 | Basic | **DNP** com o seguidor |
-| C12, C22 | 2 | 22 nF **C0G** 50 V | **C1206C223J5GACTU** (Kemet) | **1206** | Extended | divisor −6 dB; **alternativa PPS: ECHU1C223GX5** (Panasonic). Nunca X7R aqui |
-| C7, C9, C9, C4, C2 | 5 | 100 nF X7R 50 V | Basic | 0805 | Basic | desacople (energia + pré-amp) |
-| C8 | 1 | 10 µF X7R **50 V** | Basic | **1206** | Basic | colado ao pino 8 de U1 (14,6 V — 0805/25 V perde metade por polarização) |
-| C4 (energia) | 1 | 100 nF X7R | Basic | 0805 | Basic | no terminal do amp, ao lado do 2200 µ |
-
-### Sem peça (não entram na BOM nem no CPL)
-NetTie-2 (AGND↔GND, cobre) · PWR_FLAG ×4.
+> ⚠️ **Names updated on 05/09 to match the schematic.** KiCad treats a
+> reference without a numeric part (`R0A`, `C1A`, `RVA`, `DA`) as unannotated and
+> renumbers it on its own when flashing. The tens digit now states the channel:
+> `R10`–`R14` = channel A, `R20`–`R24` = channel B, `C11`–`C14` / `C21`–`C24`,
+> `RV1`/`RV2`, `D11`/`D21`. Full map in `ERC-ISENCOES.md`.
+> **The 10 k at the amp inputs are `R50`/`R51`** — the tens digit 2 was taken
+> by the preamp channel B, and the reference is unique across the whole hierarchy.
+> **Rule:** the footprint comes from the datasheet of the chosen MPN, not from measurement.
+> Only what has no datasheet is measured (§5). LCSC codes: the Code is pulled at
+> order time with confirmed stock — JLC's BOM tool matches by MPN.
+> Selection criterion: **a part from a known manufacturer, in stock at LCSC, in
+> the Basic tier when one exists** (Basic = no setup fee; Extended = ~US$3/part
+> once per order).
 
 ---
 
-## 2 · CÉREBRO — THT, dB compra e solda
+## 1 · BRAIN BOARD — SMD, JLCPCB assembles (top face)
 
-### Eletrolíticos radiais (Panasonic FR = low-ESR, longa vida; footprint da ficha)
-| ref | qtd | valor | MPN | ⌀ × alt. · passo | nota |
-|---|---|---|---|---|---|
-| C1 (energia) | 1 | 2200 µF 35 V | **EEU-FR1V222** (Panasonic FR) | 16 × 25 · **P7,5** | no terminal do amp — medido: sem ele o exciter zumbe |
-| C3 (energia) | 1 | 100 µF 16 V | **EEU-FR1C101** | 6,3 × 11 · P2,5 | na ponte |
-| C6, C6 (pré-amp) | 2 | 470 µF 25 V | **EEU-FR1E471** | 10 × 12,5 · P5 | reservatório V+PRE |
-| C5 (pré-amp) | 1 | 47 µF 25 V | **EEU-FR1E470** | 6,3 × 11 · P2,5 | VBIAS |
-| C13, C23 (pré-amp) | 2 | 22 µF **bipolar** 50 V | **UES1H220MEM** (Nichicon UES, áudio) | 6,3 × 11 · P2,5 | **DNP** com o seguidor; footprint fica |
+### Semiconductors
+| ref | qty | part | MPN | encaps. | tier | note |
+|---|---|---|---|---|---|---|
+| U1 | 1 | dual JFET op-amp | **OPA1642AIDR** (TI) | SOIC-8 | Extended | **confirm stock before the order — it holds everything up.** Alternative if out of stock: OPA1652AIDR (CMOS, 4,5 nV) |
+| D11, D21 | 2 | dual series diode | **BAV99,215** (Nexperia) | SOT-23 | Basic | input clamp; pin 3 = signal |
+| D2 | 1 | Schottky 1 A 40 V | **SS14** (MDD or Vishay) | SMA | Basic | the bench 1N5819, in SMD; range for the bridge |
+| D1 | 1 | TVS 24 V standoff | **SMBJ24A** (Littelfuse) | SMB | Basic/Ext | cathode on +15 V |
+| F1 | 1 | PTC 3 A hold, ≥ 24 V | **2920L300/24MR** (Littelfuse) | 2920 | Extended | the 1812 3 A ones only reach 16 V — 15 V PD is zero margin |
 
-### Filme
-| ref | qtd | valor | MPN | corpo · passo | nota |
-|---|---|---|---|---|---|
-| C14, C24 | 2 | 2,2 µF 63 V | **MKS2C042201K00KSSD** (WIMA MKS2) | 7,2 × 11 × 7,2 · **P5** | acoplamento de saída — filme, nunca X7R |
-
-### Trimpot (DNP, footprint fica)
-| ref | qtd | peça | MPN |
+### Resistors 0805, 1 %, thick film (Uniroyal 0805W8F… or Yageo RC0805FR — all Basic)
+| ref | qty | value | note |
 |---|---|---|---|
-| RV1, RV2 | 2 | 100 kΩ multivoltas | **3296W-1-104LF** (Bourns) |
+| R11, R21 | 2 | 4,7 MΩ | input bias — **1 %**; 5 % shifts the node's VBIAS |
+| R12, R22 | 2 | 1 kΩ | input protection |
+| R13, R23 | 2 | 4,7 kΩ | **DNP** — gain leg, only if the trimpot comes back |
+| R10, R20 | 2 | 0 Ω | follower: OUT → −IN |
+| R14, R24 | 2 | 100 Ω | output isolation |
+| R5, R6 | 2 | 100 kΩ | VBIAS divider |
+| R8 | 1 | 100 kΩ | rail → A2 divider |
+| R9 | 1 | 22 kΩ | likewise |
+| R50, R51 | 2 | 10 kΩ | amp inputs to GND (outside the switch) — **they were `R10`/`R11`; the tens digit 1 became the preamp channel A** |
+| R7 | 1 | 100 Ω **¼ W, 1206** | V+PRE filter; 0805 is ⅛ W |
 
-### Conectores e soquete
-| ref | qtd | peça | MPN / spec | nota |
+### SMD capacitors
+| ref | qty | value | MPN / spec | encaps. | tier | note |
+|---|---|---|---|---|---|---|
+| C11, C21 | 2 | 22 pF **C0G** 50 V | any Basic C0G | 0805 | Basic | **DNP** with the follower |
+| C12, C22 | 2 | 22 nF **C0G** 50 V | **C1206C223J5GACTU** (Kemet) | **1206** | Extended | −6 dB divider; **PPS alternative: ECHU1C223GX5** (Panasonic). Never X7R here |
+| C7, C9, C9, C4, C2 | 5 | 100 nF X7R 50 V | Basic | 0805 | Basic | decoupling (power + preamp) |
+| C8 | 1 | 10 µF X7R **50 V** | Basic | **1206** | Basic | glued to pin 8 of U1 (14,6 V — 0805/25 V loses half to bias) |
+| C4 (power) | 1 | 100 nF X7R | Basic | 0805 | Basic | at the amp terminal, next to the 2200 µ |
+
+### No part (do not go in the BOM or the CPL)
+NetTie-2 (AGND↔GND, copper) · PWR_FLAG ×4.
+
+---
+
+## 2 · BRAIN BOARD — THT, dB buys and solders
+
+### Radial electrolytics (Panasonic FR = low-ESR, long life; footprint from the datasheet)
+| ref | qty | value | MPN | ⌀ × ht. · pitch | note |
+|---|---|---|---|---|---|
+| C1 (power) | 1 | 2200 µF 35 V | **EEU-FR1V222** (Panasonic FR) | 16 × 25 · **P7,5** | at the amp terminal — measured: without it the exciter hums |
+| C3 (power) | 1 | 100 µF 16 V | **EEU-FR1C101** | 6,3 × 11 · P2,5 | on the bridge |
+| C6, C6 (preamp) | 2 | 470 µF 25 V | **EEU-FR1E471** | 10 × 12,5 · P5 | V+PRE reservoir |
+| C5 (preamp) | 1 | 47 µF 25 V | **EEU-FR1E470** | 6,3 × 11 · P2,5 | VBIAS |
+| C13, C23 (preamp) | 2 | 22 µF **bipolar** 50 V | **UES1H220MEM** (Nichicon UES, audio) | 6,3 × 11 · P2,5 | **DNP** with the follower; footprint stays |
+
+### Film
+| ref | qty | value | MPN | body · pitch | note |
+|---|---|---|---|---|---|
+| C14, C24 | 2 | 2,2 µF 63 V | **MKS2C042201K00KSSD** (WIMA MKS2) | 7,2 × 11 × 7,2 · **P5** | output coupling — film, never X7R |
+
+### Trimpot (DNP, footprint stays)
+| ref | qty | part | MPN |
+|---|---|---|---|
+| RV1, RV2 | 2 | 100 kΩ multiturn | **3296W-1-104LF** (Bourns) |
+
+### Connectors and socket
+| ref | qty | part | MPN / spec | note |
 |---|---|---|---|---|
-| soquete Daisy | 2 | fêmea 1×20, 2,54, contactos dourados | **M20-7822046** (Harwin) ou equiv. | substituibilidade — vale os US$2 |
-| J2 (amp 15 V), J_L, J_R (linha ao amp) | 3 | terminal parafuso 2 vias, 5,08 | **1935161** (Phoenix MKDS 1/2-5.08) ou KF301-5.0 genérico | Phoenix se for série; KF301 na bancada |
-| J step-down | 1 | fêmea 1×3, 2,54 | genérico | passo confirmado quando o módulo chegar |
-| J decoy | 1 | terminal parafuso 2 vias 5,08 | idem J2 | |
-| J ponte | 1 | fêmea 1×5, 2,54 | genérico | TX RX STATUS 5V GND |
-| J painel | 1 | IDC 2×13 macho, blindado, 2,54 | **N2526-6002RB** (3M) ou genérico | o contrato entre placas |
-| J jacks piezo / linha | 4 | header 1×3, 2,54 | genérico | fio aos jacks de painel |
-| J DPDT | 2 | header 1×6, 2,54 | genérico | fio às chaves |
+| Daisy socket | 2 | female 1×20, 2,54, gold contacts | **M20-7822046** (Harwin) or equiv. | substitutability — worth the US$2 |
+| J2 (amp 15 V), J_L, J_R (line to amp) | 3 | 2-way screw terminal, 5,08 | **1935161** (Phoenix MKDS 1/2-5.08) or generic KF301-5.0 | Phoenix if it goes into production; KF301 on the bench |
+| J step-down | 1 | female 1×3, 2,54 | generic | pitch confirmed when the module arrives |
+| J decoy | 1 | 2-way screw terminal 5,08 | same as J2 | |
+| J bridge | 1 | female 1×5, 2,54 | generic | TX RX STATUS 5V GND |
+| J panel | 1 | IDC 2×13 male, shrouded, 2,54 | **N2526-6002RB** (3M) or generic | the contract between boards |
+| J piezo / line jacks | 4 | header 1×3, 2,54 | generic | wire to the panel jacks |
+| J DPDT | 2 | header 1×6, 2,54 | generic | wire to the switches |
 
 ---
 
-## 3 · PAINEL — SMD, JLCPCB monta
-| ref | qtd | peça | MPN | encaps. | tier | nota |
+## 3 · PANEL BOARD — SMD, JLCPCB assembles
+| ref | qty | part | MPN | encaps. | tier | note |
 |---|---|---|---|---|---|---|
-| Q1, Q2 | 2 | MOSFET N logic-level | **AO3400A** (Alpha & Omega) | SOT-23 | Basic | 5 A; margem contra os 100 mA por LED |
+| Q1, Q2 | 2 | N logic-level MOSFET | **AO3400A** (Alpha & Omega) | SOT-23 | Basic | 5 A; margin against the 100 mA per LED |
 | R_g1, R_g2 | 2 | 100 Ω | 0805 Basic | | | gate |
-| R_pd1, R_pd2 | 2 | 10 kΩ | 0805 Basic | | | **pull-down obrigatório** — GPIO flutua no boot |
-| R_led1, R_led2 | 2 | 47 Ω **½ W** | 1210 ou 2512 | Basic | | série dos LEDs, alvo ~30 mA; **valor confirmado na bancada** com o azul |
-| C_pot1, C_pot2 | 2 | 100 nF X7R | 0805 Basic | | | do cursor ao GND, colado ao pot |
+| R_pd1, R_pd2 | 2 | 10 kΩ | 0805 Basic | | | **mandatory pull-down** — the GPIO floats at boot |
+| R_led1, R_led2 | 2 | 47 Ω **½ W** | 1210 or 2512 | Basic | | LED series, target ~30 mA; **value confirmed on the bench** with the blue one |
+| C_pot1, C_pot2 | 2 | 100 nF X7R | 0805 Basic | | | from wiper to GND, glued to the pot |
 
-## 4 · PAINEL — THT, dB compra e solda
-| ref | qtd | peça | MPN | nota |
+## 4 · PANEL BOARD — THT, dB buys and solders
+| ref | qty | part | MPN | note |
 |---|---|---|---|---|
-| SW1 | 1 | EC11 com push, eixo 20 mm | **PEC11R-4220F-S0024** (Bourns) | 24 detentes, eixo estriado; se ficares com o comprado, footprint por medição |
-| RV1, RV2 | 2 | pot 10 kΩ **linear**, 9 mm, eixo 20 mm | **PTV09A-4020F-B103** (Bourns) | eixo estriado ⌀6 — confere o furo do knob ⌀13 |
-| J_OLED | 1 | header 1,25 mm 7 vias vertical | **53047-0710** (Molex PicoBlade) | é o "MX1.25" do módulo Waveshare |
-| J painel | 1 | IDC 2×13 fêmea | **N3793-6002RB** (3M) ou genérico | |
-| J_frzA, J_frzB (switch) | 2 | JST XH 2 vias | **B2B-XH-A** | fio ao microswitch do arcade |
-| J_ledA, J_ledB | 2 | JST XH 2 vias | **B2B-XH-A** | fio ao LED do arcade |
-| botões arcade | 2 | 30 mm iluminado **azul** 5 V | EG Starts (já comprados) | **cor é spec** — a 3,3 V o amarelo não acende |
-| OLED | 1 | Waveshare 2,42" SSD1309 SPI | já comprado | |
+| SW1 | 1 | EC11 with push, 20 mm shaft | **PEC11R-4220F-S0024** (Bourns) | 24 detents, knurled shaft; if you keep the one bought, footprint by measurement |
+| RV1, RV2 | 2 | pot 10 kΩ **linear**, 9 mm, 20 mm shaft | **PTV09A-4020F-B103** (Bourns) | knurled shaft ⌀6 — check the knob hole ⌀13 |
+| J_OLED | 1 | header 1,25 mm 7-way vertical | **53047-0710** (Molex PicoBlade) | it is the module's Waveshare "MX1.25" |
+| J panel | 1 | IDC 2×13 female | **N3793-6002RB** (3M) or generic | |
+| J_frzA, J_frzB (switch) | 2 | JST XH 2-way | **B2B-XH-A** | wire to the arcade microswitch |
+| J_ledA, J_ledB | 2 | JST XH 2-way | **B2B-XH-A** | wire to the arcade LED |
+| arcade buttons | 2 | 30 mm illuminated **blue** 5 V | EG Starts (already bought) | **color is spec** — at 3,3 V the yellow one will not light |
+| OLED | 1 | Waveshare 2,42" SSD1309 SPI | already bought | |
 
 ---
 
-## 5 · FORA DAS PLACAS — comprados, ligam por fio
+## 5 · OFF-BOARD — bought, connect by wire
 
-| peça | qtd | MPN / spec | nota |
+| part | qty | MPN / spec | note |
 |---|---|---|---|
-| decoy PD 15 V / 5 A | 1 | AITRIP (já comprado) | receptáculo USB-C na face de trás |
-| step-down 5 V fixo 1,5 A | 1 | Euogeudel (já comprado, 5 un.) | **saída fixa**, por decisão |
-| amp classe D estéreo | 1 | Clyxgs TPA3116D2 (já comprado) | terminais de parafuso; fora da placa |
-| jacks TRS ¼" painel | 4 | **NMJ6HCD2** (Neutrik) | isolados do chassis; qualidade/preço |
-| DPDT ON-ON-ON tipo 2 | 2 | já comprados | **medir tipo com multímetro antes de fiar** |
-| ponte BLE | 1 | ESP32-C3 SuperMini | 5 fios |
-| cabo IDC 2×13 | 1 | 26 vias, ~150 mm, crimpado | testar cada crimpe **por tração** |
-| cabo USB-C curto | 1 | 15 cm, C-C, com dados (PD) | do powerbank ao decoy |
+| decoy PD 15 V / 5 A | 1 | AITRIP (already bought) | USB-C receptacle on the rear face |
+| step-down 5 V fixed 1,5 A | 1 | Euogeudel (already bought, 5 pcs.) | **fixed output**, by decision |
+| class-D stereo amp | 1 | Clyxgs TPA3116D2 (already bought) | screw terminals; off-board |
+| panel ¼" TRS jacks | 4 | **NMJ6HCD2** (Neutrik) | isolated from the chassis; quality/price |
+| DPDT ON-ON-ON type 2 | 2 | already bought | **measure the type with a multimeter before wiring** |
+| BLE bridge | 1 | ESP32-C3 SuperMini | 5 wires |
+| IDC 2×13 cable | 1 | 26-way, ~150 mm, crimped | test each crimp **by pulling** |
+| short USB-C cable | 1 | 15 cm, C-C, with data (PD) | from the powerbank to the decoy |
 
-## 6 · O que ainda se MEDE (sem ficha útil)
-Jacks (rosca, porca, profundidade, T/R/S) · DPDT (rosca, profundidade, **tipo**) ·
-step-down e decoy (passo dos pinos, furos) · terminal do amp · arcade (⌀ do
-furo, aro) · OLED (furos c-c). É a folha `MEDICAO-21-PECAS.md`, secções 3, 4,
-8 e 9 — as outras secções ficam obsoletas por esta BOM.
+## 6 · What is still MEASURED (no usable datasheet)
+Jacks (thread, nut, depth, T/R/S) · DPDT (thread, depth, **type**) ·
+step-down and decoy (pin pitch, holes) · amp terminal · arcade (⌀ of the
+hole, bezel) · OLED (c-c holes). It is the sheet `MEDICAO-21-PECAS.md`, sections 3, 4,
+8 and 9 — the other sections are made obsolete by this BOM.
 
-## 7 · Antes de submeter à JLC
-1. Code: LCSC de cada linha SMD, **com stock**, e o tier real. Onde o Basic
-   não existir, dizer quantos Extended há (cada um custa setup).
-2. **OPA1642AIDR em stock?** Se não: OPA1652AIDR é a substituta (mesmo
-   footprint, CMOS, 4,5 nV — ligeiramente pior em ruído de corrente, ainda
-   muito acima do necessário).
-3. **C0G 22 nF 1206** em stock? Se não: PPS ECHU1C223GX5. Se nenhum: 2× 10 nF
-   C0G 0805 em paralelo (footprint duplo).
-4. BOM e CPL sem NetTie, sem PWR_FLAG, com os DNP marcados como DNP.
-5. Montagem só na face de cima; THT nada montado pela JLC.
+## 7 · Before submitting to JLC
+1. Code: LCSC of each SMD line, **with stock**, and the real tier. Where Basic
+   does not exist, state how many Extended there are (each one costs setup).
+2. **OPA1642AIDR in stock?** If not: OPA1652AIDR is the substitute (same
+   footprint, CMOS, 4,5 nV — slightly worse in current noise, still
+   well above what is needed).
+3. **C0G 22 nF 1206** in stock? If not: PPS ECHU1C223GX5. If neither: 2× 10 nF
+   C0G 0805 in parallel (double footprint).
+4. BOM and CPL without NetTie, without PWR_FLAG, with the DNPs marked as DNP.
+5. Assembly only on the top face; no THT assembled by JLC.
 
 ---
 
-## 8 · Achados de 05/09 ao atribuir os footprints
+## 8 · Findings of 05/09 while assigning the footprints
 
-Verificado ficheiro a ficheiro e contra as fichas dos fabricantes. **Três
-escolhas desta BOM não sobrevivem ao confronto com o desenho mecânico.**
+Verified file by file and against the manufacturers' datasheets. **Three
+choices in this BOM do not survive the confrontation with the mechanical drawing.**
 
-### 8.1 O pot `PTV09A-4020F-B103` não serve
+### 8.1 The pot `PTV09A-4020F-B103` does not fit
 
-O estilo **`-4` é *Horizontal/Rear Mount, bushingless*** — sem rosca e com o
-eixo deitado. A decisão de 05/09 é o pot **na placa, eixo a subir pelo furo
-ø7 da tampa**, o que pede um estilo **vertical com bucim roscado**.
+The style **`-4` is *Horizontal/Rear Mount, bushingless*** — no thread and with the
+shaft lying down. The decision of 05/09 is the pot **on the board, shaft rising through the
+ø7 hole in the lid**, which calls for a **vertical style with a threaded bushing**.
 
-O estilo vertical é o **`PTV09A-1`**, e é o único que o KiCad traz footprint
-(`Potentiometer_Bourns_PTV09A-1_Single_Vertical`: 3 pinos a 2,5 mm, dois
-postes ø2,2 a x=7). **A rever antes de comprar.**
+The vertical style is the **`PTV09A-1`**, and it is the only one KiCad carries a footprint for
+(`Potentiometer_Bourns_PTV09A-1_Single_Vertical`: 3 pins at 2,5 mm, two
+posts ø2,2 at x=7). **To be reviewed before buying.**
 
-### 8.2 O encoder `PEC11R` não tem footprint, e não é o Alps
+### 8.2 The encoder `PEC11R` has no footprint, and is not the Alps one
 
-A ficha da Bourns põe os três pinos do encoder a **5,0 mm**; o `EC11E` da
-Alps, que é o que o KiCad traz, põe-nos a **2,5 mm**. Não são intercambiáveis
-por muito que ambos se chamem "EC11 de 12 mm".
+The Bourns datasheet puts the encoder's three pins at **5,0 mm**; the Alps `EC11E`,
+which is the one KiCad carries, puts them at **2,5 mm**. They are not interchangeable
+no matter how much they both call themselves "12 mm EC11".
 
-Duas saídas: desenhar footprint próprio para o PEC11R (cotas na ficha:
-pinos ø1,0 a 5,0 mm, patilhas 2,6 × 1,8, vãos 7,0 e 7,5), **ou** escolher um
-Alps `EC11E` e usar o footprint que já existe. A segunda é mais barata em
-trabalho e em risco.
+Two ways out: draw a footprint of our own for the PEC11R (dimensions in the datasheet:
+pins ø1,0 at 5,0 mm, tabs 2,6 × 1,8, gaps 7,0 and 7,5), **or** choose an
+Alps `EC11E` and use the footprint that already exists. The second is cheaper in
+work and in risk.
 
-### 8.3 `R5`/`R6` do painel: valor e encapsulamento em desacordo
+### 8.3 Panel `R5`/`R6`: value and package in disagreement
 
-A BOM diz **47 Ω ½ W**; o esquema diz **`100R serie (~30 mA)`**. E o
-encapsulamento estava em 0805, que é **⅛ W** — errado em qualquer dos casos.
-Ficou **1210**; se a peça escolhida for de ¼ W, sobe para 2512. **O valor
-continua por decidir.**
+The BOM says **47 Ω ½ W**; the schematic says **`100R serie (~30 mA)`**. And the
+package was at 0805, which is **⅛ W** — wrong in either case.
+It ended up **1210**; if the chosen part is ¼ W, it goes up to 2512. **The value
+is still to be decided.**
 
-### 8.4 Outras correcções aplicadas
+### 8.4 Other corrections applied
 
-| ref | estava | ficou | porquê |
+| ref | was | became | why |
 |---|---|---|---|
-| `F1` | 1812 | **2920** | os 1812 de 3 A só vão a 16 V — razão da própria BOM |
-| `C8` | 0805 | **1206** | 10 µF X7R 50 V; 0805/25 V perde metade por polarização |
+| `F1` | 1812 | **2920** | the 1812 3 A ones only go to 16 V — the BOM's own reason |
+| `C8` | 0805 | **1206** | 10 µF X7R 50 V; 0805/25 V loses half to bias |
 | `C12`/`C22` | — | **1206** | C0G 22 nF (Kemet `C1206C223J5GACTU`) |
-| `J3`–`J7` (painel) | header 2,54 | **JST XH** `B2B-XH-A` | conector com trava |
-| `J2` (painel) | — | **PicoBlade `53047-0710`** | é o "MX1.25" do Waveshare |
-| `J1`,`J2` (energia) | header 2,54 | **Phoenix MKDS-1,5-2-5.08** | terminal de parafuso |
-| radiais e filme | — | da ⌀×passo desta BOM | `CP_Radial_D16.0mm_P7.50mm`, `D6.3mm_P2.50mm`, `D10.0mm_P5.00mm`, `C_Rect_L7.2mm_W11.0mm_P5.00mm_…MKS2` |
+| `J3`–`J7` (panel) | header 2,54 | **JST XH** `B2B-XH-A` | connector with a latch |
+| `J2` (panel) | — | **PicoBlade `53047-0710`** | it is the Waveshare "MX1.25" |
+| `J1`,`J2` (power) | header 2,54 | **Phoenix MKDS-1,5-2-5.08** | screw terminal |
+| radials and film | — | from the ⌀×pitch of this BOM | `CP_Radial_D16.0mm_P7.50mm`, `D6.3mm_P2.50mm`, `D10.0mm_P5.00mm`, `C_Rect_L7.2mm_W11.0mm_P5.00mm_…MKS2` |
 
-⚠️ O footprint do WIMA foi escolhido pelo nome (`…MKS2`, passo 5) e pelo `11`
-da linha desta BOM. **Confere à craveira** quando a peça chegar: as três cotas
-`7,2 × 11 × 7,2` não dizem qual é a espessura.
+⚠️ The WIMA footprint was chosen by name (`…MKS2`, pitch 5) and by the `11`
+in this BOM's line. **Check it with calipers** when the part arrives: the three dimensions
+`7,2 × 11 × 7,2` do not say which is the thickness.
 
-### 8.5 Divergências de contagem, por resolver
+### 8.5 Count discrepancies, unresolved
 
-- A BOM listava `C6A`/`C6B` (2× 470 µF) e `C7A`/`C7B` (2× 100 n); **o esquema
-  tem um de cada** — alimentação partilhada, não duplicada por canal.
-- A BOM e o `ERC-ISENCOES.md` dizem **quatro `PWR_FLAG`**; o esquema tem
-  **dois**, e sobram exactamente **2 `power_pin_not_driven`** no cérebro.
+- The BOM listed `C6A`/`C6B` (2× 470 µF) and `C7A`/`C7B` (2× 100 n); **the schematic
+  has one of each** — shared supply, not duplicated per channel.
+- The BOM and `ERC-ISENCOES.md` say **four `PWR_FLAG`**; the schematic has
+  **two**, and exactly **2 `power_pin_not_driven`** are left over in the brain board.
 
-### 8.6 Seis peças que ainda são desenhadas como peças e deviam ser conectores
+### 8.6 Six parts still drawn as parts that ought to be connectors
 
-Esta BOM já decide que ligam por fio (`header 1×3` para os jacks, `1×6` para
-os DPDT), mas o esquema desenha-as como peças: `J5`/`J6` (piezo), `J12`/`J13`
-(TRS de linha), `SW1`/`SW2` (DPDT). É a mesma correcção já feita aos botões
-arcade do painel.
+This BOM already decides that they connect by wire (`header 1×3` for the jacks, `1×6` for
+the DPDTs), but the schematic draws them as parts: `J5`/`J6` (piezo), `J12`/`J13`
+(line TRS), `SW1`/`SW2` (DPDT). It is the same correction already made to the panel's
+arcade buttons.
 
-### 8.7 Stock, medido a 05/09
+### 8.7 Stock, measured on 05/09
 
-`OPA1642AIDR` na LCSC: **`C67640`, 980 unidades, US$ 1,0145** a 5–10 un.
-⚠️ Stock da LCSC **não é** stock de montagem da JLC — são armazéns diferentes,
-e o tier Basic/Extended confirma-se na biblioteca de peças da JLC, não aqui.
+`OPA1642AIDR` at LCSC: **`C67640`, 980 units, US$ 1,0145** at 5–10 pcs.
+⚠️ LCSC stock **is not** JLC assembly stock — they are different warehouses,
+and the Basic/Extended tier is confirmed in JLC's parts library, not here.
 
 ---
 
-## 9 · Decisões de 05/09 e custo por peça
+## 9 · Decisions of 05/09 and cost per part
 
-### 9.1 O que mudou de peça
+### 9.1 What changed part
 
-| ref | era | passa a ser | porquê |
+| ref | was | becomes | why |
 |---|---|---|---|
-| `RV1`,`RV2` (painel) | `PTV09A-4020F-B103` | **`PTV09A-4020S-B103`** | só o `F` muda: `F` é eixo **liso**, `S` é **estriado 18 dentes**, que é o que estava escrito na nota. O estilo `-4` mantém-se — é *bushingless*, mas com o pot **na placa** o furo da tampa é passagem e quem segura é o PCB. ⚠️ O `-1` não existe em stock em 10 kΩ; só a família `-4`. |
-| `SW1` (painel) | Bourns `PEC11R-4220F-S0024` | **Alps `EC11E15244G1`** | a ficha da Bourns põe os pinos a **5,0 mm**; o KiCad só traz footprint do Alps, a **2,5 mm**. Footprint próprio é trabalho e risco para poupar nada. |
-| `F1` | `2920L300/24MR` | **`2920L330/24MR`** | ⚠️ **o 300/24 não aparece em stock em lado nenhum.** O que existe a 24 V é o **3,3 A**; o `2920L300/15DR` é 3 A mas só a **15 V**, que é a margem zero que esta BOM já rejeitava. |
-| `C14`,`C24` | 7,2 × 11 × 7,2 | corpo real **7,2 × 7,2 × 13**, passo 5,0 | medido na ficha do `MKS2C042201K00KSSD`. ⚠️ O KiCad **não tem** `L7,2 × W7,2`; ficou o `W11.0`, que é **maior** que a peça — folga a mais, nunca a menos. Confere à craveira. |
-| `R5`,`R6` (painel) | 47 Ω ½ W | **`100R`, 1210, valor por medir** | 30 mA em 100 Ω são 90 mW; 0805 é ⅛ W e não aguenta. O valor fecha-se na bancada, com o azul a 5 V, medindo a corrente. |
+| `RV1`,`RV2` (panel) | `PTV09A-4020F-B103` | **`PTV09A-4020S-B103`** | only the `F` changes: `F` is a **smooth** shaft, `S` is **knurled, 18 teeth**, which is what the note said. The `-4` style stays — it is *bushingless*, but with the pot **on the board** the lid hole is a passage and what holds it is the PCB. ⚠️ The `-1` is not in stock in 10 kΩ; only the `-4` family. |
+| `SW1` (panel) | Bourns `PEC11R-4220F-S0024` | **Alps `EC11E15244G1`** | the Bourns datasheet puts the pins at **5,0 mm**; KiCad only carries the Alps footprint, at **2,5 mm**. A footprint of our own is work and risk to save nothing. |
+| `F1` | `2920L300/24MR` | **`2920L330/24MR`** | ⚠️ **the 300/24 does not show up in stock anywhere.** What exists at 24 V is the **3,3 A**; the `2920L300/15DR` is 3 A but only at **15 V**, which is the zero margin this BOM already rejected. |
+| `C14`,`C24` | 7,2 × 11 × 7,2 | real body **7,2 × 7,2 × 13**, pitch 5,0 | measured from the `MKS2C042201K00KSSD` datasheet. ⚠️ KiCad **does not have** `L7,2 × W7,2`; it ended up as `W11.0`, which is **larger** than the part — clearance to spare, never short. Check with calipers. |
+| `R5`,`R6` (panel) | 47 Ω ½ W | **`100R`, 1210, value to be measured** | 30 mA in 100 Ω is 90 mW; 0805 is ⅛ W and will not take it. The value is settled on the bench, with the blue one at 5 V, measuring the current. |
 
-### 9.2 Custo por peça — **medido a 05/09**
+### 9.2 Cost per part — **measured on 05/09**
 
-| peça | fonte | preço unit. | stock |
+| part | source | unit price | stock |
 |---|---|---|---|
-| `OPA1642AIDR` | LCSC `C67640` | **US$ 1,0145** (5–10 un.) | 980 |
-| Alps `EC11E15244G1` | LCSC `C370970` | **US$ 1,70** (5 un.) | 1 125 |
+| `OPA1642AIDR` | LCSC `C67640` | **US$ 1,0145** (5–10 pcs.) | 980 |
+| Alps `EC11E15244G1` | LCSC `C370970` | **US$ 1,70** (5 pcs.) | 1 125 |
 | Neutrik `NMJ6HCD2` ×4 | Stompboxparts | **US$ 1,75** (25+: 1,70) | 196 |
-| Panasonic `EEU-FR1V222` | LCSC `C407956` | **US$ 0,7162** | em stock |
+| Panasonic `EEU-FR1V222` | LCSC `C407956` | **US$ 0,7162** | in stock |
 | Bourns `3296W-1-104LF` ×2 | LCSC `C48084` | **US$ 0,4458** | 11 068 |
 | Littelfuse `2920L330/24MR` | LCSC `C720183` | **US$ 0,1804** | 4 075 |
-| `AO3400A` ×2 | LCSC | **US$ 0,0119–0,0487** | vários |
-| `SMBJ24A` | LCSC | **US$ 0,0143–0,0793** | vários |
-| C0G 22 nF 1206 | LCSC (comparável) | **~US$ 0,0165** | — |
+| `AO3400A` ×2 | LCSC | **US$ 0,0119–0,0487** | several |
+| `SMBJ24A` | LCSC | **US$ 0,0143–0,0793** | several |
+| C0G 22 nF 1206 | LCSC (comparable) | **~US$ 0,0165** | — |
 
-### 9.3 Custo por peça — **estimado, não medido**
+### 9.3 Cost per part — **estimated, not measured**
 
-Passivos 0805/1206 Basic ~US$ 0,002–0,01 · `BAV99` e `SS14` ~US$ 0,02 ·
-headers 2,54 ~US$ 0,05–0,15 · `JST XH` ~US$ 0,05 · PicoBlade ~US$ 0,30 ·
-IDC 2×13 ~US$ 0,30–0,60 · terminal Phoenix ~US$ 0,80–1,50 (o `KF301`
-genérico ~US$ 0,15) · soquete Daisy ~US$ 2 (nota da própria BOM) ·
-electrolíticos FR pequenos ~US$ 0,10–0,30 · WIMA `MKS2` ~US$ 0,50–0,90 ·
+0805/1206 Basic passives ~US$ 0,002–0,01 · `BAV99` and `SS14` ~US$ 0,02 ·
+2,54 headers ~US$ 0,05–0,15 · `JST XH` ~US$ 0,05 · PicoBlade ~US$ 0,30 ·
+IDC 2×13 ~US$ 0,30–0,60 · Phoenix terminal ~US$ 0,80–1,50 (the generic `KF301`
+~US$ 0,15) · Daisy socket ~US$ 2 (the BOM's own note) ·
+small FR electrolytics ~US$ 0,10–0,30 · WIMA `MKS2` ~US$ 0,50–0,90 ·
 Nichicon `UES` ~US$ 0,30 · pot `PTV09A` ~US$ 0,60.
 
-### 9.4 Ordem de grandeza por conjunto
+### 9.4 Order of magnitude per assembly
 
-| bloco | ~US$ |
+| block | ~US$ |
 |---|---|
-| cérebro, lado SMD | 1,50 |
-| cérebro, THT | 9,60 |
-| painel, SMD | 0,20 |
-| painel, THT | 4,00 |
-| 4 jacks Neutrik | 7,00 |
-| **componentes, por conjunto** | **≈ 22** |
+| brain board, SMD side | 1,50 |
+| brain board, THT | 9,60 |
+| panel, SMD | 0,20 |
+| panel, THT | 4,00 |
+| 4 Neutrik jacks | 7,00 |
+| **components, per assembly** | **≈ 22** |
 
-⚠️ **Não inclui** PCB, montagem da JLC, taxa de *setup* dos Extended, nem o
-que já está comprado (arcade, OLED, TPA3116, step-down, decoy, ESP32-C3).
+⚠️ **Does not include** PCB, JLC assembly, the Extended *setup* fee, nor what
+is already bought (arcade, OLED, TPA3116, step-down, decoy, ESP32-C3).
 
-### 9.5 A verificação que fica, e é a que trava tudo
+### 9.5 The check that remains, and it is the one that holds everything up
 
-**Stock da LCSC não é stock de montagem da JLC.** São armazéns diferentes. As
-980 unidades do `OPA1642AIDR` na LCSC não dizem nada sobre a biblioteca de
-peças da JLC, e o tier Basic/Extended confirma-se **lá**, não aqui.
+**LCSC stock is not JLC assembly stock.** They are different warehouses. The
+980 units of `OPA1642AIDR` at LCSC say nothing about JLC's parts
+library, and the Basic/Extended tier is confirmed **there**, not here.
 
-Se o `OPA1642` não estiver na biblioteca da JLC, a resposta **não é esperar**:
-é o **`OPA1652AIDR`** (mesmo footprint SOIC-8, CMOS, 4,5 nV), ou pedir à JLC
-que o compre na LCSC como peça de *pre-order* — eles fazem, com prazo.
+If the `OPA1642` is not in JLC's library, the answer **is not to wait**:
+it is the **`OPA1652AIDR`** (same SOIC-8 footprint, CMOS, 4,5 nV), or asking JLC
+to buy it at LCSC as a *pre-order* part — they do that, with a lead time.
 
-### 9.6 O que ainda não tem footprint
+### 9.6 What still has no footprint
 
-`RV1`/`RV2` — 2 de 79. O KiCad traz footprint do `PTV09A-1` e do `-2`; a peça
-comprável é o **`-4`**, e **não confirmei** que os três partilham o mesmo
-desenho de PCB. Facto de hardware sem fonte citada é hipótese: ou se lê o
-desenho do `-4` na ficha, ou se mede a peça na mão.
-
----
-
-## 10 · 05/09 — a placa passou a **Daisy Seed3**
-
-O rev4 esteve com produção suspensa; o Seed3 voltou a stock e é o que vai.
-
-**A pinagem foi conferida, não assumida.** Comparei os dois CSV do fabricante
-pino a pino: **o nome STM32 bate nos 40 pinos, sem uma excepção.** A doc do
-Seed3 diz textualmente *"maintaining pin-to-pin compatibility with the
-original Seed pinout and footprint"*, e o desenho de pinagem que o dB mandou
-confirma pino a pino nos que este projecto usa.
-
-Resultado no esquema: **símbolo, footprint e netlist idênticos.** A troca não
-mexeu numa ligação — provado por comparação de netlist, 63 redes iguais.
-
-**⚠️ Duas armadilhas encontradas pelo caminho, e valem para a próxima vez:**
-
-1. **Os dois CSV têm colunas com sentidos diferentes.** Onde o do rev4 põe a
-   função alternativa (`SDMMC1_D3`), o do Seed3 põe `GPIO`. Comparar coluna a
-   coluna dá **35 "diferenças" que não existem**. Compara-se o **nome STM32**.
-   O `gera_daisy_sym.py` passou a ler pelo NOME do cabeçalho, e é por isso que
-   rebentou alto quando a fonte mudou, em vez de emitir um símbolo errado.
-2. **O CSV do fabricante contradiz o desenho do fabricante.** No pino 40 a
-   coluna do nome diz `PG3`; a da função diz `GND`; o desenho diz `DGND`. O
-   gerador passou a recusar nomes que sejam designação de porta do MCU
-   (`P[A-K]n`) e a **avisar** qual descartou — escolher em silêncio entre duas
-   fontes que discordam é o mesmo que inventar.
-
-**O que muda a favor:** codec **TI TAC5242**, 32 bit / 192 kHz, chão de ruído
-de −120 dB, contra o AK4556 do rev4. Esta mesma sessão passou horas a recuperar
-35–39 dB de chão de ruído; a peça nova entra por cima disso.
-
-**O que muda contra: nada de prático.** Eu tinha escrito que "o cabo de
-gravação muda" — **estava errado**: o dB grava por USB-C desde que a primeira
-placa queimou, e a placa de bancada já é de USB-C. A caixa nunca teve recorte
-para o USB da Daisy e continua a não ter: grava-se com a caixa aberta.
-
-**Fonte versionada:** `kicad/cotuca_cerebro/Seed3_pinout.csv`, tirado de
-`daisy.nyc3.cdn.digitaloceanspaces.com/products/seed3/`. Uma gralha corrigida
-de caminho: o pino 17 chamava-se `AUDIO_INR` (falta de espaço no CSV do rev4)
-e passou a `AUDIO_IN_R`.
+`RV1`/`RV2` — 2 of 79. KiCad carries a footprint for the `PTV09A-1` and the `-2`; the
+buyable part is the **`-4`**, and I **did not confirm** that the three share the same
+PCB drawing. A hardware fact with no cited source is a hypothesis: either the
+`-4` drawing is read in the datasheet, or the part is measured by hand.
 
 ---
 
-## 11 · 05/09 — o `OPA1642` está confirmado na JLC, e o `OPA1656` foi avaliado e recusado
+## 10 · 05/09 — the board became the **Daisy Seed3**
 
-### 11.1 O bloqueio caiu
+The rev4 had production suspended; the Seed3 came back in stock and is the one that goes.
 
-**`OPA1642AIDR` = LCSC `C67640` = JLCPCB `C67640`, tier EXTENDED**, disponível
-para montagem SMT (*Economic* e *Standard*). Estava marcado nesta BOM como
-*"confirmar stock — trava tudo"*. **Está confirmado.** Custa o *setup* único de
-Extended, que era o previsto.
+**The pinout was checked, not assumed.** I compared the two manufacturer CSVs pin
+by pin: **the STM32 name matches across all 40 pins, without a single exception.** The Seed3
+documentation says verbatim *"maintaining pin-to-pin compatibility with the
+original Seed pinout and footprint"*, and the pinout drawing that dB sent
+confirms pin by pin on the ones this project uses.
 
-LCSC: US$ 1,0145 a 5–10 un., 980 em stock (medido 05/09).
+Result in the schematic: **identical symbol, footprint, and netlist.** The swap did not
+touch a single connection — proven by netlist comparison, 63 nets equal.
 
-### 11.2 O `OPA1656` foi considerado, e fica de fora
+**⚠️ Two traps found along the way, and they hold for next time:**
 
-Veio à conversa porque **o KiCad tem símbolo dele e não tem do `OPA1642`** — o
-`OPA1656ID` herda do `LM2904`, e é dual SOIC-8 com o mesmo footprint.
+1. **The two CSVs have columns with different meanings.** Where the rev4 one puts the
+   alternate function (`SDMMC1_D3`), the Seed3 one puts `GPIO`. Comparing column by
+   column gives **35 "differences" that do not exist**. You compare the **STM32 name**.
+   `gera_daisy_sym.py` now reads by the header NAME, and that is why it
+   blew up loud when the source changed, instead of emitting a wrong symbol.
+2. **The manufacturer's CSV contradicts the manufacturer's drawing.** On pin 40 the
+   name column says `PG3`; the function one says `GND`; the drawing says `DGND`. The
+   generator now refuses names that are an MCU port designation
+   (`P[A-K]n`) and **warns** which one it discarded — choosing silently between two
+   sources that disagree is the same as inventing.
+
+**What changes in our favor:** codec **TI TAC5242**, 32 bit / 192 kHz, noise floor
+of −120 dB, versus the rev4's AK4556. This same session spent hours recovering
+35–39 dB of noise floor; the new part comes in above all that.
+
+**What changes against: nothing practical.** I had written that "the flashing
+cable changes" — **that was wrong**: dB flashes over USB-C ever since the first
+board burned out, and the bench board is already USB-C. The enclosure never had a cutout
+for the Daisy's USB and still does not: you flash with the enclosure open.
+
+**Versioned source:** `kicad/cotuca_cerebro/Seed3_pinout.csv`, taken from
+`daisy.nyc3.cdn.digitaloceanspaces.com/products/seed3/`. One typo fixed
+in a path: pin 17 was called `AUDIO_INR` (a missing space in the rev4 CSV)
+and became `AUDIO_IN_R`.
+
+---
+
+## 11 · 05/09 — the `OPA1642` is confirmed at JLC, and the `OPA1656` was evaluated and rejected
+
+### 11.1 The blocker fell
+
+**`OPA1642AIDR` = LCSC `C67640` = JLCPCB `C67640`, EXTENDED tier**, available
+for SMT assembly (*Economic* and *Standard*). It was marked in this BOM as
+*"confirm stock — holds everything up"*. **It is confirmed.** It costs the one-time Extended
+*setup*, which was what was foreseen.
+
+LCSC: US$ 1,0145 at 5–10 pcs., 980 in stock (measured 05/09).
+
+### 11.2 The `OPA1656` was considered, and stays out
+
+It came up because **KiCad has a symbol for it and none for the `OPA1642`** — the
+`OPA1656ID` inherits from the `LM2904`, and is dual SOIC-8 with the same footprint.
 
 | | OPA1642 | OPA1656 |
 |---|---|---|
-| ruído de tensão | 5,1 nV/√Hz | **2,9 nV/√Hz** (10 kHz) |
-| ruído de corrente | — | 6 fA/√Hz (1 kHz) |
+| voltage noise | 5,1 nV/√Hz | **2,9 nV/√Hz** (10 kHz) |
+| current noise | — | 6 fA/√Hz (1 kHz) |
 | GBW | ~11 MHz | **53 MHz** |
-| saída | — | rail-to-rail |
-| LCSC | US$ 1,01 · 980 | **US$ 0,86** (`IDR`, bobina) · **5 245** |
+| output | — | rail-to-rail |
+| LCSC | US$ 1,01 · 980 | **US$ 0,86** (`IDR`, reel) · **5 245** |
 
-No papel é melhor amplificador e mais barato. **Fica de fora por três razões:**
+On paper it is a better amplifier and cheaper. **It stays out for three reasons:**
 
-1. **O pré-amp está montado e MEDIDO com o `OPA1642`.** A recuperação de 35–39
-   dB de chão de ruído de 05/09 foi feita nesse circuito. Trocar põe na placa
-   fabricada um amplificador que a bancada nunca ouviu — e a regra da casa é
-   *se não soa, não fica*.
-2. **53 MHz num nó de 4M7 é variável nova.** A entrada do piezo é altíssima
-   impedância. Cinco vezes mais rápido nesse nó é mais captação de RF e mais
-   risco de pico com a capacidade de entrada — e pediria provavelmente os
-   **22 pF C0G do `C11`/`C21` populados**, que hoje são **DNP**. Deixa de ser
-   troca de peça e passa a ser alteração de circuito por medir.
-3. **Num piezo domina o ruído de CORRENTE**, não o de tensão, e ambos são
-   FET-input. O ganho dos 2,9 contra 5,1 nV é menor aqui do que numa fonte de
-   baixa impedância.
+1. **The preamp is built and MEASURED with the `OPA1642`.** The 05/09 recovery of 35–39
+   dB of noise floor was done in that circuit. Swapping puts on the fabricated board
+   an amplifier the bench never heard — and the house rule is
+   *if it does not sound, it does not stay*.
+2. **53 MHz on a 4M7 node is a new variable.** The piezo input is very high
+   impedance. Five times faster at that node is more RF pickup and more
+   risk of a peak with the input capacitance — and it would probably call for the
+   **22 pF C0G of `C11`/`C21` populated**, which today are **DNP**. It stops being a
+   part swap and becomes an unmeasured circuit change.
+3. **In a piezo the dominant noise is the CURRENT noise**, not the voltage, and both are
+   FET-input. The gain of the 2,9 against 5,1 nV is smaller here than at a
+   low-impedance source.
 
-**Se um dia se quiser experimentar:** o símbolo do KiCad existe, o footprint é
-o mesmo SOIC-8, e é uma linha desta BOM mais uma sessão de escuta. Não é
-redesenho. Fica escrito para não se voltar a decidir isto do zero.
+**If one day you want to try it:** the KiCad symbol exists, the footprint is
+the same SOIC-8, and it is one line of this BOM plus one listening session. It is not a
+redesign. It is written down so this is not decided from scratch again.
 
-### 11.3 Uma verificação de graça que veio daqui
+### 11.3 A free check that came out of this
 
-Como o `OPA1656ID` do KiCad herda do **`LM2904`** — o mesmo símbolo base de que
-se tirou a pinagem para o nosso `OPA1642` feito à mão — os dois foram
-comparados pino a pino: **unidade e tipo batem nos 8**. O símbolo caseiro está
-validado contra um mantido pela biblioteca oficial, que era a confirmação que
-faltava depois de se ter apanhado os pinos 1 e 3 trocados no símbolo antigo.
+Since KiCad's `OPA1656ID` inherits from the **`LM2904`** — the same base symbol from which
+the pinout for our hand-made `OPA1642` was taken — the two were
+compared pin by pin: **unit and type match across all 8**. The home-made symbol is
+validated against one maintained by the official library, which was the confirmation
+missing after pins 1 and 3 had been caught swapped in the old symbol.

@@ -1,141 +1,140 @@
-# SuMiA™ — supressor de microfonias automatizado
+# SuMiA™ — automated microphonics suppressor
 
-> **CONSTRUÍDO E A CORRER** desde 02/09 (`main.cpp`, `PassoDoSupressor`).
-> Este documento nasceu como o *contrato*, escrito antes do código, e ficou
-> a dizer "ainda não construído" durante dois dias depois de o código
-> existir — apanhado no deep clean de 04/09.
+> **BUILT AND RUNNING** since 02/09 (`main.cpp`, `PassoDoSupressor`).
+> This document was born as the *contract*, written before the code, and kept
+> saying "not yet built" for two days after the code existed — caught in the
+> 04/09 deep clean.
 >
-> **O que ele já fez em serviço:** a 04/09, na escultura real e não no banco
-> de ensaio, encheu as quatro bocas dos dois ramos sozinho — 3025,7 · 4523,4
-> · 790,9 · 5434,5 Hz no L e semelhantes no R. É a primeira vez que segura
-> achados próprios fora da bancada.
+> **What it has already done in service:** on 04/09, on the real sculpture and
+> not the test bench, it filled the four mouths of both branches on its own —
+> 3025,7 · 4523,4 · 790,9 · 5434,5 Hz on L and similar on R. It's the first time
+> it holds findings of its own off the bench.
 >
-> ⚠️ **Ligado por omissão** (`micro_auto` nasce em 1). Durante uma sessão de
-> escuta deve ser **desligado** — um caçador que muda um notch a meio do
-> julgamento faz atribuir ao efeito uma mudança que foi dele.
+> ⚠️ **On by default** (`micro_auto` is born at 1). During a listening session
+> it should be **turned off** — a hunter that changes a notch in the middle of
+> the judgment makes a change of its own get attributed to the effect.
 
-O contrato original, medido antes do código, segue abaixo — vale como
-desenho e como registo do que se decidiu e porquê.
+The original contract, measured before the code, follows below — it serves as a
+design and as a record of what was decided and why.
 
-## O que ele é, e o que não é
+## What it is, and what it isn't
 
-**Não é um ritual disparado por gesto.** Foi essa a primeira ideia (três
-toques no encoder) e o dB substituiu-a por uma melhor: o supressor **corre
-sozinho no arranque e sempre que os potenciómetros se mexem**.
+**It's not a ritual triggered by a gesture.** That was the first idea (three taps
+on the encoder) and dB replaced it with a better one: the suppressor **runs on
+its own at startup and whenever the potentiometers move**.
 
-Isso obriga-o a ser **silencioso**. Um ritual pode subir o ganho até o laço
-nascer; uma coisa que corre a cada mexida de pote, não. Ele **escuta o que
-já está a acontecer** — quando um pico domina a banda, corta-o; quando o
-modo desaparece, recua devagar.
+That forces it to be **silent**. A ritual can raise the gain until the loop is
+born; a thing that runs on every pot move can't. It **listens to what is already
+happening** — when a peak dominates the band, it cuts it; when the mode
+disappears, it backs off slowly.
 
-**É para o caminho do AMP, não para o jack.** Sem exciter não há laço.
+**It's for the AMP path, not the jack.** Without an exciter there's no loop.
 
-## Os três gatilhos
+## The three triggers
 
-| gatilho | porquê |
+| trigger | why |
 |---|---|
-| **arranque** | os params nascem zerados e o corpo é o que é |
-| **mexida de qualquer pote** | o ganho do laço escala com o volume: um ajuste feito a um volume **não vale a outro** |
-| (contínuo, em cadência lenta) | os modos derivam com a temperatura |
+| **startup** | the params are born zeroed and the body is what it is |
+| **any pot move** | the loop gain scales with the volume: an adjustment made at one volume **isn't valid at another** |
+| (continuous, at a slow cadence) | the modes drift with temperature |
 
-## ⚠️ QUALQUER pote rearma OS DOIS caçadores
+## ⚠️ ANY pot rearms BOTH hunters
 
-**Nunca "pote L rearma o supressor L".** Os exciters estão no mesmo corpo —
-no caso medido, o tambor está **soldado** ao botijão, é uma peça de metal
-só. Subir o volume de um exciter muda o ganho do laço que o **outro** piezo
-vê.
+**Never "pot L rearms suppressor L".** The exciters are on the same body —
+in the measured case, the drum is **welded** to the gas cylinder, it's a single
+piece of metal. Raising the volume of one exciter changes the loop gain the
+**other** piezo sees.
 
-Medido em 02/09, e é a prova: com a matriz separada (`route_b_l=0`,
-`route_a_r=0`), os dois ramos reportaram **3275,7 e 3275,8 Hz** — a mesma
-frequência às décimas. A matriz separa os caminhos **eléctricos**; não
-separa o **metal**.
+Measured on 02/09, and it's the proof: with the matrix separated (`route_b_l=0`,
+`route_a_r=0`), the two branches reported **3275,7 and 3275,8 Hz** — the same
+frequency to the tenths. The matrix separates the **electrical** paths; it
+doesn't separate the **metal**.
 
-Corolário para a calibração: **isolar a matriz não isola os corpos.** Não se
-pode assumir que L e R encontram modos diferentes — encontram os mesmos, com
-forças diferentes.
+Corollary for calibration: **isolating the matrix doesn't isolate the bodies.**
+You can't assume L and R find different modes — they find the same ones, with
+different strengths.
 
-## O que a sessão de escuta mediu, e que o supressor tem de reproduzir
+## What the listening session measured, and that the suppressor must reproduce
 
-**Cada modo que morre entrega o lugar ao seguinte.** Na mesma sessão:
-1536 Hz → 3276 Hz → 535 Hz, e a segunda boca acabou-se ao terceiro. Foi essa
-cascata que motivou **quatro bocas por ramo** (custo medido: ~0,5% de CPU
-por boca; oito no total custam ~4%, com pico em 42,7% e margem até 80% — não
-é a CPU que limita).
+**Each mode that dies hands its place to the next.** In the same session:
+1536 Hz → 3276 Hz → 535 Hz, and the second mouth was done in by the third. It was
+that cascade that motivated **four mouths per branch** (measured cost: ~0,5% CPU
+per mouth; eight in total cost ~4%, with a peak at 42,7% and margin up to 80% — it's
+not the CPU that limits).
 
-**O laço cruzado da matriz vale 49 dB.** Com as quatro células abertas:
-1536,4 Hz a **+24,4 dB**, dominância **0,99**. Com `A→L` e `B→R` apenas:
-1543,1 Hz a **−24,3 dB**, dominância **0,27**. O `route` deixou de ser
-detalhe de encaminhamento e passou a ser controlo de primeira ordem sobre a
-microfonia.
+**The matrix's cross loop is worth 49 dB.** With the four cells open:
+1536,4 Hz at **+24,4 dB**, dominance **0,99**. With `A→L` and `B→R` only:
+1543,1 Hz at **−24,3 dB**, dominance **0,27**. The `route` stopped being a
+routing detail and became a first-order control over the microphonics.
 
-**A dominância é o que separa uivo de nota**, e o limiar sai de medições e
-não da teoria: microfonia real mediu **0,97 a 1,00** quando estava a gritar,
-e **0,14 a 0,29** depois de cortada. Uma calibração anterior em senóides
-sintéticas dera 0,85, que teria recusado casos reais de 0,61–0,68.
+**Dominance is what separates a howl from a note**, and the threshold comes from
+measurements and not from theory: real microphonics measured **0,97 to 1,00** when
+it was screaming, and **0,14 to 0,29** after being cut. An earlier calibration on
+synthetic sines gave 0,85, which would have rejected real cases of 0,61–0,68.
 
-## As três decisões, tomadas pelo dB em 02/09
+## The three decisions, made by dB on 02/09
 
-### 1. As bocas não vivem em preset nenhum
+### 1. The mouths don't live in any preset
 
-**Efémeras.** Cada vez que a Daisy liga, o supressor entra em acção, suprime,
-e fica quieto. Nada persiste.
+**Ephemeral.** Each time the Daisy turns on, the suppressor goes into action,
+suppresses, and stays quiet. Nothing persists.
 
-Isso resolve por construção o problema que estava aberto: notch em preset
-global **viajaria entre unidades**, e as peças são replicadas em série com
-modos próprios de cada soldadura — uma frequência certa numa peça é ruído
-noutra. Não persistindo, não viaja.
+That solves by construction the problem that was open: a notch in a global preset
+**would travel between units**, and the pieces are replicated in a series with
+modes particular to each weld — a frequency right on one piece is noise on
+another. By not persisting, it doesn't travel.
 
-E limita a acumulação a **uma sessão** e a **quatro bocas por ramo**.
+And it limits the accumulation to **one session** and to **four mouths per branch**.
 
-### 2. O rearme é o pote, e vem do gesto humano
+### 2. The rearm is the pot, and comes from the human gesture
 
-> *"a ação do usuário sempre que há microfonia, a ação instintiva é mexer no
-> volume, então isso deve resolver"*
+> *"the user's action whenever there's microphonics, the instinctive action is to
+> move the volume, so that should solve it"*
 
-O gatilho não é uma cadência arbitrária: é o **gesto que a pessoa já faz**.
-Quem ouve microfonia mexe no volume — e é exactamente aí que o ganho do laço
-muda e a decisão antiga fica inválida.
+The trigger isn't an arbitrary cadence: it's the **gesture the person already
+makes**. Whoever hears microphonics moves the volume — and that's exactly where
+the loop gain changes and the old decision becomes invalid.
 
-⚠️ E **qualquer pote rearma OS DOIS caçadores** — ver a secção acima.
+⚠️ And **any pot rearms BOTH hunters** — see the section above.
 
-### 3. NÃO HÁ RECUO, e a razão é que o notch esconde a própria prova
+### 3. THERE IS NO BACK-OFF, and the reason is that the notch hides its own proof
 
-Depois de colocado, o modo está quieto **por causa da boca**. Olhar o
-espectro para decidir se ela ainda faz falta é olhar para o próprio
-conserto. Para saber a verdade seria preciso **baixar a boca e ouvir se o
-uivo volta** — deixar a pessoa apanhar com aquilo, de propósito, em ciclo.
+Once placed, the mode is quiet **because of the mouth**. Looking at the spectrum
+to decide whether it's still needed is looking at the fix itself. To know the
+truth you'd have to **lower the mouth and listen for whether the howl returns** —
+let the person take it, on purpose, in a cycle.
 
-E as contas são assimétricas:
+And the arithmetic is asymmetric:
 
-| | custo |
+| | cost |
 |---|---|
-| uma boca a mais que já não faz falta | ~20 Hz a Q 35, 15 dB — **inaudível** |
-| um recuo errado | **o uivo volta, com o ganho que o pôs lá** |
+| one mouth too many that's no longer needed | ~20 Hz at Q 35, 15 dB — **inaudible** |
+| a wrong back-off | **the howl returns, with the gain that put it there** |
 
-Com as bocas efémeras e limitadas a quatro, a acumulação não degenera.
-**O recuo é o botão de desligar; o rearme é o pote.**
+With the mouths ephemeral and limited to four, the accumulation doesn't
+degenerate. **The back-off is the off button; the rearm is the pot.**
 
-### 4. Arbitragem: ganha sempre a mais AGUDA
+### 4. Arbitration: the HIGHEST-pitched always wins
 
-> *"no caso de mais de 4 picos, sempre suprimir as mais agudas porque são as
-> mais dolorosas"*
+> *"in the case of more than 4 peaks, always suppress the highest-pitched ones
+> because they're the most painful"*
 
-Com as quatro bocas cheias e um modo novo:
-- se o novo for **mais agudo** que a boca mais grave em uso → **despeja a
-  mais grave** e fica com ele;
-- se for **mais grave** que todas as quatro → **não entra**.
+With the four mouths full and a new mode:
+- if the new one is **higher-pitched** than the lowest mouth in use → **evict the
+  lowest** and keep it;
+- if it's **lower** than all four → **it doesn't enter**.
 
-O critério é a **dor**, não a força. Fica registado o caso de fronteira que
-isto deixa em aberto: um modo **grave e muito forte** pode ficar de fora
-enquanto quatro agudos fracos ocupam as bocas. Se isso aparecer na escuta,
-a regra ganha um desempate por nível — mas não se inventa antes de doer.
+The criterion is **pain**, not strength. The edge case this leaves open is
+recorded: a **low and very strong** mode can be left out while four weak high ones
+occupy the mouths. If that shows up in listening, the rule gains a tiebreaker by
+level — but it isn't invented before it hurts.
 
-## O que falta decidir
+## What's left to decide
 
-- **O limiar de dominância** a que ele decide "isto é uivo". As medições
-  desta sessão dão a faixa (0,97–1,00 a gritar; 0,14–0,29 depois de cortado),
-  mas o valor final sai do ouvido do dB e não do meio da faixa.
-- **A cadência.** De quanto em quanto tempo ele analisa, e quanto tempo um
-  pico tem de persistir antes de merecer uma boca.
-- **A profundidade inicial.** 15 dB resolveu tudo o que apareceu hoje à mão;
-  se o automático deve começar mais raso e aprofundar, ou entrar já a 15.
+- **The dominance threshold** at which it decides "this is a howl". This session's
+  measurements give the range (0,97–1,00 while screaming; 0,14–0,29 after being cut),
+  but the final value comes from dB's ear and not from the middle of the range.
+- **The cadence.** How often it analyzes, and how long a peak has to persist
+  before it earns a mouth.
+- **The initial depth.** 15 dB solved everything that came up by hand today;
+  whether the automatic one should start shallower and deepen, or enter at 15 right away.

@@ -1,124 +1,127 @@
-<!-- Vocabulario do KiCad e dos geradores da revB, nao simbolos do
-     firmware. O check_docs varre `src/`; estes vivem no KiCad ou em
-     docs/operacao/esquematicos/revB/, que ele nao le. -->
-<!-- doc-check: ignore endpoint_off_grid (codigo de violacao do ERC do KiCad) -->
-<!-- doc-check: ignore lib_symbol_issues (codigo de violacao do ERC do KiCad) -->
-<!-- doc-check: ignore isolated_pin_label (codigo de violacao do ERC do KiCad) -->
-<!-- doc-check: ignore power_pin_not_driven (codigo de violacao do ERC do KiCad) -->
-<!-- doc-check: ignore pin_not_connected (codigo de violacao do ERC do KiCad) -->
-<!-- doc-check: ignore power_out (tipo electrico de pino do KiCad) -->
-<!-- doc-check: ignore power_in (tipo electrico de pino do KiCad) -->
-<!-- doc-check: ignore confere_colisoes (funcao de revB/grade.py, fora do varrimento) -->
+<!-- KiCad and revB generator vocabulary, not firmware symbols. check_docs
+     sweeps `src/`; these live in KiCad or in
+     docs/operacao/esquematicos/revB/, which it doesn't read. -->
+<!-- doc-check: ignore endpoint_off_grid (KiCad ERC violation code) -->
+<!-- doc-check: ignore lib_symbol_issues (KiCad ERC violation code) -->
+<!-- doc-check: ignore isolated_pin_label (KiCad ERC violation code) -->
+<!-- doc-check: ignore power_pin_not_driven (KiCad ERC violation code) -->
+<!-- doc-check: ignore pin_not_connected (KiCad ERC violation code) -->
+<!-- doc-check: ignore power_out (KiCad pin electrical type) -->
+<!-- doc-check: ignore power_in (KiCad pin electrical type) -->
+<!-- doc-check: ignore confere_colisoes (a function in revB/grade.py, outside the sweep) -->
 
-# ERC rev B — registo de isenções
-<!-- doc-check: ignore no_connect (codigo de violacao do ERC do KiCad) -->
+# ERC rev B — exemption record
+<!-- doc-check: ignore no_connect (KiCad ERC violation code) -->
 
-**Corrido em 01/09 com `kicad-cli` 10.0.5.** Relatórios em `erc_energia.rpt` e
-`erc_preamp.rpt`, ao lado deste ficheiro.
+**Run on 01/09 with `kicad-cli` 10.0.5.** Reports in `erc_energia.rpt` and
+`erc_preamp.rpt`, next to this file.
 
-⚠️ **As isenções ainda NÃO estão aplicadas em lado nenhum.** O KiCad guarda-as
-no `.kicad_pro`, e não existe projecto — as duas folhas são ficheiros soltos.
-Este documento é o registo; a aplicação acontece quando o projecto nascer.
-**Registo sem aplicação é promessa, e está marcado como tal.**
+⚠️ **The exemptions are still NOT applied anywhere.** KiCad stores them in the
+`.kicad_pro`, and there is no project — the two sheets are loose files. This
+document is the record; the application happens when the project is born.
+**A record without application is a promise, and it's marked as such.**
 
-## Antes e depois do encaixe na grade
+## Before and after snapping to the grid
 
-| folha | antes | depois |
+| sheet | before | after |
 |---|---|---|
-| energia | 68 violações · 0 erros | **13 · 0 erros** |
-| preamp | 159 violações · 2 erros | **38 · 2 erros** |
+| energia | 68 violations · 0 errors | **13 · 0 errors** |
+| preamp | 159 violations · 2 errors | **38 · 2 errors** |
 
-Os **176 `endpoint_off_grid` desapareceram** por conserto, não por isenção — as
-coordenadas passaram a múltiplos de 1,27 mm. Ver `grade.py`.
+The **176 `endpoint_off_grid` vanished** by fix, not by exemption — the
+coordinates became multiples of 1,27 mm. See `grade.py`.
 
-**Prova de que nada se partiu:** o netlist é idêntico antes e depois. Arredondar
-é função pura, portanto pontos que coincidiam continuam a coincidir; e o
-`confere_colisoes` garante o inverso — que dois pontos distintos não caíram no
-mesmo sítio a inventar uma ligação.
+**Proof that nothing broke:** the netlist is identical before and after. Rounding
+is a pure function, so points that coincided still coincide; and
+`confere_colisoes` guarantees the reverse — that two distinct points didn't land
+in the same spot inventing a connection.
 
 ---
 
-## Isenção 1 — `lib_symbol_issues` · 46 avisos
+## Exemption 1 — `lib_symbol_issues` · 46 warnings
 
-> *A configuração não inclui a biblioteca de símbolos 'cotuca'*
+> *The configuration does not include the symbol library 'cotuca'*
 
-**Razão:** os símbolos são **auto-contidos** no próprio `.kicad_sch`, por
-desenho — a folha abre em qualquer máquina sem símbolo em falta. O KiCad avisa
-porque não encontra uma biblioteca registada com esse nome.
+**Reason:** the symbols are **self-contained** in the `.kicad_sch` itself, by
+design — the sheet opens on any machine with no missing symbol. KiCad warns
+because it doesn't find a registered library with that name.
 
-**Prazo:** até as folhas entrarem num projecto com a biblioteca declarada.
-**Some sozinho nessa altura** — se não somar, a isenção caduca e vira defeito.
+**Deadline:** until the sheets enter a project with the library declared.
+**It disappears on its own at that point** — if it doesn't, the exemption lapses
+and becomes a defect.
 
-## Isenção 2 — `isolated_pin_label` · 3 avisos
+## Exemption 2 — `isolated_pin_label` · 3 warnings
 
-> *`+15V` · `AUDIO_IN_L` · `AUDIO_IN_R` — rótulo ligado a um só pino*
+> *`+15V` · `AUDIO_IN_L` · `AUDIO_IN_R` — label connected to a single pin*
 
-**Razão:** são redes que **atravessam folhas** por rótulo global. Numa folha
-isolada têm mesmo um pino só.
+**Reason:** these are nets that **cross sheets** via a global label. On an
+isolated sheet they really do have a single pin.
 
-**Prazo:** até as folhas estarem todas no mesmo projecto. ⚠️ **E aí a isenção
-inverte-se:** se continuarem com um pino só *dentro do projecto*, deixa de ser
-falso positivo e passa a ser **rede sem destino** — defeito real.
+**Deadline:** until the sheets are all in the same project. ⚠️ **And then the
+exemption inverts:** if they still have a single pin *within the project*, it
+stops being a false positive and becomes a **net with no destination** — a real
+defect.
 
-## ~~Isenção 3~~ — CONSERTADA, não isentada
+## ~~Exemption 3~~ — FIXED, not exempted
 
-> *U1C pino 8 (`V+`) e pino 4 (`V-`): pino de alimentação sem `power_out`*
+> *U1C pin 8 (`V+`) and pin 4 (`V-`): power pin with no `power_out`*
 
-> ⚠️ **05/09 — `U1C` passou a chamar-se `U1` unidade 3.** O OPA1642 era três
-> símbolos de uma unidade (`U1A`/`U1B`/`U1C`) a fingir de multi-unidade, o que
-> dava três linhas de BOM e três pegadas para um chip. É agora um símbolo de
-> três unidades. Os pinos 4 e 8 são os mesmos; o nome é que mudou.
+> ⚠️ **05/09 — `U1C` is now called `U1` unit 3.** The OPA1642 was three
+> single-unit symbols (`U1A`/`U1B`/`U1C`) pretending to be multi-unit, which
+> gave three BOM lines and three footprints for one chip. It's now a single
+> three-unit symbol. Pins 4 and 8 are the same; only the name changed.
 
-**Decisão do dB:** *«Declarar quem alimenta é resposta; isentar é mandar o
-verificador olhar para o lado.»* Entraram **quatro `PWR_FLAG`**, um por rede de
-energia — e quatro, não dois, porque o ERC não atravessa o R7: `V+PRE` é rede
-distinta de `+15V` e precisa da sua.
+**dB's decision:** *«Declaring who supplies power is an answer; exempting is
+telling the checker to look away.»* In came **four `PWR_FLAG`s**, one per power
+net — and four, not two, because the ERC doesn't cross R7: `V+PRE` is a net
+distinct from `+15V` and needs its own.
 
-| bandeira | rede | folha |
+| flag | net | sheet |
 |---|---|---|
-| `#FLG1` | `+15V` | energia — fonte: decoy PD |
-| `#FLG2` | `+5V` | energia — fonte: step-down |
+| `#FLG1` | `+15V` | energia — source: PD decoy |
+| `#FLG2` | `+5V` | energia — source: step-down |
 | `#FLG1` | `V+PRE` | preamp |
 | `#FLG2` | `GND` | preamp |
 
-⚠️ **Um por rede, e só um.** Dois `power_out` na mesma rede são conflito para o
-ERC — trocaria um erro por outro.
+⚠️ **One per net, and only one.** Two `power_out` on the same net are a conflict
+for the ERC — it would trade one error for another.
 
-**Resultado: zero erros nas duas folhas.**
+**Result: zero errors on both sheets.**
 
-Três coisas que custaram uma volta cada, e ficam para a próxima:
+Three things that cost one round each, and are left for next time:
 
-1. **A bandeira não vai na coordenada do rótulo** — o corpo tapa-o. O `+15V`
-   lia-se «15V» e o `+5V` ficava com o triângulo dentro do hexágono.
-2. **A referência `#...` não se mostra** — além da convenção do KiCad, o texto
-   `#FLG1` caía por cima do rótulo `V+PRE`.
-3. **Pino a meio de um fio NÃO liga** — só em ponta ou com junção explícita. Sem
-   ela, `pin_not_connected`. E **isto é invisível no render**: fio e pino
-   desenhados no mesmo sítio, sem ligação nenhuma.
-
----
-
-## O que este ERC NÃO cobre
-
-- **Footprints:** todos vazios, de propósito. Os SMD atribuem-se já; os que
-  dependem de peça em mão (step-down, decoy PD, jack TRS, trimpot, botão) só
-  depois de medir. **Footprint suposto é respin.**
-- **As folhas que faltam:** soquete da Daisy + ponte + DPDT, e conector do
-  painel. Nenhuma delas existe ainda.
-- **A gramática do ficheiro**, que o `check_sch.py` não vê — ele confere a
-  rede. Foi por isso que a duplicação de sufixo (`D_V_0_1_0_1`) passou por ele
-  e fez o KiCad recusar a folha inteira.
+1. **The flag doesn't go at the label's coordinate** — the body covers it. `+15V`
+   read as «15V» and `+5V` ended up with the triangle inside the hexagon.
+2. **The `#...` reference doesn't show** — besides the KiCad convention, the text
+   `#FLG1` fell on top of the `V+PRE` label.
+3. **A pin in the middle of a wire does NOT connect** — only at an endpoint or
+   with an explicit junction. Without one, `pin_not_connected`. And **this is
+   invisible in the render**: wire and pin drawn in the same spot, with no
+   connection at all.
 
 ---
 
-## 04/09 — `isolated_pin_label` em `AUDIO_IN_L` e `AUDIO_IN_R`
+## What this ERC does NOT cover
 
-**Estado: ✅ MORREU EM 05/09**, no commit que criou `cotuca_soquete.kicad_sch`.
-`AUDIO_IN_L` liga a `C14.2` e `U2.16`; `AUDIO_IN_R` a `C24.2` e `U2.17`.
-*(eram `C4A` e `C4B` até 05/09 — ver a nota de renomeação no fim.)*
-Zero menções no relatório. **O prazo cumpriu-se como estava escrito** — e é
-a primeira vez que uma isenção deste repo expira por ter sido resolvida, e
-não por alguém a apagar.
+- **Footprints:** all empty, on purpose. The SMD ones are assigned already; the
+  ones that depend on a part in hand (step-down, PD decoy, TRS jack, trimpot,
+  button) only after measuring. **A guessed footprint is a respin.**
+- **The missing sheets:** the Daisy socket + bridge + DPDT, and the panel board
+  connector. None of them exist yet.
+- **The file grammar**, which `check_sch.py` doesn't see — it checks the net. That's
+  why the suffix duplication (`D_V_0_1_0_1`) got past it and made KiCad reject the
+  whole sheet.
+
+---
+
+## 04/09 — `isolated_pin_label` on `AUDIO_IN_L` and `AUDIO_IN_R`
+
+**State: ✅ DIED ON 05/09**, in the commit that created `cotuca_soquete.kicad_sch`.
+`AUDIO_IN_L` connects to `C14.2` and `U2.16`; `AUDIO_IN_R` to `C24.2` and `U2.17`.
+*(they were `C4A` and `C4B` until 05/09 — see the rename note at the end.)*
+Zero mentions in the report. **The deadline was met as written** — and it is
+the first time an exemption in this repo expires for having been resolved, and
+not for someone deleting it.
 
 ```
 [isolated_pin_label]: Label connected to only one pin
@@ -126,132 +129,136 @@ não por alguém a apagar.
     @(299.72 mm, 173.99 mm): Global Label 'AUDIO_IN_R'
 ```
 
-**Porquê agora é falso positivo:** são as saídas do pré-amp. O destino delas
-são os pinos de áudio da Daisy, que vivem na **folha do soquete — que ainda
-não foi desenhada**. Hoje o rótulo toca um pino só porque só existe uma ponta.
+**Why it's a false positive now:** they are the preamp's outputs. Their
+destination is the Daisy's audio pins, which live on the **socket sheet — which
+hasn't been drawn yet**. Today the label touches a single pin only because only
+one endpoint exists.
 
-⚠️ **E esta é exactamente a isenção que se INVERTE** (skill `kicad` §7): num
-projecto de folha única é falso positivo legítimo; **assim que a folha do
-soquete entrar, a mesma linha do relatório passa a significar rede sem
-destino — defeito real.** A mesma frase, dois significados, e quem não marcar
-a data não repara.
+⚠️ **And this is exactly the exemption that INVERTS** (skill `kicad` §7): in a
+single-sheet project it's a legitimate false positive; **as soon as the socket
+sheet enters, the same line of the report comes to mean a net with no
+destination — a real defect.** The same sentence, two meanings, and whoever
+doesn't note the date won't notice.
 
-**Prazo:** morre no commit que acrescentar `cotuca_soquete.kicad_sch`. Se
-sobreviver a esse commit, **não é isenção, é defeito**.
+**Deadline:** it dies in the commit that adds `cotuca_soquete.kicad_sch`. If it
+survives that commit, **it's not an exemption, it's a defect**.
 
-## 04/09 — `power_pin_not_driven` no U1 unidade 3 (pinos 4 e 8)
+## 04/09 — `power_pin_not_driven` on U1 unit 3 (pins 4 and 8)
 
-**Estado: ✅ RESOLVIDO em 04/09** — não por isenção, por PWR_FLAG.
+**State: ✅ RESOLVED on 04/09** — not by exemption, by PWR_FLAG.
 
-Símbolos caseiros não declaram `power_out`, então todo pino `power_in` fica
-órfão. A resposta é um **PWR_FLAG por rede de energia** (skill §6), e não uma
-isenção: aqui a rede `V+PRE` é mesmo alimentada através de `R7` a partir do
-`+15V`, e é isso que o desenho tem de dizer.
+Home-made symbols don't declare `power_out`, so every `power_in` pin is orphaned.
+The answer is a **PWR_FLAG per power net** (skill §6), not an exemption: here the
+`V+PRE` net really is powered through `R7` from `+15V`, and that's what the
+design has to say.
 
-⚠️ **UM por rede, e só um** — dois `power_out` na mesma rede trocam um erro
-por outro. E a bandeira não vai na coordenada do rótulo (tapa-o): vai num
-ponto livre do mesmo fio, com junção.
+⚠️ **ONE per net, and only one** — two `power_out` on the same net trade one error
+for another. And the flag doesn't go at the label's coordinate (it covers it): it
+goes at a free point on the same wire, with a junction.
 
-**Como ficou:** símbolo `cotuca:PWR_FLAG` novo (pino `power_out`, referência
-`#FLG`, não entra na BOM), com uma bandeira em `V+PRE` e outra em `AGND`.
-Cada uma fica num ponto livre do fio, com junção — **não** na coordenada do
-rótulo, que taparia o rótulo.
+**How it ended up:** a new `cotuca:PWR_FLAG` symbol (`power_out` pin, reference
+`#FLG`, doesn't enter the BOM), with one flag on `V+PRE` and another on `AGND`.
+Each sits at a free point on the wire, with a junction — **not** at the label's
+coordinate, which would cover the label.
 
-**Uma por rede, e só uma.** Duas `power_out` na mesma rede trocam um erro por
-outro.
+**One per net, and only one.** Two `power_out` on the same net trade one error for
+another.
 
-Efeito: ERC do projeto de **4 para 2 violações**, e o netlist **não mudou** —
-23 redes, 103 nós. As bandeiras alimentam a rede para o ERC sem entrar como
-componente, que é o que a convenção da referência `#` existe para fazer.
+Effect: the project's ERC from **4 to 2 violations**, and the netlist **didn't
+change** — 23 nets, 103 nodes. The flags power the net for the ERC without
+entering as a component, which is what the `#` reference convention exists to do.
 
 ---
 
-## 05/09 — `isolated_pin_label` × 25, sinais do painel
+## 05/09 — `isolated_pin_label` × 25, panel board signals
 
-**Estado:** isenção **COM PRAZO**. Expira no commit que criar a folha do
-conector IDC 2×13 (`ROTEIRO-KICAD.md` §5).
+**State:** an exemption **WITH A DEADLINE**. It expires in the commit that creates
+the IDC 2×13 connector sheet (`ROTEIRO-KICAD.md` §5).
 
-São os rótulos que a folha do soquete leva da Daisy para o painel — OLED
-(`RST/DC/CS/CLK/DIN`), os três encoders, os dois pots, os quatro botões e os
-dois LED. Hoje tocam um pino só porque só existe uma ponta.
+These are the labels the socket sheet carries from the Daisy to the panel board —
+OLED (`RST/DC/CS/CLK/DIN`), the three encoders, the two pots, the four buttons,
+and the two LEDs. Today they touch a single pin only because only one endpoint
+exists.
 
-⚠️ **É a mesma isenção que se inverte** (skill `kicad` §7): quando a folha do
-conector entrar, a mesma linha passa a significar **rede sem destino**.
+⚠️ **It's the same exemption that inverts** (skill `kicad` §7): when the connector
+sheet enters, the same line comes to mean a **net with no destination**.
 
 ## 05/09 — `pin_not_connected` × 4: D20, D21, D29, D30
 
-**Estado: NÃO é isenção — é o desenho certo, e fica declarado.**
+**State: it's NOT an exemption — it's the correct design, and it's declared.**
 
-`D20` e `D21` estão livres de propósito. **`D29` e `D30` são as linhas de
-dados do USB** (pinos 36/37, `USB_HS_D−`/`D+`): não podem ser usados, e a
-ausência de ligação é o comportamento correto — ver `PINOS.md`.
+`D20` and `D21` are free on purpose. **`D29` and `D30` are the USB data lines**
+(pins 36/37, `USB_HS_D−`/`D+`): they can't be used, and the absence of a
+connection is the correct behavior — see `PINOS.md`.
 
-Se algum dia estes quatro deixarem de aparecer aqui, alguém ligou alguma
-coisa a eles, e nos dois últimos isso mata a serial.
+If one day these four stop appearing here, someone connected something to them,
+and on the last two that kills the serial.
 
 ---
 
-## 05/09 — as referências foram renomeadas, e porquê
+## 05/09 — the references were renamed, and why
 
-O KiCad trata uma referência que **não termina em dígito** como não anotada, e
-renumera-a sozinho ao gravar — a correspondência com os desenhos e a BOM
-quebrava em silêncio. As 29 que estavam nesse estado foram renomeadas antes de
-ir para a fábrica. **A dezena passou a dizer o canal.**
+KiCad treats a reference that **doesn't end in a digit** as unannotated, and
+renumbers it on its own when saving — the correspondence with the drawings and
+the BOM broke silently. The 29 that were in that state were renamed before going
+to the factory. **The tens digit now tells the channel.**
 
-| era | é | | era | é |
+| was | is | | was | is |
 |---|---|---|---|---|
 | `R0A`…`R4A` | `R10`…`R14` | | `R0B`…`R4B` | `R20`…`R24` |
 | `C1A`…`C4A` | `C11`…`C14` | | `C1B`…`C4B` | `C21`…`C24` |
 | `RVA` / `RVB` | `RV1` / `RV2` | | `DA` / `DB` | `D11` / `D21` |
 | `JA` / `JB` | `J5` / `J6` | | `SWL` / `SWR` | `SW1` / `SW2` |
-| `U1A`/`U1B`/`U1C` | `U1` unidades 1/2/3 | | `R20`/`R21` (soquete) | `R50`/`R51` |
+| `U1A`/`U1B`/`U1C` | `U1` units 1/2/3 | | `R20`/`R21` (socket) | `R50`/`R51` |
 
-Os `R20`/`R21` do soquete tiveram de sair da dezena 2 porque a referência é
-única em **toda a hierarquia**, não por folha, e o canal B do pré-amp passou a
-ocupá-la.
+The socket's `R20`/`R21` had to leave the 2-tens because the reference is unique
+across **the whole hierarchy**, not per sheet, and the preamp's channel B came to
+occupy it.
 
-**Critério de aceitação da renomeação:** a netlist ficou idêntica depois de
-aplicar o mapa — comparada pela *pertença* de cada rede, o conjunto de
-`(referência, pino)`, e não pelos nomes das redes, que mudam de propósito. Foi
-essa comparação que apanhou um símbolo (`R0A`) que escapara à renomeação porque
-o seu bloco começava colado ao parêntesis do anterior.
+**Acceptance criterion for the rename:** the netlist came out identical after
+applying the map — compared by the *membership* of each net, the set of
+`(reference, pin)`, and not by the net names, which change on purpose. It was
+that comparison that caught a symbol (`R0A`) that had escaped the rename because
+its block started stuck to the previous one's parenthesis.
 
 ---
 
-## 05/09 — `isolated_pin_label` no `+3V3A`: **RESOLVIDO, e era um defeito**
+## 05/09 — `isolated_pin_label` on `+3V3A`: **RESOLVED, and it was a defect**
 
-O aviso apontava o pino 21 da Daisy (`+3V3A`) com rótulo global e nenhum
-consumidor. Não era ruído de ERC: era o sintoma de os **pots estarem
-alimentados pelo trilho errado**.
+The warning pointed to the Daisy's pin 21 (`+3V3A`) with a global label and no
+consumer. It wasn't ERC noise: it was the symptom of the **pots being powered
+from the wrong rail**.
 
-A ficha do Seed3 diz, textualmente, *"Both the Digital and Analog +3.3V pins
-will output the voltage from **their regulators**"* — são dois reguladores — e
-*"65535 corresponding to **+3V3A**"*: o fundo de escala do ADC é o analógico.
-A figura de aplicação do próprio fabricante chama-se *"4.1 - Potentiometer"* e
-alimenta-a do pino `+3V3A`.
+The Seed3 datasheet says, verbatim, *"Both the Digital and Analog +3.3V pins
+will output the voltage from **their regulators**"* — there are two regulators —
+and *"65535 corresponding to **+3V3A**"*: the ADC's full scale is the analog one.
+The manufacturer's own application figure is called *"4.1 - Potentiometer"* and
+powers it from the `+3V3A` pin.
 
-Os pots estavam no `+3V3` digital e lidos contra o analógico. **A diferença
-entre dois reguladores independentes ia inteira para a leitura** — que é
-exactamente o que a nota do painel já avisava, enquanto o esquema fazia o
-contrário dela.
+The pots were on the digital `+3V3` and read against the analog. **The difference
+between two independent regulators went entirely into the reading** — which is
+exactly what the panel board note already warned about, while the schematic did
+the opposite of it.
 
-**O que mudou (05/09):**
-- a **via 9** do IDC passou de `+3V3` a **`+3V3A`**, e alimenta só os dois pots
+**What changed (05/09):**
+- IDC **via 9** went from `+3V3` to **`+3V3A`**, and powers only the two pots
   (0,66 mA);
-- o **OLED foi para os 5 V** — o módulo Waveshare aceita 3,3 ou 5 V, e um ecrã
-  comutado no fundo de escala do ADC seria pior do que o problema resolvido;
-- o rótulo `+3V3` do pino 38 **saiu**: nada o consome, e rótulo global com um
-  pino só não é uma rede, é um aviso a fingir de ligação. O pino continua
-  disponível como saída para quem declare o consumidor.
+- the **OLED went to 5 V** — the Waveshare module accepts 3,3 or 5 V, and a
+  screen switching on the ADC's full scale would be worse than the problem solved;
+- the `+3V3` label on pin 38 **was removed**: nothing consumes it, and a global
+  label with a single pin isn't a net, it's a warning pretending to be a
+  connection. The pin remains available as an output for whoever declares the
+  consumer.
 
-**Não foi isenção. Foi conserto**, e o guarda de terra não foi tocado.
+**It wasn't an exemption. It was a fix**, and the ground guard wasn't touched.
 
-## 05/09 — `D29`/`D30` deixaram de ser pinos livres
+## 05/09 — `D29`/`D30` are no longer free pins
 
-São o `USB_HS_D−`/`D+`. Levavam a regra só em documento (cicatriz 15by, em que
-o `PINOS.md` chegou a reservá-los para os DPDT). Passaram a ter **`no_connect`
-no esquema**: o ERC recusa agora quem lá ligue um fio.
+They are `USB_HS_D−`/`D+`. The rule was carried only in a document (scar 15by, in
+which `PINOS.md` even reserved them for the DPDTs). They now have **`no_connect`
+in the schematic**: the ERC now rejects anyone connecting a wire there.
 
-Os outros 11 pinos livres **não** levam `no_connect` — são reserva declarada no
-`FUTURO.md`, e prometer "nada se liga aqui" seria mentir sobre eles. Por isso o
-ERC do cérebro fica em **11 `pin_not_connected`**, e é o número certo.
+The other 11 free pins do **not** carry `no_connect` — they are a reserve declared
+in `FUTURO.md`, and promising "nothing connects here" would be lying about them.
+That's why the brain board's ERC stays at **11 `pin_not_connected`**, and it's
+the right number.

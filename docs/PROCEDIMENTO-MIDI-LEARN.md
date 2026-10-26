@@ -1,199 +1,199 @@
-# Procedimento recorrente — endereçar o Loopy Pro
+# Recurring procedure — addressing the Loopy Pro
 
-**Método que funcionou (22/08): `vistos`, não `learn`.**
+**The method that worked (22/08): `vistos`, not `learn`.**
 
-Fecharam-se 65 de 65 em duas varreduras. O modo `learn` levou cinco versões
-de firmware e nunca fechou — está descrito adiante como registro, não como
-recomendação.
-
----
-
-## O método: a placa escuta, você varre
-
-A pergunta certa não é *"como faço os widgets aprenderem os meus números?"*
-mas *"o que os widgets estão mandando, e bate com o meu mapa?"*. Quem se
-adapta é o firmware, que é o lado que se edita.
-
-```
-vistos reset      # zera o inventário
-                  # ... você move TODOS os widgets, um por vez, sem pressa
-vistos            # relatório
-```
-
-O relatório traz três coisas:
-
-- **quantos dos 76 chegaram** — endereçados e corretos
-- **FALTA cc<n> <param>** — nunca chegou: sem endereço, ou com número de
-  outro parâmetro
-- **ORFAO cc<n>** — chegou e não está no mapa: aí o conserto é no firmware,
-  não no widget
-
-`vistos` conta CCs **distintos**, não mensagens — varra à vontade, repita,
-não transborda. Acumula entre varreduras até o `reset`.
-
-## Os dois pontos cegos, e eles importam
-
-**`vistos` só enxerga widget que ENVIA.** Um widget que só recebe é
-invisível, por melhor que esteja endereçado. Em 22/08 quatro apareceram como
-"faltando" e um estava perfeito — o dB o viu piscando. Se um FALTA
-persistir, o teste é **apertar o widget e ver se o parâmetro muda na placa**.
-
-**O learn tem de estar DESLIGADO.** Em learn a placa fala e não escuta:
-todo CC que chega é descartado, e o inventário fica cego para tudo.
-
-## O que os erros parecem
-
-Quatro widgets estavam **com o número de outro parâmetro** — `wrb_on_b` no
-51 (`wrb_mix_a`), e mais três. Sintoma: o parâmetro vizinho responde a dois
-controles e o widget "não faz nada". O `vistos` os entrega sozinho: eles
-aparecem como FALTA enquanto os vizinhos chegam.
-
-## Ao terminar
-
-A varredura mexe em **todos** os parâmetros — o instrumento fica tocando o
-que as posições dos widgets dizem. `sync` faz o inverso: a placa empurra o
-estado dela e os widgets pulam para as posições verdadeiras.
-
-E o aviso que não muda: **sem preset em flash, a próxima gravação de
-firmware zera todos os valores.** O endereçamento sobrevive (mora no iPad);
-os ajustes não.
+65 of 65 were closed in two sweeps. The `learn` mode took five firmware
+versions and never closed — it is described further on as a record, not as a
+recommendation.
 
 ---
 
-# Registro: o modo `learn`, REMOVIDO em v0.121.0
+## The method: the board listens, you sweep
 
-**Ele não existe mais no firmware.** Saiu inteiro — 136 linhas, ~10 KB de
-fonte, 83 referências. Está preservado no commit `514e09c`, de onde pode ser
-ressuscitado se algum dia fizer falta.
+The right question is not *"how do I make the widgets learn my numbers?"*
+but *"what are the widgets sending, and does it match my map?"*. What
+adapts is the firmware, which is the side that gets edited.
 
-**Por que não coexistia com o `vistos`:** em `learn` a placa fala e NÃO
-ESCUTA — todo CC que chega é descartado, por desenho. Mas o inventário lê
-exatamente o que chega. Ligar o learn cega o único instrumento capaz de
-provar que o learn funcionou. Não eram dois métodos: eram dois regimes
-incompatíveis (bts 12t).
+```
+vistos reset      # zeroes the inventory
+                  # ... you move ALL the widgets, one at a time, no rush
+vistos            # report
+```
 
-**Se precisar endereçar do zero num iPad novo**, o caminho é digitar os
-números direto nos widgets, pela lista de CCs do README e do `ccmap`. É uma
-passada só, determinística, e não depende de coreografia.
+The report brings three things:
 
-O que segue é o registro do mecanismo removido.
+- **how many of the 76 arrived** — addressed and correct
+- **FALTA cc<n> <param>** — never arrived: no address, or with another
+  parameter's number
+- **ORFAO cc<n>** — arrived and is not in the map: there the fix is in the firmware,
+  not in the widget
 
-## O que o mecanismo faz
+`vistos` counts **distinct** CCs, not messages — sweep freely, repeat,
+it does not overflow. It accumulates between sweeps until the `reset`.
 
-A placa percorre o mapa de CCs **na ordem das famílias** (que é a ordem das
-páginas: CENTRAL, MOD, TIME, TECH) e pulsa cada um até o widget confirmar.
-O operador só arma; a placa detecta e avança.
+## The two blind spots, and they matter
 
-**Transmite no canal 2**, que é a voz do espelho — então o que o widget
-aprender é exatamente o que vai recebê-lo em operação.
+**`vistos` only sees a widget that SENDS.** A widget that only receives is
+invisible, however well it is addressed. On 22/08 four showed up as
+"missing" and one was perfect — dB saw it blinking. If a FALTA
+persists, the test is to **press the widget and see whether the parameter changes on the board**.
 
-**Pulso curto, 127 seguido de 0 em 60 ms, repetido a cada segundo.** O 127
-sustentado por um segundo é lido pelo Loopy como *hold*, e o widget alterna
-entre hold e CC normal. O gesto que ele reconhece é apertar-e-soltar.
+**The learn has to be OFF.** In learn the board talks and does not listen:
+every CC that arrives is discarded, and the inventory goes blind to everything.
 
-**A placa confirma sozinha.** Um CC que chega no canal de entrada com o
-número do alvo atual só pode vir de um widget que acabou de aprendê-lo — é
-prova de arme, no instante do arme. A placa loga `cc26 ARMADO` e avança.
+## What the errors look like
+
+Four widgets were **on another parameter's number** — `wrb_on_b` on the
+51 (`wrb_mix_a`), and three more. Symptom: the neighboring parameter responds to two
+controls and the widget "does nothing". `vistos` delivers them on its own: they
+show up as FALTA while the neighbors arrive.
+
+## On finishing
+
+The sweep touches **every** parameter — the instrument ends up playing
+what the widget positions say. `sync` does the inverse: the board pushes its
+state and the widgets jump to the true positions.
+
+And the warning that does not change: **with no preset in flash, the next firmware
+flashing zeroes all the values.** The addressing survives (it lives on the iPad);
+the adjustments do not.
 
 ---
 
-## O procedimento
+# Record: the `learn` mode, REMOVED in v0.121.0
+
+**It no longer exists in the firmware.** It went out whole — 136 lines, ~10 KB of
+source, 83 references. It is preserved in commit `514e09c`, from where it can
+be resurrected if one day it is needed.
+
+**Why it did not coexist with `vistos`:** in `learn` the board talks and does
+NOT LISTEN — every CC that arrives is discarded, by design. But the inventory reads
+exactly what arrives. Turning on the learn blinds the only instrument capable of
+proving that the learn worked. They were not two methods: they were two incompatible
+regimes (bts 12t).
+
+**If you need to address from scratch on a new iPad**, the way is to type the
+numbers straight into the widgets, from the CC list in the README and the `ccmap`. It is
+a single pass, deterministic, and does not depend on choreography.
+
+What follows is the record of the removed mechanism.
+
+## What the mechanism does
+
+The board walks the CC map **in family order** (which is the page order:
+CENTRAL, MOD, TIME, TECH) and pulses each one until the widget confirms. The
+operator only arms; the board detects and advances.
+
+**It transmits on channel 2**, which is the mirror's voice — so what the widget
+learns is exactly what will receive it in operation.
+
+**Short pulse, 127 followed by 0 in 60 ms, repeated every second.** A 127
+sustained for a second is read by Loopy as *hold*, and the widget toggles
+between hold and normal CC. The gesture it recognizes is press-and-release.
+
+**The board confirms on its own.** A CC that arrives on the input channel with the
+number of the current target can only come from a widget that just learned it — it is
+proof of arming, at the instant of arming. The board logs `cc26 ARMADO` and advances.
+
+---
+
+## The procedure
 
 ```
-learn <primeiro cc>     # ex.: learn 20 — entra ESTACIONADO
+learn <first cc>     # e.g.: learn 20 — enters PARKED
 ```
 
-Estacionado é o modo certo para a caminhada inteira: ele repete o CC atual
-indefinidamente e só sai dele quando o widget confirma. A caminhada
-automática (`learn` sem argumento) avança depois de 4 pulsos **tenha ou não
-alguém armado**, e não serve para trabalho com humano no circuito.
+Parked is the right mode for the whole walk: it repeats the current CC
+indefinitely and only leaves it when the widget confirms. The automatic
+walk (`learn` with no argument) advances after 4 pulses **whether or not
+someone is armed**, and is not suitable for work with a human in the loop.
 
-Depois disso, para cada widget:
+After that, for each widget:
 
-1. Ler no serial qual CC está no ar: `learn: 7/76 · cc26 · gate_release_b`
-2. Armar o widget correspondente no Loopy
-3. A placa loga `cc26 ARMADO — avancando` e passa ao próximo, sozinha
+1. Read on the serial which CC is on air: `learn: 7/76 · cc26 · gate_release_b`
+2. Arm the corresponding widget in Loopy
+3. The board logs `cc26 ARMADO — avancando` and moves to the next one, on its own
 
-Comandos durante a caminhada:
+Commands during the walk:
 
-| comando | efeito |
+| command | effect |
 |---|---|
-| `learn next` | pula o CC atual sem armar (preserva o estacionamento) |
-| `learn <cc>` | reposiciona num CC específico, para re-aprender um widget |
-| `learn <nome>` | idem, por nome de parâmetro |
-| `learn stop` | **pausa**, sem re-push |
-| `sync` | empurra os 76 CCs de propósito, quando você quiser alinhar |
+| `learn next` | skips the current CC without arming (preserves the parking) |
+| `learn <cc>` | repositions at a specific CC, to re-learn a widget |
+| `learn <name>` | likewise, by parameter name |
+| `learn stop` | **pauses**, without re-push |
+| `sync` | pushes the 76 CCs on purpose, when you want to align |
 
 ---
 
-## O que NÃO fazer, e por quê (cada um custou uma rodada)
+## What NOT to do, and why (each one cost a round)
 
-**Não deixe a placa parada pulsando enquanto ninguém opera.** O firmware
-repete o CC estacionado indefinidamente. Todo widget armado nesse intervalo
-aprende o mesmo CC. Em 22/08 quatro widgets aprenderam o cc26 porque foi o
-que ficou no fio durante uma pausa. **Se for interromper, `learn stop`.**
+**Do not leave the board sitting there pulsing while no one operates.** The firmware
+repeats the parked CC indefinitely. Every widget armed in that interval
+learns the same CC. On 22/08 four widgets learned cc26 because it was
+what stayed on the wire during a pause. **If you are going to interrupt, `learn stop`.**
 
-**Não use polling externo para detectar o arme.** Foi a primeira tentativa:
-um script lendo o histórico a cada 3 s e mandando `learn next`. O atraso
-entre a varredura e o arme É o defeito — quem decide o avanço tem que ser
-quem vê a confirmação, e isso é a placa. Detecção de fora tem sempre uma
-lacuna, e a lacuna é onde os widgets aprendem o CC errado.
+**Do not use external polling to detect the arming.** It was the first attempt:
+a script reading the history every 3 s and sending `learn next`. The delay
+between the sweep and the arming IS the defect — whoever decides the advance has to be
+whoever sees the confirmation, and that is the board. Detection from outside always has a
+gap, and the gap is where the widgets learn the wrong CC.
 
-**Não confie no histórico de CCs para conferir arme antigo.** Ele guarda as
-**8 últimas** mensagens, sem carimbo de tempo. E o caminho de volta tem
-latência de BLE: mensagens antigas chegam atrasadas e se misturam às
-recentes. Em 22/08 li `[26, 30, 32]` estando no 32 e quase concluí que a
-placa transmitia CC errado — os 26 e 30 eram ecos atrasados de
-estacionamentos anteriores. **Verificado depois: a placa transmite
-exatamente o que reporta.**
+**Do not trust the CC history to check an old arming.** It keeps the
+**last 8** messages, with no timestamp. And the return path has
+BLE latency: old messages arrive late and mix with the
+recent ones. On 22/08 I read `[26, 30, 32]` while on 32 and nearly concluded that the
+board was transmitting the wrong CC — the 26 and 30 were late echoes of
+earlier parkings. **Verified afterward: the board transmits
+exactly what it reports.**
 
-**Não conte com detecção automática do arme.** Testada e reprovada por dois
-motivos independentes: (a) nem todo widget devolve CC ao aprender — os
-faders devolvem, outros não; (b) a latência do retorno impede distinguir
-"acabou de armar" de "eco atrasado de dois passos atrás". O que sobra é o
-operador dizer que armou.
-
----
-
-## Pausar não é terminar
-
-`learn stop` **pausa e não empurra nada** (9 mensagens de acerto fino, não 76).
-Em 22/08 cada pausa disparava um re-push completo e despejava 76 CCs na tela
-do Loopy — o dB leu isso como a placa mandando CC errado, e gastamos uma
-rodada investigando um defeito que era o meu comando de pausa.
-
-Depois de um `learn stop`, os widgets podem estar mostrando **valores dos
-pulsos**, não o estado real. `sync` alinha quando você quiser.
-
-## Ao terminar
-
-O **fim da lista** dispara automaticamente:
-
-1. `eco_ult` volta a `0xFF` — a tabela **tem** que esquecer a caminhada,
-   senão o espelho compara o estado real contra os `0` dos pulsos e engole
-   as arestas em que os dois coincidem.
-2. Re-push dos 76 CCs pelo mesmo mecanismo do boot. Os pulsos deixaram os
-   widgets em posições arbitrárias; o re-push restaura a verdade da placa
-   em todas as páginas.
-3. Cada empurrão abre uma janela de autoria de 250 ms, que recusa a
-   devolução do widget. A placa vence, como deve.
-
-Conferir no `midi`: `eco: TX <n>` deve ter subido ~76, e `autoria:` deve
-mostrar recusas — se mostrar zero, ou os widgets não estão devolvendo, ou
-a janela não está funcionando.
+**Do not count on automatic detection of the arming.** Tested and rejected for two
+independent reasons: (a) not every widget returns a CC on learning — the
+faders return, others do not; (b) the return latency makes it impossible to distinguish
+"just armed" from "late echo from two steps back". What is left is the
+operator saying they armed.
 
 ---
 
-## Aceite (o que provar antes de considerar endereçado)
+## Pausing is not finishing
 
-1. Cada widget aprendeu o **CC certo** — conferir movendo o widget e vendo
-   o parâmetro certo mudar no `list`.
-2. Depois do re-push, todos mostram o **estado real da placa**.
-3. `list` idêntico ao de antes do learn — os pulsos são **TX-only** e não
-   escrevem em parâmetro nenhum.
+`learn stop` **pauses and pushes nothing** (9 fine-tuning messages, not 76).
+On 22/08 each pause fired a full re-push and dumped 76 CCs onto the Loopy screen
+— dB read that as the board sending the wrong CC, and we spent a
+round investigating a defect that was my pause command.
 
-**Estado em 22/08: não concluído.** Foram armados e confirmados os CC 20 a
-25 (CENTRAL). A caminhada parou em 7/76, cc26. O mecanismo de confirmação
-automática (v0.116.0) foi implementado mas **ainda não exercitado de ponta
-a ponta** — os CC 20–25 foram armados com detecção externa, o método que
-esta página desaconselha.
+After a `learn stop`, the widgets may be showing **values from the
+pulses**, not the real state. `sync` aligns whenever you want.
+
+## On finishing
+
+The **end of the list** fires automatically:
+
+1. `eco_ult` goes back to `0xFF` — the table **has** to forget the walk,
+   otherwise the mirror compares the real state against the `0`s of the pulses and swallows
+   the edges where the two coincide.
+2. Re-push of the 76 CCs by the same mechanism as boot. The pulses left the
+   widgets in arbitrary positions; the re-push restores the board's truth
+   across all pages.
+3. Each push opens a 250 ms authorship window, which refuses the
+   widget's return. The board wins, as it should.
+
+Check in `midi`: `eco: TX <n>` should have gone up ~76, and `autoria:` should
+show refusals — if it shows zero, either the widgets are not returning, or
+the window is not working.
+
+---
+
+## Acceptance (what to prove before considering it addressed)
+
+1. Each widget learned the **right CC** — check by moving the widget and seeing
+   the right parameter change in `list`.
+2. After the re-push, they all show the **real state of the board**.
+3. `list` identical to the one before the learn — the pulses are **TX-only** and do not
+   write to any parameter.
+
+**State on 22/08: not concluded.** CC 20 to 25 (CENTRAL) were armed
+and confirmed. The walk stopped at 7/76, cc26. The automatic confirmation
+mechanism (v0.116.0) was implemented but **not yet exercised end to
+end** — CC 20–25 were armed with external detection, the method
+this page advises against.

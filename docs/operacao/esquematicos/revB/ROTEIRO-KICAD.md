@@ -1,181 +1,185 @@
-# Cotucatronics — roteiro KiCad → fábrica
+# Cotucatronics — KiCad → factory roadmap
 
-> ⚠️⚠️ **A PLACA É DE 2 CAMADAS, e este documento dizia 4.** Medido a 08/09 nos ficheiros: só `F.Cu` e `B.Cu`, com as zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, e o `NT1` como ponte única — e isso **está verificado e certo**. O que estava errado era o texto.
+> ⚠️⚠️ **THE BOARD IS 2-LAYER, and this document said 4.** Measured on 08/09 in the files: only `F.Cu` and `B.Cu`, with the `GND` (prio 0) and `AGND` (prio 1) zones both on `B.Cu`, separated, and `NT1` as the single bridge — and that **is verified and correct**. What was wrong was the text.
 >
-> Sem plano interior, o retorno do amp é a zona de `B.Cu`: aceitável para 3 A com a largura que tem, e dito para não ser descoberto na bancada. **A encomenda na JLC tem de dizer 2 camadas** — é mais barato, e pedir 4 para uma placa desenhada a 2 paga um plano que ninguém usa.
+> With no interior plane, the amp's return is the `B.Cu` zone: acceptable for 3 A at the width it has, and stated so it is not discovered on the bench. **The JLC order has to say 2 layers** — it is cheaper, and asking for 4 on a board drawn at 2 pays for a plane nobody uses.
 
-### 04/09/2026 · pré-amp aprovado em bancada, caixa formato pedal fechada
+### 04/09/2026 · pre-amp approved on the bench, pedal-format enclosure closed
 
 ---
 
-## 1 · Fornecedor: JLCPCB para os protótipos
+## 1 · Supplier: JLCPCB for the prototypes
 
-**Veredito:** JLCPCB. É o mais barato e mais rápido para placas de 2–4
-camadas com componentes do stock LCSC — que é o caso, porque o BOM já foi
-desenhado a pensar nisso. PCBWay cobra mais nas placas simples e ganha em
-flexibilidade (BOM próprio, THT montado, revisão humana) e em consistência de
-qualidade; para este projeto isso só vale a pena se o OPA1642 faltar no stock
-da LCSC ou se se quiser o soquete da Daisy montado por eles.
+**Verdict:** JLCPCB. It is the cheapest and fastest for 2–4 layer boards with
+components from the LCSC stock — which is the case, because the BOM was already
+drawn with that in mind. PCBWay charges more on simple boards and wins on
+flexibility (own BOM, THT assembled, human review) and on quality consistency;
+for this project that is only worth it if the OPA1642 is missing from the LCSC
+stock or if you want the Daisy's socket assembled by them.
 
 | | JLCPCB | PCBWay |
 |---|---|---|
-| preço, 2–4 camadas, 5–10 placas | **o mais baixo** | ~20–40 % acima |
-| montagem SMT | económica se **100 % do BOM em stock LCSC** | aceita peças próprias |
-| THT montado | limitado | sim |
-| prazo (fab) | 24 h a 3–5 dias | 3–7 dias SMT |
-| entrega EUA (DHL) | +5–8 dias | igual |
-| quando escolher | **este projeto** | BOM fora da LCSC, ou série com QC reforçado |
+| price, 2–4 layers, 5–10 boards | **the lowest** | ~20–40% higher |
+| SMT assembly | economical if **100% of the BOM in LCSC stock** | accepts own parts |
+| THT assembled | limited | yes |
+| lead time (fab) | 24 h to 3–5 days | 3–7 days SMT |
+| delivery US (DHL) | +5–8 days | same |
+| when to choose | **this project** | BOM outside LCSC, or a run with reinforced QC |
 
-**Prática:** **2 camadas** (terra em `B.Cu`), montagem SMT só na face de cima,
-THT à mão. **5 protótipos**, nunca quantidade. Pedir a data de **entrega**, não
-a de fabrico. Confirmar o stock do **OPA1642** antes de submeter — peça sem
-stock trava o pedido inteiro.
+**Practice:** **2 layers** (ground on `B.Cu`), SMT assembly only on the top face,
+THT by hand. **5 prototypes**, never quantity. Ask for the **delivery** date, not
+the fabrication one. Confirm the **OPA1642** stock before submitting — a part
+out of stock blocks the whole order.
 
 ---
 
-## 2 · Duas placas, um contrato
+## 2 · Two boards, one contract
 
-| placa | o que leva | onde fica |
+| board | what it carries | where it sits |
 |---|---|---|
-| **cérebro** | Daisy no soquete · pré-amp · ponte ESP32 · filtro/banco de energia · DPDT (fiação) · jacks (fiação) | fundo da caixa |
-| **painel** | OLED · encoder · 2 pots · **3** botões arcade (só 2 com LED) + 2 MOSFET | tampa |
-| **fora das placas** | módulo decoy PD · módulo step-down · módulo TPA3116 | decoy e amp atrás/direita; step-down junto ao cérebro |
+| **brain board** | Daisy in the socket · pre-amp · ESP32 bridge · power filter/bank · DPDT (wiring) · jacks (wiring) | bottom of the enclosure |
+| **panel board** | OLED · encoder · 2 pots · **3** arcade buttons (only 2 with LED) + 2 MOSFET | lid |
+| **off the boards** | decoy PD module · step-down module · TPA3116 module | decoy and amp back/right; step-down next to the brain board |
 
-**Contrato = IDC 2×13.** Pinagem no §5. O mesmo nome de rede nos dois
-projetos, via a via.
+**Contract = IDC 2×13.** Pinout in §5. The same net name in both
+projects, via by via.
 
 ---
 
-## 3 · A caixa: quatro faces
+## 3 · The enclosure: four faces
 
-Desenho em [`docs/desenhos/caixa/`](../../../desenhos/caixa/) — seis páginas,
-geradas por `gen_caixa_paginas.py` — ⚠️ **apagadas a 06/09**, descreviam uma
-caixa que nunca foi cortada; ver `caixa/README.md`. **Cunha**, 200 × 120:
-**frente 40 mm, trás 70 mm**. Sem interruptor de energia — ligar o USB é ligar.
+Drawing in [`docs/desenhos/caixa/`](../../../desenhos/caixa/) — six pages,
+generated by `gen_caixa_paginas.py` — ⚠️ **deleted on 06/09**, they described an
+enclosure that was never cut; see `caixa/README.md`. **Wedge**, 200 × 120:
+**front 40 mm, back 70 mm**. No power switch — plugging in the USB is powering on.
 
-**Perfil de altura, e é restrição de layout antes da primeira peça:** os arcade
-têm 30 mm dentro da caixa e ficam à frente, na parte baixa. Por baixo deles
-nada acima de ~8 mm — pré-amp, step-down, ESP32 deitada. Tudo o que é alto vai
-atrás: Daisy no soquete (~20), módulo do amp com dissipador (~25), os
-eletrolíticos grandes. **Frente baixa = coisas baixas e o pé; trás alta = coisas
-altas e as mãos.** A face da frente é a da marca — búzio e nome, sem furos.
+**Height profile, and it is a layout constraint before the first part:** the
+arcade buttons are 30 mm inside the enclosure and sit at the front, in the low
+part. Under them nothing above ~8 mm — pre-amp, step-down, ESP32 lying flat.
+Everything tall goes to the back: Daisy in the socket (~20), the amp module with
+heatsink (~25), the large electrolytics. **Low front = low things and the foot;
+high back = tall things and the hands.** The front face is the brand's — cowrie
+and name, no holes.
 
-| face | o que sai | porquê |
+| face | what comes out | why |
 |---|---|---|
-| **esquerda** | 2× TRS piezo IN | escultura entra por aqui |
-| **direita** | 2× bornes exciter OUT | escultura sai por aqui — **os dois cabos nunca correm juntos** |
-| **trás** | USB-C PD · 2× TRS linha OUT · 2× DPDT | o mundo: energia, mesa, configuração |
-| **frente** | nada — búzio e nome | a face do público |
-| **cima** | OLED · encoder · 2 pots · 2 freeze | performance |
+| **left** | 2× TRS piezo IN | the sculpture goes in here |
+| **right** | 2× exciter OUT terminals | the sculpture comes out here — **the two cables never run together** |
+| **back** | USB-C PD · 2× TRS line OUT · 2× DPDT | the world: power, desk, configuration |
+| **front** | nothing — cowrie and name | the face for the audience |
+| **top** | OLED · encoder · 2 pots · 2 freeze | performance |
 
-Por baixo: **pré-amp na metade esquerda** (encostado aos jacks de entrada,
-ilha de AGND), **amp na metade direita**, conector do painel na borda oposta
-ao pré-amp. Pots e encoder do lado do amp.
+Underneath: **pre-amp in the left half** (up against the input jacks, AGND
+island), **amp in the right half**, panel connector on the edge opposite the
+pre-amp. Pots and encoder on the amp side.
 
 ---
 
-## 4 · Folhas do cérebro
+## 4 · Brain-board sheets
 
-**Energia** — atualizada 04/09: **sem interruptor**. Decoy → PTC → TVS →
-trilho 15 V → {J amp com 2200 µF + 100 nF · step-down}. 5 V → Daisy VIN ·
-1N5819 → ponte. **Divisor 100 k/22 k do trilho ao A2 (D17)** — 15 V dão 2,7 V
-no ADC: o firmware lê a tensão do trilho, mostra no OLED e **recusa ligar o amp
-abaixo de 12 V** com mensagem clara. É a linha nova do `Requirements`.
-Powerbank que não negoceia PD deixa de ser silêncio e passa a ser aviso.
+**Power** — updated 04/09: **no switch**. Decoy → PTC → TVS →
+15 V rail → {amp J with 2200 µF + 100 nF · step-down}. 5 V → Daisy VIN ·
+1N5819 → bridge. **100 k/22 k divider from the rail to A2 (D17)** — 15 V give
+2.7 V at the ADC: the firmware reads the rail voltage, shows it on the OLED and
+**refuses to turn on the amp below 12 V** with a clear message. It is the new
+line in `Requirements`. A power bank that does not negotiate PD stops being
+silence and becomes a warning.
 
-**Pré-amp** — feita, ERC 0; **atualizar para o que a bancada aprovou:**
-- seguidor (saída à entrada −) com a rede de ganho (RV, R3, C3, C1) em
-  footprint **DNP** e 0 Ω populado no lugar do trimpot
-- **C2 = 20 nF C0G** (os −6 dB da crista; ajustar ao piezo é facto de exemplar)
-- D1 = BAV99 (os 1N4148 eram bancada) · jacks com ring + sleeve ao AGND
+**Pre-amp** — done, ERC 0; **update to what the bench approved:**
+- follower (output to the − input) with the gain network (RV, R3, C3, C1) in a
+  **DNP** footprint and 0 Ω populated in place of the trimpot
+- **C2 = 20 nF C0G** (the −6 dB of the crest; tuning it to the piezo is a
+  per-unit fact)
+- D1 = BAV99 (the 1N4148s were bench) · jacks with ring + sleeve to AGND
 
-**Soquete + ponte + DPDT + saídas** — por fazer. **A armadilha:** `Dnn` → posição
-no header 2×20 sai da **folha de dados da Seed**, não do PINOS.
+**Socket + bridge + DPDT + outputs** — to be done. **The trap:** `Dnn` → position
+on the 2×20 header comes from the **Seed's datasheet**, not from PINOS.
 
-| pino lógico | função | pino lógico | função |
+| logical pin | function | logical pin | function |
 |---|---|---|---|
-| D0 D1 D2 | **o** encoder — A, B, push | D13 → RX · D14 ← TX | ponte, cruzado |
-| D5 D6 D7 D8 D10 | OLED RST DC CS CLK DIN | D28 | status da ponte, ativo baixo |
+| D0 D1 D2 | **the** encoder — A, B, push | D13 → RX · D14 ← TX | bridge, crossed |
+| D5 D6 D7 D8 D10 | OLED RST DC CS CLK DIN | D28 | bridge status, active low |
 | D15 D16 | pot L, pot R (A0/A1) | D22 D24 | freeze B, freeze A |
-| D23 D27 | gate LED B, gate LED A | AUDIO IN/OUT L/R | pré-amp / DPDT |
+| D23 D27 | gate LED B, gate LED A | AUDIO IN/OUT L/R | pre-amp / DPDT |
 
-**Livres: D3 D4 D9 D11 D12 D18 D19 D20 D21 D25** — dez. **D17 = A2 = V_TRILHO**, e
-desde 05/09 sem conflito: o encoder G saiu.
+**Free: D3 D4 D9 D11 D12 D18 D19 D20 D21 D25** — ten. **D17 = A2 = V_TRILHO**, and
+since 05/09 with no conflict: encoder G left.
 
-> ⚠️ **Corrigido em 05/09. A lista anterior estava errada de duas maneiras.**
-> Dizia `D3 D4 D9 D11 D12 D18 D19 D20 D21 D25 D26 D29 D30`, e:
+> ⚠️ **Fixed on 05/09. The earlier list was wrong in two ways.**
+> It said `D3 D4 D9 D11 D12 D18 D19 D20 D21 D25 D26 D29 D30`, and:
 >
-> - **`D29`/`D30` são as linhas de dados do USB** (pinos 36/37,
->   `USB_HS_D−`/`D+`, no CSV do fabricante). Usá-las como GPIO mata a serial.
->   O sense dos DPDT ia para lá — vai agora para `D11`/`D12` ou `D20`/`D21`.
-> - **`D3 D4 D9` são o encoder B, `D18 D19` o encoder G, `D25` o botão de
->   rearme e `D26` o dos búzios.** Estão todos ocupados e soldados.
+> - **`D29`/`D30` are the USB data lines** (pins 36/37,
+>   `USB_HS_D−`/`D+`, in the manufacturer's CSV). Using them as GPIO kills the
+>   serial. The DPDT sense was going there — it now goes to `D11`/`D12` or
+>   `D20`/`D21`.
+> - **`D3 D4 D9` are encoder B, `D18 D19` encoder G, `D25` the reset button and
+>   `D26` the cowrie-shells one.** They are all occupied and soldered.
 >
-> A fonte é o `Daisy_Seed_Rev4_Pinout.csv` cruzado com o
-> `hal_daisy_seed.cpp` — ver `docs/operacao/PINOS.md`, que é onde esta lista
-> vive. **O CSV manda; um resumo de memória não.**
-DPDT tipo 2, comuns amarrados, 10 kΩ de cada entrada do amp ao GND do módulo.
-**AGND e GND ligam-se num ponto só, nesta folha, nos pinos da Daisy.**
+> The source is the `Daisy_Seed_Rev4_Pinout.csv` crossed with the
+> `hal_daisy_seed.cpp` — see `docs/operacao/PINOS.md`, which is where this list
+> lives. **The CSV rules; a memory summary does not.**
+DPDT type 2, commons tied, 10 kΩ from each amp input to the module's GND.
+**AGND and GND connect at a single point, on this sheet, at the Daisy's pins.**
 
-**Conector do painel** — IDC 2×13 macho, §5.
+**Panel connector** — IDC 2×13 male, §5.
 
-## Folha do painel
+## Panel sheet
 
-IDC fêmea · OLED (MX1.25 7p, 3V3 da Daisy) · EC11 5 pinos (comum e um pino
-do push ao GND) · 2 pots 10 k lin (1→GND, 3→3V3 da Daisy, 100 nF do cursor
-ao GND colado) · 2 botões arcade **azuis** (um lado ao GND) · 2× AO3400A
-(gate 100 Ω, **pull-down 10 k obrigatório**, source ao GND) · LEDs do par de
-5 V com resistor de série para ~30 mA. Um terra só: o DGND do IDC.
+IDC female · OLED (MX1.25 7p, Daisy's 3V3) · EC11 5 pins (common and one pin
+of the push to GND) · 2 pots 10 k lin (1→GND, 3→Daisy's 3V3, 100 nF from the
+wiper to GND, glued) · 2 **blue** arcade buttons (one side to GND) · 2× AO3400A
+(gate 100 Ω, **mandatory 10 k pull-down**, source to GND) · LEDs of the 5 V pair
+with a series resistor for ~30 mA. A single ground: the IDC's DGND.
 
 ---
 
-## 5 · IDC 2×13 — o contrato
+## 5 · IDC 2×13 — the contract
 
-**A pinagem vive no `kicad/cotuca_cerebro/gera_conector.py`, no dicionário
-`VIAS`** — e é conferida via a via, dos dois lados, por
-`tools/contrato_idc.py`, que lê os **ficheiros** e não os geradores.
+**The pinout lives in `kicad/cotuca_cerebro/gera_conector.py`, in the `VIAS`
+dictionary** — and is checked via by via, on both sides, by
+`tools/contrato_idc.py`, which reads the **files** and not the generators.
 
 ```bash
 python3 tools/contrato_idc.py
 ```
 
-⚠️ **Esta secção listava as 26 vias, e a lista envelheceu.** O pino 19 deixou de
-ser terra a 05/09 e passou a `BOT_BUZIOS`; a tabela daqui continuou a dizer
-nove terras e o 19 livre, e a partir dela concluiu-se **duas vezes** que havia
-uma via disponível que não havia. A edição de 05/09 até deixou a marca à vista
-— a linha do pino 6 tinha *seis* colunas numa tabela de quatro, com o 20
-repetido — e ninguém reparou, porque uma tabela à mão não tem quem a confira.
+⚠️ **This section used to list the 26 vias, and the list aged.** Pin 19 stopped
+being ground on 05/09 and became `BOT_BUZIOS`; the table here kept saying nine
+grounds and 19 free, and from it the conclusion was drawn **twice** that there
+was an available via that there was not. The 05/09 edit even left the mark in
+plain sight — the row for pin 6 had *six* columns in a four-column table, with 20
+repeated — and nobody noticed, because a hand-made table has nobody to check it.
 
-> É a **classe 7** da skill `audit`: tabela à mão por cima de uma gerada. Duas
-> fontes do mesmo facto, e a que não corre é a que envelhece. Quem quiser ler a
-> pinagem lê o `VIAS`; quem quiser saber se as duas metades batem corre o
-> `contrato_idc.py`.
+> It is **class 7** of the `audit` skill: a hand-made table over a generated one.
+> Two sources of the same fact, and the one that does not run is the one that
+> ages. Whoever wants to read the pinout reads the `VIAS`; whoever wants to know
+> whether the two halves match runs the `contrato_idc.py`.
 
-### O que NÃO está no gerador, e por isso fica escrito aqui
+### What is NOT in the generator, and so is written here
 
-O arranjo das terras não é estética, e é a única coisa desta secção que não se
-deduz da tabela:
+The arrangement of the grounds is not aesthetics, and it is the only thing in
+this section that is not deduced from the table:
 
-- **relógio do OLED guardado por terra dos dois lados** (vias 1 e 3);
-- **pots ensanduichados** por terra (23 e 26);
-- **LED em par próprio** (11/12 alimentação, 13/14 retorno).
+- **the OLED clock guarded by ground on both sides** (vias 1 and 3);
+- **pots sandwiched** by ground (23 and 26);
+- **LED in its own pair** (11/12 supply, 13/14 return).
 
-Com o painel aceso mediram-se **6 dB de chão na entrada**, e o caminho era este
-cabo. As oito terras que restam guardam todas uma destas três coisas — não há
-terra sobrante, e ceder uma tem custo conhecido.
+With the panel lit, **6 dB of floor** was measured at the input, and the path was
+this cable. The eight grounds that remain each guard one of these three things —
+there is no spare ground, and giving one up has a known cost.
 
 ---
 
-## 6 · O que ainda não se desenha
+## 6 · What is not drawn yet
 
-Footprints de **step-down, decoy, jacks, DPDT, EC11**: só com a peça na mão. Footprint suposto é respin.
+Footprints for **step-down, decoy, jacks, DPDT, EC11**: only with the part in hand. An assumed footprint is a respin.
 
-## 7 · Ordem
+## 7 · Order
 
-1. Atualizar o pré-amp (seguidor + DNP) → ERC 0
-2. Folha do soquete → ERC 0
-3. Folha do conector → ERC 0
-4. Projeto do painel → ERC 0
-5. Tabela via-a-via gerada dos dois projetos e conferida uma contra a outra
-6. Footprints, depois de medir as peças
-7. Layout **2 camadas** → DRC → render para veto → revisão de terra → Gerbers + BOM + CPL → 5 protos
+1. Update the pre-amp (follower + DNP) → ERC 0
+2. Socket sheet → ERC 0
+3. Connector sheet → ERC 0
+4. Panel project → ERC 0
+5. Via-by-via table generated from the two projects and checked against each other
+6. Footprints, after measuring the parts
+7. Layout **2 layers** → DRC → render for veto → ground review → Gerbers + BOM + CPL → 5 protos

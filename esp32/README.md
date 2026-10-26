@@ -1,108 +1,108 @@
-# esp32/ — a ponte BLE MIDI
+# esp32/ — the BLE MIDI bridge
 
-> **`ponte` v0.5.0** · ESP32-C3 SuperMini · substitui o WIDI Core 1.3.
-> A decisão está em [GEAR-AUDIT.md](../docs/operacao/GEAR-AUDIT.md) e o voo em
+> **`ponte` v0.5.0** · ESP32-C3 SuperMini · replaces the WIDI Core 1.3.
+> The decision is in [GEAR-AUDIT.md](../docs/operacao/GEAR-AUDIT.md) and the flight in
 > [VOO-ESP32-PONTE.md](../docs/operacao/VOO-ESP32-PONTE.md).
 
-**Esta placa é um fio com rádio.** Não conhece CC nenhum, param nenhum, canal
-nenhum. Se um dia precisar de saber o que uma mensagem *significa*, a fronteira
-engordou e a decisão inteira volta à mesa.
+**This board is a wire with a radio.** It knows no CC, no param, no
+channel. If one day it needs to know what a message *means*, the boundary
+has grown and the entire decision comes back to the table.
 
 ---
 
-## Fiação — cinco fios
+## Wiring — five wires
 
 | ESP32-C3 | Daisy | |
 |---|---|---|
-| `5V` | rail 5 V | aceita 4,3–6,0 V |
+| `5V` | 5 V rail | accepts 4.3–6.0 V |
 | `GND` | GND | |
-| `IO21` (TX) | **D14** (RX) | ★ CRUZADO |
-| `IO20` (RX) | **D13** (TX) | ★ CRUZADO |
-| `IO3` (status) | **D28** | **ativo em BAIXO** |
+| `IO21` (TX) | **D14** (RX) | ★ CROSSED |
+| `IO20` (RX) | **D13** (TX) | ★ CROSSED |
+| `IO3` (status) | **D28** | **active LOW** |
 
-> ⚠️ **Mudou a 21/09 (ponte v1.0.0), e é MAJOR.** Até à v0.5.0 eram
-> `GPIO4/5/6`, escolhidos aqui porque a ponte vivia em cinco fios soltos.
-> Desde a rev C o módulo entra no **soquete `U3`** e os pinos estão em cobre:
-> a placa passou a ser a fonte. Uma ponte com firmware antigo numa placa rev C
-> **liga no iPad e não entrega nada** — o rádio não usa estes pinos.
-> `tools/pinos_ponte.py` compara os dois e recusa se divergirem.
-| `GPIO8` | — | LED de bordo, só desta placa |
+> ⚠️ **Changed on 21/09 (ponte v1.0.0), and it is MAJOR.** Up to v0.5.0 they were
+> `GPIO4/5/6`, chosen here because the bridge lived on five loose wires.
+> Since rev C the module plugs into **socket `U3`** and the pins are in copper:
+> the board became the source. A bridge with old firmware on a rev C board
+> **connects to the iPad and delivers nothing** — the radio does not use these pins.
+> `tools/pinos_ponte.py` compares the two and refuses if they diverge.
+| `GPIO8` | — | onboard LED, this board only |
 
-**DADOS CRUZADOS.** Ligar reto não queima: dá silêncio, idêntico a módulo
-desligado. Se o `midi` da Daisy der 0 bytes, desconfiar do cruzamento **antes
-de tudo**. A cicatriz nasceu com o WIDI e aplica-se igual aqui.
+**CROSSED DATA.** Wiring it straight does not burn anything: it gives silence, identical to a
+disconnected module. If the Daisy's `midi` gives 0 bytes, suspect the crossing **before
+everything**. The scar was born with the WIDI and applies the same here.
 
-🔴 **A DAISY NÃO ARRANCA SEM ESTA PONTE LIGADA.** O `D14` dela é o RX da
-USART1 e, com a ponte fora, flutua com o DMA à escuta — o que prende a
-transmissão e trava o laço principal. Medido em 31/08. Ver
-[`HARDWARE.md`](../docs/operacao/HARDWARE.md) §4. **Defeito aberto do lado da
-Daisy; até lá, a ponte é requisito de arranque.**
+🔴 **THE DAISY DOES NOT BOOT WITHOUT THIS BRIDGE CONNECTED.** Its `D14` is the RX of
+USART1 and, with the bridge out, it floats with the DMA listening — which jams the
+transmission and locks the main loop. Measured on 31/08. See
+[`HARDWARE.md`](../docs/operacao/HARDWARE.md) §4. **Open defect on the
+Daisy side; until then, the bridge is a boot requirement.**
 
-🔌 **SCHOTTKY EM SÉRIE NA ALIMENTAÇÃO DO TRILHO — SS14 ou 1N5819.**
-Ânodo no trilho de 5 V, cátodo no pino `5V` desta placa.
+🔌 **SCHOTTKY IN SERIES ON THE RAIL SUPPLY — SS14 or 1N5819.**
+Anode on the 5 V rail, cathode on this board's `5V` pin.
 
-Nesta placa o `5V` liga ao **VBUS do USB directamente**, sem díodo de bordo.
-Sem o Schottky, o cabo USB **realimenta o trilho inteiro** — medido em 31/08:
-o LED do amp acendia com o powerbank desligado. Com o díodo, podes alimentar
-pelos dois sem consequência, e a regra abaixo deixa de ser necessária.
+On this board the `5V` connects to **USB VBUS directly**, with no onboard diode.
+Without the Schottky, the USB cable **feeds back into the whole rail** — measured on 31/08:
+the amp's LED lit with the powerbank off. With the diode, you can power
+from both with no consequence, and the rule below is no longer necessary.
 
-**Bancada, enquanto o díodo não estiver soldado: alimenta por USB *ou* pelo
-pino de 5 V, nunca os dois.**
+**Bench, while the diode is not soldered: power via USB *or* via the 5 V
+pin, never both.**
 
-⚠️ **DESACOPLAMENTO OBRIGATÓRIO — 100 µF + 100 nF nos pinos `5V`/`GND`.**
+⚠️ **MANDATORY DECOUPLING — 100 µF + 100 nF on the `5V`/`GND` pins.**
 
-📖 O porquê está em [`docs/operacao/ATERRAMENTO.md`](../docs/operacao/ATERRAMENTO.md) §4 e §7.
+📖 The why is in [`docs/operacao/ATERRAMENTO.md`](../docs/operacao/ATERRAMENTO.md) §4 and §7.
 
-Medido em 31/08: sem eles, **o rádio sai pelo exciter**. As rajadas de
-transmissão são picos de corrente de microssegundos, e sem reservatório local
-eles viram ondulação no trilho partilhado, que o amp amplifica.
+Measured on 31/08: without them, **the radio comes out through the exciter**. The
+transmission bursts are microsecond current spikes, and without a local reservoir
+they turn into ripple on the shared rail, which the amp amplifies.
 
-E o sintoma tem duas caras, o que o faz parecer dois defeitos:
+And the symptom has two faces, which makes it look like two defects:
 
-| estado do BLE | o que se ouve | por quê |
+| BLE state | what you hear | why |
 |---|---|---|
-| **conectado** | zumbido contínuo | rajadas no intervalo de ligação, rápidas |
-| **desconectado** | clique a ~3 Hz | rajadas no intervalo de anúncio, ~100–300 ms |
+| **connected** | continuous hum | bursts at the connection interval, fast |
+| **disconnected** | click at ~3 Hz | bursts at the advertising interval, ~100–300 ms |
 
-**E terra própria até ao ponto de estrela**, não pendurada na terra do
-step-down — um conversor comutado abana a própria terra, e quem se pendura
-nela herda o abanão.
+**And its own ground all the way to the star point**, not hung off the ground of the
+step-down — a switching converter shakes its own ground, and whoever hangs
+off it inherits the shake.
 
-**Não pôr 2200 µF aqui.** Ela vive na saída do step-down, e banco grande junto
-a conversor comutado é o caminho para oscilação — ver `HARDWARE.md`.
+**Do not put 2200 µF here.** It lives at the step-down's output, and a large bank next
+to a switching converter is the path to oscillation — see `HARDWARE.md`.
 
-### Por que estes GPIO
+### Why these GPIO
 
-A GPIO Matrix do C3 põe a UART em quase qualquer pino — o oposto da Daisy.
-Evitados: `GPIO20/21` (console UART0, preciso para depurar), `GPIO2/8/9`
-(strapping), `GPIO18/19` (USB nativo). O `GPIO8` é strapping mas só no instante
-do boot; depois disso é o LED de bordo e usa-se sem drama.
+The C3's GPIO Matrix puts the UART on almost any pin — the opposite of the Daisy.
+Avoided: `GPIO20/21` (console UART0, needed for debugging), `GPIO2/8/9`
+(strapping), `GPIO18/19` (native USB). `GPIO8` is strapping but only at the instant
+of boot; after that it is the onboard LED and is used without drama.
 
-### D28 é ativo em BAIXO, e não leva resistor
+### D28 is active LOW, and takes no resistor
 
-Medido no firmware da Daisy: `kLbAcesoEmBaixo = true` e o pino entra com
-`Pull::PULLUP`. Portanto **conectado = puxar a LOW; sem link = SOLTAR** e
-deixar o pull-up interno levar o pino a alto.
+Measured in the Daisy firmware: `kLbAcesoEmBaixo = true` and the pin comes up with
+`Pull::PULLUP`. Therefore **connected = pull LOW; no link = RELEASE** and
+let the internal pull-up take the pin high.
 
-Aberto-dreno por construção: a ponte nunca conduz alto. Assim *"sem link"* lê
-igual quer a placa esteja desligada, em boot, ou desconectada — e essa é a
-direção segura da falha.
+Open-drain by construction: the bridge never drives high. So *"no link"* reads
+the same whether the board is off, booting, or disconnected — and that is
+the safe direction of failure.
 
 ---
 
-## Gravar
+## Flashing
 
 ```bash
 arduino-cli compile --fqbn esp32:esp32:esp32c3:CDCOnBoot=cdc ponte
 arduino-cli upload -p /dev/cu.usbmodemXXXX --fqbn esp32:esp32:esp32c3:CDCOnBoot=cdc ponte
 ```
 
-`CDCOnBoot=cdc` **não é opcional**: sem ele o `Serial` sai pelo UART0 (GPIO20/21)
-em vez do USB, e o `board` fica invisível.
+`CDCOnBoot=cdc` **is not optional**: without it the `Serial` goes out through UART0 (GPIO20/21)
+instead of USB, and the `board` becomes invisible.
 
-### Ambiente que se sabe funcionar
+### Environment known to work
 
-| | versão |
+| | version |
 |---|---|
 | `arduino-cli` | homebrew |
 | core `esp32:esp32` | **3.1.1** |
@@ -110,13 +110,13 @@ em vez do USB, e o `board` fica invisível.
 | `BLE-MIDI` | **2.2.0** |
 | `NimBLE-Arduino` | **1.4.3** |
 
-⚠️ **NimBLE 2.x NÃO compila** com BLE-MIDI 2.2.0: o 2.x removeu
-`NimBLESecurity` e mudou a assinatura do `onWrite`. Se o `lib install` trouxer
-a 2.x, descer para a 1.4.3.
+⚠️ **NimBLE 2.x does NOT compile** with BLE-MIDI 2.2.0: 2.x removed
+`NimBLESecurity` and changed the `onWrite` signature. If `lib install` brings
+2.x, drop down to 1.4.3.
 
 ---
 
-## `board` — o que a ponte sabe sobre si própria
+## `board` — what the bridge knows about itself
 
 ```
 ponte v0.1.0 · BAUD 31250 · sem link
@@ -125,58 +125,58 @@ ponte v0.1.0 · BAUD 31250 · sem link
   msgs: BLE->ser 0 · ser->BLE 0 · TX sem espaco 0
 ```
 
-**As quedas trazem recência** — *"há quantos segundos"*, não só quantas. A
-pergunta que se faz numa galeria é *"está a cair agora?"*, e contagem sem o
-quando não é dado. De brinde, separa montagem de operação sem ninguém marcar
-nada: na montagem as quedas são densas e depois cessam.
+**The dropouts carry recency** — *"how many seconds ago"*, not just how many. The
+question you ask in a gallery is *"is it dropping now?"*, and a count without the
+when is not data. As a bonus, it separates assembly from operation without anyone marking
+anything: during assembly the dropouts are dense and then cease.
 
-**E sobrevivem ao corte de energia, desde a v0.5.0.** Viviam só em RAM, e isso
-tornava-as inúteis para a pergunta que importa numa galeria — *"caiu de
-madrugada?"*. Um piscar de energia, que é **uma das causas de queda**, zerava
-a testemunha da queda.
+**And they survive the power cut, since v0.5.0.** They lived only in RAM, and that
+made them useless for the question that matters in a gallery — *"did it drop in the
+early morning?"*. A power flicker, which is **one of the causes of a dropout**, zeroed out
+the witness of the dropout.
 
 ```
-quedas: 0 · nenhuma desde o boot        <- esta sessão: "está a cair AGORA?"
-desde sempre: 0 quedas em 4 arranques   <- NVS: "caiu enquanto eu não estava?"
+quedas: 0 · nenhuma desde o boot        <- this session: "is it dropping NOW?"
+desde sempre: 0 quedas em 4 arranques   <- NVS: "did it drop while I was away?"
 ```
 
-`arranques` separa as duas leituras: vida alta **com** arranques altos é
-energia instável, não rádio instável. `zera` apaga a memória de vida.
+`arranques` separates the two readings: a high lifetime **with** a high boot count is
+unstable power, not an unstable radio. `zera` erases the lifetime memory.
 
-⚠️ **Não se escreve a cada queda**, por duas razões independentes: a NVS tem
-endurance finita e a peça fica meses ligada; e o callback de desconexão corre
-no contexto do stack BLE, onde escrever flash é trabalho longo no sítio
-errado. A queda **marca**, e o laço escreve — no máximo a cada 10 s. O `board`
-mostra `(por gravar)` enquanto há coisa pendente.
+⚠️ **It is not written on every dropout**, for two independent reasons: the NVS has
+finite endurance and the piece stays on for months; and the disconnect callback runs
+in the context of the BLE stack, where writing flash is long work in the wrong
+place. The dropout **marks**, and the loop writes — at most every 10 s. The `board`
+shows `(por gravar)` while there is something pending.
 
-**`TX sem espaço` conta e não cala.** O BLE entrega mais depressa do que 31250
-baud escoa, logo o gargalo é o buffer e não o rádio — e a maior rajada do
-sistema é conhecida: o `sync` da Daisy manda 86 CCs = 258 bytes ≈ 82 ms de
-UART. O buffer é de 1024, folga de 4×.
+**`TX sem espaço` counts and does not stay quiet.** The BLE delivers faster than 31250
+baud drains, so the bottleneck is the buffer and not the radio — and the system's biggest burst
+is known: the Daisy's `sync` sends 86 CCs = 258 bytes ≈ 82 ms of
+UART. The buffer is 1024, a 4× margin.
 
 ---
 
-## O baud é convenção, e defende-se por procedimento
+## The baud is a convention, and is defended by procedure
 
-**31250 8N1.** A ponte só passa bytes, logo **não há aperto de mão de versão**
-entre as duas placas — e não há de propósito: um handshake obrigaria esta placa
-a falar por conta própria no fluxo, e aí deixa de ser fio e vira autora, com
-janela de autoria e mensagem sem gesto humano.
+**31250 8N1.** The bridge only passes bytes, so **there is no version handshake**
+between the two boards — and there is none on purpose: a handshake would force this board
+to speak on its own account in the stream, and then it stops being a wire and becomes an author, with
+an authorship window and a message with no human gesture.
 
-O preço assumido é que a fronteira fina **não se consegue verificar a si
-própria**. A defesa é procedimental e visível: o número vive neste README, no
-README da Daisy, e sai no `board` de cada lado. **Mudar é MAJOR nos dois.**
+The assumed price is that the thin boundary **cannot verify
+itself**. The defense is procedural and visible: the number lives in this README, in the
+Daisy's README, and comes out in the `board` on each side. **Changing it is MAJOR on both.**
 
-> Enquanto a ponte só passar bytes, não há aperto de mão; se ela engordar por
-> outro motivo, o argumento cai e o handshake volta com o custo já pago.
+> As long as the bridge only passes bytes, there is no handshake; if it grows for
+> another reason, the argument falls and the handshake comes back with the cost already paid.
 
 ---
 
-## Uma precisão sobre "passa bytes"
+## A clarification about "passes bytes"
 
-O BLE MIDI é **enquadrado**: cada pacote leva um header e timestamps
-intercalados. Desenquadrar é obrigatório — não há como não o fazer. Então a
-ponte trabalha ao nível da **mensagem**: recebe, e reemite igual do outro lado.
+BLE MIDI is **framed**: each packet carries a header and timestamps
+interleaved. De-framing is mandatory — there is no way not to do it. So the
+bridge works at the **message** level: it receives, and re-emits the same on the other side.
 
-O que ela não faz é interpretar o **sentido**. Não há tabela, não há número de
-CC escrito em lado nenhum deste código, e é essa a propriedade que interessa.
+What it does not do is interpret the **meaning**. There is no table, no number of
+CC written anywhere in this code, and that is the property that matters.

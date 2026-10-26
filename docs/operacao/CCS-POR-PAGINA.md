@@ -1,33 +1,34 @@
-# CCs por página — Loopy Pro
+# CCs per page — Loopy Pro
 
-> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
-> gerador o escreve — foi feito à mão a partir do `manifest.h` **v0.85.0 · firmware v0.178.0**, e o
-> manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
-> como espelho do actual.
+> ⚠️ **NOT GENERATED, despite this sheet having said so until 06/09.** No
+> generator writes it — it was made by hand from the `manifest.h`
+> **v0.85.0 · firmware v0.178.0**, and the manifest is today at **v1.13.0**.
+> Treat it as a record of that state, not as a mirror of the current one.
 >
-> Rótulo sem gerador apodrece com autoridade: ninguém o mantém à mão *porque
-> é gerado*, e nada o regenera *porque não há gerador*. Ou se lhe escreve um,
-> ou se lhe tira o rótulo — isto é a segunda.
+> A label with no generator rots with authority: nobody maintains it by hand
+> *because it is generated*, and nothing regenerates it *because there is no
+> generator*. Either you write it one, or you take the label away — this is the
+> second.
 
-## A regra
+## The rule
 
 ```
-MANDA    ch1 compartilhados · ch2 cadeia A · ch3 cadeia B
-ESCUTA   ch4 compartilhados · ch5 cadeia A · ch6 cadeia B
+SEND     ch1 shared · ch2 chain A · ch3 chain B
+LISTEN   ch4 shared · ch5 chain A · ch6 chain B
 ```
-**Escuta = manda + 3.** O número do CC é o mesmo nos seis.
+**Listen = send + 3.** The CC number is the same on all six.
 
-⚠️ **Compartilhado nunca entra em página que se duplica.** Foi o único
-padrão de erro da sessão: `dly_time` e `shift_hz` viajaram junto com a
-cadeia A e apareceram no canal errado.
+⚠️ **A shared one never enters a page that gets duplicated.** It was the
+session's only error pattern: `dly_time` and `shift_hz` traveled along with
+chain A and appeared on the wrong channel.
 
 
 ## CENTRAL
 
-Mistura de piezos, ganho, porta e nível. **Contém compartilhados** —
-não duplicar esta página.
+Piezo mix, gain, gate and level. **Contains shared ones** —
+do not duplicate this page.
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 20 | ch1 | ch4 | `piezo_mix` |
 | 64 | ch1 | ch4 | `dly_time` |
@@ -41,9 +42,9 @@ não duplicar esta página.
 
 ## MOD A
 
-Drive, phaser e warble da **cadeia A**.
+Drive, phaser and warble of **chain A**.
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 30 | ch2 | ch5 | `drv_on_a` |
 | 31 | ch2 | ch5 | `drv_mix_a` |
@@ -66,9 +67,9 @@ Drive, phaser e warble da **cadeia A**.
 
 ## MOD B
 
-**Cópia da MOD A com o canal em 3.** Mesmos números.
+**Copy of MOD A with the channel at 3.** Same numbers.
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 30 | ch3 | ch6 | `drv_on_b` |
 | 31 | ch3 | ch6 | `drv_mix_b` |
@@ -91,9 +92,9 @@ Drive, phaser e warble da **cadeia A**.
 
 ## TIME A
 
-Delay, freeze, reverb e shimmer da **cadeia A**.
+Delay, freeze, reverb and shimmer of **chain A**.
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 60 | ch2 | ch5 | `dly_on_a` |
 | 61 | ch2 | ch5 | `dly_mix_a` |
@@ -114,12 +115,12 @@ Delay, freeze, reverb e shimmer da **cadeia A**.
 
 ## TIME B
 
-**Cópia da TIME A com o canal em 3.** Mesmos números.
+**Copy of TIME A with the channel at 3.** Same numbers.
 
-⚠️ O `dly_time` (cc64) é **compartilhado** e mora na **CENTRAL**.
-Não entra nesta cópia — foi o padrão de erro da sessão de 24/08.
+⚠️ The `dly_time` (cc64) is **shared** and lives in **CENTRAL**.
+It does not enter this copy — it was the error pattern of the 24/08 session.
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 60 | ch3 | ch6 | `dly_on_b` |
 | 61 | ch3 | ch6 | `dly_mix_b` |
@@ -140,9 +141,9 @@ Não entra nesta cópia — foi o padrão de erro da sessão de 24/08.
 
 ## RANDOM
 
-Os búzios. Todos compartilhados, ch1.
+The cowrie shells. All shared, ch1.
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 90 | ch1 | ch4 | `buzios_on` |
 | 91 | ch1 | ch4 | `buzios_thresh` |
@@ -152,10 +153,10 @@ Os búzios. Todos compartilhados, ch1.
 
 ## TECH
 
-Tom de teste, exciter, governor, roteamento e boost de bancada.
-**Mistura compartilhados e pareados** — não duplicar inteira.
+Test tone, exciter, governor, routing and bench boost.
+**Mixes shared and paired ones** — do not duplicate the whole thing.
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 93 | ch1 | ch4 | `tone_freq` |
 | 94 | ch1 | ch4 | `tone_mix` |
@@ -173,12 +174,12 @@ Tom de teste, exciter, governor, roteamento e boost de bancada.
 | 115 | ch2 | ch5 | `bench_boost_l` |
 | 115 | ch3 | ch6 | `bench_boost_r` |
 
-*15 widgets*  ·  **+2 pareados novos: `route_a_l`/`route_b_l` cc97, `route_a_r`/`route_b_r` cc98**
+*15 widgets*  ·  **+2 new paired ones: `route_a_l`/`route_b_l` cc97, `route_a_r`/`route_b_r` cc98**
 
-## Compartilhados, a lista fechada
+## Shared ones, the closed list
 
-Existem **uma vez só**, sempre no ch1, e **nunca** entram em página que
-se duplica:
+They exist **only once**, always on ch1, and **never** enter a page that
+gets duplicated:
 
 - `piezo_mix` — cc20
 - `dly_time` — cc64
@@ -194,20 +195,19 @@ se duplica:
 - `out_l` — cc113
 - `out_r` — cc114
 
-**13 compartilhados · 78 pareados · 91 vínculos**
+**13 shared · 78 paired · 91 bindings**
 
-### A matriz de roteamento — cc97 / cc98
+### The routing matrix — cc97 / cc98
 
-Pareados como qualquer outro: **o CC diz a SAÍDA, o canal diz a CADEIA.**
+Paired like any other: **the CC says the OUTPUT, the channel says the CHAIN.**
 
 | CC | ch2 (A) | ch3 (B) |
 |---|---|---|
 | **97** | `route_a_l` | `route_b_l` |
 | **98** | `route_a_r` | `route_b_r` |
 
-Quatro interruptores em dois números. Todos nascem **ligados**, que é o
-que reproduz o som anterior à matriz. Desligar `route_a_r` e `route_b_l`
-deixa a cadeia A só na saída L e a B só na R; trocar as duas colunas
-**inverte as cadeias** — que é para o que ela existe, quando os
-transdutores estão ligados ao contrário.
-
+Four switches in two numbers. They are all born **on**, which is
+what reproduces the sound from before the matrix. Turning off `route_a_r` and
+`route_b_l` leaves chain A only on output L and B only on R; swapping the two
+columns **inverts the chains** — which is what it exists for, when the
+transducers are wired backwards.

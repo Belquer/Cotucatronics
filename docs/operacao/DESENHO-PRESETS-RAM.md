@@ -1,162 +1,162 @@
-# Desenho — biblioteca de presets em RAM
+# Design — preset library in RAM
 
-> **Estado: passos 1–3 IMPLEMENTADOS e provados na placa (23/08, v0.148.0);
-> passos 4–5 pendentes.** O ciclo `capturar → dump → reset → colar → load`
-> fecha com 33 params e zero recusas. Escrito enquanto o aceite de hardware
-> corre, de propósito: é trabalho de cabeça, não toca o firmware e não captura
-> estado nenhum, então não corre o risco de congelar um endereçamento
-> não-validado. Ver `ACEITE-MULTIPLEXACAO.md`.
+> **Status: steps 1–3 IMPLEMENTED and proven on the board (23/08, v0.148.0);
+> steps 4–5 pending.** The cycle `capturar → dump → reset → paste → load`
+> closes with 33 params and zero refusals. Written while the hardware acceptance
+> runs, on purpose: it is head work, it does not touch the firmware and it captures
+> no state, so it does not run the risk of freezing an unvalidated
+> addressing. See `ACEITE-MULTIPLEXACAO.md`.
 >
-> Complementa `PRESETS.md` (aprovado 22/08) com as decisões de estrutura.
+> Complements `PRESETS.md` (approved 22/08) with the structure decisions.
 
-## 0. Três correções de contagem, antes de qualquer decisão
+## 0. Three count corrections, before any decision
 
-**a) São 37 famílias por cadeia, não 33.** A estimativa era 23 originais + 10
-cópias de caráter. O real é **27 + 10 = 37** — contado do manifest, não de
-memória.
+**a) There are 37 families per chain, not 33.** The estimate was 23 originals + 10
+character copies. The real figure is **27 + 10 = 37** — counted from the manifest, not from
+memory.
 
-**b) A DTCM não está apertada: está vazia.** A premissa era que `.bss` na DTCM
-concorreria com o que já está lá. O relatório do linker diz outra coisa:
+**b) The DTCM is not tight: it is empty.** The premise was that `.bss` in the DTCM
+would compete with what is already there. The linker report says otherwise:
 
     DTCMRAM:        0 B / 128 KB      0.00%
     SRAM (AXI):   281 KB / 512 KB    53.73%
 
-O `.bss` cai na **SRAM**, não na DTCM — o script tem uma seção
-`.dtcmram_bss` separada, e **nada a usa**. Os 281 KB da SRAM são quase todos
+The `.bss` falls in the **SRAM**, not in the DTCM — the script has a separate
+`.dtcmram_bss` section, and **nothing uses it**. The 281 KB of SRAM are almost all
 `reverb_mem` (225 KB).
 
-**c) O `sync` não abre a janela de autoria.** Achado ao investigar o ponto 3,
-e vale para o firmware de hoje, não só para o desenho — ver §3.
+**c) `sync` does not open the authorship window.** Found while investigating point 3, and
+it holds for today's firmware, not only for the design — see §3.
 
-## 1. O que entra num preset de cadeia
+## 1. What goes into a chain preset
 
-O critério, que é do dB e resolve os casos difíceis sozinho:
+The criterion, which is dB's and resolves the hard cases by itself:
 
-> **Preset guarda intenção musical — não estado de hardware, nem ferramenta de
-> medição.**
+> **A preset stores musical intent — not hardware state, nor a measurement
+> tool.**
 
-Aplicado às 37 famílias, ele exclui **quatro**, não duas:
+Applied to the 37 families, it excludes **four**, not two:
 
-| fora | por quê |
+| out | why |
 |---|---|
-| `exc_on` | **estado físico.** Vai virar leitura dos DPDT em D29/D30 — um preset que o escrevesse tentaria mudar uma chave de metal |
-| `bench_boost` | **ferramenta de medição.** É bancada |
-| `gov_ceiling` | **calibração de hardware.** O manifest já diz por quê: *"cada amp e cada exciter tem ganho e acoplamento próprios, então o teto útil difere"* — é propriedade do ramo físico, não da música |
-| `gov_release` | idem |
+| `exc_on` | **physical state.** It will become a read of the DPDTs on D29/D30 — a preset that wrote it would try to change a metal switch |
+| `bench_boost` | **measurement tool.** It is bench |
+| `gov_ceiling` | **hardware calibration.** The manifest already says why: *"each amp and each exciter has its own gain and coupling, so the useful ceiling differs"* — it is a property of the physical branch, not of the music |
+| `gov_release` | likewise |
 
-As duas últimas são a extensão consistente do mesmo argumento que exclui o
-`bench_boost`. Um preset "corda-shimmer" carregado numa escultura com outro
-exciter levaria junto um teto de proteção **calibrado para outro corpo** — e a
-proteção é o subsistema onde estar errado é mais caro.
+The last two are the consistent extension of the same argument that excludes the
+`bench_boost`. A "string-shimmer" preset loaded into a sculpture with a different
+exciter would carry along a protection ceiling **calibrated for another body** — and
+protection is the subsystem where being wrong is most expensive.
 
-**Preset de cadeia = 33 params.** Um byte cada (normalizado 0–127, a mesma
-resolução que o MIDI entrega e que o `set` refina quando alguém precisa).
+**Chain preset = 33 params.** One byte each (normalized 0–127, the same
+resolution MIDI delivers and that `set` refines when someone needs it).
 
-## 2. O que entra no preset global
+## 2. What goes into the global preset
 
-Dos 12 compartilhados, o mesmo critério exclui **três**:
+Of the 12 shared ones, the same criterion excludes **three**:
 
-| fora | por quê |
+| out | why |
 |---|---|
-| `tone_freq`, `tone_mix`, `tone_dest` | **o tom de teste é bancada.** Um preset que o ligasse poria uma senoide no meio da peça |
+| `tone_freq`, `tone_mix`, `tone_dest` | **the test tone is bench.** A preset that turned it on would put a sine wave in the middle of the piece |
 
 <!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
 <!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
-**Preset global = 9 params:** `level`, `piezo_mix`, `dly_time`,
+**Global preset = 9 params:** `level`, `piezo_mix`, `dly_time`,
 `out_l`, `out_r`, `shift_hz`, `buzios_on`, `buzios_thresh`,
 `buzios_cooldown`.
 
-⚠️ **`out_*` fica, com a tensão anotada.** É topologia de saída, o que soa
-como hardware — mas *qual ramo está vivo* é decisão de performance, e o
-desenho aprovado o inclui. (Chamavam-se `route_exciter`/`route_jack` até
-28/08; o DPDT de três posições tornou esses nomes falsos.)
+⚠️ **`out_*` stays, with the tension noted.** It is output topology, which sounds
+like hardware — but *which branch is live* is a performance decision, and the
+approved design includes it. (They were called `route_exciter`/`route_jack` until
+28/08; the three-position DPDT made those names false.)
 
-🚫 **A matriz `route_*` NÃO entra, e a razão é outra.** Ela compensa como os
-transdutores estão LIGADOS — facto de fiação. Dentro do preset, cada preset
-carregaria a fiação, e desandar um fio obrigaria a regravar a biblioteca
-inteira: a mesma família do *"corda existiria duas vezes"* que fez a
-biblioteca ser UMA.
+🚫 **The matrix `route_*` does NOT go in, and the reason is another.** It compensates for how the
+transducers are WIRED — a fact of wiring. Inside the preset, each preset
+would carry the wiring, and undoing a wire would force re-recording the whole
+library: the same family as the *"string would exist twice"* that made the
+library be ONE.
 
-E ela **cai na regra do sufixo** se ninguém a excluir: `route_l_a` acaba em
-`_a`, logo sem a excepção em `presets.h` entraria sozinha nos presets de
-**cadeia** — o pior dos dois destinos possíveis.
+And it **falls under the suffix rule** if no one excludes it: `route_l_a` ends in
+`_a`, so without the exception in `presets.h` it would enter the **chain**
+presets on its own — the worst of the two possible destinations.
 
-**Global slot 0 = estado de boot**, que é o que mata o `level` nascendo em 0.
+**Global slot 0 = boot state**, which is what kills `level` being born at 0.
 
-## 3. `load`, a janela de autoria, e um defeito que já existe
+## 3. `load`, the authorship window, and a defect that already exists
 
-### O defeito de hoje: `sync` não abre a janela
+### Today's defect: `sync` does not open the window
 
-`MidiEspelha()` escreve `quiet_until[id]` a cada mensagem. **`MidiPushEstado()`
-— o `sync` — não escreve nenhuma.** Manda as 86 e sai.
+`MidiEspelha()` writes `quiet_until[id]` on every message. **`MidiPushEstado()`
+— the `sync` — writes none.** It sends the 86 and leaves.
 
-Como widget de toggle devolve o *estado dele* (que é exatamente o motivo de a
-janela existir), depois de um `sync` a placa **obedece o eco**. O `eco_ult`
-impede o espelho de reenviar; não impede a entrada de aceitar.
+Since a toggle widget returns *its own state* (which is exactly why the
+window exists), after a `sync` the board **obeys the echo**. The `eco_ult`
+keeps the mirror from resending; it does not keep the input from accepting.
 
-**Não é hipótese de desenho — é o firmware atual.** Consertar é uma linha, mas
-não com a bancada em curso.
+**It is not a design hypothesis — it is the current firmware.** Fixing it is one line, but
+not with the bench in progress.
 
-### O que `load` acrescenta
+### What `load` adds
 
-Carregar escreve 33 params de uma vez. Se cada um anunciar, são **33 janelas
-abrindo juntas** e 33 mensagens no fio.
+Loading writes 33 params at once. If each one announces, that is **33 windows
+opening together** and 33 messages on the wire.
 
-**Custo do despejo, medido pelo que já existe:** o `sync` gasta
-`hal::DelayMs(3)` por mensagem × 86 = **258 ms de loop bloqueado**. E o
-comentário ao lado dele ainda diz *"despejar 12 CCs"* — foi escrito quando o
-mapa tinha 12, e o bloqueio cresceu 7× em silêncio. É o achado 5 do audit
-reincidindo por crescimento, não por edição.
+**Cost of the dump, measured by what already exists:** `sync` spends
+`hal::DelayMs(3)` per message × 86 = **258 ms of blocked loop**. And the
+comment next to it still says *"dump 12 CCs"* — it was written when the
+map had 12, and the block grew 7× in silence. It is finding 5 of the audit
+recurring through growth, not through editing.
 
-### A decisão
+### The decision
 
-**`load` NÃO usa o caminho do `sync`.** Marca os 33 params como sujos e deixa o
-espelho normal escoá-los na cadência dele — duas mensagens a cada 8 ms, sem
-bloquear o loop. 33 params levam ~132 ms de escoamento **sem parar nada**,
-contra 99 ms de loop travado se fosse despejo.
+**`load` does NOT use the `sync` path.** It marks the 33 params dirty and lets the
+normal mirror drain them at its own cadence — two messages every 8 ms, without
+blocking the loop. 33 params take ~132 ms of draining **without stopping anything**,
+against 99 ms of a locked loop if it were a dump.
 
-    load  ->  escreve os params
-          ->  abre quiet_until[p] para os 33, DE UMA VEZ
-          ->  marca sujo; o espelho escoa 2 por 8 ms
-          ->  drenagem de entrada de 300 ms (o mecanismo já existe)
+    load  ->  writes the params
+          ->  opens quiet_until[p] for the 33, ALL AT ONCE
+          ->  marks dirty; the mirror drains 2 per 8 ms
+          ->  input drain of 300 ms (the mechanism already exists)
 
-**Por que a janela abre no `load` e não à medida que o espelho manda:** o
-gesto autônomo é o `load`, não cada mensagem. Se a janela abrisse só quando a
-mensagem saísse, o widget que ecoasse no milissegundo 5 — antes de a mensagem
-dele ter saído — seria obedecido, e o `load` seria desfeito pela metade.
+**Why the window opens on `load` and not as the mirror sends:** the
+autonomous gesture is the `load`, not each message. If the window opened only when the
+message went out, the widget that echoed on millisecond 5 — before its
+message had gone out — would be obeyed, and the `load` would be undone halfway.
 
-**A drenagem existe e serve aqui sem mudança:** é o mesmo problema da 13n com
-outro gatilho — o instrumento acabou de mudar sozinho, e o que chegar nos
-próximos 300 ms é reação, não intenção.
+**The drain exists and serves here with no change:** it is the same problem as the 13n with
+a different trigger — the instrument just changed on its own, and what arrives in the
+next 300 ms is a reaction, not intent.
 
-## 4. Onde a biblioteca mora
+## 4. Where the library lives
 
-**`.bss` → SRAM (AXI), explicitamente, e não na DTCM.** A razão não é
-capacidade — cabe em qualquer uma:
+**`.bss` → SRAM (AXI), explicitly, and not in the DTCM.** The reason is not
+capacity — it fits in either:
 
-    16 presets de cadeia × 33 B  =    528 B
-     8 presets globais  ×  9 B   =     72 B
-    cabeçalhos + índices          ≈    128 B
+    16 chain presets  × 33 B  =    528 B
+     8 global presets  ×  9 B  =     72 B
+    headers + indexes          ≈    128 B
     ------------------------------------------
-    total                         ≈    728 B
+    total                      ≈    728 B
 
-É **por uso**: a biblioteca é fria — lida no `load`, escrita no `capturar`,
-nunca tocada no callback de áudio. A DTCM é a RAM sem espera e sem cache do
-núcleo, e gastá-la com armazenamento frio é desperdiçar a única memória que
-ainda pode salvar um caminho quente.
+It is **by usage**: the library is cold — read on `load`, written on `capturar`,
+never touched in the audio callback. The DTCM is the core's RAM with no wait state and no
+cache, and spending it on cold storage is wasting the only memory that
+could still save a hot path.
 
-> **Anotado para outra ocasião, não para agora:** 128 KB de DTCM inteiramente
-> ociosos enquanto 225 KB de `reverb_mem` vivem na SRAM é uma assimetria que
-> merece medição própria — com A/B no mesmo binário, porque nesta placa delta
-> entre builds pode ser 25% (cicatriz 12d). Não é escopo dos presets.
+> **Noted for another occasion, not for now:** 128 KB of DTCM entirely
+> idle while 225 KB of `reverb_mem` live in the SRAM is an asymmetry that
+> deserves a measurement of its own — with A/B in the same binary, because on this board the delta
+> between builds can be 25% (scar 12d). It is not in the presets' scope.
 
-## 5. O cabeçalho, e a lição da travessia
+## 5. The header, and the lesson of the crossing
 
-> **Provar que a configuração nova é segura não prova que a travessia é.**
+> **Proving that the new configuration is safe does not prove that the crossing is.**
 
-Um preset capturado hoje e carregado depois de um remapeamento escreve valores
-nos params errados: é **exatamente o fantasma mal-endereçado da 13n, com
-atraso de semanas** — e pior, porque não há sequer um fio para suspeitar.
+A preset captured today and loaded after a remap writes values
+to the wrong params: it is **exactly the misaddressed ghost of the 13n, with a
+delay of weeks** — and worse, because there is not even a wire to suspect.
 
 ```
 struct PresetHeader
@@ -170,63 +170,63 @@ struct PresetHeader
 };
 ```
 
-### O `formato` é a travessia noutra dimensão
+### The `formato` is the crossing in another dimension
 
-Os vereditos cobrem arquivo trocado, remapeamento e corrupção. **Nenhum
-cobria "o cabeçalho ganhou um campo entre a gravação e a leitura."** Um preset
-gravado com o layout v1 e lido por um firmware v2 é interpretado com
-**deslocamento**: passa no magic, falha no checksum, e reporta *corrupção*
-para um caso de migração de formato — mandando caçar a coisa errada.
+The verdicts cover a swapped file, a remap and corruption. **None
+covered "the header gained a field between the writing and the reading."** A preset
+written with the v1 layout and read by a v2 firmware is interpreted with
+**an offset**: it passes the magic, fails the checksum, and reports *corruption*
+for a format-migration case — sending you to hunt for the wrong thing.
 
-**Convenção, e ela vive ao lado do campo porque em outro lugar ninguém
-lembraria:** toda mudança no layout do `PresetHeader`, ou na ordem/largura do
-payload, incrementa `kFormato`.
+**A convention, and it lives next to the field because in another place no one would
+remember it:** every change to the layout of `PresetHeader`, or to the order/width of
+the payload, increments `kFormato`.
 
-### A ORDEM das conferências decide o diagnóstico
+### The ORDER of the checks decides the diagnosis
 
-O checksum cobre o **cabeçalho**, e tem que cobrir — um bit trocado no campo
-do hash produz *"gravado sob outro mapa"*, que é uma frase **plausível**, e o
-operador vai procurar um remapeamento que nunca houve.
+The checksum covers the **header**, and it has to — a flipped bit in the hash
+field produces *"written under another map"*, which is a **plausible** sentence, and
+the operator will go looking for a remap that never happened.
 
-Daí a regra: **não se confia em nenhum campo antes de o checksum passar.**
+Hence the rule: **no field is trusted before the checksum passes.**
 
-    1. magic     -> arquivo trocado         (mais barato e mais específico)
-    2. formato   -> migração de recipiente  (o layout mudou sob os pés)
-    3. tamanho   -> incoerente              (sem isto não há o que somar)
-    4. checksum  -> corrupção               (antes de confiar em campo algum)
-    5. mapa      -> remapeamento            (agora o campo é confiável)
-    6. contagem  -> de que lado procurar
+    1. magic     -> swapped file          (cheapest and most specific)
+    2. format    -> container migration   (the layout changed under your feet)
+    3. size      -> inconsistent          (without this there is nothing to sum)
+    4. checksum  -> corruption            (before trusting any field)
+    5. map       -> remap                 (now the field is trustworthy)
+    6. count     -> which side to look on
 
-Os três primeiros vêm antes do checksum pelo mesmo motivo: são
-**pré-condições para a conta existir**.
+The first three come before the checksum for the same reason: they are
+**preconditions for the sum to exist**.
 
-O banco prova o **par**, não só a metade: campo do hash corrompido lê como
-corrupção, **e** um remapeamento real com cabeçalho íntegro continua lendo
-como remapeamento. Sem o gêmeo, a ordem nova poderia mascarar tudo como
-corrupção e o primeiro teste passaria igual.
+The bank proves the **pair**, not just the half: a corrupted hash field reads as
+corruption, **and** a real remap with an intact header still reads
+as a remap. Without the twin, the new order could mask everything as
+corruption and the first test would pass just the same.
 
-### A versão do mapa é DERIVADA, não incrementada
+### The map version is DERIVED, not incremented
 
-**Número que alguém precisa lembrar de subir é número que não sobe.** A versão
-é um hash (FNV-1a de 16 bits) da concatenação dos **nomes dos params na
-ordem**, calculado no `Init`:
+**A number someone has to remember to bump is a number that does not get bumped.** The version
+is a hash (16-bit FNV-1a) of the concatenation of the **param names in
+order**, computed in `Init`:
 
-- renomear um param muda o hash;
-- reordenar muda o hash;
-- acrescentar ou remover muda o hash;
-- **mudar só a faixa de um param NÃO muda** — e isso é correto, porque o
-  preset guarda o normalizado, que sobrevive a uma mudança de faixa.
+- renaming a param changes the hash;
+- reordering changes the hash;
+- adding or removing changes the hash;
+- **changing only a param's range does NOT change it** — and that is correct, because the
+  preset stores the normalized value, which survives a range change.
 
-O último ponto é a razão de o hash ser sobre nomes e não sobre a tabela
-inteira: um hash largo demais recusaria presets bons e ensinaria o operador a
-ignorar a recusa.
+The last point is the reason the hash is over names and not over the whole
+table: a hash that was too broad would refuse good presets and teach the operator to
+ignore the refusal.
 
-### `n_params` é redundante de propósito
+### `n_params` is redundant on purpose
 
-O hash já cobriria. A contagem existe porque **um hash que não bate não diz o
-que mudou**, e a contagem diz de que lado procurar. Custa um byte.
+The hash would already cover it. The count exists because **a hash that does not match does not say
+what changed**, and the count says which side to look on. It costs one byte.
 
-### A recusa é gritada, e o que ela diz
+### The refusal is shouted, and here is what it says
 
 ```
 PRESET RECUSADO: gravado sob o mapa 0x4F2A, este firmware e 0x91C7.
@@ -235,11 +235,11 @@ PRESET RECUSADO: gravado sob o mapa 0x4F2A, este firmware e 0x91C7.
   Nada foi carregado. `preset dump` do arquivo velho ainda funciona.
 ```
 
-**Recusar sem dizer o que fazer é recusar pela metade.** A última linha
-importa: o texto continua legível, então nada se perdeu — o caminho é editar
-os nomes no arquivo e recarregar.
+**Refusing without saying what to do is refusing halfway.** The last line
+matters: the text is still legible, so nothing was lost — the way is to edit
+the names in the file and reload.
 
-## 6. O formato de texto, e por que ele é a curadoria inteira
+## 6. The text format, and why it is the whole curation
 
 ```
 # presets.txt — biblioteca de cadeia · mapa 0x91C7
@@ -247,31 +247,31 @@ os nomes no arquivo e recarregar.
 2  tambor-seco     in_gain=71 gate_thresh=40 drv_on=1 ... rev_on=1 rev_size=30
 ```
 
-**Por NOME, não por posição.** Um formato posicional seria mais curto e
-transformaria qualquer reordenação do manifest em corrupção silenciosa — o
-mesmo defeito do cabeçalho, movido para dentro da linha.
+**By NAME, not by position.** A positional format would be shorter and
+would turn any reordering of the manifest into silent corruption — the
+same defect as the header, moved inside the line.
 
-Reordenar = mover linha · renomear = editar texto · deletar = apagar linha ·
-**versionar = git · backup = grátis · levar pro próximo instrumento = copiar.**
+Reorder = move a line · rename = edit text · delete = delete a line ·
+**version = git · backup = free · take to the next instrument = copy.**
 
-Mesma filosofia do manifest: *identidade do instrumento é dado, não código.*
+Same philosophy as the manifest: *the instrument's identity is data, not code.*
 
-## 7. Ordem de implementação, e o que cada passo pode provar sozinho
+## 7. Order of implementation, and what each step can prove on its own
 
-**FEITO (v0.148.0):** 1, 2 e 3. **Falta:** ponteiros com pré-escuta (4) e OLED (5).
+**DONE (v0.148.0):** 1, 2 and 3. **Remaining:** pointers with pre-listen (4) and OLED (5).
 
-1. **Estruturas + hash do mapa.** Prova: o hash muda ao renomear um param, e
-   não muda ao mexer numa faixa. Banco nativo, sem placa.
-2. **`capturar` + `preset list`.** Prova: capturar duas vezes com um `set` no
-   meio dá presets diferentes.
-3. **`preset dump` / `preset load` por serial.** Prova: `dump` → editar → `load`
-   → `list` reproduz o editado. E um `load` com mapa adulterado é recusado
-   gritando — **exercitar a recusa, senão ela é hipótese**.
-4. **Ponteiros A/B + `load` com janela e drenagem.** Prova: carregar não é
-   desfeito pelo eco dos widgets (o teste é o `vistos` e o `cc_janela` depois
-   de um `load` com o iPad ligado).
-5. **OLED**, quando o painel soldar.
+1. **Structures + map hash.** Proof: the hash changes on renaming a param, and
+   does not change on touching a range. Native bench, no board.
+2. **`capturar` + `preset list`.** Proof: capturing twice with a `set` in
+   between gives different presets.
+3. **`preset dump` / `preset load` over serial.** Proof: `dump` → edit → `load`
+   → `list` reproduces what was edited. And a `load` with a tampered map is refused
+   shouting — **exercise the refusal, otherwise it is a hypothesis**.
+4. **A/B pointers + `load` with window and drain.** Proof: loading is not
+   undone by the widgets' echo (the test is `vistos` and `cc_janela` after
+   a `load` with the iPad connected).
+5. **OLED**, when the panel is soldered.
 
-**Antes do passo 4, consertar o `sync`** — ele tem o mesmo defeito que o
-`load` precisa não ter, e é mais barato provar o conserto no `sync`, que já
-existe, do que no `load`, que ainda não.
+**Before step 4, fix the `sync`** — it has the same defect that
+`load` must not have, and it is cheaper to prove the fix on `sync`, which already
+exists, than on `load`, which does not yet.

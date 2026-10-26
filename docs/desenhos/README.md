@@ -1,109 +1,111 @@
-# Desenhos técnicos
-<!-- doc-check: ignore build_sheet (nome de um SVG em docs/operacao/esquematicos/, nao simbolo de src/.) -->
-<!-- doc-check: ignore svg_colisoes (a ferramenta vive em `tools/`, e o check_docs varre so `src/`. Nao e fantasma: e limite de alcance dele.) -->
-<!-- doc-check: ignore cotuca_energia_previa (desenho APOSENTADO em 05/09. A lapide fica: e ela que impede alguem de o regenerar sem ler por que saiu.) -->
-<!-- doc-check: ignore energia_preview (idem) -->
-<!-- doc-check: ignore preamp_preview (idem) -->
+# Technical drawings
+<!-- doc-check: ignore build_sheet (name of an SVG in docs/operacao/esquematicos/, not a symbol from src/.) -->
+<!-- doc-check: ignore svg_colisoes (the tool lives in `tools/`, and check_docs only scans `src/`. Not a ghost: it is a limit of its reach.) -->
+<!-- doc-check: ignore cotuca_energia_previa (drawing RETIRED on 05/09. The tombstone stays: it is what keeps someone from regenerating it without reading why it left.) -->
+<!-- doc-check: ignore energia_preview (same) -->
+<!-- doc-check: ignore preamp_preview (same) -->
 
-**Uma pasta, e uma regra que a governa inteira:**
+**One folder, and one rule that governs it entirely:**
 
-> **Quando um artefacto ganha uma fonte, os desenhos anteriores dele ou
-> passam a ser gerados dessa fonte, ou morrem.**
+> **When an artifact gains a source, its earlier drawings either become generated
+> from that source, or they die.**
 >
-> Um desenho que descreve o que a fonte deixou de dizer é **pior que
-> nenhum**: tem ar de oficial e mente.
+> A drawing that describes what the source no longer says is **worse than
+> none**: it looks official and lies.
 
-## Como se mantém atualizada — e não é por lembrança
+## How it is kept up to date — and not by memory
 
 ```bash
-python3 tools/desenhos.py            # confere; sai != 0 se algum está velho
-python3 tools/desenhos.py --gerar    # regenera e confere
+python3 tools/desenhos.py            # checks; exits != 0 if any is old
+python3 tools/desenhos.py --gerar    # regenerates and checks
 ```
 
-O critério é mecânico e não pede opinião: **se a fonte é mais nova que o
-desenho, o desenho está velho.** Não se pergunta se mudou o que importa —
-essa pergunta é onde a disciplina se perde.
+The criterion is mechanical and asks for no opinion: **if the source is newer
+than the drawing, the drawing is old.** You do not ask whether what matters
+changed — that question is where the discipline is lost.
 
-## O que há aqui
+## What is here
 
-### `esquematicos/` — **gerados**, não se editam
+### `esquematicos/` — **generated**, not edited
 
-| desenho | fonte |
+| drawing | source |
 |---|---|
 | `cotuca_energia.svg` | `kicad/cotuca_cerebro/cotuca_energia.kicad_sch` |
 | `cotuca_preamp.svg` | `kicad/cotuca_cerebro/cotuca_preamp.kicad_sch` |
 | `cotuca_soquete.svg` | `kicad/cotuca_cerebro/cotuca_soquete.kicad_sch` |
 
-Saem do mesmo ficheiro que a fábrica vai ler, portanto **não podem divergir —
-não têm vida própria.**
+They come out of the same file the factory will read, so **they cannot diverge —
+they have no life of their own.**
 
-### `caixa/` — **gerados**, menos a página 1
+### `caixa/` — **generated**, except page 1
 
-Seis páginas do desenho de fabricação da caixa, por dois geradores que
-correm daqui:
+Six pages of the enclosure's fabrication drawing, by two generators that run
+from here:
 
 
 
-⚠️ **As cotas marcadas "confirmar" mudam depois de medir as peças — e mudam
-no `.py`, nunca no SVG.** Um SVG editado à mão diverge do gerador na primeira
-regeneração, e aí ninguém sabe qual manda.
+⚠️ **The dimensions marked "confirm" change after the parts are measured — and
+they change in the `.py`, never in the SVG.** An SVG edited by hand diverges from
+the generator on the first regeneration, and then nobody knows which one rules.
 
-⚠️ **As 6 páginas de fabricação da caixa foram apagadas a 06/09.** Desenhavam
-uma caixa que nunca foi cortada. O artefacto da caixa é agora o
-`caixa/cotuca_caixa_corte.py`, que gera o ficheiro de corte a partir de
-`--t`/`--kerf` e traz portões próprios — não passa por este vigia.
+⚠️ **The 6 enclosure fabrication pages were deleted on 06/09.** They drew an
+enclosure that was never cut. The enclosure's artifact is now
+`caixa/cotuca_caixa_corte.py`, which generates the cut file from
+`--t`/`--kerf` and carries its own gates — it does not pass through this
+watchman.
 
-Ao contrário dos esquemáticos, estas **passam o `svg_colisoes`** — são
-`<text>` a sério — e o próprio gerador corre o portão a cada página, com
-`assert` no fim: com colisões, não entrega.
+Unlike the schematics, these **pass `svg_colisoes`** — they are real `<text>` —
+and the generator itself runs the gate on every page, with an `assert` at the
+end: with collisions, it does not deliver.
 
-### ⚠️ O que se perde nessa troca, e é honesto dizê-lo
+### ⚠️ What is lost in that trade, and it is honest to say so
 
-Estes SVG **não passam o portão do `svg_colisoes.py`**: o `kicad-cli` desenha
-as letras como *paths*, não como `<text>`, e a ferramenta responde
-`NAO VERIFICAVEL — nenhum <text> encontrado`, código **3** — que é *"não
-consegui olhar"*, e não *"está limpo"*.
+These SVGs **do not pass the `svg_colisoes.py` gate**: `kicad-cli` draws the
+letters as *paths*, not as `<text>`, and the tool answers
+`NAO VERIFICAVEL — nenhum <text> encontrado`, code **3** — which is *"I couldn't
+look"*, not *"it's clean"*.
 
-Trocámos **"pode divergir mas verifica-se"** por **"não pode divergir mas não
-se verifica"**. Para figura de documentação é a troca certa: a verdade do
-desenho vale mais que a garantia de não haver toque, e o toque tem outro
-portão a montante — o ERC. Mas fica **declarado**, não presumido.
+We traded **"it can diverge but can be checked"** for **"it cannot diverge but
+cannot be checked"**. For a documentation figure it is the right trade: the
+truth of the drawing is worth more than the guarantee of no overlap, and the
+overlap has another gate upstream — the ERC. But it is left **declared**, not
+presumed.
 
-A inspecção destes é a do olho, em fatias, como manda a `design-review` §3.
+The inspection of these is by eye, in slices, as the `design-review` §3 requires.
 
-## O que morreu, e porquê
+## What died, and why
 
-**`preamp-piezo.svg`**, aposentado a 05/09. Era a figura de conversa de antes
-de existir esquema. Quando o pré-amp ganhou um `.kicad_sch`, passou a
-descrever um circuito que não é o da placa — dizia `C2 1 nF` e mostrava o
-`RV1` vivo, quando o esquema diz `C2A 20n` e o `RVA` está **DNP** desde que a
-bancada aprovou o seguidor. Não se consertou: aposentou-se. Continua em git.
+**`preamp-piezo.svg`**, retired on 05/09. It was the figure for conversation from
+before a schematic existed. When the pre-amp gained a `.kicad_sch`, it came to
+describe a circuit that is not the board's — it said `C2 1 nF` and showed `RV1`
+live, when the schematic says `C2A 20n` and `RVA` has been **DNP** ever since
+the bench approved the follower. It was not fixed: it was retired. It is still
+in git.
 
-**As três prévias dos geradores** (`cotuca_energia_previa`, `energia_preview`,
-`preamp_preview`), removidas no mesmo dia: saída de um caminho que deixou de
-ser a fonte quando o projecto KiCad entrou.
+**The three generator previews** (`cotuca_energia_previa`, `energia_preview`,
+`preamp_preview`), removed the same day: output of a path that stopped being the
+source when the KiCad project came in.
 
-## Ainda fora daqui, e a decidir
+## Still outside here, and undecided
 
-Desenhos que **não** têm fonte e por isso não se geram — ficam por julgar um
-a um, com a pergunta que vale mais que o conserto: **isto ainda serve para
-quê?**
+Drawings that **have no source** and therefore are not generated — they remain to
+be judged one by one, with the question that is worth more than the fix: **what
+is this still good for?**
 
-- `docs/operacao/esquematicos/piezo_v2_protecao.svg` — a protecção do piezo
-  **já vive** no `cotuca_preamp.kicad_sch` (D1 BAV99, R1, R2). Pela regra
-  desta pasta, é candidato a morrer.
-- `cotucatronics_esquematicos_v3.svg` — superseded pelo `v4`, citado por
-  ninguém.
+- `docs/operacao/esquematicos/piezo_v2_protecao.svg` — the piezo's protection
+  **already lives** in `cotuca_preamp.kicad_sch` (D1 BAV99, R1, R2). By this
+  folder's rule, it is a candidate to die.
+- `cotucatronics_esquematicos_v3.svg` — superseded by `v4`, cited by nobody.
 - `cotucatronics_esquematicos_v4.svg` · `cotucatronics_build_sheet.svg` —
-  citados por ninguém. O `build_sheet` não tem equivalente em KiCad, portanto
-  sobrevive à regra — mas não necessariamente à pergunta.
+  cited by nobody. The `build_sheet` has no KiCad equivalent, so it survives the
+  rule — but not necessarily the question.
 
-## Já morreram
+## Already dead
 
-| desenho | quando | porquê |
+| drawing | when | why |
 |---|---|---|
-| `preamp-piezo.svg` | 05/09 | descrevia o pré-amp de antes do `.kicad_sch` — `C2 1 nF` e `RV1` vivo, contra `20n` e `DNP` |
-| `caixa-pedal-4-faces.svg` · `caixa-pedal-layout.svg` | 05/09 | as duas versões anteriores da caixa, substituídas pelas seis páginas |
-| `cotuca_energia_previa.svg` · `energia_preview.svg` · `preamp_preview.svg` | 05/09 | prévias dos `gen_*.py`, que deixaram de ser a fonte |
+| `preamp-piezo.svg` | 05/09 | described the pre-amp from before the `.kicad_sch` — `C2 1 nF` and `RV1` live, against `20n` and `DNP` |
+| `caixa-pedal-4-faces.svg` · `caixa-pedal-layout.svg` | 05/09 | the two earlier versions of the enclosure, replaced by the six pages |
+| `cotuca_energia_previa.svg` · `energia_preview.svg` · `preamp_preview.svg` | 05/09 | previews of the `gen_*.py`, which stopped being the source |
 
-Todos continuam em git.
+All are still in git.

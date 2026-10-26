@@ -1,169 +1,169 @@
 # CTOS — Cotucatronics Operational System
 
-**Documento de desenho v0.4.0 · 2026-08-20 · design antes de código**
+**Design document v0.4.0 · 2026-08-20 · design before code**
 
-> **Status: PROPOSTA.** Nada aqui está implementado. O documento existe pra
-> ser discutido e aprovado antes de qualquer refactor — e pra que a discussão
-> aconteça sobre a fronteira, não sobre o código que já foi escrito.
+> **Status: PROPOSAL.** Nothing here is implemented. The document exists to
+> be discussed and approved before any refactor — and so that the discussion
+> happens over the boundary, not over code that has already been written.
 
 ---
 
-## 0. Por que existe
+## 0. Why it exists
 
-Um efeito derrubou o loop principal. O instrumento continuou tocando — o
-áudio roda por interrupção — mas a placa ficou surda a **tudo**: serial,
-MIDI, comandos, parâmetros. Só um LED piscando direto do loop conseguiu
-relatar a morte, porque todos os outros instrumentos de diagnóstico passavam
-pelo loop que tinha morrido.
+An effect brought down the main loop. The instrument kept playing — the
+audio runs on an interrupt — but the board went deaf to **everything**: serial,
+MIDI, commands, parameters. Only an LED blinking straight from the loop managed
+to report the death, because every other diagnostic instrument passed
+through the loop that had died.
 
-**A pergunta que isso levanta não é "qual efeito tem o bug".** É: *por que um
-efeito consegue derrubar a base?*
+**The question that raises is not "which effect has the bug".** It is: *why can an
+effect bring down the base?*
 
-Num sistema compartimentado isso seria estruturalmente impossível. O efeito
-poderia falhar de todas as formas — travar, estourar o prazo, ler fora dos
-limites — e o instrumento perderia **o efeito**, nunca **a base**.
+In a compartmentalized system that would be structurally impossible. The effect
+could fail in every way — lock up, blow the deadline, read out of
+bounds — and the instrument would lose **the effect**, never **the base**.
 
-### Ressalva de honestidade, e ela importa
+### A caveat of honesty, and it matters
 
-O freeze é o **suspeito principal** da morte do loop, e **não está
-confirmado**. O quadro, depois de o cabo ser identificado e estabilizado:
+The freeze is the **prime suspect** in the loop's death, and it is **not
+confirmed**. The picture, after the cable was identified and stabilized:
 
 | Build | Freeze | Loop |
 |---|---|---|
-| v0.46.2 | **off** | ✅ vivo |
-| v0.47.0 | on | ❌ morto |
-| v0.48.0 | on | ❌ morto |
-| v0.48.1 | on + log mudo | ❌ morto |
+| v0.46.2 | **off** | ✅ alive |
+| v0.47.0 | on | ❌ dead |
+| v0.48.0 | on | ❌ dead |
+| v0.48.1 | on + mute log | ❌ dead |
 
-Três mortes com freeze, uma vida sem ele — consistente, e o log já foi
-inocentado no caminho. **O que falta é uma única gravação:** um build com o
-freeze fora, com o cabo confirmado. A v0.47.1 era exatamente isso e a
-gravação expirou. (Houve um freeze-off que morreu, v0.46.1, mas com o cabo
-ainda se movendo — não conta.)
+Three deaths with freeze, one life without it — consistent, and the log has already been
+cleared along the way. **What is missing is a single flashing:** a build with the
+freeze off, with the cable confirmed. The v0.47.1 was exactly that and the
+flashing timed out. (There was a freeze-off that died, v0.46.1, but with the cable
+still moving — it does not count.)
 
-**Isso não enfraquece o CTOS — reforça.** O argumento não é *"o freeze é
-culpado, então compartimente"*. É:
+**That does not weaken the CTOS — it reinforces it.** The argument is not *"the freeze is
+guilty, so compartmentalize"*. It is:
 
-> Passamos horas sem conseguir dizer **qual metade do sistema** estava
-> quebrada, porque não existe fronteira que separe as metades. Um sistema em
-> que a pergunta *"foi a base ou foi o efeito?"* não tem resposta observável
-> é um sistema sem compartimentos — e a dificuldade do diagnóstico É o
-> sintoma.
+> We spent hours unable to say **which half of the system** was
+> broken, because there is no boundary that separates the halves. A system in
+> which the question *"was it the base or the effect?"* has no observable answer
+> is a system with no compartments — and the difficulty of the diagnosis IS the
+> symptom.
 
-O CTOS se justifica pela **capacidade de responder essa pergunta**, não pela
-culpa de um efeito específico.
+The CTOS is justified by the **ability to answer that question**, not by the
+guilt of a specific effect.
 
 ---
 
-## 1. Divisão de contexto como CONTRATO, não convenção
+## 1. Context division as a CONTRACT, not a convention
 
-Duas metades, dois contextos de execução, e a fronteira é lei:
+Two halves, two execution contexts, and the boundary is law:
 
-| | **CTOS** | **Efeito** |
+| | **CTOS** | **Effect** |
 |---|---|---|
-| Onde roda | loop principal | **só** callback de áudio |
-| Interface | comandos, params, estado | `buffer → buffer` |
-| Pode bloquear? | sim (é o dono do tempo ocioso) | **nunca** |
-| Pode alocar? | sim, no boot | **só no Init** |
-| Pode logar? | sim | **nunca** |
+| Where it runs | main loop | **only** the audio callback |
+| Interface | commands, params, state | `buffer → buffer` |
+| Can it block? | yes (it owns the idle time) | **never** |
+| Can it allocate? | yes, at boot | **only in Init** |
+| Can it log? | yes | **never** |
 
-**As duas regras duras:**
+**The two hard rules:**
 
-1. **Nenhum código de efeito executa no loop principal.**
-2. **Nenhum código de CTOS executa no callback de áudio.**
+1. **No effect code runs in the main loop.**
+2. **No CTOS code runs in the audio callback.**
 
-> **Convenção é o que a gente lembra; contrato é o que o build cobra.** Todas
-> as regras deste projeto que dependiam de lembrar já foram violadas pelo
-> menos uma vez — inclusive por quem as escreveu, no mesmo dia.
+> **A convention is what we remember; a contract is what the build charges for.** Every
+> rule in this project that depended on remembering has been violated at least
+> once — including by whoever wrote it, on the same day.
 
-### 1.1 Como auditar no `make check`
+### 1.1 How to audit it in `make check`
 
-Cada efeito compila pro seu próprio objeto. A fronteira vira verificável por
-**símbolos importados**:
+Each effect compiles to its own object. The boundary becomes verifiable by
+**imported symbols**:
 
 ```bash
-# um efeito só pode importar da libc/libm. Nada de hal, params, log.
+# an effect can only import from libc/libm. No hal, params, log.
 arm-none-eabi-nm -u build/effect_*.o | grep -vE '<allowlist>' && FALHA
 ```
 
-**Allowlist do efeito:** `memcpy`, `memset`, funções de `<cmath>`, e nada
-mais. Qualquer referência a `hal::`, `params`, `Log`, `Blackbox` reprova o
+**Effect allowlist:** `memcpy`, `memset`, functions from `<cmath>`, and nothing
+else. Any reference to `hal::`, `params`, `Log`, `Blackbox` fails the
 build.
 
-**No sentido inverso:** o CTOS não pode chamar `Process()` de efeito fora do
-callback. Isso é mais difícil de provar por símbolo; a proposta é estrutural
-— o ponteiro do efeito só é visível de dentro do módulo que contém o
-callback, então chamá-lo de fora **não compila**.
+**In the reverse direction:** the CTOS cannot call an effect's `Process()` outside the
+callback. That is harder to prove by symbol; the proposal is structural
+— the effect pointer is only visible from inside the module that contains the
+callback, so calling it from outside **does not compile**.
 
-**Limite honesto:** a checagem por símbolos pega dependência, não
-comportamento. Um efeito que faça `while(1)` sem importar nada passa na
-auditoria. É o watchdog (§3) que cobre isso — as duas defesas são
-complementares e nenhuma sozinha basta.
+**Honest limit:** the symbol check catches dependency, not
+behavior. An effect that does `while(1)` without importing anything passes the
+audit. It is the watchdog (§3) that covers that — the two defenses are
+complementary and neither alone is enough.
 
 ---
 
-## 2. Contrato de recursos do efeito
+## 2. The effect's resource contract
 
-Um efeito, para ser embarcável:
+An effect, to be embeddable:
 
-- [ ] **Aloca só no `Init`**, e só via `hal::AllocBig()`. Zero alocação em
+- [ ] **Allocates only in `Init`**, and only via `hal::AllocBig()`. Zero allocation at
       runtime.
-- [ ] **Nunca bloqueia, nunca espera, nunca dorme.** Sem `Delay`, sem
-      retry, sem laço de espera.
-- [ ] **Nenhum laço de duração não-limitada.** Todo `while` no caminho de
-      áudio precisa de teto provável por construção.
-- [ ] **Todo índice de buffer é limitado ANTES do acesso**, não confiando em
-      invariante de quem chama.
-- [ ] **Todo estado cross-context é `volatile`** e escrito por um lado só.
-- [ ] **Não loga, não mede tempo, não fala com o mundo.** Quem observa é o
-      CTOS, de fora.
+- [ ] **Never blocks, never waits, never sleeps.** No `Delay`, no
+      retry, no wait loop.
+- [ ] **No loop of unbounded duration.** Every `while` on the audio
+      path needs a ceiling provable by construction.
+- [ ] **Every buffer index is bounded BEFORE the access**, not trusting the
+      caller's invariant.
+- [ ] **Every cross-context state is `volatile`** and written by one side only.
+- [ ] **Does not log, does not time, does not talk to the world.** Whoever observes is the
+      CTOS, from outside.
 
-### 2.1 Caso de estudo: o freeze v0.1.0/v0.2.0
+### 2.1 Case study: the freeze v0.1.0/v0.2.0
 
-O que dá pra **verificar lendo o código**, sem atribuir a ele a morte do loop:
+What you can **verify by reading the code**, without attributing the loop's death to it:
 
-**Alocação:** ✅ conforme. Aloca uma vez, no `Init`, via `AllocBig`.
+**Allocation:** ✅ compliant. Allocates once, in `Init`, via `AllocBig`.
 
-**Laços sem teto:** ❌ **viola.**
+**Loops with no ceiling:** ❌ **violates.**
 ```cpp
 float WrapF(float x) const {
-    while(x < 0.f) x += n;      // n pequeno + x grande = muitas voltas
+    while(x < 0.f) x += n;      // small n + large x = many turns
     while(x >= n)  x -= n;
 }
 ```
-Duas voltas em uso normal. Mas o teto depende de `x` e `n` serem sãos — e
-**dentro do callback de áudio, um laço cujo teto depende de dados é um risco
-estrutural**, não um detalhe. `fmod` ou aritmética direta não têm esse
-problema.
+Two turns in normal use. But the ceiling depends on `x` and `n` being sane — and
+**inside the audio callback, a loop whose ceiling depends on data is a structural
+risk**, not a detail. `fmod` or direct arithmetic do not have that
+problem.
 
-**Índice não limitado:** ❌ **viola.**
+**Unbounded index:** ❌ **violates.**
 ```cpp
-const size_t i0 = (size_t)p;   // se p sair da faixa, le fora do buffer
+const size_t i0 = (size_t)p;   // if p leaves the range, it reads out of the buffer
 return b[i0] + f * (b[i1] - b[i0]);
 ```
-`i1` é protegido contra passar do fim; `i0` **não**. Confia que `p` está na
-faixa. Num buffer de 768 KB em SDRAM, um `p` inválido lê memória alheia sem
-erro nenhum.
+`i1` is protected against going past the end; `i0` is **not**. It trusts that `p` is in
+the range. In a 768 KB buffer in SDRAM, an invalid `p` reads someone else's memory with
+no error at all.
 
-**Estado cross-context:** ✅ não se aplica. Todo o estado do freeze é escrito
-e lido dentro do callback — não há travessia de contexto. *(A afirmação
-inicial de que ele violava as três não se sustenta na leitura do código; ele
-viola duas, e as duas são reais.)*
+**Cross-context state:** ✅ does not apply. All of the freeze's state is written
+and read inside the callback — there is no context crossing. *(The initial
+claim that it violated all three does not hold up on reading the code; it
+violates two, and the two are real.)*
 
-**A lição do caso:** as duas violações são do tipo que **não aparece em
-teste** — funcionam sempre, até o dia em que os dados saem da faixa. Nenhuma
-seria pega por medição de CPU, escuta, ou pelo IFÁ10000 como ele está hoje.
-Só um contrato explícito as pega, e só antes de embarcar.
+**The lesson of the case:** the two violations are the kind that **does not show up in a
+test** — they always work, until the day the data leaves the range. Neither
+would be caught by CPU measurement, by listening, or by the IFÁ10000 as it stands today.
+Only an explicit contract catches them, and only before embarking.
 
 ---
 
-## 3. Watchdog com veto automático
+## 3. Watchdog with an automatic veto
 
-O CTOS mede o tempo do efeito **por bloco**. Estouro do orçamento:
+The CTOS measures the effect's time **per block**. An overrun of the budget:
 
-1. o efeito entra em **bypass automático**, no mesmo contexto que detectou;
-2. a razão fica registrada e consultável;
-3. **o instrumento continua tocando** — perde o efeito, mantém a base.
+1. the effect enters **automatic bypass**, in the same context that detected it;
+2. the reason is logged and queryable;
+3. **the instrument keeps playing** — loses the effect, keeps the base.
 
 ```
 > ctos
@@ -174,337 +174,337 @@ CTOS v0.1.0 | loop vivo | fase 6 | uptime 412 s
   estoura de novo, e religar sozinho esconderia o defeito
 ```
 
-**Isto ressuscita por desenho o bypass do fx2**, que existiu e foi revogado
-quando o módulo do Fx2 passou a nascer ligado. A diferença é de natureza: antes era
-**proteção pontual**, decidida caso a caso e revogável por conveniência;
-agora é **lei estrutural do CTOS**, e a condição de retorno já estava escrita
-no IFÁ10000 — *módulo não-certificado entra em bypass até passar pelo
-protocolo*.
+**This resurrects by design the fx2 bypass**, which existed and was revoked
+when the Fx2 module came to be born on. The difference is one of nature: before it was
+**point protection**, decided case by case and revocable for convenience;
+now it is **a structural law of the CTOS**, and the condition for its return was already written
+in the IFÁ10000 — *an uncertified module enters bypass until it passes the
+protocol*.
 
-**DECIDIDO pelo dB (18/08): bypass PERMANENTE até `ctos rearm`.** Religar
-sozinho transformaria um defeito reprodutível em intermitente — e
-intermitente foi o que custou esta sessão inteira. Um efeito que estourou uma
-vez estoura de novo; o valor do bypass está justamente em ele **não** se
-desfazer sem alguém olhar.
+**DECIDED by dB (18/08): PERMANENT bypass until `ctos rearm`.** Re-engaging
+on its own would turn a reproducible defect into an intermittent one — and
+intermittent is what cost this entire session. An effect that overran
+once overruns again; the value of the bypass lies precisely in its **not** undoing
+itself without someone looking.
 
 ---
 
-## 3b. Teto de soma — o irmão do watchdog, não o substituto
+## 3b. Sum ceiling — the watchdog's brother, not its substitute
 
-O §3 protege contra **um efeito com defeito**. Não protege contra **N efeitos
-saudáveis que juntos não cabem**, e essa é uma situação de natureza diferente
-que exige um mecanismo diferente.
+§3 protects against **one effect with a defect**. It does not protect against **N healthy
+effects that together do not fit**, and that is a situation of a different nature
+that requires a different mechanism.
 
-### A distinção que decide tudo
+### The distinction that decides everything
 
-| | Watchdog por-efeito (§3) | Teto de soma (§3b) |
+| | Per-effect watchdog (§3) | Sum ceiling (§3b) |
 |---|---|---|
-| **O que pega** | um efeito que sozinho estoura seu orçamento | N efeitos saudáveis cuja soma não cabe no prazo |
-| **Há culpado?** | **sim** — o efeito tem defeito individual | **não** — é excesso de ambição, ninguém está errado |
-| **Pergunta certa** | "quem estourou?" | "qual o instrumento perde com menos dano?" |
-| **Base da decisão** | medição do próprio efeito | **prioridade declarada a frio pelo dB** |
-| **Justiça** | o veto é justo porque há culpa | não existe noção de culpa aqui |
+| **What it catches** | one effect that alone overruns its budget | N healthy effects whose sum does not fit the deadline |
+| **Is there a culprit?** | **yes** — the effect has an individual defect | **no** — it is excess ambition, no one is wrong |
+| **The right question** | "who overran?" | "which instrument do we lose with the least harm?" |
+| **Basis for the decision** | the effect's own measurement | **a priority declared cold by dB** |
+| **Fairness** | the veto is fair because there is guilt | there is no notion of guilt here |
 
-**É aqui que o erro de punir o inocente nasceria.** Qualquer regra que tente
-achar "quem foi" quando não há quem, acaba inventando um culpado — e o
-inventado será algum efeito perfeitamente correto. A saída não é uma detecção
-melhor: é **abandonar a pergunta**. O teto de soma não procura culpa porque
-não há culpa a procurar.
+**It is here that the error of punishing the innocent would be born.** Any rule that tries
+to find "who did it" when there is no one, ends up inventing a culprit — and the
+invented one will be some perfectly correct effect. The way out is not a better
+detection: it is **abandoning the question**. The sum ceiling does not look for guilt because
+there is no guilt to look for.
 
-### Por que não LIFO
+### Why not LIFO
 
-Derrubar o último ligado é aproximação, e uma aproximação ruim: pune por
-**ordem de chegada**, que não tem relação nenhuma com valor musical. O último
-efeito ligado pode ser exatamente aquele que o dB estava procurando quando a
-soma estourou — o gesto mais recente é, se alguma coisa, o mais intencional.
+Bringing down the last one engaged is an approximation, and a bad approximation: it punishes by
+**order of arrival**, which has no relation at all to musical value. The last
+effect engaged may be exactly the one that dB was looking for when the
+sum overran — the most recent gesture is, if anything, the most intentional.
 
-**Prioridade declarada é a versão correta.** A escolha é musical, e decisão
-musical se toma **a frio**, no manifest, fora do calor do overrun. O sistema,
-no instante da falha, não escolhe nada: lê a ordem e obedece.
+**A declared priority is the correct version.** The choice is musical, and a musical
+decision is taken **cold**, in the manifest, outside the heat of the overrun. The system,
+at the instant of the failure, chooses nothing: it reads the order and obeys.
 
-### A política
+### The policy
 
-1. **Ordem de sacrifício no manifest** (`Manifest::sacrif[]`). A ordem do
-   array **é** a prioridade — índice 0 cai primeiro. Não há número de
-   prioridade escondido em lugar nenhum; reordenar o array é a única forma de
-   mudar a política, e isso é deliberado: a política tem que ser legível de
-   uma olhada.
+1. **Sacrifice order in the manifest** (`Manifest::sacrif[]`). The order of the
+   array **is** the priority — index 0 falls first. There is no hidden priority
+   number anywhere; reordering the array is the only way to
+   change the policy, and that is deliberate: the policy has to be readable at
+   a glance.
 
-2. **Mede o BLOCO INTEIRO**, não a soma de estimativas. Estimativa some
-   justamente no caso que importa — interação entre efeitos, cache, estreia. O
-   cronômetro do bloco é o único número que corresponde ao que de fato
-   acontece. Subtrai em **ticks** e converte depois: dividir antes faz a volta
-   do contador deixar de se corrigir sozinha (a armadilha que já derrubou o
-   watchdog em 4 277 071 629 µs).
+2. **Measure the WHOLE BLOCK**, not the sum of estimates. An estimate goes missing
+   precisely in the case that matters — interaction between effects, cache, debut. The
+   block's stopwatch is the only number that corresponds to what actually
+   happens. Subtract in **ticks** and convert afterward: dividing first makes the
+   counter wrap stop correcting itself (the trap that already brought down the
+   watchdog at 4 277 071 629 µs).
 
-3. **Teto em 85% do prazo, e só depois de 4 blocos SEGUIDOS acima.** O
-   primeiro bloco de qualquer efeito é caro — é a estreia, e o projeto já tem
-   a distinção estreia/regime documentada. Derrubar por causa dela puniria o
-   ato de **ligar**. Só o regime conta. O contador volta devagar (decrementa,
-   não zera) para que uma alternância não mascare um estouro sustentado.
+3. **Ceiling at 85% of the deadline, and only after 4 CONSECUTIVE blocks above.** The
+   first block of any effect is expensive — it is the debut, and the project already has
+   the debut/regime distinction documented. Bringing it down because of that would punish the
+   act of **engaging**. Only the regime counts. The counter comes back slowly (it decrements,
+   does not zero) so that an alternation does not mask a sustained overrun.
 
-4. **Cai o de menor prioridade que estiver LIGADO.** Bypass pelo mesmo
-   caminho que o dB usaria: o param de liga/desliga vai a zero. O latch é
-   reaplicado **todo bloco**, não só no instante da queda — sem isso um CC do
-   Loopy religaria o efeito e o teto teria virado sugestão.
+4. **The lowest-priority one that is ENGAGED falls.** Bypass by the same
+   path dB would use: the on/off param goes to zero. The latch is
+   reapplied **every block**, not only at the instant of the fall — without that a CC from
+   the Loopy would re-engage the effect and the ceiling would have become a suggestion.
 
-5. **O aviso é obrigatório.** Log alto + CC 119 na saída MIDI (valor =
-   índice+1 do efeito derrubado). Derrubar em silêncio seria a família "falha
-   em silêncio" de novo, e desta vez com o instrumento **mudando de som
-   sozinho** — o pior caso possível dessa família.
+5. **The warning is mandatory.** Loud log + CC 119 on the MIDI output (value =
+   index+1 of the effect brought down). Bringing it down in silence would be the "silent
+   failure" family again, and this time with the instrument **changing its sound
+   on its own** — the worst possible case of that family.
 
-   **O aviso sai do LOOP, nunca do callback.** A primeira versão logava de
-   dentro do `AudioCb` e matou a serial no primeiro teste: escrever no CDC de
-   dentro do callback starva a ISR do USB, que é o defeito de prioridade 1
-   deste projeto e estava catalogado antes de eu cometê-lo. O callback só
-   marca (`volatile`); o loop lê a marca e fala. Família A dos bugs de ordem:
-   quem arma e quem executa no mesmo contexto — e o contexto que pode falar
-   com o mundo é o loop.
+   **The warning comes from the LOOP, never from the callback.** The first version logged from
+   inside the `AudioCb` and killed the serial on the first test: writing to the CDC from
+   inside the callback starves the USB ISR, which is the priority-1 defect
+   of this project and was catalogued before I committed it. The callback only
+   marks (`volatile`); the loop reads the mark and speaks. Family A of the ordering
+   bugs: whoever arms and whoever executes in the same context — and the context that can speak
+   with the world is the loop.
 
-6. **Permanente até `ctos rearm` ou boot**, pela política já fechada no §3.
-   `ctos rearm` solta os latches mas **não religa os efeitos**: soltar o latch
-   devolve o *direito* de ligar; ligar continua sendo gesto do dB. Religar
-   automaticamente decidiria por ele qual configuração ele queria de volta.
+6. **Permanent until `ctos rearm` or boot**, by the policy already settled in §3.
+   `ctos rearm` releases the latches but **does not re-engage the effects**: releasing the latch
+   gives back the *right* to engage; engaging remains dB's gesture. Re-engaging
+   automatically would decide for him which configuration he wanted back.
 
-7. **Estourar sem ter o que derrubar é um estado próprio**, e se declara. Se
-   todos os sacrificáveis já caíram e a soma ainda não cabe, a base sozinha
-   não cabe — e isso não se resolve por bypass. O silêncio do mecanismo nesse
-   caso seria lido como sucesso dele.
+7. **Overrunning with nothing to bring down is a state of its own**, and it declares itself. If
+   all the sacrificeable ones have already fallen and the sum still does not fit, the base alone
+   does not fit — and that is not solved by bypass. The mechanism's silence in that
+   case would be read as its success.
 
-### Como testar sem esperar o limite chegar em cena
+### How to test without waiting for the limit to arrive on stage
 
 ```
-ctos teto <us>     # teto artificial, força o estouro sem carregar a CPU
-ctos teto 0        # volta ao automático
-ctos               # mostra bloco, pico, teto, quedas e a ordem inteira
+ctos teto <us>     # artificial ceiling, forces the overrun without loading the CPU
+ctos teto 0        # back to automatic
+ctos               # shows block, peak, ceiling, drops and the whole order
 ```
 
-Descobrir se o mecanismo funciona no instante em que o instrumento encontra o
-limite é descobrir tarde demais.
+Finding out whether the mechanism works at the instant the instrument meets the
+limit is finding out too late.
 
-### Custo
+### Cost
 
-O mecanismo custou **+14 µs** por bloco (dentro do ruído entre corridas; o
-pico não mudou). São duas leituras de tick e uma varredura de seis
-comparações. Já se cronometrava por efeito; somar é de graça.
-
----
-
-## 4. Diagnóstico ortogonal de primeira classe
-
-**O princípio, comprado caro:** *um instrumento de diagnóstico não pode
-depender do que ele diagnostica.* Serial, MIDI e caixa-preta passam todos
-pelo loop principal — quando ele morreu, **nenhum dos três conseguiu
-relatar**. A primeira versão do pulso no LED tinha o mesmo defeito: era o
-próprio loop que piscava, então só sabia dizer "morreu", nunca "onde".
-
-**Vira permanente no CTOS:**
-
-- **O loop sempre pisca.** "Loop vivo?" nunca mais depende de serial.
-- **O padrão codifica a última fase completada** — N piscos = fase N, pausa
-  longa entre rajadas. É a lição da caçada do `DelayMs`, agora estrutural em
-  vez de instrumentação temporária.
-- **Quem pisca é o callback de áudio**, lendo um `volatile` que o loop
-  publica. O observador vive no contexto que sobrevive.
-
-| Padrão | Significa |
-|---|---|
-| N piscos, repetindo | loop vivo, completando até a fase N |
-| aceso fixo / apagado fixo | callback vivo, **loop morto** |
-| nada, e sem som | placa morta ou sem alimentação |
-
-**Extensão natural, se um segundo indicador existir:** um LED por contexto —
-um pro CTOS, um pro efeito. Aí a pergunta *"qual metade quebrou?"* passa a
-ter resposta **visual e imediata**, sem ferramenta nenhuma.
+The mechanism cost **+14 µs** per block (within the noise between runs; the
+peak did not change). It is two tick reads and one sweep of six
+comparisons. Timing per effect was already happening; summing is free.
 
 ---
 
-## 5. Mapa: o que mora onde
+## 4. Orthogonal first-class diagnostics
 
-Explícito, pra que a próxima adição não precise adivinhar.
+**The principle, bought dearly:** *a diagnostic instrument cannot
+depend on what it diagnoses.* Serial, MIDI and the black box all pass
+through the main loop — when it died, **none of the three managed to
+report**. The first version of the LED pulse had the same defect: it was the
+loop itself that blinked, so it could only say "it died", never "where".
 
-### CTOS — loop principal
+**It becomes permanent in the CTOS:**
 
-| Responsabilidade | Por quê |
+- **The loop always blinks.** "Loop alive?" never again depends on serial.
+- **The pattern encodes the last completed phase** — N blinks = phase N, a long
+  pause between bursts. It is the lesson of the `DelayMs` hunt, now structural instead
+  of temporary instrumentation.
+- **Whoever blinks is the audio callback**, reading a `volatile` the loop
+  publishes. The observer lives in the context that survives.
+
+| Pattern | Means |
 |---|---|
-| WIDI / MIDI (`PollMidi`) | despacho precisa de contexto que possa bloquear |
-| Serial (`PollSerial`, comandos) | idem |
-| Tabela de parâmetros | dono único da verdade; efeito só lê |
-| Watchdog e bypass | quem julga não pode ser julgado no mesmo contexto |
-| Caixa-preta | registro é do sistema, não do efeito |
-| Estado de boot, manifest, defaults | identidade da escultura |
-| Roteamento e crossfade de fonte | decide **o que** entra no efeito |
-| **Dinâmica de saída**: gate, governor, limiter | segurança do instrumento |
-| **Reverb** | moldura permanente, não caráter trocável |
-| Búzios (sorteio) | mexe em params — é ato de CTOS, não de DSP |
-| Pulso de vida e fase | diagnóstico é infraestrutura |
+| N blinks, repeating | loop alive, completing up to phase N |
+| steady on / steady off | callback alive, **loop dead** |
+| nothing, and no sound | board dead or no power |
 
-### Efeito — só callback de áudio
-
-| Responsabilidade | Por quê |
-|---|---|
-| Miolo DSP trocável | é o que muda de escultura pra escultura |
-| Buffer próprio, alocado no `Init` | recurso declarado, nunca pedido em voo |
-| Leitura de params (só leitura) | o efeito obedece, não decide |
-
-**A regra de bolso pra classificar coisa nova:** *se responde a comando, mexe
-em params, ou serve de referencial fixo do instrumento, é CTOS. Se transforma
-amostra em amostra e pode ser trocado sem mudar a identidade da escultura, é
-Efeito.*
-
-**Nota sobre o freeze:** por esta régua ele é **Efeito** (transforma amostras,
-é trocável) — mas o `frz_on` é **CTOS**, porque é gesto de execução ligado a
-botão e CC. A fronteira passa entre o gesto e o processamento, e é por isso
-que ela precisa estar desenhada antes: sem o mapa, "freeze" parece uma coisa
-só.
+**A natural extension, if a second indicator exists:** one LED per context —
+one for the CTOS, one for the effect. Then the question *"which half broke?"* comes to
+have a **visual and immediate** answer, with no tool at all.
 
 ---
 
-## 5b. Suíte de efeitos residentes v1 — desenho (PROPOSTA)
+## 5. Map: what lives where
 
-Cinco efeitos em C++, todos **Efeito** pela régua do §5 (transformam amostra
-em amostra, trocáveis sem mudar a identidade da escultura). Calibrados pro
-material do dB — percussão, kalimba, monocórdio, molas — e pra estética
-Chase Bliss / dreamy.
+Explicit, so that the next addition does not have to guess.
 
-**Ordem fixa de pedaleira**, e ela é decisão musical, não de implementação:
+### CTOS — main loop
+
+| Responsibility | Why |
+|---|---|
+| WIDI / MIDI (`PollMidi`) | dispatch needs a context that can block |
+| Serial (`PollSerial`, commands) | likewise |
+| Parameter table | sole owner of the truth; the effect only reads |
+| Watchdog and bypass | whoever judges cannot be judged in the same context |
+| Black box | logging is the system's, not the effect's |
+| Boot state, manifest, defaults | the sculpture's identity |
+| Source routing and crossfade | decides **what** enters the effect |
+| **Output dynamics**: gate, governor, limiter | the instrument's safety |
+| **Reverb** | a permanent frame, not a swappable character |
+| Cowrie shells (drawing lots) | touches params — it is a CTOS act, not a DSP one |
+| Life pulse and phase | diagnostics is infrastructure |
+
+### Effect — only the audio callback
+
+| Responsibility | Why |
+|---|---|
+| Swappable DSP core | it is what changes from sculpture to sculpture |
+| Own buffer, allocated in `Init` | a declared resource, never asked for in flight |
+| Reading params (read only) | the effect obeys, it does not decide |
+
+**The rule of thumb to classify something new:** *if it responds to a command, touches
+params, or serves as a fixed reference point of the instrument, it is CTOS. If it transforms
+sample into sample and can be swapped without changing the sculpture's identity, it is
+Effect.*
+
+**Note on the freeze:** by this yardstick it is an **Effect** (it transforms samples,
+it is swappable) — but the `frz_on` is **CTOS**, because it is a performance gesture tied to a
+button and a CC. The boundary passes between the gesture and the processing, and that is why
+it needs to be drawn beforehand: without the map, "freeze" looks like one thing
+only.
+
+---
+
+## 5b. Resident effects suite v1 — design (PROPOSAL)
+
+Five effects in C++, all **Effect** by the yardstick of §5 (they transform sample
+into sample, swappable without changing the sculpture's identity). Calibrated for dB's
+material — percussion, kalimba, monochord, springs — and for the
+Chase Bliss / dreamy aesthetic.
+
+**Fixed pedalboard order**, and it is a musical decision, not an implementation one:
 
 ```
 drive → phaser → warble → detune → [delay] → shimmer → [reverb]
 ```
 
-Drive antes de tudo porque cola e dá corpo ao que entra. Shimmer depois do
-delay e antes do reverb porque ele **é** um reverb com realimentação afinada:
-pô-lo antes do delay faria o delay repetir a cauda dele.
+Drive before everything because it glues and gives body to what comes in. Shimmer after the
+delay and before the reverb because it **is** a reverb with tuned feedback:
+putting it before the delay would make the delay repeat its tail.
 
-### Motor de pitch — UM POR PONTO DE DERIVAÇÃO
+### Pitch engine — ONE PER DERIVATION POINT
 
-> ⚠️ **CORREÇÃO (18/08):** a primeira versão deste documento dizia "um motor
-> só, consumido pelos três". **Está errado, e o erro só apareceu ao escrever
-> o laço do shimmer.**
+> ⚠️ **CORRECTION (18/08):** the first version of this document said "a single
+> engine, consumed by the three". **It is wrong, and the error only showed up on writing
+> the shimmer loop.**
 
-Um motor tem **um buffer com um ponto de escrita**. Ele só pode servir a
-consumidores que deslocam a **mesma fonte** — e os cinco efeitos não tapam no
-mesmo lugar:
+An engine has **one buffer with one write point**. It can only serve
+consumers that shift the **same source** — and the five effects do not tap at the
+same spot:
 
 ```
-seco → [detune, warble tapam AQUI] → drive/phaser → delay → reverb ⇄ [shimmer tapa AQUI]
+dry → [detune, warble tap HERE] → drive/phaser → delay → reverb ⇄ [shimmer taps HERE]
 ```
 
-O shimmer precisa gravar a **saída do reverb**, porque é a cauda que sobe de
-oitava e realimenta. Detune e warble precisam do **seco**, antes de tudo.
+The shimmer needs to write the **reverb's output**, because it is the tail that rises an
+octave and feeds back. Detune and warble need the **dry**, before everything.
 
-**Decisão do dB: um motor por ponto de derivação.** A economia do
-compartilhamento continua real — apenas é **por ponto**, não global:
+**dB's decision: one engine per derivation point.** The economy of
+sharing is still real — it is just **per point**, not global:
 
-| Motor | Tapa | Consumidores |
+| Engine | Taps | Consumers |
 |---|---|---|
-| `pitch_dry` | seco, pré-efeitos | detune (2 vozes), warble (1) |
-| `pitch_tail` | saída do reverb | shimmer (1 ou 2 vozes: +12 e +7) |
+| `pitch_dry` | dry, pre-effects | detune (2 voices), warble (1) |
+| `pitch_tail` | reverb output | shimmer (1 or 2 voices: +12 and +7) |
 
-Custo: 150 KB de SDRAM cada, acesso sequencial. Com 64 MB disponíveis, o
-gargalo nunca foi memória — era o pool de SRAM dos módulos externos, e nenhum
-destes usa aquele pool.
+Cost: 150 KB of SDRAM each, sequential access. With 64 MB available, the
+bottleneck was never memory — it was the SRAM pool of the external modules, and none
+of these uses that pool.
 
-**A lição do erro:** *"compartilhado" é uma afirmação sobre a FONTE, não sobre
-o recurso.* Dois efeitos só compartilham um motor de histórico se ouvirem o
-mesmo ponto da cadeia. Eu escrevi o desenho assumindo que sim, sem verificar
-de onde cada um puxa — e a verificação custava uma linha por efeito.
+**The lesson of the error:** *"shared" is a statement about the SOURCE, not about
+the resource.* Two effects only share a history engine if they listen to the
+same point of the chain. I wrote the design assuming they did, without checking
+where each one pulls from — and the check cost one line per effect.
 
-> ⚠️ **CORREÇÃO DE PREMISSA: o freeze NÃO tem pitch-shifter.** Ele tem a
-> *maquinaria* granular — janela raiz-de-Hann, posições sorteadas, leitura
-> interpolada — mas lê a **taxa 1.0** (`pos_ += 1.f`). Altura é taxa ≠ 1.
+> ⚠️ **PREMISE CORRECTION: the freeze does NOT have a pitch-shifter.** It has the
+> granular *machinery* — root-Hann window, drawn positions, interpolated
+> reading — but it reads at **rate 1.0** (`pos_ += 1.f`). Pitch is rate ≠ 1.
 >
-> Então o motor compartilhado é uma **extensão** da estrutura do freeze, não
-> reuso de capacidade existente. O trabalho é pequeno porque a estrutura está
-> provada e certificada, mas não é zero — e planejar como se fosse zero é
-> como o `r_window` que ninguém conferiu.
+> So the shared engine is an **extension** of the freeze's structure, not
+> reuse of existing capability. The work is small because the structure is
+> proven and certified, but it is not zero — and planning as if it were zero is
+> like the `r_window` that no one checked.
 
-**O que o motor herda do freeze, e é o que o torna barato:** grãos com
-raiz-de-Hann somam potência constante para posições descorrelacionadas, e o
-sorteio de posição **mata o comb filtering** que um pitch-shifter de janela
-fixa produz. Os dois já foram medidos e aprovados de ouvido.
+**What the engine inherits from the freeze, and it is what makes it cheap:** grains with
+root-Hann sum to constant power for uncorrelated positions, and the
+position draw **kills the comb filtering** that a fixed-window pitch-shifter
+produces. The two have already been measured and approved by ear.
 
-### Custo — o que a aposta do dB encontra pela frente
+### Cost — what dB's bet runs into
 
-Aposta: **< 15% do bloco 48 com os cinco ligados.** Os números que já temos:
+Bet: **< 15% of block 48 with all five engaged.** The numbers we already have:
 
-| Peça | Medido |
+| Piece | Measured |
 |---|---|
-| Freeverb (110 KB em SRAM) | **+5,6 pp** de CPU |
-| Freeze: 2 grãos, estéreo, interpolado | **98 µs** de 1000 (≈10%) |
+| Freeverb (110 KB in SRAM) | **+5,6 pp** of CPU |
+| Freeze: 2 grains, stereo, interpolated | **98 µs** of 1000 (≈10%) |
 
-**A aposta é alcançável, mas depende de uma escolha de desenho do shimmer:**
+**The bet is reachable, but it depends on a design choice for the shimmer:**
 
-- **Shimmer com Freeverb próprio:** +110 KB de SRAM e +5,6 pp, mais o pitch
-  (~10%) ⇒ **~15% só ele**. A aposta não fecha.
-- **Shimmer realimentando pelo reverb EXISTENTE:** custo = só o pitch e a
-  soma ⇒ **~10%**, e zero memória nova. Mais fiel ao original de Eno/Lanois,
-  onde o shimmer *é* a sala realimentada.
+- **Shimmer with its own Freeverb:** +110 KB of SRAM and +5,6 pp, plus the pitch
+  (~10%) ⇒ **~15% for it alone**. The bet does not close.
+- **Shimmer feeding back through the EXISTING reverb:** cost = only the pitch and the
+  sum ⇒ **~10%**, and zero new memory. More faithful to the Eno/Lanois original,
+  where the shimmer *is* the fed-back room.
 
-**Recomendação: o segundo.** E ele traz um risco declarado: o laço de
-realimentação passa a atravessar o reverb do instrumento, então `rev_mix` e
-`rev_size` afetam a cauda do shimmer. Isso é característica, não defeito —
-mas precisa estar no `frz`-style comentário e ser dito ao músico, porque um
-controle que mexe em dois lugares surpreende.
+**Recommendation: the second.** And it brings a declared risk: the feedback
+loop now crosses the instrument's reverb, so `rev_mix` and
+`rev_size` affect the shimmer's tail. That is a feature, not a defect —
+but it needs to be in the `frz`-style comment and be told to the musician, because a
+control that touches two places surprises.
 
-Os outros três são baratos por construção: **drive** é função por amostra
-(zero memória), **phaser** é só estado de allpass (zero buffer), **warble** é
-um delay de ~20 ms (≈1 KB). Três dos cinco não pesam.
+The other three are cheap by construction: **drive** is a per-sample function
+(zero memory), **phaser** is just allpass state (zero buffer), **warble** is
+a ~20 ms delay (≈1 KB). Three of the five do not weigh.
 
-### Cada efeito passa pelo IFÁ10000 completo
+### Each effect passes the full IFÁ10000
 
-O freeze é o gabarito — e o que ele custou vale como aviso: **três versões**
-até passar na etapa 9, e as três falhas foram de desenho, não de código
-(varredura linear virando laço; janela assumindo correlação depois de o
-sorteio tirá-la; mix como crossfade apagando o instrumento vivo).
+The freeze is the template — and what it cost serves as a warning: **three versions**
+until it passed step 9, and the three failures were of design, not of code
+(linear sweep becoming a loop; the window assuming correlation after the
+draw removed it; mix as a crossfade erasing the live instrument).
 
-**Medir individual E com todos ligados**, no bloco 48. O watchdog por slot já
-cobre o estouro isolado; o que ele **não** cobre é a soma — cinco efeitos
-dentro do orçamento sozinhos podem estourar juntos, e nenhum seria vetado
-porque nenhum passou do próprio teto.
+**Measure individually AND with all engaged**, at block 48. The per-slot watchdog already
+covers the isolated overrun; what it **does not** cover is the sum — five effects
+within budget on their own may overrun together, and none would be vetoed
+because none went past its own ceiling.
 
-> **Item de projeto que isso levanta:** o CTOS precisa de um **teto de soma**,
-> não só de tetos por efeito. Fica registrado aqui como pendência do §3.
+> **A project item this raises:** the CTOS needs a **sum ceiling**,
+> not only per-effect ceilings. Recorded here as a pending item of §3.
 
-### Ordem de trabalho
+### Order of work
 
-1. **Motor de pitch compartilhado** (extensão do freeze).
-2. **Shimmer** — primeiro efeito, valida o modelo inteiro: motor
-   compartilhado, slot, watchdog, IFÁ10000.
-3. Os outros quatro, na ordem de custo crescente: drive, phaser, warble,
+1. **Shared pitch engine** (extension of the freeze).
+2. **Shimmer** — first effect, validates the whole model: shared
+   engine, slot, watchdog, IFÁ10000.
+3. The other four, in order of increasing cost: drive, phaser, warble,
    detune.
 
 ---
 
-## 6. Ordem do refactor, quando aprovado
+## 6. Order of the refactor, when approved
 
-1. **`ctos` como comando** — expõe loop vivo, fase, uptime, efeitos em
-   bypass. É o primeiro porque é o que torna o resto observável.
-2. **Pulso no LED permanente** com codificação de fase *(já existe em
-   v0.49.0 como diagnóstico; vira estrutura)*.
-3. **Watchdog com veto** e bypass permanente.
-4. **Migrar o que está do lado errado da linha**, começando pelo que o freeze
-   pôs no caminho de áudio: `WrapF` sem teto e `Read` sem limite.
-5. **Checagem de fronteira no `make check`**, por símbolos importados.
-6. **Cláusula de fronteira no IFÁ10000** — etapa nova, ou item da etapa 1
-   (CONTRATO): *"este efeito respeita a divisão de contexto do CTOS?"*
+1. **`ctos` as a command** — exposes loop alive, phase, uptime, effects in
+   bypass. It is first because it is what makes the rest observable.
+2. **Permanent LED pulse** with phase encoding *(already exists in
+   v0.49.0 as a diagnostic; becomes structure)*.
+3. **Watchdog with veto** and permanent bypass.
+4. **Migrate what is on the wrong side of the line**, starting with what the freeze
+   put on the audio path: `WrapF` with no ceiling and `Read` with no bound.
+5. **Boundary check in `make check`**, by imported symbols.
+6. **Boundary clause in the IFÁ10000** — a new step, or an item of step 1
+   (CONTRACT): *"does this effect respect the CTOS's context division?"*
 
-**O loop morto atual se resolve no caminho.** Ele não é um obstáculo ao
-refactor — é a prova viva de que a fronteira precisa existir, e o primeiro
-caso de teste dela.
-
----
-
-## 7. O que este documento NÃO resolve
-
-- **Não sabemos ainda qual metade quebrou** — a v0.49.0 (LED por fase) é
-  quem vai dizer, e ela ainda não foi lida.
-- **Não substitui o ring de log kick-and-forget.** Compartimentar impede o
-  efeito de matar o loop; não impede o loop de se afogar no USB sozinho.
-- **A checagem por símbolos não pega comportamento.** Watchdog cobre; nenhum
-  dos dois sozinho basta.
+**The current dead loop resolves itself along the way.** It is not an obstacle to the
+refactor — it is the living proof that the boundary needs to exist, and the first
+test case of it.
 
 ---
 
-*"O instrumento perde o efeito, nunca a base."*
+## 7. What this document does NOT solve
+
+- **We still do not know which half broke** — the v0.49.0 (LED per phase) is
+  what will tell, and it has not been read yet.
+- **It does not replace the kick-and-forget log ring.** Compartmentalizing keeps the
+  effect from killing the loop; it does not keep the loop from drowning itself in USB.
+- **The symbol check does not catch behavior.** The watchdog covers it; neither
+  of the two alone is enough.
+
+---
+
+*"The instrument loses the effect, never the base."*

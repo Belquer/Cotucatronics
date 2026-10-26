@@ -1,125 +1,130 @@
-# Audit — commit `696fa0c`, placa v0.171.0
+# Audit — commit `696fa0c`, board v0.171.0
 
-> **Feito depois de uma sessão de ~40 versões**, com a multiplexação MIDI
-> refeita duas vezes, presets em RAM implementados, três encoders com o mapa
-> de pinos corrigido a meio caminho, e o OLED que nunca funcionou.
+> **Done after a session of ~40 versions**, with the MIDI multiplexing redone
+> twice, presets in RAM implemented, three encoders with the pin map fixed
+> halfway through, and the OLED that never worked.
 >
-> **O audit não conserta** (R4). Os fixes são commits separados.
+> **The audit does not fix** (R4). The fixes are separate commits.
 
-> **FECHO PARCIAL, 2026-09-04.** Este documento é um instantâneo datado e
-> **não se reescreve** — o que caiu desde então fica registado aqui, por cima.
+> **PARTIAL CLOSE, 2026-09-04.** This document is a dated snapshot and
+> **is not rewritten** — what has landed since then is recorded here, on top.
 >
-> - **⚪ 4 (README com versões velhas) — FECHADO.** Não só as sete: o
->   `versoes_readme.py` v1.0.0 achou **15 de 58** derivadas, uma delas com o
->   README à FRENTE do fonte. Hoje **61 de 61 batem**, e a classe passou a ter
->   verificador — era exactamente o que o item pedia (*"o `check_docs` não
->   pega… Fix: código + doc"*). Corre dentro do `/audit`.
-> - **⚪ 5 ("76 CCs") — ABERTO, e maior do que estava escrito.** Já não são os
->   dois comentários de `main.cpp:1114` e `1290`: hoje são **três**
->   (`1521`, `1697`, `1708`), e o número real são **119** vínculos, não 86.
->   Não foi tocado — é `src/`, e está com outra sessão.
-> - **🟡 2 (detector de duplicata de CC) — JÁ ESTAVA FECHADO, 05/09.** O item
->   pedia varredura no `Init` e o `board` a gritar. Existe: `Colisoes()` e
->   `Colisao()` no `manifest.h`, chamadas em `main.cpp:5134`, e o `board`
->   imprime `colisao de CC`. Foi implementado depois do audit e ninguém fechou
->   a entrada. O comentário da função narra o caso que a motivou — o notch
->   registado no CC 115 que já era do `bench_boost` — e deixa a frase que vale
->   por si: *"contar quem não tem CC não encontra quem tem CC roubado — são
->   perguntas diferentes, e só uma delas estava a ser feita."*
-> - **🟠 1 (quatro documentos no esquema de QUATRO canais) — FECHADO,
->   verificado em 05/09.** A verdade está no `midi.h:88` — *"os seis canais, e
->   a regra é uma só: ESCUTA = MANDA + 3"*. Os quatro documentos batem: o
->   `CCMAP.md` é gerado e traz colunas **manda/escuta** (ch1→ch4); o
->   `ACEITE-MULTIPLEXACAO.md` prova ch4/ch5/ch6 e manda **recusar** ch4–ch6 na
->   entrada; o `PRESETS.md` traz o esquema inteiro nas linhas 64–69; o `STATUS`
->   idem. As menções a "quatro canais" que restam são **narrações do conserto**
->   — o próprio `ACEITE-MULTIPLEXACAO.md:61` diz que descreveu o esquema velho
->   *até 23/08*. Presença de texto novo não prova ausência do velho, por isso
->   foi conferido pelas linhas que este audit citou, uma a uma.
-> - **🟡 3 (comentário revogado sobre o `kCanalEco`) — FECHADO.** `kCanalEco`
->   tem **0 ocorrências** no `main.cpp`. As três linhas saíram com o símbolo.
+> - **⚪ 4 (README with old versions) — CLOSED.** Not just the seven: the
+>   `versoes_readme.py` v1.0.0 found **15 of 58** derivatives, one of them with
+>   the README AHEAD of the source. Today **61 of 61 match**, and the class now
+>   has a checker — which was exactly what the item asked for (*"`check_docs`
+>   doesn't catch it… Fix: code + doc"*). It runs inside `/audit`.
+> - **⚪ 5 ("76 CCs") — OPEN, and bigger than it was written.** It is no longer
+>   the two comments at `main.cpp:1114` and `1290`: today there are **three**
+>   (`1521`, `1697`, `1708`), and the real number is **119** bindings, not 86.
+>   It has not been touched — it is `src/`, and is with another session.
+> - **🟡 2 (CC duplicate detector) — WAS ALREADY CLOSED, 05/09.** The item
+>   asked for a sweep in `Init` and `board` shouting. It exists: `Colisoes()` and
+>   `Colisao()` in `manifest.h`, called at `main.cpp:5134`, and `board`
+>   prints `colisao de CC`. It was implemented after the audit and nobody closed
+>   the entry. The function's comment narrates the case that motivated it — the
+>   notch registered on CC 115 that already belonged to `bench_boost` — and
+>   leaves the line that stands on its own: *"counting who has no CC does not
+>   find who has a stolen CC — they are different questions, and only one of
+>   them was being asked."*
+> - **🟠 1 (four documents on the FOUR-channel scheme) — CLOSED,
+>   verified on 05/09.** The truth is in `midi.h:88` — *"the six channels, and
+>   the rule is just one: LISTEN = SEND + 3"*. The four documents match: the
+>   `CCMAP.md` is generated and carries **send/listen** columns (ch1→ch4); the
+>   `ACEITE-MULTIPLEXACAO.md` proves ch4/ch5/ch6 and orders ch4–ch6 to be
+>   **refused** at the input; the `PRESETS.md` carries the whole scheme in lines
+>   64–69; the `STATUS` likewise. The mentions of "four channels" that remain are
+>   **narrations of the fix** — `ACEITE-MULTIPLEXACAO.md:61` itself says it
+>   described the old scheme *until 23/08*. The presence of new text does not
+>   prove the absence of the old, so it was checked against the lines this audit
+>   cited, one by one.
+> - **🟡 3 (revoked comment about `kCanalEco`) — CLOSED.** `kCanalEco`
+>   has **0 occurrences** in `main.cpp`. The three lines left with the symbol.
 >
-> **Com isto os cinco itens de 23/08 estão resolvidos** — três estavam feitos
-> havia tempo e ninguém fechou a entrada, e é essa a lição que fica: *audit que
-> não conserta precisa de alguém que volte a fechá-lo, senão vira backlog
-> fantasma que assusta sem informar.*
+> **With this the five items from 23/08 are resolved** — three had been done for
+> a while and nobody closed the entry, and that is the lesson that stays: *an
+> audit that does not fix needs someone to come back and close it, otherwise it
+> becomes a phantom backlog that scares without informing.*
 
-## O que passou
+## What passed
 
-| passada | resultado |
+| pass | result |
 |---|---|
-| **P0** inventário | 30 arquivos, todos classificáveis. `detune.h` fora do build **com registro completo** em FEATURES.md |
-| **P1** contexto | **Callback limpo** — `main.cpp:1652–2276`, zero `Log`, `MidiSendBytes`, `malloc`, `DelayMs` ou desenho de OLED |
-| **P2** ordem | `hal::Init` → `params.Init` → `manifest.Init` → `pmapa`/hash → `EncoderInit` → `midi.Init` |
-| **P4** tetos | params 86/96 · vínculos 86/128 · sacrificáveis 10/12 · botões 2/6 · randomizáveis 2/8 |
-| **P5** órfãs | **nenhuma** — todo contador tem escritor e leitor |
-| **P7** aritmética | `Set()` clampa via `Clamp01`, então os casts `×127+0.5` dos presets não estouram |
-| **P9** simetria | **37 famílias `_a`/`_b`, zero órfãs dos dois lados** |
+| **P0** inventory | 30 files, all classifiable. `detune.h` out of the build **with a full record** in FEATURES.md |
+| **P1** context | **Clean callback** — `main.cpp:1652–2276`, zero `Log`, `MidiSendBytes`, `malloc`, `DelayMs` or OLED drawing |
+| **P2** order | `hal::Init` → `params.Init` → `manifest.Init` → `pmapa`/hash → `EncoderInit` → `midi.Init` |
+| **P4** ceilings | params 86/96 · bindings 86/128 · sacrificeable 10/12 · buttons 2/6 · randomizable 2/8 |
+| **P5** orphans | **none** — every counter has a writer and a reader |
+| **P7** arithmetic | `Set()` clamps via `Clamp01`, so the presets' `×127+0.5` casts do not overflow |
+| **P9** symmetry | **37 `_a`/`_b` families, zero orphans on either side** |
 
-## Achados
+## Findings
 
-### 🟠 1 — Quatro documentos descrevem o esquema de QUATRO canais
+### 🟠 1 — Four documents describe the FOUR-channel scheme
 
 `operacao/CCMAP.md:37` · `operacao/ACEITE-MULTIPLEXACAO.md:9,13,29,68` ·
 `operacao/PRESETS.md` · `STATUS.md`
 
-A mudança para seis canais (v0.156.0) atualizou só o `RETRABALHO-LOOPY.md` —
-**que é gerado.** Os escritos à mão ficaram.
+The change to six channels (v0.156.0) updated only `RETRABALHO-LOOPY.md` —
+**which is generated.** The hand-written ones stayed.
 
-**Consequência:** o roteiro de aceite manda conferir `ch3`/`ch4` no MIDI
-Wrench, e a placa fala **ch4/ch5/ch6**. Manda o operador ao canal errado.
+**Consequence:** the acceptance script orders checking `ch3`/`ch4` in the MIDI
+Wrench, and the board speaks **ch4/ch5/ch6**. It sends the operator to the wrong
+channel.
 
 **Fix: doc.**
 
-### 🟡 2 — `ApplyMidiCc` declara "duplicata é erro" e nada detecta
+### 🟡 2 — `ApplyMidiCc` declares "a duplicate is an error" and nothing detects it
 
-`manifest.h:648`. O `midi_overflow` só pega estouro de capacidade.
+`manifest.h:648`. `midi_overflow` only catches a capacity overflow.
 
-**E a multiplexação piorou:** antes, dois `AddMidi` com o mesmo número
-saltavam à vista; agora o mesmo número aparece **legitimamente duas vezes**,
-uma por canal, e uma duplicata real se esconde entre as repetições legítimas.
+**And the multiplexing made it worse:** before, two `AddMidi` with the same
+number jumped out; now the same number appears **legitimately twice**, one per
+channel, and a real duplicate hides among the legitimate repetitions.
 
-**Fix: código.** Varredura no `Init`, contador `midi_dup`, `board` grita.
+**Fix: code.** A sweep in `Init`, a `midi_dup` counter, `board` shouts.
 
-### 🟡 3 — Comentário revogado sobrevivendo acima do que o substituiu
+### 🟡 3 — Revoked comment surviving above what replaced it
 
-`main.cpp:245-247` — três linhas sobre o `kCanalEco` imediatamente acima do
-bloco que começa em 248 com *"O ESPELHO SAIU DO CH2"*.
+`main.cpp:245-247` — three lines about `kCanalEco` immediately above the block
+that begins at 248 with *"THE MIRROR LEFT CH2"*.
 
-**Fix: doc-no-código.** Apagar as três linhas.
+**Fix: doc-in-code.** Delete the three lines.
 
-### ⚪ 4 — README com versões velhas em 7 arquivos
+### ⚪ 4 — README with old versions in 7 files
 
 `hal.h` 0.33/0.22 · `hal_daisy_seed.cpp` 0.38/0.24 · `main.cpp` 0.171/0.155 ·
 `manifest.h` 0.81/0.79 · `midi.h` 0.8/0.7 · `qspi_raw.h` 0.2/0.1 ·
 `test_midi.cpp` 0.4/0.2
 
-**E o `check_docs` não pega:** a regra de deriva confere se o último commit
-mexeu na versão — não confere a tabela do README. **Fix: código + doc.**
+**And `check_docs` doesn't catch it:** the drift rule checks whether the last
+commit touched the version — it does not check the README's table. **Fix: code +
+doc.**
 
-### ⚪ 5 — "76 CCs" em dois comentários que hoje seriam 86
+### ⚪ 5 — "76 CCs" in two comments that today would be 86
 
-`main.cpp:1114` e `1290`, usados como magnitude de referência para rajada.
+`main.cpp:1114` and `1290`, used as a reference magnitude for a burst.
 
-## Meta-achado: o script do audit caiu na 12c
+## Meta-finding: the audit script fell into 12c
 
-O detector de versões acusou `main.cpp` com cabeçalho `0.125.0`. Era **a
-narração da remoção**, dentro do comentário que explica por que o número saiu
-de lá. R5 pegou — mas só porque a regra manda ler as vizinhas antes de afirmar.
+The version detector accused `main.cpp` of a `0.125.0` header. It was **the
+narration of the removal**, inside the comment that explains why the number left
+there. R5 caught it — but only because the rule orders reading the neighboring
+lines before asserting.
 
-## Ordem de ataque
+## Order of attack
 
-1. **🟠 1** — antes de voltar à bancada; é o único que muda o que se faz com as mãos
-2. **🟡 3** — mesma região do `main.cpp` que o ⚪5 toca, um voo só
-3. **🟡 2** — detector de duplicata
-4. **⚪ 4** — regra do README no `check_docs`
+1. **🟠 1** — before going back to the bench; it is the only one that changes what you do with your hands
+2. **🟡 3** — same region of `main.cpp` that ⚪5 touches, a single flight
+3. **🟡 2** — duplicate detector
+4. **⚪ 4** — README rule in `check_docs`
 
-## O que NÃO foi verificado (R7)
+## What was NOT verified (R7)
 
-- **Nada de som.** A P8 inteira ficou de fora — exige A/B no mesmo binário e o
-  ouvido do dB.
-- **A trilha do OLED** — painel morto pelo conector, nenhuma afirmação sobre o
-  driver dele é confirmável até o novo chegar.
-- **Os quatro critérios de aceite dos encoders** — sentido inverso, push
-  isolado, giro rápido, independência.
-- **P3 completa** — cobri só as variáveis centrais.
+- **No sound.** All of P8 was left out — it requires A/B in the same binary and
+  dB's ear.
+- **The OLED track** — panel killed by the connector, no claim about its driver
+  is confirmable until the new one arrives.
+- **The four encoder acceptance criteria** — reverse direction, isolated push,
+  fast spin, independence.
+- **Full P3** — I covered only the central variables.

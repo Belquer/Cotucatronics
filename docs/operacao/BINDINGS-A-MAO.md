@@ -1,20 +1,20 @@
-# Bindings à mão — Control Settings
+# Bindings by hand — Control Settings
 
-> ⚠️ **NÃO É GERADO.** Foi feito à mão a partir do `CCS-POR-PAGINA.md`, que
-> por sua vez também não é gerado — **derivado de um derivado**, e a
-> distância à fonte multiplica-se. Vale o mesmo aviso que está lá.
+> ⚠️ **NOT GENERATED.** This was done by hand from `CCS-POR-PAGINA.md`, which
+> in turn is also not generated — **a derivative of a derivative**, and the
+> distance from the source multiplies. The same warning that is there applies.
 >
-> Feito de `CCS-POR-PAGINA.md`. Plano B do mapeamento: em Control
-> Settings → perfil → **Add New Binding**, escolhe a ação e escreve o
-> gatilho no campo **Trigger**.
+> Made from `CCS-POR-PAGINA.md`. Plan B for the mapping: in Control
+> Settings → profile → **Add New Binding**, pick the action and write the
+> trigger in the **Trigger** field.
 
-> O caminho normal é o `gerar_perfil_loopy.py`, que emite tudo de uma vez.
-> Esta folha existe para o dia em que a exportação não estiver disponível.
+> The normal path is `gerar_perfil_loopy.py`, which emits everything at once.
+> This sheet exists for the day the export is not available.
 
 
 ## CENTRAL  ·  9 bindings
 
-| ✓ | param | Trigger CC | Trigger canal |
+| ✓ | param | Trigger CC | Trigger channel |
 |---|---|---|---|
 |  | `piezo_mix` | **20** | **ch4** |
 |  | `dly_time` | **64** | **ch4** |
@@ -26,7 +26,7 @@
 
 ## MOD A  ·  16 bindings
 
-| ✓ | param | Trigger CC | Trigger canal |
+| ✓ | param | Trigger CC | Trigger channel |
 |---|---|---|---|
 |  | `drv_on_a` | **30** | **ch5** |
 |  | `drv_mix_a` | **31** | **ch5** |
@@ -47,7 +47,7 @@
 
 ## MOD B  ·  16 bindings
 
-| ✓ | param | Trigger CC | Trigger canal |
+| ✓ | param | Trigger CC | Trigger channel |
 |---|---|---|---|
 |  | `drv_on_b` | **30** | **ch6** |
 |  | `drv_mix_b` | **31** | **ch6** |
@@ -68,7 +68,7 @@
 
 ## TIME A  ·  14 bindings
 
-| ✓ | param | Trigger CC | Trigger canal |
+| ✓ | param | Trigger CC | Trigger channel |
 |---|---|---|---|
 |  | `dly_on_a` | **60** | **ch5** |
 |  | `dly_mix_a` | **61** | **ch5** |
@@ -87,7 +87,7 @@
 
 ## TIME B  ·  14 bindings
 
-| ✓ | param | Trigger CC | Trigger canal |
+| ✓ | param | Trigger CC | Trigger channel |
 |---|---|---|---|
 |  | `dly_on_b` | **60** | **ch6** |
 |  | `dly_mix_b` | **61** | **ch6** |
@@ -106,7 +106,7 @@
 
 ## RANDOM  ·  3 bindings
 
-| ✓ | param | Trigger CC | Trigger canal |
+| ✓ | param | Trigger CC | Trigger channel |
 |---|---|---|---|
 |  | `buzios_on` | **90** | **ch4** |
 |  | `buzios_thresh` | **91** | **ch4** |
@@ -114,7 +114,7 @@
 
 ## TECH  ·  15 bindings
 
-| ✓ | param | Trigger CC | Trigger canal |
+| ✓ | param | Trigger CC | Trigger channel |
 |---|---|---|---|
 |  | `tone_freq` | **93** | **ch4** |
 |  | `tone_mix` | **94** | **ch4** |
@@ -138,4 +138,4 @@
 
 ---
 
-**87 bindings no total.**
+**87 bindings in total.**

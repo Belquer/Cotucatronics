@@ -1,60 +1,60 @@
 # CC MAP — Cotucatronics
 <!-- CARIMBO gerar_ccmap -->
-> **GERADO do `src/manifest.h`** por `gerar_ccmap.py v0.11.0` em **2026-09-05 08:32 EDT**.
-> Nao editar a mao: rode `python3 docs/operacao/gerar_ccmap.py`.
+> **GENERATED from `src/manifest.h`** by `gerar_ccmap.py v0.11.0` on **2026-09-05 08:32 EDT**.
+> Do not edit by hand: run `python3 docs/operacao/gerar_ccmap.py`.
 >
-> **122 vinculos em 84 numeros de CC** · `src/manifest.h` @ `ddbcc49` · manifest v1.13.0
+> **122 bindings across 84 CC numbers** · `src/manifest.h` @ `ddbcc49` · manifest v1.13.0
 >
-> Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6` (escuta = manda + 3).
+> Six channels: send `ch1`/`ch2`/`ch3`, listen `ch4`/`ch5`/`ch6` (listen = send + 3).
 <!-- FIM CARIMBO -->
 
 
-## Como ler
+## How to read it
 
-- **`_a` / `_b`** = cadeia A (piezo 1) e cadeia B (piezo 2). Cada cadeia tem
-  entrada, caráter e **espaço próprios**.
-- **Sem sufixo** = compartilhado entre as duas cadeias.
-- **Faixa** é em unidade real (o que o `set` aceita). O CC 0–127 é mapeado
-  nela pela curva do param.
+- **`_a` / `_b`** = chain A (piezo 1) and chain B (piezo 2). Each chain has its own
+  input, character and **space**.
+- **No suffix** = shared between the two chains.
+- **Range** is in real units (what `set` accepts). The CC 0–127 is mapped
+  onto it by the param's curve.
 
-## Os SEIS canais — escuta = manda + 3
+## The SIX channels — listen = send + 3
 
-    MANDA    ch1  compartilhados
-             ch2  cadeia A
-             ch3  cadeia B
+    SEND     ch1  shared
+             ch2  chain A
+             ch3  chain B
 
-    ESCUTA   ch4  compartilhados
-             ch5  cadeia A
-             ch6  cadeia B
+    LISTEN   ch4  shared
+             ch5  chain A
+             ch6  chain B
 
-**O número do CC é o mesmo nos seis.** Só o canal diz de quem é e em que
-direção — e a regra é aritmética, não uma tabela para decorar.
+**The CC number is the same across all six.** Only the channel says whose it is and in which
+direction — and the rule is arithmetic, not a table to memorize.
 
-**Cada página tem UM assunto**, e é isso que faz a duplicação funcionar: monte
-a página da cadeia A no ch2 e duplique trocando o canal para 3. Os 37 pareados
-saem numa operação, sem nenhum compartilhado junto para apagar.
+**Each page has ONE subject**, and that is what makes the duplication work: build
+the chain A page on ch2 and duplicate it switching the channel to 3. The 37 paired ones
+come out in one operation, with no shared one alongside to delete.
 
-⚠️ **O canal é parte do endereço, não filtro.** O CC 34 no ch2 é
-`drv_drive_a`; no ch3 é `drv_drive_b`. Um CC que chega num canal sem vínculo
-**não move nada** e é contado (`canal sem vinculo` e `(canal,cc) fora do mapa`,
-no `midi`).
+⚠️ **The channel is part of the address, not a filter.** CC 34 on ch2 is
+`drv_drive_a`; on ch3 it is `drv_drive_b`. A CC that arrives on a channel with no binding
+**moves nothing** and is counted (`canal sem vinculo` and `(canal,cc) fora do mapa`,
+in `midi`).
 
-**Todo widget deve escutar**, e não é conveniência: a placa muda params
-**sozinha** em três situações — os búzios sorteiam a cada batida, o CTOS
-derruba efeitos quando o teto de soma estoura, e `preset load` troca 33 de uma
-vez. Widget que não escuta passa a mentir depois de qualquer uma delas.
+**Every widget must listen**, and it is not a convenience: the board changes params
+**on its own** in three situations — the cowrie shells draw lots on every beat, the CTOS
+brings down effects when the sum ceiling overruns, and `preset load` swaps 33 at
+once. A widget that does not listen starts lying after any one of them.
 
-**O `sync` confere o retorno sozinho** e sai de `AVISO` para `OK` conforme os
-widgets voltam a escutar.
+**`sync` checks the return by itself** and goes from `AVISO` to `OK` as the
+widgets go back to listening.
 
-**Janela de autoria: 250 ms, indexada por PARÂMETRO.** Era por CC, e com a
-multiplexação o CC deixou de identificar o assunto. Descarte é contado
+**Authorship window: 250 ms, indexed by PARAMETER.** It used to be by CC, and with
+multiplexing the CC stopped identifying the subject. A discard is counted
 (`cc_janela`).
 
-## Tabela
+## Table
 
 <!-- gerado por gerar_ccmap v0.11.0 de manifest.h — nao editar a mao -->
-| CC | manda | escuta | param | família | faixa real |
+| CC | send | listen | param | family | real range |
 |---|---|---|---|---|---|
 | 1 | ch1 | ch4 | `microfonia_on_l` | — | 0 – 1 |
 | 2 | ch1 | ch4 | `microfonia_on_r` | — | 0 – 1 |
@@ -181,54 +181,54 @@ multiplexação o CC deixou de identificar o assunto. Descarte é contado
 
 <!-- 122 vinculos em 84 numeros de CC -->
 >
-> Seis canais: manda `ch1`/`ch2`/`ch3`, escuta `ch4`/`ch5`/`ch6` (escuta = manda + 3).
+> Six channels: send `ch1`/`ch2`/`ch3`, listen `ch4`/`ch5`/`ch6` (listen = send + 3).
 >
-> ⚠️ **ARVORE SUJA** — `src/manifest.h` tem alteracoes por commitar.
-> Este mapa descreve codigo que mais ninguem tem.
+> ⚠️ **DIRTY TREE** — `src/manifest.h` has uncommitted changes.
+> This map describes code that no one else has.
 <!-- FIM CARIMBO -->
 
 
-## Como ler
+## How to read it
 
-- **`_a` / `_b`** = cadeia A (piezo 1) e cadeia B (piezo 2). Cada cadeia tem
-  entrada, caráter e **espaço próprios**.
-- **Sem sufixo** = compartilhado entre as duas cadeias.
-- **Faixa** é em unidade real (o que o `set` aceita). O CC 0–127 é mapeado
-  nela pela curva do param.
+- **`_a` / `_b`** = chain A (piezo 1) and chain B (piezo 2). Each chain has its own
+  input, character and **space**.
+- **No suffix** = shared between the two chains.
+- **Range** is in real units (what `set` accepts). The CC 0–127 is mapped
+  onto it by the param's curve.
 
-## Os SEIS canais — escuta = manda + 3
+## The SIX channels — listen = send + 3
 
-    MANDA    ch1  compartilhados
-             ch2  cadeia A
-             ch3  cadeia B
+    SEND     ch1  shared
+             ch2  chain A
+             ch3  chain B
 
-    ESCUTA   ch4  compartilhados
-             ch5  cadeia A
-             ch6  cadeia B
+    LISTEN   ch4  shared
+             ch5  chain A
+             ch6  chain B
 
-**O número do CC é o mesmo nos seis.** Só o canal diz de quem é e em que
-direção — e a regra é aritmética, não uma tabela para decorar.
+**The CC number is the same across all six.** Only the channel says whose it is and in which
+direction — and the rule is arithmetic, not a table to memorize.
 
-**Cada página tem UM assunto**, e é isso que faz a duplicação funcionar: monte
-a página da cadeia A no ch2 e duplique trocando o canal para 3. Os 37 pareados
-saem numa operação, sem nenhum compartilhado junto para apagar.
+**Each page has ONE subject**, and that is what makes the duplication work: build
+the chain A page on ch2 and duplicate it switching the channel to 3. The 37 paired ones
+come out in one operation, with no shared one alongside to delete.
 
-⚠️ **O canal é parte do endereço, não filtro.** O CC 34 no ch2 é
-`drv_drive_a`; no ch3 é `drv_drive_b`. Um CC que chega num canal sem vínculo
-**não move nada** e é contado (`canal sem vinculo` e `(canal,cc) fora do mapa`,
-no `midi`).
+⚠️ **The channel is part of the address, not a filter.** CC 34 on ch2 is
+`drv_drive_a`; on ch3 it is `drv_drive_b`. A CC that arrives on a channel with no binding
+**moves nothing** and is counted (`canal sem vinculo` and `(canal,cc) fora do mapa`,
+in `midi`).
 
-**Todo widget deve escutar**, e não é conveniência: a placa muda params
-**sozinha** em três situações — os búzios sorteiam a cada batida, o CTOS
-derruba efeitos quando o teto de soma estoura, e `preset load` troca 33 de uma
-vez. Widget que não escuta passa a mentir depois de qualquer uma delas.
+**Every widget must listen**, and it is not a convenience: the board changes params
+**on its own** in three situations — the cowrie shells draw lots on every beat, the CTOS
+brings down effects when the sum ceiling overruns, and `preset load` swaps 33 at
+once. A widget that does not listen starts lying after any one of them.
 
-**O `sync` confere o retorno sozinho** e sai de `AVISO` para `OK` conforme os
-widgets voltam a escutar.
+**`sync` checks the return by itself** and goes from `AVISO` to `OK` as the
+widgets go back to listening.
 
-**Janela de autoria: 250 ms, indexada por PARÂMETRO.** Era por CC, e com a
-multiplexação o CC deixou de identificar o assunto. Descarte é contado
+**Authorship window: 250 ms, indexed by PARAMETER.** It used to be by CC, and with
+multiplexing the CC stopped identifying the subject. A discard is counted
 (`cc_janela`).
 
-## Tabela
+## Table
 

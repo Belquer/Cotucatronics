@@ -1,124 +1,125 @@
-# Roteiro de revalidação — troca para BOOT_SRAM
+# Revalidation roadmap — switch to BOOT_SRAM
 
-**Por que existe:** sem roteiro escrito **antes** de gravar, revalidação vira
-"liguei e funcionou". Esta página é o contrato do passo 1.
+**Why it exists:** without a roadmap written **before** flashing, revalidation
+turns into "I turned it on and it worked". This page is the contract of step 1.
 
-**Por que a troca:** `PersistentStorage::Save()` tira a QSPI do modo
-memory-mapped para apagar, e esse código mora na QSPI. A pré-condição dele é
-*"o app não executa da QSPI"*, revogada por `APP_TYPE=BOOT_QSPI` sem nenhum
-aviso de compilação (bts 12v). Presets dependem disso.
+**Why the switch:** `PersistentStorage::Save()` takes the QSPI out of
+memory-mapped mode to erase, and that code lives in the QSPI. Its precondition is
+*"the app doesn't execute from QSPI"*, revoked by `APP_TYPE=BOOT_QSPI` with no
+compile warning at all (bts 12v). Presets depend on this.
 
 ---
 
-## Antes de gravar — o mapa de memória
+## Before flashing — the memory map
 
-Medido em `48832a3`, BOOT_QSPI:
+Measured in `48832a3`, BOOT_QSPI:
 
-| seção | onde | tamanho |
+| section | where | size |
 |---|---|---|
 | `.isr_vector` + `.text` | QSPI 0x90040000 | **182 KB** |
 | `.data` | SRAM 0x24000000 | 4,7 KB |
 | `.bss` | SRAM 0x24001280 | **276 KB** |
 | `.sdram_bss` | SDRAM | 64 MB (pool) |
 
-Os 276 KB de `.bss` são dominados por **`reverb_mem` = 220 KB**; depois
-`warble_mem` 15 KB e os buffers de áudio da libDaisy, 8 KB cada.
+The 276 KB of `.bss` are dominated by **`reverb_mem` = 220 KB**; then
+`warble_mem` 15 KB and the libDaisy audio buffers, 8 KB each.
 
-**A conta do BOOT_SRAM:** a região encolhe de 512 para **480 KB** e o `.text`
-passa a morar nela.
+**The BOOT_SRAM arithmetic:** the region shrinks from 512 to **480 KB** and
+`.text` comes to live in it.
 
-    276 (.bss) + 5 (.data) + 182 (.text) = 463 de 480 KB
+    276 (.bss) + 5 (.data) + 182 (.text) = 463 of 480 KB
 
-**Sobram ~17 KB, não 300.** A estimativa anterior ignorava que a SRAM já
-carregava `.bss`. Cabe, mas a folga é parede declarada — não espaço.
+**~17 KB are left over, not 300.** The earlier estimate ignored that the SRAM
+already carried `.bss`. It fits, but the margin is a declared wall — not space.
 
-**Duas verificações feitas antes de gravar:**
+**Two checks done before flashing:**
 
-**A pilha está na DTCM** — `_estack = 0x20020000`, topo dos 128 KB de DTCM,
-nos dois linkers. Os 17 KB são 17 KB de verdade, não folga otimista.
+**The stack is in the DTCM** — `_estack = 0x20020000`, the top of the 128 KB of
+DTCM, in both linkers. The 17 KB are a real 17 KB, not optimistic margin.
 
-**O heap SAI da AXI no BOOT_SRAM.** O linker do BOOT_SRAM manda o heap para
-`RAM_D2` (linha 248: `} > RAM_D2`); no BOOT_QSPI ele fica na AXI, em
-0x24044900. Um consumidor a menos na região apertada, de graça.
+**The heap LEAVES the AXI in BOOT_SRAM.** The BOOT_SRAM linker sends the heap to
+`RAM_D2` (line 248: `} > RAM_D2`); in BOOT_QSPI it stays in the AXI, at
+0x24044900. One less consumer in the tight region, for free.
 
-**Se não couber — e o destino certo NÃO é a SDRAM.** O H750 tem **RAM_D2:
-256 KB em 0x30008000**, declarada no linker e hoje sem uso pelo app (todo o
-`.bss` mora na AXI). É SRAM de verdade, no barramento AHB — mais lenta que a
-AXI para o M7, mas **ordens de grandeza mais perto de SRAM que de SDRAM**.
-Os 220 KB de `reverb_mem` cabem nela com folga.
+**If it doesn't fit — and the right destination is NOT the SDRAM.** The H750 has
+**RAM_D2: 256 KB at 0x30008000**, declared in the linker and today unused by the
+app (all of `.bss` lives in the AXI). It's real SRAM, on the AHB bus — slower than
+the AXI for the M7, but **orders of magnitude closer to SRAM than to SDRAM**.
+The 220 KB of `reverb_mem` fit in it with margin.
 
-A pergunta "o reverb aguenta memória lenta?" quase desaparece com D2 como
-destino. **Continua sendo voo separado, depois da base declarada** — mas a
-trilha deixa de ser cara.
+The question "can the reverb withstand slow memory?" almost disappears with D2 as
+the destination. **It remains a separate flight, after the base is declared** —
+but the track stops being expensive.
 
 ---
 
-## Depois de gravar — a lista, nesta ordem
+## After flashing — the list, in this order
 
-Nada aqui é "liguei e funcionou". Cada item tem critério.
+Nothing here is "I turned it on and it worked". Each item has a criterion.
 
-### 1. O binário linkou e cabe
-`arm-none-eabi-size` e o `.map`. **Diffar os dois `.map`** (antes/depois),
-não ler só o novo: símbolo que mudou de endereço aparece no diff e some numa
-leitura isolada.
-**Critério:** nenhum símbolo saiu da região que devia; total ≤ 480 KB.
-Confirmar no diff que o **heap** migrou para RAM_D2 e que a **pilha** segue
-na DTCM — se a pilha tiver ido para a AXI, a folga real é menor que a conta.
+### 1. The binary linked and fits
+`arm-none-eabi-size` and the `.map`. **Diff the two `.map`** (before/after),
+not just read the new one: a symbol that changed address appears in the diff and
+vanishes in an isolated read.
+**Criterion:** no symbol left the region it should be in; total ≤ 480 KB.
+Confirm in the diff that the **heap** migrated to RAM_D2 and that the **stack**
+stays in the DTCM — if the stack went to the AXI, the real margin is smaller than
+the arithmetic.
 
-### 2. Os quatro regimes, média E pico
-Refazer com `cpu reset` entre leituras. **É BASE NOVA** — código em SRAM tem
-outro perfil de I-cache, e esta plataforma já provou o peso disso no caso do
-`-O3`. Esperado melhorar; esperado não é medido.
-**Critério:** declarar "referência v0.124+, BOOT_SRAM". **Nenhum delta contra
-os números do BOOT_QSPI é atribuível** (12d).
+### 2. The four regimes, average AND peak
+Redo with `cpu reset` between readings. **IT'S A NEW BASE** — code in SRAM has
+another I-cache profile, and this platform already proved the weight of that in
+the `-O3` case. Expected to improve; expected is not measured.
+**Criterion:** declare "reference v0.124+, BOOT_SRAM". **No delta against
+the BOOT_QSPI numbers is attributable** (12d).
 
-**Nuance que reforça o "esperado não é medido":** com o `.text` na AXI,
-**código e dados do reverb passam a disputar o mesmo barramento** — buscas
-de instrução e o tráfego dos buffers agora moram na mesma SRAM. A I-cache
-mitiga e o esperado segue sendo melhorar sobre a QSPI, mas a melhora pode
-não ser uniforme. Se algum regime surpreender, o candidato é R2/R3 — os de
-reverb pesado.
+**A nuance that reinforces "expected is not measured":** with `.text` in the AXI,
+**the reverb's code and data now contend for the same bus** — instruction
+fetches and the buffers' traffic now live in the same SRAM. The I-cache
+mitigates and the expectation is still to improve over the QSPI, but the
+improvement may not be uniform. If some regime surprises, the candidate is R2/R3 —
+the heavy-reverb ones.
 
-### 3. Espelho MIDI
-TX de 76 no boot (`midi` → `eco: TX 76`). Janela de autoria pelo teste que a
-validou: 4 ciclos de 500 ms num CC com widget → **8/8**; CC sem widget →
-**8/8**. Colisão dentro da janela → `cc_janela` incrementa.
+### 3. MIDI mirror
+TX of 76 at boot (`midi` → `eco: TX 76`). Authorship window by the test that
+validated it: 4 cycles of 500 ms on a CC with a widget → **8/8**; a CC with no widget →
+**8/8**. A collision within the window → `cc_janela` increments.
 
 ### 4. `vistos`
-`vistos reset`, varrer uma família, conferir que os CCs aparecem.
+`vistos reset`, sweep a family, check that the CCs appear.
 
-### 5. Critério de estouro
-`ctos prazo 300` → derruba na ordem declarada, o relatório diz **PRAZO
-ARTIFICIAL** e **CAIU por ESTOURO**. `ctos prazo 0` devolve.
+### 5. Overflow criterion
+`ctos prazo 300` → drops in the declared order, the report says **ARTIFICIAL
+DEADLINE** and **DROPPED by OVERFLOW**. `ctos prazo 0` restores.
 
-### 6. Serial e caixa-preta sob carga
-Com o regime pesado no ar: `list`, `ctos`, `midi`, `bb`. **Critério:** o loop
-não starva — o serial responde e o LED continua batendo.
+### 6. Serial and black box under load
+With the heavy regime in the air: `list`, `ctos`, `midi`, `bb`. **Criterion:** the loop
+doesn't starve — the serial responds and the LED keeps beating.
 
-### 7. MIDI de volta ao Loopy
-Mover um widget e ver o parâmetro mudar; mudar um parâmetro por serial e ver
-o widget seguir.
+### 7. MIDI back to Loopy
+Move a widget and see the parameter change; change a parameter over serial and
+see the widget follow.
 
-### 8. Áudio
-Tocar. Sem clique, sem dropout, sem mudança de caráter que não tenha
-explicação. **Este é o único item que o Code não pode julgar sozinho.**
+### 8. Audio
+Play. No click, no dropout, no change of character without an
+explanation. **This is the only item Code can't judge on its own.**
 
 ---
 
-## Ao fim — o teto pede RE-EXAME, não mudança automática
+## At the end — the ceiling calls for RE-EXAMINATION, not automatic change
 
-Os 850 µs foram escolhidos como orçamento sobre o perfil de execução da
-**QSPI**. Se a SRAM mudar os picos de verdade, 850 pode ficar frouxo ou
-apertado demais em relação à nova distância até a parede.
+The 850 µs were chosen as a budget over the execution profile of the
+**QSPI**. If the SRAM really changes the peaks, 850 may become too loose or too
+tight relative to the new distance to the wall.
 
-**A pergunta:** *o orçamento administrativo ainda administra bem a distância
-até o prazo?*
+**The question:** *does the administrative budget still administer the distance
+to the deadline well?*
 
-A resposta vai etiquetada como **escolhida sobre medição**, na forma que o
-passo 0 padronizou — e o valor antigo fica registrado com o motivo da
-mudança, se houver.
+The answer goes labeled as **chosen over measurement**, in the form that the
+step 0 standardized — and the old value is recorded with the reason for the
+change, if there is one.
 
-## O boot-report ganha a parede
+## The boot report gains the wall
 
-480 KB é limite novo, e ninguém deve descobri-lo batendo nele. O boot passa a
-declarar **"binário X de 480 KB"**.
+480 KB is a new limit, and nobody should discover it by hitting it. The boot now
+declares **"binary X of 480 KB"**.

@@ -1,487 +1,503 @@
 # HARDWARE — Cotucatronics
 
-> Decisões fechadas, com o **porquê** de cada uma. Esquemáticos em
-> `esquematicos/`. Quando uma decisão for revista, o motivo antigo fica
-> registrado — premissa revogada em silêncio é a família de bug mais cara
-> deste projeto.
+> Settled decisions, with the **why** of each one. Schematics in
+> `esquematicos/`. When a decision is revised, the old reason stays on
+> record — a premise silently revoked is the most expensive family of bug in
+> this project.
 
 ---
 
-## 1 · ENERGIA — entrada única, sem boost
+## 1 · POWER — single input, no boost
 
 ```
-qualquer powerbank PD ──USB-C──> [decoy PD 15V, 5A] ──> RAIL 15V
-                                       ┌──> TPA3116D2 estéreo  (+2200µF +100nF)
-                                       └──> step-down 5V       (SEM banco)
-                                                  ├──> Daisy VIN
-                                                  └──▶|── 5V da ponte ESP32
-                                                    SCHOTTKY
+any PD powerbank ──USB-C──> [PD decoy 15V, 5A] ──> RAIL 15V
+                                   ┌──> TPA3116D2 stereo  (+2200µF +100nF)
+                                   └──> step-down 5V      (NO bank)
+                                              ├──> Daisy VIN
+                                              └──▶|── 5V from the ESP32 bridge
+                                                SCHOTTKY
 ```
 
-✅ **SOLDADO E VERIFICADO EM 01/09 — 1N5819.** `VIN` da ponte a **4,72 V**
-(queda certa, sem caminho a contorná-lo). **Teste do gatilho passou:** powerbank
-desligado com o USB da ponte ligado, e o LED do amp **apagado**.
+✅ **SOLDERED AND VERIFIED ON 01/09 — 1N5819.** The bridge's `VIN` at **4,72 V**
+(the right drop, with no path bypassing it). **The gate test passed:** powerbank
+off with the bridge's USB on, and the amp LED **dark**.
 
-E os **100 µF + 100 nF** ficaram soldados nos pinos da ponte, **depois** do
-díodo. **A terra própria à estrela não se fez, e não faz falta:** 0 mV em AC
-entre o terra dela e a estrela, com tom a tocar — ver
+And the **100 µF + 100 nF** ended up soldered on the bridge's pins, **after** the
+diode. **A ground of its own to the star was not made, and isn't needed:** 0 mV
+AC between its ground and the star, with a tone playing — see
 [`ATERRAMENTO.md`](ATERRAMENTO.md) §8.
 
-⚠️ **O SCHOTTKY NA PONTE NÃO É OPCIONAL — SS14 ou 1N5819, ânodo no trilho.**
+⚠️ **THE SCHOTTKY ON THE BRIDGE IS NOT OPTIONAL — SS14 or 1N5819, anode on the rail.**
 
-Na ESP32-C3 SuperMini o pino `5V` liga ao **VBUS do USB directamente no cobre**,
-sem díodo de bordo. Sem o Schottky, ligar o USB da ponte **realimenta o trilho
-de 5 V inteiro** — medido em 31/08: o LED do amp acendia com o powerbank
-desligado, só com o cabo USB na ponte.
+On the ESP32-C3 SuperMini the `5V` pin connects to the USB's **VBUS directly in
+the copper**, with no on-board diode. Without the Schottky, connecting the
+bridge's USB **feeds back the entire 5 V rail** — measured on 31/08: the amp LED
+lit up with the powerbank off, just from the USB cable on the bridge.
 
-Custa ~0,3 V de queda, e a ponte aceita 4,3–6,0 V: sobra folga.
+It costs ~0,3 V of drop, and the bridge accepts 4,3–6,0 V: there's clearance to spare.
 
-**Por que uma peça e não uma regra:** a regra *"alimenta por USB **ou** pelo
-pino de 5 V, nunca os dois"* já estava escrita no `esp32/README.md` desde o
-início, e foi violada na mesma — por quem a escreveu. O díodo torna o erro
-**impossível**, e regra que depende de alguém a ler não protege peça de galeria.
+**Why a part and not a rule:** the rule *"power it by USB **or** by the 5 V pin,
+never both"* was already written in `esp32/README.md` from the start, and it was
+violated anyway — by the one who wrote it. The diode makes the mistake
+**impossible**, and a rule that depends on someone reading it does not protect a
+gallery piece.
 
-🚫 **E não se conserta isto por firmware.** Não há transístor nesse caminho: o
-`5V` e o VBUS são o mesmo nó, e nenhum GPIO abre cobre. O que o firmware poderia
-fazer era *avisar* — e um aviso que só detecta hospedeiro USB fica calado
-perante um carregador burro, que é justamente o caso da galeria.
+🚫 **And you don't fix this in firmware.** There is no transistor in that path:
+`5V` and VBUS are the same node, and no GPIO opens copper. What the firmware
+could do was *warn* — and a warning that only detects a USB host stays silent in
+front of a dumb charger, which is exactly the gallery case.
 
-**UM amp estéreo, não dois.** O desenho dizia `amp A` e `amp B` de quando eram
-dois módulos; hoje é um TPA3116D2 de dois canais, e as duas saídas partilham a
-alimentação dentro da placa — **um banco à entrada serve os dois**. O `WIDI VI`
-também saiu: é a ponte ESP32.
+**ONE stereo amp, not two.** The design said `amp A` and `amp B` from when they
+were two modules; today it's a two-channel TPA3116D2, and the two outputs share
+the supply within the board — **one bank at the input serves both**. The
+`WIDI VI` also went away: it's the ESP32 bridge.
 
-**Por que 15V e não 12V:** 5V/9V/**15V**/20V são os perfis PD **obrigatórios**;
-12V é opcional e muitos powerbanks não oferecem. 15V = qualquer powerbank
-serve, que era o objetivo (powerbank vira consumível, não peça do projeto).
+**Why 15V and not 12V:** 5V/9V/**15V**/20V are the **mandatory** PD profiles;
+12V is optional and many powerbanks don't offer it. 15V = any powerbank works,
+which was the goal (the powerbank becomes a consumable, not a part of the
+project).
 
-**Por que sem boost:** o MT3608 de 2A não deu conta — entregava 6V sob carga.
-Capacitor não resolveu, e o diagnóstico é o verbete: *capacitor empresta
-energia pra PICO; se a tensão continua caindo, falta corrente MÉDIA, e nenhum
-capacitor fabrica potência.* O decoy PD não cria tensão, **negocia** — o
-trabalho pesado fica na eletrônica do powerbank, dimensionada de fábrica.
+**Why without boost:** the 2A MT3608 couldn't handle it — it delivered 6V under
+load. A capacitor didn't solve it, and the diagnosis is the entry: *a capacitor
+lends energy for a PEAK; if the voltage keeps dropping, what's missing is AVERAGE
+current, and no capacitor manufactures power.* The PD decoy doesn't create
+voltage, it **negotiates** — the heavy lifting stays in the powerbank's
+electronics, sized at the factory.
 
-**Obrigatório:** **2200 µF / 35 V + 100 nF colados nos pinos do amp.**
-Medido em 31/08: sem banco, alimentar a Daisy pelo trilho fazia o exciter
-zumbir, e alimentá-la à parte limpava. **Na galeria não há fonte à parte**,
-portanto isto é requisito da peça, não recomendação.
+**Mandatory:** **2200 µF / 35 V + 100 nF glued to the amp's pins.**
+Measured on 31/08: without the bank, powering the Daisy from the rail made the
+exciter hum, and powering it separately cleaned it up. **In the gallery there is
+no separate supply**, so this is a requirement of the piece, not a recommendation.
 
-🚫 **NADA DE BANCO NA ENTRADA DO STEP-DOWN.** Tentado em 31/08 e desfeito no
-mesmo dia: **guincho agudo** imediato. O amp é carga de corrente pulsada e
-quer o banco; o step-down é carga de **potência constante** e não o tolera.
+🚫 **NO BANK AT THE INPUT OF THE STEP-DOWN.** Tried on 31/08 and undone the same
+day: immediate **high-pitched squeal**. The amp is a pulsed-current load and
+wants the bank; the step-down is a **constant-power** load and does not tolerate it.
 
-📖 O mecanismo (impedância de entrada negativa, critério de Middlebrook) e o
-resto das regras de desacoplamento estão em
+📖 The mechanism (negative input impedance, Middlebrook criterion) and the rest
+of the decoupling rules are in
 [`ATERRAMENTO.md`](ATERRAMENTO.md) §4.
 
-### Os dois pots estão com as pontas trocadas — corrigido em firmware
+### The two pots have their ends swapped — fixed in firmware
 
-Medido em 31/08: **sentido horário DIMINUÍA o volume** nos dois. Não é
-software — é a ordem dos dois fios das **extremidades** do potenciómetro, com
-o cursor a subir na direcção da ponta ligada ao `GND`.
+Measured on 31/08: **clockwise LOWERED the volume** on both. It's not software —
+it's the order of the two wires at the **ends** of the potentiometer, with the
+wiper rising toward the end connected to `GND`.
 
-O conserto ficou em `hal_daisy_seed.cpp`, na tabela `kKnobInverte[2]`, e não na
-macro. A fronteira é essa: **o sentido de um potenciómetro é um facto do
-cobre**, e invertendo já na leitura tudo a jusante — captura, histerese,
-passos, `Inverso()` — trabalha em coordenadas corrigidas, sem um segundo sítio
-onde alguém possa esquecer o sinal.
+The fix went into `hal_daisy_seed.cpp`, in the `kKnobInverte[2]` table, and not
+in the macro. That's the boundary: **the direction of a potentiometer is a fact
+of the copper**, and inverting it right at the read makes everything downstream
+— takeover, hysteresis, steps, `Inverso()` — work in corrected coordinates, with
+no second place where someone could forget the sign.
 
-Se algum dia os fios forem re-soldados na ordem certa, **é essa tabela que
-passa a `false`** — não há mais nenhum lugar a mexer.
+If the wires are ever re-soldered in the right order, **it's that table that
+goes to `false`** — there's nowhere else to touch.
 
-### Terra, massa e desacoplamento
+### Ground, chassis, and decoupling
 
-📖 **O assunto tem capítulo próprio: [`ATERRAMENTO.md`](ATERRAMENTO.md).**
-Taxonomia dos três tipos de terra, estrela, `AGND`/`DGND`, condensadores por
-tipo de carga, entradas de alta impedância, acoplamento pelo ar, e o método de
-medição sob carga. **Quando este arquivo e aquele discordarem, aquele manda.**
+📖 **The subject has its own chapter: [`ATERRAMENTO.md`](ATERRAMENTO.md).**
+Taxonomy of the three kinds of ground, the star, `AGND`/`DGND`, capacitors by
+load type, high-impedance inputs, coupling through the air, and the method of
+measuring under load. **When this file and that one disagree, that one wins.**
 
-Revisão de terra no desenho de placa: skill `revisao-terra`.
+Ground review in the board design: skill `revisao-terra`.
 
-O desenho alvo **deste** instrumento:
+The target design for **this** instrument:
 
 ```
-   ILHA DE ÁUDIO — só sinal
-     AGND ── piezos ── comuns dos DPDT ── sleeve dos jacks ── entrada do amp
-          ↑ encontra o DGND SÓ por dentro da Daisy
-   TRILHO DE FORÇA E LÓGICA
-     DGND ── fio próprio à estrela ── pots (3V3 da Daisy) ── encoders ── botões
-          ── ponte ESP32 (fio próprio à estrela)
+   AUDIO ISLAND — signal only
+     AGND ── piezos ── DPDT commons ── jack sleeves ── amp input
+          ↑ meets DGND ONLY inside the Daisy
+   POWER AND LOGIC RAIL
+     DGND ── own wire to the star ── pots (Daisy 3V3) ── encoders ── buttons
+          ── ESP32 bridge (own wire to the star)
 ```
 
-### O pot não chega às pontas — batentes esticados em firmware
+### The pot doesn't reach the ends — stops stretched in firmware
 
-Medido em 31/08, varrendo os dois de ponta a ponta. **O valor de cobre**, sem
-inversão nem correcção:
+Measured on 31/08, sweeping both end to end. **The copper value**, with no
+inversion or correction:
 
-| pot | fundo | topo |
+| pot | bottom | top |
 |---|---|---|
 | k1 (L) | 0,0009 | **0,9756** |
 | k2 (R) | 0,0005 | **0,9753** |
 
-O fundo chega quase perfeito; **o topo pára a 0,975** — o cursor nunca entrega
-os 3V3 inteiros. Depois da inversão isso vira um **piso de 0,025**, que não é
-silêncio: é cerca de **−32 dB, audível**. Foi exactamente o que se ouviu com os
-pots no mínimo, e o teste que o provou foi pôr `post_level_l`/`post_level_r` a zero por
-comando — aí houve **silêncio total**, o que também absolveu o amp.
+The bottom reaches nearly perfect; **the top stops at 0,975** — the wiper never
+delivers the full 3V3. After inversion that becomes a **floor of 0,025**, which
+isn't silence: it's about **−32 dB, audible**. That was exactly what was heard
+with the pots at minimum, and the test that proved it was setting
+`post_level_l`/`post_level_r` to zero by command — then there was **total
+silence**, which also absolved the amp.
 
-O conserto são `kKnobFundo` (0,035) e `kKnobTopo` (0,990) em
-`hal_daisy_seed.cpp`, aplicados depois da inversão.
+The fix is `kKnobFundo` (0,035) and `kKnobTopo` (0,990) in
+`hal_daisy_seed.cpp`, applied after the inversion.
 
-⚠️ **As constantes ficam DENTRO do curso medido, não nele.** Assim cada ponta
-ganha ~1% de zona morta onde o valor assenta em 0 ou 1 e **lá fica**. Batente
-posto no valor medido daria um extremo que só se alcança com sorte e que o
-ruído do ADC faria tremer.
+⚠️ **The constants sit INSIDE the measured travel, not on it.** That way each end
+gets ~1% of a dead zone where the value settles at 0 or 1 and **stays there**. A
+stop set at the measured value would give an extreme reachable only by luck and
+that ADC noise would make quiver.
 
-E há um segundo defeito que o piso causava, menos óbvio: com o parâmetro em 0
-e o pot no seu mínimo de 0,025, a **janela de captura era 0,02** — menor que o
-piso. O pot ficava **permanentemente incapaz de retomar o parâmetro**. Esticar
-os batentes cura os dois de uma vez.
+And there's a second defect the floor caused, less obvious: with the parameter at
+0 and the pot at its minimum of 0,025, the **takeover window was 0,02** — smaller
+than the floor. The pot was **permanently unable to retake the parameter**.
+Stretching the stops cures both at once.
 
-`knob` mostra agora `cobre X INV -> vale Y`: o valor bruto ao lado do tratado,
-porque **uma correcção que apaga a própria evidência não se pode re-conferir**.
+`knob` now shows `cobre X INV -> vale Y`: the raw value next to the treated one,
+because **a correction that erases its own evidence cannot be re-checked**.
 
-### Os condensadores desta peça
+### The capacitors of this piece
 
-| consumidor | precisa | estado |
+| consumer | needs | state |
 |---|---|---|
-| **amp TPA3116** | 2200 µF / 35 V + 100 nF nos pinos | ✅ soldado |
-| **step-down 5 V** | **nada na entrada** | ✅ removido (era o guincho) |
-| **ponte ESP32** | 100 µF / 16 V + 100 nF + terra própria | ⬜ por soldar |
-| **Daisy** | 100 µF / 16 V + 100 nF | ⬜ recomendado |
+| **amp TPA3116** | 2200 µF / 35 V + 100 nF on the pins | ✅ soldered |
+| **step-down 5 V** | **nothing at the input** | ✅ removed (it was the squeal) |
+| **ESP32 bridge** | 100 µF / 16 V + 100 nF + a ground of its own | ⬜ to be soldered |
+| **Daisy** | 100 µF / 16 V + 100 nF | ⬜ recommended |
 
-📖 O porquê de cada valor, e as proibições, em [`ATERRAMENTO.md`](ATERRAMENTO.md) §4.
+📖 The why of each value, and the prohibitions, in [`ATERRAMENTO.md`](ATERRAMENTO.md) §4.
 
-**Terra em ESTRELA, não margarida.** O ponto é onde o `GND` do decoy PD chega
-ao amp, e é dali que bifurca para o step-down. O retorno do amp é o fio mais
-curto e grosso.
+**Ground in a STAR, not a daisy chain.** The point is where the PD decoy's `GND`
+reaches the amp, and it's from there that it forks to the step-down. The amp's
+return is the shortest and thickest wire.
 
-🚫 **Switch só no positivo. Terra nunca passa por chave.**
+🚫 **Switch only on the positive. Ground never passes through a switch.**
 
 ---
 
-## 1b · O PAINEL OLED CUSTA 6 dB — por isso nasce apagado
+## 1b · THE OLED PANEL COSTS 6 dB — that's why it is born dark
 
-Medido em 31/08, com o instrumento parado:
+Measured on 31/08, with the instrument at rest:
 
-| | painel apagado | painel aceso |
+| | panel dark | panel lit |
 |---|---|---|
 | IN_L | −75,3 dBFS | **−69,3 dBFS** |
 | IN_R | −77,7 dBFS | **−71,3 dBFS** |
-| pico espectral | 119,7 Hz · dom 0,28 | **7040,8 Hz · dom 0,95** |
+| spectral peak | 119,7 Hz · dom 0,28 | **7040,8 Hz · dom 0,95** |
 
-Dominância 0,95 é assinatura de **relógio**, não de ruído térmico. E 7040 Hz
-tem explicação exacta: **64 linhas × ~110 Hz de quadro = 7040 varrimentos de
-linha por segundo**. É a corrente de accionamento das linhas, proporcional aos
-píxeis **acesos** — por isso a medição com os píxeis apagados ficou limpa.
+Dominance 0,95 is the signature of a **clock**, not of thermal noise. And 7040 Hz
+has an exact explanation: **64 lines × ~110 Hz of frame = 7040 line scans per
+second**. It's the drive current of the lines, proportional to the **lit**
+pixels — that's why the measurement with the pixels dark came out clean.
 
-**A regra (v0.221.0):** o painel nasce apagado, acorda quando alguém gira ou
-prime um encoder, e dorme ao fim de **5 s** sem actividade. Durante a
-performance ninguém lhe toca, portanto está apagado quando o ouvido trabalha.
+**The rule (v0.221.0):** the panel is born dark, wakes when someone turns or
+presses an encoder, and sleeps after **5 s** of inactivity. During the
+performance nobody touches it, so it's dark when the ear is working.
 
-🚫 **Não se conserta com notch.** Um notch de 201 Hz a 7 kHz seria musicalmente
-barato, mas **não escala**: a peça é replicada em série e cada painel terá o seu
-relógio. Painel apagado acerta em todas as unidades, custa zero DSP, e deixa as
-bocas do notch livres para a microfonia.
+🚫 **You don't fix it with a notch.** A notch from 201 Hz to 7 kHz would be
+musically cheap, but it **doesn't scale**: the piece is replicated in a series and
+each panel will have its own clock. A dark panel is right on every unit, costs
+zero DSP, and leaves the notch bands free for microphonics.
 
-⚠️ **Item de bancada:** os cinco fios do OLED (`D5 D6 D7 D8 D10`) correm perto
-dos cabos dos piezos. Vale afastá-los e cruzá-los em ângulo recto — mesma regra
-do acoplamento pelo ar que vale para a saída do amp classe D.
+⚠️ **Bench item:** the OLED's five wires (`D5 D6 D7 D8 D10`) run close to the
+piezo cables. Worth moving them apart and crossing them at a right angle — same
+rule of coupling through the air that applies to the class-D amp output.
 
-## 2 · ENTRADA DOS PIEZOS (×2) — só proteção, ganho intacto
+## 2 · PIEZO INPUT (×2) — protection only, gain intact
 
-⚠️ **O LAÇO ACÚSTICO É REAL, E CEIFA O ADC — medido em 31/08.**
+⚠️ **THE ACOUSTIC LOOP IS REAL, AND IT REAPS THE ADC — measured on 31/08.**
 
-Exciter e piezo vivem no mesmo corpo, portanto **são** um laço de realimentação.
-Medido com a mesma força de toque, mudando só se a saída toca:
+Exciter and piezo live in the same body, so they **are** a feedback loop.
+Measured with the same touch force, changing only whether the output plays:
 
-| | saída a tocar | saída muda |
+| | output playing | output muted |
 |---|---|---|
-| **IN_L** | **0,0 dBFS · 313 amostras ceifadas** | **−7,4 dBFS · 0 ceifadas** |
+| **IN_L** | **0,0 dBFS · 313 samples reaped** | **−7,4 dBFS · 0 reaped** |
 
-**O laço acrescenta ~7,4 dB**, e é exactamente o que falta para bater no tecto
-com `pre_level_ab` a 0,6. (Para comparar: a corda dava −17 dBFS e a membrana −21 em
-medições sem laço.)
+**The loop adds ~7,4 dB**, and it's exactly what's needed to hit the ceiling with
+`pre_level_ab` at 0,6. (For comparison: the string gave −17 dBFS and the membrane
+−21 in measurements without the loop.)
 
-O laço **não é defeito** — é metade do que o instrumento tem de bom. O que não
-presta é o fim dele: **ceifado no ADC**, distorção digital dura e sem controlo.
+The loop **isn't a defect** — it's half of what's good about the instrument.
+What's no good is the end of it: **reaped at the ADC**, hard digital distortion
+with no control.
 
-⚠️ **Hoje não há controlo de ganho de entrada.** O `in_gain` foi aposentado em
-31/08 por estar inerte — decisão certa, mas isto é o primeiro caso que pede um
-trim de entrada a sério. Enquanto não houver, o controlo é **baixar o `pre_level_ab`**
-até o `pk` deixar de acusar `clip`.
+⚠️ **Today there is no input gain control.** `in_gain` was retired on 31/08 for
+being inert — the right decision, but this is the first case that calls for a
+serious input trim. While there isn't one, the control is to **lower
+`pre_level_ab`** until `pk` stops reporting `clip`.
 
-**Diagnóstico:** `pk reset`, tocar, `pk`. Se `clip > 0`, está a ceifar. Repetir
-com `set pre_level_ab 0` separa **laço** de **fonte quente**: se o pico cair, é laço.
+**Diagnosis:** `pk reset`, play, `pk`. If `clip > 0`, it's reaping. Repeat with
+`set pre_level_ab 0` to separate **loop** from **hot source**: if the peak drops,
+it's the loop.
 
 
 ```
 piezo (+) ──1kΩ──●──> AUDIO IN
-                 ├── D1 1N4148 (cátodo → 3V3)
-                 └── D2 1N4148 (cátodo → o nó, ânodo → GND)
-piezo (−) ────────────> trilho de terra (direto, sem resistor)
+                 ├── D1 1N4148 (cathode → 3V3)
+                 └── D2 1N4148 (cathode → the node, anode → GND)
+piezo (−) ────────────> ground rail (direct, no resistor)
 ```
 
-- Jacks **1/4" TRS** no painel · tip = sinal, sleeve = terra, ring aterrado
-- Fio **blindado**: centro = (+), malha = (−)
-- Piezo A → AUDIO IN L → cadeia A · Piezo B → AUDIO IN R → cadeia B
+- **1/4" TRS** jacks on the panel · tip = signal, sleeve = ground, ring grounded
+- **Shielded** wire: center = (+), shield = (−)
+- Piezo A → AUDIO IN L → chain A · Piezo B → AUDIO IN R → chain B
 
-**Sem atenuador, e o motivo é de método:** o clipe medido veio de *dedo direto
-no disco solto* — regime que não é o de uso. Na escultura o piezo lê flexão de
-placa, nível muito mais baixo. **Validade de medição tem REGIME.** Pads do
-divisor previstos na carrier board, não populados.
+**No attenuator, and the reason is one of method:** the measured clip came from a
+*finger directly on a loose disc* — a regime that isn't the one of use. On the
+sculpture the piezo reads board flexing, a much lower level. **A measurement's
+validity has a REGIME.** Divider pads planned on the carrier board, not populated.
 
-**Os diodos são invisíveis abaixo de 3,3 V** — não atenuam, não colorem, só
-acordam no pico excepcional. Os dois apontam na mesma direção (cátodo pro lado
-mais positivo do seu par).
+**The diodes are invisible below 3,3 V** — they don't attenuate, don't color,
+they only wake at the exceptional peak. The two point in the same direction
+(cathode toward the more positive side of their pair).
 
-**Verbete:** *defeito físico num transdutor imita perfeitamente assimetria de
-circuito.* O p2 chegando baixo era o piezo, não o canal — o teste que separou
-foi **trocar os piezos de canal**, não medir mais fundo.
+**Entry:** *a physical defect in a transducer perfectly mimics a circuit
+asymmetry.* The p2 arriving low was the piezo, not the channel — the test that
+separated it was to **swap the piezos between channels**, not to measure deeper.
 
 ---
 
-## 3 · SAÍDA — dois ramos, e o destino é da CHAVE
+## 3 · OUTPUT — two branches, and the destination belongs to the SWITCH
 
 ```
-OUT_L ──> [DPDT 3 pos: jack | ambos | amp] ─┬──> jack TS
-                                            └──> TPA3110 PBTL ──> exciter DAEX32QMB-4 (4Ω)
-OUT_R ──> idem, chave própria
+OUT_L ──> [DPDT 3 pos: jack | both | amp] ─┬──> jack TS
+                                           └──> TPA3110 PBTL ──> exciter DAEX32QMB-4 (4Ω)
+OUT_R ──> same, own switch
 ```
 
-**O firmware não nomeia destino — nomeia SAÍDA.** `OUT_L` não é "o exciter"
-e `OUT_R` não é "o jack": cada um vai para onde a sua chave mandar, e as
-três posições existem justamente porque o destino muda em operação.
+**The firmware doesn't name a destination — it names an OUTPUT.** `OUT_L` is not
+"the exciter" and `OUT_R` is not "the jack": each goes wherever its switch sends
+it, and the three positions exist precisely because the destination changes in
+operation.
 
-<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
-<!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
-Foi por não ver isto que os params se chamaram `route_exciter` /
-`route_jack` até 28/08 — e o nome enganou *dentro da sessão que o
-corrigiu*, quando `route_exciter 0` foi usado a pensar que silenciava só o
-transdutor. Hoje chamam-se `out_l` / `out_r` (CC 113/114), e cortam o ramo
-inteiro, seja qual for o destino em que a chave estiver.
+<!-- doc-check: ignore route_exciter (name RETIRED on 28/08, now `out_l`. The mention is deliberate: it is the record of the rename, and deleting the old name would delete exactly what explains why it was wrong.) -->
+<!-- doc-check: ignore route_jack (idem, now `out_r`) -->
+It was for not seeing this that the params were called `route_exciter` /
+`route_jack` until 28/08 — and the name misled *within the session that fixed it*,
+when `route_exciter 0` was used thinking it silenced only the transducer. Today
+they're called `out_l` / `out_r` (CC 113/114), and they cut the whole branch,
+whatever the destination the switch happens to be at.
 
-**Qual CADEIA entra em qual SAÍDA é decisão de firmware**, e é a matriz 2×2
-— `route_a_l`, `route_b_l`, `route_a_r`, `route_b_r`, nos CC 97/98 (o CC diz
-a saída, o canal diz a cadeia). Nasce cheia, que reproduz exactamente o
-código fixo que a antecedeu. Serve para inverter as cadeias quando os
-transdutores estão ligados ao contrário, em dois gestos e sem duplicar
-preset nenhum — e por isso **fica fora dos presets**: é facto de fiação, não
-de timbre.
+**Which CHAIN feeds which OUTPUT is a firmware decision**, and it's the 2×2
+matrix — `route_a_l`, `route_b_l`, `route_a_r`, `route_b_r`, on CC 97/98 (the CC
+says the output, the channel says the chain). It is born full, which reproduces
+exactly the hardcoded code that preceded it. It serves to swap the chains when
+the transducers are connected the wrong way, in two gestures and without
+duplicating any preset — and that's why it **stays out of the presets**: it's a
+wiring fact, not a timbre one.
 
-⚠️ **Esta chave contradiz a regra do parágrafo seguinte, e a regra é que
-está mal formulada.** *"Áudio não passa por contato mecânico"* nasceu de uma
-chave de POTÊNCIA (contato seco, não conduz nível de linha) e generalizou
-demais. O DPDT de sinal conduz áudio de propósito. A regra correcta é a que
-o caso original ensinou: **chave de potência não serve para comutar sinal.**
+⚠️ **This switch contradicts the rule in the next paragraph, and it's the rule
+that's badly worded.** *"Audio does not pass through a mechanical contact"* was
+born from a POWER switch (dry contact, does not conduct line level) and
+generalized too far. The signal DPDT conducts audio on purpose. The correct rule
+is the one the original case taught: **a power switch is no good for switching
+signal.**
 
-**O switch mora ANTES do amp, em nível de linha.** Nunca depois: o TPA3110 em
-PBTL é ponte — **os dois terminais de saída são quentes**, e encostar um deles
-no terra do jack mata o amp.
+**The switch lives BEFORE the amp, at line level.** Never after: the TPA3110 in
+PBTL is a bridge — **both output terminals are hot**, and touching one of them to
+the jack ground kills the amp.
 
-**Resistor de 10 kΩ permanente** do IN+ do amp ao GND: entrada flutuante é
-antena amplificada direto no exciter.
+**Permanent 10 kΩ resistor** from the amp's IN+ to GND: a floating input is an
+antenna amplified straight into the exciter.
 
-**Regra de arquitetura:** *áudio não passa por contato mecânico em lugar nenhum
-deste instrumento — chave governa GPIO, firmware corta o ramo.* Descoberto por
-medição: chave de potência de 3 posições (marcada 12V) tem **contato seco** e
-não conduz nível de linha.
+**Architecture rule:** *audio does not pass through a mechanical contact anywhere
+in this instrument — the switch governs a GPIO, the firmware cuts the branch.*
+Discovered by measurement: a 3-position power switch (marked 12V) has a **dry
+contact** and does not conduct line level.
 
-**Exciter é surdo em grave: 100 Hz serve pra medir, não pra ouvir.**
+**The exciter is deaf in the low end: 100 Hz is good for measuring, not for
+hearing.**
 
-**A CORRENTE DO EXCITER NÃO SE MEDE COM SHUNT.** Pelo mesmo motivo que o
-switch não pode morar depois do amp: em PBTL a saída é ponte comutada a
-centenas de kHz, **não há DC para medir e os dois terminais são quentes** —
-um INA ali não tem modo comum válido nem sinal que faça sentido. Para o
-exciter: microfone, ou pinça de corrente AC.
+**THE EXCITER'S CURRENT IS NOT MEASURED WITH A SHUNT.** For the same reason the
+switch can't live after the amp: in PBTL the output is a bridge switched at
+hundreds of kHz, **there's no DC to measure and both terminals are hot** — an INA
+there has no valid common mode nor a signal that makes sense. For the exciter: a
+microphone, or an AC current clamp.
 
-Quem responde "quanto o amp está a puxar" é a medição **na entrada dele**,
-no ramo dos amps depois da bifurcação — ver o painel 5 dos esquemáticos. E
-ela responde a pergunta ELÉCTRICA: corrente é bom detector de anomalia e mau
-juiz de qualidade. Um exciter mal acoplado à escultura pode puxar o dobro e
-soar menos. Para *"está melhor?"* o instrumento é o ouvido.
+What answers "how much the amp is drawing" is the measurement **at its input**,
+on the amp branch after the fork — see panel 5 of the schematics. And it answers
+the ELECTRICAL question: current is a good anomaly detector and a bad judge of
+quality. An exciter poorly coupled to the sculpture can draw double and sound
+less. For *"is it better?"* the instrument is the ear.
 
 ---
 
-## 4 · A PONTE ESP32 — e o cabo dela NÃO é opcional
+## 4 · THE ESP32 BRIDGE — and its cable is NOT optional
 
-🔴 **A PONTE E A DAISY PRECISAM DE UM LAÇO DE TERRA DIRECTO.**
+🔴 **THE BRIDGE AND THE DAISY NEED A DIRECT GROUND LOOP.**
 
-Medido em 31/08, e custou uma tarde a caçar firmware inocente. A sequência que
-o produziu: **tirou-se o fio de terra que ligava a ponte à Daisy** (ficaram a
-encontrar-se só na estrela), e depois **desligou-se a alimentação do trilho**.
+Measured on 31/08, and it cost an afternoon hunting innocent firmware. The
+sequence that produced it: **the ground wire linking the bridge to the Daisy was
+removed** (they were left to meet only at the star), and then **the rail supply
+was turned off**.
 
-A Daisy vinha do USB do portátil e ficou viva; a ponte ficou **sem alimentação
-e sem referência**. O `TX` dela, ainda ligado ao `D14`, passou a injectar
-corrente pelos díodos de protecção de um chip morto. A USART1 é **a mesma** para
-TX e RX, e a linha indefinida prendia quem tentava transmitir — a
-`MidiEspelha()` entrava em `BlockingTransmit` e não voltava.
+The Daisy was coming from the laptop's USB and stayed alive; the bridge was left
+**without power and without a reference**. Its `TX`, still connected to `D14`,
+started injecting current through the protection diodes of a dead chip. USART1 is
+**the same** for TX and RX, and the undefined line held whoever tried to transmit
+— `MidiEspelha()` entered `BlockingTransmit` and did not return.
 
-⚠️ **O defeito aparecia do lado ALIMENTADO.** A placa viva é que travava, por
-causa da morta. Procurava-se onde se manifestava, e morava do outro lado do cabo.
+⚠️ **The defect showed up on the POWERED side.** It was the live board that hung,
+because of the dead one. We looked where it manifested, and it lived on the other
+side of the cable.
 
-**Sintoma:** LED preso (fase 2 · sub-fase 6), sem série, e a porta USB a demorar
-~1 minuto a abrir em vez de instantaneamente. Reproduzível de instalação limpa.
+**Symptom:** a stuck LED (phase 2 · sub-phase 6), no serial, and the USB port
+taking ~1 minute to open instead of instantly. Reproducible from a clean install.
 
-**Regra, e ela está no capítulo:** duas placas que trocam sinais e podem ser
-alimentadas separadamente precisam de **laço de terra directo ao lado dos fios
-de sinal** — ver [`ATERRAMENTO.md`](ATERRAMENTO.md) §5b. Tirar a terra de sinal
-para resolver ruído é trocar um zumbido por uma placa morta; ruído resolve-se
-com **desacoplamento local**.
+**Rule, and it's in the chapter:** two boards that exchange signals and can be
+powered separately need a **direct ground loop next to the signal wires** — see
+[`ATERRAMENTO.md`](ATERRAMENTO.md) §5b. Removing the signal ground to fix noise
+is trading a hum for a dead board; noise is fixed with **local decoupling**.
 
-**Do lado do firmware (v0.216.0):** a transmissão passou a ser fila + pedaços de
-3 bytes com tecto de 3 ms e **recuo de 500 ms após três falhas**. Já não existe
-espera sem limite no laço.
+**On the firmware side (v0.216.0):** the transmission became a queue + 3-byte
+chunks with a 3 ms ceiling and a **500 ms back-off after three failures**. There
+is no longer an unbounded wait in the loop.
 
-⚠️ **NÃO TESTADO CONTRA A FALHA REAL.** Verificou-se que não há regressão e que
-a placa sobrevive com a ponte sem alimentação — mas nessa medição a transmissão
-teve êxito, ou seja **a condição do defeito não se reproduziu**. O teste que
-fecha isto é recriar a condição exacta: sem laço de terra directo, e trilho
-desligado.
+⚠️ **NOT TESTED AGAINST THE REAL FAILURE.** It was verified that there's no
+regression and that the board survives with the bridge unpowered — but in that
+measurement the transmission succeeded, meaning **the defect's condition did not
+reproduce**. The test that closes this is to recreate the exact condition: no
+direct ground loop, and rail off.
 
-### Gravar: dois DFU diferentes, e trocá-los custa uma tentativa
+### Flashing: two different DFUs, and swapping them costs an attempt
 
-| gesto | DFU que aparece | escreve |
+| gesture | DFU that appears | writes |
 |---|---|---|
-| **`BOOT` + `RST`** | ROM da ST (`@Internal Flash`, `@Option Bytes`) | o **bootloader** |
-| **`RST` simples** | bootloader da Daisy (`0x90000000`) | a **aplicação**, na QSPI |
+| **`BOOT` + `RST`** | ST ROM (`@Internal Flash`, `@Option Bytes`) | the **bootloader** |
+| **`RST` alone** | Daisy bootloader (`0x90000000`) | the **application**, in QSPI |
 
-🚫 `BOOT+RST` **não grava a aplicação** — dá `Last page at 0x9007f663 is not
-writeable`, porque a ROM não conhece a QSPI. Distinguir os dois pelo endereço
-`0x90000000` no `dfu-util -l`, **nunca** por `df11`, que ambos partilham.
+🚫 `BOOT+RST` **does not flash the application** — it gives `Last page at
+0x9007f663 is not writeable`, because the ROM doesn't know the QSPI. Distinguish
+the two by the address `0x90000000` in `dfu-util -l`, **never** by `df11`, which
+both share.
 
-## 4b · WIDI CORE — BLE MIDI, 6 fios
+## 4b · WIDI CORE — BLE MIDI, 6 wires
 
-> ⚠️ **SUBSTITUIÇÃO DECIDIDA, AINDA NÃO EXECUTADA.** O WIDI sai a favor de um
-> ESP32-C3 (US$ 45 → US$ 4, numa peça replicada em série na ordem de
-> centenas) — decisão e preço em [GEAR-AUDIT.md](GEAR-AUDIT.md), voo em
-> [VOO-ESP32-PONTE.md](VOO-ESP32-PONTE.md). **Sem plano B: o aceite é
-> portão**, e o que ele trava é a encomenda.
+> ⚠️ **REPLACEMENT DECIDED, NOT YET EXECUTED.** The WIDI goes out in favor of an
+> ESP32-C3 (US$ 45 → US$ 4, on a piece replicated in a series on the order of
+> hundreds) — decision and price in [GEAR-AUDIT.md](GEAR-AUDIT.md), the flight in
+> [VOO-ESP32-PONTE.md](VOO-ESP32-PONTE.md). **No plan B: the acceptance is the
+> gate**, and what it blocks is the order.
 >
-> Esta secção fica porque descreve o que está **na bancada hoje**. Sai
-> inteira quando o portão passar — e nunca sai do `battle_scars.md`, onde o
-> cruzamento TX/RX continua vivo, porque se aplica igual ao substituto.
+> This section stays because it describes what's **on the bench today**. It goes
+> out whole when the gate passes — and it never leaves `battle_scars.md`, where
+> the TX/RX crossover stays alive, because it applies the same to the
+> replacement.
 
-| WIDI | Daisy | nota |
+| WIDI | Daisy | note |
 |---|---|---|
-| VI | rail **5V** | não 3V3 |
-| ON | jumper do VI | sem isso, dorme |
-| GND | rail de terra | |
+| VI | rail **5V** | not 3V3 |
+| ON | jumper from VI | without it, it sleeps |
+| GND | ground rail | |
 | RX | ← **D13** | |
-| TX | → **D14** | ★ essencial — é o que recebe MIDI |
-| LB | → **D28** | status do link |
-| V3 | (só medir) | ≈3,3 V = módulo vivo |
+| TX | → **D14** | ★ essential — it's what receives MIDI |
+| LB | → **D28** | link status |
+| V3 | (measure only) | ≈3,3 V = module alive |
 
-**DADOS CRUZADOS.** Ligar reto não queima — dá silêncio, idêntico a módulo
-desligado. Se `midi` der 0 bytes, desconfiar do cruzamento **antes de tudo**.
-LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
+**DATA CROSSED.** Connecting it straight doesn't burn it out — it gives silence,
+identical to a module turned off. If `midi` gives 0 bytes, suspect the crossover
+**before anything else**. LG/LR removed (they marked no useful state) → D29/D30
+free.
 
 ---
 
-## 5 · PAINEL v2 (projetado, não montado)
+## 5 · PANEL v2 (designed, not assembled)
 
-- **OLED Waveshare 2.42" SSD1309**, 128×64, SPI 4 fios, tradutor de tensão
-  embarcado (3,3 V ok). Driver **já existe na libDaisy** (SSD130x).
-  Área visível 55,01 × 27,49 mm · módulo 61,50 × 39,50 mm · conector MX1.25 7p.
+- **OLED Waveshare 2.42" SSD1309**, 128×64, 4-wire SPI, with an on-board voltage
+  translator (3,3 V ok). The driver **already exists in libDaisy** (SSD130x).
+  Visible area 55,01 × 27,49 mm · module 61,50 × 39,50 mm · MX1.25 7p connector.
 
-  **As sete cores do chicote que vem com o painel**, e o pino da Daisy de
-  cada uma. Está aqui porque cor de fio é a única etiqueta que sobrevive à
-  bancada — e em 28/08 um cabo trocado sem marca custou um diagnóstico
-  inteiro, com o defeito atribuído a um conserto que estava certo:
+  **The seven colors of the harness that comes with the panel**, and the Daisy
+  pin for each. It's here because wire color is the only label that survives the
+  bench — and on 28/08 a swapped cable with no marking cost a whole diagnosis,
+  with the defect attributed to a fix that was right:
 
-  | cor | sinal | Daisy |
+  | color | signal | Daisy |
   |---|---|---|
-  | vermelho | VCC | 3V3 |
-  | preto | GND | GND |
-  | branco | RST | **D5** |
-  | verde | DC | **D6** |
-  | laranja | CS | **D7** |
-  | amarelo | CLK | **D8** |
-  | azul | DIN (MOSI) | **D10** |
+  | red | VCC | 3V3 |
+  | black | GND | GND |
+  | white | RST | **D5** |
+  | green | DC | **D6** |
+  | orange | CS | **D7** |
+  | yellow | CLK | **D8** |
+  | blue | DIN (MOSI) | **D10** |
 
-  Diagnóstico na placa: `oled` inicializa e acende · `oled off` apaga ·
-  `oled texto` escreve (**prova mais que o fill**: encher pode acontecer com
-  o `DC` preso, escrever exige que ele comute) · `oledvel <2..256>` varre a
-  velocidade do SPI · `fio curto` caça pontes nos dez pares · `fio <rst|dc|
-  cs|clk|din> <0|1>` segura um pino para medir **no conector do painel**.
+  Diagnosis on the board: `oled` initializes and lights · `oled off` turns it off ·
+  `oled texto` writes (**proves more than the fill**: filling can happen with the
+  `DC` stuck, writing requires it to toggle) · `oledvel <2..256>` sweeps the SPI
+  speed · `fio curto` hunts for bridges across the ten pairs · `fio <rst|dc|
+  cs|clk|din> <0|1>` holds a pin to measure **at the panel's connector**.
 
-  ⚠️ **O painel NUNCA responde** — é escrita pura, sem MISO. O firmware só
-  pode dizer *CONFIGURADO*, nunca *presente*. O único detector é o olho.
+  ⚠️ **The panel NEVER responds** — it's pure writing, no MISO. The firmware can
+  only say *CONFIGURED*, never *present*. The only detector is the eye.
 
-  ⚠️ **Conferir os jumpers `BS` no verso do módulo.** Eles escolhem o
-  interface — 4-wire SPI, 3-wire SPI, I²C ou paralelo. Em I²C ou 3-wire o
-  pino `DC` deixa de ser `DC`, e o firmware fica a falar a língua errada num
-  painel que responde o suficiente para limpar a tela e mais nada.
-- **Encoder EC11** com detentes e push (push = confirmar). Relativo, não
-  absoluto — mata o problema do salto do knob compartilhado.
-- **2 pots de volume**, um por ramo — ✅ **soldados e implementados em 28/08**:
-  `A0` = **D15** (ramo L) · `A1` = **D16** (ramo R). Params `post_level_l`/`post_level_r`
-  (CC 116/117), aplicados **depois do limiter**, onde só se pode reduzir.
+  ⚠️ **Check the `BS` jumpers on the back of the module.** They choose the
+  interface — 4-wire SPI, 3-wire SPI, I²C, or parallel. In I²C or 3-wire the `DC`
+  pin stops being `DC`, and the firmware ends up speaking the wrong language to a
+  panel that responds just enough to clear the screen and nothing more.
+- **EC11 encoder** with detents and push (push = confirm). Relative, not absolute
+  — it kills the jump problem of the shared knob.
+- **2 volume pots**, one per branch — ✅ **soldered and implemented on 28/08**:
+  `A0` = **D15** (branch L) · `A1` = **D16** (branch R). Params
+  `post_level_l`/`post_level_r` (CC 116/117), applied **after the limiter**, where
+  you can only reduce.
 
-  ⚠️ **Não há um terceiro pot possível.** `A0–A4` são aliases de `D15–D19`, e
-  o encoder global ocupa `D17/D18/D19`. O bloco do ADC acabou.
+  ⚠️ **There is no possible third pot.** `A0–A4` are aliases of `D15–D19`, and the
+  global encoder occupies `D17/D18/D19`. The ADC block is used up.
 
-  **Pot é absoluto e o param é partilhado com o MIDI**, então há **captura
-  suave**: o pot só assume quando passa pelo valor actual, e larga quando o
-  iPad escreve. Excepção no arranque — a primeira leitura **adopta** a
-  posição física, porque aí ninguém escreveu ainda e a verdade é o botão.
-  Diagnóstico: `knob` na serial.
-- **Botões de arcade: três, e só DOIS têm o LED ligado.**
-  - `freeze A` e `freeze B` (azuis) — botão **e** LED. O LED de 5 V é acionado
-    com 3,3 V pelos `Q1`/`Q2` do painel: **brilho aprovado no ambiente real**;
-    plano B do transístor arquivado sem custo.
-  - `búzios` (branco) — **botão apenas**. Sabe-se que está ligado pelo
-    **display**, não por luz no botão. Por isso há dois MOSFET para três
-    botões, e isso está certo.
+  **The pot is absolute and the param is shared with MIDI**, so there's **soft
+  takeover**: the pot only takes over when it passes through the current value,
+  and lets go when the iPad writes. Exception at startup — the first read
+  **adopts** the physical position, because there nobody has written yet and the
+  truth is the knob. Diagnosis: `knob` over serial.
+- **Arcade buttons: three, and only TWO have their LED wired.**
+  - `freeze A` and `freeze B` (blue) — button **and** LED. The 5 V LED is driven
+    with 3,3 V by the panel's `Q1`/`Q2`: **brightness approved in the real
+    environment**; the transistor plan B shelved at no cost.
+  - `cowrie shells` (white) — **button only**. You know it's on from the
+    **display**, not from light on the button. That's why there are two MOSFETs
+    for three buttons, and that's correct.
 
-  > ⚠️ Esta linha dizia *«arcade 30 mm com LED (freeze A e B, búzios)»*, e a
-  > leitura natural era que os três acendem. Isso levou **duas vezes** à mesma
-  > conclusão errada — que faltava um `Q3` no painel — e à segunda quase custou
-  > uma via do IDC 2×13, que está cheio e cujas oito terras guardam todas coisa
-  > medida. O caminho do búzios está completo desde 05/09: painel `J5` → IDC
-  > via **19** → Daisy pino **33**.
+  > ⚠️ This line said *«30 mm arcade with LED (freeze A and B, cowrie shells)»*,
+  > and the natural reading was that all three light up. That led **twice** to the
+  > same wrong conclusion — that a `Q3` was missing on the panel — and the second
+  > time it nearly cost a via of the IDC 2×13, which is full and whose eight
+  > grounds each hold something measured. The cowrie-shells path has been complete
+  > since 05/09: panel `J5` → IDC via **19** → Daisy pin **33**.
 
-  **Os três são de 30 mm.** Os centros ficam em `x = 40 | 100 | 160` na tampa,
-  e o búzios é o do meio. O «100 mm» que apareceu numa nota era a **posição no
-  eixo**, não o diâmetro — e a peça cortada confirma três furos de 30.
+  **All three are 30 mm.** The centers sit at `x = 40 | 100 | 160` on the lid, and
+  the cowrie shells one is in the middle. The «100 mm» that appeared in a note was
+  the **position on the axis**, not the diameter — and the cut piece confirms
+  three 30 holes.
 
-  ⚠️ **O que isto custa no palco, e diz-se:** o botão branco **não acende no
-  escuro**. Sabe-se onde está pela posição entre os dois azuis, não pela luz.
-  Se um dia isso incomodar, falta **uma** via no IDC (não duas — o botão já tem
-  a 19), e a candidata é o **pino 10**, com o custo medido dos 6 dB.
+  ⚠️ **What this costs on stage, and it's said:** the white button **doesn't light
+  in the dark**. You know where it is by its position between the two blue ones,
+  not by light. If that ever bothers, **one** via is missing in the IDC (not two —
+  the button already has 19), and the candidate is **pin 10**, with the measured
+  cost of the 6 dB.
 
-**Burn-in:** contraste baixo + deslocar 1–2 px a cada minutos. A peça pode
-ficar meses ligada numa galeria.
-
----
-
-## 6 · CARRIER BOARD rev A (projetada, não fabricada)
-
-KiCad → JLCPCB, SMD. Bloco de energia com esquemático **verificado pino a
-pino** (netlist conferida contra a conectividade pretendida, automaticamente).
-
-Peças críticas com número LCSC verificado: **CH224K** `C970725` (PD sink),
-**TPA3116D2DADR** `C50144` (amp). O medidor de corrente é o **INA219**, a
-mesma peça da bancada — LCSC ⚠️ **por verificar**, ao contrário dos outros
-dois. O INA226 saiu do desenho em 25/08: bancada e produção passam a ser a
-mesma peça, e número medido numa peça não se transporta para outra.
-
-⚠️ **Conector de 2 fios NÃO serve para a entrada** — PD negocia pelos pinos
-CC1/CC2. Pigtail sem CC deixa o chip surdo e o powerbank nunca sai dos 5V:
-falha em silêncio, em cobre.
+**Burn-in:** low contrast + shift 1–2 px every few minutes. The piece may stay on
+for months in a gallery.
 
 ---
 
-## Checklist antes de energizar
+## 6 · CARRIER BOARD rev A (designed, not fabricated)
 
-⚠️ **Antes de energizar montagem nova, correr a revisão de terra** — skill
-`revisao-terra`. Ruído de massa imita defeito de firmware, e diagnosticá-lo
-depois custou uma tarde e três acusações a inocentes.
+KiCad → JLCPCB, SMD. Power block with a schematic **verified pin by pin** (netlist
+checked against the intended connectivity, automatically).
 
-- [ ] Continuidade +V ↔ GND: **não pode bipar**
-- [ ] Decoy PD medido: **15 V confirmados sem carga**
-- [ ] Step-down medido em **5 V** antes de encostar na Daisy
-- [ ] Polaridade do capacitor (tarja = negativo) e dos diodos (faixa = cátodo)
-- [ ] Switch no **+V**, terra contínuo em estrela, zero loops
-- [ ] V3 do WIDI ≈ 3,3 V depois de energizar
-- [ ] Exciter **por último**, com `pre_level_ab` baixo e anti-feedback conferido
+Critical parts with a verified LCSC number: **CH224K** `C970725` (PD sink),
+**TPA3116D2DADR** `C50144` (amp). The current meter is the **INA219**, the same
+part as on the bench — LCSC ⚠️ **to be verified**, unlike the other two. The
+INA226 left the design on 25/08: bench and production become the same part, and a
+number measured on one part doesn't carry over to another.
+
+⚠️ **A 2-wire connector is no good for the input** — PD negotiates through the
+CC1/CC2 pins. A pigtail without CC leaves the chip deaf and the powerbank never
+leaves 5V: it fails silently, in copper.
+
+---
+
+## Checklist before powering up
+
+⚠️ **Before powering up a new assembly, run the ground review** — skill
+`revisao-terra`. Chassis-ground noise mimics a firmware defect, and diagnosing it
+afterward cost an afternoon and three accusations of the innocent.
+
+- [ ] Continuity +V ↔ GND: **must not beep**
+- [ ] PD decoy measured: **15 V confirmed with no load**
+- [ ] Step-down measured at **5 V** before touching the Daisy
+- [ ] Capacitor polarity (stripe = negative) and diode polarity (band = cathode)
+- [ ] Switch on **+V**, continuous ground in a star, zero loops
+- [ ] WIDI's V3 ≈ 3,3 V after powering up
+- [ ] Exciter **last**, with `pre_level_ab` low and anti-feedback checked

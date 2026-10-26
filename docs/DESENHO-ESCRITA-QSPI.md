@@ -1,102 +1,102 @@
-# Desenho — rotina própria de escrita na QSPI
+# Design — our own QSPI write routine
 
-**Estado:** desenho, nada implementado. Escrito depois do inventário, antes
-da primeira linha — que é a ordem que esta sessão aprendeu a respeitar.
+**State:** design, nothing implemented. Written after the inventory, before
+the first line — which is the order this session learned to respect.
 
-**Por que rotina própria e não a libDaisy:** ver bts 12v. `PersistentStorage`
-tem pré-condição não escrita — *"o app não executa da QSPI"* — revogada por
-`APP_TYPE=BOOT_QSPI` sem aviso de compilação.
+**Why our own routine and not libDaisy's:** see bts 12v. `PersistentStorage`
+has an unwritten precondition — *"the app does not run from QSPI"* — revoked by
+`APP_TYPE=BOOT_QSPI` with no compile warning.
 
-**Por que não forkar `qspi.cpp`:** o fecho transitivo decide, e decide contra
-o fork.
+**Why not fork `qspi.cpp`:** the transitive closure decides, and it decides against
+the fork.
 
-    EraseSector chama
+    EraseSector calls
       ├─ CheckProgramMemory  → EnterQuadMode, GetProgramMemoryRegion, SetMode
-      ├─ SetMode             → Init, e recursivamente SetMode
+      ├─ SetMode             → Init, and recursively SetMode
       ├─ WriteEnable         → HAL_QSPI_Command, HAL_QSPI_AutoPolling
-      ├─ HAL_QSPI_Command    → driver da ST
+      ├─ HAL_QSPI_Command    → ST driver
       ├─ AutopollingMemReady → HAL_QSPI_AutoPolling
       └─ ERR_RECOVERY        → SetMode(MEMORY_MAPPED)
 
-    qspi.cpp (libDaisy)        1.308 linhas
-    stm32h7xx_hal_qspi.c (ST)  2.666 linhas
-    ITCM disponível               64 KB
+    qspi.cpp (libDaisy)        1,308 lines
+    stm32h7xx_hal_qspi.c (ST)  2,666 lines
+    ITCM available                64 KB
 
-A cadeia **atravessa a fronteira da libDaisy e entra no HAL da ST**. Mover o
-`EraseSector` sem o `HAL_QSPI_Command` não é solução incompleta: é falha
-garantida no pior instante — a busca de instrução morre exatamente quando o
-modo muda. E levar tudo é carregar ~4.000 linhas de terceiro para dentro de
-64 KB, com fronteira que se move a cada atualização.
+The chain **crosses the libDaisy boundary and enters the ST HAL**. Moving
+`EraseSector` without `HAL_QSPI_Command` is not an incomplete solution: it is a
+guaranteed failure at the worst moment — the instruction fetch dies exactly when the
+mode changes. And taking everything means loading ~4,000 lines of third-party code into
+64 KB, with a boundary that moves at every update.
 
-**O critério é superfície de dependência, não linhas escritas.** A rotina
-própria é a que mais escreve e a que menos herda: fecho transitivo **zero**.
+**The criterion is dependency surface, not lines written.** Our own routine
+is the one that writes the most and inherits the least: **zero** transitive closure.
 
 ---
 
-## O inventário de ISRs, e ele decide a forma da janela
+## The ISR inventory, and it decides the shape of the window
 
-Medido no `.map` e no `.elf` de `9f47efb`, BOOT_QSPI:
+Measured in the `.map` and the `.elf` of `9f47efb`, BOOT_QSPI:
 
-| o que | onde |
+| what | where |
 |---|---|
-| `.isr_vector` — **a tabela de vetores** | **`0x90040000` — QSPI** |
-| 51 handlers, incluindo `SysTick_Handler`, `DMA1_Stream0/1`, `OTG_FS`, `QUADSPI` | `0x9005xxxx` — QSPI |
+| `.isr_vector` — **the vector table** | **`0x90040000` — QSPI** |
+| 51 handlers, including `SysTick_Handler`, `DMA1_Stream0/1`, `OTG_FS`, `QUADSPI` | `0x9005xxxx` — QSPI |
 | `HardFault_Handler` | `0x90053ef0` — QSPI |
 
-**Isto resolve a questão por necessidade, não por escolha.** Durante a janela
-a QSPI não é memory-mapped. Qualquer interrupção é fatal **antes de chegar ao
-handler**: o processador busca o vetor em `0x90040000+offset`, que é
-exatamente o que saiu do ar. Não existe lista de exceções possível — o
-mecanismo de despacho inteiro está na memória apagada.
+**This resolves the question by necessity, not by choice.** During the window
+the QSPI is not memory-mapped. Any interrupt is fatal **before reaching the
+handler**: the processor fetches the vector at `0x90040000+offset`, which is
+exactly what went off the air. There is no possible exception list — the
+entire dispatch mechanism is in the erased memory.
 
-> **`__disable_irq()` na janela inteira é obrigatório.** A resposta mais
-> simples venceu a mais fina porque a mais fina não existe.
+> **`__disable_irq()` for the whole window is mandatory.** The simplest answer
+> won over the finer one because the finer one does not exist.
 
-**Nota sobre o `HardFault_Handler`:** ele também mora na QSPI. Se algo faltar
-durante a janela, não há para onde ir — o processador entra em lockup. Isso
-não é argumento contra o desenho; é o motivo de a rotina ter que ser
-**inteiramente** ITCM, sem uma única chamada para fora.
+**Note on `HardFault_Handler`:** it also lives in QSPI. If something is missing
+during the window, there is nowhere to go — the processor enters lockup. That
+is not an argument against the design; it is the reason the routine has to be
+**entirely** ITCM, without a single call to the outside.
 
-## Parar o áudio: os dois lados, e a libDaisy mata os dois
+## Stopping the audio: the two sides, and libDaisy kills both
 
 `DaisySeed::StopAudio()` → `AudioHandle::Stop()` → `SaiHandle::StopDmaTransfer()`
-→ `HAL_SAI_DMAStop()`, que faz **`SAI_Disable`** e **`HAL_DMA_Abort`** nos
-streams de Tx e Rx.
+→ `HAL_SAI_DMAStop()`, which does **`SAI_Disable`** and **`HAL_DMA_Abort`** on the
+Tx and Rx streams.
 
-Então a API cobre os dois atos distintos: para o periférico **e** aborta o
-DMA. Sem isso, o DMA continuaria transferindo sozinho durante a janela — não
-é fatal (DMA não busca instrução) mas deixaria a última meia-volta do buffer
-em laço, e interrupções pendentes disparariam no instante em que
-`__enable_irq()` voltasse.
+So the API covers the two distinct acts: it stops the peripheral **and** aborts the
+DMA. Without that, the DMA would keep transferring on its own during the window — it is not
+fatal (DMA does not fetch instructions) but it would leave the last half-turn of the buffer
+looping, and pending interrupts would fire the instant
+`__enable_irq()` returned.
 
 ---
 
-## A sequência
+## The sequence
 
 ```
-save <n>                            // gesto de bancada, por serial
-  1. hal::StopAudio()               // SAI parado + DMA abortado
-  2. __disable_irq()                // a tabela de vetores esta na QSPI
-  3. rotina ITCM:                   // fecho transitivo ZERO
-       - QSPI -> modo indireto
-       - le/apaga/escreve
+save <n>                            // bench gesture, over serial
+  1. hal::StopAudio()               // SAI stopped + DMA aborted
+  2. __disable_irq()                // the vector table is in QSPI
+  3. ITCM routine:                  // ZERO transitive closure
+       - QSPI -> indirect mode
+       - read/erase/write
        - QSPI -> memory-mapped
   4. __enable_irq()
   5. hal::StartAudio()
-  6. sync                           // o mundo confere: re-push do espelho
+  6. sync                           // the world checks: re-push of the mirror
 ```
 
-**Tudo entre 2 e 4 roda de ITCM, sem uma única chamada para fora.** Nenhuma
-função de biblioteca, nenhum `Log`, nenhuma variável em QSPI. É <100 ms, é
-bancada, e é surdo por construção.
+**Everything between 2 and 4 runs from ITCM, without a single call to the outside.** No
+library function, no `Log`, no variable in QSPI. It is <100 ms, it is
+bench, and it is deaf by construction.
 
-## O PROTOCOLO REAL — lido no `Init` da libDaisy, 22/08
+## THE REAL PROTOCOL — read in libDaisy's `Init`, 22/08
 
-**Este é o resultado mais valioso da rodada, e é conhecimento, não código.**
-Está aqui porque a próxima tentativa pode travar a placa, e o achado tem que
-sobreviver à sessão.
+**This is the most valuable result of the round, and it is knowledge, not code.**
+It is here because the next attempt may lock up the board, and the finding has to
+survive the session.
 
-**A libDaisy NUNCA entra em quad:**
+**libDaisy NEVER enters quad:**
 
 ```cpp
 // These functions are defined, but we haven't added the ability to
@@ -104,165 +104,165 @@ sobreviver à sessão.
 QSPIHandle::Result EnterQuadMode() __attribute__((unused));
 ```
 
-O chip está em **SPI simples**. Isso **refuta** a hipótese que explicava o
-`FF FF FF` (chip em QPI ignorando comando de 1 linha) — hipótese plausível,
-que batia com o sintoma, e errada (bts 13j).
+The chip is in **plain SPI**. This **refutes** the hypothesis that explained the
+`FF FF FF` (chip in QPI ignoring a 1-line command) — a plausible hypothesis,
+one that matched the symptom, and wrong (bts 13j).
 
-**O formato da leitura memory-mapped, que é o que o chip entende hoje:**
+**The format of the memory-mapped read, which is what the chip understands today:**
 
-| campo | valor |
+| field | value |
 |---|---|
-| `InstructionMode` | **1 LINHA** |
+| `InstructionMode` | **1 LINE** |
 | `Instruction` | `0xEB` — quad I/O fast read |
-| `AddressMode` | **4 linhas** |
-| `DataMode` | **4 linhas** |
+| `AddressMode` | **4 lines** |
+| `DataMode` | **4 lines** |
 | `DummyCycles` | **6** |
 
-Não é SPI nem QPI: é **híbrido**. Só a instrução vai serial; endereço e dado
-vão em quatro linhas. Qualquer comando novo nasce sabendo disso.
+It is neither SPI nor QPI: it is **hybrid**. Only the instruction goes serial; the address
+and data go on four lines. Any new command is born knowing this.
 
-**O chip que a libDaisy supõe** aparece num comentário comentado ao lado dos
-dummies: `IS25LP080D_DUMMY_CYCLES_READ_QUAD` — um IS25LP da ISSI. **Suposição
-da biblioteca, não leitura** — daí o JEDEC ID continuar valendo.
+**The chip libDaisy assumes** appears in a commented-out comment beside the
+dummies: `IS25LP080D_DUMMY_CYCLES_READ_QUAD` — an ISSI IS25LP. **The library's
+assumption, not a reading** — hence the JEDEC ID still holding.
 
-**E o `0x88` deixou de ser mistério:** são dois nibbles `1000` — uma linha
-alta e três baixas. É a assinatura de comando em quatro linhas chegando num
-chip que só escuta a IO0.
+**And `0x88` stopped being a mystery:** it is two `1000` nibbles — one line
+high and three low. It is the signature of a four-line command arriving at a
+chip that only listens to IO0.
 
-**Próxima tentativa, com o protocolo conhecido em vez de suposto:** `0x9F`
-com instrução e dado em **1 linha**, **zero** dummy, e o **`SSHIFT` do `CR`
-conferido** — com prescaler alto, a amostragem de meia-fase é o que separa
-`03 07 0F 1F` de um ID legível. Uma variável.
+**Next attempt, with the protocol known instead of assumed:** `0x9F`
+with instruction and data on **1 line**, **zero** dummy, and the `CR`'s `SSHIFT`
+checked — with a high prescaler, the half-phase sampling is what separates
+`03 07 0F 1F` from a legible ID. One variable.
 
-## O chip nasce anônimo
+## The chip is born anonymous
 
-A primeira coisa que a rotina lê é o **JEDEC ID (0x9F)** — três bytes,
-fabricante e densidade.
+The first thing the routine reads is the **JEDEC ID (0x9F)** — three bytes,
+manufacturer and density.
 
-Isso não é um pré-requisito da rota: **é o primeiro incremento dela.** A
-libDaisy não expõe leitura de ID e o handle do periférico é privado, então
-ler o ID exige exatamente o mesmo acesso de registrador que escrever, menos o
-apagamento. É o "olá mundo" da infraestrutura: valida ITCM, mudança de modo e
-retorno ao memory-mapped **com o único comando que não pode estragar nada**.
+This is not a prerequisite of the route: **it is its first increment.** libDaisy
+does not expose ID reading and the peripheral handle is private, so reading the ID requires
+exactly the same register access as writing, minus the erase. It is the "hello
+world" of the infrastructure: it validates ITCM, the mode change and the
+return to memory-mapped **with the only command that cannot break anything**.
 
-O ID entra no boot-report, e chip desconhecido é **recusado gritando** em vez
-de escrito com a tabela de comandos errada — a família 3 fechada por desenho,
-agora no nível do silício.
+The ID goes into the boot-report, and an unknown chip is **refused loudly** instead
+of being written with the wrong command table — family 3 closed by design,
+now at the silicon level.
 
-## Onde os presets moram
+## Where the presets live
 
-A decidir com o mapa na mão. O que já se sabe:
+To be decided with the map in hand. What is already known:
 
-- `QSPIFLASH` do app: `0x90040000`, 7936 KB. O binário usa ~189 KB.
-- Os primeiros 256 KB do chip (`0x90000000`–`0x9003FFFF`) estão **fora** da
-  região do app em BOOT_QSPI — área do bootloader. **Não escrever lá:**
-  arrisca brickar até o BOOT+RST.
-- Erase é por **setor de 4 KB**. Os 8 slots vivem num setor só, logo todo
-  `save` é **ler os 8, alterar 1, regravar o bloco**.
-- +4 bytes de contador de gravações no cabeçalho do setor: a flash aguenta
-  ~100k ciclos e o save-por-comando nunca esgota, mas o contador transforma
-  "será que gastou?" de mistério em leitura — daqui a dez anos, numa galeria.
+- The app's `QSPIFLASH`: `0x90040000`, 7936 KB. The binary uses ~189 KB.
+- The first 256 KB of the chip (`0x90000000`–`0x9003FFFF`) are **outside** the
+  app's region in BOOT_QSPI — bootloader area. **Do not write there:**
+  it risks bricking even the BOOT+RST.
+- Erase is by **4 KB sector**. The 8 slots live in a single sector, so every
+  `save` is **read the 8, change 1, rewrite the block**.
+- +4 bytes of a write counter in the sector header: the flash endures
+  ~100k cycles and save-by-command never exhausts it, but the counter turns
+  "did it wear out?" from a mystery into a reading — ten years from now, in a gallery.
 
-**A garantia é de linker**, não de convenção — mesma jogada do portão da
-SDRAM: clandestino nem linka. O `.lds` forkado com certidão de origem já
-existe no ramo `investigacao-boot-sram` e é reaproveitável.
+**The guarantee is from the linker**, not from convention — the same play as the SDRAM
+gate: a clandestine one does not even link. The forked `.lds` with a certificate of origin
+already exists on the `investigacao-boot-sram` branch and is reusable.
 
-## Aceite
+## Acceptance
 
-1. **JEDEC ID lido e a placa sobrevive** — valida o mecanismo inteiro sem
-   escrever nada.
-2. **ID no boot-report**, e chip desconhecido recusado com log.
-3. `save 1` / `load 1` sobrevivendo a **desligar da tomada**, não só a reset.
-4. `list` idêntico antes e depois de um `save` — a escrita não mexe em estado.
-5. Preset de mapa velho **recusado gritando** no boot, não carregado torto.
-6. Contador de gravações subindo, e visível.
+1. **JEDEC ID read and the board survives** — validates the whole mechanism without
+   writing anything.
+2. **ID in the boot-report**, and an unknown chip refused with a log.
+3. `save 1` / `load 1` surviving **unplugging from the wall**, not just a reset.
+4. `list` identical before and after a `save` — the write does not touch state.
+5. A preset from an old map **refused loudly** at boot, not loaded crooked.
+6. Write counter going up, and visible.
 
-## O que ainda não sei
+## What I still do not know
 
-- **Qual chip.** Por desenho: o ID é a primeira leitura.
-- **Se o erase de 4 KB cabe confortavelmente na janela** — depende do chip e
-  fica sabido depois do ID.
-- **Se `__disable_irq()` por ~100 ms tem efeito colateral** no USB CDC (a
-  enumeração pode cair e voltar). Bancada, aceitável, mas a ser observado.
+- **Which chip.** By design: the ID is the first read.
+- **Whether the 4 KB erase fits comfortably in the window** — it depends on the chip and
+  becomes known after the ID.
+- **Whether `__disable_irq()` for ~100 ms has a side effect** on the USB CDC (the
+  enumeration may drop and come back). Bench, acceptable, but to be observed.
 
-**E o registro que fecha a rota do BOOT_SRAM:** dezenas de `SetMode`
-sobrevivem em todo boot — quase certamente a I-cache segurando a rotina
-curta. Mas *rotina curta sobrevive* não escala para *apagamento de 4 KB
-sobrevive*: o erase é longo, o polling é laço, e laço longo é onde a I-cache
-eventualmente perde uma linha e busca na QSPI morta. **ITCM é a diferença
-entre funciona-por-sorte e funciona-por-construção.**
+**And the record that closes the BOOT_SRAM route:** dozens of `SetMode` calls
+survive on every boot — almost certainly the I-cache holding the short routine.
+But *a short routine survives* does not scale to *a 4 KB erase
+survives*: the erase is long, the polling is a loop, and a long loop is where the I-cache
+eventually loses a line and fetches from the dead QSPI. **ITCM is the difference
+between works-by-luck and works-by-construction.**
 
 ---
 
-# Onde a frente parou (22/08) — e como retomar
+# Where the front stopped (22/08) — and how to resume
 
-**Parada por dimensionamento, não por desistência.** O risco arquitetural
-acabou; o que resta é sequência de registrador, que é trabalho de leitura.
+**Stopped by scoping, not by giving up.** The architectural risk is over;
+what remains is a register sequence, which is reading work.
 
-## O que ficou PROVADO
+## What was PROVEN
 
-1. **A janela ITCM funciona.** A placa sai do memory-mapped executando de uma
-   RAM independente, dialoga com o periférico, volta e sobrevive. Reproduzido
-   em seis gravações. `ITCMRAM: 212 B` é a prova de que a seção foi aplicada.
-2. **O protocolo real está lido no fonte**, não suposto — ver a seção do
-   `Init` acima. A libDaisy **nunca** entra em quad.
-3. **A sonda varre sem gravar**: `qspi id [dummy] [modo] [opcode]`.
-4. **`00 00 00` distingue-se de `FF FF FF`** no relatório, com a
-   interpretação etiquetada ao lado. Informação de diagnóstico que não
-   existia antes — ver cicatriz 13k.
+1. **The ITCM window works.** The board leaves memory-mapped executing from an
+   independent RAM, talks to the peripheral, returns and survives. Reproduced
+   across six flashes. `ITCMRAM: 212 B` is the proof that the section was applied.
+2. **The real protocol is read from the source**, not assumed — see the `Init`
+   section above. libDaisy **never** enters quad.
+3. **The probe sweeps without writing:** `qspi id [dummy] [modo] [opcode]`.
+4. **`00 00 00` is distinguished from `FF FF FF`** in the report, with the
+   interpretation labeled beside it. Diagnostic information that did not
+   exist before — see scar 13k.
 
-## ACHADO DE PROTOCOLO: sair do memory-mapped exige ABORT
+## PROTOCOL FINDING: leaving memory-mapped requires ABORT
 
-Desligar o `QUADSPI_CR_EN` **não basta**. O periférico guarda estado da
-configuração mapeada — contador de timeout, `TCEN`, transação em curso — e
-com esse estado de pé a linha de dado fica presa. O sintoma foi ler
-`00 00 00` até no `0x06` (WREN), que **não tem fase de dado**.
+Turning off `QUADSPI_CR_EN` **is not enough**. The peripheral keeps state from
+the mapped configuration — timeout counter, `TCEN`, transaction in progress — and
+with that state standing the data line stays stuck. The symptom was reading
+`00 00 00` even on `0x06` (WREN), which **has no data phase**.
 
     QUADSPI->CR |= QUADSPI_CR_ABORT;
-    while(QUADSPI->SR & QUADSPI_SR_BUSY) { }   // com teto de voltas
+    while(QUADSPI->SR & QUADSPI_SR_BUSY) { }   // with a cap on loops
     __DSB();
     LimpaFlags();
     QUADSPI->CR |= QUADSPI_CR_EN;
 
-A libDaisy faz isto por dentro do `SetMode`. **Rotina própria não herda nada
-— tem que fazer explícito**, e este é o primeiro item dessa conta.
+libDaisy does this inside `SetMode`. **Our own routine inherits nothing
+— it has to do it explicitly**, and this is the first item on that bill.
 
-*(Veio de um chute, e está registrado como achado assim mesmo. Ver 13l sobre
-por que um chute que acerta parcialmente é o mais perigoso.)*
+*(It came from a guess, and is recorded as a finding all the same. See 13l on
+why a guess that is partly right is the most dangerous.)*
 
-## AS TRÊS HIPÓTESES VIVAS — nomeadas, não testadas
+## THE THREE LIVE HYPOTHESES — named, not tested
 
-O gabarito é `QSPIHandle::Impl::GetStatusRegister()` em
-`libDaisy/src/per/qspi.cpp:1045`, que faz uma leitura indireta de 1 byte
-neste chip, com este periférico, e **funciona**. Ele difere da rotina própria
-em três pontos, e qualquer um deles explica o resultado atual:
+The reference is `QSPIHandle::Impl::GetStatusRegister()` at
+`libDaisy/src/per/qspi.cpp:1045`, which does an indirect 1-byte read on this chip,
+with this peripheral, and **works**. It differs from our own routine in three points,
+and any one of them explains the current result:
 
-1. **Dois passos vs um.** O HAL chama `HAL_QSPI_Command` e **depois**
-   `HAL_QSPI_Receive`; a rotina própria configura `CCR` com `FMODE=01` numa
-   escrita só. A ordem de escrita do `CCR` pode ser o que dispara a leitura.
-2. **`NbData` / `DLR`.** O gabarito pede **1 byte** (`NbData = 1` → `DLR = 0`);
-   a sonda pede 3 (`DLR = 2`). Comprimento errado pode deixar a transação
-   pendurada.
-3. **Ordem de escrita do `CCR`** em relação a `DLR` e `AR`. No QUADSPI a
-   escrita do `CCR` é o gatilho quando não há endereço — se `DLR` for escrito
-   depois, chegou tarde.
+1. **Two steps vs one.** The HAL calls `HAL_QSPI_Command` and **then**
+   `HAL_QSPI_Receive`; our own routine configures `CCR` with `FMODE=01` in a single
+   write. The order of writing `CCR` may be what triggers the read.
+2. **`NbData` / `DLR`.** The reference requests **1 byte** (`NbData = 1` → `DLR = 0`);
+   the probe requests 3 (`DLR = 2`). A wrong length can leave the transaction
+   hanging.
+3. **Order of writing `CCR`** relative to `DLR` and `AR`. In QUADSPI the
+   write of `CCR` is the trigger when there is no address — if `DLR` is written
+   afterward, it arrived late.
 
-**Não são independentes o bastante para bissecção cega.** Testar uma custa
-uma gravação e, se falhar, não elimina as outras duas: sem o manual não se
-distingue "a hipótese está errada" de "a execução da hipótese está errada".
+**They are not independent enough for blind bisection.** Testing one costs
+a flash and, if it fails, does not eliminate the other two: without the manual one cannot
+distinguish "the hypothesis is wrong" from "the execution of the hypothesis is wrong".
 
-## CONDIÇÃO DE RETOMADA
+## RESUMPTION CONDITION
 
-> **RM0433 (STM32H7 reference manual), capítulo QUADSPI, seção de leitura
-> indireta.** Com ele aberto, a sequência é **leitura**, e as três hipóteses
-> viram uma resposta.
+> **RM0433 (STM32H7 reference manual), QUADSPI chapter, indirect-read
+> section.** With it open, the sequence is **reading**, and the three hypotheses
+> turn into one answer.
 
-**O critério, escrito para quem retomar não confundir pausa com abandono:**
-*meia hora com o manual vale mais que dez gravações adivinhando.* Sem o
-manual, a frente fica parada — e ficar parada aqui é a decisão certa, porque
-o difícil já está resolvido.
+**The criterion, written so that whoever resumes does not confuse a pause with abandonment:**
+*half an hour with the manual is worth more than ten flashes guessing.* Without the
+manual, the front stays stopped — and staying stopped here is the right decision, because
+the hard part is already solved.
 
-## Depois que o ID ler
+## After the ID reads
 
-A ordem não mudou: ID → recusa gritada de chip desconhecido → erase → program
-→ `save`/`load` sobrevivendo a desligar da tomada.
+The order has not changed: ID → loud refusal of an unknown chip → erase → program
+→ `save`/`load` surviving unplugging from the wall.

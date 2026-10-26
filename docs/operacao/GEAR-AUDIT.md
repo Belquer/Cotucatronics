@@ -1,136 +1,136 @@
 # GEAR-AUDIT — WIDI Core → ESP32-C3
 
-> **v0.1.0** · 25/08 · a decisão de substituir o módulo BLE MIDI, com o
-> preço de cada lado. Quando esta decisão for revista, o motivo antigo fica
-> — premissa revogada em silêncio é a família de bug mais cara deste projeto.
+> **v0.1.0** · 25/08 · the decision to replace the BLE MIDI module, with the
+> price of each side. When this decision is revisited, the old reason stays
+> — a premise revoked in silence is the most expensive bug family in this project.
 
-O voo que executa esta decisão está em
+The flight that executes this decision is in
 [VOO-ESP32-PONTE.md](VOO-ESP32-PONTE.md).
 
 ---
 
-## 1 · O número, e por que ele decide
+## 1 · The number, and why it decides
 
 | | WIDI Core 1.3 | ESP32-C3 SuperMini |
 |---|---|---|
-| custo unitário | ~US$ 45 | ~US$ 4 |
-| firmware | fechado | nosso |
-| pino de status | semântica do fabricante | semântica nossa |
-| jumper de ON | necessário | não existe |
-| depuração | nenhuma | console USB |
+| unit cost | ~US$ 45 | ~US$ 4 |
+| firmware | closed | ours |
+| status pin | the manufacturer's semantics | our semantics |
+| ON jumper | required | does not exist |
+| debugging | none | USB console |
 
-**Não é 30% mais barato — é uma ordem de grandeza.** E o instrumento é
-replicado em série, na ordem de centenas: quarenta e um dólares por unidade,
-vezes centenas, é a diferença entre um projeto viável e um protótipo caro.
+**It is not 30% cheaper — it is an order of magnitude.** And the instrument is
+replicated in a series, on the order of hundreds: forty-one dollars per unit,
+times hundreds, is the difference between a viable project and an expensive prototype.
 
-Num exemplar único a troca não se justificaria. É a **escala** que a torna
-obrigatória, e é por isso que o requisito se escreve como escala e não como
-preferência técnica.
-
----
-
-## 2 · O que o WIDI entregava, e o que cobrava
-
-Entregava uma coisa real: **funcionava sem que ninguém escrevesse uma linha.**
-Emparelha, conecta, passa MIDI. Para chegar até aqui, isso valeu o preço.
-
-Cobrava quatro:
-
-- **Caixa fechada.** Quando falhava, falhava. Não havia o que ler, o que
-  instrumentar, o que corrigir. O diagnóstico terminava em "o módulo não
-  está a responder" e não havia passo seguinte.
-- **O pino LB dizia o que o fabricante decidiu que dizia.** Ativo em baixo,
-  sem documentação do que distingue *advertising* de *conectado* de *erro*.
-  Nós medimos transições e duty para inferir — inferência sobre uma decisão
-  de outra pessoa.
-- **O jumper de ON.** Um gesto de montagem, um modo de falha ("está ligado
-  mas dorme"), e uma linha de checklist, vezes centenas de unidades.
-- **31250 baud como lei.** A serial tinha de ser MIDI porque a outra ponta
-  era MIDI. Não havia decisão a tomar — e não havia como saber que era uma
-  decisão, porque estava do lado de lá.
+In a single unit the swap would not be justified. It is the **scale** that
+makes it mandatory, and that is why the requirement is written as scale and not as a
+technical preference.
 
 ---
 
-## 3 · O que passa a ser nosso — e é grátis
+## 2 · What the WIDI delivered, and what it charged
 
-A linha que separa o que a migração dá de graça do que ela apenas
-**disponibiliza** é uma só:
+It delivered one real thing: **it worked without anyone writing a line.**
+It pairs, connects, passes MIDI. To get this far, that was worth the price.
 
-> **É grátis tudo o que vive só do lado do ESP32. É caro tudo o que atravessa.**
+It charged four:
 
-Do lado grátis, e já incorporado ao voo 1:
-
-- **A cadência do LED de estado.** Sólido, piscando, ritmo de erro — escolha
-  nossa, num LED do próprio ESP32, sem tocar na Daisy.
-- **O dimensionamento do buffer de TX**, pela maior rajada conhecida do
-  sistema, em vez de default herdado de biblioteca.
-- **A contagem de quedas de link, com recência** — que responde *"está a
-  cair agora?"* e não *"quantas vezes desde o boot"*.
-- **O comportamento na reconexão**, incluindo o relatório do que foi feito.
-- **O nome anunciado no Bluetooth.**
-
-Nada disso o WIDI permitia, e nada disso custa uma linha da Daisy. **A
-migração já cobra a liberdade que era para cobrar.**
-
----
-
-## 4 · O que fica registrado e NÃO construído
-
-**Os 31250 baud deixam de ser lei e viram decisão nossa.** Hoje são
-imposição do WIDI; depois da migração as duas pontas são nossas, e o número
-podia subir com ganho direto na rajada.
-
-Não se muda agora, e o motivo tem preço nomeado: **mudar o baud arrasta a
-Daisy**, e no momento em que arrasta cria-se uma matriz de compatibilidade
-entre as versões dos dois firmwares — ESP32 antigo com Daisy nova fica mudo,
-com sintoma **idêntico a fio trocado**. Numa peça replicada em centenas isso
-é um custo permanente, não um inconveniente de bancada.
-
-> Isto é a **bts 12g em hardware**: separar o que é LEI do que é DECISÃO
-> nossa. O número era lei enquanto uma das pontas era de terceiro. Deixou de
-> ser — e passar por lei é exatamente o que a cicatriz manda separar.
-
-Também não entram neste voo: OSC, editor web, presets na flash do ESP32,
-ESP-NOW. Todos disponíveis, nenhum bloqueia nada, todos entram quando
-virarem necessidade real com requisito claro.
+- **A closed box.** When it failed, it failed. There was nothing to read, to
+  instrument, to correct. The diagnosis ended at "the module is not
+  responding" and there was no next step.
+- **The LB pin said what the manufacturer decided it said.** Active low,
+  with no documentation of what distinguishes *advertising* from *connected* from *error*.
+  We measured transitions and duty to infer — inference over someone else's
+  decision.
+- **The ON jumper.** An assembly gesture, a failure mode ("it is on
+  but asleep"), and a checklist line, times hundreds of units.
+- **31250 baud as law.** The serial had to be MIDI because the other end
+  was MIDI. There was no decision to make — and there was no way to know that it was a
+  decision, because it was on the other side.
 
 ---
 
-## 5 · Sem plano B — e o que isso significa de facto
+## 3 · What becomes ours — and is free
 
-**O WIDI sai de vez. Não fica em header, não fica como reserva.** Com isso o
-aceite do voo 1 deixa de ser confirmação e passa a ser **portão**: falhar um
-critério trava a montagem em vez de adiar.
+The line that separates what the migration gives for free from what it merely
+**makes available** is a single one:
 
-Três consequências que a decisão arrasta:
+> **Everything that lives only on the ESP32 side is free. Everything that crosses is expensive.**
 
-**O plano B não desapareceu — mudou de natureza.** Sem BLE, o instrumento
-não fica sem MIDI: fica **sem MIDI sem fio**. D13/D14 são UART, e um jack
-TRS ou DIN de MIDI cabeado funciona sem rádio nenhum. Em palco, a diferença
-entre *"não há instrumento"* e *"há instrumento com cabo"* é toda.
+On the free side, and already incorporated into flight 1:
 
-**Falhar deixa de significar impasse.** O WIDI era caixa fechada: quando
-falhava, não havia o que depurar. A ponte é código nosso, com biblioteca
-pública e console USB. Falhar passa a significar *"há um bug e ele tem
-endereço"* — e **eliminar a caixa preta é o que torna tolerável não ter para
-onde recuar**.
+- **The cadence of the status LED.** Solid, blinking, an error rhythm — our
+  choice, on an LED of the ESP32 itself, without touching the Daisy.
+- **The sizing of the TX buffer**, by the system's largest known
+  burst, instead of a default inherited from a library.
+- **The count of link drops, with recency** — which answers *"is it
+  dropping now?"* and not *"how many times since boot"*.
+- **The behavior on reconnection**, including the report of what was done.
+- **The name advertised over Bluetooth.**
 
-**O portão autoriza a compra.** Numa série de centenas, o que o aceite trava
-não é a bancada: é a encomenda. Portão em protoboard, **antes** de soldar
-seja o que for e antes de comprar em quantidade.
+None of that did the WIDI allow, and none of that costs a line of the Daisy. **The
+migration already charges the freedom it was meant to charge.**
 
 ---
 
-## 6 · O que sai dos documentos, e o que nunca sai
+## 4 · What is recorded and NOT built
 
-Quando o portão passar, o WIDI sai do `HARDWARE.md`, do `PINOS.md`, do
-README e do esquemático — tudo o que descreve o **estado atual**.
+**The 31250 baud stop being law and become our decision.** Today they are
+the WIDI's imposition; after the migration both ends are ours, and the number
+could go up with a direct gain on the burst.
 
-**Não sai do `battle_scars.md`.** As cicatrizes não documentam o presente:
-registram o que custou chegar aqui, e apagá-las apagaria a lição junto com a
-peça.
+It is not changed now, and the reason has a named price: **changing the baud drags
+the Daisy along**, and the moment it drags, a compatibility matrix is created
+between the versions of the two firmwares — an old ESP32 with a new Daisy goes dead,
+with a symptom **identical to a swapped wire**. On a piece replicated in the hundreds that
+is a permanent cost, not a bench inconvenience.
 
-E uma delas nem é histórica: **o cruzamento TX/RX continua vivo.** Nasceu
-com o WIDI e aplica-se inteira ao substituto — o ESP32 também liga TX no D14
-e RX no D13. Apagá-la por associação seria perder a lição no exato momento
-em que ela volta a ser necessária.
+> This is **bts 12g in hardware**: separating what is LAW from what is OUR
+> DECISION. The number was law while one of the ends belonged to a third party. It stopped
+> being — and passing as law is exactly what the scar says to separate.
+
+Also not entering this flight: OSC, web editor, presets in the ESP32's flash,
+ESP-NOW. All available, none blocks anything, all enter when they
+become a real need with a clear requirement.
+
+---
+
+## 5 · No plan B — and what that means in fact
+
+**The WIDI goes for good. It does not stay in a header, it does not stay as a reserve.** With that the
+acceptance of flight 1 stops being a confirmation and becomes a **gate**: failing a
+criterion blocks the assembly instead of postponing it.
+
+Three consequences the decision drags along:
+
+**Plan B did not disappear — it changed nature.** Without BLE, the instrument
+is not left without MIDI: it is left **without wireless MIDI**. D13/D14 are UART, and a
+wired MIDI TRS or DIN jack works with no radio at all. On stage, the difference
+between *"there is no instrument"* and *"there is an instrument with a cable"* is everything.
+
+**Failing stops meaning a deadlock.** The WIDI was a closed box: when it
+failed, there was nothing to debug. The bridge is our code, with a public library
+and a USB console. Failing comes to mean *"there is a bug and it has an
+address"* — and **eliminating the black box is what makes it tolerable to have nowhere
+to fall back to**.
+
+**The gate authorizes the purchase.** In a series of hundreds, what the acceptance
+blocks is not the bench: it is the order. The gate on protoboard, **before** soldering
+anything and before buying in quantity.
+
+---
+
+## 6 · What leaves the documents, and what never leaves
+
+When the gate passes, the WIDI leaves `HARDWARE.md`, `PINOS.md`, the
+README and the schematic — everything that describes the **current state**.
+
+**It does not leave `battle_scars.md`.** The scars do not document the present: they
+record what it cost to get here, and erasing them would erase the lesson along with the
+part.
+
+And one of them is not even historical: **the TX/RX crossing is still alive.** It was born
+with the WIDI and applies entirely to the substitute — the ESP32 also connects TX to D14
+and RX to D13. Erasing it by association would be losing the lesson at the exact moment
+it becomes necessary again.

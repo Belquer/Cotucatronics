@@ -1,1661 +1,1661 @@
 # STATUS — Cotucatronics
-<!-- doc-check: ignore svg_colisoes (ferramenta em tools/, fora do alcance do check_docs) -->
-<!-- doc-check: ignore dentro_do_contorno (ferramenta em kicad/, fora do alcance do check_docs) -->
-<!-- doc-check: ignore sincroniza_pcb (ferramenta em kicad/, fora do alcance do check_docs) -->
-<!-- doc-check: ignore para_fabrica (ferramenta em kicad/, fora do alcance do check_docs) -->
-<!-- doc-check: ignore funcao_dos_pads (ferramenta em kicad/, fora do alcance do check_docs) -->
-<!-- doc-check: ignore confere_arcade (funcao do pcb_contorno.py, em kicad/) -->
-<!-- doc-check: ignore y_max (valor da constante FRENTE_CEREBRO, no pcb_contorno.py) -->
-<!-- doc-check: ignore y_min (valor da constante FRENTE_CEREBRO, no pcb_contorno.py) -->
-<!-- doc-check: ignore refresca_redes (funcao do sincroniza_pcb, em kicad/) -->
-<!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
-<!-- doc-check: ignore silk_overlap (codigo de violacao do DRC do KiCad) -->
-<!-- doc-check: ignore starved_thermal (codigo de violacao do DRC do KiCad) -->
-<!-- doc-check: ignore lib_footprint_mismatch (codigo de violacao do DRC do KiCad) -->
-<!-- doc-check: ignore courtyards_overlap (codigo de violacao do DRC do KiCad) -->
+<!-- doc-check: ignore svg_colisoes (tool in tools/, out of reach of check_docs) -->
+<!-- doc-check: ignore dentro_do_contorno (tool in kicad/, out of reach of check_docs) -->
+<!-- doc-check: ignore sincroniza_pcb (tool in kicad/, out of reach of check_docs) -->
+<!-- doc-check: ignore para_fabrica (tool in kicad/, out of reach of check_docs) -->
+<!-- doc-check: ignore funcao_dos_pads (tool in kicad/, out of reach of check_docs) -->
+<!-- doc-check: ignore confere_arcade (function of pcb_contorno.py, in kicad/) -->
+<!-- doc-check: ignore y_max (value of the FRENTE_CEREBRO constant, in pcb_contorno.py) -->
+<!-- doc-check: ignore y_min (value of the FRENTE_CEREBRO constant, in pcb_contorno.py) -->
+<!-- doc-check: ignore refresca_redes (function of sincroniza_pcb, in kicad/) -->
+<!-- doc-check: ignore silk_over_copper (KiCad DRC violation code) -->
+<!-- doc-check: ignore silk_overlap (KiCad DRC violation code) -->
+<!-- doc-check: ignore starved_thermal (KiCad DRC violation code) -->
+<!-- doc-check: ignore lib_footprint_mismatch (KiCad DRC violation code) -->
+<!-- doc-check: ignore courtyards_overlap (KiCad DRC violation code) -->
 
-**Onde estamos.** O par deste documento é
-[battle_scars.md](battle_scars.md), que diz *o que aprendemos chegando
-aqui*. Leia os dois antes de tocar em código.
+**Where we are.** The companion of this document is
+[battle_scars.md](battle_scars.md), which says *what we learned getting
+here*. Read both before touching code.
 
-> Atualizado em **2026-09-06 (a caixa está pronta para a Ponoko)** · leva:
-> **`caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg`, 20 peças, pronto a
-> encomendar.** O nome leva revisão e **digest do desenho** — a r1 (19 peças,
-> sem reforço) foi a encomenda #1263497 e chamava-se igual à r2 antes disto.
-> Acrílico transparente 3,0 mm, kerf 0,2, chapa P2, ocupa 377,1 × 326,0 com
-> 6,9 mm de margem, ≈ 6,84 m de corte (≈ $40 a $5,87/m, mais envio).
+> Updated on **2026-09-06 (the enclosure is ready for Ponoko)** · brings:
+> **`caixa/cotuca_caixa_r2_acrilico_3p0_55cf3955.svg`, 20 parts, ready to
+> order.** The name carries the revision and the **digest of the drawing** — r1 (19 parts,
+> no reinforcement) was order #1263497 and was named the same as r2 before this.
+> Transparent acrylic 3.0 mm, kerf 0.2, sheet P2, occupies 377.1 × 326.0 with
+> a 6.9 mm margin, ≈ 6.84 m of cut (≈ $40 at $5.87/m, plus shipping).
 >
-> A vigésima peça é o **REFORÇO da tampa** — faixa de 193 × 50 colada por
-> baixo, só na faixa dos arcade: 6 mm onde o pé pisa, 3 mm onde os eixos
-> atravessam. Furos ø30 concêntricos, verificado. **O protótipo em madeira
-> tinha 6 mm e os botões apertaram lá** — foi essa medição, num objecto que
-> existiu, que fechou a questão.
+> The twentieth part is the **lid REINFORCEMENT** — a 193 × 50 strip glued
+> underneath, only on the arcade strip: 6 mm where the foot presses, 3 mm where the shafts
+> pass through. Concentric ø30 holes, verified. **The wooden prototype
+> had 6 mm and the buttons jammed there** — it was that measurement, on an object that
+> existed, that settled the question.
 >
-> Arcade à distância máxima: **x = 30 · 100 · 170**, 70 entre eixos, 40 entre
-> bordos. Se um pé largo ainda apertar dois, a resposta é um ressalto colado,
-> não mais espaço — não há mais espaço numa face de 200.
+> Arcade at maximum spacing: **x = 30 · 100 · 170**, 70 between centers, 40 between
+> edges. If a wide foot still jams two, the answer is a glued ridge,
+> not more space — there is no more space on a 200 face.
 >
-> ⚠️ **A PLACA NÃO ESTÁ PRONTA, e é independente da caixa.** Os três arcade
-> descem 40 mm e passam por cima do cérebro, com **7,5 mm** de altura livre no
-> pior caso. **Seis peças não cabem** — `RV1` (10), `C13` (11) e os headers
-> `J4 J5 J10 J15` (20 com a ficha e o fio). É colocação, não redesenho.
-> Orientação decidida por medição: `FRENTE_CEREBRO = "y_min"`, porque a outra
-> punha a Daisy (17) e o `C1` (25) debaixo de botões. `pcb_contorno.py` **v0.7.0**
-> tem o portão que mede isto — nenhum DRC o vê. Cicatriz **15ci**.
+> ⚠️ **THE BOARD IS NOT READY, and it is independent of the enclosure.** The three arcade buttons
+> go down 40 mm and pass over the brain board, with **7.5 mm** of free height in the
+> worst case. **Six parts do not fit** — `RV1` (10), `C13` (11) and the headers
+> `J4 J5 J10 J15` (20 with the plug and the wire). It is placement, not a redesign.
+> Orientation decided by measurement: `FRENTE_CEREBRO = "y_min"`, because the other
+> put the Daisy (17) and `C1` (25) under buttons. `pcb_contorno.py` **v0.7.0**
+> has the gate that measures this — no DRC sees it. Scar **15ci**.
 >
-> Fila: mover as 6 peças · furos de fixação (símbolo → esquema → PCB) · rotear
-> 139 e 47 · `revisao-terra` · gerbers.
+> Queue: move the 6 parts · mounting holes (symbol → schematic → PCB) · route
+> 139 and 47 · `revisao-terra` · gerbers.
 
-> Atualizado em **2026-09-05 (KiCad para a JLCPCB)** · leva: **o painel nasceu**
-> (`kicad/cotuca_painel/`, ERC 0) e o contrato entre as duas placas passou a ser
-> verificável — `tools/contrato_idc.py` lê as 26 vias dos dois projectos por
-> geometria e confere uma contra a outra; a netlist do próprio KiCad confirma
-> 26/26. Duas delas (13 e 14, terra do LED) **nunca tinham sido desenhadas**:
-> saíam como `1.7763568394002505e-15` e nenhum leitor com `[\d.]+` as via.
+> Updated on **2026-09-05 (KiCad for JLCPCB)** · brings: **the panel board was born**
+> (`kicad/cotuca_painel/`, ERC 0) and the contract between the two boards became
+> verifiable — `tools/contrato_idc.py` reads the 26 links of the two projects by
+> geometry and checks one against the other; KiCad's own netlist confirms
+> 26/26. Two of them (13 and 14, the LED ground) **had never been drawn**:
+> they came out as `1.7763568394002505e-15` and no reader with `[\d.]+` saw them.
 >
-> **O OPA1642 estava errado de três maneiras ao mesmo tempo** — pinos 1 e 3
-> trocados face ao SOIC-8 real, os dois amplificadores no mesmo encapsulamento,
-> e três linhas de BOM para um chip. É agora um símbolo de três unidades, com a
-> pinagem tirada do `LM2904` da biblioteca oficial do KiCad. Nada disto se via
-> no protótipo, que é ligado à mão.
+> **The OPA1642 was wrong in three ways at the same time** — pins 1 and 3
+> swapped relative to the real SOIC-8, the two amplifiers in the same package,
+> and three BOM lines for one chip. It is now a three-unit symbol, with the
+> pinout taken from the `LM2904` of KiCad's official library. None of this was visible
+> on the prototype, which is hand-wired.
 >
-> **29 referências renomeadas** (`R0A`→`R10`…): o KiCad trata uma referência
-> sem parte numérica como não anotada e renumera-a sozinho ao gravar. A dezena
-> passou a dizer o canal. Provado por comparação de netlist sob o mapa.
+> **29 references renamed** (`R0A`→`R10`…): KiCad treats a reference
+> without a numeric part as unannotated and renumbers it on its own when saving. The tens digit
+> came to say the channel. Proven by netlist comparison under the map.
 >
-> **Placa: Daisy Seed3**, conferida pino a pino contra o rev4 — o nome STM32
-> bate nos 40 pinos. Codec TI TAC5242, 32 bit / 192 kHz. Símbolo, footprint e
-> netlist idênticos.
+> **Board: Daisy Seed3**, checked pin by pin against the rev4 — the STM32 name
+> matches on all 40 pins. TI TAC5242 codec, 32 bit / 192 kHz. Symbol, footprint and
+> netlist identical.
 >
-> **Footprints: 77 de 79**, todos os nomes verificados contra as bibliotecas
-> instaladas. Faltam os dois pots. **`docs/COTUCA_BOM.md`** é a BOM do
-> instrumento inteiro, **gerada das folhas** — ≈ US$ 22 em componentes de placa,
-> ≈ US$ 97 com os módulos.
+> **Footprints: 77 of 79**, all names verified against the installed
+> libraries. The two pots are missing. **`docs/COTUCA_BOM.md`** is the BOM of the
+> whole instrument, **generated from the sheets** — ≈ US$ 22 in board components,
+> ≈ US$ 97 with the modules.
 >
-> ⚠️ **O que trava a fábrica:** o `OPA1642` na biblioteca de peças da JLC (stock
-> da LCSC não é o mesmo armazém), o footprint dos pots, e o valor de `R5`/`R6`
-> do painel. **Não há `.kicad_pcb` nenhum** — o layout é o passo seguinte.
+> ⚠️ **What blocks the factory:** the `OPA1642` in JLC's parts library (LCSC
+> stock is not the same warehouse), the pots' footprint, and the value of `R5`/`R6`
+> of the panel. **There is no `.kicad_pcb` at all** — the layout is the next step.
 >
-> Ferramentas novas: `colisoes_sch.py` (o portão dos esquemáticos, que o
-> `svg_colisoes` não conseguia ser), `contrato_idc.py`, `bom_completa.py`.
-> Cicatrizes 15cb–15ce, e a skill `kicad` de 270 para ~600 linhas.
+> New tools: `colisoes_sch.py` (the schematics gate, which
+> `svg_colisoes` could not be), `contrato_idc.py`, `bom_completa.py`.
+> Scars 15cb–15ce, and the `kicad` skill from 270 to ~600 lines.
 
-> Atualizado em 2026-09-04 (limpeza) · leva: **o efeito aposentado do slot
-> Fx2 saiu da documentação inteira** — 43 menções em oito ficheiros (`STATUS`,
-> `battle_scars`, `FEATURES`, `IFA10000`, `CTOS`, `params-aposentados` e
-> três skills). Onde ele era a RAZÃO de uma decisão viva, a razão ficou e
-> só o nome saiu: o bloco 48, o defeito 🔴 da serial (que é starvation da
-> ISR do USB por callback longo, e não de um efeito), o passa-alta do Fx2
-> e as quatro etapas do IFÁ10000 que ele ensinava.
+> Updated on 2026-09-04 (cleanup) · brings: **the retired effect from the
+> Fx2 slot left the entire documentation** — 43 mentions across eight files (`STATUS`,
+> `battle_scars`, `FEATURES`, `IFA10000`, `CTOS`, `params-aposentados` and
+> three skills). Where it was the REASON for a live decision, the reason stayed and
+> only the name left: the block 48, the 🔴 serial defect (which is starvation of
+> the USB ISR by a long callback, and not of an effect), the Fx2 high-pass
+> and the four steps of the IFÁ10000 it taught.
 >
-> Na mesma leva, **o motor de DSP externo saiu da documentação inteira** —
-> mais 53 menções, incluindo 15 no README. Onde o nome era identificador de
-> API (as macros da receita de embarque) a receita saiu em vez de ser
-> renomeada: macro com nome inventado é pior que macro nenhuma. As três
-> directivas `doc-check: ignore` do `FEATURES.md` saíram com os nomes que
-> isentavam, e o caminho de volta para os `.maxpat` do dB foi **reprovado
-> antes de reescrito** (`git show 8271e97:Max/` lista os quatro; o do delay
-> devolve 104 335 bytes). `check_docs` a 0 fantasmas nas duas rondas.
+> In the same batch, **the external DSP engine left the entire documentation** —
+> another 53 mentions, including 15 in the README. Where the name was an API
+> identifier (the macros of the embedding recipe) the recipe left instead of being
+> renamed: a macro with an invented name is worse than no macro. The three
+> `doc-check: ignore` directives of `FEATURES.md` left with the names they
+> exempted, and the path back to dB's `.maxpat` files was **rejected
+> before being rewritten** (`git show 8271e97:Max/` lists the four; the delay's
+> returns 104 335 bytes). `check_docs` at 0 ghosts in both rounds.
 >
-> Do processo nasceu a skill **`/audit`** + `auditar.sh` v1.0.0 e
-> `versoes_readme.py` v1.0.0. Na estreia contra esta árvore apanhou **5
-> links mortos** no `MAPA-DE-TERRA.md` (apontava `../` estando um nível
-> mais fundo), uma **entrada duplicada** na lista de aposentados, e **15 de
-> 58 versões do mapa do README derivadas** — uma delas com o README à
-> FRENTE do fonte (`ponte.ino` v0.5.0 anunciada, v0.4.0 no ficheiro).
-> Todas consertadas; o mapa está a 60/60.
+> From the process the **`/audit`** skill was born + `auditar.sh` v1.0.0 and
+> `versoes_readme.py` v1.0.0. In its debut against this tree it caught **5
+> dead links** in `MAPA-DE-TERRA.md` (it pointed to `../` while being one level
+> deeper), one **duplicate entry** in the retired list, and **15 of
+> 58 versions in the README map drifted** — one of them with the README AHEAD
+> of the source (`ponte.ino` v0.5.0 announced, v0.4.0 in the file).
+> All fixed; the map is at 60/60.
 >
-> Segunda passagem do `/audit` (`auditar.sh` v1.1.0 + `coerencia.py` v1.0.0):
-> **duas das minhas próprias checagens estavam a acusar pelo critério errado**
-> — contavam ocorrências simples quando o `check_docs` só vê nomes **entre
-> crases**, e supunham escopo de linha quando `isentos()` varre o ficheiro
-> inteiro. Reescritas em Python. As **6 isenções órfãs** foram a zero sem
-> perder história: `oct_on` e `test_tone_on` **migraram** para a lista de
-> aposentados (52 → 54) por carregarem registo único; as outras quatro eram
-> cópias de um registo que vive no `battle_scars`. O **vault** ficou alinhado
-> nos três ficheiros em atraso — o `HARDWARE.md` de lá ainda tinha os nomes
-> velhos da matriz (`route_l_a`), renomeados a 02/09.
+> Second pass of `/audit` (`auditar.sh` v1.1.0 + `coerencia.py` v1.0.0):
+> **two of my own checks were flagging by the wrong criterion**
+> — they counted plain occurrences when `check_docs` only sees names **between
+> backticks**, and assumed line scope when `isentos()` scans the whole
+> file. Rewritten in Python. The **6 orphan exemptions** went to zero without
+> losing history: `oct_on` and `test_tone_on` **migrated** to the retired
+> list (52 → 54) because they carry a unique record; the other four were
+> copies of a record that lives in `battle_scars`. The **vault** was aligned
+> across the three files that were behind — the `HARDWARE.md` there still had the old
+> matrix names (`route_l_a`), renamed on 02/09.
 >
-> Passada nova de **itens pendentes**: 186 linhas marcadas na árvore. Fechou-se
-> o **⚪4 do `AUDIT-23-08`** (versões velhas no README), com prova; e o **⚪5**
-> ficou registado como **aberto e maior**: o `"76 CCs"` está hoje em três
-> comentários do `main.cpp`, não dois, e o número real são 119.
+> New pass of **pending items**: 186 lines flagged in the tree. The
+> **⚪4 of `AUDIT-23-08`** was closed (old versions in the README), with proof; and the **⚪5**
+> was recorded as **open and larger**: the `"76 CCs"` is today in three
+> comments of `main.cpp`, not two, and the real number is 119.
 >
-> **04/09, fecho: a limpeza acabou, ponta a ponta.** Com a decisão do dB:
-> `src/TESTES.md` (v0.25.0) e `src/BOARDS.md` (v0.14.0) limpos sem esperar
-> pela outra sessão, e **os 86 comentários de fonte** em 13 ficheiros. O build
-> prova que foram só comentários: **QSPI 283 196 B, SRAM 322 488 B, ITCM 308 B
-> — idênticos ao baseline**, antes e depois.
+> **04/09, close: the cleanup is done, end to end.** With dB's decision:
+> `src/TESTES.md` (v0.25.0) and `src/BOARDS.md` (v0.14.0) cleaned without waiting
+> for the other session, and **the 86 source comments** in 13 files. The build
+> proves they were only comments: **QSPI 283 196 B, SRAM 322 488 B, ITCM 308 B
+> — identical to the baseline**, before and after.
 >
-> Saíram três **receitas falsas** — mandavam usar ficheiros que não existem:
-> a "bancada" do `BOARDS.md`, o bloco de revivência do `Makefile` (v0.4.1), e
-> os binds comentados do `manifest.h` (v1.12.2), onde vivia a afirmação de que
-> os params do módulo **continuavam na tabela**. Não continuavam, e foi ela
-> que me mandou procurar código que não existe. Está lá agora a dizê-lo.
+> Three **false recipes** left — they told you to use files that do not exist:
+> the "bench" of `BOARDS.md`, the revival block of the `Makefile` (v0.4.1), and
+> the commented-out binds of `manifest.h` (v1.12.2), where the claim lived that
+> the module's params **were still in the table**. They were not, and it was that claim
+> that sent me looking for code that does not exist. It is there now saying so.
 >
-> O **T12** do `TESTES.md` (98 linhas, o ensaio de coincidência espectral)
-> virou lápide de 8 linhas: as duas lições que ele comprou vivem na etapa 6 do
-> IFÁ10000 e no cap. 6 do battle_scars, que é onde servem a qualquer efeito.
-> O mapa de CC à mão do `BOARDS.md`, que dizia "instrumento atual" e listava
-> quatro params mortos, foi **removido em vez de corrigido** — apontar para o
-> `CCMAP.md`, que é gerado, em vez de manter viva a tabela que mente.
+> The **T12** of `TESTES.md` (98 lines, the spectral-coincidence test)
+> became an 8-line tombstone: the two lessons it bought live in step 6 of
+> IFÁ10000 and in ch. 6 of battle_scars, which is where they serve any effect.
+> The hand-made CC map of `BOARDS.md`, which said "current instrument" and listed
+> four dead params, was **removed instead of corrected** — pointing to
+> `CCMAP.md`, which is generated, instead of keeping alive the table that lies.
 >
-> A cauda do README foi consertada: os defeitos em aberto passam a espelhar
-> este documento, o signal path deixa de estar "à espera de hardware", o Pot 5
-> deixa de fazer um crossfade aposentado a 20/08, e os "próximos passos"
-> apontam para aqui em vez de duplicarem uma lista que volta a derivar.
+> The README's tail was fixed: the open defects now mirror
+> this document, the signal path stops being "waiting for hardware", Pot 5
+> stops doing a crossfade retired on 20/08, and the "next steps"
+> point here instead of duplicating a list that drifts again.
 >
-> **⚪5 do `AUDIT-23-08` fechado:** o `"76 CCs"` estava em três comentários do
-> `main.cpp` (v0.301.1), não dois, e o número real são 119. Corrigido nos três.
-> **🟡2 estava fechado e ninguém tinha dado por isso.** Fui escrevê-lo e
-> encontrei-o feito: `Colisoes()`/`Colisao()` no `manifest.h`, chamadas em
-> `main.cpp:5134`, e o `board` a imprimir `colisao de CC`. Implementado depois
-> do audit de 23/08, com a entrada por fechar. Construir por cima teria sido
-> trabalho a duplicar código que já existia.
+> **⚪5 of `AUDIT-23-08` closed:** the `"76 CCs"` was in three comments of
+> `main.cpp` (v0.301.1), not two, and the real number is 119. Corrected in all three.
+> **🟡2 was closed and nobody had noticed.** I went to write it and
+> found it done: `Colisoes()`/`Colisao()` in `manifest.h`, called at
+> `main.cpp:5134`, and the `board` printing `colisao de CC`. Implemented after
+> the 23/08 audit, with the entry left to close. Building on top would have been
+> work duplicating code that already existed.
 >
-> **05/09 — placa nova gravada, e os três params invisíveis deixaram de o ser.**
-> A Daisy nova entrou (uma unidade só, por agora), com o bootloader já lá — o
-> DFU que apareceu expunha `0x90000000`, a QSPI. Gravada e conferida nos dois
-> lados: fonte e placa em **v0.302.0**.
+> **05/09 — new board flashed, and the three invisible params stopped being so.**
+> The new Daisy came in (just one unit, for now), with the bootloader already there — the
+> DFU that appeared exposed `0x90000000`, the QSPI. Flashed and checked on both
+> sides: source and board at **v0.302.0**.
 >
-> O `board` acusava `sem CC: 3 de 122 params — alcançáveis por `set`,
-> invisíveis ao iPad`: `sim_laco`, `sim_hz`, `sim_fb`, o banco de ensaio do
-> supressor. Ganharam **CC 107/108/109** em `ch1`, colados ao `bench_boost`
-> (105/106) porque são a mesma família — coisas de bancada, não de palco, e a
-> vizinhança é defesa: um widget mal configurado atinge o vizinho. Escolhidos
-> livres nas **duas** fontes (fonte e `CCMAP` gerado) e fora de 120–127
-> (Channel Mode), 0/32 (Bank Select) e 32–63 (os LSB de 0–31).
+> The `board` flagged `sem CC: 3 de 122 params — alcançáveis por `set`,
+> invisíveis ao iPad`: `sim_laco`, `sim_hz`, `sim_fb`, the suppressor's test
+> bench. They got **CC 107/108/109** on `ch1`, stuck next to `bench_boost`
+> (105/106) because they are the same family — bench things, not stage things, and the
+> proximity is a safeguard: a misconfigured widget hits its neighbor. Chosen
+> free in **both** sources (source and generated `CCMAP`) and outside 120–127
+> (Channel Mode), 0/32 (Bank Select) and 32–63 (the LSBs of 0–31).
 >
-> Medido na placa depois de gravar: **`sem CC` 3 → 0 · CCs 119 → 122 ·
-> `colisao de CC: nenhuma`** — dita pelo detector que já lá estava, que é
-> exactamente o trabalho dele. ⚠️ **Não há widget no Loopy para estes**, por
-> decisão do dB: o CC existe para o param deixar de ser invisível, não porque
-> haja página à espera.
+> Measured on the board after flashing: **`sem CC` 3 → 0 · CCs 119 → 122 ·
+> `colisao de CC: nenhuma`** — reported by the detector that was already there, which is
+> exactly its job. ⚠️ **There is no widget in Loopy for these**, by
+> dB's decision: the CC exists so the param stops being invisible, not because
+> there is a page waiting.
 >
-> **E o `check_docs` acusou-me 10 ficheiros "tocados sem subir a versão"** —
-> os do commit `1cc896c`. Olhados, não presumidos, que é o que a docstring
-> dele pede: são **comentário puro**, e a prova é o binário byte a byte igual
-> (QSPI 283 196 B · SRAM 322 488 B · ITCM 308 B, antes e depois). **Não
-> bumpados de propósito:** `hal`, `params` e `dynamics` reportam versão no
-> `board`, e subi-la anunciaria uma mudança que não existe — além de obrigar a
-> regravar para nada. Fica escrito para não se voltar a discutir.
+> **And `check_docs` flagged 10 files for me as "touched without bumping the version"** —
+> those of commit `1cc896c`. Looked at, not assumed, which is what its docstring
+> asks: they are **pure comment**, and the proof is the byte-for-byte identical binary
+> (QSPI 283 196 B · SRAM 322 488 B · ITCM 308 B, before and after). **Not
+> bumped on purpose:** `hal`, `params` and `dynamics` report a version in the
+> `board`, and bumping it would announce a change that does not exist — besides forcing
+> a reflash for nothing. It is written down so it is not discussed again.
 >
-> **Uma contradição minha, apanhada na varredura de pendentes.** Ao escolher
-> os CCs escrevi que 120–127 são Channel Mode e não se usam. Mas o projecto
-> usa **120/121/122 de propósito** como CCs de COMANDO (`sync`, preset load,
-> preset save) — não são params, por isso não entram no mapa. O comentário
-> lia-se como proibição geral e passou a dizer o que é: a faixa alta não está
-> livre, está reservada a outra coisa.
+> **A contradiction of mine, caught in the sweep of pending items.** When choosing
+> the CCs I wrote that 120–127 are Channel Mode and are not used. But the project
+> uses **120/121/122 on purpose** as COMMAND CCs (`sync`, preset load,
+> preset save) — they are not params, so they do not enter the map. The comment
+> read as a general prohibition and now says what it is: the high range is not
+> free, it is reserved for something else.
 >
-> **O `/audit` foi apertado contra as duas falhas desta sessão** (`auditar.sh`
-> v1.2.0). A primeira: varri o fonte com `*.h *.cpp Makefile` — 33 ficheiros —
-> e a árvore tem **137 rastreados em 14 extensões**; o `check_repo.sh` escapou
-> e só apareceu por acaso na varredura final. O inventário passa a ser por
-> `git ls-files`, e imprime as extensões da árvore ao lado, para que tipo novo
-> apareça à vista. A segunda: a **frase partida pela renomeação** — âncora
-> única, `grep` limpo, `make` a passar, e a frase a ficar *"morre sob callback
-> ligado"* porque a continuação estava na linha seguinte. Nasceu o
-> `vizinhos.py` v1.0.0, que lê o diff e assinala só onde a edição tocou o FIM
-> da linha. Corrido sobre esta sessão: **16 vizinhanças, todas lidas, nenhuma
-> outra partida.** E a varredura exaustiva confirma **zero em 137 ficheiros**.
+> **`/audit` was tightened against the two failures of this session** (`auditar.sh`
+> v1.2.0). The first: I swept the source with `*.h *.cpp Makefile` — 33 files —
+> and the tree has **137 tracked across 14 extensions**; `check_repo.sh` escaped
+> and only appeared by accident in the final sweep. The inventory is now done by
+> `git ls-files`, and prints the tree's extensions alongside, so that a new type
+> appears in plain view. The second: the **sentence broken by the renaming** — a unique
+> anchor, clean `grep`, passing `make`, and the sentence left as *"dies under a connected
+> callback"* because the continuation was on the next line. `vizinhos.py` v1.0.0 was
+> born, which reads the diff and flags only where the edit touched the END
+> of the line. Run over this session: **16 neighborhoods, all read, no
+> other broken.** And the exhaustive sweep confirms **zero in 137 files**.
 >
-> ⚠️ **A cauda do README está podre por conta própria** e a limpeza só a
-> destapou: dizia "Nenhum defeito conhecido" com um 🔴 prioridade 1 aberto;
-> dizia que gravar "exige o botão BOOT" quinze linhas depois de anunciar o
-> `flash.sh` a entrar por `dfu go`; dava o signal path como "ainda não
-> implementado, hardware a caminho"; e apontava três vezes para
-> `src/modules/README.md`, que não existe. **Isto não foi consertado** —
-> está fora do pedido, e é decisão do dB.
+> ⚠️ **The README's tail is rotten on its own** and the cleanup only
+> uncovered it: it said "No known defect" with a 🔴 priority 1 open; it
+> said flashing "requires the BOOT button" fifteen lines after announcing
+> `flash.sh` entering via `dfu go`; it gave the signal path as "not yet
+> implemented, hardware on the way"; and it pointed three times to
+> `src/modules/README.md`, which does not exist. **This was not fixed** —
+> it is outside the request, and is dB's decision.
 >
-> Antes, 2026-09-04 (deep clean) · leva: o supressor passa a
-> chamar-se **SuMiA™** em todas as instâncias · **deep clean da documentação**
-> — o README declarava dois estados incompatíveis a quinze linhas um do outro
-> ("bloco 48, sem motor externo" e um módulo de FFT ligado com bloco 256),
-> anunciava
-> v0.172.0 com
-> o fonte em v0.301.0, e dizia que os pots e botões não estavam soldados · a
-> pasta `Max/` (1,8 MB de patches aposentados) saiu da árvore com o caminho de
-> volta provado · o `CCMAP.md` tinha o cabeçalho à mão a envelhecer por cima
-> de uma tabela gerada · e dez documentos vivos entraram no mapa do README
+> Before, 2026-09-04 (deep clean) · brings: the suppressor is now
+> called **SuMiA™** in every instance · **deep clean of the documentation**
+> — the README declared two incompatible states fifteen lines apart from each other
+> ("block 48, no external engine" and an FFT module on with block 256),
+> announced
+> v0.172.0 with
+> the source at v0.301.0, and said the pots and buttons were not soldered · the
+> `Max/` folder (1.8 MB of retired patches) left the tree with the path
+> back proven · `CCMAP.md` had the hand-made header aging on top
+> of a generated table · and ten live documents entered the README map
 >
-> ⚠️ **HARDWARE NOVO: o pré-amp está montado e testado** (04/09), com som mais
-> cheio. Isso invalida toda a medição de ganho anterior — §14 da
-> `medicao-limpa`. A sessão de escuta estava a começar quando o deep clean a
-> interrompeu; **o pré-voo tem de ser refeito do zero.**
+> ⚠️ **NEW HARDWARE: the pre-amp is assembled and tested** (04/09), with a
+> fuller sound. That invalidates all the previous gain measurement — §14 of
+> `medicao-limpa`. The listening session was just beginning when the deep clean
+> interrupted it; **the pre-flight has to be redone from scratch.**
 >
-> Antes, 2026-09-04 · leva: **gravar passou a repor o estado** —
-> `flash.sh` v0.4.0 + `estado.py`, guardando antes do DFU e repondo depois,
-> porque a regra existia na skill e vivia só na minha cabeça · a **marca da
-> abertura refeita em três peças** (casco vazado, lábio, boca) contra
-> desenhos e renders do dB, com **espelho cima↔baixo a 0 px de 1215** e o
-> casco provado fechado por **alagamento** · e o **exame de pinos** a apanhar
-> o `PINOS.md` a contradizer-se a si próprio
+> Before, 2026-09-04 · brings: **flashing now restores the state** —
+> `flash.sh` v0.4.0 + `estado.py`, saving before the DFU and restoring after,
+> because the rule existed in the skill and lived only in my head · the **splash
+> mark redone in three parts** (hollow shell, lip, mouth) against
+> dB's drawings and renders, with the **top↔bottom mirror at 0 px of 1215** and the
+> shell proven closed by **flooding** · and the **pin exam** catching
+> `PINOS.md` contradicting itself
 >
-> **05/09 — o teste do terra no documento dono estava velho.** O
-> `ATERRAMENTO.md` (v0.2.0) é, pelo README, o dono do assunto, mas a sua
-> secção *Conferência* ainda mandava medir a ilha contra o trilho e dizia *"se
-> apitar, há uma ligação a mais"*. **Com o net-tie do revB, apitar é o
-> correcto** — o teste velho faria ler uma placa certa como defeituosa. Passou
-> a espelhar o `MAPA-DE-TERRA.md` §6: três medições e por ordem, porque o
-> teste do meio sozinho não separa *"ponte única"* de *"nenhuma ponte"*, e uma
-> delas mata o áudio. A premissa (20↔40 aberto na Daisy nua) está **medida em
-> 04/09**; o que continua por medir é a placa montada.
+> **05/09 — the ground test in the owner document was stale.** The
+> `ATERRAMENTO.md` (v0.2.0) is, per the README, the owner of the subject, but its
+> *Conferência* section still told you to measure the island against the rail and said *"if
+> it beeps, there is one connection too many"*. **With the revB net-tie, beeping is
+> correct** — the old test would read a correct board as defective. It now
+> mirrors `MAPA-DE-TERRA.md` §6: three measurements and in order, because the
+> middle test alone does not separate *"single bridge"* from *"no bridge"*, and one
+> of them kills the audio. The premise (20↔40 open on the bare Daisy) is **measured on
+> 04/09**; what remains to be measured is the assembled board.
 >
-> ⚠️ **Continua por confirmar com o multímetro** o `AGND`/`DGND` unidos fora
-> da placa (P3 da varredura de terra) — o dB refez o aterramento em 03/09 e
-> reportou som mais limpo, mas a medida não foi feita.
+> ⚠️ **Still to be confirmed with the multimeter**: the `AGND`/`DGND` joined outside
+> the board (P3 of the ground sweep) — dB redid the grounding on 03/09 and
+> reported cleaner sound, but the measurement was not done.
 >
-> Antes, 2026-09-02 (fecho) · leva: **compressor** (49 dB de factor
-> de crista, medidos) · **medidor de saída** `pkout` · e o **chiado de banda
-> larga** diagnosticado até uma regra com nome — `AGND`/`DGND` unidos fora
-> da placa, P3 da varredura de terra, **por confirmar com o multímetro**
+> Before, 2026-09-02 (close) · brings: **compressor** (49 dB of crest
+> factor, measured) · **output meter** `pkout` · and the **broadband
+> hiss** diagnosed down to a named rule — `AGND`/`DGND` joined outside
+> the board, P3 of the ground sweep, **to be confirmed with the multimeter**
 >
-> Antes, 2026-09-02 (noite) · leva: **SuMiA™** — supressor de
-> microfonias automatizado, por exciter, quatro bocas, provado num **banco
-> de ensaio** sem a escultura · o notch mudou de eixo (cadeia → **ramo**) ·
-> **rampa de arranque supervisionada**, que recua quando apanha um modo ·
-> e três incidentes de microfonia que ferem, todos meus
+> Before, 2026-09-02 (night) · brings: **SuMiA™** — automated
+> microphonics suppressor, per exciter, four mouths, proven on a **test
+> bench** without the sculpture · the notch changed axis (chain → **branch**) ·
+> **supervised startup ramp**, which backs off when it catches a mode ·
+> and three microphonics incidents that hurt, all mine
 >
-> Antes, 2026-09-02 (fim do dia) · leva: **a marca da abertura
-> encolhida e subida** a pedido do dB — folga de 3 para 6 linhas até ao
-> nome · o **PS_2 medido** e o mapa do prescaler fechado · o **espectro a
-> 7 kHz** medido (o framebuffer não lhe mexe, mas o chão de banda larga
-> sobe 5,4/6,9 dB) · **20 órfãos da caixa-preta a 0** · e todos os
-> verificadores a zero
+> Before, 2026-09-02 (end of day) · brings: **the splash mark
+> shrunk and raised** at dB's request — clearance from 3 to 6 lines up to the
+> name · the **PS_2 measured** and the prescaler map closed · the **spectrum at
+> 7 kHz** measured (the framebuffer does not touch it, but the broadband floor
+> rises 5.4/6.9 dB) · **20 black-box orphans at 0** · and all the
+> checkers at zero
 >
-> Antes, 2026-09-02 · leva: **o travamento com a ponte, fechado na
-> raiz** — faltava um `GPIO_PULLUP` no RX do MIDI · **vigia de laço** que
-> reinicia a placa sozinha · **caixa-preta consertada**: 20 órfãos e uma
-> colisão de endereços · e a regra que organiza o resto, **15az**
+> Before, 2026-09-02 · brings: **the lockup with the bridge, closed at the
+> root** — a `GPIO_PULLUP` was missing on the MIDI RX · **loop watchdog** that
+> restarts the board on its own · **black box fixed**: 20 orphans and an
+> address collision · and the rule that organizes the rest, **15az**
 >
-> Antes, 2026-09-01 · leva: **a abertura do OLED** viva (jogada de
-> búzios → marca → nome → versão, 50 quadros a 20 Hz) · **framebuffer inteiro
-> por SPI a PS_8**, 3 811 µs/quadro, verificado no vidro · fonte 5×7 gerada
-> de glifos legíveis · o enfeite que cobrava **13% ao laço parado**
+> Before, 2026-09-01 · brings: **the OLED splash** alive (cowrie-shell
+> throw → mark → name → version, 50 frames at 20 Hz) · **the whole framebuffer
+> over SPI at PS_8**, 3 811 µs/frame, verified on the glass · a 5×7 font generated
+> from legible glyphs · the ornament that charged **13% to the idle loop**
 >
-> Antes, 2026-08-28: **matriz de roteamento 2×2** medida ·
-> **OLED vivo** e três encoders a contar · **livelock do MIDI consertado** ·
-> `in_gain` removido · **tarolator**, efeito novo nascido de uma medição
-
----
-
-
-## 19/09/2026 — cérebro #1 na bancada: o que foi montado diferente da BOM
-
-A montagem do primeiro cérebro está em curso, pelo manual
-(`docs/montagem/manual_montagem.html`). O que este exemplar tem de diferente
-da BOM fica aqui, para ninguém o ler depois como erro de montagem:
-
-- **`C14`/`C24`: eletrolítico, não filme.** A BOM pede WIMA MKS2 2,2 µF 63 V
-  com passo 5 mm; não foi comprado (o dB contava com o stock do lab) e o
-  único 2,2 µF do lab era um filme de 400 V, grande de mais para o passo
-  5 mm e o corpo de 7,8 × 11,6 mm. Montou-se um **eletrolítico**, com o **+ no
-  lado do `R14`/`R24`** (VBIAS, ~7 V; a entrada da Daisy fica sempre abaixo), e
-  a polaridade foi conferida pelo dB. ⚠️ **Valor e tensão do eletrolítico
-  montado: por anotar.** O que muda: nada audível se ≥ 2,2 µF; o manual
-  (v0.3.0) passa a aceitar esta troca, com o + marcado no desenho, e proíbe
-  cerâmico multicamada (microfónico, e perde capacitância com 7 V em cima).
-- **Ordem dos botões arcade na tampa: azul A · azul B · branco**, com o branco
-  do lado do capacitor alto — decidido na bancada porque o branco (búzios) não
-  tem LED e é mais curto. Medido pelo dB a 19/09: **o branco desce 20 mm abaixo
-  do painel, com conectores**; o capacitor é o **C1, 2200 µF**.
-  A `confere_arcade` (`pcb_contorno.py` **v0.24.0**) passou a ter **uma
-  profundidade por botão** e **altura de electrolítico por diâmetro** (D16 = 25,
-  D10 = 16 mm, de catálogo). Com isso a altura livre é **7,5 mm** sob um azul e
-  **21,5 mm** sob o branco.
-- ❌ **ERRO MEU, corrigido no mesmo dia.** Escrevi que a Daisy debaixo do botão
-  central provava a orientação declarada. **Não prova nada:** o `U2` cai sob o
-  furo do meio nas **duas** orientações — medi as duas e só depois vi. Um facto
-  que é igual nos dois lados não distingue os dois lados.
-- 🔴 **O cérebro está montado GIRADO 180° face ao modelo (dB, 19/09).** A prova
-  é a serigrafia: com o lado do utilizador virado para si (logo de frente) e a
-  olhar de cima, a serigrafia do **painel** lê-se direita e a do **cérebro** lê-se
-  **de cabeça para baixo**. Isso é a orientação `y_max` — a que foi **rejeitada**
-  a 06/09 exactamente por pôr peças altas sob os botões. E nessa orientação o
-  verificador acusa, medido hoje:
-  · **`C1` (2200 µF, 25 mm)** sob o furo **1** — bate com o capacitor alto que
-  obrigou a trocar a ordem dos botões, que era o que faltava explicar;
-  · **`U2` (17 mm)**, **`J13` (1×3)** e **`J16` (1×8)** sob o furo **2** — os dois
-  headers contam **20 mm** com ficha e fio.
-- 🔴 **E nada impedia:** os quatro furos de fixação do cérebro (`H1`–`H4`, ø3,2)
-  formam um **retângulo simétrico** — medido a 19/09 — por isso a placa aparafusa
-  nos dois sentidos, e o sentido errado não tem resistência mecânica nenhuma. O
-  `FRENTE_CEREBRO` é uma **constante declarada**, e o `encaixe.py` até **recusa**
-  se ela não for `y_min`: a ferramenta acredita na declaração e nunca pergunta à
-  placa. **Para a rev D isto é requisito:** a fixação tem de ser assimétrica (ou
-  ganhar um recorte de chave), para a orientação errada **não entrar**.
-- ⚠️ **Por decidir, e é o dB que decide:** girar o cérebro para a orientação do
-  modelo (e ver se os conectores ainda alcançam as paredes), ou assumir a
-  orientação girada e **recolocar as peças altas na rev D**.
-  E o dB diz que a Daisy **cabe, apertada** — o que mede o que faltava: o
-  verificador dá **7,5 mm** livres sob um azul e a Daisy tem **17 mm**, logo a
-  profundidade do botão azul **não** são os 34 mm do pior caso. Para a Daisy
-  caber, o azul desce **~24 mm** abaixo do painel. ⚠️ **Por medir:** a
-  profundidade real do botão azul (a do branco, 20 mm, já foi medida). Enquanto
-  não for medida, a `confere_arcade` reprova `U2`, `J14` e `RV1` — e reprova
-  **por excesso de cautela**, que é o lado certo para errar.
-- ⚠️ **FICA ABERTO: qual é a peça alta debaixo do botão branco.** Com a
-  orientação confirmada, o `C1` (2200 µF) está a **64 mm** do furo mais próximo
-  — não pode ter sido ele. Debaixo do furo da esquerda está a **caixa de pinos
-  `J14`** (8,85 mm, mais a ficha do cabo IDC por cima); debaixo do da direita só
-  há peças rasteiras. **Por medir:** o que está debaixo do botão branco.
-- ✅ **O amplificador ganhou casa (dB, 20/09): prateleira sobre o cérebro, em
-  4 torres M3 COLADAS a quente**, na metade de trás (pontos a 114 · 175 mm da
-  esquerda e 5 · 95 mm do topo). O `onde_furar.py` v0.3.0 dizia que os quatro
-  pontos **passavam com parafuso isolante** e reprovavam com metálico (caem no
-  plano `GND`, em campo largo, com 4,7 a 11,1 mm de folga ao pad mais próximo).
-  **O dB escolheu não furar:** a placa é insubstituível a meio da montagem, e o
-  ganho de aperto não pagava o risco. Colar é reversível; furar não é.
-  ⚠️ **O calor não chega por contacto** (nota corrigida a 20/09, com a razão do
-  dB): o amplificador aparafusa no **topo** da torre e a cola fica na **base**.
-  Sobram dois caminhos fracos — condução pela torre (os furos do módulo são a
-  parte fria dele; uma anilha de nylon entre módulo e torre corta isto de vez) e
-  o **ambiente da caixa fechada**, que é o que realmente mede. Cola EVA amolece
-  a 60–80 °C. **Teste barato:** meia hora a tocar alto e o dedo na base da
-  torre — cinco segundos sem largar ≈ abaixo de 50 °C, confortável.
-  ⚠️ **E o risco maior é mecânico, não térmico:** cola quente é forte em
-  cisalhamento e fraca em descascamento. Um cabo esticado descola a torre antes
-  de qualquer temperatura — folga nos fios, e cordão em volta de todo o pé.
-  O `encaixe.py` M7 já aceita esta casa; falta o **step-down**.
-- 🔴 **A caixa não tinha lugar definido para nenhum módulo (20/09).**
-  O `CAIXA-ACRILICO-MONTAGEM.md` §6 diz *"módulo do amp nos dele [espaçadores]"*,
-  mas esses espaçadores nunca existiram: a chapa de fundo tem **4** furos, e são
-  os do cérebro. E não há chão: a chapa é **193 × 113** e o cérebro ocupa
-  **180 × 100**, o que deixa faixas de **6,5 mm** à direita e atrás — não cabe
-  módulo nenhum ao lado. Medido a 20/09.
-  O volume que sobra é **por cima do cérebro**: **31,4 mm** na frente e
-  **56,4 mm** atrás (interior menos calço 6 + espaçador 10 + placa 1,6). Atrás
-  é onde cabe, e é também para onde as regras de cabo já mandam o amp (os
-  exciters saem pela direita, a linha da mesa vem do DPDT da parede de trás).
-  ⚠️ **Por medir antes de decidir:** as dimensões do módulo (com dissipador e
-  bornes), o padrão de furos dele, e a altura do `C1` já montado — um segundo
-  andar por cima do cérebro tem de passar por cima dos 25 mm do `C1`.
-  ⚠️ **E o calor:** a caixa é acrílico fechado. Um classe D a 15 V dentro de
-  caixa selada não foi discutido em lado nenhum do repo.
-- ⚠️ **O painel só sai com os jacks TRS fora (dB, 19/09).** Com os TRS
-  montados o painel não tem por onde sair: a ponta do encoder fica presa no
-  acrílico da tampa. Ordem de montagem e de manutenção: **o painel entra e sai
-  antes dos jacks**. Ver `caixa/LICOES-MONTAGEM.md` #11.
-- ⚠️ **(histórico) DIVERGÊNCIA — a orientação do cérebro na caixa.** O modelo declara
-  `FRENTE_CEREBRO = "y_min"`, e **nessa** orientação o `C1` fica a **64 mm** do
-  botão mais próximo: nada alto sob os furos. O `C1` só cai debaixo de um arcade
-  na orientação **oposta** (`y_max`) — que foi rejeitada em 06/09 exactamente
-  por pôr o `C1` e a Daisy sob botões. Ou a placa montada está virada ao
-  contrário do modelo, ou as cotas dos furos não são as do desenho. **Não
-  registei como facto até medir**, porque muda o que a rev D tem de resolver.
-  Na orientação `y_max` o verificador também acusa **U2 (Daisy, 17 mm)** e os
-  headers **J13/J16 (20 mm com ficha)** debaixo de botões azuis, onde só cabem
-  7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
-  altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
-  Ver `caixa/LICOES-MONTAGEM.md` #10.
-- **Painel, estado da primeira ligação (22/09):** alimentação **5 V e 3,3 V**
-  boas · os **três botões** respondem (o branco dos búzios é **NF**, exceção
-  declarada no firmware, `hal` v0.76.0) · os **dois pots** lidos pelo ADC ·
-  **LEDs dos arcade a funcionar** depois de trocar o chicote comprado, que vinha
-  com as cores cruzadas (bts 15fh).
-  **Cabo do OLED, cores levantadas na peça (dB, 22/09)** — a Waveshare não as
-  publica, a wiki dela só lista nomes de pino: `J2` pino 1 = **vermelho** (+5 V)
-  · 2 **preto** (GND) · 3 **azul** (DIN) · 4 **amarelo** (CLK) · 5 **laranja**
-  (CS) · 6 **verde** (DC) · 7 **branco** (RST). A ordem do cabo coincide com a
-  do `J2`, logo é ligação direta — contando o pino 1 pelo **pad quadrado**, que
-  com o header soldado por baixo fica do lado oposto ao que a serigrafia sugere.
-  ⚠️ **Por resolver: o OLED não liga** e o **encoder conta 1 pulso em 20
-  cliques**, com os três pinos dele a comutar — suspeita no terminal comum.
-- ⚠️ **Dívida medida a 22/09: 15 dos 47 mapas do manual têm colisão de texto.**
-  Medido com `tools/svg_colisoes.py` mapa a mapa — **15 antes e 15 depois** da
-  mudança do rótulo que desvia (logo não é regressão, é herança). São na maioria
-  rótulos a cruzar o bordo da placa (`texto×borda contentor`) e dois casos de
-  `texto×texto` (`VCC`/`GND` no mapa do OLED, e `1 vermelho`/`2`). Até hoje só
-  os desenhos novos passavam pelo portão; os mapas antigos nunca passaram.
-- ✅ **22/09: o cérebro toca.** Piezo → pré-amp → Daisy → delay e reverb →
-  saída de linha, nos **dois** canais, sem clip em lado nenhum. O que estava
-  entre a montagem e este parágrafo está em `battle_scars.md` **15fd**, **15fe**
-  e **15ff**: ponte com pinos errados, três soldas frias em cadeia, e o divisor
-  de entrada que nunca tinha sido medido com o piezo real.
-- **Estado medido deste exemplar (22/09), para não se reinventar depois:**
-  · piezos: **18 nF** (corda de metal, entra no `p1`/`J5`) e **17 nF**
-  (estrutura junto à pele do tambor, entra no `p2`/`J6`)
-  · `C12` e `C22`: **22 nF de fábrica + 100 nF C0G soldado por cima** →
-  atenuação de **−17,8 dB** por canal
-  · picos tocando forte: **−1,4 dBFS** no `p1` e **−15,6 dBFS** no `p2`, `clip 0`
-  · `pre_level_ab` = **0,5** (era 1,0; a soma interna estourava em +5,5 dBFS)
-  · `k1`/`k2` = 0,60 · `post_level_l/r` = 0,88 · saída em **−12,7 dBFS** de pico
-  ⚠️ **A assimetria de 14 dB entre os canais é do INSTRUMENTO**, não defeito:
-  corda de metal e pele de tambor são fontes diferentes. Quem "corrigir" isso
-  desfaz o ajuste.
-  ⚠️ **Por decidir:** o `p1` está a 1,4 dB do teto. O firmware recomenda mais
-  6 dB — seria trocar o 100 nF do `C12` por 220 nF. Não feito ainda.
-  ⚠️ **Tudo isto vive na RAM:** qualquer regravação da Daisy repõe os params a
-  zero, e só os capacitores ficam.
-- **DPDT, a fiação que já funcionou (dB, 21/09, descrita da peça montada):
-  3 fios e UM jumper, chave usada na DIAGONAL.** `A1` = linha (mixer) ·
-  `B1` **vazia** · `A2`–`B2` jumpeados = o comum, que recebe o sinal ·
-  `A3` **vazia** · `B3` = amp (exciter). Nas três posições dá **só linha**,
-  **os dois**, **só amp**. Na placa: `J15` pino `1` → comum, `2` → `A1`,
-  `3` → `B3`; `4`/`5`/`6` não se usam, `7`/`8` são dreno.
-  ⚠️ **A verificar com o dB:** ele anotou o comum como *GND*. Nesta placa o
-  comum é `OUT_L_DAISY` (o sinal) — se fosse GND, a linha e o amp nunca
-  receberiam sinal, porque `LINHA_L` e `AMP_IN_L` só se encontram com a saída
-  da Daisy **através da chave**.
-- **(histórico) a leitura anterior: 3 fios e 3 jumpers**, com
-  **nenhum terra na chave**. Medido na placa: os três sinais estão
-  **duplicados** no header — `1`=`4` (`OUT_L_DAISY`), `2`=`5` (`LINHA_L`),
-  `3`=`6` (`AMP_IN_L`) — porque os dois polos trabalham em paralelo, e é isso
-  que dá a posição do meio com **as duas saídas**. Logo **6 fios sem jumper** e
-  **3 fios com 3 jumpers** são a mesma ligação: na primeira o paralelo é feito
-  no cobre da placa, na segunda é feito na chave.
-  O desenho do manual mostrava só a de 6 fios e por isso pareceu divergir do
-  que estava montado; passou a mostrar as duas, com os jumpers desenhados nas
-  três linhas.
-- **Amplificador: energia pelo `J2`, áudio pelo `J11` (dB, 20/09).** O módulo
-  em mão alimenta-se por **borne de parafuso**, então o `J2` leva a força
-  (+15 V/GND, fio curto e grosso — é retorno de força, regra da estrela) e o
-  `J11` leva o áudio (2 = referência, 3 = L, 4 = R). ⚠️ **O `J11` pino 1 NÃO se
-  liga:** é o mesmo +15 V, e ligar os dois põe a força em paralelo por dois
-  caminhos. Declarado em `encaixe.py` **v0.5.0** (`COMPLEMENTARES` +
-  `VESTIGIO_PINO`), com o portão a exigir a declaração pino a pino — declarar só
-  o par seria calar a duplicação em vez de a resolver. A rev D encolhe o `J11`
-  para 1×3.
-- **Step-down em mão: `GND IN` e `GND OUT` são o MESMO nó** (bipado pelo dB,
-  20/09). Logo vai **um fio só** ao `J3` pino 2, do lado `OUT−` — que é o que o
-  `ATERRAMENTO.md` pede (fio de terra dedicado; o retorno do 5 V por outro
-  caminho já custou um clique a ~3 Hz).
-- **`U1` (OPA1642AID da Mouser) marca o pino 1 com uma faixa na ponta**, a ligar
-  os pinos 1 e 8, não com ponto. Confirmado pelo dB com o teste de diodo no chip
-  solto (vermelha no pino 4 = V−, 0,4–0,8 V para os outros). O manual (v0.2.1)
-  descreve as duas marcas e o teste.
-
-## 17/09/2026 — um ramo só, e o `J2` é o da placa que foi à fábrica
-
-O ramo `claude/slack-session-sm2ldz` (rev C, pacotes e encomendas de 12/09) foi
-**fundido no `main`**, e os dois ficaram iguais. A placa, as posições e o `J2`
-vêm da rev C; do `main` ficaram as guardas (malha a 1,27, courtyard contra o
-bordo, `sincroniza_pcb` na cadeia, guarda do `liga()`) — nenhuma contradiz a
-placa encomendada.
-
-**O `J2` do OLED:** header **macho** 1×07 a 2,54 na placa, onde entram os
-jumpers **fêmea** do cabo que vem com o módulo (MX1.25 do lado dele). Ordem
-`1 VCC · 2 GND · 3 DIN · 4 CLK · 5 CS · 6 DC · 7 RST`, que é a do módulo lida a
-partir do VCC: **com jumpers soltos o contrato é o nome de cada fio**, e os sete
-batem. Fontes: página Waveshare «Control Interface» e o dB, 17/09. O PicoBlade
-`RST…VCC` que o `main` teve de 08/09 a 17/09 não chegou a nenhuma placa
-fabricada (cicatriz 15ew).
-
-**Provado sobre as placas encomendadas** (commit `06db1c7`, JLC
-`W2026091304545438`): gerador fundido reproduz a netlist do painel (24 redes, 0
-diferenças) · `funcao_dos_pads` 0 falhas nas duas, com o contrato do `J2` a
-reprovar sob sabotagem e o contrato PicoBlade velho a reprovar 6 de 7 · IDC 26/26
-· ERC do painel 0 · courtyards: cérebro 0, painel com o `J1` a **0,405** do bordo
-esquerdo (regra 0,5; o corpo fica dentro) — isenção com o número, e na próxima
-revisão `J1 x ≥ 26,1`.
-
-**Encomenda JLC `W2026091304545438`: as duas placas, cérebro e painel**
-(confirmado pelo dB, 17/09). **Enviada a 17/09**: 5 de cada, dos pacotes
-`06db1c7` — as mesmas placas medidas acima. DHL Express, tracking `7099774990`.
-
-⚠️ **Na montagem, `Q1`/`Q2` do painel:** o mapa do kit diz `AO3400A`; solda-se o
-**`SI2302CDS-T1-GE3`** que veio da Mouser (marcação **N2**). Mesma pinagem, 1 G ·
-2 S · 3 D, conferida na ficha Vishay doc. 68645 (17/09). Ver a nota no MANIFEST.
-
-⚠️ **O painel não tem por onde ser preso (18/09).** Sem furos de montagem; o
-encoder `EC11E15244G1` não tem rosca e os pots foram para a tampa. **Reprovado em
-M2 da trilha M do IFÁ10000** (certificação mecânica placa↔caixa, nova, na `/aipcb`).
-Pontos furáveis medidos, em mm do canto superior esquerdo, lado dos componentes:
-**(77,5 · 32,0) · (109,0 · 32,0) · (146,0 · 4,0) · (172,0 · 32,0)** — M3 com anilha,
-fora do cobre de outras redes, em acrílico inteiro da tampa. Os primeiros 60 mm
-ficam em balanço. A tampa leva os furos a condizer (a caixa cede à placa).
-
-**Pots do painel (18/09):** a placa tem o layout Bourns PTV09A de montagem
-traseira (3 pinos a 2,5 mm, patas a 8,8 mm entre centros, 7,0 mm da linha dos
-pinos à das patas — conferido na ficha Bourns PTV09). Os pots em casa são de
-16 mm e não cabem; os da Mouser nunca foram comprados. Para os pots **prenderem
-a placa** à tampa têm de ter **bucim roscado** (Bourns estilo `-6`, ou um 9 mm
-genérico com M7): o furo de ø7 da tampa abre-se para passar a rosca, e as três
-cotas acima medem-se na peça antes de soldar. **10 kΩ linear (B10K)** — os 100 kΩ
-do projecto são os trimpots do cérebro.
-
-**Cabo painel↔cérebro (18/09):** as duas pontas são a caixa de pinos macho Würth
-`61202621621` (4 compradas). O cabo é **IDC 2×13 fêmea-fêmea, com chave,
-directo (pino 1 ↔ pino 1), ~300 mm**: percurso medido ~170 mm pela parede de
-trás (`J1` do painel a 98 mm da frente, `J14` do cérebro a 19) mais os 80 mm de
-folga que a caixa pede para tirar o fundo. O BOM dizia ~150, estimado.
-
-⚠️ **Cérebro rev C reprova em M6 (`encaixe.py`, pelo corpo): três peças dentro
-dos discos dos arcade**, contra o raio do FURO (15) e 7,5 mm de folga: `J14`
-(8,85 mm) a **11,6** do centro do arcade da esquerda, trimpot `RV1` (10 mm) a
-**13,3**, Daisy `U2` (17 mm) a **14,8** do do meio. O corpo do botão por baixo da
-tampa é mais estreito e nunca foi medido — **medir o diâmetro do corpo roscado e
-do micro-interruptor** decide: pode absolver o `U2` e talvez o `RV1`; o `J14` é o
-que mais provavelmente bate. Pela prioridade 2, o que cede é a caixa (mover o
-arcade na tampa), não a placa fabricada.
-
-**Portão novo (18/09): `kicad/encaixe.py`**, só leitura, chamado pelo
-`para_fabrica` — hoje recusa as duas placas: o painel em M2, o cérebro em M6.
-
-**Painel, M6 medido pelo dB (18/09): o header do OLED não cabe por cima** — nem com
-jumpers direitos, nem em L. **Resolvido: header soldado por baixo, jumpers em L
-para trás e para baixo** (`caixa/LICOES-MONTAGEM.md` #7). Âncora de pinos, visível
-dos dois lados: **o pad quadrado é o VCC**, e daí `VCC · GND · DIN · CLK · CS · DC ·
-RST`; confirmar por continuidade com o `TP1` (+5V) e o `TP3` (GND) antes de ligar.
-Não repetir no `J1` nem nos JST dos LEDs.
-
-**`J1` (IDC) também não cabe por cima** (bate no OLED e no aperto do encoder — dB,
-18/09). **Virar a caixa de pinos para baixo dá 0/26 ou 2/26 pinos certos e, em
-duas combinações, +3V3A em curto com GND** — simulado. Solução: **fita soldada
-directamente nos pads do painel, por baixo**, ficha IDC só do lado do cérebro;
-procedimento e continuidade em `caixa/LICOES-MONTAGEM.md` #8. Virar nas **duas**
-pontas dá 26/26 em 8 de 16 combinações, mas por baixo do cérebro só há 9 mm.
-
-**O encoder real tem rosca (EC11 genérico, corpo 6,5 mm) e fixa a folga
-placa↔acrílico em 6,5 mm.** Tudo o que é mais alto na face de cima bate: `J3`–`J7`
-e o `C3` vão por baixo (os LEDs `J6`/`J7` com **fios soldados**, não JST); **os pots
-não podem ir na placa** — ficam na tampa, fiados, e os de 16 mm da gaveta servem
-(não é preciso comprar os RK097). Tabela e âncoras em `LICOES-MONTAGEM.md` #9.
-
-**`J4` do cérebro («a ponte ESP32») é vestígio (18/09):** a tomada da ponte de
-quando era por fio; a ponte está no soquete `U3` desde 06/09. **Fica vazio**;
-na próxima revisão, sai. Declarado no `encaixe.py` (M1) — cicatriz 15ez.
+> Before, 2026-08-28: **2×2 routing matrix** measured ·
+> **OLED alive** and three encoders counting · **MIDI livelock fixed** ·
+> `in_gain` removed · **tarolator**, a new effect born from a measurement
 
 ---
 
-## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li
 
-O `sincroniza_pcb` escrevia a rede nos pads **só ao acrescentar um footprint
-novo**. Para as peças já na placa, nada refrescava nada: a placa guardava as
-redes do dia em que a peça entrou.
+## 19/09/2026 — brain board #1 on the bench: what was assembled differently from the BOM
 
-Seis defeitos foram consertados no esquema, o comando correu, disse **«já estão
-sincronizados»**, e a placa ficou com as vinte e duas falhas — o `EXC_R` ainda
-lá estava.
+The assembly of the first brain board is underway, by the manual
+(`docs/montagem/manual_montagem.html`). What this unit has different
+from the BOM stays here, so no one later reads it as an assembly error:
 
-> **O relatório dele não mentia.** Ele compara *footprints* — quais existem,
-> referência, valor — e sobre isso estava tudo certo. Um verificador responde à
-> pergunta que lhe fizeram, e a pergunta era outra.
+- **`C14`/`C24`: electrolytic, not film.** The BOM calls for a WIMA MKS2 2.2 µF 63 V
+  with 5 mm pitch; it was not bought (dB was counting on the lab's stock) and the
+  only 2.2 µF in the lab was a 400 V film, too big for the 5 mm pitch
+  and its 7.8 × 11.6 mm body. An **electrolytic** was fitted, with the **+ on the
+  `R14`/`R24` side** (VBIAS, ~7 V; the Daisy's input stays always below), and
+  the polarity was checked by dB. ⚠️ **Value and voltage of the fitted
+  electrolytic: to be noted.** What changes: nothing audible if ≥ 2.2 µF; the manual
+  (v0.3.0) now accepts this swap, with the + marked on the drawing, and forbids
+  multilayer ceramic (microphonic, and it loses capacitance with 7 V on top).
+- **Arcade button order on the lid: blue A · blue B · white**, with the white one
+  on the side of the tall capacitor — decided at the bench because the white one (cowrie shells) has
+  no LED and is shorter. Measured by dB on 19/09: **the white one goes down 20 mm below
+  the panel, with connectors**; the capacitor is **C1, 2200 µF**.
+  The `confere_arcade` (`pcb_contorno.py` **v0.24.0**) now has **one
+  depth per button** and **electrolytic height by diameter** (D16 = 25,
+  D10 = 16 mm, from catalog). With that the free height is **7.5 mm** under a blue one and
+  **21.5 mm** under the white one.
+- ❌ **MY ERROR, corrected the same day.** I wrote that the Daisy under the central button
+  proved the declared orientation. **It proves nothing:** `U2` falls under the
+  middle hole in **both** orientations — I measured both and only then saw. A fact
+  that is the same on both sides does not distinguish the two sides.
+- 🔴 **The brain board is assembled ROTATED 180° relative to the model (dB, 19/09).** The proof
+  is the silkscreen: with the user's side facing you (so, from the front) and
+  looking from above, the **panel**'s silkscreen reads upright and the **brain board**'s reads
+  **upside down**. That is the `y_max` orientation — the one that was **rejected**
+  on 06/09 exactly for putting tall parts under the buttons. And in that orientation the
+  checker flags, measured today:
+  · **`C1` (2200 µF, 25 mm)** under hole **1** — matches the tall capacitor that
+  forced the button order to change, which was what remained to explain;
+  · **`U2` (17 mm)**, **`J13` (1×3)** and **`J16` (1×8)** under hole **2** — the two
+  headers count **20 mm** with plug and wire.
+- 🔴 **And nothing prevented it:** the brain board's four mounting holes (`H1`–`H4`, ø3.2)
+  form a **symmetric rectangle** — measured on 19/09 — so the board screws
+  in both directions, and the wrong direction has no mechanical resistance at all. The
+  `FRENTE_CEREBRO` is a **declared constant**, and `encaixe.py` even **refuses**
+  if it is not `y_min`: the tool believes the declaration and never asks the
+  board. **For rev D this is a requirement:** the fastening has to be asymmetric (or
+  gain a key cutout), so the wrong orientation **does not go in**.
+- ⚠️ **To be decided, and it is dB who decides:** rotate the brain board to the model's
+  orientation (and see whether the connectors still reach the walls), or accept the
+  rotated orientation and **relocate the tall parts in rev D**.
+  And dB says the Daisy **fits, tight** — which measures what was missing: the
+  checker gives **7.5 mm** free under a blue one and the Daisy is **17 mm**, so the
+  blue button's depth is **not** the worst case's 34 mm. For the Daisy
+  to fit, the blue one goes down **~24 mm** below the panel. ⚠️ **To be measured:** the
+  real depth of the blue button (the white one's, 20 mm, is already measured). While
+  it is not measured, `confere_arcade` fails `U2`, `J14` and `RV1` — and it fails
+  **out of excess caution**, which is the right side to err on.
+- ⚠️ **STAYS OPEN: which is the tall part under the white button.** With the
+  orientation confirmed, `C1` (2200 µF) is **64 mm** from the nearest hole
+  — it cannot have been it. Under the left hole is the **pin header
+  `J14`** (8.85 mm, plus the IDC cable's plug on top); under the right one there are only
+  low-lying parts. **To be measured:** what is under the white button.
+- ✅ **The amplifier got a home (dB, 20/09): a shelf over the brain board, on
+  4 hot-GLUED M3 towers**, in the back half (points at 114 · 175 mm from the
+  left and 5 · 95 mm from the top). `onde_furar.py` v0.3.0 said the four
+  points **passed with an isolating screw** and failed with a metallic one (they fall on the
+  `GND` plane, in a wide field, with 4.7 to 11.1 mm clearance to the nearest pad).
+  **dB chose not to drill:** the board is irreplaceable mid-assembly, and the
+  gain in tightness did not pay for the risk. Gluing is reversible; drilling is not.
+  ⚠️ **The heat does not arrive by contact** (note corrected on 20/09, with dB's
+  reasoning): the amplifier screws to the **top** of the tower and the glue is on the **base**.
+  Two weak paths remain — conduction through the tower (the module's holes are its
+  cold part; a nylon washer between module and tower cuts this off for good) and
+  the **ambient of the closed enclosure**, which is what really measures. EVA glue softens
+  at 60–80 °C. **Cheap test:** half an hour playing loud and a finger on the base of the
+  tower — five seconds without letting go ≈ below 50 °C, comfortable.
+  ⚠️ **And the bigger risk is mechanical, not thermal:** hot glue is strong in
+  shear and weak in peel. A stretched cable peels the tower off before
+  any temperature — slack in the wires, and a bead around the whole foot.
+  `encaixe.py` M7 already accepts this home; the **step-down** is missing.
+- 🔴 **The enclosure had no defined place for any module (20/09).**
+  `CAIXA-ACRILICO-MONTAGEM.md` §6 says *"the amp module on its [standoffs]"*,
+  but those standoffs never existed: the bottom plate has **4** holes, and they are
+  the brain board's. And there is no floor: the plate is **193 × 113** and the brain board occupies
+  **180 × 100**, which leaves strips of **6.5 mm** to the right and behind — no
+  module fits alongside. Measured on 20/09.
+  The volume that remains is **above the brain board**: **31.4 mm** at the front and
+  **56.4 mm** behind (interior minus standoff 6 + spacer 10 + board 1.6). Behind
+  is where it fits, and it is also where the cable rules already send the amp (the
+  exciters exit to the right, the table line comes from the DPDT on the back wall).
+  ⚠️ **To be measured before deciding:** the module's dimensions (with heatsink and
+  terminals), its hole pattern, and the height of the already-fitted `C1` — a second
+  floor above the brain board has to clear the 25 mm of `C1`.
+  ⚠️ **And the heat:** the enclosure is closed acrylic. A class D at 15 V inside a
+  sealed enclosure was not discussed anywhere in the repo.
+- ⚠️ **The panel only comes out with the TRS jacks removed (dB, 19/09).** With the TRS
+  mounted the panel has no way out: the encoder's tip stays stuck in the
+  acrylic of the lid. Assembly and maintenance order: **the panel goes in and comes out
+  before the jacks**. See `caixa/LICOES-MONTAGEM.md` #11.
+- ⚠️ **(historical) DIVERGENCE — the orientation of the brain board in the enclosure.** The model declares
+  `FRENTE_CEREBRO = "y_min"`, and in **that** orientation `C1` is **64 mm** from the
+  nearest button: nothing tall under the holes. `C1` only falls under an arcade
+  in the **opposite** orientation (`y_max`) — which was rejected on 06/09 exactly
+  for putting `C1` and the Daisy under buttons. Either the assembled board is turned
+  the opposite way from the model, or the hole dimensions are not those of the drawing. **I did
+  not record it as a fact until measuring**, because it changes what rev D has to resolve.
+  In the `y_max` orientation the checker also flags **U2 (Daisy, 17 mm)** and the
+  headers **J13/J16 (20 mm with plug)** under blue buttons, where only
+  7.5 mm fit. **To be measured:** which part is under each of the three holes, and the
+  real height of `C1` (the catalog says 25 mm, and only 21.5 fit under the white one).
+  See `caixa/LICOES-MONTAGEM.md` #10.
+- **Panel, state of the first connection (22/09):** **5 V and 3.3 V** power
+  good · the **three buttons** respond (the white one of the cowrie shells is **NC**, an exception
+  declared in the firmware, `hal` v0.76.0) · the **two pots** read by the ADC ·
+  **arcade LEDs working** after swapping the purchased harness, which came
+  with the colors crossed (bts 15fh).
+  **OLED cable, colors lifted from the part (dB, 22/09)** — Waveshare does not
+  publish them, its wiki only lists pin names: `J2` pin 1 = **red** (+5 V)
+  · 2 **black** (GND) · 3 **blue** (DIN) · 4 **yellow** (CLK) · 5 **orange**
+  (CS) · 6 **green** (DC) · 7 **white** (RST). The cable order coincides with
+  `J2`'s, so it is a direct connection — counting pin 1 by the **square pad**, which
+  with the header soldered underneath ends up on the opposite side from what the silkscreen suggests.
+  ⚠️ **To be resolved: the OLED does not turn on** and the **encoder counts 1 pulse in 20
+  clicks**, with its three pins switching — suspicion on the common terminal.
+- ⚠️ **Debt measured on 22/09: 15 of the 47 maps in the manual have text collision.**
+  Measured with `tools/svg_colisoes.py` map by map — **15 before and 15 after** the
+  change of the label that deflects (so it is not a regression, it is inheritance). They are mostly
+  labels crossing the board edge (`texto×borda contentor`) and two cases of
+  `texto×texto` (`VCC`/`GND` in the OLED map, and `1 vermelho`/`2`). Until today only
+  the new drawings passed through the gate; the old maps never passed.
+- ✅ **22/09: the brain board plays.** Piezo → pre-amp → Daisy → delay and reverb →
+  line output, on **both** channels, with no clip anywhere. What was
+  between the assembly and this paragraph is in `battle_scars.md` **15fd**, **15fe**
+  and **15ff**: a bridge with wrong pins, three cold solder joints in a chain, and the input
+  divider that had never been measured with the real piezo.
+- **Measured state of this unit (22/09), so it is not reinvented later:**
+  · piezos: **18 nF** (metal string, enters at `p1`/`J5`) and **17 nF**
+  (structure next to the drum skin, enters at `p2`/`J6`)
+  · `C12` and `C22`: **22 nF from the factory + 100 nF C0G soldered on top** →
+  attenuation of **−17.8 dB** per channel
+  · peaks playing hard: **−1.4 dBFS** at `p1` and **−15.6 dBFS** at `p2`, `clip 0`
+  · `pre_level_ab` = **0.5** (was 1.0; the internal sum overflowed at +5.5 dBFS)
+  · `k1`/`k2` = 0.60 · `post_level_l/r` = 0.88 · output at **−12.7 dBFS** peak
+  ⚠️ **The 14 dB asymmetry between the channels is from the INSTRUMENT**, not a defect:
+  metal string and drum skin are different sources. Whoever "corrects" that
+  undoes the adjustment.
+  ⚠️ **To be decided:** `p1` is 1.4 dB from the ceiling. The firmware recommends another
+  6 dB — it would be swapping the `C12`'s 100 nF for 220 nF. Not done yet.
+  ⚠️ **All of this lives in RAM:** any reflash of the Daisy resets the params to
+  zero, and only the capacitors stay.
+- **DPDT, the wiring that has already worked (dB, 21/09, described from the assembled part):
+  3 wires and ONE jumper, switch used on the DIAGONAL.** `A1` = line (mixer) ·
+  `B1` **empty** · `A2`–`B2` jumpered = the common, which receives the signal ·
+  `A3` **empty** · `B3` = amp (exciter). In the three positions it gives **line only**,
+  **both**, **amp only**. On the board: `J15` pin `1` → common, `2` → `A1`,
+  `3` → `B3`; `4`/`5`/`6` are not used, `7`/`8` are drain.
+  ⚠️ **To verify with dB:** he noted the common as *GND*. On this board the
+  common is `OUT_L_DAISY` (the signal) — if it were GND, the line and the amp would never
+  receive signal, because `LINHA_L` and `AMP_IN_L` only meet the Daisy's output
+  **through the switch**.
+- **(historical) the earlier reading: 3 wires and 3 jumpers**, with
+  **no ground on the switch**. Measured on the board: the three signals are
+  **duplicated** on the header — `1`=`4` (`OUT_L_DAISY`), `2`=`5` (`LINHA_L`),
+  `3`=`6` (`AMP_IN_L`) — because the two poles work in parallel, and that is what
+  gives the middle position with **both outputs**. So **6 wires without a jumper** and
+  **3 wires with 3 jumpers** are the same connection: in the first the parallel is made
+  in the board's copper, in the second it is made on the switch.
+  The manual's drawing showed only the 6-wire one and so seemed to diverge from
+  what was assembled; it now shows both, with the jumpers drawn on the
+  three lines.
+- **Amplifier: power via `J2`, audio via `J11` (dB, 20/09).** The module
+  in hand is powered via a **screw terminal**, so `J2` carries the power
+  (+15 V/GND, short thick wire — it is a power return, star rule) and
+  `J11` carries the audio (2 = reference, 3 = L, 4 = R). ⚠️ **`J11` pin 1 is NOT
+  connected:** it is the same +15 V, and connecting both puts the power in parallel by two
+  paths. Declared in `encaixe.py` **v0.5.0** (`COMPLEMENTARES` +
+  `VESTIGIO_PINO`), with the gate requiring the declaration pin by pin — declaring only
+  the pair would be silencing the duplication instead of resolving it. Rev D shrinks `J11`
+  to 1×3.
+- **Step-down in hand: `GND IN` and `GND OUT` are the SAME node** (beeped out by dB,
+  20/09). So **a single wire** goes to `J3` pin 2, on the `OUT−` side — which is what
+  `ATERRAMENTO.md` asks for (a dedicated ground wire; the 5 V return by another
+  path already cost a click at ~3 Hz).
+- **`U1` (OPA1642AID from Mouser) marks pin 1 with a band on the end**, joining
+  pins 1 and 8, not with a dot. Confirmed by dB with the diode test on the loose
+  chip (red on pin 4 = V−, 0.4–0.8 V to the others). The manual (v0.2.1)
+  describes the two marks and the test.
 
-⚠️ **Isto muda como se lê o histórico:** **nenhuma alteração de esquema alguma
-vez chegou a uma placa já roteada por esta via.** Não deu na vista porque, até
-hoje, cada mudança vinha com peças novas — e aí o caminho que escreve redes
-corria. Qualquer «sincronizado» anterior a esta data significa *as peças
-batem*, e não *a placa está igual ao esquema*.
+## 17/09/2026 — a single branch, and the `J2` is that of the board that went to the factory
 
-Consertado em `sincroniza_pcb` **v0.5.0** (`refresca_redes`), que põe em cada
-pad a rede da netlist **e apaga a que a netlist já não tem**.
+The branch `claude/slack-session-sm2ldz` (rev C, packages and orders from 12/09) was
+**merged into `main`**, and the two became equal. The board, the positions and the `J2`
+come from rev C; from `main` the guards stayed (1.27 mesh, courtyard against the
+edge, `sincroniza_pcb` in the chain, the `liga()` guard) — none contradicts the
+ordered board.
+
+**The OLED's `J2`:** a **male** 1×07 header at 2.54 on the board, where the **female**
+jumpers of the cable that comes with the module enter (MX1.25 on its side). Order
+`1 VCC · 2 GND · 3 DIN · 4 CLK · 5 CS · 6 DC · 7 RST`, which is the module's read
+from VCC: **with loose jumpers the contract is the name of each wire**, and the seven
+match. Sources: Waveshare «Control Interface» page and dB, 17/09. The PicoBlade
+`RST…VCC` that `main` had from 08/09 to 17/09 never reached any fabricated
+board (scar 15ew).
+
+**Proven over the ordered boards** (commit `06db1c7`, JLC
+`W2026091304545438`): the merged generator reproduces the panel's netlist (24 nets, 0
+differences) · `funcao_dos_pads` 0 failures on both, with the `J2` contract
+failing under sabotage and the old PicoBlade contract failing 6 of 7 · IDC 26/26
+· panel ERC 0 · courtyards: brain board 0, panel with `J1` at **0.405** from the left
+edge (rule 0.5; the body stays inside) — exemption with the number, and in the next
+revision `J1 x ≥ 26.1`.
+
+**JLC order `W2026091304545438`: both boards, brain board and panel**
+(confirmed by dB, 17/09). **Shipped on 17/09**: 5 of each, from the `06db1c7`
+packages — the same boards measured above. DHL Express, tracking `7099774990`.
+
+⚠️ **In assembly, the panel's `Q1`/`Q2`:** the kit map says `AO3400A`; you solder the
+**`SI2302CDS-T1-GE3`** that came from Mouser (marking **N2**). Same pinout, 1 G ·
+2 S · 3 D, checked in the Vishay datasheet doc. 68645 (17/09). See the note in MANIFEST.
+
+⚠️ **The panel has no way to be fastened (18/09).** No mounting holes; the
+`EC11E15244G1` encoder has no thread and the pots went to the lid. **Failed in
+M2 of the M track of the IFÁ10000** (mechanical board↔enclosure certification, new, in `/aipcb`).
+Drillable points measured, in mm from the top-left corner, component side:
+**(77.5 · 32.0) · (109.0 · 32.0) · (146.0 · 4.0) · (172.0 · 32.0)** — M3 with washer,
+outside the copper of other nets, in intact acrylic of the lid. The first 60 mm
+are cantilevered. The lid takes the matching holes (the enclosure yields to the board).
+
+**Panel pots (18/09):** the board has the Bourns PTV09A rear-mount
+layout (3 pins at 2.5 mm, legs at 8.8 mm between centers, 7.0 mm from the pin
+line to the leg line — checked in the Bourns PTV09 datasheet). The pots at home are
+16 mm and do not fit; the Mouser ones were never bought. For the pots to **fasten
+the board** to the lid they have to have a **threaded bushing** (Bourns `-6` style, or a generic
+9 mm with M7): the lid's ø7 hole opens up to pass the thread, and the three
+dimensions above are measured on the part before soldering. **10 kΩ linear (B10K)** — the 100 kΩ
+of the project are the brain board's trimpots.
+
+**Panel↔brain-board cable (18/09):** both ends are the male Würth pin header
+`61202621621` (4 bought). The cable is **IDC 2×13 female-female, keyed,
+straight (pin 1 ↔ pin 1), ~300 mm**: route measured ~170 mm along the back
+wall (panel's `J1` at 98 mm from the front, brain board's `J14` at 19) plus the 80 mm of
+slack the enclosure asks for to remove the bottom. The BOM said ~150, estimated.
+
+⚠️ **Brain board rev C fails M6 (`encaixe.py`, by the body): three parts inside
+the arcade discs**, against the HOLE radius (15) and 7.5 mm clearance: `J14`
+(8.85 mm) at **11.6** from the center of the left arcade, trimpot `RV1` (10 mm) at
+**13.3**, Daisy `U2` (17 mm) at **14.8** from the middle one. The button body under the
+lid is narrower and was never measured — **measuring the diameter of the threaded body and
+the microswitch** decides: it may absolve `U2` and maybe `RV1`; `J14` is the
+one that most likely hits. By priority 2, what yields is the enclosure (moving the
+arcade on the lid), not the fabricated board.
+
+**New gate (18/09): `kicad/encaixe.py`**, read-only, called by
+`para_fabrica` — today it refuses both boards: the panel on M2, the brain board on M6.
+
+**Panel, M6 measured by dB (18/09): the OLED header does not fit on top** — neither with
+straight jumpers, nor in an L. **Resolved: header soldered underneath, jumpers in an L
+back and down** (`caixa/LICOES-MONTAGEM.md` #7). Pin anchor, visible
+from both sides: **the square pad is the VCC**, and from there `VCC · GND · DIN · CLK · CS · DC ·
+RST`; confirm by continuity with `TP1` (+5V) and `TP3` (GND) before connecting.
+Do not repeat on `J1` nor on the LEDs' JST.
+
+**`J1` (IDC) also does not fit on top** (it hits the OLED and the encoder's tightening — dB,
+18/09). **Turning the pin header downward gives 0/26 or 2/26 correct pins and, in
+two combinations, +3V3A shorted to GND** — simulated. Solution: **ribbon soldered
+directly to the panel's pads, underneath**, IDC plug only on the brain-board side;
+procedure and continuity in `caixa/LICOES-MONTAGEM.md` #8. Turning at **both**
+ends gives 26/26 in 8 of 16 combinations, but under the brain board there are only 9 mm.
+
+**The real encoder has a thread (generic EC11, 6.5 mm body) and fixes the board↔acrylic
+clearance at 6.5 mm.** Everything taller on the top face hits: `J3`–`J7`
+and `C3` go underneath (the `J6`/`J7` LEDs with **soldered wires**, not JST); **the pots
+cannot go on the board** — they stay on the lid, wired, and the 16 mm ones from the drawer serve
+(no need to buy the RK097). Table and anchors in `LICOES-MONTAGEM.md` #9.
+
+**The brain board's `J4` («the ESP32 bridge») is a vestige (18/09):** the bridge's socket from
+when it was by wire; the bridge is in socket `U3` since 06/09. **It stays empty**;
+in the next revision, it leaves. Declared in `encaixe.py` (M1) — scar 15ez.
+
+---
+
+## ⚠️ 08/09/2026 — «synchronized» never meant what I read
+
+`sincroniza_pcb` wrote the net onto the pads **only when adding a new
+footprint**. For the parts already on the board, nothing refreshed anything: the board kept the
+nets from the day the part entered.
+
+Six defects were fixed in the schematic, the command ran, said **«they are already
+synchronized»**, and the board kept all twenty-two faults — `EXC_R` was still
+there.
+
+> **Its report did not lie.** It compares *footprints* — which exist,
+> reference, value — and on that everything was correct. A checker answers the
+> question it was asked, and the question was another.
+
+⚠️ **This changes how you read the history:** **no schematic change ever
+reached a board already routed by this route.** It did not show because, until
+today, every change came with new parts — and then the path that writes nets
+ran. Any «synchronized» before this date means *the parts
+match*, and not *the board is equal to the schematic*.
+
+Fixed in `sincroniza_pcb` **v0.5.0** (`refresca_redes`), which puts on each
+pad the net of the netlist **and erases the one the netlist no longer has**.
 
 
-## Rotina de operação: os dois destinos, sempre juntos
+## Operation routine: the two destinations, always together
 
-**Toda nova versão de `STATUS.md` ou `battle_scars.md` vai para os DOIS
-destinos na mesma ação:**
+**Every new version of `STATUS.md` or `battle_scars.md` goes to BOTH
+destinations in the same action:**
 
-| Destino | Caminho | Forma |
+| Destination | Path | Form |
 |---|---|---|
-| Repo | `docs/` | cru, sem frontmatter |
-| Vault | `~/Documents/Obsidian Vault/Cotucatronics/` | com frontmatter YAML + tags |
+| Repo | `docs/` | raw, no frontmatter |
+| Vault | `~/Documents/Obsidian Vault/Cotucatronics/` | with YAML frontmatter + tags |
 
-Os dois servem leitores diferentes e nenhum substitui o outro. O **repo**
-é o que sobrevive ao clone limpo — documento citado que não existe no
-clone é a mesma classe do cabeçalho de alocação que faltou por semanas.
-O **vault** é onde se lê, linka e pensa entre sessões, com tags e
-backlinks que o Markdown cru não tem.
+The two serve different readers and neither replaces the other. The **repo**
+is what survives the clean clone — a cited document that does not exist in the
+clone is the same class as the allocation header that was missing for weeks.
+The **vault** is where you read, link and think between sessions, with tags and
+backlinks that raw Markdown does not have.
 
-Nunca deixar um destino pra depois: o par desalinha em silêncio, e o
-desalinho só aparece quando alguém precisa da versão certa.
+Never leave a destination for later: the pair misaligns silently, and the
+misalignment only appears when someone needs the right version.
 
 ---
 
 
-## 02/09, fecho — o chiado, e a medição que derrubou dois planos meus
+## 02/09, close — the hiss, and the measurement that knocked down two of my plans
 
-**O ruído branco perene**, que o dB descreveu como *"um chiado como um rádio
-fora da estação"*. Quatro factos, todos medidos por ele:
+**The perennial white noise**, which dB described as *"a hiss like a radio
+off the station"*. Four facts, all measured by him:
 
-| teste | resultado |
+| test | result |
 |---|---|
-| mexer o pote (volume digital) | **não muda** → entra depois do conversor |
-| volume de **entrada do amp a zero** | **não muda** → não entra pela entrada |
-| tirar o cabo, ou desligar a Daisy | **pára** → é a Daisy, pelo cabo |
-| tirar a USB do Mac | **melhora, não resolve** |
+| move the pot (digital volume) | **does not change** → it enters after the converter |
+| **amp input** volume at zero | **does not change** → it does not enter through the input |
+| remove the cable, or turn off the Daisy | **stops** → it is the Daisy, through the cable |
+| remove the USB from the Mac | **improves, does not resolve** |
 
-E do lado do código, provado por leitura: com `out_l = out_r = 0` o único
-código depois do mute é o LED e a contabilidade de CPU. **O conversor recebe
-zeros exactos** — o firmware está ilibado por construção.
+And on the code side, proven by reading: with `out_l = out_r = 0` the only
+code after the mute is the LED and the CPU accounting. **The converter receives
+exact zeros** — the firmware is exonerated by construction.
 
-**Diagnóstico, pela varredura de terra (P3):** `AGND` e `DGND` **combinados
-fora da placa**, no trilho de permaproto. A Daisy já os une internamente num
-ponto; uni-los outra vez faz um **anel**, a corrente divide-se, e a fracção
-que escolhe o caminho de dentro atravessa a **referência do codec**. Explica
-os quatro factos de uma vez, e é branco porque é a soma de tudo o que corre
-no trilho.
+**Diagnosis, by the ground sweep (P3):** `AGND` and `DGND` **combined
+outside the board**, on the permaproto rail. The Daisy already joins them internally at a
+point; joining them again makes a **ring**, the current divides, and the fraction
+that chooses the inside path crosses the **codec reference**. It explains
+the four facts at once, and it is white because it is the sum of everything that runs
+on the rail.
 
-**Por confirmar com o multímetro**, em AC/mV e sob carga. O plano de ataque
-e o critério de aceitação estão escritos no relatório da varredura.
+**To be confirmed with the multimeter**, in AC/mV and under load. The plan of attack
+and the acceptance criterion are written in the sweep report.
 
-### O compressor, e a medição que o pediu
+### The compressor, and the measurement that asked for it
 
-Construído o **`pkout`** — faltava o outro lado da conta do `pk`. A primeira
-leitura deu **74,7 dB de margem** e eu ia construir um andar de ganho em
-cima dela. Era o **ambiente**. Com o dB a bater:
+Built the **`pkout`** — the other side of the `pk` account was missing. The first
+reading gave **74.7 dB of margin** and I was going to build a gain stage on
+top of it. It was the **ambient**. With dB hitting:
 
 ```
 ENTRADA  IN_L  0,0 dBFS · 24 CLIPS   (piezo directo, sem pré-amp)
 SAÍDA    OUT_L pico −0,4 dBFS · média −49,2 dBFS   →  MARGEM 0,4 dB
 ```
 
-**49 dB de factor de crista.** O amp precisava de tanto ganho porque estava
-a ser pedido para tornar audível a **média**. Logo a resposta não era ganho
-— era **compressão**. Novo bloco `Compressor` em `dynamics.h`, params
-partilhados, **nasce desligado**.
+**49 dB of crest factor.** The amp needed so much gain because it was
+being asked to make the **average** audible. So the answer was not gain
+— it was **compression**. New `Compressor` block in `dynamics.h`, shared
+params, **born off**.
 
-**Requisito de hardware, medido:** o piezo precisa de ~6 dB de atenuação
-antes do conversor, ou os transitórios continuam a ser destruídos.
-
----
-
-## 02/09, noite — SuMiA™, e o preço de iterar num ser humano
-
-**O que existe agora.** O `notch` chama-se **`microfonia`** e mudou de eixo:
-era por cadeia (piezo), é por **ramo** (exciter). O laço fecha-se pelo par
-exciter+corpo, e o dB tem tambor no L e botijão no R — um ajuste por cadeia
-obrigava a mesma frequência a servir os dois. **Quatro bocas por ramo**,
-CC 1–18 no ch1.
-
-**O SuMiA™** (nome dele; o trocadilho é exacto) corre no laço, 250 ms
-alternando ramos. Detecta pela **dominância**, age à primeira vista,
-**aprofunda** de 18 até 24 dB quando a boca não chega, e **despeja a mais
-grave** quando estão cheias — regra dele: *"as mais agudas porque são as
-mais dolorosas"*. Nunca toca em boca posta à mão. Não persiste, não entra
-em preset, e **`micro_auto` está fora do preset por segurança**: uma cena
-não pode desligar a protecção.
-
-**A rampa de arranque é supervisionada.** Sobe em 8 s, curva quadrática, e
-**recua 25%** sempre que o SuMiA™ apanha um modo — a boca ganha tempo de
-morder e o que já soava baixa. Um corpo que uiva muito demora mais a abrir;
-um corpo limpo abre nos 8 s. **A peça negoceia com o próprio corpo.**
-
-### O achado da escuta: o laço atravessava DOIS corpos
-
-Com as quatro células da matriz abertas: **1536,4 Hz a +24,4 dB,
-dominância 0,99**. Com `A→L` e `B→R` apenas: **1543,1 Hz a −24,3 dB,
-dominância 0,27**. **Quarenta e nove decibéis.**
-
-E mesmo com a matriz separada, os dois ramos reportaram **3275,7 e 3275,8
-Hz** — o tambor está **soldado** ao botijão. A matriz separa os caminhos
-eléctricos; **não separa o metal**. Por isso qualquer pote tem de rearmar
-os dois caçadores.
-
-### O banco de ensaio, e porque devia ter vindo primeiro
-
-O SuMiA™ foi afinado **com a escultura ligada ao lado de uma criança**, e
-três vezes a microfonia chegou aos ouvidos dela — uma delas fez o filho do
-dB gritar. Ver **15bi**, **15bj**, **15bk**.
-
-Existe agora um **tom de ensaio** (`sim_laco`, `sim_hz`, `sim_fb`) que
-injecta um pico de amplitude conhecida antes do notch, com as saídas mudas.
-Provou os cinco comportamentos em **dez minutos**: erro de detecção
-< 0,3 Hz, preenchimento por ordem, aprofundamento 18→21→24, despejo da mais
-grave, e silêncio quando resolvido.
-
-**Declarado no código:** o tom **não** testa se o notch quebra um laço
-real. Isso só o corpo responde.
-
-**Aberto, e é o próximo:** o **ruído branco perene** que toca o tempo todo.
+**Hardware requirement, measured:** the piezo needs ~6 dB of attenuation
+before the converter, or the transients continue to be destroyed.
 
 ---
 
-## 02/09 — o dia em que um pino sem pull-up custou cinco horas
+## 02/09, night — SuMiA™, and the price of iterating on a human being
 
-**A causa era uma linha.** A libDaisy inicia os pinos da UART com
-`GPIO_NOPULL`; com a ponte ESP32 sem alimentação o RX (PB7) ficava a
-flutuar, e uma entrada CMOS solta apanha ruído a MHz. A USART entrava em
-tempestade **por taxa**, o CPU ficava na interrupção e o laço morria à
-fome — em menos de 4 s, e sem voltar quando a linha sarava.
+**What exists now.** The `notch` is called **`microfonia`** and changed axis:
+it was per chain (piezo), it is per **branch** (exciter). The loop closes through the
+exciter+body pair, and dB has a drum on the L and a gas canister on the R — a per-chain adjustment
+forced the same frequency to serve both. **Four mouths per branch**,
+CC 1–18 on ch1.
 
-`g.Pull = GPIO_PULLUP`. **Verificado: 7/7 sondagens com a linha a flutuar
-e todos os contadores a ZERO** — a falha não é sobrevivida, não acontece.
+**SuMiA™** (his name; the pun is exact) runs in the loop, 250 ms
+alternating branches. It detects by **dominance**, acts at first sight,
+**deepens** from 18 to 24 dB when the mouth is not enough, and **evicts the lowest
+one** when they are full — his rule: *"the highest ones because they are the
+most painful"*. It never touches a mouth placed by hand. It does not persist, does not enter
+a preset, and **`micro_auto` is out of the preset for safety**: a scene
+cannot turn off the protection.
 
-### O que sobreviveu como defesa, e porquê
+**The startup ramp is supervised.** It rises over 8 s, quadratic curve, and
+**backs off 25%** whenever SuMiA™ catches a mode — the mouth gains time to
+bite and what already sounded drops. A body that howls a lot takes longer to open;
+a clean body opens in 8 s. **The piece negotiates with its own body.**
 
-| defesa | porque fica |
-|---|---|
-| tecto e recuo no rearme do `DmaListen` | a linha **presa em baixo** ainda o exercita (deu `rearmes 2`), e sem ele corria ao ritmo do laço — **10 029 rearmes com a ponte sã** |
-| vigia de laço no callback de áudio | requisito de campo: peças em série, ninguém carrega num botão por elas. Reinicia se o laço não completar uma volta em 48 000 amostras |
-| USART1 em prioridade 1 | estavam **todas** em `(0,0)`, e prioridade igual não permite preempção: o abort do DMA nunca completava. O agrupamento virou **invariante que a placa confere e grita** |
+### The listening finding: the loop crossed TWO bodies
 
-Saíram duas que fingiam defender: limpeza de bandeira no callback (inútil
-contra tempestade por taxa, e corrida de contexto com a própria ISR) e
-tecto de erros no `PollMidi` (fase 2, para uma falha que mata na fase 1 —
-só corria enquanto o problema não existisse).
+With the matrix's four cells open: **1536.4 Hz at +24.4 dB,
+dominance 0.99**. With `A→L` and `B→R` only: **1543.1 Hz at −24.3 dB,
+dominance 0.27**. **Forty-nine decibels.**
 
-### A caixa-preta estava a mentir de duas maneiras
+And even with the matrix separated, the two branches reported **3275.7 and 3275.8
+Hz** — the drum is **welded** to the gas canister. The matrix separates the
+electrical paths; **it does not separate the metal**. That is why any pot has to rearm
+both hunters.
 
-Varredura de órfãos nas duas direcções: **14 slots lidos e nunca escritos**
-(zero por construção) e **6 escritos e nunca lidos**. Um deles era a
-pergunta central da sessão — o slot 30 lê-se como *"laço PRESO?"* e
-**ninguém o escrevia**.
+### The test bench, and why it should have come first
 
-E pior que órfão: **colisão de endereços.** O bloco "PICO POR NOTA" lia
-`32..44`, mas 33–39 são contadores de MIDI e 40–44 o diário por minuto —
-imprimia `midi.Bytes()` disfarçado de pico de áudio.
+SuMiA™ was tuned **with the sculpture on next to a child**, and
+three times the microphonics reached her ears — one of them made dB's
+son scream. See **15bi**, **15bj**, **15bk**.
 
-**20 órfãos → 0.** O registador de voo também estava preso a `if(voando)`
-(`buzios_on`, que nasce a zero após cada gravação). Verificado:
-`blocos 14 080 · CPU 29% · voltas 218 780 · laço não ficou preso`, e os
-três **fecham entre si**.
+There is now a **test tone** (`sim_laco`, `sim_hz`, `sim_fb`) that
+injects a spike of known amplitude before the notch, with the outputs muted.
+It proved the five behaviors in **ten minutes**: detection error
+< 0.3 Hz, filling in order, deepening 18→21→24, eviction of the lowest
+one, and silence when resolved.
 
-### A regra que organiza as outras
+**Declared in the code:** the tone does **not** test whether the notch breaks a real
+loop. Only the body answers that.
 
-**15az** — conserto adiado não fica pequeno: fica a ser o **equipamento da
-próxima emergência**. Nenhum dos nove defeitos encontrados foi causado
-pelo pull-up, e nenhum cresceu. O que mudou foi que passaram a ser usados,
-e todos eram instrumento, ferramenta ou relatório.
-
-Contrapeso: consertar agora não é consertar tudo o que se vê — é consertar
-**o que a tarefa de agora está a usar**. Numa caçada, isso é o instrumento.
-
-**A sessão de escuta ganhou um argumento novo** (dB, 02/09): o aviso
-"gravar zera os params" é repetido desde agosto e gerido por memória. O
-desenho dos presets já tem a resposta — **global slot 0 = estado de boot**
-— e no dia em que a biblioteca existir, gravar deixa de zerar: carrega o 0.
-A escuta não é só o estrangulamento mais antigo, é o que **aposenta esse
-aviso**. Ver [PRESETS-LISTA.md](operacao/PRESETS-LISTA.md).
-
-~~**Aberto:** os ~5% de base do laço~~ — **FECHADO em 02/09, e não
-existiam.** Dois builds inertes mostraram que a primeira medição depois de
-uma gravação dá ~15 000 voltas/s e as seguintes ~22 800. Descartada a
-primeira, os builds diferem **0,27%** contra **1,3%** de dispersão do
-próprio instrumento. Era **aquecimento** — e a regra estava escrita na
-skill `medicao-limpa`, item 17. Ver battle_scars **15be**.
+**Open, and it is next:** the **perennial white noise** that plays all the time.
 
 ---
 
-## 01/09 — o painel passou a desenhar, e o custo ficou medido
+## 02/09 — the day a pin without a pull-up cost five hours
 
-**O que existe agora.** O OLED deixou de ser duas linhas de texto e passou a
-receber **o framebuffer inteiro** por `hal::OledDesenha(fb)` — uma entrada só,
-com a fronteira do HAL intacta. Em cima disso, três peças de C++ **puro**, sem
-hardware nenhum: `desenho.h` (primitivas), `fonte5x7.h` (43 glifos, gerados de
-arte legível por `fonte5x7.py`) e `splash.h` (a abertura). Tudo isto vê-se
-inteiro no computador antes de haver vidro, e o Bresenham é **inteiro**, então
-o que sai no painel é bit a bit o que saiu no teste em terra.
+**The cause was one line.** libDaisy initializes the UART pins with
+`GPIO_NOPULL`; with the ESP32 bridge unpowered the RX (PB7) was left
+floating, and a loose CMOS input picks up noise at MHz. The USART went into a
+storm **by rate**, the CPU stayed in the interrupt and the loop starved
+to death — in less than 4 s, and without returning when the line healed.
 
-**A abertura.** Jogada de búzios que entra pelo topo e abre em leque (1,05 s),
-**fica assente** 0,45 s, uma das conchas que caiu sobe e cresce até virar
-marca, o nome entra letra a letra, a versão assina. 50 quadros a 20 Hz, 2,50 s.
-Corre **depois** do `StartAudio` — o instrumento já soa enquanto a jogada cai —
-e apaga-se 2 s depois de acabar, porque painel aceso custa 6 dB de chão de
-ruído e assinatura acesa para sempre cobrava esse preço por um enfeite.
+`g.Pull = GPIO_PULLUP`. **Verified: 7/7 probings with the line floating
+and all counters at ZERO** — the fault is not survived, it does not happen.
 
-Repete-se sem gravar: `splash` e `splash curto`.
+### What survived as a safeguard, and why
 
-**Os números, e os que faltam.**
-
-| | medido |
+| safeguard | why it stays |
 |---|---|
-| Quadro a PS_64 | 23 401 µs |
-| Quadro a PS_16 | 6 945 µs |
-| **Quadro a PS_8** (por omissão) | **3 811 µs** — custa 7% do laço a 20 Hz |
-| Quadro a PS_4 | 2 023 µs |
-| Custo fixo, deduzido dos dois pontos rápidos | ~300 µs + ~440 µs por unidade |
+| ceiling and backoff in the `DmaListen` rearm | the line **held low** still exercises it (gave `rearmes 2`), and without it it ran at the loop's pace — **10 029 rearms with a healthy bridge** |
+| loop watchdog in the audio callback | field requirement: pieces in a series, nobody presses a button for them. It restarts if the loop does not complete a turn in 48 000 samples |
+| USART1 at priority 1 | they were **all** at `(0,0)`, and equal priority does not allow preemption: the DMA abort never completed. The grouping became an **invariant that the board checks and shouts** |
 
-PS_8 e PS_4 desenham **limpo**, confirmado no vidro com padrão de 1 px. PS_8
-é o escolhido, não PS_4: os dois servem, mas PS_8 tem uma oitava de folga
-**provada** por baixo, e margem medida vale mais que os 3% que custa. **PS_2
-não foi medido** e fica declarado como desconhecido.
+Two left that pretended to defend: flag clearing in the callback (useless
+against a storm by rate, and a context race with the ISR itself) and
+error ceiling in `PollMidi` (phase 2, for a fault that kills in phase 1 —
+it only ran while the problem did not exist).
 
-**Três dívidas abertas, escritas como dívidas:**
+### The black box was lying in two ways
 
-1. ~~A semente da jogada de arranque é fraca~~ — **PAGA em 01/09.** A jogada
-   passou a ser semeada do **ruído do próprio ADC**, colhido durante 150 ms
-   antes de a animação começar. Quatro arranques deram `AB25A781`, `771E58D9`,
-   `6E671930`, `190173E9` — e **917 leituras distintas** do conversor em cada
-   colheita. Esse número tem sentido físico: 917 em 150 ms são **6 113 Hz**,
-   a taxa de conversão do ADC. É a melhor prova de que a entropia é real e não
-   fabricada — bate com um relógio de hardware que ninguém escolheu.
+Orphan sweep in both directions: **14 slots read and never written**
+(zero by construction) and **6 written and never read**. One of them was the
+central question of the session — slot 30 reads as *"loop STUCK?"* and
+**nobody wrote it**.
 
-   A qualidade **é dita, não presumida**: `board` imprime a semente e a
-   contagem, e grita `<- ENTROPIA FRACA` se cair abaixo de 8 leituras
-   distintas (que é o que aconteceria se o ADC estivesse morto). Gémeo
-   consultável, porque a linha de arranque sai 150 ms depois do `StartAudio`
-   e o `reboot` derruba a USB — quem reconecta a seguir nunca a veria.
-2. **Faltam 7% de base do laço.** O `noinline` recuperou 8 dos 13 pontos
-   perdidos; os outros não têm explicação e não são arredondamento.
-3. ~~A abertura do despertar~~ — **RESOLVIDO pelo dB em 01/09**, e a decisão
-   deu à animação um emprego melhor do que enfeite. Ver abaixo.
+And worse than an orphan: **address collision.** The "PICO POR NOTA" block read
+`32..44`, but 33–39 are MIDI counters and 40–44 the per-minute log —
+it printed `midi.Bytes()` disguised as an audio peak.
 
-### A decisão do dB: três estados, e a jogada passa a ser instrumento
+**20 orphans → 0.** The flight recorder was also stuck at `if(voando)`
+(`buzios_on`, which is born at zero after each flashing). Verified:
+`blocos 14 080 · CPU 29% · voltas 218 780 · laço não ficou preso`, and the
+three **close among themselves**.
 
-> *"a abertura corre quando ligo o aparelho · o oled funciona normalmente como
-> tínhamos estabelecido para os presets, sem a abertura · quando ativarmos os
-> búzios a animação volta mas sem a logo"*
+### The rule that organizes the others
 
-| quando | o que o vidro mostra |
+**15az** — a deferred fix does not stay small: it becomes the **equipment of the
+next emergency**. None of the nine defects found was caused
+by the pull-up, and none grew. What changed is that they came to be used,
+and all were instrument, tool or report.
+
+Counterweight: fixing now is not fixing everything you see — it is fixing
+**what the current task is using**. In a hunt, that is the instrument.
+
+**The listening session gained a new argument** (dB, 02/09): the warning
+"flashing zeroes the params" is repeated since August and managed by memory. The
+preset design already has the answer — **global slot 0 = boot state**
+— and on the day the library exists, flashing stops zeroing: it loads 0.
+The listening is not just the oldest bottleneck, it is what **retires that
+warning**. See [PRESETS-LISTA.md](operacao/PRESETS-LISTA.md).
+
+~~**Open:** the ~5% base of the loop~~ — **CLOSED on 02/09, and it did not
+exist.** Two inert builds showed that the first measurement after
+a flashing gives ~15 000 turns/s and the following ones ~22 800. Discarding the
+first, the builds differ **0.27%** against **1.3%** of dispersion of the
+instrument itself. It was **warm-up** — and the rule was written in the
+`medicao-limpa` skill, item 17. See battle_scars **15be**.
+
+---
+
+## 01/09 — the panel started drawing, and the cost was measured
+
+**What exists now.** The OLED stopped being two lines of text and now
+receives **the whole framebuffer** via `hal::OledDesenha(fb)` — a single entry,
+with the HAL boundary intact. On top of that, three **pure** C++ pieces, with no
+hardware at all: `desenho.h` (primitives), `fonte5x7.h` (43 glyphs, generated from
+legible art by `fonte5x7.py`) and `splash.h` (the opening). All of this can be seen
+whole on the computer before there is any glass, and the Bresenham is **integer**, so
+what comes out on the panel is bit for bit what came out in the ground test.
+
+**The opening.** A cowrie-shell throw that enters from the top and fans out (1.05 s),
+**settles** 0.45 s, one of the shells that fell rises and grows until it becomes the
+mark, the name enters letter by letter, the version signs. 50 frames at 20 Hz, 2.50 s.
+It runs **after** `StartAudio` — the instrument already sounds while the throw falls —
+and turns off 2 s after finishing, because a lit panel costs 6 dB of noise
+floor and a signature lit forever charged that price for an ornament.
+
+It repeats without flashing: `splash` and `splash curto`.
+
+**The numbers, and the ones missing.**
+
+| | measured |
 |---|---|
-| Arranque | **abertura completa** — jogada, marca, nome, versão (50 quadros), e a marca fica **3 s** no vidro |
-| Uso normal | o painel de presets, **imediato**, sem animação nenhuma |
-| Búzios disparam | **só a jogada** — 30 quadros, sem concha a crescer, sem marca |
+| Frame at PS_64 | 23 401 µs |
+| Frame at PS_16 | 6 945 µs |
+| **Frame at PS_8** (default) | **3 811 µs** — costs 7% of the loop at 20 Hz |
+| Frame at PS_4 | 2 023 µs |
+| Fixed cost, deduced from the two fast points | ~300 µs + ~440 µs per unit |
 
-A terceira é a que muda a natureza da coisa: **a jogada no vidro é a jogada que
-o instrumento acabou de fazer.** Deixa de ser decoração e passa a ser mostrador.
+PS_8 and PS_4 draw **clean**, confirmed on the glass with a 1 px pattern. PS_8
+is the chosen one, not PS_4: both serve, but PS_8 has an octave of clearance
+**proven** below, and measured margin is worth more than the 3% it costs. **PS_2
+was not measured** and is declared as unknown.
 
-Segue o `buzios_on` que já governa o sorteio — **sem parâmetro novo**, porque um
-interruptor próprio seria um segundo sítio onde a mesma decisão mora, e os dois
-divergiriam. Disparo novo a meio da animação **reinicia**: são duas jogadas, e a
-segunda não espera pela primeira. No fim devolve o vidro a quem o tinha, e o
-`splash curto` de 12 quadros **foi removido** — existia para o despertar, que
-acabou de ser cancelado.
+**Three open debts, written as debts:**
 
-### A jogada por búzios: funciona, e o que ela NÃO é
+1. ~~The startup throw's seed is weak~~ — **PAID on 01/09.** The throw
+   is now seeded from the **ADC's own noise**, gathered over 150 ms
+   before the animation starts. Four startups gave `AB25A781`, `771E58D9`,
+   `6E671930`, `190173E9` — and **917 distinct readings** of the converter in each
+   gathering. That number has physical meaning: 917 in 150 ms is **6 113 Hz**,
+   the ADC's conversion rate. It is the best proof that the entropy is real and not
+   fabricated — it matches a hardware clock no one chose.
 
-Confirmado pelo dB em 01/09: **funciona**. Mas custou uma volta a chegar lá, por
-duas razões que ficam escritas.
+   The quality **is stated, not assumed**: `board` prints the seed and the
+   count, and shouts `<- ENTROPIA FRACA` if it falls below 8 distinct
+   readings (which is what would happen if the ADC were dead). A consultable
+   twin, because the startup line comes out 150 ms after `StartAudio`
+   and `reboot` knocks down the USB — whoever reconnects after would never see it.
+2. **7% of the loop base is missing.** `noinline` recovered 8 of the 13 lost
+   points; the others have no explanation and are not rounding.
+3. ~~The waking opening~~ — **RESOLVED by dB on 01/09**, and the decision
+   gave the animation a better job than an ornament. See below.
 
-**`buzios_on` é interruptor, não gatilho.** Ele arma o detector; quem atira a
-jogada é a pancada. Mandar o CC pelo Loopy não dispara nada — e a expectativa
-contrária é razoável, então está agora no [CCMAP](operacao/CCMAP.md) e não na
-cabeça de ninguém. **Lacuna aberta:** não existe forma de atirar os búzios por
-comando. Se se fizer, tem de passar pelo mesmo caminho do detector — sorteio
-**e** animação — para não haver dois sítios onde a jogada nasce.
+### dB's decision: three states, and the throw becomes an instrument
 
-**O detector escuta pós-gate, não o piezo.** Com a cadeia fechada fica surdo.
-Novo comando de serial **`buzios`** parte a pergunta em três: `disparos`,
-`passaram o buzios_on`, `foram a animação`, e mostra o pico que o envelope
-alcançou ao lado do limiar.
+> *"the opening runs when I turn on the device · the oled works normally as
+> we had established for the presets, without the opening · when we activate the
+> cowrie shells the animation comes back but without the logo"*
 
-### O espectro a 7 kHz com o framebuffer a 20 Hz — MEDIDO em 02/09
+| when | what the glass shows |
+|---|---|
+| Startup | **full opening** — throw, mark, name, version (50 frames), and the mark stays **3 s** on the glass |
+| Normal use | the preset panel, **immediate**, with no animation at all |
+| Cowrie shells fire | **only the throw** — 30 frames, no shell growing, no mark |
 
-Pedido em 01/09 e feito agora. Alternância respeitada, primeira leitura
-descartada, piso do vigia em −80 dB.
+The third is the one that changes the nature of the thing: **the throw on the glass is the throw that
+the instrument just made.** It stops being decoration and becomes a display.
 
-| condição | pico | ocorrências |
+It follows the `buzios_on` that already governs the draw — **no new parameter**, because a
+switch of its own would be a second place where the same decision lives, and the two
+would diverge. A new fire in the middle of the animation **restarts**: they are two throws, and the
+second does not wait for the first. At the end it gives the glass back to whoever had it, and the
+12-frame `splash curto` **was removed** — it existed for the waking, which
+has just been cancelled.
+
+### The cowrie-shell throw: it works, and what it is NOT
+
+Confirmed by dB on 01/09: **it works**. But it cost a round-trip to get there, for
+two reasons that are written down.
+
+**`buzios_on` is a switch, not a trigger.** It arms the detector; what throws the
+play is the hit. Sending the CC via Loopy fires nothing — and the opposite
+expectation is reasonable, so it is now in the [CCMAP](operacao/CCMAP.md) and not in
+anyone's head. **Open gap:** there is no way to throw the cowrie shells by
+command. If it is made, it has to go through the same path as the detector — draw
+**and** animation — so there are not two places where the throw is born.
+
+**The detector listens post-gate, not the piezo.** With the chain closed it goes deaf.
+A new serial command **`buzios`** splits the question into three: `disparos`,
+`passaram o buzios_on`, `foram a animação`, and shows the peak the envelope
+reached next to the threshold.
+
+### The spectrum at 7 kHz with the framebuffer at 20 Hz — MEASURED on 02/09
+
+Requested on 01/09 and done now. Alternation respected, first reading
+discarded, watchdog floor at −80 dB.
+
+| condition | peak | occurrences |
 |---|---|---|
-| QUIETO 1 | 7017,6 Hz · **−24,9 dB** | 88 |
-| 20 Hz 1 | 7018,3 Hz · **−25,0 dB** | 86 |
-| QUIETO 2 | 7018,9 Hz · **−25,1 dB** | 86 |
-| 20 Hz 2 | 7019,8 Hz · **−25,3 dB** | 81 |
+| QUIET 1 | 7017.6 Hz · **−24.9 dB** | 88 |
+| 20 Hz 1 | 7018.3 Hz · **−25.0 dB** | 86 |
+| QUIET 2 | 7018.9 Hz · **−25.1 dB** | 86 |
+| 20 Hz 2 | 7019.8 Hz · **−25.3 dB** | 81 |
 
-**O framebuffer a 20 Hz NÃO mexe no espeto de 7 kHz** — ±0,4 dB, com as
-ocorrências a sobrepor-se. Resultado negativo, e fica escrito.
+**The framebuffer at 20 Hz does NOT touch the 7 kHz spike** — ±0.4 dB, with the
+occurrences overlapping. Negative result, and it is written down.
 
-**Mas duas coisas apareceram que não estavam na pergunta:**
+**But two things appeared that were not in the question:**
 
-**1. A frequência deriva, sempre no mesmo sentido** — 7016,9 → 7017,6 →
-7018,3 → 7018,9 → 7019,8 Hz, ~0,7 Hz por corrida. Artefacto digital do MCU
-estaria preso ao cristal e **não derivaria**. Isto é analógico, e
-provavelmente térmico — o suspeito natural é o step-down da caça de 31/08.
+**1. The frequency drifts, always in the same direction** — 7016.9 → 7017.6 →
+7018.3 → 7018.9 → 7019.8 Hz, ~0.7 Hz per run. A digital artifact of the MCU
+would be locked to the crystal and **would not drift**. This is analog, and
+probably thermal — the natural suspect is the step-down from the 31/08 hunt.
 
-**2. O `pk` de banda larga SOBE ao desenhar**: −69,6 → −64,2 dBFS no L e
-−75,2 → −68,3 no R. **+5,4 e +6,9 dB.** O framebuffer adiciona ruído de
-banda larga (comutação da SPI) e **não alimenta o tom de 7 kHz**. São dois
-fenómenos no mesmo sinal, e só se separam porque foram medidos os dois.
+**2. The broadband `pk` RISES when drawing**: −69.6 → −64.2 dBFS on the L and
+−75.2 → −68.3 on the R. **+5.4 and +6.9 dB.** The framebuffer adds broadband
+noise (SPI switching) and **does not feed the 7 kHz tone**. They are two
+phenomena in the same signal, and they only separate because both were measured.
 
-**Nota de método:** a primeira tentativa passou `-95` como piso e o
-instrumento usou `-25` em silêncio — ele espera **magnitude**. Os quatro
-picos deram todos `−24,6/−24,7` contra um piso de `−25`: valor encostado à
-fronteira é sinal de que se está a medir o piso, não o pico. Não foi
-publicado.
+**Method note:** the first attempt passed `-95` as the floor and the
+instrument used `-25` in silence — it expects **magnitude**. The four
+peaks all gave `−24.6/−24.7` against a floor of `−25`: a value pressed against the
+boundary is a sign you are measuring the floor, not the peak. It was not
+published.
 
-### PS_2 — MEDIDO em 02/09, e o mapa do prescaler fecha
+### PS_2 — MEASURED on 02/09, and the prescaler map closes
 
-| prescaler | quadro | custo a 20 Hz | vidro |
+| prescaler | frame | cost at 20 Hz | glass |
 |---|---|---|---|
-| PS_64 | 23 401 µs | −45 % | limpo |
+| PS_64 | 23 401 µs | −45 % | clean |
 | PS_16 | 6 945 µs | −12 % | — |
-| **PS_8** ← escolhido | **3 861 µs** | **−7 %** | **limpo** |
-| PS_4 | 2 050 µs | −4 % | limpo |
-| PS_2 | 1 419 µs | −4 % | **limpo** (foto) |
+| **PS_8** ← chosen | **3 861 µs** | **−7 %** | **clean** |
+| PS_4 | 2 050 µs | −4 % | clean |
+| PS_2 | 1 419 µs | −4 % | **clean** (photo) |
 
-**PS_2 desenha limpo** — confirmado por fotografia do padrão de 1 px, não
-por descrição: xadrez fino e uniforme, sem blocos nem costuras. O
-periférico não parte até ao chão.
+**PS_2 draws clean** — confirmed by photograph of the 1 px pattern, not
+by description: a fine, uniform checkerboard, with no blocks or seams. The
+peripheral does not break down to the floor.
 
-**A decisão continua PS_8, e agora com razão medida em vez de prudência.**
-De PS_4 para PS_2 o relógio duplica e o quadro só cai 31 % (2 050 → 1 419
-µs): a ~300 µs de custo fixo já são 21 % do quadro, e o laço não sente a
-diferença — **−4 % nos dois**. PS_2 não compra nada que PS_4 já não dê, e
-gasta a última oitava de margem eléctrica.
+**The decision remains PS_8, and now with a measured reason instead of prudence.**
+From PS_4 to PS_2 the clock doubles and the frame only drops 31 % (2 050 → 1 419
+µs): at ~300 µs of fixed cost that is already 21 % of the frame, and the loop does not feel the
+difference — **−4 % on both**. PS_2 buys nothing that PS_4 does not already give, and
+spends the last octave of electrical margin.
 
-**Nota de leitura:** a foto mostrava uma banda escura no terço inferior, e
-foi tratada como candidato a defeito até ser descartada — é **obturador
-rolante contra a varredura do OLED**, artefacto da câmara. O vidro está
-homogéneo. Verificar custou dois minutos; presumir teria custado uma caça.
+**Reading note:** the photo showed a dark band in the lower third, and
+it was treated as a defect candidate until discarded — it is **rolling
+shutter against the OLED's scan**, a camera artifact. The glass is
+homogeneous. Verifying cost two minutes; assuming would have cost a hunt.
 
 ---
 
-## 31/08 — o dia do terra e da microfonia
+## 31/08 — the day of the ground and the microphonics
 
-### 01/09 — O PORTÃO DOS PRESETS ESTÁ FECHADO
+### 01/09 — THE PRESETS GATE IS CLOSED
 
-**As duas decisões foram tomadas pelo dB e estão no código.** O mapa é agora
-**`0xFB5A`** — e o global caiu de 11 para **9 params**, que são os dois
-`post_level_*` a sair.
+**The two decisions were made by dB and are in the code.** The map is now
+**`0xFB5A`** — and the global dropped from 11 to **9 params**, which are the two
+`post_level_*` leaving.
 
-**1 · `post_level_l/r` fora do preset.** Razão dele: *«seguem os pots físicos;
-se o preset os restaurar, firmware e cobre discordam sem ninguém saber qual
-manda. E cada corpo da série tem ganho de exciter próprio.»* Mesma categoria do
-`exc_on` e do `gov_ceiling` — **facto de exemplar, não intenção musical**.
+**1 · `post_level_l/r` out of the preset.** His reason: *«they follow the physical pots;
+if the preset restores them, firmware and copper disagree without anyone knowing which
+rules. And each body in the series has its own exciter gain.»* Same category as
+`exc_on` and `gov_ceiling` — **a fact of the unit, not musical intent**.
 
-**2 · Família do tom renomeada:** `test_tone_freq · mix · out · via`. Uma regra
-de exclusão cobre as quatro (eram duas, e a terceira a nascer escaparia às duas).
+**2 · Tone family renamed:** `test_tone_freq · mix · out · via`. One exclusion
+rule covers the four (there were two, and the third one being born would escape both).
 
 
-⚠️ **O nome passou por três, e o último é o que fica: `test_tone_level`.**
-Primeiro `test_tone_mix`, porque o código faz um crossfade a sério
-(`b*(1-m) + tom*m`, e em 0.5 ouve-se metade de cada). Depois `gain`, depois
-**`level`** — escolha do dB.
+⚠️ **The name went through three, and the last is the one that stays: `test_tone_level`.**
+First `test_tone_mix`, because the code does a real crossfade
+(`b*(1-m) + tom*m`, and at 0.5 you hear half of each). Then `gain`, then
+**`level`** — dB's choice.
 
-E o critério que decidiu não foi a literalidade: **o casamento widget↔param no
-Loopy é por TÍTULO**, portanto quem manda no nome é o que está pintado no vidro,
-não o que é exacto no código. Obrigá-lo a repintar o painel para acompanhar um
-nome de código é a troca errada.
+And the criterion that decided was not literalness: **the widget↔param matching in
+Loopy is by TITLE**, so what rules the name is what is painted on the glass,
+not what is exact in the code. Forcing him to repaint the panel to follow a
+code name is the wrong trade.
 
-⚠️ **Consequência prática:** o widget tem de passar a **«Test Tone Level»**.
-Enquanto disser outra coisa, o gerador de perfil deixa-o órfão e o fader não
-manda nada — **falha silenciosa, sem erro nenhum**.
+⚠️ **Practical consequence:** the widget has to become **«Test Tone Level»**.
+While it says anything else, the profile generator leaves it orphaned and the fader sends
+nothing — **a silent failure, with no error at all**.
 
-Fica registado o que ele FAZ, para ninguém escrever `>= 0.5f` contra ele: é um
-crossfade, não um interruptor.
+It is recorded what it DOES, so no one writes `>= 0.5f` against it: it is a
+crossfade, not a switch.
 
-⚠️ **E o `ntc_*` passou a `notch_*`.** O dB perguntou *«o que é ntc?»* — e se o
-dono do instrumento não reconhece o nome, o nome falhou. Pior neste repositório:
-**NTC é um componente** (termistor de coeficiente negativo), e há folhas de KiCad
-ao lado do firmware. Os CCs (82–86) não mudaram.
+⚠️ **And `ntc_*` became `notch_*`.** dB asked *«what is ntc?»* — and if the
+owner of the instrument does not recognize the name, the name failed. Worse in this repository:
+**NTC is a component** (negative-coefficient thermistor), and there are KiCad sheets
+next to the firmware. The CCs (82–86) did not change.
 
-### A ORDEM DE TRABALHO, dada pelo dB em 01/09
+### THE WORK ORDER, given by dB on 01/09
 
 | | |
 |---|---|
-| **1** | ~~O rename~~ ✅ **feito** — era o portão duro |
-| **2** | **A SESSÃO DE ESCUTA** — o gargalo mais antigo, não depende de peça nenhuma, e é ela que constrói a biblioteca de presets |
-| **3** | Em paralelo, o ERC das folhas da rev B |
-| **4** | A placa **espera as peças** — footprints do step-down, decoy e botão dependem de medir o que chegar. Desenhar antes é adivinhar |
+| **1** | ~~The rename~~ ✅ **done** — it was the hard gate |
+| **2** | **THE LISTENING SESSION** — the oldest bottleneck, depends on no part, and it is what builds the preset library |
+| **3** | In parallel, the ERC of the rev B sheets |
+| **4** | The board **waits for the parts** — step-down, decoy and button footprints depend on measuring what arrives. Drawing before is guessing |
 
-🚫 **O que NÃO fazer agora, decisão dele:** o rearme do `DmaListen`. Tem gatilho
-artificial desde o Schottky, mas **não bloqueia a escuta**, e mexe no caminho
-que toda a telemetria atravessa.
+🚫 **What NOT to do now, his decision:** the `DmaListen` rearm. It has an artificial
+trigger since the Schottky, but **it does not block the listening**, and it touches the path
+that all the telemetry crosses.
 
-### 01/09 — o cobre fechou, e os presets deixaram de ser inertes
+### 01/09 — the copper closed, and the presets stopped being inert
 
-**O hardware da ponte está feito e medido pelo dB:** Schottky **1N5819** com
-`VIN` a **4,72 V**, teste do gatilho passado (powerbank desligado + USB na
-ponte = LED do amp apagado), e **100 µF + 100 nF** nos pinos, depois do díodo.
-**A terra própria à estrela não se fez, e não faz falta** — 0 mV medidos.
+**The bridge's hardware is done and measured by dB:** Schottky **1N5819** with
+`VIN` at **4.72 V**, trigger test passed (powerbank off + USB on the
+bridge = amp's LED off), and **100 µF + 100 nF** on the pins, after the diode.
+**The dedicated ground to the star was not done, and is not needed** — 0 mV measured.
 
-**A caçada do ruído fechou com veredito:** trilho **único**. Separar as fontes
-**piora**, e monotonamente — +9,6 → +17,3 → +24,3 dB em 8–16 kHz. Mecanismo: o
-cabo de áudio vira o único elo de terra entre amp e Daisy. A resposta é
-**encadeamento de ganho**, que a arquitectura já faz.
+**The noise hunt closed with a verdict:** a **single** rail. Separating the sources
+**worsens** it, and monotonically — +9.6 → +17.3 → +24.3 dB in 8–16 kHz. Mechanism: the
+audio cable becomes the only ground link between amp and Daisy. The answer is
+**gain chaining**, which the architecture already does.
 
-**As duas decisões que travavam os presets foram tomadas:** `post_level_l/r`
-fora do preset, e `test_tone_*` → `test_tone_*`.
+**The two decisions that were blocking the presets were made:** `post_level_l/r`
+out of the preset, and `test_tone_*` → `test_tone_*`.
 
-**E o CC 121 (carregar preset) passou a existir** — não existia, e os botões do
-Loopy eram inertes. Canal diz o destino, valor diz o slot. O **122 (gravar) não
-existe por decisão**: um CC que escreve preset destrói uma biblioteca com uma
-mensagem perdida.
+**And CC 121 (load preset) came to exist** — it did not exist, and the Loopy buttons
+were inert. The channel says the destination, the value says the slot. **122 (save) does not
+exist by decision**: a CC that writes a preset destroys a library with one
+lost message.
 
-📄 **`LOOPY-SECAO.md`** é a folha de montagem, gerada do `manifest.h`.
+📄 **`LOOPY-SECAO.md`** is the assembly sheet, generated from `manifest.h`.
 
-⚠️ **ITEM NOVO, do dB — pente de 1000 Hz exactos**, de 1 a 23 kHz, +17 a +35 dB,
-**imune às três topologias de alimentação**. 48000/48 = taxa de bloco. O teste
-que decide é **bloco 48 → 96**: se o espaçamento cair para 500 Hz, é manipulação
-a confirmar. `src/medir_pente.py` mede o espaçamento (o `cotuca_measure`
-responde outra pergunta — dá o pico, não a distância entre picos).
+⚠️ **NEW ITEM, from dB — a comb of exactly 1000 Hz**, from 1 to 23 kHz, +17 to +35 dB,
+**immune to the three power topologies**. 48000/48 = block rate. The test
+that decides is **block 48 → 96**: if the spacing drops to 500 Hz, it is manipulation
+to confirm. `src/medir_pente.py` measures the spacing (the `cotuca_measure`
+answers another question — it gives the peak, not the distance between peaks).
 
-### Fim de 31/08 — o instrumento está de pé
+### End of 31/08 — the instrument is standing
 
-Firmware **v0.227.0**. Três coisas mudaram no fim do dia:
+Firmware **v0.227.0**. Three things changed at the end of the day:
 
-**Os níveis passaram a dizer a topologia:** `pre_level_ab` (antes do
-governor/limiter — alimenta a protecção) e `post_level_l`/`post_level_r`
-(depois do limiter — só reduzem). Não são redundantes: estão em lados opostos
-da protecção. E o `pre_level_ab` **nasce a 1.0**, primeira excepção deliberada
-a «todo param nasce em zero» — ele é de teste e emergência, e o piezo deve
-entrar quente na dinâmica de saída.
+**The levels came to say the topology:** `pre_level_ab` (before the
+governor/limiter — feeds the protection) and `post_level_l`/`post_level_r`
+(after the limiter — they only reduce). They are not redundant: they are on opposite sides
+of the protection. And `pre_level_ab` **is born at 1.0**, the first deliberate exception
+to «every param is born at zero» — it is for test and emergency, and the piezo should
+enter hot into the output dynamics.
 
-**O `board` grita quando o master está a zero**, e explica porque o tom de teste
-soa e os piezos não. Esse defeito disfarçou-se cinco vezes num dia.
+**The `board` shouts when the master is at zero**, and explains why the test tone
+sounds and the piezos do not. That defect disguised itself five times in one day.
 
-**O painel OLED nasce apagado**, acorda no encoder e dorme aos 5 s — e **acende só no FIM do gesto** — roda-se o que for preciso com a tela ainda apagada, e ela acende 500 ms depois de a mão parar, sem ter mexido em valor nenhum — custava
-**6 dB de chão de ruído** e um espeto a 7040 Hz. Ver `HARDWARE.md` §1b.
+**The OLED panel is born off**, wakes on the encoder and sleeps at 5 s — and **lights only at the END of the gesture** — you turn whatever is needed with the screen still off, and it lights 500 ms after the hand stops, without having touched any value — it cost
+**6 dB of noise floor** and a spike at 7040 Hz. See `HARDWARE.md` §1b.
 
-⚠️ **Estado que ainda se perde a cada gravação** (é o argumento dos presets):
+⚠️ **State that is still lost on each flashing** (it is the argument for presets):
 ```
 set microfonia1_hz_l 770 · set microfonia1_db_l 15
 set microfonia2_hz_l 834 · set microfonia2_db_l 15 · set microfonia_on_l 1
 ```
 
-🔴 **A PONTE TEM DE ESTAR ALIMENTADA — defeito aberto.**
+🔴 **THE BRIDGE HAS TO BE POWERED — open defect.**
 
-A Daisy não arranca com a ponte ESP32 sem alimentação: o `D14` (RX da USART1)
-fica pendurado num chip morto, e o laço principal deixa de completar voltas.
-**Sintoma de saúde mais rápido: a série abre em 0,0 s quando está sã, e leva
-~59 s quando está doente.**
+The Daisy does not boot with the ESP32 bridge unpowered: `D14` (RX of USART1)
+hangs on a dead chip, and the main loop stops completing turns.
+**Fastest health symptom: the serial opens in 0.0 s when it is healthy, and takes
+~59 s when it is sick.**
 
-Testado ao fim de 31/08, e o que o teste corrigiu:
+Tested at the end of 31/08, and what the test corrected:
 
-| condição | resultado |
+| condition | result |
 |---|---|
-| ponte alimentada | ✅ arranca, série instantânea |
-| ponte sem alimentação, **com** laço de terra directo | ❌ trava na mesma |
-| terra directo **ou** pela Daisy | ❌ trava nos dois |
+| powered bridge | ✅ boots, instant serial |
+| unpowered bridge, **with** a direct ground loop | ❌ locks up all the same |
+| direct ground **or** via the Daisy | ❌ locks up in both |
 
-⚠️ **A terra sozinha não cura** — eu disse que curava, antes de testar, e o dB
-soldou por causa disso. O conserto de firmware de hoje (tecto de 3 ms e recuo na
-transmissão, v0.216.0) **também não chega**: recriada a falha, a placa travou.
+⚠️ **The ground alone does not cure it** — I said it did, before testing, and dB
+soldered because of that. Today's firmware fix (3 ms ceiling and backoff in the
+transmission, v0.216.0) **is also not enough**: with the fault recreated, the board locked up.
 
-**Caminho, para amanhã:** o problema é da **recepção**, não da transmissão —
-parar e rearmar o `DmaListen` quando os erros de UART passarem de um limiar.
-⚠️ **Mas com instrumento novo primeiro:** o LED de sub-fases só é válido com o
-laço PARADO; com ele a correr dá números arbitrários, e eu diagnostiquei a
-partir de um deles.
+**Path, for tomorrow:** the problem is on **reception**, not transmission —
+stop and rearm `DmaListen` when the UART errors pass a threshold.
+⚠️ **But with a new instrument first:** the sub-phase LED is only valid with the
+loop STOPPED; with it running it gives arbitrary numbers, and I diagnosed
+from one of them.
 
-### O que ficou resolvido
+### What was resolved
 
 | | |
 |---|---|
-| **Pots** | sentido invertido, batentes esticados (o cobre para a 0,0009–0,9756), e a histerese que media do centro e calava o iPad — **210 150 janelas em 20 s parado → 0** |
-| **Microfonia no tambor** | **770 e 834 Hz**, achadas pela vigia (199 e 252 de 999 capturas, dominância 0,96/0,98), cortadas a 15 dB. **Resolveu** |
-| **Ruído do amp** | guincho = banco na entrada do step-down · clique = terra · zumbido = rádio da ponte pelo trilho partilhado |
-| **Colisão de CC** | notch entrara no 115, do `bench_boost`, nos mesmos canais → movido para 82–86, e nasceu `Manifest::Colisoes()` |
+| **Pots** | direction inverted, stops stretched (the copper stops at 0.0009–0.9756), and the hysteresis that measured from the center and silenced the iPad — **210 150 windows in 20 s at rest → 0** |
+| **Drum microphonics** | **770 and 834 Hz**, found by the watchdog (199 and 252 of 999 captures, dominance 0.96/0.98), cut at 15 dB. **Resolved** |
+| **Amp noise** | squeal = bank at the step-down's input · click = ground · hum = bridge radio via the shared rail |
+| **CC collision** | the notch had entered 115, of `bench_boost`, on the same channels → moved to 82–86, and `Manifest::Colisoes()` was born |
 
-### O que ficou por fazer
+### What was left to do
 
-**Bancada (hardware), com o plano escrito em [`ATERRAMENTO.md`](operacao/ATERRAMENTO.md):**
-1. Separar a **ilha de `AGND`** — piezos, DPDT, jacks, entrada do amp.
-   Conferir com as **três medições por ordem** do
-   [`ATERRAMENTO.md`](operacao/ATERRAMENTO.md) v0.2.0 — "com a Daisy fora do
-   soquete" era o método antigo, e com o net-tie do revB dá o veredito ao
-   contrário.
-2. **100 µF + 100 nF** nos pinos da ponte ESP32, e fio de terra próprio à
-   estrela. ⚠️ 100 µF, **não** 2200 — ela pendura-se na saída do step-down.
-3. Afastar os cabos dos piezos dos cabos dos exciters (acoplamento **pelo ar**,
-   imune a esquema de terra).
+**Bench (hardware), with the plan written in [`ATERRAMENTO.md`](operacao/ATERRAMENTO.md):**
+1. Separate the **`AGND` island** — piezos, DPDT, jacks, amp input.
+   Check with the **three measurements in order** from
+   [`ATERRAMENTO.md`](operacao/ATERRAMENTO.md) v0.2.0 — "with the Daisy out of the
+   socket" was the old method, and with the revB net-tie it gives the verdict the
+   opposite way.
+2. **100 µF + 100 nF** on the ESP32 bridge's pins, and a dedicated ground wire to the
+   star. ⚠️ 100 µF, **not** 2200 — it hangs off the step-down's output.
+3. Keep the piezo cables away from the exciter cables (coupling **through the air**,
+   immune to grounding scheme).
 
 **Firmware:**
-- **Detector automático de microfonia.** O argumento fechou-se hoje: não é só
-  que cada peça da série terá modos próprios — os modos **mudam durante a
-  sessão**. A vigia já tem as peças (dominância medida, contagem de aparições,
-  95% de ciclo útil); falta a decisão automática.
-- **Duas bocas podem não chegar** — já se viram quatro modos capazes de gritar
-  (770, 834, 930, 1403). Subir para quatro é uma constante em `notch.h`.
-- **O notch não passou pelo IFA10000.** Efeito novo, certificação devida.
-- **Presets** — travados por duas decisões não tomadas (ver abaixo). E hoje
-  ficou concreto o custo: afinou-se por medição dois valores que só existem
-  enquanto a placa não reiniciar.
+- **Automatic microphonics detector.** The argument closed today: it is not only
+  that each piece in the series will have its own modes — the modes **change during the
+  session**. The watchdog already has the pieces (measured dominance, appearance count,
+  95% duty cycle); the automatic decision is missing.
+- **Two mouths may not be enough** — four modes capable of screaming have already been seen
+  (770, 834, 930, 1403). Going up to four is a constant in `notch.h`.
+- **The notch did not pass the IFA10000.** A new effect, certification owed.
+- **Presets** — blocked by two decisions not made (see below). And today
+  the cost became concrete: two values were tuned by measurement that only exist
+  while the board does not restart.
 
-**Decisões que só o dB pode tomar, e que travam os presets:**
-- `post_level_l`/`post_level_r` entram no preset global? *Recomendo que não* — seguem
-  botões físicos, como o `exc_on`.
-- Renomear `test_tone_*` → `test_tone_*` para alinhar com os widgets do Loopy?
+**Decisions only dB can make, and that block the presets:**
+- Do `post_level_l`/`post_level_r` enter the global preset? *I recommend not* — they follow
+  physical buttons, like `exc_on`.
+- Rename `test_tone_*` → `test_tone_*` to align with the Loopy widgets?
 
-Ambas são livres **só até à primeira captura** congelar o mapa (hoje `0x3505`).
+Both are free **only until the first capture** freezes the map (today `0x3505`).
 
-## Como retomar
+## How to resume
 
 ```bash
 cd ~/CODE/GitHub/Cotucatronics/src
 make BOARD=daisy_seed && make check
-# RESET simples (SEM segurar BOOT — isso entra no DFU da STM, onde mora
-# o bootloader). Grave na janela de graça de ~2 s:
+# Simple RESET (WITHOUT holding BOOT — that enters the STM's DFU, where the
+# bootloader lives). Flash in the ~2 s grace window:
 make program-dfu
 ./cotuca_serial.py --send board mods list --gap 2
 ```
 
-Placa roda da QSPI via bootloader da Electrosmith (`APP_TYPE=BOOT_QSPI`),
-480 MHz permanente, `-O3` (ver a cicatriz do `-O3` no cap. 3 do battle
-scars — ele PIOROU; reverter exige remedir tudo).
+The board runs from the QSPI via the Electrosmith bootloader (`APP_TYPE=BOOT_QSPI`),
+480 MHz permanent, `-O3` (see the `-O3` scar in ch. 3 of battle
+scars — it MADE IT WORSE; reverting requires remeasuring everything).
 
 ---
 
-## O que toca hoje
+## What plays today
 
-**Pedaleira de cinco efeitos residentes, em ordem fixa.** Bloco **48**.
+**A pedalboard of five resident effects, in fixed order.** Block **48**.
 
 ```
-piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE   (por cadeia)
-            → MATRIZ 2×2 ─┬─ DELAY (uma instância, não segue a matriz)
-                          ├─ FREEZE  (por cadeia, segue)
-                          └─ [SHIMMER ↺ REVERB] (por cadeia, segue)
-            → level → governor+SSB por ramo → limiter → out_l / out_r
-            → [DPDT 3 pos: jack | ambos | amp]        ← isto é COBRE
+piezo/line → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE   (per chain)
+            → 2×2 MATRIX ─┬─ DELAY (one instance, does not follow the matrix)
+                          ├─ FREEZE  (per chain, follows)
+                          └─ [SHIMMER ↺ REVERB] (per chain, follows)
+            → level → governor+SSB per branch → limiter → out_l / out_r
+            → [DPDT 3 pos: jack | both | amp]        ← this is COPPER
 ```
 
-`piezo_mix` é BALANÇO, não crossfade: no centro os dois piezos entram cheios.
+`piezo_mix` is BALANCE, not crossfade: at the center both piezos enter full.
 
-**O `out_width` (mid/side) foi aposentado em 20/08** — com dois transdutores
-no mesmo corpo não há imagem estéreo a alargar: a soma é acústica, no objeto.
+**The `out_width` (mid/side) was retired on 20/08** — with two transducers
+in the same body there is no stereo image to widen: the sum is acoustic, in the object.
 
-**A matriz decide qual CADEIA entra em qual SAÍDA** (`route_a_l` … `route_b_r`,
-CC 97/98). O destino de cada saída não é decisão do firmware: é a posição do
-DPDT. O firmware nomeia SAÍDA; o cobre nomeia destino.
+**The matrix decides which CHAIN enters which OUTPUT** (`route_a_l` … `route_b_r`,
+CC 97/98). The destination of each output is not the firmware's decision: it is the DPDT's
+position. The firmware names OUTPUT; the copper names the destination.
 
-O shimmer não tem reverb próprio: ele realimenta o Freeverb que já está na
-cadeia, e por isso aparece dentro do laço.
+The shimmer has no reverb of its own: it feeds back into the Freeverb that is already in the
+chain, and that is why it appears inside the loop.
 
-| Recurso | Medido |
+| Resource | Measured |
 |---|---|
-| CPU (suíte + shimmer + detune) | **59,5% média / 65,8% pico** do prazo de 1000 µs |
-| Tabelas | **91/96 params · 91/128 CCs** (o `board` declara, 28/08) |
-| Bloco | **48** (1 ms de prazo) |
-| Custo por efeito | drive +21 µs · warble +14 · phaser +26 · detune **+125** |
+| CPU (suite + shimmer + detune) | **59.5% average / 65.8% peak** of the 1000 µs budget |
+| Tables | **91/96 params · 91/128 CCs** (the `board` declares, 28/08) |
+| Block | **48** (1 ms budget) |
+| Cost per effect | drive +21 µs · warble +14 · phaser +26 · detune **+125** |
 
 ---
 
-## ✅ Estado do repo é INSTRUMENTO
+## ✅ The repo state is INSTRUMENT
 
-Resolvido em 2026-08-17. A dinâmica voltou e a placa **sobe tocando**:
+Resolved on 2026-08-17. The dynamics returned and the board **comes up playing**:
 
 | | |
 |---|---|
 | `pre_level_ab` 1.00 · `in_gain` **8×** | `gate_thresh` 0.02 · `gov_ceiling` 0.85 |
 | `rev_mix` 0.35 · `fx2_hp` 120 Hz | `fx2_on` 1 · `buzios_on` 1 · `buzios_thresh` 0.04 |
 
-`shift_hz` segue em 0: é anti-feedback do laço piezo→corpo→piezo, e liga
-quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
+`shift_hz` stays at 0: it is anti-feedback of the piezo→body→piezo loop, and turns on
+when the **exciter** enters the path — before that it only metallizes the timbre.
 
-> **Quando o exciter entrar, revisar `pre_level_ab` e `gov_ceiling` juntos.** Lá
-> não há atenuador: o TPA3116 recebe o que a placa mandar, e os dois
-> formam o par que decide onde o laço para de crescer.
+> **When the exciter enters, review `pre_level_ab` and `gov_ceiling` together.** There
+> is no attenuator there: the TPA3116 receives whatever the board sends, and the two
+> form the pair that decides where the loop stops growing.
 
 ---
 
-## 28/08 — a matriz de roteamento, medida na placa
+## 28/08 — the routing matrix, measured on the board
 
-**O que mudou.** Havia dois andares confundidos num só. Agora estão separados:
+**What changed.** There were two stages confused into one. Now they are separated:
 
-| | onde age | o que faz |
+| | where it acts | what it does |
 |---|---|---|
-| `route_a_l/b`, `route_a_r/b` | antes dos efeitos | qual **cadeia** entra em qual **saída** |
-| `out_l`, `out_r` | depois do limiter | corta o **ramo** inteiro |
+| `route_a_l/b`, `route_a_r/b` | before the effects | which **chain** enters which **output** |
+| `out_l`, `out_r` | after the limiter | cuts the whole **branch** |
 
-A matriz nasce cheia e reproduz exactamente o `out[0] = out[1] = A + B` que a
-antecedeu. Serve para inverter as cadeias quando os transdutores estão ligados
-ao contrário — e **fica fora dos presets**, porque é facto de fiação e não de
+The matrix is born full and reproduces exactly the `out[0] = out[1] = A + B` that
+preceded it. It serves to invert the chains when the transducers are connected
+the wrong way — and **stays out of the presets**, because it is a fact of wiring and not of
 timbre.
 
-**T7c medido em v0.178.0**, chão do caminho a −69,2 dBFS, base a −35,6:
+**T7c measured in v0.178.0**, path floor at −69.2 dBFS, base at −35.6:
 
-**Refeito com uma saída por canal** (`OUT_L → ch1`, `OUT_R → ch2`, separação
-59,6 dB). A primeira corrida tinha as duas saídas somadas numa entrada, e por
-isso dois dos critérios passaram **sem poder falhar** — ver `TESTES.md`.
+**Redone with one output per channel** (`OUT_L → ch1`, `OUT_R → ch2`, separation
+59.6 dB). The first run had the two outputs summed into one input, and so
+two of the criteria passed **without being able to fail** — see `TESTES.md`.
 
-| critério | OUT_L | OUT_R | |
+| criterion | OUT_L | OUT_R | |
 |---|---|---|---|
-| `route_a_l=0` corta A em L, e só em L | −44,8 | +0,0 | ✅ |
-| `route_a_r=0` corta A em R, e só em R | −0,0 | −43,9 | ✅ |
-| `out_l=0` corta o ramo L, e só L | −44,1 | +0,0 | ✅ |
-| `out_r=0` corta o ramo R, e só R | +0,0 | −41,5 | ✅ |
-| **inversão** A→L vira A→R | −32,6 → −77,4 | −80,9 → −36,7 | ✅ |
-| o delay sobrevive à matriz | — | +41,0 dB acima do chão | ✅ |
+| `route_a_l=0` cuts A on L, and only on L | −44.8 | +0.0 | ✅ |
+| `route_a_r=0` cuts A on R, and only on R | −0.0 | −43.9 | ✅ |
+| `out_l=0` cuts the L branch, and only L | −44.1 | +0.0 | ✅ |
+| `out_r=0` cuts the R branch, and only R | +0.0 | −41.5 | ✅ |
+| **inversion** A→L becomes A→R | −32.6 → −77.4 | −80.9 → −36.7 | ✅ |
+| the delay survives the matrix | — | +41.0 dB above the floor | ✅ |
 
-O último separa os andares: a matriz tira o seco, o freeze e o espaço da
-cadeia A, e o retorno do delay fica — uma instância só, envios já somados.
+The last one separates the stages: the matrix takes the dry, the freeze and the space from
+chain A, and the delay return stays — a single instance, sends already summed.
 
-O teste vive em `src/teste_roteamento.py`: pergunta a porta, acha a interface
-pelo nome, **mede** o mapa de canais e aborta se as duas saídas caírem no
-mesmo.
+The test lives in `src/teste_roteamento.py`: it asks the port, finds the interface
+by name, **measures** the channel map and aborts if the two outputs fall on the
+same.
 
-⚠️ **O mapa de params mudou: `0xFD72` → `0xBE1B`.** Como ainda não existe
-preset nenhum, saiu de graça — foi a última janela.
+⚠️ **The params map changed: `0xFD72` → `0xBE1B`.** Since no preset exists
+yet, it came for free — it was the last window.
 
-### Defeitos abertos que esta sessão deixou
+### Open defects this session left
 
-- ✅ **`ccmap.html` / `ccmap.pdf` — RESOLVIDO, e virou GERADO.** O
-  `gerar_ccmap.py` v0.3.0 escreve os **dois** destinos (`CCMAP.md` e o cartão
-  A4) a partir do `manifest.h`. As notas humanas vivem numa tabela `NOTAS` — a
-  única parte escrita à mão — e o gerador **denuncia nota órfã** (param que já
-  não existe) e **nota que mente sobre topologia** (diz "compart." num param
-  pareado). Achou **dez notas erradas** à primeira passagem, incluindo o
-  `frz_size` a dizer 20–400 ms com o manifest em 20–165 (o caso que gerou a
-  regra das faixas) e o `test_tone_out` com a semântica invertida. O par colapsa
-  numa linha (`in_gain_a/b`), e por isso volta a caber em **uma folha**.
-- ✅ **`OUT_L` — RESOLVIDO em 28/08.** Era fiação, e a placa foi inocentada
-  por testemunha interna antes de se mexer num fio: com o tom em `dest 1` o
-  `gov A` sobe a 0,285 enquanto o `gov B` fica em 0,001, e invertem-se com
-  `dest 2` — sinal nos dois ramos, simétrico, dentro do firmware.
-- ✅ **Contador de quedas da ponte — RESOLVIDO.** `ponte` v0.5.0 guarda em
-  NVS, com **duas contas**: `quedas` desta sessão responde *"está a cair
-  agora?"*; `desde sempre` + `arranques` responde *"caiu enquanto eu não
-  estava?"*, e a segunda distingue energia instável de rádio instável.
-  Escrita diferida (máx. 1×/10 s, fora do callback do BLE, porque a NVS tem
-  endurance finita e a peça fica meses ligada). Persistência **provada**: o
-  contador de arranques foi 2 → 3 → 4 através de resets.
-- ✅ **Os 20 minutos do link BLE — PASSOU em 28/08.** `0 quedas`, com o iPad
-  acordado e o Loopy em primeiro plano. E o `arranques` subiu **exactamente
-  um** desde a leitura anterior — e esse um foi a sonda a abrir a porta —,
-  o que fecha também a outra hipótese: **a ponte não reiniciou.** Piscar de
-  alimentação teria aparecido ali.
+- ✅ **`ccmap.html` / `ccmap.pdf` — RESOLVED, and became GENERATED.** The
+  `gerar_ccmap.py` v0.3.0 writes **both** destinations (`CCMAP.md` and the A4
+  card) from `manifest.h`. The human notes live in a `NOTAS` table — the
+  only part written by hand — and the generator **flags an orphan note** (a param that no
+  longer exists) and **a note that lies about topology** (says "compart." on a paired
+  param). It found **ten wrong notes** on the first pass, including
+  `frz_size` saying 20–400 ms with the manifest at 20–165 (the case that generated the
+  range rule) and `test_tone_out` with the inverted semantics. The pair collapses
+  into one line (`in_gain_a/b`), and so it fits again on **one sheet**.
+- ✅ **`OUT_L` — RESOLVED on 28/08.** It was wiring, and the board was exonerated
+  by internal witness before touching a wire: with the tone at `dest 1` the
+  `gov A` rises to 0.285 while `gov B` stays at 0.001, and they invert with
+  `dest 2` — signal on both branches, symmetric, inside the firmware.
+- ✅ **Bridge dropout counter — RESOLVED.** `ponte` v0.5.0 saves in
+  NVS, with **two counts**: `quedas` for this session answers *"is it dropping
+  now?"*; `desde sempre` + `arranques` answers *"did it drop while I was not
+  here?"*, and the second distinguishes unstable power from unstable radio.
+  Deferred write (max. 1×/10 s, outside the BLE callback, because the NVS has
+  finite endurance and the piece stays on for months). Persistence **proven**: the
+  boot counter went 2 → 3 → 4 across resets.
+- ✅ **The 20 minutes of the BLE link — PASSED on 28/08.** `0 quedas`, with the iPad
+  awake and Loopy in the foreground. And `arranques` rose **exactly
+  one** since the previous reading — and that one was the probe opening the port —,
+  which also closes the other hypothesis: **the bridge did not restart.** A power
+  flicker would have appeared there.
 
-  ⚠️ **A sonda derruba o que mede, e isto tem de ficar escrito.** Abrir a
-  porta série do ESP32-C3 **reinicia a placa** (o USB nativo lê a abertura
-  como reset, mesmo com `DTR`/`RTS` em falso). A primeira tentativa deste
-  teste morreu assim: eu li o `board` e derrubei a ligação do dB. Para
-  observar ao vivo, **abrir UMA vez e segurar** — o `/tmp/teste20.py` faz
-  isso. E a corrida anterior, que "falhou aos ~6 min", **não conta como
-  evidência**: eu li o `board` a meio dela.
+  ⚠️ **The probe knocks down what it measures, and this has to be written down.** Opening the
+  ESP32-C3's serial port **restarts the board** (the native USB reads the opening
+  as a reset, even with `DTR`/`RTS` false). The first attempt of this
+  test died this way: I read the `board` and knocked down dB's connection. To
+  observe live, **open ONCE and hold** — `/tmp/teste20.py` does
+  that. And the previous run, which "failed at ~6 min", **does not count as
+  evidence**: I read the `board` in the middle of it.
 
-  **A NVS pagou-se na primeira utilização real.** Ler a ponte exige
-  reiniciá-la, o que apaga os contadores da sessão; só o de vida sobreviveu,
-  e foi ele que deu o resultado. Há três dias este número teria desaparecido
-  no acto de o ir buscar.
+  **The NVS paid for itself on the first real use.** Reading the bridge requires
+  restarting it, which erases the session counters; only the lifetime one survived,
+  and it was the one that gave the result. Three days ago this number would have disappeared
+  in the act of going to fetch it.
 
-  Não provado: os contadores de mensagens foram-se com o reset, logo não há
-  prova numérica de tráfego — só a observação do dB, que estava a tocar.
-- ✅ **Tectos subidos, com folga na mão e não com o estouro.** `kMaxParams`
-  96 → **128** e `kMaxPresetVals` 40 → **56** — este era o mais apertado
-  (33/40), porque um param de cadeia novo gasta um slot aqui e **dois** na
-  tabela de params. Custo medido: **+1504 bytes**, SRAM 55,59 % → 56,00 %. E o
-  alarme de estouro de preset ganhou **gémeo consultável** no `board`: só
-  saía no boot, e quem liga a serial depois nunca o via.
-- ✅ **Ponto cego do `varre` — RESOLVIDO.** `varre tudo` lê os **31** pinos,
-  com o preço declarado: mata o OLED e o MIDI, porque são os mesmos pinos.
-  `reboot` desfaz — comando novo, porque modalidade que só sai com o dedo de
-  alguém não serve a uma escultura numa galeria.
-- ✅ **`check_docs` v0.12.0 vigia `.py`.** A regra antiga cruzava cabeçalho
-  com `#define`, e um script não tem `#define`. A nova recolhe **toda** a
-  auto-identificação — docstring, constante `VERSAO`, e o que ele **imprime**
-  — e exige que concordem. A que mais importa é a terceira: é a única que o
-  operador vê. Achou um segundo caso na primeira execução (`pitch_spectrum.py`
-  dizia 0.2.0 e imprimia 0.1.0).
+  Not proven: the message counters went with the reset, so there is no
+  numerical proof of traffic — only dB's observation, who was playing.
+- ✅ **Ceilings raised, with margin in hand and not with the overflow.** `kMaxParams`
+  96 → **128** and `kMaxPresetVals` 40 → **56** — this was the tightest
+  (33/40), because a new chain param spends one slot here and **two** in the
+  params table. Measured cost: **+1504 bytes**, SRAM 55.59 % → 56.00 %. And the
+  preset overflow alarm gained a **consultable twin** in the `board`: it only
+  came out at boot, and whoever connects the serial after never saw it.
+- ✅ **`varre` blind spot — RESOLVED.** `varre tudo` reads the **31** pins,
+  with the declared price: it kills the OLED and the MIDI, because they are the same pins.
+  `reboot` undoes it — a new command, because a mode that only exits with someone's
+  finger does not serve a sculpture in a gallery.
+- ✅ **`check_docs` v0.12.0 watches `.py`.** The old rule crossed the header
+  with `#define`, and a script has no `#define`. The new one collects **all** the
+  self-identification — docstring, `VERSAO` constant, and what it **prints**
+  — and requires that they agree. The one that matters most is the third: it is the only one the
+  operator sees. It found a second case on the first run (`pitch_spectrum.py`
+  said 0.2.0 and printed 0.1.0).
 
 ---
 
-## 28/08 — o painel: OLED vivo, três encoders a contar
+## 28/08 — the panel: OLED alive, three encoders counting
 
-**O OLED funciona.** Enche, apaga e escreve texto formatado, e o espelho dos
-encoders desenha as três linhas com os contadores. Foi a primeira vez — o que
-se via antes era **imagem retida** de uma sessão anterior, porque nada
-inicializa o painel no arranque (ver cicatriz 15o).
+**The OLED works.** It fills, clears and writes formatted text, and the mirror of the
+encoders draws the three lines with the counters. It was the first time — what
+was seen before was **retained image** from a previous session, because nothing
+initializes the panel at startup (see scar 15o).
 
-Ferramenta de bancada que ficou, e que provou os cinco fios um a um:
+Bench tool that stayed, and that proved the five wires one by one:
 
-| comando | o que faz |
+| command | what it does |
 |---|---|
-| `oled` · `oled off` · `oled texto` | inicializa/enche · apaga · **escreve** (prova mais que o encher) |
-| `oledvel <2..256>` | varre o prescaler do SPI — oito velocidades |
-| `fio curto` | caça-ponte nos dez pares |
-| `fio <rst\|dc\|cs\|clk\|din> <0\|1>` | segura o pino para medir **no conector do painel** |
-| `varre` / `varre reset` | lê os **15 pinos livres** de uma vez, sem opinião |
-| `varre tudo` | lê os **31** — mata OLED e MIDI até um `reboot` |
-| `reboot` | reinicia o app por software; o estado volta aos defaults |
-| `encpino` / `encpino reset` | trava por pino dos encoders, nas duas direcções |
-| `enc inverte <a\|b\|g>` | inverte o sentido **em execução**, sem gravar |
+| `oled` · `oled off` · `oled texto` | initializes/fills · clears · **writes** (proves more than filling) |
+| `oledvel <2..256>` | sweeps the SPI prescaler — eight speeds |
+| `fio curto` | bridge-hunter on the ten pairs |
+| `fio <rst\|dc\|cs\|clk\|din> <0\|1>` | holds the pin to measure **at the panel connector** |
+| `varre` / `varre reset` | reads the **15 free pins** at once, without opinion |
+| `varre tudo` | reads the **31** — kills OLED and MIDI until a `reboot` |
+| `reboot` | restarts the app by software; the state returns to defaults |
+| `encpino` / `encpino reset` | per-pin latch of the encoders, in both directions |
+| `enc inverte <a\|b\|g>` | inverts the direction **at runtime**, without flashing |
 
-⚠️ **O `varre` normal lê 15 dos 31 pinos** — ficam de fora `D5`–`D8`, `D10`
-(OLED), `D13`/`D14` (MIDI) e `D22`–`D30`. Isso é correcto para o uso comum:
-sonda que dirige um pino de periférico parte o periférico. Mas criava um modo
-de falha inteiro que nenhum instrumento nosso via, e **`varre tudo` abre-o**.
+⚠️ **The normal `varre` reads 15 of the 31 pins** — `D5`–`D8`, `D10`
+(OLED), `D13`/`D14` (MIDI) and `D22`–`D30` are left out. That is correct for common use:
+a probe that drives a peripheral pin breaks the peripheral. But it created a whole failure
+mode that none of our instruments saw, and **`varre tudo` opens it**.
 
-**Encoder G: fases trocadas no `kEncPin`** (`D19` fase A · `D18` fase B ·
-`D17` push), porque montado o CW contava para trás. A troca mora no mapa de
-pinos e não num sinal invertido no laço — o sentido de um encoder *é* qual
-fase vem primeiro, e inverter o resultado depois faria o `encpino` mentir.
+**Encoder G: phases swapped in `kEncPin`** (`D19` phase A · `D18` phase B ·
+`D17` push), because as mounted CW counted backward. The swap lives in the pin
+map and not in an inverted signal in the loop — the direction of an encoder *is* which
+phase comes first, and inverting the result afterward would make `encpino` lie.
 
-### 🔴 Defeito aberto: o encoder G é INTERMITENTE
+### 🔴 Open defect: encoder G is INTERMITTENT
 
-As duas fases do G **abriram durante a sessão**, sem ninguém tocar no
-hardware. O `varre` provou-o: quinze pinos livres, e só o push a comutar
-(`push 14 · crus +0`). **Voltaram durante o manuseio do chicote** — e
-intermitência correlacionada com manuseio é o diagnóstico, não ruído.
+The two phases of G **opened during the session**, without anyone touching the
+hardware. `varre` proved it: fifteen free pins, and only the push switching
+(`push 14 · crus +0`). **They came back during the handling of the harness** — and
+intermittence correlated with handling is the diagnosis, not noise.
 
-O ponto fraco continua lá e vai reabrir. **Resoldar antes da galeria.** O push
-tem circuito próprio no EC11, o que explica ele ter sobrevivido enquanto as
-duas fases morriam juntas: elas partilham um comum que o botão não usa.
-
----
-
-## 28/08, fim do dia — a sessão de escuta e o que ela cobrou
-
-**🔴 A placa travou, e o LED de fase foi quem a encontrou.** O `PollMidi`
-drenava com `while(m_tail != m_head)` — condição que persegue um ponteiro
-escrito pela ISR. Sob tráfego BLE contínuo o laço nunca terminava: áudio a
-tocar, tela congelada, serial calada, e nenhum vigia disparou porque a
-chamada sempre retorna. Consertado com instantâneo do ponteiro, **e o irmão
-`PollSerial` levou o mesmo**. O `board` passou a declarar o atraso da
-drenagem — sensor que teria denunciado isto antes de travar.
-
-**🗑️ `in_gain` REMOVIDO — "se não soa, não fica"** (regra do dB). O
-`Governor` é um AGC: 18 dB postos no `in_gain` eram 18 dB que ele tirava
-adiante. O controlo funcionava e era inaudível **por construção**; só restava
-o degrau. Deep clean em código, geradores e sete documentos. **CC 21 livre.**
-
-⚠️ **O que se perdeu:** o casamento com transdutores de sensibilidade
-diferente. O governor só REDUZ. Se aparecer na replicação, conserta-se no
-divisor da carrier board — a lápide está no `FEATURES.md` e no `TESTES.md`.
-
-**🥁 TAROLATOR — efeito novo** (`tarol_on` cc80, `tarol_mix` cc81, por
-cadeia). Nasceu oitavador por divisão de frequência, e não faz oitava: numa
-membrana os modos são inarmónicos e o divisor treme, gerando ruído
-percussivo com o envelope da pancada. **O dB gostou e deu-lhe o nome certo.**
-Tom e rastreio fixos (6000 e 1200 Hz); `mix` 0–4× com curva 0.5, porque
-0–1 linear deixava dois terços de fader mortos. Custo **+2,9 %** nas duas
-cadeias, medido em A/B no mesmo binário — não entra na ordem de sacrifício.
-
-**Também:** `wrb_rate` passou a **0,5–12 Hz** (era 0,05–3, e o topo já era
-lento); **`shm_on` abre o espaço sozinho** — antes só corria com `rev_on`, e
-a chave existia surda.
-
-### A medição que mudou o desenho
-
-A membrana foi medida em vez de descrita: **76,5 % da energia entre 640 e
-1280 Hz, ZERO abaixo de 160 Hz**, modo dominante em **768 Hz**. "Magro" é
-literal. Isso matou a sugestão de drive (acrescentaria onde já sobra) e
-ressuscitou o oitavador que eu tinha objectado — a fundamental não era grave.
-
-### Entrada
-
-Piezos a **−17 dBFS** (corda, toque normal), **−7,5** (corda, forte) e
-**−21,3** (membrana). A membrana chega **14 dB abaixo** da corda. Separação
-entre os dois piezos através do corpo: **34 dB**.
+The weak point is still there and will reopen. **Resolder before the gallery.** The push
+has its own circuit in the EC11, which explains it surviving while the
+two phases died together: they share a common that the button does not use.
 
 ---
 
-## 28/08 — os potenciómetros
+## 28/08, end of day — the listening session and what it cost
 
-**Dois pots, e só cabem dois:** `A0` = D15 (ramo L), `A1` = D16 (ramo R). Os
-outros três do bloco ADC são o encoder global — `A0–A4` são aliases de
-`D15–D19`. `num_knobs` passou de **5 para 2**; declarar cinco fazia o laço
-iterar sobre knobs inexistentes.
+**🔴 The board locked up, and the phase LED was what found it.** `PollMidi`
+drained with `while(m_tail != m_head)` — a condition that chases a pointer
+written by the ISR. Under continuous BLE traffic the loop never ended: audio
+playing, frozen screen, silent serial, and no watchdog fired because the
+call always returns. Fixed with a snapshot of the pointer, **and the sibling
+`PollSerial` got the same**. The `board` came to declare the drain
+delay — a sensor that would have flagged this before locking up.
 
-**Params novos:** `post_level_l` / `post_level_r` (CC 116/117), volume contínuo por ramo,
-**depois do limiter** — mesmo ponto do mute `out_*`, e pela mesma razão: ali
-só se pode reduzir. São funções diferentes no mesmo sítio — `out_*` mata o
-ramo (segurança, instantâneo), `vol_*` dosa (performance, contínuo).
+**🗑️ `in_gain` REMOVED — "if it doesn't sound, it doesn't stay"** (dB's rule). The
+`Governor` is an AGC: 18 dB put on `in_gain` were 18 dB it took away
+downstream. The control worked and was inaudible **by construction**; only the
+step remained. Deep clean in code, generators and seven documents. **CC 21 free.**
 
-### Os três problemas, e nenhum era ler o ADC
+⚠️ **What was lost:** the matching with transducers of different
+sensitivity. The governor only REDUCES. If it appears in the replication, it is fixed on the
+carrier board's divider — the tombstone is in `FEATURES.md` and `TESTES.md`.
+
+**🥁 TAROLATOR — new effect** (`tarol_on` cc80, `tarol_mix` cc81, per
+chain). It was born as an octaver by frequency division, and it does not make an octave: on a
+membrane the modes are inharmonic and the divider trembles, generating percussive
+noise with the envelope of the hit. **dB liked it and gave it the right name.**
+Tone and tracking fixed (6000 and 1200 Hz); `mix` 0–4× with a 0.5 curve, because
+0–1 linear left two thirds of the fader dead. Cost **+2.9 %** in both
+chains, measured in A/B on the same binary — it does not enter the sacrifice order.
+
+**Also:** `wrb_rate` became **0.5–12 Hz** (was 0.05–3, and the top was already
+slow); **`shm_on` opens the space on its own** — before it only ran with `rev_on`, and
+the switch existed deaf.
+
+### The measurement that changed the design
+
+The membrane was measured instead of described: **76.5 % of the energy between 640 and
+1280 Hz, ZERO below 160 Hz**, dominant mode at **768 Hz**. "Thin" is
+literal. That killed the drive suggestion (it would add where there is already excess) and
+resurrected the octaver I had objected to — the fundamental was not low.
+
+### Input
+
+Piezos at **−17 dBFS** (string, normal touch), **−7.5** (string, hard) and
+**−21.3** (membrane). The membrane arrives **14 dB below** the string. Separation
+between the two piezos through the body: **34 dB**.
+
+---
+
+## 28/08 — the potentiometers
+
+**Two pots, and only two fit:** `A0` = D15 (L branch), `A1` = D16 (R branch). The
+other three of the ADC block are the global encoder — `A0–A4` are aliases of
+`D15–D19`. `num_knobs` went from **5 to 2**; declaring five made the loop
+iterate over nonexistent knobs.
+
+**New params:** `post_level_l` / `post_level_r` (CC 116/117), continuous volume per branch,
+**after the limiter** — same point as the `out_*` mute, and for the same reason: there
+you can only reduce. They are different functions in the same place — `out_*` kills the
+branch (safety, instant), `vol_*` doses (performance, continuous).
+
+### The three problems, and none was reading the ADC
 
 | | |
 |---|---|
-| **a guarda antiga matava o MIDI** | era `if(v == knob_last[k])` — igualdade de float sobre ruído **nunca dispara**, e o pot escreveria a cada volta do laço. O comentário que lá estava previa-o: *"sem ela o MIDI para de funcionar em silêncio no mesmo dia"* |
-| **pot absoluto, param partilhado** | **captura suave**: só assume quando passa pelo valor actual, larga quando o iPad escreve. Janela de largar maior que a de capturar, senão troca de dono na fronteira |
-| **mas no arranque a verdade é o botão** | primeira leitura **adopta** a posição física — volume que nasce longe do botão assusta quem liga |
+| **the old guard killed the MIDI** | it was `if(v == knob_last[k])` — float equality over noise **never fires**, and the pot would write on every turn of the loop. The comment that was there predicted it: *"without it the MIDI stops working silently the same day"* |
+| **absolute pot, shared param** | **soft capture**: it only takes over when it passes through the current value, releases when the iPad writes. Release window larger than the capture one, otherwise it changes owner at the boundary |
+| **but at startup the truth is the button** | the first reading **adopts** the physical position — a volume that is born far from the button startles whoever turns it on |
 
-**Medidor:** `knob` mostra cru, filtrado, param e dono; `knob <s> <c> <l> <z>`
-ajusta os quatro números sem gravar, porque só a bancada sabe o ruído deste
+**Meter:** `knob` shows raw, filtered, param and owner; `knob <s> <c> <l> <z>`
+adjusts the four numbers without flashing, because only the bench knows the noise of this
 ADC.
 
-**Bancos nativos novos:** `src/teste_tarol.cpp` (o divisor em material
-periódico) e `src/teste_macro.cpp` (a ida-e-volta do `Macro::Inverso`, de que
-a captura depende — se ele errar, o pot "não pega" e a bancada culpa o ADC).
+**New native benches:** `src/teste_tarol.cpp` (the divider on periodic
+material) and `src/teste_macro.cpp` (the round-trip of `Macro::Inverso`, on which
+the capture depends — if it errs, the pot "doesn't catch" and the bench blames the ADC).
 
-⚠️ **Nada disto foi gravado nem medido na placa** — o dB desmontou a bancada.
-O `knob` diz na hora se o ADC lê.
+⚠️ **None of this was flashed or measured on the board** — dB dismantled the bench.
+The `knob` says on the spot whether the ADC reads.
 
 ---
 
-## 31/08 — os pots funcionam, ponta a ponta
+## 31/08 — the pots work, end to end
 
-**`post_level_l` / `post_level_r` seguem os dois potenciómetros.** Curso completo
-verificado: `0,9752 → 0,0001` com o param a acompanhar. Ruído em repouso
-**σ 0,0003**, que são 26× abaixo de um passo de MIDI, e **zero escritas**
-com os pots parados.
+**`post_level_l` / `post_level_r` follow the two potentiometers.** Full travel
+verified: `0.9752 → 0.0001` with the param following along. Noise at rest
+**σ 0.0003**, which is 26× below a MIDI step, and **zero writes**
+with the pots at rest.
 
-Condensadores de **0,1 µF do cursor à massa, no próprio pot** — ficam, e
-valem: **29× melhor** no canal ruidoso, e a assimetria entre os dois
-desapareceu. Com o sinal limpo, a filtragem foi afrouxada (filtro 12× mais
-rápido, histerese 2,4× mais fina) sem custo nenhum em estabilidade.
+Capacitors of **0.1 µF from the wiper to ground, on the pot itself** — they stay, and
+are worth it: **29× better** on the noisy channel, and the asymmetry between the two
+disappeared. With the signal clean, the filtering was loosened (filter 12× faster,
+hysteresis 2.4× finer) with no cost at all in stability.
 
-### 🔴 A instabilidade era um curto, e eu acusei três inocentes
+### 🔴 The instability was a short, and I accused three innocents
 
-A placa caía do barramento durante a montagem. Em duas horas acusei **o hub
-USB** (a Daisy não estava em hub nenhum), **os condensadores** (medi com os
-pots desligados) e **o circuito** (cortava a energia entre os testes, e
-creditava a recuperação à variável errada).
+The board kept falling off the bus during assembly. In two hours I accused **the USB
+hub** (the Daisy was in no hub), **the capacitors** (I measured with the
+pots disconnected) and **the circuit** (I cut the power between tests, and
+credited the recovery to the wrong variable).
 
-Era um **curto intermitente entre PWR e GND da ponte**, encostado ao mexer nos
-cabos. Brownout — a placa perde alimentação e some do barramento; não é
-travamento. **Encontrou-o o dB, a olhar para os fios.**
+It was an **intermittent short between PWR and GND of the bridge**, leaning in when moving the
+cables. Brownout — the board loses power and vanishes from the bus; it is not
+a lockup. **dB found it, looking at the wires.**
 
-⚠️ **Isolar esses dois fios.** Curto de alimentação intermitente desaparece
-sempre que se vai procurar.
+⚠️ **Isolate those two wires.** An intermittent power short disappears
+whenever you go looking for it.
 
-## 31/08 — e o defeito do ADC era firmware
+## 31/08 — and the ADC defect was firmware
 
-**`post_level_l` / `post_level_r`** (CC 116/117) seguem os dois pots físicos. Custou uma
-sessão inteira, e o culpado não era o cobre:
+**`post_level_l` / `post_level_r`** (CC 116/117) follow the two physical pots. It cost a
+whole session, and the culprit was not the copper:
 
-### 🔴 O varredor de pinos livres roubava o pino ao ADC
+### 🔴 The free-pin scanner was stealing the pin from the ADC
 
-`D15` e `D16` estavam em `kLivres`, e o `VarreLivres()` — que corre **a cada
-volta do laço** — reconfigurava-os como digitais na primeira passagem,
-arrancando-os do modo **analógico**. O ADC amostrava uma entrada desligada, os
-dois canais liam o mesmo ~0,12, e **nada feito ao cobre podia mudar nada**: o
-firmware chegava sempre primeiro.
+`D15` and `D16` were in `kLivres`, and `VarreLivres()` — which runs **on every
+turn of the loop** — reconfigured them as digital on the first pass,
+ripping them from the **analog** mode. The ADC sampled a disconnected input, the
+two channels read the same ~0.12, and **nothing done to the copper could change anything**: the
+firmware always arrived first.
 
-O dB trocou fios, removeu um condensador, mediu 3,3 V nos extremos e trocou os
-pinos entre si — tudo em vão, por minha causa.
+dB swapped wires, removed a capacitor, measured 3.3 V at the ends and swapped the
+pins with each other — all in vain, because of me.
 
-> **Lista de "pinos livres" é afirmação sobre POSSE, e envelhece.** Terceira
-> vez no mês: `num_knobs = 5` com dois pots, a isenção do `kEncPin` depois de
-> ele virar fonte, e agora esta.
+> **A list of "free pins" is a claim about OWNERSHIP, and it ages.** Third
+> time this month: `num_knobs = 5` with two pots, the `kEncPin` exemption after
+> it became a source, and now this.
 
-A trava mora agora dentro do `VarreLivres` e grita em vez de roubar calado.
+The latch now lives inside `VarreLivres` and shouts instead of stealing quietly.
 
-### ⚠️ E as duas sondas que construí para o caçar mentiram
+### ⚠️ And the two probes I built to hunt it lied
 
-**`knob pino`** segurava o pull 5 ms; com 0,1 µF e ~40 kΩ a constante é ~4 ms —
-lia antes de o condensador carregar, e deu *"LIGADO"* ao caso que existia para
-apanhar. Agora espera 60 ms.
+**`knob pino`** held the pull for 5 ms; with 0.1 µF and ~40 kΩ the time constant is ~4 ms —
+it read before the capacitor charged, and gave *"ON"* to the case that existed to
+catch. Now it waits 60 ms.
 
-**`knob prova`** dirigia o pino como saída digital, o que nos STM32 **desliga o
-interruptor analógico** — o ADC deixa de ver o pino. Estava garantida a dizer
-*"não segue"*, e eu usei isso para anunciar uma conclusão.
+**`knob prova`** drove the pin as a digital output, which on the STM32 **turns off the
+analog switch** — the ADC stops seeing the pin. It was guaranteed to say
+*"does not follow"*, and I used that to announce a conclusion.
 
-O que resolveu não foi sonda nenhuma: foi ler o código à procura de **quem
-mais tocava naqueles pinos**.
+What resolved it was no probe at all: it was reading the code looking for **who
+else touched those pins**.
 
-### Estado medido
+### Measured state
 
 | | |
 |---|---|
-| escritas em repouso | **0,07/s** (eram 623/s antes da quantização) |
-| ruído `k2` (D16) | σ **0,00085** — limpo |
-| ruído `k1` (D15) | σ **0,0055** — seis vezes pior, sem condensador de filtro |
+| writes at rest | **0.07/s** (were 623/s before quantization) |
+| `k2` noise (D16) | σ **0.00085** — clean |
+| `k1` noise (D15) | σ **0.0055** — six times worse, without a filter capacitor |
 
-⚠️ **Repor o 0,1 µF, agora em PARALELO** (pino → GND), pelo menos no D15. Com
-o sinal limpo dá para afrouxar a filtragem e o pot fica mais responsivo.
+⚠️ **Restore the 0.1 µF, now in PARALLEL** (pin → GND), at least on D15. With
+the signal clean the filtering can be loosened and the pot becomes more responsive.
 
-### Também nesta sessão
+### Also in this session
 
-- **`min_knobs` 4 → 2.** Baixar o `num_knobs` fez o `CheckRequirements()`
-  recusar arrancar — correctamente. A **recusa passou a explicar-se**: o LED
-  conta o código da falha (1 áudio, 2 RAM, 3 knobs) com a gramática do
-  instrumento de fase, e o texto **repete-se**, para quem ligar a serial depois.
-- **`AdcInit` saiu de antes do `StartLog`.** Inicialização que pode falhar não
-  mora antes do canal que reportaria a falha.
-- **Quantização no passo do fio** (1/127 com histerese de 0,85 passo) em vez de
-  zona morta mágica — o pot tem a resolução do protocolo, nem mais nem menos.
-- **O pot fecha a recepção MIDI do seu param** ao escrever, em vez de esperar
-  que o espelho o anuncie até 8 ms depois.
-
----
-
-## Versões
-
-**Moram no mapa de arquivos do [README.md](../README.md), em um lugar só.**
-
-Esta seção já teve uma tabela própria. Ela chegou a `main.cpp v0.85.1`
-enquanto a placa rodava a v0.130.0 — **45 versões de deriva**, porque era uma
-segunda cópia que ninguém imprimia e ninguém lia. Mesma forma que o
-cabeçalho do `main.cpp` carregava (cicatriz 13k e a regra do checklist):
-*número que ninguém imprime não tem quem o corrija.*
-
-A versão que vale é a que a **placa diz no boot**, e o `flash.sh` a confere
-contra o binário depois de gravar.
+- **`min_knobs` 4 → 2.** Lowering `num_knobs` made `CheckRequirements()`
+  refuse to boot — correctly. The **refusal came to explain itself**: the LED
+  counts the fault code (1 audio, 2 RAM, 3 knobs) with the grammar of the
+  phase instrument, and the text **repeats**, for whoever connects the serial after.
+- **`AdcInit` moved out from before `StartLog`.** Initialization that can fail does not
+  live before the channel that would report the failure.
+- **Quantization at the wire step** (1/127 with 0.85-step hysteresis) instead of
+  a magic dead zone — the pot has the protocol's resolution, no more and no less.
+- **The pot closes the MIDI reception of its param** when writing, instead of waiting
+  for the mirror to announce it up to 8 ms later.
 
 ---
 
-## Fechado em 18/08 — MIDI certificado sob carga
+## Versions
 
-**T16c passou.** 2 779 CCs em 90 s com a carga a **65,1%** do prazo do
-bloco: zero órfão, zero ressync, zero perdido, zero erro de UART. A marca
-d'água da fila ficou em **32 de 128 bytes — idêntica com e sem carga**, o
-que fecha com número o furo do `PollMidi` (bytes entram por DMA, mas quem
-despacha é o loop). Os 32 bytes são o tamanho da rajada do BLE, não atraso
-do loop: se fosse latência, teria subido com a carga.
+**They live in the file map of [README.md](../README.md), in one place only.**
 
-**Regra revogada:** o pareamento BLE **sobrevive** ao reset. O
-`gravar → reparear → testar` era superstição nascida de um log que eu
-mesmo silenciei — caso 8 do battle_scars, com adendo no capítulo 11 e a
-seção do BOARDS.md marcada como REVOGADA.
+This section once had a table of its own. It reached `main.cpp v0.85.1`
+while the board ran v0.130.0 — **45 versions of drift**, because it was a
+second copy that no one printed and no one read. Same form that the
+`main.cpp` header carried (scar 13k and the checklist rule):
+*a number no one prints has no one to correct it.*
 
-**Cicatrizes viraram skills.** `.claude/skills/`: `ifa10000`,
-`medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura`. O
-IFÁ10000 ganhou a **etapa 0 — MEDIÇÃO LIMPA**.
+The version that counts is the one the **board says at boot**, and `flash.sh` checks it
+against the binary after flashing.
 
 ---
 
-## Ganho sonoro não planejado (18/08): o grave voltou
+## Closed on 18/08 — MIDI certified under load
 
-Aceite do dB, sem eu ter mexido em nada de timbre: **"presença de grave que
-nunca teve antes, muito melhor sonoramente."**
+**T16c passed.** 2 779 CCs in 90 s with the load at **65.1%** of the block
+budget: zero orphans, zero resync, zero lost, zero UART errors. The queue's high-water
+mark stayed at **32 of 128 bytes — identical with and without load**, which
+closes with a number the `PollMidi` hole (bytes enter by DMA, but what
+dispatches is the loop). The 32 bytes are the size of the BLE burst, not loop
+delay: if it were latency, it would have risen with the load.
 
-**Causa, verificada no código:** o passa-alta de 120 Hz mora dentro do bloco
-do Fx2. Slot Fx2 vazio ⇒ `fx2_want` falso ⇒ bloco pulado ⇒ **sem
-filtro**. Ele existia só pra conter o estouro de grave que o módulo do Fx2
-causava, e saiu junto com a causa porque foi instalado no escopo certo.
+**Rule revoked:** the BLE pairing **survives** the reset. The
+`flash → re-pair → test` was superstition born of a log that I
+myself silenced — case 8 of battle_scars, with an addendum in chapter 11 and the
+BOARDS.md section marked REVOKED.
 
-**Contribuição secundária, não medida:** `block_size` de 256 → 48 derruba a
-latência de 5,3 ms pra 1 ms. Num instrumento realimentado isso desloca onde
-o laço acústico se estabelece e aperta o transiente. Plausível e não
-isolado — se quisermos o número, é um voo com uma variável.
+**Scars became skills.** `.claude/skills/`: `ifa10000`,
+`medicao-limpa`, `instrumentacao`, `bug-de-ordem`, `edicao-segura`. The
+IFÁ10000 gained **step 0 — CLEAN MEASUREMENT**.
 
 ---
 
-## ✅ Freeze granular — CERTIFICADO (2026-08-18)
+## Unplanned sonic gain (18/08): the low end came back
 
-IFÁ10000 completo. **Etapa 9 passou:** *"ficou ótimo assim"* — sustentado de
-10 s sem pulsação, cauda de 2 s, instrumento vivo audível por baixo.
+dB's acceptance, without my having touched anything in the timbre: **"a presence of low
+end it never had before, much better sonically."**
 
-| Etapa | Resultado |
+**Cause, verified in the code:** the 120 Hz high-pass lives inside the Fx2
+block. Empty Fx2 slot ⇒ `fx2_want` false ⇒ block skipped ⇒ **no
+filter**. It existed only to contain the low-end overflow that the Fx2 module
+caused, and it left along with the cause because it was installed in the right scope.
+
+**Secondary contribution, not measured:** `block_size` from 256 → 48 knocks the
+latency from 5.3 ms down to 1 ms. In a fed-back instrument that shifts where
+the acoustic loop settles and tightens the transient. Plausible and not
+isolated — if we want the number, it is a flight with one variable.
+
+---
+
+## ✅ Granular freeze — CERTIFIED (2026-08-18)
+
+IFÁ10000 complete. **Step 9 passed:** *"it turned out great like this"* — a 10 s
+sustain with no pulsation, a 2 s tail, the live instrument audible underneath.
+
+| Step | Result |
 |---|---|
-| 4 MEMÓRIA | 768 KB SDRAM, 4 leituras **sequenciais**/amostra |
-| 5 CARGA | **98 µs** do efeito em 500 de orçamento; 370 de 1000 no sistema |
-| 6 MATERIAL | transiente real (tap na escultura) |
-| 8 SEGURANÇA | fora dos búzios — categoria **GESTO** |
-| 9 ACEITE | ✅ dB aprovou |
+| 4 MEMORY | 768 KB SDRAM, 4 **sequential** reads/sample |
+| 5 LOAD | **98 µs** of the effect in 500 of budget; 370 of 1000 in the system |
+| 6 MATERIAL | real transient (tap on the sculpture) |
+| 8 SAFETY | outside the cowrie shells — **GESTURE** category |
+| 9 ACCEPTANCE | ✅ dB approved |
 
-**Três versões até chegar aqui, e cada uma consertou um erro de desenho meu:**
-- **v0.1.0** reprovou de ouvido: varredura linear = laço de 2 s. Eu tinha
-  escrito no cabeçalho que o jitter mataria a periodicidade. Não mata.
-- **v0.2.0** trocou varredura por **sorteio num núcleo de 500 ms** — matou a
-  gaiola e, no mesmo gesto, quebrou a premissa de correlação da janela,
-  criando o ganho baixo. *Janela e estratégia de posição são um par.*
-- **v0.3.0/0.3.1** fechou: **raiz-de-Hann** (potência constante para grãos
-  descorrelacionados), **mix como camada** e não crossfade (o crossfade
-  apagava o instrumento vivo), e **cauda de 2 s**.
+**Three versions to get here, and each one fixed a design mistake of mine:**
+- **v0.1.0** failed by ear: linear sweep = 2 s loop. I had
+  written in the header that the jitter would kill the periodicity. It does not.
+- **v0.2.0** swapped the sweep for a **draw within a 500 ms core** — it killed the
+  cage and, in the same gesture, broke the window's correlation premise,
+  creating the low gain. *Window and position strategy are a pair.*
+- **v0.3.0/0.3.1** closed it: **root-of-Hann** (constant power for decorrelated
+  grains), **mix as a layer** and not crossfade (the crossfade
+  erased the live instrument), and a **2 s tail**.
 
 ---
 
-## Para amanhã — pedidos do dB (18/08, fim de sessão)
+## For tomorrow — dB's requests (18/08, end of session)
 
-O instrumento está **funcionando e aprovado** ("tudo ok! excelente"). Três
-ajustes do freeze, e os três têm raiz comum de desenho:
+The instrument is **working and approved** ("all ok! excellent"). Three
+freeze adjustments, and all three have a common design root:
 
-**1. `frz_mix` é crossfade e deveria ser CAMADA.**
+**1. `frz_mix` is crossfade and should be a LAYER.**
 ```cpp
-l = l * (1.f - mix_) + wl * mix_;   // mix 1.0 APAGA o instrumento
+l = l * (1.f - mix_) + wl * mix_;   // mix 1.0 ERASES the instrument
 ```
-Congelar deve **somar** uma camada sustentada, não substituir a fonte. É a
-causa de "quando o frz está rolando não escuto o instrumento direito" — não é
-efeito colateral, é o que a linha faz.
+Freezing should **add** a sustained layer, not replace the source. It is the
+cause of "when the frz is running I don't hear the instrument properly" — it is not
+a side effect, it is what the line does.
 
-**2. Ganho do freeze muito baixo.** Causa técnica: duas janelas Hann somam
-1.0 só para conteúdo **correlacionado**. Com as posições agora **sorteadas**,
-os grãos são descorrelacionados e somam em potência — ~0,7× da amplitude
-esperada. O conserto certo não é ganho de maquiagem: é **janela raiz-de-Hann**
-(`sqrt(hann)`), que dá potência constante justamente para grãos
-descorrelacionados.
+**2. Freeze gain too low.** Technical cause: two Hann windows sum
+1.0 only for **correlated** content. With the positions now **drawn**,
+the grains are decorrelated and sum in power — ~0.7× of the expected
+amplitude. The right fix is not a makeup gain: it is a **root-of-Hann window**
+(`sqrt(hann)`), which gives constant power precisely for decorrelated
+grains.
 
-**3. Cauda no corte.** `frz_on` 1→0 corta seco; soa como tomada arrancada, não
-como gesto. Rampa de saída de ~300 ms, com os grãos rodando durante a descida.
-*Decisão pendente do dB:* tempo fixo ou parâmetro `frz_release`?
-<!-- doc-check: ignore frz_release (proposta nao implementada) -->
-> **Nota:** `frz_release` é **proposta**, não parâmetro. A marca acima o
-> declara ao verificador de deriva — fantasma declarado deixa de ser
-> fantasma; fantasma silencioso quebra o build.
+**3. Tail on the cut.** `frz_on` 1→0 cuts dry; it sounds like a plug yanked out, not
+like a gesture. ~300 ms release ramp, with the grains running during the descent.
+*dB's pending decision:* fixed time or a `frz_release` parameter?
+<!-- doc-check: ignore frz_release (unimplemented proposal) -->
+> **Note:** `frz_release` is a **proposal**, not a parameter. The mark above
+> declares it to the drift checker — a declared ghost stops being a
+> ghost; a silent ghost breaks the build.
 
-### Também na fila, do mesmo desenho (CTOS protegendo a base)
-- **Tirar `src_mix`, `gate_thresh` e `gov_ceiling` do mapa MIDI.** São
-  roteamento e segurança — foram exatamente eles que emudeceram o instrumento
-  no despejo fantasma. *O que não está mapeado não pode ser derrubado.*
-- **Limite de taxa de mudança por parâmetro** vindo de MIDI: fader real anda
-  em rampa; salto de 0 a 127 num CC é assinatura de máquina.
-- **Relógio confiável pro watchdog:** `hal::NowUs()` devolve lixo
-  esporadicamente (3 amostras descartadas em 12 min). O veto repousa nele.
+### Also in the queue, of the same design (CTOS protecting the base)
+- **Remove `src_mix`, `gate_thresh` and `gov_ceiling` from the MIDI map.** They are
+  routing and safety — they were exactly the ones that muted the instrument
+  in the phantom eviction. *What is not mapped cannot be knocked down.*
+- **Rate-of-change limit per parameter** coming from MIDI: a real fader moves
+  in a ramp; a jump from 0 to 127 on a CC is a machine signature.
+- **A reliable clock for the watchdog:** `hal::NowUs()` returns garbage
+  sporadically (3 samples discarded in 12 min). The veto rests on it.
 
 ---
 
-## Fechado em 20/08 — o shimmer que ardia
+## Closed on 20/08 — the shimmer that burned
 
-Duas causas distintas, medidas na bancada offline (os headers são C++ puro,
-então o host reproduz o laço exato):
+Two distinct causes, measured on the offline bench (the headers are pure C++,
+so the host reproduces the exact loop):
 
-**1. Aliasing no motor de pitch.** Ler o buffer a `ratio 2.0` dobra a
-frequência; tudo acima de 12 kHz atravessa Nyquist e volta **inarmônico**. Com
-3500 Hz na entrada, o pico mais alto de toda a cauda era 19963 Hz. Anti-alias
-Butterworth de 6ª ordem **na escrita do motor** (não no shimmer — o defeito é
-de ler rápido, e quem lê rápido é o motor): dobra de −11,9 para **−64 dB**.
+**1. Aliasing in the pitch engine.** Reading the buffer at `ratio 2.0` doubles the
+frequency; everything above 12 kHz crosses Nyquist and comes back **inharmonic**. With
+3500 Hz at the input, the highest peak of the whole tail was 19963 Hz. A 6th-order
+Butterworth anti-alias **on the engine's write** (not on the shimmer — the defect is
+reading fast, and what reads fast is the engine): a fold from −11.9 to **−64 dB**.
 
-**2. Conteúdo legítimo na faixa mais sensível do ouvido.** A planura espectral
-de 2–6 kHz é 0,009 — tonal, não ruído. O 1–3 kHz da escultura vai a 2–6 kHz
-pela oitava e o reverb sustenta lá. Conserto: **sino de −6 dB em 3 kHz**, com
-a profundidade escolhida contra a razão medida da cauda seca (0,28), não de
-ouvido.
+**2. Legitimate content in the ear's most sensitive band.** The spectral flatness
+of 2–6 kHz is 0.009 — tonal, not noise. The sculpture's 1–3 kHz goes to 2–6 kHz
+by the octave and the reverb sustains there. Fix: **a −6 dB bell at 3 kHz**, with
+the depth chosen against the measured ratio of the dry tail (0.28), not by
+ear.
 
 | | v0.1.0 | v0.3.0 |
 |---|---|---|
-| razão (2–6 k)/(300–2 k) | 1,01 | **0,19** |
-| centroide da cauda | 7134 Hz | **1907 Hz** |
-| 6–12 kHz | 28,2% | **4%** |
+| ratio (2–6 k)/(300–2 k) | 1.01 | **0.19** |
+| tail centroid | 7134 Hz | **1907 Hz** |
+| 6–12 kHz | 28.2% | **4%** |
 
-`shm_tone` (**CC 57**) move as duas coisas e **sobe pra clarear**: 0 é o sino
-cheio com corte em 6 kHz, 1 abre até 18 kHz. Zero tem que ser o estado bom, ou
-a aspereza volta a cada boot.
+`shm_tone` (**CC 57**) moves the two things and **rises to brighten**: 0 is the full
+bell with a cut at 6 kHz, 1 opens up to 18 kHz. Zero has to be the good state, or
+the harshness comes back on every boot.
 
 ---
 
-## Fechado em 20/08 — teto de soma do CTOS
+## Closed on 20/08 — the CTOS sum ceiling
 
-A última fronteira estrutural. O watchdog do §3 protegia contra **um efeito
-com defeito**; faltava a proteção contra **N efeitos saudáveis que juntos não
-cabem**. São situações de natureza diferente e exigem mecanismos diferentes —
-a distinção está inteira em [CTOS.md §3b](CTOS.md).
+The last structural boundary. The §3 watchdog protected against **one defective
+effect**; the protection was missing against **N healthy effects that together do not
+fit**. They are situations of a different nature and require different mechanisms —
+the distinction is entirely in [CTOS.md §3b](CTOS.md).
 
-**Não há culpado no teto de soma**, e é por isso que ele não procura um:
-qualquer regra que tente achar "quem foi" quando não há quem acaba inventando
-um culpado, e o inventado seria um efeito correto. A política é **prioridade
-declarada a frio** pelo dB em `Manifest::sacrif[]` — a ordem do array *é* a
-prioridade. LIFO foi descartado: pune por ordem de chegada, que não tem relação
-com valor musical.
+**There is no culprit in the sum ceiling**, and that is why it does not look for one:
+any rule that tries to find "who did it" when there is no one ends up inventing
+a culprit, and the invented one would be a correct effect. The policy is **priority
+declared cold** by dB in `Manifest::sacrif[]` — the order of the array *is* the
+priority. LIFO was discarded: it punishes by arrival order, which has no relation
+to musical value.
 
-Três testes, todos passados na v0.84.0:
+Three tests, all passed in v0.84.0:
 
-| Teste | Esperado | Resultado |
+| Test | Expected | Result |
 |---|---|---|
-| teto 620 µs (bloco 639) | cai **só** o detune | ✅ bloco 639 → 526 µs, os outros cinco tocando |
-| teto 200 µs | cascata na ordem + estado "sem saída" | ✅ detune→phaser→warble→drive→freeze→shimmer, depois *"a base sozinha não cabe"* |
-| `ctos rearm` | solta latches **sem** religar | ✅ |
+| ceiling 620 µs (block 639) | **only** the detune drops | ✅ block 639 → 526 µs, the other five playing |
+| ceiling 200 µs | cascade in order + "no output" state | ✅ detune→phaser→warble→drive→freeze→shimmer, then *"the base alone does not fit"* |
+| `ctos rearm` | releases latches **without** turning back on | ✅ |
 
-Com os seis efeitos ligados o bloco fica em **577–639 µs de pico ~700**, contra
-teto de 850 (85% de 1000). A suíte inteira ainda cabe com folga. Mecanismo
-custou **+14 µs**.
+With the six effects on the block stays at **577–639 µs with a ~700 peak**, against
+a ceiling of 850 (85% of 1000). The whole suite still fits with margin. The mechanism
+cost **+14 µs**.
 
-**Duas correções que os testes forçaram:**
+**Two corrections the tests forced:**
 
-1. **A serial morreu no primeiro teste** — eu chamava `LogAlways` e
-   `MidiSendBytes` de dentro do `AudioCb`, que é o defeito de prioridade 1
-   deste documento, catalogado antes de eu cometê-lo. Travou o instrumento
-   inteiro, não só o CDC. Consertado: o callback marca (`volatile`), o loop
-   fala.
-2. **Derrubava dois quando um bastava.** Zerar o param não faz o efeito parar
-   de custar — o `EffectSlot` desce por rampa e continua processando. O
-   mecanismo media de novo antes da própria ação surtir efeito. Consertado com
-   **carência de 250 ms** depois de cada queda.
+1. **The serial died in the first test** — I called `LogAlways` and
+   `MidiSendBytes` from inside `AudioCb`, which is the priority 1 defect
+   of this document, catalogued before I committed it. It locked up the whole
+   instrument, not only the CDC. Fixed: the callback marks (`volatile`), the loop
+   speaks.
+2. **It knocked down two when one was enough.** Zeroing the param does not make the effect stop
+   costing — the `EffectSlot` descends by ramp and keeps processing. The
+   mechanism measured again before its own action took effect. Fixed with a
+   **250 ms grace** after each drop.
 
 ---
 
-## Pivô de 20/08 — duas cadeias de caráter, medido
+## Pivot of 20/08 — two character chains, measured
 
 ```
 p1 → in_gain_A → gate_A → [DRIVE·PHASER·WARBLE] ┐
@@ -1663,318 +1663,318 @@ p1 → in_gain_A → gate_A → [DRIVE·PHASER·WARBLE] ┐
 p2 → in_gain_B → gate_B → [DRIVE·PHASER·WARBLE] ┘   → level → OUT_WIDTH → split
 ```
 
-Firmware **v0.91.0** · **71/96 params · 36/48 CCs** · SDRAM liberada: 153,6 KB.
+Firmware **v0.91.0** · **71/96 params · 36/48 CCs** · SDRAM freed: 153.6 KB.
 
 | | µs |
 |---|---|
-| tudo ligado | **620 média / 663 pico (66%)** |
-| base (nada ligado) | 160 |
-| os seis de caráter | ~130 (90 o primeiro a ligar, 38 o segundo — I-cache) |
-| cauda (reverb 99 + freeze 69 + shimmer 202) | 370 |
+| everything on | **620 average / 663 peak (66%)** |
+| base (nothing on) | 160 |
+| the six character ones | ~130 (90 the first to turn on, 38 the second — I-cache) |
+| tail (reverb 99 + freeze 69 + shimmer 202) | 370 |
 
-**A assimetria entre cadeias era I-cache, não código.** Quem liga primeiro
-paga ~90, quem liga depois ~38, seja qual for a cadeia — três corridas
-concordantes com a ordem invertida. As duas cadeias são simétricas.
+**The asymmetry between chains was I-cache, not code.** Whoever turns on first
+pays ~90, whoever turns on after ~38, whichever chain it is — three runs
+in agreement with the order inverted. The two chains are symmetric.
 
-**A base decomposta matou o caso de otimização:** dos 182 µs originais, o
-desperdício real eram os dois gates com o portão aberto. Módulo do delay (45),
-osso da dinâmica (94), medição (15) e escritas do warble (7) estão todos
-fazendo algo. Guarda `thresh > 0` implementado — **26–30 µs medidos A/B no
-mesmo binário**.
+**The decomposed base killed the optimization case:** of the original 182 µs, the
+real waste was the two gates with the gate open. The delay module (45),
+the bone of the dynamics (94), the measurement (15) and the warble writes (7) are all
+doing something. `thresh > 0` guard implemented — **26–30 µs measured A/B on the
+same binary**.
 
-**Aberto:** aceite de ouvido no instrumento híbrido, e IFÁ10000 dos seis
-efeitos nas novas posições (não herdam o aceite da cadeia antiga).
+**Open:** acceptance by ear on the hybrid instrument, and IFÁ10000 of the six
+effects in the new positions (they do not inherit the acceptance of the old chain).
 
 ---
 
-## Fechado em 20/08 — o motor de DSP externo saiu, inteiro
+## Closed on 20/08 — the external DSP engine left, entirely
 
-O delay era o último consumidor do runtime. Reescrito em C++ (`delay.h`, grafo
-lido do export: feedback fixo **0,4**, crossfade, mono nos dois canais), o
-runtime saiu por completo.
+The delay was the last consumer of the runtime. Rewritten in C++ (`delay.h`, graph
+read from the export: fixed feedback **0.4**, crossfade, mono on both channels), the
+runtime left completely.
 
-| | antes | depois |
+| | before | after |
 |---|---|---|
-| tudo ligado | 678 µs | **545 µs / 656 pico** |
-| base (nada ligado) | 182 µs | **115 µs** |
-| o delay | 45 µs, **sempre** | +11 µs, só ligado |
-| binário | 212 424 B | 175 980 B |
+| everything on | 678 µs | **545 µs / 656 peak** |
+| base (nothing on) | 182 µs | **115 µs** |
+| the delay | 45 µs, **always** | +11 µs, only when on |
+| binary | 212 424 B | 175 980 B |
 | params | 61 | **54** |
-| repo | — | **−8 MB** de export |
+| repo | — | **−8 MB** of export |
 
-**Os 67 µs da base são o dado que interessa:** um `Module::Process` roda ligado
-ou desligado, porque o módulo não sabe que está em bypass. Custo-zero-desligado,
-que todo efeito da casa segue, era **estruturalmente impossível** dentro do
-sistema de slots.
+**The 67 µs of the base are the datum that matters:** a `Module::Process` runs on
+or off, because the module does not know it is in bypass. Zero-cost-when-off,
+which every in-house effect follows, was **structurally impossible** inside the
+slot system.
 
-Saíram junto: `MODULE_SRC`, o diretório de export, `module.h`, `mod_slot[]`,
-`ModBind` e o
-push-por-nome, seis arquivos, quatro exports, os seis params órfãos do módulo,
-o watchdog do fx2 que julgava pelo CPU global (**achado 8**), o comando `probe`
-e o histograma nota-a-nota (**achado 7**).
+Left along with it: `MODULE_SRC`, the export directory, `module.h`, `mod_slot[]`,
+`ModBind` and the
+push-by-name, six files, four exports, the module's six orphan params,
+the fx2 watchdog that judged by the global CPU (**finding 8**), the `probe` command
+and the note-by-note histogram (**finding 7**).
 
-**Método na cicatriz 12f:** remover o símbolo-raiz e deixar o compilador
-enumerar os dependentes. Quatro erros na primeira passada, depois um, depois
-zero — sem faixa calculada e sem prosa perdida.
+**Method in scar 12f:** remove the root symbol and let the compiler
+enumerate the dependents. Four errors on the first pass, then one, then
+zero — with no calculated range and no lost prose.
 
-**Mapa de CC refeito:** todo param recebe CC (54/64), uma década por efeito.
-Nada mais só-serial.
+**CC map redone:** every param receives a CC (54/64), one decade per effect.
+Nothing else serial-only.
 
 ---
 
-## Fechado em 20/08 — cauda PARALELA e dois espaços
+## Closed on 20/08 — PARALLEL tail and two spaces
 
-O dB pediu p1 com delay e p2 com reverb, e depois corda com shimmer e couro
-com sala limpa. A cauda serial não conseguia nenhum dos dois.
+dB asked for p1 with delay and p2 with reverb, and then string with shimmer and leather
+with clean room. The serial tail could do neither.
 
 ```
 A ─┬→ ×dly_a ──┐
-B ─┼→ ×dly_b ──┴→ DELAY  (uma instância) ──┐
+B ─┼→ ×dly_b ──┴→ DELAY  (one instance) ───┐
    ├→ ×frz_a ──┐                           │
-   ├→ ×frz_b ──┴→ FREEZE (uma instância) ──┤→ soma → level → split
-   ├→ ×esp_a ───→ [SHIMMER_A ↺ SALA_A] ────┤
-   └→ ×esp_b ───→ [SHIMMER_B ↺ SALA_B] ────┤
-   └→ seco (as duas, inteiro) ─────────────┘
+   ├→ ×frz_b ──┴→ FREEZE (one instance) ───┤→ sum → level → split
+   ├→ ×esp_a ───→ [SHIMMER_A ↺ ROOM_A] ─────┤
+   └→ ×esp_b ───→ [SHIMMER_B ↺ ROOM_B] ─────┤
+   └→ dry (both, whole) ───────────────────┘
 ```
 
-**Delay e freeze continuam sendo UM**, com envio por cadeia — o gesto pedido
-era sobre espaço, e duplicá-los custaria CPU sem entregar diferença. **O
-espaço duplica de verdade**, porque shimmer não é um efeito ao lado do reverb:
-ele *é* o reverb realimentado com pitch, e duas molhaduras exigem duas salas.
+**Delay and freeze remain ONE**, with a send per chain — the requested gesture
+was about space, and duplicating them would cost CPU without delivering a difference. **The
+space duplicates for real**, because shimmer is not an effect alongside the reverb:
+it *is* the reverb fed back with pitch, and two wettings require two rooms.
 
-| | previsto | medido |
+| | predicted | measured |
 |---|---|---|
-| A: delay+shimmer · B: sala limpa | 625 µs | **490 / 530 pico — 53%** |
-| pior caso: as duas com shimmer e sala | 807 µs | **598 / 639 pico — 64%** |
+| A: delay+shimmer · B: clean room | 625 µs | **490 / 530 peak — 53%** |
+| worst case: both with shimmer and room | 807 µs | **598 / 639 peak — 64%** |
 
-O pior caso ficou **209 µs abaixo** da previsão: somei custos medidos na cauda
-serial, onde cada efeito processava o sinal inteiro. Em paralelo cada um
-recebe só o seu envio — **duas salas custam menos que o dobro de uma**
-(cicatriz 12g).
+The worst case came in **209 µs below** the prediction: I summed costs measured on the serial
+tail, where each effect processed the whole signal. In parallel each one
+receives only its own send — **two rooms cost less than twice one**
+(scar 12g).
 
-**Consequências declaradas:** o delay deixou de ser reverberado (os ecos saem
-secos, a sala trabalha sobre a fonte); os mixes internos viraram envios por
-cadeia; e o freeze virou **dois independentes**, um por cadeia, com buffer
-próprio: `frz_on_{a,b}` **são** o gesto de congelar, com `frz_vol` e
-`frz_size` por cadeia.
+**Declared consequences:** the delay stopped being reverberated (the echoes come out
+dry, the room works on the source); the internal mixes became per-chain
+sends; and the freeze became **two independent ones**, one per chain, with its own
+buffer: `frz_on_{a,b}` **are** the freeze gesture, with `frz_vol` and
+`frz_size` per chain.
 
-> **Correção de deriva (22/08).** Este parágrafo descrevia por meses um
-> desenho de "fonte e gesto separados", com um `frz_hold` que **nunca
-> existiu como parâmetro** — o `manifest.h:264` já registrava a decisão
-> contrária e a doc ficou no modelo antigo. Achado pelo audit de deriva
-> doc↔código; ver bts 13h.
+> **Drift correction (22/08).** This paragraph for months described a
+> design of "source and gesture separated", with a `frz_hold` that **never
+> existed as a parameter** — `manifest.h:264` already recorded the
+> opposite decision and the doc stayed in the old model. Found by the doc↔code
+> drift audit; see bts 13h.
 
-**Proteção anti-feedback duplicada** para o ramo B (bloqueante do hardware de
-dois exciters): governor e boost por ramo, `shift_hz` compartilhado — dois
-exciters no mesmo corpo com deslocamentos diferentes bateriam um contra o
-outro. **Painel — pinos (22/08).** D26 = B1 randomizador, D27 = B2 assinalável,
-**D25 = B3 rearme do CTOS** (novo em v0.111.0). D28 = LB do WIDI.
-D29/D30 reservados pras chaves DPDT dos excitadores. Os três botões usam
-pull-up interno e são ativos em baixo, então pino sem botão lê "solto".
+**Anti-feedback protection duplicated** for branch B (hardware blocker for
+two exciters): governor and boost per branch, `shift_hz` shared — two
+exciters on the same body with different shifts would beat against each
+other. **Panel — pins (22/08).** D26 = B1 randomizer, D27 = B2 assignable,
+**D25 = B3 CTOS rearm** (new in v0.111.0). D28 = WIDI LB.
+D29/D30 reserved for the exciters' DPDT switches. The three buttons use
+an internal pull-up and are active low, so a pin with no button reads "released".
 
-**O LED do Seed carrega dois fatos numa cadência só:** devagar = loop
-vivo e sem trava; **4× mais rápido = tem efeito derrubado pelo teto,
-aperte B3**; congelado = loop morto. O alarme entrou na cadência
-justamente pra não gastar o estado, que é a prova de aliveness.
+**The Seed's LED carries two facts in a single cadence:** slow = live
+loop with no lock; **4× faster = there is an effect knocked down by the ceiling,
+press B3**; frozen = dead loop. The alarm entered the cadence
+precisely so as not to spend the state, which is the proof of aliveness.
 
-**Aberto, e é o mais caro agora: não há preset em flash.** Toda gravação
-zera todo parâmetro e `pre_level_ab` nasce em 0. A perda é silenciosa dos dois
-lados e o sintoma imita defeito de efeito — custou dois diagnósticos
-falsos em 22/08 (bts 12l).
+**Open, and it is the most expensive now: there is no preset in flash.** Every flashing
+zeroes every parameter and `pre_level_ab` is born at 0. The loss is silent on both
+sides and the symptom imitates an effect defect — it cost two false
+diagnoses on 22/08 (bts 12l).
 
-`exc_filter_l/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
-substituem o param pelo estado real.
+`exc_filter_l/b` gate the protection; when the DPDTs are soldered, D29/D30
+replace the param with the real state.
 
-**Simplificação depois (v0.106.0):** `esp_on/esp_mix` e o `rev_mix` antigo
-eram **o mesmo controle duas vezes** — ganho na entrada e ganho na saída da
-mesma sala linear. O dB viu antes de mim. Ficou um envio só por destino
-(`rev_on`/`rev_mix`, mesma forma do delay e do freeze), retorno inteiro, e
-`shm_mix` de volta ao emprego único. Cicatriz 12h.
+**Simplification after (v0.106.0):** `esp_on/esp_mix` and the old `rev_mix`
+were **the same control twice** — gain at the input and gain at the output of
+the same linear room. dB saw it before me. It became a single send per destination
+(`rev_on`/`rev_mix`, same form as the delay and the freeze), whole return, and
+`shm_mix` back to a single job. Scar 12h.
 
-**Mapa de CC: 75 params, 75 CCs, nada só-serial.** Uma faixa por família, e
-todo destino com a mesma forma: `on_a, mix_a, on_b, mix_b`, depois os
-compartilhados.
-
----
-
-## Auditoria de params (20/08) — uma feature estava morta
-
-O dB pediu auditoria de todos os params, um por um. Três camadas, quinze
-minutos:
-
-| camada | resultado |
-|---|---|
-| quem lê cada param | 🔴 **detector dos búzios apagado havia 5 commits** |
-| faixa × trava interna | 🟠 `frz_size` com 61% de curso morto (corrigido) |
-| varredura viva min/max | ✅ 75/75 atingem os extremos declarados |
-
-**Os búzios estavam mortos desde `6a8175d`** — o detector vivia pós-gate,
-dentro da faixa que substituí na reestruturação em duas cadeias. Nada
-denunciou: as variáveis seguiram declaradas e lidas no loop, os params na
-tabela, os CCs no mapa apontando pro nada, e o `board` reportando tudo certo.
-
-**Feature morta parece feature desligada** — e `buzios_on` nasce em 0, então o
-estado normal era o estado quebrado. Restaurado do `3303028` e testado: oito
-pulsos, oito sorteios. A posição mudou de significado — agora lê a soma das
-duas cadeias, e uma batida em qualquer piezo dispara.
-
-**Falso positivo registrado:** a camada 2 acusou `drv_drive`, `drv_tone` e
-`phs_rate` de alcance desperdiçado. São deliberados. A trava do efeito é rede
-de segurança, não alvo — só faixa MAIOR que a trava é defeito.
-
-A auditoria virou seção do IFÁ10000, para rodar depois de qualquer refactor
-que toque no callback.
+**CC map: 75 params, 75 CCs, nothing serial-only.** One range per family, and
+every destination with the same form: `on_a, mix_a, on_b, mix_b`, then the
+shared ones.
 
 ---
 
-## Onde estamos (23/08, v0.155.0)
+## Params audit (20/08) — a feature was dead
 
-**A cadeia inteira do controlador está provada, e o painel acendeu.**
+dB asked for an audit of all the params, one by one. Three layers, fifteen
+minutes:
 
-| frente | estado |
+| layer | result |
 |---|---|
-| params de caráter por cadeia | ✅ custo indistinguível, medido com A/B no mesmo binário |
-| endereçamento por canal (ch1/ch2) | ✅ 37 pares, banco nativo |
-| espelho em ch4/ch5/ch6 | ✅ Wrench viu ch5; ch4 e ch6 a confirmar |
-| fio de volta (iPad → placa) | ✅ 93 CCs contados |
-| presets em RAM | ✅ ciclo `capturar → dump → reset → colar → load` |
-| botão de freeze B (D22/D23) | ✅ 4 batidas para 4 apertos |
-| rearme do CTOS pelo B3 | ✅ ressuscitado — tinha ramo inalcançável |
-| OLED SSD1309 | ✅ acende e escreve. **Configurado, nunca "presente"** |
+| who reads each param | 🔴 **cowrie-shell detector off for 5 commits** |
+| range × internal lock | 🟠 `frz_size` with 61% dead travel (corrected) |
+| live min/max sweep | ✅ 75/75 reach the declared extremes |
 
-**O que falta é humano:** remapear o Loopy (mapa inteiro em
-[RETRABALHO-LOOPY.md](operacao/RETRABALHO-LOOPY.md)) e a **escuta que
-constrói a biblioteca** — cada julgamento vira um preset em vez de uma
-anotação.
+**The cowrie shells were dead since `6a8175d`** — the detector lived post-gate,
+inside the stretch I replaced in the restructuring into two chains. Nothing
+flagged it: the variables stayed declared and read in the loop, the params in the
+table, the CCs in the map pointing at nothing, and the `board` reporting everything correct.
 
-## Painel físico (23/08) — encoders vivos, OLED morto
+**A dead feature looks like a disabled feature** — and `buzios_on` is born at 0, so the
+normal state was the broken state. Restored from `3303028` and tested: eight
+pulses, eight draws. The position changed meaning — it now reads the sum of the
+two chains, and a hit on any piezo fires.
 
-**Os três encoders EC11 funcionam**, com o mapa conferido por medição:
+**False positive recorded:** layer 2 flagged `drv_drive`, `drv_tone` and
+`phs_rate` for wasted range. They are deliberate. The effect's lock is a safety
+net, not a target — only a range LARGER than the lock is a defect.
 
-| encoder | fase A | fase B | push |
+The audit became a section of the IFÁ10000, to run after any refactor
+that touches the callback.
+
+---
+
+## Where we are (23/08, v0.155.0)
+
+**The whole controller chain is proven, and the panel lit up.**
+
+| front | state |
+|---|---|
+| per-chain character params | ✅ indistinguishable cost, measured with A/B on the same binary |
+| per-channel addressing (ch1/ch2) | ✅ 37 pairs, native bench |
+| mirror on ch4/ch5/ch6 | ✅ Wrench saw ch5; ch4 and ch6 to confirm |
+| return wire (iPad → board) | ✅ 93 CCs counted |
+| presets in RAM | ✅ cycle `capturar → dump → reset → colar → load` |
+| freeze B button (D22/D23) | ✅ 4 hits for 4 presses |
+| CTOS rearm via B3 | ✅ resurrected — had an unreachable branch |
+| OLED SSD1309 | ✅ lights and writes. **Configured, never "present"** |
+
+**What is missing is human:** remap Loopy (whole map in
+[RETRABALHO-LOOPY.md](operacao/RETRABALHO-LOOPY.md)) and the **listening that
+builds the library** — each judgment becomes a preset instead of a
+note.
+
+## Physical panel (23/08) — encoders alive, OLED dead
+
+**The three EC11 encoders work**, with the map checked by measurement:
+
+| encoder | phase A | phase B | push |
 |---|---|---|---|
-| cadeia A | D0 | D1 | D2 |
-| cadeia B | D3 | D4 | D9 |
+| chain A | D0 | D1 | D2 |
+| chain B | D3 | D4 | D9 |
 | global | **D18** | **D19** | **D17** |
 
-**Um pulso por detente, medido** — dez cliques deram dez. A divisão fica em 1.
+**One pulse per detent, measured** — ten clicks gave ten. The division stays at 1.
 
-**O OLED não sobreviveu.** GND e 3V3 estavam invertidos na placa de
-distribuição, e o módulo recebeu polaridade reversa. Sete causas foram
-eliminadas por prova — firmware (o binário que funcionou também dá preto),
-alimentação, encoders, fio rompido, ponte, velocidade e ordem de energização —
-e tudo que divide a mesma placa de alimentação funciona.
+**The OLED did not survive.** GND and 3V3 were inverted on the distribution
+board, and the module received reverse polarity. Seven causes were
+eliminated by proof — firmware (the binary that worked also gives black),
+power, encoders, broken wire, bridge, speed and power-up order —
+and everything that shares the same power board works.
 
-**Ao trocar o painel, o teste é de um minuto:** `oled` acende tudo,
-`oled texto ola` prova endereçamento de pixel e o DC.
+**When swapping the panel, the test is one minute:** `oled` lights everything up,
+`oled texto ola` proves pixel addressing and the DC.
 
-### Sondas que ficaram, e servem a cada solda nova
+### Probes that stayed, and serve each new solder
 
-| comando | o que responde |
+| command | what it answers |
 |---|---|
-| `varre [reset]` | **quais dos 15 pinos livres têm algo que se move** — não supõe mapa |
-| `encpino [reset]` | nível cru dos nove pinos, trava nas duas direções |
-| `fio <pino> <0\|1>` | segura um pino do OLED para medir no conector |
-| `fio curto` | ponte entre os cinco, teste diferencial |
-| `oledvel <n>` | prescaler do SPI em tempo de execução |
+| `varre [reset]` | **which of the 15 free pins have something that moves** — assumes no map |
+| `encpino [reset]` | raw level of the nine pins, latch in both directions |
+| `fio <pino> <0\|1>` | holds an OLED pin to measure at the connector |
+| `fio curto` | bridge among the five, differential test |
+| `oledvel <n>` | SPI prescaler at runtime |
 
-Todas acumulam desde o reset — **nenhuma abre janela cronometrada.**
+All accumulate since the reset — **none opens a timed window.**
 
-### Revisão de pinos entra na rotina de fechamento
+### Pin review enters the closing routine
 
-`make check-docs` confere `PINOS.md` contra os `seed::Dnn` do fonte, em três
-colunas: **no código e fora do doc · no doc e não usado · RESERVADO usado.**
-Pedido do dB, e a razão é dele: *a placa está entupida e os pontos de solda
-espremidos — conferir de cabeça falha exatamente quando errar custa mais.*
+`make check-docs` checks `PINOS.md` against the source's `seed::Dnn`, in three
+columns: **in the code and not in the doc · in the doc and unused · RESERVED used.**
+dB's request, and the reason is his: *the board is clogged and the solder points
+cramped — checking from memory fails exactly when a mistake costs most.*
 
 ---
 
-## Frente na fila — ampliar os búzios (pedido do dB, 23/08, "mas não ainda")
+## Front in the queue — expand the cowrie shells (dB's request, 23/08, "but not yet")
 
-**Os búzios estão com DUAS cartas** — `dly_time` e `dly_mix_a`, num array que
-cabe 8. O manifest já registrava isso como empobrecimento conhecido, herdado
-da saída do módulo de caráter do build:
+**The cowrie shells have TWO cards** — `dly_time` and `dly_mix_a`, in an array that
+fits 8. The manifest already recorded this as a known impoverishment, inherited
+from the removal of the build's character module:
 
-> *"Os búzios ficaram com DUAS cartas em vez de quatro, e o sorteio soa
-> proporcionalmente mais pobre. Não há conserto silencioso pra isso — ou volta
-> um módulo de caráter, ou a decisão é aceitar o sorteio menor."*
+> *"The cowrie shells ended up with TWO cards instead of four, and the draw sounds
+> proportionally poorer. There is no silent fix for that — either a
+> character module comes back, or the decision is to accept the smaller draw."*
 
-**Há um terceiro caminho que aquele texto não previu:** a duplicação de
-caráter do passo 1 criou **dez params novos da categoria certa**. Não é
-"randomizar quase tudo" — é **preencher a categoria que já estava definida e
-estava vazia.**
+**There is a third path that text did not foresee:** the character duplication
+of step 1 created **ten new params of the right category**. It is not
+"randomize almost everything" — it is **filling the category that was already defined and
+was empty.**
 
-### Onde parar já está decidido, e as razões são de música
+### Where to stop is already decided, and the reasons are musical
 
-| categoria | fora | por quê |
+| category | out | why |
 |---|---|---|
-| **MOLDURA** | reverb | o fundo parado que faz o contraste existir — *se tudo salta, nada é surpresa* |
-| **GESTO** | freeze | decisão de execução com hora certa; sorteada vira acidente |
-| **SEGURANÇA** | level, gate, governor, limiter, shift | — |
+| **FRAME** | reverb | the still background that makes the contrast exist — *if everything jumps, nothing is a surprise* |
+| **GESTURE** | freeze | a performance decision with a precise time; drawn it becomes an accident |
+| **SAFETY** | level, gate, governor, limiter, shift | — |
 
-**Candidatos legítimos (20, contra os 2 de hoje):** `drv_drive`, `drv_tone`,
+**Legitimate candidates (20, against today's 2):** `drv_drive`, `drv_tone`,
 `drv_sujeira`, `phs_rate`, `phs_depth`, `phs_fb`, `phs_stages`, `wrb_rate`,
-`wrb_depth`, `wrb_irreg` — nas duas cadeias.
+`wrb_depth`, `wrb_irreg` — in both chains.
 
-### O que o trabalho realmente é
+### What the work really is
 
-Subir o teto do array é trivial. **O trabalho é a FAIXA de sorteio de cada
-um**, e ela é de ouvido: sortear `drv_drive` no curso inteiro produz do limpo
-ao destruído a cada batida. O registro do antigo sorteio de nota mostra o
-padrão — faixa estreita, centro escolhido, e no caso dele até quantização
-em escala.
+Raising the array's ceiling is trivial. **The work is the draw RANGE of each
+one**, and it is by ear: drawing `drv_drive` over the whole travel produces from clean
+to destroyed on every hit. The record of the old note draw shows the
+pattern — narrow range, chosen center, and in its case even scale
+quantization.
 
-E o aviso que o próprio manifest deixou: *"o registro anterior sorteava certo
-mas soava tudo grave e parecido — o registro aprovado de ouvido foi o de
-cima."* **Faixa de sorteio é decisão de música, e o aceite é do músico.**
-
----
-
-**Duas frentes pequenas com argumento próprio, ambas de "dar testemunha ao
-que só a disciplina protege":**
-
-- **Tabela de pinos RESERVADOS em código**, com `static_assert` sobre os pinos
-  efetivamente configurados. Hoje `D29/D30` estão reservados aos DPDT do
-  exciter **só em documento — e o compilador não lê documento.** O default do
-  RST do OLED é justamente `D30`: se a solda tivesse seguido o default, a
-  colisão só apareceria no dia de montar o painel, com o fio na caixa, e nada
-  a teria pego antes.
-- **`defesas`**: inventário do que nunca foi exercitado (bts 13w), três
-  colunas — já agiu · tem gatilho · nenhum dos dois.
-
-**Na fila depois disso:** inventário do que nunca foi exercitado (bts 13w) ·
-unificar as duas recusas temporais globais · ponteiros de preset com
-pré-escuta · painel no OLED · QSPI (janela ITCM provada, falta a leitura
-indireta — não gastar gravação sem o RM0433).
+And the warning the manifest itself left: *"the previous record drew correctly
+but everything sounded low and similar — the record approved by ear was the one
+above."* **Draw range is a musical decision, and the acceptance is the musician's.**
 
 ---
 
-## Rota dos presets (22/08) — o difícil resolvido, o tedioso identificado
+**Two small fronts with an argument of their own, both about "giving testimony to
+what only discipline protects":**
 
-**A janela ITCM funciona.** A placa sai do memory-mapped executando de RAM
-independente, dialoga com o periférico, volta e sobrevive — seis gravações,
-`ITCMRAM: 212 B` provando que a seção foi aplicada. **Era o risco
-arquitetural da rota dos presets, e ele acabou.**
+- **A table of RESERVED pins in code**, with a `static_assert` over the pins
+  effectively configured. Today `D29/D30` are reserved for the exciter DPDTs
+  **only in a document — and the compiler does not read a document.** The OLED RST
+  default is precisely `D30`: if the soldering had followed the default, the
+  collision would only appear on the day of assembling the panel, with the wire in the enclosure, and nothing
+  would have caught it before.
+- **`defesas`**: an inventory of what was never exercised (bts 13w), three
+  columns — already acted · has a trigger · neither.
 
-**O que falta é protocolo**, que é trabalho de leitura: a sequência exata de
-leitura indireta do QUADSPI. Três hipóteses vivas e nomeadas, condição de
-retomada explícita — tudo em
+**In the queue after that:** an inventory of what was never exercised (bts 13w) ·
+unify the two global temporal refusals · preset pointers with
+pre-listen · panel on the OLED · QSPI (ITCM window proven, indirect read
+missing — do not spend a flashing without the RM0433).
+
+---
+
+## Preset route (22/08) — the hard part solved, the tedious part identified
+
+**The ITCM window works.** The board leaves memory-mapped executing from independent
+RAM, talks to the peripheral, returns and survives — six flashings,
+`ITCMRAM: 212 B` proving the section was applied. **It was the architectural
+risk of the preset route, and it is over.**
+
+**What is missing is protocol**, which is reading work: the exact sequence of
+indirect reading of the QUADSPI. Three live and named hypotheses, explicit
+resumption condition — all in
 [DESENHO-ESCRITA-QSPI.md](DESENHO-ESCRITA-QSPI.md).
 
-> **Condição de retomada: RM0433, capítulo QUADSPI, leitura indireta.** Sem
-> ele a frente fica parada — por dimensionamento, não por desistência. Meia
-> hora com o manual vale mais que dez gravações adivinhando.
+> **Resumption condition: RM0433, QUADSPI chapter, indirect read.** Without
+> it the front stays stopped — by sizing, not by giving up. Half
+> an hour with the manual is worth more than ten flashings guessing.
 
-O BOOT_SRAM segue estacionado no ramo `investigacao-boot-sram`, com a
-hipótese registrada para quem retomar.
+The BOOT_SRAM remains parked on the `investigacao-boot-sram` branch, with the
+hypothesis recorded for whoever resumes.
 
 ---
 
-## Defeitos abertos
+## Open defects
 
-**✅ FECHADO 22/08 — a entrada NÃO satura, e o divisor saiu da fila.**
+**✅ CLOSED 22/08 — the input does NOT saturate, and the divider left the queue.**
 
-Medido com os piezos **montados na escultura**, que é o regime de uso:
+Measured with the piezos **mounted on the sculpture**, which is the usage regime:
 
 ```
 p1 (IN_L): pico  -9,2 dBFS | 18,0% das amostras ativas | clip 0
@@ -1982,59 +1982,59 @@ p2 (IN_R): pico -19,5 dBFS |  1,3% das amostras ativas | clip 0
 pos-ganho (in_gain 2,8x):   -0,3 dBFS                  | clip 0
 ```
 
-**Nenhum clip em lugar nenhum.** O plano de oito passos encolheu para dois: a
-proteção (1 kΩ + 2× 1N4148), que serve de qualquer jeito porque piezo entrega
-dezenas de volts num transiente forte, e recalibrar o `in_gain`.
+**No clip anywhere.** The eight-step plan shrank to two: the
+protection (1 kΩ + 2× 1N4148), which serves anyway because a piezo delivers
+tens of volts in a strong transient, and recalibrating `in_gain`.
 
-**A cicatriz 12a acertou o desfecho.** A medição de 20/08 que dizia "a entrada
-satura" foi feita com **dedo direto no disco solto** — o caso mais violento que
-a pastilha encontra. Montada e excitada por vibração, ela entrega vinte dB a
-menos. *"Dimensionar antes de medir no regime certo seria resolver um problema
-que talvez não exista"* — e não existia.
+**Scar 12a got the outcome right.** The 20/08 measurement that said "the input
+saturates" was done with a **finger directly on the loose disc** — the most violent case the
+pickup encounters. Mounted and excited by vibration, it delivers twenty dB
+less. *"Sizing before measuring in the right regime would be solving a problem
+that maybe does not exist"* — and it did not.
 
-**Dois pontos de atenção que a medição deixou:**
+**Two points of attention the measurement left:**
 
-**O pós-ganho está a três décimos do teto** (−0,3 dBFS com `in_gain` 2,8×). Uma
-batida mais forte clipa. Há folga na entrada, não na saída do ganho.
+**The post-gain is three tenths from the ceiling** (−0.3 dBFS with `in_gain` 2.8×). A
+stronger hit clips. There is margin at the input, not at the gain output.
 
-**Dez dB entre os dois piezos, e p1 com 14× mais amostras ativas.** Pode ser
-execução ou acoplamento, e a medição não distingue — a separação é **trocar os
-piezos de canal** (cicatriz 12b). Enquanto não se faz, `in_gain_a/b` existem
-justamente para casar os dois.
+**Ten dB between the two piezos, and p1 with 14× more active samples.** It may be
+performance or coupling, and the measurement does not distinguish — the separation is **swapping the
+piezos' channel** (scar 12b). While it is not done, `in_gain_a/b` exist
+precisely to match the two.
 
-**🔴 A serial morre sob callback longo — prioridade 1.**
-As rajadas de ~3,4 ms do callback starvam a ISR do USB; o CDC do host
-apodrece. Contornado por `log_mute`, caixa-preta e MIDI, mas o conserto
-certo está desenhado e não feito: **ring de log kick-and-forget**, em que
-o loop nunca toca o USB e a drenagem acontece por ISR.
+**🔴 The serial dies under a long callback — priority 1.**
+The callback's ~3.4 ms bursts starve the USB ISR; the host's CDC
+rots. Worked around with `log_mute`, black box and MIDI, but the right
+fix is designed and not done: a **kick-and-forget log ring**, in which
+the loop never touches the USB and the drain happens by ISR.
 
-**🟡 Bloco 256 custa 5,3 ms de latência.** Num instrumento realimentado
-isso desloca onde o feedback se estabelece — é o preço de qualquer módulo
-de FFT que o exija, e a razão de o bloco ser 48. Restrição conhecida, não
-resolvida.
+**🟡 Block 256 costs 5.3 ms of latency.** In a fed-back instrument
+that shifts where the feedback settles — it is the price of any FFT
+module that requires it, and the reason the block is 48. Known constraint, not
+resolved.
 
-**🟢 Off-by-one no contador de aplicadas.** `msgs completas N` vem sempre
-**exatamente 1** acima de `APLICADAS`, com e sem carga (65/64 e
-2779/2778). Diferença fixa, não taxa de perda — provavelmente a mensagem
-em trânsito no instante da leitura. Confirmar antes de chamar de cosmético.
+**🟢 Off-by-one in the applied counter.** `msgs completas N` always comes
+**exactly 1** above `APLICADAS`, with and without load (65/64 and
+2779/2778). A fixed difference, not a loss rate — probably the message
+in transit at the instant of reading. Confirm before calling it cosmetic.
 
-**🟡 Pool SRAM a 92,4%.** Terceiro módulo não entra sem mudar a
-estratégia de alocação (rotular alocações quente/fria antes de crescer).
-
----
-
-## Fila congelada (espera hardware)
-
-T4 (buffer + piezo) · T7e (gate com transiente real) · teste percussivo do
-limiter · **solda do painel v2** (5 pots + 2 botões; B2 é candidato natural pro toggle dos
-Búzios).
+**🟡 SRAM pool at 92.4%.** A third module does not fit without changing the
+allocation strategy (label hot/cold allocations before growing).
 
 ---
 
-## Próximos passos, em ordem
+## Frozen queue (waiting for hardware)
 
-1. **Decisão do dB:** quanto de proteção volta → grava o estado
-   instrumento como default do repo.
-2. **Ring de log** — mata o defeito prioridade 1 por arquitetura.
-3. **Defaults de palco:** `buzios_thresh`, `buzios_cooldown`.
-4. **Painel v2** quando o hardware chegar (T11 já testa por serial).
+T4 (buffer + piezo) · T7e (gate with a real transient) · percussive test of the
+limiter · **panel v2 solder** (5 pots + 2 buttons; B2 is a natural candidate for the cowrie-shell
+toggle).
+
+---
+
+## Next steps, in order
+
+1. **dB's decision:** how much protection comes back → flash the instrument
+   state as the repo default.
+2. **Log ring** — kills the priority 1 defect by architecture.
+3. **Stage defaults:** `buzios_thresh`, `buzios_cooldown`.
+4. **Panel v2** when the hardware arrives (T11 already tests via serial).

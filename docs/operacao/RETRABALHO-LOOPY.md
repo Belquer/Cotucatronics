@@ -1,51 +1,51 @@
-# Lista de CCs para configurar o Loopy
+# List of CCs to configure Loopy
 
-> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
-> gerador o escreve — foi feito à mão a partir do `manifest.h` **firmware v0.156.0**, e o
-> manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
-> como espelho do actual.
+> ⚠️ **NOT GENERATED, despite this sheet having said so until 06/09.** No
+> generator writes it — it was made by hand from `manifest.h` **firmware v0.156.0**, and the
+> manifest is today at **v1.13.0**. Treat it as a record of that state, not
+> as a mirror of the current one.
 >
-> Rótulo sem gerador apodrece com autoridade: ninguém o mantém à mão *porque
-> é gerado*, e nada o regenera *porque não há gerador*. Ou se lhe escreve um,
-> ou se lhe tira o rótulo — isto é a segunda.
+> A label without a generator rots with authority: nobody maintains it by hand *because
+> it is generated*, and nothing regenerates it *because there is no generator*. Either you write one for it,
+> or you take the label off it — this is the second.
 
-## A regra: seis canais, e ESCUTA = MANDA + 3
+## The rule: six channels, and LISTEN = SEND + 3
 
 ```
-MANDA    ch1  compartilhados
-         ch2  cadeia A
-         ch3  cadeia B
+SEND     ch1  shared
+         ch2  chain A
+         ch3  chain B
 
-ESCUTA   ch4  compartilhados
-         ch5  cadeia A
-         ch6  cadeia B
+LISTEN   ch4  shared
+         ch5  chain A
+         ch6  chain B
 ```
 
-**O número do CC é o mesmo nos seis canais.** Só o canal diz de quem é e
-em que direção.
+**The CC number is the same across the six channels.** Only the channel says whose it is and
+in which direction.
 
-**Cada página tem UM assunto**, e é isto que faz a duplicação funcionar:
-monte a página da cadeia A no ch2 e duplique trocando o canal para 3 — os
-37 saem numa operação, sem nenhum compartilhado junto para apagar.
+**Each page has ONE subject**, and this is what makes the duplication work:
+build the chain-A page on ch2 and duplicate it swapping the channel to 3 — the
+37 come out in one operation, with no shared one mixed in to delete.
 
-### Por que todos os widgets devem escutar
+### Why every widget must listen
 
-Não é conveniência. A placa muda params **sozinha** em três situações, e
-widget que não escuta passa a mentir:
+It is not convenience. The board changes params **on its own** in three situations, and
+a widget that does not listen starts lying:
 
-- **búzios** sorteiam a cada batida;
-- o **CTOS** derruba efeitos quando o teto de soma estoura;
-- **`preset load`** troca 33 params de uma vez.
+- **the cowrie shells** draw lots on every beat;
+- the **CTOS** drops effects when the sum ceiling overflows;
+- **`preset load`** swaps 33 params at once.
 
-O `sync` empurra o estado e **confere o retorno sozinho** — sai de `AVISO`
-para `OK` conforme os widgets voltam a escutar.
+`sync` pushes the state and **checks the return on its own** — it goes from `AVISO`
+to `OK` as the widgets return to listening.
 
 
-## COMPARTILHADOS — 12 · manda **ch1** · escuta **ch4**
+## SHARED — 12 · sends on **ch1** · listens on **ch4**
 
-Existem uma vez só. **Não duplicar.**
+They exist only once. **Do not duplicate.**
 
-| CC | param |
+| CC | parameter |
 |---|---|
 | 20 | `piezo_mix` |
 | 64 | `dly_time` |
@@ -60,22 +60,22 @@ Existem uma vez só. **Não duplicar.**
 | 113 | `out_l` |
 | 114 | `out_r` |
 
-## PAREADOS — 37 · manda **ch2**(A)/**ch3**(B) · escuta **ch5**/**ch6**
+## PAIRED — 37 · sends on **ch2**(A)/**ch3**(B) · listens on **ch5**/**ch6**
 
-O nome é a família: no firmware são `<nome>_a` e `<nome>_b`, e o canal os
-separa.
+The name is the family: in the firmware they are `<name>_a` and `<name>_b`, and the channel
+separates them.
 
 
 ### CENTRAL
 
-| CC | família |
+| CC | family |
 |---|---|
 | 23 | `gate_thresh` |
 | 25 | `gate_release` |
 
 ### MOD
 
-| CC | família |
+| CC | family |
 |---|---|
 | 30 | `drv_on` |
 | 31 | `drv_mix` |
@@ -96,7 +96,7 @@ separa.
 
 ### TIME
 
-| CC | família |
+| CC | family |
 |---|---|
 | 60 | `dly_on` |
 | 61 | `dly_mix` |
@@ -106,7 +106,7 @@ separa.
 
 ### TECH
 
-| CC | família |
+| CC | family |
 |---|---|
 | 71 | `rev_on` |
 | 72 | `rev_mix` |
@@ -119,29 +119,28 @@ separa.
 | 79 | `shm_tone` |
 | 105 | `exc_on` |
 
-### PROTEÇÃO
+### PROTECTION
 
-| CC | família |
+| CC | family |
 |---|---|
 | 110 | `gov_ceiling` |
 | 111 | `gov_release` |
 | 115 | `bench_boost` |
 
-## Reservado, ainda não implementado
+## Reserved, not yet implemented
 
 ```
-preset da cadeia A   ch2 cc101   valor 0..127 = slot
-preset da cadeia B   ch3 cc101   valor 0..127 = slot
+chain A preset   ch2 cc101   value 0..127 = slot
+chain B preset   ch3 cc101   value 0..127 = slot
 ```
 
-## Ao terminar
+## When finishing
 
 ```
 vistos reset
-# ... move TODOS os widgets, um por vez
+# ... move ALL the widgets, one at a time
 vistos
 ```
 
-`FALTA` = não chegou · `ORFAO` = chegou fora do mapa → **conserto no
-firmware**, não no widget.
-
+`FALTA` = did not arrive · `ORFAO` = arrived off the map → **fix in the
+firmware**, not in the widget.

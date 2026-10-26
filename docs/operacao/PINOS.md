@@ -1,79 +1,81 @@
-# MAPA DE PINOS — Cotucatronics
+# PIN MAP — Cotucatronics
 
-> ⚠️ **05/09 — a placa e o Daisy Seed3, nao o rev4.** A pinagem e a MESMA: o
-> nome STM32 bate nos 40 pinos entre os dois CSV do fabricante, e a doc diz
-> *"maintaining pin-to-pin compatibility with the original Seed pinout and
-> footprint"*. Tudo o que este ficheiro diz continua a valer. A fonte passou a
-> ser `kicad/cotuca_cerebro/Seed3_pinout.csv`, versionado no repo.
+> ⚠️ **05/09 — the board is the Daisy Seed3, not the rev4.** The pinout is the
+> SAME: the STM32 name matches on all 40 pins between the two manufacturer CSVs,
+> and the doc says *"maintaining pin-to-pin compatibility with the original Seed
+> pinout and footprint"*. Everything this file says still holds. The source is
+> now `kicad/cotuca_cerebro/Seed3_pinout.csv`, versioned in the repo.
 >
-> A diferenca pratica e uma so, e e a favor: o codec passa a **TI TAC5242**
-> (32 bit / 192 kHz, -120 dB). O conector e USB-C, mas a bancada ja grava por
-> USB-C desde que a primeira placa queimou — nao muda nada no fluxo.
+> The practical difference is just one, and it is in our favor: the codec
+> becomes the **TI TAC5242** (32 bit / 192 kHz, -120 dB). The connector is USB-C,
+> but the bench has flashed over USB-C ever since the first board burned — it
+> changes nothing in the flow.
 
 
-> Verificado em `src/hal_daisy_seed.cpp` e `src/manifest.h` @ `hal v0.74.1` (04/09).
-> **Pino se confirma no fonte, não na memória.** Se este documento e o
-> código divergirem, o código está certo e este documento está velho.
+> Verified in `src/hal_daisy_seed.cpp` and `src/manifest.h` @ `hal v0.74.1` (04/09).
+> **A pin is confirmed in the source, not in memory.** If this document and the
+> code diverge, the code is right and this document is old.
 
-## Ocupados
+## Occupied
 
-| pino | função | como |
+| pin | function | how |
 |---|---|---|
-| **D13** | UART TX → **RX** da ponte ESP32 | PB6 · USART1 · 31250 8N1 · ★ CRUZADO |
-| **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI · **PULL-UP INTERNO LIGADO** (~40 kΩ) desde 02/09 — ver abaixo |
-| **D15, D16** | pots ×2 (A0, A1) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico. **Só D15 e D16 são pots**; `board` diz `knobs:2`. Ambos com leitura **invertida** (`kKnobInverte`) — medido nos dois extremos, cru 0,0008 no máximo e 0,9753 no mínimo |
-| **D0, D1, D2** | **o encoder** — fase A, fase B, push | `kEncPin[0]`, e é o único desde 05/09 |
-| **D17** | **A2 — divisor 100 k/22 k do trilho de 15 V** | leitura da tensão; o firmware recusa ligar o amp abaixo de 12 V |
-| **D5, D6, D7, D8, D10** | OLED SSD1309 SPI | ver a tabela do painel, mais abaixo |
-| **D22** | botão B4 — freeze B | INPUT + PULLUP, ativo-baixo |
-| **D23** | LED — freeze B | OUTPUT, segue o param `frz_on_b` |
-| **D24** | botão B2 — freeze A | INPUT + PULLUP, ativo-baixo |
-| ~~**D25**~~ | ~~botão B3 — rearme do CTOS~~ · **REMOVIDO 05/09** | a função fica pelo `b3` da serial; o painel não leva botão |
-| **D26** | botão B1 — búzios (randomizador) | INPUT + PULLUP |
-| **D27** | LED — freeze A | OUTPUT, segue o param `frz_on_a` |
-| **D28** | STATUS da ponte ESP32 (link BLE) | INPUT + PULLUP · ativo em BAIXO, aberto-dreno |
+| **D13** | UART TX → **RX** of the ESP32 bridge | PB6 · USART1 · 31250 8N1 · ★ CROSSED |
+| **D14** | UART RX ← **TX** of the ESP32 bridge | PB7 · ★ CROSSED · it is the one that receives MIDI · **INTERNAL PULL-UP ON** (~40 kΩ) since 02/09 — see below |
+| **D15, D16** | pots ×2 (A0, A1) | ⚠️ **A0–A4 are ALIASES of D15–D19** — the same physical pin. **Only D15 and D16 are pots**; `board` says `knobs:2`. Both with **inverted** reading (`kKnobInverte`) — measured at both extremes, raw 0.0008 at the maximum and 0.9753 at the minimum |
+| **D0, D1, D2** | **the** encoder — phase A, phase B, push | `kEncPin[0]`, and it is the only one since 05/09 |
+| **D17** | **A2 — 100 k/22 k divider of the 15 V rail** | voltage reading; the firmware refuses to turn on the amp below 12 V |
+| **D5, D6, D7, D8, D10** | OLED SSD1309 SPI | see the panel table, further down |
+| **D22** | button B4 — freeze B | INPUT + PULLUP, active-low |
+| **D23** | LED — freeze B | OUTPUT, follows the param `frz_on_b` |
+| **D24** | button B2 — freeze A | INPUT + PULLUP, active-low |
+| ~~**D25**~~ | ~~button B3 — CTOS reset~~ · **REMOVED 05/09** | the function stays with the serial's `b3`; the panel carries no button |
+| **D26** | button B1 — cowrie shells (randomizer) | INPUT + PULLUP |
+| **D27** | LED — freeze A | OUTPUT, follows the param `frz_on_a` |
+| **D28** | STATUS of the ESP32 bridge (BLE link) | INPUT + PULLUP · active LOW, open-drain |
 
-> ✅ **O CONFLITO DO `D17` MORREU EM 05/09, e não por conserto.**
+> ✅ **THE `D17` CONFLICT DIED ON 05/09, and not by a fix.**
 >
-> O `D17` era o push do encoder G *e* o A2 do divisor do trilho — dois usos
-> escritos, ambos intencionais, e nenhum verificador os via porque moravam em
-> documentos diferentes. Propus duas saídas, e **nenhuma foi precisa**: o dB
-> fechou a interface num **encoder só**, o encoder G saiu, e o `D17` ficou
-> livre para o divisor sem se tocar em firmware que funcionava.
+> The `D17` was the push of encoder G *and* the A2 of the rail divider — two
+> uses written, both intentional, and no checker saw them because they lived in
+> different documents. I proposed two ways out, and **neither was needed**: dB
+> closed the interface on a **single encoder**, encoder G left, and `D17` became
+> free for the divider without touching firmware that worked.
 >
-> **Uma decisão de interface dissolveu um problema de hardware.** Fica
-> escrito porque a próxima colisão pode ter a mesma saída, e ninguém a
-> procura desse lado.
+> **An interface decision dissolved a hardware problem.** It is written down
+> because the next collision may have the same way out, and nobody looks for it
+> from that side.
 
-## Livres
+## Free
 
-**D3** · **D4** · **D9** · **D11** · **D12** · **D18** · **D19** · **D20** · **D21** · **D25** — dez.
+**D3** · **D4** · **D9** · **D11** · **D12** · **D18** · **D19** · **D20** · **D21** · **D25** — ten.
 
-Passaram de quatro a dez a 05/09: saíram os encoders B e G (`D3 D4 D9 D18 D19`)
-e o botão de rearme (`D25`). O `D17` **não** está aqui — é o A2 do divisor.
+They went from four to ten on 05/09: encoders B and G left (`D3 D4 D9 D18 D19`)
+and the reset button (`D25`). The `D17` is **not** here — it is the A2 of the
+divider.
 
-⚠️ **`D29` e `D30` saíram desta lista em 04/09: são as linhas de dados do
-USB** (pinos 36 e 37, `USB_HS_D−`/`D+`). Ver o aviso abaixo.
+⚠️ **`D29` and `D30` left this list on 04/09: they are the USB data lines**
+(pins 36 and 37, `USB_HS_D−`/`D+`). See the warning below.
 
-> ⚠️ Esta linha dizia **`D0–D12`** até 04/09, e estava errada de duas
-> maneiras ao mesmo tempo: D0–D4 e D9 são os encoders A e B, e D5–D8 e D10
-> são o OLED — que este mesmo documento lista como ocupado três secções
-> abaixo. **O documento contradizia-se a si próprio**, e ninguém reparou
-> porque as duas afirmações nunca são lidas na mesma passagem.
+> ⚠️ This line said **`D0–D12`** until 04/09, and was wrong in two ways at the
+> same time: D0–D4 and D9 are encoders A and B, and D5–D8 and D10 are the OLED —
+> which this same document lists as occupied three sections below. **The document
+> contradicted itself**, and nobody noticed because the two statements are never
+> read in the same pass.
 >
-> Apanhado pelo exame de pinos do `bts`, que é para isto que existe: ler o
-> fonte e o documento lado a lado em vez de confiar em qualquer um deles.
+> Caught by the pin exam of the `bts`, which is what it exists for: reading the
+> source and the document side by side instead of trusting either one of them.
 
-⚠️ **Não confundir com `kLivresPin` no fonte** (`hal_daisy_seed.cpp`). Essa
-lista chama-se "livres" mas quer dizer **"que a varredura pode reconfigurar
-sem matar o OLED nem o MIDI"** — e inclui D17/D18/D19, que são o encoder G.
-O nome mente; o comportamento é intencional (a varredura existe justamente
-para descobrir cablagem de encoder).
+⚠️ **Do not confuse it with `kLivresPin` in the source** (`hal_daisy_seed.cpp`).
+That list is called "free" but means **"that the sweep can reconfigure without
+killing the OLED or the MIDI"** — and it includes D17/D18/D19, which are encoder
+G. The name lies; the behavior is intentional (the sweep exists precisely to
+discover encoder wiring).
 
-> 🔴 **D29 E D30 NAO PODEM SER USADOS. SAO O USB.**
+> 🔴 **D29 AND D30 CANNOT BE USED. THEY ARE THE USB.**
 >
-> Descoberto em 04/09, ao gerar o símbolo da Seed do
-> `Daisy_Seed_Rev4_Pinout.csv` do fabricante:
+> Discovered on 04/09, while generating the Seed symbol from the manufacturer's
+> `Daisy_Seed_Rev4_Pinout.csv`:
 >
 > ```
 > pino 36  →  D29  =  USB_HS_D_-   (PB14)
@@ -81,107 +83,107 @@ para descobrir cablagem de encoder).
 > pino  1  →  D0   =  USB_HS_ID    (PB12)
 > ```
 >
-> São **as linhas de dados do próprio USB** — as que o conector usa e por onde
-> passa a serial. Reconfigurá-las como GPIO mata a porta, e o defeito só
-> apareceria com a placa feita: firmware a correr, painel bom, e nenhuma
-> forma de falar com ele. Passámos um dia inteiro nesse quadro por outra
-> causa, e sabemos como é.
+> They are **the data lines of the USB itself** — the ones the connector uses
+> and through which the serial passes. Reconfiguring them as GPIO kills the port,
+> and the defect would only appear with the board built: firmware running, panel
+> good, and no way to talk to it. We spent a whole day in that picture for
+> another cause, and we know what it is like.
 >
-> **Este documento reservava-as para o sense dos DPDT.** Não vão lá.
+> **This document used to reserve them for the DPDT sense.** They do not go there.
 
-**O sense dos DPDT foi DESCARTADO a 05/09.** A DPDT tipo 2 usa os dois polos
-para o mesmo canal (comuns amarrados), portanto não sobra contacto para ler o
-estado. `exc_on` continua a ser **intenção de software** — o firmware acredita
-no que lhe dizem. As opções e o que cada uma custa estão em
-[`FUTURO.md`](../FUTURO.md) §1, incluindo uma que não gasta pino nenhum.
+**The DPDT sense was DISCARDED on 05/09.** The type-2 DPDT uses both poles for
+the same channel (commons tied), so there is no contact left to read the state.
+`exc_on` remains **a software intention** — the firmware believes what it is
+told. The options and what each one costs are in
+[`FUTURO.md`](../FUTURO.md) §1, including one that spends no pin at all.
 
-⚠️ **`D0` é o `USB_HS_ID`** e está a ser usado como fase A do encoder A. Em
-modo dispositivo o pino ID não é usado, portanto funciona — mas fica escrito,
-porque é a mesma família e ninguém o sabia.
+⚠️ **`D0` is the `USB_HS_ID`** and is being used as phase A of encoder A. In
+device mode the ID pin is not used, so it works — but it is written down,
+because it is the same family and nobody knew.
 
-## Reservado para o painel v2
+## Reserved for panel v2
 
-| bloco | pinos | nota |
+| block | pins | note |
 |---|---|---|
-| OLED SSD1309 SPI | 5 | **SOLDADO 23/08** — ver a tabela abaixo. SPI1, modo 0, MISO não atribuído |
-| Encoder EC11 | 3 (A, B, push) | ✅ **JÁ SÃO TRÊS E ESTÃO LIGADOS** — ver os `kEncPin` na tabela de ocupados |
-| Pots de volume ×2 | 2 (ADC) | ✅ **LIGADOS** em D15/D16, um por exciter |
+| OLED SSD1309 SPI | 5 | **SOLDERED 23/08** — see the table below. SPI1, mode 0, MISO unassigned |
+| Encoder EC11 | 3 (A, B, push) | ✅ **THEY ARE NOW THREE AND CONNECTED** — see the `kEncPin` in the occupied table |
+| Volume pots ×2 | 2 (ADC) | ✅ **CONNECTED** on D15/D16, one per exciter |
 
-## A regra de hardware que custou uma gravação
+## The hardware rule that cost a flashing
 
-> **GPIO se remapeia no fonte (dois números, uma gravação).
-> UART, SAI, ADC e QSPI NÃO — a função está amarrada ao pino pelo silício.**
+> **GPIO is remapped in the source (two numbers, one flashing).
+> UART, SAI, ADC and QSPI are NOT — the function is tied to the pin by the silicon.**
 
-A diferença **não aparece no esquema**, só na tabela de funções alternadas do
-chip. LED/switch invertidos custaram uma gravação; o MIDI de volta exigiu fio
-novo.
+The difference **does not appear in the schematic**, only in the chip's
+alternate-function table. Inverted LED/switch cost a flashing; getting the MIDI
+back required a new wire.
 
-## Tabela de botões (fonte única)
+## Button table (single source)
 
-`AddBotao()` em `manifest.h` amarra índice do HAL → param → LED:
+`AddBotao()` in `manifest.h` ties HAL index → param → LED:
 
-| índice | nome | switch | LED | alvo |
+| index | name | switch | LED | target |
 |---|---|---|---|---|
-| B1 | búzios | D26 | — | randomizador |
+| B1 | cowrie shells | D26 | — | randomizer |
 | B2 | freeze A | D24 | D27 (LED 0) | `frz_on_a` |
-| ~~B3~~ | ~~rearme CTOS~~ · **REMOVIDO 05/09** | ~~D25~~ | — | a função fica pelo `b3` da serial; o painel não leva botão |
+| ~~B3~~ | ~~CTOS reset~~ · **REMOVED 05/09** | ~~D25~~ | — | the function stays with the serial's `b3`; the panel carries no button |
 | B4 | freeze B | D22 | D23 (LED 1) | `frz_on_b` |
 
-**Debounce: 30 ms, MEDIDO** — com 10 ms, cinco batidas viravam seis.
+**Debounce: 30 ms, MEASURED** — at 10 ms, five hits turned into six.
 
-**O LED segue o PARAM, nunca o gesto.** Se o freeze mudar por CC, serial ou
-CTOS, o LED conta a verdade. Verificado por serial, sem tocar no botão.
+**The LED follows the PARAM, never the gesture.** If the freeze changes via CC,
+serial or CTOS, the LED tells the truth. Verified over serial, without touching
+the button.
 
-## OLED SSD1309 — soldado e ocupado (23/08, v0.154.0)
+## OLED SSD1309 — soldered and occupied (23/08, v0.154.0)
 
-| sinal | pino | porta | origem |
+| signal | pin | port | origin |
 |---|---|---|---|
-| CLK | **D8** | `PORTG11` | default da libDaisy |
-| DIN | **D10** | `PORTB5` | default da libDaisy |
-| CS | **D7** | `PORTG10` | default da libDaisy |
-| DC | **D6** | `PORTC12` | **sobrescrito** (default seria D9) |
-| RST | **D5** | `PORTD2` | **sobrescrito** (default seria D30) |
+| CLK | **D8** | `PORTG11` | libDaisy default |
+| DIN | **D10** | `PORTB5` | libDaisy default |
+| CS | **D7** | `PORTG10` | libDaisy default |
+| DC | **D6** | `PORTC12` | **overridden** (default would be D9) |
+| RST | **D5** | `PORTD2` | **overridden** (default would be D30) |
 
-⚠️ **O PAINEL ACESO CUSTA 6 dB DE CHÃO DE RUÍDO NA ENTRADA** — medido em
-31/08: IN_L de −75,3 para −69,3 dBFS, com um espeto a **7040 Hz** e dominância
-0,95. É a corrente de accionamento das linhas (64 linhas × ~110 Hz de quadro),
-proporcional aos píxeis **acesos**.
+⚠️ **THE LIT PANEL COSTS 6 dB OF NOISE FLOOR AT THE INPUT** — measured on
+31/08: IN_L from −75.3 to −69.3 dBFS, with a spike at **7040 Hz** and dominance
+0.95. It is the drive current of the lines (64 lines × ~110 Hz of frame),
+proportional to the **lit** pixels.
 
-Por isso, desde a v0.221.0, **o painel nasce apagado**: acorda quando alguém
-mexe num encoder, acende 200 ms depois de a mão parar, e dorme aos 5 s. Ver
+So, since v0.221.0, **the panel is born dark**: it wakes when someone moves an
+encoder, lights up 200 ms after the hand stops, and sleeps at 5 s. See
 [`HARDWARE.md`](HARDWARE.md) §1b.
 
-**Item de bancada:** estes cinco fios correm perto dos cabos dos piezos.
-Afastá-los, e cruzá-los em ângulo recto — acoplamento pelo ar não se corrige
-com esquema de terra.
+**Bench item:** these five wires run near the piezo cables. Keep them apart, and
+cross them at a right angle — air coupling is not fixed with a ground scheme.
 
-**D5, D6, D7, D8 e D10 saíram do pool de livres.** O **D9** continua livre —
-é o que o default usaria para DC e a solda não usou.
+**D5, D6, D7, D8 and D10 left the free pool.** The **D9** remains free — it is
+what the default would use for DC and the soldering did not use.
 
-**O RST fora do default é escolha certa e vale registrar por quê:** o default
-é `PORTB15` = **D30**, e D29/D30 estão reservados para a leitura dos DPDT do
-exciter. Usar o default aqui criaria uma disputa que só apareceria no dia de
-soldar o painel.
+**Putting RST off the default is the right choice and worth recording why:** the
+default is `PORTB15` = **D30**, and D29/D30 are reserved for reading the
+exciter's DPDTs. Using the default here would create a dispute that would only
+appear on the day of soldering the panel.
 
-**MISO não é atribuído, e não custou decisão.** O default da libDaisy já é
-`direction = TWO_LINES_TX_ONLY` com `miso = Pin(PORTX, 0)` — o "nenhum pino"
-da casa. O display é escrita pura.
+**MISO is not assigned, and it cost no decision.** The libDaisy default is
+already `direction = TWO_LINES_TX_ONLY` with `miso = Pin(PORTX, 0)` — the house
+"no pin". The display is pure writing.
 
-> ⚠️ **Consequência que atravessa todo diagnóstico deste painel: ele NÃO É
-> DETECTÁVEL.** Não há caminho de leitura, então nenhum comando pode dizer
-> "OLED presente". O `board` diz **configurado**, e a diferença não é
-> preciosismo — é a mesma linha do `placa viva: sim` que já mentiu aqui.
+> ⚠️ **Consequence that runs through every diagnosis of this panel: it is NOT
+> DETECTABLE.** There is no read path, so no command can say
+> "OLED present". The `board` says **configured**, and the difference is not
+> pedantry — it is the same line as `placa viva: sim` that has already lied here.
 
-## MAPA CONFERIDO POR MÁQUINA
+## MAP CHECKED BY MACHINE
 
 <!-- pinos: inicio -->
-| pino | dono |
+| pin | owner |
 |---|---|
-| D0 | encoder A fase A |
-| D1 | encoder A fase B |
+| D0 | encoder A phase A |
+| D1 | encoder A phase B |
 | D2 | encoder A push |
-| D3 | encoder B fase A |
-| D4 | encoder B fase B |
+| D3 | encoder B phase A |
+| D4 | encoder B phase B |
 | D5 | OLED RST |
 | D6 | OLED DC |
 | D7 | OLED CS |
@@ -190,62 +192,62 @@ da casa. O display é escrita pura.
 | D10 | OLED DIN |
 | D13 | MIDI TX |
 | D14 | MIDI RX |
-| D15 | **pot L** (A0) — volume do ramo L |
-| D16 | **pot R** (A1) — volume do ramo R |
+| D15 | **pot L** (A0) — volume of branch L |
+| D16 | **pot R** (A1) — volume of branch R |
 | D17 | encoder G push |
-| D18 | encoder G fase **B** |
-| D19 | encoder G fase **A** |
-| D22 | botão B4 freeze B |
+| D18 | encoder G phase **B** |
+| D19 | encoder G phase **A** |
+| D22 | button B4 freeze B |
 | D23 | LED freeze B |
-| D24 | botão B2 freeze A |
-| D25 | botão B3 rearme CTOS |
-| D26 | botão B1 randomize |
+| D24 | button B2 freeze A |
+| D25 | button B3 CTOS reset |
+| D26 | button B1 randomize |
 | D27 | LED freeze A |
-| D28 | STATUS da ponte ESP32 (ativo em BAIXO, aberto-dreno) |
-| D29 | RESERVADO — DPDT exciter |
-| D30 | RESERVADO — DPDT exciter |
+| D28 | STATUS of the ESP32 bridge (active LOW, open-drain) |
+| D29 | RESERVED — DPDT exciter |
+| D30 | RESERVED — DPDT exciter |
 <!-- pinos: fim -->
 
-**Livres:** D11, D12 (I2C_1 para o INA219), D20, D21.
+**Free:** D11, D12 (I2C_1 for the INA219), D20, D21.
 
-⚠️ **O bloco do ADC acabou.** `A0–A4` são aliases de `D15–D19`: os pots
-ocupam A0/A1 e o encoder global ocupa D17/D18/D19. **Não há um terceiro pot
-possível** sem mudar o painel — e é por isso que `num_knobs` é 2 e não 5.
+⚠️ **The ADC block is used up.** `A0–A4` are aliases of `D15–D19`: the pots
+occupy A0/A1 and the global encoder occupies D17/D18/D19. **There is no possible
+third pot** without changing the panel — and that is why `num_knobs` is 2 and
+not 5.
 
-> **Esta tabela é conferida pelo `make check-docs`** contra os
-> `seed::Dnn` do `hal_daisy_seed.cpp`. Pino reclamado no código e ausente
-> daqui, ou daqui e não usado lá, vira acusação.
+> **This table is checked by `make check-docs`** against the
+> `seed::Dnn` of the `hal_daisy_seed.cpp`. A pin claimed in the code and absent
+> here, or here and not used there, becomes an accusation.
 >
-> A rotina existe porque **a placa está entupida e os pontos de solda
-> espremidos**: conferir de cabeça é o que falha exatamente quando o
-> custo de errar é maior. E porque um mapa suposto já custou horas — o
-> encoder global estava em D17/D18/D19 e o firmware media D20/D21,
-> então todo instrumento apontava para o lugar errado e nenhum podia
-> dizer isso.
+> The routine exists because **the board is clogged and the solder points
+> squeezed**: checking from memory is what fails exactly when the cost of being
+> wrong is highest. And because an assumed map has already cost hours — the
+> global encoder was on D17/D18/D19 and the firmware measured D20/D21, so every
+> instrument pointed at the wrong place and none could say so.
 
 ---
 
-## D14 tem pull-up interno, e não é detalhe
+## D14 has an internal pull-up, and it is not a detail
 
-A libDaisy inicia os pinos da UART com **`GPIO_NOPULL`**
-(`src/per/uart.cpp`). Com a ponte ESP32 sem alimentação o pino dela fica em
-alta impedância e o nosso RX **fica a flutuar** — e uma entrada CMOS solta
-apanha ruído a MHz. A USART entra em tempestade **por taxa** (FE/NE/ORE ao
-ritmo do serviço da interrupção), o CPU fica na ISR e o laço morre à fome.
+The libDaisy initializes the UART pins with **`GPIO_NOPULL`**
+(`src/per/uart.cpp`). With the ESP32 bridge unpowered its pin is high-impedance
+and our RX **floats** — and a loose CMOS input picks up noise at MHz. The USART
+storms **by rate** (FE/NE/ORE at the pace of the interrupt service), the CPU
+stays in the ISR and the loop starves to death.
 
-Medido em 01/09: a placa deixava de responder à serial em **menos de 4 s** e
-**não voltava** com a linha já em repouso.
+Measured on 01/09: the board stopped responding to the serial in **less than
+4 s** and **did not come back** with the line already at rest.
 
-Repouso de uma linha de UART é **alto, por definição**. Se o transmissor
-desaparece, alguém tem de segurar o alto. O `hal_daisy_seed.cpp` reconfigura
-PB7 com `GPIO_PULLUP` logo a seguir ao `Init` da UART — com ~100 pF de cabo a
-subida é ~4 µs contra 32 µs por bit.
+The rest state of a UART line is **high, by definition**. If the transmitter
+disappears, someone has to hold the high. The `hal_daisy_seed.cpp` reconfigures
+PB7 with `GPIO_PULLUP` right after the UART's `Init` — with ~100 pF of cable the
+rise is ~4 µs against 32 µs per bit.
 
-**Efeito lateral conhecido e aceite:** com a ESP32 desligada, o pull-up injecta
-~80 µA pelo díodo de protecção do pino dela. Inofensivo a esse nível; com
-10 kΩ externo seriam ~330 µA.
+**Known and accepted side effect:** with the ESP32 off, the pull-up injects
+~80 µA through its pin's protection diode. Harmless at that level; with an
+external 10 kΩ it would be ~330 µA.
 
-**Se alguém reescrever o `Init` do MIDI, esta linha tem de sobreviver.** Sem
-ela o defeito volta, e volta de uma forma que parece firmware.
+**If anyone rewrites the MIDI `Init`, this line has to survive.** Without it the
+defect comes back, and it comes back in a form that looks like firmware.
 
-Ver battle_scars **15az**.
+See battle_scars **15az**.

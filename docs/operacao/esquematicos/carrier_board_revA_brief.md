@@ -1,92 +1,92 @@
-# Cotucatronics — Carrier Board rev A · brief de projeto
-### Alvo: KiCad → JLCPCB (fab + SMT assembly) · atualizado 20/08 noite
+# Cotucatronics — Carrier Board rev A · project brief
+### Target: KiCad → JLCPCB (fab + SMT assembly) · updated 20/08 night
 
-## O que esta placa é
-Uma carrier board SMD onde a **Daisy Seed encaixa em soquete** e todo o resto do
-instrumento — energia, proteção de entrada, amplificação, medição — vive em cobre
-em vez de floresta de jumpers. O painel (encoder, botões, OLED, switches, jacks)
-conecta por headers: a placa não amarra o desenho da caixa.
+## What this board is
+An SMD carrier board where the **Daisy Seed plugs into a socket** and all the rest of the
+instrument — power, input protection, amplification, measurement — lives in copper
+instead of a jumper thicket. The panel (encoder, buttons, OLED, switches, jacks)
+connects via headers: the board does not tie down the enclosure design.
 
-## Entradas e saídas (decisões do dB, 20/08)
-| o quê | como |
+## Inputs and outputs (dB's decisions, 20/08)
+| what | how |
 |---|---|
-| Piezos (×2) | **jack 1/4" TRS** — tip = sinal, sleeve = terra, ring aterrado |
-| Exciters (×2) | **conector de alavanca (lever/Wago-style) SMD**, 2 polos cada |
-| Energia | **USB-C no painel** → powerbank/PSU externo, removível (bagagem despachada) |
-| Linha (×2) | jack 1/4" TS/TRS, sempre ligados (L=A, R=B em stems; mix conforme modo) |
+| Piezos (×2) | **1/4" TRS jack** — tip = signal, sleeve = ground, ring grounded |
+| Exciters (×2) | **SMD lever connector (lever/Wago-style)**, 2 poles each |
+| Power | **USB-C on the panel** → external powerbank/PSU, removable (checked baggage) |
+| Line (×2) | 1/4" TS/TRS jack, always connected (L=A, R=B in stems; mix depending on mode) |
 
-## Blocos do circuito
+## Circuit blocks
 
-### 1 · Energia
+### 1 · Power
 ```
-USB-C (painel) → [CH224K: PD sink, pede 15V] → fusível PTC → switch (+V)
+USB-C (panel) → [CH224K: PD sink, asks 15V] → PTC fuse → switch (+V)
    → RAIL 15V ─┬→ shunt 10 mΩ + INA219 (I2C) ─┬→ AMP A (bulk 2200µF/35V + 100nF)
-               │                              └→ AMP B (idem)
+               │                              └→ AMP B (same)
                └→ buck 15→5V (≥2A) → RAIL 5V → Daisy VIN + BLE + OLED
 ```
-- **CH224K** substitui o módulo PD trigger: SOP, ~US$0,30, config fixa em 12V.
-  Fallback declarado: fonte sem PD 12V → 5V no rail → lógica viva (buck em
-  dropout ≈ 4,7V, dentro da faixa do VIN da Daisy), amps mudos. LED no PG
-  do CH224K denuncia "estou em 12V" — falha em silêncio, não.
-- **Buck 12→5V**: IC SMD classe 2–3A (candidatos no catálogo JLC na hora do
-  esquemático: TPS54331 / MP2315 / TPS562201). Lógica consome <1A; folga 3×.
-- **INA219 + shunt 10 mΩ 2512** no positivo, **no ramo dos AMPS, DEPOIS da
-  bifurcação** — a lógica puxa <1 A e é constante, e no total só diluiria a
-  resolução. Kelvin no shunt. I2C com pull-ups na placa.
-  Na carrier board não há módulo: o shunt escolhe-se. 10 mΩ com ~4 A dá 40 mV,
-  que cabe no PGA ÷1 do INA219 — LSB de 10 µV = **1 mA de resolução**.
-  ⚠️ VCC do INA219 é 3–5 V: alimenta do rail de 5 V, NUNCA do de 15 V.
-- Bulk por amp: eletrolítico radial low-ESR THT (montagem mista JLC) **ou** 2×
-  1000µF polímero SMD por amp — decidir por custo no BOM.
+- **CH224K** replaces the PD trigger module: SOP, ~US$0.30, config fixed at 12V.
+  Declared fallback: a supply without PD 12V → 5V on the rail → logic alive (buck in
+  dropout ≈ 4.7V, within the Daisy's VIN range), amps dead. An LED on the CH224K's PG
+  flags "I'm at 12V" — it does not fail silently.
+- **Buck 12→5V**: SMD IC class 2–3A (candidates in the JLC catalog at schematic
+  time: TPS54331 / MP2315 / TPS562201). Logic draws <1A; 3× margin.
+- **INA219 + shunt 10 mΩ 2512** on the positive, **on the AMPS branch, AFTER the
+  fork** — the logic pulls <1 A and is constant, and in the total it would only dilute
+  the resolution. Kelvin at the shunt. I2C with pull-ups on the board.
+  On the carrier board there is no module: the shunt is chosen. 10 mΩ with ~4 A gives 40 mV,
+  which fits in the INA219's ÷1 PGA — a 10 µV LSB = **1 mA of resolution**.
+  ⚠️ The INA219's VCC is 3–5 V: power it from the 5 V rail, NEVER from the 15 V one.
+- Bulk per amp: low-ESR radial electrolytic THT (JLC mixed assembly) **or** 2×
+  1000µF SMD polymer per amp — decide by cost in the BOM.
 
-### 2 · Entrada (×2, um por piezo)
-Jack TRS → 1kΩ série → nó → {D1 1N4148WS→3V3 · D2 1N4148WS→GND} → AUDIO IN.
-- SMD: R 0603, diodos SOD-323. Sem atenuador (decisão de regime, 20/08);
-  **pads previstos para R2 do divisor** (não populados) — se o `hist` na
-  escultura pedir, solda sem respin.
-- Ring do TRS no terra = blindagem grátis do cabo.
+### 2 · Input (×2, one per piezo)
+TRS jack → 1kΩ series → node → {D1 1N4148WS→3V3 · D2 1N4148WS→GND} → AUDIO IN.
+- SMD: R 0603, SOD-323 diodes. No attenuator (regime decision, 20/08);
+  **pads provided for the divider's R2** (not populated) — if the `hist` in the
+  sculpture calls for it, solder without a respin.
+- TRS ring to ground = free cable shielding.
 
-### 3 · Amplificação (×2)
-- **TPA3116D2 em PBTL mono** integrado na placa (HTSSOP c/ pad térmico — JLC
-  monta). 12V/4Ω PBTL ≈ 15–18W por canal: sobra pros exciters.
-- Filtro de saída LC por amp (10µH + 680nF): os exciters saem por FIO — sem
-  filtro, o fio vira antena de EMI do classe-D.
-- Enable do amp acessível: o corte físico do DPDT atua AQUI (polo 1) além do
-  áudio, e o polo 2 → D29/D30 (sense, pull-up interno).
+### 3 · Amplification (×2)
+- **TPA3116D2 in mono PBTL** integrated on the board (HTSSOP w/ thermal pad — JLC
+  assembles it). 12V/4Ω PBTL ≈ 15–18W per channel: plenty for the exciters.
+- LC output filter per amp (10µH + 680nF): the exciters exit by WIRE — without a
+  filter, the wire becomes an EMI antenna for the class-D.
+- Amp enable accessible: the DPDT's physical cut acts HERE (pole 1) besides the
+  audio, and pole 2 → D29/D30 (sense, internal pull-up).
 
-### 4 · Headers de painel (JST-PH 2.0 exceto onde dito)
-| header | pinos |
+### 4 · Panel headers (JST-PH 2.0 except where noted)
+| header | pins |
 |---|---|
 | Encoder EC11 | A, B, GND, SW, GND |
-| Botões: freeze (pinball+LED), búzios, +, − | 2 fios cada; LED do freeze +2 |
-| Rotary seletor de tela | divisor → 1 pino ADC (3 fios) |
+| Buttons: freeze (pinball+LED), cowrie shells, +, − | 2 wires each; freeze LED +2 |
+| Rotary screen selector | divider → 1 ADC pin (3 wires) |
 | Switch fork mix/stems | 1 GPIO + GND |
 | DPDT sense ×2 | → D29 / D30 |
-| OLED Waveshare 2.42" | **MX1.25 7 pinos** (receptáculo direto na placa) |
-| WIDI Core | 6 fios: 5V, ON, GND, TX, RX, LB |
-| USB-C do painel | header 2 pinos VBUS/GND vindo do conector de chassi **ou** receptáculo USB-C 16p na borda da placa — decidir com o desenho da caixa |
+| OLED Waveshare 2.42" | **MX1.25 7 pins** (receptacle directly on the board) |
+| WIDI Core | 6 wires: 5V, ON, GND, TX, RX, LB |
+| Panel USB-C | 2-pin VBUS/GND header coming from the chassis connector **or** 16p USB-C receptacle on the board edge — decide with the enclosure design |
 
-### 5 · Regras de layout (o DRC não cobra, eu desenho e o dB veta)
-- **4 camadas** (custa ~nada na JLC): L2 = terra sólido contínuo. Classe-D com
-  retorno curto é a diferença entre silêncio e chiado.
-- Um ponto de união analógico/digital, junto ao soquete da Daisy.
-- Loop do bulk cap → pinos do amp: o menor cobre possível.
-- Trilhas de áudio (entrada piezo) longe do chaveamento (amps, buck) — lados
-  opostos da placa; entrada de alta impedância é antena.
-- Shunt com sense Kelvin; I2C afastado do LC dos amps.
-- THT só onde faz sentido mecânico: soquete da Daisy (2×20 fêmea), bulk caps,
-  conectores de alavanca se a variante SMD não houver no catálogo.
+### 5 · Layout rules (the DRC does not police, I draw and dB vetoes)
+- **4 layers** (costs ~nothing at JLC): L2 = continuous solid ground. Class-D with
+  a short return is the difference between silence and hiss.
+- A single analog/digital union point, next to the Daisy socket.
+- Bulk cap loop → amp pins: the smallest copper possible.
+- Audio traces (piezo input) away from the switching (amps, buck) — opposite
+  sides of the board; a high-impedance input is an antenna.
+- Shunt with Kelvin sense; I2C kept away from the amps' LC.
+- THT only where it makes mechanical sense: Daisy socket (2×20 female), bulk caps,
+  lever connectors if the SMD variant isn't in the catalog.
 
-## Fluxo
-1. **BOM candidato contra o catálogo LCSC/JLC** (part numbers reais, estoque
-   conferido) — aprovação do dB
-2. Esquemático KiCad (.kicad_sch, texto, versionado no repo) — revisão
-3. PCB + DRC headless (kicad-cli) → **render pra veto do dB**
-4. Gerbers + CPL + BOM → zip JLCPCB → **5 placas protótipo** antes de qualquer
-   quantidade
-5. Rev B só depois de a rev A tocar
+## Flow
+1. **Candidate BOM against the LCSC/JLC catalog** (real part numbers, stock
+   checked) — dB's approval
+2. KiCad schematic (.kicad_sch, text, versioned in the repo) — review
+3. PCB + headless DRC (kicad-cli) → **render for dB's veto**
+4. Gerbers + CPL + BOM → JLCPCB zip → **5 prototype boards** before any
+   quantity
+5. Rev B only after rev A plays
 
-## Abertos (poucos, nenhum bloqueia o esquemático)
-- Jacks 1/4": montados na placa (borda) ou no painel com header? → decide com a caixa
-- USB-C: chassi+header (já comprado) vs receptáculo na borda → idem
-- Bulk: THT radial vs polímero SMD → decide no BOM por custo
+## Open (few, none blocks the schematic)
+- 1/4" jacks: mounted on the board (edge) or on the panel with a header? → decide with the enclosure
+- USB-C: chassis+header (already bought) vs edge receptacle → same
+- Bulk: radial THT vs SMD polymer → decide in the BOM by cost

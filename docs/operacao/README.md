@@ -1,71 +1,71 @@
-# OPERAÇÃO — Cotucatronics
+# OPERATION — Cotucatronics
 
-> **Estado congelado em 22/08/2026** · firmware v0.130.0 · commit `6002a70`
+> **State frozen on 22/08/2026** · firmware v0.130.0 · commit `6002a70`
 >
-> Esta pasta é o **manual de operação**: o que você precisa para ligar, tocar,
-> endereçar e consertar o instrumento. Ela é distinta dos documentos de
-> *processo* (`STATUS.md`, `battle_scars.md`, `FEATURES.md`, `CTOS.md`), que
-> registram como se chegou até aqui.
+> This folder is the **operation manual**: what you need to power up, play,
+> address and fix the instrument. It is distinct from the *process* documents
+> (`STATUS.md`, `battle_scars.md`, `FEATURES.md`, `CTOS.md`), which record how
+> we got here.
 
-## Índice
+## Index
 
-| documento | para quê |
+| document | for what |
 |---|---|
-| **[PINOS.md](PINOS.md)** | mapa de pinos — **autoridade final** sobre o que está ligado onde |
-| **[CCMAP.md](CCMAP.md)** | os 76 CCs, com faixa real de cada param · **gerado do manifest** |
-| **[HARDWARE.md](HARDWARE.md)** | energia, entrada, saída, WIDI, painel, checklist de energização |
-| **[ARQUITETURA.md](ARQUITETURA.md)** | topologia de sinal, CTOS, e todos os comandos serial |
-| **[PRESETS.md](PRESETS.md)** | o desenho aprovado + o workflow (Loopy constrói, OLED opera) |
-| **[ROTINAS.md](ROTINAS.md)** | `ud`, `bts`, `ppc`, `cp`, `cv` — o que cada uma faz |
-| `esquematicos/` | SVGs, brief e BOM da carrier board |
-| `gerar_ccmap.py` | regenera o CCMAP a partir do `manifest.h` |
+| **[PINOS.md](PINOS.md)** | pin map — **final authority** on what is connected where |
+| **[CCMAP.md](CCMAP.md)** | the 76 CCs, with the real range of each param · **generated from the manifest** |
+| **[HARDWARE.md](HARDWARE.md)** | power, input, output, WIDI, panel, power-up checklist |
+| **[ARQUITETURA.md](ARQUITETURA.md)** | signal topology, CTOS, and all serial commands |
+| **[PRESETS.md](PRESETS.md)** | the approved design + the workflow (Loopy builds, OLED operates) |
+| **[ROTINAS.md](ROTINAS.md)** | `ud`, `bts`, `ppc`, `cp`, `cv` — what each one does |
+| `esquematicos/` | SVGs, brief and BOM of the carrier board |
+| `gerar_ccmap.py` | regenerates the CCMAP from `manifest.h` |
 
-## Como usar em cinco minutos
+## How to use it in five minutes
 
-**Ligar:** powerbank PD → decoy 15V → switch. Confere `board` no serial: versão,
-memória e pinos saem no boot.
+**Power up:** PD powerbank → 15V decoy → switch. Check `board` on the serial: version,
+memory and pins print at boot.
 
-**Tocar pelo iPad:** Loopy Pro, canal 1. A placa responde e **espelha de volta
-no canal 2** — a tela do Loopy conta a verdade mesmo depois de gravação ou de
-queda do CTOS.
+**Play from the iPad:** Loopy Pro, channel 1. The board responds and **mirrors back
+on channel 2** — the Loopy screen tells the truth even after a flash or a CTOS
+drop.
 
-**Se o MIDI não chegar:** `midi` mostra bytes/msgs/aplicadas. Zero bytes →
-desconfie do cruzamento TX/RX **antes de tudo** (ver HARDWARE §4).
+**If MIDI does not arrive:** `midi` shows bytes/msgs/applied. Zero bytes →
+suspect the TX/RX crossover **before anything else** (see HARDWARE §4).
 
-**Se um widget estiver no CC errado:** `vistos` — a placa escuta, você varre o
-Loopy, e o inventário entrega o culpado sozinho.
+**If a widget is on the wrong CC:** `vistos` — the board listens, you sweep the
+Loopy, and the inventory hands you the culprit on its own.
 
-**Se algo cair sozinho:** `ctos` — quedas por carga e por estouro são
-reportadas **separadamente**, porque pedem consertos diferentes.
+**If something drops on its own:** `ctos` — drops by load and by overflow are
+reported **separately**, because they call for different fixes.
 
-## As regras da casa
+## The house rules
 
-Estas atravessam tudo e valem para qualquer sessão futura:
+These cut across everything and hold for any future session:
 
-- **Um voo, uma variável** — e listar os empregos da variável antes de mexer.
-- **Toda medição declara REGIME e UNIDADE.** RMS ou pico? norm ou real? qual
-  bloco? estreia ou permanente?
-- **Delta entre builds não é atribuível.** Custo se mede por A/B no mesmo
-  binário, alternando por parâmetro.
-- **Nenhum valor do domínio significa "sem dado".** Ausência mora fora do
-  domínio — flag separada ou sentinela impossível, nunca um zero que o dado
-  pode produzir.
-- **O relatório imprime o cru e etiqueta a interpretação ao lado.**
-- **A hipótese plausível é a perigosa.** O teste que decide é o que lê a fonte,
-  não o que confirma a hipótese.
-- **Sempre o cirúrgico** — medido em delta de *comportamento*, não de esforço.
-  Atalho cobra 10× depois.
-- **Feature nova: o aceite é do músico.**
+- **One flight, one variable** — and list the variable's jobs before touching it.
+- **Every measurement declares REGIME and UNIT.** RMS or peak? norm or real? which
+  block? debut or permanent?
+- **A delta between builds is not attributable.** Cost is measured by A/B in the same
+  binary, toggling one parameter at a time.
+- **No value in the domain means "no data".** Absence lives outside the
+  domain — a separate flag or an impossible sentinel, never a zero that the data
+  can itself produce.
+- **The report prints the raw value and labels the interpretation beside it.**
+- **The plausible hypothesis is the dangerous one.** The deciding test is the one that
+  reads the source, not the one that confirms the hypothesis.
+- **Always the surgical one** — measured in delta of *behavior*, not of effort.
+  A shortcut charges 10× later.
+- **New feature: acceptance belongs to the musician.**
 
-## Sobre a validade deste documento
+## On the validity of this document
 
-Os números aqui foram **extraídos do fonte** em `6002a70`, não da memória.
-`CCMAP.md` é gerado; `PINOS.md` foi lido do `hal_daisy_seed.cpp`.
+The numbers here were **extracted from the source** at `6002a70`, not from memory.
+`CCMAP.md` is generated; `PINOS.md` was read from `hal_daisy_seed.cpp`.
 
-⚠️ **Os SVGs em `esquematicos/` são anteriores ao painel v2.** Os circuitos
-analógicos (piezo, WIDI, saída, OLED) continuam válidos; **as anotações de
-pino neles estão superadas** — `PINOS.md` é a autoridade. Regenerar quando o
-painel for soldado.
+⚠️ **The SVGs in `esquematicos/` predate panel v2.** The analog circuits
+(piezo, WIDI, output, OLED) are still valid; **the pin annotations on them
+are superseded** — `PINOS.md` is the authority. Regenerate once the panel is
+soldered.
 
-**Se este documento e o código divergirem, o código está certo.** O `make
-check-docs` cobre a doc do repo; esta pasta entra na rotina `ud`.
+**If this document and the code diverge, the code is right.** `make
+check-docs` covers the repo's docs; this folder is part of the `ud` routine.

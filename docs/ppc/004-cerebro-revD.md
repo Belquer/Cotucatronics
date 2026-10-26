@@ -1,146 +1,146 @@
-# ppc/004 — cérebro **rev D**: tirar o que não se monta
-<!-- doc-check: ignore confere_arcade (função do pcb_contorno.py, em kicad/) -->
-<!-- doc-check: ignore y_min (valor da constante FRENTE_CEREBRO, no pcb_contorno.py) -->
+# ppc/004 — brain board **rev D**: remove what does not assemble
+<!-- doc-check: ignore confere_arcade (function of pcb_contorno.py, in kicad/) -->
+<!-- doc-check: ignore y_min (value of the FRENTE_CEREBRO constant, in pcb_contorno.py) -->
 
-> **Estado: PLANO, com execução BLOQUEADA** em três medidas (§5). Escrito a
-> 2026-09-19, com a rev C em cima da bancada a ser montada.
+> **State: PLAN, with execution BLOCKED** on three measurements (§5). Written on
+> 2026-09-19, with rev C on the bench being assembled.
 
-- **Data:** 2026-09-19
-- **Ramo:** `claude/slack-session-sm2ldz`
-- **Pedido do dB (19/09):** *"limpe todos os componentes não utilizados da
-  placa"* → opção **(a)**: nova revisão do cérebro. Os **pads de teste ficam**
-  (decisão do dB, 19/09): não custam altura nem dinheiro, e são por onde se mede
-  a placa quando ela não liga.
-- **Pareia com:** `docs/IFA10000.md` (trilha M), `ppc/003` (volume 3D),
+- **Date:** 2026-09-19
+- **Branch:** `claude/slack-session-sm2ldz`
+- **dB's request (19/09):** *"clean all unused components from the
+  board"* → option **(a)**: a new brain-board revision. The **test pads stay**
+  (dB's decision, 19/09): they cost neither height nor money, and they are how the
+  board is measured when it does not power on.
+- **Pairs with:** `docs/IFA10000.md` (track M), `ppc/003` (3D volume),
   `caixa/LICOES-MONTAGEM.md` #10.
 
-## §0 — A regra que este plano existe para impor
+## §0 — The rule this plan exists to enforce
 
-> **A rev C está CONGELADA.** Ela está a ser montada agora, e o manual, a BOM,
-> os mapas e o pacote de fábrica são **gerados dela**. Um `git diff` em
-> `kicad/cotuca_cerebro/` invalida em silêncio tudo o que já foi impresso.
+> **Rev C is FROZEN.** It is being assembled right now, and the manual, the BOM,
+> the maps and the factory package are **generated from it**. A `git diff` in
+> `kicad/cotuca_cerebro/` silently invalidates everything already printed.
 
-A rev D nasce como **cópia** (`kicad/cotuca_cerebro_revD/`), e o portão é
-mecânico: se a árvore mostrar a rev C alterada, o trabalho está errado, seja
-qual for o resultado.
+Rev D is born as a **copy** (`kicad/cotuca_cerebro_revD/`), and the gate is
+mechanical: if the tree shows rev C altered, the work is wrong, whatever
+the result.
 
-⚠️ **E o `main()` do `pcb_contorno.py` ESCREVE a placa.** Correr
-`pcb_contorno.py cerebro` na rev C reescreve o ficheiro fabricado — já
-aconteceu uma vez (cicatriz). Na rev D, toda conferência corre em **leitura**,
-chamando `confere_*` sobre o texto lido, como foi feito a 19/09 para os arcade.
+⚠️ **And the `main()` of `pcb_contorno.py` WRITES the board.** Running
+`pcb_contorno.py cerebro` on rev C rewrites the fabricated file — it has
+happened once (scar). In rev D, every check runs in **read mode**,
+calling `confere_*` on the text read, as was done on 19/09 for the arcade buttons.
 
-## §1 — O que sai, e porquê
+## §1 — What goes out, and why
 
-| ref | o que é | porque sai |
+| ref | what it is | why it goes out |
 |---|---|---|
-| `J4` | header 1×2 "a ponte ESP32" | **vestígio**: a ponte entra no soquete `U3`, que já traz 5 V e GND. O `J4` só repete essas duas redes. Três revisões viram-no e nenhuma perguntou o que liga do outro lado |
-| `C11` `C21` | 22 pF C0G | perna de **ganho** do pré-amp, que hoje é seguidor (`R10`/`R20` = 0 Ω) |
-| `R13` `R23` | 4k7 | idem |
-| `C13` `C23` | 22 µF NP | idem |
-| `RV1` `RV2` | trimpot 100 k | idem |
-| `J15` e `J16` passam de **1×8 para 1×4** | header 1×8 → 1×4 | **decidido a 21/09** (bts 15fc): os dois polos da chave estão em paralelo no cobre (`1`=`4`, `2`=`5`, `3`=`6`), logo metade dos pinos é conveniência, não necessidade. Ficam **comum · jack · amp · dreno**, e o paralelo faz-se com jumpers na chave — que é como a montagem que funciona já está feita. Metade do cabo (4 vias em vez de 8) |
-| `J11` pino 1 (o conector passa a **1×3**) | header 1×4 → 1×3 | **decidido a 20/09:** o módulo alimenta-se pelo **borne de parafuso**, logo fica o `J2` para a força e o `J11` só para o áudio (referência + L + R). O pino 1 é `+15V` duplicado (bts 15fb) |
+| `J4` | 1×2 header "the ESP32 bridge" | **vestige**: the bridge goes into the `U3` socket, which already brings 5 V and GND. `J4` only repeats those two nets. Three revisions saw it and none asked what it connects on the other side |
+| `C11` `C21` | 22 pF C0G | **gain** leg of the preamp, which is today a follower (`R10`/`R20` = 0 Ω) |
+| `R13` `R23` | 4k7 | same |
+| `C13` `C23` | 22 µF NP | same |
+| `RV1` `RV2` | trimpot 100 k | same |
+| `J15` and `J16` go from **1×8 to 1×4** | 1×8 → 1×4 header | **decided on 21/09** (bts 15fc): the two switch poles are paralleled on the copper (`1`=`4`, `2`=`5`, `3`=`6`), so half the pins are convenience, not necessity. What stays is **common · jack · amp · drain**, and the paralleling is done with jumpers on the switch — which is how the working assembly is already built. Half the cable (4 ways instead of 8) |
+| `J11` pin 1 (the connector becomes **1×3**) | 1×4 → 1×3 header | **decided on 20/09:** the module is powered through the **screw terminal**, so `J2` is left for the power and `J11` only for the audio (reference + L + R). Pin 1 is duplicated `+15V` (bts 15fb) |
 
-**O que FICA, e é decisão explícita:**
+**What STAYS, and is an explicit decision:**
 
-- **`TP1`..`TP9`** — pads de teste (dB, 19/09).
-- **O seguidor como está.** Tirar a perna de ganho é tirar **pads vazios**, não
-  mudar o circuito: nenhuma rede viva muda de função. Se alguém quiser o ganho
-  ajustável de volta, volta na rev E, com medição — não é o que este plano faz.
+- **`TP1`..`TP9`** — test pads (dB, 19/09).
+- **The follower as it is.** Removing the gain leg is removing **empty pads**, not
+  changing the circuit: no live net changes function. If someone wants the
+  adjustable gain back, it comes back in rev E, with measurement — it is not what this plan does.
 
-## §2 — Onde vive cada coisa (medido no repo, 19/09)
+## §2 — Where each thing lives (measured in the repo, 19/09)
 
-| artefacto | quem manda | nota |
+| artifact | who's in charge | note |
 |---|---|---|
-| `cotuca_preamp.kicad_sch` | **o próprio ficheiro** | ⚠️ o gerador `docs/operacao/esquematicos/revB/gen_preamp.py` está **duas gerações atrás** e **não se corre**: reintroduz `U1A/U1B/U1C` e referências não anotadas. Aqui a regra "o gerador é a fonte" está **invertida**, e o cabeçalho dele já o diz |
-| `cotuca_energia.kicad_sch` (tem o `J4`) | o próprio ficheiro | idem |
-| `cotuca_conector.kicad_sch` | `gera_conector.py` v0.10.0 | gerado; não é tocado por este plano |
-| `cotuca_soquete.kicad_sch` | `gera_soquete.py` | idem |
-| `cotuca_cerebro.kicad_pcb` | colocação/roteamento na placa | as peças saem daqui **e** do esquema, ou o netlist deixa de bater |
+| `cotuca_preamp.kicad_sch` | **the file itself** | ⚠️ the generator `docs/operacao/esquematicos/revB/gen_preamp.py` is **two generations behind** and **is not run**: it reintroduces `U1A/U1B/U1C` and unannotated references. Here the rule "the generator is the source" is **inverted**, and its own header already says so |
+| `cotuca_energia.kicad_sch` (has `J4`) | the file itself | same |
+| `cotuca_conector.kicad_sch` | `gera_conector.py` v0.10.0 | generated; not touched by this plan |
+| `cotuca_soquete.kicad_sch` | `gera_soquete.py` | same |
+| `cotuca_cerebro.kicad_pcb` | placement/routing on the board | the parts come out of here **and** of the schematic, or the netlist stops matching |
 
-Consequência: **§3 é edição de `.kicad_sch` à mão**, e vale a `edicao-segura`
-(varrer por contagem de parêntesis, nunca por indentação; contar o que se leu).
+Consequence: **§3 is editing `.kicad_sch` by hand**, and `edicao-segura` applies
+(sweep by parenthesis count, never by indentation; count what you read).
 
-## §3 — Ordem de execução
+## §3 — Order of execution
 
-1. **Copiar** a rev C para `kicad/cotuca_cerebro_revD/`, com o `.kicad_pro`
-   próprio. Registar o commit da rev C de onde saiu.
-2. **Medir o ponto de partida**: `kicad-cli sch erc`, netlist, DRC. Estes três
-   números são o "bom conhecido" a que tudo se compara.
-3. **Tirar os 9 símbolos** do esquema (8 da perna de ganho + `J4`), um de cada
-   vez, com contagem antes/depois.
-4. **Tirar os 9 footprints** da placa, e o cobre que só os servia.
-5. **Reencher as zonas** e correr o DRC.
-6. **Recolocar as peças altas** — ⚠️ **§5 bloqueia este passo**.
-7. **Portões**: ERC 0 · DRC 0 · `encaixe.py` · `confere_arcade` em leitura ·
-   `compara_netlist.py` contra a rev C.
-8. **Documentos**: BOM, manual e MANIFEST **continuam a apontar para a rev C**
-   enquanto a rev D não for fabricada. A rev D entra como linha nova, não como
-   substituição.
+1. **Copy** rev C to `kicad/cotuca_cerebro_revD/`, with its own `.kicad_pro`.
+   Record the rev C commit it came from.
+2. **Measure the starting point**: `kicad-cli sch erc`, netlist, DRC. These three
+   numbers are the "known good" everything is compared to.
+3. **Remove the 9 symbols** from the schematic (8 from the gain leg + `J4`), one at a
+   time, with a before/after count.
+4. **Remove the 9 footprints** from the board, and the copper that only served them.
+5. **Refill the zones** and run the DRC.
+6. **Re-place the tall parts** — ⚠️ **§5 blocks this step**.
+7. **Gates**: ERC 0 · DRC 0 · `encaixe.py` · `confere_arcade` in read mode ·
+   `compara_netlist.py` against rev C.
+8. **Documents**: BOM, manual and MANIFEST **keep pointing to rev C**
+   while rev D is not fabricated. Rev D enters as a new line, not as a
+   replacement.
 
-## §3b — O que a primeira montagem (22/09) acrescentou à lista
+## §3b — What the first assembly (22/09) added to the list
 
-Três requisitos que não vêm de limpeza, vêm de bancada — ver `battle_scars.md`
-**15fe** e **15ff**:
+Three requirements that do not come from cleanup, they come from the bench — see `battle_scars.md`
+**15fe** and **15ff**:
 
-1. **Pontos de teste no caminho do piezo.** Os onze `TP` da placa cobrem
-   alimentação, terras e as saídas de linha; **nenhum** toca a cadeia de
-   entrada, que é a mais sensível e a que falhou. A rev D leva, por canal, um
-   `TP` na **saída do pré-amp** — que repousa no VBIAS e diz num segundo se o
-   `U1` está vivo.
-2. **O divisor de entrada com pads para dois valores.** O `C12`/`C22` de 22 nF
-   dá −6,9 dB com um piezo de 18 nF, e a bancada precisou de **−17,8 dB**. A
-   rev D leva o valor medido como ponto de partida **e** um segundo pad em
-   paralelo, porque cada fonte pede o seu — e a serigrafia diz que os dois
-   canais podem (e devem) ficar diferentes.
-3. **Os `TP` do lado acessível, com o nome impresso** (bts 15fg). No cérebro
-   está certo por acaso — ele deita no fundo. **No painel está errado**: os 5
-   `TP` estão em `TOP`, virados para o acrílico, e com a referência em `F.Fab`,
-   que não se imprime. A próxima rev do painel leva-os para `B.Cu` +
-   `B.Silkscreen`, e ganha `TP` nos botões e no encoder, que hoje não têm
-   nenhum. O `encaixe.py` **M8** já reprova isto.
-4. **A conta de margem escrita ao lado do valor.** O −6 dB original era uma
-   estimativa que nenhuma revisão confrontou com o transdutor real. O que fecha
-   isto não é outro valor: é a **frase que diz qual piezo, qual acoplamento e
-   qual pico medido** justificam o valor.
+1. **Test points on the piezo path.** The board's eleven `TP`s cover
+   power, grounds and the line outputs; **none** touches the input
+   chain, which is the most sensitive and the one that failed. Rev D carries, per channel, a
+   `TP` at the **preamp output** — which rests on VBIAS and says in a second whether
+   `U1` is alive.
+2. **The input divider with pads for two values.** The 22 nF `C12`/`C22`
+   gives −6.9 dB with an 18 nF piezo, and the bench needed **−17.8 dB**. The
+   rev D carries the measured value as a starting point **and** a second pad in
+   parallel, because each source asks for its own — and the silkscreen says the two
+   channels can (and should) be different.
+3. **The `TP`s on the accessible side, with the name printed** (bts 15fg). On the brain board
+   it is right by accident — it lies on the bottom. **On the panel it is wrong**: the 5 `TP`s
+   are on `TOP`, facing the acrylic, and with the reference on `F.Fab`,
+   which does not print. The next panel rev moves them to `B.Cu` +
+   `B.Silkscreen`, and gains `TP`s on the buttons and on the encoder, which today have
+   none. `encaixe.py` **M8** already fails this.
+4. **The margin calculation written beside the value.** The original −6 dB was an
+   estimate that no revision confronted with the real transducer. What closes
+   this is not another value: it is the **sentence that says which piezo, which coupling and
+   which measured peak** justify the value.
 
-## §4 — Aceitação (o que prova que está feito)
+## §4 — Acceptance (what proves it is done)
 
-- `compara_netlist.py` rev C → rev D: as **únicas** diferenças são as redes que
-  morreram com as peças removidas. Qualquer rede viva que mude é **defeito**.
-- ERC: **0 violações**, e nenhuma isenção nova.
-- DRC: **0**, com as zonas reenchidas.
-- `git status` da rev C: **limpo**. Se não estiver, o trabalho volta atrás.
-- A BOM da rev D não tem nenhuma linha marcada DNP.
+- `compara_netlist.py` rev C → rev D: the **only** differences are the nets that
+  died with the removed parts. Any live net that changes is a **defect**.
+- ERC: **0 violations**, and no new exemption.
+- DRC: **0**, with the zones refilled.
+- `git status` of rev C: **clean**. If it is not, the work goes back.
+- Rev D's BOM has no line marked DNP.
 
-## §5 — ⚠️ O QUE BLOQUEIA, e não é burocracia
+## §5 — ⚠️ WHAT BLOCKS, and it is not bureaucracy
 
-**Resolvido a 19/09, e ao contrário do que eu escrevi primeiro:** a placa está
-**girada 180°** face ao modelo. A prova é a serigrafia do cérebro de cabeça
-para baixo com o lado do utilizador de frente; a Daisy sob o botão central não
-provava nada, porque cai lá nas duas orientações. Na orientação real, o `C1`
-(25 mm) fica sob o furo 1 e o `U2` + `J13` + `J16` sob o furo 2.
+**Resolved on 19/09, and contrary to what I wrote at first:** the board is
+**rotated 180°** relative to the model. The proof is the brain board's silkscreen upside
+down with the user's side facing front; the Daisy under the center button did not
+prove anything, because it falls there in both orientations. In the real orientation, `C1`
+(25 mm) sits under hole 1 and `U2` + `J13` + `J16` under hole 2.
 
-**Requisito novo para a rev D, e é o mais importante deste documento:** a
-fixação do cérebro é um **retângulo simétrico** (`H1`–`H4`), logo a placa entra
-nos dois sentidos e o errado não encontra resistência nenhuma. A rev D leva
-**fixação assimétrica ou recorte de chave**: a orientação errada tem de deixar
-de caber. Documentar não chega — já estava documentado numa constante, e o
-`encaixe.py` recusa se ela mudar, o que fez a ferramenta acreditar na
-declaração em vez de perguntar à placa.
+**New requirement for rev D, and it is the most important in this document:** the
+brain board's mounting is a **symmetric rectangle** (`H1`–`H4`), so the board goes in
+both ways and the wrong one meets no resistance at all. Rev D carries
+**asymmetric mounting or a keying cutout**: the wrong orientation has to stop
+fitting. Documenting is not enough — it was already documented in a constant, and the
+`encaixe.py` refuses if it changes, which made the tool believe the
+declaration instead of asking the board.
 
-**O que ficou a faltar é UMA medida, e ela decide a rev D inteira:** a
-**profundidade do botão azul** abaixo do painel. O verificador usa o pior caso
-(34 mm, cabeça = 0) e dá **7,5 mm** livres — mas a Daisy tem 17 mm e **coube,
-apertada**, o que só é possível se o azul descer **~24 mm**. Com o número real:
+**What is still missing is ONE measurement, and it decides the whole of rev D:** the
+**depth of the blue button** below the panel. The checker uses the worst case
+(34 mm, head = 0) and gives **7.5 mm** of clearance — but the Daisy is 17 mm and **fit,
+snugly**, which is only possible if the blue one drops **~24 mm**. With the real number:
 
-- se o azul descer ~24 mm, a folga sob ele é ~17,5 mm, e a rev D **não precisa**
-  de recolocar nada por causa dos arcade — a limpeza (§1) é todo o trabalho;
-- se descer mais, `U2`, `J14` e `RV1` têm de sair de debaixo dos discos, e a rev
-  D passa a ser **recolocação**, com o roteamento a acompanhar.
+- if the blue one drops ~24 mm, the clearance under it is ~17.5 mm, and rev D **does not need**
+  to re-place anything because of the arcade buttons — the cleanup (§1) is the whole work;
+- if it drops more, `U2`, `J14` and `RV1` have to come out from under the discs, and the
+  rev D becomes a **re-placement**, with the routing following along.
 
-Medir o botão azul custa um paquímetro e decide entre um trabalho pequeno e um
-grande. **Por isso o §3 passo 6 continua bloqueado.**
+Measuring the blue button costs a caliper and decides between a small job and a
+big one. **That is why §3 step 6 stays blocked.**
 
-Outra coisa medida no mesmo dia, que a rev D não resolve mas a próxima caixa
-tem de resolver: **o painel só sai com os jacks TRS fora** (LICOES #11).
+Another thing measured the same day, which rev D does not solve but the next enclosure
+must solve: **the panel only comes out with the TRS jacks removed** (LICOES #11).

@@ -1,118 +1,118 @@
-# FUTURO — o que se pensou, o que custa, e por que não é agora
+# FUTURE — what was considered, what it costs, and why not now
 
-> **Este documento não é uma lista de tarefas.** O que está por fazer vive no
-> [`STATUS.md`](STATUS.md); os defeitos, no [`battle_scars.md`](battle_scars.md).
-> Aqui ficam **possibilidades**: coisas que se consideraram, com o custo já
-> apurado e a razão de terem ficado de fora.
+> **This document is not a task list.** What is still to be done lives in
+> [`STATUS.md`](STATUS.md); the defects, in [`battle_scars.md`](battle_scars.md).
+> Here live **possibilities**: things that were considered, with the cost already
+> worked out and the reason they were left out.
 >
-> Existe porque a alternativa é redescobrir. Três vezes nesta semana alguém
-> reabriu uma questão que já tinha resposta medida, e a resposta estava numa
-> conversa que ninguém guardou.
+> It exists because the alternative is to rediscover. Three times this week someone
+> reopened a question that already had a measured answer, and the answer was in a
+> conversation nobody saved.
 
-## O orçamento, e é ele que decide quase tudo
+## The budget, and it is what decides almost everything
 
-**Dez pinos livres:** `D3` `D4` `D9` `D11` `D12` `D18` `D19` `D20` `D21` `D25`
+**Ten free pins:** `D3` `D4` `D9` `D11` `D12` `D18` `D19` `D20` `D21` `D25`
 
-Cada ideia abaixo gasta deste bolso. E há dois que **não** estão nele e nunca
-vão estar:
+Each idea below spends from this pocket. And there are two that are **not** in it and never
+will be:
 
-🔴 **`D29` e `D30` são as linhas de dados do USB** (`USB_HS_D−`/`D+`, pinos
-36/37 do header). Usá-los como GPIO mata a serial — e uma placa assim dá
-firmware a correr, painel bom, alimentação normal, e nenhuma forma de falar
-com ela. Já passámos um dia inteiro nesse quadro por outra causa.
+🔴 **`D29` and `D30` are the USB data lines** (`USB_HS_D−`/`D+`, pins
+36/37 of the header). Using them as GPIO kills the serial — and a board like that gives
+running firmware, a good panel, normal power, and no way to talk
+to it. We already spent a whole day in that picture for another cause.
 
-`D20` e `D21` são os únicos livres que também são **ADC** (`ADC_INP11`,
-`ADC1_INP4`) — quem precisar de leitura analógica gasta desses dois primeiro.
+`D20` and `D21` are the only free ones that are also **ADC** (`ADC_INP11`,
+`ADC1_INP4`) — whoever needs an analog reading spends these two first.
 
 ---
 
-## 1 · Sense dos DPDT — `exc_on` a ler hardware em vez de acreditar
+## 1 · DPDT sense — `exc_on` reading hardware instead of believing
 
-**Estado: descartado a 05/09. Nice to have.**
+**Status: discarded on 05/09. Nice to have.**
 
-Hoje o `exc_on` é **intenção de software**: alguém declara "o exciter está no
-circuito" e o firmware acredita. Quando a declaração e a realidade divergem,
-a proteção anti-realimentação (shifter + Governor) fica ligada sem laço para
-quebrar — custa timbre — ou desligada com laço no ar, que é o caso que já
-custou incidentes de microfonia.
+Today `exc_on` is **software intent**: someone declares "the exciter is in the
+circuit" and the firmware believes it. When the declaration and reality diverge,
+the anti-feedback protection (shifter + Governor) stays on with no loop to
+break — it costs timbre — or off with a loop in the air, which is the case that has already
+cost microphonics incidents.
 
-**Por que ficou de fora:** a **DPDT tipo 2** usa os dois polos para o mesmo
-canal (comuns amarrados, como o desenho pede), portanto **não sobra contacto**
-para ler o estado.
+**Why it was left out:** the **type-2 DPDT** uses both poles for the same
+channel (commons tied together, as the drawing requires), so **no contact is left over**
+to read the state.
 
-**O que custaria:**
+**What it would cost:**
 
-| caminho | custo |
+| path | cost |
 |---|---|
-| **3PDT** ou DPDT com terminal auxiliar | 1 pino por canal · peça diferente na BOM · o polo extra é limpo e é a via certa |
-| ler um terminal comutado com pull-up | 1 pino por canal · ⚠️ põe um pino do MCU em contacto com o caminho de áudio |
-| ⭐ **detectar por sinal** | 0 pinos · o `AUDIO_OUT` a sair sem o `AUDIO_IN` reagir *é* a assinatura de exciter fora do circuito, e o SuMiA™ já mede dominância |
+| **3PDT** or DPDT with an auxiliary terminal | 1 pin per channel · a different part in the BOM · the extra pole is clean and is the right route |
+| read a switched terminal with a pull-up | 1 pin per channel · ⚠️ puts an MCU pin in contact with the audio path |
+| ⭐ **detect by signal** | 0 pins · `AUDIO_OUT` going out without `AUDIO_IN` reacting *is* the signature of an exciter out of the circuit, and SuMiA™ already measures dominance |
 
-A terceira não estava na conversa e talvez seja a melhor: **não gasta pino
-nenhum** e usa medição que já existe. Fica como ideia, não como plano.
+The third was not in the conversation and may be the best: **it spends no pin
+at all** and uses measurement that already exists. It stays as an idea, not as a plan.
 
-## 2 · Tela colorida
+## 2 · Color screen
 
-**Estado: possibilidade. Nunca orçamentada.**
+**Status: possibility. Never budgeted.**
 
-⚠️ **O aviso que qualquer estudo tem de começar por ler:** o painel
-monocromático aceso **mediu 6 dB de subida no chão de ruído da entrada** —
-IN_L de −75,3 para −69,3 dBFS, com um espeto a 7040 Hz e dominância 0,95. É
-corrente de accionamento das linhas, **proporcional aos píxeis acesos**.
+⚠️ **The warning any study has to begin by reading:** the monochrome panel
+lit **measured a 6 dB rise in the input noise floor** —
+IN_L from −75.3 to −69.3 dBFS, with a spike at 7040 Hz and dominance 0.95. It is
+line-driving current, **proportional to the lit pixels**.
 
-Uma tela colorida tem mais píxeis, mais bits por píxel e mais taxa de
-actualização. **O custo em ruído não é linear e não é pequeno**, e num
-instrumento cuja entrada é um piezo de alta impedância isso vai direto ao
-sinal.
+A color screen has more pixels, more bits per pixel and a higher refresh
+rate. **The cost in noise is not linear and not small**, and in an
+instrument whose input is a high-impedance piezo that goes straight to the
+signal.
 
-Foi por causa desses 6 dB que o painel actual **nasce apagado** e dorme aos
-5 s (v0.221.0). Uma tela colorida provavelmente não pode ficar acesa enquanto
-se toca — e aí a pergunta é se ainda serve.
+It was because of those 6 dB that the current panel **is born off** and sleeps at
+5 s (v0.221.0). A color screen probably cannot stay lit while
+playing — and then the question is whether it is still useful.
 
-**O que se mediria antes de decidir:** o chão de entrada com a tela nova
-acesa e apagada, no regime de uso, com o instrumento a tocar — nunca em
-repouso, que foi o erro de 02/09 (74,7 dB de margem em repouso contra 0,4 dB
-a tocar).
+**What would be measured before deciding:** the input floor with the new screen
+on and off, in the usage regime, with the instrument playing — never at
+rest, which was the mistake of 02/09 (74.7 dB of margin at rest against 0.4 dB
+while playing).
 
-**Pinos:** SPI já existe (`D5..D10`). Uma tela maior pede provavelmente mais
-largura de banda, não mais pinos — mas confirmar contra a folha de dados da
-tela, não de memória.
+**Pins:** SPI already exists (`D5..D10`). A bigger screen probably asks for more
+bandwidth, not more pins — but confirm against the screen's datasheet, not
+from memory.
 
-## 3 · Os encoders que saíram
+## 3 · The encoders that were removed
 
-**Estado: reversível, e os pinos estão guardados.**
+**Status: reversible, and the pins are kept.**
 
-Havia três; a 05/09 ficou **um**, com push+giro a dar os outros controlos.
-`D3 D4 D9` (encoder B) e `D18 D19` (encoder G) voltaram ao bolso.
+There were three; on 05/09 **one** remained, with push+turn giving the other controls.
+`D3 D4 D9` (encoder B) and `D18 D19` (encoder G) went back into the pocket.
 
-⚠️ **Se algum voltar, cuidado com o `D17`.** Ele era o push do encoder G e
-passou a ser o **A2 do divisor** que lê a tensão do trilho. Devolver o
-encoder G tal como estava recria a colisão — e ela é invisível aos
-verificadores, porque os dois usos moram em documentos diferentes.
+⚠️ **If any comes back, watch out for `D17`.** It was the push of encoder G and
+became the **A2 of the divider** that reads the rail voltage. Returning
+encoder G as it was recreates the collision — and it is invisible to the
+checkers, because the two uses live in different documents.
 
-E fica a lição do encoder G, que vale independentemente: quando se trocaram
-as fases dele e a contagem parou, o defeito **não era a troca** — o `Init` e
-o `Debounce` tratam `a` e `b` simetricamente, logo trocar só pode inverter,
-nunca zerar. Eram as duas fases abertas no chicote.
+And the lesson of encoder G remains, which holds independently: when its
+phases were swapped and the count stopped, the defect **was not the swap** — `Init` and
+`Debounce` treat `a` and `b` symmetrically, so swapping can only invert,
+never zero out. It was the two phases open in the harness.
 
-## 4 · Coisas menores, com o custo já sabido
+## 4 · Smaller things, with the cost already known
 
-| ideia | pinos | nota |
+| idea | pins | note |
 |---|---|---|
-| **LED RGB** em vez dos dois monocromáticos | +2 (ou 1 com WS2812) | ⚠️ um LED consome miliamperes e **já é audível** quando a massa está mal feita — foi assim que se apanhou acoplamento em 31/08. Um RGB comuta mais |
-| **Quarto botão arcade** | +1 | ⚠️ o terceiro **já existe**: o branco dos búzios, em `J5` → IDC 19 → Daisy 33. Ele não tem LED, e é por isso que há dois MOSFET para três botões — sabe-se que está ligado pelo **display**. O IDC 2×13 está cheio: um quarto sinal exige 2×15, ou sacrificar terra — e as **oito** que restam guardam todas coisa medida (relógio do OLED 1/3, referência do ADC 8/10, retorno dos LED 13/14 que valeram 6 dB, retornos dos pots 23/26) |
-| **Entrada de expressão / pedal** | +1 ADC | gasta `D20` ou `D21`, os únicos livres com ADC |
-| **Segundo par de exciters** | — | não é pino, é potência e é caixa. O amp actual tem dois canais |
+| **RGB LED** instead of the two monochrome ones | +2 (or 1 with WS2812) | ⚠️ one LED draws milliamps and **is already audible** when the ground is poorly done — that is how coupling was caught on 31/08. An RGB switches more |
+| **Fourth arcade button** | +1 | ⚠️ the third **already exists**: the white one of the cowrie shells, on `J5` → IDC 19 → Daisy 33. It has no LED, and that is why there are two MOSFETs for three buttons — it is known to be on via the **display**. The 2×13 IDC is full: a fourth signal requires 2×15, or sacrificing ground — and the **eight** that remain all guard something measured (OLED clock 1/3, ADC reference 8/10, LED return 13/14 that was worth 6 dB, pot returns 23/26) |
+| **Expression / pedal input** | +1 ADC | spends `D20` or `D21`, the only free ones with ADC |
+| **Second pair of exciters** | — | not a pin, it is power and it is enclosure. The current amp has two channels |
 
 ---
 
-## A regra que este documento serve
+## The rule this document serves
 
-> **Uma possibilidade sem custo apurado é uma conversa; com custo apurado é
-> uma escolha.**
+> **A possibility without a worked-out cost is a conversation; with a worked-out cost it is
+> a choice.**
 
-Cada entrada aqui tem o preço em pinos, em ruído medido, ou em peça de BOM.
-Quem reabrir uma delas começa onde a última conversa parou, e não do princípio.
+Each entry here has its price in pins, in measured noise, or in a BOM part.
+Whoever reopens one of them starts where the last conversation stopped, and not from the beginning.
 
-E quando uma destas for feita, **sai daqui** — para o `FEATURES.md` se vive,
-ou para o `battle_scars.md` se ensinou alguma coisa a caminho.
+And when one of these is done, **it leaves here** — to `FEATURES.md` if it lives,
+or to `battle_scars.md` if it taught something along the way.

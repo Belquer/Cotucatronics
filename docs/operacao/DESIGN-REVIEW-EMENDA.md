@@ -1,76 +1,76 @@
-> ⚠️ **ABSORVIDA. A skill manda.** Este texto foi integrado em
-> `.claude/skills/design-review/SKILL.md` a 05/09, como o **passo 1** dela —
-> não como apêndice, para a ordem não ficar ambígua. Fica aqui como registo
-> do que se descobriu e da prova que o motivou; **se os dois divergirem, a
-> skill está certa e isto está velho.**
+> ⚠️ **ABSORBED. The skill rules.** This text was integrated into
+> `.claude/skills/design-review/SKILL.md` on 05/09, as its **step 1** —
+> not as an appendix, so the order would not be ambiguous. It stays here as a
+> record of what was discovered and the proof that motivated it; **if the two
+> diverge, the skill is right and this is stale.**
 >
-> A ferramenta vive em `tools/svg_colisoes.py` — a versão corrente está no
-> mapa do README, e não aqui, para não haver dois sítios a envelhecer.
+> The tool lives in `tools/svg_colisoes.py` — the current version is in the
+> README map, and not here, so there aren't two places aging.
 
-# design-review — emenda 05/09: o portão que pode dizer não
+# design-review — amendment 05/09: the gate that can say no
 
-## O que falhou
+## What failed
 
-Quatro entregas com "revisão visual limpa" tinham sobreposições. Duas eram
-visíveis a olho e passaram porque o olho olhou o todo e não a fatia; duas eram
-de meio pixel — texto a tocar o risco de uma cruz, rótulo a cruzar uma linha
-tracejada cinzenta — invisíveis em qualquer render, e mesmo assim defeito.
+Four deliverables with "clean visual review" had overlaps. Two were
+visible to the eye and passed because the eye looked at the whole and not the
+slice; two were half-a-pixel ones — text touching the stroke of a cross, a label crossing a
+gray dashed line — invisible in any render, and defects even so.
 
-**O olho é o instrumento errado para sobreposição fina.** Serve para
-composição, legibilidade, hierarquia. Não serve para "este texto toca esta
-linha?", que é pergunta de geometria e tem resposta exata.
+**The eye is the wrong instrument for fine overlap.** It serves for
+composition, legibility, hierarchy. It does not serve for "does this text touch this
+line?", which is a question of geometry and has an exact answer.
 
-## A regra nova, e vem ANTES do olho
+## The new rule, and it comes BEFORE the eye
 
-> **Todo SVG entregue passa por `svg_colisoes.py` e sai com ZERO colisões.
-> Só depois entra a inspeção visual — e ela passa a olhar composição, não
-> toque.**
+> **Every SVG delivered passes through `svg_colisoes.py` and comes out with ZERO collisions.
+> Only then does the visual inspection begin — and it now looks at composition, not
+> touching.**
 
-`svg_colisoes.py ficheiro.svg` calcula a caixa de cada texto e testa contra:
-- **texto × texto** — sempre defeito
-- **texto × segmento** — geometria real (Liang–Barsky), não bbox de path; um
-  path em L não acusa o texto que está no canto vazio dele
-- **texto × borda de forma** — texto DENTRO de um rect/círculo é etiqueta e é
-  legítimo; texto a **cruzar** a borda é defeito
-- **formas com `opacity < 0,5`** são sombreado decorativo e não contam
+`svg_colisoes.py file.svg` computes the bounding box of each text and tests it against:
+- **text × text** — always a defect
+- **text × segment** — real geometry (Liang–Barsky), not the bbox of a path; an
+  L-shaped path does not flag the text sitting in its empty corner
+- **text × shape border** — text INSIDE a rect/circle is a label and is
+  legitimate; text **crossing** the border is a defect
+- **shapes with `opacity < 0.5`** are decorative shading and do not count
 
-Sai com código ≠ 0 se houver colisão. É isso que o torna portão: pode dizer
-não, e um script que o chama pára.
+It exits with code ≠ 0 if there is a collision. That is what makes it a gate: it can say
+no, and a script that calls it stops.
 
-**Largura de texto é estimada** (0,55 em por caractere, Helvetica). É
-conservadora — acusa uns pixels antes do toque real. Isso é o comportamento
-certo para um portão: falso positivo custa mover um rótulo; falso negativo
-custa uma entrega errada.
+**Text width is estimated** (0.55 em per character, Helvetica). It is
+conservative — it flags a few pixels before the real touch. That is the
+right behavior for a gate: a false positive costs moving a label; a false negative
+costs a wrong deliverable.
 
-## Como se torna automático
+## How it becomes automatic
 
-1. **Nos geradores:** o `.py` que escreve o SVG chama o verificador antes de
-   copiar para `outputs/`; com colisões, escreve para `/tmp` e recusa entregar.
-   Um `assert` no fim do gerador.
-2. **Na skill:** o passo 1 de qualquer revisão de SVG é correr a ferramenta e
-   colar a linha de resultado no relatório — `N textos, M segmentos, 0
-   colisões`. Sem essa linha, a revisão não aconteceu.
-3. **Para o que não é SVG** (PNG de plot, PDF, render do KiCad): a ferramenta
-   não alcança. Aí a regra é a que já existia — fatiar em regiões e olhar cada
-   uma — **mais** a lição de hoje: olhar o todo não substitui olhar a fatia,
-   porque o todo esconde exatamente o que é pequeno. Para o KiCad, o portão é
-   o `kicad-cli sch export svg` seguido desta mesma ferramenta.
+1. **In the generators:** the `.py` that writes the SVG calls the checker before
+   copying to `outputs/`; with collisions, it writes to `/tmp` and refuses to deliver.
+   An `assert` at the end of the generator.
+2. **In the skill:** step 1 of any SVG review is to run the tool and
+   paste the result line into the report — `N texts, M segments, 0
+   collisions`. Without that line, the review did not happen.
+3. **For what is not SVG** (plot PNG, PDF, KiCad render): the tool
+   does not reach it. There the rule is the one that already existed — slice into regions and look at each
+   one — **plus** today's lesson: looking at the whole does not replace looking at the slice,
+   because the whole hides exactly what is small. For KiCad, the gate is
+   `kicad-cli sch export svg` followed by this same tool.
 
-## A ordem, fixa
+## The order, fixed
 
 ```
-gerar → svg_colisoes (0) → fatiar e olhar (composição) → entregar
+generate → svg_colisoes (0) → slice and look (composition) → deliver
 ```
 
-Qualquer edição depois de qualquer um dos três reinicia os três.
+Any edit after any of the three restarts all three.
 
-## Resultado de hoje, como prova
+## Today's result, as proof
 
-| ficheiro | antes | depois |
+| file | before | after |
 |---|---|---|
-| caixa-fabricacao.svg | 30 acusações (2 reais visíveis, 4 quase-toques, 24 falsos por trapézio) | **0**, ferramenta corrigida para contentores |
-| preamp-piezo.svg | 3 quase-toques que o olho nunca viu em três revisões | **0** |
-| `caixa-pedal-4-faces.svg` *(aposentado 05/09)* | 2 falsos por sombreado | **0**, com o filtro de opacidade |
-| `caixa-pedal-layout.svg` *(aposentado 05/09)* | 1 falso por sombreado | **0** |
+| caixa-fabricacao.svg | 30 flags (2 real visible, 4 near-touches, 24 false from trapezoid) | **0**, tool fixed for containers |
+| preamp-piezo.svg | 3 near-touches the eye never saw in three reviews | **0** |
+| `caixa-pedal-4-faces.svg` *(retired 05/09)* | 2 false from shading | **0**, with the opacity filter |
+| `caixa-pedal-layout.svg` *(retired 05/09)* | 1 false from shading | **0** |
 
-A ferramenta apanhou o defeito que o dB viu **e** três que ninguém tinha visto.
+The tool caught the defect that dB saw **and** three that nobody had seen.

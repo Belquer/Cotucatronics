@@ -1,37 +1,37 @@
-# Remapeamento MIRADO na sessão de escuta
+# Targeted remap for the listening session
 
-> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
-> gerador o escreve — foi feito à mão a partir do `manifest.h` **v0.171.0, mais juízo humano do `PAUTA-ESCUTA.md`**, e o
-> manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
-> como espelho do actual.
+> ⚠️ **IT IS NOT GENERATED, even though this sheet said so until 06/09.** No
+> generator writes it — it was made by hand from `manifest.h` **v0.171.0, plus human judgment from `PAUTA-ESCUTA.md`**, and the
+> manifest is today at **v1.13.0**. Treat it as a record of that state, not
+> as a mirror of the current one.
 >
-> Rótulo sem gerador apodrece com autoridade: ninguém o mantém à mão *porque
-> é gerado*, e nada o regenera *porque não há gerador*. Ou se lhe escreve um,
-> ou se lhe tira o rótulo — isto é a segunda.
+> A label with no generator rots with authority: no one maintains it by hand *because
+> it is generated*, and nothing regenerates it *because there is no generator*. Either
+> one is written for it, or the label is removed from it — this is the latter.
 
-Os learns do Loopy foram apagados. **Remapear os 86 antes de escutar é
-trabalho que a sessão não precisa** — a pauta usa uma fração.
+The Loopy learns were erased. **Remapping the 86 before listening is
+work the session does not need** — the agenda uses a fraction.
 
-**E isto não limita o que a biblioteca guarda:** `capturar` grava os 33
-params da cadeia **independentemente de estarem mapeados**. O que o iPad
-não controlar ainda continua sendo salvo com o valor que estiver.
+**And this does not limit what the library stores:** `capturar` records the 33
+chain params **regardless of whether they are mapped**. What the iPad
+does not yet control keeps being saved with whatever value it has.
 
-**Regra:** manda no ch1 (compartilhados) · ch2 (cadeia A) · ch3 (cadeia B).
-Escuta = manda + 3. Mesmo número de CC nos seis.
+**Rule:** send on ch1 (shared) · ch2 (chain A) · ch3 (chain B).
+Listen = send + 3. Same CC number across all six.
 
 
-## ESSENCIAL — sem isto não se escuta nada
+## ESSENTIAL — without this you hear nothing
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 100 | ch1 | ch4 | `level` |
 | 20 | ch1 | ch4 | `piezo_mix` |
 
-*4 widgets · acumulado: 4*
+*4 widgets · accumulated: 4*
 
-## BLOCO 1+2 — drive e shimmer (os dois que têm pergunta específica)
+## BLOCK 1+2 — drive and shimmer (the two that have a specific question)
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 30 | ch2 | ch5 | `drv_on_a` |
 | 31 | ch2 | ch5 | `drv_mix_a` |
@@ -43,11 +43,11 @@ Escuta = manda + 3. Mesmo número de CC nos seis.
 | 78 | ch2 | ch5 | `shm_shift_a` |
 | 79 | ch2 | ch5 | `shm_tone_a` |
 
-*9 widgets · acumulado: 13*
+*9 widgets · accumulated: 13*
 
-## BLOCO 3+4 — delay sozinho e os dois espaços
+## BLOCK 3+4 — delay alone and the two spaces
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 60 | ch2 | ch5 | `dly_on_a` |
 | 61 | ch2 | ch5 | `dly_mix_a` |
@@ -61,11 +61,11 @@ Escuta = manda + 3. Mesmo número de CC nos seis.
 | 75 | ch3 | ch6 | `shm_on_b` |
 | 76 | ch3 | ch6 | `shm_mix_b` |
 
-*11 widgets · acumulado: 24*
+*11 widgets · accumulated: 24*
 
-## BLOCO 5 — gate, warble, freeze duplo, búzios
+## BLOCK 5 — gate, warble, double freeze, cowrie shells
 
-| CC | manda | escuta | param |
+| CC | send | listen | param |
 |---|---|---|---|
 | 23 | ch2 | ch5 | `gate_thresh_a` |
 | 25 | ch2 | ch5 | `gate_release_a` |
@@ -80,15 +80,14 @@ Escuta = manda + 3. Mesmo número de CC nos seis.
 | 91 | ch1 | ch4 | `buzios_thresh` |
 | 92 | ch1 | ch4 | `buzios_cooldown` |
 
-*12 widgets · acumulado: 36*
+*12 widgets · accumulated: 36*
 
-## Ordem de ataque
+## Order of attack
 
-Faz por camada e para quando cobrir o que vais julgar. **A primeira
-camada sozinha já permite tocar e ouvir**; as outras destravam blocos
-específicos da pauta.
+Do it layer by layer and stop when you cover what you are going to judge. **The first
+layer alone already lets you play and listen**; the others unlock specific blocks
+of the agenda.
 
 
-O resto dos 86 remapeia depois, quando houver motivo — a lista
-completa está em `RETRABALHO-LOOPY.md`.
-
+The rest of the 86 is remapped later, when there is a reason — the complete
+list is in `RETRABALHO-LOOPY.md`.
