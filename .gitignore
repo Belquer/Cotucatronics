@@ -87,3 +87,4 @@ mech/3d/*.step
 
 # ambiente do BLE (tools/consola-sem-fio.command recria-o numa linha)
 .venv-ble/
+.claude/
