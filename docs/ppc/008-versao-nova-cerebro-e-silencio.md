@@ -1,5 +1,6 @@
 # ppc/008 — a versão nova: cérebro, silêncio, e o que a pesquisa desmentiu
 
+<!-- doc-check: ignore cotuca_cerebro (pasta do projecto KiCad, nao e param) -->
 <!-- doc-check: ignore funcao_dos_pads (portao do /aipcb, ferramenta em kicad/) -->
 
 > **Estado: PESQUISA FECHADA EM 5 DE 7 FRENTES, decisão principal TOMADA.**
