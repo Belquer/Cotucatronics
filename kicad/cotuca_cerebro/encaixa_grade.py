@@ -12,7 +12,7 @@ fio: o cursor salta para a grade, a ponta vai para 97,79 e o pino fica em
 
 ⚠️ SO A COLOCACAO, NUNCA O DESENHO DENTRO DO SIMBOLO. O bloco `lib_symbols` e
 mascarado antes de qualquer substituicao: arredondar o interior distorce
-triangulos de diodo para nao consertar ligacao nenhuma. Medido em 01/09: os
+triangulos de diodo para nao consertar ligacao nenhuma. Medido em 2026-09-01: os
 pinos internos estavam 100% na grade e so a colocacao estava fora.
 
 ⚠️ E O RISCO NAO E PERDER LIGACAO, E INVENTAR UMA. Arredondar e funcao pura,

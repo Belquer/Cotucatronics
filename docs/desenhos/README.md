@@ -1,7 +1,7 @@
 # Desenhos técnicos
 <!-- doc-check: ignore build_sheet (nome de um SVG em docs/operacao/esquematicos/, nao simbolo de src/.) -->
 <!-- doc-check: ignore svg_colisoes (a ferramenta vive em `tools/`, e o check_docs varre so `src/`. Nao e fantasma: e limite de alcance dele.) -->
-<!-- doc-check: ignore cotuca_energia_previa (desenho APOSENTADO em 05/09. A lapide fica: e ela que impede alguem de o regenerar sem ler por que saiu.) -->
+<!-- doc-check: ignore cotuca_energia_previa (desenho APOSENTADO em 2026-09-05. A lapide fica: e ela que impede alguem de o regenerar sem ler por que saiu.) -->
 <!-- doc-check: ignore energia_preview (idem) -->
 <!-- doc-check: ignore preamp_preview (idem) -->
 
@@ -48,7 +48,7 @@ correm daqui:
 no `.py`, nunca no SVG.** Um SVG editado à mão diverge do gerador na primeira
 regeneração, e aí ninguém sabe qual manda.
 
-⚠️ **As 6 páginas de fabricação da caixa foram apagadas a 06/09.** Desenhavam
+⚠️ **As 6 páginas de fabricação da caixa foram apagadas a 2026-09-06.** Desenhavam
 uma caixa que nunca foi cortada. O artefacto da caixa é agora o
 `caixa/cotuca_caixa_corte.py`, que gera o ficheiro de corte a partir de
 `--t`/`--kerf` e traz portões próprios — não passa por este vigia.
@@ -73,7 +73,7 @@ A inspecção destes é a do olho, em fatias, como manda a `design-review` §3.
 
 ## O que morreu, e porquê
 
-**`preamp-piezo.svg`**, aposentado a 05/09. Era a figura de conversa de antes
+**`preamp-piezo.svg`**, aposentado a 2026-09-05. Era a figura de conversa de antes
 de existir esquema. Quando o pré-amp ganhou um `.kicad_sch`, passou a
 descrever um circuito que não é o da placa — dizia `C2 1 nF` e mostrava o
 `RV1` vivo, quando o esquema diz `C2A 20n` e o `RVA` está **DNP** desde que a
@@ -102,8 +102,8 @@ quê?**
 
 | desenho | quando | porquê |
 |---|---|---|
-| `preamp-piezo.svg` | 05/09 | descrevia o pré-amp de antes do `.kicad_sch` — `C2 1 nF` e `RV1` vivo, contra `20n` e `DNP` |
-| `caixa-pedal-4-faces.svg` · `caixa-pedal-layout.svg` | 05/09 | as duas versões anteriores da caixa, substituídas pelas seis páginas |
-| `cotuca_energia_previa.svg` · `energia_preview.svg` · `preamp_preview.svg` | 05/09 | prévias dos `gen_*.py`, que deixaram de ser a fonte |
+| `preamp-piezo.svg` | 2026-09-05 | descrevia o pré-amp de antes do `.kicad_sch` — `C2 1 nF` e `RV1` vivo, contra `20n` e `DNP` |
+| `caixa-pedal-4-faces.svg` · `caixa-pedal-layout.svg` | 2026-09-05 | as duas versões anteriores da caixa, substituídas pelas seis páginas |
+| `cotuca_energia_previa.svg` · `energia_preview.svg` · `preamp_preview.svg` | 2026-09-05 | prévias dos `gen_*.py`, que deixaram de ser a fonte |
 
 Todos continuam em git.

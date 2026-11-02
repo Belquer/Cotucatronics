@@ -15,7 +15,7 @@
 // junto, e o ouvido chama qualquer coisa mais alta de "melhor" — o
 // controle mediria nivel disfarçado de timbre.
 //
-// O DENOMINADOR FOI TROCADO POR `drive` EM 22/08 E DESFEITO NO MESMO
+// O DENOMINADOR FOI TROCADO POR `drive` EM 2026-08-22 E DESFEITO NO MESMO
 // DIA. Fica registrado porque o erro foi de leitura, nao de conta.
 //
 // Dividir por `drive` normaliza o ganho de PEQUENO SINAL: a camada sai
@@ -37,12 +37,12 @@
 //
 // O JOELHO E RELATIVO AO NIVEL, e e por isso que o teto subiu.
 // A curva so molda perto de x ~= 1/d; abaixo disso ela e reta. O
-// histograma do instrumento tocado (22/08) poe 98% das amostras abaixo
+// histograma do instrumento tocado (2026-08-22) poe 98% das amostras abaixo
 // de -18 dBFS, entao um drive de 12x — joelho em -19 dBFS — fica reto
 // quase o tempo todo. NAO se conserta subindo a ENTRADA (e o `in_gain`
-// que fazia isso saiu em 28/08, por nao soar): subir a entrada
+// que fazia isso saiu em 2026-08-28, por nao soar): subir a entrada
 // engorda o seco na mesma proporcao e a camada some por comparacao
-// (medido, e foi um conselho errado meu em 22/08). Conserta-se aqui,
+// (medido, e foi um conselho errado meu em 2026-08-22). Conserta-se aqui,
 // no alcance do proprio controle. Ver bts 12n e 12o.
 //
 // ORDEM INTERNA, e cada passo tem razao:
@@ -116,7 +116,7 @@ class Drive
         if(a_ > 1.f) a_ = 1.f;
     }
 
-    // 0 = so tanh (o tube que o dB aprovou em 22/08)
+    // 0 = so tanh (o tube que o dB aprovou em 2026-08-22)
     // 1 = so wavefolder. Medido no nivel real: THD de 17.9% pra 58.9%
     // no pico, e OITO VEZES mais energia acima do 7o harmonico. Clipe
     // duro e assimetria foram testados e reprovados: em 48x o sinal ja

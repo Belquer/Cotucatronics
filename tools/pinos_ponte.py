@@ -3,7 +3,7 @@
 
     (Python do KiCad)  tools/pinos_ponte.py [--sabota]
 
-POR QUE EXISTE, e custou uma tarde de bancada (21/09).
+POR QUE EXISTE, e custou uma tarde de bancada (2026-09-21).
 
 O dB montou tudo, o iPad viu o `Cotucatronics` e ligou, mexeu nos parametros
 do Loopy — e nada. A placa dizia a verdade no `board`:

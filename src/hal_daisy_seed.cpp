@@ -69,7 +69,7 @@ constexpr int      kNumButtons  = 4;   // B1 rnd, B2 frzA, B3 rearme, B4 frzB
 // nada.
 constexpr int      kNumLeds = 2;   // 0 = freeze A (D27), 1 = freeze B (D23)
 static GPIO        leds[kNumLeds];
-static GPIO        widi_led;     // LB=D28 (LG/LR removidos 20/08 — nao
+static GPIO        widi_led;     // LB=D28 (LG/LR removidos 2026-08-20 — nao
                                  // marcavam nada, medido)
 // 30 ms, MEDIDO — nao escolhido.
 //
@@ -132,7 +132,7 @@ static SerialLineCallback line_cb = nullptr;
 // 160, e o numero tem razao: e o mesmo teto do `hal::Log`. Uma linha
 // que a placa consegue IMPRIMIR tem que ser uma linha que ela consegue
 // LER de volta — senao o `preset dump` produz texto que ela mesma
-// recusa, que foi exatamente o que aconteceu em 23/08 com 64.
+// recusa, que foi exatamente o que aconteceu em 2026-08-23 com 64.
 constexpr size_t kLineMax    = 160;
 constexpr size_t kQueueLines = 8;
 
@@ -172,7 +172,7 @@ constexpr int            kCdcDeadAfter = 3;
 // System::Delay, entao o custo e o de uma chamada que falha rapido.
 constexpr uint32_t       kCdcRetryMs   = 500;
 static uint32_t          cdc_retry_ms  = 0;
-// MUDO DO LOG, EM ESCOPO DE FICHEIRO — e a correcao de 27/08.
+// MUDO DO LOG, EM ESCOPO DE FICHEIRO — e a correcao de 2026-08-27.
 //
 // Era um `static bool` DENTRO do Log, e por isso a ISR de recepcao nao
 // lhe chegava. O rearme por byte recebido limpava o `cdc_dead` e o
@@ -184,7 +184,7 @@ static uint32_t          cdc_retry_ms  = 0;
 // Irmao desprotegido (bts 13q) em forma de sinalizador: dois estados
 // descrevem a mesma coisa, o rearme tocava num e nao no outro. O sintoma
 // e o pior possivel — placa viva, arranque completo, e ZERO bytes: em
-// 27/08 isso passou por firmware travado durante uma noite inteira, e
+// 2026-08-27 isso passou por firmware travado durante uma noite inteira, e
 // custou uma placa que se suspeitou morta sem estar.
 static bool              log_mudo      = false;
 // Teto da carencia de enumeracao. 3 s cobre com folga o tempo de o host
@@ -311,7 +311,7 @@ bool Init()
     {
         // MINIMO INCONDICIONAL PRIMEIRO. A versao anterior desta carencia
         // saia no primeiro envio bem-sucedido — e isso acontece ANTES de o
-        // host terminar de configurar a interface: medido em 27/08, o ping
+        // host terminar de configurar a interface: medido em 2026-08-27, o ping
         // saia (2 bytes no fio) e tudo o que vinha a seguir morria. Sair
         // cedo demais e nao esperar sao a mesma coisa.
         System::Delay(kBootMinMs);
@@ -351,14 +351,14 @@ bool Init()
     // do MIDI, D15-D19 sao os pots (A0-A4 sao os MESMOS pinos), e
     // D26 e D24 sao botoes; D27 virou SAIDA pro LED do freeze.
     // So o LB. D29/D30 reservados pras chaves DPDT dos excitadores.
-    // D25 entrou em 22/08 como B3 = rearme do teto de soma: pull-up
+    // D25 entrou em 2026-08-22 como B3 = rearme do teto de soma: pull-up
     // interno e ativo em BAIXO, entao com o painel ainda inexistente o
     // pino flutuante le "solto" — botao que nao existe nao dispara.
     widi_led.Init(seed::D28, GPIO::Mode::INPUT, GPIO::Pull::PULLUP);
 
     // LEDs de painel. Saida, sem pull — os LEDs tem resistor proprio
     // de 5 V acionados com 3,3 V. Brilho JULGADO SUFICIENTE de olho em
-    // 22/08, entao o plano B (transistor chaveando o trilho de 5 V,
+    // 2026-08-22, entao o plano B (transistor chaveando o trilho de 5 V,
     // base/gate via 1k) fica arquivado sem custo.
     //
     // O LED do freeze A ficou no D27 e o switch no D24 porque a fiacao
@@ -425,7 +425,7 @@ void AdcInit()
 
 // SENTIDO DE ROTACAO — os dois pots estao com as pontas trocadas.
 //
-// Medido em 31/08: girar no sentido HORARIO DIMINUIA o volume. Nao e
+// Medido em 2026-08-31: girar no sentido HORARIO DIMINUIA o volume. Nao e
 // defeito de software, e a ordem dos dois fios das EXTREMIDADES do pot:
 // o cursor sobe em direcao a ponta que esta no GND em vez da que esta
 // no 3V3. Resolver com ferro de soldar era trocar dois fios numa placa
@@ -437,7 +437,7 @@ void AdcInit()
 // `Inverso()` — ja trabalha em coordenadas corrigidas, e nao ha um
 // segundo lugar onde alguem possa esquecer o sinal.
 static const bool kKnobInverte[2] = {true, true};   // A0 (L), A1 (R)
-// ⚠️ LIGADA, E MEDIDA COM OS DOIS EXTREMOS DECLARADOS PELO dB (03/09).
+// ⚠️ LIGADA, E MEDIDA COM OS DOIS EXTREMOS DECLARADOS PELO dB (2026-09-03).
 //
 //     pote no MAXIMO  ->  cru 0.0008
 //     pote no MINIMO  ->  cru 0.9753
@@ -447,7 +447,7 @@ static const bool kKnobInverte[2] = {true, true};   // A0 (L), A1 (R)
 // EU DESLIGUEI-A DURANTE MEIA HORA, e o erro merece ficar escrito porque o
 // dB o nomeou como regra: eu li `0,975` no ADC e ASSUMI que aquela posicao
 // era o maximo. Nunca perguntei onde o botao estava. Errei a direccao duas
-// vezes — em 31/08 e hoje — e as duas por inferir a posicao a partir do
+// vezes — em 2026-08-31 e hoje — e as duas por inferir a posicao a partir do
 // valor.
 //
 //   O VALOR CRU DIZ *QUANTO*. NAO DIZ *ONDE*.
@@ -459,7 +459,7 @@ static const bool kKnobInverte[2] = {true, true};   // A0 (L), A1 (R)
 
 // BATENTES — o pot nao chega as pontas, e por isso nao silenciava.
 //
-// Medido em 31/08, varrendo os dois de ponta a ponta (ja invertidos):
+// Medido em 2026-08-31, varrendo os dois de ponta a ponta (ja invertidos):
 //
 //     k1 (L)  min 0.0250   max 0.9993
 //     k2 (R)  min 0.0247   max 0.9994
@@ -623,7 +623,7 @@ bool ReadWidiLed()
     return widi_led.Read();
 }
 
-// ⚠️ 22/09 — O BOTAO BRANCO DO BUZIOS E NORMALMENTE FECHADO, e isto e uma
+// ⚠️ 2026-09-22 — O BOTAO BRANCO DO BUZIOS E NORMALMENTE FECHADO, e isto e uma
 // EXCECAO DECLARADA, nao um conserto silencioso.
 //
 // O arcade branco que o dB montou traz um microinterruptor com DOIS terminais
@@ -640,7 +640,7 @@ bool ReadWidiLed()
 // nivel CRU continua a reportar a verdade electrica — inverter ali faria o
 // diagnostico mentir exactamente onde ele serve para achar defeito.
 static const bool botao_nf[kNumButtons] = {
-    true,    // B1 buzios — branco, microinterruptor NF (dB, 22/09)
+    true,    // B1 buzios — branco, microinterruptor NF (dB, 2026-09-22)
     false,   // B2 freeze A
     false,   // B3 rearme do CTOS
     false,   // B4 freeze B
@@ -713,7 +713,7 @@ constexpr size_t kLogMax = 160;
 //
 // Uma linha que a placa consegue IMPRIMIR tem que ser uma linha que ela
 // consegue LER DE VOLTA. Sem isso o `preset dump` produz texto que a
-// propria placa recusa — que foi exatamente o que aconteceu em 23/08,
+// propria placa recusa — que foi exatamente o que aconteceu em 2026-08-23,
 // com o log em 160 e a entrada em 64: saiam 13 de 33 params, e a
 // colagem de volta recusava um por linha.
 //
@@ -745,7 +745,7 @@ void Log(const char* fmt, ...)
         return;
     // TRUNCAGEM SE ANUNCIA. O `vsnprintf` devolve o que CABERIA, entao
     // aqui se sabe que cortou — e cortar em silencio e a familia
-    // proibida: em 23/08 o `preset dump` emitia 13 de 33 params e
+    // proibida: em 2026-08-23 o `preset dump` emitia 13 de 33 params e
     // parecia completo, porque nada na linha dizia que ela tinha fim
     // artificial.
     //
@@ -803,7 +803,7 @@ void Log(const char* fmt, ...)
     // GATE COM RESSURREICAO. Antes isto era definitivo: tres falhas
     // e a placa ficava MUDA PARA SEMPRE, sem retentar.
     //
-    // O QUE ISSO CUSTOU (18/08, e travou a sessao inteira): no boot o
+    // O QUE ISSO CUSTOU (2026-08-18, e travou a sessao inteira): no boot o
     // app loga reverb, freeze, SDRAM e o banner ANTES de o host
     // terminar de enumerar o USB. As tres primeiras falhas sao a
     // CORRIDA NORMAL da enumeracao, nao um CDC doente — e matavam o
@@ -946,7 +946,7 @@ static uint32_t midi_rearme_seguidos = 0;   // falhas consecutivas
 // Agrupamento de prioridades conferido no Init do MIDI. Falso = o
 // `SetPriority` acima nao preempta nada e o conserto e um no-op.
 static bool     nvic_grupo_ok        = false;
-// (os contadores do teto de erros sairam com o teto — 01/09)
+// (os contadores do teto de erros sairam com o teto — 2026-09-01)
 static volatile uint32_t midi_restarts = 0; // rearmes da escuta DMA
 // MARCA D'AGUA DA FILA. O furo conhecido do MIDI: os bytes chegam por
 // DMA (imune a carga) mas quem DESPACHA e o loop principal, que sob
@@ -1051,7 +1051,7 @@ void SetMidiByteCallback(MidiByteCallback cb)
     // SUBprioridade e nao preempta coisa nenhuma — o conserto seria um
     // no-op silencioso, com ar de feito.
     //
-    // Lido em 02/09: `HAL_Init` poe GROUP_4
+    // Lido em 2026-09-02: `HAL_Init` poe GROUP_4
     // (Drivers/.../stm32h7xx_hal.c:147) e ninguem na libDaisy nem aqui
     // volta a chamar `SetPriorityGrouping`. Mas leitura de hoje nao e
     // garantia de amanha, entao a placa CONFERE e grita — a prioridade so
@@ -1068,7 +1068,7 @@ void SetMidiByteCallback(MidiByteCallback cb)
     // Entrada CMOS solta apanha ruido a MHz. A USART ve arestas ao ritmo
     // da propria amostragem, e FE/NE/ORE disparam a uma taxa que se
     // aproxima do tempo de servico da interrupcao: o CPU fica na ISR da
-    // USART e o laco morre a fome. MEDIDO em 01/09 — a placa deixava de
+    // USART e o laco morre a fome. MEDIDO em 2026-09-01 — a placa deixava de
     // responder em menos de 4 s e NAO voltava com a linha ja em repouso.
     //
     // Repouso de uma linha de UART e ALTO, por definicao. Se o
@@ -1134,7 +1134,7 @@ uint32_t MidiRearmeSeguidos() { return midi_rearme_seguidos; }
 bool     NvicGrupoOk()        { return nvic_grupo_ok; }
 
 // Estado CRU do periferico e do pino, para nao bissectar as cegas.
-// Em 02/09 o RX parou depois de eu mexer em tres coisas no mesmo dia
+// Em 2026-09-02 o RX parou depois de eu mexer em tres coisas no mesmo dia
 // (pull-up no PB7, prioridade da USART1, escrita directa no TDR). Em vez
 // de tirar uma de cada vez e gravar tres vezes, pergunta-se ao silicio.
 void UartDiag(uint32_t* cr1, uint32_t* cr3, uint32_t* isr,
@@ -1155,7 +1155,7 @@ void ReiniciaAgora() { NVIC_SystemReset(); }
 
 void PollMidi()
 {
-    // ⚠️ AQUI ESTEVE UM TETO DE ERROS DE LINHA, E ELE SAIU. (01/09)
+    // ⚠️ AQUI ESTEVE UM TETO DE ERROS DE LINHA, E ELE SAIU. (2026-09-01)
     //
     // Contava erros por segundo e calava o receptor acima de 200/s. O
     // problema nao e a regra — e o SITIO: isto corre no `PollMidi`, que e
@@ -1166,7 +1166,7 @@ void PollMidi()
     // regra escrita para quem a for reimplementar no sitio certo — a ISR.
     // VIGIA DA ESCUTA — COM TETO E RECUO, e o motivo esta MEDIDO.
     //
-    // ⚠️ ATE 01/09 ISTO ERA `if(!IsListening()) MidiRestart();` sem mais
+    // ⚠️ ATE 2026-09-01 ISTO ERA `if(!IsListening()) MidiRestart();` sem mais
     // nada, e ERA O DEFEITO, nao o conserto.
     //
     // Com o RX preso em baixo — que e o que a ponte ESP32 faz quando
@@ -1215,7 +1215,7 @@ void PollMidi()
     // Despacha em contexto normal, onde o parser pode mexer em params
     // e o Log() pode transmitir. Mesmo contrato do PollSerial().
     // INSTANTANEO DO `m_head`, e e o conserto de um LIVELOCK que travou
-    // a placa em 28/08, depois de vinte minutos de trafego BLE.
+    // a placa em 2026-08-28, depois de vinte minutos de trafego BLE.
     //
     // Era `while(m_tail != m_head)`, com o `m_head` escrito pela ISR: a
     // condicao de paragem PERSEGUIA UM ALVO QUE SE MOVE. Se os bytes
@@ -1253,7 +1253,7 @@ uint32_t MidiRingTam()   { return (uint32_t)kMidiRing; }
 
 // ---- TRANSMISSAO DE MIDI: FILA, PEDACOS CURTOS E RECUO ----
 //
-// O QUE ISTO CONSERTA, e o preco que cobrou: ate 31/08 esta funcao era
+// O QUE ISTO CONSERTA, e o preco que cobrou: ate 2026-08-31 esta funcao era
 // uma linha —
 //
 //     midi_uart.BlockingTransmit(tmp, n, 10);
@@ -1378,7 +1378,7 @@ void MidiTxPump()
     if(midi_tx_retry_ms && (int32_t)(NowMs() - midi_tx_retry_ms) < 0) return;
 
     // INSTANTANEO do `head`. Perseguir um alvo que se move travou a
-    // placa em 28/08 no `PollMidi`; mesma cicatriz, mesma defesa.
+    // placa em 2026-08-28 no `PollMidi`; mesma cicatriz, mesma defesa.
     const uint32_t head = midi_tx_head;
     if(head == midi_tx_tail) return;
 
@@ -1402,7 +1402,7 @@ void MidiTxPump()
     // ⚠️ NUNCA UM BLOQUEANTE DA HAL NO LACO. Isto travou a placa, e o
     //    instrumento de fase apontou o sitio exacto.
     //
-    // MEDIDO em 01/09, com a linha de RX A FLUTUAR (o comando `pino 4 2`
+    // MEDIDO em 2026-09-01, com a linha de RX A FLUTUAR (o comando `pino 4 2`
     // na ponte poe o TX dela em alta impedancia): o LED ficou em `2 e 6`
     // PARA SEMPRE — fase 2, inquilino 6, que e este pump. O OLED parou,
     // a serial calou, e nao voltou nem com a linha restaurada, porque o
@@ -1441,7 +1441,7 @@ void MidiTxPump()
     }
     // ⚠️ "O PERIFERICO NAO ACEITOU" NAO E FALHA — E A LINHA CHEIA.
     //
-    // MEDIDO a 22/09: `DESCARTES 1433` contra `1026 bytes entregues`, com
+    // MEDIDO a 2026-09-22: `DESCARTES 1433` contra `1026 bytes entregues`, com
     // `falhas 1404` e `recuos 445`. A 31250 baud a UART engole ~3 125 bytes/s
     // e este laco passa aqui ~13 000 vezes/s: a esmagadora maioria das
     // passagens encontra a FIFO cheia, e isso e o funcionamento NORMAL de
@@ -1563,7 +1563,7 @@ uint32_t SerialTruncadas() { return serial_truncadas; }
 //   enc B (cadeia B)   D3  D4   push D9
 //   enc G (global)     D18 D19  push D17
 //
-// O GLOBAL MUDOU DE PINO em 23/08, e a razao vale registrar: a solda
+// O GLOBAL MUDOU DE PINO em 2026-08-23, e a razao vale registrar: a solda
 // foi para D17/D18/D19 e o firmware supunha D20/D21/D19. O sintoma era
 // desconcertante — girar movia o pino do "push" (D19, que na verdade e
 // uma FASE) e as duas "fases" nunca comutavam, porque nao havia nada
@@ -1593,7 +1593,7 @@ static bool           enc_pronto = false;
 
 // A TABELA E A FONTE, e o `EncoderInit` LE dela — nao ao contrario.
 //
-// Ate 28/08 havia duas listas: o `Init` com os pinos escritos a mao e
+// Ate 2026-08-28 havia duas listas: o `Init` com os pinos escritos a mao e
 // esta tabela para a sonda. O comentario ja dizia "UMA fonte: se o Init
 // mudar e isto nao, o proximo diagnostico mede o pino errado e culpa a
 // solda certa" — e a segunda lista continuou la, a espera. No dia em que
@@ -1603,7 +1603,7 @@ static bool           enc_pronto = false;
 // Havia ainda uma TERCEIRA copia, os nomes em texto no `encpino` do
 // main.cpp. Vive agora aqui ao lado, e sai pelo `EncoderPinNome`.
 //
-// ⚠️ A LICAO DO ENCODER G FICA, MESMO COM ELE FORA (removido a 05/09).
+// ⚠️ A LICAO DO ENCODER G FICA, MESMO COM ELE FORA (removido a 2026-09-05).
 //
 // Ele tinha as fases trocadas de proposito, e quando isso se fez o dB
 // reportou que a contagem PAROU DE VEZ. Fui procurar um mapa de pinos
@@ -1669,7 +1669,7 @@ uint16_t EncoderNiveisCrus()
 
 // Todos os pinos que NAO estao ocupados por periferico. Inclui os nove
 // dos encoders — se o fio estiver noutro lugar, e aqui que aparece.
-// D15 E D16 SAIRAM DAQUI EM 31/08, e a razao e um defeito que custou uma
+// D15 E D16 SAIRAM DAQUI EM 2026-08-31, e a razao e um defeito que custou uma
 // sessao inteira e uma solda do dB.
 //
 // O `VarreLivres` corre a CADA volta do laco e, na primeira, reconfigura
@@ -1693,7 +1693,7 @@ static const int kLivres[] = {0,1,2,3,4,9,11,12,17,18,19,20,21};
 // periferico parte o periferico.
 //
 // Mas cria um modo de falha inteiro que nenhum instrumento nosso via:
-// FIO QUE VA PARAR A UM DESSES NAO APARECE. Em 28/08 cacei um encoder
+// FIO QUE VA PARAR A UM DESSES NAO APARECE. Em 2026-08-28 cacei um encoder
 // por meia tarde com quatro mapas de pinos em desacordo, e se um fio
 // tivesse escorregado para o D20 do OLED eu teria lido "parado" em toda
 // a gama e concluido "fio aberto" — a conclusao errada, com a sonda a
@@ -1754,7 +1754,7 @@ uint32_t VarreLivres()
     if(!feito)
     {
         // TRAVA CONTRA O ROUBO DE PINO, e mora AQUI porque e aqui que o
-        // roubo acontece. Ate 31/08 o D15 e o D16 estavam nesta lista, e
+        // roubo acontece. Ate 2026-08-31 o D15 e o D16 estavam nesta lista, e
         // esta linha arrancava-os do modo ANALOGICO na primeira volta do
         // laco: o ADC passava a amostrar uma entrada desligada e os dois
         // pots liam o mesmo valor para sempre. Nada que se fizesse ao
@@ -1793,7 +1793,7 @@ bool EncoderPushBorda(int i)
 
 // ---- OLED ----
 //
-// FIACAO SOLDADA (23/08) contra os defaults da libDaisy:
+// FIACAO SOLDADA (2026-08-23) contra os defaults da libDaisy:
 //
 //   CLK  D8  = PORTG11   <- e o default, nao mexe
 //   DIN  D10 = PORTB5    <- e o default, nao mexe
@@ -1851,7 +1851,7 @@ class OledFb : public daisy::SSD130x4WireSpi128x64Driver
     // DMA para um problema que era um laco de 8192 iteracoes.
     void Copia(const uint8_t* fb) { memcpy(buffer_, fb, sizeof(buffer_)); }
 
-    // O QUADRO EM PEDACOS DE 32 BYTES, e o numero foi MEDIDO (22/09).
+    // O QUADRO EM PEDACOS DE 32 BYTES, e o numero foi MEDIDO (2026-09-22).
     //
     // O `Update()` da libDaisy manda a pagina inteira — 128 bytes — num
     // `BlockingTransmit` so. Nesta placa um envio de 128 bytes devolve
@@ -1902,7 +1902,7 @@ static bool oled_pronto = false;
 
 // MEMORIA DAS RETENCOES DO `fio`, e ela existe por uma medicao perdida.
 //
-// A 22/09 o dB mediu os cinco pinos no conector contando que as cinco
+// A 2026-09-22 o dB mediu os cinco pinos no conector contando que as cinco
 // retencoes estivessem de pe. Nao estavam: um reinicio pelo meio tinha
 // devolvido CLK e DIN ao SPI, que em repouso os deixa BAIXOS. O padrao
 // medido — 0 V nos dois do SPI, 3,3 V nos tres GPIO — foi lido como
@@ -1930,7 +1930,7 @@ int OledVelocidadeAtual() { return oled_ps; }
 
 // O PAINEL TEM ALIMENTACAO? — e esta pergunta vale um modulo por sessao.
 //
-// MEDIDO a 22/09: com a bancada desligada e a Daisy viva no USB, o `TP5`
+// MEDIDO a 2026-09-22: com a bancada desligada e a Daisy viva no USB, o `TP5`
 // (rede +5V) da ZERO. Os 5 V do painel vem do step-down, que corre do +15 V;
 // o pad 39 do `U2` e VIN, uma ENTRADA. Ou seja: sempre que se trabalha so com
 // USB, o modulo esta sem VCC — e o firmware, que inicializa o OLED no arranque
@@ -1939,7 +1939,7 @@ int OledVelocidadeAtual() { return oled_ps; }
 // Um modulo nessas condicoes e alimentado pelos DIODOS DE PROTECCAO das
 // entradas dele. Mata devagar, ao longo de sessoes, e deixa a logica com ar de
 // viva — pull-ups bons, niveis de repouso certos, vidro morto. Ja morreram
-// DOIS: o primeiro por polaridade invertida na placa de distribuicao (23/08,
+// DOIS: o primeiro por polaridade invertida na placa de distribuicao (2026-08-23,
 // causa conhecida e resolvida), o segundo sem causa apurada ate aqui.
 //
 // A sonda nao precisa de fio novo: o proprio modulo tem PULL-UP nas entradas,
@@ -2035,7 +2035,7 @@ bool OledInit(bool forcar)
 // Devolve `false` quando havia transferencia em curso e o quadro foi
 // descartado. Descarte nao e erro: a 20 Hz nao devia acontecer, e se
 // acontecer e sinal de que a taxa esta acima do que o SPI aguenta.
-// ⚠️ O CAMINHO DE DMA TRAVA A PLACA. MEDIDO EM 01/09, DUAS VEZES.
+// ⚠️ O CAMINHO DE DMA TRAVA A PLACA. MEDIDO EM 2026-09-01, DUAS VEZES.
 //
 // A ideia era boa e e do dB: por DMA o laco paga o DISPARO e a
 // transferencia atravessa o periferico — os 20 KB/s existem no
@@ -2079,7 +2079,7 @@ bool OledDesenha(const uint8_t* fb)
 
 // ⚠️ O PICO E RETIDO, entao quem mede TEM de o zerar antes.
 //
-// Medido em 01/09: tres corridas seguidas a prescalers diferentes
+// Medido em 2026-09-01: tres corridas seguidas a prescalers diferentes
 // imprimiram todas `23288 us` — o pico da PRIMEIRA, com PS_64. As duas
 // seguintes eram muito mais rapidas e o numero nao mexeu, porque um
 // maximo so sobe. Numero velho com cara de novo, que e a familia que
@@ -2294,7 +2294,7 @@ void OledLeCinco(bool* com_pullup, bool* com_pulldown)
 // refaz o barramento e os pinos voltam ao repouso dele.
 // SONDA DO SPI — le o codigo de erro que o nosso caminho deita fora.
 //
-// POR QUE EXISTE, e custou uma tarde (22/09). O painel nao acendia, e
+// POR QUE EXISTE, e custou uma tarde (2026-09-22). O painel nao acendia, e
 // medimos a tarde inteira do lado do FIO: continuidade, pontes, curtos,
 // alimentacao, ordem dos sinais no modulo. Tudo bom. O que denunciou foi
 // o TEMPO do quadro: 800 ms, e IGUAL de PS_256 a PS_4 — 64x de relogio

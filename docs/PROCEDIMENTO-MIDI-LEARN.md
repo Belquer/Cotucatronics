@@ -1,6 +1,6 @@
 # Procedimento recorrente — endereçar o Loopy Pro
 
-**Método que funcionou (22/08): `vistos`, não `learn`.**
+**Método que funcionou (2026-08-22): `vistos`, não `learn`.**
 
 Fecharam-se 65 de 65 em duas varreduras. O modo `learn` levou cinco versões
 de firmware e nunca fechou — está descrito adiante como registro, não como
@@ -34,7 +34,7 @@ não transborda. Acumula entre varreduras até o `reset`.
 ## Os dois pontos cegos, e eles importam
 
 **`vistos` só enxerga widget que ENVIA.** Um widget que só recebe é
-invisível, por melhor que esteja endereçado. Em 22/08 quatro apareceram como
+invisível, por melhor que esteja endereçado. Em 2026-08-22 quatro apareceram como
 "faltando" e um estava perfeito — o dB o viu piscando. Se um FALTA
 persistir, o teste é **apertar o widget e ver se o parâmetro muda na placa**.
 
@@ -130,7 +130,7 @@ Comandos durante a caminhada:
 
 **Não deixe a placa parada pulsando enquanto ninguém opera.** O firmware
 repete o CC estacionado indefinidamente. Todo widget armado nesse intervalo
-aprende o mesmo CC. Em 22/08 quatro widgets aprenderam o cc26 porque foi o
+aprende o mesmo CC. Em 2026-08-22 quatro widgets aprenderam o cc26 porque foi o
 que ficou no fio durante uma pausa. **Se for interromper, `learn stop`.**
 
 **Não use polling externo para detectar o arme.** Foi a primeira tentativa:
@@ -142,7 +142,7 @@ lacuna, e a lacuna é onde os widgets aprendem o CC errado.
 **Não confie no histórico de CCs para conferir arme antigo.** Ele guarda as
 **8 últimas** mensagens, sem carimbo de tempo. E o caminho de volta tem
 latência de BLE: mensagens antigas chegam atrasadas e se misturam às
-recentes. Em 22/08 li `[26, 30, 32]` estando no 32 e quase concluí que a
+recentes. Em 2026-08-22 li `[26, 30, 32]` estando no 32 e quase concluí que a
 placa transmitia CC errado — os 26 e 30 eram ecos atrasados de
 estacionamentos anteriores. **Verificado depois: a placa transmite
 exatamente o que reporta.**
@@ -158,7 +158,7 @@ operador dizer que armou.
 ## Pausar não é terminar
 
 `learn stop` **pausa e não empurra nada** (9 mensagens de acerto fino, não 76).
-Em 22/08 cada pausa disparava um re-push completo e despejava 76 CCs na tela
+Em 2026-08-22 cada pausa disparava um re-push completo e despejava 76 CCs na tela
 do Loopy — o dB leu isso como a placa mandando CC errado, e gastamos uma
 rodada investigando um defeito que era o meu comando de pausa.
 
@@ -192,7 +192,7 @@ a janela não está funcionando.
 3. `list` idêntico ao de antes do learn — os pulsos são **TX-only** e não
    escrevem em parâmetro nenhum.
 
-**Estado em 22/08: não concluído.** Foram armados e confirmados os CC 20 a
+**Estado em 2026-08-22: não concluído.** Foram armados e confirmados os CC 20 a
 25 (CENTRAL). A caminhada parou em 7/76, cc26. O mecanismo de confirmação
 automática (v0.116.0) foi implementado mas **ainda não exercitado de ponta
 a ponta** — os CC 20–25 foram armados com detecção externa, o método que

@@ -83,7 +83,7 @@ class Splash
             // ⚠️ MEDIDO EM PIXEIS, e nao a olho. Com ra=30/rb=13 e cy=20
             //    o anel exterior (ra+5, rb+4) acabava em y=37 e o nome
             //    comeca em y=40: TRES pixeis de folga, e a marca colava-se
-            //    as letras. Pedido do dB em 02/09.
+            //    as letras. Pedido do dB em 2026-09-02.
             //
             //    Agora ra=26/rb=11 -> anel em (31,15), centro em cy=17:
             //    a marca ocupa y=2..32 e a folga passa a OITO pixeis.
@@ -161,7 +161,7 @@ class Splash
     // A CONCHA, unica. `aberto` = a fenda dentada virada para cima; caido
     // fechado e o dorso liso. Serve o buzio de 13 px e a marca de 61.
     //
-    // ⚠️ REDESENHADA EM 03/09, com buzios de verdade a frente.
+    // ⚠️ REDESENHADA EM 2026-09-03, com buzios de verdade a frente.
     //
     // Era uma ELIPSE com a fenda ao centro, e o dB viu logo o que estava
     // mal: "me lembra um pouco uma bola de futebol americano". Estava
@@ -179,7 +179,7 @@ class Splash
     //      atravessava a peca ao meio, que e o que fazia a costura de bola.
     static void Concha(uint8_t* fb, int cx, int cy, int ra, int rb, bool aberto)
     {
-        // Anatomia do buzio, do desenho do dB (IMG_5910, 04/09). Nao e uma
+        // Anatomia do buzio, do desenho do dB (IMG_5910, 2026-09-04). Nao e uma
         // elipse com um corte: sao TRES pecas encaixadas.
         //
         //   1. o CASCO e um contorno vazado, nao um vulto macico;
@@ -211,7 +211,7 @@ class Splash
         // diferentes parece bater certo e nao bate: a TAMPA do interno cai
         // na mesma linha que o ARCO do externo, e as duas nao se encontram.
         // Saiam 3 px de buraco de cada lado na penultima linha — "a linha
-        // debaixo esta interrompida", 04/09. Dois tracos vizinhos so se
+        // debaixo esta interrompida", 2026-09-04. Dois tracos vizinhos so se
         // tocam onde a curva anda devagar; nos topos ela salta.
         //
         // Um anel feito de cheio-menos-cheio nao pode abrir, porque nao ha
@@ -262,7 +262,7 @@ class Splash
             // eu tinha-o posto de proposito, para "ligar a ponta magra a
             // boca larga". O efeito real era partir em dois o traco que
             // vai do canto ao centro: "sem a interrupcao da linha do canto
-            // esquerdo ao centro", 04/09.
+            // esquerdo ao centro", 2026-09-04.
             //
             // A boca abre onde HA boca. No rabo, o labio fica macico.
             if(ha < 1) continue;

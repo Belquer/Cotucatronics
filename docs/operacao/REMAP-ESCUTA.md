@@ -1,6 +1,6 @@
 # Remapeamento MIRADO na sessão de escuta
 
-> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
+> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 2026-09-06.** Nenhum
 > gerador o escreve — foi feito à mão a partir do `manifest.h` **v0.171.0, mais juízo humano do `PAUTA-ESCUTA.md`**, e o
 > manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
 > como espelho do actual.

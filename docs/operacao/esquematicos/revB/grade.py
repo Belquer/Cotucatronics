@@ -9,7 +9,7 @@ que alguem arrastar um fio no editor, o cursor pula para a grade e a
 ponta vai parar a 97,79 enquanto o pino fica em 98,00: os dois continuam
 DESENHADOS encostados e a ligacao ja nao existe. Sem aviso.
 
-⚠️ SO A COLOCACAO, NUNCA O DESENHO DENTRO DO SIMBOLO. Medido em 01/09:
+⚠️ SO A COLOCACAO, NUNCA O DESENHO DENTRO DO SIMBOLO. Medido em 2026-09-01:
 os pinos internos ja estao todos na grade (offsets de 2,54 e 3,81 sao
 multiplos de 1,27), e arredondar as linhas de um triangulo de diodo
 distorceria o desenho para nao consertar nada.

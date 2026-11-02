@@ -4,7 +4,7 @@
     ./modo_exciter.py            # boost a 1.0 (unidade), o estado conhecido-bom
     ./modo_exciter.py 3          # boost a 3x, se o instrumento estiver fraco
 
-POR QUE EXISTE (04/09). Em modo jack o exciter esta fora do circuito: nao ha
+POR QUE EXISTE (2026-09-04). Em modo jack o exciter esta fora do circuito: nao ha
 laco para quebrar, e a proteccao so custa timbre. Por isso, para uma
 demonstracao pelo jack, desligou-se TUDO — supressor, bocas, portao do
 exciter (que e quem corre o shifter e o Governor) — e subiu-se o
@@ -22,9 +22,9 @@ import sys, time, serial
 
 VERSAO = "0.1.1"
 
-# As oito bocas que o SuMiA™ achou sozinho em 04/09, medidas na escultura
+# As oito bocas que o SuMiA™ achou sozinho em 2026-09-04, medidas na escultura
 # real e nao no banco de ensaio. Nao vivem em preset nenhum e a gravacao
-# apaga-as: e daqui que se repoem. Regra do dB (02/09): "repoe as bocas
+# apaga-as: e daqui que se repoem. Regra do dB (2026-09-02): "repoe as bocas
 # conhecidas e deixa o supressor so preencher as livres".
 BOCAS = [
     ("microfonia1_hz_l", 3025.7), ("microfonia1_db_l", 18),
@@ -89,7 +89,7 @@ def main():
     if diag:
         print()
         print("  ⚠️ AS DIAGONAIS DA MATRIZ ESTAO ABERTAS (route_b_l / route_a_r).")
-        print("     Medido em 31/08: matriz toda aberta = +24,4 dB, dominancia 0,99")
+        print("     Medido em 2026-08-31: matriz toda aberta = +24,4 dB, dominancia 0,99")
         print("     (uivo). So A->L e B->R = -24,3 dB. Sao 49 dB de margem de laco,")
         print("     e as diagonais fecham o laco pelos DOIS corpos — o tarol esta")
         print("     soldado ao botijao. Nao mexo nisto: e escolha sua.")

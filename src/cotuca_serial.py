@@ -31,7 +31,7 @@ BAUD = 115200
 # janela em que ela esta viva e nao responde — porque esta a reiniciar.
 #
 # Um sondador com janela menor que (vigia + arranque) pode SEMPRE dizer
-# "muda" a uma placa viva. Aconteceu tres vezes em 01-02/09, e uma delas
+# "muda" a uma placa viva. Aconteceu tres vezes em 01-2026-09-02, e uma delas
 # quase me fez reportar como morta uma placa que estava a recuperar
 # sozinha, que era exactamente o comportamento desejado.
 #
@@ -45,9 +45,9 @@ JANELA_MIN = VIGIA_S + ARRANQUE_S
 
 def find_port(quieto=False):
     """A porta certa e a que RESPONDE — e quem sabe perguntar e o
-    `porta_daisy`, que existe desde 25/08 EXACTAMENTE para isto.
+    `porta_daisy`, que existe desde 2026-08-25 EXACTAMENTE para isto.
 
-    ⚠️ ATE 02/09 ESTE FICHEIRO TINHA A SUA PROPRIA COPIA. Antes disso
+    ⚠️ ATE 2026-09-02 ESTE FICHEIRO TINHA A SUA PROPRIA COPIA. Antes disso
     tinha `sorted(glob(...))[-1]`, que mandou cinco comandos para a ponte
     ESP32 enquanto o script anunciava que tinham sido aplicados — e o
     `porta_daisy.py` ja tinha ESSE defeito escrito na docstring, como

@@ -32,7 +32,7 @@ Três factos que qualquer hipótese tem de explicar:
    32 bytes fixos no `SPI1` do H7.
 3. Quando falha, gasta **exactamente o prazo** (100 ms) e devolve `ERR`.
 
-⚠️ E o mais importante: **isto funcionou a 23/08** (bts 13z), com a mesma
+⚠️ E o mais importante: **isto funcionou a 2026-08-23** (bts 13z), com a mesma
 libDaisy, a mesma configuração e o mesmo driver — em jumpers curtos, direto à
 Daisy. O que mudou foi o caminho físico e ~40 versões de firmware.
 
@@ -43,7 +43,7 @@ Daisy. O que mudou foi o caminho físico e ~40 versões de firmware.
 | H1 | o `BlockingTransmit` espera um sinal que só chega com o FIFO a drenar, e a drenagem depende de interrupções que o áudio esfomeia | correr o `oledspi` com o áudio **parado** e comparar a fronteira |
 | H2 | o periférico entra em erro (overrun/underrun) e o `Result` esconde qual | ler os registos `SR`/`IER` do `SPI1` logo a seguir ao `ERR` e imprimi-los |
 | H3 | é do `NSSPMode = SPI_NSS_PULSE_ENABLE` da libDaisy com `MasterInterDataIdleness = 0` | repetir com `nss` em software, guiando o `D7` à mão |
-| H4 | regressão nossa entre 23/08 e hoje | `git bisect` sobre o firmware, com o `oledspi` como critério — **é o teste mais barato e o único que dá uma data** |
+| H4 | regressão nossa entre 2026-08-23 e hoje | `git bisect` sobre o firmware, com o `oledspi` como critério — **é o teste mais barato e o único que dá uma data** |
 
 **Ordem: H4, H1, H2, H3.** O H4 não precisa de entender nada do H7 e devolve o
 commit; os outros só valem se o H4 disser "sempre esteve assim".

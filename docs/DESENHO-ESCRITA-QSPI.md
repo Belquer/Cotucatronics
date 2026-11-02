@@ -90,7 +90,7 @@ save <n>                            // gesto de bancada, por serial
 função de biblioteca, nenhum `Log`, nenhuma variável em QSPI. É <100 ms, é
 bancada, e é surdo por construção.
 
-## O PROTOCOLO REAL — lido no `Init` da libDaisy, 22/08
+## O PROTOCOLO REAL — lido no `Init` da libDaisy, 2026-08-22
 
 **Este é o resultado mais valioso da rodada, e é conhecimento, não código.**
 Está aqui porque a próxima tentativa pode travar a placa, e o achado tem que
@@ -122,7 +122,7 @@ que batia com o sintoma, e errada (bts 13j).
 | `AlternateBytesSize` | 8 bits |
 | `SIOOMode` | **`INST_ONLY_FIRST_CMD`** |
 
-🔴 **AS QUATRO ÚLTIMAS LINHAS FALTAVAM ATÉ 29/09, e eram as que decidiam.**
+🔴 **AS QUATRO ÚLTIMAS LINHAS FALTAVAM ATÉ 2026-09-29, e eram as que decidiam.**
 Com `AlternateBytes = 0xA0` os bits M5-M4 valem `10`, o que põe o chip em
 **leitura contínua (XIP)** — e nesse modo **o chip deixa de interpretar o
 primeiro byte como opcode**. Foi por isso que, durante cinco semanas, nenhum
@@ -206,7 +206,7 @@ entre funciona-por-sorte e funciona-por-construção.**
 
 ---
 
-# Onde a frente parou (22/08) — e como retomar
+# Onde a frente parou (2026-08-22) — e como retomar
 
 **Parada por dimensionamento, não por desistência.** O risco arquitetural
 acabou; o que resta é sequência de registrador, que é trabalho de leitura.
@@ -282,7 +282,7 @@ A ordem não mudou: ID → recusa gritada de chip desconhecido → erase → pro
 
 ---
 
-# ✅ RESOLVIDO — 29/09. A QSPI escreve com o app a correr da QSPI.
+# ✅ RESOLVIDO — 2026-09-29. A QSPI escreve com o app a correr da QSPI.
 
 Este documento esteve cinco semanas com a frente parada e a condição de
 retomada a apontar para o RM0433. **O manual não foi preciso.** O que resolveu
@@ -291,7 +291,7 @@ foi ler três funções da libDaisy — `SetMode`, `HAL_QSPI_Abort` e
 
 ## As três hipóteses vivas: mortas, e nenhuma era a causa
 
-| hipótese de 22/08 | veredicto de 29/09 |
+| hipótese de 2026-08-22 | veredicto de 2026-09-29 |
 |---|---|
 | dois passos vs um (`Command`+`Receive`) | **irrelevante** — um passo funciona |
 | `NbData`/`DLR` | **irrelevante** — 1 ou 3 bytes, igual |

@@ -233,7 +233,7 @@ São **botões de valor fixo**, não faders: cada botão manda o CC 121 com o se
 
 ⚠️ **Os presets vivem em RAM.** Desliga da tomada e somem. `preset dump` guarda no computador enquanto a escrita na flash não destrava.
 
-⚠️ **Quantização em 7 bits.** O preset guarda 0..127, como o MIDI. Medido em 01/09: um notch capturado a 834 Hz volta a 847,6 Hz — a 834, com curva 2.0 sobre 60–8000, um passo vale ~14 Hz. O notch tem 24 Hz de largura e ainda cobre o modo, mas ajuste mais fino que 1/127 não sobrevive à captura.
+⚠️ **Quantização em 7 bits.** O preset guarda 0..127, como o MIDI. Medido em 2026-09-01: um notch capturado a 834 Hz volta a 847,6 Hz — a 834, com curva 2.0 sobre 60–8000, um passo vale ~14 Hz. O notch tem 24 Hz de largura e ainda cobre o modo, mas ajuste mais fino que 1/127 não sobrevive à captura.
 
 ---
 

@@ -18,7 +18,7 @@
 >   dois comentários de `main.cpp:1114` e `1290`: hoje são **três**
 >   (`1521`, `1697`, `1708`), e o número real são **119** vínculos, não 86.
 >   Não foi tocado — é `src/`, e está com outra sessão.
-> - **🟡 2 (detector de duplicata de CC) — JÁ ESTAVA FECHADO, 05/09.** O item
+> - **🟡 2 (detector de duplicata de CC) — JÁ ESTAVA FECHADO, 2026-09-05.** O item
 >   pedia varredura no `Init` e o `board` a gritar. Existe: `Colisoes()` e
 >   `Colisao()` no `manifest.h`, chamadas em `main.cpp:5134`, e o `board`
 >   imprime `colisao de CC`. Foi implementado depois do audit e ninguém fechou
@@ -27,19 +27,19 @@
 >   por si: *"contar quem não tem CC não encontra quem tem CC roubado — são
 >   perguntas diferentes, e só uma delas estava a ser feita."*
 > - **🟠 1 (quatro documentos no esquema de QUATRO canais) — FECHADO,
->   verificado em 05/09.** A verdade está no `midi.h:88` — *"os seis canais, e
+>   verificado em 2026-09-05.** A verdade está no `midi.h:88` — *"os seis canais, e
 >   a regra é uma só: ESCUTA = MANDA + 3"*. Os quatro documentos batem: o
 >   `CCMAP.md` é gerado e traz colunas **manda/escuta** (ch1→ch4); o
 >   `ACEITE-MULTIPLEXACAO.md` prova ch4/ch5/ch6 e manda **recusar** ch4–ch6 na
 >   entrada; o `PRESETS.md` traz o esquema inteiro nas linhas 64–69; o `STATUS`
 >   idem. As menções a "quatro canais" que restam são **narrações do conserto**
 >   — o próprio `ACEITE-MULTIPLEXACAO.md:61` diz que descreveu o esquema velho
->   *até 23/08*. Presença de texto novo não prova ausência do velho, por isso
+>   *até 2026-08-23*. Presença de texto novo não prova ausência do velho, por isso
 >   foi conferido pelas linhas que este audit citou, uma a uma.
 > - **🟡 3 (comentário revogado sobre o `kCanalEco`) — FECHADO.** `kCanalEco`
 >   tem **0 ocorrências** no `main.cpp`. As três linhas saíram com o símbolo.
 >
-> **Com isto os cinco itens de 23/08 estão resolvidos** — três estavam feitos
+> **Com isto os cinco itens de 2026-08-23 estão resolvidos** — três estavam feitos
 > havia tempo e ninguém fechou a entrada, e é essa a lição que fica: *audit que
 > não conserta precisa de alguém que volte a fechá-lo, senão vira backlog
 > fantasma que assusta sem informar.*

@@ -181,7 +181,7 @@ agora é **lei estrutural do CTOS**, e a condição de retorno já estava escrit
 no IFÁ10000 — *módulo não-certificado entra em bypass até passar pelo
 protocolo*.
 
-**DECIDIDO pelo dB (18/08): bypass PERMANENTE até `ctos rearm`.** Religar
+**DECIDIDO pelo dB (2026-08-18): bypass PERMANENTE até `ctos rearm`.** Religar
 sozinho transformaria um defeito reprodutível em intermitente — e
 intermitente foi o que custou esta sessão inteira. Um efeito que estourou uma
 vez estoura de novo; o valor do bypass está justamente em ele **não** se
@@ -379,7 +379,7 @@ pô-lo antes do delay faria o delay repetir a cauda dele.
 
 ### Motor de pitch — UM POR PONTO DE DERIVAÇÃO
 
-> ⚠️ **CORREÇÃO (18/08):** a primeira versão deste documento dizia "um motor
+> ⚠️ **CORREÇÃO (2026-08-18):** a primeira versão deste documento dizia "um motor
 > só, consumido pelos três". **Está errado, e o erro só apareceu ao escrever
 > o laço do shimmer.**
 

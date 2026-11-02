@@ -244,7 +244,7 @@ class Freeze
     // volta a reconhecer material, e reconhecer material é o começo
     // de perceber repetição.
     static constexpr float kNucleusMs = 500.f;
-    // 2 s de cauda, pedido do dB de ouvido (18/08). Comecou em 300 ms
+    // 2 s de cauda, pedido do dB de ouvido (2026-08-18). Comecou em 300 ms
     // — suficiente pra nao soar CORTADO, e curto demais pra soar como
     // DECAIMENTO. A diferenca nao e de grau: 300 ms remove o degrau,
     // 2 s faz o congelado se dissolver na sala em vez de terminar.

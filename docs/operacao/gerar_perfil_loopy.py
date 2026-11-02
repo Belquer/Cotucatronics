@@ -7,7 +7,7 @@ Le o projeto exportado do Loopy Pro (zip com Project.sqlite), casa cada
 widget com o seu parametro pelo TITULO, e emite um perfil de controlo
 com os 85 bindings ja endereçados.
 
-FORMATO, decodificado em 24/08 e confirmado contra dois bindings feitos
+FORMATO, decodificado em 2026-08-24 e confirmado contra dois bindings feitos
 a mao (`b417` e `b314` no perfil exportado):
 
     Trigger  = [prefixo:] <status><cc>[<valor>]   em hex
@@ -21,7 +21,7 @@ provaram — Sli:1:2 e Gate Thresh A, Sli:1:6 e Piezo Mix.
 
 🔴 O endereço e o ID do widget (`"#1526"`), NAO a posicao. A versao anterior
 deste cabecalho dizia o contrario, a skill `loopy` ja o tinha corrigido a
-01/09, e a ferramenta continuou a escrever posicional ate 23/09 — tres
+2026-09-01, e a ferramenta continuou a escrever posicional ate 2026-09-23 — tres
 importacoes recusadas com "perfil sem bindings" e nenhuma a dizer porque.
 
 O id e ESTAVEL: reordenar ou apagar widgets numa pagina NAO o muda. Mas
@@ -41,7 +41,7 @@ TITULOS = {
  'buzios':('buzios_on','compart'), 'buzios_thresh':('buzios_thresh','compart'),
  'buzios_cooldown':('buzios_cooldown','compart'),
  'tone_mix':('tone_mix','compart'), 'tone_dest':('tone_dest','compart'),
- # NOMES NOVOS DO PAINEL (28/08). O casamento e por TITULO, entao
+ # NOMES NOVOS DO PAINEL (2026-08-28). O casamento e por TITULO, entao
  # renomear um widget torna-o orfao na geracao seguinte — e o sintoma
  # seria 'esse controlo deixou de funcionar', sem nada a apontar para
  # a causa. Os titulos antigos ficam: um mapa que aceita os dois nao
@@ -53,7 +53,7 @@ TITULOS = {
  'test_tone_stage':('test_tone_stage','compart'), # pre (directo) / post (cadeia)
  'test_tone_via':('test_tone_stage','compart'),   # nome antigo, ainda casa
  'shift_hz':('shift_hz','compart'),
- # ---- CORRIGIDOS a 23/09: apontavam para params que FORAM RENOMEADOS ----
+ # ---- CORRIGIDOS a 2026-09-23: apontavam para params que FORAM RENOMEADOS ----
  # `tone_freq`, `tone_mix`, `tone_dest` e `test_tone_stage` nao existem no
  # manifest ha muito. A ferramenta dizia "sem CC no manifest", que se le como
  # "o param nao tem CC" — quando o CC existe e era o MAPA daqui que apontava
@@ -79,7 +79,7 @@ TITULOS = {
  'tarolator_a':('tarol_on_a','a'), 'tarolator_b':('tarol_on_b','b'),
  'tarolator_mix_a':('tarol_mix_a','a'), 'tarolator_mix_b':('tarol_mix_b','b'),
  # MUTE DE RAMO (pos-limiter). Os nomes velhos ainda casam: um perfil
- # exportado antes de 28/08 continua a encontrar o param certo.
+ # exportado antes de 2026-08-28 continua a encontrar o param certo.
  'out_l':('out_l','compart'), 'out_r':('out_r','compart'),
  'route_exciter':('out_l','compart'), 'route_jack':('out_r','compart'),
  # MATRIZ 2x2: qual cadeia entra em qual saida. O canal diz a cadeia.
@@ -125,7 +125,7 @@ AMBIGUOS = []   # identificadores que davam CC errado em silencio
 def ccs_do_manifest(raiz):
     """param -> cc, lido do manifest.h (fonte unica da verdade).
 
-    ⚠️ INDICE PERDIDO DAVA VINCULO ERRADO EM SILENCIO (23/09).
+    ⚠️ INDICE PERDIDO DAVA VINCULO ERRADO EM SILENCIO (2026-09-23).
 
     A versao anterior capturava `p_([A-Za-z0-9_]+)` e parava no `[`. Para um
     param BIDIMENSIONAL — `p_notch_hz[0][0]`, que tem OITO CCs (3,4,7,8,11,
@@ -173,7 +173,7 @@ def ccs_do_manifest(raiz):
 def main():
     lpproj = sys.argv[1]
     # A extensao e `.lpcontrolprofile` nos DOIS sitios — dentro do .lpproj e
-    # exportado. A 23/09 andamos a troca-la por `.lpcontrollerprofile` e a
+    # exportado. A 2026-09-23 andamos a troca-la por `.lpcontrollerprofile` e a
     # importar tres versoes seguidas: era um DESVIO, e a causa real do "perfil
     # sem bindings" estava no Subject (ver acima). Extensao errada e sintoma
     # visivel; Subject errado e sintoma mudo — e foi o mudo que mandava.
@@ -191,12 +191,12 @@ def main():
     #
     # Esta linha dizia: "o perfil que vive DENTRO do .lpproj usa id; o exportado
     # sozinho, posicao" — e punha o modo por id atras de uma variavel de
-    # ambiente. **A skill `loopy` corrigiu isto a 01/09**, verificado num export
+    # ambiente. **A skill `loopy` corrigiu isto a 2026-09-01**, verificado num export
     # real, e a ferramenta nunca foi actualizada:
     #
     #     Subject = "#<id do objecto do widget>"      ex: "#1526"
     #
-    # Provado outra vez a 23/09, comparando lado a lado o perfil que o LOOPY
+    # Provado outra vez a 2026-09-23, comparando lado a lado o perfil que o LOOPY
     # escreveu com o que esta ferramenta escrevia:
     #
     #     Loopy:      "Subject": "#1526"
@@ -241,7 +241,7 @@ def main():
             manda, escuta = CANAL[lado if lado in CANAL else 'compart']
             cc = ccs[par]
             trig = f"b{escuta-1:x}{cc:02x}"
-            # IDENTIDADE PERSISTENTE, nao posicao. Descoberto em 24/08 ao
+            # IDENTIDADE PERSISTENTE, nao posicao. Descoberto em 2026-08-24 ao
             # abrir o perfil de DENTRO do projeto: os bindings feitos a mao
             # apontavam para "#1522", que e o `id` do widget no SQLite. O
             # `LPSliderWidget:1:6` que aparece no perfil exportado sozinho e
@@ -265,7 +265,7 @@ def main():
 
     # ---- A IDENTIDADE DO DISPOSITIVO SAI DO PROJECTO, NAO DE UM LITERAL ----
     #
-    # ⚠️ Ate 23/09 isto estava cravado:
+    # ⚠️ Ate 2026-09-23 isto estava cravado:
     #     'Device':'227f559e', 'Device Name':'Cotucatronics1 Bluetooth'
     # Um literal que foi verdade em Agosto. O dB importou o perfil e o Loopy
     # deu-lhe "perfil global sem bindings" — ele LE o ficheiro, nao encontra
@@ -304,7 +304,7 @@ def main():
 
     # ---- SAIDA COMO .lpproj: a UNICA que funciona para bindings de widget ----
     #
-    # 🔴 DESCOBERTO a 23/09 com dois perfis REAIS que o dB exportou do Loopy:
+    # 🔴 DESCOBERTO a 2026-09-23 com dois perfis REAIS que o dB exportou do Loopy:
     #
     #     exportado solto: "Subject": "Playing Tracks" · "Identifier": "Mute"
     #     este gerador:    "Subject": "#1775"          <- id de um WIDGET

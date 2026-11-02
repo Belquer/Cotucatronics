@@ -4,7 +4,7 @@
     import porta_daisy; p = porta_daisy.achar()
     ./porta_daisy.py            # imprime a porta e a versao
 
-POR QUE EXISTE (25/08). Todo script desta bancada fazia
+POR QUE EXISTE (2026-08-25). Todo script desta bancada fazia
 `glob.glob('/dev/cu.usbmodem*')[-1]`. Funcionou enquanto havia UMA placa.
 No dia em que o ESP32 entrou na USB passaram a existir dois `usbmodem`, e
 a ordem que o `glob` devolve e a do sistema de ficheiros — nao alfabetica,

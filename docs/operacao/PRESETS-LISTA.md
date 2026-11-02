@@ -1,4 +1,4 @@
-# ⚠️ MODELO CORRIGIDO EM 01/09 — LER ISTO ANTES DO RESTO
+# ⚠️ MODELO CORRIGIDO EM 2026-09-01 — LER ISTO ANTES DO RESTO
 
 O que está abaixo desta secção descreve o modelo ANTIGO, de **duas
 bibliotecas** (16 de cadeia + 8 globais, com conteúdos diferentes). **Está
@@ -59,7 +59,7 @@ estruturas, os helpers, o analisador do `dump`, o `capturar`, o `load`, o
 despacho do CC 121, a listagem e os testes.
 
 ⚠️ **Não é trabalho de fim de sessão.** É o subsistema que vai guardar o
-resultado da sessão de escuta, e foi tentado em 01/09 ao fim de uma sessão longa
+resultado da sessão de escuta, e foi tentado em 2026-09-01 ao fim de uma sessão longa
 — a refactorização foi revertida a meio, de propósito, deixando só as exclusões.
 Melhor não começada que meio feita.
 
@@ -67,7 +67,7 @@ Melhor não começada que meio feita.
 
 # PRESETS — a lista, e como os botões a endereçam
 
-> **v0.2.0** · 28/08 · documento **vivo**: a lista cresce durante a sessão de
+> **v0.2.0** · 2026-08-28 · documento **vivo**: a lista cresce durante a sessão de
 > escuta e esta tabela acompanha, para os botões do Loopy poderem ser criados
 > de uma vez em vez de um a um.
 >
@@ -116,7 +116,7 @@ caminho. Um botão manda uma mensagem, uma vez.
 
 Comando mora fora da faixa de parâmetro, e isso é cicatriz:
 
-> Em 22/08 o `cc34` foi dado ao `drv_drive` numa reorganização do mapa e
+> Em 2026-08-22 o `cc34` foi dado ao `drv_drive` numa reorganização do mapa e
 > ninguém cruzou as duas listas. O intercept de comando corre **antes** do
 > mapa e retorna — então aquele fader ficou **surdo a MIDI em silêncio**, e
 > cada gesto nele disparava um push de estado inteiro. Dois donos para um
@@ -208,7 +208,7 @@ param foram feitas **antes** da primeira captura.
 
 ## O slot 0 do global aposenta o aviso "gravar zera os params"
 
-Observação do dB em 02/09, e muda a prioridade da biblioteca.
+Observação do dB em 2026-09-02, e muda a prioridade da biblioteca.
 
 **"Gravar zera os params" aparece em todos os briefings desde agosto** e é
 gerido por memória: repor à mão e declarar o que se repôs. Já custou pelo

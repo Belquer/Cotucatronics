@@ -1,6 +1,6 @@
 # ATERRAMENTO — o capítulo
 
-**v0.2.0** · escrito em 31/08/2026, depois de uma tarde a caçar três ruídos
+**v0.2.0** · escrito em 2026-08-31, depois de uma tarde a caçar três ruídos
 que tinham três causas diferentes e um sintoma parecido.
 
 > Este é o documento **dono** do assunto. O `HARDWARE.md` descreve *este*
@@ -135,7 +135,7 @@ Junta-lhe um banco grande de baixa ESR e a indutância da fiação, e tens um
 circuito ressonante com amortecimento negativo. **Oscila** — é o critério de
 Middlebrook.
 
-Medido em 31/08: 2200 µF na entrada do step-down produziu um **guincho agudo**
+Medido em 2026-08-31: 2200 µF na entrada do step-down produziu um **guincho agudo**
 imediato, e removê-lo curou-o no mesmo gesto. Os módulos já trazem o que
 precisam à entrada; não lhes acrescentar carga.
 
@@ -166,7 +166,7 @@ ao ligar, é isto — não um defeito novo.
 
 ## 5 · `AGND` e `DGND` — a ponte estreita
 
-> ⚠️ **CORRIGIDO EM 04/09, E A VERSÃO ANTERIOR DESTA SECÇÃO ESTAVA ERRADA.**
+> ⚠️ **CORRIGIDO EM 2026-09-04, E A VERSÃO ANTERIOR DESTA SECÇÃO ESTAVA ERRADA.**
 > Ela afirmava que a Daisy junta `AGND` e `DGND` internamente. **Não junta.**
 > A documentação da libDaisy diz que se devem **sempre ligar os pinos `DGND` e
 > `AGND` fora da Daisy**, e a Seed expõe-os em dois pinos distintos do header
@@ -199,7 +199,7 @@ pontos de encontro formam um anel, e a corrente divide-se pelos dois caminhos
 > **O anel do P3 não era a ponte existir: era ela ser um trilho partilhado com
 > corrente, em vez de um fio curto nos pinos.** E por isso o conserto é
 > **MOVER** a ponte, nunca removê-la — remover deixa o codec sem referência,
-> que foi o que em 31/08 "trocou um zumbido por uma placa morta".
+> que foi o que em 2026-08-31 "trocou um zumbido por uma placa morta".
 
 🚫 **Nunca puxar a alimentação pelo `AGND`.** O retorno de toda a placa
 atravessaria a ponte estreita e aterraria na referência do codec — o oposto
@@ -234,7 +234,7 @@ curso — cerca de 1,6 passos de MIDI**, a mexer sozinho.
 
 ### Conferência — TRÊS medições, e por esta ordem
 
-> ⚠️ **CORRIGIDO EM 05/09.** A versão anterior desta secção mandava medir a
+> ⚠️ **CORRIGIDO EM 2026-09-05.** A versão anterior desta secção mandava medir a
 > ilha contra o trilho com a placa fora do soquete e dizia *"se apitar, há uma
 > ligação a mais"*. **Com o net-tie desenhado, apitar é o CORRECTO** — e o
 > teste velho faria ler uma placa certa como defeituosa. O teste vivo é o do
@@ -246,7 +246,7 @@ pino 40 (`GND`), com a placa fora de tudo.
 
 | resultado | significa |
 |---|---|
-| **aberto** | ✅ **medido em 04/09.** A ponte é nossa para fazer |
+| **aberto** | ✅ **medido em 2026-09-04.** A ponte é nossa para fazer |
 | **apita** | 🔴 seria outra revisão. Parar e repensar |
 
 **2 · A ponte é única?** Sem alimentação, **levantar uma perna do net-tie**
@@ -269,7 +269,7 @@ piezo), ponta B no plano de `GND` (terra do módulo do amp).
 de *"nenhuma ponte"*, e uma delas mata o áudio. **Um teste que não separa os
 dois desfechos não é teste.**
 
-### ⚠️ Separar as fontes de alimentação PIORA — medido em 01/09
+### ⚠️ Separar as fontes de alimentação PIORA — medido em 2026-09-01
 
 Tentação óbvia: se o trilho partilhado acopla, dá-se a cada um a sua fonte.
 **Três voos, e a tendência é monótona na direcção errada.** Ruído em 8–16 kHz:
@@ -304,7 +304,7 @@ não o anel em si.
 
 ## 5b · Sinal entre duas placas: a terra vai JUNTO com o fio
 
-🔴 **Esta secção nasceu de um conselho errado meu, em 31/08.** Eu disse:
+🔴 **Esta secção nasceu de um conselho errado meu, em 2026-08-31.** Eu disse:
 
 > *"Não acrescentes um fio de terra ao lado dos fios da UART. Isso criaria um
 > segundo caminho entre a ponte e a Daisy, em paralelo com o da estrela."*
@@ -332,7 +332,7 @@ defeito onde ele se manifesta, e ele mora do outro lado do cabo.
 ### ⚠️ O que o teste mostrou, e corrige esta secção
 
 Escrevi acima que a falta do laço directo era **a causa** da Daisy não arrancar.
-**O teste não sustenta isso.** Medido em 31/08, ao fim do dia:
+**O teste não sustenta isso.** Medido em 2026-08-31, ao fim do dia:
 
 | condição | resultado |
 |---|---|
@@ -444,13 +444,13 @@ de um defeito.
 | **dezenas de mV** | chega lá através de outra coisa — falta-lhe fio próprio |
 | **subiu depois de uma mudança** | a mudança piorou; desfazer |
 
-**Medido neste instrumento, em 31/08, com tom a tocar:**
+**Medido neste instrumento, em 2026-08-31, com tom a tocar:**
 
 | percurso | antes | depois |
 |---|---|---|
 | estrela → amp | 0 mV | 0 mV |
 | estrela → Daisy | **42 mV** | **0 mV** (fio dedicado) |
-| estrela → **ponte** | — | **0 mV** (medido 01/09) |
+| estrela → **ponte** | — | **0 mV** (medido 2026-09-01) |
 
 ⚠️ **E foi a medição que dispensou o terceiro fio.** Eu tinha prescrito «terra
 própria à estrela» também para a ponte, por simetria com a Daisy. Medido com
@@ -488,7 +488,7 @@ aconteceu.
 
 ---
 
-## 10 · Registo — os três ruídos de 31/08
+## 10 · Registo — os três ruídos de 2026-08-31
 
 Estavam todos ao mesmo tempo e pareciam um só. Separá-los foi metade do
 trabalho.

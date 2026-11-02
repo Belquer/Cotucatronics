@@ -56,7 +56,7 @@ for p, d in ausente:   print("  AUSENTE  %-42s README diz v%s" % (p, d))
 for p, d in mudo:      print("  SEM VERSAO LEGIVEL  %-31s README diz v%s" % (p, d))
 # ⚠️ O ficheiro concorda CONSIGO PROPRIO? Este verificador comparava o README
 # com a constante `VERSAO` e NUNCA a constante com o cabecalho do proprio
-# ficheiro. A 05/09 SEIS ficheiros diziam uma versao no docstring e outra na
+# ficheiro. A 2026-09-05 SEIS ficheiros diziam uma versao no docstring e outra na
 # constante, com o portao verde — um deles vindo de um commit cuja mensagem
 # anunciava a versao nova, e so a constante ficou para tras. E a constante que
 # o README segue, portanto o README estava certo sobre um ficheiro que mentia.
@@ -74,7 +74,7 @@ for _f in (_g.glob(str(RAIZ / "tools/*.py")) + _g.glob(str(RAIZ / "kicad/*/gera_
 for _p, _a, _b in incoerentes:
     print("  INCOERENTE  %-40s cabecalho v%s · VERSAO %s" % (_p, _a, _b))
 
-# ⚠️ E O SENTIDO CONTRARIO? Ate 22/09 este portao andava so num: o README
+# ⚠️ E O SENTIDO CONTRARIO? Ate 2026-09-22 este portao andava so num: o README
 # contra o disco. Um ficheiro NOVO nunca era notado — o `tools/portoes.py` e o
 # `tools/colisoes_manual.py` nasceram nesse dia, com versao e tudo, e o portao
 # disse "0 ausentes" com o README a nao os mencionar. A regra e "o README lista

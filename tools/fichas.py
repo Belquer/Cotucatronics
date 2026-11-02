@@ -205,7 +205,7 @@ def confere(caminho, mpn):
 # rede alheia e volta a tentar-se; nao e ausencia de catalogo.
 FONTE_EXTERNA = {
     "1715721": "Phoenix Contact — MKDS 1,5/2-5,08, ficha do artigo 1715721",
-    # (o 53047-0710 PicoBlade saiu a 17/09: o J2 do painel e header 1x07 da
+    # (o 53047-0710 PicoBlade saiu a 2026-09-17: o J2 do painel e header 1x07 da
     #  barra 61304011121, porque o OLED traz cabo com jumpers femea)
     "C1206C223J5GACTU": "Kemet — serie C0G/NP0 1206, 22 nF 50 V",
     "MKS2C042201M00KN00": "WIMA MKS 2 — 2,2 uF 63 V PET, passo 5 mm (PCM5); Mouser 505-MKS2C042201M00KN",

@@ -37,7 +37,7 @@ inline bool ForaDoPreset(const char* nome)
     //
     // `micro_auto` e o interruptor da protecao. Num preset, carregar uma
     // cena podia DESLIGA-LA — e foi exactamente com a protecao ausente que
-    // o dB levou com microfonia a volume alto em 02/09 (ver 15bh). Estado
+    // o dB levou com microfonia a volume alto em 2026-09-02 (ver 15bh). Estado
     // de seguranca nao viaja em cena.
     //
     // `micro_dom` e limiar de CALIBRACAO, afinado ao ouvido nesta peca. As
@@ -48,7 +48,7 @@ inline bool ForaDoPreset(const char* nome)
     // `sim_laco` poria a peca a realimentar-se sozinha.
     if(!strncmp(nome, "sim_", 4))        return true;
     // OS VOLUMES DE SAIDA SEGUEM OS POTS FISICOS — decisao do dB em
-    // 01/09, e a razao e de replicacao, nao de gosto:
+    // 2026-09-01, e a razao e de replicacao, nao de gosto:
     //
     //   "seguem os pots — facto de exemplar, nao intencao musical;
     //    preset de um corpo levaria nivel errado noutro corpo."
@@ -62,7 +62,7 @@ inline bool ForaDoPreset(const char* nome)
     // escrevesse isto tentaria mudar uma chave de metal.
     if(!strncmp(nome, "post_level_", 11)) return true;
 
-    // ⚠️ `out_l` / `out_r` CORTAM O RAMO — decisao do dB em 01/09.
+    // ⚠️ `out_l` / `out_r` CORTAM O RAMO — decisao do dB em 2026-09-01.
     // Mesma categoria do `route_*`: TOPOLOGIA e SEGURANCA, nao intencao
     // musical. Um preset que os apanhasse desligados silenciaria o
     // instrumento a meio da peca, e ninguem ligaria as duas coisas.
@@ -86,14 +86,14 @@ inline bool ForaDoPreset(const char* nome)
     // peca.
     // A FAMILIA INTEIRA DO TOM DE TESTE, numa regra so.
     //
-    // Eram DUAS ate 01/09 — `tone_` e `test_tone` — porque o
+    // Eram DUAS ate 2026-09-01 — `tone_` e `test_tone` — porque o
     // `test_tone_stage` nasceu com prefixo diferente do resto da
     // familia e escapava a primeira. Duas regras para uma familia e
     // uma divergencia com data marcada: a terceira a nascer escaparia
     // as duas. Com o rename, uma regra cobre tudo.
     if(!strncmp(nome, "test_tone", 9))    return true;
     // E O `test_tone_*` TAMBEM, que escapava. A exclusao acima e por
-    // prefixo `tone_`, e em 28/08 o `tone_via` foi renomeado para
+    // prefixo `tone_`, e em 2026-08-28 o `tone_via` foi renomeado para
     // `test_tone_stage` — que comeca por `test_`. O param saiu da
     // exclusao sem ninguem tocar na exclusao, e passou a entrar no preset
     // GLOBAL: carregar um preset poria a via do tom de teste no que
@@ -103,7 +103,7 @@ inline bool ForaDoPreset(const char* nome)
     // silencioso: o param nao desaparece, muda de categoria. Apanhado na
     // revisao ANTES da primeira captura, que e a unica altura em que
     // corrigir isto e de graca.
-    // TOPOLOGIA DE SAIDA (28/08). A matriz `route_*` compensa como os
+    // TOPOLOGIA DE SAIDA (2026-08-28). A matriz `route_*` compensa como os
     // transdutores estao LIGADOS — e facto de fiacao, nao de timbre.
     // Dentro do preset cada preset carregaria a fiacao, e desandar um
     // fio obrigaria a regravar a biblioteca inteira: a mesma familia
@@ -219,7 +219,7 @@ static_assert(sizeof(PresetHeader) == 8,
 
 static constexpr uint16_t kPresetMagic   = 0x4354u;  // 'CT'
 static constexpr uint8_t  kFormato       = 1;
-// 56 desde 28/08. Era 40 com 33 params de cadeia ja ocupados — folga de
+// 56 desde 2026-08-28. Era 40 com 33 params de cadeia ja ocupados — folga de
 // SETE, e um param de cadeia novo consome UM slot aqui e DOIS na tabela
 // de params, entao este tecto e o que aperta primeiro por feature.
 //

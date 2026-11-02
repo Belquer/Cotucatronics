@@ -4,7 +4,7 @@
 POR QUE EXISTE.
 
     "De que vale uma placa correta eletricamente se nao podemos monta-la?"
-                                                        — dB, 18/09/2026
+                                                        — dB, 2026-09-18
 
 Nesse dia, com as duas placas rev C ja na fabrica e todos os portoes eletricos
 verdes, uma sequencia de perguntas simples encontrou:
@@ -19,7 +19,7 @@ Cada resposta saiu de um script solto no /tmp. Este ficheiro e esses scripts
 tornados portao: o `para_fabrica` chama-o e recusa se ele disser que nao.
 
 ⚠️ SO LE. Nunca grava. O `pcb_contorno` mistura verificar e colocar, e correr
-esse para ler o relatorio REESCREVEU o cerebro fabricado (18/09, reposto do
+esse para ler o relatorio REESCREVEU o cerebro fabricado (2026-09-18, reposto do
 git). Aqui nao ha caminho de escrita.
 
 ⚠️ E NAO REFAZ CONTAS. A geometria da caixa, os discos dos arcade, a tabela de
@@ -54,11 +54,11 @@ sys.path.insert(0, AQUI)
 
 # Pecas que PRENDEM a placa pela propria rosca, e so com a ficha a prova-lo.
 # Vazio de proposito: o EC11E15244G1 nao tem rosca (ficha Alps: colar liso) e
-# nenhum pot com bucim roscado esta ainda escolhido e medido (18/09).
+# nenhum pot com bucim roscado esta ainda escolhido e medido (2026-09-18).
 FIXACAO = {
     # SW1: o encoder EM MAO tem bucim roscado (EC11 generico; foto do dB,
-    # 18/09) — nao o EC11E15244G1 do BOM, que nao tem. A peca em mao manda.
-    "painel": {"SW1": "EC11 generico com bucim roscado, peca em mao (dB, 18/09)"},
+    # 2026-09-18) — nao o EC11E15244G1 do BOM, que nao tem. A peca em mao manda.
+    "painel": {"SW1": "EC11 generico com bucim roscado, peca em mao (dB, 2026-09-18)"},
     "cerebro": {},
 }
 
@@ -68,12 +68,12 @@ FOLGA_CABO = 80.0
 
 # M1 — O QUE LIGA AQUI? Todo conector declara a peca ou o cabo do outro lado,
 # e os soquetes declaram o modulo que recebem.
-# ⚠️ Nasceu do J4 do cerebro (18/09): a tomada da ponte ESP32 de quando ela era
-# por fio. A ponte passou a soquete (U3) a 06/09, o J4 ficou, e tres revisoes
+# ⚠️ Nasceu do J4 do cerebro (2026-09-18): a tomada da ponte ESP32 de quando ela era
+# por fio. A ponte passou a soquete (U3) a 2026-09-06, o J4 ficou, e tres revisoes
 # perguntaram se ele estava CERTO — nenhuma se era PRECISO. Um conector que
 # ninguem sabe dizer o que liga esta a mais; dois que dizem o MESMO destino sao
 # o rasto de uma migracao.
-# ⚠️ 20/09: o destino passou de FRASE a (COISA, PAPEL), e a razao e um defeito
+# ⚠️ 2026-09-20: o destino passou de FRASE a (COISA, PAPEL), e a razao e um defeito
 # que a versao em frase nao podia ver. O `J2` dizia "alimentacao do
 # amplificador" e o `J11` dizia "entrada de audio do amplificador": duas
 # frases diferentes, o mesmo modulo, e os DOIS a levar +15 V. A regra comparava
@@ -103,7 +103,7 @@ DESTINOS = {
 # de estar declarado em VESTIGIO_PINO. Caso contrario isto seria uma forma
 # elegante de calar o portao — e a duplicacao continuava na placa, calada.
 COMPLEMENTARES = {
-    ("cerebro", "J11", "J2"): "o modulo em mao alimenta-se pelo BORNE DE PARAFUSO (dB, 20/09): "
+    ("cerebro", "J11", "J2"): "o modulo em mao alimenta-se pelo BORNE DE PARAFUSO (dB, 2026-09-20): "
                               "o J2 leva a forca (+15V/GND, fio curto e grosso, regra da estrela) "
                               "e o J11 leva o audio (2=referencia, 3=L, 4=R).",
 }
@@ -117,15 +117,15 @@ VESTIGIO_PINO = {
 # Vestigios conhecidos numa placa ja fabricada: ficam VAZIOS, e a proxima rev
 # tira-os. Declarar nao os absolve — so os torna visiveis no relatorio.
 VESTIGIO = {
-    ("cerebro", "J4"): "tomada da ponte ESP32 de quando era por fio (01/09); "
-                       "desde 06/09 a ponte esta no soquete U3, com o mesmo 5V "
+    ("cerebro", "J4"): "tomada da ponte ESP32 de quando era por fio (2026-09-01); "
+                       "desde 2026-09-06 a ponte esta no soquete U3, com o mesmo 5V "
                        "e GND. Fica VAZIO; proxima rev: remover.",
 }
 
 # M7 — A CASA DE CADA MODULO. Um modulo nao e um componente: nao tem footprint,
 # nao entra em DRC nenhum, e por isso nao existe para as ferramentas. Se a casa
 # dele nao estiver escrita aqui, ele nao tem casa — e a caixa fecha-se sem ele.
-# ⚠️ 20/09: o dB perguntou onde poe o TPA3116 e a resposta do repo era "nos
+# ⚠️ 2026-09-20: o dB perguntou onde poe o TPA3116 e a resposta do repo era "nos
 # espacadores dele", que nunca existiram. A chapa de fundo tem 4 furos e sao os
 # do cerebro; ao lado sobram 6,5 mm. Um modulo comprado e montado sem lugar e
 # planeamento que nao aconteceu, e so aparece com a caixa montada na mao.
@@ -145,11 +145,11 @@ CASA = {
     # ⚠️ colado, nao aparafusado, e a razao importa: a placa e insubstituivel
     # (5 unidades fabricadas, montagem a meio) e furar era risco sem retorno. O
     # `onde_furar` dizia que os quatro pontos passavam com parafuso ISOLANTE; o
-    # dB escolheu nao gastar a placa num ganho de aperto. Decisao dele, 20/09.
+    # dB escolheu nao gastar a placa num ganho de aperto. Decisao dele, 2026-09-20.
     "amplificador":       dict(superficie="prateleira sobre o cerebro, metade de tras",
                                fixacao="4 torres M3 coladas a quente no cerebro "
                                        "(114,5 · 175,5 · 114,95 · 175,95 mm da esquerda/topo)",
-                               fonte="dB, 20/09 — pontos conferidos com onde_furar.py v0.3.0",
+                               fonte="dB, 2026-09-20 — pontos conferidos com onde_furar.py v0.3.0",
                                pistas=["amplificador"]),
     "step-down 5 V":      dict(superficie="", fixacao="",
                                fonte="por decidir — nunca foi escrito em lado nenhum",
@@ -294,7 +294,7 @@ def m1_interfaces(nome, b, sabota=False):
                 if chave not in ja_dito:
                     ja_dito.add(chave)
                     maus.append(suspeito + " — vestigio?")
-    # ⚠️ 21/09 (bts 15fc): um conector com PINOS a mais do que REDES distintas
+    # ⚠️ 2026-09-21 (bts 15fc): um conector com PINOS a mais do que REDES distintas
     # nao e defeito — mas e uma escolha que ninguem estava a contar, e foi assim
     # que um manual mandou ligar 8 condutores onde bastavam 4. O portao passa a
     # dize-lo em voz alta, com o numero, para a proxima rev decidir com o dado.
@@ -326,7 +326,7 @@ def m1_interfaces(nome, b, sabota=False):
 def m8_pontos_de_teste(nome, b, alvo, sabota=False):
     """O ponto de teste fica do lado ACESSIVEL, e com o nome impresso.
 
-    ⚠️ 22/09, dB, com o painel na mao: *"os tps estao em cima na placa, entao
+    ⚠️ 2026-09-22, dB, com o painel na mao: *"os tps estao em cima na placa, entao
     tenho que remove-la da tampa para testar"* — e *"nao tenho esses tps na
     serigrafia"*. As duas coisas medidas: os 5 TPs do painel estao em `TOP` e o
     texto da referencia deles vive em `F.Fab`, que NAO se imprime.

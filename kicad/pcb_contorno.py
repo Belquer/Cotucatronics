@@ -34,7 +34,7 @@ outro — que e exactamente a familia de erro que este projecto ja pagou.
 ⚠️ A FONTE E O GERADOR DA CAIXA, NAO OS DESENHOS.
 Houve tres outras fontes plausiveis para esta caixa — desenhos de uma que nunca
 foi cortada, e o corte em nogueira de 6,4, que e real mas e OUTRA caixa. Todas
-apagadas a 06/09 (estao no historico). A que esta a ser cortada e a do
+apagadas a 2026-09-06 (estao no historico). A que esta a ser cortada e a do
 `caixa/cotuca_caixa_corte.py`: acrilico de 3,0, frente 55, tras 80, TRES
 arcade e nenhum berco. Este ficheiro IMPORTA esse gerador.
 
@@ -124,7 +124,7 @@ def _chapa_fundo():
 
 TAMPA = _furos_tampa()
 FUNDO = _chapa_fundo()
-# DECIDIDO por medicao, 06/09: a aresta y=20 do KiCad olha para a FRENTE.
+# DECIDIDO por medicao, 2026-09-06: a aresta y=20 do KiCad olha para a FRENTE.
 #
 # Nao e estetica. Os tres arcade descem da tampa e passam por cima da placa, e a
 # altura livre por baixo deles e de 7,5 mm no pior caso. As duas orientacoes
@@ -189,7 +189,7 @@ COLOCA = {
     # maior faixa livre do painel: 163,8 mm em y=27,5.
     **{f"TP{i + 1}": (90.0 + 6.0 * i, 27.5, 0) for i in range(5)},
     # ⚠️ POSICOES DA REV C, que e a placa ENCOMENDADA (JLC W2026091304545438,
-    # 12/09). No `main` a rev B tinha o J1 em (29,4 · 26,75), por causa do
+    # 2026-09-12). No `main` a rev B tinha o J1 em (29,4 · 26,75), por causa do
     # corpo fora do bordo e do canto de raio 3 (cicatriz 15er); a rev C
     # resolveu o mesmo problema por outro caminho, e e essa que existe.
     "J1":  (26.0, 29.5, 90),
@@ -1017,7 +1017,7 @@ def confere_caixa(nome, alvo):
         L.append("     folga as paredes: %.2f esq · %.2f dir · %.2f frente · "
                  "%.2f tras" % (x0 - li, lf - x0 - w, y0 - bi, bf - y0 - h))
     if mau:
-        # ⚠️ DESDE 18/09 A ORDEM E A OUTRA (IFA10000-M, skill aipcb): a placa traz
+        # ⚠️ DESDE 2026-09-18 A ORDEM E A OUTRA (IFA10000-M, skill aipcb): a placa traz
         # os seus meios de fixacao, e com isso e a CAIXA que cede — muito mais
         # barata de refazer. Ate aqui esta mensagem dizia "a caixa ja existe,
         # quem cede e a placa". A recusa fica (nao cabe = nao cabe); muda quem
@@ -1137,19 +1137,19 @@ def confere_furos(t, alvo):
 # mas o que ocupa o espaco e ele COM a ficha enfiada e o fio a sair — 20 mm e
 # conservador. Medir a peca nua e medir o estado em que ela nunca esta.
 ALTURAS = [
-    # ⚠️ 18/09: as duas primeiras linhas faltavam, e as pecas saiam como "?" —
+    # ⚠️ 2026-09-18: as duas primeiras linhas faltavam, e as pecas saiam como "?" —
     # entre elas o J14 do cerebro, que fica debaixo do arcade da esquerda.
     # Caixa de pinos IDC: 8,85 mm de corpo, ficha Wurth WR-BHD (612 026 216 21,
     # catalogo 05-5). A ficha IDC do cabo encaixada ACRESCENTA — por medir.
     (r"IDC-Header",                  8.85, "caixa de pinos IDC (so a caixa)"),
     # ponto de teste: e um pad de cobre, sem corpo nenhum.
     (r"TestPoint_Pad",               0.1, "pad de teste, sem corpo"),
-    # encoder EC11: corpo 6,5 mm (peca em mao, dB 18/09). E ele que fixa a folga
+    # encoder EC11: corpo 6,5 mm (peca em mao, dB 2026-09-18). E ele que fixa a folga
     # placa<->tampa do painel quando aparafusado rente.
     (r"RotaryEncoder",               6.5, "corpo do encoder EC11"),
     (r"PinHeader.*Vertical",        20.0, "header + ficha + fio"),
     (r"JST_XH",                     20.0, "JST + ficha + fio"),
-    # ⚠️ 19/09: 11 mm para TODO electrolitico subestimava o C1, que e D16 — um
+    # ⚠️ 2026-09-19: 11 mm para TODO electrolitico subestimava o C1, que e D16 — um
     # 2200 uF/35 V desse corpo anda pelos 25 mm de altura. Um verificador que
     # subestima altura aprova colisao: a altura passa a sair do DIAMETRO, que e o
     # que o footprint sabe. ⚠️ POR MEDIR: a altura real das pecas em mao; estes
@@ -1460,7 +1460,7 @@ def confere_arcade(t, alvo, frente_em):
     que vem de fora da placa — para o DRC a coluna de ar acima do cobre e
     infinita. A caixa e que a limita, e a conta faz-se aqui ou nao se faz.
 
-    Medido a 06/09 com o botao na mao (40 mm de profundidade): sobra 1,5 mm
+    Medido a 2026-09-06 com o botao na mao (40 mm de profundidade): sobra 1,5 mm
     entre a ponta do botao e a placa NUA. Qualquer componente debaixo de um
     disco de o30 e colisao."""
     import math
@@ -1472,7 +1472,7 @@ def confere_arcade(t, alvo, frente_em):
     # pior caso, cabeca = 0, que e o unico valor que nao mente para o lado
     # perigoso. Medir a saliencia abaixo do painel encolhe isto e so melhora.
     PAINEL = 2 * CAIXA.T             # tampa + reforco, onde o arcade monta
-    # ⚠️ 19/09: OS TRES BOTOES NAO SAO IGUAIS, e tratar todos como o pior caso
+    # ⚠️ 2026-09-19: OS TRES BOTOES NAO SAO IGUAIS, e tratar todos como o pior caso
     # escondeu uma colisao REAL. Na bancada o dB teve de trocar a ordem deles:
     # o C1 (2200 uF, o mais alto do cerebro) ficou debaixo do furo da DIREITA, e
     # so o branco passa por cima, porque nao tem LED. Medido pelo dB: o branco
@@ -1509,11 +1509,11 @@ def confere_arcade(t, alvo, frente_em):
          "     discos o30 sobre a placa: y %.1f · x %s"
          % (ay, " ".join("%.0f" % v for v in ax))]
     ox, oy = alvo["origem"]
-    # ⚠️⚠️ O CORPO, E NAO SO OS PADS (18/09). Ate aqui isto testava so os pads
+    # ⚠️⚠️ O CORPO, E NAO SO OS PADS (2026-09-18). Ate aqui isto testava so os pads
     # contra o disco — e o J14 do cerebro passava: pads a 16,1 mm do centro do
     # arcade da esquerda, fora do raio 15 por 0,25. O CORPO da caixa de pinos
     # (8,85 mm de altura) chega a 11,6. E um botao bate no plastico, nao no pad.
-    # E a mesma familia do `confere_furos` a 08/09 — "contornos, nao pads" — que
+    # E a mesma familia do `confere_furos` a 2026-09-08 — "contornos, nao pads" — que
     # ficou consertada la e nao aqui.
     corpos = {}
     for ref_c, pts in _courtyards(t):
@@ -1526,7 +1526,7 @@ def confere_arcade(t, alvo, frente_em):
 
     # ⚠️ 15 = o raio do FURO da tampa. O que desce por baixo (corpo roscado e
     # micro-interruptor) e mais estreito, e esse diametro NUNCA foi medido — a
-    # 06/09 mediu-se a profundidade. Fica o pior caso ate alguem medir o botao;
+    # 2026-09-06 mediu-se a profundidade. Fica o pior caso ate alguem medir o botao;
     # medir so pode tirar pecas desta lista, nunca por.
     R_CORPO_ARCADE = 15.0
 

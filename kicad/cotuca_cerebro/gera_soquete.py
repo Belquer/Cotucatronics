@@ -15,7 +15,7 @@ O QUE ESTA FOLHA RESOLVE, e cada um tem fonte:
 
  · `Dnn` -> pino do header sai da folha de dados, nunca de memoria. O mapa
    vem do `Seed3_pinout.csv` via `gera_daisy_sym.py`. (Era o CSV do rev4
-   ate 05/09; a pinagem dos dois bate nos 40 pinos, conferida.)
+   ate 2026-09-05; a pinagem dos dois bate nos 40 pinos, conferida.)
    ⚠️ D29/D30 SAO O USB (pinos 36/37). Nao se usam. O sense dos DPDT vai
    para D11/D12.
 
@@ -111,7 +111,7 @@ def simbolo(lib, ref, val, x, y, ang=0, campos=()):
 # "medir antes de soldar". Footprint mecanico errado e placa inutil, e um
 # footprint plausivel escrito hoje parece verdade amanha.
 #
-# A JLC monta so o lado SMD (decidido com o dB a 05/09); o THT solda o dB.
+# A JLC monta so o lado SMD (decidido com o dB a 2026-09-05); o THT solda o dB.
 FOOTPRINT = {
     "U2":  "Module:Electrosmith_Daisy_Seed",      # o footprint do fabricante
     "NT1": "NetTie:NetTie-2_SMD_Pad2.0mm",        # ⚠️ FORA da BOM: nao e peca
@@ -163,7 +163,7 @@ def _instancia(ref, unidade=1):
     se grave: *"An error was found when loading the schematic that has been
     automatically fixed."* Nenhuma ferramenta de linha de comando denuncia
     isto — nem o ERC, nem a netlist, nem o `sch upgrade`, que devolve "not
-    updated" porque o formato ja e o corrente. A 05/09 gastaram-se tres
+    updated" porque o formato ja e o corrente. A 2026-09-05 gastaram-se tres
     hipoteses erradas a caca disto ate se pedir ao KiCad para gravar e se
     comparar o ficheiro dele com o meu; a resposta estava no diff.
 
@@ -314,7 +314,7 @@ PINO = {"D0":1,"D1":2,"D2":3,"D3":4,"D4":5,"D5":6,"D6":7,"D7":8,"D8":9,"D9":10,
 LIGA = {
     "AUDIO_IN_L":"AUDIO_IN_L", "AUDIO_IN_R":"AUDIO_IN_R",
     "AUDIO_OUT_L":"OUT_L_DAISY", "AUDIO_OUT_R":"OUT_R_DAISY",
-    # ⚠️ O `3v3D` (pino 38) NAO leva rotulo: desde 05/09 nada o consome. Os
+    # ⚠️ O `3v3D` (pino 38) NAO leva rotulo: desde 2026-09-05 nada o consome. Os
     # pots passaram para o `+3V3A` (pino 21), que e o fundo de escala do ADC,
     # e o OLED foi para os 5 V. Um rotulo global com um pino so nao e uma
     # rede: e um aviso de ERC a fingir de ligacao. O pino continua a ser uma
@@ -324,12 +324,12 @@ LIGA = {
     "D17":"V_TRILHO_A2",
     "D5":"OLED_RST","D6":"OLED_DC","D7":"OLED_CS","D8":"OLED_CLK","D10":"OLED_DIN",
     "D0":"ENC_A_A","D1":"ENC_A_B","D2":"ENC_A_PUSH",   # o unico encoder
-    # ⚠️ UM encoder desde 05/09. D3/D4/D9 (enc B) e D18/D19 (enc G) sairam,
+    # ⚠️ UM encoder desde 2026-09-05. D3/D4/D9 (enc B) e D18/D19 (enc G) sairam,
     # e o D17 deixou de ser o push do G para ser o A2 do divisor — que
     # dissolveu o conflito sem se tocar em firmware que funcionava.
     "D15":"POT_L","D16":"POT_R",
     "D22":"BOT_FRZ_B","D23":"LED_FRZ_B","D24":"BOT_FRZ_A",    "D26":"BOT_BUZIOS","D27":"LED_FRZ_A",  # o buzios ganha botao branco no painel
-    # ⚠️ O SENSE DOS DPDT NAO EXISTE, e a decisao e de 05/09. A DPDT tipo 2
+    # ⚠️ O SENSE DOS DPDT NAO EXISTE, e a decisao e de 2026-09-05. A DPDT tipo 2
     # usa os DOIS polos para o mesmo canal (comuns amarrados), logo nao sobra
     # contacto para ler o estado. `exc_on` continua a ser INTENCAO de
     # software, e nao leitura de hardware — o que quer dizer que o firmware
@@ -452,7 +452,7 @@ texto("MODULO DO AMP — 15 V e as duas linhas.", AX - 40, AY - 11.43, 1.6)
 # ⚠️ CONECTOR, E NAO A CHAVE. O DPDT tipo 2 e de PAINEL: prende pela rosca na
 # caixa e liga por fio. A BOM-MPN ja o dizia ("J DPDT | header 1x6"), mas o
 # esquema desenhava a chave — e o layout ia tentar pousa-la no PCB. Mesma
-# correcao feita aos botoes arcade do painel a 05/09.
+# correcao feita aos botoes arcade do painel a 2026-09-05.
 #
 # Comum = a saida da Daisy, nos DOIS polos. Uma posicao vai ao borne do
 # exciter, a outra ao TRS de linha. Os dois comuns amarrados.
@@ -597,7 +597,7 @@ def _confere_lib(caminho):
     """Depois de escrever: todo `lib_id` tem entrada no `lib_symbols`?
 
     Um simbolo referido e nao embutido nao da erro nenhum — o KiCad ve um
-    simbolo SEM PINOS e cada fio fica solto. A 05/09 custou 10 fios soltos no
+    simbolo SEM PINOS e cada fio fica solto. A 2026-09-05 custou 10 fios soltos no
     painel, sem uma palavra do gerador."""
     import re as _r
     t = io.open(caminho, encoding="utf-8").read()
@@ -665,7 +665,7 @@ for (_n, px, py), (rot, ang, just) in zip(pinos_de("C_V"),
     fio(x, y, x, y - dy); rotulo(rot, x, y - dy, ang, just)
 nota(CDX - 30, CDY + 20.0,
      "100 nF do +5V ao GND, colado ao pino 39 da Daisy. O trilho nao tinha",
-     "nenhum: achado da P4 da revisao de terra, 06/09.")
+     "nenhum: achado da P4 da revisao de terra, 2026-09-06.")
 
 # ------------------------------------------- os dois PWR_FLAG que faltavam
 #

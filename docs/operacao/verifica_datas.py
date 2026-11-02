@@ -14,7 +14,7 @@ Tres perguntas, e cada uma pode dizer nao:
              e commitar a X-1, porque a data veio da cabeca e nao do relogio.
 
 ⚠️ O QUE **NAO** E ACHADO: uma data ANTERIOR ao commit. Documento que regista
-historia diz correctamente "23/08" numa linha escrita a 05/09 — e isso e a
+historia diz correctamente "2026-08-23" numa linha escrita a 2026-09-05 — e isso e a
 maioria esmagadora. A primeira versao desta guarda tratava-o como divergencia e
 devolveu 85 falsos positivos contra 1 achado. Regra que grita no caso normal
 treina quem a le a ignora-la.

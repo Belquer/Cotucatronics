@@ -158,7 +158,7 @@ def refresca_redes(t, redes):
     estao a ser ACRESCENTADOS. Para os que ja la estavam, nada refrescava nada:
     a placa guardava as redes do dia em que a peca entrou.
 
-    Medido a 08/09: seis defeitos foram consertados no esquema — as entradas do
+    Medido a 2026-09-08: seis defeitos foram consertados no esquema — as entradas do
     OPA1642, os MOSFET, o Schottky, o encoder, e o `EXC_R` que passou a
     `AMP_IN_R` — o sincronizador correu, disse **"ja estao sincronizados"**, e a
     placa continuou com as vinte e duas falhas. O `EXC_R` ainda la estava.

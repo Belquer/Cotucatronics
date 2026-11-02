@@ -17,7 +17,7 @@ catodo do LED, o catodo do Schottky aponta para o lado errado.
 LIGACAO. Esta verifica SIGNIFICADO — a unica pergunta que nenhum deles faz:
 *este pad, que a ficha diz ser a fonte, esta na rede que a fonte tem de ter?*
 
-A varredura de 08/09 encontrou CINCO defeitos desta classe numa placa que
+A varredura de 2026-09-08 encontrou CINCO defeitos desta classe numa placa que
 passava em tudo o resto: U1 (as duas entradas trocadas, nos dois canais),
 Q1/Q2 (dreno e fonte), D2 (catodo ao contrario), SW1 (nenhum pad ligado) e
 EXC/AMP_IN (duas redes onde tinha de ser uma).
@@ -46,8 +46,8 @@ NUM = r"-?\d+(?:\.\d+)?"
 # mesmo SOT-23 e o AO3400A (1G 2S 3D) e o BAV99 (1 anodo comum...), e um mapa
 # por footprint diria a mesma coisa das duas, que e como se erra.
 FICHA = {
-    # ⚠️ A PECA COMPRADA E O SI2302CDS-T1-GE3 (Mouser #40440548, 12/09), nao o
-    # AO3400A com que o painel foi desenhado. Conferido a 17/09 na ficha Vishay
+    # ⚠️ A PECA COMPRADA E O SI2302CDS-T1-GE3 (Mouser #40440548, 2026-09-12), nao o
+    # AO3400A com que o painel foi desenhado. Conferido a 2026-09-17 na ficha Vishay
     # Siliconix doc. 68645 rev. D (docs/datasheets/SI2302CDS-T1-GE3.pdf),
     # "SOT-23 (TO-236) Top View": 1 G · 2 S · 3 D — a mesma pinagem, logo a
     # placa encomendada (06db1c7) serve as duas. Porta a 3,3 V da Daisy contra
@@ -65,12 +65,12 @@ FICHA = {
     #
     # FONTE: pagina do produto Waveshare "2.42inch OLED Display Module,
     # 128x64, SPI/I2C, White", seccao "Control Interface" (tabela + serigrafia
-    # do modulo). Ate 08/09 a nossa ordem era `GND +5V CLK DIN CS DC RST`,
+    # do modulo). Ate 2026-09-08 a nossa ordem era `GND +5V CLK DIN CS DC RST`,
     # escrita sem ficha: punha os nossos +5 V no pino DC do modulo com cabo
     # directo, e no GND dele com cabo invertido. ERC, DRC, netlist e as 26
     # vias do IDC ficavam TODOS limpos.
     # ⚠️ o J2 e um header MACHO de 2,54 onde entram os JUMPERS FEMEA soltos do
-    # cabo que vem com o modulo (dB, 17/09). O contrato e o NOME de cada fio:
+    # cabo que vem com o modulo (dB, 2026-09-17). O contrato e o NOME de cada fio:
     # o pad da placa tem de levar o sinal que o modulo chama assim. A
     # posicao do pad nao e a posicao no modulo — e a ordem dele lida a
     # partir do VCC (rev C, deddd3d; cicatriz 15ew).

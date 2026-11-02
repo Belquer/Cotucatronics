@@ -15,7 +15,7 @@ DUAS linhas de item que se seguem. Um extractor que casa a linha do cabecalho
 devolve zero achados com ar de placa limpa — e foi o que me devolveu, contra
 um DRC que dizia 47. Verificador que mente e pior que verificador nenhum.
 
-⚠️⚠️ E `Zone [X] <-> Zone [X]` NAO E UMA MEDICAO ESTAVEL. Medido a 08/09: cinco
+⚠️⚠️ E `Zone [X] <-> Zone [X]` NAO E UMA MEDICAO ESTAVEL. Medido a 2026-09-08: cinco
 corridas do DRC sobre COPIAS IDENTICAS do mesmo ficheiro, com as zonas cheias
 uma vez e gravadas, deram 3, 0, 0, 3, 0 planos partidos. O total de ligacoes por
 fazer foi 15 nas cinco, e o perfil por rede foi AGND=4 GND=8 nas cinco.

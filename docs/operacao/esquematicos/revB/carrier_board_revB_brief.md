@@ -1,11 +1,11 @@
 # Cotucatronics — Carrier rev B · brief de projeto
 
-> ⚠️⚠️ **A PLACA É DE 2 CAMADAS, e este documento dizia 4.** Medido a 08/09 nos ficheiros: só `F.Cu` e `B.Cu`, com as zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, e o `NT1` como ponte única — e isso **está verificado e certo**. O que estava errado era o texto.
+> ⚠️⚠️ **A PLACA É DE 2 CAMADAS, e este documento dizia 4.** Medido a 2026-09-08 nos ficheiros: só `F.Cu` e `B.Cu`, com as zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, e o `NT1` como ponte única — e isso **está verificado e certo**. O que estava errado era o texto.
 >
 > Sem plano interior, o retorno do amp é a zona de `B.Cu`: aceitável para 3 A com a largura que tem, e dito para não ser descoberto na bancada. **A encomenda na JLC tem de dizer 2 camadas** — é mais barato, e pedir 4 para uma placa desenhada a 2 paga um plano que ninguém usa.
 
-### Alvo: KiCad → JLCPCB (fab + SMT) · **duas placas** · atualizado 01/09
-> Substitui `carrier_board_revA_brief.md`, que ficou de 20/08 e traz cinco
+### Alvo: KiCad → JLCPCB (fab + SMT) · **duas placas** · atualizado 2026-09-01
+> Substitui `carrier_board_revA_brief.md`, que ficou de 2026-08-20 e traz cinco
 > decisões vencidas. A rev A **nunca foi fabricada**; isto não é respin, é a
 > atualização do desenho antes do primeiro corte de cobre.
 
@@ -13,7 +13,7 @@
 
 ## 0 · O que mudou desde a rev A, e porquê
 
-| item | rev A (20/08) | rev B | razão |
+| item | rev A (2026-08-20) | rev B | razão |
 |---|---|---|---|
 | tensão do trilho | 12 V (CH224K Rset 24 k) | **15 V** | 15 V é perfil PD obrigatório; 12 V é opcional e muitos powerbanks não o dão |
 | PD sink | CH224K no cobre | **módulo decoy PD 15 V/5 A** | módulo já comprado; traz o receptáculo com as linhas CC (pigtail de 2 fios deixa o chip surdo) |
@@ -21,7 +21,7 @@
 | amp | TPA3116D2DADR no cobre, PBTL ×2 | **módulo TPA3116D2 estéreo, FORA da placa** | classe-D é o maior risco de layout numa primeira placa; o módulo tem terminais de parafuso e liga por fio |
 | medição de corrente | shunt 10 mΩ + INA219 + I2C | **removido** | o powerbank virou consumível com display próprio; o propósito sumiu. D11/D12 voltam ao pool |
 | ponte MIDI | header WIDI 6 fios | **ESP32-C3 + Schottky + 100 µF + 100 nF** | US$45 → US$4; o Schottky não é opcional (`HARDWARE.md` §1) |
-| entrada de piezo | 1 kΩ + 2 diodos, pads de atenuador DNP | **pré-amplificador OPA1642** | a relação sinal/ruído decidiu-se por medição em 01/09 |
+| entrada de piezo | 1 kΩ + 2 diodos, pads de atenuador DNP | **pré-amplificador OPA1642** | a relação sinal/ruído decidiu-se por medição em 2026-09-01 |
 | encoders | 1 EC11 | **1 EC11, e em D0/D1/D2** | ver §1: liberta os aliases A2/A3/A4 |
 | botões | 4 (búzios, frz A, rearme CTOS, frz B) | **2 (frz A, frz B)** | ver §6, tem consequência de firmware |
 | LEDs | direto no pino | **AO3400A + gate, do trilho de 5 V** | medido: 30–80 mA por LED, contra os 20 mA de limite do pino |
@@ -184,7 +184,7 @@ montagem), ou se passa a um módulo de 5 V fixo. **Módulo com regime
 selecionável é módulo que não recusa fora do regime.**
 
 Registado e não medido: é uma fonte comutada a alimentar a Daisy, e a caçada
-de 01/09 deixou por explicar uma série de 400 Hz e o relvado de 500 Hz–4 kHz.
+de 2026-09-01 deixou por explicar uma série de 400 Hz e o relvado de 500 Hz–4 kHz.
 Não acusar sem medir — mas está na lista.
 
 ---

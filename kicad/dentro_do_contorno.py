@@ -3,7 +3,7 @@
 
 POR QUE EXISTE.
 
-A 08/09 uma imagem do painel mostrou, em dez segundos, o `J1` com o courtyard
+A 2026-09-08 uma imagem do painel mostrou, em dez segundos, o `J1` com o courtyard
 por cima do bordo e o `J2` encostado ao topo. O DRC dizia **geometria 0**, e
 nao estava a mentir: **o KiCad nao confere courtyard contra `Edge.Cuts`**. Nao
 ha regra dessas por omissao, portanto a pergunta nunca foi feita.
@@ -41,7 +41,7 @@ ISENCOES = {
                         "de fisico para caber ou nao caber.",
 }
 ISENCOES[("painel", "J1")] = (
-    "rev C ENCOMENDADA (JLC W2026091304545438, 12/09): courtyard do IDC a "
+    "rev C ENCOMENDADA (JLC W2026091304545438, 2026-09-12): courtyard do IDC a "
     "0,405 do bordo esquerdo, contra 0,5 da regra. O corpo fica DENTRO da "
     "placa (o courtyard ja inclui margem ao plastico); falta margem, nao "
     "cabe mal. Nao se muda numa placa que ja esta na fabrica — na proxima "

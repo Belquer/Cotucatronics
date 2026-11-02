@@ -1,5 +1,5 @@
 > ⚠️ **ABSORVIDA. A skill manda.** Este texto foi integrado em
-> `.claude/skills/design-review/SKILL.md` a 05/09, como o **passo 1** dela —
+> `.claude/skills/design-review/SKILL.md` a 2026-09-05, como o **passo 1** dela —
 > não como apêndice, para a ordem não ficar ambígua. Fica aqui como registo
 > do que se descobriu e da prova que o motivou; **se os dois divergirem, a
 > skill está certa e isto está velho.**
@@ -7,7 +7,7 @@
 > A ferramenta vive em `tools/svg_colisoes.py` — a versão corrente está no
 > mapa do README, e não aqui, para não haver dois sítios a envelhecer.
 
-# design-review — emenda 05/09: o portão que pode dizer não
+# design-review — emenda 2026-09-05: o portão que pode dizer não
 
 ## O que falhou
 
@@ -70,7 +70,7 @@ Qualquer edição depois de qualquer um dos três reinicia os três.
 |---|---|---|
 | caixa-fabricacao.svg | 30 acusações (2 reais visíveis, 4 quase-toques, 24 falsos por trapézio) | **0**, ferramenta corrigida para contentores |
 | preamp-piezo.svg | 3 quase-toques que o olho nunca viu em três revisões | **0** |
-| `caixa-pedal-4-faces.svg` *(aposentado 05/09)* | 2 falsos por sombreado | **0**, com o filtro de opacidade |
-| `caixa-pedal-layout.svg` *(aposentado 05/09)* | 1 falso por sombreado | **0** |
+| `caixa-pedal-4-faces.svg` *(aposentado 2026-09-05)* | 2 falsos por sombreado | **0**, com o filtro de opacidade |
+| `caixa-pedal-layout.svg` *(aposentado 2026-09-05)* | 1 falso por sombreado | **0** |
 
 A ferramenta apanhou o defeito que o dB viu **e** três que ninguém tinha visto.

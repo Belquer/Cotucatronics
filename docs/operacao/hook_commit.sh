@@ -4,7 +4,7 @@
 # POR QUE EXISTE, e a razao NAO e "prevenir um push mau".
 #
 # O `hook_stop.sh` ja apanhava isto: corre o /audit no fecho da sessao. O que
-# ele nao consegue e apanha-lo A TEMPO. A 05/09 bumpei o hal_daisy_seed para
+# ele nao consegue e apanha-lo A TEMPO. A 2026-09-05 bumpei o hal_daisy_seed para
 # v0.75.0 e nao actualizei a linha dele no mapa do README; o audit acusou —
 # no commit SEGUINTE, com o mau ja empurrado.
 #
@@ -16,7 +16,7 @@
 # impede commitar e um portao que se desliga na primeira vez que estorva, e
 # ai deixa de haver verificacao nenhuma.
 #
-# ⚠️ E SO OS BARATOS. Medido a 05/09:
+# ⚠️ E SO OS BARATOS. Medido a 2026-09-05:
 #     versoes_readme  0,03 s     desenhos  0,02 s
 #     check_docs      1,50 s     auditar   3,26 s
 # Os dois primeiros custam 50 ms e correm aqui. Os pesados ficam onde ja

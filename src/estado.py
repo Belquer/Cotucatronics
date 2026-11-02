@@ -4,14 +4,14 @@
     ./estado.py guardar <ficheiro>
     ./estado.py repor   <ficheiro>
 
-POR QUE EXISTE (04/09). Gravar apaga tudo o que e volatil: os params
+POR QUE EXISTE (2026-09-04). Gravar apaga tudo o que e volatil: os params
 renascem no valor de nascenca do manifesto, nao no que estava configurado.
 A regra da bancada ja dizia que repor e DECLARAR o que foi reposto faz
 parte de gravar (§2c) — mas era uma regra executada de cabeca, e por isso
-falhada. Em 20/08 foram quatro gravacoes seguidas a zerar o `level` sem
+falhada. Em 2026-08-20 foram quatro gravacoes seguidas a zerar o `level` sem
 reposicao nem aviso, e o dB re-dialava pelo Loopy sem saber porque.
 
-O pedido do dB, 04/09: "faca isso sempre, ao gravar reponha os valores".
+O pedido do dB, 2026-09-04: "faca isso sempre, ao gravar reponha os valores".
 Regra que depende de eu lembrar nao e regra; e sorte. Entao mora aqui, e
 o `flash.sh` chama-a nos dois lados do DFU.
 

@@ -25,7 +25,7 @@ o bundle proprio:
     open -a "/Applications/KiCad/PCB Editor.app" --args <caminho absoluto>
 
 (E e ele que deixa o `<ficheiro>.kicad_pcb.kicad_pro` ao lado, que esta no
-`.gitignore` desde 08/09.)
+`.gitignore` desde 2026-09-08.)
 """
 import glob
 import sys

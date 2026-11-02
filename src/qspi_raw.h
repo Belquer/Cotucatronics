@@ -33,7 +33,7 @@
 
 #ifdef COTUCA_TEM_ITCM
 #define COTUCA_ITCM __attribute__((section(".itcm_text"), noinline))
-// TODA funcao desta unidade leva COTUCA_ITCM. Em 22/08 eu marquei os
+// TODA funcao desta unidade leva COTUCA_ITCM. Em 2026-08-22 eu marquei os
 // dois ajudantes e ESQUECI a funcao principal — ela rodou da QSPI e se
 // matou na instrucao seguinte a desligar o periferico. O linker vinha
 // dizendo: `ITCMRAM: 68 B` era pouco demais pro que eu tinha escrito, e
@@ -82,7 +82,7 @@ void     SetModo(uint32_t m);      // 1 = uma linha, 4 = quatro linhas
 //
 // 🔴 ZONA SEGURA IMPOSTA EM CODIGO, e ela nao e cerimonia.
 //
-// A 29/09 uma gravacao no endereco errado apagou o app que estava a correr e
+// A 2026-09-29 uma gravacao no endereco errado apagou o app que estava a correr e
 // custou meia hora de recuperacao com BOOT+RESET (bts 15fv). A causa foi uma
 // subtraccao que eu nao fiz. Um `erase` com o endereco errado faz o mesmo em
 // silencio e sem hipotese de arrepender — entao a funcao RECUSA qualquer

@@ -23,7 +23,7 @@ namespace cotuca
 
 // canal 0–15 (o do fio) ou omni
 constexpr int kMidiOmni    = -1;
-// 32, nao 16. Em 18/08 o mapa chegou a 17 entradas e a 17a foi
+// 32, nao 16. Em 2026-08-18 o mapa chegou a 17 entradas e a 17a foi
 // escrita FORA DO ARRAY — sem guarda, sem erro. O `midi` imprimia a
 // linha (le pelo mesmo indice estourado) e o `ApplyMidiCc` nao achava
 // o dono: duas leituras contraditorias da mesma tabela, que e a
@@ -34,7 +34,7 @@ constexpr int kMidiOmni    = -1;
 // 48. Estourou DE NOVO: 36 entradas contra teto de 32, e os quatro CCs
 // do SHIMMER foram recusados em silencio — o efeito continuava tocando
 // e nenhum controle dele respondia.
-// 64. O dB mandou mapear TODO param em 20/08 — nada mais so-serial.
+// 64. O dB mandou mapear TODO param em 2026-08-20 — nada mais so-serial.
 // Sao 54 hoje, e o teto de 48 estourava. Conta feita ANTES de escrever
 // o mapa, pela terceira vez seguida: estouro de capacidade e defeito de
 // projeto, nao condicao de runtime.
@@ -191,7 +191,7 @@ class MidiParser
   public:
     using CcCallback = void (*)(uint8_t channel, uint8_t cc, uint8_t value);
 
-    // ---- CORPO DE SYSEX, que ate 29/09 era engolido -------------------
+    // ---- CORPO DE SYSEX, que ate 2026-09-29 era engolido -------------------
     //
     // POR QUE PASSA A SER GUARDADO (ppc/006 fase 1). A consola da Daisy vive
     // no USB, que e o cabo que obriga a abrir a caixa. Por radio ela tem de

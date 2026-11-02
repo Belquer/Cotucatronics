@@ -1,6 +1,6 @@
 # OPERAÇÃO — Cotucatronics
 
-> **Estado congelado em 22/08/2026** · firmware v0.130.0 · commit `6002a70`
+> **Estado congelado em 2026-08-22** · firmware v0.130.0 · commit `6002a70`
 >
 > Esta pasta é o **manual de operação**: o que você precisa para ligar, tocar,
 > endereçar e consertar o instrumento. Ela é distinta dos documentos de

@@ -1,5 +1,5 @@
 # Cotucatronics — Carrier Board rev A · brief de projeto
-### Alvo: KiCad → JLCPCB (fab + SMT assembly) · atualizado 20/08 noite
+### Alvo: KiCad → JLCPCB (fab + SMT assembly) · atualizado 2026-08-20 noite
 
 ## O que esta placa é
 Uma carrier board SMD onde a **Daisy Seed encaixa em soquete** e todo o resto do
@@ -7,7 +7,7 @@ instrumento — energia, proteção de entrada, amplificação, medição — vi
 em vez de floresta de jumpers. O painel (encoder, botões, OLED, switches, jacks)
 conecta por headers: a placa não amarra o desenho da caixa.
 
-## Entradas e saídas (decisões do dB, 20/08)
+## Entradas e saídas (decisões do dB, 2026-08-20)
 | o quê | como |
 |---|---|
 | Piezos (×2) | **jack 1/4" TRS** — tip = sinal, sleeve = terra, ring aterrado |
@@ -41,7 +41,7 @@ USB-C (painel) → [CH224K: PD sink, pede 15V] → fusível PTC → switch (+V)
 
 ### 2 · Entrada (×2, um por piezo)
 Jack TRS → 1kΩ série → nó → {D1 1N4148WS→3V3 · D2 1N4148WS→GND} → AUDIO IN.
-- SMD: R 0603, diodos SOD-323. Sem atenuador (decisão de regime, 20/08);
+- SMD: R 0603, diodos SOD-323. Sem atenuador (decisão de regime, 2026-08-20);
   **pads previstos para R2 do divisor** (não populados) — se o `hist` na
   escultura pedir, solda sem respin.
 - Ring do TRS no terra = blindagem grátis do cabo.

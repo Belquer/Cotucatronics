@@ -9,7 +9,7 @@ O QUE ELE PROVA, e por que sao coisas diferentes:
   out_l, out_r               DEPOIS do limiter   corta o RAMO inteiro
 
 PRE-CONDICAO DE FIACAO, e ela NAO e opcional: cada saida da Daisy num canal
-PROPRIO da interface. Em 28/08 este teste correu com as duas saidas somadas
+PROPRIO da interface. Em 2026-08-28 este teste correu com as duas saidas somadas
 numa entrada so, e os dois criterios de ISOLAMENTO passaram sem testar nada —
 "o L nao afecta o R" estava garantido porque o L nao chegava a interface.
 Medicao que nao pode falhar nao e medicao.
@@ -87,7 +87,7 @@ print("teste_roteamento v%s\n" % VERSAO)
 
 def mapeia():
     """Descobre QUAL canal da interface ve QUAL saida, medindo. Na bancada
-    de 28/08 o mapa saiu CRUZADO (OUT_L -> ch2), e assumi-lo teria trocado
+    de 2026-08-28 o mapa saiu CRUZADO (OUT_L -> ch2), e assumi-lo teria trocado
     todos os vereditos de lado sem nenhum deles falhar."""
     global L, R
     for c, e in [("set level 0.15","real=0.150"), ("set tone_freq 1000","real=1000.000"),

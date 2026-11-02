@@ -74,14 +74,14 @@ Referência-só: KiCad StepUp (FreeCAD), enclozure (CadQuery).
 
 ## §2b — ⚠️ ESTE PLANO PASSA A SER DESENHADO SOBRE A ARQUITECTURA NOVA
 
-> Acrescentado a 29/09. O `ppc/007` (mecânica-primeiro) **vem antes deste**: a
+> Acrescentado a 2026-09-29. O `ppc/007` (mecânica-primeiro) **vem antes deste**: a
 > montagem 3D verifica a rev C com o **painel como datum**, não a rev B.
 > Verificar a arquitectura antiga com rigor novo é gastar o rigor no sítio
 > errado. Ver bts 15ga e `docs/operacao/HARDWARE.md` §0.
 
 ## §3 — As 7 asserções (rígidas vs declaradas)
 
-### 7 — A CAIXA É MONTÁVEL  *(nova, 29/09)*
+### 7 — A CAIXA É MONTÁVEL  *(nova, 2026-09-29)*
 
 **Cada peça entra e sai na ordem declarada, com a ferramenta a alcançar cada
 parafuso.** Não é folga: é sequência. Uma caixa cujas peças cabem todas e que

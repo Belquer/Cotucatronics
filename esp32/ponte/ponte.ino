@@ -17,7 +17,7 @@
 // e reemite igual do outro lado. O que ela nao faz e interpretar o
 // SENTIDO — e essa a propriedade que interessa.
 //
-// D28 E ATIVO EM BAIXO. Medido no firmware da Daisy em 25/08:
+// D28 E ATIVO EM BAIXO. Medido no firmware da Daisy em 2026-08-25:
 //     kLbAcesoEmBaixo = true          (main.cpp)
 //     Pull::PULLUP no pino            (hal_daisy_seed.cpp)
 // Entao: conectado = puxar a LOW. Desconectado = SOLTAR (alta impedancia)
@@ -42,7 +42,7 @@
 #define PONTE_VERSAO "1.7.0"
 
 // ---- pinos -----------------------------------------------------------------
-// ⚠️⚠️ MAJOR a 21/09: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
+// ⚠️⚠️ MAJOR a 2026-09-21: OS PINOS SAO OS DA PLACA, E A PLACA E QUE MANDA.
 //
 // Ate a v0.5.0 este ficheiro escolhia os pinos — GPIO4/5/6 — porque a ponte
 // vivia em cinco fios soltos e a escolha era dele. Desde a rev C o modulo
@@ -53,7 +53,7 @@
 //     IO3  -> PONTE_STATUS (D28 da Daisy), ATIVO EM BAIXO
 //
 // O firmware antigo gravado numa placa rev C da EXACTAMENTE o sintoma de
-// 21/09: o iPad ve e liga (o radio nao usa estes pinos), e a Daisy conta
+// 2026-09-21: o iPad ve e liga (o radio nao usa estes pinos), e a Daisy conta
 // `pico 0 de 128 bytes do anel` — nunca chegou um byte. Nao ha como o
 // perceber pelo BLE, porque o BLE funciona.
 //
@@ -94,7 +94,7 @@ static const size_t TX_BUFFER = 1024;
 //   ou seja 2 de cabecalho + 8 caracteres, e "Cotucatronics" tem 13.
 // A conta esta certa e o modelo estava incompleto: o nome vai na RESPOSTA
 // AO SCAN, que e um segundo pacote de 31 bytes, e o iOS faz varredura
-// ativa. Em 25/08 encurtei para "Cotuca" com base so na conta — e o dB ja
+// ativa. Em 2026-08-25 encurtei para "Cotuca" com base so na conta — e o dB ja
 // tinha visto "Cotucatronics" aparecer no Loopy. Revertido.
 //
 // A licao e a da casa: nao agir sobre o modelo quando a medicao esta a
@@ -149,7 +149,7 @@ static uint8_t   nus_fila[NUS_FILA];
 static volatile size_t nus_cab = 0, nus_cau = 0;
 static uint32_t  nus_descartes = 0;   // bytes do Mac que nao couberam
 static uint32_t  nus_para_daisy = 0, nus_do_daisy = 0;
-// ⚠️ CONTA A ESCRITA, NAO SO O FIM DO CAMINHO. A 29/09 o `consola:` deu zero
+// ⚠️ CONTA A ESCRITA, NAO SO O FIM DO CAMINHO. A 2026-09-29 o `consola:` deu zero
 // e isso nao distinguia "o BLE nao entregou" de "a fila nao escoou" — um
 // contador no fim do percurso responde por todo o percurso, que e o mesmo
 // defeito do `pkout` sem o `pk`. Este conta a CHEGADA.
@@ -157,7 +157,7 @@ static uint32_t  nus_escritas = 0, nus_bytes_crus = 0;
 
 // ---- O ANUNCIO FICA DE PE ENQUANTO HOUVER VAGA -----------------------------
 //
-// 🔴 MEDIDO a 29/09. O `begin()` do BLEMIDI faz `advertiseOnDisconnect(true)`,
+// 🔴 MEDIDO a 2026-09-29. O `begin()` do BLEMIDI faz `advertiseOnDisconnect(true)`,
 // e no NimBLE o anuncio PARA quando alguem se liga. Consequencia: com o Loopy
 // agarrado, a ponte fica INVISIVEL — o Mac varre e nao a ve.
 //
@@ -171,7 +171,7 @@ static uint32_t  nus_escritas = 0, nus_bytes_crus = 0;
 // ============================================================================
 //
 // O bootloader deste nucleo traz `CONFIG_BOOTLOADER_APP_ROLLBACK_ENABLE=y`
-// (verificado no sdkconfig do C3, 29/09). Isso muda tudo: a imagem nova
+// (verificado no sdkconfig do C3, 2026-09-29). Isso muda tudo: a imagem nova
 // arranca em PENDING_VERIFY e, se ninguem a CONFIRMAR, o bootloader volta
 // sozinho a anterior no reinicio seguinte.
 //
@@ -204,7 +204,7 @@ static void OtaAborta(const char* porque)
 
 // ---- PARAMETROS DA LIGACAO: MEDIR, E SO DEPOIS PEDIR -----------------------
 //
-// A 29/09 a transferencia da imagem andava a 0,8 kB/s com pedacos de 180 B e
+// A 2026-09-29 a transferencia da imagem andava a 0,8 kB/s com pedacos de 180 B e
 // escrita confirmada — ou seja ~5 escritas por segundo, o que aponta para um
 // intervalo de ligacao de ~200 ms. Mas APONTAR NAO E MEDIR: o `!board` passa
 // a dizer o intervalo REAL, e so assim se sabe se o pedido pegou.
@@ -229,7 +229,7 @@ static void PedeIntervaloCurto()
         // 🔴 A CONDICAO ERRADA ERA `if(intervalo > 24)`, e por isso o pedido
         // NUNCA saia: o intervalo ja era 24. Mas o pedido nao e so sobre o
         // intervalo — leva tambem o PRAZO DE SUPERVISAO, e era esse que
-        // faltava. Medido a 29/09: supervisao 720 ms contra uma escrita de
+        // faltava. Medido a 2026-09-29: supervisao 720 ms contra uma escrita de
         // flash que bloqueia 85 ms. Duas ou tres proximas e o central
         // desiste, que e a queda a meio da imagem.
         //
@@ -350,7 +350,7 @@ class NusRxCB : public NimBLECharacteristicCallbacks
                 // violacao da regra que este ficheiro ja tinha escrita tres
                 // blocos acima — e o `Update.begin()` APAGA FLASH, que e uma
                 // operacao longa. Feita na tarefa do BLE, a pilha perde o
-                // tempo dela e DERRUBA A LIGACAO: medido a 29/09, o `!ota`
+                // tempo dela e DERRUBA A LIGACAO: medido a 2026-09-29, o `!ota`
                 // matava a sessao antes de enviar um byte de imagem.
                 //
                 // A regra vale para tudo o que demora, nao so para a Serial1.
@@ -556,7 +556,7 @@ void setup()
 
     // ---- NUS ANTES do RADIO.begin(), e a ORDEM E O CONSERTO ----
     //
-    // 🔴 MEDIDO a 29/09, depois de duas tentativas erradas. O `begin()` do
+    // 🔴 MEDIDO a 2026-09-29, depois de duas tentativas erradas. O `begin()` do
     // BLEMIDI faz, por esta ordem: init do dispositivo, cria o servidor, cria
     // o servico MIDI, `service->start()`, e **arranca o anuncio**. E no
     // NimBLE e o arranque do ANUNCIO que constroi a tabela GATT.
@@ -576,7 +576,7 @@ void setup()
     // `RADIO.begin()` fazer o resto — o `init` e o `createServer` dele sao
     // idempotentes, e o anuncio dele constroi a tabela com os DOIS servicos.
     NimBLEDevice::init("Cotucatronics");
-    // ⚠️ MTU GRANDE, E A RAZAO E MEDIDA. A 29/09 a imagem ia a 0,9 kB/s com
+    // ⚠️ MTU GRANDE, E A RAZAO E MEDIDA. A 2026-09-29 a imagem ia a 0,9 kB/s com
     // o intervalo de ligacao ja em 30 ms — a 30 ms uma escrita confirmada
     // devia dar ~6 kB/s. Sete vezes mais lento que o intervalo permite e a
     // assinatura de MTU pequeno: com o omisso de 23, uma escrita de 180 B

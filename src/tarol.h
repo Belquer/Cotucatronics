@@ -4,7 +4,7 @@
 //
 // Nome do dB, e o nome E o diagnostico. Nasceu como oitavador por
 // divisao de frequencia, e nao produz oitava: numa membrana os modos sao
-// INARMONICOS — a medicao de 28/08 achou-lhe oito (278, 370, 406, 672,
+// INARMONICOS — a medicao de 2026-08-28 achou-lhe oito (278, 370, 406, 672,
 // 732, 768, 809, 1061 Hz) — e um detector de cruzamento por zero nao acha
 // fundamental nenhuma nisso. Ele treme, e o que sai e rajada de ruido com
 // o envelope da pancada. Soa a tarol.

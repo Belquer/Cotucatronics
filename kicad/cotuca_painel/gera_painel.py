@@ -156,7 +156,7 @@ def simbolo(lib, ref, val, x, y, ry=-7.62, vy=7.62):
 # "medir antes de soldar". Footprint mecanico errado e placa inutil, e um
 # footprint plausivel escrito hoje parece verdade amanha.
 #
-# A JLC monta so o lado SMD (decidido com o dB a 05/09); o THT solda o dB.
+# A JLC monta so o lado SMD (decidido com o dB a 2026-09-05); o THT solda o dB.
 FOOTPRINT = {
     # ⚠️ `TestPoint_Pad_D1.5mm` traz `exclude_from_pos_files exclude_from_bom`:
     # e cobre, nao e peca. Nao entra no CPL nem na lista de compras.
@@ -172,14 +172,14 @@ FOOTPRINT = {
     # OLED: header de 1x07 a 2,54 mm — recebe pinos macho-macho e o cabo do
     # modulo Waveshare SSD1309 por jumpers dupont femea (1:1 com o modulo). Era
     # um Molex PicoBlade 1,25 mm, incompativel com header/dupont padrao: trocado
-    # a 12/09 depois de provar que o header de 17,78 mm cabe (folga 4,05 mm ao
+    # a 2026-09-12 depois de provar que o header de 17,78 mm cabe (folga 4,05 mm ao
     # J1, 2,24 mm ao bordo de cima) e que passa na caixa (frente ~42 mm livres).
     "J2":  "Connector_PinHeader_2.54mm:PinHeader_1x07_P2.54mm_Vertical",
     "Q1":  "Package_TO_SOT_SMD:SOT-23",
     "Q2":  "Package_TO_SOT_SMD:SOT-23",
     "C1":  "Capacitor_SMD:C_0805_2012Metric",
     # ⚠️ o C3 e o MESMO EEU-FR1C101 que ja esta na BOM para o C3 do cerebro —
-    # zero linhas novas de MPN, decidido com o dB a 06/09.
+    # zero linhas novas de MPN, decidido com o dB a 2026-09-06.
     "C3":  "Capacitor_THT:CP_Radial_D6.3mm_P2.50mm",
     "C4":  "Capacitor_SMD:C_0805_2012Metric",
     "C5":  "Capacitor_SMD:C_0805_2012Metric",
@@ -195,13 +195,13 @@ FOOTPRINT = {
     # escolhida for 1/4 W, sobe para 2512.
     "R5":  "Resistor_SMD:R_1210_3225Metric",
     "R6":  "Resistor_SMD:R_1210_3225Metric",
-    # Alps EC11E, decidido a 05/09: pinos a 2,5 mm, footprint oficial no
+    # Alps EC11E, decidido a 2026-09-05: pinos a 2,5 mm, footprint oficial no
     # KiCad, e ja era a peca do PINOS.md. LCSC C370970 (EC11E15244G1), com
     # push, 30 detentes/15 pulsos, eixo de 20 mm — US$1,70 @5, 1125 em stock.
     "SW1": "Rotary_Encoder:RotaryEncoder_Alps_EC11E-Switch_Vertical_H20mm",
     # Pot: `PTV09A-1020S-B103` — estilo **1** (rear mount COM bucim), eixo de
     # 20 mm, estriado 18 dentes (`S`), 10 k linear (`B103`). Decidido pelo dB a
-    # 05/09, e compra-se na Mouser/DigiKey: **a falta de stock na LCSC nao conta
+    # 2026-09-05, e compra-se na Mouser/DigiKey: **a falta de stock na LCSC nao conta
     # para THT**, porque a JLC so monta o SMD e quem compra o resto e o dB.
     # O footprint do KiCad chama-se literalmente `PTV09A-1`: peca e desenho
     # sao do mesmo estilo, e a duvida que eu tinha levantado (se o `-4` partilha
@@ -263,7 +263,7 @@ def liga(lib, ref, x, y, mapa, val="", ry=-7.62, vy=7.62, comp=10.16):
 
     ⚠️⚠️ A GUARDA DOS DOIS LADOS, e ela existe por causa do encoder.
 
-    Ate 08/09 isto dizia `if n not in mapa: continue` e mais nada. Um pino do
+    Ate 2026-09-08 isto dizia `if n not in mapa: continue` e mais nada. Um pino do
     simbolo que faltasse no mapa ficava por ligar; uma chave do mapa que nao
     correspondesse a pino nenhum era deitada fora. Nos DOIS casos, em silencio,
     e o gerador anunciava "219 blocos" como se estivesse tudo feito.
@@ -320,7 +320,7 @@ nota(55.0, 84.4,
 #  1. Waveshare "2.42inch OLED Display Module, 128x64, SPI/I2C, White",
 #     seccao "Control Interface": o modulo tem um receptaculo MX1.25 de 7
 #     vias, 1 RST · 2 DC · 3 CS · 4 CLK · 5 DIN · 6 GND · 7 VCC (3,3 ou 5 V).
-#  2. dB, 17/09: o modulo JA VEM com o cabo — MX1.25 do lado dele, JUMPERS
+#  2. dB, 2026-09-17: o modulo JA VEM com o cabo — MX1.25 do lado dele, JUMPERS
 #     FEMEA soltos do outro. Na placa solda-se um header MACHO de 2,54.
 #
 # Com jumpers individuais cada fio leva o seu nome, e a placa so tem de ter
@@ -328,17 +328,17 @@ nota(55.0, 84.4,
 # lida a partir do VCC (1=VCC ... 7=RST): pino a pino, os nomes batem.
 #
 # ⚠️ HISTORIA, para ninguem "consertar" isto outra vez:
-#  - ate 05/09: `GND +5V CLK DIN CS DC RST` sem ficha — 1<->2 e 3<->4 trocados.
-#  - 08/09, no main: PicoBlade na placa, `RST DC CS CLK DIN GND VCC` (cicatriz
+#  - ate 2026-09-05: `GND +5V CLK DIN CS DC RST` sem ficha — 1<->2 e 3<->4 trocados.
+#  - 2026-09-08, no main: PicoBlade na placa, `RST DC CS CLK DIN GND VCC` (cicatriz
 #    15eu). Certo para um cabo MX1.25-MX1.25 directo — que NAO e o cabo que
 #    existe.
-#  - 12/09, rev C (deddd3d): header 2,54 e esta ordem. E a placa encomendada
+#  - 2026-09-12, rev C (deddd3d): header 2,54 e esta ordem. E a placa encomendada
 #    (JLC W2026091304545438) e e a que bate com o cabo real. Ver 15ew.
 liga("CONN7_L", "J2", 210.0, 60.0,
      {"1":"+5V", "2":"GND", "3":"OLED_DIN", "4":"OLED_CLK",
       "5":"OLED_CS", "6":"OLED_DC", "7":"OLED_RST"}, "OLED SSD1309 2,54mm 7p")
 nota(175.0, 36.2,
-     "OLED a 5 V, e nao a 3V3 — decidido a 05/09. O modulo Waveshare aceita",
+     "OLED a 5 V, e nao a 3V3 — decidido a 2026-09-05. O modulo Waveshare aceita",
      "3,3 ou 5 V (tem tradutor de nivel a bordo), e tira-lo do trilho de 3V3",
      "liberta a via 9 para o +3V3A dos pots. Ecra comutado no fundo de escala",
      "do ADC e pior do que o problema que se resolvia. O painel nao gera nada.")
@@ -349,10 +349,10 @@ nota(175.0, 36.2,
 # `pinos_de` casa por NUMERO — chaves 1..5 nao casavam com nada e o SW1 saia
 # com os cinco pinos soltos (ERC: pin_not_connected). A verdade de terra e o
 # footprint do SW1 na placa: A=ENC_A_A, B=ENC_A_B, C=GND, S1=ENC_A_PUSH, S2=GND.
-# Corrigido a 12/09 (deriva pre-existente: a fonte tinha 1..5 e o sch commitado
+# Corrigido a 2026-09-12 (deriva pre-existente: a fonte tinha 1..5 e o sch commitado
 # fora gerado de uma versao com as chaves certas).
 liga("EC11", "SW1", 210.0, 120.0,
-     # ⚠️ POR NOME DE PINO, nao por "1".."5". O conserto C4 (08/09) renumerou
+     # ⚠️ POR NOME DE PINO, nao por "1".."5". O conserto C4 (2026-09-08) renumerou
      # o EC11 para os nomes dos pads do footprint — A C B S1 S2 — porque um
      # simbolo com pinos 1..5 casado com um footprint cujos pads tem funcao
      # fixa da netlist certa e funcao errada. O simbolo mudou e ESTE mapa nao,
@@ -361,7 +361,7 @@ liga("EC11", "SW1", 210.0, 120.0,
      {"A":"ENC_A_A", "C":"GND", "B":"ENC_A_B", "S1":"ENC_A_PUSH", "S2":"GND"},
      "EC11 — o unico encoder")
 nota(175.0, 99.2,
-     "ENCODER — comum (C) e um pino do push ao GND. E o UNICO desde 05/09:",
+     "ENCODER — comum (C) e um pino do push ao GND. E o UNICO desde 2026-09-05:",
      "push+giro dao os outros controlos, e a lista de presets e simples.")
 
 # ------------------------------------------------------------------ pots
@@ -391,21 +391,21 @@ nota(175.0, 154.2,
 # PAINEL, nao na placa: nao existe footprint de placa para ele. O que a placa
 # leva e um header de 2 pinos, e o botao chega por fio. Desenhar o botao aqui
 # poe o layout a tentar pousar 30 mm de plastico em cima do PCB.
-# Decidido com o dB a 05/09, junto com o inverso para o encoder e os pots:
+# Decidido com o dB a 2026-09-05, junto com o inverso para o encoder e os pots:
 # esses vao NA PLACA, com o eixo pelo furo da tampa (a caixa ja tem os tres
 # furos ø7 alinhados a 35 mm), porque o 100 nF do cursor tem de ficar colado.
 for ref, sinal, cor, y in (("J3", "BOT_FRZ_A", "fio -> arcade AZUL freeze A", 250.0),
                            ("J4", "BOT_FRZ_B", "fio -> arcade AZUL freeze B", 270.0),
                            ("J5", "BOT_BUZIOS", "fio -> arcade BRANCO buzios", 290.0)):
     # x=85 e nao 100: a 100 o rotulo GND do botao encostava no LED_FRZ_A
-    # do R1 (8,2 mm² de sobreposicao, medido pelo colisoes_sch a 05/09).
+    # do R1 (8,2 mm² de sobreposicao, medido pelo colisoes_sch a 2026-09-05).
     liga("CONN2_L", ref, 85.0, y, {"1":sinal, "2":"GND"}, cor)
 # ------------------------------ desacoplamento do +5V, JUNTO AOS MOSFET
 #
 # ⚠️ A CARGA NAO E O OLED — ele tem os condensadores dele. O que comuta neste
 # +5V sao os LED dos arcade pelos MOSFET: ~90 mA a ligar e a desligar, por
 # 150 mm de fita. O par vai onde a corrente muda, que e aqui, e nao junto ao
-# conector do OLED. Achado da P4 da revisao de terra, 06/09.
+# conector do OLED. Achado da P4 da revisao de terra, 2026-09-06.
 # 100 uF e nao mais: o +5V e a SAIDA de um step-down, e capacitancia a mais na
 # saida mexe na estabilidade da malha.
 liga("CP_V", "C3", 240.0, 285.0, {"1":"+5V", "2":"GND"}, "100u 16V")
@@ -434,7 +434,7 @@ for i, (canal, sinal, y) in enumerate((("A", "LED_FRZ_A", 250.0), ("B", "LED_FRZ
     liga("R_V", f"R{i+3}", QX - 15.24, y + 16.51, {"1":f"GATE_{canal}", "2":"GND"},
          "10k pull-down")
     # ⚠️ 2 E A FONTE E 3 E O DRENO. FICHA: AO3400A, SOT-23 vista de cima —
-    # 1 G · 2 S · 3 D. Ate 08/09 este mapa dizia `2: LED_K, 3: GND`, porque
+    # 1 G · 2 S · 3 D. Ate 2026-09-08 este mapa dizia `2: LED_K, 3: GND`, porque
     # foi escrito quando o simbolo `MOSFET_N` tinha o dreno no 2. O conserto
     # C2 trocou os NUMEROS no simbolo e este mapa nao soube.
     # ⚠️ E a guarda de chaves do `liga()` NAO podia apanhar isto: as chaves
@@ -465,7 +465,7 @@ def _confere_lib(caminho):
     """Depois de escrever: todo `lib_id` tem entrada no `lib_symbols`?
 
     Um simbolo referido e nao embutido nao da erro nenhum — o KiCad ve um
-    simbolo SEM PINOS e cada fio fica solto. A 05/09 custou 10 fios soltos no
+    simbolo SEM PINOS e cada fio fica solto. A 2026-09-05 custou 10 fios soltos no
     painel, sem uma palavra do gerador."""
     import re as _r
     t = io.open(caminho, encoding="utf-8").read()
@@ -487,7 +487,7 @@ def _confere_lib(caminho):
 def lib_embutida(usados=None):
     """A biblioteca embutida sai do que foi REALMENTE colocado.
 
-    ⚠️ Era uma lista literal escrita a mao ao lado de uma folha gerada. A 05/09
+    ⚠️ Era uma lista literal escrita a mao ao lado de uma folha gerada. A 2026-09-05
     trocaram-se `SW_H` e `LED` por `CONN2_L` e a lista ficou a dizer os nomes
     velhos: a folha saiu a referir um simbolo que a biblioteca embutida nao
     tinha, KiCad viu um simbolo SEM PINOS, e os 10 fios ficaram soltos. O

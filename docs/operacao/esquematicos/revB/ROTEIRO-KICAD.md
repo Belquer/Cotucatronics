@@ -1,10 +1,10 @@
 # Cotucatronics — roteiro KiCad → fábrica
 
-> ⚠️⚠️ **A PLACA É DE 2 CAMADAS, e este documento dizia 4.** Medido a 08/09 nos ficheiros: só `F.Cu` e `B.Cu`, com as zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, e o `NT1` como ponte única — e isso **está verificado e certo**. O que estava errado era o texto.
+> ⚠️⚠️ **A PLACA É DE 2 CAMADAS, e este documento dizia 4.** Medido a 2026-09-08 nos ficheiros: só `F.Cu` e `B.Cu`, com as zonas `GND` (prio 0) e `AGND` (prio 1) ambas em `B.Cu`, separadas, e o `NT1` como ponte única — e isso **está verificado e certo**. O que estava errado era o texto.
 >
 > Sem plano interior, o retorno do amp é a zona de `B.Cu`: aceitável para 3 A com a largura que tem, e dito para não ser descoberto na bancada. **A encomenda na JLC tem de dizer 2 camadas** — é mais barato, e pedir 4 para uma placa desenhada a 2 paga um plano que ninguém usa.
 
-### 04/09/2026 · pré-amp aprovado em bancada, caixa formato pedal fechada
+### 2026-09-04 · pré-amp aprovado em bancada, caixa formato pedal fechada
 
 ---
 
@@ -49,7 +49,7 @@ projetos, via a via.
 ## 3 · A caixa: quatro faces
 
 Desenho em [`docs/desenhos/caixa/`](../../../desenhos/caixa/) — seis páginas,
-geradas por `gen_caixa_paginas.py` — ⚠️ **apagadas a 06/09**, descreviam uma
+geradas por `gen_caixa_paginas.py` — ⚠️ **apagadas a 2026-09-06**, descreviam uma
 caixa que nunca foi cortada; ver `caixa/README.md`. **Cunha**, 200 × 120:
 **frente 40 mm, trás 70 mm**. Sem interruptor de energia — ligar o USB é ligar.
 
@@ -76,7 +76,7 @@ ao pré-amp. Pots e encoder do lado do amp.
 
 ## 4 · Folhas do cérebro
 
-**Energia** — atualizada 04/09: **sem interruptor**. Decoy → PTC → TVS →
+**Energia** — atualizada 2026-09-04: **sem interruptor**. Decoy → PTC → TVS →
 trilho 15 V → {J amp com 2200 µF + 100 nF · step-down}. 5 V → Daisy VIN ·
 1N5819 → ponte. **Divisor 100 k/22 k do trilho ao A2 (D17)** — 15 V dão 2,7 V
 no ADC: o firmware lê a tensão do trilho, mostra no OLED e **recusa ligar o amp
@@ -100,9 +100,9 @@ no header 2×20 sai da **folha de dados da Seed**, não do PINOS.
 | D23 D27 | gate LED B, gate LED A | AUDIO IN/OUT L/R | pré-amp / DPDT |
 
 **Livres: D3 D4 D9 D11 D12 D18 D19 D20 D21 D25** — dez. **D17 = A2 = V_TRILHO**, e
-desde 05/09 sem conflito: o encoder G saiu.
+desde 2026-09-05 sem conflito: o encoder G saiu.
 
-> ⚠️ **Corrigido em 05/09. A lista anterior estava errada de duas maneiras.**
+> ⚠️ **Corrigido em 2026-09-05. A lista anterior estava errada de duas maneiras.**
 > Dizia `D3 D4 D9 D11 D12 D18 D19 D20 D21 D25 D26 D29 D30`, e:
 >
 > - **`D29`/`D30` são as linhas de dados do USB** (pinos 36/37,
@@ -140,9 +140,9 @@ python3 tools/contrato_idc.py
 ```
 
 ⚠️ **Esta secção listava as 26 vias, e a lista envelheceu.** O pino 19 deixou de
-ser terra a 05/09 e passou a `BOT_BUZIOS`; a tabela daqui continuou a dizer
+ser terra a 2026-09-05 e passou a `BOT_BUZIOS`; a tabela daqui continuou a dizer
 nove terras e o 19 livre, e a partir dela concluiu-se **duas vezes** que havia
-uma via disponível que não havia. A edição de 05/09 até deixou a marca à vista
+uma via disponível que não havia. A edição de 2026-09-05 até deixou a marca à vista
 — a linha do pino 6 tinha *seis* colunas numa tabela de quatro, com o 20
 repetido — e ninguém reparou, porque uma tabela à mão não tem quem a confira.
 

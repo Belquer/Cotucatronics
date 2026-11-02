@@ -71,7 +71,7 @@ qualquer powerbank PD ──USB-C──> [decoy PD 15V, 5A] ──> RAIL 15V
                                                     SCHOTTKY
 ```
 
-✅ **SOLDADO E VERIFICADO EM 01/09 — 1N5819.** `VIN` da ponte a **4,72 V**
+✅ **SOLDADO E VERIFICADO EM 2026-09-01 — 1N5819.** `VIN` da ponte a **4,72 V**
 (queda certa, sem caminho a contorná-lo). **Teste do gatilho passou:** powerbank
 desligado com o USB da ponte ligado, e o LED do amp **apagado**.
 
@@ -84,7 +84,7 @@ entre o terra dela e a estrela, com tom a tocar — ver
 
 Na ESP32-C3 SuperMini o pino `5V` liga ao **VBUS do USB directamente no cobre**,
 sem díodo de bordo. Sem o Schottky, ligar o USB da ponte **realimenta o trilho
-de 5 V inteiro** — medido em 31/08: o LED do amp acendia com o powerbank
+de 5 V inteiro** — medido em 2026-08-31: o LED do amp acendia com o powerbank
 desligado, só com o cabo USB na ponte.
 
 Custa ~0,3 V de queda, e a ponte aceita 4,3–6,0 V: sobra folga.
@@ -115,11 +115,11 @@ capacitor fabrica potência.* O decoy PD não cria tensão, **negocia** — o
 trabalho pesado fica na eletrônica do powerbank, dimensionada de fábrica.
 
 **Obrigatório:** **2200 µF / 35 V + 100 nF colados nos pinos do amp.**
-Medido em 31/08: sem banco, alimentar a Daisy pelo trilho fazia o exciter
+Medido em 2026-08-31: sem banco, alimentar a Daisy pelo trilho fazia o exciter
 zumbir, e alimentá-la à parte limpava. **Na galeria não há fonte à parte**,
 portanto isto é requisito da peça, não recomendação.
 
-🚫 **NADA DE BANCO NA ENTRADA DO STEP-DOWN.** Tentado em 31/08 e desfeito no
+🚫 **NADA DE BANCO NA ENTRADA DO STEP-DOWN.** Tentado em 2026-08-31 e desfeito no
 mesmo dia: **guincho agudo** imediato. O amp é carga de corrente pulsada e
 quer o banco; o step-down é carga de **potência constante** e não o tolera.
 
@@ -129,7 +129,7 @@ resto das regras de desacoplamento estão em
 
 ### Os dois pots estão com as pontas trocadas — corrigido em firmware
 
-Medido em 31/08: **sentido horário DIMINUÍA o volume** nos dois. Não é
+Medido em 2026-08-31: **sentido horário DIMINUÍA o volume** nos dois. Não é
 software — é a ordem dos dois fios das **extremidades** do potenciómetro, com
 o cursor a subir na direcção da ponta ligada ao `GND`.
 
@@ -164,7 +164,7 @@ O desenho alvo **deste** instrumento:
 
 ### O pot não chega às pontas — batentes esticados em firmware
 
-Medido em 31/08, varrendo os dois de ponta a ponta. **O valor de cobre**, sem
+Medido em 2026-08-31, varrendo os dois de ponta a ponta. **O valor de cobre**, sem
 inversão nem correcção:
 
 | pot | fundo | topo |
@@ -215,7 +215,7 @@ curto e grosso.
 
 ## 1b · O PAINEL OLED CUSTA 6 dB — por isso nasce apagado
 
-Medido em 31/08, com o instrumento parado:
+Medido em 2026-08-31, com o instrumento parado:
 
 | | painel apagado | painel aceso |
 |---|---|---|
@@ -243,7 +243,7 @@ do acoplamento pelo ar que vale para a saída do amp classe D.
 
 ## 2 · ENTRADA DOS PIEZOS (×2) — só proteção, ganho intacto
 
-⚠️ **O LAÇO ACÚSTICO É REAL, E CEIFA O ADC — medido em 31/08.**
+⚠️ **O LAÇO ACÚSTICO É REAL, E CEIFA O ADC — medido em 2026-08-31.**
 
 Exciter e piezo vivem no mesmo corpo, portanto **são** um laço de realimentação.
 Medido com a mesma força de toque, mudando só se a saída toca:
@@ -260,7 +260,7 @@ O laço **não é defeito** — é metade do que o instrumento tem de bom. O que
 presta é o fim dele: **ceifado no ADC**, distorção digital dura e sem controlo.
 
 ⚠️ **Hoje não há controlo de ganho de entrada.** O `in_gain` foi aposentado em
-31/08 por estar inerte — decisão certa, mas isto é o primeiro caso que pede um
+2026-08-31 por estar inerte — decisão certa, mas isto é o primeiro caso que pede um
 trim de entrada a sério. Enquanto não houver, o controlo é **baixar o `pre_level_ab`**
 até o `pk` deixar de acusar `clip`.
 
@@ -306,10 +306,10 @@ OUT_R ──> idem, chave própria
 e `OUT_R` não é "o jack": cada um vai para onde a sua chave mandar, e as
 três posições existem justamente porque o destino muda em operação.
 
-<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
+<!-- doc-check: ignore route_exciter (nome APOSENTADO em 2026-08-28, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
 <!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 Foi por não ver isto que os params se chamaram `route_exciter` /
-`route_jack` até 28/08 — e o nome enganou *dentro da sessão que o
+`route_jack` até 2026-08-28 — e o nome enganou *dentro da sessão que o
 corrigiu*, quando `route_exciter 0` foi usado a pensar que silenciava só o
 transdutor. Hoje chamam-se `out_l` / `out_r` (CC 113/114), e cortam o ramo
 inteiro, seja qual for o destino em que a chave estiver.
@@ -360,7 +360,7 @@ soar menos. Para *"está melhor?"* o instrumento é o ouvido.
 
 🔴 **A PONTE E A DAISY PRECISAM DE UM LAÇO DE TERRA DIRECTO.**
 
-Medido em 31/08, e custou uma tarde a caçar firmware inocente. A sequência que
+Medido em 2026-08-31, e custou uma tarde a caçar firmware inocente. A sequência que
 o produziu: **tirou-se o fio de terra que ligava a ponte à Daisy** (ficaram a
 encontrar-se só na estrela), e depois **desligou-se a alimentação do trilho**.
 
@@ -439,7 +439,7 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
 
   **As sete cores do chicote que vem com o painel**, e o pino da Daisy de
   cada uma. Está aqui porque cor de fio é a única etiqueta que sobrevive à
-  bancada — e em 28/08 um cabo trocado sem marca custou um diagnóstico
+  bancada — e em 2026-08-28 um cabo trocado sem marca custou um diagnóstico
   inteiro, com o defeito atribuído a um conserto que estava certo:
 
   | cor | sinal | Daisy |
@@ -467,7 +467,7 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
   painel que responde o suficiente para limpar a tela e mais nada.
 - **Encoder EC11** com detentes e push (push = confirmar). Relativo, não
   absoluto — mata o problema do salto do knob compartilhado.
-- **2 pots de volume**, um por ramo — ✅ **soldados e implementados em 28/08**:
+- **2 pots de volume**, um por ramo — ✅ **soldados e implementados em 2026-08-28**:
   `A0` = **D15** (ramo L) · `A1` = **D16** (ramo R). Params `post_level_l`/`post_level_r`
   (CC 116/117), aplicados **depois do limiter**, onde só se pode reduzir.
 
@@ -491,7 +491,7 @@ LG/LR removidos (não marcavam estado útil) → D29/D30 livres.
   > leitura natural era que os três acendem. Isso levou **duas vezes** à mesma
   > conclusão errada — que faltava um `Q3` no painel — e à segunda quase custou
   > uma via do IDC 2×13, que está cheio e cujas oito terras guardam todas coisa
-  > medida. O caminho do búzios está completo desde 05/09: painel `J5` → IDC
+  > medida. O caminho do búzios está completo desde 2026-09-05: painel `J5` → IDC
   > via **19** → Daisy pino **33**.
 
   **Os três são de 30 mm.** Os centros ficam em `x = 40 | 100 | 160` na tampa,
@@ -516,7 +516,7 @@ pino** (netlist conferida contra a conectividade pretendida, automaticamente).
 Peças críticas com número LCSC verificado: **CH224K** `C970725` (PD sink),
 **TPA3116D2DADR** `C50144` (amp). O medidor de corrente é o **INA219**, a
 mesma peça da bancada — LCSC ⚠️ **por verificar**, ao contrário dos outros
-dois. O INA226 saiu do desenho em 25/08: bancada e produção passam a ser a
+dois. O INA226 saiu do desenho em 2026-08-25: bancada e produção passam a ser a
 mesma peça, e número medido numa peça não se transporta para outra.
 
 ⚠️ **Conector de 2 fios NÃO serve para a entrada** — PD negocia pelos pinos

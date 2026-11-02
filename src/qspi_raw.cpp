@@ -69,7 +69,7 @@ volatile uint32_t g_dummy_ler = 6;   // o mapeado usa 6
 // constante ao comando em 4 linhas — dois nibbles `1000`, uma linha
 // alta e tres baixas: assinatura de chip que NAO esta em QPI e so
 // escuta a IO0. Entao a exploracao precisa varrer modo, nao so dummy.
-// 🔴 OS DEFAULTS ERAM DA HIPOTESE REFUTADA (corrigido 29/09).
+// 🔴 OS DEFAULTS ERAM DA HIPOTESE REFUTADA (corrigido 2026-09-29).
 // Eram `0xAF` (JEDEC em QPI) e modo 3 (quatro linhas), escolhidos quando se
 // acreditava que a libDaisy punha o chip em QPI. Ela nunca o faz — ver
 // DESENHO-ESCRITA-QSPI.md e bts 13j. Uma sonda cujo default e a hipotese
@@ -153,7 +153,7 @@ COTUCA_ITCM uint32_t LeJedecId()
         return 0;
     }
 
-    // 🔴 ESTE COMENTARIO ESTAVA ERRADO E REENSINOU O BUG (corrigido 29/09).
+    // 🔴 ESTE COMENTARIO ESTAVA ERRADO E REENSINOU O BUG (corrigido 2026-09-29).
     //
     // Ele dizia: "a libDaisy poe o chip em QPI no Init (`EnterQuadMode`)" e
     // "TODOS os comandos futuros nascem em QPI tambem". As duas frases foram
@@ -162,7 +162,7 @@ COTUCA_ITCM uint32_t LeJedecId()
     // A libDaisy declara `EnterQuadMode` e NUNCA a chama; o comentario dela
     // di-lo em voz alta. O chip esta em SPI SIMPLES.
     //
-    // O custo de nao ter corrigido isto aqui: a 29/09 escrevi o driver de
+    // O custo de nao ter corrigido isto aqui: a 2026-09-29 escrevi o driver de
     // escrita com os tres campos de modo em quad, porque LI ESTE COMENTARIO
     // e acreditei nele. O documento estava certo e o codigo continuou a
     // mentir — e o codigo e que se le quando se vai programar.
@@ -291,7 +291,7 @@ COTUCA_ITCM uint32_t DrenaFifo()
 
 // 🔴 SAIR DO MEMORY-MAPPED E DESLIGAR O PERIFERICO, NAO ABORTA-LO.
 //
-// Medido a 29/09, quatro gravacoes a insistir no ABORT:
+// Medido a 2026-09-29, quatro gravacoes a insistir no ABORT:
 //
 //   SR antes do ABORT     0x00000420 / 0x00000020   BUSY=1
 //   SR depois do ABORT    0x00001E22   BUSY=1 FLEVEL=30 TCF=1
@@ -331,7 +331,7 @@ static uint32_t g_abr_antes = 0;
 //     SIOOMode          = INST_ONLY_FIRST_CMD
 //
 // Com M5-M4 = 10 o chip passa a esperar ENDERECO onde antes esperava
-// instrucao. Foi por isso que, a 29/09, TODOS os comandos falharam do mesmo
+// instrucao. Foi por isso que, a 2026-09-29, TODOS os comandos falharam do mesmo
 // modo — 0x9F, 0xAF, 0x05, uma linha, quatro linhas, 0 a 10 ciclos dummy,
 // SSHIFT nos tres estados: vinte e quatro combinacoes, todas `FF` ou `88`.
 // Nenhuma delas estava errada. O chip nao estava a ouvir opcodes.
@@ -514,7 +514,7 @@ COTUCA_ITCM void SondaJanela(uint32_t* fora6)
 // ⚠️ A MASCARA VIVE AQUI DENTRO, nao no chamador.
 //
 // O contrato estava escrito em prosa no topo deste ficheiro — "o chamador
-// mascara interrupcoes" — e a 29/09 escrevi tres comandos novos que nao o
+// mascara interrupcoes" — e a 2026-09-29 escrevi tres comandos novos que nao o
 // cumpriram, porque prosa nao e verificada por nada. Regra que vive so em
 // documento custa a mesma disciplina todas as vezes; dentro do instrumento,
 // custa uma.

@@ -19,10 +19,10 @@ anunciar mais partiria o pareamento para ganhar o que a descoberta
 pos-ligacao ja da. Portanto: liga-se PRIMEIRO, procura-se DEPOIS.
 
 ✅ E O iPAD PODE ESTAR LIGADO AO MESMO TEMPO. A ponte v1.7.0 leva
-CONFIG_BT_NIMBLE_MAX_CONNECTIONS = 3, e o dB confirmou em bancada a 29/09:
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS = 3, e o dB confirmou em bancada a 2026-09-29:
 Loopy e consola agarrados ao mesmo tempo, os dois a funcionar.
 
-🔴 Este paragrafo dizia o CONTRARIO ate 29/09 — "aceita uma ligacao de cada
+🔴 Este paragrafo dizia o CONTRARIO ate 2026-09-29 — "aceita uma ligacao de cada
 vez ... se o Loopy estiver agarrado, isto nao liga". Era verdade antes do
 conserto, ficou aqui depois dele, e nesse mesmo dia fez-me avisar o dB de uma
 limitacao que ja nao existia. E a cicatriz 15fx: documentacao que afirma
@@ -77,7 +77,7 @@ async def consola_viva(c):
     """CONSOLA INTERACTIVA — uma ligacao, muitos comandos.
 
     ⚠️ EXISTE PORQUE A FORMA DE UM TIRO SO ESTAVA ERRADA PARA BANCADA. Ate a
-    v0.6.1 o `.command` perguntava UMA linha, enviava, e fechava — e a 29/09,
+    v0.6.1 o `.command` perguntava UMA linha, enviava, e fechava — e a 2026-09-29,
     a meio de um troubleshoot com a caixa montada, o dB escreveu `board`, viu
     a janela fechar-se, e o `oled te` que escreveu a seguir foi parar ao
     prompt de "Enter para fechar". Perdeu-se o comando e perdeu-se a sessao.
@@ -155,7 +155,7 @@ async def corre(nome, comandos, segundos, ota=None, viva=False):
     print("  achei: %s" % d.address)
 
     # ⚠️ LIGAR E UM PASSO PROPRIO, E FALHA DE MANEIRAS PROPRIAS. Ate a v0.7.0
-    # isto era um `async with` seco dentro do try do main, e a 29/09 imprimiu
+    # isto era um `async with` seco dentro do try do main, e a 2026-09-29 imprimiu
     # "FALHOU: " — o nome do erro em branco, porque ha excepcoes do bleak cujo
     # str() e vazio. Erro sem mensagem e ausencia de dado com cara de dado, que
     # e a familia da cicatriz 13k. Agora diz-se o TIPO, que nunca e vazio.
@@ -181,13 +181,13 @@ async def corre(nome, comandos, segundos, ota=None, viva=False):
         print("\n  O que costuma destravar, por ordem de custo:")
         print("   1. o macOS guarda a ligacao em cache: desliga e liga o")
         print("      Bluetooth do Mac (nao e superticao — limpa o cache do")
-        print("      CoreBluetooth, e ja destravou isto a 29/09);")
+        print("      CoreBluetooth, e ja destravou isto a 2026-09-29);")
         print("   2. a ponte pode estar com as 3 vagas ocupadas: fecha o Loopy")
         print("      no iPad e tenta outra vez;")
         print("   3. reinicia a ponte (tirar e por a alimentacao dela).")
         return 3
     async with cli as c:
-        # ⚠️ DESPEJA A TABELA ANTES DE SUBSCREVER. A 29/09 a ligacao caiu no
+        # ⚠️ DESPEJA A TABELA ANTES DE SUBSCREVER. A 2026-09-29 a ligacao caiu no
         # `start_notify` com um "disconnected" seco, e nao havia como saber se
         # a tabela estava errada ou se a subscricao pedia emparelhamento.
         # Imprimir o que se VE antes de tentar usar transforma as duas em
@@ -215,7 +215,7 @@ async def corre(nome, comandos, segundos, ota=None, viva=False):
             await manda_ota(c, ota)
         for cmd in comandos:
             dados = (cmd + "\n").encode()
-            # ⚠️ COM CONFIRMACAO, e a 29/09 isto foi o conserto do diagnostico.
+            # ⚠️ COM CONFIRMACAO, e a 2026-09-29 isto foi o conserto do diagnostico.
             # A primeira versao escrevia SEM resposta: a ponte contou zero
             # escritas e o cliente nao se queixou de nada — silencio
             # indistinguivel de sucesso, que e a familia que este projecto
@@ -258,7 +258,7 @@ def main():
         return asyncio.run(corre(a.nome, a.send, a.listen, a.ota, a.viva))
     except Exception as e:
         # O TIPO NUNCA E VAZIO; o texto pode ser. Imprimir so o texto foi o que
-        # produziu o "FALHOU: " nu de 29/09.
+        # produziu o "FALHOU: " nu de 2026-09-29.
         print("  FALHOU: %s: %s"
               % (type(e).__name__, str(e) or "(a excepcao nao traz texto)"))
         import traceback

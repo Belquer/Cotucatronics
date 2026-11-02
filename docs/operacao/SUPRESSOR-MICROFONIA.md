@@ -1,11 +1,11 @@
 # SuMiA™ — supressor de microfonias automatizado
 
-> **CONSTRUÍDO E A CORRER** desde 02/09 (`main.cpp`, `PassoDoSupressor`).
+> **CONSTRUÍDO E A CORRER** desde 2026-09-02 (`main.cpp`, `PassoDoSupressor`).
 > Este documento nasceu como o *contrato*, escrito antes do código, e ficou
 > a dizer "ainda não construído" durante dois dias depois de o código
-> existir — apanhado no deep clean de 04/09.
+> existir — apanhado no deep clean de 2026-09-04.
 >
-> **O que ele já fez em serviço:** a 04/09, na escultura real e não no banco
+> **O que ele já fez em serviço:** a 2026-09-04, na escultura real e não no banco
 > de ensaio, encheu as quatro bocas dos dois ramos sozinho — 3025,7 · 4523,4
 > · 790,9 · 5434,5 Hz no L e semelhantes no R. É a primeira vez que segura
 > achados próprios fora da bancada.
@@ -45,7 +45,7 @@ no caso medido, o tambor está **soldado** ao botijão, é uma peça de metal
 só. Subir o volume de um exciter muda o ganho do laço que o **outro** piezo
 vê.
 
-Medido em 02/09, e é a prova: com a matriz separada (`route_b_l=0`,
+Medido em 2026-09-02, e é a prova: com a matriz separada (`route_b_l=0`,
 `route_a_r=0`), os dois ramos reportaram **3275,7 e 3275,8 Hz** — a mesma
 frequência às décimas. A matriz separa os caminhos **eléctricos**; não
 separa o **metal**.
@@ -73,7 +73,7 @@ não da teoria: microfonia real mediu **0,97 a 1,00** quando estava a gritar,
 e **0,14 a 0,29** depois de cortada. Uma calibração anterior em senóides
 sintéticas dera 0,85, que teria recusado casos reais de 0,61–0,68.
 
-## As três decisões, tomadas pelo dB em 02/09
+## As três decisões, tomadas pelo dB em 2026-09-02
 
 ### 1. As bocas não vivem em preset nenhum
 

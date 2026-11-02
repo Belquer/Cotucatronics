@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """vizinhos v1.0.0 — caca FRASE PARTIDA PELA RENOMEACAO.
 
-NASCEU DE UM CASO REAL (04/09). Renomeei uma frase no hal_daisy_seed.cpp
+NASCEU DE UM CASO REAL (2026-09-04). Renomeei uma frase no hal_daisy_seed.cpp
 com ancora unica e verificada. A ancora casou uma vez, o grep confirmou o
 texto novo, o build passou. E a frase ficou assim:
 
@@ -27,7 +27,7 @@ print("vizinhos v1.0.0")
 args = sys.argv[1:]
 # --termo X aperta a rede: numa remocao de nome, o risco concentra-se onde
 # a CAUDA REMOVIDA continha o nome — a continuacao foi escrita a concordar
-# com ele. Foi exactamente assim que se partiu a frase de 04/09.
+# com ele. Foi exactamente assim que se partiu a frase de 2026-09-04.
 TERMO = None
 for a in list(args):
     if a.startswith("--termo="): TERMO = a.split("=", 1)[1]; args.remove(a)

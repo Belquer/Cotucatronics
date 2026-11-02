@@ -3,7 +3,7 @@
 
 POR QUE EXISTE, e nao e para substituir o olho.
 
-⚠️ CORRIGIDO A 06/09. Este cabecalho dizia que o `svg_colisoes.py` devolve
+⚠️ CORRIGIDO A 2026-09-06. Este cabecalho dizia que o `svg_colisoes.py` devolve
 sempre codigo 3 nos exports do `kicad-cli` "porque nao ha um unico <text>
 para medir". E FALSO, e foi medido: ha 222 no preamp — invisiveis
 (`opacity="0"`) mas com `textLength`, que e a largura que o proprio KiCad
@@ -22,7 +22,7 @@ todos la, em milimetros, antes de virarem curvas.
 estimada (`largura ≈ n × tamanho × 0,6`), nao medida. Portanto:
   - falso positivo e barato e esperado;
   - **codigo 0 nao autoriza saltar o olho** — autoriza olhar sabendo onde.
-Foi calibrado a 05/09 contra tres colisoes ja confirmadas a olho na folha do
+Foi calibrado a 2026-09-05 contra tres colisoes ja confirmadas a olho na folha do
 painel; se uma alteracao futura o fizer perder alguma delas, o teste de
 calibracao no fim do ficheiro grita.
 
@@ -38,7 +38,7 @@ VERSAO = "0.5.0"
 # Avanco medio por caractere, em fraccao do corpo nominal escrito na folha.
 #
 # NAO E UM PALPITE. O export SVG do kicad-cli traz `textLength` em cada <text>
-# — a largura que o proprio KiCad calculou. Medido a 05/09 em tres notas da
+# — a largura que o proprio KiCad calculou. Medido a 2026-09-05 em tres notas da
 # folha do painel: 0,799 · 0,802 · 0,849. O valor abaixo e o topo dessa faixa,
 # porque falso positivo custa um olhar e falso negativo custa uma placa.
 #
@@ -268,7 +268,7 @@ def confere(p, mostrar=True):
     #
     # ⚠️ A v0.4.1 so comparava as NOTAS contra as formas, com o argumento de que
     # "rotulo colado ao seu fio e normal". Verdade para o fio; FALSO para o
-    # corpo de outro componente. A 05/09 o valor `22p C0G` do C11 estava
+    # corpo de outro componente. A 2026-09-05 o valor `22p C0G` do C11 estava
     # desenhado DENTRO do corpo do R10 e a ferramenta disse "0 colisoes" — o
     # olho viu, ela nao. Uma excepcao larga de mais e uma cegueira com desculpa.
     #

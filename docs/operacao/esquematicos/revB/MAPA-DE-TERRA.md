@@ -1,6 +1,6 @@
 # MAPA DE TERRA — carrier rev B
 
-**04/09/2026 · v1.0.0 · o contrato de massa da placa, antes do layout**
+**2026-09-04 · v1.0.0 · o contrato de massa da placa, antes do layout**
 
 > **Este documento não ensina aterramento** — isso é o
 > [`../../ATERRAMENTO.md`](../../ATERRAMENTO.md), e a varredura é a skill
@@ -97,7 +97,7 @@ lá não sai para mais lado nenhum.
 
 ### ⚠️ A PONTE DESENHA-SE. A SEED NÃO JUNTA OS TERRAS POR DENTRO.
 
-> **Corrigido em 04/09, contra o que este mesmo documento dizia horas antes.**
+> **Corrigido em 2026-09-04, contra o que este mesmo documento dizia horas antes.**
 > A versão anterior afirmava que a Daisy junta `AGND` e `DGND` internamente e
 > que desenhar a ponte seria criar uma segunda. **É o contrário.**
 
@@ -116,7 +116,7 @@ terras do conversor, que é o que injecta ruído digital no analógico.
 
 🔴 **O P3 não era "tirar uma segunda ponte".** O trilho da permaproto era a
 **única** ponte. Separar o `AGND` do trilho — como o plano dizia — deixa o
-codec **sem referência nenhuma**. É exactamente o que aconteceu em 31/08:
+codec **sem referência nenhuma**. É exactamente o que aconteceu em 2026-08-31:
 *"tirar a terra de sinal trocou um zumbido por uma placa morta."*
 
 > **O P3 certo é MOVER a ponte, não removê-la.** Sai do trilho partilhado e
@@ -134,7 +134,7 @@ curto nos pinos.
 
 > ⚠️ **E NÃO SÃO VIZINHOS.** Esta secção dizia que eram, e estava errada —
 > outra afirmação de posição feita sem olhar para a placa. **Medido pelo dB
-> em 04/09: o pino 20 fica no canto INFERIOR ESQUERDO, colado ao USB-C, e o
+> em 2026-09-04: o pino 20 fica no canto INFERIOR ESQUERDO, colado ao USB-C, e o
 > 40 no canto SUPERIOR DIREITO, no extremo oposto ao USB.** Estão na diagonal
 > do módulo.
 
@@ -197,7 +197,7 @@ alimentada injecta corrente pelos díodos de protecção da desalimentada, a
 linha fica indefinida e quem tenta transmitir fica preso.
 
 ⚠️ **O defeito aparece do lado ALIMENTADO.** É exactamente a família do
-travamento de 02/09, que se manifestava na Daisy e morava do outro lado do
+travamento de 2026-09-02, que se manifestava na Daisy e morava do outro lado do
 cabo.
 
 🚫 **Não tirar esta terra para resolver ruído.** Ruído de alimentação
@@ -232,7 +232,7 @@ Antes de tudo, provar que a Seed **não** junta os terras por dentro. Com uma
 Daisy na mão, fora de tudo, multímetro em continuidade entre o **pino 20
 (`AGND`)** e o **pino 40 (`GND`)** do header:
 
-✅ **MEDIDO EM 04/09: NÃO HÁ CONTINUIDADE ENTRE 20 E 40.** Aberto, como a
+✅ **MEDIDO EM 2026-09-04: NÃO HÁ CONTINUIDADE ENTRE 20 E 40.** Aberto, como a
 documentação diz. A premissa está agora confirmada em três frentes
 independentes — a doc da libDaisy, o CSV do fabricante, e o multímetro do dB
 numa placa em mão. **A ponte é nossa para desenhar.**

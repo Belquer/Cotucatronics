@@ -7,9 +7,9 @@
 
 - **Data:** 2026-09-19
 - **Ramo:** `claude/slack-session-sm2ldz`
-- **Pedido do dB (19/09):** *"limpe todos os componentes não utilizados da
+- **Pedido do dB (2026-09-19):** *"limpe todos os componentes não utilizados da
   placa"* → opção **(a)**: nova revisão do cérebro. Os **pads de teste ficam**
-  (decisão do dB, 19/09): não custam altura nem dinheiro, e são por onde se mede
+  (decisão do dB, 2026-09-19): não custam altura nem dinheiro, e são por onde se mede
   a placa quando ela não liga.
 - **Pareia com:** `docs/IFA10000.md` (trilha M), `ppc/003` (volume 3D),
   `caixa/LICOES-MONTAGEM.md` #10.
@@ -27,7 +27,7 @@ qual for o resultado.
 ⚠️ **E o `main()` do `pcb_contorno.py` ESCREVE a placa.** Correr
 `pcb_contorno.py cerebro` na rev C reescreve o ficheiro fabricado — já
 aconteceu uma vez (cicatriz). Na rev D, toda conferência corre em **leitura**,
-chamando `confere_*` sobre o texto lido, como foi feito a 19/09 para os arcade.
+chamando `confere_*` sobre o texto lido, como foi feito a 2026-09-19 para os arcade.
 
 ## §1 — O que sai, e porquê
 
@@ -38,17 +38,17 @@ chamando `confere_*` sobre o texto lido, como foi feito a 19/09 para os arcade.
 | `R13` `R23` | 4k7 | idem |
 | `C13` `C23` | 22 µF NP | idem |
 | `RV1` `RV2` | trimpot 100 k | idem |
-| `J15` e `J16` passam de **1×8 para 1×4** | header 1×8 → 1×4 | **decidido a 21/09** (bts 15fc): os dois polos da chave estão em paralelo no cobre (`1`=`4`, `2`=`5`, `3`=`6`), logo metade dos pinos é conveniência, não necessidade. Ficam **comum · jack · amp · dreno**, e o paralelo faz-se com jumpers na chave — que é como a montagem que funciona já está feita. Metade do cabo (4 vias em vez de 8) |
-| `J11` pino 1 (o conector passa a **1×3**) | header 1×4 → 1×3 | **decidido a 20/09:** o módulo alimenta-se pelo **borne de parafuso**, logo fica o `J2` para a força e o `J11` só para o áudio (referência + L + R). O pino 1 é `+15V` duplicado (bts 15fb) |
+| `J15` e `J16` passam de **1×8 para 1×4** | header 1×8 → 1×4 | **decidido a 2026-09-21** (bts 15fc): os dois polos da chave estão em paralelo no cobre (`1`=`4`, `2`=`5`, `3`=`6`), logo metade dos pinos é conveniência, não necessidade. Ficam **comum · jack · amp · dreno**, e o paralelo faz-se com jumpers na chave — que é como a montagem que funciona já está feita. Metade do cabo (4 vias em vez de 8) |
+| `J11` pino 1 (o conector passa a **1×3**) | header 1×4 → 1×3 | **decidido a 2026-09-20:** o módulo alimenta-se pelo **borne de parafuso**, logo fica o `J2` para a força e o `J11` só para o áudio (referência + L + R). O pino 1 é `+15V` duplicado (bts 15fb) |
 
 **O que FICA, e é decisão explícita:**
 
-- **`TP1`..`TP9`** — pads de teste (dB, 19/09).
+- **`TP1`..`TP9`** — pads de teste (dB, 2026-09-19).
 - **O seguidor como está.** Tirar a perna de ganho é tirar **pads vazios**, não
   mudar o circuito: nenhuma rede viva muda de função. Se alguém quiser o ganho
   ajustável de volta, volta na rev E, com medição — não é o que este plano faz.
 
-## §2 — Onde vive cada coisa (medido no repo, 19/09)
+## §2 — Onde vive cada coisa (medido no repo, 2026-09-19)
 
 | artefacto | quem manda | nota |
 |---|---|---|
@@ -78,7 +78,7 @@ Consequência: **§3 é edição de `.kicad_sch` à mão**, e vale a `edicao-seg
    enquanto a rev D não for fabricada. A rev D entra como linha nova, não como
    substituição.
 
-## §3b — O que a primeira montagem (22/09) acrescentou à lista
+## §3b — O que a primeira montagem (2026-09-22) acrescentou à lista
 
 Três requisitos que não vêm de limpeza, vêm de bancada — ver `battle_scars.md`
 **15fe** e **15ff**:
@@ -105,7 +105,7 @@ Três requisitos que não vêm de limpeza, vêm de bancada — ver `battle_scars
    qual pico medido** justificam o valor.
 
 4. **Resistores em série nos cinco sinais do OLED, e a alimentação do painel**
-   (bts **15fm**, 22/09). Dois módulos mortos, e o segundo fomos nós: com a
+   (bts **15fm**, 2026-09-22). Dois módulos mortos, e o segundo fomos nós: com a
    bancada desligada e a Daisy no USB, o `TP5` dá **0 V** — os 5 V do painel
    vêm do step-down, que corre do +15 V — e o firmware conduz os cinco sinais
    a 3,3 V num módulo sem `VCC`, alimentando-o pelos díodos de protecção. As
@@ -126,7 +126,7 @@ Três requisitos que não vêm de limpeza, vêm de bancada — ver `battle_scars
 
 ## §5 — ⚠️ O QUE BLOQUEIA, e não é burocracia
 
-**Resolvido a 19/09, e ao contrário do que eu escrevi primeiro:** a placa está
+**Resolvido a 2026-09-19, e ao contrário do que eu escrevi primeiro:** a placa está
 **girada 180°** face ao modelo. A prova é a serigrafia do cérebro de cabeça
 para baixo com o lado do utilizador de frente; a Daisy sob o botão central não
 provava nada, porque cai lá nas duas orientações. Na orientação real, o `C1`

@@ -47,21 +47,21 @@ int main()
           cad + glob + fora == t.Count(), d);
     // ⚠️ ESTES NUMEROS ENVELHECEM, E E ESSE O TRABALHO DELES.
     //
-    // Eram 33 e 9. Em 02/09 este teste falhava com 39 e 6, e as tres
+    // Eram 33 e 9. Em 2026-09-02 este teste falhava com 39 e 6, e as tres
     // falhas eram DO TESTE: ele guardava requisitos que o dB tinha
     // revogado e alteracoes que eu tinha feito sem o correr.
     //
-    //   33 -> 39 por cadeia: os notches anti-microfonia entraram em 01/09
+    //   33 -> 39 por cadeia: os notches anti-microfonia entraram em 2026-09-01
     //         (notch1_hz, notch1_db, notch2_hz, notch2_db, notch_on).
     //    9 ->  6 globais: o dB tirou `post_level_l/r`, `out_l/r` e
-    //         `pre_level_ab` do preset em 01/09 — sao ajuste de sala e de
+    //         `pre_level_ab` do preset em 2026-09-01 — sao ajuste de sala e de
     //         botao fisico, nao de musica.
     //
     // Nao se apagam por incomodarem: e a contagem que denuncia um param
     // que entrou ou saiu do preset SEM ninguem decidir. Quando falharem
     // outra vez, a pergunta e "quem mudou a pertinencia, e foi de
     // proposito?" — e a resposta actualiza-se AQUI, com a data.
-    //   39 -> 34 por cadeia e 6 -> 16 globais em 02/09: os CINCO params
+    //   39 -> 34 por cadeia e 6 -> 16 globais em 2026-09-02: os CINCO params
     //         de notch por lado deixaram de ser `_a`/`_b` e passaram a
     //         `_l`/`_r`, porque o notch mudou da CADEIA para o RAMO. Sao
     //         dez params que atravessaram a fronteira de uma vez.
@@ -71,13 +71,13 @@ int main()
     //    serie com modos proprios de cada soldadura. Uma frequencia certa
     //    numa peca e ruido noutra.
     Check("preset de cadeia tem 34 params por cadeia", cad / 2 == 34);
-    //   16 -> 24 globais em 02/09: as bocas 3 e 4 da microfonia, oito
+    //   16 -> 24 globais em 2026-09-02: as bocas 3 e 4 da microfonia, oito
     //         params (hz+db x 2 bocas x 2 ramos). Subiu de 2 para 4 bocas
     //         no meio de uma sessao de escuta em que cada modo morto
     //         entregava o lugar ao seguinte — 1536, 3276, 535 Hz — e a
     //         segunda boca acabou-se ao terceiro. Ver
     //         docs/operacao/SUPRESSOR-MICROFONIA.md.
-    //   24 -> 28 globais em 02/09: os quatro do COMPRESSOR (`comp_on`,
+    //   24 -> 28 globais em 2026-09-02: os quatro do COMPRESSOR (`comp_on`,
     //         `comp_thresh`, `comp_razao`, `comp_makeup`). Nasceu de uma
     //         medicao: 49 dB de factor de crista, pico no tecto e media a
     //         -49 dBFS. Ele ENTRA no preset, ao contrario do supressor —
@@ -91,7 +91,7 @@ int main()
         "exc_filter_l", "exc_filter_r", "bench_boost_l", "bench_boost_r",
         "gov_ceiling_l", "gov_ceiling_r", "gov_release_l", "gov_release_r",
         "test_tone_freq", "test_tone_level", "test_tone_out",
-        // ⚠️ DECISOES DO dB DE 01/09, e agora GUARDADAS e nao apenas
+        // ⚠️ DECISOES DO dB DE 2026-09-01, e agora GUARDADAS e nao apenas
         //    nao-contrariadas. Tira-los da lista de "tem de entrar" so
         //    deixava o teste de os exigir; poe-los aqui obriga o codigo a
         //    manter a decisao.
@@ -116,9 +116,9 @@ int main()
     // demais (`if(strncmp(nome,"g",1))`) passaria nos testes acima.
     const char* devem_entrar[] = {"drv_drive_a", "drv_drive_b", "gate_thresh_a",
                                   "shm_tone_b", "dly_time",
-        // `pre_level_ab` SAIU desta lista em 02/09. Estava aqui como
+        // `pre_level_ab` SAIU desta lista em 2026-09-02. Estava aqui como
         // "param de musica que tem de entrar no preset", e o dB tirou-o do
-        // preset em 01/09 junto com `out_l`, `out_r` e `post_level_l/r`:
+        // preset em 2026-09-01 junto com `out_l`, `out_r` e `post_level_l/r`:
         // sao ajuste de sala e de botao fisico, nao de musica. O teste
         // guardava o requisito revogado e acusava o codigo por o cumprir.
                                   "piezo_mix", "buzios_thresh"};

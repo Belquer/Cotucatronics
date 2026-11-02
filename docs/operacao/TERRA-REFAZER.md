@@ -1,6 +1,6 @@
 # Refazer o terra — folha de bancada
 
-Escrita em 02/09 para a montagem do dia seguinte. O diagnóstico está em
+Escrita em 2026-09-02 para a montagem do dia seguinte. O diagnóstico está em
 battle_scars **15bm** e na varredura P3.
 
 ## ANTES de desmontar — anota isto (regra R3)
@@ -66,7 +66,7 @@ melhorar, não sabes qual agiu, e uma delas pode estar a piorar.
   é onda quadrada a centenas de kHz com corrente alta. Cruzamentos em
   ângulo recto (P6).
 
-## ⚠️ Não confundir com o erro de 31/08
+## ⚠️ Não confundir com o erro de 2026-08-31
 
 Ali eu mandei tirar a terra de **SINAL** entre a ESP e a Daisy, e isso matou
 a placa. **Aqui não se tira terra nenhuma** — separa-se uma **referência**

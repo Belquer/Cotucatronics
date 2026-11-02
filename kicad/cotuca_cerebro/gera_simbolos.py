@@ -263,7 +263,7 @@ def opa1642():
            '\t\t\t\t\t(fill (type none))\n\t\t\t\t)\n')
     # ⚠️⚠️ O `+` VAI EM BAIXO E O `-` EM CIMA, e isto e o conserto do C1.
     #
-    # Ate 08/09 era ao contrario, e o comentario acima dizia que os fios "ja
+    # Ate 2026-09-08 era ao contrario, e o comentario acima dizia que os fios "ja
     # encostam nesses pontos, e mover o pino partiria ligacoes que estao
     # certas". Nao estavam. Medido na folha, na unidade A:
     #

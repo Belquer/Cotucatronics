@@ -100,7 +100,7 @@ FOLGA = 0.35            # entre a pista e o que nao e dela (regra da placa: 0,20
 # que e exactamente o que devolve quando a placa esta mesmo cheia. Um numero
 # certo a esconder uma causa errada.
 #
-# Medido a 08/09 no painel, as tres redes que nem o FreeRouting fechava:
+# Medido a 2026-09-08 no painel, as tres redes que nem o FreeRouting fechava:
 #
 #     passo 0,25    (1,27/5,08)   0 de 3       <- o que estava ca
 #     passo 0,125   (1,27/10,16)  0 de 3       <- errar por 0,002 basta
@@ -621,7 +621,7 @@ def auto_teste():
     Um verificador que nao e verificado e uma opiniao com ar de medicao."""
     import collections as C
     casos = [
-        ("plano parte-se enquanto um pad se liga (o buraco de 07/09)",
+        ("plano parte-se enquanto um pad se liga (o buraco de 2026-09-07)",
          C.Counter({("GND", "pad"): 1}),
          C.Counter({("GND", "zona-partida"): 1}), True),
         ("plano parte-se do nada",

@@ -22,7 +22,7 @@ e 1 tem resolução útil ou o interessante está espremido?
 
 ## 2. Shimmer religado, com `shm_shift` conferido
 
-Em 22/08 o `shm_shift_a` estava em **0,00** — shimmer sem transposição soa
+Em 2026-08-22 o `shm_shift_a` estava em **0,00** — shimmer sem transposição soa
 como reverb realimentado, não como shimmer. É possível que boa parte do
 julgamento anterior do shimmer tenha sido feita nesse estado.
 
@@ -32,7 +32,7 @@ seca) resolveu a aspereza que gerou o "ainda ardido"?
 
 ## 3. Delay seco
 
-Reescrito em C++ em 20/08, com piso de 50 ms e feedback 0,4 lido do patch
+Reescrito em C++ em 2026-08-20, com piso de 50 ms e feedback 0,4 lido do patch
 original. **Nunca foi julgado sozinho** — sempre soou dentro de uma cadeia.
 
 **Julgar:** o piso de 50 ms é curto o bastante? O feedback fixo em 0,4 pede
@@ -61,7 +61,7 @@ independentes, e o detector de búzios restaurado dos mortos.
 sessão. Misturar os dois produz "melhorou" sem referência.
 
 **Não deixar o Code instrumentando durante a escuta.** Custou dois
-diagnósticos falsos em 22/08: scripts carregavam uma "base" inteira a cada
+diagnósticos falsos em 2026-08-22: scripts carregavam uma "base" inteira a cada
 medição e sobrescreviam ajustes do dB no meio da tocada (bts 12l).
 
 **Declarar o regime de CPU antes.** Com tudo ligado o pico está em ~940 µs

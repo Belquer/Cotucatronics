@@ -19,7 +19,7 @@ CODIGOS DE SAIDA, e sao TRES perguntas diferentes:
     3   NAO VERIFICAVEL              -> defeito na FERRAMENTA ou no ficheiro.
                                        Nem aprovacao nem reprovacao.
 
-⚠️ O 3 existe porque, ate 05/09, um ficheiro que REBENTAVA saia com 1 — o
+⚠️ O 3 existe porque, ate 2026-09-05, um ficheiro que REBENTAVA saia com 1 — o
 mesmo codigo de quem tinha colisoes de verdade. Uma falha da ferramenta
 vestia-se de achado, e quem lia a lista via "defeito" onde estava "nao
 consegui olhar".
@@ -48,13 +48,13 @@ def bbox_text(el, fs, anc=None):
     proprio calculou com a fonte de tracos — e depois desenha os glifos como
     paths ao lado. Havendo esse numero, nao se estima: mede-se. A estimativa
     `n × corpo × 0,6` erra por 18 mm numa nota de 73 caracteres (medido a
-    05/09 na folha do painel), o suficiente para dizer "limpo" sobre um texto
+    2026-09-05 na folha do painel), o suficiente para dizer "limpo" sobre um texto
     que atravessa um potenciometro."""
     x = float(el.get("x", 0)); y = float(el.get("y", 0))
     s = "".join(el.itertext())
     tl = el.get("textLength")
     w = float(tl) if tl else len(s) * fs * W_CHAR
-    # ⚠️ O ANCHOR TAMBEM VEM DO CSS, e ate 22/09 so se lia o atributo.
+    # ⚠️ O ANCHOR TAMBEM VEM DO CSS, e ate 2026-09-22 so se lia o atributo.
     # Um `<text class="rot">` com `text-anchor:middle` na folha de estilo era
     # modelado como se comecasse no ponto — a caixa saia deslocada de meia
     # largura, e a ferramenta reportava colisoes que nao existiam E calava
@@ -104,7 +104,7 @@ def inter(a, b, pad=0.0):
 def quanto(a, b):
     """QUAO fundo entram uma na outra, no eixo mais raso — em unidades da folha.
 
-    ⚠️ NASCEU DE UM CASO REAL (06/09). A ferramenta dizia "ha colisao" e nao
+    ⚠️ NASCEU DE UM CASO REAL (2026-09-06). A ferramenta dizia "ha colisao" e nao
     dizia QUANTO, e eu reportei ao dB como defeito serio um par `V-`/`4` que
     se sobrepunha 42 MICROMETROS — dentro do erro do proprio modelo, que
     supoe ascendente de 0,75 do corpo e a fonte de tracos do KiCad nao tem
@@ -149,7 +149,7 @@ def main():
     ambiguas = set()   # classes com regras em desacordo: nao se usam
     css = {}      # classe -> tamanho
     css_anc = {}  # classe -> text-anchor
-    # ⚠️ SEM DEPENDER DO ESPACO DE NOMES, e foi isso que falhou a 22/09.
+    # ⚠️ SEM DEPENDER DO ESPACO DE NOMES, e foi isso que falhou a 2026-09-22.
     # Os SVGs do manual nao declaravam `xmlns`; o ElementTree parseia-os sem
     # espaco de nomes, esta procura com `{...svg}style` nao achava nada, e a
     # ferramenta caia no omisso de 12 px e `text-anchor: start` — modelando
@@ -166,7 +166,7 @@ def main():
             # em TODAS, porque nao se resolve especificidade aqui — e o que
             # interessa e nao ficar com o omisso "start" quando ha regra.
             # (!) SO SELETORES DE UMA CLASSE SO. Esta ferramenta NAO resolve
-            # CSS: nao ha contexto nem especificidade. A 22/09 ela aceitou
+            # CSS: nao ha contexto nem especificidade. A 2026-09-22 ela aceitou
             # `svg.dpdt .rot.peq{font-size:12px}` como se falasse de `.rot`,
             # e mediu o manual inteiro com 12 px onde eram 15. Regra composta
             # nao se le — e se duas regras discordarem sobre a MESMA classe,
@@ -304,7 +304,7 @@ def main():
         print("   Zero colisoes aqui nao significa nada. Ver a skill design-review §1.")
         sys.exit(3)
     print(f"{fn}: {len(texts)} textos, {len(shapes)} formas, {len(segs)} segmentos, {len(probs)} colisoes")
-    # ⚠️ ASSUMIR EM SILENCIO E O MODO DE FALHA CARO. A 22/09 esta ferramenta
+    # ⚠️ ASSUMIR EM SILENCIO E O MODO DE FALHA CARO. A 2026-09-22 esta ferramenta
     # mediu 78 figuras com 12 px e `start` porque nao achou o `<style>`, e
     # ninguem soube. Agora ela diz de quantos textos teve de adivinhar.
     if assumidos:
@@ -316,7 +316,7 @@ def main():
 def path_segs(d, fechado):
     """converte um `d` de path (ou `points` de polyline) em segmentos.
 
-    ⚠️ 20/09: a versao anterior so entendia M/L/Z. Tudo o resto — e sobretudo
+    ⚠️ 2026-09-20: a versao anterior so entendia M/L/Z. Tudo o resto — e sobretudo
     o **H** e o **V**, que levam UM numero — era lido como par de coordenadas,
     e um caminho ortogonal saia como diagonais que nao existem. Nao e so falso
     positivo: e o verificador a medir um desenho que nao e o que esta la.
@@ -414,7 +414,7 @@ def thin_miss(t, s):
     return False
 
 if __name__ == "__main__":
-    # ⚠️ Excepcao NAO e colisao. Antes de 05/09 um crash subia sem tratamento
+    # ⚠️ Excepcao NAO e colisao. Antes de 2026-09-05 um crash subia sem tratamento
     # e o shell via rc=1, indistinguivel de "achei defeito".
     try:
         main()

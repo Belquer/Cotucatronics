@@ -1,6 +1,6 @@
 # CCs por página — Loopy Pro
 
-> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
+> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 2026-09-06.** Nenhum
 > gerador o escreve — foi feito à mão a partir do `manifest.h` **v0.85.0 · firmware v0.178.0**, e o
 > manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
 > como espelho do actual.
@@ -117,7 +117,7 @@ Delay, freeze, reverb e shimmer da **cadeia A**.
 **Cópia da TIME A com o canal em 3.** Mesmos números.
 
 ⚠️ O `dly_time` (cc64) é **compartilhado** e mora na **CENTRAL**.
-Não entra nesta cópia — foi o padrão de erro da sessão de 24/08.
+Não entra nesta cópia — foi o padrão de erro da sessão de 2026-08-24.
 
 | CC | manda | escuta | param |
 |---|---|---|---|

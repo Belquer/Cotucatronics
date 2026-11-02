@@ -1,6 +1,6 @@
 # MAPA DE PINOS — Cotucatronics
 
-> ⚠️ **05/09 — a placa e o Daisy Seed3, nao o rev4.** A pinagem e a MESMA: o
+> ⚠️ **2026-09-05 — a placa e o Daisy Seed3, nao o rev4.** A pinagem e a MESMA: o
 > nome STM32 bate nos 40 pinos entre os dois CSV do fabricante, e a doc diz
 > *"maintaining pin-to-pin compatibility with the original Seed pinout and
 > footprint"*. Tudo o que este ficheiro diz continua a valer. A fonte passou a
@@ -11,7 +11,7 @@
 > USB-C desde que a primeira placa queimou — nao muda nada no fluxo.
 
 
-> Verificado em `src/hal_daisy_seed.cpp` e `src/manifest.h` @ `hal v0.74.1` (04/09).
+> Verificado em `src/hal_daisy_seed.cpp` e `src/manifest.h` @ `hal v0.74.1` (2026-09-04).
 > **Pino se confirma no fonte, não na memória.** Se este documento e o
 > código divergirem, o código está certo e este documento está velho.
 
@@ -20,20 +20,20 @@
 | pino | função | como |
 |---|---|---|
 | **D13** | UART TX → **RX** da ponte ESP32 | PB6 · USART1 · 31250 8N1 · ★ CRUZADO |
-| **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI · **PULL-UP INTERNO LIGADO** (~40 kΩ) desde 02/09 — ver abaixo |
+| **D14** | UART RX ← **TX** da ponte ESP32 | PB7 · ★ CRUZADO · é o que recebe MIDI · **PULL-UP INTERNO LIGADO** (~40 kΩ) desde 2026-09-02 — ver abaixo |
 | **D15, D16** | pots ×2 (A0, A1) | ⚠️ **A0–A4 são ALIASES de D15–D19** — mesmo pino físico. **Só D15 e D16 são pots**; `board` diz `knobs:2`. Ambos com leitura **invertida** (`kKnobInverte`) — medido nos dois extremos, cru 0,0008 no máximo e 0,9753 no mínimo |
-| **D0, D1, D2** | **o encoder** — fase A, fase B, push | `kEncPin[0]`, e é o único desde 05/09 |
+| **D0, D1, D2** | **o encoder** — fase A, fase B, push | `kEncPin[0]`, e é o único desde 2026-09-05 |
 | **D17** | **A2 — divisor 100 k/22 k do trilho de 15 V** | leitura da tensão; o firmware recusa ligar o amp abaixo de 12 V |
 | **D5, D6, D7, D8, D10** | OLED SSD1309 SPI | ver a tabela do painel, mais abaixo |
 | **D22** | botão B4 — freeze B | INPUT + PULLUP, ativo-baixo |
 | **D23** | LED — freeze B | OUTPUT, segue o param `frz_on_b` |
 | **D24** | botão B2 — freeze A | INPUT + PULLUP, ativo-baixo |
-| ~~**D25**~~ | ~~botão B3 — rearme do CTOS~~ · **REMOVIDO 05/09** | a função fica pelo `b3` da serial; o painel não leva botão |
+| ~~**D25**~~ | ~~botão B3 — rearme do CTOS~~ · **REMOVIDO 2026-09-05** | a função fica pelo `b3` da serial; o painel não leva botão |
 | **D26** | botão B1 — búzios (randomizador) | INPUT + PULLUP |
 | **D27** | LED — freeze A | OUTPUT, segue o param `frz_on_a` |
 | **D28** | STATUS da ponte ESP32 (link BLE) | INPUT + PULLUP · ativo em BAIXO, aberto-dreno |
 
-> ✅ **O CONFLITO DO `D17` MORREU EM 05/09, e não por conserto.**
+> ✅ **O CONFLITO DO `D17` MORREU EM 2026-09-05, e não por conserto.**
 >
 > O `D17` era o push do encoder G *e* o A2 do divisor do trilho — dois usos
 > escritos, ambos intencionais, e nenhum verificador os via porque moravam em
@@ -49,13 +49,13 @@
 
 **D3** · **D4** · **D9** · **D11** · **D12** · **D18** · **D19** · **D20** · **D21** · **D25** — dez.
 
-Passaram de quatro a dez a 05/09: saíram os encoders B e G (`D3 D4 D9 D18 D19`)
+Passaram de quatro a dez a 2026-09-05: saíram os encoders B e G (`D3 D4 D9 D18 D19`)
 e o botão de rearme (`D25`). O `D17` **não** está aqui — é o A2 do divisor.
 
-⚠️ **`D29` e `D30` saíram desta lista em 04/09: são as linhas de dados do
+⚠️ **`D29` e `D30` saíram desta lista em 2026-09-04: são as linhas de dados do
 USB** (pinos 36 e 37, `USB_HS_D−`/`D+`). Ver o aviso abaixo.
 
-> ⚠️ Esta linha dizia **`D0–D12`** até 04/09, e estava errada de duas
+> ⚠️ Esta linha dizia **`D0–D12`** até 2026-09-04, e estava errada de duas
 > maneiras ao mesmo tempo: D0–D4 e D9 são os encoders A e B, e D5–D8 e D10
 > são o OLED — que este mesmo documento lista como ocupado três secções
 > abaixo. **O documento contradizia-se a si próprio**, e ninguém reparou
@@ -72,7 +72,7 @@ para descobrir cablagem de encoder).
 
 > 🔴 **D29 E D30 NAO PODEM SER USADOS. SAO O USB.**
 >
-> Descoberto em 04/09, ao gerar o símbolo da Seed do
+> Descoberto em 2026-09-04, ao gerar o símbolo da Seed do
 > `Daisy_Seed_Rev4_Pinout.csv` do fabricante:
 >
 > ```
@@ -89,7 +89,7 @@ para descobrir cablagem de encoder).
 >
 > **Este documento reservava-as para o sense dos DPDT.** Não vão lá.
 
-**O sense dos DPDT foi DESCARTADO a 05/09.** A DPDT tipo 2 usa os dois polos
+**O sense dos DPDT foi DESCARTADO a 2026-09-05.** A DPDT tipo 2 usa os dois polos
 para o mesmo canal (comuns amarrados), portanto não sobra contacto para ler o
 estado. `exc_on` continua a ser **intenção de software** — o firmware acredita
 no que lhe dizem. As opções e o que cada uma custa estão em
@@ -103,7 +103,7 @@ porque é a mesma família e ninguém o sabia.
 
 | bloco | pinos | nota |
 |---|---|---|
-| OLED SSD1309 SPI | 5 | **SOLDADO 23/08** — ver a tabela abaixo. SPI1, modo 0, MISO não atribuído |
+| OLED SSD1309 SPI | 5 | **SOLDADO 2026-08-23** — ver a tabela abaixo. SPI1, modo 0, MISO não atribuído |
 | Encoder EC11 | 3 (A, B, push) | ✅ **JÁ SÃO TRÊS E ESTÃO LIGADOS** — ver os `kEncPin` na tabela de ocupados |
 | Pots de volume ×2 | 2 (ADC) | ✅ **LIGADOS** em D15/D16, um por exciter |
 
@@ -124,7 +124,7 @@ novo.
 |---|---|---|---|---|
 | B1 | búzios | D26 | — | randomizador |
 | B2 | freeze A | D24 | D27 (LED 0) | `frz_on_a` |
-| ~~B3~~ | ~~rearme CTOS~~ · **REMOVIDO 05/09** | ~~D25~~ | — | a função fica pelo `b3` da serial; o painel não leva botão |
+| ~~B3~~ | ~~rearme CTOS~~ · **REMOVIDO 2026-09-05** | ~~D25~~ | — | a função fica pelo `b3` da serial; o painel não leva botão |
 | B4 | freeze B | D22 | D23 (LED 1) | `frz_on_b` |
 
 **Debounce: 30 ms, MEDIDO** — com 10 ms, cinco batidas viravam seis.
@@ -132,7 +132,7 @@ novo.
 **O LED segue o PARAM, nunca o gesto.** Se o freeze mudar por CC, serial ou
 CTOS, o LED conta a verdade. Verificado por serial, sem tocar no botão.
 
-## OLED SSD1309 — soldado e ocupado (23/08, v0.154.0)
+## OLED SSD1309 — soldado e ocupado (2026-08-23, v0.154.0)
 
 | sinal | pino | porta | origem |
 |---|---|---|---|
@@ -143,7 +143,7 @@ CTOS, o LED conta a verdade. Verificado por serial, sem tocar no botão.
 | RST | **D5** | `PORTD2` | **sobrescrito** (default seria D30) |
 
 ⚠️ **O PAINEL ACESO CUSTA 6 dB DE CHÃO DE RUÍDO NA ENTRADA** — medido em
-31/08: IN_L de −75,3 para −69,3 dBFS, com um espeto a **7040 Hz** e dominância
+2026-08-31: IN_L de −75,3 para −69,3 dBFS, com um espeto a **7040 Hz** e dominância
 0,95. É a corrente de accionamento das linhas (64 linhas × ~110 Hz de quadro),
 proporcional aos píxeis **acesos**.
 
@@ -233,7 +233,7 @@ alta impedância e o nosso RX **fica a flutuar** — e uma entrada CMOS solta
 apanha ruído a MHz. A USART entra em tempestade **por taxa** (FE/NE/ORE ao
 ritmo do serviço da interrupção), o CPU fica na ISR e o laço morre à fome.
 
-Medido em 01/09: a placa deixava de responder à serial em **menos de 4 s** e
+Medido em 2026-09-01: a placa deixava de responder à serial em **menos de 4 s** e
 **não voltava** com a linha já em repouso.
 
 Repouso de uma linha de UART é **alto, por definição**. Se o transmissor

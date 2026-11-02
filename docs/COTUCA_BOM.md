@@ -129,10 +129,10 @@
 | painel | Botao arcade 30 mm BRANCO (buzios) | EG Starts | 1 | 2.50 | estimado | sem LED |
 | painel | Jack TRS 1/4" NMJ6HCD2 (Neutrik) | Stompboxparts | 4 | 1.75 | medido | isolado do chassis; 2 entradas de piezo + 2 saidas de linha |
 | painel | DPDT ON-ON-ON tipo 2 | ja comprados | 2 | 2.00 | estimado | ⚠️ MEDIR O TIPO COM MULTIMETRO ANTES DE FIAR |
-| cablagem | Cabo IDC 2x13, 26 vias, ~300 mm, femea-femea com chave, directo (pino 1 a pino 1) | — | 1 | 3.00 | estimado | percurso medido a 18/09: ~170 mm pela parede de tras (J1 do painel a 98 mm da frente, J14 do cerebro a 19) + 80 mm de folga para tirar o fundo |
+| cablagem | Cabo IDC 2x13, 26 vias, ~300 mm, femea-femea com chave, directo (pino 1 a pino 1) | — | 1 | 3.00 | estimado | percurso medido a 2026-09-18: ~170 mm pela parede de tras (J1 do painel a 98 mm da frente, J14 do cerebro a 19) + 80 mm de folga para tirar o fundo |
 | soquete | Tira femea 1x20 2,54 dourada (soquete da Daisy) | Harwin/LCSC | 2 | 1.00 | estimado | M20-7822046 (Harwin) ou equivalente — a substituibilidade vale os US$2 |
 | soquete | Tira femea 1x8 2,54 (soquete do ESP32-C3) | generico | 2 | 0.15 | estimado | o modulo entra em soquete para poder ser regravado e trocado |
-| cablagem | Cabo 8 vias ~150 mm ao DPDT, crimpado (J15 e J16) | — | 2 | 1.00 | estimado | 8 e nao 6 desde 08/09: os pinos 7 e 8 sao GND, referencia do cabo. Os dois condutores de terra nao vao a lug nenhum da chave — ou ao corpo dela, se for metalica, ou ficam como dreno junto ao par |
+| cablagem | Cabo 8 vias ~150 mm ao DPDT, crimpado (J15 e J16) | — | 2 | 1.00 | estimado | 8 e nao 6 desde 2026-09-08: os pinos 7 e 8 sao GND, referencia do cabo. Os dois condutores de terra nao vao a lug nenhum da chave — ou ao corpo dela, se for metalica, ou ficam como dreno junto ao par |
 | cablagem | Cabo USB-C curto 15 cm C-C com dados (PD) | — | 1 | 3.00 | estimado | do powerbank ao decoy |
 | caixa | Caixa (ver docs/desenhos/caixa/) | — | 1 | — | por orcar | acrilico 3,0 mm, 200x120, frente 55 / tras 80, rev 5; furos na tampa para encoder e 2 pots |
 
@@ -153,7 +153,7 @@ Todas as pecas do total tem preco declarado.
 
 | ref | esquema | MPN escolhido | |
 |---|---|---|---|
-| ~~`C12`, `C22`~~ | ~~`20n C0G`~~ | | **RESOLVIDO 05/09**: o esquema passou a `22n C0G`. 20 nF C0G nao e valor de serie; o esquema mentia ao BOM. |
+| ~~`C12`, `C22`~~ | ~~`20n C0G`~~ | | **RESOLVIDO 2026-09-05**: o esquema passou a `22n C0G`. 20 nF C0G nao e valor de serie; o esquema mentia ao BOM. |
 | `R5`, `R6` (painel) | `100R serie (~30 mA)` | 47 Ω 1/2 W na `BOM-MPN-revB` | por medir na bancada com o azul a 5 V |
 
 Enquanto nao baterem, a BOM esta a comprar uma peca e o desenho a descrever
@@ -161,10 +161,10 @@ outra — e nenhum verificador apanha isso.
 
 ## 8 · O que ainda trava o pedido
 
-0. ~~`+3V3A` sem dono.~~ **RESOLVIDO 05/09** — e era defeito, nao ruido: os
+0. ~~`+3V3A` sem dono.~~ **RESOLVIDO 2026-09-05** — e era defeito, nao ruido: os
    pots estavam no trilho DIGITAL e lidos contra o ANALOGICO, que e o fundo de
    escala do ADC. Via 9 passou a `+3V3A`, OLED foi para 5 V. Ver ERC-ISENCOES.
-1. ~~`OPA1642AIDR` na biblioteca da JLC.~~ **CONFIRMADO 05/09**: JLCPCB
+1. ~~`OPA1642AIDR` na biblioteca da JLC.~~ **CONFIRMADO 2026-09-05**: JLCPCB
    `C67640`, tier **EXTENDED**, disponivel para montagem SMT. Custa o *setup*
    unico de Extended. O `OPA1656` foi avaliado como alternativa e **recusado**
    — melhor no papel, mas o pre-amp esta medido com o 1642 e 53 MHz num no de
@@ -174,13 +174,13 @@ outra — e nenhum verificador apanha isso.
    desenho de PCB. Le-se o desenho do `-4` na ficha, ou mede-se a peca.
 3. **`R5`/`R6` do painel: valor por medir.** Fica `100R` no 1210 como partida;
    fecha-se na bancada com o azul a 5 V, medindo a corrente.
-4. ~~A Daisy Seed rev4.~~ **RESOLVIDO a 05/09: passou a Seed3.** A pinagem foi
+4. ~~A Daisy Seed rev4.~~ **RESOLVIDO a 2026-09-05: passou a Seed3.** A pinagem foi
    conferida pino a pino entre os dois CSV do fabricante — **o nome STM32 bate
    nos 40 pinos, sem uma excepcao** — e a doc diz textualmente *"maintaining
    pin-to-pin compatibility with the original Seed pinout and footprint"*.
    Simbolo, footprint e netlist ficaram **identicos**. O que mudou a favor:
    codec **TI TAC5242**, 32 bit / 192 kHz, chao de ruido de -120 dB (contra o
-   AK4556 do rev4) — e este projecto passou a sessao de 05/09 a cacar chao de
+   AK4556 do rev4) — e este projecto passou a sessao de 2026-09-05 a cacar chao de
    ruido. Nada muda contra: o dB ja grava por **USB-C** desde
    que a primeira placa queimou — a placa de bancada ja e de USB-C. A caixa
    nunca teve recorte para o USB da Daisy e continua a nao ter: grava-se com a

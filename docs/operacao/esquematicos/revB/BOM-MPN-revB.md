@@ -1,4 +1,4 @@
-> [!warning] APOSENTADA a 08/09/2026 — nao encomendar por aqui
+> [!warning] APOSENTADA a 2026-09-08 — nao encomendar por aqui
 >
 > A lista de compras viva e **`COTUCA_BOM.md`**, gerada das folhas KiCad por
 > `tools/bom_completa.py`; a compra da rev C e `export/BOM_CONSOLIDADO.csv`
@@ -7,26 +7,26 @@
 > **Tudo o que ela tinha de util foi migrado**, e estes MPNs foram CORRIGIDOS
 > — se os leres aqui, estao errados:
 >
-> | aqui diz | o vivo (17/09), e porque |
+> | aqui diz | o vivo (2026-09-17), e porque |
 > |---|---|
-> | `2920L300/24MR` | **`MF-LSMF300/24X-2`** (Bourns) — o /300 nao existia (o de 24 V era o `2920L330/24MR`), e esse foi por sua vez trocado na compra da rev C por este, verificado em estoque na Mouser a 12/09 |
+> | `2920L300/24MR` | **`MF-LSMF300/24X-2`** (Bourns) — o /300 nao existia (o de 24 V era o `2920L330/24MR`), e esse foi por sua vez trocado na compra da rev C por este, verificado em estoque na Mouser a 2026-09-12 |
 > | `PEC11R-4220F-S0024` | **`EC11E15244G1`** (Alps) — o PEC11R tem pinos a 5,0 mm e o footprint e do Alps, a 2,5 |
 > | `PTV09A-4020**F**-B103` | **`PTV09A-1020S-B103`** — `S` e eixo estriado, o `F` e liso, e a nota ao lado desta propria tabela pedia estriado. A troca de `4020` para `1020` esta no gerador sem razao escrita |
 > | `1935161` | **`1715721`** — a MKDS **1** tem 1,5 mm menos de largura que a MKDS **1,5**, que e a do footprint |
-> | `53047-0710` (J_OLED, PicoBlade) | **`61304011121`** cortado a 1x07 — o OLED traz cabo com jumpers femea, e a placa leva header macho de 2,54 (17/09) |
+> | `53047-0710` (J_OLED, PicoBlade) | **`61304011121`** cortado a 1x07 — o OLED traz cabo com jumpers femea, e a placa leva header macho de 2,54 (2026-09-17) |
 >
 > E duas coisas que so apareceram ao migrar: **os soquetes da Daisy e do ESP32
 > nao estavam orcados em lado nenhum**, e o **cabo ate aos DPDT nao estava na
-> BOM de todo** — passou a 8 vias a 08/09, com os pinos 7 e 8 em GND.
+> BOM de todo** — passou a 8 vias a 2026-09-08, com os pinos 7 e 8 em GND.
 >
 > Fica pelo historico: as razoes de escolha aqui escritas continuam a valer, e
 > foi delas que sairam as notas que agora vivem no gerador.
 
 # BOM por MPN — Cotucatronics rev B
 <!-- doc-check: ignore power_pin_not_driven (codigo de violacao do ERC do KiCad) -->
-### 05/09/2026 · dois projetos KiCad · JLCPCB monta o SMD · dB compra e solda o resto
+### 2026-09-05 · dois projetos KiCad · JLCPCB monta o SMD · dB compra e solda o resto
 
-> ⚠️ **Nomes actualizados a 05/09 para os do esquema.** O KiCad trata uma
+> ⚠️ **Nomes actualizados a 2026-09-05 para os do esquema.** O KiCad trata uma
 > referência sem parte numérica (`R0A`, `C1A`, `RVA`, `DA`) como não anotada e
 > renumera-a sozinha ao gravar. A dezena passou a dizer o canal:
 > `R10`–`R14` = canal A, `R20`–`R24` = canal B, `C11`–`C14` / `C21`–`C24`,
@@ -171,7 +171,7 @@ furo, aro) · OLED (furos c-c). É a folha `MEDICAO-21-PECAS.md`, secções 3, 4
 
 ---
 
-## 8 · Achados de 05/09 ao atribuir os footprints
+## 8 · Achados de 2026-09-05 ao atribuir os footprints
 
 Verificado ficheiro a ficheiro e contra as fichas dos fabricantes. **Três
 escolhas desta BOM não sobrevivem ao confronto com o desenho mecânico.**
@@ -179,7 +179,7 @@ escolhas desta BOM não sobrevivem ao confronto com o desenho mecânico.**
 ### 8.1 O pot `PTV09A-4020F-B103` não serve
 
 O estilo **`-4` é *Horizontal/Rear Mount, bushingless*** — sem rosca e com o
-eixo deitado. A decisão de 05/09 é o pot **na placa, eixo a subir pelo furo
+eixo deitado. A decisão de 2026-09-05 é o pot **na placa, eixo a subir pelo furo
 ø7 da tampa**, o que pede um estilo **vertical com bucim roscado**.
 
 O estilo vertical é o **`PTV09A-1`**, e é o único que o KiCad traz footprint
@@ -234,7 +234,7 @@ os DPDT), mas o esquema desenha-as como peças: `J5`/`J6` (piezo), `J12`/`J13`
 (TRS de linha), `SW1`/`SW2` (DPDT). É a mesma correcção já feita aos botões
 arcade do painel.
 
-### 8.7 Stock, medido a 05/09
+### 8.7 Stock, medido a 2026-09-05
 
 `OPA1642AIDR` na LCSC: **`C67640`, 980 unidades, US$ 1,0145** a 5–10 un.
 ⚠️ Stock da LCSC **não é** stock de montagem da JLC — são armazéns diferentes,
@@ -242,7 +242,7 @@ e o tier Basic/Extended confirma-se na biblioteca de peças da JLC, não aqui.
 
 ---
 
-## 9 · Decisões de 05/09 e custo por peça
+## 9 · Decisões de 2026-09-05 e custo por peça
 
 ### 9.1 O que mudou de peça
 
@@ -254,7 +254,7 @@ e o tier Basic/Extended confirma-se na biblioteca de peças da JLC, não aqui.
 | `C14`,`C24` | 7,2 × 11 × 7,2 | corpo real **7,2 × 7,2 × 13**, passo 5,0 | medido na ficha do `MKS2C042201K00KSSD`. ⚠️ O KiCad **não tem** `L7,2 × W7,2`; ficou o `W11.0`, que é **maior** que a peça — folga a mais, nunca a menos. Confere à craveira. |
 | `R5`,`R6` (painel) | 47 Ω ½ W | **`100R`, 1210, valor por medir** | 30 mA em 100 Ω são 90 mW; 0805 é ⅛ W e não aguenta. O valor fecha-se na bancada, com o azul a 5 V, medindo a corrente. |
 
-### 9.2 Custo por peça — **medido a 05/09**
+### 9.2 Custo por peça — **medido a 2026-09-05**
 
 | peça | fonte | preço unit. | stock |
 |---|---|---|---|
@@ -310,7 +310,7 @@ desenho do `-4` na ficha, ou se mede a peça na mão.
 
 ---
 
-## 10 · 05/09 — a placa passou a **Daisy Seed3**
+## 10 · 2026-09-05 — a placa passou a **Daisy Seed3**
 
 O rev4 esteve com produção suspensa; o Seed3 voltou a stock e é o que vai.
 
@@ -352,7 +352,7 @@ e passou a `AUDIO_IN_R`.
 
 ---
 
-## 11 · 05/09 — o `OPA1642` está confirmado na JLC, e o `OPA1656` foi avaliado e recusado
+## 11 · 2026-09-05 — o `OPA1642` está confirmado na JLC, e o `OPA1656` foi avaliado e recusado
 
 ### 11.1 O bloqueio caiu
 
@@ -361,7 +361,7 @@ para montagem SMT (*Economic* e *Standard*). Estava marcado nesta BOM como
 *"confirmar stock — trava tudo"*. **Está confirmado.** Custa o *setup* único de
 Extended, que era o previsto.
 
-LCSC: US$ 1,0145 a 5–10 un., 980 em stock (medido 05/09).
+LCSC: US$ 1,0145 a 5–10 un., 980 em stock (medido 2026-09-05).
 
 ### 11.2 O `OPA1656` foi considerado, e fica de fora
 
@@ -379,7 +379,7 @@ Veio à conversa porque **o KiCad tem símbolo dele e não tem do `OPA1642`** �
 No papel é melhor amplificador e mais barato. **Fica de fora por três razões:**
 
 1. **O pré-amp está montado e MEDIDO com o `OPA1642`.** A recuperação de 35–39
-   dB de chão de ruído de 05/09 foi feita nesse circuito. Trocar põe na placa
+   dB de chão de ruído de 2026-09-05 foi feita nesse circuito. Trocar põe na placa
    fabricada um amplificador que a bancada nunca ouviu — e a regra da casa é
    *se não soa, não fica*.
 2. **53 MHz num nó de 4M7 é variável nova.** A entrada do piezo é altíssima

@@ -1,5 +1,5 @@
 # Cotucatronics Carrier rev A — BOM candidato
-### Verificado contra LCSC em 20/08 (estoque flutua: re-conferir no dia do pedido)
+### Verificado contra LCSC em 2026-08-20 (estoque flutua: re-conferir no dia do pedido)
 
 ## ✅ Críticos — verificados hoje, com número real
 

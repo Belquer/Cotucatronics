@@ -429,7 +429,7 @@ def uma(nome, incompleta):
     ficheiro verdadeiro — precisa, porque os gerbers tem de sair com as zonas
     cheias. Mas quando o portao RECUSA nao ha export, e o ficheiro ficava na
     mesma reescrito (80 linhas de poligonos a mudar na 6.a casa decimal): a
-    18/09 isso mexeu no painel que ja estava na fabrica, so por se ter corrido o
+    2026-09-18 isso mexeu no painel que ja estava na fabrica, so por se ter corrido o
     portao para ler. Um portao que recusa nao deixa rasto.
     """
     pcb = os.path.join(AQUI, "cotuca_%s" % nome, "cotuca_%s.kicad_pcb" % nome)
@@ -510,7 +510,7 @@ def _uma(nome, incompleta):
     # generico (pinos 1,2,3) casado com footprint polarizado (SOIC-8, SOT-23,
     # D_SMA, EC11). A netlist fica LIGADA e a funcao fica ERRADA, e nem ERC, nem
     # DRC, nem "0 por rotear" veem, porque os tres verificam LIGACAO e este
-    # verifica SIGNIFICADO. Apanhou 5 dos 6 criticos da varredura de 08/09.
+    # verifica SIGNIFICADO. Apanhou 5 dos 6 criticos da varredura de 2026-09-08.
     # (Confere as duas placas de uma vez, pela ficha por referencia.)
     rfp = subprocess.run([sys.executable, os.path.join(AQUI, "funcao_dos_pads.py")],
                          capture_output=True, text=True)
@@ -524,7 +524,7 @@ def _uma(nome, incompleta):
     # ⚠️⚠️ E A PLACA TEM DE SE MONTAR (encaixe — trilha M do IFA10000).
     #
     # "De que vale uma placa correta eletricamente se nao podemos monta-la?"
-    # (dB, 18/09). Nesse dia as duas placas rev C ja estavam na fabrica com
+    # (dB, 2026-09-18). Nesse dia as duas placas rev C ja estavam na fabrica com
     # todos os portoes daqui verdes — e o painel nao tinha um ponto de fixacao,
     # o J14 do cerebro ficava debaixo de um arcade, e a fita do IDC tinha metade
     # do comprimento. Nenhuma recusa acima pergunta nada disso.

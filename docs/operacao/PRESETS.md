@@ -1,7 +1,7 @@
 # PRESETS — desenho aprovado
 
-> **Estado: passos 1 e 2 IMPLEMENTADOS (23/08, v0.135.0); passos 3–6
-> desenhados.** Aprovado pelo dB em 22/08.
+> **Estado: passos 1 e 2 IMPLEMENTADOS (2026-08-23, v0.135.0); passos 3–6
+> desenhados.** Aprovado pelo dB em 2026-08-22.
 >
 > O passo 2 saiu em **dois voos separados**: A, o endereçamento de
 > entrada por canal; B, o espelho para canais próprios (que na época
@@ -40,11 +40,11 @@ Uma **cena** = global + ponteiro A + ponteiro B.
 Os **10** params de caráter compartilhados (`drv_drive/tone/sujeira`,
 `phs_rate/depth/fb/stages`, `wrb_rate/depth/irreg`) **passam a ser por cadeia**.
 
-> **Correção de contagem (23/08):** este documento dizia 11, e a lista sempre
+> **Correção de contagem (2026-08-23):** este documento dizia 11, e a lista sempre
 > teve 10. O 11º de caráter é o `dly_time`, que fica de fora de propósito —
 > ver logo abaixo. Logo 76 → **86** params, não ~87. Folga de 10 no teto de 96.
 
-**Custo: zero CPU — CONFIRMADO em 23/08.** Os estados internos já são
+**Custo: zero CPU — CONFIRMADO em 2026-08-23.** Os estados internos já são
 separados por cadeia (dois conjuntos de allpass no phaser, dois buffers de
 warble) — foi medido quando foram recolhidos: *"encolheu a tabela, não o
 trabalho"*.
