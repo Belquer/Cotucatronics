@@ -3,7 +3,7 @@
 
     tools/traducao_guarda.py [--escreve-lista]
 
-POR QUE EXISTE. A 02/11 o dB pediu o repositorio inteiro em ingles, com um
+POR QUE EXISTE. A 2026-11-02 o dB pediu o repositorio inteiro em ingles, com um
 limite explicito: os COMANDOS DE CONSOLA e os NOMES DE PARAMS ficam como estao.
 
     `fio estado` e o que ele escreve na bancada, e esta citado em dezenas de
@@ -87,7 +87,7 @@ def main():
     # renomear `fio estado` para `wire state`, o token sumiu da lista de
     # vigilancia junto com a fonte, e a guarda anunciou "OK".
     #
-    # E a familia que o projecto nomeou a 29/09 na QSPI: a sonda que pergunta
+    # E a familia que o projecto nomeou a 2026-09-29 na QSPI: a sonda que pergunta
     # ao acusado cai junto com ele. A fonte viva so serve para CRIAR a
     # referencia; depois disso, quem manda e a referencia.
     if "--escreve-lista" in sys.argv or not os.path.exists(REF):

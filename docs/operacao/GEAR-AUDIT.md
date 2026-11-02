@@ -1,6 +1,6 @@
 # GEAR-AUDIT — WIDI Core → ESP32-C3
 
-> **v0.1.0** · 25/08 · a decisão de substituir o módulo BLE MIDI, com o
+> **v0.1.0** · 2026-08-25 · a decisão de substituir o módulo BLE MIDI, com o
 > preço de cada lado. Quando esta decisão for revista, o motivo antigo fica
 > — premissa revogada em silêncio é a família de bug mais cara deste projeto.
 

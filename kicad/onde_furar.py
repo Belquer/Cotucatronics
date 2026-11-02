@@ -9,7 +9,7 @@
                                       via ou pad — e o relatorio diz que plano
                                       e com que margem ate ao bordo dele.
 
-POR QUE EXISTE. A 20/09 o dB perguntou: *"nao vejo tracos em nenhum lado da
+POR QUE EXISTE. A 2026-09-20 o dB perguntou: *"nao vejo tracos em nenhum lado da
 placa, posso furar entao?"*. A pergunta e boa e a premissa e falsa:
 
   ⚠️ **"nao vejo tracos" NAO e "nao ha cobre".** A face de baixo do cerebro e
@@ -21,7 +21,7 @@ placa, posso furar entao?"*. A pergunta e boa e a premissa e falsa:
 
   ⚠️ E a cabeca metalica do parafuso encosta nesse cobre nu. No cerebro isso e
   pior do que parece: ha DOIS terras (GND e AGND), separados de proposito — a
-  separacao deles vale 35 a 39 dB de chao de ruido, medidos a 05/09. Um
+  separacao deles vale 35 a 39 dB de chao de ruido, medidos a 2026-09-05. Um
   parafuso que toque nos dois solda-os um ao outro, e o instrumento volta ao
   chao de ruido de antes sem que nada pareca partido.
 
@@ -66,7 +66,7 @@ def _pcbnew():
 #   NAO resolve: o furo CORTA cobre. Num plano largo um furo de 3,4 mm e um
 #   buraco num campo; num ESTRANGULAMENTO do plano, ele parte o caminho de
 #   retorno — e corrente de retorno que da a volta e a familia de defeito mais
-#   cara deste projecto (31/08: o terra custou 35 a 39 dB de chao de ruido).
+#   cara deste projecto (2026-08-31: o terra custou 35 a 39 dB de chao de ruido).
 # Por isso o modo --plastico nao diz so "pode": diz em que plano cai e a que
 # distancia do bordo desse plano, que e a medida do estrangulamento.
 def varre(nome, diametro=3.4, passo=1.0, plastico=False):

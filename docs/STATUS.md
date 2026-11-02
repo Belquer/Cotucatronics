@@ -120,14 +120,14 @@ aqui*. Leia os dois antes de tocar em código.
 > aposentados (52 → 54) por carregarem registo único; as outras quatro eram
 > cópias de um registo que vive no `battle_scars`. O **vault** ficou alinhado
 > nos três ficheiros em atraso — o `HARDWARE.md` de lá ainda tinha os nomes
-> velhos da matriz (`route_l_a`), renomeados a 02/09.
+> velhos da matriz (`route_l_a`), renomeados a 2026-09-02.
 >
 > Passada nova de **itens pendentes**: 186 linhas marcadas na árvore. Fechou-se
 > o **⚪4 do `AUDIT-23-08`** (versões velhas no README), com prova; e o **⚪5**
 > ficou registado como **aberto e maior**: o `"76 CCs"` está hoje em três
 > comentários do `main.cpp`, não dois, e o número real são 119.
 >
-> **04/09, fecho: a limpeza acabou, ponta a ponta.** Com a decisão do dB:
+> **2026-09-04, fecho: a limpeza acabou, ponta a ponta.** Com a decisão do dB:
 > `src/TESTES.md` (v0.25.0) e `src/BOARDS.md` (v0.14.0) limpos sem esperar
 > pela outra sessão, e **os 86 comentários de fonte** em 13 ficheiros. O build
 > prova que foram só comentários: **QSPI 283 196 B, SRAM 322 488 B, ITCM 308 B
@@ -148,7 +148,7 @@ aqui*. Leia os dois antes de tocar em código.
 >
 > A cauda do README foi consertada: os defeitos em aberto passam a espelhar
 > este documento, o signal path deixa de estar "à espera de hardware", o Pot 5
-> deixa de fazer um crossfade aposentado a 20/08, e os "próximos passos"
+> deixa de fazer um crossfade aposentado a 2026-08-20, e os "próximos passos"
 > apontam para aqui em vez de duplicarem uma lista que volta a derivar.
 >
 > **⚪5 do `AUDIT-23-08` fechado:** o `"76 CCs"` estava em três comentários do
@@ -156,10 +156,10 @@ aqui*. Leia os dois antes de tocar em código.
 > **🟡2 estava fechado e ninguém tinha dado por isso.** Fui escrevê-lo e
 > encontrei-o feito: `Colisoes()`/`Colisao()` no `manifest.h`, chamadas em
 > `main.cpp:5134`, e o `board` a imprimir `colisao de CC`. Implementado depois
-> do audit de 23/08, com a entrada por fechar. Construir por cima teria sido
+> do audit de 2026-08-23, com a entrada por fechar. Construir por cima teria sido
 > trabalho a duplicar código que já existia.
 >
-> **05/09 — placa nova gravada, e os três params invisíveis deixaram de o ser.**
+> **2026-09-05 — placa nova gravada, e os três params invisíveis deixaram de o ser.**
 > A Daisy nova entrou (uma unidade só, por agora), com o bootloader já lá — o
 > DFU que apareceu expunha `0x90000000`, a QSPI. Gravada e conferida nos dois
 > lados: fonte e placa em **v0.302.0**.
@@ -224,7 +224,7 @@ aqui*. Leia os dois antes de tocar em código.
 > volta provado · o `CCMAP.md` tinha o cabeçalho à mão a envelhecer por cima
 > de uma tabela gerada · e dez documentos vivos entraram no mapa do README
 >
-> ⚠️ **HARDWARE NOVO: o pré-amp está montado e testado** (04/09), com som mais
+> ⚠️ **HARDWARE NOVO: o pré-amp está montado e testado** (2026-09-04), com som mais
 > cheio. Isso invalida toda a medição de ganho anterior — §14 da
 > `medicao-limpa`. A sessão de escuta estava a começar quando o deep clean a
 > interrompeu; **o pré-voo tem de ser refeito do zero.**
@@ -237,7 +237,7 @@ aqui*. Leia os dois antes de tocar em código.
 > casco provado fechado por **alagamento** · e o **exame de pinos** a apanhar
 > o `PINOS.md` a contradizer-se a si próprio
 >
-> **05/09 — o teste do terra no documento dono estava velho.** O
+> **2026-09-05 — o teste do terra no documento dono estava velho.** O
 > `ATERRAMENTO.md` (v0.2.0) é, pelo README, o dono do assunto, mas a sua
 > secção *Conferência* ainda mandava medir a ilha contra o trilho e dizia *"se
 > apitar, há uma ligação a mais"*. **Com o net-tie do revB, apitar é o
@@ -245,10 +245,10 @@ aqui*. Leia os dois antes de tocar em código.
 > a espelhar o `MAPA-DE-TERRA.md` §6: três medições e por ordem, porque o
 > teste do meio sozinho não separa *"ponte única"* de *"nenhuma ponte"*, e uma
 > delas mata o áudio. A premissa (20↔40 aberto na Daisy nua) está **medida em
-> 04/09**; o que continua por medir é a placa montada.
+> 2026-09-04**; o que continua por medir é a placa montada.
 >
 > ⚠️ **Continua por confirmar com o multímetro** o `AGND`/`DGND` unidos fora
-> da placa (P3 da varredura de terra) — o dB refez o aterramento em 03/09 e
+> da placa (P3 da varredura de terra) — o dB refez o aterramento em 2026-09-03 e
 > reportou som mais limpo, mas a medida não foi feita.
 >
 > Antes, 2026-09-02 (fecho) · leva: **compressor** (49 dB de factor
@@ -286,7 +286,7 @@ aqui*. Leia os dois antes de tocar em código.
 ---
 
 
-## 19/09/2026 — cérebro #1 na bancada: o que foi montado diferente da BOM
+## 2026-09-19 — cérebro #1 na bancada: o que foi montado diferente da BOM
 
 A montagem do primeiro cérebro está em curso, pelo manual
 (`docs/montagem/manual_montagem.html`). O que este exemplar tem de diferente
@@ -303,7 +303,7 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   cerâmico multicamada (microfónico, e perde capacitância com 7 V em cima).
 - **Ordem dos botões arcade na tampa: azul A · azul B · branco**, com o branco
   do lado do capacitor alto — decidido na bancada porque o branco (búzios) não
-  tem LED e é mais curto. Medido pelo dB a 19/09: **o branco desce 20 mm abaixo
+  tem LED e é mais curto. Medido pelo dB a 2026-09-19: **o branco desce 20 mm abaixo
   do painel, com conectores**; o capacitor é o **C1, 2200 µF**.
   A `confere_arcade` (`pcb_contorno.py` **v0.24.0**) passou a ter **uma
   profundidade por botão** e **altura de electrolítico por diâmetro** (D16 = 25,
@@ -313,18 +313,18 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   central provava a orientação declarada. **Não prova nada:** o `U2` cai sob o
   furo do meio nas **duas** orientações — medi as duas e só depois vi. Um facto
   que é igual nos dois lados não distingue os dois lados.
-- 🔴 **O cérebro está montado GIRADO 180° face ao modelo (dB, 19/09).** A prova
+- 🔴 **O cérebro está montado GIRADO 180° face ao modelo (dB, 2026-09-19).** A prova
   é a serigrafia: com o lado do utilizador virado para si (logo de frente) e a
   olhar de cima, a serigrafia do **painel** lê-se direita e a do **cérebro** lê-se
   **de cabeça para baixo**. Isso é a orientação `y_max` — a que foi **rejeitada**
-  a 06/09 exactamente por pôr peças altas sob os botões. E nessa orientação o
+  a 2026-09-06 exactamente por pôr peças altas sob os botões. E nessa orientação o
   verificador acusa, medido hoje:
   · **`C1` (2200 µF, 25 mm)** sob o furo **1** — bate com o capacitor alto que
   obrigou a trocar a ordem dos botões, que era o que faltava explicar;
   · **`U2` (17 mm)**, **`J13` (1×3)** e **`J16` (1×8)** sob o furo **2** — os dois
   headers contam **20 mm** com ficha e fio.
 - 🔴 **E nada impedia:** os quatro furos de fixação do cérebro (`H1`–`H4`, ø3,2)
-  formam um **retângulo simétrico** — medido a 19/09 — por isso a placa aparafusa
+  formam um **retângulo simétrico** — medido a 2026-09-19 — por isso a placa aparafusa
   nos dois sentidos, e o sentido errado não tem resistência mecânica nenhuma. O
   `FRENTE_CEREBRO` é uma **constante declarada**, e o `encaixe.py` até **recusa**
   se ela não for `y_min`: a ferramenta acredita na declaração e nunca pergunta à
@@ -345,14 +345,14 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   — não pode ter sido ele. Debaixo do furo da esquerda está a **caixa de pinos
   `J14`** (8,85 mm, mais a ficha do cabo IDC por cima); debaixo do da direita só
   há peças rasteiras. **Por medir:** o que está debaixo do botão branco.
-- ✅ **O amplificador ganhou casa (dB, 20/09): prateleira sobre o cérebro, em
+- ✅ **O amplificador ganhou casa (dB, 2026-09-20): prateleira sobre o cérebro, em
   4 torres M3 COLADAS a quente**, na metade de trás (pontos a 114 · 175 mm da
   esquerda e 5 · 95 mm do topo). O `onde_furar.py` v0.3.0 dizia que os quatro
   pontos **passavam com parafuso isolante** e reprovavam com metálico (caem no
   plano `GND`, em campo largo, com 4,7 a 11,1 mm de folga ao pad mais próximo).
   **O dB escolheu não furar:** a placa é insubstituível a meio da montagem, e o
   ganho de aperto não pagava o risco. Colar é reversível; furar não é.
-  ⚠️ **O calor não chega por contacto** (nota corrigida a 20/09, com a razão do
+  ⚠️ **O calor não chega por contacto** (nota corrigida a 2026-09-20, com a razão do
   dB): o amplificador aparafusa no **topo** da torre e a cola fica na **base**.
   Sobram dois caminhos fracos — condução pela torre (os furos do módulo são a
   parte fria dele; uma anilha de nylon entre módulo e torre corta isto de vez) e
@@ -363,12 +363,12 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   cisalhamento e fraca em descascamento. Um cabo esticado descola a torre antes
   de qualquer temperatura — folga nos fios, e cordão em volta de todo o pé.
   O `encaixe.py` M7 já aceita esta casa; falta o **step-down**.
-- 🔴 **A caixa não tinha lugar definido para nenhum módulo (20/09).**
+- 🔴 **A caixa não tinha lugar definido para nenhum módulo (2026-09-20).**
   O `CAIXA-ACRILICO-MONTAGEM.md` §6 diz *"módulo do amp nos dele [espaçadores]"*,
   mas esses espaçadores nunca existiram: a chapa de fundo tem **4** furos, e são
   os do cérebro. E não há chão: a chapa é **193 × 113** e o cérebro ocupa
   **180 × 100**, o que deixa faixas de **6,5 mm** à direita e atrás — não cabe
-  módulo nenhum ao lado. Medido a 20/09.
+  módulo nenhum ao lado. Medido a 2026-09-20.
   O volume que sobra é **por cima do cérebro**: **31,4 mm** na frente e
   **56,4 mm** atrás (interior menos calço 6 + espaçador 10 + placa 1,6). Atrás
   é onde cabe, e é também para onde as regras de cabo já mandam o amp (os
@@ -378,14 +378,14 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   andar por cima do cérebro tem de passar por cima dos 25 mm do `C1`.
   ⚠️ **E o calor:** a caixa é acrílico fechado. Um classe D a 15 V dentro de
   caixa selada não foi discutido em lado nenhum do repo.
-- ⚠️ **O painel só sai com os jacks TRS fora (dB, 19/09).** Com os TRS
+- ⚠️ **O painel só sai com os jacks TRS fora (dB, 2026-09-19).** Com os TRS
   montados o painel não tem por onde sair: a ponta do encoder fica presa no
   acrílico da tampa. Ordem de montagem e de manutenção: **o painel entra e sai
   antes dos jacks**. Ver `caixa/LICOES-MONTAGEM.md` #11.
 - ⚠️ **(histórico) DIVERGÊNCIA — a orientação do cérebro na caixa.** O modelo declara
   `FRENTE_CEREBRO = "y_min"`, e **nessa** orientação o `C1` fica a **64 mm** do
   botão mais próximo: nada alto sob os furos. O `C1` só cai debaixo de um arcade
-  na orientação **oposta** (`y_max`) — que foi rejeitada em 06/09 exactamente
+  na orientação **oposta** (`y_max`) — que foi rejeitada em 2026-09-06 exactamente
   por pôr o `C1` e a Daisy sob botões. Ou a placa montada está virada ao
   contrário do modelo, ou as cotas dos furos não são as do desenho. **Não
   registei como facto até medir**, porque muda o que a rev D tem de resolver.
@@ -394,26 +394,26 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   7,5 mm. **Por medir:** que peça está debaixo de cada um dos três furos, e a
   altura real do `C1` (o catálogo diz 25 mm, e só 21,5 cabem sob o branco).
   Ver `caixa/LICOES-MONTAGEM.md` #10.
-- **Painel, estado da primeira ligação (22/09):** alimentação **5 V e 3,3 V**
+- **Painel, estado da primeira ligação (2026-09-22):** alimentação **5 V e 3,3 V**
   boas · os **três botões** respondem (o branco dos búzios é **NF**, exceção
   declarada no firmware, `hal` v0.76.0) · os **dois pots** lidos pelo ADC ·
   **LEDs dos arcade a funcionar** depois de trocar o chicote comprado, que vinha
   com as cores cruzadas (bts 15fh).
-  **Cabo do OLED, cores levantadas na peça (dB, 22/09)** — a Waveshare não as
+  **Cabo do OLED, cores levantadas na peça (dB, 2026-09-22)** — a Waveshare não as
   publica, a wiki dela só lista nomes de pino: `J2` pino 1 = **vermelho** (+5 V)
   · 2 **preto** (GND) · 3 **azul** (DIN) · 4 **amarelo** (CLK) · 5 **laranja**
   (CS) · 6 **verde** (DC) · 7 **branco** (RST). A ordem do cabo coincide com a
   do `J2`, logo é ligação direta — contando o pino 1 pelo **pad quadrado**, que
   com o header soldado por baixo fica do lado oposto ao que a serigrafia sugere.
-  ✅ **O encoder está bom (22/09): 19 pulsos em 20 cliques, 3 pushes em 3.**
+  ✅ **O encoder está bom (2026-09-22): 19 pulsos em 20 cliques, 3 pushes em 3.**
   Contava 1 em 20 porque o laço principal estava a 1 volta/s, estrangulado
   pelo painel partido — e o `Debounce` da libDaisy quer 1 kHz. Consertado o
   envio do SPI, passou a contar **sem lhe tocar** (`battle_scars` **15fi**).
-  **O sentido está certo como está (dB, 22/09):** o encoder foi soldado na
+  **O sentido está certo como está (dB, 2026-09-22):** o encoder foi soldado na
   placa, e a orientação que ele dá é a que vale. O que estava errado era a
   minha leitura, não a peça — `enc inverte a` **não** se corre, e o
   `enc_sinal` fica em `+1` no fonte.
-- ❌ **Módulo OLED nº 2 morto: o CONVERSOR DE ALTA TENSÃO dele (22/09).**
+- ❌ **Módulo OLED nº 2 morto: o CONVERSOR DE ALTA TENSÃO dele (2026-09-22).**
   Medido no canto da alimentação do módulo, contra o `GND` dele: **nada acima
   de 5 V**, onde tinham de estar 12–13. O SSD1309 não acende o vidro com os
   5 V da entrada. Isso explica o quadro inteiro — lógica viva, dados a chegar
@@ -430,7 +430,7 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   a guarda só protegia o arranque; (3) os comandos da consola armam sono de um
   minuto. ⚠️ Rev D leva na mesma resistores em série nos cinco sinais
   (`ppc/004 §3b.4`): o firmware é remendo, o cobre é o conserto.
-- ✅ **Dívida das colisões do manual: FECHADA a 22/09 — 78 de 78 figuras
+- ✅ **Dívida das colisões do manual: FECHADA a 2026-09-22 — 78 de 78 figuras
   passam o portão.** E a medição antiga ("15 dos 47") estava a ser feita com
   caixas erradas: os SVGs não declaravam `xmlns`, o verificador não achava o
   `<style>`, e modelava todo rótulo centrado como se começasse no ponto. O que
@@ -440,17 +440,17 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   recurso; o `svg_colisoes.py` v0.9.0 deixou de adivinhar CSS em silêncio. Ver
   `battle_scars.md` **15fl**.
 - ✅ **`tools/portoes.py` v0.1.0 — um comando corre os 16 portões de leitura.**
-  Nasceu do pedido do dB de 22/09 (*"verifique que as bts estão sendo devidamente
+  Nasceu do pedido do dB de 2026-09-22 (*"verifique que as bts estão sendo devidamente
   implementadas e não só registradas"*): 48 ferramentas, nenhuma corrida em
   conjunto, e **três vermelhas** no primeiro varrimento. Traz catraca de dívida —
   50 fantasmas de documentação e 10 achados de encaixe da rev C têm a linha
   declarada; acima dela reprova, abaixo manda baixar a linha.
-- ✅ **22/09: o cérebro toca.** Piezo → pré-amp → Daisy → delay e reverb →
+- ✅ **2026-09-22: o cérebro toca.** Piezo → pré-amp → Daisy → delay e reverb →
   saída de linha, nos **dois** canais, sem clip em lado nenhum. O que estava
   entre a montagem e este parágrafo está em `battle_scars.md` **15fd**, **15fe**
   e **15ff**: ponte com pinos errados, três soldas frias em cadeia, e o divisor
   de entrada que nunca tinha sido medido com o piezo real.
-- **Estado medido deste exemplar (22/09), para não se reinventar depois:**
+- **Estado medido deste exemplar (2026-09-22), para não se reinventar depois:**
   · piezos: **18 nF** (corda de metal, entra no `p1`/`J5`) e **17 nF**
   (estrutura junto à pele do tambor, entra no `p2`/`J6`)
   · `C12` e `C22`: **22 nF de fábrica + 100 nF C0G soldado por cima** →
@@ -465,7 +465,7 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   6 dB — seria trocar o 100 nF do `C12` por 220 nF. Não feito ainda.
   ⚠️ **Tudo isto vive na RAM:** qualquer regravação da Daisy repõe os params a
   zero, e só os capacitores ficam.
-- **DPDT, a fiação que já funcionou (dB, 21/09, descrita da peça montada):
+- **DPDT, a fiação que já funcionou (dB, 2026-09-21, descrita da peça montada):
   3 fios e UM jumper, chave usada na DIAGONAL.** `A1` = linha (mixer) ·
   `B1` **vazia** · `A2`–`B2` jumpeados = o comum, que recebe o sinal ·
   `A3` **vazia** · `B3` = amp (exciter). Nas três posições dá **só linha**,
@@ -485,7 +485,7 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   O desenho do manual mostrava só a de 6 fios e por isso pareceu divergir do
   que estava montado; passou a mostrar as duas, com os jumpers desenhados nas
   três linhas.
-- **Amplificador: energia pelo `J2`, áudio pelo `J11` (dB, 20/09).** O módulo
+- **Amplificador: energia pelo `J2`, áudio pelo `J11` (dB, 2026-09-20).** O módulo
   em mão alimenta-se por **borne de parafuso**, então o `J2` leva a força
   (+15 V/GND, fio curto e grosso — é retorno de força, regra da estrela) e o
   `J11` leva o áudio (2 = referência, 3 = L, 4 = R). ⚠️ **O `J11` pino 1 NÃO se
@@ -495,7 +495,7 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   o par seria calar a duplicação em vez de a resolver. A rev D encolhe o `J11`
   para 1×3.
 - **Step-down em mão: `GND IN` e `GND OUT` são o MESMO nó** (bipado pelo dB,
-  20/09). Logo vai **um fio só** ao `J3` pino 2, do lado `OUT−` — que é o que o
+  2026-09-20). Logo vai **um fio só** ao `J3` pino 2, do lado `OUT−` — que é o que o
   `ATERRAMENTO.md` pede (fio de terra dedicado; o retorno do 5 V por outro
   caminho já custou um clique a ~3 Hz).
 - **`U1` (OPA1642AID da Mouser) marca o pino 1 com uma faixa na ponta**, a ligar
@@ -503,9 +503,9 @@ da BOM fica aqui, para ninguém o ler depois como erro de montagem:
   solto (vermelha no pino 4 = V−, 0,4–0,8 V para os outros). O manual (v0.2.1)
   descreve as duas marcas e o teste.
 
-## 17/09/2026 — um ramo só, e o `J2` é o da placa que foi à fábrica
+## 2026-09-17 — um ramo só, e o `J2` é o da placa que foi à fábrica
 
-O ramo `claude/slack-session-sm2ldz` (rev C, pacotes e encomendas de 12/09) foi
+O ramo `claude/slack-session-sm2ldz` (rev C, pacotes e encomendas de 2026-09-12) foi
 **fundido no `main`**, e os dois ficaram iguais. A placa, as posições e o `J2`
 vêm da rev C; do `main` ficaram as guardas (malha a 1,27, courtyard contra o
 bordo, `sincroniza_pcb` na cadeia, guarda do `liga()`) — nenhuma contradiz a
@@ -515,8 +515,8 @@ placa encomendada.
 jumpers **fêmea** do cabo que vem com o módulo (MX1.25 do lado dele). Ordem
 `1 VCC · 2 GND · 3 DIN · 4 CLK · 5 CS · 6 DC · 7 RST`, que é a do módulo lida a
 partir do VCC: **com jumpers soltos o contrato é o nome de cada fio**, e os sete
-batem. Fontes: página Waveshare «Control Interface» e o dB, 17/09. O PicoBlade
-`RST…VCC` que o `main` teve de 08/09 a 17/09 não chegou a nenhuma placa
+batem. Fontes: página Waveshare «Control Interface» e o dB, 2026-09-17. O PicoBlade
+`RST…VCC` que o `main` teve de 2026-09-08 a 2026-09-17 não chegou a nenhuma placa
 fabricada (cicatriz 15ew).
 
 **Provado sobre as placas encomendadas** (commit `06db1c7`, JLC
@@ -528,14 +528,14 @@ esquerdo (regra 0,5; o corpo fica dentro) — isenção com o número, e na pró
 revisão `J1 x ≥ 26,1`.
 
 **Encomenda JLC `W2026091304545438`: as duas placas, cérebro e painel**
-(confirmado pelo dB, 17/09). **Enviada a 17/09**: 5 de cada, dos pacotes
+(confirmado pelo dB, 2026-09-17). **Enviada a 2026-09-17**: 5 de cada, dos pacotes
 `06db1c7` — as mesmas placas medidas acima. DHL Express, tracking `7099774990`.
 
 ⚠️ **Na montagem, `Q1`/`Q2` do painel:** o mapa do kit diz `AO3400A`; solda-se o
 **`SI2302CDS-T1-GE3`** que veio da Mouser (marcação **N2**). Mesma pinagem, 1 G ·
-2 S · 3 D, conferida na ficha Vishay doc. 68645 (17/09). Ver a nota no MANIFEST.
+2 S · 3 D, conferida na ficha Vishay doc. 68645 (2026-09-17). Ver a nota no MANIFEST.
 
-⚠️ **O painel não tem por onde ser preso (18/09).** Sem furos de montagem; o
+⚠️ **O painel não tem por onde ser preso (2026-09-18).** Sem furos de montagem; o
 encoder `EC11E15244G1` não tem rosca e os pots foram para a tampa. **Reprovado em
 M2 da trilha M do IFÁ10000** (certificação mecânica placa↔caixa, nova, na `/aipcb`).
 Pontos furáveis medidos, em mm do canto superior esquerdo, lado dos componentes:
@@ -543,7 +543,7 @@ Pontos furáveis medidos, em mm do canto superior esquerdo, lado dos componentes
 fora do cobre de outras redes, em acrílico inteiro da tampa. Os primeiros 60 mm
 ficam em balanço. A tampa leva os furos a condizer (a caixa cede à placa).
 
-**Pots do painel (18/09):** a placa tem o layout Bourns PTV09A de montagem
+**Pots do painel (2026-09-18):** a placa tem o layout Bourns PTV09A de montagem
 traseira (3 pinos a 2,5 mm, patas a 8,8 mm entre centros, 7,0 mm da linha dos
 pinos à das patas — conferido na ficha Bourns PTV09). Os pots em casa são de
 16 mm e não cabem; os da Mouser nunca foram comprados. Para os pots **prenderem
@@ -552,7 +552,7 @@ genérico com M7): o furo de ø7 da tampa abre-se para passar a rosca, e as trê
 cotas acima medem-se na peça antes de soldar. **10 kΩ linear (B10K)** — os 100 kΩ
 do projecto são os trimpots do cérebro.
 
-**Cabo painel↔cérebro (18/09):** as duas pontas são a caixa de pinos macho Würth
+**Cabo painel↔cérebro (2026-09-18):** as duas pontas são a caixa de pinos macho Würth
 `61202621621` (4 compradas). O cabo é **IDC 2×13 fêmea-fêmea, com chave,
 directo (pino 1 ↔ pino 1), ~300 mm**: percurso medido ~170 mm pela parede de
 trás (`J1` do painel a 98 mm da frente, `J14` do cérebro a 19) mais os 80 mm de
@@ -567,10 +567,10 @@ do micro-interruptor** decide: pode absolver o `U2` e talvez o `RV1`; o `J14` é
 que mais provavelmente bate. Pela prioridade 2, o que cede é a caixa (mover o
 arcade na tampa), não a placa fabricada.
 
-**Portão novo (18/09): `kicad/encaixe.py`**, só leitura, chamado pelo
+**Portão novo (2026-09-18): `kicad/encaixe.py`**, só leitura, chamado pelo
 `para_fabrica` — hoje recusa as duas placas: o painel em M2, o cérebro em M6.
 
-**Painel, M6 medido pelo dB (18/09): o header do OLED não cabe por cima** — nem com
+**Painel, M6 medido pelo dB (2026-09-18): o header do OLED não cabe por cima** — nem com
 jumpers direitos, nem em L. **Resolvido: header soldado por baixo, jumpers em L
 para trás e para baixo** (`caixa/LICOES-MONTAGEM.md` #7). Âncora de pinos, visível
 dos dois lados: **o pad quadrado é o VCC**, e daí `VCC · GND · DIN · CLK · CS · DC ·
@@ -578,7 +578,7 @@ RST`; confirmar por continuidade com o `TP1` (+5V) e o `TP3` (GND) antes de liga
 Não repetir no `J1` nem nos JST dos LEDs.
 
 **`J1` (IDC) também não cabe por cima** (bate no OLED e no aperto do encoder — dB,
-18/09). **Virar a caixa de pinos para baixo dá 0/26 ou 2/26 pinos certos e, em
+2026-09-18). **Virar a caixa de pinos para baixo dá 0/26 ou 2/26 pinos certos e, em
 duas combinações, +3V3A em curto com GND** — simulado. Solução: **fita soldada
 directamente nos pads do painel, por baixo**, ficha IDC só do lado do cérebro;
 procedimento e continuidade em `caixa/LICOES-MONTAGEM.md` #8. Virar nas **duas**
@@ -590,13 +590,13 @@ e o `C3` vão por baixo (os LEDs `J6`/`J7` com **fios soldados**, não JST); **o
 não podem ir na placa** — ficam na tampa, fiados, e os de 16 mm da gaveta servem
 (não é preciso comprar os RK097). Tabela e âncoras em `LICOES-MONTAGEM.md` #9.
 
-**`J4` do cérebro («a ponte ESP32») é vestígio (18/09):** a tomada da ponte de
-quando era por fio; a ponte está no soquete `U3` desde 06/09. **Fica vazio**;
+**`J4` do cérebro («a ponte ESP32») é vestígio (2026-09-18):** a tomada da ponte de
+quando era por fio; a ponte está no soquete `U3` desde 2026-09-06. **Fica vazio**;
 na próxima revisão, sai. Declarado no `encaixe.py` (M1) — cicatriz 15ez.
 
 ---
 
-## ⚠️ 08/09/2026 — «sincronizado» nunca quis dizer o que eu li
+## ⚠️ 2026-09-08 — «sincronizado» nunca quis dizer o que eu li
 
 O `sincroniza_pcb` escrevia a rede nos pads **só ao acrescentar um footprint
 novo**. Para as peças já na placa, nada refrescava nada: a placa guardava as
@@ -642,7 +642,7 @@ desalinho só aparece quando alguém precisa da versão certa.
 ---
 
 
-## 02/09, fecho — o chiado, e a medição que derrubou dois planos meus
+## 2026-09-02, fecho — o chiado, e a medição que derrubou dois planos meus
 
 **O ruído branco perene**, que o dB descreveu como *"um chiado como um rádio
 fora da estação"*. Quatro factos, todos medidos por ele:
@@ -689,7 +689,7 @@ antes do conversor, ou os transitórios continuam a ser destruídos.
 
 ---
 
-## 02/09, noite — SuMiA™, e o preço de iterar num ser humano
+## 2026-09-02, noite — SuMiA™, e o preço de iterar num ser humano
 
 **O que existe agora.** O `notch` chama-se **`microfonia`** e mudou de eixo:
 era por cadeia (piezo), é por **ramo** (exciter). O laço fecha-se pelo par
@@ -740,7 +740,7 @@ real. Isso só o corpo responde.
 
 ---
 
-## 02/09 — o dia em que um pino sem pull-up custou cinco horas
+## 2026-09-02 — o dia em que um pino sem pull-up custou cinco horas
 
 **A causa era uma linha.** A libDaisy inicia os pinos da UART com
 `GPIO_NOPULL`; com a ponte ESP32 sem alimentação o RX (PB7) ficava a
@@ -790,14 +790,14 @@ e todos eram instrumento, ferramenta ou relatório.
 Contrapeso: consertar agora não é consertar tudo o que se vê — é consertar
 **o que a tarefa de agora está a usar**. Numa caçada, isso é o instrumento.
 
-**A sessão de escuta ganhou um argumento novo** (dB, 02/09): o aviso
+**A sessão de escuta ganhou um argumento novo** (dB, 2026-09-02): o aviso
 "gravar zera os params" é repetido desde agosto e gerido por memória. O
 desenho dos presets já tem a resposta — **global slot 0 = estado de boot**
 — e no dia em que a biblioteca existir, gravar deixa de zerar: carrega o 0.
 A escuta não é só o estrangulamento mais antigo, é o que **aposenta esse
 aviso**. Ver [PRESETS-LISTA.md](operacao/PRESETS-LISTA.md).
 
-~~**Aberto:** os ~5% de base do laço~~ — **FECHADO em 02/09, e não
+~~**Aberto:** os ~5% de base do laço~~ — **FECHADO em 2026-09-02, e não
 existiam.** Dois builds inertes mostraram que a primeira medição depois de
 uma gravação dá ~15 000 voltas/s e as seguintes ~22 800. Descartada a
 primeira, os builds diferem **0,27%** contra **1,3%** de dispersão do
@@ -806,7 +806,7 @@ skill `medicao-limpa`, item 17. Ver battle_scars **15be**.
 
 ---
 
-## 01/09 — o painel passou a desenhar, e o custo ficou medido
+## 2026-09-01 — o painel passou a desenhar, e o custo ficou medido
 
 **O que existe agora.** O OLED deixou de ser duas linhas de texto e passou a
 receber **o framebuffer inteiro** por `hal::OledDesenha(fb)` — uma entrada só,
@@ -842,7 +842,7 @@ não foi medido** e fica declarado como desconhecido.
 
 **Três dívidas abertas, escritas como dívidas:**
 
-1. ~~A semente da jogada de arranque é fraca~~ — **PAGA em 01/09.** A jogada
+1. ~~A semente da jogada de arranque é fraca~~ — **PAGA em 2026-09-01.** A jogada
    passou a ser semeada do **ruído do próprio ADC**, colhido durante 150 ms
    antes de a animação começar. Quatro arranques deram `AB25A781`, `771E58D9`,
    `6E671930`, `190173E9` — e **917 leituras distintas** do conversor em cada
@@ -857,7 +857,7 @@ não foi medido** e fica declarado como desconhecido.
    e o `reboot` derruba a USB — quem reconecta a seguir nunca a veria.
 2. **Faltam 7% de base do laço.** O `noinline` recuperou 8 dos 13 pontos
    perdidos; os outros não têm explicação e não são arredondamento.
-3. ~~A abertura do despertar~~ — **RESOLVIDO pelo dB em 01/09**, e a decisão
+3. ~~A abertura do despertar~~ — **RESOLVIDO pelo dB em 2026-09-01**, e a decisão
    deu à animação um emprego melhor do que enfeite. Ver abaixo.
 
 ### A decisão do dB: três estados, e a jogada passa a ser instrumento
@@ -884,7 +884,7 @@ acabou de ser cancelado.
 
 ### A jogada por búzios: funciona, e o que ela NÃO é
 
-Confirmado pelo dB em 01/09: **funciona**. Mas custou uma volta a chegar lá, por
+Confirmado pelo dB em 2026-09-01: **funciona**. Mas custou uma volta a chegar lá, por
 duas razões que ficam escritas.
 
 **`buzios_on` é interruptor, não gatilho.** Ele arma o detector; quem atira a
@@ -899,9 +899,9 @@ Novo comando de serial **`buzios`** parte a pergunta em três: `disparos`,
 `passaram o buzios_on`, `foram a animação`, e mostra o pico que o envelope
 alcançou ao lado do limiar.
 
-### O espectro a 7 kHz com o framebuffer a 20 Hz — MEDIDO em 02/09
+### O espectro a 7 kHz com o framebuffer a 20 Hz — MEDIDO em 2026-09-02
 
-Pedido em 01/09 e feito agora. Alternância respeitada, primeira leitura
+Pedido em 2026-09-01 e feito agora. Alternância respeitada, primeira leitura
 descartada, piso do vigia em −80 dB.
 
 | condição | pico | ocorrências |
@@ -919,7 +919,7 @@ ocorrências a sobrepor-se. Resultado negativo, e fica escrito.
 **1. A frequência deriva, sempre no mesmo sentido** — 7016,9 → 7017,6 →
 7018,3 → 7018,9 → 7019,8 Hz, ~0,7 Hz por corrida. Artefacto digital do MCU
 estaria preso ao cristal e **não derivaria**. Isto é analógico, e
-provavelmente térmico — o suspeito natural é o step-down da caça de 31/08.
+provavelmente térmico — o suspeito natural é o step-down da caça de 2026-08-31.
 
 **2. O `pk` de banda larga SOBE ao desenhar**: −69,6 → −64,2 dBFS no L e
 −75,2 → −68,3 no R. **+5,4 e +6,9 dB.** O framebuffer adiciona ruído de
@@ -932,7 +932,7 @@ picos deram todos `−24,6/−24,7` contra um piso de `−25`: valor encostado �
 fronteira é sinal de que se está a medir o piso, não o pico. Não foi
 publicado.
 
-### PS_2 — MEDIDO em 02/09, e o mapa do prescaler fecha
+### PS_2 — MEDIDO em 2026-09-02, e o mapa do prescaler fecha
 
 | prescaler | quadro | custo a 20 Hz | vidro |
 |---|---|---|---|
@@ -959,9 +959,9 @@ homogéneo. Verificar custou dois minutos; presumir teria custado uma caça.
 
 ---
 
-## 31/08 — o dia do terra e da microfonia
+## 2026-08-31 — o dia do terra e da microfonia
 
-### 01/09 — O PORTÃO DOS PRESETS ESTÁ FECHADO
+### 2026-09-01 — O PORTÃO DOS PRESETS ESTÁ FECHADO
 
 **As duas decisões foram tomadas pelo dB e estão no código.** O mapa é agora
 **`0xFB5A`** — e o global caiu de 11 para **9 params**, que são os dois
@@ -998,7 +998,7 @@ dono do instrumento não reconhece o nome, o nome falhou. Pior neste repositóri
 **NTC é um componente** (termistor de coeficiente negativo), e há folhas de KiCad
 ao lado do firmware. Os CCs (82–86) não mudaram.
 
-### A ORDEM DE TRABALHO, dada pelo dB em 01/09
+### A ORDEM DE TRABALHO, dada pelo dB em 2026-09-01
 
 | | |
 |---|---|
@@ -1011,7 +1011,7 @@ ao lado do firmware. Os CCs (82–86) não mudaram.
 artificial desde o Schottky, mas **não bloqueia a escuta**, e mexe no caminho
 que toda a telemetria atravessa.
 
-### 01/09 — o cobre fechou, e os presets deixaram de ser inertes
+### 2026-09-01 — o cobre fechou, e os presets deixaram de ser inertes
 
 **O hardware da ponte está feito e medido pelo dB:** Schottky **1N5819** com
 `VIN` a **4,72 V**, teste do gatilho passado (powerbank desligado + USB na
@@ -1039,7 +1039,7 @@ que decide é **bloco 48 → 96**: se o espaçamento cair para 500 Hz, é manipu
 a confirmar. `src/medir_pente.py` mede o espaçamento (o `cotuca_measure`
 responde outra pergunta — dá o pico, não a distância entre picos).
 
-### Fim de 31/08 — o instrumento está de pé
+### Fim de 2026-08-31 — o instrumento está de pé
 
 Firmware **v0.227.0**. Três coisas mudaram no fim do dia:
 
@@ -1069,7 +1069,7 @@ fica pendurado num chip morto, e o laço principal deixa de completar voltas.
 **Sintoma de saúde mais rápido: a série abre em 0,0 s quando está sã, e leva
 ~59 s quando está doente.**
 
-Testado ao fim de 31/08, e o que o teste corrigiu:
+Testado ao fim de 2026-08-31, e o que o teste corrigiu:
 
 | condição | resultado |
 |---|---|
@@ -1160,7 +1160,7 @@ piezo/linha → src_mix → in_gain → gate → DRIVE → PHASER → WARBLE   (
 
 `piezo_mix` é BALANÇO, não crossfade: no centro os dois piezos entram cheios.
 
-**O `out_width` (mid/side) foi aposentado em 20/08** — com dois transdutores
+**O `out_width` (mid/side) foi aposentado em 2026-08-20** — com dois transdutores
 no mesmo corpo não há imagem estéreo a alargar: a soma é acústica, no objeto.
 
 **A matriz decide qual CADEIA entra em qual SAÍDA** (`route_a_l` … `route_b_r`,
@@ -1173,7 +1173,7 @@ cadeia, e por isso aparece dentro do laço.
 | Recurso | Medido |
 |---|---|
 | CPU (suíte + shimmer + detune) | **59,5% média / 65,8% pico** do prazo de 1000 µs |
-| Tabelas | **91/96 params · 91/128 CCs** (o `board` declara, 28/08) |
+| Tabelas | **91/96 params · 91/128 CCs** (o `board` declara, 2026-08-28) |
 | Bloco | **48** (1 ms de prazo) |
 | Custo por efeito | drive +21 µs · warble +14 · phaser +26 · detune **+125** |
 
@@ -1197,7 +1197,7 @@ quando o **exciter** entrar no caminho — antes disso só metaliza o timbre.
 
 ---
 
-## 28/08 — a matriz de roteamento, medida na placa
+## 2026-08-28 — a matriz de roteamento, medida na placa
 
 **O que mudou.** Havia dois andares confundidos num só. Agora estão separados:
 
@@ -1247,7 +1247,7 @@ preset nenhum, saiu de graça — foi a última janela.
   `frz_size` a dizer 20–400 ms com o manifest em 20–165 (o caso que gerou a
   regra das faixas) e o `test_tone_out` com a semântica invertida. O par colapsa
   numa linha (`in_gain_a/b`), e por isso volta a caber em **uma folha**.
-- ✅ **`OUT_L` — RESOLVIDO em 28/08.** Era fiação, e a placa foi inocentada
+- ✅ **`OUT_L` — RESOLVIDO em 2026-08-28.** Era fiação, e a placa foi inocentada
   por testemunha interna antes de se mexer num fio: com o tom em `dest 1` o
   `gov A` sobe a 0,285 enquanto o `gov B` fica em 0,001, e invertem-se com
   `dest 2` — sinal nos dois ramos, simétrico, dentro do firmware.
@@ -1258,7 +1258,7 @@ preset nenhum, saiu de graça — foi a última janela.
   Escrita diferida (máx. 1×/10 s, fora do callback do BLE, porque a NVS tem
   endurance finita e a peça fica meses ligada). Persistência **provada**: o
   contador de arranques foi 2 → 3 → 4 através de resets.
-- ✅ **Os 20 minutos do link BLE — PASSOU em 28/08.** `0 quedas`, com o iPad
+- ✅ **Os 20 minutos do link BLE — PASSOU em 2026-08-28.** `0 quedas`, com o iPad
   acordado e o Loopy em primeiro plano. E o `arranques` subiu **exactamente
   um** desde a leitura anterior — e esse um foi a sonda a abrir a porta —,
   o que fecha também a outra hipótese: **a ponte não reiniciou.** Piscar de
@@ -1298,7 +1298,7 @@ preset nenhum, saiu de graça — foi a última janela.
 
 ---
 
-## 28/08 — o painel: OLED vivo, três encoders a contar
+## 2026-08-28 — o painel: OLED vivo, três encoders a contar
 
 **O OLED funciona.** Enche, apaga e escreve texto formatado, e o espelho dos
 encoders desenha as três linhas com os contadores. Foi a primeira vez — o que
@@ -1342,7 +1342,7 @@ duas fases morriam juntas: elas partilham um comum que o botão não usa.
 
 ---
 
-## 28/08, fim do dia — a sessão de escuta e o que ela cobrou
+## 2026-08-28, fim do dia — a sessão de escuta e o que ela cobrou
 
 **🔴 A placa travou, e o LED de fase foi quem a encontrou.** O `PollMidi`
 drenava com `while(m_tail != m_head)` — condição que persegue um ponteiro
@@ -1388,7 +1388,7 @@ entre os dois piezos através do corpo: **34 dB**.
 
 ---
 
-## 28/08 — os potenciómetros
+## 2026-08-28 — os potenciómetros
 
 **Dois pots, e só cabem dois:** `A0` = D15 (ramo L), `A1` = D16 (ramo R). Os
 outros três do bloco ADC são o encoder global — `A0–A4` são aliases de
@@ -1421,7 +1421,7 @@ O `knob` diz na hora se o ADC lê.
 
 ---
 
-## 31/08 — os pots funcionam, ponta a ponta
+## 2026-08-31 — os pots funcionam, ponta a ponta
 
 **`post_level_l` / `post_level_r` seguem os dois potenciómetros.** Curso completo
 verificado: `0,9752 → 0,0001` com o param a acompanhar. Ruído em repouso
@@ -1447,7 +1447,7 @@ travamento. **Encontrou-o o dB, a olhar para os fios.**
 ⚠️ **Isolar esses dois fios.** Curto de alimentação intermitente desaparece
 sempre que se vai procurar.
 
-## 31/08 — e o defeito do ADC era firmware
+## 2026-08-31 — e o defeito do ADC era firmware
 
 **`post_level_l` / `post_level_r`** (CC 116/117) seguem os dois pots físicos. Custou uma
 sessão inteira, e o culpado não era o cobre:
@@ -1523,7 +1523,7 @@ contra o binário depois de gravar.
 
 ---
 
-## Fechado em 18/08 — MIDI certificado sob carga
+## Fechado em 2026-08-18 — MIDI certificado sob carga
 
 **T16c passou.** 2 779 CCs em 90 s com a carga a **65,1%** do prazo do
 bloco: zero órfão, zero ressync, zero perdido, zero erro de UART. A marca
@@ -1543,7 +1543,7 @@ IFÁ10000 ganhou a **etapa 0 — MEDIÇÃO LIMPA**.
 
 ---
 
-## Ganho sonoro não planejado (18/08): o grave voltou
+## Ganho sonoro não planejado (2026-08-18): o grave voltou
 
 Aceite do dB, sem eu ter mexido em nada de timbre: **"presença de grave que
 nunca teve antes, muito melhor sonoramente."**
@@ -1585,7 +1585,7 @@ IFÁ10000 completo. **Etapa 9 passou:** *"ficou ótimo assim"* — sustentado de
 
 ---
 
-## Para amanhã — pedidos do dB (18/08, fim de sessão)
+## Para amanhã — pedidos do dB (2026-08-18, fim de sessão)
 
 O instrumento está **funcionando e aprovado** ("tudo ok! excelente"). Três
 ajustes do freeze, e os três têm raiz comum de desenho:
@@ -1624,7 +1624,7 @@ como gesto. Rampa de saída de ~300 ms, com os grãos rodando durante a descida.
 
 ---
 
-## Fechado em 20/08 — o shimmer que ardia
+## Fechado em 2026-08-20 — o shimmer que ardia
 
 Duas causas distintas, medidas na bancada offline (os headers são C++ puro,
 então o host reproduz o laço exato):
@@ -1653,7 +1653,7 @@ a aspereza volta a cada boot.
 
 ---
 
-## Fechado em 20/08 — teto de soma do CTOS
+## Fechado em 2026-08-20 — teto de soma do CTOS
 
 A última fronteira estrutural. O watchdog do §3 protegia contra **um efeito
 com defeito**; faltava a proteção contra **N efeitos saudáveis que juntos não
@@ -1693,7 +1693,7 @@ custou **+14 µs**.
 
 ---
 
-## Pivô de 20/08 — duas cadeias de caráter, medido
+## Pivô de 2026-08-20 — duas cadeias de caráter, medido
 
 ```
 p1 → in_gain_A → gate_A → [DRIVE·PHASER·WARBLE] ┐
@@ -1725,7 +1725,7 @@ efeitos nas novas posições (não herdam o aceite da cadeia antiga).
 
 ---
 
-## Fechado em 20/08 — o motor de DSP externo saiu, inteiro
+## Fechado em 2026-08-20 — o motor de DSP externo saiu, inteiro
 
 O delay era o último consumidor do runtime. Reescrito em C++ (`delay.h`, grafo
 lido do export: feedback fixo **0,4**, crossfade, mono nos dois canais), o
@@ -1760,7 +1760,7 @@ Nada mais só-serial.
 
 ---
 
-## Fechado em 20/08 — cauda PARALELA e dois espaços
+## Fechado em 2026-08-20 — cauda PARALELA e dois espaços
 
 O dB pediu p1 com delay e p2 com reverb, e depois corda com shimmer e couro
 com sala limpa. A cauda serial não conseguia nenhum dos dois.
@@ -1796,7 +1796,7 @@ cadeia; e o freeze virou **dois independentes**, um por cadeia, com buffer
 próprio: `frz_on_{a,b}` **são** o gesto de congelar, com `frz_vol` e
 `frz_size` por cadeia.
 
-> **Correção de deriva (22/08).** Este parágrafo descrevia por meses um
+> **Correção de deriva (2026-08-22).** Este parágrafo descrevia por meses um
 > desenho de "fonte e gesto separados", com um `frz_hold` que **nunca
 > existiu como parâmetro** — o `manifest.h:264` já registrava a decisão
 > contrária e a doc ficou no modelo antigo. Achado pelo audit de deriva
@@ -1805,7 +1805,7 @@ próprio: `frz_on_{a,b}` **são** o gesto de congelar, com `frz_vol` e
 **Proteção anti-feedback duplicada** para o ramo B (bloqueante do hardware de
 dois exciters): governor e boost por ramo, `shift_hz` compartilhado — dois
 exciters no mesmo corpo com deslocamentos diferentes bateriam um contra o
-outro. **Painel — pinos (22/08).** D26 = B1 randomizador, D27 = B2 assinalável,
+outro. **Painel — pinos (2026-08-22).** D26 = B1 randomizador, D27 = B2 assinalável,
 **D25 = B3 rearme do CTOS** (novo em v0.111.0). D28 = LB do WIDI.
 D29/D30 reservados pras chaves DPDT dos excitadores. Os três botões usam
 pull-up interno e são ativos em baixo, então pino sem botão lê "solto".
@@ -1818,7 +1818,7 @@ justamente pra não gastar o estado, que é a prova de aliveness.
 **Aberto, e é o mais caro agora: não há preset em flash.** Toda gravação
 zera todo parâmetro e `pre_level_ab` nasce em 0. A perda é silenciosa dos dois
 lados e o sintoma imita defeito de efeito — custou dois diagnósticos
-falsos em 22/08 (bts 12l).
+falsos em 2026-08-22 (bts 12l).
 
 `exc_filter_l/b` gateiam a proteção; quando os DPDT forem soldados, D29/D30
 substituem o param pelo estado real.
@@ -1835,7 +1835,7 @@ compartilhados.
 
 ---
 
-## Auditoria de params (20/08) — uma feature estava morta
+## Auditoria de params (2026-08-20) — uma feature estava morta
 
 O dB pediu auditoria de todos os params, um por um. Três camadas, quinze
 minutos:
@@ -1865,7 +1865,7 @@ que toque no callback.
 
 ---
 
-## Onde estamos (23/08, v0.155.0)
+## Onde estamos (2026-08-23, v0.155.0)
 
 **A cadeia inteira do controlador está provada, e o painel acendeu.**
 
@@ -1885,7 +1885,7 @@ que toque no callback.
 constrói a biblioteca** — cada julgamento vira um preset em vez de uma
 anotação.
 
-## Painel físico (23/08) — encoders vivos, OLED morto
+## Painel físico (2026-08-23) — encoders vivos, OLED morto
 
 **Os três encoders EC11 funcionam**, com o mapa conferido por medição:
 
@@ -1927,7 +1927,7 @@ espremidos — conferir de cabeça falha exatamente quando errar custa mais.*
 
 ---
 
-## Frente na fila — ampliar os búzios (pedido do dB, 23/08, "mas não ainda")
+## Frente na fila — ampliar os búzios (pedido do dB, 2026-08-23, "mas não ainda")
 
 **Os búzios estão com DUAS cartas** — `dly_time` e `dly_mix_a`, num array que
 cabe 8. O manifest já registrava isso como empobrecimento conhecido, herdado
@@ -1984,7 +1984,7 @@ que só a disciplina protege":**
 unificar as duas recusas temporais globais · ponteiros de preset com
 pré-escuta · painel no OLED.
 
-> **QSPI: RESOLVIDO a 29/09** — apagar, programar e reler funcionam com o app a
+> **QSPI: RESOLVIDO a 2026-09-29** — apagar, programar e reler funcionam com o app a
 > correr da QSPI (`qspi prova` passa; `qspi id` → `9D 60 17`). Eram duas causas
 > empilhadas: sair do memory-mapped é `CR.EN=0` e não `ABORT`, e o chip estava
 > em leitura contínua, onde não existe opcode. O RM0433 não foi preciso — o que
@@ -1993,7 +1993,7 @@ pré-escuta · painel no OLED.
 
 ---
 
-## Rota dos presets (22/08) — o difícil resolvido, o tedioso identificado
+## Rota dos presets (2026-08-22) — o difícil resolvido, o tedioso identificado
 
 **A janela ITCM funciona.** A placa sai do memory-mapped executando de RAM
 independente, dialoga com o periférico, volta e sobrevive — seis gravações,
@@ -2016,7 +2016,7 @@ hipótese registrada para quem retomar.
 
 ## Defeitos abertos
 
-**✅ FECHADO 22/08 — a entrada NÃO satura, e o divisor saiu da fila.**
+**✅ FECHADO 2026-08-22 — a entrada NÃO satura, e o divisor saiu da fila.**
 
 Medido com os piezos **montados na escultura**, que é o regime de uso:
 
@@ -2030,7 +2030,7 @@ pos-ganho (in_gain 2,8x):   -0,3 dBFS                  | clip 0
 proteção (1 kΩ + 2× 1N4148), que serve de qualquer jeito porque piezo entrega
 dezenas de volts num transiente forte, e recalibrar o `in_gain`.
 
-**A cicatriz 12a acertou o desfecho.** A medição de 20/08 que dizia "a entrada
+**A cicatriz 12a acertou o desfecho.** A medição de 2026-08-20 que dizia "a entrada
 satura" foi feita com **dedo direto no disco solto** — o caso mais violento que
 a pastilha encontra. Montada e excitada por vibração, ela entrega vinte dB a
 menos. *"Dimensionar antes de medir no regime certo seria resolver um problema

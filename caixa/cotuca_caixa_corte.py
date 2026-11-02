@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """cotuca_caixa_corte.py — ficheiros de corte da caixa em acrílico.
 
-Estrutura (decidida 05/09):
+Estrutura (decidida 2026-09-05):
   · CASCA soldada: TAMPA inclinada + 4 paredes, juntas a dedo nos 4 cantos
     verticais e nas 4 bordas superiores.
   · FUNDO removível: chapa que entra por baixo, apoia em 6 calços colados e
@@ -46,17 +46,17 @@ VERSAO = "0.7.0"
 # Com o digest no nome, geometria diferente E ficheiro diferente, por construcao:
 # nao ha como sobrepor sem dar por isso.
 REV, REV_DATA = 5, "2026-09-06"
-# r1 (06/09) 19 pecas · arcade a 40/100/160 · sem reforco. ENCOMENDA #1263497.
-# r2 (06/09) 20 pecas · arcade a 30/100/170 (70 entre eixos) · REFORCO da tampa
+# r1 (2026-09-06) 19 pecas · arcade a 40/100/160 · sem reforco. ENCOMENDA #1263497.
+# r2 (2026-09-06) 20 pecas · arcade a 30/100/170 (70 entre eixos) · REFORCO da tampa
 #            193x50 com furos o30, confirmado pelo prototipo de madeira de 6 mm.
-# r3 (06/09) + ABERTURAS na parede de tras, pedidas pela placa em
+# r3 (2026-09-06) + ABERTURAS na parede de tras, pedidas pela placa em
 #            caixa/aberturas.json, para reprogramar os modulos montados. A r2 nao
 #            tinha nenhuma livre: o unico recorte de USB e o do decoy PD.
 #            NAO ENCOMENDADA — so tinha a abertura da Daisy.
-# r4 (06/09) DUAS aberturas: Daisy e ESP32-C3, que passou a soquete. A do ESP32
+# r4 (2026-09-06) DUAS aberturas: Daisy e ESP32-C3, que passou a soquete. A do ESP32
 #            mudou de x=164 para x=75 quando o modulo achou lugar livre a
 #            esquerda em vez da direita. NAO ENCOMENDADA.
-# r5 (06/09) as duas aberturas JUNTAM-SE numa: ficavam a 2,6 mm uma da outra, e
+# r5 (2026-09-06) as duas aberturas JUNTAM-SE numa: ficavam a 2,6 mm uma da outra, e
 #            uma tira de 2,6 em acrilico de 3 parte ao montar.
 
 # --------------- parâmetros ---------------

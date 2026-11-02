@@ -18,7 +18,7 @@ aparelho enumera e apaga-o quando ele se vai. A marca de tempo dele e o
 registo do sistema operativo, nao da placa.
 
 ⚠️ E HA BATIMENTO. Uma sonda que so fala quando ha novidade e indistinguivel
-de uma sonda morta — foi o que aconteceu a 29/09 com a versao anterior, que
+de uma sonda morta — foi o que aconteceu a 2026-09-29 com a versao anterior, que
 imprimiu duas linhas e calou-se, e eu quase li o silencio como "sem
 reinicios". Silencio nao e dado.
 """

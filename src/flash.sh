@@ -3,7 +3,7 @@
 # REPOE o estado que a gravacao apagou (ver `estado.py`).
 #
 # Existe porque `make program-dfu` grava o BINARIO EM DISCO, que pode ser
-# de um build anterior se o atual falhou. Em 20/08 isso me fez medir o
+# de um build anterior se o atual falhou. Em 2026-08-20 isso me fez medir o
 # gate no firmware velho e ler o defeito como se fosse o conserto.
 # Ferramenta que reporta sucesso sobre artefato velho e instrumento que
 # mente — e o antidoto e a regra da casa: conferir a versao NO FONTE E
@@ -30,9 +30,9 @@ if [ $RC -ne 0 ]; then
 fi
 echo "  build ok"
 # GUARDAR O ESTADO ANTES DO DFU, nao depois: dali a dois passos a placa
-# esta em bootloader e nao responde a `list`. Pedido do dB, 04/09 —
+# esta em bootloader e nao responde a `list`. Pedido do dB, 2026-09-04 —
 # "ao gravar reponha os valores" — e a §2c da bancada, que dizia isto
-# desde 20/08 e vivia so na minha cabeca. Agora vive no script.
+# desde 2026-08-20 e vivia so na minha cabeca. Agora vive no script.
 ESTADO=build/estado_antes.txt
 python3 estado.py guardar "$ESTADO" || true
 
@@ -44,7 +44,7 @@ else
     python3 - <<'PY' 2>/dev/null || true
 import sys, time, serial
 # A porta certa e a que RESPONDE, e quem sabe perguntar e o `porta_daisy`,
-# que existe desde 25/08 para isto. Uma copia local aqui seria a terceira
+# que existe desde 2026-08-25 para isto. Uma copia local aqui seria a terceira
 # implementacao da mesma coisa. Ver battle_scars 15bd.
 sys.path.insert(0, '.')
 try:
@@ -79,7 +79,7 @@ esp=sys.argv[1]
 # sempre basta falha silenciosamente na vez em que nao basta.
 # ⚠️ TAMBEM AQUI, e nao so no `dfu go` la em cima.
 #
-# Em 02/09 consertei o bloco do `dfu go` para usar o `porta_daisy` e
+# Em 2026-09-02 consertei o bloco do `dfu go` para usar o `porta_daisy` e
 # DEIXEI ESTE no `p[-1]`. E a 15bd a repetir-se dentro do mesmo ficheiro,
 # no mesmo dia: um conserto nao adoptado por TODOS os chamadores nao esta
 # feito.

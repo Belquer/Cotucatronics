@@ -20,7 +20,7 @@ LED conta o código de cada requisito em falta, ciclando entre eles:
 não há serial a que perguntar. Mas **o texto do erro repete-se** a cada três
 ciclos: ligar a serial a qualquer momento mostra o motivo.
 
-> Custou meia hora em 31/08. O `min_knobs` dizia 4, o painel tem 2, e a placa
+> Custou meia hora em 2026-08-31. O `min_knobs` dizia 4, o painel tem 2, e a placa
 > recusou arrancar — correctamente. Mas piscava 5 Hz constante (indistinguível
 > de um travamento) e dizia o erro **uma vez**, no boot, para um host que ainda
 > não estava a escutar. **Alarme de boot que se perde, numa forma sem
@@ -30,7 +30,7 @@ ciclos: ligar a serial a qualquer momento mostra o motivo.
 
 Com o instrumento vivo, o mesmo LED conta a **fase** em que o laço está. Corre
 no callback de áudio, e por isso **sobrevive a um laço morto** — foi o que
-endereçou o *livelock* do `PollMidi` em 28/08.
+endereçou o *livelock* do `PollMidi` em 2026-08-28.
 
 | piscadas | fase |
 |---|---|
@@ -929,7 +929,7 @@ necessário** — RESET e toca.
 | `gov_ceiling` | 0.85 | proteção, não cor |
 | `fx2_on` / `buzios_on` | **1 / 1** | nascem ligados |
 
-### ~~`in_gain` — pós-fonte, PRÉ-GATE~~ 🗑️ REMOVIDO 28/08
+### ~~`in_gain` — pós-fonte, PRÉ-GATE~~ 🗑️ REMOVIDO 2026-08-28
 
 > **O param saiu, e este registo fica.** O `Governor` é um AGC: 18 dB postos
 > no `in_gain` eram 18 dB que ele tirava adiante, e a saída não mudava — o
@@ -957,7 +957,7 @@ ganho.
 > o caminho errado** — o certo é o buffer de alta impedância
 > ([BOARDS.md](BOARDS.md)), que levanta o sinal antes do ADC e melhora a
 > relação sinal/ruído em vez de multiplicar os dois. A conclusão de
-> 16/08 ("a Daisy dá conta do piezo") segue válida *para o nível em que
+> 2026-08-16 ("a Daisy dá conta do piezo") segue válida *para o nível em que
 > ele estava* — e esse nível mudou de significado.
 
 ### A regra do bypass, revogada por medição
@@ -1130,7 +1130,7 @@ Faltam: `level`, `src mix`, `gov ceiling`, `reverb mix`, `in gain`,
 `fx2 gain` (CC 25) e `fx2 on` (CC 33) — slot Fx2 vazio, o esperado é o CC
 chegar e não fazer nada.
 
-**#1 e #2 DESBLOQUEADOS em 18/08:** o freeze v0.3.1 passou no aceite de 10 s
+**#1 e #2 DESBLOQUEADOS em 2026-08-18:** o freeze v0.3.1 passou no aceite de 10 s
 (*"ficou ótimo assim"*) e o widget do `freeze mix` foi corrigido pro CC 27 no
 app. A regra que valeu até aqui continua valendo pro próximo: **conserto não
 verificado não vira linha verde em lugar nenhum.**
@@ -1145,7 +1145,7 @@ primeiro aceite foi anulado justamente por um veto falso do watchdog, e os
 app no número errado — diagnóstico que nenhuma leitura de código
 encontraria, e que o dB corrigiu no app assim que o PAT apontou.
 
-**Mapa reduzido em 18/08:** `src_mix` (CC 23) e `gov_ceiling` (CC 24) saíram
+**Mapa reduzido em 2026-08-18:** `src_mix` (CC 23) e `gov_ceiling` (CC 24) saíram
 do mapa MIDI por segurança — ver T17. Os widgets deles no controlador seguem
 mandando e a placa ignora, o que aparece como `msgs completas` maior que
 `APLICADAS` (95 de 887 numa sessão). **Isso é a proteção funcionando, não

@@ -4,7 +4,7 @@
 // Filtros de rejeicao estreitos, contra microfonia.
 //
 // POR QUE ISTO EXISTE, e por que nao ha alternativa mecanica:
-// medido em 31/08 numa peca em que o tambor e SOLDADO ao botijao —
+// medido em 2026-08-31 numa peca em que o tambor e SOLDADO ao botijao —
 // um cone de metal, corpo unico. Exciter e piezo vivem na mesma peca
 // rigida, sem junta nenhuma entre eles, e por isso todos os gestos
 // mecanicos falharam: cruzar o roteamento, procurar o no, inverter a
@@ -56,7 +56,7 @@ namespace cotuca
 class Notch
 {
   public:
-        // QUATRO, e nao duas. Subido em 02/09, no meio de uma sessao de
+        // QUATRO, e nao duas. Subido em 2026-09-02, no meio de uma sessao de
     // escuta em que cada modo morto entregava o lugar ao seguinte: 1536,
     // 3276, 535 Hz — e a segunda boca acabou-se ao terceiro. Para por o
     // 3276 tive de APAGAR os 834 que o dB tinha afinado, e a escolha foi

@@ -1,5 +1,6 @@
 # ppc/008 — a versão nova: cérebro, silêncio, e o que a pesquisa desmentiu
 
+<!-- doc-check: ignore cotuca_cerebro (pasta do projecto KiCad, nao e param) -->
 <!-- doc-check: ignore funcao_dos_pads (portao do /aipcb, ferramenta em kicad/) -->
 
 > **Estado: PESQUISA FECHADA EM 5 DE 7 FRENTES, decisão principal TOMADA.**
@@ -39,11 +40,11 @@ preço de mercado. Claramente certo a partir de **300–500 un/ano**.
 **A 10 unidades, a placa própria perde feio:** semanas e dois ou três respins
 para poupar $250.
 
-### E o projecto já tinha decidido isto, a 05/09
+### E o projecto já tinha decidido isto, a 2026-09-05
 
 A `COTUCA_BOM.md` diz, e a razão é a mesma de hoje:
 
-> *"A Daisy Seed rev4. **RESOLVIDO a 05/09: passou a Seed3.** A pinagem foi
+> *"A Daisy Seed rev4. **RESOLVIDO a 2026-09-05: passou a Seed3.** A pinagem foi
 > conferida pino a pino... o nome STM32 bate nos 40 pinos, sem uma excepção...
 > Símbolo, footprint e netlist ficaram **idênticos**. O que mudou a favor:
 > codec **TI TAC5242**, 32 bit/192 kHz, chão de ruído de −120 dB."*
@@ -53,7 +54,7 @@ semanas**, e o Seed3 é `drop-in`: *"backwards compatible with existing firmware
 binaries"*. Zero alterações de firmware, zero de netlist.
 
 ⚠️ **Acção com prazo:** a Electrosmith deixou de vender por distribuidores e o
-mercado de memória está tenso até 2027. A 29/09 havia **44 Seed3** e **436
+mercado de memória está tenso até 2027. A 2026-09-29 havia **44 Seed3** e **436
 Seed2 DFM** em stock directo, a $29,99.
 
 ### Quando reabrir a questão da placa própria
@@ -102,7 +103,7 @@ morre por aqui.
 Candidatos verificados: **STM32H7R3Z8T6** ($6,10/100 na ST, 600 MHz, LQFP144) +
 **APS6404L-3SQR-SN** (8 MB, SOP-8, 3,0 V, $2,90/100).
 
-### 🔴 CORRECÇÃO (estudo da memória, 29/09): a PSRAM NÃO devolve os 12,9 pontos
+### 🔴 CORRECÇÃO (estudo da memória, 2026-09-29): a PSRAM NÃO devolve os 12,9 pontos
 
 Aquela medição foi **externo contra interno**, não SDRAM contra PSRAM. Custo de
 uma linha de cache de 32 bytes (o Cortex-M7 tem linha fixa de 32 B):
@@ -188,7 +189,7 @@ Busca por chamadas reais a libDaisy fora da camada de placa (`daisy::`,
 `main.cpp` são comentários.
 
 **A migração é um ficheiro** — 94 funções, das quais ~20 tocam no silício. E o
-`qspi_raw.cpp` escrito a 29/09 é CMSIS puro: **transfere-se tal e qual**.
+`qspi_raw.cpp` escrito a 2026-09-29 é CMSIS puro: **transfere-se tal e qual**.
 
 **Proposta de refinamento:** acrescentar `AllocFast()` (SRAM interna) ao lado do
 `AllocBig()` (memória externa), para a partição quente/frio ficar **explícita e
@@ -204,7 +205,7 @@ auditável no arranque**, como já é a contabilidade da SDRAM.
 | com o painel OLED aceso | −69,3 | −71,3 dBFS (**−6 dB**) |
 | **antes do conserto de terra** | −34,2 | −34,2 dBFS |
 | saída em repouso | pico −74,7 · média −89,6 dBFS | |
-| tom permanente medido 29/09 | **4999,1 Hz a 33,9 dB**, dominância 1,00 | |
+| tom permanente medido 2026-09-29 | **4999,1 Hz a 33,9 dB**, dominância 1,00 | |
 
 **Refazer o terra valeu 35 a 39 dB.** Trocar o conversor vale ~15–33 dB.
 
@@ -437,7 +438,7 @@ piezo**. Fica como experiência, não como facto.
 
 ---
 
-## §6b — 🔴 O CONSTRANGIMENTO NÃO É PREÇO, É PRAZO (29/09)
+## §6b — 🔴 O CONSTRANGIMENTO NÃO É PREÇO, É PRAZO (2026-09-29)
 
 Lido em páginas ao vivo da Mouser: **52 semanas de prazo de fábrica em
 praticamente todo o conjunto STM32H7.** O preço deixa de ser a variável.
@@ -474,7 +475,7 @@ Verificado no `cotuca_cerebro`, e coincide com a prática publicada:
 | **Ilha de AGND com ponte ÚNICA** (`MAPA-DE-TERRA.md` §6) | a decisão que a Daisy empurra para a carrier (`R7 DNI 0R`) |
 | **Pré-amp encostado aos jacks, dentro da ilha, pista curta** | o padrão de particionamento por colocação |
 | **Malha do piezo ao AGND só de UM lado** | *"nas duas pontas fecha laço"* |
-| **`2200 µF` + `100 n` no terminal do amp** | medido a 31/08: sem banco, o exciter zumbe |
+| **`2200 µF` + `100 n` no terminal do amp** | medido a 2026-08-31: sem banco, o exciter zumbe |
 
 **A parte analógica do desenho não é o problema.** Isso é informação: o ruído
 que resta não está nestas decisões.
@@ -689,7 +690,7 @@ ADC entrava em colapso durante a realimentação, e a causa raiz era **mecânica
 > interruptores, que às vezes **desligava com as vibrações fortes da caixa
 > produzidas pelo altifalante**."*
 
-⚠️ **Isto pode ser o mecanismo da noite de 29/09** — o DPDT desligado, os fios
+⚠️ **Isto pode ser o mecanismo da noite de 2026-09-29** — o DPDT desligado, os fios
 do OLED, o conector da ponte. *"Consertaremos uma coisa e outra vai estragar"*
 deixa de ser azar e passa a ser previsão. **A revisão mecânica tem de contar com
 a vibração do próprio instrumento**, não só com a montagem.
@@ -795,7 +796,7 @@ falhas documentadas de acoplamento de class-D em entradas de alta impedância.
 
 **Lacunas declaradas, para ninguém as tratar como factos:**
 
-- ~~Zero preços da Mouser/DigiKey.~~ **FECHADO a 29/09** por leitura em
+- ~~Zero preços da Mouser/DigiKey.~~ **FECHADO a 2026-09-29** por leitura em
   navegador real. Onde as duas fontes coincidem, **batem ao cêntimo**:
   H750VBT6 $7,81/100, H723ZGT6 $9,80/100, H7B3ZIT6Q $9,75/100 na ST **e** na
   Mouser. A tabela de preços está validada por duas fontes independentes.

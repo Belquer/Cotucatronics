@@ -21,7 +21,7 @@
 // cortava a faixa por baixo em 0.05 pra chegar em ~59 ms, porque abaixo
 // disso o ouvido nao separa em eco, so espessa.
 //
-// PISO DE 50 ms AGORA MORA AQUI (decisao do dB, 20/08), e a cerca sai
+// PISO DE 50 ms AGORA MORA AQUI (decisao do dB, 2026-08-20), e a cerca sai
 // da tabela de params. Isso devolve o CURSO INTEIRO ao fader: `dly_time`
 // volta a ser 0..1 de ponta a ponta, e 0 ja e um tempo util. Cerca no
 // EFEITO vale pra qualquer manifest que o use; cerca no PARAM valia so

@@ -9,7 +9,7 @@ header nao se deduz do `Dnn` — `D0` e o pino 1, mas `D15` e o 22 e `D17` e o
 
 A fonte e o `Seed3_pinout.csv` do fabricante, guardado ao lado deste ficheiro.
 
-⚠️ A 05/09 a placa passou do **Daisy Seed rev4** para o **Seed3**. A pinagem
+⚠️ A 2026-09-05 a placa passou do **Daisy Seed rev4** para o **Seed3**. A pinagem
 foi CONFERIDA pino a pino entre os dois CSV: **o nome STM32 bate nos 40 pinos,
 sem uma excepcao** — e a doc do fabricante diz, textualmente, *"maintaining
 pin-to-pin compatibility with the original Seed pinout and footprint"*. Por
@@ -20,7 +20,7 @@ isso o simbolo e o footprint NAO mudam. Mudou o codec (TI TAC5242, 32 bit /
 funcao alternativa (`SDMMC1_D3`), o do Seed3 poe `GPIO`. Comparar coluna a
 coluna da 35 "diferencas" que nao existem. **Compara-se o nome STM32.**
 A antiga fonte era o `Daisy_Seed_Rev4_Pinout.csv`, que vinha dentro da
-libDaisy (`doc/`). Regra do dB, 04/09: "a folha de dados da Seed para o
+libDaisy (`doc/`). Regra do dB, 2026-09-04: "a folha de dados da Seed para o
 `Dnn` -> header, e nada de memoria".
 
 ⚠️ E A REGRA VALE COM MAIS FORCA PARA O QUE SE JULGA SABER. No mesmo dia
@@ -112,7 +112,7 @@ def gerar():
     # o net-tie da ponte legivel no ESQUEMA.
     #
     # ⚠️ ISTO E CONVENIENCIA DE DESENHO, NAO A PLACA. No modulo real eles
-    # estao na DIAGONAL — medido pelo dB em 04/09: o 20 no canto inferior
+    # estao na DIAGONAL — medido pelo dB em 2026-09-04: o 20 no canto inferior
     # esquerdo, colado ao USB-C, e o 40 no superior direito, no extremo
     # oposto. O condutor da ponte atravessa o modulo, e isso e restricao de
     # LAYOUT que o esquema nao mostra. Ver MAPA-DE-TERRA.md §2.

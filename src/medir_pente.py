@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """medir_pente v0.3.0 — mede o ESPACAMENTO de um pente no espectro.
 
-Nasceu em 01/09 para um defeito concreto: o dB reportou um pente de
+Nasceu em 2026-09-01 para um defeito concreto: o dB reportou um pente de
 1000 Hz exactos, de 1 kHz a 23 kHz, +17 a +35 dB, IMUNE as tres
 topologias de alimentacao. 48000/48 = 1000 — cheira a taxa de bloco.
 

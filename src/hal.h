@@ -122,7 +122,7 @@ bool             ButtonNormalmenteFechado(int index);
 // Le o pad LB (D28) do WIDI. Nivel CRU, sem interpretacao.
 //
 // ERAM TRES. LG (D29) e LR (D30) foram lidos por dois dias e NAO
-// MARCARAM NADA util — removidos do hardware em 20/08, com D29/D30 de
+// MARCARAM NADA util — removidos do hardware em 2026-08-20, com D29/D30 de
 // volta ao pool de pinos livres (ver BOARDS.md).
 //
 // O QUE O LB INDICA SEGUE PERGUNTA ABERTA. A legenda da CME ("pisca
@@ -149,7 +149,7 @@ void             RebootToDfu();
 
 // VERSAO DA IMPLEMENTACAO DO HAL, perguntada ao backend.
 //
-// NASCEU DE UM BUILD QUEBRADO (25/08). O `board` passou a imprimir as
+// NASCEU DE UM BUILD QUEBRADO (2026-08-25). O `board` passou a imprimir as
 // versoes de modulo, e para o hal eu usei `COTUCA_HAL_VERSION` direto no
 // main.cpp — macro que vive no hal_daisy_seed.cpp e portanto nao existe
 // ali. Compilou zero vezes e mesmo assim foi commitado: o check_docs e os
@@ -197,7 +197,7 @@ void             PollMidi();
 // ENFILEIRA E VOLTA SEMPRE. Nunca bloqueia, nunca espera pelo mundo.
 // Fila cheia = descarta o resto da mensagem e conta.
 //
-// ⚠️ Ate 31/08 isto era um `BlockingTransmit`, e com a ponte ESP32
+// ⚠️ Ate 2026-08-31 isto era um `BlockingTransmit`, e com a ponte ESP32
 // desligada a placa NAO ARRANCAVA: o D14 flutuava, a USART1 entrava em
 // erro, e o `MidiEspelha` ficava la dentro. Um cabo solto matava o
 // instrumento. Ver hal_daisy_seed.cpp e HARDWARE.md §4.
@@ -254,7 +254,7 @@ uint32_t         SerialTruncadas();
 // por padrao de quadratura. Transicao mais curta que 1 ms se perde. Por
 // isso quem chama ACUMULA e CONTA, para que a perda apareca como numero
 // em vez de sumir.
-// UM encoder. Foram tres ate 05/09; o dB fechou a interface num so, com
+// UM encoder. Foram tres ate 2026-09-05; o dB fechou a interface num so, com
 // combinacao de push+giro a fazer o resto e uma lista de presets simples.
 //
 // ⚠️ E ISSO RESOLVEU O CONFLITO DO D17 DE GRACA. O push do encoder G vivia
@@ -264,7 +264,7 @@ uint32_t         SerialTruncadas();
 // foi precisa: a decisao de INTERFACE dissolveu o problema de HARDWARE.
 static constexpr int kNumEncoders = 1;
 bool             EncoderInit();
-// O NOME DO PINO VEM DO HAL, nao de uma lista no shell. Ate 28/08 o
+// O NOME DO PINO VEM DO HAL, nao de uma lista no shell. Ate 2026-08-28 o
 // `encpino` carregava os nove nomes escritos a mao: uma terceira copia
 // do mapa, noutro ficheiro, que o compilador nao consegue cruzar.
 const char*      EncoderPinNome(int idx, int qual);   // qual: 0=faseA 1=faseB 2=push
@@ -308,7 +308,7 @@ void             Reiniciar();
 // ATRASO DA DRENAGEM DE MIDI. `MidiAtrasos` conta as voltas que deixaram
 // bytes para tras; `MidiSobraPico`, a maior sobra vista. Zero nos dois =
 // a drenagem acompanha. A subir = ela esta a perder, e foi perder PARA
-// SEMPRE que travou a placa em 28/08.
+// SEMPRE que travou a placa em 2026-08-28.
 uint32_t         MidiAtrasos();
 uint32_t         MidiSobraPico();
 // O TAMANHO DO ANEL VEM DO HAL, nao de uma copia aqui. Escrevi

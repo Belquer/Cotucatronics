@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# ⚠️ ESTE GERADOR NAO E MAIS A FONTE. A 04/09 o projeto passou a ser
+# ⚠️ ESTE GERADOR NAO E MAIS A FONTE. A 2026-09-04 o projeto passou a ser
 # `kicad/cotuca_cerebro/` — um projeto KiCad a serio, com `.kicad_pro` e
 # folha raiz, que e o que as folhas multiplas exigem. As copias soltas que
 # viviam aqui foram removidas: havia TRES do `cotuca_energia.kicad_sch`, com
@@ -15,7 +15,7 @@
 #
 # ⚠️ O `.kicad_sch` NO REPO ESTA UM PASSO A FRENTE DESTE GERADOR.
 #
-# ⚠️⚠️ 05/09 — ESTE GERADOR ESTA AGORA DUAS GERACOES ATRAS, E NAO SE CORRE.
+# ⚠️⚠️ 2026-09-05 — ESTE GERADOR ESTA AGORA DUAS GERACOES ATRAS, E NAO SE CORRE.
 #
 # Ele ainda emite `U1A`/`U1B`/`U1C` sobre os simbolos `OPA` e `OPAPWR`, que
 # foram APOSENTADOS por estarem errados de duas maneiras: os pinos 1 e 3
@@ -29,7 +29,7 @@
 # Ver `docs/operacao/esquematicos/revB/ERC-ISENCOES.md` (mapa completo) e a
 # skill `kicad` §6b e §7d. Correr isto reintroduz os dois defeitos de uma vez.
 #
-# O `kiutils` escreve o formato `20211014` (KiCad 6). A 04/09 as duas folhas
+# O `kiutils` escreve o formato `20211014` (KiCad 6). A 2026-09-04 as duas folhas
 # foram migradas com `kicad-cli sch upgrade` para `20260306` (KiCad 10.0.5),
 # que e o que a maquina do dB abre.
 #
@@ -54,7 +54,7 @@ from kiutils.items.syitems import SyRect, SyPolyLine, SyCircle
 from kiutils.symbol import Symbol, SymbolPin
 
 # ⚠️ ESCREVE AO LADO DE SI PROPRIO, e nao num caminho absoluto.
-# Ate 01/09 estava `/mnt/user-data/outputs/`, que e o disco da maquina
+# Ate 2026-09-01 estava `/mnt/user-data/outputs/`, que e o disco da maquina
 # onde ele foi escrito e nao existe em mais lado nenhum: o gerador
 # rebentava com FileNotFoundError na primeira tentativa de o correr aqui.
 # Fonte que so corre na maquina do autor nao e fonte — e um artefacto
@@ -84,7 +84,7 @@ def mksym(name, gr, pins, ref="U"):
                   Property(key="Footprint",value="",position=Position(X=0,Y=0,angle=0),effects=eff(hide=True)),
                   Property(key="Datasheet",value="",position=Position(X=0,Y=0,angle=0),effects=eff(hide=True))]
     # ⚠️ SEM SUFIXO NO `entryName` — o kiutils acrescenta `_unitId_styleId`
-    # ele proprio. Ate 01/09 este ficheiro passava `f"{name}_0_1"` E os
+    # ele proprio. Ate 2026-09-01 este ficheiro passava `f"{name}_0_1"` E os
     # ids, e o kiutils somava outra vez: saia `D_V_0_1_0_1`, com QUATRO
     # numeros. O KiCad separa o sufixo `_<unidade>_<estilo>` para deduzir
     # o nome do pai, encontrava `D_V_0_1` — que nao existe — e recusava a
@@ -231,7 +231,7 @@ w((300,260), P("R6","1")); w(P("R6","2"), (300,288))
 w((300,260), P("C5","1")); w(P("C5","2"), (335,280))
 # ⚠️ JUNCAO SOB CADA BANDEIRA — sem ela o pino NAO LIGA.
 #
-# Medido em 01/09: pino que cai no MEIO de um segmento de fio nao se
+# Medido em 2026-09-01: pino que cai no MEIO de um segmento de fio nao se
 # liga no KiCad; ele liga em PONTA de fio ou onde ha juncao explicita.
 # As bandeiras estao a meio do fio de proposito (na coordenada do
 # rotulo tapavam-no), entao precisam da juncao.
@@ -262,8 +262,8 @@ _n=["PRE-AMP DE PIEZO - Cotucatronics carrier rev B",
  "   OPA1642 5,1 nV/rtHz = 0,72 uV RMS integrados; TL072 18 nV/rtHz = 2,5 uV. Onze dB, que e a margem em jogo.",
  "5  CERAMICO X7R E PIEZOELECTRICO. Num corpo que vibra vira microfone. C0G nos pequenos, FILME no acoplamento",
  "   de saida (C4). Nunca X7R onde passa sinal.",
- "6  C1 22p e C2 1n cortam RF antes do ADC - inclui a comutacao a 400 kHz do classe D, medida acoplada em 01/09.",
- "7  Alimentacao pelo MESMO trilho de 15V do amp, filtrada por R7/C6/C7. Medido em 01/09 em tres topologias:",
+ "6  C1 22p e C2 1n cortam RF antes do ADC - inclui a comutacao a 400 kHz do classe D, medida acoplada em 2026-09-01.",
+ "7  Alimentacao pelo MESMO trilho de 15V do amp, filtrada por R7/C6/C7. Medido em 2026-09-01 em tres topologias:",
  "   separar as fontes PIORA (8-16 kHz: +9,6 -> +17,3 -> +24,3 dB). Trilho unico + filtro local, nao separacao.",
  "8  Layout: pre-amp encostado aos jacks de entrada, dentro da ILHA DE AGND, pista de entrada curta.",
  "   Cabo do piezo blindado, malha ao AGND SO do lado da placa - nas duas pontas fecha laco.",
@@ -281,7 +281,7 @@ for ref,typ,val,x,y in PLACE:
     rx,ry,vx,vy = {"v":(x+8,y-2,x+8,y+3), "h":(x-4,y-8,x-4,y+10), "ha":(x-4,y+8,x-4,y-8), "u":(x-4,y-4,x-4,y-9)}[m]
     # ⚠️ REFERENCIA `#...` NAO SE MOSTRA — convencao do KiCad para
     # simbolo que nao e peca (PWR_FLAG e afins). E aqui nao e so
-    # convencao: medido no render de 01/09, o texto "#FLG1" caia por
+    # convencao: medido no render de 2026-09-01, o texto "#FLG1" caia por
     # cima do rotulo `V+PRE` e o "#FLG2" por cima do `GND`. O CORPO da
     # bandeira estava livre; era a etiqueta que colidia — e etiqueta e
     # o elemento que mais colide, como a lista fechada diz.

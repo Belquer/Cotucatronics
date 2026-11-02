@@ -9,7 +9,7 @@
 # Se disseres nao por engano: Definicoes > Privacidade e Seguranca > Bluetooth.
 #
 # 🔴 v0.2.0 — A FORMA DE UM TIRO SO ESTAVA ERRADA. Ate a v0.1.0 isto
-# perguntava UMA linha de comandos, enviava, e fechava. A 29/09, a meio de um
+# perguntava UMA linha de comandos, enviava, e fechava. A 2026-09-29, a meio de um
 # troubleshoot com a caixa montada, o dB escreveu `board`, a janela fechou-se,
 # e o `oled te` que escreveu a seguir foi parar ao prompt de "Enter para
 # fechar". Perdeu-se o comando e perdeu-se a sessao — e cada comando novo

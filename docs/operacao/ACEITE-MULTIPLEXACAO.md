@@ -1,6 +1,6 @@
 # Aceite de hardware — multiplexação por canal (voos A e B)
 
-> **Estado (23/08, v0.171.0): o lado do FIRMWARE está VERDE.**
+> **Estado (2026-08-23, v0.171.0): o lado do FIRMWARE está VERDE.**
 > O que resta é remapear o Loopy — ver
 > [RETRABALHO-LOOPY.md](RETRABALHO-LOOPY.md).
 >
@@ -13,7 +13,7 @@
 > | endereçamento por canal, 37 pares | banco nativo |
 > | recusa de ch4–ch6 na entrada | varredura do mapa |
 >
-> **Os learns do Loopy foram apagados em 23/08**, então o remapeamento é
+> **Os learns do Loopy foram apagados em 2026-08-23**, então o remapeamento é
 > do zero e não uma migração de 37 widgets. O mapa inteiro está no
 > documento acima.
 >
@@ -58,7 +58,7 @@ no fio.
 
 **Escuta = manda + 3**, mesmo número de CC nos seis.
 
-> Este documento descreveu o esquema de QUATRO canais até 23/08 — e o
+> Este documento descreveu o esquema de QUATRO canais até 2026-08-23 — e o
 > roteiro mandava conferir `ch3`/`ch4` quando a placa já falava
 > `ch4`/`ch5`/`ch6`. **Documento errado não fica parado: manda alguém ao
 > lugar errado com o multímetro na mão** (bts 14h).
@@ -67,7 +67,7 @@ no fio.
 
 Serial aberta (`./monitor.command`), e `log on` antes de tudo.
 
-**1. TX nos canais certos.** ✅ **FEITO 23/08** — o MIDI Wrench viu os três
+**1. TX nos canais certos.** ✅ **FEITO 2026-08-23** — o MIDI Wrench viu os três
 valores de `level` (CC 100 = 64, 127, 0) em **ch5**. O caminho
 `placa → WIDI → iPad` está provado ponta a ponta.
 

@@ -32,7 +32,7 @@ clang++ -std=c++14 -O2 -I. test_presets.cpp -o /tmp/cotuca_test_presets \
 
 # ⚠️ ESTES DOIS NASCERAM DEPOIS E NUNCA FORAM LIGADOS AQUI.
 #
-# Descoberto em 02/09: este corredor chamava TRES dos cinco testes
+# Descoberto em 2026-09-02: este corredor chamava TRES dos cinco testes
 # nativos. O `teste_macro` e o `teste_tarol` existiam, compilavam e
 # passavam — e ninguem os corria, porque o caminho que toda a gente usa
 # nao os chamava. Apodreceram em silencio, e eu subi a versao de um deles

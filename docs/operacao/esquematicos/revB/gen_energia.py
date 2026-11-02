@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 #
-# ⚠️ ESTE GERADOR NAO E MAIS A FONTE. A 04/09 o projeto passou a ser
+# ⚠️ ESTE GERADOR NAO E MAIS A FONTE. A 2026-09-04 o projeto passou a ser
 # `kicad/cotuca_cerebro/` — um projeto KiCad a serio, com `.kicad_pro` e
 # folha raiz, que e o que as folhas multiplas exigem. As copias soltas que
 # viviam aqui foram removidas: havia TRES do `cotuca_energia.kicad_sch`, com
@@ -15,12 +15,12 @@
 #
 # ⚠️ O `.kicad_sch` NO REPO ESTA UM PASSO A FRENTE DESTE GERADOR.
 #
-# ⚠️ 05/09 — a folha viva perdeu 13 blocos `(instances)` obsoletos que este
+# ⚠️ 2026-09-05 — a folha viva perdeu 13 blocos `(instances)` obsoletos que este
 # gerador nao escreve e que apontavam para uma folha (`/ec86fb39...`) que nao
 # existe, com o nome de projecto errado. Nao os voltes a escrever a mao: o
 # KiCad escreve-os certos quando grava, e as outras tres folhas nao tem nenhum.
 #
-# O `kiutils` escreve o formato `20211014` (KiCad 6). A 04/09 as duas folhas
+# O `kiutils` escreve o formato `20211014` (KiCad 6). A 2026-09-04 as duas folhas
 # foram migradas com `kicad-cli sch upgrade` para `20260306` (KiCad 10.0.5),
 # que e o que a maquina do dB abre.
 #
@@ -83,7 +83,7 @@ def mksym(name, graphics, pins, ref="U", val=""):
         Property(key="Datasheet", value="",  position=Position(X=0, Y=0, angle=0), effects=eff(hide=True)),
     ]
     # ⚠️ SEM SUFIXO NO `entryName` — o kiutils acrescenta `_unitId_styleId`
-    # ele proprio. Ate 01/09 este ficheiro passava `f"{name}_0_1"` E os
+    # ele proprio. Ate 2026-09-01 este ficheiro passava `f"{name}_0_1"` E os
     # ids, e o kiutils somava outra vez: saia `D_V_0_1_0_1`, com QUATRO
     # numeros. O KiCad separa o sufixo `_<unidade>_<estilo>` para deduzir
     # o nome do pai, encontrava `D_V_0_1` — que nao existe — e recusava a
@@ -238,7 +238,7 @@ JUNC = [(85, 45.46), (140, 45.46), (58, 98), (80, 98), (80, 120),
 
 # ⚠️ JUNCAO SOB CADA BANDEIRA — sem ela o pino NAO LIGA.
 #
-# Medido em 01/09: pino que cai no MEIO de um segmento de fio nao se
+# Medido em 2026-09-01: pino que cai no MEIO de um segmento de fio nao se
 # liga no KiCad; ele liga em PONTA de fio ou onde ha juncao explicita.
 # As bandeiras estao a meio do fio de proposito (na coordenada do
 # rotulo tapavam-no), entao precisam da juncao.
@@ -264,12 +264,12 @@ _n = ["ENERGIA - Cotucatronics carrier rev B",
  "1  Decoy PD sempre energizado: a negociacao acontece com SW1 desligado. Ligar depois nao renegoceia.",
  "2  SW1 latching, LED em WIRING A (a jusante do contacto) = indicador de TRILHO VIVO, nao de gesto.",
  "   Powerbank que nao negoceia fica em 5V, e o LED denuncia em vez de os amps ficarem mudos sem razao.",
- "3  C1 2200u/35V low-ESR + C2 100n colados no TERMINAL do amp. Medido 31/08: sem banco, o exciter zumbe.",
+ "3  C1 2200u/35V low-ESR + C2 100n colados no TERMINAL do amp. Medido 2026-08-31: sem banco, o exciter zumbe.",
  "4  Modulos FORA da placa: decoy PD, step-down, TPA3116 estereo. Todos com terminais de parafuso.",
- "5  SEM banco na entrada do step-down: tentado em 31/08 e desfeito.",
+ "5  SEM banco na entrada do step-down: tentado em 2026-08-31 e desfeito.",
  "6  Step-down de saida FIXA, por decisao. Modulo com regime selecionavel poe 24V a um jumper do VIN da Daisy,",
  "   e numa serie de dezenas uma seleccao que pode estar errada vai estar errada nalguma.",
- "7  D2 1N5819: sem ele, o USB da ponte realimenta o trilho de 5V inteiro (medido 31/08). Faixa = catodo,",
+ "7  D2 1N5819: sem ele, o USB da ponte realimenta o trilho de 5V inteiro (medido 2026-08-31). Faixa = catodo,",
  "   virada para a ponte. Cerca de 0,3V de queda; a ponte aceita 4,3-6,0V. Medido: 4,72V no VIN dela.",
  "8  Orcamento do trilho de 5V: Daisy 300 + ponte 100 (pico 300) + OLED 30 + LEDs 2x30 = ~490 mA de ~1,5A.",
  "   O resistor de serie dos LEDs, dimensionado para ~30 mA, e o que mantem a folga em 3x.",
@@ -282,7 +282,7 @@ sch.uuid = U()
 from kiutils.items.common import PageSettings
 
 # ⚠️ ESCREVE AO LADO DE SI PROPRIO, e nao num caminho absoluto.
-# Ate 01/09 estava `/mnt/user-data/outputs/`, que e o disco da maquina
+# Ate 2026-09-01 estava `/mnt/user-data/outputs/`, que e o disco da maquina
 # onde ele foi escrito e nao existe em mais lado nenhum: o gerador
 # rebentava com FileNotFoundError na primeira tentativa de o correr aqui.
 # Fonte que so corre na maquina do autor nao e fonte — e um artefacto
@@ -300,7 +300,7 @@ for ref, typ, val, x, y in PLACE:
     s.properties = [
         # ⚠️ REFERENCIA `#...` NAO SE MOSTRA — convencao do KiCad para
         # simbolo que nao e peca. Ver a nota gemea em gen_preamp.py: no
-        # render de 01/09 a etiqueta da bandeira caia por cima do
+        # render de 2026-09-01 a etiqueta da bandeira caia por cima do
         # rotulo global. O corpo estava livre; era o texto que colidia.
         Property(key="Reference", value=ref, position=Position(X=x, Y=y - 11, angle=0),
                  effects=eff(1.27, "left", ref.startswith("#"))),

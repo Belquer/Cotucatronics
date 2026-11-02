@@ -145,7 +145,7 @@ periférico nenhum.
 | GND | — | — | qualquer DGND | GND do WIDI |
 | **LB** (estado do link) | `seed::D28` | — | — | pad **LB** do WIDI |
 
-> ### D29 e D30 ESTÃO LIVRES desde 20/08
+> ### D29 e D30 ESTÃO LIVRES desde 2026-08-20
 >
 > Eram **LG** (D29) e **LR** (D30), lidos junto com o LB para descobrir
 > qual pad carregava o estado de conexão. Foram medidos por dois dias e
@@ -213,7 +213,7 @@ Antes de encostar o ferro, o estado que importa:
 **O mapa vive em [docs/operacao/CCMAP.md](../docs/operacao/CCMAP.md), que é
 GERADO** do `manifest.h` pelo `gerar_ccmap.py` — e é lá que se lê, não aqui.
 
-Até 04/09 esta secção trazia uma tabela à mão intitulada *"do instrumento
+Até 2026-09-04 esta secção trazia uma tabela à mão intitulada *"do instrumento
 atual"* que listava quatro params já inexistentes. Tabela de mão a envelhecer
 por cima de uma gerada mente com ar de autoridade; foi removida em vez de
 corrigida, porque corrigi-la seria manter viva a que mente.
@@ -235,7 +235,7 @@ Esta seção mandava, até a v0.40.0, esquecer e reparear o WIDI depois de
 todo RESET. **A regra foi revogada por medição** — não existe procedimento
 especial. Grave, teste, siga.
 
-| Medido em 18/08, v0.40.0, sem reparear | |
+| Medido em 2026-08-18, v0.40.0, sem reparear | |
 |---|---|
 | depois de DFU + gravação + reset | 65 CCs, 220 bytes |
 | órfãos / ressync / perdidos / erros | 0 / 0 / 0 / 0 |
@@ -313,7 +313,7 @@ diferentes, e confundi-las custava três passos onde bastam dois.
 | **BLE** (o que o pino LB vê) | ✅ conectado — `LB 0/100%` |
 | **Sessão CoreMIDI** (o que o Loopy usa) | ❌ morre |
 
-**O ritual, medido em 18/08:**
+**O ritual, medido em 2026-08-18:**
 
 1. ~~Esquecer o Bluetooth no iPad~~ — **desnecessário**, o pareamento nunca
    quebrou
@@ -341,7 +341,7 @@ entra no caminho crítico.**
 #### Camada 1 — o LED no pad LB
 
 LED + 470 Ω soldados no pad **LB** do WIDI Core, com **V3 como fonte**.
-**Só o LB** — LG e LR foram removidos em 20/08 (ver o quadro na seção de
+**Só o LB** — LG e LR foram removidos em 2026-08-20 (ver o quadro na seção de
 solda do WIDI).
 
 Legenda oficial do módulo, conforme a **CME**:
@@ -357,7 +357,7 @@ Legenda oficial do módulo, conforme a **CME**:
 > conectado/desconectado — carrega outra coisa, e qual ainda não se sabe.
 >
 > A saída óbvia era "então é o LG ou o LR". Os dois foram lidos por dois
-> dias e **não marcaram nada**, e por isso saíram do hardware em 20/08.
+> dias e **não marcaram nada**, e por isso saíram do hardware em 2026-08-20.
 > Restou uma pergunta aberta com **dois candidatos a menos** — o que é
 > progresso, não o mesmo lugar de antes.
 >
@@ -580,10 +580,10 @@ e em memória externa isso custa mais que o inlining rende.
 
 ---
 
-## Pool de SRAM dos módulos — HISTÓRICO (até 20/08)
+## Pool de SRAM dos módulos — HISTÓRICO (até 2026-08-20)
 
 > ⚠️ **Os números desta secção são do sistema de módulos externos, que saiu
-> inteiro a 20/08.** Ficam porque a lição de dimensionamento sobrevive à
+> inteiro a 2026-08-20.** Ficam porque a lição de dimensionamento sobrevive à
 > ferramenta. **O valor de hoje é outro: 92,4%**, e vive no
 > [STATUS.md](../docs/STATUS.md). Não comparar os dois.
 

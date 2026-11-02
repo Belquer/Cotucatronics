@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """gerar_ccmap v0.11.0 — gera a tabela do CCMAP.md a partir de src/manifest.h.
 
-Sem versao ate 28/08; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
+Sem versao ate 2026-08-28; nasce em 0.2.0 e nao em 0.1.0 de proposito, para nao
 se dar por novo um ficheiro que ja tinha historia.
 
 USO:  python3 gerar_ccmap.py [caminho/para/manifest.h]
@@ -22,7 +22,7 @@ import subprocess
 from datetime import datetime
 
 # ⚠️ UMA VERSAO SO, e por isso e uma CONSTANTE e nao texto repetido.
-# Ate 04/09 a docstring dizia 0.9.0 e a tabela emitida dizia 0.7.0:
+# Ate 2026-09-04 a docstring dizia 0.9.0 e a tabela emitida dizia 0.7.0:
 # duas afirmacoes sobre a mesma coisa no mesmo ficheiro, e a que o
 # leitor ve era a velha.
 VERSAO = "0.11.0"
@@ -50,7 +50,7 @@ src = MANIFEST.read_text()
 
 # ---- simbolo -> nome real do param ----
 sym2name = {}
-# `(\[\d\])*` e nao `(\[\d\])?`: em 31/08 o notch declarou-se com DOIS
+# `(\[\d\])*` e nao `(\[\d\])?`: em 2026-08-31 o notch declarou-se com DOIS
 # indices — `p_notch_hz[cadeia][boca]` — e o gerador, que so sabia ler um,
 # nao resolveu oito CCs. Ele FALHOU ALTO em vez de emitir tabela torta,
 # que e o desenho certo; mas o episodio mostra que o padrao de declaracao
@@ -113,7 +113,7 @@ NOTAS = {
     "test_tone_freq": "80…2000 Hz · nasce em 848",
     "post_level_l": "<b>volume do ramo L</b> — POT físico em A0 (D15)",
     "post_level_r": "<b>volume do ramo R</b> — POT físico em A1 (D16)",
-    # (out_l / out_r sairam do mapa a 22/09 — uma fonte de verdade por
+    # (out_l / out_r sairam do mapa a 2026-09-22 — uma fonte de verdade por
     #  controlo, e a chave fisica e a fonte. A nota foi com eles: nota de um
     #  vinculo que ja nao existe e lapide invertida, e este gerador acusa-a.)
     "tarol_on": "<b>TAROLATOR</b> — ruído percussivo com o envelope da pancada; nasceu oitavador e não faz oitava",
@@ -293,7 +293,7 @@ if "--stdout" in sys.argv:
 
 # ---- ESCREVE OS DOIS DESTINOS ----
 #
-# Ate 28/08 este script so IMPRIMIA, e quem o chamava colava o resultado
+# Ate 2026-08-28 este script so IMPRIMIA, e quem o chamava colava o resultado
 # no CCMAP.md a mao. O cartao A4 nem isso: era mantido inteiro a mao, e
 # ficou com 27 numeros de CC que ja nao existiam — anterior ao esquema de
 # seis canais, e ninguem notou porque um PDF nao compila e nao falha.
@@ -304,7 +304,7 @@ def carimbo(nvinc, ncc, ver_manifest):
     """Data, contagens, firmware e limpeza da arvore.
 
     ⚠️ O CARIMBO E DO GERADOR, NAO DA LEMBRANCA DE QUEM O CORRE. Pedido do
-    dB, 04/09: "sempre adiciona a data a lista de CCs pra eu saber quando
+    dB, 2026-09-04: "sempre adiciona a data a lista de CCs pra eu saber quando
     ela foi gerada". Ate aqui o cabecalho do CCMAP.md era escrito a mao, e
     ficou a dizer "87 vinculos em 50 numeros de CC / Firmware v0.177.0"
     enquanto o fonte tinha 119 em 81 — sem data, ninguem podia sequer

@@ -46,7 +46,7 @@ static inline int CadeiaDoParam(int c) { return g_dup_por_cadeia ? c : 0; }
 #include "drive.h"
 #include "phaser.h"
 #include "warble.h"
-// detune.h NAO e incluido: o efeito saiu do build em 20/08 (decisao de
+// detune.h NAO e incluido: o efeito saiu do build em 2026-08-20 (decisao de
 // ouvido do dB — o warble ja cobre o territorio de modulacao de altura,
 // e o detune custava 125 us, cinco vezes o phaser). O arquivo segue no
 // repo, intacto e revivivel. Ver docs/FEATURES.md, secao Arquivo.
@@ -136,7 +136,7 @@ static bool     ble_drop_flagged = false;
 // ============================================================
 // QUARENTENA DE RECONEXAO — o detector de dump virou DEFESA
 //
-// CASO DE CAMPO (18/08): transicoes de link BLE fazem o iOS/Loopy
+// CASO DE CAMPO (2026-08-18): transicoes de link BLE fazem o iOS/Loopy
 // reenviar a posicao de todos os widgets de uma vez. O instrumento
 // obedecia: som silenciado na desconexao, e freeze com frz_size no
 // TETO na reconexao. Comandos fantasma, que ninguem deu.
@@ -228,7 +228,7 @@ static void QuarTick()
 //
 // Zerar os defaults seria contornar: faria o controlador SEMPRE vencer.
 // Isto inverte: a placa fala primeiro, e o controlador se alinha a ela.
-// 120, NAO 34. Em 22/08 o 34 foi dado ao `drv_drive` na reorganizacao
+// 120, NAO 34. Em 2026-08-22 o 34 foi dado ao `drv_drive` na reorganizacao
 // do mapa e ninguem cruzou as duas listas: o `OnMidiCc` intercepta o CC
 // de comando ANTES do mapa e retorna, entao `drv_drive` ficou surdo a
 // MIDI e cada gesto naquele fader disparava um push de estado inteiro.
@@ -273,7 +273,7 @@ static inline uint8_t StatusEspelho(uint8_t canal_vinculo)
 static uint8_t  eco_ult[cotuca::kMaxParams];  // 0xFF = nunca visto
 static uint32_t eco_prox_ms = 0;
 static uint32_t eco_proprio = 0;   // mensagens minhas que VOLTARAM
-// CONTADOR DE TRANSMISSAO, e ele faltava. Em 22/08 eu li `eco_proprio`
+// CONTADOR DE TRANSMISSAO, e ele faltava. Em 2026-08-22 eu li `eco_proprio`
 // como "quantas sairam" — ele conta quantas VOLTARAM. Os dois numeros
 // so coincidem se o caminho de volta for perfeito, que e exatamente a
 // hipotese sob teste. Medir o retorno e chamar de envio responde a
@@ -490,7 +490,7 @@ struct EstadoEnc
 };
 static EstadoEnc enc_st[cotuca::hal::kNumEncoders];
 
-// ⚠️ AQUI ESTEVE UM AVISO NO PAINEL E UM GESTO DE TRES CLIQUES. (02/09)
+// ⚠️ AQUI ESTEVE UM AVISO NO PAINEL E UM GESTO DE TRES CLIQUES. (2026-09-02)
 //
 // Serviam para armar a calibracao de microfonia por gesto no encoder G. O
 // dB substituiu o gatilho por um melhor — o supressor corre no ARRANQUE e
@@ -541,7 +541,7 @@ static uint32_t var_tudo_alto = 0, var_tudo_baixo = 0;
 // ADC desta montagem.
 // ---- OS QUATRO NUMEROS, E O QUE OS DECIDIU ----
 //
-// MEDIDO na bancada em 31/08, com os pots PARADOS:
+// MEDIDO na bancada em 2026-08-31, com os pots PARADOS:
 //   cru        espalhamento 0,014–0,021 · desvio 0,0056
 //   filtrado   espalhamento 0,0075–0,0092 · desvio 0,0024
 //   resultado  623 ESCRITAS POR SEGUNDO sem ninguem tocar
@@ -555,7 +555,7 @@ static uint32_t var_tudo_alto = 0, var_tudo_baixo = 0;
 // passou a QUANTIZAR no passo de MIDI, com histerese, e so escreve quando
 // o passo MUDA. A zona morta deixou de ser um palpite e passou a ser uma
 // propriedade do protocolo.
-// AFROUXADOS EM 31/08, e os numeros vieram de medicao, nao de palpite.
+// AFROUXADOS EM 2026-08-31, e os numeros vieram de medicao, nao de palpite.
 //
 // Os 0,02 e 0,85 foram escolhidos contra um ruido de sigma 0,0056 — que
 // era ARTEFACTO: o `VarreLivres` roubava o pino ao ADC e a entrada estava
@@ -585,7 +585,7 @@ static bool     knob_vivo[cotuca::kNumKnobs] = {false};
 static bool     knob_dono[cotuca::kNumKnobs] = {false};
 // ---- PAINEL TEMPORARIO ----
 //
-// MEDIDO EM 31/08, e o numero decidiu o desenho: com o painel aceso o
+// MEDIDO EM 2026-08-31, e o numero decidiu o desenho: com o painel aceso o
 // chao de ruido da ENTRADA sobe 6 dB nos dois canais (-75,3 -> -69,3
 // dBFS) e aparece um espeto a 7040 Hz com dominancia 0,95 — 22 dB
 // acima do que la estava. Espeto com dominancia dessas e acoplamento
@@ -648,7 +648,7 @@ static void ArmaSonoConsola()
 // SEQUENCIA:
 //   apagado --[encoder]--> a engolir (apagado) --[500 ms parado]--> aceso
 //   aceso --[5 s sem tocar]--> apagado
-// 200 ms, AFINADO PELA MAO em 31/08 — 500 pareceu lento, 100 apertado,
+// 200 ms, AFINADO PELA MAO em 2026-08-31 — 500 pareceu lento, 100 apertado,
 // 200 ficou. A janela nao precisa de cobrir a rotacao inteira: cada
 // detente ADIA o fim dela, entao so tem de ser maior que o intervalo
 // entre dois detentes de uma rotacao continua.
@@ -924,7 +924,7 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
     using namespace cotuca;
     // A PLACA NAO OBEDECE A PROPRIA VOZ.
     //
-    // Medido em 22/08 com o `midi`: cada mensagem que saia no canal 2
+    // Medido em 2026-08-22 com o `midi`: cada mensagem que saia no canal 2
     // voltava pelo RX e era ACEITA, porque o receptor esta em omni —
     // omni inclui o canal em que ela mesma fala. A separacao de canal
     // estava declarada no cabecalho e nao existia no codigo: metade de
@@ -998,7 +998,7 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
 
     // CC que chega num canal sem vinculo: nao move nada, e e CONTADO.
     // Sem o contador isto seria indistinguivel de "o widget nao mandou",
-    // que e o erro que custou uma sessao inteira em 22/08.
+    // que e o erro que custou uma sessao inteira em 2026-08-22.
     // ---- CC DE COMANDO: nao tem param, e morreria na linha abaixo ----
     //
     // O 121 nao e um param — e uma ordem. Passa-lo pelo mapa exigiria
@@ -1006,7 +1006,7 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
     // apareceria no `list`, no preset e no espelho: tres sitios onde
     // ele nao existe.
     //
-    // Ate 01/09 isto NAO EXISTIA. O `PRESETS-LISTA.md` descrevia o
+    // Ate 2026-09-01 isto NAO EXISTIA. O `PRESETS-LISTA.md` descrevia o
     // desenho e nada o implementava, entao os botoes de preset do Loopy
     // eram inertes — documento a descrever intencao como se fosse
     // comportamento, que e uma armadilha para quem o le.
@@ -1075,7 +1075,7 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
 
         if(quar_seen_n >= kQuarDistinct)
         {
-            // ---- A DEFESA VIROU ESTORVO (18/08) ----
+            // ---- A DEFESA VIROU ESTORVO (2026-08-18) ----
             //
             // A quarentena nasceu porque o despejo de reconexao punha
             // `src_mix` e `gate_thresh` em valores perigosos e emudecia
@@ -1097,7 +1097,7 @@ static void OnMidiCc(uint8_t ch, uint8_t cc, uint8_t value)
             // e para de descartar. Libera o que estava seguro.
             QuarFlush();
             ble_reconnects++;
-            // CARIMBA A BASE DA SESSAO. Ate 22/08 este contador era
+            // CARIMBA A BASE DA SESSAO. Ate 2026-08-22 este contador era
             // LIDO e nunca ESCRITO: o `ble` imprimia
             // `CcCount() - ble_session_base` com a base congelada em
             // zero, ou seja, o TOTAL rotulado como "msgs da sessao".
@@ -1317,7 +1317,7 @@ static constexpr float     kPitchSeconds = 0.40f;
 // ---- SHIMMER: motor PROPRIO, no ponto de derivacao da cauda ----
 //
 // Motor separado do `pitch` porque "compartilhado" e afirmacao sobre a
-// FONTE, nao sobre o recurso (docs/CTOS.md §5b, correcao de 18/08). O
+// FONTE, nao sobre o recurso (docs/CTOS.md §5b, correcao de 2026-08-18). O
 // shimmer grava a SAIDA DO REVERB — e a cauda que sobe de oitava e
 // realimenta; detune e warble vao gravar o seco, noutro ponto.
 static cotuca::PitchEngine pitch_tail;
@@ -1348,7 +1348,7 @@ static cotuca::EffectSlot warble_slot;
 // pra nao produzirem um fade-in de estreia que ninguem pediu.
 static cotuca::Suave       suave_gl, suave_gr;
 
-// DELAY EM C++ — substitui o modulo externo em 20/08. Era o ultimo
+// DELAY EM C++ — substitui o modulo externo em 2026-08-20. Era o ultimo
 // consumidor daquele runtime no instrumento. Ver delay.h: o grafo do
 // patch foi lido do export e reproduzido, feedback 0.4 incluido.
 static cotuca::Delay       delay_fx;
@@ -1359,7 +1359,7 @@ static cotuca::Suave       suave_dly, suave_rev;
 
 // LEVEL SUAVIZADO — o master de saida era o UNICO ganho aplicado cru.
 //
-// Medido em 27/08 pelo ouvido do dB: mover o fader do `level` depressa
+// Medido em 2026-08-27 pelo ouvido do dB: mover o fader do `level` depressa
 // produzia um clique. A causa e de forma, nao de valor: o `level` era
 // lido UMA vez por bloco e multiplicado igual nas 48 amostras, entao
 // cada bloco era um degrau. A 48 kHz sao 1 ms por degrau — inaudivel
@@ -1384,7 +1384,7 @@ static cotuca::Suave       suave_dir_l, suave_dir_r;
 
 // ---- MATRIZ DE ROTEAMENTO 2x2 ----
 //
-// Qual CADEIA entra em qual SAIDA. Ate 28/08 isto era codigo fixo com
+// Qual CADEIA entra em qual SAIDA. Ate 2026-08-28 isto era codigo fixo com
 // as quatro celulas ligadas (`out[0] = out[1] = A + B`), e a matriz
 // cheia reproduz exatamente esse som.
 //
@@ -1416,7 +1416,7 @@ static bool                notch_vivo[cotuca::Manifest::kCadeias] = {false, fals
 //
 // TRAVESSIA DE CONTEXTO, e ela e o risco deste bloco. O callback
 // ESCREVE, o laco LE. A disciplina e a mesma que a do anel de MIDI,
-// que travou a placa em 28/08 por perseguir um ponteiro vivo:
+// que travou a placa em 2026-08-28 por perseguir um ponteiro vivo:
 //
 //   callback: enche ate ao fim, poe `cheio=true`, e PARA de escrever
 //   laco:     so le quando `cheio`, e limpa a flag quando acaba
@@ -1616,7 +1616,7 @@ static int SomaTravados()
 // unico CC do instrumento que anda na direcao da saida: todos os outros
 // sao o dB falando com a placa; este e a placa falando com o dB.
 //
-// DOIS VALORES, NAO UM INDICE (decisao do dB, 20/08):
+// DOIS VALORES, NAO UM INDICE (decisao do dB, 2026-08-20):
 //   127 = teto de SOMA — N efeitos saudaveis nao cabem juntos
 //    64 = watchdog POR-EFEITO — o shimmer sozinho estourou o orcamento
 //
@@ -1704,7 +1704,7 @@ static bool SacrificaUm(uint32_t us, uint32_t prazo, bool por_estouro)
 // Confundir os dois faz a protecao criar o defeito que deveria evitar.
 //
 // O teto (850) e orcamento administrativo; o prazo (1000) e a parede
-// fisica. Medido em 22/08: com tudo ligado o pico fica em ~975 us — o
+// fisica. Medido em 2026-08-22: com tudo ligado o pico fica em ~975 us — o
 // teto e ultrapassado em TODO pico e nada falha. Um criterio de pico
 // que mirasse o teto derrubaria efeito o tempo todo numa configuracao
 // que toca limpa: seria a protecao criando o defeito que deveria
@@ -1720,7 +1720,7 @@ static bool SacrificaUm(uint32_t us, uint32_t prazo, bool por_estouro)
 // punir o instrumento por um acidente.
 // ESCOLHIDOS, NAO MEDIDOS — e a etiqueta importa.
 //
-// 22/08: o contador de estouros mediu ZERO em todo regime de bancada
+// 2026-08-22: o contador de estouros mediu ZERO em todo regime de bancada
 // (uso desenhado, extremo com tudo ligado, e sob provocacao dirigida
 // ao `sync` de 119 CCs, varredura de fader e chaveamento do
 // wavefolder). Sem estouro observado, nao ha dado do qual derivar
@@ -1813,7 +1813,7 @@ alignas(32) static float warble_mem[cotuca::Manifest::kCadeias][1924];
 static float             tone_buf[kMaxBlock];
 static volatile uint32_t   shimmer_pico = 0; // so o shimmer, sem o reverb
 
-// BISSECCAO (18/08): uma variavel, um voo. Com 0 aqui o freeze nao
+// BISSECCAO (2026-08-18): uma variavel, um voo. Com 0 aqui o freeze nao
 // aloca, nao inicializa e nao entra no callback — se o som e a serial
 // voltarem, o culpado esta isolado; se nao voltarem, esta em outro
 // lugar e o freeze fica inocentado por medicao, nao por opiniao.
@@ -1916,9 +1916,9 @@ alignas(32) static float reverb_mem[cotuca::Manifest::kCadeias][28160];
 // O ARRAY E DIMENSIONADO PELA MESMA CONSTANTE QUE LIMITA O LACO, e a
 // historia deste par explica por que:
 //
-// Em 22/08 o array ficou em [2] enquanto o laco passou a `b < 3`:
+// Em 2026-08-22 o array ficou em [2] enquanto o laco passou a `b < 3`:
 // `btn_prev[2] = now` escrevia FORA, em cima de b2_sim/b3_sim.
-// Consertado alargando os dois a mao — e em 23/08 o par divergiu de
+// Consertado alargando os dois a mao — e em 2026-08-23 o par divergiu de
 // novo, no outro sentido: o array e o laco em 3, e o botao de indice 3
 // (freeze B, D22) NUNCA ERA LIDO. O nivel cru chegava, o contador ficava
 // em zero, e a suspeita caiu na solda do dB, que estava perfeita.
@@ -2006,7 +2006,7 @@ static cotuca::Compressor comp_l, comp_r;   // sobe a media
 static cotuca::Governor gov_l, gov_r; // só no ramo OUT_L (exciter)
 static cotuca::Limiter  lim_l; // um por ramo: estados independentes
 static cotuca::Limiter  lim_r;
-// ANTI-FEEDBACK POR RAMO. Ate 20/08 so o ramo L tinha: OUT_R era jack
+// ANTI-FEEDBACK POR RAMO. Ate 2026-08-20 so o ramo L tinha: OUT_R era jack
 // de linha e nao realimentava. Com DOIS exciters os dois fecham laco, e
 // a protecao duplica junto com o hardware.
 static cotuca::Shifter  shift_l, shift_r;
@@ -2045,7 +2045,7 @@ static volatile uint8_t loop_fase = 0;
 // ---- SUB-FASE: qual INQUILINO da fase 2 ----
 //
 // A fase 2 nao e uma linha, sao SETE chamadas — e o instrumento sabia
-// dizer a rua, nao a porta. Medido em 31/08: a placa trava sempre na
+// dizer a rua, nao a porta. Medido em 2026-08-31: a placa trava sempre na
 // fase 2, de instalacao limpa, e o prompt apontava o `TransmitInternal`
 // como suspeito. Mas na fase 2 tambem moram a varredura de pinos (que
 // ja roubou o ADC uma vez), o OLED por SPI (que ja foi o meu palpite
@@ -2064,7 +2064,7 @@ static volatile uint8_t loop_sub = 0;
 // O `loop_fase` e o `loop_sub` sao escritos pelo laco a ~20 000 voltas/s e
 // lidos pelo callback de audio. Ler DUAS volateis nao e ler um par: o laco
 // avanca entre uma leitura e a outra, e o que sai pode ser uma combinacao
-// que o codigo NUNCA produz. Aconteceu em 01/09 — li `1 e 3`, que e
+// que o codigo NUNCA produz. Aconteceu em 2026-09-01 — li `1 e 3`, que e
 // impossivel pela ordem das etapas, gastei uma analise inteira a
 // explica-lo, e fui procurar no sitio errado por causa dele.
 //
@@ -2086,7 +2086,7 @@ static volatile uint32_t loop_snap = 0;
 // contexto que detectou (familia A dos bugs de ordem: quem arma e quem
 // checa nao podem estar em contextos diferentes).
 //
-// BYPASS PERMANENTE ate `ctos rearm`, decisao do dB em 18/08. Religar
+// BYPASS PERMANENTE ate `ctos rearm`, decisao do dB em 2026-08-18. Religar
 // sozinho transformaria defeito reproduzivel em intermitente — e
 // intermitente foi o que custou a sessao inteira. O instrumento perde o
 // EFEITO, nunca a BASE.
@@ -2179,10 +2179,10 @@ __attribute__((noinline)) static void ColheEntropia()
 // ============================================================
 // SuMiA™ — SUPRESSOR DE MICROFONIAS AUTOMATIZADO
 //
-// Nome do dB, 02/09. E um trocadilho exacto: e o que a microfonia faz.
+// Nome do dB, 2026-09-02. E um trocadilho exacto: e o que a microfonia faz.
 //
 // Contrato completo em docs/operacao/SUPRESSOR-MICROFONIA.md, decidido
-// com o dB na sessao de escuta de 02/09. O essencial:
+// com o dB na sessao de escuta de 2026-09-02. O essencial:
 //
 // POR RAMO, e nao por cadeia. O laco fecha-se pelo par EXCITER+CORPO. O
 // dB tem tambor no L e botijao no R, e um ajuste por cadeia obrigava a
@@ -2207,11 +2207,11 @@ __attribute__((noinline)) static void ColheEntropia()
 // 250 ms entre analises, alternando os ramos: cada um e visto 2x/s. O
 // custo e um FFT de 2048 pontos a cada 250 ms, fora do callback.
 static const uint32_t kMicroCadenciaMs = 250;
-// Acima disto e uivo, abaixo e o corpo a ressoar. MEDIDO em 02/09: a
+// Acima disto e uivo, abaixo e o corpo a ressoar. MEDIDO em 2026-09-02: a
 // gritar deu +21,3 e +31,1 dB; depois de cortado, -21,4 e -33,2 dB.
 static const float    kMicroNivelDb    = 0.f;
 // Profundidade de entrada. 15 dB resolveu tudo o que apareceu a mao.
-// ENTRA JA A 18 dB, e APROFUNDA ate 24. Medido em 02/09: com 15 dB os
+// ENTRA JA A 18 dB, e APROFUNDA ate 24. Medido em 2026-09-02: com 15 dB os
 // modos deste corpo escapavam — 1414 Hz continuou a uivar COM a boca la, e
 // 1531 escapou por cima de uma boca a 1528. Um notch raso demais nao e
 // meia protecao: e uma boca gasta que nao protege.
@@ -2222,7 +2222,7 @@ static const float    kMicroDbPasso    = 3.f;    // por deteccao repetida
 // termica de 3 Hz gastava uma boca nova a cada analise.
 // ⚠️ O SUPRESSOR SO MEXE NO QUE FOI ELE A POR.
 //
-// Regra do dB, 02/09, e nasceu de um erro meu que doeu: eu gravei uma
+// Regra do dB, 2026-09-02, e nasceu de um erro meu que doeu: eu gravei uma
 // versao nova e deixei as bocas VAZIAS de proposito, para o supressor as
 // encher — numa escultura que eu sabia uivar, ao lado de uma crianca. Tirei
 // a protecao PROVADA (770, 3276, 535 Hz, medidos nesta sessao) para testar
@@ -2249,7 +2249,7 @@ static inline bool MicroEhMinha(int r, int q, float hz_actual)
     return d < 0.6f;   // folga do arredondamento do param
 }
 
-// ⚠️ TRES LARGURAS, e nao uma. MEDIDO em 03/09.
+// ⚠️ TRES LARGURAS, e nao uma. MEDIDO em 2026-09-03.
 //
 // Era `d <= meia` — so contava como coberto o que caisse DENTRO da boca.
 // Resultado, com um modo LARGO: ele cortava 20 Hz, o pico reaparecia 30 Hz
@@ -2265,7 +2265,7 @@ static inline bool MicroEhMinha(int r, int q, float hz_actual)
 // APROFUNDA em vez de gastar boca nova. Se 24 dB nao chegarem, o problema
 // nao e falta de bocas: e o Q errado para este corpo, e isso e outra
 // conversa (e provavelmente um param de largura).
-// ⚠️ AQUI ESTEVE UM "RECUO DA RAMPA", E ELE SAIU. (03/09)
+// ⚠️ AQUI ESTEVE UM "RECUO DA RAMPA", E ELE SAIU. (2026-09-03)
 //
 // A ideia: cada vez que o supressor apanhasse um modo, a rampa de arranque
 // recuava 25% para dar tempo a boca de morder. Custou DOIS defeitos
@@ -2303,7 +2303,7 @@ __attribute__((noinline)) static void PassoDoSupressor()
 
     // ⚠️ SEM LACO NAO HA MICROFONIA — e sem exciter no ar nao ha laco.
     //
-    // Apanhado em 02/09, minutos depois de o supressor nascer: com
+    // Apanhado em 2026-09-02, minutos depois de o supressor nascer: com
     // `out_l=0`, `out_r=0` e `level=0` ele encheu tres bocas — 1736, 1713 e
     // 1603 Hz. Nao era microfonia nenhuma: era o corpo a ressoar com o
     // ambiente, e ele cortou-o como se fosse uivo. Deixado a correr,
@@ -2379,7 +2379,7 @@ __attribute__((noinline)) static void PassoDoSupressor()
         // ⚠️ COBERTA MAS AINDA A UIVAR = APROFUNDA, nao ignora.
         //
         // Era `return` seco: se ja havia boca ali, ele dava por resolvido.
-        // Mas em 02/09 o dB ouviu 1414 Hz a uivar COM uma boca a 1408, e
+        // Mas em 2026-09-02 o dB ouviu 1414 Hz a uivar COM uma boca a 1408, e
         // 1531 por cima de uma a 1528 — a boca estava la e era rasa. O
         // supressor via cobertura e nao via que ela nao chegava.
         //
@@ -2415,7 +2415,7 @@ __attribute__((noinline)) static void PassoDoSupressor()
     if(alvo < 0)
     {
         // Cheias. Regra do dB: ganha a mais AGUDA, porque as agudas doem
-        // mais. Mas em 02/09 essa regra sozinha BLOQUEOU um conserto: o
+        // mais. Mas em 2026-09-02 essa regra sozinha BLOQUEOU um conserto: o
         // exciter R tinha as quatro bocas em 1527..1905 e o corpo uivava a
         // 1414 — mais GRAVE que todas, logo recusado, e o uivo continuou.
         //
@@ -2510,7 +2510,7 @@ static void LedFaseTick(size_t block_size, float sample_rate)
     // valor, nunca com silencio.
     // ⚠️ O PAR TEM DE SER TIRADO NO MESMO INSTANTE, e a fase 0 nao pode
     //    piscar como a fase 1. Duas correcoes, e as duas custaram uma
-    //    leitura inutil em 01/09.
+    //    leitura inutil em 2026-09-01.
     //
     // (1) QUIMERA. `fa` e `su` eram lidos a cada callback, e o padrao
     //     dura ~3,7 s. Com o laco vivo — mesmo lentissimo — a rajada da
@@ -2579,7 +2579,7 @@ static void LedFaseTick(size_t block_size, float sample_rate)
     }
 }
 
-// ⚠️ AQUI VIVEU UMA RAMPA DE DESPEDIDA, E ELA SAIU — 31/08.
+// ⚠️ AQUI VIVEU UMA RAMPA DE DESPEDIDA, E ELA SAIU — 2026-08-31.
 //
 // O estalo da gravacao foi isolado por eliminacao (abrir a porta,
 // comando curto, comando longo, fechar: nenhum estalava), e a hipotese
@@ -2596,7 +2596,7 @@ static void LedFaseTick(size_t block_size, float sample_rate)
 // ninguem a reinventar com o mesmo raciocinio.
 static void AudioCb(const float* const* in, float** out, size_t size)
 {
-    // ⚠️ AQUI ESTEVE UMA LIMPEZA DE BANDEIRA DA UART, E ELA SAIU. (01/09)
+    // ⚠️ AQUI ESTEVE UMA LIMPEZA DE BANDEIRA DA UART, E ELA SAIU. (2026-09-01)
     //
     // Escrevi-a a acreditar que a linha suja travava a placa por bandeira
     // de erro nao limpa. A causa era outra — faltava PULL-UP no RX, e o
@@ -2673,7 +2673,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             {
                 // ⚠️ CARIMBA A AUTOPSIA ANTES DE MORRER.
                 //
-                // Em 01/09 a caixa-preta nao sabia dizer se o laco tinha
+                // Em 2026-09-01 a caixa-preta nao sabia dizer se o laco tinha
                 // ficado preso — o slot 30 ("TOKEN de linha, 1 = PRESA")
                 // era lido no relatorio e ninguem o escrevia. Passei a
                 // sessao a perguntar a placa uma coisa que ela tinha um
@@ -2693,7 +2693,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
     const float level = params.Real(manifest.p_pre_level);
     const float mix   = params.Real(manifest.p_test_tone_level);
-    // O balanco dos piezos saiu daqui no pivo de 20/08: ele agora mistura
+    // O balanco dos piezos saiu daqui no pivo de 2026-08-20: ele agora mistura
     // as duas cadeias JA PROCESSADAS, no bloco 2.
     OscSetFreq(params.Real(manifest.p_test_tone_freq),
                cotuca::hal::Info().sample_rate);
@@ -2708,7 +2708,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // TETO DE SOMA: efeito derrubado fica derrubado ate `ctos rearm`.
     // O latch e reaplicado TODO bloco, e nao so no instante da queda:
     // sem isso um CC do Loopy religaria o efeito e o teto teria virado
-    // sugestao. Bypass permanente foi decisao do dB em 18/08 — religar
+    // sugestao. Bypass permanente foi decisao do dB em 2026-08-18 — religar
     // sozinho fabrica intermitencia e esconde o defeito.
     for(int k = 0; k < manifest.n_sacrif; k++)
         if(soma_caiu[k]) params.Set(manifest.sacrif[k].param_on, 0.f);
@@ -2762,7 +2762,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
         // 1.1) ENTRADA
         //
-        // O `in_gain` FOI REMOVIDO em 28/08, por veredito de ouvido e com
+        // O `in_gain` FOI REMOVIDO em 2026-08-28, por veredito de ouvido e com
         // mecanismo conhecido: o `Governor` e um AGC — mantem o sinal no
         // tecto ajustando o proprio ganho —, entao subir 18 dB aqui era
         // 18 dB que ele baixava adiante. Saida inalterada. O unico efeito
@@ -2794,11 +2794,11 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // apontaria para o modo seguinte como se fosse o primeiro.
         // Medir depois do proprio remedio e a familia de defeito que
         // faz o segundo notch cacar o fantasma do primeiro.
-        // (a captura do cacador saiu daqui em 02/09 — foi para o RAMO,
+        // (a captura do cacador saiu daqui em 2026-09-02 — foi para o RAMO,
         //  junto com o notch. Cacar na cadeia daria os modos do PIEZO, e
         //  o que interessa sao os do corpo que o exciter excita.)
 
-        // ⚠️ O NOTCH SAIU DAQUI EM 02/09, e foi para o RAMO (bloco 6).
+        // ⚠️ O NOTCH SAIU DAQUI EM 2026-09-02, e foi para o RAMO (bloco 6).
         //
         // Vivia na cadeia, antes do gate, e a razao era boa: microfonia
         // que passa o gate SEGURA O PORTAO ABERTO, e tudo a jusante fica
@@ -2825,7 +2825,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // efeito audivel nenhum. Duplicar a cadeia duplicou tambem esse
         // desperdicio, e foi so ai que ele apareceu.
         //
-        // CORRECAO 20/08: a versao anterior deste comentario afirmava
+        // CORRECAO 2026-08-20: a versao anterior deste comentario afirmava
         // que "o gain fica em 1.0 enquanto isso". E FALSO — `Gate::Init`
         // poe `gain_` em ZERO, e pular o Process() CONGELA esse zero.
         // Eu afirmei um estado que nao conferi, e a consequencia era
@@ -2952,7 +2952,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             k.warble.SetIrreg(params.Real(manifest.p_wrb_irreg[CadeiaDoParam(c)]));
             k.warble.AtualizaLfo(size);
             // `mix` ESCALA O MOLHADO, e o fade do slot escala o mix —
-            // mesma forma do drive e do phaser. Ate 20/08 o warble
+            // mesma forma do drive e do phaser. Ate 2026-08-20 o warble
             // cruzava direto pro derivado e ligar bastava pra ouvir;
             // agora mix em 0 significa mudo, e isso e mudanca no efeito
             // aprovado, feita a pedido do dB por consistencia.
@@ -2982,7 +2982,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         const float bal     = params.Real(manifest.p_piezo_mix);
         const float alvo_ga = 1.f - (bal > 0.f ?  bal : 0.f);
         const float alvo_gb = 1.f - (bal < 0.f ? -bal : 0.f);
-        // O CROSSFADE SECO/ESPACO SAIU DAQUI em 20/08. Na cauda
+        // O CROSSFADE SECO/ESPACO SAIU DAQUI em 2026-08-20. Na cauda
         // PARALELA o seco passa inteiro por fora e cada destino tem seu
         // proprio envio — nao ha mais o que dividir aqui. Este bloco so
         // aplica o balanco entre as cadeias.
@@ -2995,7 +2995,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             src_buf[i] = cad[0].buf[i] + cad[1].buf[i];
         }
 
-    // BUZIOS — RESTAURADO EM 20/08.
+    // BUZIOS — RESTAURADO EM 2026-08-20.
     //
     // Ele foi APAGADO em 6a8175d, a reestruturacao em duas cadeias:
     // vivia pos-gate, dentro da faixa que eu substitui de uma vez, e
@@ -3070,7 +3070,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // 3) MÓDULO DO INSTRUMENTO — escreve direto no out (2 out).
     // 3) CAUDA PARALELA — cada destino recebe SUA mistura das cadeias.
     //
-    // Ate 20/08 a cauda era uma FILA: delay -> freeze -> [shimmer ↺
+    // Ate 2026-08-20 a cauda era uma FILA: delay -> freeze -> [shimmer ↺
     // reverb]. Toda cadeia atravessava tudo na mesma ordem, e por isso
     // era impossivel dar delay a uma e sala a outra.
     //
@@ -3146,7 +3146,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
         // param se chama `on` pra ler igual aos vizinhos, mas o que ele
         // faz e segurar o que acabou de passar.
         //
-        // SO O MOLHADO SAI DAQUI, e isto era um DEFEITO ate 20/08: o
+        // SO O MOLHADO SAI DAQUI, e isto era um DEFEITO ate 2026-08-20: o
         // `Freeze::Process` e CAMADA — soma o congelado e deixa o sinal
         // PASSAR. Na primeira versao paralela eu somava `l` inteiro na
         // saida, entao o envio entrava de novo e a cadeia engrossava
@@ -3189,7 +3189,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
             // realimentada com pitch, e entra pelo mesmo caminho.
             const bool  rev_quer = params.Real(manifest.p_rev_on[c]) >= 0.5f;
             const bool  shm_quer = params.Real(manifest.p_shm_on[c]) >= 0.5f;
-            // O SHIMMER ABRE O ESPACO SOZINHO (28/08). Ate aqui o bloco so
+            // O SHIMMER ABRE O ESPACO SOZINHO (2026-08-28). Ate aqui o bloco so
             // corria com `rev_on`, e o envio ficava em zero sem ele: ligar
             // `shm_on` com o reverb desligado nao fazia NADA. Confuso para
             // quem toca, e com razao — a chave existia e era surda.
@@ -3326,7 +3326,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     }
 
     // 5b) [vago] — aqui morava o OUT_WIDTH (mid/side), aposentado em
-    // 20/08 quando a arquitetura de DOIS EXCITERS o esvaziou de sentido.
+    // 2026-08-20 quando a arquitetura de DOIS EXCITERS o esvaziou de sentido.
     //
     // M/S pressupoe que L e R sao um PAR ESTEREO. Com dois exciters no
     // MESMO CORPO nao ha imagem estereo: a soma e ACUSTICA, no objeto,
@@ -3340,7 +3340,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
 
     // 6) SPLIT — cada ramo leva a SUA protecao.
     //
-    // Ate 20/08 so o ramo L a tinha, e estava certo: OUT_R era jack de
+    // Ate 2026-08-20 so o ramo L a tinha, e estava certo: OUT_R era jack de
     // linha e nao realimentava. Com DOIS exciters no corpo da escultura
     // os dois fecham laco acustico, e proteger so um deixaria o outro
     // microfonando livre.
@@ -3358,7 +3358,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // que de fato vai pro exciter, ja deslocado.
         // 6-sim) TOM DE ENSAIO — microfonia sem escultura.
     //
-    // ⚠️ EXISTE PORQUE O dB ERA O BANCO DE ENSAIO, e isso acabou. Em 02/09
+    // ⚠️ EXISTE PORQUE O dB ERA O BANCO DE ENSAIO, e isso acabou. Em 2026-09-02
     // o SuMiA™ foi afinado com a escultura ligada ao lado de uma pessoa;
     // cada defeito meu chegou-lhe aos ouvidos, e numa delas o filho gritou.
     //
@@ -3503,7 +3503,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     //    (seguranca, instantaneo), `vol_*` dosa (performance, continuo).
     // ---- RAMPA DE ARRANQUE ----
     //
-    // ⚠️ SEGURANCA, e nasceu de um susto. Em 02/09 o dB ligou a escultura
+    // ⚠️ SEGURANCA, e nasceu de um susto. Em 2026-09-02 o dB ligou a escultura
     // com o volume alto e a microfonia entrou COM TUDO — palavras dele,
     // "quase explodiu meus timpanos". A placa arranca com as saidas
     // ABERTAS e as bocas de microfonia VAZIAS, e o laco tem ganho de sobra
@@ -3555,7 +3555,7 @@ static void AudioCb(const float* const* in, float** out, size_t size)
     // ---- MEDIDOR DE SAIDA — o ultimo ponto antes do conversor ----
     //
     // ⚠️ EXISTE PORQUE FALTAVA O OUTRO LADO DA CONTA. O `pk` diz quanto
-    // ENTRA; nada dizia quanto SAI. Em 02/09, a caçar um chiado de banda
+    // ENTRA; nada dizia quanto SAI. Em 2026-09-02, a caçar um chiado de banda
     // larga, eu disse ao dB que "o amp tem ganho a mais" — e isso era uma
     // INFERENCIA a partir da posicao dos potes, nao uma medicao.
     //
@@ -3855,7 +3855,7 @@ static void LbTick()
         return;
     prox_ms = ag + 5u; // 200 Hz
 
-    // SO O LB. LG/LR saíram do hardware em 20/08 por nao marcarem nada.
+    // SO O LB. LG/LR saíram do hardware em 2026-08-20 por nao marcarem nada.
     const bool nivel = hal::ReadWidiLed();
     const bool aceso = kLbAcesoEmBaixo ? !nivel : nivel;
     if(primeira) ant = aceso;
@@ -4077,7 +4077,7 @@ static void HandleLine(const char* line)
     // `qspi prova` — a escada completa NA ZONA DE RASCUNHO (0x90400000).
     //
     // ⚠️ Nao aceita endereco por argumento, DE PROPOSITO. Um comando de
-    // consola que apaga o endereco que lhe derem e a mesma arma de 29/09 com
+    // consola que apaga o endereco que lhe derem e a mesma arma de 2026-09-29 com
     // gatilho mais leve. Para apagar outra coisa, e preciso mexer no codigo —
     // e quem mexe no codigo le a zona segura pelo caminho.
     if(strncmp(line, "qspi prova", 10) == 0)
@@ -4270,7 +4270,7 @@ static void HandleLine(const char* line)
         hal::Log("tone ON");
         // ⚠️ E DIZ SE ALGUEM O ESTA A CALAR A JUSANTE. Os `post_level_*` tem
         // DONO — seguem os pots do painel — e um pot no fim do curso poe o
-        // ramo a zero. A 22/09 isso passou por "o test tone deixou de falar",
+        // ramo a zero. A 2026-09-22 isso passou por "o test tone deixou de falar",
         // e a caca comecou pelo tom em vez de acabar no volume.
         //
         // E o corolario que o `estado` do flash nao pode cumprir: param com
@@ -4770,7 +4770,7 @@ static void HandleLine(const char* line)
         oled_bench_on   = true;
         // ⚠️ A PRIMEIRA CORRIDA DEPOIS DO ARRANQUE E AQUECIMENTO.
         //
-        // MEDIDO em 02/09, com dois builds INERTES (so um comentario a
+        // MEDIDO em 2026-09-02, com dois builds INERTES (so um comentario a
         // mudar): a primeira leitura a seguir a uma gravacao deu ~15 000
         // voltas/s e as tres seguintes ~22 800, nos DOIS. Descartada a
         // primeira, os builds diferem 0,27% — contra 1,3% de dispersao do
@@ -4829,7 +4829,7 @@ static void HandleLine(const char* line)
         const char* a = line + 4;
         while(*a == ' ') a++;
         const bool primeira = !hal::OledConfigurado();
-        // ⚠️ E O RESULTADO LE-SE. Ate 22/09 esta linha era `hal::OledInit();`
+        // ⚠️ E O RESULTADO LE-SE. Ate 2026-09-22 esta linha era `hal::OledInit();`
         // solta: a guarda recusava-se a conduzir um painel sem alimentacao,
         // devolvia `false`, e o despacho anunciava "CONFIGURADO" e "tela
         // ACESA" na mesma. Escrevi a cicatriz 15fi sobre um `Result` deitado
@@ -4848,7 +4848,7 @@ static void HandleLine(const char* line)
             // deteccao possivel aqui, hoje ou nunca.
             hal::Log("oled: CONFIGURADO (nao detectado — o painel e escrita"
                      " pura e nunca responde)");
-            // ⚠️ O PRESCALER LIDO, nao um numero cravado. Ate 22/09 esta
+            // ⚠️ O PRESCALER LIDO, nao um numero cravado. Ate 2026-09-22 esta
             // linha dizia sempre `PS_64` enquanto o `oledvel` mexia no valor
             // a serio — instrumento a mentir sobre a propria configuracao,
             // que e a familia que esta casa persegue.
@@ -5369,7 +5369,7 @@ static void HandleLine(const char* line)
         // rotina encontrou, minutos depois de ser escrita.
         hal::Log("Cotucatronics OS v" COTUCA_OS_VERSION);
         // VERSAO DE MODULO NO `board`. As quatro macros existiam desde
-        // sempre e NINGUEM as imprimia: em 24/08 a conferencia achou o
+        // sempre e NINGUEM as imprimia: em 2026-08-24 a conferencia achou o
         // `hal` a anunciar-se 0.9.0 estando em 0.38.0, e o `midi` 0.2.1
         // estando em 0.8.0 — atraso de dezenas de revisoes, invisivel.
         // Numero que ninguem imprime nao tem quem o corrija; a partir
@@ -5407,7 +5407,7 @@ static void HandleLine(const char* line)
         // que ja obrigou o `tabelas:` a existir aqui. Estouro do mapa de
         // preset trunca a captura EM SILENCIO: o preset guarda menos
         // params do que devia e carrega-se sem se queixar.
-        // ATRASO DA DRENAGEM DE MIDI — o sensor que faltava. Em 28/08 a
+        // ATRASO DA DRENAGEM DE MIDI — o sensor que faltava. Em 2026-08-28 a
         // placa travou num laco de drenagem sem fronteira e NADA o disse:
         // o unico sintoma era o LED da fase a piscar 6 para sempre. Zero
         // aqui = a drenagem acompanha. A subir = ela esta a perder.
@@ -5459,7 +5459,7 @@ static void HandleLine(const char* line)
                 if(tem_cc[p]) continue;
                 sem++;
                 // ⚠️ O TECTO DA LISTA TEM DE SEGUIR A LISTA DECLARADA.
-                // Estava em 6 de quando eram 6; a 23/09 passaram a 8 e o
+                // Estava em 6 de quando eram 6; a 2026-09-23 passaram a 8 e o
                 // relato escondeu dois atras de "...", logo a seguir a eu ter
                 // escrito que uma contagem nua convida a desfazer a decisao.
                 // Um tecto que nao acompanha o que conta e um numero velho
@@ -5474,7 +5474,7 @@ static void HandleLine(const char* line)
             }
             // ⚠️ DE PROPOSITO E ACIDENTE NAO SE CONTAM JUNTOS.
             //
-            // Desde 22/09 ha params FORA do mapa por decisao — o
+            // Desde 2026-09-22 ha params FORA do mapa por decisao — o
             // instrumento tem chave fisica para eles, e duas fontes de
             // verdade para o mesmo estado e o defeito. Uma contagem nua
             // le-se como avaria, e o conserto obvio (repor os CCs) desfaz
@@ -5533,7 +5533,7 @@ static void HandleLine(const char* line)
                 hal::Log("colisao de CC: nenhuma");
         }
 
-        // ⚠️ MASTER A ZERO — o defeito que se disfarçou cinco vezes em 31/08.
+        // ⚠️ MASTER A ZERO — o defeito que se disfarçou cinco vezes em 2026-08-31.
         //
         // O `pre_level_ab` nasce em zero (regra da casa: todo param
         // nasce em zero) e nao tem botao fisico. Depois de cada
@@ -5561,7 +5561,7 @@ static void HandleLine(const char* line)
             }
         }
 
-        // FILA DE TX DO MIDI — o conserto de 31/08 tem de se poder ver.
+        // FILA DE TX DO MIDI — o conserto de 2026-08-31 tem de se poder ver.
         // Contador sem leitor mede para ninguem; e um descarte que
         // ninguem conta e indistinguivel de um CC que nunca foi mandado.
         {
@@ -5723,7 +5723,7 @@ static void HandleLine(const char* line)
         //    log, e o `Log` sai cedo quando calado — o ANUNCIO da mudanca
         //    de estado era comido pela propria mudanca. Quem armava a
         //    caixa-preta nao recebia confirmacao NENHUMA, e o comando
-        //    parecia nao existir. Descoberto em 02/09 a tentar usa-la.
+        //    parecia nao existir. Descoberto em 2026-09-02 a tentar usa-la.
         //
         //    E isso alimentava o suspeito "nao estava armada" quando a
         //    caixa vinha vazia: sem confirmacao, armar e nao armar tem
@@ -5790,7 +5790,7 @@ static void HandleLine(const char* line)
                  (double)hal::BlackboxRead(10), (double)hal::BlackboxRead(12));
         hal::Log("  fases: 1 knobs 2 serial 3 botoes 4 sorteio 5 rampas"
                  " 6 midi 7 watchdog 8 push-modulo");
-        // ⚠️ AQUI ESTEVE O "PICO POR NOTA", E ELE MENTIA. (02/09)
+        // ⚠️ AQUI ESTEVE O "PICO POR NOTA", E ELE MENTIA. (2026-09-02)
         //
         // Lia `BlackboxRead(32 + b)` para b em 0..12, ou seja os slots
         // 32..44. Mas 33..39 sao CONTADORES DE MIDI e 40..44 sao o DIARIO
@@ -5836,7 +5836,7 @@ static void HandleLine(const char* line)
         hal::Log("   erros de uart %.0f | rearmes %.0f",
                  (double)hal::BlackboxRead(38), (double)hal::BlackboxRead(39));
         // AUTOPSIA DO LACO. Escrita pelo vigia no callback de audio, que e
-        // o unico contexto que sobrevive a prisao. Em 01/09 este campo era
+        // o unico contexto que sobrevive a prisao. Em 2026-09-01 este campo era
         // lido e ninguem o escrevia: passei a sessao a perguntar a placa
         // uma coisa que ela tinha campo para responder e caneta nenhuma.
         if(hal::BlackboxRead(30) > 0.5f)
@@ -5942,7 +5942,7 @@ static void HandleLine(const char* line)
             // ALIMENTA A TABELA DE ECO, igual ao espelho. Sem isto o
             // teste tem comportamento DIFERENTE da feature que ele
             // deveria exercitar — e foi assim que um `midiloop` ficou
-            // batendo com o espelho durante a bancada de 22/08.
+            // batendo com o espelho durante a bancada de 2026-08-22.
             {
                 // O canal do teste decide de QUAL cadeia e o vinculo:
                 // ch3 espelha a A, ch4 espelha a B. Alimentar sempre a A
@@ -5997,7 +5997,7 @@ static void HandleLine(const char* line)
         while(*a == ' ') a++;
         // OS TUNAVEIS DO MOTOR SEGUEM ALCANCAVEIS — na instancia que
         // EXISTE, que e a da cauda (shimmer). A rota de teste isolada
-        // foi aposentada em 20/08 por custar uma instancia inteira so
+        // foi aposentada em 2026-08-20 por custar uma instancia inteira so
         // pra bancada; os ajustes nao foram junto.
         if(strncmp(a, "grain", 5) == 0)
         {
@@ -6015,7 +6015,7 @@ static void HandleLine(const char* line)
                      " deterministicos, so pra MEDIR com seno)", (double)j);
             return;
         }
-        hal::Log("pitch: a ROTA DE TESTE isolada foi aposentada em 20/08.");
+        hal::Log("pitch: a ROTA DE TESTE isolada foi aposentada em 2026-08-20.");
         hal::Log("  custava uma instancia inteira do motor (153,6 KB de"
                  " SDRAM) so pra bancada, e");
         hal::Log("  com o detune fora do build o unico consumidor real"
@@ -6062,7 +6062,7 @@ static void HandleLine(const char* line)
         }
         // O REGIME NAO ESTA NO ALCANCE DESTE COMANDO, E ELE DIZ ISSO.
         //
-        // Em 20/08 a entrada foi medida com dedo direto no disco solto e
+        // Em 2026-08-20 a entrada foi medida com dedo direto no disco solto e
         // o resultado virou "a entrada satura" no STATUS — afirmacao
         // sobre o instrumento MONTADO feita com uma medicao que nunca o
         // tocou. Nenhum numero estava errado; o alcance da conclusao e
@@ -6172,7 +6172,7 @@ static void HandleLine(const char* line)
         // ⚠️ `pk reset` — sem ele isto e um MAXIMO RETIDO desde o arranque,
         //    e um maximo so sobe: mede a historia, nao a janela.
         //
-        // Apanhado em 02/09 a montar a medicao do espectro. O `pk` dizia
+        // Apanhado em 2026-09-02 a montar a medicao do espectro. O `pk` dizia
         // -0,5 dBFS nos dois canais — quase fundo de escala — e era um
         // transitorio de arranque de ha meia hora. Como etapa 0 ("o canal
         // fala AGORA?") nao servia de nada, e teria feito a medicao inteira
@@ -6198,7 +6198,7 @@ static void HandleLine(const char* line)
             hal::Log("  IN_R (p2): pico %.5f = %6.1f dBFS | %lu amostras | clip %lu",
                      (double)in_pk_r, (double)dbfs(in_pk_r),
                      (unsigned long)in_n_r, (unsigned long)in_clip_r);
-            // SEM `in_gain` DESDE 28/08: a entrada vai crua para a cadeia,
+            // SEM `in_gain` DESDE 2026-08-28: a entrada vai crua para a cadeia,
             // entao o pico cru JA E o que a cadeia recebe. A linha que
             // projetava o ganho saiu com ele — projecao de um ganho que
             // nao existe e numero com cara de dado.
@@ -6225,7 +6225,7 @@ static void HandleLine(const char* line)
     // multiplicacoes: no callback estouraria o prazo do bloco com
     // folga. A regra da casa e explicita — callback nao faz trabalho
     // de tamanho variavel.
-    // ⚠️ `microfonia` e nao `notch`. Nome do dB, 02/09: o comando trata do
+    // ⚠️ `microfonia` e nao `notch`. Nome do dB, 2026-09-02: o comando trata do
     //    PROBLEMA, e `notch` e a tecnica. Quem chega a bancada quer dizer
     //    "microfonia", nao "filtro de rejeicao de banda estreita".
     //    A classe C++ continua `Notch` — ela E um notch, e essa camada
@@ -6575,7 +6575,7 @@ static void HandleLine(const char* line)
             const uint32_t prazo_real
                 = (uint32_t)(1e6f * (float)hal::Info().block_size
                              / hal::Info().sample_rate);
-            // O ROTULO USA O PRAZO EFETIVO. Em 22/08 ele imprimiu
+            // O ROTULO USA O PRAZO EFETIVO. Em 2026-08-22 ele imprimiu
             // ">1000 us" enquanto contava contra os 300 artificiais do
             // teste — instrumento que mente sobre o proprio criterio.
             const uint32_t prazo = est_prazo_forc ? est_prazo_forc
@@ -6661,7 +6661,7 @@ static void HandleLine(const char* line)
                  (unsigned long)(midi.CcCount() - ble_session_base));
         // ---- CAMADA 1: numero, nao nome ----
         hal::Log("  WIDI LED LB (D28) — transicoes por 2 s / %% aceso:");
-        hal::Log("    LB %lu/%u%%   (LG/LR removidos 20/08)",
+        hal::Log("    LB %lu/%u%%   (LG/LR removidos 2026-08-20)",
                  (unsigned long)lb_trans, (unsigned)lb_duty);
         // ---- O CRUZAMENTO QUE IMPORTA NA PRATICA ----
         //
@@ -6669,7 +6669,7 @@ static void HandleLine(const char* line)
         // caiu com o radio intacto. Sao camadas diferentes: o BLE
         // sobrevive a gravacao, a sessao MIDI nao.
         //
-        // Medido em 18/08: depois de `dfu go` + gravar, o LB fica em
+        // Medido em 2026-08-18: depois de `dfu go` + gravar, o LB fica em
         // 0/100% (conectado) e nao chega um byte. Reconectar no painel
         // de Bluetooth MIDI resolve; ESQUECER o dispositivo e
         // desnecessario — o pareamento nunca esteve quebrado.
@@ -6820,7 +6820,7 @@ static void HandleLine(const char* line)
                              : "   (o fio de volta NUNCA foi provado)");
         // ⚠️ DUAS CONTAGENS MEDIDAS, E A SUBTRACCAO SO QUANDO ELA VALE.
         //
-        // A 22/09 esta linha imprimiu `perdidas -63`: voltaram 243 onde
+        // A 2026-09-22 esta linha imprimiu `perdidas -63`: voltaram 243 onde
         // sairam 180. O `eco_proprio` conta QUALQUER CC que chegue num canal
         // de espelho — nao so os nossos de volta — e a subtraccao assumia uma
         // correspondencia de um para um que nao existe.
@@ -6984,7 +6984,7 @@ int main(void)
         // ---- PARAGEM QUE SE EXPLICA, e as duas metades sao precisas ----
         //
         // A versao anterior piscava a 5 Hz para sempre e dizia o erro UMA
-        // vez. As duas coisas falharam juntas em 31/08, e custaram meia
+        // vez. As duas coisas falharam juntas em 2026-08-31, e custaram meia
         // hora de caca no sitio errado:
         //
         //   - a MENSAGEM sai no boot, para um host que ainda nao esta a
@@ -7078,7 +7078,7 @@ int main(void)
     for(int i = 0; i < cotuca::kMaxParams; i++) eco_ult[i] = 0xFF;
     // Armado DEPOIS do hal::Init(), porque `NowMs()` antes dele nao tem
     // base de tempo valida — a mesma pre-condicao que derrubou o vigia
-    // do loop em 22/08 (bts 12z).
+    // do loop em 2026-08-22 (bts 12z).
     boot_dreno_ate = hal::NowMs() + kDrenoBootMs;
     // O MAPA DE PRESET E O HASH SE CONSTROEM DEPOIS DO manifest.Init(),
     // porque os dois LEEM a tabela ja povoada. Ler antes daria um mapa
@@ -7266,7 +7266,7 @@ int main(void)
     }
 
     // ---- CAPACIDADE DAS TABELAS: DENUNCIA NO BOOT ----
-    // Em 18/08 os dois tetos estouraram no mesmo dia, os dois EM
+    // Em 2026-08-18 os dois tetos estouraram no mesmo dia, os dois EM
     // SILENCIO: `kMaxParams` recusou tres params (os buzios inteiros
     // sumiram) e `kMaxMidiMap` deixou a 17a entrada ser escrita FORA
     // DO ARRAY (o `shm_shift` chegava e nao achava dono).
@@ -7478,7 +7478,7 @@ int main(void)
             //    Nao era so desperdicio. Cada escrita abre a janela de
             //    silencio de 250 ms, entao o `level` ficava PERMANENTEMENTE
             //    surdo ao Loopy — um pot parado a calar o iPad. Medido a
-            //    31/08: 210 150 janelas em 20 s parado, o ritmo do laco.
+            //    2026-08-31: 210 150 janelas em 20 s parado, o ritmo do laco.
             //
             //    O ruido nao tinha culpa: medido no mesmo instante, 0.23
             //    passos de pico-a-pico. Uma guarda mal posta imita ruido, e
@@ -8127,7 +8127,7 @@ int main(void)
             // acumularia uma "queda" a cada 10 s.
             // SILENCIO NAO E QUEDA — e so silencio.
             //
-            // Este contador ja mentiu uma vez (18/08): disse "provavel
+            // Este contador ja mentiu uma vez (2026-08-18): disse "provavel
             // QUEDA" quando o dB simplesmente parou de mexer no fader,
             // com o link intacto. Cicatriz 7, o rotulo que mente, e
             // escrita por mim horas depois de eu documentar a regra.
@@ -8158,7 +8158,7 @@ int main(void)
                 ble_drop_flagged = false; // voltou: rearma pra proxima
             }
 
-            // O DETECTOR DE DUMP MUDOU DE LUGAR (18/08): virou o gate
+            // O DETECTOR DE DUMP MUDOU DE LUGAR (2026-08-18): virou o gate
             // em OnMidiCc, porque sensor que avisa depois de o comando
             // ja ter sido aplicado nao defende nada. Ver a QUARENTENA
             // DE RECONEXAO no topo deste arquivo.
@@ -8300,7 +8300,7 @@ int main(void)
         //    com voar — e que nasce a ZERO depois de cada gravacao.
         //
         // Efeito: a caixa-preta so registava o laco quando alguem tinha
-        // ligado os buzios. Em 02/09 ela veio com `VOLTAS completas=0`
+        // ligado os buzios. Em 2026-09-02 ela veio com `VOLTAS completas=0`
         // depois de um voo real, e eu li isso como "o laco nao andou" em
         // vez de "ninguem escreveu". Zero com cara de dado, outra vez.
         //

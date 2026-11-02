@@ -1,6 +1,6 @@
 # Lista de CCs para configurar o Loopy
 
-> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 06/09.** Nenhum
+> ⚠️ **NÃO É GERADO, apesar de esta folha o ter dito até 2026-09-06.** Nenhum
 > gerador o escreve — foi feito à mão a partir do `manifest.h` **firmware v0.156.0**, e o
 > manifest está hoje em **v1.13.0**. Trate-o como registo daquele estado, não
 > como espelho do actual.

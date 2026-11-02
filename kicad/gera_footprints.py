@@ -25,7 +25,7 @@ remessa espelhada, ve-se ao pousar o modulo, nao ao ligar.
 
 Medidas: 2x8, passo 2,54, filas a 15,24 (confirmado por tres fontes
 independentes e pela ficha do vendedor). Contorno 22,5 x 18. O USB-C sai 1 mm
-da borda — MEDIDO pelo dB na peca em mao, 06/09.
+da borda — MEDIDO pelo dB na peca em mao, 2026-09-06.
 
 USO:  gera_footprints.py
 """

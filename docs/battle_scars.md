@@ -15,11 +15,11 @@
 <!-- doc-check: ignore confere_caixa (idem) -->
 <!-- doc-check: ignore confere_acesso (idem, vive no pcb_contorno.py) -->
 <!-- doc-check: ignore silk_over_copper (codigo de violacao do DRC do KiCad) -->
-<!-- doc-check: ignore route_l_a  (nome ANTERIOR da matriz, renomeado em 02/09 para `route_a_l` — entrada primeiro, saida depois. A mencao aqui e o REGISTO do que se aprendeu com o nome velho; apaga-lo apagava o que explica a cicatriz.) -->
+<!-- doc-check: ignore route_l_a  (nome ANTERIOR da matriz, renomeado em 2026-09-02 para `route_a_l` — entrada primeiro, saida depois. A mencao aqui e o REGISTO do que se aprendeu com o nome velho; apaga-lo apagava o que explica a cicatriz.) -->
 <!-- doc-check: ignore route_l_b (idem) -->
 <!-- doc-check: ignore route_r_a (idem) -->
 <!-- doc-check: ignore route_r_b (idem) -->
-<!-- doc-check: ignore in_gain_a (REMOVIDO em 28/08 — cicatriz 15v. O nome aparece aqui porque a cicatriz E sobre a remocao dele; apaga-lo apagaria o assunto.) -->
+<!-- doc-check: ignore in_gain_a (REMOVIDO em 2026-08-28 — cicatriz 15v. O nome aparece aqui porque a cicatriz E sobre a remocao dele; apaga-lo apagaria o assunto.) -->
 ### O que o firmware nos ensinou enquanto a gente o ensinava a cantar
 *Registro de aprendizados — resultados e metodologia. Atualizado ao fim da caçada do shimmer ardido e dos dois controles de I/O.*
 
@@ -56,7 +56,7 @@ A lição mais repetida do projeto, cometida inclusive **depois de nomeada**. In
 5. Os marcadores do HAL gravavam **fora do portão** `bb_rec` — o comando `bb` da autópsia contaminava a cena do crime.
 6. O `BlackboxArm()` ligava **no meio do processamento de uma linha serial** — M1/M2 pareavam eventos de linhas diferentes e produziram um álibi falso (M1==M2 "provando" que nenhuma linha prendia).
 7. As ~20 escritas/volta com `SCB_CleanDCache` viraram **suspeitas de criar o defeito que mediam** (inocentadas depois, mas o voo enxuto precisou existir para isso).
-8. **O mudo sem porta de saída (18/08).** O comando `bb arm` chamava `LogMute(true)` e **não existia nenhum caminho de volta** — a flag só zerava no boot. Quatro janelas seguidas de teste de MIDI reportaram "0 CCs" e eu li como link morto. O log estava mudo **porque eu mesmo tinha armado a caixa-preta numa janela anterior**: cada medição seguinte mediu o meu próprio silêncio.
+8. **O mudo sem porta de saída (2026-08-18).** O comando `bb arm` chamava `LogMute(true)` e **não existia nenhum caminho de volta** — a flag só zerava no boot. Quatro janelas seguidas de teste de MIDI reportaram "0 CCs" e eu li como link morto. O log estava mudo **porque eu mesmo tinha armado a caixa-preta numa janela anterior**: cada medição seguinte mediu o meu próprio silêncio.
 
 **A escalada, nomeada: números → conclusões.** Os casos 1 a 7 estragaram *medições* — um pico perdido, um perfil sobrescrito, um contador zerado. O caso 8 estragou uma *conclusão*, e a conclusão foi **publicada**: com base nesses quatro zeros eu commitei neste documento uma causa errada para a falha de MIDI (ver o adendo no capítulo 11). Instrumentação quebrada não para na planilha — ela chega ao registro permanente, e de lá volta como premissa da sessão seguinte.
 
@@ -66,7 +66,7 @@ A lição mais repetida do projeto, cometida inclusive **depois de nomeada**. In
 
 Esse antídoto é o **mesmo** da cicatriz 7 do capítulo 3 (o rótulo que mentia, "transições: NENHUMA" impresso com todos os contadores zerados): as duas falhas são o instrumento **não declarando o próprio estado**, e as duas se curam obrigando-o a declarar.
 
-9. **O watchdog que condenou o inocente (18/08).** O CTOS ganhou veto
+9. **O watchdog que condenou o inocente (2026-08-18).** O CTOS ganhou veto
    automático: efeito que estoura o prazo entra em bypass. Na primeira
    execução ele mediu **4 277 071 629 µs** — lixo, assinatura de subtração
    estourada — leu como estouro e **desligou o freeze**, que gastava 35 µs de
@@ -193,7 +193,7 @@ Cada transiente na escultura é uma jogada; o que cai decide o timbre. `dly_time
 
 ---
 
-## 10. O dia 17/08 — quatro cicatrizes
+## 10. O dia 2026-08-17 — quatro cicatrizes
 
 **Estado de diagnóstico que sobrevive ao diagnóstico.** O `level` ficou em 0.4 desde o A/B com o Max e virou default do repo por três commits, junto com gate e governor desligados. Pior que o descuido: eu **documentei a violação no STATUS como temporária** e segui em frente. Registro que se sabe errado e não conserta não é aviso — é permissão. O dB só descobriu indo tocar o instrumento real. É prima da instrumentação-que-apaga-o-dado, mas pior: aquela estraga a medição, esta estraga o instrumento, e some do radar justamente por estar anotada. **Estado de bancada tem prazo, e o prazo é a mesma sessão.**
 
@@ -211,7 +211,7 @@ Duas destas cicatrizes quase não existiram — o script que as escrevia usou um
 
 ---
 
-## 11. MIDI, BLE e a hora que eu gastei trocando de suspeito (17/08)
+## 11. MIDI, BLE e a hora que eu gastei trocando de suspeito (2026-08-17)
 
 **O teste que elimina variáveis vale mais que dez que trocam de suspeito.**
 Passei uma hora atrás de um MIDI que não chegava, e troquei de hipótese
@@ -238,7 +238,7 @@ Não era link instável, nem 5V no pino de 3V3, nem brown-out do rail, nem
 central competindo — era procedimento de operação que ninguém tinha
 escrito. **Gravar e testar MIDI não cabem no mesmo ciclo.**
 
-> **ADENDO DE 18/08 — esta conclusão foi publicada em cima de silêncio
+> **ADENDO DE 2026-08-18 — esta conclusão foi publicada em cima de silêncio
 > auto-infligido.** Ela continua acima, sem corte, porque o registro do
 > que eu concluí importa tanto quanto a correção.
 >
@@ -309,7 +309,7 @@ acidente.)
 
 ---
 
-## 11b. O conserto que quase sobreviveu ao problema (18/08)
+## 11b. O conserto que quase sobreviveu ao problema (2026-08-18)
 
 Com o slot Fx2 vazio, o dB ouviu o instrumento e disse: **"o som está
 com uma presença de grave que nunca teve antes, muito melhor sonoramente."**
@@ -345,7 +345,7 @@ morreu, e o custo aparece como "o instrumento sempre soou assim".
 
 ---
 
-## 11c. O cabo (18/08) — cinco hipóteses, nenhuma certa
+## 11c. O cabo (2026-08-18) — cinco hipóteses, nenhuma certa
 
 A placa passou horas "morta": USB enumerava, DFU gravava, e o app não dava
 sinal — sem banner, sem resposta, sem som. **A causa era o cabo USB.** Com um
@@ -385,7 +385,7 @@ que sobrou.
 
 ---
 
-## 11d. O instrumento que não pode depender do paciente (18/08)
+## 11d. O instrumento que não pode depender do paciente (2026-08-18)
 
 O loop principal morreu. Serial, MIDI e caixa-preta pararam juntos — e os
 **três** passam pelo loop. Nenhum conseguiu relatar a própria morte.
@@ -412,7 +412,7 @@ coincidência — é a assinatura do que eles têm em comum.
 
 ---
 
-## 11e. Comandos fantasma: a quarentena funcionou e não bastou (18/08)
+## 11e. Comandos fantasma: a quarentena funcionou e não bastou (2026-08-18)
 
 Transições de link BLE fazem o iOS reenviar o estado de todos os widgets. O
 instrumento obedecia. A quarentena de reconexão foi construída pra isso e
@@ -445,7 +445,7 @@ impossível.
 
 ---
 
-## 11f. O filtro de sanidade que descartava a catástrofe (18/08)
+## 11f. O filtro de sanidade que descartava a catástrofe (2026-08-18)
 
 O caso 9 (watchdog que vetou um efeito saudável com base em 4 277 071 629 µs)
 foi consertado com um **filtro de plausibilidade**: amostra acima de 10× o
@@ -505,7 +505,7 @@ não é questão de se, é de quando.
 
 ---
 
-## 11g. A defesa que sobreviveu à ameaça (18/08)
+## 11g. A defesa que sobreviveu à ameaça (2026-08-18)
 
 A quarentena de reconexão foi construída porque despejos de estado do iOS
 punham `src_mix` e `gate_thresh` em valores perigosos e **emudeceram o
@@ -558,7 +558,7 @@ decisões e não fizemos essa pergunta.
 
 ---
 
-## 11h. Proposta que o outro lado já executou (18/08)
+## 11h. Proposta que o outro lado já executou (2026-08-18)
 
 Propus um mapa de CCs renumerado, apresentei a tabela, pedi confirmação — e
 **não implementei**. O dB alinhou o Loopy pela tabela.
@@ -577,7 +577,7 @@ junto, porque no intervalo os dois lados divergem **em silêncio**.
 
 ---
 
-## 11i. Os dois tetos que estouraram calados, e a caixa única (18/08)
+## 11i. Os dois tetos que estouraram calados, e a caixa única (2026-08-18)
 
 Quatro parâmetros novos do shimmer empurraram **três** para fora da tabela:
 `kMaxParams = 32`, o manifest declarava 35, e o `Add()` devolvia `-1` **sem
@@ -613,7 +613,7 @@ O teto era o sintoma. A causa é que **não havia lugar único onde a lista de
 features vive** — então ninguém revisa o que já existe antes de acrescentar, e
 o custo de cada adição fica invisível até algo quebrar.
 
-Daí [`docs/FEATURES.md`](FEATURES.md), decidido pelo dB em 18/08:
+Daí [`docs/FEATURES.md`](FEATURES.md), decidido pelo dB em 2026-08-18:
 
 - **Toda feature vigente numa caixa só**, com params, CCs e estado.
 - **Aposentadas vão pro arquivo**, no mesmo documento, com *por que saiu* e
@@ -633,7 +633,7 @@ por que algo existe, não há como perguntar se ainda precisa existir.
 
 ---
 
-## 11j. O controle que não controlava (18/08)
+## 11j. O controle que não controlava (2026-08-18)
 
 O dB, sobre o shimmer recém-nascido: **"o som está lindo mas o ganho está
 baixo, mesmo com o mix no máximo."**
@@ -660,7 +660,7 @@ responde lendo o código, em segundos, antes de qualquer ajuste.
 
 ---
 
-## 11k. Reportar como feito o que o assert barrou (18/08)
+## 11k. Reportar como feito o que o assert barrou (2026-08-18)
 
 Três vezes seguidas eu anunciei um conserto como gravado, e o `main.cpp`
 tinha ficado em **v0.67.0** o tempo todo. As edições morriam num `assert` de
@@ -693,7 +693,7 @@ barulho.
 
 ---
 
-## 11l. O RESET que não precisava existir (18/08)
+## 11l. O RESET que não precisava existir (2026-08-18)
 
 Esta sessão gastou perto de **vinte gravações** brigando com a janela de ~2 s
 do bootloader. Metade falhou porque eu pedia o RESET e **só depois** começava
@@ -734,7 +734,7 @@ qualquer projeto embarcado futuro.
 
 ---
 
-## 11m. Escrevi a regra três vezes e violei quatro (18/08)
+## 11m. Escrevi a regra três vezes e violei quatro (2026-08-18)
 
 **"Silêncio não distingue 'ninguém mexeu' de 'caiu'."** Está no `ble`, está no
 BOARDS.md, está no battle_scars. E eu construí **quatro** instrumentos que
@@ -772,7 +772,7 @@ evidência?"* — e se houver um, a frase tem que citá-lo.
 
 ---
 
-## 11n. Duas camadas com o mesmo sintoma (18/08)
+## 11n. Duas camadas com o mesmo sintoma (2026-08-18)
 
 Depois de toda gravação o dB tinha de esquecer o Bluetooth, reparear o WIDI e
 voltar ao Loopy. Três passos, toda vez.
@@ -802,7 +802,7 @@ sintomas, causas diferentes, e a segunda acontece **toda vez** que se grava.
 
 ---
 
-## 11o. O desperdício que preserva a correção (18/08)
+## 11o. O desperdício que preserva a correção (2026-08-18)
 
 Três efeitos seguidos pagaram o dobro pela mesma razão:
 
@@ -845,7 +845,7 @@ espera custo zero.
 
 ---
 
-## 11p. O sinal errado como régua, terceira aparição (18/08)
+## 11p. O sinal errado como régua, terceira aparição (2026-08-18)
 
 O phaser soou "como um tremolo bem sutil". Medido: **excursão de nível de
 0,1 dB** com o notch varrendo — ou seja, não havia notch.
@@ -874,7 +874,7 @@ procurar no LFO ou no mix.
 
 ---
 
-## 11q. O estado que não sobrevive ao flash (20/08)
+## 11q. O estado que não sobrevive ao flash (2026-08-20)
 
 Configurei o detune, gravei a placa para consertar os tetos das tabelas, e
 anunciei *"o detune está ligado e pronto"*. O dB foi tocar e não ouviu nada.
@@ -911,7 +911,7 @@ tabelas: 55/64 params | 37/48 CCs
 
 ---
 
-## 11r. Metade da queixa (20/08)
+## 11r. Metade da queixa (2026-08-20)
 
 O dB: *"tem frequências agudas, **médio-agudas** no shimmer que estão bem
 ardidas"*. Encontrei uma causa real e a consertei.
@@ -943,7 +943,7 @@ construção, não podia consertar a metade que o dB nomeou primeiro.
 
 ---
 
-## 11s. A hipótese que a medição matou (20/08)
+## 11s. A hipótese que a medição matou (2026-08-20)
 
 Para a metade restante eu tinha uma hipótese boa, e o próprio código a
 endossava: o cabeçalho do `detune.h` já dizia que grãos descorrelacionados
@@ -993,7 +993,7 @@ pesado onde precisava passar. Butterworth de 6ª ordem acertou as duas pontas.
 
 ---
 
-## 11t. A convenção que só funcionava porque todos os casos eram iguais (20/08)
+## 11t. A convenção que só funcionava porque todos os casos eram iguais (2026-08-20)
 
 O `piezo_mix` nasceu grudado num piezo só — `real=-1.00`, o extremo
 esquerdo — e um dos dois transdutores teria ficado mudo sem sintoma.
@@ -1021,7 +1021,7 @@ gravar já era rotina (11q). A cicatriz anterior pagou por esta.
 
 ---
 
-## 11u. Não afirmei estado errado — destruí estado em silêncio (20/08)
+## 11u. Não afirmei estado errado — destruí estado em silêncio (2026-08-20)
 
 A 11q dizia: *estado afirmado antes de um flash não sobrevive ao flash*.
 Escrevi a regra, virou skill, e no mesmo dia o dB relatou "sem som no p2".
@@ -1041,7 +1041,7 @@ porque o outro lado não tem como saber que aconteceu.
 
 ---
 
-## 11v. A pergunta que o instrumento não sabe responder (20/08)
+## 11v. A pergunta que o instrumento não sabe responder (2026-08-20)
 
 *"Chega sinal no segundo piezo?"* — e não havia como saber. O firmware media
 CPU, MIDI, picos por nota, ganho do limiter, custo de cada efeito, e **não
@@ -1097,7 +1097,7 @@ jusante**. O conserto real é físico.
 
 ---
 
-## 11w. Dois canais de saída não são uma imagem estéreo (20/08)
+## 11w. Dois canais de saída não são uma imagem estéreo (2026-08-20)
 
 A especificação do `out_width` dizia "na saída final, após a espacialização
 estéreo". Aplicado ao pé da letra, teria desfeito o stack anti-feedback.
@@ -1120,7 +1120,7 @@ canais ainda são a mesma imagem.
 
 ---
 
-## 11x. Canal mudo prova que aquele canal está mudo (20/08)
+## 11x. Canal mudo prova que aquele canal está mudo (2026-08-20)
 
 Implementando o **aviso obrigatório** do teto de soma — a parte do desenho que
 existia justamente para não repetir a família "falha em silêncio" — chamei
@@ -1155,7 +1155,7 @@ apenas era conveniente.
 
 ---
 
-## 11y. Agir de novo antes de observar a própria ação (20/08)
+## 11y. Agir de novo antes de observar a própria ação (2026-08-20)
 
 Teto de soma, teste 1: teto em 620 µs, bloco em 626. Derrubar o detune
 (−125 µs) resolvia com folga. **Caíram dois** — detune e phaser:
@@ -1185,7 +1185,7 @@ deve caber: durante ela o custo **está** lá, e uma segunda queda seria correta
 
 ---
 
-## 11z. Chave nova num recurso compartilhado cria dependência muda (20/08)
+## 11z. Chave nova num recurso compartilhado cria dependência muda (2026-08-20)
 
 O dB pediu `on`/`off` para o delay e o reverb, que até então ligavam pelo
 `mix`. Pedido simples, e cada uma das duas chaves trouxe um problema
@@ -1225,7 +1225,7 @@ teto de soma, fechado horas antes, é o que torna esse custo aceitável.
 
 ---
 
-## 12a. Validade de medição tem regime (20/08)
+## 12a. Validade de medição tem regime (2026-08-20)
 
 Medi a entrada dos piezos com **dedo direto no disco solto** e registrei o
 resultado como *"a entrada satura"*. Escrevi isso no STATUS como defeito
@@ -1266,7 +1266,7 @@ para os dois resultados possíveis.
 
 ---
 
-## 12b. Defeito físico num transdutor imita assimetria de circuito (20/08)
+## 12b. Defeito físico num transdutor imita assimetria de circuito (2026-08-20)
 
 O p2 chegava mais baixo que o p1. Medi, confirmei a diferença, e a diferença
 virou premissa: entrou no STATUS como característica do par de canais e quase
@@ -1305,7 +1305,7 @@ idênticos de fábrica.
 
 ---
 
-## 12c. Verificador que casa texto não distingue o dado da narração (20/08)
+## 12c. Verificador que casa texto não distingue o dado da narração (2026-08-20)
 
 Certifiquei a remoção dos LEDs LG/LR com um teste automático: rodar `ble` e
 procurar as letras `LG` ou `LR` na saída. Ele acusou **fantasmas**.
@@ -1313,7 +1313,7 @@ procurar as letras `LG` ou `LR` na saída. Ele acusou **fantasmas**.
 A linha que ele encontrou era esta:
 
 ```
-LB 0/100%   (LG/LR removidos 20/08)
+LB 0/100%   (LG/LR removidos 2026-08-20)
 ```
 
 O verificador achou exatamente **a frase que anuncia que eles foram
@@ -1337,11 +1337,11 @@ número redondo demais é sintoma, não resultado.
 
 ---
 
-## 12d. Delta entre builds não é atribuível (20/08) — e nesta placa pode ser 25% (23/08)
+## 12d. Delta entre builds não é atribuível (2026-08-20) — e nesta placa pode ser 25% (2026-08-23)
 
-### A atualização de 23/08, que sobe a regra de grau
+### A atualização de 2026-08-23, que sobe a regra de grau
 
-Em 20/08 a lição foi *"delta entre builds não é atribuível"*. Em 23/08 mediu-se
+Em 2026-08-20 a lição foi *"delta entre builds não é atribuível"*. Em 2026-08-23 mediu-se
 **quanto** ele pode valer aqui, e o número muda o que a regra exige.
 
 Duplicar dez params de caráter, com o **mesmo regime e o mesmo trabalho** nos
@@ -1393,7 +1393,7 @@ precisão — **é não medir.**
 
 ---
 
-### O caso original (20/08)
+### O caso original (2026-08-20)
 
 O guarda do gate (`if(thresh > 0)`, pular quando o portão está aberto) mediu
 **−58 µs** — comparando o total de v0.90.0 contra v0.91.0. Anunciei isso como o
@@ -1435,7 +1435,7 @@ promovido a fato.
 
 ---
 
-## 12e. Deleção por faixa calculada, e a instrumentação órfã (20/08)
+## 12e. Deleção por faixa calculada, e a instrumentação órfã (2026-08-20)
 
 Duas vezes na mesma sessão apaguei código que não pretendia apagar. As duas
 operações têm a mesma forma: **deletar uma faixa cujos limites eu calculei em
@@ -1547,7 +1547,7 @@ descartada exatamente na hora em que valia mais.
 
 ---
 
-## 12f. Eliminação cirúrgica: o compilador como inventário (20/08)
+## 12f. Eliminação cirúrgica: o compilador como inventário (2026-08-20)
 
 Tirar o motor externo do projeto era remover 56 sítios espalhados por três
 arquivos,
@@ -1613,7 +1613,7 @@ impossível dentro do sistema de slots.
 
 ---
 
-## 12g. "Impossível" que era "impossível nesta arquitetura" (20/08)
+## 12g. "Impossível" que era "impossível nesta arquitetura" (2026-08-20)
 
 O dB pediu envio por cadeia em cada efeito da cauda — `dly_mix_a`,
 `frz_mix_b`, e assim por diante. Respondi que **não era fisicamente
@@ -1664,7 +1664,7 @@ uma ideia boa antes de ela ser tentada.
 
 ---
 
-## 12h. Redundância criada por uma mudança em outro lugar (20/08)
+## 12h. Redundância criada por uma mudança em outro lugar (2026-08-20)
 
 O dB perguntou: *"qual a função de esp_mix? já não temos rev_mix?"*
 
@@ -1725,7 +1725,7 @@ Quatro params e quatro CCs a menos.
 
 ---
 
-## 12i. Faixa do param maior que o alcance do efeito (20/08)
+## 12i. Faixa do param maior que o alcance do efeito (2026-08-20)
 
 O dB: *"não estou vendo o frz_size_b funcionar"*.
 
@@ -1760,7 +1760,7 @@ para um teste de "o efeito funciona?".
 
 ### E a lição já existia
 
-Em 18/08 o `dly_time` teve exatamente isto: ia de 10 ms a 1 s e o primeiro
+Em 2026-08-18 o `dly_time` teve exatamente isto: ia de 10 ms a 1 s e o primeiro
 terço ficava abaixo da percepção de eco. O conserto de lá está escrito no
 manifest, com a frase certa:
 
@@ -1795,7 +1795,7 @@ em vez de reação.
 
 ---
 
-## 12j. A feature que morreu e ninguém notou por cinco commits (20/08)
+## 12j. A feature que morreu e ninguém notou por cinco commits (2026-08-20)
 
 O dB pediu uma auditoria dos params, um por um. A primeira camada — *quem lê
 cada param?* — acusou dois: `buzios_thresh` e `buzios_cooldown`, declarados,
@@ -1861,7 +1861,7 @@ importa era "compare, e saiba qual direção é defeito"**.
 
 ---
 
-## 12k. A trava muda: três efeitos "quebrados" que estavam intactos (22/08)
+## 12k. A trava muda: três efeitos "quebrados" que estavam intactos (2026-08-22)
 
 **Sintoma.** "phaser, drive e shimmer não estão soando, warble, delay,
 rvb e frz estão." Fui procurar defeito nos três módulos.
@@ -1930,7 +1930,7 @@ negativa exige `>= 0` explícito — nunca teste de verdade.
 
 ---
 
-## 12l. Gravar apaga o instrumento, e ninguém é avisado (22/08)
+## 12l. Gravar apaga o instrumento, e ninguém é avisado (2026-08-22)
 
 **Sintoma, dez minutos depois de 12k:** "e drv shm e rvb não estão
 soando". Fui procurar a trava do CTOS de novo. Não era.
@@ -1960,11 +1960,11 @@ relatado nessa janela sou eu, não o código.*
 **Regra 2:** *estado que só existe em RAM morre a cada gravação. Num
 instrumento sem tela, isso é perda de trabalho invisível — e o sintoma
 dela imita defeito de efeito.* Aponta pra preset em flash: salvar e
-recarregar no boot. Aberto em 22/08.
+recarregar no boot. Aberto em 2026-08-22.
 
 ---
 
-## 12m. O botão que devolve, e o LED que avisa que ele existe (22/08)
+## 12m. O botão que devolve, e o LED que avisa que ele existe (2026-08-22)
 
 Resolvido 12k, ficou a pergunta prática: o dB toca **sem computador**. Se
 o teto derrubar no meio da performance, `ctos rearm` por serial não está
@@ -2004,7 +2004,7 @@ simulado tem que ser consumido por quem o lê.
 
 ---
 
-## 12n. O efeito que funciona e mesmo assim não soa (22/08)
+## 12n. O efeito que funciona e mesmo assim não soa (2026-08-22)
 
 **Relato:** "tudo funciona exceto o drive." O drive custava +12 µs
 medidos — rodava. E não se ouvia.
@@ -2063,7 +2063,7 @@ por tone e a THD por nível — rodaram no host, sem tocar no hardware.
 
 ---
 
-## 12o. O teto era o defeito, e eu consertei a divisão (22/08)
+## 12o. O teto era o defeito, e eu consertei a divisão (2026-08-22)
 
 **Queixa:** "quando ligo o drive tenho mais ganho mas a distorção legal que
 tinha antes desapareceu."
@@ -2113,7 +2113,7 @@ rodaram no host.
 
 ---
 
-## 12p. Defesa órfã: a separação de canal que existia só no cabeçalho (22/08)
+## 12p. Defesa órfã: a separação de canal que existia só no cabeçalho (2026-08-22)
 
 Implementei o espelho MIDI — a placa transmite seu estado de volta ao iPad
 — com duas defesas declaradas contra realimentação:
@@ -2156,7 +2156,7 @@ Loopy como causa e absolveu o firmware.
 
 ---
 
-## 12q. A lacuna entre varreduras é onde o erro mora (22/08)
+## 12q. A lacuna entre varreduras é onde o erro mora (2026-08-22)
 
 O modo `learn` percorre os 76 CCs pulsando cada um para o dB armar os
 widgets do Loopy. Primeira versão: a placa pulsa, **eu** leio o histórico a
@@ -2193,7 +2193,7 @@ que deveria dar UM passo dava todos.
 
 ---
 
-## 12r. Unidade errada num dimensionamento (22/08)
+## 12r. Unidade errada num dimensionamento (2026-08-22)
 
 Precisava saber quais dos 76 widgets do Loopy já estavam endereçados. O
 histórico de CCs da placa guardava **8** mensagens — pouco. Aumentei para
@@ -2225,7 +2225,7 @@ pergunta?"* é mais barata que uma gravação e vem antes dela.
 
 ---
 
-## 12s. Inverter a pergunta resolveu o que três horas de mecanismo não (22/08)
+## 12s. Inverter a pergunta resolveu o que três horas de mecanismo não (2026-08-22)
 
 O modo `learn` foi construído para endereçar os widgets do Loopy: a placa
 pulsa cada CC, o dB arma o widget, avança. Ganhou confirmação automática,
@@ -2268,7 +2268,7 @@ entregá-lo.
 
 ---
 
-## 12t. Verificação que exige desligar o sensor é desenho invertido (22/08)
+## 12t. Verificação que exige desligar o sensor é desenho invertido (2026-08-22)
 
 O modo `learn` e o inventário `vistos` resolviam o mesmo problema —
 endereçar os widgets do Loopy — e eram **mutuamente exclusivos**, o que
@@ -2305,7 +2305,7 @@ ccmap). Remover sem nomear a volta seria apagar, não aposentar.
 
 ---
 
-## 12u. Citei o piso ao lado de um número de carga (22/08)
+## 12u. Citei o piso ao lado de um número de carga (2026-08-22)
 
 Relatei de passagem "CPU 180 µs" logo depois de remover o `learn`, ao lado
 de uma referência de 509 µs da mesma sessão. Parece otimização de 65%. Não é
@@ -2388,7 +2388,7 @@ protegendo contra um fenômeno diferente do que está acontecendo.
 
 ---
 
-## 12v. Pré-condição de API herdada, revogada sem aviso de compilação (22/08)
+## 12v. Pré-condição de API herdada, revogada sem aviso de compilação (2026-08-22)
 
 Para os presets, a orientação que chegou foi: *"a libDaisy já resolveu isso
 — a classe de storage persistente escreve numa área reservada afastada do
@@ -2444,7 +2444,7 @@ a ser satisfeita de verdade, não por sorte.
 
 ---
 
-## 12w. Teto é orçamento, prazo é parede — e a diferença salvou a defesa (22/08)
+## 12w. Teto é orçamento, prazo é parede — e a diferença salvou a defesa (2026-08-22)
 
 O teto de soma derruba efeito quando N blocos **consecutivos** passam de
 850 µs. Histerese deliberada. Medindo com o leitor consertado (12u),
@@ -2481,7 +2481,7 @@ detalhe de implementação — é onde a opção é testada.
 
 ---
 
-## 12x. O ganho de teste pegou o relatório mentindo, não só a defesa (22/08)
+## 12x. O ganho de teste pegou o relatório mentindo, não só a defesa (2026-08-22)
 
 O critério de estouro mede zero em regime real — então, sem ganho, seria
 indemonstrável. `ctos prazo <us>` força prazo artificial, espelhando o
@@ -2519,7 +2519,7 @@ estouros já grava.
 
 ---
 
-## 12y. Trabalho ilimitado em contexto compartilhado — a terceira e a quarta (22/08)
+## 12y. Trabalho ilimitado em contexto compartilhado — a terceira e a quarta (2026-08-22)
 
 O `Log()` já tinha aprendido isto e ganhado disjuntor: *trabalho ilimitado
 em contexto compartilhado é parada cardíaca esperando acontecer.* A lição
@@ -2563,7 +2563,7 @@ dia.
 
 ---
 
-## 12z. Investigação sem ponto de retorno declarado (22/08)
+## 12z. Investigação sem ponto de retorno declarado (2026-08-22)
 
 Ao trocar para `BOOT_SRAM` apareceu um travamento reprodutível. Investiguei
 por seis gravações seguidas, cada uma com um conserto novo, **sem nunca
@@ -2607,7 +2607,7 @@ bootloader aparecer e gravar no instante em que surgir** — polling do
 
 ---
 
-## 13a. Guarda de faixa em float se escreve pela NEGAÇÃO (22/08)
+## 13a. Guarda de faixa em float se escreve pela NEGAÇÃO (2026-08-22)
 
 `delay.h:117` tinha `while(r < 0.f) r += (float)cap_;` — normalizar um
 ponteiro de leitura circular. Fui consertar **um** defeito e encontrei
@@ -2659,7 +2659,7 @@ prova por gancho de teste, como o `ctos prazo` fez.
 
 ---
 
-## 13b. Três causas empilhadas, e cada uma escondia a seguinte (22/08)
+## 13b. Três causas empilhadas, e cada uma escondia a seguinte (2026-08-22)
 
 Amplificador novo na bancada — TPA3110 alimentado por boost, exciter de 4 Ω.
 Sintoma inicial: som muito baixo. Levou uma tarde, e a lição não é elétrica,
@@ -2690,12 +2690,12 @@ e potência que se entrega em vez de potência de catálogo.
 
 **Regra de hardware, e vale para o painel inteiro:** *sinal de áudio não
 passa por contato mecânico em lugar nenhum deste instrumento.* Chave governa
-<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
+<!-- doc-check: ignore route_exciter (nome APOSENTADO em 2026-08-28, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
 <!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 **GPIO**; o firmware corta o ramo. `route_exciter` e `route_jack` existem
 para isso, e as DPDT planejadas em D29/D30 seguem o mesmo desenho.
 
-> **Corrigido em 28/08, e a correção é do enunciado, não do caso.** A regra
+> **Corrigido em 2026-08-28, e a correção é do enunciado, não do caso.** A regra
 > generalizou demais: ela nasceu de uma chave de POTÊNCIA, cujo contato seco
 > não conduz nível de linha. O DPDT de sinal de três posições
 > (jack \| ambos \| amp) conduz áudio DE PROPÓSITO, e é o que está montado.
@@ -2716,9 +2716,9 @@ Foi isso que apontou o dedo para fora dela.
 
 ---
 
-## 13c. Prosa de status é medição também — as quatro do mesmo dia (22/08)
+## 13c. Prosa de status é medição também — as quatro do mesmo dia (2026-08-22)
 
-Quatro vezes em 22/08 o instrumento de medir virou a falha. Só no fim ficou
+Quatro vezes em 2026-08-22 o instrumento de medir virou a falha. Só no fim ficou
 claro que as quatro têm a **mesma anatomia**.
 
 | onde | o que a linha dizia | o que era |
@@ -2749,7 +2749,7 @@ com quatro ocorrências documentadas no mesmo dia. Junto com "é só um log" e
 
 ---
 
-## 13d. O tamanho da seção é a prova de que o atributo foi aplicado (22/08)
+## 13d. O tamanho da seção é a prova de que o atributo foi aplicado (2026-08-22)
 
 A rotina de escrita na QSPI precisa executar da ITCM — é o mecanismo inteiro.
 Marquei `COTUCA_ITCM` nos dois ajudantes e **esqueci na função principal**.
@@ -2778,7 +2778,7 @@ que alguém vai acrescentar a próxima função e esquecer o atributo.
 
 ---
 
-## 13e. O operador não consegue agir dentro de uma janela que só aparece depois dela começar (22/08)
+## 13e. O operador não consegue agir dentro de uma janela que só aparece depois dela começar (2026-08-22)
 
 Precisava contar quantas alternâncias cinco batidas no arcade produziam. Fiz
 o óbvio: abri uma janela de 20 s, imprimi *">>> BATA 5 VEZES AGORA <<<"* e
@@ -2812,7 +2812,7 @@ debounce ruim — só a contagem distingue.
 
 ---
 
-## 13f. Sentinela negativa não sobrevive a zero-init — a segunda no mesmo dia (22/08)
+## 13f. Sentinela negativa não sobrevive a zero-init — a segunda no mesmo dia (2026-08-22)
 
 Generalizei o botão assinalável para uma tabela: cada botão declara o
 parâmetro que alterna e o LED que o espelha, com `-1` significando "sem
@@ -2843,7 +2843,7 @@ preço dele imediatamente, e este cobrou antes de o defeito chegar ao painel.
 
 ---
 
-## 13g. GPIO troca no fonte; UART, não (22/08)
+## 13g. GPIO troca no fonte; UART, não (2026-08-22)
 
 O LED do freeze foi soldado no D27 e o switch no D24 — invertidos em relação
 ao que o firmware esperava. Custou dois números no fonte e uma gravação:
@@ -2869,7 +2869,7 @@ o problema era o widget não escutar o canal 2.
 
 ---
 
-## 13h. Toda reestruturação tem três frentes; o compilador cobra uma (22/08)
+## 13h. Toda reestruturação tem três frentes; o compilador cobra uma (2026-08-22)
 
 Audit de deriva doc↔código, e a causa raiz é comum aos doze achados: o
 commit `3834cea` — cauda paralela, dois espaços, freeze por cadeia — foi
@@ -2928,7 +2928,7 @@ fantasma injetado → `make: *** [check-docs] Error 1`; removido → passa.
 
 ---
 
-## 13i. A fila também deriva, e ninguém a verifica (22/08)
+## 13i. A fila também deriva, e ninguém a verifica (2026-08-22)
 
 O backlog trazia: *"`frz_size`: 61% de curso morto, faixa 20–400, clamp 167, etiquetado antes do painel"*. <!-- doc-check: ignore frz_size (cicatriz cita a faixa PRE-conserto) --> Verificado no fonte de agora:
 
@@ -2971,7 +2971,7 @@ custa mais que o comentário — **cirúrgico é o que muda menos**.
 
 ---
 
-## 13j. A hipótese plausível é a perigosa (22/08)
+## 13j. A hipótese plausível é a perigosa (2026-08-22)
 
 O JEDEC ID vinha `FF FF FF`. A explicação era boa: *a libDaisy põe o chip em
 QPI no `Init`; chip em QPI ignora comando em 1 linha; a linha fica em
@@ -3015,7 +3015,7 @@ exigida por eles.** Removi `zero_buf` e `seco_buf` no commit A; a cicatriz
 depois. O mecanismo se completou por pressão do próprio uso, que é o melhor
 sinal de que o desenho está certo.
 
-## 13k. Nenhum valor de dado pode significar "sem dado" (22/08)
+## 13k. Nenhum valor de dado pode significar "sem dado" (2026-08-22)
 
 A sonda QSPI reportava, para quatro comandos diferentes:
 
@@ -3068,7 +3068,7 @@ carregar a validade junto.
 ao lado. Quando as duas ficam na mesma linha, o leitor pode discordar da
 segunda sem perder a primeira — que foi exatamente o que aconteceu aqui.
 
-## 13l. Parar no meio é a regra funcionando; parar depois é a cicatriz (22/08)
+## 13l. Parar no meio é a regra funcionando; parar depois é a cicatriz (2026-08-22)
 
 Escrevi a 13j nesta mesma sessão. Ela diz: *o teste que decide é o que lê a
 fonte da configuração.* Depois disso **voltei a varrer duas vezes** — o
@@ -3101,7 +3101,7 @@ identificado** (a sequência de registrador). A condição de retomada está
 escrita no `DESENHO-ESCRITA-QSPI.md`, com as três hipóteses nomeadas, para
 que ninguém recomece o espaço de busca.
 
-## 13m. Falha crônica é sensor desligado que ninguém lembra de ter desligado (23/08)
+## 13m. Falha crônica é sensor desligado que ninguém lembra de ter desligado (2026-08-23)
 
 Os bancos nativos falhavam **3 de 3** havia semanas. Ninguém os rodava, porque
 "eles já falham". Ao abrir, nenhuma falha era do firmware:
@@ -3155,7 +3155,7 @@ sete documentos e o `check_docs` usava `glob("*.md")`, não recursivo — sete
 documentos entraram sem vigilância nenhuma, e a saída continuou `ok`. Pasta
 nova entra sem vigilância **por padrão**.
 
-## 13n. Desligar um transmissor não esvazia o fio (23/08)
+## 13n. Desligar um transmissor não esvazia o fio (2026-08-23)
 
 A multiplexação pôs a entrada da cadeia B no ch2, que é onde o espelho fala.
 A recusa *"não obedeço a minha própria voz"* era incondicional naquele canal,
@@ -3273,7 +3273,7 @@ declarar como segura.
 cc24`, `cc26`, `cc33` — exatamente os números que a cadeia B liberou, com os
 widgets antigos ainda apontando para eles.
 
-## 13o. Comando que não consta não existe (23/08)
+## 13o. Comando que não consta não existe (2026-08-23)
 
 Três comandos escritos no mesmo dia — `dup`, `espelho`, `dreno` — funcionavam
 e **não apareciam na linha do `?`**. O padrão é sempre o mesmo: escreve-se o
@@ -3301,7 +3301,7 @@ verdade (pulso de freeze, pulso de rearme). Isenção generosa transforma
 verificador em carimbo — a lista ficou com os `k1..k5`, que a linha anuncia
 como faixa, e os dois `midi*`, que ela lista por extenso.
 
-## 13p. Custo proporcional a uma tabela que cresce é bomba-relógio silenciosa (23/08)
+## 13p. Custo proporcional a uma tabela que cresce é bomba-relógio silenciosa (2026-08-23)
 
 O `sync` (`MidiPushEstado`) gasta `hal::DelayMs(3)` por mensagem. Quando foi
 escrito, o mapa tinha 12 CCs — **36 ms**, e o comentário ao lado dizia
@@ -3336,14 +3336,14 @@ pequena?* Varridos todos os laços sobre `n_midi`, `params.Count()` e
 **A pergunta vale como item de audit permanente**, porque a resposta muda toda
 vez que uma tabela cresce, e ninguém é avisado quando isso acontece.
 
-## 13q. Defesa aplicada num caminho e não no irmão (23/08)
+## 13q. Defesa aplicada num caminho e não no irmão (2026-08-23)
 
 Três ocorrências, e a terceira é minha, no mesmo dia em que escrevi sobre as
 outras duas:
 
 | defesa | caminho protegido | irmão desprotegido |
 |---|---|---|
-| governor | ramo L | **ramo R** (até 20/08) |
+| governor | ramo L | **ramo R** (até 2026-08-20) |
 | janela de autoria | `MidiEspelha` | **`MidiPushEstado`** (o `sync`) |
 | canal no relatório | `vistos` | **`midi`** |
 
@@ -3403,7 +3403,7 @@ mecanismo com razões diferentes** — um emprego, duas variáveis, que é a
 inversão da variável-com-dois-empregos e diverge no primeiro conserto. Fica
 registrado; unificar é trabalho de outro voo.
 
-## 13r. Para provar que o binário gravado tem a fonte atual, leia na placa um número que só a fonte nova produz (23/08)
+## 13r. Para provar que o binário gravado tem a fonte atual, leia na placa um número que só a fonte nova produz (2026-08-23)
 
 Um `make` que não reconstruiu levantou a hipótese feia: *se header não dispara
 rebuild, gravei binário velho a sessão inteira.*
@@ -3429,7 +3429,7 @@ Generaliza: a versão em `COTUCA_OS_VERSION` já faz isso para o `main.cpp`, e o
 e aí serve qualquer número derivado: contagem de params, de vínculos, um hash.
 *Escolha um número que a mudança move, e leia-o do outro lado.*
 
-## 13s. Todo teste de rejeição precisa do gêmeo que confirma a aceitação (23/08)
+## 13s. Todo teste de rejeição precisa do gêmeo que confirma a aceitação (2026-08-23)
 
 Três aparições no mesmo dia, e as três com a mesma forma: **o teste positivo
 passa sozinho e esconde que o mecanismo virou carimbo.**
@@ -3486,7 +3486,7 @@ no dia, depois do canal de espelho e do `n_sacrif`: **transformar disciplina em
 contrato, e limite em contrato.** Exercitado — um campo a mais reprova o build
 com a frase certa.
 
-## 13t. O nível cru inocentou a solda e acusou o firmware (23/08)
+## 13t. O nível cru inocentou a solda e acusou o firmware (2026-08-23)
 
 O dB soldou o freeze B em D22/D23. O botão não contava nada e o LED não
 acendia. **Duas suspeitas foram levantadas contra o trabalho dele — fiação
@@ -3512,7 +3512,7 @@ for(int b = 0; b < 3 && b < hal::Info().num_buttons; b++)
 ```
 
 **O índice 3 — D22, freeze B — nunca era lido.** Segunda divergência do mesmo
-par em dois dias: em 22/08 o array ficou em `[2]` com o laço em `3` e escreveu
+par em dois dias: em 2026-08-22 o array ficou em `[2]` com o laço em `3` e escreveu
 fora; consertado alargando os dois à mão, e a forma sobreviveu para divergir
 de novo no outro sentido.
 
@@ -3548,7 +3548,7 @@ compartilhado e mandou o dB buscar multímetro.
 > operador não é um instrumento que se relê depois — a resposta dele chega
 > quando chega, e se o estado mudou no meio, ela responde outra pergunta.
 
-## 13u. Truncagem silenciosa nas duas pontas do mesmo canal (23/08)
+## 13u. Truncagem silenciosa nas duas pontas do mesmo canal (2026-08-23)
 
 O `preset dump` emitia **13 de 33 params** e a linha parecia completa. Ao
 consertar, a colagem de volta recusava **um param por linha**. Duas
@@ -3630,7 +3630,7 @@ Três consertos, e nenhum deles é "aumenta o número":
 O último é o padrão da casa outra vez: **o formato não pode ter um limite que
 o conteúdo possa alcançar.**
 
-## 13v. O ciclo completo, e o que ele prova (23/08)
+## 13v. O ciclo completo, e o que ele prova (2026-08-23)
 
     capturar -> dump -> RESET (a RAM some) -> colar de volta -> load
 
@@ -3671,7 +3671,7 @@ falta é a lista.** Candidatos levantados, e nenhum verificado ainda:
 
 O custo já foi pago uma vez, no B3. **Fila, com argumento próprio.**
 
-## 13x. Ausência só é evidência quando a presença era possível (23/08)
+## 13x. Ausência só é evidência quando a presença era possível (2026-08-23)
 
 Três casos no mesmo dia, e só ao juntá-los ficou claro que eram **um**:
 
@@ -3709,7 +3709,7 @@ exercita*. Faltava a linha seguinte:
 Quando um exercício de trava não falha, a primeira hipótese não é "a trava
 está errada": é **"o exercício não aconteceu"**.
 
-## 13y. A conferência achou o defeito na defesa que ela conferia (23/08)
+## 13y. A conferência achou o defeito na defesa que ela conferia (2026-08-23)
 
 O dB pediu que o `sync` deixasse de ser *"mandei"* e virasse *"chegou"*: se o
 Loopy não devolver o eco, avisa; se devolver, dá o OK.
@@ -3782,7 +3782,7 @@ Pela 13x — o gatilho também precisa ser exercitado:
   `5 voltaram, 5 barrados`;
 - e o sub-ramo `Voltou MENOS DA METADE`, que também disparou.
 
-## 13z. O painel acendeu de primeira, e as três decisões saíram do fonte (23/08)
+## 13z. O painel acendeu de primeira, e as três decisões saíram do fonte (2026-08-23)
 
 O OLED SSD1309 subiu no primeiro voo: tela cheia, depois `COTUCATRONICS`
 legível. **Nenhuma das três decisões do caminho foi tomada por tentativa.**
@@ -3835,7 +3835,7 @@ perdoam menos em MHz alto, e este teste **não tem requisito de taxa**. Se
 acender, dá para descer e **medir onde para de acender** — que é informação
 sobre a instalação, não chute.
 
-## 14a. `open(f,'w')` trunca ANTES de o `read()` interno rodar (23/08)
+## 14a. `open(f,'w')` trunca ANTES de o `read()` interno rodar (2026-08-23)
 
 ```python
 io.open(f, 'w').write(io.open(f).read().replace(velho, novo))
@@ -3892,7 +3892,7 @@ pegou". Quem gritou foi o **compilador**, por um caminho que nada tinha a ver.
 Quinto caso do padrão: **instrumentação encontra o que não era o alvo dela** —
 aqui, o alvo nem era instrumentação, era o build.
 
-## 14b. Reintroduzir o método aposentado sem reintroduzir o mecanismo (23/08)
+## 14b. Reintroduzir o método aposentado sem reintroduzir o mecanismo (2026-08-23)
 
 Com os learns do Loopy apagados, escrevi o `RETRABALHO-LOOPY.md` como uma
 tabela de 86 linhas e o entreguei dizendo *"remapeia a partir disto"*. O dB
@@ -3901,7 +3901,7 @@ isso volta agora?"**
 
 Ele estava certo, e o defeito não estava no documento — **estava no
 enquadramento.** A tabela é referência legítima; apresentá-la como
-*procedimento* trouxe de volta o trabalho manual que o método de 22/08 tinha
+*procedimento* trouxe de volta o trabalho manual que o método de 2026-08-22 tinha
 eliminado.
 
 ### A decisão original era mais forte do que eu lembrava
@@ -3945,7 +3945,7 @@ O procedimento em vigor não prepara nada no iPad:
 | **o widget se adapta** | **o firmware se adapta** |
 
 > **Quem se adapta é o firmware, que é o lado que se edita.** Essa frase estava
-> escrita no procedimento desde 22/08, e eu passei duas rodadas propondo o
+> escrita no procedimento desde 2026-08-22, e eu passei duas rodadas propondo o
 > inverso.
 
 **A palavra denunciou o que a estrutura escondia.** "Armar" não tinha lugar no
@@ -3963,7 +3963,7 @@ abre com *"método que funcionou: `vistos`, não `learn`"*, 65 de 65 em duas
 varreduras. O commit `ec756ef` nomeia o caminho de volta inteiro. **A casa
 tinha feito a parte dela; faltou eu consultar.**
 
-## 14c. Prefixo engole comando, e a licao estava dois comandos acima (23/08)
+## 14c. Prefixo engole comando, e a licao estava dois comandos acima (2026-08-23)
 
 `oledvel 256` casou no handler do **`oled`** — `strncmp(line, "oled", 4)`
 vem antes na cadeia e engole o prefixo.
@@ -3986,7 +3986,7 @@ coisa** e reporta sucesso, nao.
 > antes dele — e nada no codigo cobra isso. Candidato para o `check-docs`:
 > comparar cada `strncmp(line, "X")` com os demais e acusar prefixo posterior.
 
-## 14d. Supor o mapa e medir contra a suposicao so acha o que ja se esperava (23/08)
+## 14d. Supor o mapa e medir contra a suposicao so acha o que ja se esperava (2026-08-23)
 
 O encoder global nao respondia. Construi tres instrumentos para descobrir por
 que — a trava de nivel cru nas duas direcoes, o teste diferencial, a sonda de
@@ -4035,7 +4035,7 @@ que o nosso codigo dissesse.
 Consertado declarando os tres explicitamente, embora sejam os defaults. Nao
 muda comportamento — **muda quem sabe.**
 
-## 14e. Medi presenca e chamei de polaridade (23/08)
+## 14e. Medi presenca e chamei de polaridade (2026-08-23)
 
 O painel nao acendia. Eliminei sete causas por prova e concluí, por
 eliminacao, que o display estava morto — apoiada em *"3,3 V confirmado
@@ -4058,7 +4058,7 @@ as letras, que o MCU estava rodando e que isso exigia 3V3 em algum lugar.
 Depois segui uma leitura de multimetro que dizia 0 V no pino. **Duas evidencias
 incompativeis deviam ter suspendido a conclusao, e eu escolhi um lado.**
 
-## 14f. Instrumento nao inicializado le zero, e zero pareceu dado (23/08)
+## 14f. Instrumento nao inicializado le zero, e zero pareceu dado (2026-08-23)
 
 O encoder global tinha as duas fases COMUTANDO no `encpino` e `crus +0` no
 `enc`. Diagnostiquei hardware: mandei o dB conferir o comum no multimetro, e
@@ -4083,7 +4083,7 @@ virar conclusao. Vale como desenho: **quando um instrumento novo mede o mesmo
 fenomeno por outro caminho, a divergencia entre eles e informacao — nao ruido
 a reconciliar.**
 
-## 14g. Teste o hardware primeiro, de todas as maneiras possiveis (23/08)
+## 14g. Teste o hardware primeiro, de todas as maneiras possiveis (2026-08-23)
 
 Passei uma sessao inteira eliminando causas do OLED preto: firmware,
 alimentacao, encoders, fio rompido, ponte, velocidade, ordem de energizacao.
@@ -4141,7 +4141,7 @@ Sonda que so responde com tudo parado tem um ponto cego do tamanho de todas as
 falhas mecanicas — que num projeto com a placa entupida e os pontos de solda
 espremidos sao a maioria.
 
-## 14h. Documento gerado acompanha; documento escrito a mao, nao (23/08)
+## 14h. Documento gerado acompanha; documento escrito a mao, nao (2026-08-23)
 
 A multiplexacao mudou de quatro canais para seis. **Um documento se atualizou
 sozinho e quatro ficaram para tras** — e o que decidiu nao foi importancia nem
@@ -4184,7 +4184,7 @@ para sempre.
 
 ---
 
-## 14i. Cinco padroes de mensagem, todos dentro do conjunto errado (24/08)
+## 14i. Cinco padroes de mensagem, todos dentro do conjunto errado (2026-08-24)
 
 O Loopy Pro nao aprendia o `cc21`. Testei cinco formas de disparo:
 
@@ -4216,7 +4216,7 @@ espacamento (14k). Nomear a familia nao imuniza contra ela com outra variavel.
 
 ---
 
-## 14j. O limiar era zero, e eu deduzi-o em 64 (24/08)
+## 14j. O limiar era zero, e eu deduzi-o em 64 (2026-08-24)
 
 Todo o raciocinio sobre "o que o Loopy ve" assentava numa suposicao minha: que
 valor de CC acima de 64 e ON e abaixo e OFF, como um botao com meio curso.
@@ -4239,7 +4239,7 @@ desenhado esse disparo exatamente para fugir da ambiguidade dos extremos.
 
 ---
 
-## 14k. Tres medidas na mesma variavel sem mover o fenomeno (24/08)
+## 14k. Tres medidas na mesma variavel sem mover o fenomeno (2026-08-24)
 
 O dB pediu espacamento de 500 ms, depois 1000, depois 1500, depois 2000 —
 cada um porque o anterior "ainda deu double tap". Quatro pedidos, uma variavel,
@@ -4256,7 +4256,7 @@ terceiro descartou.** Se a resposta for "nada", trocar de variavel.
 
 ---
 
-## 14l. A sonda que nunca podia ouvir, e o `ok` que ela devolvia (24/08)
+## 14l. A sonda que nunca podia ouvir, e o `ok` que ela devolvia (2026-08-24)
 
 Para saber se um widget mandava MIDI de volta, liguei `log on` e li a serial
 durante 20 s enquanto o dB mexia no controlo. Zero bytes. Conclui que o widget
@@ -4279,7 +4279,7 @@ nesta mesma sessao: o `vistos`, que e estado da placa e nao fluxo de log.
 
 ---
 
-## 14m. O artefacto exportado era a fonte que faltava (24/08)
+## 14m. O artefacto exportado era a fonte que faltava (2026-08-24)
 
 O trabalho a frente era configurar 85 bindings a mao no iPad — um dia inteiro,
 por gesto, sem verificacao possivel. A saida nao foi acelerar o gesto: foi
@@ -4307,7 +4307,7 @@ reexporta o projeto, regera o perfil.
 
 ---
 
-## 14n. Validar o gerador contra verdade conhecida ANTES de emitir (24/08)
+## 14n. Validar o gerador contra verdade conhecida ANTES de emitir (2026-08-24)
 
 O gerador tinha de adivinhar como um binding aponta para o seu widget. A forma
 era `LPSliderWidget:1:2` — tipo, pagina, indice — e o indice **nao** e a posicao
@@ -4334,7 +4334,7 @@ medicoes independentes — uma pela placa, outra pelo XML — a dizerem o mesmo.
 
 ---
 
-## 14o. Endereco posicional desendereça em silencio (24/08)
+## 14o. Endereco posicional desendereça em silencio (2026-08-24)
 
 O `Subject` de um binding e posicional. O dB corrigiu o layout — moveu o
 `Dly Time` para a pagina CENTRAL — e regerei o perfil. A conferencia contra os
@@ -4385,7 +4385,7 @@ uma no seu contexto. Foi a segunda reproducao que revelou que havia duas.
 
 ---
 
-## 14p. O verificador contava zero CCs e assinava "ok" (24/08)
+## 14p. O verificador contava zero CCs e assinava "ok" (2026-08-24)
 
 Na revisao de fecho, o `check_docs` imprimiu:
 
@@ -4430,7 +4430,7 @@ quatro argumentos — zero casamentos, aborta.
 
 ---
 
-## 14q. O suspeito e a causa recuperaram JUNTOS (27/08)
+## 14q. O suspeito e a causa recuperaram JUNTOS (2026-08-27)
 
 A Daisy sumiu do barramento. Pedi troca de cabo; 22 s depois o STM32
 reapareceu. Anunciei: **"era o cabo"**.
@@ -4450,7 +4450,7 @@ volta do mesmo instante em que o cabo mudou. **Correlacao perfeita e falsa.**
 
 ---
 
-## 14r. Descartei a massa por deducao, e ela estava desligada (27/08)
+## 14r. Descartei a massa por deducao, e ela estava desligada (2026-08-27)
 
 Dois fios de tres nao funcionavam. Escrevi: *"isso descarta massa comum como
 causa unica, porque as duas placas partilham terra pelo Mac"* — e o
@@ -4468,7 +4468,7 @@ teriam funcionado ao primeiro toque.
 
 ---
 
-## 14s. Mudei o nome com a medicao a caminho (27/08)
+## 14s. Mudei o nome com a medicao a caminho (2026-08-27)
 
 Calculei que "Cotucatronics" nao cabia no pacote de anuncio BLE: 31 bytes,
 menos 3 de flags, menos 18 do UUID de 128 bit, sobram 8 caracteres para um
@@ -4490,7 +4490,7 @@ por nao esperar pelos que vinham.
 
 ---
 
-## 14t. Tres instrumentos mentiram em duas horas (27/08)
+## 14t. Tres instrumentos mentiram em duas horas (2026-08-27)
 
 Nenhum deles avisou. Todos deram numeros com cara de resultado.
 
@@ -4519,7 +4519,7 @@ placa estava a correr havia minutos.
 
 ---
 
-## 14u. O firmware minimo partiu o espaco em UMA gravacao (27/08)
+## 14u. O firmware minimo partiu o espaco em UMA gravacao (2026-08-27)
 
 Duas horas de hipoteses sobre por que o app enumerava o USB e nunca falava.
 Bootloader, linker, `.bss`, QSPI, ITCM, `n_ramps`, `NowMs`, `BbFlush` —
@@ -4546,7 +4546,7 @@ placa, init do audio, 64 MB de SDRAM escritos e relidos — e o
 
 ---
 
-## 14v. O instrumento de autopsia tinha dois autores (27/08)
+## 14v. O instrumento de autopsia tinha dois autores (2026-08-27)
 
 O projeto tem um sinalizador de arranque desenhado exatamente para este
 caso: o callback de audio pisca a ultima FASE que o loop completou, porque
@@ -4573,7 +4573,7 @@ causas, consertos opostos.** O discriminante e o nome do produto no USB:
 
 ---
 
-## 14w. Hardware so se elimina por REPRODUCAO (27/08)
+## 14w. Hardware so se elimina por REPRODUCAO (2026-08-27)
 
 Uma placa que nao responde e sempre suspeita de si propria, e o argumento
 "deve estar queimada" e confortavel demais para se examinar. A segunda
@@ -4593,7 +4593,7 @@ experimento em vez de uma discussao.**
 
 ---
 
-## 14x. A deteccao de placa e um fall-through silencioso (27/08)
+## 14x. A deteccao de placa e um fall-through silencioso (2026-08-27)
 
 A libDaisy identifica a Seed por pinos aterrados na fabrica: `PD3` para a
 1.1, `PD4` para a Seed2 DFM, e **nenhum** para a rev4. O ramo final nao e
@@ -4617,7 +4617,7 @@ aguardar suporte na biblioteca — e o instrumento que o detectou (o
 
 ---
 
-## 14y. O terceiro sinalizador, e o conserto de 18/08 que ficou pela metade (27/08)
+## 14y. O terceiro sinalizador, e o conserto de 2026-08-18 que ficou pela metade (2026-08-27)
 
 O `Log` tem tres estados que descrevem a mesma coisa — o canal esta mau:
 
@@ -4637,7 +4637,7 @@ tentativa por chamada, sem espera nenhuma. Uma tentativa isolada raramente
 calha com o endpoint livre: o log ficava morto para sempre, com cara de
 recuperado.
 
-**O conserto de 18/08 estava certo e incompleto.** Naquele dia o problema foi
+**O conserto de 2026-08-18 estava certo e incompleto.** Naquele dia o problema foi
 nomeado com precisao — *"a placa rodava perfeita e MUDA, e o sintoma (porta
 viva, zero resposta, nem banner) era indistinguivel de firmware travado"* — e
 a ressurreicao foi acrescentada. So que a um dos irmaos.
@@ -4653,7 +4653,7 @@ declarada morta que talvez nao estivesse.
 
 ---
 
-## 14z. `TransmitInternal` devolve OK antes de o canal servir (27/08)
+## 14z. `TransmitInternal` devolve OK antes de o canal servir (2026-08-27)
 
 O arranque deste firmware sempre se perdeu: `StartLog(false)` nao espera pelo
 host, e tudo o que sai nos primeiros milissegundos cai num CDC que ninguem
@@ -4686,7 +4686,7 @@ uma carencia cega no arranque, que nao depende de nada estar a funcionar.
 
 ---
 
-## 15a. O mapeamento tem duas metades, e a troca de hardware quebra so uma (27/08)
+## 15a. O mapeamento tem duas metades, e a troca de hardware quebra so uma (2026-08-27)
 
 Depois de o ESP32 substituir o WIDI, o `sync` funcionava — os 86 widgets do
 Loopy saltavam para o estado da placa — e **o fader nao comandava nada**.
@@ -4716,7 +4716,7 @@ outros 153 reescrevem-se de uma vez.
 
 ---
 
-## 15b. O unico ganho aplicado cru era o mestre (27/08)
+## 15b. O unico ganho aplicado cru era o mestre (2026-08-27)
 
 O dB moveu o fader do `level` depressa e ouviu um clique. Causa de FORMA, nao
 de valor: o `level` era lido uma vez por bloco e multiplicado igual nas 48
@@ -4740,7 +4740,7 @@ fio.
 
 ---
 
-## 15c. O instrumento de medida nao pode depender do que o musico deixou no fader (28/08)
+## 15c. O instrumento de medida nao pode depender do que o musico deixou no fader (2026-08-28)
 
 O tom de teste era injectado DENTRO das cadeias, portanto passava pelo
 `level` como qualquer som. Com o fader do utilizador em zero — que e onde
@@ -4771,7 +4771,7 @@ nao sabe que aquilo era um teste.
 
 ---
 
-## 15d. Nao era o instrumento — era o pre-amplificador, e a LINEARIDADE provou (28/08)
+## 15d. Nao era o instrumento — era o pre-amplificador, e a LINEARIDADE provou (2026-08-28)
 
 O canal esquerdo da gravacao tinha 3a harmonica a −10,7 dB (29% da
 fundamental) e o direito nao tinha nenhuma. Mesmo tom, mesma placa, duas
@@ -4798,7 +4798,7 @@ inteira de vereditos musicais sobre um pre-amplificador saturado.
 
 ---
 
-## 15e. A arquitectura era pergunta de COBRE, nao de codigo (28/08)
+## 15e. A arquitectura era pergunta de COBRE, nao de codigo (2026-08-28)
 
 Tres fontes discordavam sobre o que sao as duas saidas. O codigo somava as
 duas cadeias nas duas (`out[0] = out[1] = A + B`). Os params chamavam-se
@@ -4833,7 +4833,7 @@ e o espaco, mas o retorno do delay continua a entrar.
 
 ---
 
-## 15f. A regra do sufixo teria engolido a matriz (28/08)
+## 15f. A regra do sufixo teria engolido a matriz (2026-08-28)
 
 A pertinencia ao preset e DERIVADA do nome, e isso e um acerto do desenho:
 sufixo `_a`/`_b` diz "e por cadeia", e nao ha segunda lista para divergir.
@@ -4859,7 +4859,7 @@ escrever.
 
 ---
 
-## 15g. A regra generalizou alem do caso que a gerou (28/08)
+## 15g. A regra generalizou alem do caso que a gerou (2026-08-28)
 
 *"Audio nao passa por contato mecanico em lugar nenhum deste instrumento"*
 esta escrita no `HARDWARE.md` e neste documento, com autoridade. E ela e
@@ -4881,7 +4881,7 @@ impecavel e nao cita simbolo nenhum. So o hardware a desmente.
 
 ---
 
-## 15h. A folha impressa e anterior ao mapa (28/08)
+## 15h. A folha impressa e anterior ao mapa (2026-08-28)
 
 O `ccmap.html` — e o `ccmap.pdf` que sai dele, o cartao de referencia da
 bancada — tem **27 numeros de CC que ja nao existem** (106, 116-118, 80-88,
@@ -4902,7 +4902,7 @@ Regerar ou aposentar e decisao do dB — mas nao fica a fingir que esta certo.
 
 ---
 
-## 15i. Placa muda: o barramento USB continua a testemunhar (28/08)
+## 15i. Placa muda: o barramento USB continua a testemunhar (2026-08-28)
 
 Depois de um `dfu`, a placa parou de responder: zero bytes em 8 s de escuta
 passiva e em tres comandos com 3 s cada. Tinha respondido `v0.177.0` minutos
@@ -4931,7 +4931,7 @@ cabo" que era o dongle.
 
 ---
 
-## 15j. A primeira gravacao depois de abrir o dispositivo e lixo (28/08)
+## 15j. A primeira gravacao depois de abrir o dispositivo e lixo (2026-08-28)
 
 A primeira corrida do mapeamento deu numeros que nao fechavam com caminho
 nenhum do codigo: `dest 1` sem sinal, `dest 2` a acender dois canais, e
@@ -4952,7 +4952,7 @@ comecam com uma leitura de aquecimento deitada fora.
 
 ---
 
-## 15k. Seno continuo e mau instrumento para medir delay (28/08)
+## 15k. Seno continuo e mau instrumento para medir delay (2026-08-28)
 
 No caso que separa os dois andares do roteamento, os numeros absolutos
 mentiram: com tudo ligado e o delay a tocar, a saida media **-44,4 dBFS**,
@@ -4976,7 +4976,7 @@ route_r_a=0, delay LIGADO      -39,5 dBFS   (+29,7 dB acima do chao)
 
 ---
 
-## 15l. O contador de quedas mora na RAM que o evento apaga (28/08)
+## 15l. O contador de quedas mora na RAM que o evento apaga (2026-08-28)
 
 O criterio dos 20 minutos do link BLE tinha falhado com uma queda aos ~6 min.
 Fui ler o contador da ponte para distinguir sono do iPad de instabilidade
@@ -5000,7 +5000,7 @@ familia inteira em miniatura.
 
 ---
 
-## 15m. Criterio que nao pode falhar nao e criterio (28/08)
+## 15m. Criterio que nao pode falhar nao e criterio (2026-08-28)
 
 O T7c da matriz tinha cinco criterios e passou nos cinco. Dois deles eram
 **vazios**, e so se soube depois de a fiacao mudar.
@@ -5030,7 +5030,7 @@ pre-condicao de fiacao virou parte do instrumento em vez de nota no roteiro.
 
 ---
 
-## 15n. Escrevi a regra e falhei-a vinte minutos depois (28/08)
+## 15n. Escrevi a regra e falhei-a vinte minutos depois (2026-08-28)
 
 Na mesma sessao pus na skill `medicao-limpa`: *provar que o canal fala antes
 de ler qualquer medicao*. Vinte minutos depois corri o mapeamento, li "nao
@@ -5057,7 +5057,7 @@ com o alicate na mao.
 
 ---
 
-## 15o. Painel nao inicializado mostra uma FOTOGRAFIA VELHA (28/08)
+## 15o. Painel nao inicializado mostra uma FOTOGRAFIA VELHA (2026-08-28)
 
 O OLED acendeu com tres linhas de texto formatado no arranque, e o dB
 concluiu — com toda a razao aparente — que o hardware estava bom e o defeito
@@ -5092,7 +5092,7 @@ e desliga o painel **sem SPI nenhum**. So provou que um fio dos cinco chegava.
 
 ---
 
-## 15p. A simetria era PROVA, e eu fui procurar explicacao noutro lado (28/08)
+## 15p. A simetria era PROVA, e eu fui procurar explicacao noutro lado (2026-08-28)
 
 O dB pediu para inverter o sentido do encoder G: "e so trocar as duas
 variaveis". Troquei `a` com `b` no mapa de pinos. **A contagem parou de vez.**
@@ -5128,7 +5128,7 @@ com manuseio E o diagnostico*.
 
 ---
 
-## 15q. A edicao ancorou em texto NAO-UNICO e a funcionalidade foi parar a outro comando (28/08)
+## 15q. A edicao ancorou em texto NAO-UNICO e a funcionalidade foi parar a outro comando (2026-08-28)
 
 Escrevi um subcomando `enc inverte <a|b|g>` para corrigir o sentido sem
 gravar. Ancorei a insercao em:
@@ -5164,7 +5164,7 @@ Eu ja tinha esse guarda escrito noutro script desta mesma sessao — um
 
 ---
 
-## 15r. Quatro mapas do mesmo encoder, nenhum medido (28/08)
+## 15r. Quatro mapas do mesmo encoder, nenhum medido (2026-08-28)
 
 Ao caçar o G, encontrei quatro afirmacoes em desacordo sobre onde ele estava:
 
@@ -5198,7 +5198,7 @@ que temos hoje diria isso.
 
 ---
 
-## 15s. Documento meio-gerado mente na metade escrita a mao (28/08)
+## 15s. Documento meio-gerado mente na metade escrita a mao (2026-08-28)
 
 O cartao de CC (`ccmap.html` -> `ccmap.pdf`) era a folha que se leva para a
 bancada. Estava com **27 numeros de CC que ja nao existiam** — anterior ao
@@ -5244,7 +5244,7 @@ que o documento se descola do codigo.**
 
 ---
 
-## 15t. O laco que perseguia um alvo que se move (28/08)
+## 15t. O laco que perseguia um alvo que se move (2026-08-28)
 
 A placa travou depois de vinte minutos de trafego BLE continuo. Audio a
 tocar, tela congelada, serial calada, e nenhum vigia disparou.
@@ -5297,7 +5297,7 @@ construi-lo, e as duas sao erros meus da mesma hora:
 
 ---
 
-## 15u. Banco nativo prova a ALGEBRA, nao o TIMBRE (28/08)
+## 15u. Banco nativo prova a ALGEBRA, nao o TIMBRE (2026-08-28)
 
 Escrevi um oitavador por divisao de frequencia e provei-o em banco nativo
 antes de o gravar — disciplina da casa, e passou:
@@ -5332,7 +5332,7 @@ certo chegou antes de o errado ficar no repo.
 
 ---
 
-## 15v. SE NAO SOA, NAO FICA — e o controlo que o AGC anulava (28/08)
+## 15v. SE NAO SOA, NAO FICA — e o controlo que o AGC anulava (2026-08-28)
 
 Regra do dB, nascida de um caso: *"o in_gain a 0 e a 100% nao muda nada no
 som, entao e melhor remover este parametro"*.
@@ -5373,7 +5373,7 @@ documentos. O detector de notas orfas que eu escrevera de manha apanhou o
 
 ---
 
-## 15w. O pot absoluto e o param partilhado (28/08)
+## 15w. O pot absoluto e o param partilhado (2026-08-28)
 
 Os dois pots chegaram soldados e o codigo do laco ja os esperava havia
 meses, com esta guarda e este aviso:
@@ -5433,7 +5433,7 @@ projeto ja pagou cinco vezes num dia so.
 
 ---
 
-## 15x. O varredor de pinos livres roubava o pino ao ADC (31/08)
+## 15x. O varredor de pinos livres roubava o pino ao ADC (2026-08-31)
 
 Os dois pots liam **o mesmo valor**, ~0,12, e nao mexiam. O dB trocou fios,
 removeu um condensador, mediu 3,3 V nos extremos, trocou os pinos entre si —
@@ -5468,7 +5468,7 @@ primeira volta —, e grita em vez de roubar calado.
 
 ---
 
-## 15y. Construi duas sondas que nao podiam passar (31/08)
+## 15y. Construi duas sondas que nao podiam passar (2026-08-31)
 
 Cacei este defeito com duas ferramentas novas, e **as duas mentiram**, cada
 uma a seu modo. A regra que ambas violaram esta escrita nesta casa ha
@@ -5500,7 +5500,7 @@ procura de quem mais tocava naqueles pinos.
 
 ---
 
-## 15z. Acusei tres inocentes antes de o dB ver o curto (31/08)
+## 15z. Acusei tres inocentes antes de o dB ver o curto (2026-08-31)
 
 Os pots foram ligados, e a placa comecou a cair do barramento — reiniciava,
 re-enumerava, calava. Em duas horas eu acusei, com confianca, **tres coisas
@@ -5519,7 +5519,7 @@ desaparece do barramento — nao e travamento, e falta de corrente.
 **Cada uma das minhas tres acusacoes tinha o mesmo defeito de forma.**
 
 > **Quando o suspeito e a cura se movem juntos, a coincidencia e
-> indistinguivel da confirmacao.** Isto ja estava escrito aqui, de 27/08, com
+> indistinguivel da confirmacao.** Isto ja estava escrito aqui, de 2026-08-27, com
 > estas palavras — e eu repeti-o tres vezes no mesmo dia, cada vez com um
 > suspeito novo.
 
@@ -5544,7 +5544,7 @@ cabos e a ver dois fios a encostar.
 
 ---
 
-## 15aa. O ruido contra o qual apertei as defesas era artefacto (31/08)
+## 15aa. O ruido contra o qual apertei as defesas era artefacto (2026-08-31)
 
 Medi o ruido do ADC com cuidado — 25 leituras, desvio padrao, taxa de escrita
 — e escolhi os quatro numeros da captura do pot contra ele: filtro a 0,02,
@@ -5580,7 +5580,7 @@ que a recalibracao custou um comando em vez de uma gravacao.
 
 Ler o [STATUS.md](STATUS.md) e este documento antes de tocar em código. `/gitsync` se a sessão for de arquitetura. Um voo, uma variável — e listar os empregos da variável antes de mexer. Caixa-preta armada por comando no início do voo; sessão de leitura não escreve. Toda medição declara unidade (RMS? pico? norm? real?) e regime (estreia? permanente? que bloco? que clock? -O2 ou -O3?). Módulo novo: description.json → embarque pela receita → medir estreia+regime nos dois blocos → teste audível com o material certo pro efeito. Bug novo: nomear a família antes de consertar. Hipótese nova: registrar a aposta com percentual. Feature nova: o aceite é do músico. **Sintoma repetido pela terceira vez: pare de gerar hipóteses e ache o teste que corta o sistema ao meio** (para canal de entrada, é o loopback). **Zerar o ambiente antes de medir é parte da medição.** **Antes de ler qualquer medição, provar que o canal fala** — um comando de eco conhecido primeiro; zero num canal não confirmado não é dado, é ausência de dado. **Todo modo que silencia ou altera o instrumento tem que se declarar em todo comando de status, e a declaração atravessa o modo que declara.** **Documento vivo atualizado: sincronizar repo E vault na mesma ação** — nunca um destino de cada vez. **Estado de placa afirmado antes de um flash não sobrevive ao flash — reler depois de gravar, ou não afirmar.** **Todo alarme de boot precisa de um gêmeo consultável sob demanda.** **A queixa tem tantas partes quantas o dB nomeou: consertar uma e medir melhora não é consertar a queixa.** **Antes de gastar código numa hipótese, a medição que a mataria** — planura separa ruído de som legítimo. **Profundidade de EQ se escolhe contra régua medida (o sinal seco), nunca de ouvido.** **Toda gravação destrói estado: repor E declarar o que foi reposto faz parte de gravar.** **Ao ser o primeiro caso de uma forma nova, reler a assinatura em vez de imitar o vizinho.** **Valor lido de placa viva não tem procedência — default se lê no fonte.** **Canal de sinal novo entra com o medidor dele junto.** **Antes de misturar canais, perguntar o que cada canal É naquele ponto.** **Canal mudo prova que aquele canal está mudo, e nada além disso** — nunca inferir a saúde de um subsistema pela ausência de resposta de outro. **Nada de logar ou mandar MIDI de dentro do callback de áudio: o callback marca, o loop fala.** **Mecanismo corretivo automático precisa de carência entre agir e medir de novo, ou reage à própria ação ainda em curso.** **Chave nova num recurso compartilhado emudece quem depende dele: declare a dependência onde alguém vai olhar.** **Regra herdada tem pré-condição — verificar se a estrutura que a tornava possível existe no caso novo.** **Validade de medição tem REGIME, e o regime é parte do dado** — temporal (estreia/permanente) E físico (como o sinal está sendo produzido). **Antes de dimensionar uma solução, verificar se o problema existe no regime real** — e fazer primeiro o que serve para os dois desfechos possíveis. **Par assimétrico: troque os elementos de lugar antes de atribuir a assimetria ao sistema** — medir mais fundo só confirma o número, que nunca esteve em dúvida. **Justificativa errada envelhece mal:** registre a razão que se sustenta, não a que estava à mão. **Verificador que casa texto encontra a narração sobre o dado** — case na estrutura da linha de dado. **Controle que não existe mede zero, e zero parece dado:** número redondo demais em itens independentes é sintoma. **Delta entre builds não é atribuível:** custo se mede por A/B no MESMO binário, alternando por parâmetro. **Param sem leitor é feature morta até prova em contrário** — a checagem é textual e barata, e é a única que encontra o que o compilador não vê. **Feature morta parece feature desligada, e quando o default é "desligado" o estado normal É o estado quebrado.** **Efeito que trava um param internamente: a faixa declarada TEM que bater com a trava** — faixa maior é curso morto, e ninguém detecta, porque o defeito vive entre dois arquivos que estão certos. **Conserto que vira nota local reincide; conserto que vira pergunta de rotina, não.** **Refactor cria controle morto, não só código morto: depois de mudar a topologia, perguntar o que deixou de ser NECESSÁRIO.** **Variável ganha o segundo emprego quando alguém precisa de um valor e há um por perto — pergunte se o param já responde a outra coisa.** **Antes de dizer "não é possível", separar o que é LEI do que é DECISÃO minha** — argumento bom sobre premissa não examinada convence os dois lados. **Custo medido numa arquitetura não se transporta para outra.** **Para remover um subsistema, apague o símbolo-raiz e deixe o compilador enumerar o resto.** **Depois que ele calar, ainda falta o que não vê: params sem leitor, prosa sem assunto, e verificações sem objeto — esta última PASSA e ninguém desconfia de um `ok`.** **Deleção por faixa calculada: o perigo é proporcional ao que não é referenciado por nome** — o compilador testemunha símbolos e nada mais. **Casar → imprimir o que casou → conferir linhas → só então apagar.** **Recuperar um bloco não é restaurar um arquivo:** `git show HEAD:arquivo` + recolagem, nunca `checkout` com trabalho não commitado. **Contar errado para o lado autocrítico é o mesmo defeito com sinal trocado.** **Documento gerado acompanha a mudança; escrito à mão, não — separe os dois e trate os escritos como lista de trabalho.** **E o que se pode gerar, gere: cada doc que vira gerador sai da lista de disciplina para sempre.** **TESTE O HARDWARE PRIMEIRO, DE TODAS AS MANEIRAS POSSÍVEIS: torça, puxe, aperte cada conector e veja se algo muda** — contato intermitente é invisível a teste estático por definição. **Intermitência correlacionada com manuseio É o diagnóstico, não o que atrapalha o diagnóstico.** **Toda sonda ganha uma dimensão de movimento: medir enquanto se mexe no chicote, não com tudo parado.** **Tensão presente não é tensão correta: meça com o SINAL, ponta preta num terra do lado de quem alimenta.** **Defeito conhecido e adiado vira a explicação errada do próximo sintoma, e o custo recai sobre quem está com o multímetro na mão.** **Divergência entre dois instrumentos que medem por caminhos diferentes é informação, não ruído a reconciliar.** **O instrumento herda o ponto cego da hipótese que o gerou: supor o mapa e medir contra a suposição só acha o que já se esperava** — alargue o escopo em vez de refinar a mira. **Ocupação que vive só no default de uma biblioteca é irmã da reserva que vive só em documento: declare no fonte, mesmo quando for o default.** **Revisão de pinos contra o esperado entra em toda rotina de fechamento.** **Despacho por prefixo exige ordem: comando novo que começa com o nome de um existente tem que vir ANTES dele** — e o sintoma é o pior tipo, porque o comando responde com mensagem plausível executando outra coisa. **Ao retomar problema já resolvido, releia COMO foi resolvido: decisão registrada tem duas metades — o que saiu e o que ficou no lugar — e lembrar só da primeira reintroduz o que ela evitava.** **Mecanismo aposentado não aposenta o método: procure a peça que sobreviveu.** **Nunca ler e escrever o mesmo arquivo na mesma expressão: `open(f,'w')` trunca antes de o `read()` interno rodar.** **Commitar cedo é o que transforma um destroço em inconveniente.** **Antes de escolher uma configuração, leia o default na fonte: a decisão pode não existir.** **Ao provar um caminho, escolha o teste que falha diferente para cada defeito possível.** **Periférico sem caminho de leitura não é detectável — diga CONFIGURADO, nunca PRESENTE, mesmo com ele funcionando na frente.** **Janela de silêncio conta do FIM do gesto, não do meio: um despejo mais longo que a janela deixa os primeiros desprotegidos.** **Transformar "mandei" em "chegou" é a única forma de descobrir que a coisa não chegava** — toda operação que termina dizendo só que executou é candidata. **Ausência só é evidência quando a presença era possível: antes de concluir do silêncio, prove que havia caminho para o som.** **O gatilho artificial também precisa ser exercitado — "0 erros" onde se esperava vermelho é sinal de exercício que não aconteceu, não de trava errada.** **Antes de concluir do silêncio de uma sonda, prove que ela cobre o caso** — ponto cego não é ausência do fenômeno. **Defesa que nunca agiu e não tem gatilho artificial é hipótese com nome de proteção: faça o inventário do que nunca foi exercitado.** **Linha truncada não é comando: recuse inteira e conte** — meio comando é válido e obedece calado. **Truncagem se anuncia nas duas pontas do canal.** **O formato não pode ter limite que o conteúdo alcance** — alargar o buffer conserta o caso e preserva a forma. **Instrumentar um ramo de três e ler o silêncio como resposta é a armadilha da própria família.** **Operação com perda se declara onde a perda acontece.** **Antes de suspeitar do trabalho de alguém, meça antes da primeira camada** — contador em zero não distingue "não fechou" de "ninguém leu". **Cadeia `else if` esconde ramo morto por ordenação: use saída antecipada, específico antes do genérico.** **Não gravar enquanto uma observação humana está em voo** — a resposta chega depois e responde outra pergunta. **Par array+laço: derive os dois das fontes que já existem; alargar à mão conserta o caso e preserva a forma.** **Todo teste de rejeição precisa do gêmeo que confirma a aceitação** — provar que o portão fecha não prova que ele abre, e o mecanismo largo demais passa em todos os testes de rejeição. **Ao conferir formato binário: primeiro o que torna a conta possível, depois a conta, só então o que a conta protege** — ler campo antes do checksum é consumir antes de configurar (P2), e a coerência de tamanho é segurança de memória, não só diagnóstico. **Para provar que o binário gravado tem a fonte atual, leia NA PLACA um número que só a fonte nova produz** — timestamp, `.map` e toolchain são testemunho do próprio acusado. **Trava que só diz "não" ensina a contornar; trava que diz o que REEXAMINAR ensina a decidir.** **Custo proporcional a uma tabela que cresce regride por CRESCIMENTO, não por edição — e nenhuma ferramenta do projeto vigia isso:** pergunte no audit que custos foram dimensionados quando a tabela era pequena. **Ao proteger ou consertar um caminho, procurar o IRMÃO** — duas rotas de saída, dois relatórios da mesma tabela, dois ramos: o irmão é quase sempre visível de onde se está. **Comando que não consta na ajuda não existe para quem está na bancada** — e a isenção do verificador, escrita larga, transforma-o em carimbo. **Provar que a configuração nova é segura não prova que a TRAVESSIA é: pergunte o que já está em trânsito quando você troca** — e trânsito inclui fio, flash e a cabeça de quem opera. **Pôr uma dimensão nova no endereço converte mensagem órfã em MAL-ENDEREÇADA, e esta não tem gesto humano para correlacionar** — pergunte se acha o dono CERTO, não se acha dono. **Defesa que vira invariante de compilação vence defesa que roda — e ainda assim tem que ser exercitada uma vez.** **Instrumentação nova encontra o que não era o alvo dela: instrumente cedo.** **Desligar um emissor não drena o meio: todo desligamento de transmissor pede carência de drenagem, dimensionada pelo tempo de voo.** **Quando o canal vira parte do endereço, toda estrutura indexada por CC tem que ser reexaminada** — janela, inventário, último-valor e fila de quarentena, e o compilador não cobra nenhuma delas. **Nesta placa o delta entre builds pode ser 25% sem mudar o trabalho** (o código roda da QSPI, logo layout de instrução é variável de primeira ordem): número de CPU sem A/B no mesmo binário é ruído com aparência de resultado, e ganho de teste que permite o A/B fica no firmware. **N falhas crônicas escondem a falha N+1** — suíte vermelha por paisagem é sensor desligado. **Teste dentro de `if(existe)` some em silêncio quando o nome muda: afirme a existência.** **Teste que cita um CC decorado mede o mapa, não a invariante — derive o número da fonte.** **Pasta nova entra sem vigilância por padrão: confira se o verificador alcança.** **Nenhum valor do domínio pode significar "sem dado": ausência se representa FORA do domínio** — flag, sentinela impossível ou par valor+validade; cinco casos num dia provam que a forma é estrutural. **Relatório imprime o CRU e etiqueta a interpretação ao lado.** **Antes de gastar um voo numa hipótese, perguntar se falhar diminui o espaço de busca** — se não diminui, não é experimento, é tentativa, e tentativa se paga com gravação. **Segunda fonte de verdade para a versão deriva com data marcada: número que ninguém imprime não tem quem o corrija.** **Instrumento de medida nao pode depender de estado de utilizador — tom de referencia que obedece ao fader do musico mede o fader.** **Distorcao mede-se por LINEARIDADE em tres niveis, nao pela harmonica: a harmonica diz que ha, a escala diz onde.** **Via de teste entra depois do ganho e ANTES da protecao: o transdutor nao sabe que aquilo era um teste.** **Identidade de dispositivo e uma RELACAO: ao trocar hardware, pergunte QUEM PRECISA DE SABER quem ele e, nao onde esta o nome dele.** **Interpolacao de parametro corre por AMOSTRA: por bloco da a mesma escada, so que mais lenta.** **Quando um estado e descrito por mais de uma variavel, o rearme toca em TODAS — e a de escopo mais estreito e a esquecida, porque nem aparece de onde o rearme e escrito.** **Confirmacao de uma camada nao e prontidao da pilha: criterio de 'pronto' que usa a propria operacao a testar passa cedo demais por construcao — minimo incondicional primeiro, tentativa depois.** **Quando o suspeito e a causa se movem ao mesmo tempo, a coincidencia e indistinguivel da confirmacao — elimine a variavel (hub, adaptador), nao a explique.** **Eliminar por argumento nao e eliminar: 'isso nao pode ser' esconde a hipotese em vez de a descartar.** **Sonda que devolve zero tem de provar que consegue devolver diferente de zero — controlo positivo antes de ler ausencia.** **Quando o espaco de busca nao encolhe, pare de varrer e BISSECTE: um firmware minimo divide o problema ao meio numa gravacao, porque nao partilha nada com o suspeito.** **Antes de explicar um numero, verifique QUEM O ESCREVE — sinal partilhado da teoria errada, e teoria custa mais que numero.** **Hardware so se elimina por REPRODUCAO numa segunda unidade; duas nao falham igual por acaso.** **Deteccao por fall-through transforma 'nao reconheco' em 'e o mais antigo': pergunte a biblioteca o que ela detectou, nunca presuma.** **Quando N tentativas falham de formas diferentes mas todas do MESMO TIPO, o tipo e a resposta — escreva o que todas as falhas tiveram em comum antes da tentativa N+1.** **Constante de protocolo se le na fonte, nao se deduz do comportamento: numero deduzido nao parece suspeito porque EXPLICA os dados.** **Antes do quarto valor da mesma variavel, escreva o que o terceiro descartou — se for nada, troque de variavel.** **Sonda nova nasce sem procedencia: o primeiro uso de qualquer sonda e o controlo de presenca, nunca a medicao.** **Antes de aceitar trabalho manual repetitivo, procure o formato de intercambio — a pergunta e onde isto vive quando nao esta na tela.** **Todo gerador de formato desconhecido reproduz uma amostra conhecida antes de emitir o resto.** **Endereco por posicao transforma edicao de layout em reenderecamento silencioso: regere o conjunto todo, ou nao use posicao.** **Todo contador de verificador precisa de piso: zero onde se esperava populacao ABORTA, nao informa — `ok` ao lado de um zero e a assinatura da familia.** **Antes de aceitar um criterio, escreva o que teria de acontecer para ele FALHAR — se for 'nada que o codigo possa fazer', ele nao mede o codigo.** **Num teste de isolamento, o lado que se espera que NAO mude e o que precisa de prova de vida.** **Mapa de canais mede-se, nao se assume: indice trocado nao produz silencio, produz veredito trocado de lado.** **Regra que vive so em prosa custa a mesma disciplina toda vez — ponha-a DENTRO do instrumento.** **Antes de reportar que uma accao humana piorou alguma coisa, prove que o sistema estava a responder depois dela: o custo de errar recai sobre quem esta com o alicate na mao.** **O firmware nomeia SAIDA; o cobre nomeia DESTINO — quando N fontes discordam sobre o que uma coisa E, pergunte se a coisa e decisao de outra pessoa ou de uma chave de metal.** **Regra derivada classifica o que ainda nao existe, e em silencio: ao criar simbolo novo, leia a regra primeiro e pergunte onde ELA o poe.** **Ao escrever a regra, pergunte qual e a MENOR afirmacao que cobre o caso — a regra larga contradiz o hardware real e quem a le acredita nela.** **Ao encontrar um erro num documento, meca o resto antes de corrigir esse: abaixo de um limiar, corrigir uma linha e desinformar.** **Quando o canal principal cala, o sistema operativo continua a testemunhar — enumeracao, idProduct e marca de tempo do node nao dependem do acusado.** **A primeira leitura de qualquer sonda e aquecimento: numero que nao fecha com caminho nenhum do codigo e suspeita contra o INSTRUMENTO primeiro.** **Sinal periodico continuo mede mal tudo o que produz copias de si proprio: compare contra o CHAO com uma variavel so.** **Instrumento cuja memoria e apagada pelo evento que ele mede so serve enquanto ninguem precisa dele.** **Ler um contador com uma sonda que o zera e a familia inteira em miniatura.** **Ecra e memoria, nao janela: conteudo de ecra nao prova que alguem escreveu AGORA.** **Quando uma mudanca nao pode causar o sintoma, pare de procurar como ela o causou — ler a implementacao e barato e conclui.** **`assert texto in fonte` prova existencia, nao UNICIDADE: confira `count()==1` e verifique PROGRAMATICAMENTE onde o bloco caiu.** **Defesa que existe e nao se aplica por habito nao e defesa, e sorte.** **Quando N fontes discordam e nenhuma mede, nao escolha entre elas — meca; e se a ferramenta ja existe no repo, pergunte por que nao foi a PRIMEIRA a correr.** **Toda sonda declara o que NAO alcanca: o `varre` le 15 dos 31 pinos.** **O que MUDA gera-se; o que DURA e dado — e ao gerar metade de um documento, escreva o verificador da outra metade: a parte manual fica rodeada de dados frescos, o que a torna MAIS convincente.** **Gerador que nao ESCREVE deixa a ultima milha para a disciplina humana.** **Instrumento cuja memoria e apagada pelo evento que mede: guarde fora da RAM, e conte duas contas — a da sessao e a de sempre.** **Todo laco de drenagem tira um INSTANTANEO do ponteiro de escrita — perseguir o ponteiro vivo so e correcto enquanto o produtor for mais lento que o consumidor, e ninguem escreve isso na condicao.** **Sonda que vive no mesmo contexto que o suspeito morre com ele: o instrumento de fase salvou esta caca por correr no callback de audio.** **Alarme que dispara em operacao sa ensina a ignora-lo.** **Banco nativo prova a ALGEBRA, nao o TIMBRE: se existe medicao da fonte real, o teste alimenta-se DELA.** **SE NAO SOA, NAO FICA — e vale para pedacos de curso, nao so para params.** **Ao juntar um controlo manual a um automatismo que age no mesmo eixo, pergunte qual dos dois o ouvido vai ouvir.** **Guarda escrita antes de o hardware existir nao foi exercitada: ao ligar o periferico, EXERCITE-A em vez de confiar nela.** **Controlo absoluto que partilha um param precisa de dizer QUANDO manda — captura, adocao no arranque, e largar quando outro escreve sao a mesma pergunta em tres momentos.** **Capacidade declarada e uma afirmacao sobre o hardware e envelhece como qualquer outra: enquanto o driver e stub, ninguem a cobra.** **Lista de 'pinos livres' e afirmacao sobre POSSE: ao dar dono a um pino, pergunte quem e que assume que ele nao tem dono.** **Antes de acreditar numa sonda, pergunte o que ela faria se a resposta fosse a OUTRA — sonda que nao produz os dois resultados nao mede, decora.** **A sonda mais cara e a que confirma a hipotese de quem a escreveu.** **Sonda com pull nao le antes de o condensador carregar; sonda que dirige o pino como saida digital desliga o ADC que vinha medir.** **Antes de acusar uma peca, diga o que teria de ser verdade para ela ser INOCENTE — e verifique isso.** **Se a recuperacao vem sempre do mesmo gesto (reset, religar), a variavel que julga estar a testar nunca esteve isolada.** **Numero derivado de medicao herda a validade da medicao: quando a causa muda, toda constante calibrada contra o sintoma tem de ser recalibrada.** **Apertar defesa contra ruido que nao existe custa RESPOSTA.**
 
-## 15ab. A histerese media a partir do centro, e o pot parado calava o iPad (31/08)
+## 15ab. A histerese media a partir do centro, e o pot parado calava o iPad (2026-08-31)
 
 Sintoma: os pots estavam certos, quietos, e mesmo assim o `level` **não
 respondia ao Loopy**. O contador dizia **210 150 janelas de silêncio em 20 s
@@ -5616,7 +5616,7 @@ E o defeito escondia-se por trás de um sintoma que ninguém liga a um pot: *"o
 Loopy não mexe no volume"*. Contador que conta o que devia foi o que o revelou
 — sem `knob_janelas`, isto era um mistério de MIDI.
 
-## 15ac. Escolhi o metodo pela familiaridade, e a prova reprovou-o 6 em 6 (31/08)
+## 15ac. Escolhi o metodo pela familiaridade, e a prova reprovou-o 6 em 6 (2026-08-31)
 
 Para achar a frequencia da microfonia escrevi um cacador por **autocorrelacao**
 — porque e o que se usa para achar periodo, e eu sabia faze-lo. Antes de gravar,
@@ -5647,7 +5647,7 @@ E a licao de processo: **a prova em Python custou dez minutos e poupou uma
 sessao inteira de bancada** a perseguir um cacador que apontaria sempre para o
 sitio errado, com o instrumento a gritar em cima.
 
-## 15ad. Um instrumento de medida com 3% de ciclo util nao mede: amostra (31/08)
+## 15ad. Um instrumento de medida com 3% de ciclo util nao mede: amostra (2026-08-31)
 
 Com os notches postos, o dB disse que sobravam duas frequencias. Corri o
 cacador cem segundos e devolvi **"nao gritou nesta janela"**. Estava errado.
@@ -5667,7 +5667,7 @@ frequencias apareceram imediatamente, em 199 e 252 capturas cada.
 > cara com que devolveria a verdade.** Antes de aceitar um negativo, calcular
 > que fatia do tempo o instrumento estava mesmo a olhar.
 
-## 15ae. Calibrei o discriminador em senoides e ele teria recusado a microfonia real (31/08)
+## 15ae. Calibrei o discriminador em senoides e ele teria recusado a microfonia real (2026-08-31)
 
 O cacador classificava por **dominancia** — que fatia da energia esta no pico.
 Nas senoides sinteticas a microfonia dava 0,93–1,00, e pus o limiar em 0,85,
@@ -5686,7 +5686,7 @@ julgar por uma fraccao com tres centesimos de margem.
 > sinal de teste nao tem o que torna o caso real dificil — se o tivesse, nao
 > seria sinal de teste.
 
-## 15af. Contei quem nao tinha CC, e o que estava mudo tinha CC ROUBADO (31/08)
+## 15af. Contei quem nao tinha CC, e o que estava mudo tinha CC ROUBADO (2026-08-31)
 
 Os dez params do notch entraram no CC **115**, que ja era do `bench_boost`
 **nos mesmos canais**. O mapa diz na propria linha:
@@ -5715,7 +5715,7 @@ Conserto: notch para 82–86, e `Manifest::Colisoes()` a gritar no `board`.
 E o alarme ganhou via consultavel a qualquer momento, nao so no banner — a
 regra que a §2b da bancada ja impunha, e que aqui se aplicou de primeira.
 
-## 15ag. O instrumento nao distinguia os dois suspeitos que existia para separar (31/08)
+## 15ag. O instrumento nao distinguia os dois suspeitos que existia para separar (2026-08-31)
 
 A placa travava na FASE 2, e a fase 2 tem **sete** inquilinos. Construi
 sub-fases para apontar o inquilino, e o LED passou a mostrar a sub-fase
@@ -5739,7 +5739,7 @@ Conserto: **duas rajadas**, fase e sub-fase, com pausas diferentes.
 > "improvavel" calculado por mim, sobre o defeito que ainda nao entendi, nao e
 > um calculo: e uma preferencia.
 
-## 15ah. Elevei um sintoma a "condicao que a hipotese exige" (31/08)
+## 15ah. Elevei um sintoma a "condicao que a hipotese exige" (2026-08-31)
 
 Durante a caçada, abrir o CDC da Daisy levava **47, 58,7 e 59,2 segundos** —
 tres medicoes independentes, consistentes. Construi raciocinio em cima:
@@ -5759,7 +5759,7 @@ mecanismo porque encaixava na historia que eu ja tinha.
 > Nunca a fiz — nao havia placa boa para comparar, e em vez de declarar isso,
 > usei o numero como se houvesse.
 
-## 15ai. Cacei software durante horas, e o defeito era um cabo (31/08)
+## 15ai. Cacei software durante horas, e o defeito era um cabo (2026-08-31)
 
 Sintoma: LED preso na fase 2, sem serial, reproduzivel de instalacao limpa
 (bootloader reinstalado do DFU da ROM + aplicacao regravada). Todo o desenho da
@@ -5792,7 +5792,7 @@ replicada em serie, isso nao pode ser. Conserto devido: barreira antes do
 `BlockingTransmit` (perguntar se a anterior concluiu; se nao, **descartar e
 contar**), mais rearme do estado de erro da USART.
 
-## 15aj. Pedi o gesto errado: o DFU da ROM nao conhece a QSPI (31/08)
+## 15aj. Pedi o gesto errado: o DFU da ROM nao conhece a QSPI (2026-08-31)
 
 Pedi `BOOT+RST` para gravar a aplicacao. Resultado:
 
@@ -5813,7 +5813,7 @@ escrever la e o **bootloader da Daisy**, que aparece num **RST simples**.
 Conserto do metodo: o vigia de gravacao passou a esperar por `0x90000000` no
 `dfu-util -l`, e nao por `df11` — que os dois DFU partilham.
 
-## 15ak. O instrumento so era valido com o paciente parado (31/08)
+## 15ak. O instrumento so era valido com o paciente parado (2026-08-31)
 
 As sub-fases apontavam o inquilino da fase 2, e eu li os numeros como
 diagnostico a tarde inteira. Ate o dB reportar **"1 e 6"** — uma combinacao que
@@ -5832,7 +5832,7 @@ volta do callback, mas o padrao dura ~5 s: se mudarem no meio, o `dur` muda, o
 Um instrumento tem de declarar **em que regime e valido**, e recusar-se a
 responder fora dele. Este respondia sempre, e com a mesma cara.
 
-## 15al. Escalei a suspeita antes de ler o documento que eu proprio escrevi (31/08)
+## 15al. Escalei a suspeita antes de ler o documento que eu proprio escrevi (2026-08-31)
 
 O dB reportou que o USB da ponte acendia o LED do amp. Respondi *"para tudo,
 isso e defeito de ligacao e pode danificar pecas"*, e pedi quatro medicoes de
@@ -5853,7 +5853,7 @@ e nao lida por mim quando o sintoma dela apareceu.
 E o conserto certo nao foi o alarme: foi um **Schottky de 5 centimos** que torna
 o erro impossivel. **Regra depende de alguem a ler; peca nao.**
 
-## 15am. Apresentei uma regra por testar como se fosse a causa (31/08)
+## 15am. Apresentei uma regra por testar como se fosse a causa (2026-08-31)
 
 Descobri que o meu conselho de tirar a terra de sinal estava errado, escrevi a
 correcao na §5b do `ATERRAMENTO.md`, e disse ao dB que **era essa a causa** da
@@ -5871,7 +5871,7 @@ causa disso.
 > **Descobrir que se errou nao e o mesmo que descobrir a causa.** As duas
 > chegam com a mesma sensacao de alivio, e so uma delas se mede.
 
-## 15an. O master mudo disfarcou-se de piezo avariado cinco vezes (31/08)
+## 15an. O master mudo disfarcou-se de piezo avariado cinco vezes (2026-08-31)
 
 Sintoma: o tom de teste sai alto e limpo, os piezos nao soam. O dB ia
 **subir o ganho dos piezos** — mudanca permanente no instrumento, paga em
@@ -5902,7 +5902,7 @@ Tres consertos, e sao de tipos diferentes:
 > vias, e uma armadilha desenhada.** A metade que sobrevive e que faz o
 > diagnostico apontar para o lado errado.
 
-## 15ao. A rampa que nao soou nao ficou (31/08)
+## 15ao. A rampa que nao soou nao ficou (2026-08-31)
 
 Gravar produzia um estalo seco. Isolei por eliminacao — abrir a porta, comando
 curto, comando longo, fechar: **nenhum estalava** — e conclui que era o reset a
@@ -5919,7 +5919,7 @@ no caminho do reset.
 > saiu, com o registo no lugar dela para ninguem a reinventar com o mesmo
 > raciocinio, que continua a parecer bom.
 
-## 15ap. O painel custava 6 dB, e o numero desenhou a regra (31/08)
+## 15ap. O painel custava 6 dB, e o numero desenhou a regra (2026-08-31)
 
 O dB reportou ruido novo ao ligar o OLED. Medido, com o instrumento parado:
 
@@ -6017,7 +6017,7 @@ osciloscopio.
 > placa que meça "isto distrai quem esta a tocar". A quarta foi bug, e o
 > conserto ja existia no ficheiro.
 
-## 15aq. O comando morria no portao dos "sem dono" — e era codigo morto (01/09)
+## 15aq. O comando morria no portao dos "sem dono" — e era codigo morto (2026-09-01)
 
 O `PRESETS-LISTA.md` descrevia o CC 121 (carregar preset) desde sempre, e
 **nada o implementava**: os botoes de preset do Loopy eram inertes. Documento a
@@ -6053,7 +6053,7 @@ destroi uma biblioteca com uma mensagem perdida, e nao traz nome nenhum para lhe
 dar. Capturar fica no serial, onde o gesto e deliberado e o preset nasce com
 nome. **Decisao do dB, e nao omissao minha** — ele concordou por escrito.
 
-## 15ar. A folha de montagem ia mandar montar um interruptor onde e um fader (01/09)
+## 15ar. A folha de montagem ia mandar montar um interruptor onde e um fader (2026-09-01)
 
 O gerador da seccao do Loopy classificava widgets assim:
 
@@ -6077,7 +6077,7 @@ serve as ferramentas, nao so a quem le.
 > `gerar_ccmap.py` ja tinha ensinado isto ao falhar oito CCs de um notch com dois
 > indices; foi preciso repetir noutra ferramenta no mesmo dia.
 
-## 15as. Entreguei duas folhas que nao abriam, e o verificador disse que estavam limpas (01/09)
+## 15as. Entreguei duas folhas que nao abriam, e o verificador disse que estavam limpas (2026-09-01)
 
 Duas folhas de KiCad entregues com o verificador de netlist limpo e a revisao
 visual feita **tres vezes**. Nenhuma das duas abria: `Failed to load schematic`,
@@ -6104,7 +6104,7 @@ Nasceu daqui a skill `kicad`, porque a licao nao tinha onde carregar sozinha.
 
 <!-- doc-check: ignore pin_not_connected (codigo de violacao do ERC do KiCad) -->
 
-## 15at. Editei, renderizei, olhei — e nao repeti o ERC (01/09)
+## 15at. Editei, renderizei, olhei — e nao repeti o ERC (2026-09-01)
 
 Ao mover dois `PWR_FLAG` para fora dos rotulos que estavam a tapar, refiz o
 render e inspeccionei o desenho. **Nao voltei a correr o ERC.**
@@ -6146,7 +6146,7 @@ delas nao diz nada sobre as outras.
 
 *"Sem medir antes de concluir, o freeze teria sido condenado pelo número errado, o módulo do Fx2 descartado pelos 234 ms de estreia, e o warm-up desenhado como uma chamada só — que não resolveria nada."* — o parágrafo que resume tudo, escrito pelo Code no fechamento da fase 1 e provado verdadeiro em cada capítulo desde então.
 
-## 15au. Tres medicoes, o mesmo numero, e eu publiquei as duas metades sem as multiplicar (01/09)
+## 15au. Tres medicoes, o mesmo numero, e eu publiquei as duas metades sem as multiplicar (2026-09-01)
 
 Media o custo do painel OLED em tres prescalers. As tres corridas imprimiram
 `DISPARO pico 23288 us` — **exactamente o mesmo numero**, ate ao microssegundo.
@@ -6185,7 +6185,7 @@ sitio — cura-se em cada leitor novo do contador.
 
 ---
 
-## 15av. Construi um teste cuja falha se parecia com o sucesso, e tres respostas nao provaram nada (01/09)
+## 15av. Construi um teste cuja falha se parecia com o sucesso, e tres respostas nao provaram nada (2026-09-01)
 
 Contar quadros nao prova que os pixeis chegaram: **SPI rapida em fio comprido
 corrompe, nao emudece**. Para fechar a integridade fiz um comando que desenha o
@@ -6224,7 +6224,7 @@ antecessor.
 
 ---
 
-## 15aw. O enfeite de 2,5 s cobrou 13% ao laco que nunca o corre (01/09)
+## 15aw. O enfeite de 2,5 s cobrou 13% ao laco que nunca o corre (2026-09-01)
 
 Liguei a abertura do OLED — jogada de buzios, fonte 5x7, elipses, Bresenham — com
 a chamada `abertura.Quadro(fb)` no corpo do laco principal, guardada por um `if`.
@@ -6254,7 +6254,7 @@ regressao que ninguem foi procurar.
 
 ---
 
-## 15ax. Nome de porta nao e identidade: cinco comandos foram para a ponte enquanto eu anunciava que tinham sido aplicados (01/09)
+## 15ax. Nome de porta nao e identidade: cinco comandos foram para a ponte enquanto eu anunciava que tinham sido aplicados (2026-09-01)
 
 O meu seletor de porta serial era este, ha semanas:
 
@@ -6300,7 +6300,7 @@ proprio `print`, que dizia a mesma coisa quer tivesse funcionado quer nao.
 
 ---
 
-## 15ay. Chamei "armada" a uma placa surda, e mandei o dB bater nela (01/09)
+## 15ay. Chamei "armada" a uma placa surda, e mandei o dB bater nela (2026-09-01)
 
 Liguei o `buzios_on`, liguei o painel, li os notches de volta, e escrevi:
 
@@ -6369,7 +6369,7 @@ a pancada. Fica registado como lacuna, nao como mal-entendido.
 
 ---
 
-## 15az. Um pino sem pull-up custou cinco horas, e nenhuma delas foi por causa do pino (02/09)
+## 15az. Um pino sem pull-up custou cinco horas, e nenhuma delas foi por causa do pino (2026-09-02)
 
 O defeito era uma linha: a libDaisy inicia os pinos da UART com
 `GPIO_NOPULL`, e com a ponte ESP32 sem alimentacao o nosso RX ficava a
@@ -6439,7 +6439,7 @@ muda a falha de sitio e um diagnostico.
 
 ---
 
-## 15ba. Cinco voos, e nenhum devolveu um dado (02/09)
+## 15ba. Cinco voos, e nenhum devolveu um dado (2026-09-02)
 
 Entre "a placa trava com a linha a flutuar" e o conserto (um pull-up)
 gravei CINCO consertos. Cada um falhou de maneira diferente:
@@ -6504,7 +6504,7 @@ dia: ele esta a dizer que nao ha um ponto, ha uma classe.
 
 ---
 
-## 15bb. Nomeei a classe do defeito e construi-a no conserto seguinte (02/09)
+## 15bb. Nomeei a classe do defeito e construi-a no conserto seguinte (2026-09-02)
 
 Diagnostiquei, com a fonte da HAL na mao, que
 `UART_WaitOnFlagUntilTimeout` sai por `(HAL_GetTick() - Tickstart) >
@@ -6538,7 +6538,7 @@ uma varredura de uma ausencia.
 
 ---
 
-## 15bc. O comando calava o log antes de anunciar que ia calar o log (02/09)
+## 15bc. O comando calava o log antes de anunciar que ia calar o log (2026-09-02)
 
 `bb arm` fazia, por esta ordem:
 
@@ -6601,22 +6601,22 @@ medicao, e nao a plausibilidade de cada numero sozinho (**15au**).
 
 ---
 
-## 15bd. O conserto existia, previa o meu erro por escrito, e nao tinha sido adoptado (02/09)
+## 15bd. O conserto existia, previa o meu erro por escrito, e nao tinha sido adoptado (2026-09-02)
 
 Depois de fechar a sessao, o dB perguntou se sobrava algum bug. Fui
 verificar em vez de responder de memoria, e o `check_docs` apontou
 `porta_daisy.py` na lista de ficheiros tocados sem subir a versao.
 
-Abri-o. Escrito em **25/08**, uma semana antes. Docstring:
+Abri-o. Escrito em **2026-08-25**, uma semana antes. Docstring:
 
-> **POR QUE EXISTE (25/08).** Todo script desta bancada fazia
+> **POR QUE EXISTE (2026-08-25).** Todo script desta bancada fazia
 > `glob.glob('/dev/cu.usbmodem*')[-1]`. Funcionou enquanto havia UMA
 > placa. No dia em que o ESP32 entrou na USB passaram a existir dois
 > `usbmodem` [...] **o modo de falha seria mandar comandos da Daisy para o
 > ESP32: sem erro, sem resposta, e um diagnostico que procuraria o defeito
 > no lado errado.**
 
-Foi **exactamente** isso que me aconteceu em 01/09, e eu escrevi-o como
+Foi **exactamente** isso que me aconteceu em 2026-09-01, e eu escrevi-o como
 descoberta na **15ax**.
 
 O conserto existia. Estava certo. **Previa o meu erro por escrito.** E era
@@ -6650,7 +6650,7 @@ Feito agora: os dois scripts passam a chamar `porta_daisy.achar()`. Nenhum
 
 ---
 
-## 15be. Os "5 pontos por explicar" eram aquecimento, e a regra estava escrita (02/09)
+## 15be. Os "5 pontos por explicar" eram aquecimento, e a regra estava escrita (2026-09-02)
 
 Durante dois dias carreguei um item aberto: ligar o splash do OLED derrubou
 a base do laco de ~21 500 para ~18 600 voltas/s COM O SPLASH PARADO, e um
@@ -6675,7 +6675,7 @@ INERTE 2   [15000, 22762, 22727, 23056]
 contra **1,3%** de dispersao do proprio instrumento no mesmo binario.
 
 Nao ha 5 pontos. Nunca houve. Era **aquecimento**, e as minhas medicoes de
-01/09 caiam em posicoes diferentes relativamente ao arranque.
+2026-09-01 caiam em posicoes diferentes relativamente ao arranque.
 
 ### A regra ja estava escrita, e e a numero 17
 
@@ -6708,7 +6708,7 @@ aquecimento e nao base.
 
 ---
 
-## 15bf. Consertei metade do ficheiro, e o grep com que declarei o resto limpo nao podia casar (02/09)
+## 15bf. Consertei metade do ficheiro, e o grep com que declarei o resto limpo nao podia casar (2026-09-02)
 
 O dB perguntou se sobrava algum bug. Fui **correr** o `flash.sh` — que eu
 tinha consertado nessa manha e nunca exercitado — e saiu isto:
@@ -6799,7 +6799,7 @@ verificacao que a apanhou custou seis segundos.
 
 ---
 
-## 15bg. O corredor de testes chamava tres dos cinco, e o teste que ninguem corre guarda requisitos revogados (02/09)
+## 15bg. O corredor de testes chamava tres dos cinco, e o teste que ninguem corre guarda requisitos revogados (2026-09-02)
 
 Segunda vez que o dB pergunta "sobrou algum bug?". Da primeira eu tinha
 respondido com um `grep` e ele apanhou-me. Desta vez **corri tudo o que e
@@ -6811,7 +6811,7 @@ executavel no repo** — e sairam tres.
 
 | falha | esperava | real | porque |
 |---|---|---|---|
-| params por cadeia | 33 | **39** | os notches entraram em 01/09 |
+| params por cadeia | 33 | **39** | os notches entraram em 2026-09-01 |
 | params globais | 9 | **6** | o dB tirou `post_level_l/r`, `out_l/r`, `pre_level_ab` |
 | `pre_level_ab` tem de entrar | sim | **nao** | *"tira out_l, out_r e pre_level_ab"* — decisao dele |
 
@@ -6861,7 +6861,7 @@ errada de uma ferramenta certa, e o susto valeu a leitura do ficheiro.
 
 ---
 
-## 15bh. A decisao que resolvia a portabilidade criou um perigo no arranque (02/09)
+## 15bh. A decisao que resolvia a portabilidade criou um perigo no arranque (2026-09-02)
 
 O dB decidiu, e bem, que as bocas de microfonia **nao vivem em preset
 nenhum**: sao efemeras, morrem quando a Daisy desliga. A razao era solida —
@@ -6925,7 +6925,7 @@ diferente de guardar para confiar.
 
 ---
 
-## 15bi. Eu usei uma pessoa como banco de ensaio, e o filho dela gritou (02/09)
+## 15bi. Eu usei uma pessoa como banco de ensaio, e o filho dela gritou (2026-09-02)
 
 Sessao de escuta. O actuador de microfonia so se prova com o instrumento a
 uivar — e por isso eu iterei o supressor **com a escultura ligada, num
@@ -6982,7 +6982,7 @@ mede-se em quem leva com o resultado.
 
 ---
 
-## 15bj. O supressor cacava sem laco, e cortava musica em silencio (02/09)
+## 15bj. O supressor cacava sem laco, e cortava musica em silencio (2026-09-02)
 
 Minutos depois de o SuMiA™ nascer, com `out_l=0`, `out_r=0` e o som cortado,
 ele encheu tres bocas: 1736, 1713 e 1603 Hz.
@@ -7010,7 +7010,7 @@ semanas, e o instrumento ia ficando mais fino sem ninguem saber porque.
 
 ---
 
-## 15bk. Gastei duas gravacoes a afinar o SIMULADOR em vez do que ele testa (02/09)
+## 15bk. Gastei duas gravacoes a afinar o SIMULADOR em vez do que ele testa (2026-09-02)
 
 Para parar de usar o dB como banco, construi um laco de microfonia dentro
 do firmware: ressoador de Q alto realimentado, com o notch la dentro.
@@ -7036,7 +7036,7 @@ que nao cobre convida a confiar nele para o que ele nao viu.
 
 ---
 
-## 15bl. Media com o instrumento parado e ia construir em cima disso (02/09)
+## 15bl. Media com o instrumento parado e ia construir em cima disso (2026-09-02)
 
 O dB caçava um chiado de banda larga. Eu tinha afirmado "o amp tem ganho a
 mais" a partir da POSICAO DOS POTES — inferencia vestida de diagnostico — e
@@ -7082,7 +7082,7 @@ segundo plano nunca teria aparecido sem o numero.
 
 ---
 
-## 15bm. Duas conclusoes minhas mortas por dois testes de dez segundos (02/09)
+## 15bm. Duas conclusoes minhas mortas por dois testes de dez segundos (2026-09-02)
 
 O chiado de banda larga, e a sequencia inteira e uma aula do dB a fazer o
 meu trabalho:
@@ -7121,10 +7121,10 @@ P3 da varredura, escrita muito antes deste caso.
 
 ---
 
-## 15bn. Construi uma ferramenta de reposicao sobre um contrato que DEDUZI (04/09)
+## 15bn. Construi uma ferramenta de reposicao sobre um contrato que DEDUZI (2026-09-04)
 
 O dB deu uma regra permanente: **"faca isso sempre, ao gravar reponha os
-valores"**. A regra ja existia na skill `bancada-firmware` (§2c) desde 20/08 e
+valores"**. A regra ja existia na skill `bancada-firmware` (§2c) desde 2026-08-20 e
 vivia so na minha cabeca — por isso falhava. Escrevi o `estado.py` para a por
 no `flash.sh`, nos dois lados do DFU.
 
@@ -7146,7 +7146,7 @@ linha que eu descartava.
 
 > **Duas licoes na mesma linha, e as duas ja estavam escritas noutro sitio.**
 > Deduzi o contrato de um comando em vez de o LER — a mesma coisa que fiz
-> duas vezes com o `porta_daisy.achar()` em 02/09. E construi uma verificacao
+> duas vezes com o `porta_daisy.achar()` em 2026-09-02. E construi uma verificacao
 > **incapaz de reprovar**, porque nao olhava para o unico sinal disponivel.
 
 Sem estrago: todas as recusas foram recusas. Mas o modo de falha era o pior
@@ -7163,7 +7163,7 @@ humano; virou entrada de maquina, e ninguem reavaliou a precisao.
 
 ---
 
-## 15bo. O espigao que eu apaguei era o que fechava o casco (04/09)
+## 15bo. O espigao que eu apaguei era o que fechava o casco (2026-09-04)
 
 O dB: *"tem um quadradinho branco no topo"*. Era um pixel em (64, 4) — o
 apice da superelipse: na linha `y = -rb` a curva vale `x = 0`, e com `n = 3,2`
@@ -7185,7 +7185,7 @@ Conserto da segunda metade: a tampa e um **traco**, nao dois extremos.
 
 ---
 
-## 15bp. Engrossar um contorno desenhando-o duas vezes nao fecha (04/09)
+## 15bp. Engrossar um contorno desenhando-o duas vezes nao fecha (2026-09-04)
 
 O dB: *"a linha debaixo esta interrompida"*. O casco era **contorno (ra,rb) +
 contorno (ra-1,rb-1)**. Dois tracos vizinhos so se tocam onde a curva anda
@@ -7214,7 +7214,7 @@ teste; um que reprova o passado mede o presente.
 
 ---
 
-## 15bq. Ler a palavra e inferencia; ver a imagem e medicao (04/09)
+## 15bq. Ler a palavra e inferencia; ver a imagem e medicao (2026-09-04)
 
 O dB escreveu *"as laterais um pouco mais pontiagudas"*. Li **laterais** como
 os BICOS e baixei o expoente da superelipse de 2,6 para 2,2. Ele falava das
@@ -7233,7 +7233,7 @@ so ele tem.
 
 ---
 
-## 15br. Chamei "prova" a comparar com uma copia minha (04/09)
+## 15br. Chamei "prova" a comparar com uma copia minha (2026-09-04)
 
 Ele escolheu uma celula de uma folha de quatro. Para provar que a apliquei,
 escrevi um programa que gerava a celula e a comparava pixel a pixel com o
@@ -7264,7 +7264,7 @@ em `+3 px vs +6 px`, que se resolve numa gravacao.
 
 ---
 
-## 15bs. A minha propria medida de simetria estava errada (04/09)
+## 15bs. A minha propria medida de simetria estava errada (2026-09-04)
 
 Escrevi um medidor de simetria e ele disse **33% de assimetria** numa marca
 que o ASCII mostrava espelhada linha a linha. O espelho de `x` na caixa
@@ -7283,7 +7283,7 @@ o mediu.**
 
 ---
 
-## 15bt. Um comentario meu com autoridade re-ensinava o defeito (04/09)
+## 15bt. Um comentario meu com autoridade re-ensinava o defeito (2026-09-04)
 
 Na `Concha` eu tinha escrito, e o codigo obedecia:
 
@@ -7317,13 +7317,13 @@ forem lidas na mesma passagem.** E para isso que o exame de pinos existe no
 
 ---
 
-## 15bu. Escrevi o segundo gerador de CCs, e o primeiro dizia-me onde estava (04/09)
+## 15bu. Escrevi o segundo gerador de CCs, e o primeiro dizia-me onde estava (2026-09-04)
 
 O dB pediu que a lista de CCs saisse sempre com a data. Escrevi um `ccmap.py`
 novo, com carimbo, envolucro clicavel e uma docstring a explicar por que
 existia.
 
-**Ja existia** — `docs/operacao/gerar_ccmap.py`, desde 28/08, seguido pelo
+**Ja existia** — `docs/operacao/gerar_ccmap.py`, desde 2026-08-28, seguido pelo
 git. E melhor que o meu: resolve simbolo→nome, emite faixa real e familia,
 sai com codigo 1 se algum CC nao resolver, e **escreve os dois destinos**
 (`CCMAP.md` e o cartao A4 `ccmap.html`), com um comentario a explicar que
@@ -7365,7 +7365,7 @@ aqui pela primeira vez.
 
 ---
 
-## 15bv. Deep clean: o README contradizia-se em vinte linhas (04/09)
+## 15bv. Deep clean: o README contradizia-se em vinte linhas (2026-09-04)
 
 Pedido do dB: *"faz um deep clean em toda a documentacao, inclusive pastas do
 Max antiga, incoerencias no Readme"*. O que a varredura achou:
@@ -7374,7 +7374,7 @@ Max antiga, incoerencias no Readme"*. O que a varredura achou:
 eles.** A linha 8 dizia *"bloco 48, sem motor externo"*; a linha 28 abria um bloco
 intitulado **"Estado versionado — MODULO LIGADO"** e dizia *"bloco 256 ·
 modulo no Fx2"*, com a justificacao *"o bloco 256 e exigencia do modulo"*.
-O motor externo foi aposentado a 20/08 e a placa corre `48000Hz/blk48`.
+O motor externo foi aposentado a 2026-08-20 e a placa corre `48000Hz/blk48`.
 
 Dizia ainda **"Estado atual: v0.172.0"** (o fonte estava em v0.301.0, 129
 versoes a frente) e **"os pots e botoes ainda nao foram soldados"** — no
@@ -7391,7 +7391,7 @@ sozinha e a outra metade nao**, e era a metade parada que o leitor lia
 primeiro.
 
 **`Max/`** guardava 1,8 MB de `.maxpat` aposentados, intocados desde
-15–23/08, referidos por nenhum documento. Removidos da arvore, com o caminho
+15–2026-08-23, referidos por nenhum documento. Removidos da arvore, com o caminho
 de volta **provado antes de apagar**: `git show 8271e97:Max/` lista os quatro,
 e o do delay devolve os 104 335 bytes.
 
@@ -7409,7 +7409,7 @@ eles, que e a fonte de pinos e se confere a cada `bts`.
 
 ---
 
-## 15bw. Um facto de hardware afirmado sem fonte, e escrito em dois documentos (04/09)
+## 15bw. Um facto de hardware afirmado sem fonte, e escrito em dois documentos (2026-09-04)
 
 O `ATERRAMENTO.md` §5 dizia, desde que foi escrito:
 
@@ -7422,7 +7422,7 @@ distintos do header — 20 e 40, no `Daisy_Seed_Rev4_Pinout.csv` do fabricante.
 A regra geral de conversores (Analog Devices) diz onde juntar: ao `AGND` no
 proprio encapsulamento, ao mesmo potencial, e em mais lado nenhum.
 
-O erro nao ficou parado. Em 04/09 o dB reformulou-o com mais forca, para me
+O erro nao ficou parado. Em 2026-09-04 o dB reformulou-o com mais forca, para me
 guiar no passo do soquete — *"a ponte nao e um fio, e a propria Daisy; se
 alguem desenhar um net-tie o PCB ganha uma segunda ponte"* — e **eu escrevi-o
 no `MAPA-DE-TERRA.md` §2 tal e qual**, com o simbolo de proibido, sem pedir
@@ -7436,7 +7436,7 @@ como *"AGND e DGND unidos FORA da placa — a ligacao a mais"*, e o conserto
 proposto era **separar** o AGND do trilho. Mas o trilho da permaproto era a
 **UNICA** ponte: separa-lo deixaria o codec sem referencia.
 
-E ja tinha acontecido uma vez. Em 31/08, seguindo esta mesma premissa, deu-se
+E ja tinha acontecido uma vez. Em 2026-08-31, seguindo esta mesma premissa, deu-se
 um conselho que **matou uma placa**: *"tirar a terra de sinal trocou um
 zumbido por uma placa morta"*. A skill `revisao-terra` ate ganhou uma passada
 nova por causa disso (P3b), sem que ninguem tenha voltado a duvidar da
@@ -7477,9 +7477,9 @@ foi afirmada com confianca duas vezes em sentidos opostos.
 
 ---
 
-## 15bx. Uma Daisy morreu, e a pergunta que a matou tinha resposta na doc (04/09)
+## 15bx. Uma Daisy morreu, e a pergunta que a matou tinha resposta na doc (2026-09-04)
 
-Fim do dia 04/09, e custou uma placa.
+Fim do dia 2026-09-04, e custou uma placa.
 
 **O que aconteceu.** Sob orientacao minha — a premissa errada da 15bw — o dB
 tinha DESLIGADO o AGND do DGND. Ao reconectar, o instrumento ficou sem som.
@@ -7551,7 +7551,7 @@ atalho por `APP_TYPE=BOOT_NONE`: tem de passar pelo bootloader.
 
 ---
 
-## 15by. `D29` e `D30` sao o USB, e o PINOS.md reservava-os para os DPDT (04/09)
+## 15by. `D29` e `D30` sao o USB, e o PINOS.md reservava-os para os DPDT (2026-09-04)
 
 Achado ao gerar o simbolo da Seed a partir do
 `Daisy_Seed_Rev4_Pinout.csv` do fabricante — nao por suspeita, e nao por
@@ -7583,7 +7583,7 @@ colisao era entre o documento e o SILICIO.
 
 Uma placa com D29/D30 ligados aos DPDT teria dado: firmware a correr, painel
 bom, alimentacao normal, **e nenhuma forma de falar com ela**. E exactamente
-o quadro em que passamos o dia 04/09 por outra causa — e teriamos passado
+o quadro em que passamos o dia 2026-09-04 por outra causa — e teriamos passado
 outro, com cinco placas feitas e a causa no cobre.
 
 **Sense dos DPDT passa para `D11`/`D12`** (I2C1, PB8/PB9) ou `D20`/`D21`
@@ -7595,7 +7595,7 @@ ninguem sabia, e e a mesma familia.
 
 ---
 
-## 15bz. Afirmei posicao fisica de pinos sem olhar para a placa (04/09)
+## 15bz. Afirmei posicao fisica de pinos sem olhar para a placa (2026-09-04)
 
 O dB disse que os pinos 20 e 40 eram "vizinhos no header 2x20", e eu escrevi
 isso no `MAPA-DE-TERRA.md` como facto, com a consequencia agarrada — *"e e
@@ -7624,7 +7624,7 @@ de papel e nao a placa.
 
 ---
 
-## 15ca — A ponte não estava dentro da Daisy, e a instrução matou uma Seed (05/09)
+## 15ca — A ponte não estava dentro da Daisy, e a instrução matou uma Seed (2026-09-05)
 
 > **Escrita pelo dB.** Entrou como `15ca` e não como `15bn`, que era o número
 > no original: o `15bn` já estava ocupado pela ferramenta de reposição
@@ -7650,7 +7650,7 @@ Daisy Seed 3.
 recomenda para qualquer ADC/DAC. No KiCad é um **NetTie-2**, uma ligação de
 cobre só, num sítio escolhido; `AGND` e `GND` continuam duas redes. O P3
 nunca foi "tirar uma segunda ponte": o trilho da permaproto era a **única**,
-e o erro dele era ser trilho partilhado com corrente, não ser ponte. O 31/08
+e o erro dele era ser trilho partilhado com corrente, não ser ponte. O 2026-08-31
 ("tirar a terra de sinal matou a placa") era isto mesmo, e não se leu.
 
 > ⚠️ **O "vizinhos, ~5 mm" acima está riscado porque está errado, e o próprio
@@ -7716,9 +7716,9 @@ morrem neste commit, como o prazo dizia.
 
 ---
 
-## 15cb — MPN escolhido sem abrir a ficha é palpite com número de peça (05/09)
+## 15cb — MPN escolhido sem abrir a ficha é palpite com número de peça (2026-09-05)
 
-**05/09.** Três peças escolhidas pela família, sem ler o código de estilo. As
+**2026-09-05.** Três peças escolhidas pela família, sem ler o código de estilo. As
 três desmentidas pela ficha, e nenhuma delas se via no esquema:
 
 | escolhido | o que a ficha diz |
@@ -7757,7 +7757,7 @@ carácter do sufixo**. Sem isso, é família com número.
 
 ---
 
-## 15cc — O leitor que perde linhas em silêncio aprova tudo (05/09)
+## 15cc — O leitor que perde linhas em silêncio aprova tudo (2026-09-05)
 
 Três ferramentas, no mesmo dia, leram menos do que existia e **não disseram
 nada**. Uma delas era o verificador escrito para apanhar as outras duas:
@@ -7796,7 +7796,7 @@ foi a comparação de netlist.
 
 ---
 
-## 15cd — Portão de linha de comando todo verde não prova que o ficheiro abre (05/09)
+## 15cd — Portão de linha de comando todo verde não prova que o ficheiro abre (2026-09-05)
 
 O dB abriu o KiCad e apareceu: *"An error was found when loading the schematic
 that has been automatically fixed. Please save the schematic to repair the
@@ -7830,7 +7830,7 @@ escreve**, senão a regeneração seguinte apaga a reparação e a caixa volta.
 
 ---
 
-## 15ce — Lista escrita à mão ao lado de coisa gerada envelhece sempre (05/09)
+## 15ce — Lista escrita à mão ao lado de coisa gerada envelhece sempre (2026-09-05)
 
 O `gera_painel.py` tinha a biblioteca embutida declarada assim:
 
@@ -7859,7 +7859,7 @@ símbolo que não encontra, e uma verificação **depois de escrever** de que to
 
 ---
 
-## 15cf — Três fontes plausíveis para a mesma caixa, e eu escolhi duas erradas (06/09)
+## 15cf — Três fontes plausíveis para a mesma caixa, e eu escolhi duas erradas (2026-09-06)
 
 O contorno das duas placas e a posição dos três eixos que saem pela tampa vinham
 de `caixa/medidas/*.svg` — **desenhos**. Fui corrigi-los contra
@@ -7877,7 +7877,7 @@ cortar a caixa em **acrílico**, e a de nogueira é *outra caixa*.
 Quatro fontes, quatro espessuras, e as três primeiras davam números plausíveis.
 Cada vez que corrigi, corrigi para outra caixa errada.
 
-⚠️ **As três primeiras foram apagadas a 06/09** — `caixa/medidas/`, os dois
+⚠️ **As três primeiras foram apagadas a 2026-09-06** — `caixa/medidas/`, os dois
 `gen_caixa*.py` e os ficheiros da nogueira. Estão no histórico
 (`git show 94066fd:caixa/medidas/caixa-fabricacao.svg`). Não se guarda um
 artefacto real de uma geração anterior ao lado do actual: é indistinguível do
@@ -7988,7 +7988,7 @@ estava desactualizado era o desenho, outra vez.
 
 ---
 
-## 15cg — A omissão errada não rebenta: responde com confiança sobre outro objecto (06/09)
+## 15cg — A omissão errada não rebenta: responde com confiança sobre outro objecto (2026-09-06)
 
 A limpar a pasta `caixa/`, encontrei isto no gerador da caixa:
 
@@ -8043,7 +8043,7 @@ resgatado para o `CAIXA-ACRILICO-MONTAGEM.md`.
 
 ---
 
-## 15ch — Atribuí um delta a uma de duas coisas que mudaram, e é a minha própria regra R2 (06/09)
+## 15ch — Atribuí um delta a uma de duas coisas que mudaram, e é a minha própria regra R2 (2026-09-06)
 
 O dB leu a cotação da Ponoko e disse: *«a otimização economizou $1.90 então não
 muito»*. Aceitei o número, construí uma regra de projecto em cima dele —
@@ -8111,7 +8111,7 @@ de $58,09 — custou $0,00.
 
 ---
 
-## 15ci — O DRC vê a placa em duas dimensões; o botão desce na terceira (06/09)
+## 15ci — O DRC vê a placa em duas dimensões; o botão desce na terceira (2026-09-06)
 
 O dB mediu o arcade que já comprou: **40 mm de profundidade**. Com isso a coluna
 de ar na linha dos botões fecha-se:
@@ -8164,7 +8164,7 @@ importação.
 
 ---
 
-## 15cj — Planta, volume, e a terceira que ninguém mede: o ACESSO (06/09)
+## 15cj — Planta, volume, e a terceira que ninguém mede: o ACESSO (2026-09-06)
 
 O dB perguntou como reprograma a Daisy e o ESP32 com o instrumento montado.
 Medido:
@@ -8212,7 +8212,7 @@ requisito escrito da r3, e não uma coisa que se lembra na hora.
 
 ---
 
-## 15ck — Um diagrama de pinagem sem a face declarada é meio facto (06/09)
+## 15ck — Um diagrama de pinagem sem a face declarada é meio facto (2026-09-06)
 
 Três leituras contraditórias da mesma peça, em duas horas:
 
@@ -8258,7 +8258,7 @@ essa resolveu as três de uma vez.
 
 ---
 
-## 15cl — O vazio de uma camada não é o vazio da face (06/09)
+## 15cl — O vazio de uma camada não é o vazio da face (2026-09-06)
 
 Pus a marca do instrumento na serigrafia de **trás**, a meio da placa, com o
 raciocínio: *«atrás não há serigrafia nenhuma, logo está vazio»*. A camada
@@ -8288,7 +8288,7 @@ correcta.
 
 ---
 
-## 15cm — Ferramenta aberta não vê biblioteca nova (06/09)
+## 15cm — Ferramenta aberta não vê biblioteca nova (2026-09-06)
 
 Criei `kicad/cotuca.pretty` e as `fp-lib-table` às 11:28. O dB tinha o KiCad
 aberto desde antes. Fez F8, e o resultado foi meio: o `J10` **saiu** (já não
@@ -8345,8 +8345,8 @@ Partidas por tipo, eram outra coisa:
 | **1 FUTURO** | `10/12` em `sacrificaveis 10/12` — uma **fraccao** |
 | **0 FUTURA** | a deriva que o plano temia: **nenhuma vez em 544** |
 
-As 85 «ANTIGA» eram todas legitimas: um documento escrito a 05/09 que regista
-um evento de 23/08 diz correctamente 23/08. **Documento que regista historia
+As 85 «ANTIGA» eram todas legitimas: um documento escrito a 2026-09-05 que regista
+um evento de 2026-08-23 diz correctamente 2026-08-23. **Documento que regista historia
 tem datas para tras — e isso e o caso normal, nao o defeito.**
 
 > **Uma regra que grita no caso normal treina quem a le a ignora-la.** E o
@@ -8367,7 +8367,7 @@ sobre-afirmo a partir de dados a menos.
 ### Provada a dizer nao, nas duas direccoes
 
 - **FUTURO**: cabecalho do `STATUS.md` sabotado para `2026-09-20` -> apanhado.
-- **FUTURA**: num repositorio descartavel, linha commitada a 01/09 a dizer
+- **FUTURA**: num repositorio descartavel, linha commitada a 2026-09-01 a dizer
   `2026-09-04` -> apanhado como «3 dias antes».
 - E a linha de controlo, `2026-08-20` atras do mesmo commit, **nao** dispara.
 
@@ -8432,7 +8432,7 @@ excepto o meu tempo, e ficou a saber-se uma coisa que nao se sabia.
 
 ## 15cp — o roteador não precisava de ficar esperto; o desenho é que estava errado
 
-*07/09.* A cicatriz anterior (15co) terminou com o roteador a cortar os planos e
+*2026-09-07.* A cicatriz anterior (15co) terminou com o roteador a cortar os planos e
 com uma pergunta: **como é que se ensina um roteador a ver zonas?** O dB
 escolheu que se tentasse. A resposta certa era que a pergunta estava errada.
 
@@ -8480,7 +8480,7 @@ painel    32 -> 14 por ligar · planos em pedacos 0
 
 ## 15cq — o estrago tinha duas formas e eu só procurava uma
 
-*07/09.* Ensinei o roteador a usar as duas camadas, e pus-lhe um guarda: depois
+*2026-09-07.* Ensinei o roteador a usar as duas camadas, e pus-lhe um guarda: depois
 de escrever, medir se algum plano se tinha partido, e retirar as travessias
 culpadas. O guarda procurava `Zone [X] <-> Zone [X]` — o plano em ilhas — que
 era a forma do estrago da véspera (15co).
@@ -8505,7 +8505,7 @@ noutra pista da mesma rede. A assinatura de uma isenção é o par (tipo, rede).
 
 ## 15cr — o defeito de ordem que passa em todos os testes
 
-*07/09.* A costura das vias corria **antes** da colocação das peças: lia a
+*2026-09-07.* A costura das vias corria **antes** da colocação das peças: lia a
 posição de cada pad para saber onde pôr a via, e lia-a antes de as peças serem
 movidas. Nunca deu erro. A placa já chegava colocada, a segunda corrida é
 idempotente, e os números batiam sempre.
@@ -8526,7 +8526,7 @@ o ficheiro não mudou, e nenhum passo o disse.
 
 ## 15cs — a ferramenta que recusa encontrou o que ninguém foi procurar
 
-*07/09.* Pus a costura a recusar-se a descer uma via para um plano que não
+*2026-09-07.* Pus a costura a recusar-se a descer uma via para um plano que não
 passasse por baixo do pad — e a **dizer de quem era o pad**. Achei que estava a
 tapar um caso de borda.
 
@@ -8545,7 +8545,7 @@ ponte**. A ponte passou para a fronteira da ilha, com um pad de cada lado.
 
 ## 15ct — apertar a folga piorou o resultado, e eu mudei duas coisas de uma vez
 
-*07/09.* O roteador usava 0,35 mm de folga com a regra da placa em 0,20 — quase
+*2026-09-07.* O roteador usava 0,35 mm de folga com a regra da placa em 0,20 — quase
 o dobro. Pareceu-me óbvio que apertar abriria caminhos. Apertei a folga **e**
 refinei a malha, na mesma corrida.
 
@@ -8570,7 +8570,7 @@ precisavam.
 
 ## 15cu — duas escritas concorrentes não dão erro, dão um número
 
-*07/09.* Deixei uma comparação de ordens de roteamento a correr em segundo
+*2026-09-07.* Deixei uma comparação de ordens de roteamento a correr em segundo
 plano e, sem esperar por ela, lancei a cadeia completa. As duas escreviam os
 **mesmos** `.kicad_pcb`, durante meia hora, por cima uma da outra.
 
@@ -8596,7 +8596,7 @@ tinha deixado a correr estava.
 
 ## 15cv — o glob que abortou a linha, e as três medições que eram a mesma
 
-*07/09.* Escrevi uma alteração ao roteador, encadeada assim:
+*2026-09-07.* Escrevi uma alteração ao roteador, encadeada assim:
 
 ```
 pkill … && rm -f .lock cotuca_*/*.melhor && python3 - <<'PY' … PY
@@ -8626,7 +8626,7 @@ não são um resultado, são uma avaria do aparelho.**
 
 ## 15cw — a bissecção "a sério" era pior nos dois eixos
 
-*07/09.* O comentário dizia bissecção e o código fazia varrimento linear — uma
+*2026-09-07.* O comentário dizia bissecção e o código fazia varrimento linear — uma
 rede de cada vez, um DRC por rede. Vi o comentário, achei que estava a corrigir
 uma preguiça antiga, e escrevi a versão que parte ao meio.
 
@@ -8650,7 +8650,7 @@ que não tinha nada a fazer, e a cadeia seguia calada com outro número no fim.
 
 ## 15cx — zero pistas à volta não é espaço livre: era uma regra minha
 
-*07/09.* O roteador tinha parado em 22 ligações no cérebro e 10 no painel, e a
+*2026-09-07.* O roteador tinha parado em 22 ligações no cérebro e 10 no painel, e a
 minha explicação era congestionamento — a zona à volta do amp-op, a placa cheia.
 Fui medir em vez de continuar a acreditar nisso, e a medição disse o contrário:
 
@@ -8687,7 +8687,7 @@ são recusadas de graça, na geometria.
 
 ## 15cy — a retracção que não alcança tudo o que escreveu
 
-*07/09.* A retracção interrogava só as redes que tinham passado pela camada do
+*2026-09-07.* A retracção interrogava só as redes que tinham passado pela camada do
 plano, porque a minha teoria do estrago era essa. Numa passada apertada, o
 estrago veio de outro lado, a lista de suspeitos não o continha, e a ferramenta
 **desistiu de gravar um trabalho quase todo bom** por causa de uma pista que
@@ -8704,7 +8704,7 @@ filtro é a propriedade física, não o parâmetro do momento.**
 
 ## 15cz — um conector de duas filas encostado ao bordo tem metade dos pinos
 
-*07/09.* Os cinco sinais do OLED falhavam nas duas placas, e o diagnóstico dizia
+*2026-09-07.* Os cinco sinais do OLED falhavam nas duas placas, e o diagnóstico dizia
 **zero pistas num raio de 8 mm** à volta deles. Não era congestionamento.
 
 O `J14` estava em y=25, com a fila da frente em y=22,5 e o bordo da placa em
@@ -8730,7 +8730,7 @@ de ⌀16.
 
 ## 15da — o que faltava não era o caminho, era o primeiro milímetro
 
-*07/09.* Depois de mover o conector, sobravam 18 ligações no cérebro. Fui ver
+*2026-09-07.* Depois de mover o conector, sobravam 18 ligações no cérebro. Fui ver
 onde acabavam, e **todas terminavam num pad de passo fino**: os pinos do `U1`,
 um SOIC de 1,27 mm, e os do cabo plano. As pistas chegavam a cinco milímetros
 do pad e paravam.
@@ -8755,7 +8755,7 @@ cerebro  18 -> 12 por ligar · geometria 0 · planos inteiros
 
 ## 15db — arrancar e refazer: a capacidade que faltava, e não estava pronta
 
-*07/09.* Depois de o roteador parar em 12 ligações, testei tudo o que era
+*2026-09-07.* Depois de o roteador parar em 12 ligações, testei tudo o que era
 afinação — malha, folga, tecto de nós, ordem de ataque, um corredor achado numa
 malha grossa. Nenhuma delas rendeu mais de duas ligações, e três renderam
 menos. Todas partiam do mesmo pressuposto: **que existe caminho livre e falta
@@ -8788,7 +8788,7 @@ mudar de ideia é esse, e eu passei por ele mais do que uma vez.
 
 ## 15dc — o auto-teste contava o total e deixava um estrago mascarar o outro
 
-*07/09.* A regra de aceitação do roteador era boa: mede-se quantas ligações
+*2026-09-07.* A regra de aceitação do roteador era boa: mede-se quantas ligações
 faltam em **cada rede** antes e depois, e nenhuma pode piorar. Substituiu uma
 lista de sintomas precisamente para não haver sintoma novo que passasse por não
 estar na lista (15cq).
@@ -8825,7 +8825,7 @@ antiga, falha.
 
 ## 15dd — arrancar para dar passagem pode trocar uma ligação por outra
 
-*07/09.* O arrancar-e-refazer tirava do caminho as pistas que estorvavam e
+*2026-09-07.* O arrancar-e-refazer tirava do caminho as pistas que estorvavam e
 devolvia-as à fila. Se a rede arrancada não conseguisse refazer-se, o resultado
 era uma troca — e às vezes um prejuízo, porque a arrancada **estava feita** e a
 outra continuava por fazer.
@@ -8842,7 +8842,7 @@ pertence ao caminho por omissão**; antes das duas correcções não pertencia.
 
 ## 15de — "não há export de DSN": disse-o três vezes e era falso
 
-*07/09.* Escrevi na skill, no README e num commit que o `pcbnew` não expõe
+*2026-09-07.* Escrevi na skill, no README e num commit que o `pcbnew` não expõe
 export de Specctra DSN, e que por isso **nenhum autoroteador externo era
 alcançável**. Com base nisso escrevi um roteador de raiz e passei uma sessão
 inteira a afiná-lo.
@@ -8881,7 +8881,7 @@ se aplica sozinha ao sítio do lado.
 
 ## 15df — o filtro que devolvia vazio e eu li como um achado
 
-*07/09.* Ao consertar outra coisa, descobri que três filtros meus procuravam
+*2026-09-07.* Ao consertar outra coisa, descobri que três filtros meus procuravam
 `(net_name "X")` dentro de um bloco `(zone ...)`. O KiCad 10 escreve
 `(net "GND")`. Os três devolviam **sempre** conjunto vazio.
 
@@ -8910,7 +8910,7 @@ avaria tem de saber distinguir "não há" de "não achei".
 
 ## 15dg — uma peça necessária com uma ferramenta é um estorvo com outra
 
-*07/09.* A costura — uma via por cada pad SMD de terra, para ele chegar ao plano
+*2026-09-07.* A costura — uma via por cada pad SMD de terra, para ele chegar ao plano
 em B.Cu — era necessária e provou-se: sem ela o `via_dangling` explodia.
 
 Com o FreeRouting a rotear, passou a ser um estorvo. Ele sabe ligar um pad ao
@@ -8930,7 +8930,7 @@ escrever e retira o que não consegue provar.**
 
 ## 15dh — a segunda opinião apanhou o que eu nunca tinha ido procurar
 
-*08/09.* Trouxe o `kicad-happy` — revisão de KiCad de outra pessoa, MIT, testada
+*2026-09-08.* Trouxe o `kicad-happy` — revisão de KiCad de outra pessoa, MIT, testada
 contra 5800 projectos abertos. Não roteia nem gera: só olha. Correu em 0,2
 segundos e disse três coisas que a nossa cadeia inteira não sabe dizer:
 
@@ -8967,7 +8967,7 @@ de 5 V.
 
 ## 15di — o sincronizador comparava presença e chamava-lhe identidade
 
-*08/09.* Mudei o `J15` e o `J16` de 1×06 para 1×08 no esquema — dois pinos de
+*2026-09-08.* Mudei o `J15` e o `J16` de 1×06 para 1×08 no esquema — dois pinos de
 terra novos — e corri o sincronizador. Ele respondeu:
 
 ```
@@ -8989,7 +8989,7 @@ verificador não mentiu, respondeu a outra pergunta.
 
 ## 15dj — o passo de uma grelha é o limite da peça mais alta que ela vai arrumar
 
-*08/09.* O conector passou de 15,24 para 20,32 mm de altura. A zona que o arruma
+*2026-09-08.* O conector passou de 15,24 para 20,32 mm de altura. A zona que o arruma
 espaça as filas de **19 mm**. Os pads da última fila ficaram **a 1,22 mm** dos da
 peça seguinte, quando precisavam de 1,70 — curto no cobre, não aperto.
 
@@ -9010,7 +9010,7 @@ corrida e faz duvidar do roteador.
 
 ## 15dk — dois consertos em fila, e o primeiro engolia o segundo
 
-*08/09.* A reparação de terra ganhou uma verificação nova — se partiu um plano,
+*2026-09-08.* A reparação de terra ganhou uma verificação nova — se partiu um plano,
 retira-se — e eu pu-la **antes** da que já lá estava, a das vias soltas. Com um
 `return` no meio.
 
@@ -9032,7 +9032,7 @@ E na mesma passada, dois erros da mesma família dos que já estão escritos aqu
 
 ## 15dl — a peça que só existe numa ramificação que nunca corre
 
-*08/09.* Ao migrar os MPNs da lista à mão para o gerador da BOM, encontrei duas
+*2026-09-08.* Ao migrar os MPNs da lista à mão para o gerador da BOM, encontrei duas
 peças reais que **não estavam orçadas em lado nenhum**: as tiras fêmea onde a
 Daisy e o ESP32 encaixam.
 
@@ -9060,7 +9060,7 @@ proveniência, em vez de ficar com um traço.
 
 ## 15dm — o MPN corrigido precisa da razão ao lado, ou volta
 
-*08/09.* Pedi para marcar como "por decidir" três MPNs que a skill regista como
+*2026-09-08.* Pedi para marcar como "por decidir" três MPNs que a skill regista como
 escolhas erradas. Fui migrá-los e **já estavam corrigidos no gerador** há três
 dias: `2920L3**30**/24MR`, o encoder da Alps em vez do Bourns, e o sufixo `S`
 em vez do `F`. Quem guardava os valores errados era a lista à mão.
@@ -9081,7 +9081,7 @@ pelo óbvio:
 
 ## 15dn — a hesitação era minha, e escondia um erro a sério
 
-*08/09.* Deixei a escolha do terminal de parafuso em aberto — *"Phoenix se for
+*2026-09-08.* Deixei a escolha do terminal de parafuso em aberto — *"Phoenix se for
 série, KF301 na bancada"* — e o dB perguntou porquê. Não havia porquê: o
 instrumento replica-se às centenas, e isso já decide. Apresentei como pergunta
 uma coisa que a premissa do projecto respondia.
@@ -9105,7 +9105,7 @@ três distribuidores: 2 vias, 5,08 mm, 17,5 A / 400 V, 1,5 mm².
 > não a marca; e um número plausível e errado parece certo até a caixa chegar.
 
 E o preço passou a **medido** em vez de estimado, no escalão que interessa: uma
-peça de série orça-se a 100+, não a um. Medido a 08/09: £0,904 a 100+ contra
+peça de série orça-se a 100+, não a um. Medido a 2026-09-08: £0,904 a 100+ contra
 £1,13 à unidade.
 
 > **Uma hesitação minha custou uma pergunta ao dB — e valeu, porque foi ao ir
@@ -9114,7 +9114,7 @@ peça de série orça-se a 100+, não a um. Medido a 08/09: £0,904 a 100+ contr
 
 ## 15do — cada obstáculo que se acrescenta empurra o texto para o próximo
 
-*08/09.* O `arruma_silk` afastava as referências dos **pads** e mais nada. O
+*2026-09-08.* O `arruma_silk` afastava as referências dos **pads** e mais nada. O
 resultado não era serigrafia arrumada: era o defeito noutro sítio. Medido no
 cérebro, um obstáculo de cada vez:
 
@@ -9143,7 +9143,7 @@ provado idêntico: pistas, vias, pads e peças iguais antes e depois.
 
 ## 15dp — a medição em que assentei o portão dá números diferentes sobre o mesmo ficheiro
 
-*08/09.* Cinco corridas do `kicad-cli pcb drc` sobre **cópias idênticas do mesmo
+*2026-09-08.* Cinco corridas do `kicad-cli pcb drc` sobre **cópias idênticas do mesmo
 ficheiro**, com as zonas cheias uma vez e gravadas:
 
 ```
@@ -9175,7 +9175,7 @@ idênticas** denunciaram um verificador em que eu confiava.
 
 ## 15dq — a mensagem descrevia o trabalho e o commit levava um ficheiro
 
-*08/09.* O commit `0436b62` chama-se *"J15 e J16 ganham terra"*, tem vinte linhas
+*2026-09-08.* O commit `0436b62` chama-se *"J15 e J16 ganham terra"*, tem vinte linhas
 de mensagem a descrever três ferramentas novas, e contém **um ficheiro**:
 `caixa/aberturas.json`.
 
@@ -9207,7 +9207,7 @@ linha a dizer que correu tudo bem.
 
 ## 15dr — o plano no DSN fazia os dois lados acharem que a terra era do outro
 
-*08/09.* Vinte e cinco ligações de terra por fazer, e nenhuma das minhas
+*2026-09-08.* Vinte e cinco ligações de terra por fazer, e nenhuma das minhas
 ferramentas as fechava. O FreeRouting dizia 5 por fazer; o KiCad dizia 15. Passei
 horas a construir reparações — vias, cotos, vizinhos, cascatas — a tratar o
 sintoma.
@@ -9248,7 +9248,7 @@ voltar aos meus próprios dados e ver que o problema não era de roteamento. As
 
 ## 15ds — a cadeia caía duas em cinco corridas, e a razão estava escrita e a ser deitada fora
 
-*08/09.* A cadeia dizia `⚠️ FreeRouting falhou; sigo com o roteador da casa` e
+*2026-09-08.* A cadeia dizia `⚠️ FreeRouting falhou; sigo com o roteador da casa` e
 seguia. Duas corridas em cinco. Eu não sabia porquê — e a razão estava escrita,
 no `stderr` que quem chamava **deitava ao lixo**.
 
@@ -9281,7 +9281,7 @@ importação falhar a meio, a placa boa não fica meio escrita.
 
 ## 15dt — 100% autónomo, e nenhum passo sozinho lá chegava
 
-*08/09.* Um comando, de placa limpa a pacote que o portão aceita:
+*2026-09-08.* Um comando, de placa limpa a pacote que o portão aceita:
 
 ```
 cérebro   147 ligações -> 0 por fazer · geometria 0
@@ -9308,7 +9308,7 @@ Nenhum destes passos sozinho fecha a placa. Juntos, e **nesta ordem**, fecham:
 
 ## 15du — o MPN vivia dentro da minha ferramenta, e o esquema não sabia dele
 
-*08/09.* Os números de peça viviam numa tabela dentro do `tools/bom_completa.py`.
+*2026-09-08.* Os números de peça viviam numa tabela dentro do `tools/bom_completa.py`.
 Funcionava, e escondia que **o esquema não sabia deles**. Quando entrou uma
 revisão de fora, ela leu as folhas e disse a verdade:
 
@@ -9347,7 +9347,7 @@ compra. **Uma cobertura de 100% que incluísse esse seria uma peça inventada.**
 
 ## 15dv — a cobertura de 0/69 não se conserta pondo 69
 
-*08/09.* A revisão de fora dizia `Test point coverage: 0/69 nets (0%)`. A
+*2026-09-08.* A revisão de fora dizia `Test point coverage: 0/69 nets (0%)`. A
 resposta preguiçosa é pôr um ponto de teste em cada rede — numa placa de
 180×100, com a caixa fechada por cima, e com a métrica a subir a cada furo
 inútil.
@@ -10219,7 +10219,7 @@ A guarda nova não podia ver — as três chaves continuam a existir.
 ## 15eu — a ordem dos pinos do OLED estava errada nas sete posições, e a função de um conector é do outro lado
 
 O `J2` do painel (PicoBlade 7 vias) ligava ao módulo Waveshare 2.42" pela ordem
-`GND +5V CLK DIN CS DC RST`, escrita a 05/09 sem ficha porque o módulo não estava
+`GND +5V CLK DIN CS DC RST`, escrita a 2026-09-05 sem ficha porque o módulo não estava
 em mão. A foto da secção «Control Interface» da página do produto diz
 `1 RST · 2 DC · 3 CS · 4 CLK · 5 DIN · 6 GND · 7 VCC`.
 
@@ -10260,14 +10260,14 @@ de ser a porta única para a placa.**
 
 ## 15ew — dei o alarme de «dois `J2` sem ficha» sem ler o commit que o explicava
 
-No `ud` de 17/09 encontrei o ramo da rev C com o `J2` do OLED em header de 2,54
+No `ud` de 2026-09-17 encontrei o ramo da rev C com o `J2` do OLED em header de 2,54
 e ordem `+5V GND DIN CLK CS DC RST`, a inversa exacta do PicoBlade do `main`.
 Escrevi no `STATUS` e no commit que **«ninguém a citou»** e pus a rev C em
 suspenso antes de pagar.
 
 **O commit que a criou (`deddd3d`) dizia porquê**, com a regra certa: o módulo
 liga por jumpers, e PicoBlade na placa é incompatível com Dupont. E a placa já
-estava **paga e na fábrica** desde 12/09. O dB fechou a questão numa frase: o
+estava **paga e na fábrica** desde 2026-09-12. O dB fechou a questão numa frase: o
 OLED vem com o cabo, MX1.25 do lado dele e jumpers fêmea do outro; na placa
 solda-se header macho.
 
@@ -10289,13 +10289,13 @@ que isso tocasse numa placa fabricada.
 
 ## 15ex — cinco placas fabricadas sem um ponto de fixação, com todos os portões verdes
 
-A pergunta do dB, a 18/09, foi simples: *«como prendo a placa do painel à caixa?
+A pergunta do dB, a 2026-09-18, foi simples: *«como prendo a placa do painel à caixa?
 não vejo furos»*. Medido na placa fabricada (`06db1c7`, 5 unidades a caminho):
 **nenhum footprint de furo, nenhum furo não metalizado**. O painel foi desenhado
 para ficar **pendurado nos eixos** de dois pots e de um encoder, aparafusados à
 tampa pela porca. Duas coisas tiraram-lhe os três apoios, e nenhuma o disse:
 
-- o **caso B** (17/09): os pots são de 16 mm, vão na tampa e ligam-se à placa por
+- o **caso B** (2026-09-17): os pots são de 16 mm, vão na tampa e ligam-se à placa por
   fios — deixaram de a segurar;
 - o encoder `EC11E15244G1` **não tem rosca** — a ficha da Alps mostra um colar
   liso, sem `M7` nem porca. O desenho supôs uma porca que não existe.
@@ -10310,7 +10310,7 @@ módulo do OLED, não têm sítio nenhum e ficam em balanço.
 
 **A doutrina da casa inverteu-se no mesmo dia, a pedido do dB.** Até aqui o
 `pcb_contorno` recusava com *«a caixa já existe, quem cede é a placa»*, e a
-cicatriz de 06/09 dizia *«a caixa manda em três dimensões»*. Agora, **por ordem
+cicatriz de 2026-09-06 dizia *«a caixa manda em três dimensões»*. Agora, **por ordem
 de prioridade e não como lei**:
 
 1. a placa traz os seus meios de fixação — sem furos não há como a prender, e aí
@@ -10332,7 +10332,7 @@ registo — reprovado em M2.
 
 ## 15ey — «de que vale uma placa correta eletricamente se não podemos montá-la?»
 
-A pergunta é do dB, a 18/09, no fim de um dia em que perguntas simples de
+A pergunta é do dB, a 2026-09-18, no fim de um dia em que perguntas simples de
 montagem — *como se prende? que cabo compro? estes pots servem?* — encontraram,
 com as duas placas rev C já na fábrica e todos os portões verdes:
 
@@ -10345,7 +10345,7 @@ com as duas placas rev C já na fábrica e todos os portões verdes:
 
 ⚠️ **O `confere_arcade` já existia, e aprovava.** Testava os **pads** contra o
 disco do botão: os do `J14` passavam a 16,1 mm, por 0,25. O corpo de plástico
-chegava a 11,6. É a família do `confere_furos` de 08/09 — *contornos, não pads* —
+chegava a 11,6. É a família do `confere_furos` de 2026-09-08 — *contornos, não pads* —
 consertada lá e deixada aqui. Um botão bate no plástico.
 
 ⚠️ **E dois verificadores escreviam.** Corri o `pcb_contorno` para ler o
@@ -10364,18 +10364,18 @@ mesmo peso da ligação na filosofia da `/aipcb`.
 
 ## 15ez — três revisões perguntaram se o `J4` estava certo; nenhuma se ele era preciso
 
-O dB, a 18/09, ao ler o manual de montagem: *«por que a ponte ESP32 é com fio e
+O dB, a 2026-09-18, ao ler o manual de montagem: *«por que a ponte ESP32 é com fio e
 não no circuito?»*. Está no circuito — o ESP32 encaixa no soquete `U3` do
 cérebro. O que parecia fio era o **`J4`** («a ponte ESP32», 2 pinos, `+5V_PONTE`
 e GND): a tomada do cabo de alimentação de quando a ponte era um módulo solto.
 
 | data | o quê | o que se viu do `J4` |
 |---|---|---|
-| 01/09 | nasce na folha de energia, tomada da ponte por fio | — |
-| 06/09 | a ponte passa a soquete `U3` (`0750e69`); **no mesmo dia** o conserto do díodo (`34f4ce4`) liga o `U3` à mesma rede `+5V_PONTE` | é o instante exacto em que o `J4` fica duplicado — e ninguém olha para ele: o conserto era do díodo |
-| 08/09 | varredura externa pré-fábrica | confere a ordem do soquete e apanha o `D2` ao contrário (crítico) — **o `J4` nem aparece** |
-| 12/09 | `VISTORIA.md`, item 18 | *«a ordem de pinos de J4 bate no que o cabo/módulo **do outro lado** espera»* — **pressupunha que havia outro lado** |
-| 18/09 | o manual de montagem, gerado por mim | mandou soldá-lo no passo dos headers |
+| 2026-09-01 | nasce na folha de energia, tomada da ponte por fio | — |
+| 2026-09-06 | a ponte passa a soquete `U3` (`0750e69`); **no mesmo dia** o conserto do díodo (`34f4ce4`) liga o `U3` à mesma rede `+5V_PONTE` | é o instante exacto em que o `J4` fica duplicado — e ninguém olha para ele: o conserto era do díodo |
+| 2026-09-08 | varredura externa pré-fábrica | confere a ordem do soquete e apanha o `D2` ao contrário (crítico) — **o `J4` nem aparece** |
+| 2026-09-12 | `VISTORIA.md`, item 18 | *«a ordem de pinos de J4 bate no que o cabo/módulo **do outro lado** espera»* — **pressupunha que havia outro lado** |
+| 2026-09-18 | o manual de montagem, gerado por mim | mandou soldá-lo no passo dos headers |
 
 E o BOM dizia *«5 fios ao soquete»* — uma frase com duas épocas dentro.
 
@@ -10405,12 +10405,12 @@ de um módulo para fora da placa — largo demais, e foi medido antes de entrar.
 
 ## 15fa — um módulo não é um componente: nenhuma ferramenta o vê, e por isso ele fica sem casa
 
-O dB, a 20/09, com a caixa montada na bancada: *«onde coloco o TPA3116 dentro da
+O dB, a 2026-09-20, com a caixa montada na bancada: *«onde coloco o TPA3116 dentro da
 caixa?»*. A resposta que o repo dava era o `CAIXA-ACRILICO-MONTAGEM.md` §6:
 *«módulo do amp nos dele [espaçadores]»*. **Esses espaçadores nunca existiram.**
 A chapa de fundo tem quatro furos e são os do cérebro.
 
-E medido a 20/09, não havia sequer onde: a chapa é **193 × 113** e o cérebro
+E medido a 2026-09-20, não havia sequer onde: a chapa é **193 × 113** e o cérebro
 ocupa **180 × 100** — sobram faixas de **6,5 mm** à direita e atrás. O único
 volume livre é **por cima** do cérebro (31,4 mm à frente, 56,4 atrás).
 
@@ -10433,7 +10433,7 @@ verifica.** O que tem footprint é conferido pela máquina; o que não tem só �
 conferido por alguém que se lembre. Lembrar não escala, por isso isto virou
 portão.
 
-**O que ficou (20/09):** `kicad/encaixe.py` **v0.3.0** ganhou a etapa **M7 —
+**O que ficou (2026-09-20):** `kicad/encaixe.py` **v0.3.0** ganhou a etapa **M7 —
 casa dos módulos**. A tabela `CASA` declara, por módulo, a superfície, a
 fixação e a fonte; o portão reprova quando um módulo nomeado por um conector
 não tem casa, e o peso **conta quantos** estão sem casa (com peso fixo, tirar a
@@ -10446,7 +10446,7 @@ esconde o buraco, preencher com palpite é pior.
 
 ## 15fb — a regra do vestígio comparava TEXTOS, e por isso não via dois caminhos para o mesmo módulo
 
-O dB, a 20/09, depois de eu explicar de onde vem o `+15 V` do `J11`: *«isso é
+O dB, a 2026-09-20, depois de eu explicar de onde vem o `+15 V` do `J11`: *«isso é
 confuso, corrija e corrija o gerador que fez isso»*. A confusão era real e não
 era da explicação:
 
@@ -10470,7 +10470,7 @@ estava lá, a correr, verde. Porquê:
 ⚠️ **Um verificador que compara frases verifica a redacção, não o circuito.** O
 conserto não é escrever melhor: é o destino deixar de ser frase.
 
-**O que ficou (20/09):**
+**O que ficou (2026-09-20):**
 
 - `kicad/encaixe.py` **v0.4.0**: `DESTINOS` passa de frase a **`(coisa, papel)`**
   — a coisa escrita sempre igual para a mesma peça, o papel em
@@ -10494,7 +10494,7 @@ vermelho é o marcador dessa dívida, e não se cala declarando.
 
 ## 15fc — desenhei um fio por PINO, quando bastava um fio por REDE: de 3 condutores para 8
 
-O dB, a 21/09, ao ver o desenho da chave DPDT que eu tinha acabado de gerar:
+O dB, a 2026-09-21, ao ver o desenho da chave DPDT que eu tinha acabado de gerar:
 *«por que preciso ligar 1 e 4 se eles estão com um jumper ligando os dois pinos
 centrais? no design anterior, só tinha 3 cabos ligados, não 6»*. E a seguir:
 *«construímos um modelo simples que funcionava, e aqui você me deu uma solução
@@ -10525,7 +10525,7 @@ referência — e qualquer proposta que acrescente condutores, peças ou passos
 tem de dizer o que ganha em troca.* Se não diz, não é proposta: é regressão
 com cara de manual.
 
-**O que ficou (21/09):**
+**O que ficou (2026-09-21):**
 
 - `tools/manual_montagem.py` **v0.12.0**: o desenho do DPDT passa a mostrar
   **um fio por rede** — três cheios, para um polo só, mais os três jumpers. Os
@@ -10541,7 +10541,7 @@ com cara de manual.
 
 ## 15fd — o iPad ligava e nada acontecia: a ponte falava por pinos que a placa não tem
 
-A 21/09 o dB montou o cérebro, desligou o painel, e foi ao Loopy: o iPad viu o
+A 2026-09-21 o dB montou o cérebro, desligou o painel, e foi ao Loopy: o iPad viu o
 `Cotucatronics`, **ligou**, ele mexeu nos parâmetros — e nada. A placa dizia a
 verdade ao primeiro `board`:
 
@@ -10577,7 +10577,7 @@ netlist, `encaixe`, `check_docs` — e duas fontes do mesmo facto (o mapa de
 pinos) sem ninguém a compará-las. Uma delas está gravada num ESP32, a outra
 fabricada em fibra de vidro: a comparação tinha de ser um **terceiro**.
 
-**O que ficou (21/09):**
+**O que ficou (2026-09-21):**
 
 - `esp32/ponte/ponte.ino` **v1.0.0** (MAJOR, porque o contrato de fiação muda):
   `PINO_TX = 21`, `PINO_RX = 20`, `PINO_STATUS = 3`. O cabeçalho diz que **a
@@ -10595,7 +10595,7 @@ fabricada em fibra de vidro: a comparação tinha de ser um **terceiro**.
 
 ## 15fe — três soldas frias em cadeia, e cada sintoma apontava para o lugar errado
 
-21–22/09, a primeira ligação do cérebro montado. O dB: *"o iPad conecta, mudo os
+21–2026-09-22, a primeira ligação do cérebro montado. O dB: *"o iPad conecta, mudo os
 parâmetros no Loopy e nada acontece"*. Do fim ao princípio, foram **três**
 defeitos independentes, todos de montagem, e nenhum deles se parecia com o que
 era:
@@ -10649,7 +10649,7 @@ exactamente −6,9 dB com o piezo real. O que faltou não está no desenho:
 > Nenhum verifica **adequação de nível**. O `−6 dB` foi escolhido sobre uma
 > estimativa que nunca foi confrontada com o transdutor real na escultura real.
 
-**Os números, agora medidos (22/09):**
+**Os números, agora medidos (2026-09-22):**
 
 | | |
 |---|---|
@@ -10675,7 +10675,7 @@ resolvido baixando o `pre_level_ab` de 1,0 para 0,5).
 
 ## 15fg — ponto de teste do lado errado da placa, e sem nome impresso
 
-22/09, o dB com o painel na mão, a começar a fase de testes: *"os tps estão em
+2026-09-22, o dB com o painel na mão, a começar a fase de testes: *"os tps estão em
 cima na placa, então tenho que removê-la da tampa para testar"*. E logo a
 seguir: *"não tenho esses tps na serigrafia"*.
 
@@ -10701,7 +10701,7 @@ anónimos: quem mede tem de contar posições ou abrir o KiCad para saber qual �
 `tampa`) está no `pcb_contorno` desde sempre, e é dele que sai toda a geometria
 de caixa. O dado existia; faltava a **pergunta**.
 
-**O que ficou (22/09):** `kicad/encaixe.py` **v0.7.0**, etapa **M8**. Ela deriva
+**O que ficou (2026-09-22):** `kicad/encaixe.py` **v0.7.0**, etapa **M8**. Ela deriva
 o lado acessível do `assenta` e exige duas coisas de cada `TP`: estar nesse
 lado, e ter a referência na serigrafia **desse** lado. Hoje aprova os 11 do
 cérebro e reprova os 5 do painel, que é a verdade. Provado com `--sabota tp`.
@@ -10714,7 +10714,7 @@ teste nenhum nos botões nem no encoder.
 
 ## 15fh — o chicote comprado cruza as cores, e a cor não é polaridade
 
-22/09. Os LEDs dos arcade não acendiam. A placa fazia tudo certo — os dois
+2026-09-22. Os LEDs dos arcade não acendiam. A placa fazia tudo certo — os dois
 `frz_on` ligados, o firmware a pedir os LEDs acesos. O defeito estava no cabo, e
 a descrição do dB é a lição inteira:
 
@@ -10745,7 +10745,7 @@ uma tarde a medir a placa que estava certa.
 
 ## 15fi — o `Result` que ninguém lê: o painel dizia "tela ACESA" com 800 ms de prazo esgotado por quadro
 
-22/09. O OLED do painel não acendia. Passámos **a tarde inteira** a interrogar o
+2026-09-22. O OLED do painel não acendia. Passámos **a tarde inteira** a interrogar o
 fio — continuidade, pontes entre os cinco sinais, curtos à terra, alimentação no
 módulo, ordem dos sinais nos pinos dele, resistores de selecção de interface na
 traseira. Tudo bom, e provado com medição diferencial, não com impressão.
@@ -10836,7 +10836,7 @@ fica provado bom para o módulo seguinte.
 
 ## 15fj — a retenção do `fio` morre num reinício, e o repouso normal do SPI virou diagnóstico de avaria
 
-22/09, duas vezes no mesmo dia. O comando `fio <pino> <0|1>` segura um dos cinco
+2026-09-22, duas vezes no mesmo dia. O comando `fio <pino> <0|1>` segura um dos cinco
 sinais do OLED num nível fixo para se medir no conector. Mandei medir; o dB
 mediu com todo o cuidado e trouxe:
 
@@ -10864,7 +10864,7 @@ errada — e a leitura certa não se defende sozinha.
 
 ## 15fk — prever a média de uma linha que está 97% parada é medir o software, não o fio
 
-22/09. Pus o barramento a desenhar sem parar e mandei medir o `CLK` com o
+2026-09-22. Pus o barramento a desenhar sem parar e mandei medir o `CLK` com o
 multímetro, prevendo **1,5 a 1,8 V** — a média de uma linha a comutar. O dB
 mediu **poucos mV** e a leitura dele estava certa; a previsão é que estava
 errada.
@@ -10886,7 +10886,7 @@ Depois do conserto da 15fi o mesmo teste passou a valer: quadro de 2,6 ms, e no
 ## 15fl — quarenta e oito ferramentas, nenhum comando que as corresse: o portão que ninguém passa é decoração
 <!-- doc-check: ignore svg_colisoes (ferramenta em tools/, fora do alcance do check_docs) -->
 
-22/09. O dB pediu: *"verifique que as bts estão sendo devidamente implementadas
+2026-09-22. O dB pediu: *"verifique que as bts estão sendo devidamente implementadas
 e não só registradas"*. A resposta não foi ler as cicatrizes — foi **correr os
 portões que elas mandaram construir**. E descobriu-se que ninguém os corria.
 
@@ -10959,15 +10959,15 @@ veria e o leitor vê de imediato.
 
 ## 15fm — dois módulos OLED mortos, e o segundo fomos nós que o matámos pelos pinos de sinal
 
-22/09. O dB: *"por que já temos dois OLEDs queimados?"* Duas mortes no mesmo
+2026-09-22. O dB: *"por que já temos dois OLEDs queimados?"* Duas mortes no mesmo
 sítio não é azar, é causa — e as causas são **diferentes**, o que só se soube
 por o primeiro estar escrito:
 
-- **Módulo nº 1 (23/08)** — `STATUS.md`: *"GND e 3V3 estavam invertidos na
+- **Módulo nº 1 (2026-08-23)** — `STATUS.md`: *"GND e 3V3 estavam invertidos na
   placa de distribuição, e o módulo recebeu polaridade reversa."* Causa
   conhecida, e morreu com a placa de distribuição: o painel fabricado tem a
   polaridade no cobre.
-- **Módulo nº 2 (22/09)** — causa apurada neste dia, e é **nossa**.
+- **Módulo nº 2 (2026-09-22)** — causa apurada neste dia, e é **nossa**.
 
 ### A topologia, lida no cobre
 
@@ -11015,7 +11015,7 @@ por cima para quem souber o que faz.
 
 ### O desfecho: o conversor de alta tensão do módulo está morto
 
-Medido a 22/09, com a ponta preta no `GND` do módulo e a vermelha a varrer o
+Medido a 2026-09-22, com a ponta preta no `GND` do módulo e a vermelha a varrer o
 canto da alimentação (os dois SOT-23-6, o díodo e os passivos à volta):
 **nada acima de 5 V**, onde tinham de estar **12 a 13**.
 
@@ -11082,11 +11082,11 @@ verdade — *"não configurado ainda"* — e passei três leituras a desconfiar 
 
 ⚠️ **E a lição de método:** o primeiro módulo morreu com a causa escrita, e foi
 por estar escrita que se soube, hoje, que o segundo **não** morreu da mesma
-coisa. Sem esse parágrafo de 23/08 eu teria "confirmado" a polaridade e parado.
+coisa. Sem esse parágrafo de 2026-08-23 eu teria "confirmado" a polaridade e parado.
 
 ## 15fn — acelerar o laço mudou o regime de tudo o que corria dentro dele, e o MIDI parou de sair
 
-22/09, horas depois da 15fi. O dB pediu que os pots se espelhassem no Loopy.
+2026-09-22, horas depois da 15fi. O dB pediu que os pots se espelhassem no Loopy.
 O espelho já existia, já estava ligado por omissão, e os vínculos estavam lá
 (`CC 116` → `post_level_l`, `CC 117` → `post_level_r`). Ele girou o pot e o
 Loopy não mexeu.
@@ -11151,7 +11151,7 @@ esperar que o próximo defeito se apresente como defeito novo.
 
 ## 15fo — uma fonte de verdade por controlo: seis parâmetros saem do mapa MIDI
 
-22/09, decisão do dB: *"vou eliminar out L e R do iPad e Exciter/Line or Both
+2026-09-22, decisão do dB: *"vou eliminar out L e R do iPad e Exciter/Line or Both
 — these have physical keys and I want to have a single source of truth."*
 
 Saem do mapa **seis** vínculos:
@@ -11198,7 +11198,7 @@ se espera de um gerador que conhece o seu alcance.
 
 ## 15fp — o gerador do perfil perdia o índice e endereçava a boca errada do notch, em silêncio
 
-23/09. O dB exportou o projecto do Loopy para eu gerar o perfil de controlo —
+2026-09-23. O dB exportou o projecto do Loopy para eu gerar o perfil de controlo —
 o ficheiro que põe o `In` no canal de espelho em todos os widgets de uma vez,
 em vez de mais de cem edições à mão. A primeira corrida deu **71 casados,
 17 órfãos**, e os órfãos contavam duas histórias diferentes.
@@ -11254,7 +11254,7 @@ depois deles. **Perfil regenera-se depois de mexer no layout, não antes.**
 
 ## 15fq — a skill estava certa e a ferramenta contradizia-a: um dia atrás da extensão errada
 
-23/09. O perfil de controlo gerado dava sempre *"perfil sem bindings"* no
+2026-09-23. O perfil de controlo gerado dava sempre *"perfil sem bindings"* no
 Loopy. Passei o dia a caçar a **extensão** — o dB corrigiu-me para
 `.lpcontrollerprofile`, mudei, continuou a falhar; corrigiu-se depois para
 `.lpcontrolprofile`, que é a certa nos dois sítios. **Nenhuma das duas era a
@@ -11274,11 +11274,11 @@ não liga nada.
 
 ### E isto já estava escrito na skill há três semanas
 
-> 🔴 **CORRIGIDO EM 01/09, e o erro anterior custou um projecto inutilizado.**
+> 🔴 **CORRIGIDO EM 2026-09-01, e o erro anterior custou um projecto inutilizado.**
 > Esta skill dizia que o `Subject` era posicional. **Não é.** Verificado num
 > export real: `Subject = "#<id do objecto do widget>"`.
 
-A skill `loopy` foi corrigida a 01/09. O `gerar_perfil_loopy.py` **continuou a
+A skill `loopy` foi corrigida a 2026-09-01. O `gerar_perfil_loopy.py` **continuou a
 escrever posicional**, e o cabeçalho dele ainda pregava *"o endereço é
 POSICIONAL"* — a contradizer, em letra grande, o documento que devia seguir.
 O modo por id até existia, escondido atrás de uma variável de ambiente.
@@ -11311,7 +11311,7 @@ as páginas, que apaga os ids e deixa os bindings órfãos sem erro nenhum.
 
 ## 15fr — escrita BLE sem confirmação: o silêncio outra vez lido como sucesso
 
-29/09, a montar a consola sem fio (`ppc/006` fase 1). O Mac ligava-se à ponte,
+2026-09-29, a montar a consola sem fio (`ppc/006` fase 1). O Mac ligava-se à ponte,
 a tabela GATT aparecia completa, o comando era enviado — e a ponte contava
 **zero**. O cliente não se queixava de nada.
 
@@ -11342,7 +11342,7 @@ rádio.** Sem eles, era um "não funciona" sem sítio.
 
 ## 15fs — o anúncio BLE e a tabela GATT: duas ordens erradas, nenhum erro
 
-29/09. Acrescentar um serviço ao servidor NimBLE que o BLEMIDI já tinha
+2026-09-29. Acrescentar um serviço ao servidor NimBLE que o BLEMIDI já tinha
 arrancado deu **dois sintomas diferentes em duas tentativas**, e nenhum deles
 foi um erro de compilação ou de execução:
 
@@ -11373,7 +11373,7 @@ cache limpa antes de se acusar o firmware.**
 
 ## 15ft — a consola por rádio fechou, e o caminho inteiro é feito de peças que já lá estavam
 
-29/09, `ppc/006` fase 1. O dB escreveu `board` no Mac e a placa respondeu
+2026-09-29, `ppc/006` fase 1. O dB escreveu `board` no Mac e a placa respondeu
 **sem cabo nenhum**:
 
 ```
@@ -11418,7 +11418,7 @@ exactamente aí que ela vale mais.
 A primeira saída por rádio trazia `midi 0.8.1` com o `midi.h` já em `0.9.0`: o
 `COTUCA_MIDI_VERSION` não acompanhou o cabeçalho do ficheiro. **O relatório que
 existe para conferir versões estava a mentir sobre uma.** É a mesma família do
-`PS_64` cravado (22/09) e do tecto da lista que não seguia a lista (23/09).
+`PS_64` cravado (2026-09-22) e do tecto da lista que não seguia a lista (2026-09-23).
 
 > **Número que descreve outra coisa tem de ser lido dela, ou copiado com um
 > portão a vigiar a cópia.** Aqui há portão — o `versoes_readme.py` compara o
@@ -11427,7 +11427,7 @@ existe para conferir versões estava a mentir sobre uma.** É a mesma família d
 
 ## 15fu — a ponte grava-se por rádio, e o culpado era a supervisão, não a velocidade
 
-29/09, `ppc/006` fase 2. A imagem de 628 KB atravessou o BLE, passou o MD5,
+2026-09-29, `ppc/006` fase 2. A imagem de 628 KB atravessou o BLE, passou o MD5,
 arrancou, sobreviveu 15 s a anunciar e **confirmou-se sozinha**:
 
 ```
@@ -11488,7 +11488,7 @@ rádio morto, os dois modos que deixariam a caixa inalcançável.
 
 ## 15fv — "risco zero" sem fazer a subtracção: gravei o app novo por cima do que estava a correr
 
-29/09, primeiro passo da fase 3. Disse ao dB, com todas as letras, que gravar o
+2026-09-29, primeiro passo da fase 3. Disse ao dB, com todas as letras, que gravar o
 app religado em `0x90050000` era **risco zero** porque a placa continuaria a
 arrancar do app velho em `0x90040000`.
 
@@ -11541,9 +11541,9 @@ a gesto.
 > É a mesma lição da §1 da `bancada-firmware`, e eu voltei a aprendê-la do lado
 > errado.
 
-## 15fw — a QSPI escreve: eram DOIS problemas empilhados, e por isso a busca não encolhia (29/09)
+## 15fw — a QSPI escreve: eram DOIS problemas empilhados, e por isso a busca não encolhia (2026-09-29)
 
-Aberto desde 22/08. Resolvido hoje, e o que o manteve fechado cinco semanas não
+Aberto desde 2026-08-22. Resolvido hoje, e o que o manteve fechado cinco semanas não
 foi dificuldade — foi **duas causas independentes a produzirem o mesmo
 sintoma**, o que faz toda a varredura parecer inútil.
 
@@ -11628,9 +11628,9 @@ libDaisy. Dois caminhos independentes, a concordar byte a byte.
 mascaradas e leva centenas de milissegundos. Não pode ser chamado com o
 instrumento a tocar.
 
-## 15fx — o documento foi corrigido e o comentário no código não: foi o comentário que me ensinou o bug (29/09)
+## 15fx — o documento foi corrigido e o comentário no código não: foi o comentário que me ensinou o bug (2026-09-29)
 
-A 22/08 a hipótese *"a libDaisy põe o chip em QPI"* foi **refutada por
+A 2026-08-22 a hipótese *"a libDaisy põe o chip em QPI"* foi **refutada por
 leitura** e o `DESENHO-ESCRITA-QSPI.md` foi corrigido no mesmo dia.
 
 Dentro do `qspi_raw.cpp`, em letras grandes, ficou isto:
@@ -11642,7 +11642,7 @@ Dentro do `qspi_raw.cpp`, em letras grandes, ficou isto:
 // coluna existe pra ninguem redescobrir isso no erase.
 ```
 
-A 29/09 abri o ficheiro para escrever o erase, **li esse comentário, e acreditei
+A 2026-09-29 abri o ficheiro para escrever o erase, **li esse comentário, e acreditei
 nele**. Escrevi os três campos de modo em quad. Nenhum comando foi ouvido, e
 gastei uma gravação a descobri-lo.
 
@@ -11662,7 +11662,7 @@ hipótese errada responde sempre o mesmo e parece hardware mudo.
 > **Default de instrumento é afirmação sobre o mundo.** Quando a afirmação
 > cai, o default cai com ela.
 
-## 15fy — tabela incompleta com ar de completa custa mais que tabela ausente (29/09)
+## 15fy — tabela incompleta com ar de completa custa mais que tabela ausente (2026-09-29)
 
 O `DESENHO-ESCRITA-QSPI.md` tinha a tabela do formato de leitura:
 
@@ -11690,7 +11690,7 @@ suficiência.
 Uma tabela ausente manda-me ler o `EnableMemoryMappedMode`. A tabela presente
 convenceu-me de que não era preciso.
 
-## 15fz — reconstruí o defeito contra o qual o projecto já tinha uma lei (29/09)
+## 15fz — reconstruí o defeito contra o qual o projecto já tinha uma lei (2026-09-29)
 
 Escrevi o driver novo com esta assinatura:
 
@@ -11716,7 +11716,7 @@ ocioso, que é a segunda metade da 13k.
 > desenhar qualquer assinatura: *o que devolve esta função quando não tem
 > resposta, e esse valor pertence ao domínio?*
 
-## 15ga — o fundo era o datum, e por isso a caixa não se monta: nove sintomas, uma causa (29/09)
+## 15ga — o fundo era o datum, e por isso a caixa não se monta: nove sintomas, uma causa (2026-09-29)
 
 O dB tentou montar a rev C e relatou **nove** coisas. Elas parecem nove
 problemas; são um.

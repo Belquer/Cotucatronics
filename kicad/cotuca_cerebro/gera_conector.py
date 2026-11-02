@@ -4,9 +4,9 @@
 ⚠️ A PINAGEM E ESTE FICHEIRO. O `VIAS` aqui em baixo E a fonte, e nao uma
 copia do que esta escrito noutro sitio.
 
-Ate 08/09 este cabecalho dizia "a pinagem sai do ROTEIRO-KICAD.md §5" e o §5
+Ate 2026-09-08 este cabecalho dizia "a pinagem sai do ROTEIRO-KICAD.md §5" e o §5
 listava as 26 vias a mao. Duas fontes do mesmo facto, e a que nao corre foi a
-que envelheceu: o pino 19 deixou de ser terra a 05/09 e a tabela de la
+que envelheceu: o pino 19 deixou de ser terra a 2026-09-05 e a tabela de la
 continuou a dize-lo, o que levou DUAS vezes a conclusao de que havia uma via
 livre que nao havia. O §5 passou a apontar para ca — e apontar para ca so vale
 enquanto este cabecalho nao apontar de volta, senao ficam os dois a apontar um
@@ -74,7 +74,7 @@ VIAS = {
     13: ("GND", "retorno LED"),      14: ("GND", "retorno LED"),
     15: ("LED_FRZ_A", "D27"),        16: ("LED_FRZ_B", "D23"),
     17: ("BOT_FRZ_A", "D24"),        18: ("BOT_FRZ_B", "D22"),
-    # ⚠️ A VIA 19 DEIXOU DE SER TERRA a 05/09, para o botao branco dos
+    # ⚠️ A VIA 19 DEIXOU DE SER TERRA a 2026-09-05, para o botao branco dos
     # buzios. Das nove terras, era a unica que nao guardava nenhuma das tres
     # coisas medidas — o relogio do OLED (1 e 3), os pots (23 e 26) e o par
     # dos LED (13 e 14). E o que la entra e um botao: digital lento, corrente
@@ -110,7 +110,7 @@ def simbolo(lib, ref, val, x, y):
 # "medir antes de soldar". Footprint mecanico errado e placa inutil, e um
 # footprint plausivel escrito hoje parece verdade amanha.
 #
-# A JLC monta so o lado SMD (decidido com o dB a 05/09); o THT solda o dB.
+# A JLC monta so o lado SMD (decidido com o dB a 2026-09-05); o THT solda o dB.
 FOOTPRINT = {
     "C16": "Capacitor_SMD:C_0805_2012Metric",
     "J14": "Connector_IDC:IDC-Header_2x13_P2.54mm_Vertical",
@@ -127,7 +127,7 @@ def _instancia(ref, unidade=1):
     se grave: *"An error was found when loading the schematic that has been
     automatically fixed."* Nenhuma ferramenta de linha de comando denuncia
     isto — nem o ERC, nem a netlist, nem o `sch upgrade`, que devolve "not
-    updated" porque o formato ja e o corrente. A 05/09 gastaram-se tres
+    updated" porque o formato ja e o corrente. A 2026-09-05 gastaram-se tres
     hipoteses erradas a caca disto ate se pedir ao KiCad para gravar e se
     comparar o ficheiro dele com o meu; a resposta estava no diff.
 
@@ -208,7 +208,7 @@ def pinos_de(nome):
 def nota(x, y, *linhas, tam=1.6, passo=3.81):
     """Nota de varias linhas. O SINAL DO Y VIVE SO AQUI — na folha cresce para
     BAIXO, no simbolo para CIMA, e repetir a coordenada em cada sitio de
-    chamada foi como 9 notas sairam de tras para a frente a 05/09."""
+    chamada foi como 9 notas sairam de tras para a frente a 2026-09-05."""
     for i, s in enumerate(linhas):
         texto(s, x, y + i * passo, tam if i == 0 else 1.27)
 
@@ -222,7 +222,7 @@ simbolo("IDC26", "J14", "IDC 2x13 -> painel", JX, JY)
 # leitura da Daisy e ratiometrica e tolera o que for COMUM ao trilho e a
 # referencia — mas o que entra so pelo lado do cabo entra na leitura. O par
 # vai colado ao conector nas DUAS placas, que e onde o cabo comeca e acaba.
-# Achado da P4 da revisao de terra, 06/09: o trilho nao tinha nenhum.
+# Achado da P4 da revisao de terra, 2026-09-06: o trilho nao tinha nenhum.
 CX3, CY3 = JX - 40.0, JY + 60.0
 simbolo("C_V", "C16", "100n", CX3, CY3)
 for (_n, px, py), (rot, ang, just) in zip(pinos_de("C_V"),
@@ -262,7 +262,7 @@ def _confere_lib(caminho):
     """Depois de escrever: todo `lib_id` tem entrada no `lib_symbols`?
 
     Um simbolo referido e nao embutido nao da erro nenhum — o KiCad ve um
-    simbolo SEM PINOS e cada fio fica solto. A 05/09 custou 10 fios soltos no
+    simbolo SEM PINOS e cada fio fica solto. A 2026-09-05 custou 10 fios soltos no
     painel, sem uma palavra do gerador."""
     import re as _r
     t = io.open(caminho, encoding="utf-8").read()

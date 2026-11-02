@@ -1,5 +1,5 @@
 # Caixa em acrílico — materiais e montagem
-### Cotucatronics · 06/09/2026 · acrílico transparente **3,0 mm**, Ponoko
+### Cotucatronics · 2026-09-06 · acrílico transparente **3,0 mm**, Ponoko
 > Vale para a caixa que já está a ser cortada (calços cegos, rosca no acrílico) e
 > para as seguintes (calços com porca cativa — ficheiro `cotuca_caixa_corte.svg`
 > regenerado hoje). A diferença está na §4.
@@ -169,7 +169,7 @@ milímetros.
 - **Exciters** saem do amp pela direita, e **nunca cruzam o pré-amp**.
 - **IDC do painel** (26 vias) corre pela parede de **trás**, longe da esquerda.
 - **Linha para a mesa**: do DPDT (parede de trás) ao amp e aos jacks de trás.
-- **Como se termina um cabo de sinal** (o método, escrito a 20/09 a pedido do
+- **Como se termina um cabo de sinal** (o método, escrito a 2026-09-20 a pedido do
   dB — *"parece uma gambiarra, documente o jeito profissional"*): capa
   descascada **25 mm**, malha reunida num rabicho **≤ 10 mm**, centro **4–5 mm**,
   os dois estanhados, terminação por **solda + termorretráctil** ou por
@@ -181,7 +181,7 @@ milímetros.
   ⚠️ **O alívio de esforço é a parte que falta em quase todo improviso**: a
   força do cabo tem de morrer na abraçadeira, nunca na solda.
 - **Malha do cabo do piezo**: depende de quantos condutores o cabo tem, e
-  confundir os dois casos custa o sinal inteiro (esclarecido a 20/09, com o
+  confundir os dois casos custa o sinal inteiro (esclarecido a 2026-09-20, com o
   cabo do dB na mão):
   - **dois condutores + malha** (há fio de retorno próprio): a malha é
     **escudo** e liga **só do lado da placa**; nas duas pontas fecha espira.

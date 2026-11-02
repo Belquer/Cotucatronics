@@ -3,7 +3,7 @@
 
 POR QUE E GERADA, e nao escrita a mao.
 
-A `BOM-MPN-revB.md` foi escrita a mao e a 05/09 divergia do esquema em quatro
+A `BOM-MPN-revB.md` foi escrita a mao e a 2026-09-05 divergia do esquema em quatro
 sitios ao mesmo tempo: nomes de referencia anteriores a uma renomeacao,
 contagens (`C6A`/`C6B` onde ha um `C6` so), quatro `PWR_FLAG` onde havia dois,
 e seis pecas desenhadas como pecas que ja tinham sido decididas como fio. Uma
@@ -37,7 +37,7 @@ FOLHAS = [
 ]
 
 # ref -> (MPN, fornecedor/codigo, preco_unit_USD, proveniencia)
-# ⚠️ `medido` = fui a fonte a 05/09/2026 e li o numero. `estimado` = ordem de
+# ⚠️ `medido` = fui a fonte a 2026-09-05 e li o numero. `estimado` = ordem de
 #    grandeza; NAO serve para fechar pedido.
 PECAS = {
     "U1":  ("OPA1642AIDR (TI)", "LCSC C67640", 1.0145, "medido"),
@@ -54,7 +54,7 @@ PECAS = {
     "D2":  ("SS14 (onsemi, SMA/DO-214AC)", "Mouser 512-SS14", 0.02, "estimado"),
     # ⚠️ MF-LSMF300/24X-2 (Bourns MF-LSMF): hold 3 A / trip 5,2 A / 24 V, land
     # 2920/7450 metrico = mesma pegada 2920 do footprint Fuse_2920_7451Metric.
-    # VERIFICADO em estoque no Mouser (via navegador, 12/09) — 652-MF-LSMF300/24X-2.
+    # VERIFICADO em estoque no Mouser (via navegador, 2026-09-12) — 652-MF-LSMF300/24X-2.
     # O Littelfuse 2920L.../24MR (3,3 A) fica de backup em
     # export/MOUSER_ALTERNATES.md. A §7f continua a valer: o sufixo de um
     # polyfuse diz a corrente de hold, e um numero plausivel e inexistente parece
@@ -65,7 +65,7 @@ PECAS = {
     "C5":  ("EEU-FR1E470 (Panasonic FR)", "LCSC", 0.15, "estimado"),
     "C6":  ("EEU-FR1E471 (Panasonic FR)", "LCSC", 0.20, "estimado"),
     # ⚠️ CL31B106KAHNNWE (Samsung, 10 uF 25 V X7R 1206): VERIFICADO em estoque no
-    # Mouser (via navegador, 12/09) — 187-CL31B106KAHNNWE. Substitui o
+    # Mouser (via navegador, 2026-09-12) — 187-CL31B106KAHNNWE. Substitui o
     # CL31A106KBHNNNE (50 V X5R), que dava MATCH mas estava backordered/long-lead
     # — e backordered ESCAPA do filtro "no match", por isso trocou-se por um com
     # estoque "Ships Now". 25 V cobre o no. Alternativas em MOUSER_ALTERNATES.md.
@@ -82,7 +82,7 @@ PECAS = {
 }
 PECAS_PAINEL = {
     # ⚠️ SI2302CDS-T1-GE3 (Vishay, N-ch SOT-23 logic-level 20 V): VERIFICADO em
-    # estoque no Mouser (via navegador, 12/09) — 781-SI2302CDS-T1-GE3. 20 V chega:
+    # estoque no Mouser (via navegador, 2026-09-12) — 781-SI2302CDS-T1-GE3. 20 V chega:
     # Q1/Q2 sao drivers low-side de LED, Vds <= 5 V. O Mouser NAO cataloga a AOS,
     # e por isso o AO3400A dava "No Match" — fica so como VALOR de esquema e
     # ancora de equivalencia (mesmo SOT-23, 1 G 2 S 3 D). Alt em MOUSER_ALTERNATES.
@@ -101,7 +101,7 @@ PECAS_PAINEL = {
     "RV2": ("PTV09A-1020S-B103 (Bourns)", "distribuidor", 0.60, "estimado"),
     "J1":  ("61202621621 (Wurth WR-BHD, box header 2x13 blindado)", "Mouser 710-61202621621", 0.45, "estimado"),
     # J2 = header MACHO 1x07 a 2,54, cortado da barra Wurth 1x40: o OLED vem
-    # com cabo MX1.25 -> jumpers femea (dB, 17/09). Era PicoBlade 53047-0710 ate
+    # com cabo MX1.25 -> jumpers femea (dB, 2026-09-17). Era PicoBlade 53047-0710 ate
     # a rev C; nenhuma placa fabricada o usa.
     "J2":  ("61304011121 (Wurth WR-PHD 1x40, cortar 1x07)", "Mouser 710-61304011121", 0.30, "estimado"),
     # ⚠️ o C3 do PAINEL e outro C3 que o do cerebro — tabelas separadas, e por
@@ -121,7 +121,7 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
     "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical": ("header 1x4 2,54", 0.06, "estimado"),
     "Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical": ("header 1x5 2,54", 0.07, "estimado"),
     "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical": ("header 1x6 2,54", 0.08, "estimado"),
-    # ⚠️ 1x8 e nao 1x6 no J15/J16 desde 08/09: os pinos 7 e 8 sao GND, para o
+    # ⚠️ 1x8 e nao 1x6 no J15/J16 desde 2026-09-08: os pinos 7 e 8 sao GND, para o
     # cabo ate ao DPDT ter referencia. Ver a folha do soquete.
     # ⚠️ E O CABO PASSA A OITO CONDUTORES. Isso vive na seccao FORA, porque nao
     # esta em folha nenhuma — uma alteracao de placa que muda cablagem e duas
@@ -143,7 +143,7 @@ GENERICO = {   # por familia de footprint, quando nao ha MPN proprio
         #
         # ⚠️ SERIE, e nao bancada. O instrumento replica-se as centenas, e por
         # isso o preco que conta e o do escalao de 100 e nao o de um. Medido a
-        # 08/09 na Rapid: GBP 0,904 a 100+ com IVA (GBP 1,13 a um). O KF301-5.0
+        # 2026-09-08 na Rapid: GBP 0,904 a 100+ com IVA (GBP 1,13 a um). O KF301-5.0
         # generico serve para montar na bancada e NAO e a peca da serie.
         ("terminal parafuso 2p 5,08 — **1715721** (Phoenix MKDS 1,5/2-5,08); "
          "KF301-5.0 so para bancada", 0.95, "medido"),
@@ -229,7 +229,7 @@ MPN_POR_FP = {
         "1715721",
     "Connector_JST:JST_XH_B2B-XH-A_1x02_P2.50mm_Vertical": "B2B-XH-A",
     # ⚠️ TODOS os headers 1 fila 2,54 saem cortados da MESMA barra Wurth WR-PHD
-    # 1x40 (61304011121), VERIFICADA em estoque no Mouser (via navegador, 12/09)
+    # 1x40 (61304011121), VERIFICADA em estoque no Mouser (via navegador, 2026-09-12)
     # — 710-61304011121. Aqui o vazio DEIXOU de ser resposta: a barra e uma peca
     # sourced, e o numero e o mesmo de 1x2 a 1x8 — o J2 do painel (1x07)
     # incluido, desde a rev C.
@@ -263,7 +263,7 @@ FORA = [
     ("painel",   "DPDT ON-ON-ON tipo 2", "ja comprados", 2, 2.00, "estimado",
      "⚠️ MEDIR O TIPO COM MULTIMETRO ANTES DE FIAR"),
     ("cablagem", "Cabo IDC 2x13, 26 vias, ~300 mm, femea-femea com chave, directo (pino 1 a pino 1)", "—", 1, 3.00, "estimado",
-     "percurso medido a 18/09: ~170 mm pela parede de tras (J1 do painel a 98 mm da frente, J14 do cerebro a 19) + 80 mm de folga para tirar o fundo"),
+     "percurso medido a 2026-09-18: ~170 mm pela parede de tras (J1 do painel a 98 mm da frente, J14 do cerebro a 19) + 80 mm de folga para tirar o fundo"),
     # ⚠️ ESTE CABO NAO ESTAVA NA BOM. Uma peca que nao esta em folha nenhuma e
     # que ninguem escreveu aqui simplesmente NAO EXISTE na lista de compras, e o
     # total nem a conta como zero — nao a conta de todo. Apareceu por eu mexer
@@ -281,7 +281,7 @@ FORA = [
      "o modulo entra em soquete para poder ser regravado e trocado"),
     ("cablagem", "Cabo 8 vias ~150 mm ao DPDT, crimpado (J15 e J16)", "—", 2, 1.00,
      "estimado",
-     "8 e nao 6 desde 08/09: os pinos 7 e 8 sao GND, referencia do cabo. Os dois "
+     "8 e nao 6 desde 2026-09-08: os pinos 7 e 8 sao GND, referencia do cabo. Os dois "
      "condutores de terra nao vao a lug nenhum da chave — ou ao corpo dela, se "
      "for metalica, ou ficam como dreno junto ao par"),
     ("cablagem", "Cabo USB-C curto 15 cm C-C com dados (PD)", "—", 1, 3.00, "estimado",
@@ -289,7 +289,7 @@ FORA = [
     ("caixa",    "Caixa (ver docs/desenhos/caixa/)", "—", 1, 0.0, "por orcar",
      # ⚠️ dizia "paredes 6 mm, tampa 9 mm" — premissa revogada (§10b). A caixa
      # que esta a ser cortada e a do `caixa/cotuca_caixa_corte.py`: acrilico de
-     # 3,0 mm, rev 5 de 06/09. Comentario com autoridade que afirma premissa
+     # 3,0 mm, rev 5 de 2026-09-06. Comentario com autoridade que afirma premissa
      # morta re-ensina o erro a quem o le.
      "acrilico 3,0 mm, 200x120, frente 55 / tras 80, rev 5; furos na tampa "
      "para encoder e 2 pots"),
@@ -453,7 +453,7 @@ Os DNP nao contam para o total: o footprint fica na placa, a peca nao se compra.
 
 | ref | esquema | MPN escolhido | |
 |---|---|---|---|
-| ~~`C12`, `C22`~~ | ~~`20n C0G`~~ | | **RESOLVIDO 05/09**: o esquema passou a `22n C0G`. 20 nF C0G nao e valor de serie; o esquema mentia ao BOM. |
+| ~~`C12`, `C22`~~ | ~~`20n C0G`~~ | | **RESOLVIDO 2026-09-05**: o esquema passou a `22n C0G`. 20 nF C0G nao e valor de serie; o esquema mentia ao BOM. |
 | `R5`, `R6` (painel) | `100R serie (~30 mA)` | 47 Ω 1/2 W na `BOM-MPN-revB` | por medir na bancada com o azul a 5 V |
 
 Enquanto nao baterem, a BOM esta a comprar uma peca e o desenho a descrever
@@ -461,10 +461,10 @@ outra — e nenhum verificador apanha isso.
 
 ## %d · O que ainda trava o pedido
 
-0. ~~`+3V3A` sem dono.~~ **RESOLVIDO 05/09** — e era defeito, nao ruido: os
+0. ~~`+3V3A` sem dono.~~ **RESOLVIDO 2026-09-05** — e era defeito, nao ruido: os
    pots estavam no trilho DIGITAL e lidos contra o ANALOGICO, que e o fundo de
    escala do ADC. Via 9 passou a `+3V3A`, OLED foi para 5 V. Ver ERC-ISENCOES.
-1. ~~`OPA1642AIDR` na biblioteca da JLC.~~ **CONFIRMADO 05/09**: JLCPCB
+1. ~~`OPA1642AIDR` na biblioteca da JLC.~~ **CONFIRMADO 2026-09-05**: JLCPCB
    `C67640`, tier **EXTENDED**, disponivel para montagem SMT. Custa o *setup*
    unico de Extended. O `OPA1656` foi avaliado como alternativa e **recusado**
    — melhor no papel, mas o pre-amp esta medido com o 1642 e 53 MHz num no de
@@ -474,13 +474,13 @@ outra — e nenhum verificador apanha isso.
    desenho de PCB. Le-se o desenho do `-4` na ficha, ou mede-se a peca.
 3. **`R5`/`R6` do painel: valor por medir.** Fica `100R` no 1210 como partida;
    fecha-se na bancada com o azul a 5 V, medindo a corrente.
-4. ~~A Daisy Seed rev4.~~ **RESOLVIDO a 05/09: passou a Seed3.** A pinagem foi
+4. ~~A Daisy Seed rev4.~~ **RESOLVIDO a 2026-09-05: passou a Seed3.** A pinagem foi
    conferida pino a pino entre os dois CSV do fabricante — **o nome STM32 bate
    nos 40 pinos, sem uma excepcao** — e a doc diz textualmente *"maintaining
    pin-to-pin compatibility with the original Seed pinout and footprint"*.
    Simbolo, footprint e netlist ficaram **identicos**. O que mudou a favor:
    codec **TI TAC5242**, 32 bit / 192 kHz, chao de ruido de -120 dB (contra o
-   AK4556 do rev4) — e este projecto passou a sessao de 05/09 a cacar chao de
+   AK4556 do rev4) — e este projecto passou a sessao de 2026-09-05 a cacar chao de
    ruido. Nada muda contra: o dB ja grava por **USB-C** desde
    que a primeira placa queimou — a placa de bancada ja e de USB-C. A caixa
    nunca teve recorte para o USB da Daisy e continua a nao ter: grava-se com a

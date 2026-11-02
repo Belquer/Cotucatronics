@@ -14,7 +14,7 @@
 <!-- doc-check: ignore colisoes_sch (idem) -->
 <!-- doc-check: ignore kicad_layout (nome de outra skill, nao param) -->
 
-# ⚠️ APOSENTADA em 09/09/2026 — substituída pelo `/aipcb`
+# ⚠️ APOSENTADA em 2026-09-09 — substituída pelo `/aipcb`
 
 Este é o conteúdo integral da skill `/kicad` tal como estava no dia em que saiu
 de `.claude/skills/kicad/`, movido para aqui sem uma linha alterada. **Mantém o
@@ -82,7 +82,7 @@ designador a apontar para a peça errada. Nenhum deles aparece no ERC.
 
 > **"O verificador passou" e "a folha abre" são perguntas DIFERENTES.**
 
-Em 01/09 foram entregues duas folhas com o verificador de netlist limpo e a
+Em 2026-09-01 foram entregues duas folhas com o verificador de netlist limpo e a
 revisão visual feita três vezes. **Nenhuma das duas abria no KiCad.**
 
 ```
@@ -142,7 +142,7 @@ O erro não diz onde. O método que funciona é reduzir até ele desaparecer:
 3. Dentro do bloco culpado, **um símbolo de cada vez**.
 4. Dentro do símbolo, remover partes até carregar.
 
-Em 01/09 isto levou do ficheiro inteiro ao token exacto em seis passos.
+Em 2026-09-01 isto levou do ficheiro inteiro ao token exacto em seis passos.
 
 ⚠️ **E prova primeiro que a FERRAMENTA funciona**: corre o ERC num `.kicad_sch`
 alheio conhecido. Sem isso, "falha a carregar" tanto pode ser o ficheiro como o
@@ -164,7 +164,7 @@ continuam DESENHADOS encostados, e a ligação já não existe. Sem aviso.
 | pontas de fio, junções, rótulos | offsets dos pinos (já costumam estar em múltiplos de 2,54) |
 
 **Medir antes de transformar:** contar quantos pontos de cada categoria estão
-fora. Em 01/09 os pinos internos estavam 100% na grade e só a colocação estava
+fora. Em 2026-09-01 os pinos internos estavam 100% na grade e só a colocação estava
 fora — arredondar o desenho teria distorcido triângulos de díodo para não
 consertar nada.
 
@@ -224,7 +224,7 @@ invalida a inspecção que a aprovou.
 
 **E desenhar por script, não à mão.** Um esquemático gerado é reproduzível,
 diffável e corrigível na fonte; um desenhado à mão é um artefacto que ninguém
-sabe refazer. Em 01/09 foram **176 avisos de fora-da-grade** numa folha desenhada
+sabe refazer. Em 2026-09-01 foram **176 avisos de fora-da-grade** numa folha desenhada
 com coordenadas escolhidas a olho — e o conserto foi uma função de três linhas
 no gerador, aplicada a tudo de uma vez.
 
@@ -299,7 +299,7 @@ não é.
 Nunca editar o `.kicad_sch` à mão: as duas versões divergem e ninguém sabe qual
 manda. Todo conserto entra no `.py` e regera-se.
 
-**E a fonte tem de correr fora da máquina do autor.** Em 01/09 os geradores
+**E a fonte tem de correr fora da máquina do autor.** Em 2026-09-01 os geradores
 tinham `/mnt/user-data/outputs/` e `/home/claude/*.svg` gravados — rebentavam
 com `FileNotFoundError` na primeira tentativa noutro computador. Caminhos
 relativos ao próprio ficheiro (`pathlib.Path(__file__).parent`), sempre.
@@ -621,7 +621,7 @@ E o que falha é quase sempre **o sufixo**, não a família:
 > sufixo.** Sem isso é família com número.
 
 ⚠️ **Resumo de busca não é ficha.** Um resumo diz o que alguém entendeu. A
-05/09 um resumo disse que um estilo de pot "não servia", e a conclusão foi
+2026-09-05 um resumo disse que um estilo de pot "não servia", e a conclusão foi
 reportada e decidida — até um distribuidor descrever a mesma peça de outra
 maneira e a contradição obrigar a ir à tabela de estilos. A tabela deu razão
 a metade de cada lado.
@@ -1021,7 +1021,7 @@ estava desactualizado. O esquema já tinha três. Quem estava errado era o
 desenho — outra vez. **Medir antes de anunciar de que lado está a falta.**
 ## 11-12. LAYOUT E ROTEAMENTO → skill `kicad_layout`
 
-O capítulo de layout **saiu daqui a 08/09/2026**. Eram 1033 de 2022 linhas —
+O capítulo de layout **saiu daqui a 2026-09-08**. Eram 1033 de 2022 linhas —
 mais de metade — e uma skill que não se lê antes de usar não é uma skill, é um
 arquivo.
 
@@ -1046,7 +1046,7 @@ não é opcional.
 
 ## Procedência
 
-Esta skill absorveu em 01/09 a antiga `esquematico`, que deixou de existir por
+Esta skill absorveu em 2026-09-01 a antiga `esquematico`, que deixou de existir por
 decisão do dB: **uma skill por assunto; duas a dizerem quase o mesmo derivam, e
 aí ninguém sabe qual manda.**
 
@@ -1059,7 +1059,7 @@ com o verificador de rede limpo, e em que uma edição foi re-inspeccionada
 visualmente **sem se repetir o ERC** — precisamente o defeito que a `esquematico`
 não podia prever, porque foi descoberto depois dela.
 
-Em 05/09 entraram §2b, §2c, §2d, §5b, §6b, §6c, §7d, §7e, §7f, §9b e §9c, de uma sessão a preparar
+Em 2026-09-05 entraram §2b, §2c, §2d, §5b, §6b, §6c, §7d, §7e, §7f, §9b e §9c, de uma sessão a preparar
 os ficheiros para a JLCPCB. O fio que as liga é um só: **ferramentas que perdiam
 linhas em silêncio e por isso aprovavam tudo** — quatro geradores a saltar dois
 pinos escritos em notação científica, um verificador de contrato a dizer "as 26

@@ -62,7 +62,7 @@ fi
 
 # ---- 3. o motor externo saiu: nada a checar ----
 # Havia aqui um bloco que conferia os exports referenciados por caminho
-# pelos .cpp de modulo. Em 20/08 o delay virou C++ no shell
+# pelos .cpp de modulo. Em 2026-08-20 o delay virou C++ no shell
 # (delay.h) e o runtime inteiro saiu do projeto — os arquivos, os
 # includes e o sistema de slots. Verificacao sem objeto e ruido que o
 # proximo leitor vai tentar entender.

@@ -1,5 +1,5 @@
 # Varredura pré-fábrica — cérebro rev B + painel rev B
-### 08/09/2026 · sobre os `.kicad_sch` e `.kicad_pcb` recebidos (KiCad 10.0) · leitura estrutural, não regex
+### 2026-09-08 · sobre os `.kicad_sch` e `.kicad_pcb` recebidos (KiCad 10.0) · leitura estrutural, não regex
 > **Veredito: NÃO GERAR GERBERS.** Seis defeitos que tornam a placa não funcional
 > ou inutilizável na caixa, todos no desenho — nenhum é de fabrico. Todos se
 > corrigem no esquema/placa antes do pacote, e nenhum é grande. Mas cada um,
@@ -42,7 +42,7 @@
 **Conserto:** `EXC_L` e `AMP_IN_L` são a mesma rede — renomear uma (sugestão: tudo `AMP_IN_L/R`) na folha do soquete, re-importar, rotear.
 
 ### C6 · Cérebro sem furos de fixação
-**Evidência:** `Edge.Cuts` é só o retângulo arredondado; zero footprints `MountingHole`, zero `np_thru_hole`. A FILA do briefing de 06/09 pedia 4× M3 em (15,5 · 128,5) × (3,5 · 96,5) — não entrou.
+**Evidência:** `Edge.Cuts` é só o retângulo arredondado; zero footprints `MountingHole`, zero `np_thru_hole`. A FILA do briefing de 2026-09-06 pedia 4× M3 em (15,5 · 128,5) × (3,5 · 96,5) — não entrou.
 **Consequência:** a placa não se fixa ao fundo da caixa; os furos ø3,2 do acrílico não têm par.
 **Conserto:** 4× `MountingHole:MountingHole_3.2mm_M3` nas coordenadas do `pcb_contorno.py`, com anel de exclusão de cobre. Re-correr a paridade contra a caixa.
 

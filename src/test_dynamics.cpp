@@ -1,6 +1,6 @@
 // test_dynamics v0.1.0 — banco nativo da matematica de blocos.
 //
-// A versao entrou em 23/08, quando o `make check-docs` passou a
+// A versao entrou em 2026-08-23, quando o `make check-docs` passou a
 // cobrar o bump e revelou que este arquivo nunca teve uma. Regra da
 // casa e que todo arquivo carrega versao visivel — e o que faltava
 // nao era a regra, era a testemunha.

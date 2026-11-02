@@ -3,7 +3,7 @@
 
     ./gerar_secao_loopy.py
 
-POR QUE E GERADO E NAO ESCRITO A MAO: em 01/09 mudaram SEIS CCs numa
+POR QUE E GERADO E NAO ESCRITO A MAO: em 2026-09-01 mudaram SEIS CCs numa
 sessao (notch para 82-86, familia tone_ renomeada, niveis renomeados).
 Folha de montagem escrita a mao deriva na primeira mudanca, e quem a
 segue no iPad monta o instrumento de ontem. O `gerar_ccmap.py` ja
@@ -201,7 +201,7 @@ def main():
       " destrava.")
     A("")
     A("⚠️ **Quantização em 7 bits.** O preset guarda 0..127, como o MIDI."
-      " Medido em 01/09: um notch capturado a 834 Hz volta a 847,6 Hz — a 834,"
+      " Medido em 2026-09-01: um notch capturado a 834 Hz volta a 847,6 Hz — a 834,"
       " com curva 2.0 sobre 60–8000, um passo vale ~14 Hz. O notch tem 24 Hz"
       " de largura e ainda cobre o modo, mas ajuste mais fino que 1/127 não"
       " sobrevive à captura.")

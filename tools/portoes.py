@@ -3,7 +3,7 @@
 
     python3 tools/portoes.py [--rapido]
 
-POR QUE EXISTE, e a razao e uma cicatriz de 22/09.
+POR QUE EXISTE, e a razao e uma cicatriz de 2026-09-22.
 
 Este repositorio tem 48 ferramentas. Varias sao portoes de verdade: sabem
 dizer nao, e algumas provam-no com `--sabota`. **Nenhuma era corrida em

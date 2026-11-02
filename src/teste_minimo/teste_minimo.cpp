@@ -1,7 +1,7 @@
 // ============================================================================
 // teste_minimo v0.4.0 — o firmware mais curto que responde a duas perguntas
 //
-// POR QUE EXISTE (27/08). Duas Daisy novas, gravadas com sucesso, enumeram o
+// POR QUE EXISTE (2026-08-27). Duas Daisy novas, gravadas com sucesso, enumeram o
 // USB e nunca transmitem um byte. Eliminado: o hardware (duas placas, mesmo
 // sintoma), a alteracao do dia (a v0.171.0 faz igual), o bootloader e o
 // linker (versoes conferidas). Restava saber de que lado esta o defeito, e

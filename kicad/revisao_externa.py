@@ -79,7 +79,7 @@ SILENCIADOS = {
     ("VM-001", "MIDI_TX"): None,
     ("VM-001", "PONTE_STATUS"): None,
 }
-PORQUE_VM001 = """08/09: as tres redes ligam U2.15/14/35 (Daisy) a U3.IO21/IO20/IO3
+PORQUE_VM001 = """2026-09-08: as tres redes ligam U2.15/14/35 (Daisy) a U3.IO21/IO20/IO3
    (ESP32-C3), e os DOIS tem E/S a 3,3 V — verificado no netlist da placa.
    O analisador viu o pino `5V` do modulo ESP32 ligado a +5V_PONTE e deduziu
    dai que o modulo inteiro e de dominio 5 V. Esse pino alimenta o regulador

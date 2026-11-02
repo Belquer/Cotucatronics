@@ -2,7 +2,7 @@
 """check_docs — dá testemunha à documentação (versão em VERSION).
 
 O compilador cobra os símbolos; nada cobrava a doc. Depois do audit de
-deriva de 22/08 (doze achados, ver bts 13h), isto passa a cobrar.
+deriva de 2026-08-22 (doze achados, ver bts 13h), isto passa a cobrar.
 
 PRINCÍPIO: o manifest é a única fonte de verdade. Tudo que fala sobre
 ele é verificado contra ele.
@@ -39,7 +39,7 @@ DOCS = [RAIZ / "README.md"] + sorted((RAIZ / "docs").rglob("*.md"))
 def faixas():
     """min/max de cada param, pra conferir FAIXAS citadas na prosa.
 
-    A LACUNA QUE O AUDIT DE 22/08 DEIXOU ABERTA. O item de backlog do
+    A LACUNA QUE O AUDIT DE 2026-08-22 DEIXOU ABERTA. O item de backlog do
     `frz_size` dizia "faixa 20-400" quando o manifest declarava 20-165 —
     e o nome estava certo, entao o verificador de fantasmas passou por
     ele. Nome confere; NUMERO nao conferia.
@@ -58,7 +58,7 @@ def faixas():
 def verdade():
     m = (SRC / "manifest.h").read_text(errors="replace")
     params = set(re.findall(r't\.Add\("([a-z_0-9]+)"', m))
-    # AddMidi(cc, param, canal) — o canal entrou em v0.8.2 (24/08). Ate ai o
+    # AddMidi(cc, param, canal) — o canal entrou em v0.8.2 (2026-08-24). Ate ai o
     # regex exigia DOIS argumentos e fechava parentese: com tres, deixou de
     # casar e o contador passou a dizer "0 CCs" ao lado de um "ok".
     # A chave e o PAR (cc, canal), nao o numero: com seis canais o mesmo CC
@@ -77,7 +77,7 @@ def verdade():
 def versoes_divergentes():
     """Cabecalho `// nome vX.Y.Z` contra `#define COTUCA_*_VERSION "X.Y.Z"`.
 
-    NASCEU DE UM CASO REAL (24/08): quatro ficheiros carregavam DUAS versoes
+    NASCEU DE UM CASO REAL (2026-08-24): quatro ficheiros carregavam DUAS versoes
     que tinham divergido — `hal_daisy_seed` dizia 0.9.0 na macro estando em
     0.38.0 no cabecalho, `midi` dizia 0.2.1 estando em 0.8.0. As macros nunca
     eram impressas em lado nenhum, logo nada as corrigia: a placa anunciava
@@ -101,7 +101,7 @@ def versoes_divergentes():
 
     # ---- PYTHON: a mesma familia, sem macro para cruzar ----
     #
-    # CASO REAL (28/08): `nivel_tempo.py` dizia v0.2.0 no docstring e
+    # CASO REAL (2026-08-28): `nivel_tempo.py` dizia v0.2.0 no docstring e
     # IMPRIMIA v0.1.0. A regra acima nao o via — ela cruza cabecalho com
     # `#define`, e um script nao tem `#define`. Foi apanhado por acaso,
     # ao ler a saida durante outra medicao.
@@ -153,7 +153,7 @@ def simbolos_do_fonte():
     simbolo, nem aposentado declarado.
     """
     vistos = set()
-    # NOME DE FICHEIRO OU PASTA TAMBEM E COISA REAL. Em 27/08 o
+    # NOME DE FICHEIRO OU PASTA TAMBEM E COISA REAL. Em 2026-08-27 o
     # `teste_minimo` — um banco de provas em `src/teste_minimo/` — foi
     # acusado de fantasma duas vezes: existe no repo e nao existe como
     # simbolo C++. A regra desta funcao ja dizia que citar o que EXISTE e
@@ -214,7 +214,7 @@ def versao_derivada():
     """Arquivo tocado sem a versao dele mudar no mesmo commit.
 
     A regra da casa e que toda alteracao sobe a versao. O que faltava era
-    a TESTEMUNHA: em 23/08 tres `sed` de bump nao casaram o padrao e
+    a TESTEMUNHA: em 2026-08-23 tres `sed` de bump nao casaram o padrao e
     falharam em SILENCIO — o hal.h ficou em v0.18.0 enquanto tres funcoes
     novas entravam. O script disse nada, e nada foi lido como sucesso.
 
@@ -248,7 +248,7 @@ def versao_derivada():
         # bit de permissao seria escrever um numero que nao descreve
         # alteracao nenhuma — mentira com cara de disciplina.
         #
-        # Apanhado em 02/09 no `porta_daisy.py`. O verificador estava a
+        # Apanhado em 2026-09-02 no `porta_daisy.py`. O verificador estava a
         # cobrar a regra a quem nao a tinha violado, e isso gasta a
         # credibilidade dele: aviso que se aprende a ignorar deixa de ser
         # aviso, e leva os verdadeiros com ele.
@@ -316,7 +316,7 @@ def pinos():
     # inicializadores de varias linhas, e filtrar por linha deixava passar
     # as continuacoes — foi o que acusou seis pinos livres como donos.
     #
-    # O `kEncPin` SAIU DESTA LISTA em 28/08, e a razao e uma mudanca de
+    # O `kEncPin` SAIU DESTA LISTA em 2026-08-28, e a razao e uma mudanca de
     # papel, nao um ajuste: ele era sonda enquanto o `EncoderInit` tinha
     # os pinos escritos a mao ao lado. Passou a ser a FONTE — o `Init` le
     # dela num laco, e os nomes saem por `EncoderPinNome`. Continuar a
@@ -421,7 +421,7 @@ def main():
                 avisos.append((f.name, nome, n))
     # ---- FAIXAS: nome certo, numero errado ----
     #
-    # A LACUNA QUE O AUDIT DE 22/08 DEIXOU: o item do `frz_size` dizia
+    # A LACUNA QUE O AUDIT DE 2026-08-22 DEIXOU: o item do `frz_size` dizia
     # "faixa 20-400" com o manifest em 20-165. O NOME estava certo, entao
     # o verificador de fantasmas passou por ele.
     #

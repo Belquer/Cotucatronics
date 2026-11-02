@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """derivados v1.2.0 — "gerado" deixa de ser rotulo e passa a ser afirmavel.
 
-O PROBLEMA QUE RESOLVE (05/09). O `manifest.h` ja era a fonte unica, e mesmo
+O PROBLEMA QUE RESOLVE (2026-09-05). O `manifest.h` ja era a fonte unica, e mesmo
 assim o mapa de CC dava numeros diferentes em documentos diferentes. A causa
 nao era o gerador: era o ROTULO. Tres ficheiros diziam-se "gerados de
 manifest.h", ninguem os mantinha a mao por isso, e NENHUM GERADOR OS ESCREVIA.
@@ -41,7 +41,7 @@ VER_FW = m.group(1) if m else "?"
 print("  fonte unica: src/manifest.h v%s (firmware v%s)\n" % (VER_MANIF, VER_FW))
 
 # ---- quem os geradores REALMENTE escrevem --------------------------------
-# ⚠️ VARRER A ARVORE INTEIRA, NAO UMA PASTA COM UM PREFIXO. Ate 06/09 isto
+# ⚠️ VARRER A ARVORE INTEIRA, NAO UMA PASTA COM UM PREFIXO. Ate 2026-09-06 isto
 # olhava so para `docs/operacao/gerar_*.py` e por isso acusou o COTUCA_BOM.md
 # de "nenhum gerador o escreve" — quando o `tools/bom_completa.py` o escreve,
 # noutra pasta e com outro nome. Verificador cujo ALCANCE e mais estreito do
@@ -79,7 +79,7 @@ for p in sorted((RAIZ / "docs").rglob("*.md")):
     # ⚠️ E SE O GERADOR COMPOE O NOME? A varredura acima procura o nome do
     # .md como LITERAL dentro dos .py, e o `lista_roteamento.py` escreve
     #     "ROTEAMENTO-%s.md" % q.upper()
-    # — nome que nunca aparece inteiro em lado nenhum. A 22/09 isto acusou
+    # — nome que nunca aparece inteiro em lado nenhum. A 2026-09-22 isto acusou
     # dois documentos correctos de orfaos. E a MESMA familia que o comentario
     # acima descreve: alcance mais estreito que a afirmacao.
     #

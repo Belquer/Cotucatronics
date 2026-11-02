@@ -2,11 +2,11 @@
 # grava_placa_nova.command v0.2.0 — grava uma Daisy nova, esteja ela como
 # estiver: de fabrica (sem bootloader) ou ja com o bootloader instalado.
 #
-# POR QUE EXISTE (04/09). A janela de DFU do bootloader dura 2 SEGUNDOS, e
+# POR QUE EXISTE (2026-09-04). A janela de DFU do bootloader dura 2 SEGUNDOS, e
 # uma conversa com o assistente demora trinta. Nao se ganha essa corrida por
 # mensagens: quem espera tem de estar na mesma sala que o botao.
 #
-# O QUE MUDOU NA v0.2.0 (05/09). A v0.1.0 corria SEMPRE `make program-dfu`,
+# O QUE MUDOU NA v0.2.0 (2026-09-05). A v0.1.0 corria SEMPRE `make program-dfu`,
 # que so serve se o bootloader da Electrosmith ja la estiver. Numa placa de
 # fabrica ficava em ciclo PARA SEMPRE sem dizer porque — o DFU que ela espera
 # nunca aparece, porque quem aparece e o da ROM da ST.

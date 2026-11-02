@@ -28,7 +28,7 @@ com ela. Já passámos um dia inteiro nesse quadro por outra causa.
 
 ## 1 · Sense dos DPDT — `exc_on` a ler hardware em vez de acreditar
 
-**Estado: descartado a 05/09. Nice to have.**
+**Estado: descartado a 2026-09-05. Nice to have.**
 
 Hoje o `exc_on` é **intenção de software**: alguém declara "o exciter está no
 circuito" e o firmware acredita. Quando a declaração e a realidade divergem,
@@ -71,7 +71,7 @@ se toca — e aí a pergunta é se ainda serve.
 
 **O que se mediria antes de decidir:** o chão de entrada com a tela nova
 acesa e apagada, no regime de uso, com o instrumento a tocar — nunca em
-repouso, que foi o erro de 02/09 (74,7 dB de margem em repouso contra 0,4 dB
+repouso, que foi o erro de 2026-09-02 (74,7 dB de margem em repouso contra 0,4 dB
 a tocar).
 
 **Pinos:** SPI já existe (`D5..D10`). Uma tela maior pede provavelmente mais
@@ -82,7 +82,7 @@ tela, não de memória.
 
 **Estado: reversível, e os pinos estão guardados.**
 
-Havia três; a 05/09 ficou **um**, com push+giro a dar os outros controlos.
+Havia três; a 2026-09-05 ficou **um**, com push+giro a dar os outros controlos.
 `D3 D4 D9` (encoder B) e `D18 D19` (encoder G) voltaram ao bolso.
 
 ⚠️ **Se algum voltar, cuidado com o `D17`.** Ele era o push do encoder G e
@@ -99,7 +99,7 @@ nunca zerar. Eram as duas fases abertas no chicote.
 
 | ideia | pinos | nota |
 |---|---|---|
-| **LED RGB** em vez dos dois monocromáticos | +2 (ou 1 com WS2812) | ⚠️ um LED consome miliamperes e **já é audível** quando a massa está mal feita — foi assim que se apanhou acoplamento em 31/08. Um RGB comuta mais |
+| **LED RGB** em vez dos dois monocromáticos | +2 (ou 1 com WS2812) | ⚠️ um LED consome miliamperes e **já é audível** quando a massa está mal feita — foi assim que se apanhou acoplamento em 2026-08-31. Um RGB comuta mais |
 | **Quarto botão arcade** | +1 | ⚠️ o terceiro **já existe**: o branco dos búzios, em `J5` → IDC 19 → Daisy 33. Ele não tem LED, e é por isso que há dois MOSFET para três botões — sabe-se que está ligado pelo **display**. O IDC 2×13 está cheio: um quarto sinal exige 2×15, ou sacrificar terra — e as **oito** que restam guardam todas coisa medida (relógio do OLED 1/3, referência do ADC 8/10, retorno dos LED 13/14 que valeram 6 dB, retornos dos pots 23/26) |
 | **Entrada de expressão / pedal** | +1 ADC | gasta `D20` ou `D21`, os únicos livres com ADC |
 | **Segundo par de exciters** | — | não é pino, é potência e é caixa. O amp actual tem dois canais |

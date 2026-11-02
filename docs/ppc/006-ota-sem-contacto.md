@@ -63,18 +63,18 @@ responder na nova velocidade, os dois caem para 31250 sozinhos.
 
 ## §3 — O mecanismo que torna o brick impossível
 
-> **🔴 DESENHO REVISTO a 29/09, e a medição é que o obrigou.** A versão
+> **🔴 DESENHO REVISTO a 2026-09-29, e a medição é que o obrigou.** A versão
 > anterior desta secção supunha dois slots **executáveis**. Não dá sem custo:
 > o app executa da QSPI (`BOOT_QSPI`) e um binário só corre no endereço para
 > que foi ligado — dois slots executáveis exigiriam **compilar a imagem duas
 > vezes**, uma por endereço, e escolher a certa no envio. E `BOOT_SRAM`, que
 > resolveria isso, está fora: **285 KB de código + 325 KB de dados = 610 KB**
-> contra 512 KB de SRAM (medido a 29/09).
+> contra 512 KB de SRAM (medido a 2026-09-29).
 
 O bootloader da Electrosmith salta para um endereço **fixo** (`0x90040000`).
 Logo é lá que a decisão tem de viver.
 
-**O mapa real da QSPI, lido do descritor do DFU a 29/09** — e ele corrigiu um
+**O mapa real da QSPI, lido do descritor do DFU a 2026-09-29** — e ele corrigiu um
 número deste plano:
 
 ```
@@ -95,7 +95,7 @@ app, e é lá que ele pertence.
             (sobram ~6,5 MB)
 ```
 
-✅ **E o mecanismo de gravação está provado (29/09):** o `FLASH_ADDRESS` do
+✅ **E o mecanismo de gravação está provado (2026-09-29):** o `FLASH_ADDRESS` do
 Makefile da libDaisy é `?=`, logo aceita ser trocado, e o bootloader anuncia a
 QSPI inteira ao DFU. Escrevi 289 KB em `0x90200000` e a placa continuou a
 arrancar de `0x90040000` sem estranhar — gravar num endereço não perturba o
@@ -134,7 +134,7 @@ o escolhedor não estiver gravado, uma imagem religada **não arranca** — o
 bootloader saltaria para um `0x90040000` vazio. **Por isso os passos 3 e 4 são
 uma sessão física, e não se começam sem a caixa aberta.**
 
-## §3b — ✅ O driver de escrita está PROVADO (29/09)
+## §3b — ✅ O driver de escrita está PROVADO (2026-09-29)
 
 A fase 3 estava desenhada sobre um driver que **só lia três bytes de
 identificação** — e nem isso fazia, como se veio a descobrir. Hoje escreve.
@@ -217,7 +217,7 @@ slots reprovam o CRC.
 
 ## §6 — Fases, e a ordem não é negociável
 
-1. ✅ **Console por BLE — FEITO a 29/09** (`battle_scars` **15ft**). O dB
+1. ✅ **Console por BLE — FEITO a 2026-09-29** (`battle_scars` **15ft**). O dB
    escreveu `board` no Mac e a placa respondeu sem cabo. Os dois sentidos
    provados com contadores nos três pontos: `NUS: N escrita(s)` na ponte,
    `consola sem fio: N linha(s) executada(s)` na Daisy, e `N B da Daisy ->
@@ -227,7 +227,7 @@ slots reprovam o CRC.
    perdidos` no primeiro `board`. Melhor-esforço por desenho, e contado. Se
    incomodar: anel maior (a SRAM tem folga) ou subir o baud do par durante
    rajadas, que é a mesma manobra da fase 5.
-2. ✅ **OTA da ponte — FEITO a 29/09** (`battle_scars` **15fu**). Imagem de
+2. ✅ **OTA da ponte — FEITO a 2026-09-29** (`battle_scars` **15fu**). Imagem de
    628 KB por BLE, MD5 conferido, arranque em `app1` e **auto-confirmação**
    após 15 s com o rádio a anunciar. Quatro tentativas abortadas não deixaram
    marca: escreve-se sempre na partição inactiva.
@@ -238,7 +238,7 @@ slots reprovam o CRC.
 
 3. 🟡 **Escolhedor + META + slots — EM CURSO.**
 
-   ✅ **Provado a 29/09:** o `FLASH_ADDRESS` aceita ser trocado e o bootloader
+   ✅ **Provado a 2026-09-29:** o `FLASH_ADDRESS` aceita ser trocado e o bootloader
    anuncia a QSPI inteira ao DFU; o app religa para `0x90050000` e o binário
    sai correcto (`.isr_vector 0x90050000`); o mapa real de sectores está lido.
 

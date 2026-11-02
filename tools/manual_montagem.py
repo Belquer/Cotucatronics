@@ -127,7 +127,7 @@ def valor_num(v):
 def tamanhos(linhas):
     """pequeno/medio/grande em TODO valor que existe em mais de um tamanho.
 
-    ⚠️ 19/09: o `100 Ω` de 0805 estava escrito so '100 Ω' e o de 1206 dizia
+    ⚠️ 2026-09-19: o `100 Ω` de 0805 estava escrito so '100 Ω' e o de 1206 dizia
     'GRANDE' — quem le pega o errado, e o dB quase perdeu uma peca por isso. O
     nome nao pode depender de quem escreveu a linha: sai da comparacao entre os
     sacos, e so aparece quando ha com que confundir."""
@@ -218,7 +218,7 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, 
     """SVG da placa com `refs` destacadas. `baixo` espelha em x (vista por baixo).
     `vazios`: posicoes DNP da zona do passo, riscadas — pad vazio sem aviso parece esquecimento.
 
-    ⚠️ TODO TEXTO DESTE MAPA PASSA PELO MESMO MOTOR DE COLOCACAO (22/09).
+    ⚠️ TODO TEXTO DESTE MAPA PASSA PELO MESMO MOTOR DE COLOCACAO (2026-09-22).
     Ate aqui so os rotulos das pecas-alvo testavam posicao; os das marcas, dos
     furos e dos vazios iam num deslocamento FIXO, sem teste nenhum. Resultado:
     15 das 78 figuras do manual com sobreposicao, declaradas como divida no
@@ -434,7 +434,7 @@ def mapa(P, refs, baixo=False, rotulos=None, marcas=(), furos=(), legenda=None, 
         postos.append(caixa(escolhida[0], escolhida[1], texto, fs))
         # ⚠️ TAMANHO E ALINHAMENTO COMO ATRIBUTO, nao so na folha de estilo.
         # O `svg_colisoes.py` nao resolve CSS a serio — nao ha contexto nem
-        # especificidade — e a 22/09 ele resolveu `.rot` como 12 px porque uma
+        # especificidade — e a 2026-09-22 ele resolveu `.rot` como 12 px porque uma
         # regra do desenho da DPDT tinha o mesmo nome de classe. Mediu 78
         # figuras com caixas deslocadas de meia largura e ninguem soube.
         # Aqui o numero e o mesmo que o motor usou: uma fonte, nao duas.
@@ -501,7 +501,7 @@ def dpdt(P, ref, canal):
     # ⚠️ o canal de cada fio segue a ORDEM EM QUE SE DESENHA (comuns, jack, amp),
     # nao o numero do pino: os fios que vao a mesma linha ficam lado a lado e o
     # desenho cruza-se o menos possivel.
-    # ⚠️ E uma COR por fio (dB, 20/09): oito fios azuis iguais nao se seguem com
+    # ⚠️ E uma COR por fio (dB, 2026-09-20): oito fios azuis iguais nao se seguem com
     # o olho. A cor sai de tokens do tema, nunca de literais, senao o desenho
     # desaparece no modo escuro.
     ordem_fios = list(zip(comum, ("A", "B"))) + list(zip(jack, ("A", "B"))) + list(zip(amp, ("A", "B")))
@@ -516,7 +516,7 @@ def dpdt(P, ref, canal):
     o = ['<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" role="img" aria-label="%s" class="mapa dpdt">'
          % (W, H, E_("ligacao do %s a chave DPDT do canal %s" % (ref, canal)))]
     o.append('<text x="14" y="22" class="rot forte" font-size="13" text-anchor="start">%s — canal %s</text>' % (E_(ref), E_(canal)))
-    # ⚠️ 21/09, a pedido do dB: o header sai com a GEOMETRIA REAL do footprint —
+    # ⚠️ 2026-09-21, a pedido do dB: o header sai com a GEOMETRIA REAL do footprint —
     # a coluna, o passo de 2,54 mm, o pad 1 quadrado — e nao com pastilhas
     # inventadas. O desenho e a placa na mao passam a ser a mesma imagem.
     f = P.fp[ref]
@@ -577,7 +577,7 @@ def dpdt(P, ref, canal):
         desvio = 0 if c == "A" else 22          # o polo B passa ABAIXO da perna A
         o.append('<path d="M%.0f %.0f H%d V%d H%d V%d" class="%s"/>'
                  % (X0 + larg, ypin[n], mx, y2 + desvio, x2 - 13, y2, cls))
-    # ⚠️ 21/09, segunda correccao no mesmo dia, e desta vez copiada da PECA
+    # ⚠️ 2026-09-21, segunda correccao no mesmo dia, e desta vez copiada da PECA
     # MONTADA que o dB descreveu: a chave usa-se na DIAGONAL, e nao em paralelo.
     #   comum A + comum B jumpeados  <- o sinal da Daisy, UM fio
     #   A1 = linha (mixer)   ·   B3 = amp (exciter)   ·   A3 e B1 VAZIAS
@@ -720,10 +720,10 @@ def constroi():
           fonte="notificação de envio da Mouser, pedido 40440548 · `export/mouser_40440548.csv`")
 
     dnp = [r for r, f in C.fp.items() if f["dnp"] and f["corpo"]]
-    # ⚠️ o pre-amp de 01/09 e SEGUIDOR (R10/R20 = 0R, OUT -> -IN). Estas posicoes sao a
+    # ⚠️ o pre-amp de 2026-09-01 e SEGUIDOR (R10/R20 = 0R, OUT -> -IN). Estas posicoes sao a
     # perna de ganho dele (docs/operacao/esquematicos/revB/BOM-MPN-revB.md): ficam na
     # placa para o trimpot poder voltar, e vazias hoje. Um pad vazio sem aviso, na hora
-    # de soldar, le-se como peca esquecida — o dB perguntou por C11/C21 a 19/09.
+    # de soldar, le-se como peca esquecida — o dB perguntou por C11/C21 a 2026-09-19.
     POR_QUE_VAZIO = ("não é esquecimento: são a **perna de ganho** do pré-amp, que hoje é um seguidor "
                      "(ganho 1, pelo `R10`/`R20` de 0 Ω). Só se montam se o ganho ajustável voltar.")
     pacote_de = lambda P, r: {"Package": P.fp[r]["fpid"].split(":")[-1]}
@@ -778,7 +778,7 @@ def constroi():
         ]), fonte="`caixa/CAIXA-ACRILICO-MONTAGEM.md` §1 · corte r2 (20 peças)")
 
     # ------------------------------------------------------------ 2 cérebro
-    # ⚠️ 19/09: os passos SMD sao UM POR SACO, nao um por familia de encapsulamento.
+    # ⚠️ 2026-09-19: os passos SMD sao UM POR SACO, nao um por familia de encapsulamento.
     # Quem monta esvazia um envelope de cada vez; agrupar por "0805" obrigava a ter
     # sete sacos abertos ao mesmo tempo, que e exactamente como duas pecas 0805 de
     # valores diferentes acabam na mesa juntas.
@@ -811,7 +811,7 @@ def constroi():
                 marcas = [("U1", "1", "pino 1")]
                 # o OPA1642AID que chegou da Mouser (lote de 09/2026) nao tem ponto: tem
                 # uma FAIXA na ponta curta, a ligar os pinos 1 e 8. Confirmado pelo dB
-                # a 19/09 com o teste de diodo, no chip solto.
+                # a 2026-09-19 com o teste de diodo, no chip solto.
                 aviso = ("**Ache o pino 1 antes de soldar.** Segure o chip com a escrita **legível**: o pino 1 é o **de baixo à esquerda**. "
                          "A marca dele pode ser um **ponto** nesse canto ou uma **faixa na ponta** (o lado curto), ligando os pinos 1 e 8. "
                          "**Para ter certeza, teste o chip solto** com o multímetro em modo diodo: ponta **vermelha no pino 4** (embaixo à direita), "
@@ -841,7 +841,7 @@ def constroi():
           fig=mapa(C, ["C16"], baixo=True), qtd="×1",
           fonte="`MAPA_COLOCACAO.md`: C16 Bottom")
 
-    # ⚠️ o J4 NAO: e a tomada de 01/09, quando a ponte ESP32 era um modulo a
+    # ⚠️ o J4 NAO: e a tomada de 2026-09-01, quando a ponte ESP32 era um modulo a
     # parte ligado por cabo. Hoje ela encaixa no soquete U3, que ja tem o 5V e o
     # GND — o J4 so repete essas duas redes. Fica vazio.
     headers = [r for r in ("J3", "J5", "J6", "J11", "J12", "J13", "J15", "J16") if r in C.cpl]
@@ -877,7 +877,7 @@ def constroi():
                  "**Nunca cerâmico multicamada** (X7R, Y5V) aqui: com 7 V em cima perde capacitância, distorce, e é **microfônico** — "
                  "numa escultura que vibra, vira ruído no áudio."]),
           fig=mapa(C, ["C14", "C24"], marcas=[(c, n, "+") for c, n in mais.items()]), qtd="×2",
-          fonte="substituição feita no cérebro #1 a 19/09 — `docs/STATUS.md`")
+          fonte="substituição feita no cérebro #1 a 2026-09-19 — `docs/STATUS.md`")
     elec = [r for r in ("C5", "C3", "C6", "C1") if r in C.cpl]
     vaz_tht = [r for r in dnp if r not in vazios_mostrados]
     vazios_mostrados.update(vaz_tht)
@@ -889,7 +889,7 @@ def constroi():
           fig=mapa(C, elec, vazios=vaz_tht),
           pare="Eletrolítico ao contrário **estoura** quando liga. Confira os quatro antes de soldar.",
           qtd="×%d" % len(elec))
-    # ⚠️ 22/09 (bts 15fe): tres soldas frias em cadeia custaram um dia de
+    # ⚠️ 2026-09-22 (bts 15fe): tres soldas frias em cadeia custaram um dia de
     # bancada, e as duas primeiras — o divisor do VBIAS e os pinos do U1 —
     # apareciam como "piezo mudo". Duas leituras de multimetro, feitas AQUI,
     # tinham-nas apanhado antes de existir piezo no jack.
@@ -897,7 +897,7 @@ def constroi():
           "<p>%s</p>" % md("Ligue os **15 V** (decoy PD no `J1`) e meça, com a ponta preta no `TP8` (GND):") +
           tabela(["medida", "onde", "tem de dar", "se não der"], [
               ["alimentação do pré-amp", "`TP3`", "**~14,6 V**", "o `R7` ou o trilho de 15 V"],
-              ["**polarização**", "**`TP4`**", "**~metade do `TP3`** (~7,3 V)", "solda fria no `R5`/`R6` — foi este o defeito de 22/09"],
+              ["**polarização**", "**`TP4`**", "**~metade do `TP3`** (~7,3 V)", "solda fria no `R5`/`R6` — foi este o defeito de 2026-09-22"],
               ["saída do canal A", "`U1` pino **1**", "**igual ao `TP4`**", "junta do `U1`, lado A"],
               ["saída do canal B", "`U1` pino **7**", "**igual ao `TP4`**", "junta do `U1`, lado B"],
           ]) +
@@ -906,7 +906,7 @@ def constroi():
                  "Se uma junta for intermitente, ela passa uma vez e falha depois. **Pressione levemente o `U1` com um palito** enquanto mede: se a leitura mudar, refaça os oito pinos."]),
           pare="Não siga para os piezos com o `TP4` fora dos ~7 V. Tudo o que vier depois — jack, cabo, transdutor — vai parecer culpado, e não é.",
           fig=mapa(C, ["U1", "R5", "R6"]),
-          fonte="`docs/battle_scars.md` 15fe · medido na primeira montagem, 22/09")
+          fonte="`docs/battle_scars.md` 15fe · medido na primeira montagem, 2026-09-22")
 
     passo("2", "Cérebro · caixa de pinos IDC J14 (para o cabo do painel)",
           lista(["A caixa de pinos tem um **entalhe** (chave) no meio de um dos lados compridos. Coloque-a com o entalhe do lado desenhado na serigrafia da placa.",
@@ -957,11 +957,11 @@ def constroi():
           lista(["Aqui **não** use JST: virado por baixo ele trocaria + com −.",
                  "Solde dois fios (vermelho no ■, preto no outro) direto nos furos, **por baixo**. Faça igual no `J7` (arcade B).",
                  "Marque na ponta de cada fio: **A+**, **A−**, **B+**, **B−**.",
-                 "⚠️ **Não confie na cor de um chicote comprado.** Um par macho/fêmea do mesmo saco pode sair com o vermelho de um lado a casar com o preto do outro — aconteceu aqui a 22/09, e os LEDs não acendiam com a placa perfeita. A ficha só entra de um jeito, mas a chave garante o **pino**, não a **cor**. **Bipe pino a pino antes de ligar**, e marque as duas pontas."]),
+                 "⚠️ **Não confie na cor de um chicote comprado.** Um par macho/fêmea do mesmo saco pode sair com o vermelho de um lado a casar com o preto do outro — aconteceu aqui a 2026-09-22, e os LEDs não acendiam com a placa perfeita. A ficha só entra de um jeito, mas a chave garante o **pino**, não a **cor**. **Bipe pino a pino antes de ligar**, e marque as duas pontas."]),
           fig=mapa(Pn, ["J6", "J7"], baixo=True, marcas=[("J6", "1", "+"), ("J7", "1", "+")]),
           qtd="4 fios", fonte="`LICOES-MONTAGEM.md` #9")
 
-    # ⚠️ 22/09: a Waveshare NAO publica as cores do cabo — a wiki dela lista so
+    # ⚠️ 2026-09-22: a Waveshare NAO publica as cores do cabo — a wiki dela lista so
     # os nomes dos pinos. Estas foram levantadas na peca em mao pelo dB, e ficam
     # aqui porque a coluna "anote" ficou em branco quando ele montou, e sem ela
     # a unica forma de ligar sete fios iguais e contar posicoes debaixo da placa.
@@ -1008,7 +1008,7 @@ def constroi():
           fig=mapa(Pn, [], furos=[(Pn.x0 + 77.5, Pn.y0 + 32.0, "A"), (Pn.x0 + 146.0, Pn.y0 + 4.0, "C")],
                    legenda="Vista **por cima** · os círculos marcam os furos A e C com o espaço da arruela livre de trilhas"),
           aviso="Estes pontos foram medidos para não cortar nenhuma trilha. Não fure em outro lugar.",
-          qtd="2 furos", fonte="certificação IFÁ10000-M · `docs/STATUS.md` 18/09")
+          qtd="2 furos", fonte="certificação IFÁ10000-M · `docs/STATUS.md` 2026-09-18")
 
     # ------------------------------------------------------------ 4 caixa
     passo("4", "Caixa · ORDEM que não se pode inverter: painel antes dos jacks",
@@ -1016,7 +1016,7 @@ def constroi():
           lista(["Na montagem: ponha o **painel** na tampa **antes** de apertar os jacks.",
                  "Na manutenção: para tirar o painel, **tire primeiro os quatro jacks**. Não force a placa — a ponta do encoder não passa.",
                  "Vale a pena deixar os fios dos jacks com folga para eles saírem sem dessoldar."]),
-          aviso="Descoberto na bancada a 19/09, com a caixa montada.",
+          aviso="Descoberto na bancada a 2026-09-19, com a caixa montada.",
           fonte="`caixa/LICOES-MONTAGEM.md` #11")
     passo("4", "Caixa · monte a seco, sem cola",
           lista(["**Não tire a película** das peças ainda.",
@@ -1087,7 +1087,7 @@ def constroi():
         return tabela(["pino", "rede", "liga em"], linhas)
 
     # a lista de todos os conectores do cerebro, GERADA das redes da placa: o dB
-    # pediu-a a 19/09 com a placa na mao, e ela e a mesma pergunta do "o que liga
+    # pediu-a a 2026-09-19 com a placa na mao, e ela e a mesma pergunta do "o que liga
     # aqui?" que a /aipcb obriga a fazer antes de cada conector.
     # ⚠️ os vestigios saem do VESTIGIO do encaixe.py, nao de uma copia aqui:
     # estao na placa, nao se montam, e aparecer na tabela sem esse rotulo convida
@@ -1140,7 +1140,7 @@ def constroi():
                  "Em `J5`, `J6`, `J12` e `J13` o pino 1 é sempre o **sinal** e os outros dois são **terra**.",
                  "`J1` tem **2 pinos**, a 5,08 mm. O borne especificado (Phoenix `1715721`) traz **um pino por polo** — se a peça na sua mão tiver mais pinos, é outra peça: **pare e confira** antes de soldar."]),
           pare=("**O `J11` pino 1 NÃO se liga.** Ele traz o mesmo **+15 V** que já vai pelo `J2`, e o módulo em mão "
-                "alimenta-se pelo **borne de parafuso** (decidido a 20/09). Ligar os dois põe a força em paralelo por dois "
+                "alimenta-se pelo **borne de parafuso** (decidido a 2026-09-20). Ligar os dois põe a força em paralelo por dois "
                 "caminhos e fecha um laço de terra — e nada se queixa até o som ficar sujo. "
                 "**Energia pelo `J2`** (fio curto e grosso, é o retorno de força) · **áudio pelo `J11`**: pino 2 = referência, "
                 "3 = L, 4 = R. O pino 1 sai na rev D." if ("J11", "1") in NAO_LIGAR else None),
@@ -1156,7 +1156,7 @@ def constroi():
                  "Esta tabela é para **medir**, não para montar: serve quando um botão não responde e você quer bipar a via certa."]),
           fig=mapa(C, ["J14"]), fonte="gerado das redes das duas placas")
 
-    # ⚠️ 20/09, a pedido do dB: "parece uma gambiarra, documente o jeito
+    # ⚠️ 2026-09-20, a pedido do dB: "parece uma gambiarra, documente o jeito
     # profissional". Coaxial com a malha como retorno E o padrao da industria —
     # um cabo de guitarra e exactamente isso. O que era caseiro era a TERMINACAO.
     # Este passo e o metodo, e vale para qualquer cabo de sinal da caixa.
@@ -1231,7 +1231,7 @@ def constroi():
           tab_j(C, "J3", {"1": "**VIN** do step-down", "2": "**GND** do step-down", "3": "**VOUT (5 V)** do step-down"}) +
           lista(["**O módulo tem dois GND (IN e OUT) e a placa só dá um.** Bipe os dois pinos de terra do módulo: em qualquer step-down destes eles são o **mesmo nó**, e aí basta **um fio** ao `J3` pino 2 — de preferência partindo do lado **OUT**, que é por onde volta a corrente do 5 V. Se **não** bipar, o módulo é isolado (raro): aí ligue os dois, com um jumper curto no próprio módulo.",
                  "**Um fio só, e dedicado.** O terra do 5 V voltar por outro caminho já custou um **clique a ~3 Hz** audível neste instrumento (`ATERRAMENTO.md`).",
-                 "🚫 **Não acrescente capacitor grande na ENTRADA do step-down.** 2200 µF ali produziram **guincho agudo** medido a 31/08: um conversor comutado é carga de potência constante e oscila contra a indutância do fio. E na **saída**, no máximo **100 µF**."]),
+                 "🚫 **Não acrescente capacitor grande na ENTRADA do step-down.** 2200 µF ali produziram **guincho agudo** medido a 2026-08-31: um conversor comutado é carga de potência constante e oscila contra a indutância do fio. E na **saída**, no máximo **100 µF**."]),
           fig=mapa(C, ["J1", "J3"]),
           pare="Confira as marcas **VIN / GND / VOUT** no seu step-down. VIN no 5 V queima a Daisy.",
           fonte="`HARDWARE.md` §1")
@@ -1242,8 +1242,8 @@ def constroi():
                  "LED dos azuis: fio **A+/B+** no terminal **+** do LED do botão, **A−/B−** no **−**. O branco não tem LED."]),
           aviso="A ordem não é escolha de gosto: o **C1 (2200 µF)** do cérebro fica debaixo de um dos furos, e só o botão **branco** passa por cima dele, "
                 "porque não tem LED e desce só 20 mm (o azul desce 34). **Antes de fechar a tampa**, olhe por baixo de cada furo e confirme que "
-                "nenhum botão com LED tem peça alta debaixo. Medido na bancada a 19/09.",
-          fonte="`caixa/LICOES-MONTAGEM.md` #10 · `docs/STATUS.md` (19/09)")
+                "nenhum botão com LED tem peça alta debaixo. Medido na bancada a 2026-09-19.",
+          fonte="`caixa/LICOES-MONTAGEM.md` #10 · `docs/STATUS.md` (2026-09-19)")
     passo("6", "Fios · o cabo do painel no cérebro",
           lista(["A ficha que sobrou no cabo IDC vai no **J14** do cérebro: a chave da ficha entra no entalhe da caixa de pinos — só entra de um jeito.",
                  "O cabo corre pela **parede de trás**, com **~80 mm de folga**: é o que deixa tirar o fundo sem desligar."]),
@@ -1274,7 +1274,7 @@ def constroi():
           lista(["**Arcade da esquerda × J14 do cérebro**: com o fundo no lugar, aperte o botão até o fim e veja se o corpo dele encosta na caixa de pinos J14 ou no trimpot/Daisy. Se encostar, **pare** — avise para ajustar a caixa.",
                  "**Botão do encoder**: aperte e veja se o menu reage. Se não, o seu encoder pode não ter os pinos do botão.",
                  "Fundo: 6 parafusos M3 × 10 nas porcas presas. Pés de borracha a 12 mm dos cantos."]),
-          fonte="`docs/STATUS.md` (18/09): M6 do cérebro por medir")
+          fonte="`docs/STATUS.md` (2026-09-18): M6 do cérebro por medir")
     return C, Pn
 
 

@@ -93,7 +93,7 @@ fi
 if [ -n "$TERMO" ]; then
   echo
   echo "== 8. INVENTARIO EXAUSTIVO DE '$TERMO' =="
-  # `git ls-files`, NUNCA um glob a mao. Em 04/09 varri o fonte com
+  # `git ls-files`, NUNCA um glob a mao. Em 2026-09-04 varri o fonte com
   # `*.h *.cpp Makefile` — 33 ficheiros — e dei o trabalho por fechado. A
   # arvore tem 137 rastreados em 14 extensoes; ficaram de fora .py, .sh,
   # .command, .lds, .ino, .html e um SEGUNDO Makefile. O check_repo.sh

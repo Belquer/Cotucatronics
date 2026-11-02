@@ -13,7 +13,7 @@
 # ERC rev B — registo de isenções
 <!-- doc-check: ignore no_connect (codigo de violacao do ERC do KiCad) -->
 
-**Corrido em 01/09 com `kicad-cli` 10.0.5.** Relatórios em `erc_energia.rpt` e
+**Corrido em 2026-09-01 com `kicad-cli` 10.0.5.** Relatórios em `erc_energia.rpt` e
 `erc_preamp.rpt`, ao lado deste ficheiro.
 
 ⚠️ **As isenções ainda NÃO estão aplicadas em lado nenhum.** O KiCad guarda-as
@@ -64,7 +64,7 @@ falso positivo e passa a ser **rede sem destino** — defeito real.
 
 > *U1C pino 8 (`V+`) e pino 4 (`V-`): pino de alimentação sem `power_out`*
 
-> ⚠️ **05/09 — `U1C` passou a chamar-se `U1` unidade 3.** O OPA1642 era três
+> ⚠️ **2026-09-05 — `U1C` passou a chamar-se `U1` unidade 3.** O OPA1642 era três
 > símbolos de uma unidade (`U1A`/`U1B`/`U1C`) a fingir de multi-unidade, o que
 > dava três linhas de BOM e três pegadas para um chip. É agora um símbolo de
 > três unidades. Os pinos 4 e 8 são os mesmos; o nome é que mudou.
@@ -111,11 +111,11 @@ Três coisas que custaram uma volta cada, e ficam para a próxima:
 
 ---
 
-## 04/09 — `isolated_pin_label` em `AUDIO_IN_L` e `AUDIO_IN_R`
+## 2026-09-04 — `isolated_pin_label` em `AUDIO_IN_L` e `AUDIO_IN_R`
 
-**Estado: ✅ MORREU EM 05/09**, no commit que criou `cotuca_soquete.kicad_sch`.
+**Estado: ✅ MORREU EM 2026-09-05**, no commit que criou `cotuca_soquete.kicad_sch`.
 `AUDIO_IN_L` liga a `C14.2` e `U2.16`; `AUDIO_IN_R` a `C24.2` e `U2.17`.
-*(eram `C4A` e `C4B` até 05/09 — ver a nota de renomeação no fim.)*
+*(eram `C4A` e `C4B` até 2026-09-05 — ver a nota de renomeação no fim.)*
 Zero menções no relatório. **O prazo cumpriu-se como estava escrito** — e é
 a primeira vez que uma isenção deste repo expira por ter sido resolvida, e
 não por alguém a apagar.
@@ -139,9 +139,9 @@ a data não repara.
 **Prazo:** morre no commit que acrescentar `cotuca_soquete.kicad_sch`. Se
 sobreviver a esse commit, **não é isenção, é defeito**.
 
-## 04/09 — `power_pin_not_driven` no U1 unidade 3 (pinos 4 e 8)
+## 2026-09-04 — `power_pin_not_driven` no U1 unidade 3 (pinos 4 e 8)
 
-**Estado: ✅ RESOLVIDO em 04/09** — não por isenção, por PWR_FLAG.
+**Estado: ✅ RESOLVIDO em 2026-09-04** — não por isenção, por PWR_FLAG.
 
 Símbolos caseiros não declaram `power_out`, então todo pino `power_in` fica
 órfão. A resposta é um **PWR_FLAG por rede de energia** (skill §6), e não uma
@@ -166,7 +166,7 @@ componente, que é o que a convenção da referência `#` existe para fazer.
 
 ---
 
-## 05/09 — `isolated_pin_label` × 25, sinais do painel
+## 2026-09-05 — `isolated_pin_label` × 25, sinais do painel
 
 **Estado:** isenção **COM PRAZO**. Expira no commit que criar a folha do
 conector IDC 2×13 (`ROTEIRO-KICAD.md` §5).
@@ -178,7 +178,7 @@ dois LED. Hoje tocam um pino só porque só existe uma ponta.
 ⚠️ **É a mesma isenção que se inverte** (skill `kicad` §7): quando a folha do
 conector entrar, a mesma linha passa a significar **rede sem destino**.
 
-## 05/09 — `pin_not_connected` × 4: D20, D21, D29, D30
+## 2026-09-05 — `pin_not_connected` × 4: D20, D21, D29, D30
 
 **Estado: NÃO é isenção — é o desenho certo, e fica declarado.**
 
@@ -191,7 +191,7 @@ coisa a eles, e nos dois últimos isso mata a serial.
 
 ---
 
-## 05/09 — as referências foram renomeadas, e porquê
+## 2026-09-05 — as referências foram renomeadas, e porquê
 
 O KiCad trata uma referência que **não termina em dígito** como não anotada, e
 renumera-a sozinho ao gravar — a correspondência com os desenhos e a BOM
@@ -218,7 +218,7 @@ o seu bloco começava colado ao parêntesis do anterior.
 
 ---
 
-## 05/09 — `isolated_pin_label` no `+3V3A`: **RESOLVIDO, e era um defeito**
+## 2026-09-05 — `isolated_pin_label` no `+3V3A`: **RESOLVIDO, e era um defeito**
 
 O aviso apontava o pino 21 da Daisy (`+3V3A`) com rótulo global e nenhum
 consumidor. Não era ruído de ERC: era o sintoma de os **pots estarem
@@ -235,7 +235,7 @@ entre dois reguladores independentes ia inteira para a leitura** — que é
 exactamente o que a nota do painel já avisava, enquanto o esquema fazia o
 contrário dela.
 
-**O que mudou (05/09):**
+**O que mudou (2026-09-05):**
 - a **via 9** do IDC passou de `+3V3` a **`+3V3A`**, e alimenta só os dois pots
   (0,66 mA);
 - o **OLED foi para os 5 V** — o módulo Waveshare aceita 3,3 ou 5 V, e um ecrã
@@ -246,7 +246,7 @@ contrário dela.
 
 **Não foi isenção. Foi conserto**, e o guarda de terra não foi tocado.
 
-## 05/09 — `D29`/`D30` deixaram de ser pinos livres
+## 2026-09-05 — `D29`/`D30` deixaram de ser pinos livres
 
 São o `USB_HS_D−`/`D+`. Levavam a regra só em documento (cicatriz 15by, em que
 o `PINOS.md` chegou a reservá-los para os DPDT). Passaram a ter **`no_connect`

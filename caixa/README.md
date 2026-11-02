@@ -55,7 +55,7 @@ encomendada e a outra não, indistinguíveis na pasta. Não volta a acontecer.
 | revisão | o que é | encomenda | onde está |
 |---|---|---|---|
 | r1 | 19 peças · arcade a 40/100/160 · sem reforço | **#1263497**, $35,66 | `git show cbc6fbd:caixa/cotuca_caixa_corte_acrilico_3p0.svg` |
-| r2 | 20 peças · arcade a 30/100/170 · reforço da tampa | 06/09, $38,23 — entrega 15/09 | `git show 6a86006:` |
+| r2 | 20 peças · arcade a 30/100/170 · reforço da tampa | 2026-09-06, $38,23 — entrega 2026-09-15 | `git show 6a86006:` |
 | **r3** | + **aberturas de USB** na parede de trás, pedidas pela placa | — | na pasta |
 
 ⚠️ **A encomenda da r2 foi feita com o ficheiro sob o nome ANTIGO**
@@ -118,7 +118,7 @@ caixas num pacote é a maior alavanca de todas, e não se mexe no desenho.
 
 Detalhe e o que falta confirmar: skill `/caixa`, §6.
 
-## ⚠️ O que foi apagado a 06/09, e porquê
+## ⚠️ O que foi apagado a 2026-09-06, e porquê
 
 Morreram: as 6 páginas de fabricação (`medidas/`), os dois geradores delas
 (`gen_caixa*.py`), e o corte em nogueira de 6,4 com o seu `.dxf`, `.png`,

@@ -12,20 +12,20 @@
 # Citar um destes na doc e LEGITIMO. Ressuscitar um deles como param
 # novo exige tira-lo daqui — senao o verificador para de vigia-lo.
 
-src_mix        20/08   crossfade das duas fontes; virou piezo_mix (BALANCO)
-oct_on         28/08   renomeado para tarol_on (cicatriz 15u)
+src_mix        2026-08-20   crossfade das duas fontes; virou piezo_mix (BALANCO)
+oct_on         2026-08-28   renomeado para tarol_on (cicatriz 15u)
 test_tone_on   --      nome PROPOSTO e nunca criado; registo da decisao
-fx2_on         18/08   slot Fx2; saiu do mapa MIDI, depois do codigo
-fx2_gain       18/08   idem
-fx2_hp         18/08   idem
-fx2_want       18/08   idem
-rev_mix        22/08   renomeado: o esp_mix virou rev_mix_{a,b} por cadeia
-esp_mix        22/08   virou rev_mix_{a,b}
-esp_on         22/08   virou rev_on_{a,b}
-frz_mix        22/08   virou frz_vol_{a,b}
-detune_on      20/08   detune saiu do build no pivo de duas cadeias
-detune_mix     20/08   idem
-detune_cents   20/08   idem
+fx2_on         2026-08-18   slot Fx2; saiu do mapa MIDI, depois do codigo
+fx2_gain       2026-08-18   idem
+fx2_hp         2026-08-18   idem
+fx2_want       2026-08-18   idem
+rev_mix        2026-08-22   renomeado: o esp_mix virou rev_mix_{a,b} por cadeia
+esp_mix        2026-08-22   virou rev_mix_{a,b}
+esp_on         2026-08-22   virou rev_on_{a,b}
+frz_mix        2026-08-22   virou frz_vol_{a,b}
+detune_on      2026-08-20   detune saiu do build no pivo de duas cadeias
+detune_mix     2026-08-20   idem
+detune_cents   2026-08-20   idem
 
 # PROPOSTOS E NUNCA IMPLEMENTADOS — legitimos de citar como plano.
 frz_hold       nunca   desenho de "fonte e gesto separados", abandonado:
@@ -51,11 +51,11 @@ frz_mix_b      externo  sufixo do frz_mix aposentado
 # SIMBOLOS REMOVIDOS do fonte — a cicatriz que narra a remocao os cita,
 # e sem esta declaracao ela vira fantasma. Foi o proprio verificador
 # que exigiu esta secao, na primeira execucao depois do commit A.
-zero_buf       22/08   portadora ausente; sem uso desde o pivo (bts 13h)
-seco_buf       22/08   contorno da cauda; sem uso desde 3834cea (bts 13h)
-freeze_ok      22/08   vestigio do 3834cea, escrito e nunca lido
-freeze_mem     22/08   vestigio do 3834cea, declarado sem uso
-pitch_tail_mem 22/08   vestigio do 3834cea, declarado sem uso
+zero_buf       2026-08-22   portadora ausente; sem uso desde o pivo (bts 13h)
+seco_buf       2026-08-22   contorno da cauda; sem uso desde 3834cea (bts 13h)
+freeze_ok      2026-08-22   vestigio do 3834cea, escrito e nunca lido
+freeze_mem     2026-08-22   vestigio do 3834cea, declarado sem uso
+pitch_tail_mem 2026-08-22   vestigio do 3834cea, declarado sem uso
 check_docs        # nome do proprio verificador, citado na 13m
 
 # ---- ISENCOES QUE DEVEM EXPIRAR ----
@@ -64,12 +64,12 @@ check_docs        # nome do proprio verificador, citado na 13m
 # a ser achado no fonte e a linha TEM QUE SAIR. Isencao sem prazo vira
 # entulho, e entulho transforma verificador em carimbo (bts 13o).
 #
-# (vazia em 23/08: o `n_params` saiu quando o PresetHeader passou a
+# (vazia em 2026-08-23: o `n_params` saiu quando o PresetHeader passou a
 #  existir em presets.h — a divida foi cobrada pelo proprio mecanismo,
 #  que era o ponto de escrever o prazo.)
 midi_dup          desenho  AUDIT-23-08 achado 2 — sai quando o detector existir
 
-# RENOMEADOS em 31/08 — o nome passou a carregar a TOPOLOGIA, porque a
+# RENOMEADOS em 2026-08-31 — o nome passou a carregar a TOPOLOGIA, porque a
 # ordem em relacao ao limitador e o que os torna NAO redundantes:
 #   level   -> pre_level_ab    (ANTES do governor/limiter: alimenta a proteccao)
 #   level_l -> post_level_l    (DEPOIS do limiter: so reduz, nao fura o teto)
@@ -80,7 +80,7 @@ level
 level_l
 level_r
 
-# RENOMEADOS em 01/09 — familia inteira do tom de teste, para uma regra
+# RENOMEADOS em 2026-09-01 — familia inteira do tom de teste, para uma regra
 # de exclusao cobrir as quatro (eram duas regras, e a terceira a nascer
 # escaparia as duas):
 #   tone_freq       -> test_tone_freq
@@ -93,7 +93,7 @@ tone_dest
 test_tone_stage
 test_tone_gain
 
-# RENOMEADOS em 01/09, os dois por o nome nao dizer a verdade:
+# RENOMEADOS em 2026-09-01, os dois por o nome nao dizer a verdade:
 #   ntc_* -> notch_*        NTC e um COMPONENTE (termistor), e este repo tem
 #                           esquematicos ao lado. O dB perguntou "o que e ntc?"
 #                           — e se o dono nao reconhece, o nome falhou.

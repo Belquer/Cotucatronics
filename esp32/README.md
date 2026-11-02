@@ -20,7 +20,7 @@ engordou e a decisão inteira volta à mesa.
 | `IO20` (RX) | **D13** (TX) | ★ CRUZADO |
 | `IO3` (status) | **D28** | **ativo em BAIXO** |
 
-> ⚠️ **Mudou a 21/09 (ponte v1.0.0), e é MAJOR.** Até à v0.5.0 eram
+> ⚠️ **Mudou a 2026-09-21 (ponte v1.0.0), e é MAJOR.** Até à v0.5.0 eram
 > `GPIO4/5/6`, escolhidos aqui porque a ponte vivia em cinco fios soltos.
 > Desde a rev C o módulo entra no **soquete `U3`** e os pinos estão em cobre:
 > a placa passou a ser a fonte. Uma ponte com firmware antigo numa placa rev C
@@ -34,7 +34,7 @@ de tudo**. A cicatriz nasceu com o WIDI e aplica-se igual aqui.
 
 🔴 **A DAISY NÃO ARRANCA SEM ESTA PONTE LIGADA.** O `D14` dela é o RX da
 USART1 e, com a ponte fora, flutua com o DMA à escuta — o que prende a
-transmissão e trava o laço principal. Medido em 31/08. Ver
+transmissão e trava o laço principal. Medido em 2026-08-31. Ver
 [`HARDWARE.md`](../docs/operacao/HARDWARE.md) §4. **Defeito aberto do lado da
 Daisy; até lá, a ponte é requisito de arranque.**
 
@@ -42,7 +42,7 @@ Daisy; até lá, a ponte é requisito de arranque.**
 Ânodo no trilho de 5 V, cátodo no pino `5V` desta placa.
 
 Nesta placa o `5V` liga ao **VBUS do USB directamente**, sem díodo de bordo.
-Sem o Schottky, o cabo USB **realimenta o trilho inteiro** — medido em 31/08:
+Sem o Schottky, o cabo USB **realimenta o trilho inteiro** — medido em 2026-08-31:
 o LED do amp acendia com o powerbank desligado. Com o díodo, podes alimentar
 pelos dois sem consequência, e a regra abaixo deixa de ser necessária.
 
@@ -53,7 +53,7 @@ pino de 5 V, nunca os dois.**
 
 📖 O porquê está em [`docs/operacao/ATERRAMENTO.md`](../docs/operacao/ATERRAMENTO.md) §4 e §7.
 
-Medido em 31/08: sem eles, **o rádio sai pelo exciter**. As rajadas de
+Medido em 2026-08-31: sem eles, **o rádio sai pelo exciter**. As rajadas de
 transmissão são picos de corrente de microssegundos, e sem reservatório local
 eles viram ondulação no trilho partilhado, que o amp amplifica.
 

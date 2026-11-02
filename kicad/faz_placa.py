@@ -185,7 +185,7 @@ def uma(nome, zerar):
     if zerar:
         s, v = zera(pcb)
         print("  0. cobre apagado: %d pistas, %d vias" % (s, v))
-    # ⚠️⚠️ O ESQUEMA ENTRA AQUI, E ATE 08/09 NAO ENTRAVA EM LADO NENHUM.
+    # ⚠️⚠️ O ESQUEMA ENTRA AQUI, E ATE 2026-09-08 NAO ENTRAVA EM LADO NENHUM.
     #
     # O `sincroniza_pcb.py` existe desde sempre para fazer o que o F8 do
     # KiCad faz — pecas e redes do esquema para a placa — e a skill

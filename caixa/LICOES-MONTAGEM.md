@@ -1,21 +1,21 @@
 # Lições de montagem — a caixa de acrílico, montada à mão
 
-### Cotucatronics · 19/09/2026 · rev. f · acrílico transparente **3,0 mm** · gravado da bancada
+### Cotucatronics · 2026-09-19 · rev. f · acrílico transparente **3,0 mm** · gravado da bancada
 
-> **rev. f (19/09/2026):** lição **#11** — o painel só sai com os jacks TRS
+> **rev. f (2026-09-19):** lição **#11** — o painel só sai com os jacks TRS
 > fora; a ponta do encoder fica presa na tampa. E a #10 fechou a orientação do
 > cérebro (a Daisy está sob o botão central) e abriu a medida que falta: a
 > profundidade do botão azul.
 >
-> **rev. e (19/09/2026):** lição **#10** — a ordem dos três botões arcade nos
+> **rev. e (2026-09-19):** lição **#10** — a ordem dos três botões arcade nos
 > furos da tampa deixou de ser livre: **azul A, azul B, branco**, da esquerda
 > para a direita, porque um capacitor alto do cérebro fica debaixo do furo da
 > direita e só o botão branco (sem LED, mais curto) passa por cima dele.
 >
-> **rev. d (18/09/2026):** lições **#7**, **#8** e **#9** (o encoder roscado fixa a folga em 6,5 mm) (o IDC por baixo NÃO se vira; fita soldada). Lição **#7** — header do OLED soldado por baixo, jumpers
+> **rev. d (2026-09-18):** lições **#7**, **#8** e **#9** (o encoder roscado fixa a folga em 6,5 mm) (o IDC por baixo NÃO se vira; fita soldada). Lição **#7** — header do OLED soldado por baixo, jumpers
 > em L para baixo; âncora de pinos = o pad quadrado (VCC).
 >
-> **rev. c (17/09/2026):** lição #1 corrigida — o pot físico em uso é um
+> **rev. c (2026-09-17):** lição #1 corrigida — o pot físico em uso é um
 > **pot de corpo 16 mm** (Ø16,90 · bucha **M7×0,75** · **3 terminais Ø1,20 a
 > passo 5,0 mm** · pino anti-rotação a **7,80 mm @ 30°** por datasheet ≈ 7,5 mm
 > medido pelo dB), **NÃO** um PTV09A de 9 mm. Isto **supersede** a premissa
@@ -24,7 +24,7 @@
 > fabricado). Cota da tampa mantida (ø3,2 · 7,5–7,8 mm c-c · esquerda/−X na vista
 > de cima).
 
-> **rev. b (16/09/2026):** lição #1 — furo do pino de indexação do pot
+> **rev. b (2026-09-16):** lição #1 — furo do pino de indexação do pot
 > **totalmente locado na peça** (**ø3,2 mm · 7,5 mm centro-a-centro · à esquerda
 > do eixo na vista de cima**), substituindo a incerteza anterior do datasheet.
 
@@ -236,7 +236,7 @@ próxima rev do painel ganha o conector de fiação.
 
 ## 7 · Header do OLED não cabe por cima — soldado por baixo, jumpers em L para baixo
 
-**Sintoma observado (dB, 18/09):** o header macho do `J2` (OLED) com os jumpers
+**Sintoma observado (dB, 2026-09-18):** o header macho do `J2` (OLED) com os jumpers
 fêmea **direitos** não cabe entre a placa do painel e o acrílico. Jumpers **em L**
 por cima também não: a altura até à tampa chegava, mas o topo da caixa não deixa
 sair os fios; virar o L para baixo espreme o fio entre os componentes e a tampa.
@@ -274,12 +274,12 @@ placa↔tampa desenhada, não descoberta.
 
 ## 8 · A caixa de pinos do IDC (`J1`) não cabe por cima — e NÃO se vira para baixo
 
-**Sintoma observado (dB, 18/09):** a caixa de pinos Würth do `J1` soldada por cima
+**Sintoma observado (dB, 2026-09-18):** a caixa de pinos Würth do `J1` soldada por cima
 bate no OLED e não deixa espaço para aparafusar o encoder.
 
 ⚠️ **Virá-la para baixo NÃO funciona, e pode queimar.** Uma caixa de pinos de 2
 filas com chave, vista do outro lado da placa, é a imagem ao espelho — e nenhuma
-rotação dela nem da ficha no cabo desfaz um espelho. Simulado a 18/09 contra as
+rotação dela nem da ficha no cabo desfaz um espelho. Simulado a 2026-09-18 contra as
 26 vias do contrato:
 
 | por baixo | ficha no cabo | certos | efeito |
@@ -317,7 +317,7 @@ folga placa↔tampa desenhada.
 
 ## 9 · O encoder aparafusado fixa a folga em 6,5 mm — e tudo o que é mais alto bate
 
-**O que o dB tem em mão (18/09):** um EC11 genérico **com bucim roscado** (eixo
+**O que o dB tem em mão (2026-09-18):** um EC11 genérico **com bucim roscado** (eixo
 estriado de 6 mm, 20 mm acima do corpo, corpo 11,7 × 6,5 mm de altura) — **não** o
 `EC11E15244G1` do BOM, que não tem rosca. Aparafusado à tampa, **prende a placa**
 (conta para o M2). E define a distância: **a placa fica 6,5 mm abaixo do acrílico.**
@@ -351,7 +351,7 @@ encoder; 4 postes de 6,5 mm (ou 6 + anilha).
 
 ## 10 · A ordem dos botões arcade não é livre — o capacitor alto manda
 
-**O que aconteceu (dB, 19/09):** ao montar, um capacitor do cérebro ficou
+**O que aconteceu (dB, 2026-09-19):** ao montar, um capacitor do cérebro ficou
 alto de mais debaixo de um dos furos de ø30. Os dois **azuis (freeze)** foram
 para os furos da **esquerda**, juntos, e o **branco (búzios)** para o da
 **direita**, que é o furo sobre o capacitor: o branco **não tem LED**, e por
@@ -367,7 +367,7 @@ ferramenta não distingue qual furo aceita peça alta por baixo.
 esquerda para a direita na vista de cima. Está no manual de montagem, no passo
 dos fios dos arcade.
 
-**Medido (dB, 19/09):** o botão branco desce **20 mm** abaixo do painel, com
+**Medido (dB, 2026-09-19):** o botão branco desce **20 mm** abaixo do painel, com
 conectores. O capacitor é o **C1, 2200 µF**. Com isso a `confere_arcade`
 (v0.24.0) passou a ter **profundidade por botão** — azul 34, branco 20 — e
 altura de electrolítico **por diâmetro** (D16 = 25 mm). Altura livre: **7,5 mm**
@@ -378,7 +378,7 @@ escrito.** A Daisy debaixo do botão central **não distingue** nada: ela cai so
 o furo do meio nas duas orientações. Quem distingue é a **serigrafia** — com o
 lado do utilizador de frente, a do painel lê-se direita e a do **cérebro
 lê-se de cabeça para baixo**. A placa está **girada 180°** face ao modelo, na
-orientação que 06/09 tinha rejeitado por pôr peças altas sob os botões. E aí o
+orientação que 2026-09-06 tinha rejeitado por pôr peças altas sob os botões. E aí o
 `C1` (25 mm) cai debaixo do furo 1 — o capacitor alto que obrigou a trocar os
 botões, que era o que faltava explicar.
 
@@ -404,7 +404,7 @@ funcionou na bancada**, não como geometria conferida.
 
 ## 11 · O painel só sai com os jacks TRS fora
 
-**O que aconteceu (dB, 19/09):** com os quatro jacks TRS montados, o painel
+**O que aconteceu (dB, 2026-09-19):** com os quatro jacks TRS montados, o painel
 **não tem por onde sair** — a ponta do encoder fica presa no acrílico da tampa
 antes de a placa libertar os jacks.
 
@@ -472,7 +472,7 @@ usuário está tomada:
 
 ## Procedência
 
-Gravado a 16/09/2026 da montagem à mão da caixa r2 (acrílico 3,0 mm). As cinco
+Gravado a 2026-09-16 da montagem à mão da caixa r2 (acrílico 3,0 mm). As cinco
 lições vêm da peça real na bancada, não de ficha — que é a regra da própria
 skill `caixa` (§0: a peça em mão manda). Alimenta a próxima **caixa rev**; a
 reescrita da geometria do gerador (postes/T-slot, furo do pino) é tarefa

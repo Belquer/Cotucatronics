@@ -1,6 +1,6 @@
 # VOO — ponte BLE↔UART MIDI no ESP32-C3
 
-> **v0.1.0** · 25/08 · substitui o WIDI Core. A decisão e o preço estão em
+> **v0.1.0** · 2026-08-25 · substitui o WIDI Core. A decisão e o preço estão em
 > [GEAR-AUDIT.md](GEAR-AUDIT.md); aqui está o que se constrói e como se aceita.
 
 **A propriedade que define o voo 1: o firmware da Daisy não muda uma linha.**
@@ -229,7 +229,7 @@ está bom, o perfil está bom. **A relação entre o perfil e a identidade do
 dispositivo é que se partiu**, e ninguém a tem em ficheiro.
 
 **Já está resolvido, e o procedimento é curto** — o formato foi decifrado em
-24/08 e `Device`/`Device Name` são dois campos de texto no plist:
+2026-08-24 e `Device`/`Device Name` são dois campos de texto no plist:
 
 1. ligar o ESP32 e deixar o Loopy vê-lo;
 2. exportar um perfil qualquer para descobrir o identificador novo;

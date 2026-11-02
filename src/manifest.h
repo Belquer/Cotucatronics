@@ -121,7 +121,7 @@ struct Manifest
     int p_test_tone_level;   // mistura tom de teste vs entrada
     // BALANCO dos dois piezos, nao crossfade. Centro = OS DOIS CHEIOS;
     // girar abaixa o dominante sem cortar o outro. O crossfade que
-    // estava aqui (`src_mix`, aposentado 20/08) derrubava OS DOIS no
+    // estava aqui (`src_mix`, aposentado 2026-08-20) derrubava OS DOIS no
     // meio — -6 dB cada no centro — e por isso nao resolvia "um
     // encobre o outro".
     //
@@ -154,7 +154,7 @@ struct Manifest
     // melhora — o que melhora é o quanto da faixa útil se usa. Se o
     // ruído começar a incomodar, o conserto é o buffer de alta
     // impedância (receita no BOARDS.md), não mais ganho aqui.
-    // ---- DUAS CADEIAS DE CARATER (pivo de 20/08) ----
+    // ---- DUAS CADEIAS DE CARATER (pivo de 2026-08-20) ----
     //
     // POR QUE DUPLICAR, e a razao NAO e desequilibrio entre transdutores.
     //
@@ -173,7 +173,7 @@ struct Manifest
     // mede os canais iguais no futuro e conclui que a duplicacao e
     // dispensavel. Justificativa errada envelhece mal.
     static constexpr int kCadeias = 2;
-// `in_gain` REMOVIDO em 28/08 — o Governor (AGC) anulava-o e o
+// `in_gain` REMOVIDO em 2026-08-28 — o Governor (AGC) anulava-o e o
     // `piezo_mix` ja fazia o balanco. Ver a nota no `main.cpp`, secao 1.1,
     // que guarda o que se perdeu. CC 21 voltou a ficar livre.
     int p_dly_time;   // → módulo externo "dly_time"
@@ -190,7 +190,7 @@ struct Manifest
     int p_gov_release[2];
 
     // Roteamento de saída: 0/1. DOIS ANDARES, e eles NÃO fazem a
-    // mesma coisa — 28/08, e a confusão entre os dois é o que fez
+    // mesma coisa — 2026-08-28, e a confusão entre os dois é o que fez
     // `route_jack` existir com esse nome:
     //
     //   route_*  ANTES dos efeitos. Matriz 2×2: qual CADEIA entra em
@@ -278,7 +278,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
 
     // ENVIO DA CADEIA PRO ESPACO — mesma forma do delay e do freeze.
     //
-    // Ate 20/08 havia TRES controles pro mesmo caminho: `esp_mix` na
+    // Ate 2026-08-20 havia TRES controles pro mesmo caminho: `esp_mix` na
     // entrada, `rev_mix` na saida, e duas chaves. Numa sala LINEAR
     // ganho na entrada e ganho na saida sao o MESMO controle escrito
     // duas vezes — o dB viu antes de mim.
@@ -325,7 +325,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // CARATER: PARAMS COMPARTILHADOS, chave e dry/wet POR CANAL.
     //
     // Seis efeitos com params independentes ficou confuso de operar
-    // (decisao de uso do dB, 20/08). Volta a existir UM drive, UM
+    // (decisao de uso do dB, 2026-08-20). Volta a existir UM drive, UM
     // phaser, UM warble — o que duplica e so o que se opera ao vivo.
     //
     // NAO ESPERE ECONOMIA DE CPU, e isto foi verificado na estrutura
@@ -360,7 +360,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // NAO tem `mix`: fita nao mistura com ela mesma. O sinal inteiro
     // deriva, ou nao deriva — misturar com o seco daria flanger, que e
     // outro efeito.
-    // WARBLE GANHOU `mix` EM 20/08, por decisao do dB (consistencia:
+    // WARBLE GANHOU `mix` EM 2026-08-20, por decisao do dB (consistencia:
     // todo efeito de caracter tem chave e dry/wet por canal).
     //
     // ISTO MUDA UM EFEITO APROVADO. Ate aqui o dry/wet do warble era o
@@ -382,7 +382,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
 
     // NOTCH ANTI-MICROFONIA — duas bocas por cadeia.
     //
-    // ⚠️ CHAMOU-SE `ntc_*` ATE 01/09, e o nome era mau por duas razoes.
+    // ⚠️ CHAMOU-SE `ntc_*` ATE 2026-09-01, e o nome era mau por duas razoes.
     // A primeira: o dB perguntou "o que e ntc?" — e se o dono do
     // instrumento nao reconhece o nome, o nome falhou. A segunda e pior
     // neste repositorio: NTC e um COMPONENTE, o termistor de coeficiente
@@ -472,7 +472,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // ESTE LIMITE E LIDO NO CALLBACK DE AUDIO, e por isso ele nao pode
     // seguir a tabela de params.
     //
-    // Uma varredura de 23/08 procurou "que custos escalam com uma tabela
+    // Uma varredura de 2026-08-23 procurou "que custos escalam com uma tabela
     // que cresceu?" e achou o `sync` gastando 258 ms onde foi dimensionado
     // para 36 (bts 13p). O callback saiu limpo — o unico laco sobre tabela
     // ali e o do `n_sacrif` — mas saiu limpo por SORTE DE DESENHO: nada
@@ -636,7 +636,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // o patch reordena tudo. Declara-se o nome, e o boot resolve o
     // índice via Module::FindParam(). Nome que não existe = erro
     // claro no log, não parâmetro fantasma mexendo em nada.
-    // O SISTEMA DE MODULOS EXTERNOS SAIU INTEIRO EM 20/08. O delay,
+    // O SISTEMA DE MODULOS EXTERNOS SAIU INTEIRO EM 2026-08-20. O delay,
     // ultimo modulo, virou C++ no shell (delay.h). Nao ha mais slot,
     // bind, nem push por nome — todo efeito le os params direto, como
     // sempre foi pros efeitos da casa.
@@ -676,7 +676,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // DETECTOR DE COLISAO — devolve quantos pares (CC, canal) estao
     // repetidos, e escreve o primeiro em `cc_out`/`canal_out`.
     //
-    // ESTE DETECTOR NASCEU DE UM DEFEITO SEU. Em 31/08 o notch entrou
+    // ESTE DETECTOR NASCEU DE UM DEFEITO SEU. Em 2026-08-31 o notch entrou
     // no CC 115, que ja era do `bench_boost` nos MESMOS canais. O
     // `Aplica` diz na propria linha "primeiro vence; duplicata e erro"
     // — e ninguem verificava. O notch foi registado antes, ganhou, e o
@@ -789,7 +789,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     void Init(ParamTable& t)
     {
         // ============================================================
-        // DEFAULTS: ZERO PARA O QUE O MIDI ALCANCA (dB, 18/08)
+        // DEFAULTS: ZERO PARA O QUE O MIDI ALCANCA (dB, 2026-08-18)
         //
         // O Loopy so TRANSMITE — nao recebe sem MIDI learn, e o dB
         // decidiu nao fazer isso por ora. Consequencia: o controlador e
@@ -840,7 +840,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // ganho de ENTRADA, que mora pós-entrada/pré-gate — nunca aqui.
         // ⚠️ EXCEPCAO DECLARADA A "TODO PARAM NASCE EM ZERO".
         //
-        // Decisao do dB em 31/08, e a razao e o que ele faz: o
+        // Decisao do dB em 2026-08-31, e a razao e o que ele faz: o
         // `pre_level_ab` esta ANTES do governor e do limiter, e serve
         // para TESTE e EMERGENCIA — nao para tocar. O volume de
         // performance sao os `post_level_*`, que seguem os pots.
@@ -859,7 +859,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // compra ruido.
         p_pre_level     = t.Add("pre_level_ab",     1.0f, 0.f,    1.f);
         p_test_tone_freq = t.Add("test_tone_freq", 0.4f, 80.f,   2000.f);
-        // ⚠️ LEVEL — escolha do dB em 01/09, depois de passar por `mix`
+        // ⚠️ LEVEL — escolha do dB em 2026-09-01, depois de passar por `mix`
         // e `gain`. E o nome que ele quer ver no painel, e o casamento
         // widget<->param no Loopy e por TITULO: quem manda no nome e o
         // que esta pintado no vidro, nao o que e literal no codigo.
@@ -909,7 +909,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // curvado e não sabe que houve curva.
         // norm 0.69 com curve 2.5 da real ~0.40: eco audivel e
         // claramente separado, nem slapback nem cauda longa.
-        // CURVA LINEAR (dB, 18/08). Era 2.5, que dava controle fino nos
+        // CURVA LINEAR (dB, 2026-08-18). Era 2.5, que dava controle fino nos
         // tempos CURTOS — util pra delay-como-timbre e pessimo pra
         // delay-como-eco. O patch mapeia real 0..1 em 10..1000 ms
         // linearmente, entao com curva 2.5 o fader em 30% dava 59 ms:
@@ -920,7 +920,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // Linear: 10% = 109 ms, 25% = 258 ms, 50% = 505 ms, 100% = 1 s.
         // Curso inteiro util, e o fader passa a ler em MILISSEGUNDOS —
         // previsivel pra quem toca.
-        // FAIXA CORTADA POR BAIXO (dB, 18/08): o fader inteiro passa a
+        // FAIXA CORTADA POR BAIXO (dB, 2026-08-18): o fader inteiro passa a
         // viver na regiao PERCEPTIVEL. Antes ia de 10 ms a 1 s com
         // curva 2.5, e o primeiro terco do curso ficava abaixo de
         // ~60 ms — que o ouvido nao separa em eco, so espessa. Um
@@ -935,7 +935,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // curso; limite REMOVE o inutil do alcance. As cercas dos
         // buzios (100-500 ms) continuam validas porque falam em real e
         // cabem dentro da faixa nova.
-        // CURSO INTEIRO desde 20/08: a cerca de 50 ms mudou-se pra
+        // CURSO INTEIRO desde 2026-08-20: a cerca de 50 ms mudou-se pra
         // dentro do `delay.h`, onde vale pra qualquer manifest que o
         // use. Aqui o param volta a ser 0..1 de ponta a ponta.
         p_dly_time  = t.Add("dly_time",  0.0f, 0.f, 1.f, 1.0f); // 50..1000 ms
@@ -976,7 +976,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
 
         // ROTEAMENTO. Os dois ligados no boot: mudo por engano é pior
         // que alto por engano — pra alto o limiter já tem resposta.
-    // ⚠️ `exc_filter`, e nao `exc_on`. Nome do dB, 02/09: o param FILTRA
+    // ⚠️ `exc_filter`, e nao `exc_on`. Nome do dB, 2026-09-02: o param FILTRA
     //    o sinal do exciter (deslocador + governor); nao liga nem desliga
     //    o exciter. Ele perguntou "corta a saida L do amp?" — e nao corta,
     //    quem corta e o `out_l`. Nome que provoca essa pergunta esta errado.
@@ -984,7 +984,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // ⚠️ `_l`/`_r` E NAO `_a`/`_b`, e o sufixo aqui tem significado de
     //    MAQUINA e nao de estilo.
     //
-    // Terminologia do dB, fixada em 02/09: PIEZO e A ou B, porque o que o
+    // Terminologia do dB, fixada em 2026-09-02: PIEZO e A ou B, porque o que o
     // define e a COLOCACAO no instrumento; EXCITER e L ou R, porque o que
     // o define e a saida do amp estereo de que ele pega.
     //
@@ -1006,7 +1006,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // reproduz exatamente o codigo fixo que a antecedeu,
         // `out[0] = out[1] = A + B`. Feature nova que nasce mudando o
         // som e feature que se descobre pelo susto.
-    // ⚠️ ENTRADA PRIMEIRO, SAIDA DEPOIS — nome do dB, 02/09.
+    // ⚠️ ENTRADA PRIMEIRO, SAIDA DEPOIS — nome do dB, 2026-09-02.
     //
     // Eram `route_l_a` (saida, entrada). Lidos em voz alta davam "rota L
     // do A", e a pergunta que a bancada faz e a outra: "para onde vai o
@@ -1029,7 +1029,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     p_route_r[1]    = t.Add("route_b_r",     1.0f, 0.f, 1.f);
         // NOME: `level_l`/`level_r`, e nao `vol_*`. Alinha com o `level`
         // mestre que ja existia e diz o que sao — o mesmo eixo, em dois
-        // ramos. Renomeados em 30/08, a pedido do dB e de graca: o mapa
+        // ramos. Renomeados em 2026-08-30, a pedido do dB e de graca: o mapa
         // muda de hash, e ainda nao existe preset nenhum capturado.
         //
         // VOLUME POR RAMO, e nao e o mesmo que `out_*`. O mute existe para
@@ -1047,7 +1047,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         //
         // ⚠️ EXISTE PORQUE O dB ERA O BANCO DE ENSAIO, e isso acabou.
         //
-        // Em 02/09 o supressor foi afinado com a escultura ligada ao lado
+        // Em 2026-09-02 o supressor foi afinado com a escultura ligada ao lado
         // de uma pessoa: cada defeito meu chegou-lhe aos ouvidos, e uma
         // das vezes o filho dele gritou. Um actuador que so se prova a
         // gritar num corpo real nao se pode iterar.
@@ -1086,14 +1086,14 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // ---- SuMiA™: supressor de microfonias automatizado ----
         //
         // `micro_auto` nasce LIGADO. Um instrumento que arranca com a
-        // protecao desligada e o cenario de 02/09, em que o dB levou com
+        // protecao desligada e o cenario de 2026-09-02, em que o dB levou com
         // microfonia a volume alto — e o lado seguro e proteger sem
         // precisar, nao o contrario.
         //
         // `micro_dom` e o limiar de dominancia, e a faixa saiu de
         // MEDICOES e nao de teoria: 0,97-1,00 com o instrumento a gritar,
         // 0,14-0,29 depois de cortado, e microfonia real ja mediu 0,61 em
-        // 31/08. Uma calibracao anterior em senoides sinteticas dera 0,85,
+        // 2026-08-31. Uma calibracao anterior em senoides sinteticas dera 0,85,
         // que teria RECUSADO os casos reais. 0,50 fica no meio da vala,
         // longe dos dois lados, e e ajustavel porque o ouvido decide.
         p_micro_auto    = t.Add("micro_auto",    1.0f, 0.f, 1.f);
@@ -1102,7 +1102,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     //
     // Nasciam em 1.0. Cada GRAVACAO e cada arranque abriam o som com as
     // bocas de microfonia VAZIAS — os params nascem nos defaults — e o
-    // laco tinha tudo o que precisava. Em 02/09 aconteceu duas vezes: a
+    // laco tinha tudo o que precisava. Em 2026-09-02 aconteceu duas vezes: a
     // primeira apanhou o dB com o volume alto, a segunda fez o filho dele
     // gritar. A rampa de 8 s nao chega: ela sobe o som na mesma.
     //
@@ -1114,7 +1114,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
     // supressor, DEPOIS de ter provado que o corpo esta seguro.
     // NASCEM ABERTAS — a escultura tem de soar SOZINHA.
     //
-    // Estiveram a 0.0f durante meia hora em 02/09, depois de dois sustos
+    // Estiveram a 0.0f durante meia hora em 2026-09-02, depois de dois sustos
     // com microfonia no arranque. O dB desfez essa decisao com uma frase
     // que a mata: "quero que ele funcione sem o loopy". Uma peca em
     // exposicao nao tem ninguem para escrever `out_l 1`.
@@ -1196,12 +1196,12 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // real. Escrever 100.0f aqui satura em 1.0 e o grao nasce em
         // 400 ms — exatamente o tamanho em que os dois graos leem quase
         // o mesmo trecho e o batimento volta. 100 ms = (100-20)/380.
-        // FAIXA CORTADA EM 165 ms (20/08). Ia ate 400, e o `SetSize` limita o
+        // FAIXA CORTADA EM 165 ms (2026-08-20). Ia ate 400, e o `SetSize` limita o
         // grao a um TERCO DO NUCLEO — que tem 500 ms, entao o teto real
         // sempre foi ~167. Sessenta e um por cento do curso do fader nao
         // fazia nada, e o dB percebeu tentando mexer no `frz_size_b`.
         //
-        // Mesma licao do `dly_time` em 18/08: LIMITE remove o inutil do
+        // Mesma licao do `dly_time` em 2026-08-18: LIMITE remove o inutil do
         // alcance, CURVA so o redistribui. E vale pros dois canais — o
         // defeito nunca foi do B.
         // O 165 NAO E ARBITRARIO E NAO PODE DESSINCRONIZAR EM SILENCIO.
@@ -1212,10 +1212,10 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // 165 poe a faixa inteira dentro do curso util com 1,7 ms de
         // margem.
         //
-        // Ate 20/08 a faixa era 20..400 ms contra o mesmo clamp: 61%
+        // Ate 2026-08-20 a faixa era 20..400 ms contra o mesmo clamp: 61%
         // do curso do fader nao fazia nada (bts 12i). Corrigido em
         // d80e45d — e o item ficou meses na FILA descrevendo o estado
-        // pre-conserto, que e a deriva de 22/08 num lugar que o
+        // pre-conserto, que e a deriva de 2026-08-22 num lugar que o
         // `check-docs` nao olha.
         //
         // SE `kNucleusMs` MUDAR, este numero muda junto: novo teto =
@@ -1240,7 +1240,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         p_drv_drive[1] = t.Add("drv_drive_b", 0.0f, 1.5f, 48.f);
         p_drv_tone[0] = t.Add("drv_tone_a", 0.0f, 800.f, 16000.f, 2.0f);
         p_drv_tone[1] = t.Add("drv_tone_b", 0.0f, 800.f, 16000.f, 2.0f);
-        // NASCE EM 0 = o tube aprovado de ouvido em 22/08. Subir
+        // NASCE EM 0 = o tube aprovado de ouvido em 2026-08-22. Subir
         // daqui e ir pro dobrador, que e o "bem mais suja" pedido.
         p_drv_sujeira[0] = t.Add("drv_sujeira_a", 0.0f, 0.f, 1.f);
         p_drv_sujeira[1] = t.Add("drv_sujeira_b", 0.0f, 0.f, 1.f);
@@ -1267,7 +1267,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         p_wrb_on[1]    = t.Add("wrb_on_b",    0.0f, 0.f, 1.f);
         p_wrb_mix[0]   = t.Add("wrb_mix_a",   0.0f, 0.f, 1.f);
         p_wrb_mix[1]   = t.Add("wrb_mix_b",   0.0f, 0.f, 1.f);
-        // 0,5–12 Hz desde 28/08, por veredito de ouvido do dB: "vai de
+        // 0,5–12 Hz desde 2026-08-28, por veredito de ouvido do dB: "vai de
         // muito devagar a devagar". Era 0,05–3 Hz com curva 2.0, e as duas
         // coisas empurravam para o mesmo lado — a meio do curso dava
         // 0,79 Hz, e o TOPO eram 3 Hz, que ja e lento.
@@ -1337,13 +1337,13 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // (fita estragada — as vezes e o que se quer).
 
         // TOM DE TESTE: destino. 0=A 1=B 2=AMBAS (default).
-        // ORDEM DO PAINEL (28/08): 0=A+B, 1=so A, 2=so B.
+        // ORDEM DO PAINEL (2026-08-28): 0=A+B, 1=so A, 2=so B.
         // Nasce em ZERO como todos os outros — e zero e o estado
         // normal (as duas cadeias), nao um modo de diagnostico. A
         // ordem anterior (0=A, 1=B, 2=ambas) obrigava o default a
         // ser 2 e fazia do estado comum uma excecao a regra da casa.
         p_test_tone_out = t.Add("test_tone_out", 0.0f, 0.f, 2.f, 1.0f, 3);
-        // VIA DO TOM DE TESTE (28/08). Duas ferramentas diferentes com o
+        // VIA DO TOM DE TESTE (2026-08-28). Duas ferramentas diferentes com o
         // mesmo oscilador, e o switch diz qual:
         //   0 = DIRETO — entra no estagio de saida, DEPOIS do `level`.
         //       Referencia limpa: independente do nivel do utilizador e
@@ -1391,7 +1391,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // (`tone on`/`tone off`) e pelo default — o tom de teste é
         // bancada, não performance.
 
-        // >>> HISTORICO (a excecao temporaria de 16/08 virou regra) <<<
+        // >>> HISTORICO (a excecao temporaria de 2026-08-16 virou regra) <<<
         //
         // O Fx2 nasce LIGADO aqui, contra a regra do bloco de
         // declaracao. Nao e descuido: a serial esta caindo a cada 2-3
@@ -1531,7 +1531,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // O `mods` mostra o nome do parametro de origem justamente pra
         // isso saltar aos olhos: quatro linhas dizendo "pre_level_ab ->" e o
         // sintoma.
-        // O DELAY DEIXOU DE SER MODULO em 20/08 — virou C++ no shell
+        // O DELAY DEIXOU DE SER MODULO em 2026-08-20 — virou C++ no shell
         // (delay.h). Nao ha mais bind: o callback le os params direto,
         // como todos os outros efeitos da casa.
 
@@ -1556,7 +1556,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // D15–D19 e o encoder global ocupa D17/D18/D19. Sobram D15 e D16.
         knob[0].AddTarget(p_post_level_l, 1.0f);    // k1 — volume do ramo L
         knob[1].AddTarget(p_post_level_r, 1.0f);    // k2 — volume do ramo R
-        // k3, k4 e k5 NAO EXISTEM em hardware. Ate 28/08 estavam mapeados
+        // k3, k4 e k5 NAO EXISTEM em hardware. Ate 2026-08-28 estavam mapeados
         // (dly_time, dly_mix_a) e o laco iterava sobre eles com o
         // `ReadKnob` a devolver -1 — inofensivo enquanto era stub, e
         // exatamente o tipo de mapeamento que se descobre errado no dia em
@@ -1594,7 +1594,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // 110..440 Hz. O registro anterior (centro 110 Hz) sorteava
         // certo mas soava tudo GRAVE e parecido — o registro aprovado
         // de ouvido foi o de cima.
-        // >>> As duas cartas do Fx2 SAIRAM da whitelist em 18/08 porque
+        // >>> As duas cartas do Fx2 SAIRAM da whitelist em 2026-08-18 porque
         // >>> o modulo saiu do build. Nao e decisao de musica, e
         // >>> aritmetica: param de modulo ausente nao tem o que sortear.
         //
@@ -1653,7 +1653,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // ---- SLOT Fx2 VAZIO (2026-08-18) ----
         // Slot vazio e passthrough silencioso, nao erro.
         //
-        // ATE 04/09 este bloco trazia os binds do modulo antigo em
+        // ATE 2026-09-04 este bloco trazia os binds do modulo antigo em
         // comentario e afirmava que os params dele CONTINUAVAM na
         // tabela. Nao continuavam — nenhum `Add()` os cria — e a
         // afirmacao chegou a mandar-me procurar codigo que nao existe.
@@ -1670,7 +1670,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // com nada padrão (1 é mod wheel, 7 é volume, 64 é sustain).
         // Controlador genérico sai de fábrica sem usá-las.
         // ============================================================
-        // MAPA v2 (dB, 18/08) — contiguo de 20, sem CCs mortos
+        // MAPA v2 (dB, 2026-08-18) — contiguo de 20, sem CCs mortos
         //
         // Renumerado porque o mapa antigo tinha buracos (23 e 24 sairam
         // por seguranca) e dois CCs MORTOS apontando pro slot Fx2
@@ -1684,7 +1684,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // identico ao do `src_mix`. Vizinhanca importa.
         // ============================================================
         // UMA DECADA POR EFEITO. Todo param recebe CC (decisao do dB,
-        // 20/08) — nada mais so-serial. O agrupamento por decada e
+        // 2026-08-20) — nada mais so-serial. O agrupamento por decada e
         // memorizavel e, mais importante, e DEFESA: um widget mal
         // configurado atinge o VIZINHO, e vizinho da mesma familia faz
         // menos estrago que vizinho de outra. Ja aconteceu: um botao
@@ -1877,7 +1877,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // ---- PROTECAO E ROTEAMENTO: 110-115 ----
         //
         // LONGE DE PROPOSITO, e a distancia e a defesa. Estes seis
-        // saiam do MIDI em 18/08 porque despejos do iOS os punham no
+        // saiam do MIDI em 2026-08-18 porque despejos do iOS os punham no
         // extremo e emudeciam o instrumento TRES VEZES numa sessao.
         //
         // Voltam agora por decisao do dB (mapear tudo), e o que mudou
@@ -1887,7 +1887,7 @@ int p_post_level_l;        // volume do ramo L — POT em A0 (D15)
         // sem defeito nenhum. Por isso ficam a 10 CCs do vizinho mais
         // proximo: varredura acidental nao chega ate aqui.
         // A PROTECAO DUPLICA porque o hardware duplicou: com DOIS
-        // exciters, o ramo B tambem fecha laco acustico. Ate 20/08
+        // exciters, o ramo B tambem fecha laco acustico. Ate 2026-08-20
         // OUT_R era jack de linha e saia limpo por desenho.
         //
         // `shift_hz` E COMPARTILHADO, e isso e decisao acustica, nao
@@ -1904,7 +1904,7 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         AddMidi(117, p_post_level_r, kCanalCompart);             // pot A1 (D16)
         // ---- SEM CC DE PROPOSITO: quem manda nisto e a CHAVE FISICA ----
         //
-        // Decisao do dB, 22/09: **uma fonte de verdade por controlo.** Seis
+        // Decisao do dB, 2026-09-22: **uma fonte de verdade por controlo.** Seis
         // parametros saem do mapa MIDI porque o instrumento ja tem um
         // interruptor de verdade para a mesma coisa, e dois donos para o
         // mesmo estado e o defeito — nao a conveniencia.
@@ -1929,9 +1929,9 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         AddMidi(104, p_gov_release[1], kCanalCompart);   // exciter R
         AddMidi(106, p_bench_boost[1], kCanalCompart);   // exciter R
 
-        // ---- BANCO DE ENSAIO DO SUPRESSOR (05/09) ----
+        // ---- BANCO DE ENSAIO DO SUPRESSOR (2026-09-05) ----
         // Os tres `sim_*` fecham um laco DENTRO do firmware para se ver o
-        // supressor trabalhar com as saidas MUDAS. Ate 05/09 so o `set` os
+        // supressor trabalhar com as saidas MUDAS. Ate 2026-09-05 so o `set` os
         // alcancava, e o `board` acusava-os: "sem CC: 3 de 122 params —
         // alcancaveis por `set`, invisiveis ao iPad".
         //
@@ -1962,7 +1962,7 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         // CC 118/119 no ch1, com os outros params de saida (113/114 out,
         // 116/117 post_level). Eram 105 nos canais de ENTRADA, o que
         // punha um param de saida a ser endereçado pelo eixo errado.
-        // exc_filter_l / exc_filter_r (CC 118/119) SAEM a 23/09, mesma
+        // exc_filter_l / exc_filter_r (CC 118/119) SAEM a 2026-09-23, mesma
         // razao dos seis acima: quem decide se um ramo vai para um exciter e
         // o DPDT, nao um botao no iPad.
         //
@@ -1983,7 +1983,7 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
         // Proposta inicial, do mais sacrificavel ao menos. E do dB
         // mudar: a ordem e decisao musical, nao tecnica.
         //
-        //   (o detune era o indice 0 e saiu do build em 20/08)
+        //   (o detune era o indice 0 e saiu do build em 2026-08-20)
         //   phaser   +26 us — movimento, nao identidade.
         //   warble   +14 us — idem, e o mais sutil dos tres.
         //   drive    +21 us — cola; a falta se nota mais que a do phaser.
@@ -1996,7 +1996,7 @@ AddMidi(116, p_post_level_l, kCanalCompart);             // pot A0 (D15)
             { sacrif[n_sacrif].param_on = id;
               sacrif[n_sacrif].nome = n; n_sacrif++; }
         };
-        // ORDEM REVISTA no pivo de 20/08: seis slots de caracter mais a
+        // ORDEM REVISTA no pivo de 2026-08-20: seis slots de caracter mais a
         // cauda. Caracter cai antes da cauda porque a cauda e o que faz
         // tambor e corda soarem como o MESMO OBJETO — perde-la separa o
         // que o desenho existe pra unir.

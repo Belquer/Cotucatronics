@@ -290,7 +290,7 @@ class Governor
 // ============================================================
 // COMPRESSOR — sobe a MEDIA sem tocar no pico.
 //
-// POR QUE EXISTE, e o numero que o pediu: em 02/09 o dB caçava um chiado
+// POR QUE EXISTE, e o numero que o pediu: em 2026-09-02 o dB caçava um chiado
 // de banda larga. Medido, com ele a bater no instrumento:
 //
 //     OUT_L  pico -0,4 dBFS   media -49,2 dBFS

@@ -366,7 +366,7 @@ int main()
                 // para R). Sao os dois eixos de uma matriz 2x2, e nenhum
                 // cabe no sufixo.
                 //
-                // Renomeados em 02/09 de `route_l_a` para `route_a_l`
+                // Renomeados em 2026-09-02 de `route_l_a` para `route_a_l`
                 // (entrada primeiro, saida depois, a pedido do dB) — e foi
                 // essa renomeacao que os fez cair nesta regra, porque o
                 // sufixo deixou de ser `_a`/`_b`. O endereco MIDI nao
@@ -414,7 +414,7 @@ int main()
 
         // GOV_CEILING: A DECISAO MUDOU, E O TESTE MUDA COM ELA.
         //
-        // Ate 18/08 `gov_ceiling` estava FORA do mapa de proposito:
+        // Ate 2026-08-18 `gov_ceiling` estava FORA do mapa de proposito:
         // transicoes de link BLE faziam o iOS reenviar o estado de todos
         // os widgets e o instrumento obedecia, emudecendo tres vezes numa
         // sessao. Este teste era a trava dessa decisao.
@@ -438,7 +438,7 @@ int main()
         Check("gov_ceiling_l/_b ESTAO no mapa (pagina de protecao)",
               CcDe(id_gov_a) >= 0 && CcDe(id_gov_b) >= 0, d);
 
-        // SRC_MIX: APOSENTADO em 20/08. O teste antigo vivia dentro de
+        // SRC_MIX: APOSENTADO em 2026-08-20. O teste antigo vivia dentro de
         // um `if(id_src >= 0)` e passou a NAO RODAR quando o param sumiu
         // — sem uma linha de saida, sem uma falha, sem nada. Teste que
         // some em silencio e pior que teste que falha: a suite fica

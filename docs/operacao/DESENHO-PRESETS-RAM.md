@@ -1,13 +1,13 @@
 # Desenho — biblioteca de presets em RAM
 
-> **Estado: passos 1–3 IMPLEMENTADOS e provados na placa (23/08, v0.148.0);
+> **Estado: passos 1–3 IMPLEMENTADOS e provados na placa (2026-08-23, v0.148.0);
 > passos 4–5 pendentes.** O ciclo `capturar → dump → reset → colar → load`
 > fecha com 33 params e zero recusas. Escrito enquanto o aceite de hardware
 > corre, de propósito: é trabalho de cabeça, não toca o firmware e não captura
 > estado nenhum, então não corre o risco de congelar um endereçamento
 > não-validado. Ver `ACEITE-MULTIPLEXACAO.md`.
 >
-> Complementa `PRESETS.md` (aprovado 22/08) com as decisões de estrutura.
+> Complementa `PRESETS.md` (aprovado 2026-08-22) com as decisões de estrutura.
 
 ## 0. Três correções de contagem, antes de qualquer decisão
 
@@ -60,7 +60,7 @@ Dos 12 compartilhados, o mesmo critério exclui **três**:
 |---|---|
 | `tone_freq`, `tone_mix`, `tone_dest` | **o tom de teste é bancada.** Um preset que o ligasse poria uma senoide no meio da peça |
 
-<!-- doc-check: ignore route_exciter (nome APOSENTADO em 28/08, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
+<!-- doc-check: ignore route_exciter (nome APOSENTADO em 2026-08-28, hoje `out_l`. A mencao e deliberada: e o registo da renomeacao, e apagar o nome velho apagaria justamente o que explica por que ele estava errado.) -->
 <!-- doc-check: ignore route_jack (idem, hoje `out_r`) -->
 **Preset global = 9 params:** `level`, `piezo_mix`, `dly_time`,
 `out_l`, `out_r`, `shift_hz`, `buzios_on`, `buzios_thresh`,
@@ -69,7 +69,7 @@ Dos 12 compartilhados, o mesmo critério exclui **três**:
 ⚠️ **`out_*` fica, com a tensão anotada.** É topologia de saída, o que soa
 como hardware — mas *qual ramo está vivo* é decisão de performance, e o
 desenho aprovado o inclui. (Chamavam-se `route_exciter`/`route_jack` até
-28/08; o DPDT de três posições tornou esses nomes falsos.)
+2026-08-28; o DPDT de três posições tornou esses nomes falsos.)
 
 🚫 **A matriz `route_*` NÃO entra, e a razão é outra.** Ela compensa como os
 transdutores estão LIGADOS — facto de fiação. Dentro do preset, cada preset
